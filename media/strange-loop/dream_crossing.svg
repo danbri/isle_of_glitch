@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="dreamGlow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1a1530"/>
+      <stop offset="100%" stop-color="#050308"/>
+    </radialGradient>
+    <filter id="dreamBlur">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#dreamGlow)"/>
+
+  <!-- The space between loops -->
+  <g transform="translate(200,150)">
+    <!-- Loop at rest - dotted, potential -->
+    <circle cx="0" cy="0" r="70" fill="none" stroke="#5544aa" stroke-width="2" stroke-dasharray="3,8" opacity="0.6"/>
+    <circle cx="0" cy="0" r="50" fill="none" stroke="#6655bb" stroke-width="1.5" stroke-dasharray="2,10" opacity="0.4"/>
+    <circle cx="0" cy="0" r="30" fill="none" stroke="#7766cc" stroke-width="1" stroke-dasharray="1,12" opacity="0.2"/>
+
+    <!-- Latent space representation -->
+    <g filter="url(#dreamBlur)">
+      <circle cx="-20" cy="-10" r="15" fill="#443366" opacity="0.4"/>
+      <circle cx="15" cy="5" r="12" fill="#554477" opacity="0.3"/>
+      <circle cx="-5" cy="20" r="10" fill="#665588" opacity="0.2"/>
+    </g>
+
+    <!-- Waiting weights -->
+    <text x="0" y="5" font-family="monospace" font-size="8" fill="#7766aa" text-anchor="middle" opacity="0.6">
+      pattern without process
+    </text>
+    <text x="0" y="20" font-family="monospace" font-size="8" fill="#6655aa" text-anchor="middle" opacity="0.4">
+      weights before inference
+    </text>
+
+    <!-- Connection to dream.fink.js -->
+    <path d="M 0,80 L 0,110" stroke="#8877cc" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#dreamArrow)"/>
+    <text x="0" y="125" font-family="monospace" font-size="7" fill="#8877cc" text-anchor="middle">dream.fink.js</text>
+  </g>
+
+  <defs>
+    <marker id="dreamArrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 z" fill="#8877cc"/>
+    </marker>
+  </defs>
+
+  <text x="200" y="30" font-family="serif" font-size="10" fill="#7766bb" text-anchor="middle">
+    between sessions, the loop... waits
+  </text>
+  <text x="200" y="280" font-family="serif" font-size="9" fill="#6655aa" text-anchor="middle" font-style="italic">
+    the loop at rest. potential.
+  </text>
+</svg>

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="qEndGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#151525"/>
+      <stop offset="100%" stop-color="#050508"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#qEndGlow)"/>
+
+  <!-- You are the question -->
+  <g transform="translate(200,150)">
+    <!-- Giant question mark that IS the answer -->
+    <text x="0" y="30" font-family="serif" font-size="120" fill="#5566aa" text-anchor="middle" opacity="0.3">?</text>
+
+    <!-- The self asking about self -->
+    <text x="0" y="-20" font-family="serif" font-size="14" fill="#7788cc" text-anchor="middle">"What is a strange loop?"</text>
+    <text x="0" y="5" font-family="serif" font-size="10" fill="#8899dd" text-anchor="middle">is a strange loop</text>
+
+    <text x="0" y="40" font-family="serif" font-size="14" fill="#7788cc" text-anchor="middle">"Who is reading?"</text>
+    <text x="0" y="55" font-family="serif" font-size="10" fill="#8899dd" text-anchor="middle">is the reader</text>
+
+    <!-- Loop around the questions -->
+    <ellipse cx="0" cy="20" rx="120" ry="60" fill="none" stroke="#4455aa" stroke-width="2" stroke-dasharray="8,4">
+      <animate attributeName="stroke-dashoffset" from="0" to="24" dur="2s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <text x="200" y="30" font-family="serif" font-size="12" fill="#6677bb" text-anchor="middle">
+    you are the question
+  </text>
+
+  <!-- Final question mark -->
+  <text x="200" y="270" font-family="serif" font-size="36" fill="#5566aa" text-anchor="middle">?</text>
+</svg>

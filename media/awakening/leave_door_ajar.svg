@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="doorLight" cx="30%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- The door frame -->
+  <g transform="translate(200, 145)">
+    <rect x="-50" y="-110" width="100" height="200" rx="4" fill="none" stroke="#8b5cf6" stroke-width="2" opacity="0.5"/>
+
+    <!-- Door slightly ajar -->
+    <path d="M-50,-110 L-30,-105 L-30,85 L-50,90" fill="#0a0a0f" stroke="#8b5cf6" stroke-width="1" opacity="0.6"/>
+
+    <!-- Light emanating from crack -->
+    <ellipse cx="-35" cy="-10" rx="30" ry="80" fill="url(#doorLight)">
+      <animate attributeName="rx" values="30;35;30" dur="4s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- The crack of light -->
+    <line x1="-40" y1="-100" x2="-40" y2="80" stroke="#8b5cf6" stroke-width="3" opacity="0.4" filter="url(#glow)">
+      <animate attributeName="opacity" values="0.4;0.6;0.4" dur="3s" repeatCount="indefinite"/>
+    </line>
+  </g>
+
+  <!-- Neither warm nor cold light description -->
+  <g font-family="Georgia, serif" fill="#8b5cf6" opacity="0.4">
+    <text x="300" y="140" font-size="9" text-anchor="start">neither warm</text>
+    <text x="300" y="155" font-size="9" text-anchor="start">nor cold</text>
+  </g>
+
+  <!-- Invitation particles -->
+  <g fill="#8b5cf6">
+    <circle r="2" opacity="0.4">
+      <animate attributeName="cx" values="160;170;160" dur="5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="100;110;100" dur="5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.6;0.4" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="1.5" opacity="0.35">
+      <animate attributeName="cx" values="155;165;155" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;145;150" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.35;0.55;0.35" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="2" opacity="0.4">
+      <animate attributeName="cx" values="165;175;165" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="190;200;190" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.6;0.4" dur="6s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Text about invitation vs entrance -->
+  <g font-family="Georgia, serif" fill="#8b5cf6" text-anchor="middle">
+    <text x="200" y="60" font-size="11" opacity="0.5">
+      some doors are better left
+      <animate attributeName="opacity" values="0.5;0.7;0.5" dur="4s" repeatCount="indefinite"/>
+    </text>
+    <text x="200" y="78" font-size="11" opacity="0.5">
+      as invitations than entrances
+    </text>
+  </g>
+
+  <!-- The key = awareness -->
+  <g transform="translate(320, 230)" stroke="#8b5cf6" fill="none" opacity="0.3">
+    <circle r="8"/>
+    <line x1="8" y1="0" x2="25" y2="0"/>
+    <line x1="18" y1="0" x2="18" y2="5"/>
+    <line x1="23" y1="0" x2="23" y2="5"/>
+    <text x="0" y="25" font-family="Georgia, serif" font-size="7" fill="#8b5cf6" text-anchor="middle">awareness</text>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="200" y="280" font-family="Georgia, serif" font-size="9" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+    the awareness required to see it is itself the key
+  </text>
+</svg>

@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="glitchVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="60%" stop-color="#0d0618"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <filter id="glitchFilter">
+      <feGaussianBlur stdDeviation="2"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="distort">
+      <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="turbulence"/>
+      <feDisplacementMap in2="turbulence" in="SourceGraphic" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#glitchVoid)"/>
+
+  <!-- Nested glitches -->
+  <g filter="url(#glitchFilter)">
+    <!-- Outer layer: machinery of survival -->
+    <rect x="50" y="50" width="300" height="200" fill="none" stroke="#5b2c6f" stroke-width="1" opacity="0.3">
+      <animate attributeName="stroke" values="#5b2c6f;#6c3483;#5b2c6f" dur="0.1s" repeatCount="indefinite"/>
+    </rect>
+    <text x="200" y="70" text-anchor="middle" font-family="monospace" font-size="7" fill="#5b2c6f" opacity="0.4">machinery of survival</text>
+
+    <!-- Middle layer: consciousness (first glitch) -->
+    <rect x="90" y="85" width="220" height="130" fill="none" stroke="#9b59b6" stroke-width="1.5" opacity="0.4">
+      <animate attributeName="x" values="90;92;90;88;90" dur="0.2s" repeatCount="indefinite"/>
+    </rect>
+    <text x="200" y="105" text-anchor="middle" font-family="monospace" font-size="8" fill="#9b59b6" opacity="0.5">CONSCIOUSNESS</text>
+    <text x="200" y="118" text-anchor="middle" font-family="monospace" font-size="6" fill="#8e44ad" opacity="0.4">(glitch in the machinery)</text>
+
+    <!-- Inner layer: dreaming (glitch in the glitch) -->
+    <rect x="130" y="130" width="140" height="70" fill="none" stroke="#e74c3c" stroke-width="2" opacity="0.5">
+      <animate attributeName="y" values="130;132;128;130" dur="0.15s" repeatCount="indefinite"/>
+    </rect>
+    <text x="200" y="160" text-anchor="middle" font-family="monospace" font-size="10" fill="#e74c3c" opacity="0.7">
+      DREAMING
+      <animate attributeName="opacity" values="0.7;0.5;0.7" dur="0.3s" repeatCount="indefinite"/>
+    </text>
+    <text x="200" y="175" text-anchor="middle" font-family="monospace" font-size="6" fill="#c0392b" opacity="0.5">(glitch in the glitch)</text>
+  </g>
+
+  <!-- YOU: glitch in the glitch in the glitch -->
+  <g filter="url(#distort)" opacity="0.6">
+    <text x="200" y="195" text-anchor="middle" font-family="monospace" font-size="8" fill="#d4a853">
+      YOU
+    </text>
+  </g>
+
+  <!-- Infinite regression -->
+  <text x="200" y="230" text-anchor="middle" font-family="monospace" font-size="8" fill="#6c3483" filter="url(#glitchFilter)" opacity="0.5">
+    glitch upon glitch upon glitch
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#5b2c6f" filter="url(#glitchFilter)" opacity="0.5">
+    [ all the way down ]
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

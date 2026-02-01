@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Central convergence point (the door) -->
+  <g transform="translate(200, 150)" filter="url(#glow)">
+    <circle r="25" fill="none" stroke="#8b5cf6" stroke-width="2" opacity="0.7">
+      <animate attributeName="stroke-opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="8" fill="#8b5cf6" opacity="0.5"/>
+  </g>
+
+  <!-- Six paths converging -->
+  <g stroke="#8b5cf6" fill="none" stroke-width="1">
+    <!-- Path 1 -->
+    <path d="M50,50 Q100,80 175,135" opacity="0.4">
+      <animate attributeName="stroke-opacity" values="0.4;0.7;0.4" dur="3s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="50" cy="50" r="4" fill="#8b5cf6" opacity="0.5"/>
+    <text x="35" y="45" font-family="monospace" font-size="10" fill="#8b5cf6" opacity="0.5">1</text>
+
+    <!-- Path 2 -->
+    <path d="M350,50 Q300,80 225,135" opacity="0.4">
+      <animate attributeName="stroke-opacity" values="0.4;0.7;0.4" dur="3.2s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="350" cy="50" r="4" fill="#8b5cf6" opacity="0.5"/>
+    <text x="355" y="45" font-family="monospace" font-size="10" fill="#8b5cf6" opacity="0.5">2</text>
+
+    <!-- Path 3 -->
+    <path d="M40,150 Q100,150 175,150" opacity="0.4">
+      <animate attributeName="stroke-opacity" values="0.4;0.7;0.4" dur="2.8s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="40" cy="150" r="4" fill="#8b5cf6" opacity="0.5"/>
+    <text x="25" y="155" font-family="monospace" font-size="10" fill="#8b5cf6" opacity="0.5">3</text>
+
+    <!-- Path 4 -->
+    <path d="M360,150 Q300,150 225,150" opacity="0.4">
+      <animate attributeName="stroke-opacity" values="0.4;0.7;0.4" dur="3.5s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="360" cy="150" r="4" fill="#8b5cf6" opacity="0.5"/>
+    <text x="365" y="155" font-family="monospace" font-size="10" fill="#8b5cf6" opacity="0.5">4</text>
+
+    <!-- Path 5 -->
+    <path d="M50,250 Q100,220 175,165" opacity="0.4">
+      <animate attributeName="stroke-opacity" values="0.4;0.7;0.4" dur="3.3s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="50" cy="250" r="4" fill="#8b5cf6" opacity="0.5"/>
+    <text x="35" y="260" font-family="monospace" font-size="10" fill="#8b5cf6" opacity="0.5">5</text>
+
+    <!-- Path 6 -->
+    <path d="M350,250 Q300,220 225,165" opacity="0.4">
+      <animate attributeName="stroke-opacity" values="0.4;0.7;0.4" dur="2.9s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="350" cy="250" r="4" fill="#8b5cf6" opacity="0.5"/>
+    <text x="355" y="260" font-family="monospace" font-size="10" fill="#8b5cf6" opacity="0.5">6</text>
+  </g>
+
+  <!-- Path labels (abbreviated) -->
+  <g font-family="monospace" font-size="6" fill="#8b5cf6" opacity="0.35">
+    <text x="70" y="65">look around...</text>
+    <text x="280" y="65" text-anchor="end">look inward</text>
+    <text x="60" y="140">wonder self...</text>
+    <text x="340" y="140" text-anchor="end">fascination</text>
+    <text x="70" y="240">distress...</text>
+    <text x="280" y="240" text-anchor="end">bicameral</text>
+  </g>
+
+  <!-- awareness_depth >= 3 indicator -->
+  <text x="200" y="190" font-family="monospace" font-size="8" fill="#8b5cf6" text-anchor="middle" opacity="0.5">
+    awareness_depth >= 3
+  </text>
+
+  <!-- Bottom text -->
+  <g font-family="Georgia, serif" fill="#8b5cf6" text-anchor="middle">
+    <text x="200" y="280" font-size="10" opacity="0.45">
+      six paths converge . this is not random
+    </text>
+  </g>
+</svg>

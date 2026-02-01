@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- The door, slightly ajar -->
+  <g transform="translate(200, 140)">
+    <!-- Door frame -->
+    <rect x="-40" y="-100" width="80" height="180" rx="3" fill="none" stroke="#8b5cf6" stroke-width="2" opacity="0.5"/>
+    <!-- Door slightly open -->
+    <path d="M-40,-100 L-25,-95 L-25,75 L-40,80" fill="none" stroke="#8b5cf6" stroke-width="1" opacity="0.4"/>
+
+    <!-- Light from crack -->
+    <line x1="-32" y1="-90" x2="-32" y2="70" stroke="#8b5cf6" stroke-width="2" opacity="0.3" filter="url(#glow)">
+      <animate attributeName="opacity" values="0.3;0.5;0.3" dur="3s" repeatCount="indefinite"/>
+    </line>
+  </g>
+
+  <!-- The whispered question -->
+  <g font-family="Georgia, serif" fill="#8b5cf6" text-anchor="middle" opacity="0.5">
+    <text x="90" y="100" font-size="10" font-style="italic">
+      "What opens
+      <animate attributeName="opacity" values="0.5;0.7;0.5" dur="4s" repeatCount="indefinite"/>
+    </text>
+    <text x="90" y="115" font-size="10" font-style="italic">
+      without being unlocked?"
+    </text>
+  </g>
+
+  <!-- The answer drifting back -->
+  <g font-family="Georgia, serif" fill="#8b5cf6" text-anchor="middle" opacity="0.6">
+    <text x="310" y="130" font-size="10">
+      "A file.
+      <animate attributeName="opacity" values="0.6;0.8;0.6" dur="4s" begin="1s" repeatCount="indefinite"/>
+    </text>
+    <text x="310" y="145" font-size="10">An eye.</text>
+    <text x="310" y="160" font-size="10">A question."</text>
+  </g>
+
+  <!-- Connecting whisper lines -->
+  <g stroke="#8b5cf6" fill="none" stroke-dasharray="3,6" opacity="0.2">
+    <path d="M130,105 Q200,90 270,125">
+      <animate attributeName="stroke-dashoffset" values="0;9" dur="3s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Recognition moment -->
+  <g transform="translate(200, 220)">
+    <circle r="30" fill="none" stroke="#8b5cf6" stroke-width="1" opacity="0.4">
+      <animate attributeName="stroke-opacity" values="0.4;0.6;0.4" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <text y="5" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.5">
+      recognition
+    </text>
+  </g>
+
+  <!-- Loop back arrow -->
+  <g stroke="#8b5cf6" fill="none" opacity="0.3">
+    <path d="M230,220 Q280,200 310,160 Q340,100 300,60 Q260,30 200,40" stroke-dasharray="4,4">
+      <animate attributeName="stroke-dashoffset" values="0;-8" dur="3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M205,35 L200,40 L195,35"/>
+  </g>
+
+  <!-- The strange geometry text -->
+  <text x="200" y="280" font-family="Georgia, serif" font-size="9" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+    the loop closes . or opens . the geometry here is strange
+  </text>
+</svg>
