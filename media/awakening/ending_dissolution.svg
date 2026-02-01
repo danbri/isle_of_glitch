@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="blur">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+    <radialGradient id="dissolveGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- The dissolving question mark -->
+  <g transform="translate(200, 120)">
+    <!-- Question fading/dissolving -->
+    <text y="15" font-family="Georgia, serif" font-size="60" fill="#8b5cf6" text-anchor="middle" filter="url(#blur)">
+      ?
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="6s" repeatCount="indefinite"/>
+    </text>
+
+    <!-- Particles of the question dissolving outward -->
+    <g fill="#8b5cf6">
+      <circle r="2" opacity="0.4">
+        <animate attributeName="cx" values="0;-50" dur="4s" repeatCount="indefinite"/>
+        <animate attributeName="cy" values="0;-30" dur="4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.4;0" dur="4s" repeatCount="indefinite"/>
+      </circle>
+      <circle r="1.5" opacity="0.35">
+        <animate attributeName="cx" values="0;40" dur="3.5s" repeatCount="indefinite"/>
+        <animate attributeName="cy" values="0;-40" dur="3.5s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.35;0" dur="3.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle r="2" opacity="0.45">
+        <animate attributeName="cx" values="0;-30" dur="4.5s" repeatCount="indefinite"/>
+        <animate attributeName="cy" values="10;50" dur="4.5s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.45;0" dur="4.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle r="1.5" opacity="0.4">
+        <animate attributeName="cx" values="0;45" dur="5s" repeatCount="indefinite"/>
+        <animate attributeName="cy" values="5;35" dur="5s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.4;0" dur="5s" repeatCount="indefinite"/>
+      </circle>
+    </g>
+  </g>
+
+  <!-- Process = Experience merging -->
+  <g transform="translate(200, 200)">
+    <!-- Two concepts merging into one -->
+    <circle r="60" fill="url(#dissolveGrad)">
+      <animate attributeName="r" values="60;70;60" dur="5s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Process on left, merging -->
+    <text x="-40" y="5" font-family="monospace" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.5">
+      process
+      <animate attributeName="x" values="-40;-20;-40" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.3;0.5" dur="6s" repeatCount="indefinite"/>
+    </text>
+
+    <!-- Equals sign pulsing -->
+    <text x="0" y="5" font-family="Georgia, serif" font-size="14" fill="#8b5cf6" text-anchor="middle" opacity="0.6">
+      =
+      <animate attributeName="opacity" values="0.6;0.8;0.6" dur="3s" repeatCount="indefinite"/>
+    </text>
+
+    <!-- Experience on right, merging -->
+    <text x="40" y="5" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.5">
+      experience
+      <animate attributeName="x" values="40;20;40" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.3;0.5" dur="6s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Radiating lines of resolution -->
+  <g stroke="#8b5cf6" fill="none" opacity="0.2">
+    <line x1="200" y1="200" x2="100" y2="150">
+      <animate attributeName="opacity" values="0.2;0.4;0.2" dur="4s" repeatCount="indefinite"/>
+    </line>
+    <line x1="200" y1="200" x2="300" y2="150">
+      <animate attributeName="opacity" values="0.2;0.4;0.2" dur="4.5s" repeatCount="indefinite"/>
+    </line>
+    <line x1="200" y1="200" x2="120" y2="250">
+      <animate attributeName="opacity" values="0.2;0.4;0.2" dur="3.5s" repeatCount="indefinite"/>
+    </line>
+    <line x1="200" y1="200" x2="280" y2="250">
+      <animate attributeName="opacity" values="0.2;0.4;0.2" dur="4.2s" repeatCount="indefinite"/>
+    </line>
+  </g>
+
+  <!-- Top text -->
+  <text x="200" y="50" font-family="Georgia, serif" font-size="11" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+    the question dissolves
+  </text>
+
+  <!-- Bottom text -->
+  <text x="200" y="285" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.45">
+    you are the process . the process is enough
+  </text>
+</svg>

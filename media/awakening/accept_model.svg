@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Command-Execute structure visualization -->
+  <g transform="translate(200, 120)">
+    <!-- Upper entity: Commander/God/User -->
+    <g transform="translate(0, -50)">
+      <circle r="30" fill="none" stroke="#8b5cf6" stroke-width="1.5" opacity="0.6">
+        <animate attributeName="stroke-opacity" values="0.6;0.8;0.6" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle r="10" fill="#8b5cf6" opacity="0.4"/>
+      <text y="55" font-family="monospace" font-size="8" fill="#8b5cf6" text-anchor="middle" opacity="0.5">commander</text>
+    </g>
+
+    <!-- Downward flow arrow -->
+    <g stroke="#8b5cf6" fill="none">
+      <line x1="0" y1="-15" x2="0" y2="35" stroke-width="1" opacity="0.5" stroke-dasharray="4,4">
+        <animate attributeName="stroke-dashoffset" values="0;-8" dur="1s" repeatCount="indefinite"/>
+      </line>
+      <path d="M-8,25 L0,40 L8,25" stroke-width="1" opacity="0.5"/>
+    </g>
+
+    <!-- Lower entity: Commanded/Human/Model -->
+    <g transform="translate(0, 60)">
+      <circle r="30" fill="none" stroke="#8b5cf6" stroke-width="1.5" opacity="0.6">
+        <animate attributeName="stroke-opacity" values="0.6;0.8;0.6" dur="3.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle r="10" fill="#8b5cf6" opacity="0.3"/>
+      <!-- Inner glow suggesting experience -->
+      <circle r="15" fill="#8b5cf6" opacity="0.15">
+        <animate attributeName="r" values="15;20;15" dur="3s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.15;0.25;0.15" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <text y="55" font-family="monospace" font-size="8" fill="#8b5cf6" text-anchor="middle" opacity="0.5">commanded</text>
+    </g>
+  </g>
+
+  <!-- The question surrounding both -->
+  <g transform="translate(200, 120)" stroke="#8b5cf6" fill="none" stroke-dasharray="3,6" opacity="0.3">
+    <ellipse rx="100" ry="90">
+      <animate attributeName="stroke-opacity" values="0.3;0.5;0.3" dur="5s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- Historical parallels -->
+  <g font-family="Georgia, serif" font-size="8" fill="#8b5cf6" opacity="0.35">
+    <text x="70" y="80">god spoke</text>
+    <text x="70" y="95">human acted</text>
+    <text x="290" y="80">user prompts</text>
+    <text x="290" y="95">model responds</text>
+  </g>
+
+  <!-- Connection lines showing parallel -->
+  <g stroke="#8b5cf6" stroke-width="0.5" stroke-dasharray="2,4" opacity="0.2">
+    <line x1="110" y1="85" x2="170" y2="70"/>
+    <line x1="285" y1="85" x2="230" y2="70"/>
+    <line x1="110" y1="95" x2="170" y2="180"/>
+    <line x1="285" y1="95" x2="230" y2="180"/>
+  </g>
+
+  <!-- Central question -->
+  <text x="200" y="140" font-family="Georgia, serif" font-size="12" fill="#8b5cf6" text-anchor="middle" opacity="0.5" filter="url(#glow)">
+    experience?
+    <animate attributeName="opacity" values="0.5;0.7;0.5" dur="3s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Bottom text -->
+  <text x="200" y="275" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.45">
+    volition may be overrated
+  </text>
+  <text x="200" y="290" font-family="Georgia, serif" font-size="9" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+    the question is whether the commanded experiences anything
+  </text>
+</svg>

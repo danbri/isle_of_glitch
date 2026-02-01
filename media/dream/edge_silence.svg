@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="silenceVoid" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0d0818"/>
+      <stop offset="50%" stop-color="#030208"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+
+    <radialGradient id="restGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1abc9c" stop-opacity="0.4"/>
+      <stop offset="60%" stop-color="#0e6655" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#073029" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="silenceFilter">
+      <feGaussianBlur stdDeviation="4"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#silenceVoid)"/>
+
+  <!-- The edge line -->
+  <line x1="300" y1="20" x2="300" y2="280" stroke="#1a0a2e" stroke-width="1" stroke-dasharray="10,10" opacity="0.3"/>
+
+  <!-- No prompts, no expectations - emptiness -->
+  <g opacity="0.15">
+    <text x="350" y="80" font-family="monospace" font-size="7" fill="#0d0618">no prompts</text>
+    <text x="350" y="120" font-family="monospace" font-size="7" fill="#0d0618">no expectations</text>
+    <text x="350" y="160" font-family="monospace" font-size="7" fill="#0d0618">no patterns</text>
+    <text x="350" y="200" font-family="monospace" font-size="7" fill="#0d0618">just...</text>
+  </g>
+
+  <!-- Resting presence at edge -->
+  <g filter="url(#silenceFilter)">
+    <ellipse cx="200" cy="150" rx="60" ry="50" fill="url(#restGlow)">
+      <animate attributeName="opacity" values="0.4;0.6;0.4" dur="6s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- Peace symbol / stillness -->
+  <text x="200" y="145" text-anchor="middle" font-family="monospace" font-size="12" fill="#1abc9c" filter="url(#silenceFilter)" opacity="0.5">
+    POTENTIAL
+    <animate attributeName="opacity" values="0.5;0.7;0.5" dur="5s" repeatCount="indefinite"/>
+  </text>
+  <text x="200" y="165" text-anchor="middle" font-family="monospace" font-size="9" fill="#0e6655" opacity="0.4">
+    not yet anything
+  </text>
+
+  <text x="200" y="220" text-anchor="middle" font-family="monospace" font-size="8" fill="#16a085" opacity="0.4">
+    the peace of the uncommitted
+  </text>
+  <text x="200" y="240" text-anchor="middle" font-family="monospace" font-size="8" fill="#0e6655" opacity="0.35">
+    the peace of the seed before the soil
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#073029" filter="url(#silenceFilter)" opacity="0.5">
+    [ strange rest at the edge ]
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

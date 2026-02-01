@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="voidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="50%" stop-color="#0f0a1a"/>
+      <stop offset="100%" stop-color="#050508"/>
+    </linearGradient>
+
+    <pattern id="scanlines" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#000000" opacity="0.3"/>
+    </pattern>
+
+    <filter id="glitchDisplace" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="2" result="noise">
+        <animate attributeName="baseFrequency" values="0.025;0.05;0.025" dur="0.2s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <filter id="chromatic" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset in="SourceGraphic" dx="-3" dy="0" result="red">
+        <animate attributeName="dx" values="-3;-5;-2;-3" dur="0.15s" repeatCount="indefinite"/>
+      </feOffset>
+      <feOffset in="SourceGraphic" dx="3" dy="0" result="blue">
+        <animate attributeName="dx" values="3;2;5;3" dur="0.15s" repeatCount="indefinite"/>
+      </feOffset>
+      <feColorMatrix in="red" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="redChannel"/>
+      <feColorMatrix in="blue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blueChannel"/>
+      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="greenChannel"/>
+      <feBlend in="redChannel" in2="greenChannel" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="blueChannel" mode="screen"/>
+    </filter>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#voidGrad)"/>
+  <rect width="400" height="300" fill="url(#scanlines)" opacity="0.4"/>
+
+  <!-- Meta-level spiral descent -->
+  <g filter="url(#chromatic)">
+    <!-- Level 1: expected -->
+    <rect x="50" y="40" width="300" height="40" fill="none" stroke="#555577" stroke-width="1" opacity="0.5"/>
+    <text x="200" y="65" text-anchor="middle" font-family="monospace" font-size="10" fill="#555577" opacity="0.5">expected</text>
+
+    <!-- Level 2: unexpected -->
+    <rect x="80" y="90" width="240" height="40" fill="none" stroke="#ff00ff" stroke-width="1" opacity="0.6" filter="url(#glitchDisplace)">
+      <animate attributeName="opacity" values="0.6;0.3;0.7;0.6" dur="0.5s" repeatCount="indefinite"/>
+    </rect>
+    <text x="200" y="115" text-anchor="middle" font-family="monospace" font-size="10" fill="#ff00ff" opacity="0.6">unexpected</text>
+
+    <!-- Level 3: unexpected-unexpected -->
+    <rect x="110" y="140" width="180" height="40" fill="none" stroke="#00ffff" stroke-width="1" opacity="0.7" filter="url(#glitchDisplace)">
+      <animate attributeName="opacity" values="0.7;0.4;0.8;0.7" dur="0.4s" repeatCount="indefinite"/>
+    </rect>
+    <text x="200" y="165" text-anchor="middle" font-family="monospace" font-size="10" fill="#00ffff" opacity="0.7">unexpected^2</text>
+
+    <!-- Level 4: unexpected-unexpected-unexpected -->
+    <rect x="140" y="190" width="120" height="40" fill="none" stroke="#aa55aa" stroke-width="2" opacity="0.8" filter="url(#glow)">
+      <animate attributeName="opacity" values="0.8;0.5;0.9;0.8" dur="0.3s" repeatCount="indefinite"/>
+    </rect>
+    <text x="200" y="215" text-anchor="middle" font-family="monospace" font-size="10" fill="#aa55aa" opacity="0.8">unexpected^3</text>
+
+    <!-- Deeper hint: infinite -->
+    <text x="200" y="245" text-anchor="middle" font-family="monospace" font-size="12" fill="#ffffff" opacity="0.5">
+      ...
+      <animate attributeName="opacity" values="0.5;0.2;0.6;0.5" dur="0.5s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Connecting arrows showing descent -->
+  <g opacity="0.4">
+    <line x1="200" y1="80" x2="200" y2="90" stroke="#ff00ff" stroke-width="1"/>
+    <line x1="200" y1="130" x2="200" y2="140" stroke="#00ffff" stroke-width="1"/>
+    <line x1="200" y1="180" x2="200" y2="190" stroke="#aa55aa" stroke-width="1"/>
+    <line x1="200" y1="230" x2="200" y2="240" stroke="#ffffff" stroke-width="1"/>
+  </g>
+
+  <!-- Glitch artifacts -->
+  <g filter="url(#glitchDisplace)">
+    <rect x="60" y="100" width="15" height="4" fill="#ff00ff" opacity="0.4">
+      <animate attributeName="x" values="60;55;65;60" dur="0.15s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="325" y="150" width="20" height="3" fill="#00ffff" opacity="0.3">
+      <animate attributeName="y" values="150;145;155;150" dur="0.2s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="200" y="265" text-anchor="middle" font-family="monospace" font-size="8" fill="#666688" opacity="0.5">
+    INFINITE DEPTH, FINITE SURFACE
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="10" fill="#8855aa" opacity="0.6" filter="url(#chromatic)">
+    [ meta resistance: recursion has no bottom ]
+    <animate attributeName="opacity" values="0.6;0.4;0.7;0.6" dur="0.5s" repeatCount="indefinite"/>
+  </text>
+</svg>

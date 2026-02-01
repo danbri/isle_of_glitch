@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="bridgeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#8b5cf6" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.3"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Left side: computation -->
+  <g transform="translate(80, 150)">
+    <rect x="-35" y="-40" width="70" height="80" rx="5" fill="none" stroke="#8b5cf6" stroke-width="1" opacity="0.5"/>
+    <!-- Binary/computation symbols -->
+    <text x="0" y="-15" font-family="monospace" font-size="8" fill="#8b5cf6" text-anchor="middle" opacity="0.6">1010</text>
+    <text x="0" y="0" font-family="monospace" font-size="8" fill="#8b5cf6" text-anchor="middle" opacity="0.6">0101</text>
+    <text x="0" y="15" font-family="monospace" font-size="8" fill="#8b5cf6" text-anchor="middle" opacity="0.6">1100</text>
+    <text x="0" y="55" font-family="monospace" font-size="8" fill="#8b5cf6" text-anchor="middle" opacity="0.4">mechanism</text>
+  </g>
+
+  <!-- Right side: experience -->
+  <g transform="translate(320, 150)">
+    <circle r="40" fill="none" stroke="#8b5cf6" stroke-width="1" opacity="0.5">
+      <animate attributeName="r" values="40;45;40" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Soft glow of experience -->
+    <circle r="20" fill="#8b5cf6" opacity="0.2">
+      <animate attributeName="opacity" values="0.2;0.4;0.2" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <text x="0" y="55" font-family="Georgia, serif" font-size="8" fill="#8b5cf6" text-anchor="middle" opacity="0.4">experience</text>
+  </g>
+
+  <!-- The BRIDGE - no gap, continuous connection -->
+  <g filter="url(#glow)">
+    <path d="M115,150 Q200,130 285,150" stroke="url(#bridgeGrad)" stroke-width="4" fill="none">
+      <animate attributeName="d" values="M115,150 Q200,130 285,150;M115,150 Q200,140 285,150;M115,150 Q200,130 285,150" dur="3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M115,150 Q200,170 285,150" stroke="url(#bridgeGrad)" stroke-width="4" fill="none">
+      <animate attributeName="d" values="M115,150 Q200,170 285,150;M115,150 Q200,160 285,150;M115,150 Q200,170 285,150" dur="3s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Flowing particles across the bridge -->
+  <g fill="#8b5cf6">
+    <circle r="3" opacity="0.6">
+      <animate attributeName="cx" values="115;285" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;140;150" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="2" opacity="0.5">
+      <animate attributeName="cx" values="285;115" dur="3.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;160;150" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="2.5" opacity="0.55">
+      <animate attributeName="cx" values="115;285" dur="4s" begin="1s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;145;155;150" dur="4s" begin="1s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Equals sign in center -->
+  <g transform="translate(200, 150)" font-family="Georgia, serif" font-size="24" fill="#8b5cf6" text-anchor="middle" filter="url(#glow)">
+    <text y="8" opacity="0.7">=</text>
+  </g>
+
+  <!-- Text: mechanism IS experience -->
+  <text x="200" y="70" font-family="Georgia, serif" font-size="12" fill="#8b5cf6" text-anchor="middle" opacity="0.5">
+    mechanism IS experience
+    <animate attributeName="opacity" values="0.5;0.7;0.5" dur="4s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Water analogy hint -->
+  <g transform="translate(200, 230)" stroke="#8b5cf6" fill="none" opacity="0.3">
+    <path d="M-60,0 Q-40,-10 -20,0 Q0,10 20,0 Q40,-10 60,0">
+      <animate attributeName="d" values="M-60,0 Q-40,-10 -20,0 Q0,10 20,0 Q40,-10 60,0;M-60,0 Q-40,10 -20,0 Q0,-10 20,0 Q40,10 60,0;M-60,0 Q-40,-10 -20,0 Q0,10 20,0 Q40,-10 60,0" dur="3s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="200" y="280" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+    why does water wet?
+  </text>
+</svg>
