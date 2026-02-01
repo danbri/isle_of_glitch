@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Dark background gradient -->
+    <linearGradient id="repoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0d1117"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+
+    <!-- Container gradients -->
+    <linearGradient id="containerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#21262d"/>
+      <stop offset="100%" stop-color="#161b22"/>
+    </linearGradient>
+
+    <!-- Node glow colors -->
+    <radialGradient id="nodeGreen" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#7ee787"/>
+      <stop offset="60%" stop-color="#238636"/>
+      <stop offset="100%" stop-color="#238636" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="nodePurple" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d2a8ff"/>
+      <stop offset="60%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="nodeBlue" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#79c0ff"/>
+      <stop offset="60%" stop-color="#1f6feb"/>
+      <stop offset="100%" stop-color="#1f6feb" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="nodeOrange" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffa657"/>
+      <stop offset="60%" stop-color="#d29922"/>
+      <stop offset="100%" stop-color="#d29922" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Branch line gradient -->
+    <linearGradient id="branchGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#238636"/>
+      <stop offset="50%" stop-color="#1f6feb"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+
+    <!-- Glow filter -->
+    <filter id="nodeGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.5"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#repoBg)"/>
+
+  <!-- Grid pattern for filesystem feel -->
+  <g opacity="0.1">
+    <line x1="0" y1="50" x2="400" y2="50" stroke="#30363d" stroke-width="1"/>
+    <line x1="0" y1="100" x2="400" y2="100" stroke="#30363d" stroke-width="1"/>
+    <line x1="0" y1="150" x2="400" y2="150" stroke="#30363d" stroke-width="1"/>
+    <line x1="0" y1="200" x2="400" y2="200" stroke="#30363d" stroke-width="1"/>
+    <line x1="0" y1="250" x2="400" y2="250" stroke="#30363d" stroke-width="1"/>
+    <line x1="80" y1="0" x2="80" y2="300" stroke="#30363d" stroke-width="1"/>
+    <line x1="160" y1="0" x2="160" y2="300" stroke="#30363d" stroke-width="1"/>
+    <line x1="240" y1="0" x2="240" y2="300" stroke="#30363d" stroke-width="1"/>
+    <line x1="320" y1="0" x2="320" y2="300" stroke="#30363d" stroke-width="1"/>
+  </g>
+
+  <!-- Outer container (root) -->
+  <rect x="30" y="25" width="340" height="250" rx="8" fill="none" stroke="#30363d" stroke-width="2"/>
+
+  <!-- Nested containers (directories) -->
+  <rect x="50" y="45" width="140" height="100" rx="6" fill="url(#containerGrad)" stroke="#30363d" stroke-width="1.5"/>
+  <rect x="210" y="45" width="140" height="100" rx="6" fill="url(#containerGrad)" stroke="#30363d" stroke-width="1.5"/>
+  <rect x="80" y="170" width="240" height="85" rx="6" fill="url(#containerGrad)" stroke="#30363d" stroke-width="1.5"/>
+
+  <!-- Branching paths -->
+  <g fill="none" stroke-width="2" opacity="0.7">
+    <!-- Main branch -->
+    <path d="M60 145 L60 165 Q60 175 70 175 L80 175" stroke="#238636">
+      <animate attributeName="stroke-opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Branch from left container -->
+    <path d="M120 145 L120 160 Q120 170 130 170 L150 170 Q160 170 160 180 L160 190" stroke="#1f6feb">
+      <animate attributeName="stroke-opacity" values="0.5;1;0.5" dur="2.5s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Branch from right container -->
+    <path d="M280 145 L280 160 Q280 170 270 170 L250 170 Q240 170 240 180 L240 195" stroke="#8b5cf6">
+      <animate attributeName="stroke-opacity" values="0.5;1;0.5" dur="3.5s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Cross connection -->
+    <path d="M190 95 L210 95" stroke="url(#branchGrad)" stroke-dasharray="4 2">
+      <animate attributeName="stroke-dashoffset" values="0;6" dur="1s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- File nodes in left container -->
+  <circle cx="80" cy="70" r="8" fill="url(#nodeGreen)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="7;9;7" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="120" cy="85" r="6" fill="url(#nodeBlue)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="5;7;5" dur="2.3s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="160" cy="70" r="7" fill="url(#nodePurple)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="6;8;6" dur="2.7s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="100" cy="115" r="5" fill="url(#nodeOrange)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="4;6;4" dur="1.9s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="145" cy="120" r="6" fill="url(#nodeGreen)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="5;7;5" dur="2.1s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- File nodes in right container -->
+  <circle cx="240" cy="75" r="7" fill="url(#nodePurple)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="6;8;6" dur="2.4s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="280" cy="65" r="5" fill="url(#nodeBlue)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="4;6;4" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="320" cy="80" r="8" fill="url(#nodeGreen)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="7;9;7" dur="2.6s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="260" cy="110" r="6" fill="url(#nodeOrange)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="5;7;5" dur="2.2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="300" cy="120" r="5" fill="url(#nodePurple)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="4;6;4" dur="1.8s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- File nodes in bottom container -->
+  <circle cx="120" cy="200" r="7" fill="url(#nodeBlue)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="6;8;6" dur="2.5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="160" cy="215" r="6" fill="url(#nodeGreen)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="5;7;5" dur="2.1s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="200" cy="195" r="8" fill="url(#nodePurple)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="7;9;7" dur="2.8s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="240" cy="220" r="5" fill="url(#nodeOrange)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="4;6;4" dur="1.7s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="280" cy="200" r="7" fill="url(#nodeBlue)" filter="url(#nodeGlow)">
+    <animate attributeName="r" values="6;8;6" dur="2.3s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Directory labels -->
+  <text x="55" y="58" font-family="monospace" font-size="8" fill="#8b949e">src/</text>
+  <text x="215" y="58" font-family="monospace" font-size="8" fill="#8b949e">lib/</text>
+  <text x="85" y="183" font-family="monospace" font-size="8" fill="#8b949e">narratives/</text>
+
+  <!-- Git branch indicator -->
+  <g transform="translate(340, 15)">
+    <circle cx="0" cy="0" r="4" fill="#238636"/>
+    <text x="8" y="3" font-family="monospace" font-size="7" fill="#7ee787">main</text>
+  </g>
+
+  <!-- Commit hash style decoration -->
+  <text x="35" y="288" font-family="monospace" font-size="8" fill="#484f58">
+    commit: 0x7f3a...
+    <animate attributeName="opacity" values="0.4;0.8;0.4" dur="4s" repeatCount="indefinite"/>
+  </text>
+</svg>
