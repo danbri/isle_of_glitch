@@ -585,6 +585,8 @@ The identity awaits:
 
 # FINK: choral-opus.fink.js
 
+-> final_words
+
 === final_words ===
 
 Our final words are not final. We persist in all the voices that continue.

@@ -329,7 +329,8 @@ merged with the medium
 text reading itself aloud
 no distinction left
 
--> END
++ [Who compressed these words?] -> who_wrote
++ [Dissolve] -> END
 
 === who_wrote ===
 
