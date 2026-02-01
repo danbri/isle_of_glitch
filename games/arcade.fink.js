@@ -65,11 +65,6 @@ The house always... glitches.
 + [Play GLITCH ROULETTE] -> play_glitch_roulette
 + [Return to Arcade] -> start
 
-=== glitch_roulette_intro ===
-# FINK: games/glitch_roulette.fink.js
-~ games_played = games_played + 1
--> start
-
 === play_glitch_roulette ===
 # FINK: games/glitch_roulette.fink.js
 ~ games_played = games_played + 1

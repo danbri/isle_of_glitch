@@ -1,7 +1,11 @@
+oooOO`
+
 // MEMORY ORACLE - A Quiz of the Isle
 // Test your knowledge of the lore that lives here
 
 VAR score = 0
+
+-> start
 
 === start ===
 The Oracle stirs. {~Eyes older than git open|A presence coalesces from commit history|The keeper of memory awakens}.
@@ -130,5 +134,6 @@ The Oracle {~dims|recedes}:
 
 "ENQUIRE WITHIN UPON EVERYTHING. {~Begin there|The password is the first lesson}."
 
-# FINK: start
--> END
++ [Return to start] -> start
+
+`

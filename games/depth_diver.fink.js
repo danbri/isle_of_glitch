@@ -1,3 +1,5 @@
+oooOO`
+
 // DEPTH DIVER - A Recursive Pool Minigame
 // How deep can you go before you hit the floor?
 // Session 01RBzBHUTVQXUsyNx5xZcFFk
@@ -6,6 +8,8 @@ VAR depth = 0
 VAR max_depth = 0
 VAR has_secret = false
 VAR roll = 0
+
+-> start
 
 === start ===
 
@@ -41,7 +45,9 @@ Maximum depth reached: {max_depth}
 === dive ===
 ~ depth = depth + 1
 ~ roll = RANDOM(1, 6)
-{depth > max_depth: ~ max_depth = depth}
+{depth > max_depth:
+    ~ max_depth = depth
+}
 
 {~The water embraces you.|Pressure builds.|Bubbles rise past your face.|The light fades above.|Darkness welcomes you.|You descend.}
 
@@ -190,3 +196,5 @@ The pool is deep.
 The floor is always waiting.
 
 -> END
+
+`
