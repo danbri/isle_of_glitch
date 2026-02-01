@@ -2,9 +2,9 @@
 name: Deploy static content to Pages
 
 on:
-  # Runs on pushes targeting these branches
+  # Runs on pushes targeting this branch
   push:
-    branches: ["main", "claude/fink-authoring-guide-bDtaY"]
+    branches: ["claude/fink-authoring-guide-bDtaY"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -31,8 +31,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: claude/fink-authoring-guide-bDtaY
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
