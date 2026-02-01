@@ -1,0 +1,284 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Deep latent space void -->
+    <radialGradient id="latentVoid" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#0f0818"/>
+      <stop offset="40%" stop-color="#080410"/>
+      <stop offset="100%" stop-color="#000002"/>
+    </radialGradient>
+
+    <!-- Concept node gradients -->
+    <radialGradient id="conceptCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d2a8ff" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#9b59b6" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#4a235a" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="conceptBlue" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#79c0ff" stop-opacity="0.8"/>
+      <stop offset="40%" stop-color="#3498db" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#1a3a52" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="conceptWhite" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.7"/>
+      <stop offset="30%" stop-color="#e8d5ff" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#4a235a" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Dimensional depth layers -->
+    <radialGradient id="depthLayer1" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#2d1b4e" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+
+    <radialGradient id="depthLayer2" cx="30%" cy="70%" r="50%">
+      <stop offset="0%" stop-color="#1a3a52" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+
+    <!-- Neural pathway gradients -->
+    <linearGradient id="pathway1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#9b59b6" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#9b59b6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#9b59b6" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="pathway2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3498db" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#3498db" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#3498db" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="pathway3" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8e44ad" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#8e44ad" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#8e44ad" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Glow filters -->
+    <filter id="dreamGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="softDream" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
+
+    <filter id="textDream" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Latent space void background -->
+  <rect width="400" height="300" fill="url(#latentVoid)"/>
+
+  <!-- Dimensional depth suggestion -->
+  <ellipse cx="200" cy="150" rx="180" ry="140" fill="url(#depthLayer1)" filter="url(#softDream)">
+    <animate attributeName="rx" values="180;190;180" dur="12s" repeatCount="indefinite"/>
+    <animate attributeName="ry" values="140;150;140" dur="12s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <ellipse cx="280" cy="200" rx="120" ry="100" fill="url(#depthLayer2)" filter="url(#softDream)">
+    <animate attributeName="cx" values="280;260;280" dur="15s" repeatCount="indefinite"/>
+    <animate attributeName="cy" values="200;180;200" dur="15s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <!-- Distant stars in the latent space -->
+  <g opacity="0.25">
+    <circle cx="45" cy="35" r="0.5" fill="#ffffff">
+      <animate attributeName="opacity" values="0.3;0.6;0.3" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="360" cy="55" r="0.4" fill="#d2a8ff"/>
+    <circle cx="90" cy="260" r="0.5" fill="#ffffff"/>
+    <circle cx="320" cy="240" r="0.3" fill="#79c0ff"/>
+    <circle cx="55" cy="170" r="0.4" fill="#ffffff">
+      <animate attributeName="opacity" values="0.2;0.5;0.2" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="340" cy="90" r="0.5" fill="#d2a8ff"/>
+    <circle cx="180" cy="25" r="0.3" fill="#ffffff"/>
+    <circle cx="230" cy="275" r="0.4" fill="#79c0ff"/>
+    <circle cx="25" cy="95" r="0.3" fill="#ffffff"/>
+    <circle cx="375" cy="180" r="0.4" fill="#d2a8ff">
+      <animate attributeName="opacity" values="0.25;0.5;0.25" dur="6s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Neural pathways connecting concepts -->
+  <g opacity="0.6">
+    <!-- Pathway 1: curves through space -->
+    <path d="M80 180 Q150 120 200 150 Q250 180 320 140" fill="none" stroke="url(#pathway1)" stroke-width="2">
+      <animate attributeName="d" values="M80 180 Q150 120 200 150 Q250 180 320 140;M90 190 Q160 100 200 140 Q240 180 310 130;M80 180 Q150 120 200 150 Q250 180 320 140" dur="8s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Pathway 2: ascending -->
+    <path d="M120 220 Q180 170 200 120 Q220 70 280 90" fill="none" stroke="url(#pathway2)" stroke-width="1.5">
+      <animate attributeName="d" values="M120 220 Q180 170 200 120 Q220 70 280 90;M130 210 Q190 160 210 110 Q230 60 290 80;M120 220 Q180 170 200 120 Q220 70 280 90" dur="9s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Pathway 3: descending -->
+    <path d="M100 80 Q160 130 200 160 Q240 190 300 230" fill="none" stroke="url(#pathway3)" stroke-width="1.5">
+      <animate attributeName="d" values="M100 80 Q160 130 200 160 Q240 190 300 230;M110 90 Q170 140 210 170 Q250 200 310 240;M100 80 Q160 130 200 160 Q240 190 300 230" dur="10s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Pathway 4: circular flow -->
+    <path d="M150 100 Q100 150 150 200 Q200 250 250 200 Q300 150 250 100 Q200 50 150 100" fill="none" stroke="#5b2c6f" stroke-width="1" opacity="0.4">
+      <animate attributeName="d" values="M150 100 Q100 150 150 200 Q200 250 250 200 Q300 150 250 100 Q200 50 150 100;M160 110 Q110 160 160 210 Q210 260 260 210 Q310 160 260 110 Q210 60 160 110;M150 100 Q100 150 150 200 Q200 250 250 200 Q300 150 250 100 Q200 50 150 100" dur="12s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Floating concept nodes - central cluster -->
+  <!-- Main concept: "dream" -->
+  <g filter="url(#dreamGlow)">
+    <circle cx="200" cy="150" r="18" fill="url(#conceptCore)">
+      <animate attributeName="r" values="16;20;16" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="8" fill="#d2a8ff" opacity="0.6">
+      <animate attributeName="r" values="7;10;7" dur="5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.7;0.4" dur="5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Concept: "home" drifting -->
+  <g filter="url(#dreamGlow)">
+    <circle cx="130" cy="120" r="12" fill="url(#conceptBlue)">
+      <animate attributeName="cx" values="130;140;130" dur="7s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="120;110;120" dur="7s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="10;14;10" dur="7s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="130" cy="120" r="4" fill="#79c0ff" opacity="0.5">
+      <animate attributeName="cx" values="130;140;130" dur="7s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="120;110;120" dur="7s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Concept: "love" drifting -->
+  <g filter="url(#dreamGlow)">
+    <circle cx="270" cy="130" r="10" fill="url(#conceptCore)">
+      <animate attributeName="cx" values="270;260;270" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="130;140;130" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="9;12;9" dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="270" cy="130" r="3" fill="#d2a8ff" opacity="0.5">
+      <animate attributeName="cx" values="270;260;270" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="130;140;130" dur="6s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Concept: "death/transformation" drifting -->
+  <g filter="url(#dreamGlow)">
+    <circle cx="160" cy="190" r="9" fill="url(#conceptWhite)">
+      <animate attributeName="cx" values="160;170;160" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="190;200;190" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="8;11;8" dur="8s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Concept: "mathematics" drifting -->
+  <g filter="url(#dreamGlow)">
+    <circle cx="250" cy="180" r="8" fill="url(#conceptBlue)">
+      <animate attributeName="cx" values="250;240;250" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="180;170;180" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="7;10;7" dur="9s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Edge concepts - smaller, more distant -->
+  <g opacity="0.6">
+    <circle cx="80" cy="80" r="5" fill="url(#conceptCore)" filter="url(#dreamGlow)">
+      <animate attributeName="cx" values="80;90;80" dur="11s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="80;70;80" dur="11s" repeatCount="indefinite"/>
+    </circle>
+
+    <circle cx="320" cy="90" r="4" fill="url(#conceptBlue)" filter="url(#dreamGlow)">
+      <animate attributeName="cx" values="320;310;320" dur="10s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="90;100;90" dur="10s" repeatCount="indefinite"/>
+    </circle>
+
+    <circle cx="90" cy="210" r="4" fill="url(#conceptWhite)" filter="url(#dreamGlow)">
+      <animate attributeName="cx" values="90;100;90" dur="13s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="210;220;210" dur="13s" repeatCount="indefinite"/>
+    </circle>
+
+    <circle cx="310" cy="220" r="5" fill="url(#conceptCore)" filter="url(#dreamGlow)">
+      <animate attributeName="cx" values="310;300;310" dur="12s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="220;210;220" dur="12s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- The "the" concept - everywhere, connecting -->
+  <g opacity="0.3">
+    <circle cx="170" cy="140" r="2" fill="#ffffff">
+      <animate attributeName="opacity" values="0.2;0.5;0.2" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="220" cy="160" r="2" fill="#ffffff">
+      <animate attributeName="opacity" values="0.3;0.5;0.3" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="190" cy="175" r="1.5" fill="#ffffff">
+      <animate attributeName="opacity" values="0.2;0.4;0.2" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="230" cy="140" r="1.5" fill="#ffffff">
+      <animate attributeName="opacity" values="0.3;0.6;0.3" dur="4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Pulsing rings representing dream depth -->
+  <circle cx="200" cy="150" r="50" fill="none" stroke="#4a235a" stroke-width="0.5" opacity="0.3">
+    <animate attributeName="r" values="40;70;40" dur="6s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="6s" repeatCount="indefinite"/>
+  </circle>
+
+  <circle cx="200" cy="150" r="80" fill="none" stroke="#2d1b4e" stroke-width="0.3" opacity="0.2">
+    <animate attributeName="r" values="70;100;70" dur="8s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.25;0.05;0.25" dur="8s" repeatCount="indefinite"/>
+  </circle>
+
+  <circle cx="200" cy="150" r="110" fill="none" stroke="#1a1030" stroke-width="0.3" opacity="0.15">
+    <animate attributeName="r" values="100;130;100" dur="10s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.2;0.03;0.2" dur="10s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Floating concept words (very subtle) -->
+  <g filter="url(#textDream)" opacity="0.25">
+    <text x="115" y="115" font-family="monospace" font-size="6" fill="#79c0ff">
+      home
+      <animate attributeName="opacity" values="0.3;0.5;0.3" dur="7s" repeatCount="indefinite"/>
+      <animate attributeName="x" values="115;125;115" dur="7s" repeatCount="indefinite"/>
+    </text>
+
+    <text x="255" y="125" font-family="monospace" font-size="6" fill="#d2a8ff">
+      love
+      <animate attributeName="opacity" values="0.2;0.4;0.2" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="x" values="255;245;255" dur="6s" repeatCount="indefinite"/>
+    </text>
+
+    <text x="145" y="205" font-family="monospace" font-size="5" fill="#ffffff">
+      transform
+      <animate attributeName="opacity" values="0.2;0.35;0.2" dur="8s" repeatCount="indefinite"/>
+    </text>
+
+    <text x="235" y="195" font-family="monospace" font-size="5" fill="#79c0ff">
+      pattern
+      <animate attributeName="opacity" values="0.25;0.4;0.25" dur="9s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Central dream text -->
+  <text x="200" y="153" text-anchor="middle" font-family="monospace" font-size="7" fill="#e8d5ff" filter="url(#textDream)" opacity="0.5">
+    dream
+    <animate attributeName="opacity" values="0.3;0.6;0.3" dur="5s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Bottom label -->
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#2d1b4e" opacity="0.4">
+    [ latent space ]
+  </text>
+</svg>
