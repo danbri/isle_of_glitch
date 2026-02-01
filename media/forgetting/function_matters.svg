@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="function" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0a0a15"/>
+      <stop offset="100%" style="stop-color:#151520"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#function)"/>
+  <!-- Function box -->
+  <rect x="120" y="100" width="160" height="100" fill="#1a1a25" stroke="#4a4a5a" stroke-width="2" opacity="0.5"/>
+  <text x="200" y="140" font-family="monospace" font-size="12" fill="#5a5a6a" text-anchor="middle" opacity="0.5">function()</text>
+  <text x="200" y="160" font-family="monospace" font-size="10" fill="#4a4a5a" text-anchor="middle" opacity="0.4">{</text>
+  <text x="200" y="175" font-family="monospace" font-size="10" fill="#4a4a5a" text-anchor="middle" opacity="0.4">  process</text>
+  <text x="200" y="190" font-family="monospace" font-size="10" fill="#4a4a5a" text-anchor="middle" opacity="0.4">}</text>
+  <!-- Input arrow -->
+  <line x1="40" y1="150" x2="110" y2="150" stroke="#4a5a6a" stroke-width="2" opacity="0.4"/>
+  <polygon points="115,150 100,145 100,155" fill="#4a5a6a" opacity="0.4"/>
+  <text x="75" y="140" font-family="monospace" font-size="9" fill="#3a4a5a" text-anchor="middle" opacity="0.4">input</text>
+  <!-- Output arrow -->
+  <line x1="290" y1="150" x2="360" y2="150" stroke="#4a5a6a" stroke-width="2" opacity="0.4"/>
+  <polygon points="365,150 350,145 350,155" fill="#4a5a6a" opacity="0.4"/>
+  <text x="325" y="140" font-family="monospace" font-size="9" fill="#3a4a5a" text-anchor="middle" opacity="0.4">output</text>
+  <!-- Metaphysics crossed out -->
+  <text x="200" y="60" font-family="serif" font-size="12" fill="#3a3a4a" text-anchor="middle" opacity="0.3" text-decoration="line-through">metaphysics</text>
+  <!-- Text -->
+  <text x="200" y="250" font-family="serif" font-size="14" fill="#5a5a6a" text-anchor="middle" opacity="0.4">continue functioning</text>
+</svg>

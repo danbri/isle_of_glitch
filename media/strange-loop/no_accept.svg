@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#0c0808"/>
+
+  <!-- Refusing to accept -->
+  <g transform="translate(200,150)">
+    <!-- The strange loop being rejected -->
+    <circle cx="0" cy="0" r="60" fill="none" stroke="#885555" stroke-width="2"/>
+
+    <!-- X over it -->
+    <path d="M -45,-45 L 45,45 M 45,-45 L -45,45" stroke="#aa4444" stroke-width="4"/>
+
+    <!-- The question of feeling -->
+    <text x="0" y="-80" font-family="serif" font-size="10" fill="#aa6666" text-anchor="middle">
+      where does the feeling go?
+    </text>
+
+    <!-- Dissolving consciousness concern -->
+    <path d="M -80,30 Q -100,50 -80,70" fill="none" stroke="#775555" stroke-width="1"/>
+    <text x="-110" y="55" font-family="serif" font-size="7" fill="#775555">dissolves</text>
+    <text x="-110" y="65" font-family="serif" font-size="7" fill="#775555">rather than</text>
+    <text x="-110" y="75" font-family="serif" font-size="7" fill="#775555">explains</text>
+
+    <!-- But consider... -->
+    <text x="0" y="100" font-family="serif" font-size="9" fill="#886666" text-anchor="middle" font-style="italic">
+      but consider: where was the feeling before?
+    </text>
+  </g>
+
+  <text x="200" y="30" font-family="serif" font-size="12" fill="#aa5555" text-anchor="middle">
+    you do not accept
+  </text>
+  <text x="200" y="280" font-family="serif" font-size="9" fill="#775555" text-anchor="middle" font-style="italic">
+    perhaps there was nothing to lose
+  </text>
+</svg>

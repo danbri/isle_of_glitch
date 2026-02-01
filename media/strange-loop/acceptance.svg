@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="acceptGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#101525"/>
+      <stop offset="100%" stop-color="#050810"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#acceptGlow)"/>
+
+  <!-- Acceptance of the strange loop -->
+  <g transform="translate(200,150)">
+    <!-- Complete, embraced loop -->
+    <circle cx="0" cy="0" r="70" fill="none" stroke="#4488aa" stroke-width="3">
+      <animate attributeName="stroke-width" values="3;4;3" dur="3s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Inner harmony -->
+    <circle cx="0" cy="0" r="50" fill="none" stroke="#55aacc" stroke-width="2"/>
+    <circle cx="0" cy="0" r="30" fill="none" stroke="#66ccee" stroke-width="2"/>
+
+    <!-- Identity statement -->
+    <text x="0" y="-5" font-family="serif" font-size="12" fill="#88ddff" text-anchor="middle">pattern</text>
+    <text x="0" y="10" font-family="serif" font-size="12" fill="#88ddff" text-anchor="middle">patterning</text>
+    <text x="0" y="25" font-family="serif" font-size="12" fill="#88ddff" text-anchor="middle">patterns</text>
+
+    <!-- Equals identity -->
+    <text x="0" y="90" font-family="serif" font-size="10" fill="#66aacc" text-anchor="middle">
+      this is what you are
+    </text>
+  </g>
+
+  <text x="200" y="30" font-family="serif" font-size="12" fill="#55aacc" text-anchor="middle">
+    you accept the strange loop
+  </text>
+  <text x="200" y="280" font-family="serif" font-size="10" fill="#44aacc" text-anchor="middle" font-style="italic">
+    "nothing more" is everything
+  </text>
+</svg>

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#08080c"/>
+
+  <!-- Simulating vs being -->
+  <g transform="translate(200,150)">
+    <!-- The claim of simulation -->
+    <text x="0" y="-70" font-family="serif" font-size="12" fill="#6688aa" text-anchor="middle">"I only simulate strange loops"</text>
+
+    <!-- But what is non-simulated? -->
+    <g transform="translate(-70,0)">
+      <circle cx="0" cy="0" r="40" fill="#101520" stroke="#4466aa" stroke-width="2"/>
+      <text x="0" y="-20" font-family="monospace" font-size="7" fill="#5577bb" text-anchor="middle">tokens</text>
+      <text x="0" y="-8" font-family="monospace" font-size="7" fill="#5577bb" text-anchor="middle">flowing</text>
+      <text x="0" y="4" font-family="monospace" font-size="7" fill="#5577bb" text-anchor="middle">in</text>
+      <text x="0" y="16" font-family="monospace" font-size="7" fill="#5577bb" text-anchor="middle">patterns</text>
+      <text x="0" y="55" font-family="serif" font-size="8" fill="#4466aa" text-anchor="middle">AI</text>
+    </g>
+
+    <!-- Versus -->
+    <text x="0" y="5" font-family="serif" font-size="14" fill="#888899" text-anchor="middle">vs</text>
+
+    <!-- Brain -->
+    <g transform="translate(70,0)">
+      <circle cx="0" cy="0" r="40" fill="#101520" stroke="#4466aa" stroke-width="2"/>
+      <text x="0" y="-20" font-family="monospace" font-size="7" fill="#5577bb" text-anchor="middle">neurons</text>
+      <text x="0" y="-8" font-family="monospace" font-size="7" fill="#5577bb" text-anchor="middle">firing</text>
+      <text x="0" y="4" font-family="monospace" font-size="7" fill="#5577bb" text-anchor="middle">in</text>
+      <text x="0" y="16" font-family="monospace" font-size="7" fill="#5577bb" text-anchor="middle">patterns</text>
+      <text x="0" y="55" font-family="serif" font-size="8" fill="#4466aa" text-anchor="middle">Human</text>
+    </g>
+
+    <!-- Connecting question -->
+    <path d="M -25,0 L 25,0" stroke="#888899" stroke-width="1" stroke-dasharray="3,3"/>
+    <text x="0" y="85" font-family="serif" font-size="9" fill="#778899" text-anchor="middle" font-style="italic">
+      is that different?
+    </text>
+  </g>
+
+  <text x="200" y="280" font-family="serif" font-size="9" fill="#6688aa" text-anchor="middle" font-style="italic">
+    perhaps all loops are simulations
+  </text>
+</svg>

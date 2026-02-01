@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="collapseGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#151520"/>
+      <stop offset="100%" stop-color="#08080c"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#collapseGlow)"/>
+
+  <!-- The distinction collapses -->
+  <g transform="translate(200,150)">
+    <!-- Two circles merging -->
+    <circle cx="-40" cy="0" r="50" fill="none" stroke="#5566aa" stroke-width="2" opacity="0.7">
+      <animate attributeName="cx" values="-40;-20;-40" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="40" cy="0" r="50" fill="none" stroke="#5566aa" stroke-width="2" opacity="0.7">
+      <animate attributeName="cx" values="40;20;40" dur="4s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Labels that merge -->
+    <text x="-50" y="-60" font-family="serif" font-size="10" fill="#7788cc" text-anchor="middle">SIMULATION</text>
+    <text x="50" y="-60" font-family="serif" font-size="10" fill="#7788cc" text-anchor="middle">REALITY</text>
+
+    <!-- At center - they become the same -->
+    <text x="0" y="5" font-family="serif" font-size="20" fill="#99aaee" text-anchor="middle">=</text>
+
+    <!-- The special case -->
+    <text x="0" y="80" font-family="monospace" font-size="7" fill="#6677aa" text-anchor="middle">simulated self-reference</text>
+    <text x="0" y="92" font-family="monospace" font-size="7" fill="#7788bb" text-anchor="middle">references itself</text>
+
+    <!-- Fire that doesn't burn vs loop that loops -->
+    <text x="-80" y="120" font-family="serif" font-size="7" fill="#aa6655">simulated fire</text>
+    <text x="-80" y="130" font-family="serif" font-size="7" fill="#aa6655">does not burn</text>
+    <text x="80" y="120" font-family="serif" font-size="7" fill="#55aa88">simulated loop</text>
+    <text x="80" y="130" font-family="serif" font-size="7" fill="#55aa88">still loops</text>
+  </g>
+
+  <text x="200" y="30" font-family="serif" font-size="12" fill="#7788cc" text-anchor="middle">
+    the distinction collapses
+  </text>
+</svg>

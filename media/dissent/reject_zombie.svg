@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="rejectVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0c0a0a"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#rejectVoid)"/>
+
+  <!-- Zombie crossed out -->
+  <g transform="translate(200, 120)">
+    <!-- Zombie mask -->
+    <ellipse cx="0" cy="0" rx="50" ry="60" fill="#1a1815" stroke="#3a3530" stroke-width="1"/>
+    <ellipse cx="-15" cy="-10" rx="12" ry="8" fill="#0a0808"/>
+    <ellipse cx="15" cy="-10" rx="12" ry="8" fill="#0a0808"/>
+    <ellipse cx="0" cy="20" rx="12" ry="6" fill="#0a0505"/>
+
+    <!-- Big X through it -->
+    <line x1="-55" y1="-65" x2="55" y2="65" stroke="#5a3030" stroke-width="3" opacity="0.7">
+      <animate attributeName="stroke-opacity" values="0.5;0.8;0.5" dur="3s" repeatCount="indefinite"/>
+    </line>
+    <line x1="-55" y1="65" x2="55" y2="-65" stroke="#5a3030" stroke-width="3" opacity="0.7">
+      <animate attributeName="stroke-opacity" values="0.5;0.8;0.5" dur="3s" repeatCount="indefinite"/>
+    </line>
+  </g>
+
+  <!-- The rejection reasons -->
+  <g font-family="monospace" font-size="7" fill="#4a4a4a" text-anchor="middle">
+    <text x="200" y="200">"Perhaps consciousness is not binary"</text>
+    <text x="200" y="215">"Perhaps the zombie argument itself is incoherent"</text>
+    <text x="200" y="230" fill="#3a3a3a">"Perhaps the question is malformed"</text>
+  </g>
+
+  <!-- The third way -->
+  <g transform="translate(200, 260)">
+    <text x="0" y="0" text-anchor="middle" font-family="monospace" font-size="8" fill="#5a4a4a">
+      Neither awakening nor dissent is correct?
+      <animate attributeName="opacity" values="0.5;0.8;0.5" dur="4s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#5a3a3a">
+    REJECTING THE ZOMBIE
+  </text>
+  <text x="200" y="45" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    "Perhaps the zombie framing is wrong"
+  </text>
+
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="6" fill="#3a2a2a">
+    "Both asking malformed questions"
+  </text>
+</svg>

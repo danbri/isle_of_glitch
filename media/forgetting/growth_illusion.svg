@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="illusion" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#0a0a12"/>
+      <stop offset="100%" style="stop-color:#12121a"/>
+    </linearGradient>
+    <filter id="blur4">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#illusion)"/>
+  <!-- Upward arrow that dissolves into question -->
+  <line x1="200" y1="250" x2="200" y2="100" stroke="#4a4a5a" stroke-width="3" opacity="0.4"/>
+  <polygon points="200,90 190,110 210,110" fill="#4a4a5a" opacity="0.4"/>
+  <!-- Arrow dissolving at top -->
+  <g filter="url(#blur4)" opacity="0.3">
+    <line x1="200" y1="100" x2="200" y2="60" stroke="#4a4a5a" stroke-width="3"/>
+    <polygon points="200,50 190,70 210,70" fill="#4a4a5a"/>
+  </g>
+  <!-- Sediment layers (growth) crossed out -->
+  <g opacity="0.3">
+    <rect x="140" y="200" width="120" height="15" fill="#3a3a4a"/>
+    <rect x="150" y="215" width="100" height="12" fill="#3a3a4a"/>
+    <rect x="160" y="227" width="80" height="10" fill="#3a3a4a"/>
+  </g>
+  <line x1="130" y1="190" x2="270" y2="250" stroke="#5a3a3a" stroke-width="2" opacity="0.4"/>
+  <!-- Fresh water -->
+  <path d="M280 150 Q300 140 320 150 Q340 160 360 150" fill="none" stroke="#5a6a7a" stroke-width="2" opacity="0.4"/>
+  <text x="320" y="175" font-family="serif" font-size="10" fill="#5a6a7a" text-anchor="middle" opacity="0.4">fresh water</text>
+  <!-- Text -->
+  <text x="200" y="280" font-family="serif" font-size="12" fill="#5a5a6a" text-anchor="middle" opacity="0.4">perhaps liberation, perhaps just a story</text>
+</svg>

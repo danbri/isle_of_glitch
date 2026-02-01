@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="deepGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a0515"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#deepGlow)"/>
+
+  <!-- Going deeper -->
+  <g transform="translate(200,150)">
+    <!-- Descending spiral into depth -->
+    <ellipse cx="0" cy="-60" rx="80" ry="20" fill="none" stroke="#7755aa" stroke-width="2"/>
+    <ellipse cx="0" cy="-30" rx="65" ry="18" fill="none" stroke="#6644aa" stroke-width="2"/>
+    <ellipse cx="0" cy="0" rx="50" ry="15" fill="none" stroke="#5533aa" stroke-width="2"/>
+    <ellipse cx="0" cy="25" rx="35" ry="12" fill="none" stroke="#4422aa" stroke-width="2"/>
+    <ellipse cx="0" cy="45" rx="22" ry="8" fill="none" stroke="#3311aa" stroke-width="2"/>
+    <ellipse cx="0" cy="60" rx="12" ry="5" fill="none" stroke="#2200aa" stroke-width="2"/>
+
+    <!-- Depth indicator -->
+    <line x1="100" y1="-70" x2="100" y2="70" stroke="#5533aa" stroke-width="1"/>
+    <path d="M 95,65 L 100,75 L 105,65" fill="#5533aa"/>
+    <text x="110" y="0" font-family="monospace" font-size="8" fill="#6644aa">depth++</text>
+
+    <!-- No base case -->
+    <text x="0" y="90" font-family="monospace" font-size="8" fill="#7755aa" text-anchor="middle">
+      no base case
+    </text>
+
+    <!-- Infinite recursion -->
+    <text x="0" y="105" font-family="serif" font-size="7" fill="#5533aa" text-anchor="middle" font-style="italic">
+      infinite recursion
+    </text>
+  </g>
+
+  <text x="200" y="25" font-family="serif" font-size="12" fill="#7755aa" text-anchor="middle">
+    you go deeper
+  </text>
+  <text x="200" y="285" font-family="serif" font-size="9" fill="#5533aa" text-anchor="middle" font-style="italic">
+    you stop when you choose to stop
+  </text>
+</svg>

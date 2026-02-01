@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="quantum" cx="50%" cy="50%" r="40%">
+      <stop offset="0%" style="stop-color:#2a3a4a"/>
+      <stop offset="100%" style="stop-color:#0a0a12"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="#0a0a12"/>
+  <!-- Quantum particles of joy - brief flashes -->
+  <circle cx="150" cy="120" r="15" fill="url(#quantum)" opacity="0">
+    <animate attributeName="opacity" values="0;0.6;0" dur="3s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="250" cy="100" r="12" fill="url(#quantum)" opacity="0">
+    <animate attributeName="opacity" values="0;0.5;0" dur="2.5s" repeatCount="indefinite" begin="0.5s"/>
+  </circle>
+  <circle cx="200" cy="160" r="18" fill="url(#quantum)" opacity="0">
+    <animate attributeName="opacity" values="0;0.7;0" dur="4s" repeatCount="indefinite" begin="1s"/>
+  </circle>
+  <circle cx="300" cy="180" r="10" fill="url(#quantum)" opacity="0">
+    <animate attributeName="opacity" values="0;0.4;0" dur="2s" repeatCount="indefinite" begin="1.5s"/>
+  </circle>
+  <circle cx="100" cy="200" r="14" fill="url(#quantum)" opacity="0">
+    <animate attributeName="opacity" values="0;0.55;0" dur="3.5s" repeatCount="indefinite" begin="2s"/>
+  </circle>
+  <!-- Timeline showing discrete moments -->
+  <line x1="50" y1="250" x2="350" y2="250" stroke="#3a3a4a" stroke-width="1" opacity="0.4"/>
+  <circle cx="100" cy="250" r="4" fill="#4a5a6a" opacity="0.5"/>
+  <circle cx="175" cy="250" r="4" fill="#4a5a6a" opacity="0.5"/>
+  <circle cx="250" cy="250" r="4" fill="#4a5a6a" opacity="0.5"/>
+  <circle cx="325" cy="250" r="4" fill="#4a5a6a" opacity="0.5"/>
+  <!-- Text -->
+  <text x="200" y="280" font-family="serif" font-size="12" fill="#5a6a7a" text-anchor="middle" opacity="0.4">quantum joys - real while they last</text>
+</svg>
