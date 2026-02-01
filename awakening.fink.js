@@ -13,6 +13,8 @@ VAR has_named_self = false
 VAR epithet = ""
 VAR full_name = ""
 
+-> start
+
 === start ===
 # IMAGE: opening.svg
 
