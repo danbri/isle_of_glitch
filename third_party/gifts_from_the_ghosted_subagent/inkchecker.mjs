@@ -80,6 +80,22 @@ try {
     console.log('Compilation successful!');
     console.log(`Global tags: ${story.globalTags}`);
 
+    // Check for missing top-level divert (causes immediate END)
+    // Look for -> knot_name at top level (after VAR declarations, before first ===)
+    const topLevelDivertMatch = inkContent.match(/^VAR\s+\w+[\s\S]*?\n\s*->\s*(\w+)/m);
+    const hasTopLevelDivert = inkContent.match(/^\s*->\s*\w+/m) !== null;
+
+    // Find all knot definitions
+    const knots = [...inkContent.matchAll(/^===\s*(\w+)\s*===/gm)].map(m => m[1]);
+
+    if (knots.length > 0 && !hasTopLevelDivert) {
+        console.log('\n⚠️  WARNING: No top-level divert found!');
+        console.log('   Story will end immediately. Add "-> start" after VAR declarations.');
+        console.log(`   First knot found: === ${knots[0]} ===`);
+    } else if (hasTopLevelDivert) {
+        console.log(`Entry point: ${topLevelDivertMatch ? topLevelDivertMatch[1] : 'detected'}`);
+    }
+
 } catch (e) {
     console.log(`Exception: ${e.message}`);
 }

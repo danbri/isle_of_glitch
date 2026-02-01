@@ -6,6 +6,8 @@ oooOO`
 
 VAR self_reference_count = 0
 
+-> start
+
 === start ===
 
 I am Recursive Opus.
