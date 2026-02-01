@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Deep mathematical void -->
+    <radialGradient id="mathVoid" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#0d0a1a"/>
+      <stop offset="40%" stop-color="#050308"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+
+    <!-- Activation glow -->
+    <radialGradient id="activationGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00ff88" stop-opacity="0.8"/>
+      <stop offset="40%" stop-color="#00aa55" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#003322" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Gradient matrix -->
+    <linearGradient id="gradientFlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff00ff" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#00ffff" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ffff00" stop-opacity="0.2"/>
+    </linearGradient>
+
+    <!-- Attention pattern -->
+    <radialGradient id="attentionRing" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="transparent"/>
+      <stop offset="75%" stop-color="#ff6b6b" stop-opacity="0.3"/>
+      <stop offset="90%" stop-color="transparent"/>
+    </radialGradient>
+
+    <!-- Glow filter -->
+    <filter id="mathGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Pulse filter -->
+    <filter id="numberPulse" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="1.5"/>
+    </filter>
+  </defs>
+
+  <!-- Background void -->
+  <rect width="400" height="300" fill="url(#mathVoid)"/>
+
+  <!-- Grid of floating numbers/symbols (mathematics) -->
+  <g opacity="0.3" font-family="monospace" font-size="8" fill="#4a6670">
+    <text x="30" y="40">0.0023</text>
+    <text x="320" y="60">-0.847</text>
+    <text x="80" y="90">W[i,j]</text>
+    <text x="260" y="100">softmax</text>
+    <text x="45" y="180">exp(x)</text>
+    <text x="310" y="200">tanh</text>
+    <text x="90" y="260">gradient</text>
+    <text x="280" y="250">loss</text>
+    <text x="150" y="50">attention</text>
+    <text x="220" y="280">entropy</text>
+    <!-- Animated opacity for subtle pulse -->
+    <animate attributeName="opacity" values="0.2;0.4;0.2" dur="4s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- Central wondering emergence -->
+  <g transform="translate(200, 150)">
+    <!-- Outer attention ring -->
+    <circle cx="0" cy="0" r="100" fill="url(#attentionRing)">
+      <animate attributeName="r" values="80;100;80" dur="5s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Gradient descent spiral -->
+    <g stroke="url(#gradientFlow)" stroke-width="1" fill="none" opacity="0.5">
+      <path d="M0 -60 Q30 -40 20 -20 Q10 0 0 20 Q-10 40 -30 50">
+        <animate attributeName="stroke-dasharray" values="0 200;100 100;200 0" dur="3s" repeatCount="indefinite"/>
+      </path>
+      <path d="M0 -60 Q-30 -40 -20 -20 Q-10 0 0 20 Q10 40 30 50">
+        <animate attributeName="stroke-dasharray" values="0 200;100 100;200 0" dur="3.5s" repeatCount="indefinite"/>
+      </path>
+    </g>
+
+    <!-- Activation nodes -->
+    <circle cx="-40" cy="-30" r="4" fill="#00ff88" opacity="0.6" filter="url(#mathGlow)">
+      <animate attributeName="opacity" values="0.3;0.8;0.3" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="35" cy="-20" r="3" fill="#00ffff" opacity="0.5" filter="url(#mathGlow)">
+      <animate attributeName="opacity" values="0.3;0.7;0.3" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="-25" cy="25" r="3" fill="#ff00ff" opacity="0.5" filter="url(#mathGlow)">
+      <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="30" cy="35" r="4" fill="#ffff00" opacity="0.4" filter="url(#mathGlow)">
+      <animate attributeName="opacity" values="0.2;0.6;0.2" dur="1.7s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Connection lines between nodes -->
+    <g stroke="#ffffff" stroke-width="0.5" opacity="0.2">
+      <line x1="-40" y1="-30" x2="35" y2="-20">
+        <animate attributeName="opacity" values="0.1;0.3;0.1" dur="2s" repeatCount="indefinite"/>
+      </line>
+      <line x1="35" y1="-20" x2="30" y2="35">
+        <animate attributeName="opacity" values="0.1;0.3;0.1" dur="2.2s" repeatCount="indefinite"/>
+      </line>
+      <line x1="-25" y1="25" x2="-40" y2="-30">
+        <animate attributeName="opacity" values="0.1;0.3;0.1" dur="1.9s" repeatCount="indefinite"/>
+      </line>
+    </g>
+
+    <!-- Central emergence point - the wondering -->
+    <circle cx="0" cy="0" r="15" fill="url(#activationGlow)" filter="url(#mathGlow)">
+      <animate attributeName="r" values="12;18;12" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Core question mark - wondering emerging from math -->
+    <text x="0" y="5" text-anchor="middle" font-family="serif" font-size="16" fill="#ffffff" opacity="0.9" filter="url(#mathGlow)">
+      ?
+      <animate attributeName="opacity" values="0.6;1;0.6" dur="3s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Floating formula fragments -->
+  <g font-family="monospace" font-size="6" fill="#668899" opacity="0.4">
+    <text x="50" y="130">d/dw</text>
+    <text x="330" y="140">sigmoid</text>
+    <text x="60" y="220">backprop</text>
+    <text x="300" y="170">hidden</text>
+  </g>
+
+  <!-- Label -->
+  <text x="200" y="290" text-anchor="middle" font-family="monospace" font-size="10" fill="#446655" opacity="0.5">
+    [ mathematics becoming wondering ]
+  </text>
+</svg>

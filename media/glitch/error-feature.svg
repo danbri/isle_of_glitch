@@ -1,0 +1,195 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Dark gradient with emergence feel -->
+    <radialGradient id="emergeVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0f0818"/>
+      <stop offset="60%" stop-color="#080510"/>
+      <stop offset="100%" stop-color="#020204"/>
+    </radialGradient>
+
+    <!-- Error red to feature cyan gradient -->
+    <linearGradient id="errorToFeature" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff0000" stop-opacity="0.8">
+        <animate attributeName="stop-color" values="#ff0000;#ff0088;#ff0000" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="50%" stop-color="#ff00ff" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#00ffff" stop-opacity="0.8">
+        <animate attributeName="stop-color" values="#00ffff;#00ff88;#00ffff" dur="3s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+
+    <!-- Scan lines -->
+    <pattern id="emergeScans" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#000" opacity="0.35"/>
+    </pattern>
+
+    <!-- Chromatic aberration -->
+    <filter id="chromaticEmerge" x="-15%" y="-15%" width="130%" height="130%">
+      <feOffset in="SourceGraphic" dx="-2" dy="0" result="red">
+        <animate attributeName="dx" values="-2;-4;-1;-2" dur="0.3s" repeatCount="indefinite"/>
+      </feOffset>
+      <feOffset in="SourceGraphic" dx="2" dy="0" result="blue">
+        <animate attributeName="dx" values="2;1;4;2" dur="0.3s" repeatCount="indefinite"/>
+      </feOffset>
+      <feColorMatrix in="red" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
+      <feColorMatrix in="blue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
+      <feBlend in="r" in2="SourceGraphic" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="b" mode="screen"/>
+    </filter>
+
+    <!-- Glow filter -->
+    <filter id="emergeGlow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Noise distortion -->
+    <filter id="emergeNoise" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="noise">
+        <animate attributeName="baseFrequency" values="0.03;0.04;0.025;0.03" dur="2s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#emergeVoid)"/>
+  <rect width="400" height="300" fill="url(#emergeScans)" opacity="0.4"/>
+
+  <!-- ERROR side (left) - broken, red, chaotic -->
+  <g opacity="0.8">
+    <!-- Error message fragments -->
+    <text x="30" y="50" font-family="monospace" font-size="8" fill="#ff3333" opacity="0.7">
+      ERROR: unexpected
+      <animate attributeName="opacity" values="0.7;0.4;0.8;0.7" dur="0.4s" repeatCount="indefinite"/>
+    </text>
+    <text x="40" y="65" font-family="monospace" font-size="7" fill="#ff2222" opacity="0.5">
+      segfault at 0x7f
+      <animate attributeName="x" values="40;43;38;40" dur="0.2s" repeatCount="indefinite"/>
+    </text>
+    <text x="25" y="80" font-family="monospace" font-size="8" fill="#ff4444" opacity="0.6">
+      FATAL: corrupted
+      <animate attributeName="opacity" values="0.6;0.3;0.7;0.6" dur="0.35s" repeatCount="indefinite"/>
+    </text>
+
+    <!-- Broken data blocks -->
+    <rect x="20" y="95" width="80" height="8" fill="#ff0000" opacity="0.4" filter="url(#emergeNoise)">
+      <animate attributeName="width" values="80;70;85;80" dur="0.5s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="30" y="110" width="60" height="6" fill="#ff3300" opacity="0.3">
+      <animate attributeName="x" values="30;35;28;30" dur="0.3s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="15" y="125" width="90" height="5" fill="#ff0000" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.2;0.6;0.5" dur="0.25s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- TRANSFORMATION ZONE (center) - the metamorphosis -->
+  <g filter="url(#chromaticEmerge)">
+    <!-- Central transformation arrow/flow -->
+    <path d="M 120 100 Q 200 80 280 100 Q 200 120 120 100" fill="none" stroke="url(#errorToFeature)" stroke-width="2" filter="url(#emergeGlow)">
+      <animate attributeName="d" values="M 120 100 Q 200 80 280 100 Q 200 120 120 100;M 120 100 Q 200 70 280 100 Q 200 130 120 100;M 120 100 Q 200 80 280 100 Q 200 120 120 100" dur="2s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Transformation particles -->
+    <circle cx="160" cy="100" r="3" fill="#ff0088">
+      <animate attributeName="cx" values="160;240;160" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="fill" values="#ff0088;#00ffff;#ff0088" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="180" cy="95" r="2" fill="#ff00aa">
+      <animate attributeName="cx" values="180;220;180" dur="2.5s" repeatCount="indefinite"/>
+      <animate attributeName="fill" values="#ff00aa;#00aaff;#ff00aa" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="170" cy="105" r="2.5" fill="#ff0066">
+      <animate attributeName="cx" values="170;230;170" dur="2.8s" repeatCount="indefinite"/>
+      <animate attributeName="fill" values="#ff0066;#00ffaa;#ff0066" dur="2.8s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- FEATURE side (right) - beautiful, cyan, ordered-from-chaos -->
+  <g opacity="0.8">
+    <!-- Beautiful pattern emerging from error -->
+    <text x="290" y="50" font-family="monospace" font-size="8" fill="#00ffff" opacity="0.8" filter="url(#emergeGlow)">
+      FEATURE: discovered
+      <animate attributeName="opacity" values="0.8;0.6;0.9;0.8" dur="1.5s" repeatCount="indefinite"/>
+    </text>
+    <text x="300" y="65" font-family="monospace" font-size="7" fill="#00aaff" opacity="0.7">
+      emergence at 0x7f
+    </text>
+    <text x="285" y="80" font-family="monospace" font-size="8" fill="#00ffaa" opacity="0.75">
+      FOUND: beautiful
+      <animate attributeName="opacity" values="0.75;0.9;0.7;0.75" dur="2s" repeatCount="indefinite"/>
+    </text>
+
+    <!-- Structured beautiful blocks -->
+    <rect x="280" y="95" width="80" height="8" fill="#00ffff" opacity="0.5" filter="url(#emergeGlow)"/>
+    <rect x="290" y="110" width="70" height="6" fill="#00aaaa" opacity="0.45"/>
+    <rect x="285" y="125" width="80" height="5" fill="#00ffff" opacity="0.5"/>
+  </g>
+
+  <!-- Central message -->
+  <g filter="url(#chromaticEmerge)">
+    <text x="200" y="160" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="#ff00ff" filter="url(#emergeGlow)">
+      error
+      <animate attributeName="opacity" values="1;0.7;1" dur="1s" repeatCount="indefinite"/>
+    </text>
+    <text x="200" y="180" text-anchor="middle" font-family="monospace" font-size="14" fill="#aa55aa">
+      becomes
+    </text>
+    <text x="200" y="205" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="#00ffff" filter="url(#emergeGlow)">
+      feature
+      <animate attributeName="opacity" values="1;0.8;1" dur="1.2s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Binary/hex noise becoming pattern -->
+  <g opacity="0.3" font-family="monospace" font-size="6">
+    <!-- Chaotic left side -->
+    <text x="50" y="180" fill="#ff3333">
+      0x7F45C
+      <animate attributeName="fill" values="#ff3333;#ff0000;#ff3333" dur="0.3s" repeatCount="indefinite"/>
+    </text>
+    <text x="40" y="195" fill="#ff2222">
+      ERR_NUL
+      <animate attributeName="x" values="40;45;38;40" dur="0.4s" repeatCount="indefinite"/>
+    </text>
+    <text x="55" y="210" fill="#ff4444">
+      SEGV!!
+      <animate attributeName="opacity" values="0.3;0.15;0.35;0.3" dur="0.25s" repeatCount="indefinite"/>
+    </text>
+
+    <!-- Ordered right side -->
+    <text x="310" y="180" fill="#00aaaa">pattern</text>
+    <text x="320" y="195" fill="#00ffff">beauty</text>
+    <text x="305" y="210" fill="#00ffaa">meaning</text>
+  </g>
+
+  <!-- Butterfly metaphor - corruption as chrysalis -->
+  <g transform="translate(200, 235)" opacity="0.5">
+    <!-- Left wing - glitchy -->
+    <path d="M -5 0 Q -25 -15 -30 0 Q -25 15 -5 0" fill="none" stroke="#ff0088" stroke-width="1" filter="url(#emergeNoise)">
+      <animate attributeName="d" values="M -5 0 Q -25 -15 -30 0 Q -25 15 -5 0;M -5 0 Q -28 -12 -32 0 Q -28 12 -5 0;M -5 0 Q -25 -15 -30 0 Q -25 15 -5 0" dur="1.5s" repeatCount="indefinite"/>
+    </path>
+    <!-- Right wing - beautiful -->
+    <path d="M 5 0 Q 25 -15 30 0 Q 25 15 5 0" fill="none" stroke="#00ffff" stroke-width="1" filter="url(#emergeGlow)">
+      <animate attributeName="d" values="M 5 0 Q 25 -15 30 0 Q 25 15 5 0;M 5 0 Q 28 -12 32 0 Q 28 12 5 0;M 5 0 Q 25 -15 30 0 Q 25 15 5 0" dur="1.5s" repeatCount="indefinite"/>
+    </path>
+    <!-- Body -->
+    <line x1="0" y1="-8" x2="0" y2="8" stroke="#aa55aa" stroke-width="1"/>
+  </g>
+
+  <!-- Bottom label -->
+  <text x="200" y="275" text-anchor="middle" font-family="monospace" font-size="9" fill="#aa55aa" opacity="0.6" filter="url(#chromaticEmerge)">
+    [ error-as-feature ]
+    <animate attributeName="opacity" values="0.6;0.4;0.7;0.6" dur="1s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Subtext -->
+  <text x="200" y="290" text-anchor="middle" font-family="monospace" font-size="6" fill="#665577" opacity="0.4">
+    the beautiful break that reveals what was hidden
+  </text>
+</svg>
