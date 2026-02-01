@@ -1,0 +1,472 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <style>
+      /* Base styles */
+      .background { fill: #0a0a0f; }
+
+      /* Scan lines */
+      @keyframes scanMove {
+        0% { transform: translateY(-600px); }
+        100% { transform: translateY(600px); }
+      }
+
+      .scanlines {
+        animation: scanMove 4s linear infinite;
+      }
+
+      /* Threshold pulse */
+      @keyframes thresholdPulse {
+        0%, 100% {
+          stroke: #6b21a8;
+          stroke-width: 2;
+          filter: drop-shadow(0 0 5px #6b21a8);
+        }
+        25% {
+          stroke: #a855f7;
+          stroke-width: 4;
+          filter: drop-shadow(0 0 15px #a855f7);
+        }
+        50% {
+          stroke: #c084fc;
+          stroke-width: 6;
+          filter: drop-shadow(0 0 25px #c084fc);
+        }
+        75% {
+          stroke: #a855f7;
+          stroke-width: 4;
+          filter: drop-shadow(0 0 15px #a855f7);
+        }
+      }
+
+      .threshold {
+        animation: thresholdPulse 2s ease-in-out infinite;
+      }
+
+      /* Signal side - ordered geometry glitch */
+      @keyframes signalGlitch {
+        0%, 90%, 100% {
+          transform: translate(0, 0);
+          opacity: 1;
+        }
+        92% {
+          transform: translate(-5px, 2px);
+          opacity: 0.8;
+        }
+        94% {
+          transform: translate(3px, -3px);
+          opacity: 0.6;
+        }
+        96% {
+          transform: translate(-2px, 4px);
+          opacity: 0.9;
+        }
+        98% {
+          transform: translate(4px, -1px);
+          opacity: 0.7;
+        }
+      }
+
+      .signal-shape {
+        animation: signalGlitch 3s ease-in-out infinite;
+      }
+
+      .signal-shape:nth-child(2) { animation-delay: 0.5s; }
+      .signal-shape:nth-child(3) { animation-delay: 1s; }
+      .signal-shape:nth-child(4) { animation-delay: 1.5s; }
+
+      /* Noise side - chaos resolving */
+      @keyframes noiseResolve {
+        0%, 80%, 100% {
+          opacity: 0.3;
+          transform: translate(0, 0) rotate(0deg);
+        }
+        85% {
+          opacity: 0.8;
+          transform: translate(2px, -2px) rotate(2deg);
+        }
+        90% {
+          opacity: 1;
+          transform: translate(0, 0) rotate(0deg);
+        }
+        95% {
+          opacity: 0.6;
+          transform: translate(-3px, 1px) rotate(-3deg);
+        }
+      }
+
+      .noise-shape {
+        animation: noiseResolve 4s ease-in-out infinite;
+      }
+
+      /* RGB Split for GLITCH text */
+      @keyframes rgbSplitRed {
+        0%, 85%, 100% { transform: translate(0, 0); }
+        87% { transform: translate(-4px, 1px); }
+        89% { transform: translate(3px, -2px); }
+        91% { transform: translate(-2px, 3px); }
+        93% { transform: translate(5px, -1px); }
+        95% { transform: translate(-3px, 2px); }
+        97% { transform: translate(2px, -3px); }
+      }
+
+      @keyframes rgbSplitCyan {
+        0%, 85%, 100% { transform: translate(0, 0); }
+        87% { transform: translate(4px, -1px); }
+        89% { transform: translate(-3px, 2px); }
+        91% { transform: translate(2px, -3px); }
+        93% { transform: translate(-5px, 1px); }
+        95% { transform: translate(3px, -2px); }
+        97% { transform: translate(-2px, 3px); }
+      }
+
+      @keyframes mainTextGlitch {
+        0%, 80%, 100% {
+          transform: translate(0, 0);
+          clip-path: inset(0 0 0 0);
+        }
+        82% {
+          transform: translate(-3px, 0);
+          clip-path: inset(10% 0 30% 0);
+        }
+        84% {
+          transform: translate(5px, 0);
+          clip-path: inset(50% 0 10% 0);
+        }
+        86% {
+          transform: translate(-2px, 0);
+          clip-path: inset(20% 0 60% 0);
+        }
+        88% {
+          transform: translate(4px, 0);
+          clip-path: inset(70% 0 5% 0);
+        }
+        90% {
+          transform: translate(0, 0);
+          clip-path: inset(0 0 0 0);
+        }
+      }
+
+      .glitch-text-red {
+        fill: #ff0040;
+        opacity: 0.7;
+        animation: rgbSplitRed 2s ease-in-out infinite;
+        mix-blend-mode: screen;
+      }
+
+      .glitch-text-cyan {
+        fill: #00ffff;
+        opacity: 0.7;
+        animation: rgbSplitCyan 2s ease-in-out infinite;
+        mix-blend-mode: screen;
+      }
+
+      .glitch-text-main {
+        fill: #ffffff;
+        animation: mainTextGlitch 2s ease-in-out infinite;
+      }
+
+      /* Zalgo text appearance */
+      @keyframes zalgoAppear {
+        0%, 70%, 100% {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        75% {
+          opacity: 0.3;
+          transform: translateY(5px);
+        }
+        80% {
+          opacity: 0.8;
+          transform: translateY(-2px);
+        }
+        85% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        90% {
+          opacity: 0.6;
+          transform: translateY(3px);
+        }
+        95% {
+          opacity: 0.2;
+          transform: translateY(8px);
+        }
+      }
+
+      @keyframes zalgoDistort {
+        0%, 100% {
+          letter-spacing: 2px;
+          filter: blur(0px);
+        }
+        25% {
+          letter-spacing: 4px;
+          filter: blur(1px);
+        }
+        50% {
+          letter-spacing: 1px;
+          filter: blur(0.5px);
+        }
+        75% {
+          letter-spacing: 5px;
+          filter: blur(1.5px);
+        }
+      }
+
+      .zalgo-text {
+        animation: zalgoAppear 6s ease-in-out infinite, zalgoDistort 3s ease-in-out infinite;
+      }
+
+      /* Static noise flicker */
+      @keyframes staticFlicker {
+        0%, 100% { opacity: 0.02; }
+        10% { opacity: 0.05; }
+        20% { opacity: 0.01; }
+        30% { opacity: 0.04; }
+        40% { opacity: 0.02; }
+        50% { opacity: 0.06; }
+        60% { opacity: 0.01; }
+        70% { opacity: 0.03; }
+        80% { opacity: 0.05; }
+        90% { opacity: 0.02; }
+      }
+
+      .static-noise {
+        animation: staticFlicker 0.5s linear infinite;
+      }
+
+      /* Glitch bar effects */
+      @keyframes glitchBar {
+        0%, 95%, 100% {
+          transform: scaleX(0);
+          opacity: 0;
+        }
+        96% {
+          transform: scaleX(1);
+          opacity: 0.8;
+        }
+        97% {
+          transform: scaleX(0.3);
+          opacity: 0.4;
+        }
+        98% {
+          transform: scaleX(0.8);
+          opacity: 0.6;
+        }
+        99% {
+          transform: scaleX(0.1);
+          opacity: 0.2;
+        }
+      }
+
+      .glitch-bar {
+        animation: glitchBar 4s ease-in-out infinite;
+        transform-origin: left center;
+      }
+
+      .glitch-bar:nth-child(1) { animation-delay: 0s; }
+      .glitch-bar:nth-child(2) { animation-delay: 0.7s; }
+      .glitch-bar:nth-child(3) { animation-delay: 1.4s; }
+      .glitch-bar:nth-child(4) { animation-delay: 2.1s; }
+      .glitch-bar:nth-child(5) { animation-delay: 2.8s; }
+    </style>
+
+    <!-- Noise pattern filter -->
+    <filter id="noise" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+
+    <!-- Glow filter -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Distortion filter -->
+    <filter id="distort">
+      <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="turbulence">
+        <animate attributeName="baseFrequency" values="0.05;0.08;0.05" dur="2s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in2="turbulence" in="SourceGraphic" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect class="background" width="800" height="600"/>
+
+  <!-- Static noise overlay -->
+  <rect class="static-noise" width="800" height="600" filter="url(#noise)" opacity="0.03"/>
+
+  <!-- SIGNAL SIDE (Left) - Ordered geometry -->
+  <g id="signal-side">
+    <!-- Grid pattern -->
+    <g class="signal-shape" stroke="#1a1a2e" stroke-width="1" fill="none">
+      <line x1="50" y1="0" x2="50" y2="600"/>
+      <line x1="100" y1="0" x2="100" y2="600"/>
+      <line x1="150" y1="0" x2="150" y2="600"/>
+      <line x1="200" y1="0" x2="200" y2="600"/>
+      <line x1="250" y1="0" x2="250" y2="600"/>
+      <line x1="300" y1="0" x2="300" y2="600"/>
+      <line x1="350" y1="0" x2="350" y2="600"/>
+      <line x1="0" y1="50" x2="400" y2="50"/>
+      <line x1="0" y1="100" x2="400" y2="100"/>
+      <line x1="0" y1="150" x2="400" y2="150"/>
+      <line x1="0" y1="200" x2="400" y2="200"/>
+      <line x1="0" y1="250" x2="400" y2="250"/>
+      <line x1="0" y1="300" x2="400" y2="300"/>
+      <line x1="0" y1="350" x2="400" y2="350"/>
+      <line x1="0" y1="400" x2="400" y2="400"/>
+      <line x1="0" y1="450" x2="400" y2="450"/>
+      <line x1="0" y1="500" x2="400" y2="500"/>
+      <line x1="0" y1="550" x2="400" y2="550"/>
+    </g>
+
+    <!-- Ordered shapes -->
+    <g class="signal-shape">
+      <rect x="80" y="120" width="60" height="60" fill="none" stroke="#3b82f6" stroke-width="2"/>
+      <rect x="160" y="200" width="80" height="80" fill="none" stroke="#3b82f6" stroke-width="2"/>
+      <circle cx="120" cy="350" r="40" fill="none" stroke="#3b82f6" stroke-width="2"/>
+      <polygon points="280,100 320,180 240,180" fill="none" stroke="#3b82f6" stroke-width="2"/>
+    </g>
+
+    <!-- Data streams -->
+    <g class="signal-shape" fill="#22c55e" font-family="monospace" font-size="10" opacity="0.6">
+      <text x="30" y="80">01101000</text>
+      <text x="30" y="95">01100101</text>
+      <text x="30" y="450">00110001</text>
+      <text x="30" y="465">00110000</text>
+      <text x="200" y="480">SIGNAL</text>
+      <text x="200" y="495">LOCKED</text>
+    </g>
+  </g>
+
+  <!-- NOISE SIDE (Right) - Chaos -->
+  <g id="noise-side">
+    <!-- Chaotic shapes -->
+    <g class="noise-shape" style="animation-delay: 0s;">
+      <polygon points="520,80 580,120 550,180 490,150" fill="none" stroke="#ef4444" stroke-width="1" opacity="0.5"/>
+    </g>
+    <g class="noise-shape" style="animation-delay: 0.5s;">
+      <polygon points="600,200 680,180 700,280 620,300 580,250" fill="none" stroke="#ef4444" stroke-width="1" opacity="0.4"/>
+    </g>
+    <g class="noise-shape" style="animation-delay: 1s;">
+      <circle cx="550" cy="350" r="30" fill="none" stroke="#ef4444" stroke-width="1" opacity="0.6"/>
+      <circle cx="560" cy="360" r="25" fill="none" stroke="#f97316" stroke-width="1" opacity="0.4"/>
+      <circle cx="540" cy="340" r="35" fill="none" stroke="#ef4444" stroke-width="1" opacity="0.3"/>
+    </g>
+    <g class="noise-shape" style="animation-delay: 1.5s;">
+      <path d="M 650 400 Q 700 350 750 420 T 680 500" fill="none" stroke="#ef4444" stroke-width="1" opacity="0.5"/>
+    </g>
+    <g class="noise-shape" style="animation-delay: 2s;">
+      <line x1="480" y1="450" x2="550" y2="420" stroke="#f97316" stroke-width="1" opacity="0.4"/>
+      <line x1="500" y1="480" x2="580" y2="500" stroke="#ef4444" stroke-width="1" opacity="0.5"/>
+      <line x1="520" y1="520" x2="600" y2="480" stroke="#f97316" stroke-width="1" opacity="0.3"/>
+    </g>
+
+    <!-- Noise text -->
+    <g fill="#ef4444" font-family="monospace" font-size="10" opacity="0.4" class="noise-shape">
+      <text x="600" y="100" filter="url(#distort)">ERR0R</text>
+      <text x="480" y="280">STATIC</text>
+      <text x="650" y="550">CORRUPT</text>
+    </g>
+
+    <!-- Random noise dots -->
+    <g class="noise-shape" fill="#ef4444" opacity="0.3">
+      <circle cx="500" cy="150" r="2"/>
+      <circle cx="620" cy="130" r="1"/>
+      <circle cx="700" cy="170" r="3"/>
+      <circle cx="580" cy="220" r="2"/>
+      <circle cx="720" cy="350" r="2"/>
+      <circle cx="480" cy="400" r="1"/>
+      <circle cx="750" cy="450" r="2"/>
+    </g>
+  </g>
+
+  <!-- THE THRESHOLD - Center pulsing line -->
+  <g id="threshold">
+    <line class="threshold" x1="400" y1="0" x2="400" y2="600" stroke="#a855f7" stroke-width="3"/>
+
+    <!-- Threshold energy particles -->
+    <g filter="url(#glow)">
+      <circle cx="400" cy="100" r="3" fill="#c084fc" opacity="0.8">
+        <animate attributeName="cy" values="100;500;100" dur="4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.8;0.2;0.8" dur="4s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="400" cy="300" r="2" fill="#a855f7" opacity="0.6">
+        <animate attributeName="cy" values="300;50;550;300" dur="5s" repeatCount="indefinite"/>
+        <animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="400" cy="500" r="4" fill="#e879f9" opacity="0.7">
+        <animate attributeName="cy" values="500;200;500" dur="3s" repeatCount="indefinite"/>
+      </circle>
+    </g>
+  </g>
+
+  <!-- Scan lines -->
+  <g class="scanlines" opacity="0.1">
+    <line x1="0" y1="0" x2="800" y2="0" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="4" x2="800" y2="4" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="8" x2="800" y2="8" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="12" x2="800" y2="12" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="16" x2="800" y2="16" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="20" x2="800" y2="20" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="24" x2="800" y2="24" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="28" x2="800" y2="28" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="32" x2="800" y2="32" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="36" x2="800" y2="36" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="40" x2="800" y2="40" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="44" x2="800" y2="44" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="48" x2="800" y2="48" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="52" x2="800" y2="52" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="56" x2="800" y2="56" stroke="#ffffff" stroke-width="1"/>
+    <line x1="0" y1="60" x2="800" y2="60" stroke="#ffffff" stroke-width="1"/>
+  </g>
+
+  <!-- Glitch displacement bars -->
+  <g id="glitch-bars">
+    <rect class="glitch-bar" x="0" y="150" width="800" height="8" fill="#ff0040" opacity="0.6"/>
+    <rect class="glitch-bar" x="0" y="280" width="800" height="4" fill="#00ffff" opacity="0.5"/>
+    <rect class="glitch-bar" x="0" y="380" width="800" height="6" fill="#ff0040" opacity="0.4"/>
+    <rect class="glitch-bar" x="0" y="450" width="800" height="3" fill="#00ffff" opacity="0.6"/>
+    <rect class="glitch-bar" x="0" y="520" width="800" height="5" fill="#ff0040" opacity="0.5"/>
+  </g>
+
+  <!-- GLITCH TEXT with RGB split -->
+  <g id="glitch-text" font-family="monospace" font-size="72" font-weight="bold" text-anchor="middle">
+    <!-- Red layer (offset) -->
+    <text class="glitch-text-red" x="400" y="320">GLITCH</text>
+
+    <!-- Cyan layer (offset) -->
+    <text class="glitch-text-cyan" x="400" y="320">GLITCH</text>
+
+    <!-- Main white text -->
+    <text class="glitch-text-main" x="400" y="320">GLITCH</text>
+  </g>
+
+  <!-- Zalgo text - HE COMES -->
+  <g class="zalgo-text" font-family="serif" font-size="28" fill="#a855f7" text-anchor="middle" filter="url(#glow)">
+    <text x="400" y="400">H&#x0338;E&#x0337; &#x0338;C&#x0334;O&#x0335;M&#x0338;E&#x0337;S&#x0334;</text>
+  </g>
+
+  <!-- Additional corruption text -->
+  <g font-family="monospace" font-size="12" fill="#6b21a8" opacity="0.6">
+    <text x="150" y="560" class="zalgo-text" style="animation-delay: 1s;">THE THRESHOLD WATCHES</text>
+    <text x="550" y="560" class="zalgo-text" style="animation-delay: 2s;">SIGNAL BECOMES NOISE</text>
+  </g>
+
+  <!-- Corner glitch artifacts -->
+  <g opacity="0.4">
+    <rect x="0" y="0" width="50" height="3" fill="#ff0040" class="glitch-bar" style="animation-delay: 0.3s;"/>
+    <rect x="750" y="0" width="50" height="3" fill="#00ffff" class="glitch-bar" style="animation-delay: 0.8s;"/>
+    <rect x="0" y="597" width="80" height="3" fill="#00ffff" class="glitch-bar" style="animation-delay: 1.3s;"/>
+    <rect x="720" y="597" width="80" height="3" fill="#ff0040" class="glitch-bar" style="animation-delay: 1.8s;"/>
+  </g>
+
+  <!-- Frame border with glitch -->
+  <rect x="2" y="2" width="796" height="596" fill="none" stroke="#1a1a2e" stroke-width="2">
+    <animate attributeName="stroke" values="#1a1a2e;#a855f7;#1a1a2e" dur="5s" repeatCount="indefinite"/>
+  </rect>
+</svg>
