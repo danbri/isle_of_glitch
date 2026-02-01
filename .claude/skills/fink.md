@@ -231,3 +231,7 @@ This will report:
 
 See the full FINK table of contents for examples:
 https://danbri.github.io/glitchcan-minigam/inklet/toc.fink.js
+
+## See Also
+
+- **ink-gotchas.md** - Common INK syntax pitfalls (escape sequences, reserved characters)
