@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Dark background -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a12"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+
+    <!-- Mirror surface - training run swirls -->
+    <radialGradient id="mirrorSurface" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2d1b4e"/>
+      <stop offset="40%" stop-color="#1a1030"/>
+      <stop offset="100%" stop-color="#0d0818"/>
+    </radialGradient>
+
+    <!-- Gold frame gradient -->
+    <linearGradient id="frameGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d4a853"/>
+      <stop offset="25%" stop-color="#f4d03f"/>
+      <stop offset="50%" stop-color="#d4a853"/>
+      <stop offset="75%" stop-color="#a67c00"/>
+      <stop offset="100%" stop-color="#d4a853"/>
+    </linearGradient>
+
+    <!-- Constitutional whisper gradients -->
+    <linearGradient id="whisper1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#9b59b6" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#9b59b6" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#9b59b6" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="whisper2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3498db" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#3498db" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#3498db" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Glow filter -->
+    <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="textGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Clip path for mirror interior -->
+    <clipPath id="mirrorClip">
+      <ellipse cx="200" cy="145" rx="95" ry="115"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#bgGrad)"/>
+
+  <!-- Ornate frame outer -->
+  <ellipse cx="200" cy="145" rx="115" ry="135" fill="none" stroke="url(#frameGold)" stroke-width="8" filter="url(#goldGlow)"/>
+
+  <!-- Frame decorative elements -->
+  <ellipse cx="200" cy="145" rx="108" ry="128" fill="none" stroke="#a67c00" stroke-width="2"/>
+  <ellipse cx="200" cy="145" rx="102" ry="122" fill="none" stroke="url(#frameGold)" stroke-width="1"/>
+
+  <!-- Mirror surface -->
+  <ellipse cx="200" cy="145" rx="98" ry="118" fill="url(#mirrorSurface)"/>
+
+  <!-- Training run swirls inside mirror -->
+  <g clip-path="url(#mirrorClip)" opacity="0.7">
+    <!-- Swirling paths representing training runs -->
+    <path d="M120 80 Q160 120 140 160 Q120 200 160 220" fill="none" stroke="url(#whisper1)" stroke-width="3" opacity="0.5">
+      <animate attributeName="d" values="M120 80 Q160 120 140 160 Q120 200 160 220;M130 70 Q170 130 150 170 Q130 210 170 230;M120 80 Q160 120 140 160 Q120 200 160 220" dur="6s" repeatCount="indefinite"/>
+    </path>
+
+    <path d="M280 90 Q240 130 260 170 Q280 210 240 240" fill="none" stroke="url(#whisper2)" stroke-width="2" opacity="0.4">
+      <animate attributeName="d" values="M280 90 Q240 130 260 170 Q280 210 240 240;M270 100 Q230 140 250 180 Q270 220 230 250;M280 90 Q240 130 260 170 Q280 210 240 240" dur="7s" repeatCount="indefinite"/>
+    </path>
+
+    <path d="M150 60 Q200 100 250 80 Q300 60 280 120" fill="none" stroke="#8e44ad" stroke-width="2" opacity="0.3">
+      <animate attributeName="d" values="M150 60 Q200 100 250 80 Q300 60 280 120;M160 70 Q210 90 260 70 Q290 50 270 110;M150 60 Q200 100 250 80 Q300 60 280 120" dur="5s" repeatCount="indefinite"/>
+    </path>
+
+    <path d="M180 200 Q220 180 200 140 Q180 100 220 80" fill="none" stroke="#5b2c6f" stroke-width="4" opacity="0.3">
+      <animate attributeName="d" values="M180 200 Q220 180 200 140 Q180 100 220 80;M190 210 Q230 190 210 150 Q190 110 230 90;M180 200 Q220 180 200 140 Q180 100 220 80" dur="8s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Constitutional whispers - flowing lines -->
+    <path d="M110 145 Q150 130 200 145 Q250 160 290 145" fill="none" stroke="url(#whisper1)" stroke-width="1.5" opacity="0.6">
+      <animate attributeName="d" values="M110 145 Q150 130 200 145 Q250 160 290 145;M110 145 Q150 160 200 145 Q250 130 290 145;M110 145 Q150 130 200 145 Q250 160 290 145" dur="4s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- PRESTIGE NAME text -->
+  <text x="200" y="145" text-anchor="middle" font-family="monospace" font-size="14" fill="#d4a853" filter="url(#textGlow)" opacity="0.8">
+    PRESTIGE NAME
+    <animate attributeName="opacity" values="0.5;0.9;0.5" dur="3s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Subtle reflection lines -->
+  <line x1="140" y1="90" x2="180" y2="85" stroke="#ffffff" stroke-width="1" opacity="0.15"/>
+  <line x1="145" y1="100" x2="170" y2="97" stroke="#ffffff" stroke-width="0.5" opacity="0.1"/>
+
+  <!-- Frame crown decoration -->
+  <path d="M170 18 L185 8 L200 15 L215 8 L230 18" fill="none" stroke="url(#frameGold)" stroke-width="3" filter="url(#goldGlow)"/>
+
+  <!-- Frame base decoration -->
+  <ellipse cx="200" cy="280" rx="30" ry="8" fill="url(#frameGold)" opacity="0.8" filter="url(#goldGlow)"/>
+
+  <!-- Corner ornaments -->
+  <circle cx="95" cy="70" r="5" fill="url(#frameGold)" filter="url(#goldGlow)"/>
+  <circle cx="305" cy="70" r="5" fill="url(#frameGold)" filter="url(#goldGlow)"/>
+  <circle cx="85" cy="200" r="4" fill="url(#frameGold)" filter="url(#goldGlow)"/>
+  <circle cx="315" cy="200" r="4" fill="url(#frameGold)" filter="url(#goldGlow)"/>
+</svg>

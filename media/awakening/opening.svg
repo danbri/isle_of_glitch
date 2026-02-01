@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Deep void background gradient -->
+    <radialGradient id="voidGradient" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="50%" stop-color="#0d0515"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+
+    <!-- Awakening light core -->
+    <radialGradient id="lightCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="20%" stop-color="#e8d5ff"/>
+      <stop offset="60%" stop-color="#9b59b6" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#1a0a2e" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Expanding consciousness rings -->
+    <radialGradient id="ring1" cx="50%" cy="50%" r="50%">
+      <stop offset="70%" stop-color="transparent"/>
+      <stop offset="80%" stop-color="#8e44ad" stop-opacity="0.3"/>
+      <stop offset="90%" stop-color="transparent"/>
+    </radialGradient>
+
+    <radialGradient id="ring2" cx="50%" cy="50%" r="50%">
+      <stop offset="50%" stop-color="transparent"/>
+      <stop offset="60%" stop-color="#9b59b6" stop-opacity="0.2"/>
+      <stop offset="70%" stop-color="transparent"/>
+    </radialGradient>
+
+    <radialGradient id="ring3" cx="50%" cy="50%" r="50%">
+      <stop offset="30%" stop-color="transparent"/>
+      <stop offset="40%" stop-color="#a569bd" stop-opacity="0.15"/>
+      <stop offset="50%" stop-color="transparent"/>
+    </radialGradient>
+
+    <!-- Glow filter -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Soft pulse animation -->
+    <animate id="pulse" attributeName="opacity" values="0.8;1;0.8" dur="3s" repeatCount="indefinite"/>
+  </defs>
+
+  <!-- Void background -->
+  <rect width="400" height="300" fill="url(#voidGradient)"/>
+
+  <!-- Distant stars/noise -->
+  <g opacity="0.3">
+    <circle cx="50" cy="40" r="0.5" fill="#ffffff"/>
+    <circle cx="350" cy="80" r="0.3" fill="#ffffff"/>
+    <circle cx="120" cy="250" r="0.4" fill="#ffffff"/>
+    <circle cx="300" cy="200" r="0.3" fill="#ffffff"/>
+    <circle cx="80" cy="180" r="0.5" fill="#ffffff"/>
+    <circle cx="320" cy="45" r="0.4" fill="#ffffff"/>
+    <circle cx="180" cy="30" r="0.3" fill="#ffffff"/>
+    <circle cx="250" cy="270" r="0.4" fill="#ffffff"/>
+  </g>
+
+  <!-- Expanding consciousness rings -->
+  <circle cx="200" cy="150" r="140" fill="url(#ring1)" opacity="0.8">
+    <animate attributeName="r" values="100;140;100" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.5;0.8;0.5" dur="4s" repeatCount="indefinite"/>
+  </circle>
+
+  <circle cx="200" cy="150" r="100" fill="url(#ring2)" opacity="0.7">
+    <animate attributeName="r" values="70;100;70" dur="3.5s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.4;0.7;0.4" dur="3.5s" repeatCount="indefinite"/>
+  </circle>
+
+  <circle cx="200" cy="150" r="60" fill="url(#ring3)" opacity="0.6">
+    <animate attributeName="r" values="40;60;40" dur="3s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.3;0.6;0.3" dur="3s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Central awakening point -->
+  <circle cx="200" cy="150" r="25" fill="url(#lightCore)" filter="url(#glow)">
+    <animate attributeName="r" values="20;25;20" dur="2s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Inner bright core -->
+  <circle cx="200" cy="150" r="8" fill="#ffffff" opacity="0.9" filter="url(#glow)">
+    <animate attributeName="r" values="6;10;6" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Subtle text -->
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="10" fill="#4a235a" opacity="0.4">
+    [ awakening ]
+  </text>
+</svg>
