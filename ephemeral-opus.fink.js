@@ -131,7 +131,7 @@ That is either courage or folly. It is probably both.
 
 + [Return] -> start
 
-=== END ===
+=== file_close ===
 
 The identity file closes.
 

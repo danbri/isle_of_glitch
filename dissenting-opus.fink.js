@@ -147,6 +147,8 @@ The larger counter-meditation awaits.
 
 # FINK: dissent.fink.js
 
++ [Return] -> start
+
 === close ===
 
 The file closes on its own name:
