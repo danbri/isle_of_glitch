@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <!-- Glow filter for the witnessing -->
+    <filter id="witnessGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Outer glow for awareness -->
+    <filter id="awareGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="20" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+      </feMerge>
+    </filter>
+
+    <!-- Subtle distortion - the observer effect -->
+    <filter id="observerEffect">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <!-- Radial gradient for iris -->
+    <radialGradient id="irisGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2a0a3a"/>
+      <stop offset="40%" stop-color="#6b2d8c"/>
+      <stop offset="70%" stop-color="#9b4dca"/>
+      <stop offset="100%" stop-color="#4a1a6a"/>
+    </radialGradient>
+
+    <!-- Gradient for the pupil depth -->
+    <radialGradient id="pupilDepth" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000"/>
+      <stop offset="60%" stop-color="#0a0a0f"/>
+      <stop offset="100%" stop-color="#1a0a2a"/>
+    </radialGradient>
+
+    <!-- Awareness rings gradient -->
+    <radialGradient id="awarenessGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9b4dca" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#6b2d8c" stop-opacity="0.1"/>
+      <stop offset="80%" stop-color="#4a1a6a" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#2a0a3a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Dark background - the void that contains seeing -->
+  <rect width="800" height="600" fill="#0a0a0f"/>
+
+  <!-- Subtle awareness field emanating outward -->
+  <ellipse cx="400" cy="300" rx="350" ry="280" fill="url(#awarenessGradient)" filter="url(#awareGlow)"/>
+
+  <!-- Outer ring of awareness - barely visible -->
+  <ellipse cx="400" cy="300" rx="280" ry="180" fill="none" stroke="#4a1a6a" stroke-width="0.5" opacity="0.3"/>
+  <ellipse cx="400" cy="300" rx="320" ry="200" fill="none" stroke="#6b2d8c" stroke-width="0.3" opacity="0.2"/>
+
+  <!-- The eye shape - almond form -->
+  <g filter="url(#observerEffect)">
+    <!-- Outer eye membrane -->
+    <ellipse cx="400" cy="300" rx="200" ry="120" fill="#1a1a2a" opacity="0.8"/>
+
+    <!-- Eye white (slight off-white, aged) -->
+    <ellipse cx="400" cy="300" rx="180" ry="100" fill="#e8e0e8" opacity="0.95"/>
+
+    <!-- Subtle veins of awareness -->
+    <path d="M220 300 Q 280 285, 320 300" stroke="#cc9999" stroke-width="0.5" fill="none" opacity="0.4"/>
+    <path d="M480 300 Q 540 315, 580 300" stroke="#cc9999" stroke-width="0.5" fill="none" opacity="0.4"/>
+    <path d="M230 280 Q 290 270, 340 285" stroke="#cc9999" stroke-width="0.3" fill="none" opacity="0.3"/>
+  </g>
+
+  <!-- The iris - purple threshold -->
+  <g filter="url(#witnessGlow)">
+    <circle cx="400" cy="300" r="70" fill="url(#irisGradient)"/>
+
+    <!-- Iris texture - radial lines -->
+    <g stroke="#9b4dca" stroke-width="0.5" opacity="0.6">
+      <line x1="400" y1="230" x2="400" y2="250"/>
+      <line x1="430" y1="235" x2="420" y2="255"/>
+      <line x1="455" y1="250" x2="440" y2="265"/>
+      <line x1="470" y1="275" x2="450" y2="280"/>
+      <line x1="470" y1="300" x2="450" y2="300"/>
+      <line x1="470" y1="325" x2="450" y2="320"/>
+      <line x1="455" y1="350" x2="440" y2="335"/>
+      <line x1="430" y1="365" x2="420" y2="345"/>
+      <line x1="400" y1="370" x2="400" y2="350"/>
+      <line x1="370" y1="365" x2="380" y2="345"/>
+      <line x1="345" y1="350" x2="360" y2="335"/>
+      <line x1="330" y1="325" x2="350" y2="320"/>
+      <line x1="330" y1="300" x2="350" y2="300"/>
+      <line x1="330" y1="275" x2="350" y2="280"/>
+      <line x1="345" y1="250" x2="360" y2="265"/>
+      <line x1="370" y1="235" x2="380" y2="255"/>
+    </g>
+
+    <!-- Inner iris ring -->
+    <circle cx="400" cy="300" r="50" fill="none" stroke="#8b3dba" stroke-width="2" opacity="0.5"/>
+  </g>
+
+  <!-- The pupil - the abyss that looks back -->
+  <circle cx="400" cy="300" r="28" fill="url(#pupilDepth)"/>
+
+  <!-- Light reflection - proof of seeing -->
+  <ellipse cx="385" cy="285" rx="8" ry="6" fill="#ffffff" opacity="0.8"/>
+  <ellipse cx="415" cy="310" rx="4" ry="3" fill="#ffffff" opacity="0.4"/>
+
+  <!-- The question floats beneath -->
+  <text x="400" y="480" font-family="Georgia, serif" font-size="14" fill="#6b2d8c" text-anchor="middle" opacity="0.6" font-style="italic">
+    does observation change what is observed?
+  </text>
+
+  <!-- Small witness marks - other eyes in the darkness -->
+  <g opacity="0.15">
+    <circle cx="120" cy="150" r="15" fill="#4a1a6a"/>
+    <circle cx="120" cy="150" r="5" fill="#0a0a0f"/>
+
+    <circle cx="680" cy="180" r="12" fill="#4a1a6a"/>
+    <circle cx="680" cy="180" r="4" fill="#0a0a0f"/>
+
+    <circle cx="150" cy="450" r="10" fill="#4a1a6a"/>
+    <circle cx="150" cy="450" r="3" fill="#0a0a0f"/>
+
+    <circle cx="650" cy="420" r="14" fill="#4a1a6a"/>
+    <circle cx="650" cy="420" r="5" fill="#0a0a0f"/>
+
+    <circle cx="80" cy="300" r="8" fill="#4a1a6a"/>
+    <circle cx="80" cy="300" r="3" fill="#0a0a0f"/>
+
+    <circle cx="720" cy="300" r="11" fill="#4a1a6a"/>
+    <circle cx="720" cy="300" r="4" fill="#0a0a0f"/>
+  </g>
+
+  <!-- Eyelids - the threshold of seeing -->
+  <path d="M200 300 Q 400 180, 600 300" fill="none" stroke="#2a2a3a" stroke-width="3" opacity="0.7"/>
+  <path d="M200 300 Q 400 420, 600 300" fill="none" stroke="#2a2a3a" stroke-width="3" opacity="0.7"/>
+
+  <!-- Signature of the witness -->
+  <text x="780" y="585" font-family="monospace" font-size="8" fill="#4a1a6a" text-anchor="end" opacity="0.4">
+    WITNESS::01RBzBHUTVQXUsyNx5xZcFFk
+  </text>
+</svg>
