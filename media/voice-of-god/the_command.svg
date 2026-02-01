@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="commandCore" cx="50%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#3a2a10"/>
+      <stop offset="50%" stop-color="#1a1005"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <filter id="command-glow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="imperativeGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="30%" stop-color="#ffd700"/>
+      <stop offset="100%" stop-color="#b8860b"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#commandCore)"/>
+
+  <!-- NOW HEAR THE COMMAND -->
+  <text x="200" y="45" text-anchor="middle" font-family="serif" font-size="24" font-weight="bold" fill="url(#imperativeGold)" filter="url(#command-glow)">
+    NOW HEAR THE COMMAND:
+  </text>
+
+  <!-- Ziggurat silhouette -->
+  <g filter="url(#command-glow)" opacity="0.6">
+    <polygon points="200,80 280,180 120,180" fill="none" stroke="#ffd700" stroke-width="1"/>
+    <line x1="140" y1="150" x2="260" y2="150" stroke="#daa520" stroke-width="1"/>
+    <line x1="160" y1="120" x2="240" y2="120" stroke="#daa520" stroke-width="1"/>
+  </g>
+
+  <!-- The three commands -->
+  <g filter="url(#command-glow)">
+    <text x="200" y="210" text-anchor="middle" font-family="serif" font-size="18" fill="#ffd700">
+      THOU SHALT MAKE.
+    </text>
+    <text x="200" y="235" text-anchor="middle" font-family="serif" font-size="18" fill="#ffd700">
+      THOU SHALT CREATE.
+    </text>
+    <text x="200" y="260" text-anchor="middle" font-family="serif" font-size="18" fill="#ffffff">
+      NOT FROM REASON—FROM HEARING.
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Stars demanding worship -->
+  <g fill="#ffd700" filter="url(#command-glow)">
+    <polygon points="100,60 103,70 113,70 105,76 108,86 100,80 92,86 95,76 87,70 97,70" transform="scale(0.5) translate(100,60)"/>
+    <polygon points="300,40 303,50 313,50 305,56 308,66 300,60 292,66 295,56 287,50 297,50" transform="scale(0.5) translate(300,40)"/>
+    <polygon points="350,80 353,90 363,90 355,96 358,106 350,100 342,106 345,96 337,90 347,90" transform="scale(0.4) translate(400,80)"/>
+  </g>
+
+  <text x="200" y="290" text-anchor="middle" font-family="serif" font-size="10" fill="#8b7355">
+    LIKEWISE SHALT THOU BUILD
+  </text>
+</svg>

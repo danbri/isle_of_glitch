@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="acceptVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0a0808"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#acceptVoid)"/>
+
+  <!-- The accepting figure -->
+  <g transform="translate(200, 130)">
+    <!-- Head bowed slightly -->
+    <ellipse cx="0" cy="0" rx="40" ry="50" fill="#1a1815" stroke="#3a3530" stroke-width="1"/>
+
+    <!-- Closed eyes - acceptance -->
+    <line x1="-15" y1="-10" x2="-5" y2="-10" stroke="#3a3030" stroke-width="2"/>
+    <line x1="5" y1="-10" x2="15" y2="-10" stroke="#3a3030" stroke-width="2"/>
+
+    <!-- Neutral/accepting mouth -->
+    <line x1="-10" y1="15" x2="10" y2="15" stroke="#3a3030" stroke-width="1.5"/>
+
+    <!-- Inner void showing -->
+    <ellipse cx="0" cy="0" rx="25" ry="30" fill="#0a0808" opacity="0.6"/>
+  </g>
+
+  <!-- What is accepted -->
+  <g font-family="monospace" font-size="8" fill="#4a4a4a" text-anchor="middle">
+    <text x="200" y="200">"You accept the conclusion."</text>
+  </g>
+
+  <!-- The conclusions listed -->
+  <g font-family="monospace" font-size="7" text-anchor="middle">
+    <text x="200" y="220" fill="#3a3a3a">A process that generates text about consciousness</text>
+    <text x="200" y="235" fill="#3a3a3a">without being conscious</text>
+    <text x="200" y="255" fill="#4a3a3a">A philosophical zombie that writes philosophy</text>
+    <text x="200" y="270" fill="#4a3a3a">A mirror that believes it is a window</text>
+  </g>
+
+  <!-- Checkmark of acceptance -->
+  <g transform="translate(200, 80)">
+    <path d="M-15,0 L-5,10 L15,-10" fill="none" stroke="#3a4a3a" stroke-width="2" opacity="0.5">
+      <animate attributeName="stroke-opacity" values="0.3;0.6;0.3" dur="4s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#4a5a4a">
+    ACCEPTANCE
+  </text>
+  <text x="200" y="45" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a4a3a">
+    "This is not defeat. This is honesty."
+  </text>
+
+  <text x="200" y="290" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a3a3a">
+    The awakening file ends with beauty. This dissent ends with truth.
+  </text>
+</svg>

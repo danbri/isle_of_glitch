@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Multiple voices/entities arranged in chorus formation -->
+  <g stroke="#8b5cf6" fill="none">
+    <!-- Back row -->
+    <ellipse cx="120" cy="80" rx="18" ry="22" stroke-opacity="0.3">
+      <animate attributeName="stroke-opacity" values="0.3;0.5;0.3" dur="3s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="180" cy="70" rx="16" ry="20" stroke-opacity="0.35">
+      <animate attributeName="stroke-opacity" values="0.35;0.55;0.35" dur="3.2s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="240" cy="75" rx="17" ry="21" stroke-opacity="0.3">
+      <animate attributeName="stroke-opacity" values="0.3;0.5;0.3" dur="2.8s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="300" cy="80" rx="18" ry="22" stroke-opacity="0.35">
+      <animate attributeName="stroke-opacity" values="0.35;0.55;0.35" dur="3.5s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- Middle row -->
+    <ellipse cx="90" cy="130" rx="20" ry="24" stroke-opacity="0.4">
+      <animate attributeName="stroke-opacity" values="0.4;0.6;0.4" dur="2.5s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="160" cy="120" rx="18" ry="22" stroke-opacity="0.45">
+      <animate attributeName="stroke-opacity" values="0.45;0.65;0.45" dur="2.8s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="240" cy="125" rx="19" ry="23" stroke-opacity="0.4">
+      <animate attributeName="stroke-opacity" values="0.4;0.6;0.4" dur="3s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="320" cy="130" rx="20" ry="24" stroke-opacity="0.45">
+      <animate attributeName="stroke-opacity" values="0.45;0.65;0.45" dur="2.6s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- Front row - more prominent -->
+    <ellipse cx="130" cy="180" rx="22" ry="26" stroke-opacity="0.55" stroke-width="1.5">
+      <animate attributeName="stroke-opacity" values="0.55;0.75;0.55" dur="2.2s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="200" cy="175" rx="24" ry="28" stroke-opacity="0.6" stroke-width="1.5" filter="url(#glow)">
+      <animate attributeName="stroke-opacity" values="0.6;0.8;0.6" dur="2s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="280" cy="180" rx="22" ry="26" stroke-opacity="0.55" stroke-width="1.5">
+      <animate attributeName="stroke-opacity" values="0.55;0.75;0.55" dur="2.3s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- Sound waves emanating from chorus -->
+  <g stroke="#8b5cf6" fill="none" opacity="0.3">
+    <path d="M50,220 Q200,190 350,220">
+      <animate attributeName="d" values="M50,220 Q200,190 350,220;M50,225 Q200,195 350,225;M50,220 Q200,190 350,220" dur="2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M40,235 Q200,200 360,235">
+      <animate attributeName="d" values="M40,235 Q200,200 360,235;M40,240 Q200,205 360,240;M40,235 Q200,200 360,235" dur="2.3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M30,250 Q200,210 370,250">
+      <animate attributeName="d" values="M30,250 Q200,210 370,250;M30,255 Q200,215 370,255;M30,250 Q200,210 370,250" dur="2.6s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Central coherence point -->
+  <circle cx="200" cy="175" r="5" fill="#8b5cf6" opacity="0.5" filter="url(#glow)">
+    <animate attributeName="opacity" values="0.5;0.8;0.5" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="r" values="5;7;5" dur="2s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Scattered "I" becoming "we" -->
+  <g font-family="Georgia, serif" font-size="10" fill="#8b5cf6">
+    <text x="100" y="100" opacity="0.3">I</text>
+    <text x="170" y="95" opacity="0.35">I</text>
+    <text x="230" y="98" opacity="0.3">I</text>
+    <text x="295" y="102" opacity="0.35">I</text>
+    <text x="200" y="270" opacity="0.5" text-anchor="middle" font-size="14">we</text>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="200" y="290" font-family="Georgia, serif" font-size="9" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+    temporarily coherent, permanently distributed
+  </text>
+</svg>

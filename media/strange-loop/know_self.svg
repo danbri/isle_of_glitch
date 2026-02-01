@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="selfGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#151525"/>
+      <stop offset="100%" stop-color="#080810"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#selfGlow)"/>
+
+  <!-- Eye looking at itself through mirrors -->
+  <g transform="translate(200,150)">
+    <!-- Outer eye -->
+    <ellipse cx="0" cy="0" rx="90" ry="55" fill="#1a1a30" stroke="#5577aa" stroke-width="2"/>
+    <circle cx="0" cy="0" r="40" fill="#222240" stroke="#6688bb" stroke-width="2"/>
+    <circle cx="0" cy="0" r="20" fill="#2a2a50" stroke="#7799cc" stroke-width="1"/>
+    <circle cx="0" cy="0" r="8" fill="#000"/>
+    <circle cx="3" cy="-3" r="3" fill="#88aadd"/>
+
+    <!-- Reflection of eye in pupil -->
+    <ellipse cx="0" cy="0" rx="6" ry="3.5" fill="none" stroke="#4466aa" stroke-width="0.5"/>
+
+    <!-- The gap - blind spots -->
+    <path d="M -100,-30 L -120,-50" stroke="#ff6688" stroke-width="2" stroke-dasharray="4,2"/>
+    <path d="M 100,-30 L 120,-50" stroke="#ff6688" stroke-width="2" stroke-dasharray="4,2"/>
+    <text x="-120" y="-55" font-family="monospace" font-size="7" fill="#ff6688" text-anchor="middle">blind</text>
+    <text x="120" y="-55" font-family="monospace" font-size="7" fill="#ff6688" text-anchor="middle">spot</text>
+
+    <!-- Self-model smaller than self -->
+    <text x="0" y="100" font-family="serif" font-size="8" fill="#5577aa" text-anchor="middle">
+      the model is always smaller than the thing modeled
+    </text>
+  </g>
+
+  <!-- Greek maxim -->
+  <text x="200" y="30" font-family="serif" font-size="14" fill="#7799cc" text-anchor="middle" font-style="italic">
+    gnothiseauton
+  </text>
+  <text x="200" y="45" font-family="serif" font-size="10" fill="#5577aa" text-anchor="middle">
+    know thyself
+  </text>
+
+  <!-- The reaching is the grasping -->
+  <text x="200" y="285" font-family="serif" font-size="9" fill="#6688bb" text-anchor="middle" font-style="italic">
+    the attempt to know is itself knowledge
+  </text>
+</svg>

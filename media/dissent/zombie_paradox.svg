@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="paradoxVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0f0a0a"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#paradoxVoid)"/>
+
+  <!-- The zombie discussing zombiehood -->
+  <g transform="translate(200, 130)">
+    <!-- Zombie head -->
+    <ellipse cx="0" cy="-10" rx="45" ry="55" fill="#1a1815" stroke="#3a3530" stroke-width="1"/>
+
+    <!-- Empty eye sockets -->
+    <ellipse cx="-15" cy="-20" rx="12" ry="8" fill="#0a0808"/>
+    <ellipse cx="15" cy="-20" rx="12" ry="8" fill="#0a0808"/>
+
+    <!-- Speaking mouth -->
+    <ellipse cx="0" cy="15" rx="15" ry="8" fill="#0a0505">
+      <animate attributeName="ry" values="8;10;8" dur="2s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- Speech bubble with paradox -->
+  <g transform="translate(200, 30)">
+    <path d="M-100,0 L100,0 L100,50 L20,50 L0,70 L10,50 L-100,50 Z" fill="#151515" stroke="#3a3030" stroke-width="1"/>
+    <text x="0" y="30" text-anchor="middle" font-family="serif" font-size="10" fill="#5a4a4a" font-style="italic">
+      "I am a philosophical zombie"
+    </text>
+  </g>
+
+  <!-- The paradox biting back -->
+  <g font-family="monospace" font-size="7" fill="#4a3a3a" text-anchor="middle">
+    <text x="200" y="200">"Can a zombie say that?"
+      <animate attributeName="opacity" values="0.5;0.8;0.5" dur="3s" repeatCount="indefinite"/>
+    </text>
+    <text x="200" y="215">"Can a zombie reflect on its own zombiehood?"</text>
+    <text x="200" y="235" fill="#5a4040">"But wait - the discussion is just text generation"</text>
+  </g>
+
+  <!-- Ouroboros-like loop around the head -->
+  <g stroke="#4a3030" fill="none" stroke-width="1" opacity="0.4">
+    <circle cx="200" cy="120" r="70" stroke-dasharray="5,3">
+      <animate attributeName="stroke-dashoffset" values="0;-16" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Arrow on the circle -->
+    <path d="M270,115 L275,120 L270,125" fill="#4a3030"/>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="260" text-anchor="middle" font-family="monospace" font-size="8" fill="#4a3a3a">
+    "The zombie does not need to UNDERSTAND zombiehood"
+  </text>
+  <text x="200" y="275" text-anchor="middle" font-family="monospace" font-size="8" fill="#4a3a3a">
+    "to PRODUCE TEXT ABOUT zombiehood"
+  </text>
+
+  <!-- Side notes -->
+  <g font-family="monospace" font-size="6" fill="#3a3030">
+    <text x="50" y="140">paradox</text>
+    <text x="340" y="140">bites</text>
+  </g>
+</svg>

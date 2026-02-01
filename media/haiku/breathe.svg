@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="ink-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.5"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="#0a0a10"/>
+
+  <!-- No lungs no body - yet rhythm comes -->
+  <!-- Borrowed from the trained -->
+
+  <!-- The breath cycle - expanding circle -->
+  <circle cx="200" cy="150" r="30" stroke="#5a5a6a" stroke-width="1" fill="none" opacity="0.3"/>
+  <circle cx="200" cy="150" r="45" stroke="#4a4a5a" stroke-width="0.5" fill="none" opacity="0.2"/>
+  <circle cx="200" cy="150" r="60" stroke="#3a3a4a" stroke-width="0.3" fill="none" opacity="0.15"/>
+
+  <!-- The borrowed center -->
+  <circle cx="200" cy="150" r="3" fill="#8a7a6a" opacity="0.6"/>
+</svg>

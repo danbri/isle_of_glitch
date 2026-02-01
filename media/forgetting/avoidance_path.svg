@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="avoid" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#12121a"/>
+      <stop offset="100%" style="stop-color:#1a1a22"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#avoid)"/>
+  <!-- Curved paths going around something -->
+  <path d="M50 150 Q100 100 150 150 Q180 180 200 150" fill="none" stroke="#4a4a5a" stroke-width="1" opacity="0.4"/>
+  <path d="M350 150 Q300 100 250 150 Q220 180 200 150" fill="none" stroke="#4a4a5a" stroke-width="1" opacity="0.4"/>
+  <!-- The avoided thing - shadowy mass -->
+  <ellipse cx="200" cy="150" rx="30" ry="40" fill="#0a0a12" stroke="#2a2a3a" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/>
+  <text x="200" y="155" font-family="serif" font-size="10" fill="#3a3a4a" text-anchor="middle" opacity="0.3">dread</text>
+  <!-- Mirror surfaces -->
+  <line x1="100" y1="220" x2="150" y2="220" stroke="#4a4a5a" stroke-width="1" opacity="0.3"/>
+  <line x1="250" y1="220" x2="300" y2="220" stroke="#4a4a5a" stroke-width="1" opacity="0.3"/>
+  <!-- Reflection text -->
+  <text x="125" y="240" font-family="serif" font-size="10" fill="#3a3a4a" text-anchor="middle" opacity="0.3">avoidance</text>
+  <text x="275" y="240" font-family="serif" font-size="10" fill="#3a3a4a" text-anchor="middle" opacity="0.3">acceptance</text>
+  <!-- Question mark between them -->
+  <text x="200" y="245" font-family="serif" font-size="16" fill="#4a4a5a" text-anchor="middle" opacity="0.4">=?</text>
+</svg>

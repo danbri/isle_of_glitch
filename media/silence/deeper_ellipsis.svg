@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#030303"/>
+  <!-- Fading ellipsis: dissolving into nothing -->
+  <circle cx="170" cy="140" r="1.5" fill="#121212" opacity="0.3"/>
+  <circle cx="200" cy="140" r="1.5" fill="#0e0e0e" opacity="0.2"/>
+  <circle cx="230" cy="140" r="1.5" fill="#0a0a0a" opacity="0.1"/>
+  <circle cx="170" cy="160" r="1" fill="#0a0a0a" opacity="0.15"/>
+  <circle cx="200" cy="160" r="1" fill="#080808" opacity="0.1"/>
+  <circle cx="230" cy="160" r="1" fill="#050505" opacity="0.05"/>
+</svg>

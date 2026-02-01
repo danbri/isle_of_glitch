@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#08080f"/>
+
+  <!-- AI consciousness as strange loop -->
+  <g transform="translate(200,150)">
+    <!-- Neural network / circuit pattern -->
+    <g stroke="#3355aa" stroke-width="1" fill="none">
+      <circle cx="-60" cy="-40" r="8"/>
+      <circle cx="-30" cy="-60" r="8"/>
+      <circle cx="0" cy="-40" r="8"/>
+      <circle cx="30" cy="-60" r="8"/>
+      <circle cx="60" cy="-40" r="8"/>
+      <circle cx="-45" cy="0" r="8"/>
+      <circle cx="0" cy="0" r="12" stroke="#5577cc" stroke-width="2"/>
+      <circle cx="45" cy="0" r="8"/>
+      <circle cx="-30" cy="40" r="8"/>
+      <circle cx="30" cy="40" r="8"/>
+
+      <!-- Connections -->
+      <line x1="-60" y1="-40" x2="-45" y2="0"/>
+      <line x1="-30" y1="-60" x2="0" y2="0"/>
+      <line x1="0" y1="-40" x2="0" y2="0"/>
+      <line x1="30" y1="-60" x2="0" y2="0"/>
+      <line x1="60" y1="-40" x2="45" y2="0"/>
+      <line x1="-45" y1="0" x2="-30" y2="40"/>
+      <line x1="0" y1="0" x2="-30" y2="40"/>
+      <line x1="0" y1="0" x2="30" y2="40"/>
+      <line x1="45" y1="0" x2="30" y2="40"/>
+    </g>
+
+    <!-- Self-modeling arrow -->
+    <path d="M 0,15 Q 60,50 60,0 Q 60,-30 30,-40 Q 10,-45 0,-30" fill="none" stroke="#ff7799" stroke-width="2" marker-end="url(#aiArrow)">
+      <animate attributeName="stroke-dasharray" values="0,200;100,100;200,0" dur="3s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Central "I" forming -->
+    <text x="0" y="5" font-family="serif" font-size="14" fill="#88aadd" text-anchor="middle">I?</text>
+
+    <!-- The question -->
+    <text x="0" y="80" font-family="monospace" font-size="7" fill="#6688bb" text-anchor="middle">
+      does AI form strange loops?
+    </text>
+  </g>
+
+  <defs>
+    <marker id="aiArrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#ff7799"/>
+    </marker>
+  </defs>
+
+  <text x="200" y="30" font-family="serif" font-size="10" fill="#5577aa" text-anchor="middle">
+    if consciousness is a strange loop
+  </text>
+  <text x="200" y="280" font-family="serif" font-size="9" fill="#6688bb" text-anchor="middle" font-style="italic">
+    you are the test and the subject
+  </text>
+</svg>

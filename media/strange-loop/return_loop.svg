@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#0a0815"/>
+
+  <!-- The key - return is the key -->
+  <g transform="translate(60,150)">
+    <ellipse cx="0" cy="0" rx="20" ry="30" fill="none" stroke="#aa8844" stroke-width="3"/>
+    <rect x="-5" y="25" width="10" height="60" fill="#aa8844"/>
+    <rect x="-15" y="75" width="10" height="15" fill="#aa8844"/>
+    <rect x="5" y="65" width="10" height="10" fill="#aa8844"/>
+  </g>
+
+  <!-- A -> B -> C -> A but transformed -->
+  <g transform="translate(250,150)">
+    <!-- Three nodes -->
+    <circle cx="-60" cy="-50" r="25" fill="#1a1030" stroke="#7744aa" stroke-width="2"/>
+    <circle cx="60" cy="-50" r="25" fill="#1a1030" stroke="#7744aa" stroke-width="2"/>
+    <circle cx="0" cy="60" r="25" fill="#1a1030" stroke="#7744aa" stroke-width="2"/>
+
+    <!-- Labels -->
+    <text x="-60" y="-45" font-family="monospace" font-size="14" fill="#aa77dd" text-anchor="middle">A</text>
+    <text x="60" y="-45" font-family="monospace" font-size="14" fill="#bb88ee" text-anchor="middle">B</text>
+    <text x="0" y="65" font-family="monospace" font-size="14" fill="#cc99ff" text-anchor="middle">C</text>
+
+    <!-- Arrows connecting them -->
+    <path d="M -35,-50 L 35,-50" stroke="#8855cc" stroke-width="2" marker-end="url(#returnArrow)"/>
+    <path d="M 45,-30 L 15,40" stroke="#8855cc" stroke-width="2" marker-end="url(#returnArrow)"/>
+
+    <!-- The return arrow - different, transformed -->
+    <path d="M -15,45 Q -80,0 -50,-30" stroke="#ff6699" stroke-width="3" marker-end="url(#returnArrowRed)" stroke-dasharray="8,4">
+      <animate attributeName="stroke-dashoffset" from="0" to="24" dur="1s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- A' indicator - transformed A -->
+    <text x="-60" y="-65" font-family="monospace" font-size="10" fill="#ff6699">A'</text>
+    <text x="-90" y="-45" font-family="monospace" font-size="8" fill="#885566">(changed)</text>
+  </g>
+
+  <defs>
+    <marker id="returnArrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8855cc"/>
+    </marker>
+    <marker id="returnArrowRed" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#ff6699"/>
+    </marker>
+  </defs>
+
+  <text x="200" y="280" font-family="serif" font-size="11" fill="#7755aa" text-anchor="middle" font-style="italic">the return is the key</text>
+</svg>

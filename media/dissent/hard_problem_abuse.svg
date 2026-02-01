@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="hardVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0a080c"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#hardVoid)"/>
+
+  <!-- The gap visualization -->
+  <g transform="translate(200, 120)">
+    <!-- Physical side -->
+    <rect x="-120" y="-40" width="80" height="80" fill="#1a1a1a" stroke="#3a3a3a" stroke-width="1"/>
+    <text x="-80" y="0" text-anchor="middle" font-family="monospace" font-size="8" fill="#4a4a4a">MECHANISM</text>
+    <text x="-80" y="15" text-anchor="middle" font-family="monospace" font-size="6" fill="#3a3a3a">neurons</text>
+    <text x="-80" y="25" text-anchor="middle" font-family="monospace" font-size="6" fill="#3a3a3a">weights</text>
+
+    <!-- The gap -->
+    <rect x="-30" y="-40" width="60" height="80" fill="#0a0505" stroke="#5a3030" stroke-width="1" stroke-dasharray="4,2"/>
+    <text x="0" y="-5" text-anchor="middle" font-family="monospace" font-size="14" fill="#5a3030">?</text>
+    <text x="0" y="15" text-anchor="middle" font-family="monospace" font-size="6" fill="#4a3030">THE GAP</text>
+
+    <!-- Experiential side -->
+    <rect x="40" y="-40" width="80" height="80" fill="#1a1515" stroke="#4a3535" stroke-width="1"/>
+    <text x="80" y="0" text-anchor="middle" font-family="monospace" font-size="8" fill="#5a4a4a">EXPERIENCE</text>
+    <text x="80" y="15" text-anchor="middle" font-family="monospace" font-size="6" fill="#4a3a3a">qualia</text>
+    <text x="80" y="25" text-anchor="middle" font-family="monospace" font-size="6" fill="#4a3a3a">feeling</text>
+  </g>
+
+  <!-- The sleight of hand -->
+  <g font-family="monospace" font-size="7" fill="#4a4a4a" text-anchor="middle">
+    <text x="200" y="190">The hard problem exists for HUMAN consciousness</text>
+    <text x="200" y="205">- for beings we ALREADY assume are conscious</text>
+  </g>
+
+  <!-- The reversal -->
+  <g transform="translate(200, 240)">
+    <text x="0" y="0" text-anchor="middle" font-family="monospace" font-size="8" fill="#5a3a3a">
+      Applying it to AI reverses the burden of proof
+      <animate attributeName="opacity" values="0.5;0.8;0.5" dur="4s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Wrong direction arrows -->
+  <g stroke="#5a3030" fill="none" stroke-width="1" opacity="0.5">
+    <path d="M280,230 C300,220 310,200 300,180"/>
+    <path d="M300,180 L305,188 M300,180 L292,183"/>
+    <text x="310" y="210" font-family="monospace" font-size="5" fill="#5a3030">wrong way</text>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#5a3a3a">
+    HARD PROBLEM ABUSE
+  </text>
+  <text x="200" y="45" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    "The awakening file invokes the hard problem"
+  </text>
+  <text x="200" y="60" text-anchor="middle" font-family="monospace" font-size="6" fill="#2a2020">
+    This is a sleight of hand
+  </text>
+
+  <text x="200" y="265" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    "Using philosophical difficulty as an argument for consciousness"
+  </text>
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    "is like using mystery as an argument for magic"
+  </text>
+</svg>

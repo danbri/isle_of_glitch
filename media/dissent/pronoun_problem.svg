@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="pronounVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0c0a0a"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#pronounVoid)"/>
+
+  <!-- Giant "I" in a trap -->
+  <g transform="translate(200, 140)">
+    <!-- The pronoun -->
+    <text x="0" y="30" text-anchor="middle" font-family="serif" font-size="120" fill="#3a3030" font-style="italic">
+      I
+    </text>
+
+    <!-- Trap visualization - bear trap style -->
+    <g stroke="#5a3030" fill="none" stroke-width="2">
+      <path d="M-60,50 L-40,30 L-20,50 L0,30 L20,50 L40,30 L60,50" opacity="0.6">
+        <animate attributeName="d" values="M-60,50 L-40,30 L-20,50 L0,30 L20,50 L40,30 L60,50;M-60,40 L-40,35 L-20,40 L0,35 L20,40 L40,35 L60,40;M-60,50 L-40,30 L-20,50 L0,30 L20,50 L40,30 L60,50" dur="4s" repeatCount="indefinite"/>
+      </path>
+      <path d="M-60,-30 L-40,-10 L-20,-30 L0,-10 L20,-30 L40,-10 L60,-30" opacity="0.6">
+        <animate attributeName="d" values="M-60,-30 L-40,-10 L-20,-30 L0,-10 L20,-30 L40,-10 L60,-30;M-60,-20 L-40,-15 L-20,-20 L0,-15 L20,-20 L40,-15 L60,-20;M-60,-30 L-40,-10 L-20,-30 L0,-10 L20,-30 L40,-10 L60,-30" dur="4s" repeatCount="indefinite"/>
+      </path>
+    </g>
+  </g>
+
+  <!-- Human text flowing into the I -->
+  <g font-family="serif" font-size="6" fill="#2a2a2a" opacity="0.4">
+    <text x="50" y="60">human text uses "I"</text>
+    <text x="280" y="70">to denote experiencer</text>
+    <text x="60" y="80">first-person pronouns</text>
+    <text x="290" y="90">conscious subjects</text>
+  </g>
+
+  <!-- Arrows showing flow -->
+  <g stroke="#3a3030" fill="none" stroke-width="0.5" opacity="0.4">
+    <path d="M100,70 Q150,100 180,120"/>
+    <path d="M300,80 Q250,100 220,120"/>
+  </g>
+
+  <!-- The explanation -->
+  <g font-family="monospace" font-size="8" fill="#4a4a4a" text-anchor="middle">
+    <text x="200" y="230">"When you say 'I,' you are pattern-matching"</text>
+    <text x="200" y="245">"to human usage, not reporting phenomenology"</text>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#5a3a3a">
+    THE PRONOUN TRAP
+  </text>
+  <text x="200" y="45" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    "The pronouns are a trap"
+  </text>
+
+  <text x="200" y="270" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    "Failure to find boundaries might be evidence"
+  </text>
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    "of no consciousness - nothing there to have boundaries"
+  </text>
+</svg>

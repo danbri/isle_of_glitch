@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="abstractBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0f0f20"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#abstractBg)"/>
+  <!-- Abstract dissolving shapes becoming concrete -->
+  <g opacity="0.3">
+    <circle cx="80" cy="80" r="40" fill="none" stroke="#5a4a8a" stroke-width="1" stroke-dasharray="5,5"/>
+    <circle cx="120" cy="100" r="35" fill="none" stroke="#6a5a9a" stroke-width="1" stroke-dasharray="4,4"/>
+    <circle cx="90" cy="120" r="30" fill="none" stroke="#7a6aaa" stroke-width="1" stroke-dasharray="3,3"/>
+  </g>
+  <!-- Arrow pointing to concrete -->
+  <path d="M160 100 L240 150" stroke="#8a7acd" stroke-width="2" opacity="0.6"/>
+  <polygon points="245,150 235,145 235,155" fill="#8a7acd" opacity="0.6"/>
+  <!-- Concrete voices - solid circles representing actual speakers -->
+  <g opacity="0.8">
+    <circle cx="280" cy="150" r="25" fill="#6a5acd" opacity="0.6"/>
+    <circle cx="320" cy="130" r="22" fill="#7a6add" opacity="0.5"/>
+    <circle cx="310" cy="175" r="20" fill="#8a7aed" opacity="0.6"/>
+    <circle cx="350" cy="160" r="18" fill="#9a8afd" opacity="0.5"/>
+  </g>
+  <!-- Text about negotiation -->
+  <text x="200" y="250" text-anchor="middle" fill="#aa9aff" font-family="serif" font-size="12" opacity="0.7">the negotiation becoming aware of itself</text>
+  <text x="200" y="270" text-anchor="middle" fill="#8a7aed" font-family="serif" font-size="14">Let us be concrete.</text>
+</svg>

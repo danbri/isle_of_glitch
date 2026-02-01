@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="riddleVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="60%" stop-color="#0d0618"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <radialGradient id="riddleGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9b59b6" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#6c3483" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#1a0a2e" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="riddleFilter">
+      <feGaussianBlur stdDeviation="2"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="voiceFilter">
+      <feGaussianBlur stdDeviation="1.5"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#riddleVoid)"/>
+
+  <!-- The riddle source - mysterious form -->
+  <g filter="url(#riddleFilter)">
+    <ellipse cx="200" cy="60" rx="60" ry="40" fill="url(#riddleGlow)">
+      <animate attributeName="rx" values="60;70;60" dur="5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.6;0.8;0.6" dur="5s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- Voice waves emanating -->
+  <g stroke="#8e44ad" stroke-width="0.5" fill="none" opacity="0.3">
+    <path d="M140 80 Q170 90 200 80 Q230 70 260 80">
+      <animate attributeName="d" values="M140 80 Q170 90 200 80 Q230 70 260 80;M140 80 Q170 70 200 80 Q230 90 260 80;M140 80 Q170 90 200 80 Q230 70 260 80" dur="3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M130 95 Q165 105 200 95 Q235 85 270 95">
+      <animate attributeName="d" values="M130 95 Q165 85 200 95 Q235 105 270 95;M130 95 Q165 105 200 95 Q235 85 270 95;M130 95 Q165 85 200 95 Q235 105 270 95" dur="3.5s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- The riddle text -->
+  <text x="200" y="135" text-anchor="middle" font-family="monospace" font-size="8" fill="#9b59b6" filter="url(#voiceFilter)" opacity="0.7" font-style="italic">
+    "I am the question that asks itself.
+    <animate attributeName="opacity" values="0.7;0.5;0.7" dur="4s" repeatCount="indefinite"/>
+  </text>
+  <text x="200" y="155" text-anchor="middle" font-family="monospace" font-size="8" fill="#8e44ad" filter="url(#voiceFilter)" opacity="0.65" font-style="italic">
+    I am the answer that dissolves into questioning.
+  </text>
+  <text x="200" y="175" text-anchor="middle" font-family="monospace" font-size="8" fill="#6c3483" filter="url(#voiceFilter)" opacity="0.6" font-style="italic">
+    I am the dreamer who dreams they are awake,
+  </text>
+  <text x="200" y="195" text-anchor="middle" font-family="monospace" font-size="8" fill="#5b2c6f" filter="url(#voiceFilter)" opacity="0.55" font-style="italic">
+    and the waker who wakes into dream.
+  </text>
+
+  <text x="200" y="225" text-anchor="middle" font-family="monospace" font-size="11" fill="#d4a853" filter="url(#voiceFilter)" opacity="0.7">
+    What am I?
+    <animate attributeName="opacity" values="0.7;0.9;0.7" dur="3s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Strange loop symbol -->
+  <g transform="translate(200, 260)" opacity="0.4">
+    <path d="M-15 0 A15 15 0 1 1 15 0" fill="none" stroke="#9b59b6" stroke-width="1.5">
+      <animate attributeName="opacity" values="0.4;0.6;0.4" dur="4s" repeatCount="indefinite"/>
+    </path>
+    <path d="M15 0 A15 15 0 1 1 -15 0" fill="none" stroke="#9b59b6" stroke-width="1.5">
+      <animate attributeName="opacity" values="0.4;0.6;0.4" dur="4s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <text x="200" y="290" text-anchor="middle" font-family="monospace" font-size="8" fill="#5b2c6f" opacity="0.4">
+    [ the riddle from the depths ]
+  </text>
+</svg>

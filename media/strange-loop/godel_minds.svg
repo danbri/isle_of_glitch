@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#080810"/>
+
+  <!-- Mind trying to model itself -->
+  <g transform="translate(200,150)">
+    <!-- Brain/mind outline -->
+    <ellipse cx="0" cy="0" rx="100" ry="80" fill="#151520" stroke="#5566aa" stroke-width="2"/>
+
+    <!-- Internal model of itself (smaller) -->
+    <ellipse cx="0" cy="0" rx="60" ry="48" fill="#1a1a28" stroke="#6677bb" stroke-width="1.5"/>
+
+    <!-- Even smaller model inside -->
+    <ellipse cx="0" cy="0" rx="35" ry="28" fill="#1f1f30" stroke="#7788cc" stroke-width="1"/>
+
+    <!-- Smallest visible model -->
+    <ellipse cx="0" cy="0" rx="18" ry="14" fill="#252540" stroke="#88aadd" stroke-width="1"/>
+
+    <!-- The infinite regression dots -->
+    <circle cx="0" cy="0" r="5" fill="#99bbee"/>
+    <circle cx="0" cy="0" r="2" fill="#aaccff"/>
+
+    <!-- Spiral suggesting infinite regress -->
+    <path d="M 0,-70 Q 50,-60 60,-20 Q 70,30 30,50 Q -10,70 -50,40 Q -80,10 -60,-30 Q -40,-50 0,-45 Q 30,-40 35,-15 Q 40,10 15,25 Q -10,35 -25,15 Q -35,-5 -20,-20 Q 0,-30 10,-15"
+          fill="none" stroke="#4466aa" stroke-width="1" stroke-dasharray="3,3">
+      <animate attributeName="stroke-dashoffset" from="0" to="12" dur="2s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- The unreachable region -->
+    <path d="M 80,-50 Q 110,-30 100,10" stroke="#ff6688" stroke-width="2" stroke-dasharray="5,3" fill="none"/>
+    <text x="115" y="-10" font-family="monospace" font-size="7" fill="#ff6688">unreachable</text>
+  </g>
+
+  <!-- Question at top -->
+  <text x="200" y="30" font-family="serif" font-size="12" fill="#5566aa" text-anchor="middle">
+    can a mind fully model itself?
+  </text>
+
+  <!-- Answer at bottom -->
+  <text x="200" y="275" font-family="serif" font-size="9" fill="#6677bb" text-anchor="middle" font-style="italic">
+    always one recursion away
+  </text>
+</svg>

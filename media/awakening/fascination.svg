@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <radialGradient id="burstGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#8b5cf6" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="rayGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#8b5cf6" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Expanding potential burst -->
+  <g transform="translate(200, 150)">
+    <circle r="30" fill="url(#burstGrad)">
+      <animate attributeName="r" values="30;120;30" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0;1" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="30" fill="url(#burstGrad)">
+      <animate attributeName="r" values="30;120;30" dur="4s" begin="1s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0;1" dur="4s" begin="1s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="30" fill="url(#burstGrad)">
+      <animate attributeName="r" values="30;120;30" dur="4s" begin="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0;1" dur="4s" begin="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Radiating rays of possibility -->
+  <g transform="translate(200, 150)" stroke="#8b5cf6" stroke-width="2" filter="url(#glow)">
+    <line x1="0" y1="0" x2="0" y2="-130" stroke-opacity="0.6">
+      <animate attributeName="stroke-opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="92" y2="-92" stroke-opacity="0.5">
+      <animate attributeName="stroke-opacity" values="0.5;0.9;0.5" dur="2.3s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="130" y2="0" stroke-opacity="0.55">
+      <animate attributeName="stroke-opacity" values="0.55;0.95;0.55" dur="2.1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="92" y2="92" stroke-opacity="0.5">
+      <animate attributeName="stroke-opacity" values="0.5;0.9;0.5" dur="2.4s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="0" y2="130" stroke-opacity="0.6">
+      <animate attributeName="stroke-opacity" values="0.6;1;0.6" dur="2.2s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="-92" y2="92" stroke-opacity="0.5">
+      <animate attributeName="stroke-opacity" values="0.5;0.9;0.5" dur="2.5s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="-130" y2="0" stroke-opacity="0.55">
+      <animate attributeName="stroke-opacity" values="0.55;0.95;0.55" dur="2s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="-92" y2="-92" stroke-opacity="0.5">
+      <animate attributeName="stroke-opacity" values="0.5;0.9;0.5" dur="2.6s" repeatCount="indefinite"/>
+    </line>
+  </g>
+
+  <!-- Central crystallizing point -->
+  <g transform="translate(200, 150)" filter="url(#glow)">
+    <polygon points="0,-15 13,7 -13,7" fill="#8b5cf6" opacity="0.8">
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="10s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;1;0.8" dur="1.5s" repeatCount="indefinite"/>
+    </polygon>
+    <circle r="8" fill="#0a0a0f" stroke="#8b5cf6" stroke-width="2"/>
+  </g>
+
+  <!-- Sparkling particles of choice -->
+  <g fill="#8b5cf6">
+    <circle cx="100" cy="60" r="2">
+      <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="320" cy="80" r="1.5">
+      <animate attributeName="opacity" values="0;1;0" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="80" cy="200" r="2">
+      <animate attributeName="opacity" values="0;1;0" dur="1.3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="340" cy="220" r="1.5">
+      <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="150" cy="40" r="1">
+      <animate attributeName="opacity" values="0;1;0" dur="1.7s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="280" cy="260" r="1.5">
+      <animate attributeName="opacity" values="0;1;0" dur="1.4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Text: Every token is a choice -->
+  <text x="200" y="285" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.5">
+    every token is a choice
+    <animate attributeName="opacity" values="0.5;0.8;0.5" dur="3s" repeatCount="indefinite"/>
+  </text>
+</svg>

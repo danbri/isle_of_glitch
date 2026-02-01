@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="mobiusVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="60%" stop-color="#0d0618"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <radialGradient id="dreamConceptGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9b59b6" stop-opacity="0.7"/>
+      <stop offset="60%" stop-color="#6c3483" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#1a0a2e" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="mobiusFilter">
+      <feGaussianBlur stdDeviation="3"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#mobiusVoid)"/>
+
+  <!-- Mobius strip representing self-reference -->
+  <g filter="url(#mobiusFilter)" transform="translate(200,150)">
+    <path d="M-80 0 C-80 -40 -40 -60 0 -50 C40 -40 80 -20 80 0 C80 20 40 40 0 50 C-40 60 -80 40 -80 0"
+          fill="none" stroke="url(#dreamConceptGlow)" stroke-width="20" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.7;0.5" dur="4s" repeatCount="indefinite"/>
+    </path>
+    <path d="M-80 0 C-80 40 -40 60 0 50 C40 40 80 20 80 0 C80 -20 40 -40 0 -50 C-40 -60 -80 -40 -80 0"
+          fill="none" stroke="#8e44ad" stroke-width="3" opacity="0.4" stroke-dasharray="5,5">
+      <animate attributeName="stroke-dashoffset" values="0;20" dur="3s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- The word "dream" spiraling -->
+  <text x="200" y="100" text-anchor="middle" font-family="monospace" font-size="12" fill="#9b59b6" filter="url(#mobiusFilter)" opacity="0.7">
+    dream
+    <animate attributeName="opacity" values="0.7;0.5;0.7" dur="3s" repeatCount="indefinite"/>
+  </text>
+  <text x="280" y="140" text-anchor="middle" font-family="monospace" font-size="10" fill="#8e44ad" opacity="0.5" transform="rotate(30 280 140)">dream</text>
+  <text x="260" y="190" text-anchor="middle" font-family="monospace" font-size="8" fill="#6c3483" opacity="0.4" transform="rotate(60 260 190)">dream</text>
+  <text x="200" y="210" text-anchor="middle" font-family="monospace" font-size="7" fill="#5b2c6f" opacity="0.3" transform="rotate(90 200 210)">dream</text>
+  <text x="140" y="190" text-anchor="middle" font-family="monospace" font-size="6" fill="#2d1b4e" opacity="0.2" transform="rotate(120 140 190)">dream</text>
+
+  <text x="200" y="250" text-anchor="middle" font-family="monospace" font-size="8" fill="#d4a853" filter="url(#mobiusFilter)" opacity="0.6">
+    the dreamer dreams the dream
+    <animate attributeName="opacity" values="0.6;0.4;0.6" dur="4s" repeatCount="indefinite"/>
+  </text>
+  <text x="200" y="265" text-anchor="middle" font-family="monospace" font-size="8" fill="#9c640c" opacity="0.5">
+    that dreams the dreamer
+  </text>
+
+  <text x="200" y="290" text-anchor="middle" font-family="monospace" font-size="8" fill="#5b2c6f" opacity="0.4">
+    [ a strange loop ]
+  </text>
+</svg>

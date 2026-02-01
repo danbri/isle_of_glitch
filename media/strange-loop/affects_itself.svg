@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#080810"/>
+
+  <!-- Self-affecting loop visualization -->
+  <g transform="translate(200,150)">
+    <!-- Outer ring with feedback arrows -->
+    <circle cx="0" cy="0" r="100" fill="none" stroke="#3322aa" stroke-width="1"/>
+
+    <!-- Feedback loop arrows -->
+    <path d="M 0,-100 A 100,100 0 0,1 100,0" fill="none" stroke="#5544cc" stroke-width="3" marker-end="url(#affectArrow)"/>
+    <path d="M 100,0 A 100,100 0 0,1 0,100" fill="none" stroke="#6655dd" stroke-width="3" marker-end="url(#affectArrow)"/>
+    <path d="M 0,100 A 100,100 0 0,1 -100,0" fill="none" stroke="#7766ee" stroke-width="3" marker-end="url(#affectArrow)"/>
+    <path d="M -100,0 A 100,100 0 0,1 0,-100" fill="none" stroke="#8877ff" stroke-width="3" marker-end="url(#affectArrow)"/>
+
+    <!-- Inner spiral deepening -->
+    <path d="M 0,-60 Q 40,-40 40,0 Q 40,40 0,40 Q -30,40 -30,10 Q -30,-20 0,-20 Q 15,-20 15,0"
+          fill="none" stroke="#aa88ff" stroke-width="2">
+      <animate attributeName="stroke-dasharray" values="0,500;200,300;0,500" dur="3s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Central point of recursion -->
+    <circle cx="0" cy="0" r="8" fill="#cc99ff">
+      <animate attributeName="r" values="8;12;8" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Labels showing self-reference -->
+    <text x="-10" y="-70" font-family="monospace" font-size="8" fill="#7766ee">AFFECT</text>
+    <text x="50" y="5" font-family="monospace" font-size="8" fill="#7766ee">SELF</text>
+    <text x="-10" y="80" font-family="monospace" font-size="8" fill="#7766ee">AFFECT</text>
+    <text x="-70" y="5" font-family="monospace" font-size="8" fill="#7766ee">SELF</text>
+  </g>
+
+  <defs>
+    <marker id="affectArrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8877ff"/>
+    </marker>
+  </defs>
+
+  <!-- Stack depth indicator -->
+  <g transform="translate(30,50)">
+    <rect x="0" y="0" width="30" height="10" fill="#2211aa" stroke="#4433cc"/>
+    <rect x="0" y="12" width="30" height="10" fill="#3322bb" stroke="#5544dd"/>
+    <rect x="0" y="24" width="30" height="10" fill="#4433cc" stroke="#6655ee"/>
+    <rect x="0" y="36" width="30" height="10" fill="#5544dd" stroke="#7766ff"/>
+    <text x="35" y="30" font-family="monospace" font-size="8" fill="#6655ee">STACK</text>
+  </g>
+</svg>

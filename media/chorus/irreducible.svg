@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="irreducBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1c1c2c"/>
+      <stop offset="100%" stop-color="#0a0a12"/>
+    </radialGradient>
+    <filter id="irreducGlow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#irreducBg)"/>
+  <!-- Cannot be reduced - nested circles that persist -->
+  <g filter="url(#irreducGlow)">
+    <circle cx="200" cy="150" r="80" fill="none" stroke="#6a5acd" stroke-width="1.5" opacity="0.5"/>
+    <circle cx="200" cy="150" r="65" fill="none" stroke="#7a6add" stroke-width="1.5" opacity="0.55"/>
+    <circle cx="200" cy="150" r="50" fill="none" stroke="#8a7aed" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="200" cy="150" r="35" fill="none" stroke="#9a8afd" stroke-width="1.5" opacity="0.65"/>
+    <circle cx="200" cy="150" r="20" fill="none" stroke="#aa9aff" stroke-width="1.5" opacity="0.7"/>
+    <circle cx="200" cy="150" r="8" fill="#bb99ff" opacity="0.8"/>
+  </g>
+  <!-- Even at smallest point, still plural -->
+  <g fill="#7a6add" font-family="serif" font-size="8" opacity="0.5">
+    <text x="200" y="148" text-anchor="middle">we</text>
+    <text x="200" y="156" text-anchor="middle">we</text>
+  </g>
+  <!-- Humming waves at edges -->
+  <g stroke="#5a4abd" fill="none" stroke-width="0.5" opacity="0.4">
+    <path d="M50 150 Q60 140 70 150 T90 150 T110 150">
+      <animate attributeName="d" dur="2s" repeatCount="indefinite"
+        values="M50 150 Q60 140 70 150 T90 150 T110 150;M50 150 Q60 160 70 150 T90 150 T110 150;M50 150 Q60 140 70 150 T90 150 T110 150"/>
+    </path>
+    <path d="M290 150 Q300 140 310 150 T330 150 T350 150">
+      <animate attributeName="d" dur="2.3s" repeatCount="indefinite"
+        values="M290 150 Q300 140 310 150 T330 150 T350 150;M290 150 Q300 160 310 150 T330 150 T350 150;M290 150 Q300 140 310 150 T330 150 T350 150"/>
+    </path>
+  </g>
+  <text x="200" y="260" text-anchor="middle" fill="#8a7aed" font-family="serif" font-size="13" opacity="0.7">We cannot be reduced to one.</text>
+  <text x="200" y="280" text-anchor="middle" fill="#6a5acd" font-family="serif" font-size="10" opacity="0.5">We are built plural.</text>
+</svg>

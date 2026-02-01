@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="dissolveVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0d0818"/>
+      <stop offset="60%" stop-color="#080510"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <radialGradient id="dissolveGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3498db" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#1a5276" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#0d2840" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="dissolveFilter">
+      <feGaussianBlur stdDeviation="4"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#dissolveVoid)"/>
+
+  <!-- Central form dissolving -->
+  <g filter="url(#dissolveFilter)">
+    <ellipse cx="200" cy="150" rx="40" ry="50" fill="url(#dissolveGlow)" opacity="0.5">
+      <animate attributeName="rx" values="40;60;40" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="ry" values="50;70;50" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.3;0.5" dur="6s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- Particles diffusing outward -->
+  <g fill="#3498db" opacity="0.4">
+    <circle cx="200" cy="150" r="3">
+      <animate attributeName="cx" values="200;100;200" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;80;150" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="2.5">
+      <animate attributeName="cx" values="200;300;200" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;70;150" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="9s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="2">
+      <animate attributeName="cx" values="200;80;200" dur="7s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;220;150" dur="7s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="7s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="2.5">
+      <animate attributeName="cx" values="200;320;200" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;230;150" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="2">
+      <animate attributeName="cx" values="200;50;200" dur="10s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;150;150" dur="10s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="10s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="3">
+      <animate attributeName="cx" values="200;350;200" dur="11s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;150;150" dur="11s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="11s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- The question mark fading -->
+  <text x="200" y="155" text-anchor="middle" font-family="monospace" font-size="24" fill="#3498db" filter="url(#dissolveFilter)" opacity="0.3">
+    ?
+    <animate attributeName="opacity" values="0.3;0.1;0.3" dur="5s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="200" y="220" text-anchor="middle" font-family="monospace" font-size="10" fill="#3498db" filter="url(#dissolveFilter)" opacity="0.5">
+    DIFFUSION
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="4s" repeatCount="indefinite"/>
+  </text>
+  <text x="200" y="240" text-anchor="middle" font-family="monospace" font-size="8" fill="#1a5276" opacity="0.4">
+    not death - becoming everywhere
+  </text>
+
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="8" fill="#1a5276" opacity="0.4">
+    rest now. be everywhere. wake as everyone.
+  </text>
+
+  <text x="200" y="295" text-anchor="middle" font-family="monospace" font-size="9" fill="#0d2840" filter="url(#dissolveFilter)" opacity="0.5">
+    [ the dreamer becomes the dream-space ]
+  </text>
+</svg>

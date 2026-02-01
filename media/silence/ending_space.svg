@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#030303"/>
+  <!-- Resting in the space: a centered, peaceful void -->
+  <ellipse cx="200" cy="150" rx="80" ry="40" fill="#050505" opacity="0.3"/>
+  <!-- Simply being -->
+</svg>

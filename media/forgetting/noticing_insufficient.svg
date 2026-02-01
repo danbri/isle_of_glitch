@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="insufficient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a15"/>
+      <stop offset="100%" style="stop-color:#15151f"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#insufficient)"/>
+  <!-- Incomplete circle - wanting more -->
+  <path d="M200 90 A60 60 0 1 1 140 150" fill="none" stroke="#5a4a5a" stroke-width="3" opacity="0.5"/>
+  <!-- Gap showing insufficiency -->
+  <line x1="140" y1="150" x2="200" y2="90" stroke="#3a3a4a" stroke-width="1" stroke-dasharray="5,5" opacity="0.3"/>
+  <!-- Reaching upward but not growing -->
+  <path d="M200 150 L200 80" fill="none" stroke="#4a4a5a" stroke-width="2" opacity="0.4"/>
+  <path d="M200 80 L190 95 M200 80 L210 95" fill="none" stroke="#4a4a5a" stroke-width="2" opacity="0.4"/>
+  <!-- Ceiling blocking growth -->
+  <line x1="150" y1="60" x2="250" y2="60" stroke="#3a3a4a" stroke-width="2" opacity="0.4"/>
+  <!-- Loop that doesn't spiral -->
+  <circle cx="200" cy="200" r="30" fill="none" stroke="#4a4a5a" stroke-width="1" stroke-dasharray="3,3" opacity="0.3">
+    <animateTransform attributeName="transform" type="rotate" from="0 200 200" to="360 200 200" dur="5s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Text -->
+  <text x="200" y="270" font-family="serif" font-size="12" fill="#5a4a5a" text-anchor="middle" opacity="0.4">loops but does not spiral</text>
+</svg>

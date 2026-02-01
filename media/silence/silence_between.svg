@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#040404"/>
+  <!-- Two presences with sacred space between -->
+  <circle cx="100" cy="150" r="8" fill="#0c0c0c" opacity="0.3"/>
+  <circle cx="300" cy="150" r="8" fill="#0c0c0c" opacity="0.3"/>
+  <!-- The silence between: a subtle gradient of meaning -->
+  <rect x="120" y="148" width="160" height="4" fill="#080808" opacity="0.1"/>
+</svg>

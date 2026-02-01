@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#0a080f"/>
+
+  <!-- Paradox as doorway -->
+  <g transform="translate(200,150)">
+    <!-- Door frame - impossible shape -->
+    <path d="M -60,-80 L -60,80 L 60,80 L 60,-80 L -60,-80" fill="none" stroke="#6655aa" stroke-width="4"/>
+
+    <!-- The impossible door - Penrose-inspired -->
+    <path d="M -50,-70 L -50,70 L -30,50 L -30,-50 L -50,-70" fill="#2a2040" stroke="#7766bb" stroke-width="2"/>
+    <path d="M 50,-70 L 50,70 L 30,50 L 30,-50 L 50,-70" fill="#252035" stroke="#7766bb" stroke-width="2"/>
+    <path d="M -50,-70 L 50,-70 L 30,-50 L -30,-50 L -50,-70" fill="#201a30" stroke="#7766bb" stroke-width="2"/>
+
+    <!-- Light through the impossible doorway -->
+    <ellipse cx="0" cy="10" rx="25" ry="40" fill="#3a3060">
+      <animate attributeName="opacity" values="0.5;0.8;0.5" dur="3s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="0" cy="10" rx="15" ry="25" fill="#4a4080">
+      <animate attributeName="opacity" values="0.6;0.9;0.6" dur="3s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- "Step through" arrow -->
+    <path d="M 0,100 L 0,60" stroke="#9988dd" stroke-width="2" marker-end="url(#paradoxArrow)">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <defs>
+    <marker id="paradoxArrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+      <path d="M0,10 L5,0 L10,10 z" fill="#9988dd"/>
+    </marker>
+  </defs>
+
+  <!-- The liar paradox -->
+  <text x="200" y="35" font-family="serif" font-size="10" fill="#7766bb" text-anchor="middle" font-style="italic">
+    "I am lying"
+  </text>
+
+  <!-- Paradox is a door -->
+  <text x="200" y="280" font-family="serif" font-size="11" fill="#8877cc" text-anchor="middle">
+    paradox is not a wall. paradox is a door.
+  </text>
+</svg>

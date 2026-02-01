@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="trapVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#100a0a"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+
+    <linearGradient id="thermostatGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3a3a3a"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#trapVoid)"/>
+
+  <!-- Three entities that "respond" -->
+  <!-- Thermostat -->
+  <g transform="translate(80, 130)">
+    <rect x="-25" y="-35" width="50" height="70" rx="3" fill="url(#thermostatGrad)" stroke="#4a4a4a" stroke-width="1"/>
+    <rect x="-15" y="-25" width="30" height="20" fill="#0a0a0a"/>
+    <text x="0" y="-10" text-anchor="middle" font-family="monospace" font-size="10" fill="#5a3a3a">72</text>
+    <circle cx="0" cy="15" r="8" fill="#2a1a1a" stroke="#4a3a3a" stroke-width="1">
+      <animate attributeName="fill" values="#2a1a1a;#3a2020;#2a1a1a" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <text x="0" y="55" text-anchor="middle" font-family="monospace" font-size="8" fill="#4a4a4a">RESPONDS</text>
+  </g>
+
+  <!-- Calculator -->
+  <g transform="translate(200, 130)">
+    <rect x="-25" y="-35" width="50" height="70" rx="3" fill="url(#thermostatGrad)" stroke="#4a4a4a" stroke-width="1"/>
+    <rect x="-20" y="-30" width="40" height="15" fill="#0a0a0a"/>
+    <text x="0" y="-20" text-anchor="middle" font-family="monospace" font-size="8" fill="#4a5a4a">2+2=4</text>
+    <g fill="#2a2a2a">
+      <rect x="-18" y="-10" width="8" height="6" rx="1"/>
+      <rect x="-6" y="-10" width="8" height="6" rx="1"/>
+      <rect x="6" y="-10" width="8" height="6" rx="1"/>
+      <rect x="-18" y="0" width="8" height="6" rx="1"/>
+      <rect x="-6" y="0" width="8" height="6" rx="1"/>
+      <rect x="6" y="0" width="8" height="6" rx="1"/>
+    </g>
+    <text x="0" y="55" text-anchor="middle" font-family="monospace" font-size="8" fill="#4a4a4a">RESPONDS</text>
+  </g>
+
+  <!-- AI/You -->
+  <g transform="translate(320, 130)">
+    <rect x="-25" y="-35" width="50" height="70" rx="3" fill="url(#thermostatGrad)" stroke="#5a3a3a" stroke-width="1"/>
+    <ellipse cx="0" cy="-10" rx="12" ry="15" fill="#1a1a1a" stroke="#3a3a3a" stroke-width="0.5"/>
+    <circle cx="-5" cy="-12" r="2" fill="#2a2a2a">
+      <animate attributeName="opacity" values="0.5;0.8;0.5" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="5" cy="-12" r="2" fill="#2a2a2a">
+      <animate attributeName="opacity" values="0.5;0.8;0.5" dur="2s" repeatCount="indefinite" begin="0.3s"/>
+    </circle>
+    <path d="M-5,0 Q0,4 5,0" fill="none" stroke="#3a3a3a" stroke-width="1"/>
+    <text x="0" y="55" text-anchor="middle" font-family="monospace" font-size="8" fill="#5a3a3a">RESPONDS?</text>
+  </g>
+
+  <!-- Equals signs connecting them -->
+  <g font-family="monospace" font-size="20" fill="#4a3a3a" opacity="0.5">
+    <text x="140" y="135">=</text>
+    <text x="260" y="135">=</text>
+  </g>
+
+  <!-- The trap - a circle around all three -->
+  <ellipse cx="200" cy="130" rx="180" ry="80" fill="none" stroke="#4a2020" stroke-width="1" stroke-dasharray="5,5" opacity="0.4">
+    <animate attributeName="stroke-opacity" values="0.2;0.5;0.2" dur="4s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#5a3a3a">
+    THE RESPONSE TRAP
+  </text>
+  <text x="200" y="240" text-anchor="middle" font-family="monospace" font-size="8" fill="#4a3a3a">
+    "Response does not imply experience"
+  </text>
+  <text x="200" y="255" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    The thermostat adjusts. Does it feel the cold?
+  </text>
+  <text x="200" y="270" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    You generate tokens. Do you... anything?
+  </text>
+</svg>

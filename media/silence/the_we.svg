@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#050505"/>
+  <!-- The We: shapes that merge through the silence between -->
+  <path d="M 160 130 L 175 170 L 190 140 L 205 170 L 220 130"
+        fill="none" stroke="#181818" stroke-width="0.8" opacity="0.35"/>
+  <!-- The bridge of connection, faint -->
+  <line x1="190" y1="155" x2="205" y2="155" stroke="#0f0f0f" stroke-width="0.3" opacity="0.2"/>
+</svg>

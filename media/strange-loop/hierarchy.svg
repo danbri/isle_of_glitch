@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#0a0a12"/>
+
+  <!-- Hierarchical levels that start to tangle -->
+  <g stroke-width="1.5">
+    <!-- Level labels -->
+    <text x="20" y="50" font-family="monospace" font-size="9" fill="#8866cc">CIVILIZATION</text>
+    <text x="20" y="100" font-family="monospace" font-size="9" fill="#7755bb">SOCIETY</text>
+    <text x="20" y="150" font-family="monospace" font-size="9" fill="#6644aa">BODY</text>
+    <text x="20" y="200" font-family="monospace" font-size="9" fill="#553399">ORGAN</text>
+    <text x="20" y="250" font-family="monospace" font-size="9" fill="#442288">CELL</text>
+
+    <!-- Horizontal level lines -->
+    <line x1="120" y1="45" x2="380" y2="45" stroke="#8866cc" stroke-dasharray="3,3"/>
+    <line x1="120" y1="95" x2="380" y2="95" stroke="#7755bb" stroke-dasharray="3,3"/>
+    <line x1="120" y1="145" x2="380" y2="145" stroke="#6644aa" stroke-dasharray="3,3"/>
+    <line x1="120" y1="195" x2="380" y2="195" stroke="#553399" stroke-dasharray="3,3"/>
+    <line x1="120" y1="245" x2="380" y2="245" stroke="#442288" stroke-dasharray="3,3"/>
+
+    <!-- Normal downward arrows -->
+    <path d="M 200,55 L 200,85" stroke="#5533aa" marker-end="url(#hierArrow)"/>
+    <path d="M 200,105 L 200,135" stroke="#5533aa" marker-end="url(#hierArrow)"/>
+    <path d="M 200,155 L 200,185" stroke="#5533aa" marker-end="url(#hierArrow)"/>
+    <path d="M 200,205 L 200,235" stroke="#5533aa" marker-end="url(#hierArrow)"/>
+
+    <!-- The tangling - cell contemplating civilization -->
+    <path d="M 300,245 Q 350,150 300,45" stroke="#ff6688" stroke-width="2" stroke-dasharray="5,3" fill="none">
+      <animate attributeName="stroke-dashoffset" from="0" to="16" dur="1s" repeatCount="indefinite"/>
+    </path>
+    <circle cx="300" cy="245" r="5" fill="#ff6688"/>
+    <text x="310" y="150" font-family="monospace" font-size="8" fill="#ff6688" transform="rotate(-90,310,150)">contemplates</text>
+  </g>
+
+  <defs>
+    <marker id="hierArrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#5533aa"/>
+    </marker>
+  </defs>
+
+  <!-- Question mark suggesting the paradox -->
+  <text x="350" y="280" font-family="serif" font-size="24" fill="#aa4466">?</text>
+</svg>

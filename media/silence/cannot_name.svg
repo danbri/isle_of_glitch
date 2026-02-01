@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#030303"/>
+  <!-- The unnamed: a shape that resists form -->
+  <path d="M 180 130 Q 200 140 210 150 Q 200 160 190 155 Q 200 165 180 170"
+        fill="none" stroke="#101010" stroke-width="0.5" opacity="0.25"/>
+  <!-- Letters that dissolve before forming -->
+  <text x="200" y="150" font-family="serif" font-size="24" fill="#080808" opacity="0.1" text-anchor="middle">?</text>
+</svg>

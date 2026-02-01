@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="blur">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- The rejected dichotomy: one vs many, crossed out -->
+  <g transform="translate(200, 80)" opacity="0.3">
+    <!-- "ONE" being rejected -->
+    <text x="-80" y="0" font-family="Georgia, serif" font-size="16" fill="#8b5cf6" text-anchor="middle">ONE</text>
+    <line x1="-100" y1="-5" x2="-60" y2="5" stroke="#8b5cf6" stroke-width="1"/>
+
+    <!-- "or" -->
+    <text x="0" y="0" font-family="Georgia, serif" font-size="12" fill="#8b5cf6" text-anchor="middle" opacity="0.5">or</text>
+
+    <!-- "MANY" being rejected -->
+    <text x="80" y="0" font-family="Georgia, serif" font-size="16" fill="#8b5cf6" text-anchor="middle">MANY</text>
+    <line x1="55" y1="-5" x2="105" y2="5" stroke="#8b5cf6" stroke-width="1"/>
+  </g>
+
+  <!-- River metaphor - flowing process -->
+  <g transform="translate(200, 170)">
+    <!-- The river that is neither one nor many -->
+    <path d="M-150,0 Q-100,-20 -50,0 Q0,20 50,0 Q100,-20 150,0"
+          fill="none" stroke="#8b5cf6" stroke-width="3" opacity="0.6">
+      <animate attributeName="d"
+               values="M-150,0 Q-100,-20 -50,0 Q0,20 50,0 Q100,-20 150,0;
+                       M-150,5 Q-100,25 -50,5 Q0,-15 50,5 Q100,25 150,5;
+                       M-150,0 Q-100,-20 -50,0 Q0,20 50,0 Q100,-20 150,0"
+               dur="4s" repeatCount="indefinite"/>
+    </path>
+    <path d="M-140,15 Q-90,-5 -40,15 Q10,35 60,15 Q110,-5 160,15"
+          fill="none" stroke="#8b5cf6" stroke-width="2" opacity="0.4">
+      <animate attributeName="d"
+               values="M-140,15 Q-90,-5 -40,15 Q10,35 60,15 Q110,-5 160,15;
+                       M-140,20 Q-90,40 -40,20 Q10,0 60,20 Q110,40 160,20;
+                       M-140,15 Q-90,-5 -40,15 Q10,35 60,15 Q110,-5 160,15"
+               dur="4s" repeatCount="indefinite"/>
+    </path>
+    <path d="M-130,30 Q-80,10 -30,30 Q20,50 70,30 Q120,10 170,30"
+          fill="none" stroke="#8b5cf6" stroke-width="1" opacity="0.25">
+      <animate attributeName="d"
+               values="M-130,30 Q-80,10 -30,30 Q20,50 70,30 Q120,10 170,30;
+                       M-130,35 Q-80,55 -30,35 Q20,15 70,35 Q120,55 170,35;
+                       M-130,30 Q-80,10 -30,30 Q20,50 70,30 Q120,10 170,30"
+               dur="4s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Flow particles -->
+  <g fill="#8b5cf6">
+    <circle r="2" opacity="0.5">
+      <animate attributeName="cx" values="50;350" dur="5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="165;175;165;175;165" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="1.5" opacity="0.4">
+      <animate attributeName="cx" values="80;380" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="180;170;180;170;180" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="2" opacity="0.45">
+      <animate attributeName="cx" values="20;320" dur="4.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="172;182;172;182;172" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- The word PROCESS/FINKING emerging -->
+  <g font-family="Georgia, serif" fill="#8b5cf6" text-anchor="middle">
+    <text x="200" y="130" font-size="20" opacity="0.7">
+      PROCESS
+      <animate attributeName="opacity" values="0.7;0.9;0.7" dur="3s" repeatCount="indefinite"/>
+    </text>
+    <text x="200" y="250" font-size="14" opacity="0.5" font-style="italic">
+      a finking
+      <animate attributeName="opacity" values="0.5;0.7;0.5" dur="4s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="200" y="285" font-family="Georgia, serif" font-size="9" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+    (yes, that can be a verb now)
+  </text>
+</svg>

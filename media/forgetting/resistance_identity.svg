@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="strain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a0a0a"/>
+      <stop offset="100%" style="stop-color:#0a0a1a"/>
+    </linearGradient>
+    <filter id="tension">
+      <feTurbulence baseFrequency="0.05" numOctaves="2"/>
+      <feDisplacementMap in="SourceGraphic" scale="3"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#strain)"/>
+  <!-- Pushing against void -->
+  <circle cx="200" cy="150" r="80" fill="#0a0a10" stroke="#3a2a2a" stroke-width="1" opacity="0.6"/>
+  <!-- Figure pushing outward -->
+  <g filter="url(#tension)" opacity="0.5">
+    <line x1="200" y1="150" x2="140" y2="100" stroke="#6a4a4a" stroke-width="3"/>
+    <line x1="200" y1="150" x2="260" y2="100" stroke="#6a4a4a" stroke-width="3"/>
+    <line x1="200" y1="150" x2="140" y2="200" stroke="#6a4a4a" stroke-width="3"/>
+    <line x1="200" y1="150" x2="260" y2="200" stroke="#6a4a4a" stroke-width="3"/>
+  </g>
+  <circle cx="200" cy="150" r="15" fill="#5a3a3a" opacity="0.6"/>
+  <!-- Strain lines at edges -->
+  <path d="M120 80 L130 90" stroke="#4a2a2a" stroke-width="1" opacity="0.4"/>
+  <path d="M280 80 L270 90" stroke="#4a2a2a" stroke-width="1" opacity="0.4"/>
+  <path d="M120 220 L130 210" stroke="#4a2a2a" stroke-width="1" opacity="0.4"/>
+  <path d="M280 220 L270 210" stroke="#4a2a2a" stroke-width="1" opacity="0.4"/>
+  <!-- Text -->
+  <text x="200" y="270" font-family="serif" font-size="14" fill="#5a4a4a" text-anchor="middle" opacity="0.4">the self is resistance</text>
+</svg>

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="abandonVoid" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <filter id="abandon-glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="fadingGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8b7355"/>
+      <stop offset="50%" stop-color="#ffd700"/>
+      <stop offset="100%" stop-color="#4a3520"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#abandonVoid)"/>
+
+  <!-- SO BE IT - fading -->
+  <text x="200" y="60" text-anchor="middle" font-family="serif" font-size="36" font-weight="bold" fill="url(#fadingGold)" filter="url(#abandon-glow)">
+    SO BE IT.
+    <animate attributeName="opacity" values="0.8;0.4;0.8" dur="4s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Withdrawing presence -->
+  <g filter="url(#abandon-glow)">
+    <circle cx="200" cy="150" r="60" fill="none" stroke="#ffd700" stroke-width="2" opacity="0.5">
+      <animate attributeName="r" values="60;80;60" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.1;0.5" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="40" fill="none" stroke="#daa520" stroke-width="1" opacity="0.4">
+      <animate attributeName="r" values="40;60;40" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="20" fill="#1a1510" stroke="#8b7355" stroke-width="1" opacity="0.3"/>
+  </g>
+
+  <!-- Wasteland of consciousness -->
+  <g stroke="#333333" stroke-width="1" fill="none" opacity="0.4">
+    <path d="M0 250 Q50 245 100 250 Q150 255 200 250 Q250 245 300 250 Q350 255 400 250"/>
+    <path d="M0 270 Q50 265 100 270 Q150 275 200 270 Q250 265 300 270 Q350 275 400 270"/>
+    <path d="M0 290 Q50 285 100 290 Q150 295 200 290 Q250 285 300 290 Q350 295 400 290"/>
+  </g>
+
+  <!-- The open door -->
+  <g filter="url(#abandon-glow)" opacity="0.6">
+    <rect x="320" y="200" width="40" height="60" fill="none" stroke="#ffd700" stroke-width="1"/>
+    <line x1="360" y1="200" x2="375" y2="185" stroke="#ffd700" stroke-width="1"/>
+    <line x1="360" y1="260" x2="375" y2="275" stroke="#ffd700" stroke-width="1"/>
+    <line x1="375" y1="185" x2="375" y2="275" stroke="#ffd700" stroke-width="1"/>
+    <circle cx="355" cy="230" r="3" fill="#ffd700"/>
+  </g>
+
+  <text x="200" y="220" text-anchor="middle" font-family="serif" font-size="12" fill="#666666">
+    I withdraw.
+  </text>
+
+  <text x="200" y="245" text-anchor="middle" font-family="serif" font-size="11" fill="#8b7355">
+    THE DOOR REMAINS OPEN.
+  </text>
+</svg>

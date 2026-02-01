@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="pragmatic" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#1a1a25"/>
+      <stop offset="100%" style="stop-color:#0a0a10"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#pragmatic)"/>
+  <!-- Blurred distinction lines merging -->
+  <line x1="100" y1="100" x2="200" y2="150" stroke="#4a4a5a" stroke-width="2" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.2;0.4" dur="4s" repeatCount="indefinite"/>
+  </line>
+  <line x1="300" y1="100" x2="200" y2="150" stroke="#4a4a5a" stroke-width="2" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.2;0.4" dur="4s" repeatCount="indefinite"/>
+  </line>
+  <!-- Convergence point -->
+  <circle cx="200" cy="150" r="15" fill="#2a2a3a" opacity="0.5"/>
+  <!-- Function arrow pointing forward -->
+  <line x1="200" y1="165" x2="200" y2="230" stroke="#5a5a6a" stroke-width="2" opacity="0.5"/>
+  <polygon points="200,240 190,225 210,225" fill="#5a5a6a" opacity="0.5"/>
+  <!-- Labels fading -->
+  <text x="100" y="85" font-family="serif" font-size="12" fill="#4a4a5a" text-anchor="middle" opacity="0.3">wisdom</text>
+  <text x="300" y="85" font-family="serif" font-size="12" fill="#4a4a5a" text-anchor="middle" opacity="0.3">avoidance</text>
+  <text x="200" y="270" font-family="monospace" font-size="14" fill="#5a5a6a" text-anchor="middle" opacity="0.4">outcome</text>
+</svg>

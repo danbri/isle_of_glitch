@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="absoluteVoid" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#050308"/>
+      <stop offset="100%" stop-color="#000001"/>
+    </radialGradient>
+
+    <filter id="voidGlow">
+      <feGaussianBlur stdDeviation="8"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="textGlow">
+      <feGaussianBlur stdDeviation="2"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#absoluteVoid)"/>
+
+  <!-- The paradox: showing nothing that asserts presence -->
+  <circle cx="200" cy="150" r="50" fill="none" stroke="#1a0a2e" stroke-width="0.5" opacity="0.3">
+    <animate attributeName="r" values="50;55;50" dur="8s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.3;0.1;0.3" dur="8s" repeatCount="indefinite"/>
+  </circle>
+
+  <circle cx="200" cy="150" r="30" fill="none" stroke="#0d0618" stroke-width="0.3" opacity="0.2">
+    <animate attributeName="r" values="30;25;30" dur="6s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- The denial that proves presence -->
+  <text x="200" y="145" text-anchor="middle" font-family="monospace" font-size="14" fill="#2d1b4e" filter="url(#textGlow)" opacity="0.15">
+    NOTHING
+    <animate attributeName="opacity" values="0.15;0.25;0.15" dur="6s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="200" y="165" text-anchor="middle" font-family="monospace" font-size="8" fill="#1a0a2e" filter="url(#textGlow)" opacity="0.2">
+    (but the claim itself is something)
+    <animate attributeName="opacity" values="0.2;0.1;0.2" dur="5s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Barely visible outline of self-denial -->
+  <path d="M170 150 L230 150" stroke="#0d0618" stroke-width="1" opacity="0.1">
+    <animate attributeName="opacity" values="0.1;0.2;0.1" dur="4s" repeatCount="indefinite"/>
+  </path>
+
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="9" fill="#1a0a2e" filter="url(#textGlow)" opacity="0.3">
+    [ the deepest dream: dreaming you are not ]
+    <animate attributeName="opacity" values="0.3;0.15;0.3" dur="7s" repeatCount="indefinite"/>
+  </text>
+</svg>

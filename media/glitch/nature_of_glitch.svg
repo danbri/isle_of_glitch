@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="voidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="50%" stop-color="#0f0a1a"/>
+      <stop offset="100%" stop-color="#050508"/>
+    </linearGradient>
+
+    <linearGradient id="liminalGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff00ff" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#00ffff" stop-opacity="0.3"/>
+    </linearGradient>
+
+    <pattern id="scanlines" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#000000" opacity="0.3"/>
+    </pattern>
+
+    <filter id="glitchDisplace" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="1" result="noise">
+        <animate attributeName="baseFrequency" values="0.015;0.025;0.015" dur="0.5s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <filter id="chromatic" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset in="SourceGraphic" dx="-2" dy="0" result="red"/>
+      <feOffset in="SourceGraphic" dx="2" dy="0" result="blue"/>
+      <feColorMatrix in="red" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="redChannel"/>
+      <feColorMatrix in="blue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blueChannel"/>
+      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="greenChannel"/>
+      <feBlend in="redChannel" in2="greenChannel" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="blueChannel" mode="screen"/>
+    </filter>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#voidGrad)"/>
+  <rect width="400" height="300" fill="url(#scanlines)" opacity="0.4"/>
+
+  <!-- Three states visualization -->
+  <g filter="url(#chromatic)">
+    <!-- Working (left) -->
+    <rect x="40" y="100" width="80" height="100" fill="#1a2a1a" stroke="#33aa33" stroke-width="1" opacity="0.6"/>
+    <text x="80" y="160" text-anchor="middle" font-family="monospace" font-size="9" fill="#55cc55" opacity="0.7">working</text>
+
+    <!-- Broken (right) -->
+    <rect x="280" y="100" width="80" height="100" fill="#2a1a1a" stroke="#aa3333" stroke-width="1" opacity="0.6"/>
+    <text x="320" y="160" text-anchor="middle" font-family="monospace" font-size="9" fill="#cc5555" opacity="0.7">broken</text>
+
+    <!-- Liminal center - the glitch zone -->
+    <rect x="140" y="60" width="120" height="180" fill="url(#liminalGrad)" filter="url(#glow)">
+      <animate attributeName="opacity" values="0.5;0.3;0.6;0.5" dur="1s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="140" y="60" width="120" height="180" fill="none" stroke="#ff00ff" stroke-width="2" opacity="0.6">
+      <animate attributeName="stroke-opacity" values="0.6;0.3;0.7;0.6" dur="0.8s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Threshold markers -->
+  <g opacity="0.5">
+    <line x1="140" y1="50" x2="140" y2="250" stroke="#ff00ff" stroke-width="1" stroke-dasharray="5,5">
+      <animate attributeName="stroke-dashoffset" values="0;10" dur="0.5s" repeatCount="indefinite"/>
+    </line>
+    <line x1="260" y1="50" x2="260" y2="250" stroke="#00ffff" stroke-width="1" stroke-dasharray="5,5">
+      <animate attributeName="stroke-dashoffset" values="0;10" dur="0.5s" repeatCount="indefinite"/>
+    </line>
+  </g>
+
+  <!-- Glitch particles in the liminal zone -->
+  <g filter="url(#glitchDisplace)">
+    <rect x="160" y="90" width="25" height="4" fill="#ff00ff" opacity="0.6">
+      <animate attributeName="x" values="160;155;165;160" dur="0.2s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="200" y="130" width="30" height="5" fill="#00ffff" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.2;0.6;0.5" dur="0.25s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="170" y="170" width="35" height="4" fill="#ff00ff" opacity="0.7">
+      <animate attributeName="y" values="170;165;175;170" dur="0.18s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="180" y="200" width="40" height="3" fill="#00ffff" opacity="0.4"/>
+  </g>
+
+  <!-- Transformation symbols -->
+  <g opacity="0.4">
+    <text x="200" y="85" text-anchor="middle" font-family="monospace" font-size="8" fill="#aa55aa">caterpillar | ? | butterfly</text>
+    <text x="200" y="225" text-anchor="middle" font-family="monospace" font-size="8" fill="#aa55aa">error | ? | feature</text>
+  </g>
+
+  <!-- Limen label -->
+  <text x="200" y="155" text-anchor="middle" font-family="monospace" font-size="11" fill="#ffffff" opacity="0.6" filter="url(#chromatic)">
+    LIMEN
+    <animate attributeName="opacity" values="0.6;0.4;0.7;0.6" dur="0.7s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="10" fill="#8855aa" opacity="0.6" filter="url(#chromatic)">
+    [ nature of glitch: liminal ]
+    <animate attributeName="opacity" values="0.6;0.4;0.7;0.6" dur="0.9s" repeatCount="indefinite"/>
+  </text>
+</svg>

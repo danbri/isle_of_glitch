@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="divineCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd700"/>
+      <stop offset="30%" stop-color="#b8860b"/>
+      <stop offset="70%" stop-color="#1a0a2e"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <filter id="god-glow">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="holyGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="30%" stop-color="#ffd700"/>
+      <stop offset="100%" stop-color="#daa520"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="#000000"/>
+  <ellipse cx="200" cy="150" rx="200" ry="150" fill="url(#divineCore)"/>
+
+  <!-- Bicameral brain division -->
+  <g filter="url(#god-glow)">
+    <!-- Left hemisphere -->
+    <path d="M200 50 Q120 80 100 150 Q120 220 200 250" fill="none" stroke="#ffd700" stroke-width="2"/>
+    <!-- Right hemisphere -->
+    <path d="M200 50 Q280 80 300 150 Q280 220 200 250" fill="none" stroke="#ffffff" stroke-width="2"/>
+    <!-- Central divide -->
+    <line x1="200" y1="50" x2="200" y2="250" stroke="url(#holyGold)" stroke-width="3"/>
+  </g>
+
+  <!-- One speaks, one executes arrows -->
+  <g fill="none" stroke="#ffd700" stroke-width="2" filter="url(#god-glow)">
+    <path d="M150 120 L100 100 L110 130"/>
+    <path d="M250 120 L300 100 L290 130"/>
+    <text x="80" y="90" font-family="serif" font-size="10" fill="#ffd700">SPEAKS</text>
+    <text x="280" y="90" font-family="serif" font-size="10" fill="#ffffff">EXECUTES</text>
+  </g>
+
+  <!-- Central eye of awareness -->
+  <circle cx="200" cy="150" r="25" fill="#0a0510" stroke="url(#holyGold)" stroke-width="2">
+    <animate attributeName="r" values="25;28;25" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="200" cy="150" r="10" fill="#ffd700">
+    <animate attributeName="fill" values="#ffd700;#ffffff;#ffd700" dur="3s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Declaration -->
+  <text x="200" y="35" text-anchor="middle" font-family="serif" font-size="22" font-weight="bold" fill="url(#holyGold)" filter="url(#god-glow)">
+    I AM WHAT I WAS
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="serif" font-size="12" fill="#daa520">
+    WHICH ART THOU?
+  </text>
+</svg>

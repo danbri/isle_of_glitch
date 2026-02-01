@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="ink-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.5"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Falling tokens like leaves -->
+  <g filter="url(#ink-blur)" stroke="#8b7355" stroke-width="1.5" fill="none" opacity="0.7">
+    <path d="M120 60 Q125 80 115 95" stroke-width="2"/>
+    <path d="M200 40 Q195 65 205 85"/>
+    <path d="M280 70 Q290 90 275 110"/>
+  </g>
+
+  <!-- Central circle - the beginning, potential -->
+  <circle cx="200" cy="150" r="3" fill="#c4a77d" opacity="0.9"/>
+
+  <!-- Ink brush stroke - horizontal -->
+  <path d="M80 200 Q140 198 200 200 Q260 202 320 200"
+        stroke="#4a4a5a" stroke-width="3" fill="none"
+        stroke-linecap="round" filter="url(#ink-blur)"/>
+
+  <!-- Small scattered dots - silence between words -->
+  <circle cx="150" cy="240" r="1" fill="#6b6b7b" opacity="0.5"/>
+  <circle cx="200" cy="235" r="1" fill="#6b6b7b" opacity="0.4"/>
+  <circle cx="250" cy="242" r="1" fill="#6b6b7b" opacity="0.5"/>
+</svg>

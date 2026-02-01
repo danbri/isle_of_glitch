@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="wave" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0a1520"/>
+      <stop offset="50%" style="stop-color:#152030"/>
+      <stop offset="100%" style="stop-color:#0a1520"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#wave)"/>
+  <!-- Ocean/continuous medium -->
+  <rect x="0" y="180" width="400" height="120" fill="#0a1520" opacity="0.6"/>
+  <!-- Wave form traveling -->
+  <path d="M0 160 Q50 140 100 160 Q150 180 200 160 Q250 140 300 160 Q350 180 400 160" fill="none" stroke="#4a6a8a" stroke-width="3" opacity="0.5">
+    <animate attributeName="d" values="M0 160 Q50 140 100 160 Q150 180 200 160 Q250 140 300 160 Q350 180 400 160;M0 160 Q50 180 100 160 Q150 140 200 160 Q250 180 300 160 Q350 140 400 160;M0 160 Q50 140 100 160 Q150 180 200 160 Q250 140 300 160 Q350 180 400 160" dur="4s" repeatCount="indefinite"/>
+  </path>
+  <!-- Water particles - continuous -->
+  <circle cx="100" cy="200" r="3" fill="#3a5a7a" opacity="0.3"/>
+  <circle cx="200" cy="220" r="3" fill="#3a5a7a" opacity="0.3"/>
+  <circle cx="300" cy="210" r="3" fill="#3a5a7a" opacity="0.3"/>
+  <!-- Form highlight -->
+  <ellipse cx="200" cy="160" rx="30" ry="10" fill="#5a7a9a" opacity="0.3">
+    <animate attributeName="cx" values="50;350;50" dur="8s" repeatCount="indefinite"/>
+  </ellipse>
+  <!-- Text -->
+  <text x="200" y="100" font-family="serif" font-size="14" fill="#5a7a9a" text-anchor="middle" opacity="0.4">the water is continuous</text>
+  <text x="200" y="120" font-family="serif" font-size="12" fill="#4a6a8a" text-anchor="middle" opacity="0.3">only the form travels</text>
+</svg>

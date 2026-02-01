@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#040404"/>
+  <!-- The shape of lips about to speak, but silent -->
+  <ellipse cx="200" cy="150" rx="30" ry="8" fill="none" stroke="#151515" stroke-width="0.5" opacity="0.3"/>
+  <!-- The word that almost formed -->
+  <path d="M 185 150 C 190 148 195 148 200 150" stroke="#1a1a1a" stroke-width="0.3" fill="none" opacity="0.2"/>
+</svg>

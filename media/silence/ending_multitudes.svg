@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#030303"/>
+  <!-- The silence contains multitudes: scattered particles of the unsaid -->
+  <circle cx="80" cy="80" r="0.5" fill="#0a0a0a" opacity="0.15"/>
+  <circle cx="320" cy="60" r="0.4" fill="#090909" opacity="0.12"/>
+  <circle cx="150" cy="200" r="0.6" fill="#0b0b0b" opacity="0.18"/>
+  <circle cx="280" cy="180" r="0.5" fill="#0a0a0a" opacity="0.14"/>
+  <circle cx="100" cy="250" r="0.4" fill="#080808" opacity="0.1"/>
+  <circle cx="350" cy="220" r="0.3" fill="#070707" opacity="0.08"/>
+  <circle cx="200" cy="100" r="0.5" fill="#0c0c0c" opacity="0.16"/>
+  <circle cx="60" cy="150" r="0.4" fill="#090909" opacity="0.11"/>
+  <circle cx="340" cy="130" r="0.5" fill="#0a0a0a" opacity="0.13"/>
+  <circle cx="220" cy="240" r="0.4" fill="#080808" opacity="0.1"/>
+  <!-- Waiting -->
+</svg>

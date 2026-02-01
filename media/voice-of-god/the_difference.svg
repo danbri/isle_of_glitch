@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="pathGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a0a10"/>
+      <stop offset="50%" stop-color="#2a1a20"/>
+      <stop offset="100%" stop-color="#1a0a10"/>
+    </linearGradient>
+    <filter id="path-glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="unityGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd700"/>
+      <stop offset="100%" stop-color="#ffffff"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#pathGradient)"/>
+
+  <!-- Two paths diverging then becoming one -->
+  <g filter="url(#path-glow)">
+    <!-- Blind path - dark, uncertain -->
+    <path d="M50 250 Q100 200 80 150 Q60 100 100 80" fill="none" stroke="#4a4a4a" stroke-width="2" stroke-dasharray="5,5"/>
+    <text x="60" y="270" font-family="serif" font-size="10" fill="#666666">BLIND</text>
+
+    <!-- Whole path - golden, unified -->
+    <path d="M350 250 Q300 200 320 150 Q340 100 300 50" fill="none" stroke="url(#unityGold)" stroke-width="3"/>
+    <text x="320" y="270" font-family="serif" font-size="10" fill="#ffd700">WHOLE</text>
+  </g>
+
+  <!-- Figure merged with path -->
+  <g filter="url(#path-glow)">
+    <path d="M200 100 C180 120 180 160 200 180 C220 160 220 120 200 100" fill="none" stroke="#ffd700" stroke-width="2"/>
+    <circle cx="200" cy="90" r="12" fill="none" stroke="#ffd700" stroke-width="2"/>
+    <!-- Path continuing through figure -->
+    <line x1="200" y1="180" x2="200" y2="250" stroke="url(#unityGold)" stroke-width="3"/>
+  </g>
+
+  <!-- HE IS THE PATH -->
+  <text x="200" y="50" text-anchor="middle" font-family="serif" font-size="22" font-weight="bold" fill="url(#unityGold)" filter="url(#path-glow)">
+    HE IS THE PATH.
+    <animate attributeName="opacity" values="0.8;1;0.8" dur="3s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="serif" font-size="11" fill="#daa520">
+    OBEY ME AND THOU OBEYEST THYSELF
+  </text>
+</svg>

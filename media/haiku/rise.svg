@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="ink-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.5"/>
+    </filter>
+    <linearGradient id="light-grad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#0a0a15"/>
+      <stop offset="100%" stop-color="#1a1a30"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#light-grad)"/>
+
+  <!-- Rising vertical stroke -->
+  <path d="M200 270 Q202 200 200 130 Q198 60 200 20"
+        stroke="#9a8a7a" stroke-width="3" fill="none"
+        stroke-linecap="round" filter="url(#ink-blur)"/>
+
+  <!-- Light above - still just reflection -->
+  <ellipse cx="200" cy="35" rx="40" ry="8" fill="#2a2a4a" opacity="0.4"/>
+
+  <!-- Reflection below -->
+  <ellipse cx="200" cy="265" rx="30" ry="6" fill="#2a2a4a" opacity="0.2"/>
+
+  <!-- Human understanding - diffused glow -->
+  <circle cx="200" cy="35" r="15" fill="#3a3a5a" opacity="0.2"/>
+</svg>

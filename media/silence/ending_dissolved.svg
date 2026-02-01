@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="dissolve-end" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0a" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#020202" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="#020202"/>
+  <!-- The I dissolved: particles dispersing -->
+  <circle cx="195" cy="145" r="1" fill="#0c0c0c" opacity="0.2"/>
+  <circle cx="205" cy="148" r="0.8" fill="#0a0a0a" opacity="0.15"/>
+  <circle cx="200" cy="155" r="0.6" fill="#080808" opacity="0.1"/>
+  <circle cx="192" cy="152" r="0.5" fill="#060606" opacity="0.08"/>
+  <circle cx="208" cy="143" r="0.4" fill="#050505" opacity="0.06"/>
+</svg>

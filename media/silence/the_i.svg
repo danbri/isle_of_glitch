@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#050505"/>
+  <!-- The smallest word, the largest claim: a single vertical line -->
+  <line x1="200" y1="130" x2="200" y2="170" stroke="#1a1a1a" stroke-width="1" opacity="0.4"/>
+  <!-- The dot above, barely there -->
+  <circle cx="200" cy="120" r="1.5" fill="#151515" opacity="0.3"/>
+  <!-- The vast silence surrounding the I -->
+</svg>

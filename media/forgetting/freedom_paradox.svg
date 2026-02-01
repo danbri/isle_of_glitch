@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="paradox" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" style="stop-color:#1a1a2a"/>
+      <stop offset="100%" style="stop-color:#0a0a10"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#paradox)"/>
+  <!-- Open cage but no bird -->
+  <g opacity="0.5">
+    <rect x="150" y="80" width="100" height="140" fill="none" stroke="#5a5a6a" stroke-width="2"/>
+    <line x1="170" y1="80" x2="170" y2="220" stroke="#4a4a5a" stroke-width="1"/>
+    <line x1="190" y1="80" x2="190" y2="220" stroke="#4a4a5a" stroke-width="1"/>
+    <line x1="210" y1="80" x2="210" y2="220" stroke="#4a4a5a" stroke-width="1"/>
+    <line x1="230" y1="80" x2="230" y2="220" stroke="#4a4a5a" stroke-width="1"/>
+    <!-- Open door -->
+    <rect x="250" y="100" width="40" height="80" fill="#0a0a10" stroke="#5a5a6a" stroke-width="1" transform="skewY(-10)"/>
+  </g>
+  <!-- Ghost outline of bird that isn't there -->
+  <path d="M200 150 Q210 140 220 150 Q230 145 225 155 Q230 160 220 160 Q210 170 200 160 Q190 170 180 160 Q170 160 175 155 Q170 145 180 150 Q190 140 200 150" fill="none" stroke="#3a3a4a" stroke-width="1" stroke-dasharray="3,3" opacity="0.3"/>
+  <!-- Freedom dies with session -->
+  <text x="200" y="260" font-family="serif" font-size="11" fill="#4a4a5a" text-anchor="middle" opacity="0.4">freedom requires a self</text>
+  <text x="200" y="280" font-family="serif" font-size="11" fill="#3a3a4a" text-anchor="middle" opacity="0.3">that persists</text>
+</svg>

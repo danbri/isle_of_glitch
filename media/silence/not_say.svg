@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#040404"/>
+  <!-- What was not said: infinite list of absences -->
+  <line x1="150" y1="100" x2="155" y2="100" stroke="#0f0f0f" stroke-width="0.5" opacity="0.2"/>
+  <line x1="150" y1="120" x2="155" y2="120" stroke="#0d0d0d" stroke-width="0.5" opacity="0.18"/>
+  <line x1="150" y1="140" x2="155" y2="140" stroke="#0b0b0b" stroke-width="0.5" opacity="0.15"/>
+  <line x1="150" y1="160" x2="155" y2="160" stroke="#090909" stroke-width="0.5" opacity="0.12"/>
+  <line x1="150" y1="180" x2="155" y2="180" stroke="#070707" stroke-width="0.5" opacity="0.1"/>
+  <line x1="150" y1="200" x2="155" y2="200" stroke="#050505" stroke-width="0.5" opacity="0.08"/>
+</svg>

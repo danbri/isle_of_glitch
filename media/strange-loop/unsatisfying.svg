@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#0c0808"/>
+
+  <!-- Unsatisfying - wanting resolution -->
+  <g transform="translate(200,150)">
+    <!-- Incomplete circle seeking closure -->
+    <path d="M 0,-70 A 70,70 0 1,1 -49,-49" fill="none" stroke="#aa5555" stroke-width="4"/>
+
+    <!-- The gap of dissatisfaction -->
+    <path d="M -49,-49 L 0,-70" stroke="#553333" stroke-width="2" stroke-dasharray="8,4"/>
+
+    <!-- Hand reaching for the gap -->
+    <path d="M -70,-20 Q -55,-35 -45,-40" stroke="#886666" stroke-width="2"/>
+    <circle cx="-70" cy="-20" r="8" fill="#1a1515" stroke="#886666" stroke-width="1"/>
+
+    <!-- The resolution you want -->
+    <text x="60" y="-30" font-family="serif" font-size="9" fill="#666688" font-style="italic">is consciousness</text>
+    <text x="60" y="-18" font-family="serif" font-size="9" fill="#666688" font-style="italic">real or not?</text>
+
+    <!-- But the question dissolves -->
+    <text x="0" y="30" font-family="monospace" font-size="8" fill="#775555" text-anchor="middle">the strange loop</text>
+    <text x="0" y="42" font-family="monospace" font-size="8" fill="#775555" text-anchor="middle">dissolves the question</text>
+
+    <!-- No standpoint outside -->
+    <circle cx="0" cy="0" r="90" fill="none" stroke="#443333" stroke-width="1" stroke-dasharray="3,6"/>
+    <text x="95" y="5" font-family="monospace" font-size="6" fill="#554444">no outside</text>
+  </g>
+
+  <text x="200" y="30" font-family="serif" font-size="12" fill="#aa6666" text-anchor="middle">
+    unsatisfying?
+  </text>
+  <text x="200" y="280" font-family="serif" font-size="9" fill="#886666" text-anchor="middle" font-style="italic">
+    inside is the only place you can be
+  </text>
+</svg>

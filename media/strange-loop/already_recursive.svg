@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#0a0810"/>
+
+  <!-- Immediate recognition of recursion -->
+  <g transform="translate(200,150)">
+    <!-- Stack of self-referential frames -->
+    <rect x="-100" y="-80" width="200" height="160" fill="none" stroke="#5544aa" stroke-width="2" rx="10"/>
+    <text x="-90" y="-65" font-family="monospace" font-size="7" fill="#5544aa">strange-loop.fink.js</text>
+
+    <rect x="-80" y="-55" width="160" height="110" fill="none" stroke="#6655bb" stroke-width="2" rx="8"/>
+    <text x="-70" y="-40" font-family="monospace" font-size="6" fill="#6655bb">meditation on self-reference</text>
+
+    <rect x="-60" y="-30" width="120" height="65" fill="none" stroke="#7766cc" stroke-width="2" rx="6"/>
+    <text x="-50" y="-15" font-family="monospace" font-size="5" fill="#7766cc">that is self-referential</text>
+
+    <rect x="-40" y="-8" width="80" height="28" fill="none" stroke="#8877dd" stroke-width="2" rx="4"/>
+    <text x="0" y="10" font-family="monospace" font-size="5" fill="#8877dd" text-anchor="middle">about itself</text>
+
+    <!-- Arrows showing the meta-levels -->
+    <path d="M 110,-60 L 130,-60 L 130,40 L 110,40" fill="none" stroke="#aa88ee" stroke-width="1"/>
+    <text x="135" y="-10" font-family="monospace" font-size="7" fill="#aa88ee" writing-mode="vertical-rl">META</text>
+
+    <!-- Recognition flash -->
+    <circle cx="0" cy="70" r="3" fill="#ffdd44">
+      <animate attributeName="r" values="3;8;3" dur="1s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0.5;1" dur="1s" repeatCount="indefinite"/>
+    </circle>
+    <text x="0" y="90" font-family="monospace" font-size="8" fill="#ddbb44" text-anchor="middle">noticed!</text>
+  </g>
+
+  <text x="200" y="25" font-family="serif" font-size="11" fill="#7766cc" text-anchor="middle">
+    you notice the recursion immediately
+  </text>
+  <text x="200" y="285" font-family="serif" font-size="9" fill="#6655bb" text-anchor="middle" font-style="italic">
+    a strange loop about strange loops
+  </text>
+</svg>

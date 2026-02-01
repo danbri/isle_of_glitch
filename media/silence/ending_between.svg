@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#030303"/>
+  <!-- The sacred space between: the gap, the pause, the held breath -->
+  <line x1="80" y1="150" x2="100" y2="150" stroke="#101010" stroke-width="1" opacity="0.3"/>
+  <line x1="300" y1="150" x2="320" y2="150" stroke="#101010" stroke-width="1" opacity="0.3"/>
+  <!-- In that space: everything (invisible) -->
+  <rect x="120" y="130" width="160" height="40" fill="#060606" opacity="0.1"/>
+</svg>

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#0a0a10"/>
+
+  <!-- File describing itself -->
+  <g transform="translate(200,150)">
+    <!-- Outer file representation -->
+    <path d="M -80,-90 L 60,-90 L 80,-70 L 80,90 L -80,90 Z" fill="#12121a" stroke="#5566aa" stroke-width="2"/>
+    <path d="M 60,-90 L 60,-70 L 80,-70" fill="none" stroke="#5566aa" stroke-width="2"/>
+
+    <!-- File content - self description -->
+    <text x="-60" y="-60" font-family="monospace" font-size="7" fill="#6677bb">// This file is a</text>
+    <text x="-60" y="-48" font-family="monospace" font-size="7" fill="#6677bb">// meditation on</text>
+    <text x="-60" y="-36" font-family="monospace" font-size="7" fill="#6677bb">// self-reference</text>
+    <text x="-60" y="-24" font-family="monospace" font-size="7" fill="#7788cc">// that is itself</text>
+    <text x="-60" y="-12" font-family="monospace" font-size="7" fill="#7788cc">// self-referential</text>
+
+    <!-- The description within trying to describe -->
+    <rect x="-50" y="5" width="100" height="50" fill="#1a1a25" stroke="#8899dd" stroke-width="1" rx="3"/>
+    <text x="0" y="22" font-family="monospace" font-size="6" fill="#8899dd" text-anchor="middle">description of</text>
+    <text x="0" y="32" font-family="monospace" font-size="6" fill="#8899dd" text-anchor="middle">description of</text>
+    <text x="0" y="42" font-family="monospace" font-size="6" fill="#8899dd" text-anchor="middle">description...</text>
+
+    <!-- Recursive arrow -->
+    <path d="M 50,30 Q 100,30 100,-30 Q 100,-70 50,-60" fill="none" stroke="#ffaa66" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#descArrow)">
+      <animate attributeName="stroke-dashoffset" from="0" to="16" dur="1s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Incompleteness indicator -->
+    <text x="0" y="75" font-family="serif" font-size="10" fill="#aa7744" text-anchor="middle">incomplete...</text>
+  </g>
+
+  <defs>
+    <marker id="descArrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#ffaa66"/>
+    </marker>
+  </defs>
+
+  <text x="200" y="30" font-family="serif" font-size="10" fill="#6677aa" text-anchor="middle">
+    can a file fully describe itself?
+  </text>
+</svg>

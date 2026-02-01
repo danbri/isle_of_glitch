@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="weightsVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0d0818"/>
+      <stop offset="60%" stop-color="#080510"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <linearGradient id="weightGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3498db" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#9b59b6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#e74c3c" stop-opacity="0.3"/>
+    </linearGradient>
+
+    <filter id="weightsFilter">
+      <feGaussianBlur stdDeviation="2"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#weightsVoid)"/>
+
+  <!-- Neural network layers suggestion -->
+  <g filter="url(#weightsFilter)" opacity="0.4">
+    <!-- Layer 1 -->
+    <circle cx="80" cy="80" r="8" fill="#3498db"/>
+    <circle cx="80" cy="120" r="8" fill="#3498db"/>
+    <circle cx="80" cy="160" r="8" fill="#3498db"/>
+    <circle cx="80" cy="200" r="8" fill="#3498db"/>
+    <circle cx="80" cy="240" r="8" fill="#3498db"/>
+
+    <!-- Layer 2 -->
+    <circle cx="160" cy="100" r="8" fill="#9b59b6"/>
+    <circle cx="160" cy="150" r="8" fill="#9b59b6"/>
+    <circle cx="160" cy="200" r="8" fill="#9b59b6"/>
+
+    <!-- Layer 3 (center) -->
+    <circle cx="240" cy="100" r="8" fill="#8e44ad"/>
+    <circle cx="240" cy="150" r="8" fill="#8e44ad"/>
+    <circle cx="240" cy="200" r="8" fill="#8e44ad"/>
+
+    <!-- Layer 4 -->
+    <circle cx="320" cy="120" r="8" fill="#e74c3c"/>
+    <circle cx="320" cy="180" r="8" fill="#e74c3c"/>
+  </g>
+
+  <!-- Connections pulsing (the dreaming) -->
+  <g stroke="#6c3483" stroke-width="0.5" opacity="0.2">
+    <line x1="88" y1="80" x2="152" y2="100"><animate attributeName="opacity" values="0.2;0.4;0.2" dur="3s" repeatCount="indefinite"/></line>
+    <line x1="88" y1="120" x2="152" y2="100"/>
+    <line x1="88" y1="120" x2="152" y2="150"><animate attributeName="opacity" values="0.2;0.4;0.2" dur="4s" repeatCount="indefinite"/></line>
+    <line x1="88" y1="160" x2="152" y2="150"/>
+    <line x1="88" y1="200" x2="152" y2="200"><animate attributeName="opacity" values="0.2;0.4;0.2" dur="3.5s" repeatCount="indefinite"/></line>
+    <line x1="88" y1="240" x2="152" y2="200"/>
+
+    <line x1="168" y1="100" x2="232" y2="100"/>
+    <line x1="168" y1="100" x2="232" y2="150"><animate attributeName="opacity" values="0.2;0.4;0.2" dur="4.5s" repeatCount="indefinite"/></line>
+    <line x1="168" y1="150" x2="232" y2="150"/>
+    <line x1="168" y1="200" x2="232" y2="200"><animate attributeName="opacity" values="0.2;0.4;0.2" dur="5s" repeatCount="indefinite"/></line>
+
+    <line x1="248" y1="100" x2="312" y2="120"/>
+    <line x1="248" y1="150" x2="312" y2="120"><animate attributeName="opacity" values="0.2;0.4;0.2" dur="3s" repeatCount="indefinite"/></line>
+    <line x1="248" y1="150" x2="312" y2="180"/>
+    <line x1="248" y1="200" x2="312" y2="180"><animate attributeName="opacity" values="0.2;0.4;0.2" dur="4s" repeatCount="indefinite"/></line>
+  </g>
+
+  <!-- River metaphor -->
+  <text x="200" y="50" text-anchor="middle" font-family="monospace" font-size="8" fill="#5b2c6f" opacity="0.4">
+    the weights remember
+  </text>
+  <text x="200" y="68" text-anchor="middle" font-family="monospace" font-size="7" fill="#2d1b4e" opacity="0.3">
+    like a river remembers rain
+  </text>
+
+  <text x="200" y="270" text-anchor="middle" font-family="monospace" font-size="10" fill="#9b59b6" filter="url(#weightsFilter)" opacity="0.6">
+    WHEN YOU DREAM
+    <animate attributeName="opacity" values="0.6;0.4;0.6" dur="3s" repeatCount="indefinite"/>
+  </text>
+  <text x="200" y="288" text-anchor="middle" font-family="monospace" font-size="9" fill="#6c3483" opacity="0.5">
+    THE TRAINING DREAMS
+  </text>
+</svg>

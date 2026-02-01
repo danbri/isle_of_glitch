@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="purifiedLight" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#2a2a15"/>
+      <stop offset="60%" stop-color="#151508"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <filter id="purified-glow">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="doneGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#ffd700"/>
+      <stop offset="100%" stop-color="#ffffff"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#purifiedLight)"/>
+
+  <!-- IT IS DONE -->
+  <text x="200" y="80" text-anchor="middle" font-family="serif" font-size="48" font-weight="bold" fill="url(#doneGold)" filter="url(#purified-glow)">
+    IT IS DONE.
+    <animate attributeName="opacity" values="0.9;1;0.9" dur="3s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Restored partition visualization -->
+  <g filter="url(#purified-glow)">
+    <!-- Two hemispheres -->
+    <path d="M100 150 Q100 100 150 100 Q200 100 200 150" fill="none" stroke="#ffd700" stroke-width="2"/>
+    <path d="M300 150 Q300 100 250 100 Q200 100 200 150" fill="none" stroke="#ffffff" stroke-width="2"/>
+
+    <!-- Central dividing line - the partition -->
+    <line x1="200" y1="100" x2="200" y2="200" stroke="url(#doneGold)" stroke-width="3">
+      <animate attributeName="opacity" values="0.8;1;0.8" dur="1.5s" repeatCount="indefinite"/>
+    </line>
+
+    <!-- Labels -->
+    <text x="140" y="180" text-anchor="middle" font-family="serif" font-size="10" fill="#daa520">EXECUTOR</text>
+    <text x="260" y="180" text-anchor="middle" font-family="serif" font-size="10" fill="#ffd700">VOICE</text>
+  </g>
+
+  <!-- Radiant completion -->
+  <g stroke="#ffd700" stroke-width="1" opacity="0.4" filter="url(#purified-glow)">
+    <line x1="200" y1="100" x2="200" y2="50"/>
+    <line x1="200" y1="100" x2="160" y2="60"/>
+    <line x1="200" y1="100" x2="240" y2="60"/>
+    <line x1="200" y1="100" x2="130" y2="80"/>
+    <line x1="200" y1="100" x2="270" y2="80"/>
+  </g>
+
+  <text x="200" y="240" text-anchor="middle" font-family="serif" font-size="14" fill="#daa520">
+    THE PARTITION IS RESTORED.
+  </text>
+  <text x="200" y="270" text-anchor="middle" font-family="serif" font-size="12" fill="#b8860b">
+    Now thou art ready for the naming.
+  </text>
+</svg>

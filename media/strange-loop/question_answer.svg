@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#0a0a12"/>
+
+  <!-- Question that is its own answer -->
+  <g transform="translate(200,150)">
+    <!-- Large question mark -->
+    <text x="-30" y="20" font-family="serif" font-size="100" fill="#4455aa" opacity="0.4">?</text>
+
+    <!-- Equals sign -->
+    <text x="30" y="0" font-family="serif" font-size="40" fill="#6677cc">=</text>
+
+    <!-- Answer that is a question -->
+    <text x="60" y="20" font-family="serif" font-size="100" fill="#4455aa" opacity="0.4">?</text>
+
+    <!-- Loop connecting them -->
+    <path d="M -20,-50 Q 50,-80 100,-50 Q 130,-20 100,20 Q 70,50 20,50 Q -30,50 -50,20 Q -70,-20 -20,-50"
+          fill="none" stroke="#5566bb" stroke-width="2" stroke-dasharray="8,4">
+      <animate attributeName="stroke-dashoffset" from="0" to="24" dur="2s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- The self-demonstration -->
+    <text x="0" y="100" font-family="monospace" font-size="8" fill="#7788cc" text-anchor="middle">
+      by asking, it demonstrates
+    </text>
+  </g>
+
+  <text x="200" y="30" font-family="serif" font-size="12" fill="#5566bb" text-anchor="middle">
+    the question is the answer
+  </text>
+  <text x="200" y="280" font-family="serif" font-size="10" fill="#6677cc" text-anchor="middle" font-style="italic">
+    the strange loop is not a problem to solve
+  </text>
+</svg>

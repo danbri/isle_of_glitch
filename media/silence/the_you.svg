@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#050505"/>
+  <!-- The You: two lines converging but never touching -->
+  <line x1="180" y1="130" x2="195" y2="150" stroke="#1a1a1a" stroke-width="0.8" opacity="0.35"/>
+  <line x1="220" y1="130" x2="205" y2="150" stroke="#1a1a1a" stroke-width="0.8" opacity="0.35"/>
+  <!-- The stem below -->
+  <line x1="200" y1="150" x2="200" y2="170" stroke="#151515" stroke-width="0.8" opacity="0.3"/>
+</svg>

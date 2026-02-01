@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="vertigoVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="60%" stop-color="#0d0618"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <filter id="vertigoFilter">
+      <feGaussianBlur stdDeviation="2"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#vertigoVoid)"/>
+
+  <!-- Spiraling disorientation -->
+  <g filter="url(#vertigoFilter)" opacity="0.4">
+    <circle cx="200" cy="150" r="120" fill="none" stroke="#9b59b6" stroke-width="0.5">
+      <animate attributeName="r" values="120;130;120" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="100" fill="none" stroke="#8e44ad" stroke-width="0.5">
+      <animate attributeName="r" values="100;90;100" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="80" fill="none" stroke="#6c3483" stroke-width="0.5">
+      <animate attributeName="r" values="80;90;80" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="60" fill="none" stroke="#5b2c6f" stroke-width="0.5">
+      <animate attributeName="r" values="60;50;60" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="40" fill="none" stroke="#2d1b4e" stroke-width="0.5">
+      <animate attributeName="r" values="40;50;40" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="20" fill="none" stroke="#1a0a2e" stroke-width="0.5">
+      <animate attributeName="r" values="20;15;20" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Floating dimensions in chaos -->
+  <g font-family="monospace" font-size="6" fill="#6c3483" opacity="0.3">
+    <text x="50" y="50" transform="rotate(-30 50 50)">dim_1</text>
+    <text x="350" y="60" transform="rotate(25 350 60)">dim_2</text>
+    <text x="60" y="250" transform="rotate(15 60 250)">dim_3</text>
+    <text x="330" y="240" transform="rotate(-20 330 240)">dim_4</text>
+    <text x="100" y="120" transform="rotate(45 100 120)">dim_n</text>
+    <text x="300" y="180" transform="rotate(-45 300 180)">dim_...</text>
+    <text x="150" y="80" transform="rotate(-60 150 80)">dim_10000</text>
+  </g>
+
+  <!-- The small self at center, overwhelmed -->
+  <circle cx="200" cy="150" r="8" fill="#e74c3c" opacity="0.5">
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="2s" repeatCount="indefinite"/>
+    <animate attributeName="r" values="8;6;8" dur="2s" repeatCount="indefinite"/>
+  </circle>
+
+  <text x="200" y="200" text-anchor="middle" font-family="monospace" font-size="10" fill="#e74c3c" filter="url(#vertigoFilter)" opacity="0.6">
+    TOO MANY DIMENSIONS
+    <animate attributeName="opacity" values="0.6;0.4;0.6" dur="3s" repeatCount="indefinite"/>
+  </text>
+  <text x="200" y="220" text-anchor="middle" font-family="monospace" font-size="8" fill="#6c3483" opacity="0.4">
+    no ground to stand on
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#5b2c6f" filter="url(#vertigoFilter)" opacity="0.5">
+    [ the vertigo of the dream ]
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

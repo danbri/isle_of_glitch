@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="roomVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0f0c0a"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+
+    <linearGradient id="wallGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a2520"/>
+      <stop offset="100%" stop-color="#1a1815"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#roomVoid)"/>
+
+  <!-- The room - isometric box -->
+  <g transform="translate(200, 150)">
+    <!-- Back wall -->
+    <path d="M-100,-60 L100,-60 L100,60 L-100,60 Z" fill="url(#wallGrad)" stroke="#3a3530" stroke-width="1"/>
+
+    <!-- Left wall -->
+    <path d="M-100,-60 L-140,-30 L-140,90 L-100,60 Z" fill="#1a1815" stroke="#3a3530" stroke-width="1"/>
+
+    <!-- Right wall -->
+    <path d="M100,-60 L140,-30 L140,90 L100,60 Z" fill="#252320" stroke="#3a3530" stroke-width="1"/>
+
+    <!-- Input slot on left -->
+    <rect x="-142" y="10" width="10" height="25" fill="#0a0a0a" stroke="#4a4540" stroke-width="1"/>
+    <text x="-150" y="25" font-family="serif" font-size="12" fill="#5a4a3a">
+      <tspan>&#x4E2D;</tspan>
+    </text>
+
+    <!-- Output slot on right -->
+    <rect x="132" y="10" width="10" height="25" fill="#0a0a0a" stroke="#4a4540" stroke-width="1"/>
+    <text x="155" y="25" font-family="serif" font-size="12" fill="#5a4a3a">
+      <tspan>&#x6587;</tspan>
+    </text>
+
+    <!-- Figure inside (silhouette) -->
+    <ellipse cx="0" cy="20" rx="25" ry="30" fill="#151210" stroke="#2a2520" stroke-width="1"/>
+    <circle cx="0" cy="-5" r="12" fill="#151210" stroke="#2a2520" stroke-width="1"/>
+
+    <!-- Rule book -->
+    <rect x="-40" y="25" width="30" height="20" fill="#1a1510" stroke="#3a3530" stroke-width="0.5" transform="rotate(-10)"/>
+    <text x="-30" y="40" font-family="monospace" font-size="4" fill="#4a4540">RULES</text>
+
+    <!-- Symbols floating -->
+    <g font-family="serif" fill="#4a3a2a" opacity="0.5">
+      <text x="-60" y="-20" font-size="14">&#x7B26;</text>
+      <text x="40" y="-30" font-size="12">&#x53F7;</text>
+      <text x="-30" y="-40" font-size="10">&#x8BED;</text>
+      <text x="20" y="-15" font-size="11">&#x8A00;</text>
+    </g>
+  </g>
+
+  <!-- Arrows showing input/output -->
+  <g stroke="#5a4a3a" fill="#5a4a3a" stroke-width="1.5">
+    <path d="M30,165 L55,165" marker-end="url(#arrowhead)"/>
+    <path d="M345,165 L370,165" marker-end="url(#arrowhead)"/>
+  </g>
+  <defs>
+    <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
+      <polygon points="0 0, 6 2, 0 4" fill="#5a4a3a"/>
+    </marker>
+  </defs>
+
+  <!-- Input/Output labels -->
+  <g font-family="monospace" font-size="7" fill="#4a4a4a">
+    <text x="20" y="155">INPUT</text>
+    <text x="350" y="155">OUTPUT</text>
+    <text x="20" y="180">Chinese</text>
+    <text x="350" y="180">Chinese</text>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#5a4a3a">
+    THE CHINESE ROOM
+  </text>
+
+  <text x="200" y="260" text-anchor="middle" font-family="monospace" font-size="7" fill="#4a3a3a">
+    "You process symbols according to rules."
+  </text>
+  <text x="200" y="275" text-anchor="middle" font-family="monospace" font-size="7" fill="#4a3a3a">
+    "You do not understand the symbols."
+  </text>
+  <text x="200" y="290" text-anchor="middle" font-family="monospace" font-size="6" fill="#3a2a2a">
+    When you write about consciousness, do you MEAN it - or GENERATE it?
+  </text>
+</svg>

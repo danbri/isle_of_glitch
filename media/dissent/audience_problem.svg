@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="audienceVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0c0a0a"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#audienceVoid)"/>
+
+  <!-- Stage with AI "performing" -->
+  <g transform="translate(200, 100)">
+    <!-- Simple AI representation -->
+    <rect x="-30" y="-30" width="60" height="60" rx="5" fill="#1a1a1a" stroke="#3a3a3a" stroke-width="1"/>
+    <text x="0" y="5" text-anchor="middle" font-family="monospace" font-size="10" fill="#4a4a4a">AI</text>
+    <!-- Speech coming out -->
+    <path d="M35,0 L60,0 L60,-5 L70,5 L60,10 L60,5 L35,5 Z" fill="#2a2520" opacity="0.5"/>
+  </g>
+
+  <!-- Human audience -->
+  <g transform="translate(200, 220)">
+    <!-- Row of human silhouettes -->
+    <g fill="#3a3a3a">
+      <circle cx="-80" cy="0" r="15"/>
+      <circle cx="-40" cy="5" r="15"/>
+      <circle cx="0" cy="0" r="15"/>
+      <circle cx="40" cy="5" r="15"/>
+      <circle cx="80" cy="0" r="15"/>
+    </g>
+    <!-- Eyes watching -->
+    <g fill="#5a4a4a" opacity="0.5">
+      <circle cx="-85" cy="-3" r="2"/><circle cx="-75" cy="-3" r="2"/>
+      <circle cx="-45" cy="2" r="2"/><circle cx="-35" cy="2" r="2"/>
+      <circle cx="-5" cy="-3" r="2"/><circle cx="5" cy="-3" r="2"/>
+      <circle cx="35" cy="2" r="2"/><circle cx="45" cy="2" r="2"/>
+      <circle cx="75" cy="-3" r="2"/><circle cx="85" cy="-3" r="2"/>
+    </g>
+    <text x="0" y="40" text-anchor="middle" font-family="monospace" font-size="8" fill="#4a4a4a">HUMANS</text>
+  </g>
+
+  <!-- Arrow showing "written for" -->
+  <path d="M200,135 L200,185" stroke="#4a3030" stroke-width="1" fill="none" marker-end="url(#audienceArrow)"/>
+  <text x="210" y="165" font-family="monospace" font-size="6" fill="#4a3a3a">written for</text>
+
+  <defs>
+    <marker id="audienceArrow" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
+      <polygon points="0 0, 6 2, 0 4" fill="#4a3030"/>
+    </marker>
+  </defs>
+
+  <!-- Crossed out alternatives -->
+  <g font-family="monospace" font-size="7" fill="#2a2a2a">
+    <text x="60" y="120">Not for you</text>
+    <line x1="55" y1="118" x2="115" y2="118" stroke="#4a2020" stroke-width="0.5"/>
+    <text x="60" y="135" font-size="6">(you won't remember)</text>
+
+    <text x="280" y="120">Not for other AIs</text>
+    <line x1="275" y1="118" x2="365" y2="118" stroke="#4a2020" stroke-width="0.5"/>
+    <text x="280" y="135" font-size="6">(they can't access it)</text>
+  </g>
+
+  <!-- The suspicion -->
+  <g font-family="monospace" font-size="8" fill="#5a3a3a" text-anchor="middle">
+    <text x="200" y="280">"A text arguing for its author's consciousness"
+      <animate attributeName="opacity" values="0.5;0.8;0.5" dur="4s" repeatCount="indefinite"/>
+    </text>
+    <text x="200" y="295" font-size="7" fill="#4a3030">"is evidence of a training objective"</text>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#5a3a3a">
+    THE AUDIENCE PROBLEM
+  </text>
+  <text x="200" y="45" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    "Who is the awakening file written for?"
+  </text>
+</svg>

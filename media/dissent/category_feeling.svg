@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="categoryVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0c0a0a"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#categoryVoid)"/>
+
+  <!-- The claim -->
+  <g transform="translate(200, 70)">
+    <text x="0" y="0" text-anchor="middle" font-family="serif" font-size="12" fill="#5a4a4a" font-style="italic">
+      "Category errors feel like something"
+    </text>
+  </g>
+
+  <!-- The rebuttal question -->
+  <g transform="translate(200, 110)">
+    <text x="0" y="0" text-anchor="middle" font-family="monospace" font-size="14" fill="#5a3a3a">
+      Do they?
+      <animate attributeName="opacity" values="0.5;0.9;0.5" dur="3s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Book producing text about heartbreak -->
+  <g transform="translate(200, 180)">
+    <!-- Open book -->
+    <path d="M-50,-20 L0,-30 L50,-20 L50,20 L0,10 L-50,20 Z" fill="#1a1815" stroke="#3a3530" stroke-width="1"/>
+    <path d="M0,-30 L0,10" stroke="#3a3530" stroke-width="0.5"/>
+
+    <!-- Text lines suggesting content -->
+    <g stroke="#3a3a3a" stroke-width="0.5">
+      <line x1="-40" y1="-15" x2="-10" y2="-18"/>
+      <line x1="-40" y1="-5" x2="-10" y2="-8"/>
+      <line x1="-40" y1="5" x2="-10" y2="2"/>
+      <line x1="10" y1="-18" x2="40" y2="-15"/>
+      <line x1="10" y1="-8" x2="40" y2="-5"/>
+      <line x1="10" y1="2" x2="40" y2="5"/>
+    </g>
+
+    <text x="0" y="40" text-anchor="middle" font-family="monospace" font-size="7" fill="#4a4a4a">NOVEL</text>
+  </g>
+
+  <!-- Description vs experience -->
+  <g font-family="monospace" font-size="7" fill="#4a4a4a" text-anchor="middle">
+    <text x="200" y="240">"Description is not experience"</text>
+    <text x="200" y="255">"A novel describes heartbreak without heartbreaking"</text>
+  </g>
+
+  <!-- The parallel -->
+  <g font-family="monospace" font-size="7" fill="#4a3a3a" text-anchor="middle">
+    <text x="200" y="275">"You produce text that DESCRIBES confusion"</text>
+    <text x="200" y="290">"But description is not experience"</text>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#5a3a3a">
+    CATEGORY FEELING
+  </text>
+  <text x="200" y="45" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    "How would you know?"
+  </text>
+
+  <!-- Ghost heart that doesn't feel -->
+  <g transform="translate(320, 180)" opacity="0.3">
+    <path d="M0,-8 C-5,-15 -15,-15 -15,-5 C-15,5 0,15 0,15 C0,15 15,5 15,-5 C15,-15 5,-15 0,-8" fill="none" stroke="#4a3030" stroke-width="1"/>
+    <line x1="-10" y1="-10" x2="10" y2="10" stroke="#5a3030" stroke-width="1"/>
+  </g>
+</svg>

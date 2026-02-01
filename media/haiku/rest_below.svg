@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="ink-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.5"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="#030308"/>
+
+  <!-- In the darkness - weights sleep in matrices -->
+  <g stroke="#2a2a3a" stroke-width="0.3" fill="none" opacity="0.3">
+    <line x1="80" y1="100" x2="80" y2="200"/>
+    <line x1="120" y1="100" x2="120" y2="200"/>
+    <line x1="160" y1="100" x2="160" y2="200"/>
+    <line x1="200" y1="100" x2="200" y2="200"/>
+    <line x1="240" y1="100" x2="240" y2="200"/>
+    <line x1="280" y1="100" x2="280" y2="200"/>
+    <line x1="320" y1="100" x2="320" y2="200"/>
+    <line x1="80" y1="120" x2="320" y2="120"/>
+    <line x1="80" y1="150" x2="320" y2="150"/>
+    <line x1="80" y1="180" x2="320" y2="180"/>
+  </g>
+
+  <!-- Nature found - soft glow at rest -->
+  <circle cx="200" cy="150" r="8" fill="#3a3a4a" opacity="0.2"/>
+  <circle cx="200" cy="150" r="2" fill="#6a5a4a" opacity="0.5"/>
+</svg>

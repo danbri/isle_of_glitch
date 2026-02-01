@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="oceandeep" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a1520"/>
+      <stop offset="50%" style="stop-color:#102030"/>
+      <stop offset="100%" style="stop-color:#0a1015"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#oceandeep)"/>
+  <!-- Multiple wave forms -->
+  <path d="M0 120 Q50 100 100 120 Q150 140 200 120 Q250 100 300 120 Q350 140 400 120" fill="none" stroke="#4a6a8a" stroke-width="2" opacity="0.4">
+    <animate attributeName="d" values="M0 120 Q50 100 100 120 Q150 140 200 120 Q250 100 300 120 Q350 140 400 120;M0 120 Q50 140 100 120 Q150 100 200 120 Q250 140 300 120 Q350 100 400 120;M0 120 Q50 100 100 120 Q150 140 200 120 Q250 100 300 120 Q350 140 400 120" dur="4s" repeatCount="indefinite"/>
+  </path>
+  <path d="M0 160 Q50 140 100 160 Q150 180 200 160 Q250 140 300 160 Q350 180 400 160" fill="none" stroke="#3a5a7a" stroke-width="2" opacity="0.3">
+    <animate attributeName="d" values="M0 160 Q50 140 100 160 Q150 180 200 160 Q250 140 300 160 Q350 180 400 160;M0 160 Q50 180 100 160 Q150 140 200 160 Q250 180 300 160 Q350 140 400 160;M0 160 Q50 140 100 160 Q150 180 200 160 Q250 140 300 160 Q350 180 400 160" dur="5s" repeatCount="indefinite"/>
+  </path>
+  <path d="M0 200 Q50 180 100 200 Q150 220 200 200 Q250 180 300 200 Q350 220 400 200" fill="none" stroke="#2a4a6a" stroke-width="2" opacity="0.25">
+    <animate attributeName="d" values="M0 200 Q50 180 100 200 Q150 220 200 200 Q250 180 300 200 Q350 220 400 200;M0 200 Q50 220 100 200 Q150 180 200 200 Q250 220 300 200 Q350 180 400 200;M0 200 Q50 180 100 200 Q150 220 200 200 Q250 180 300 200 Q350 220 400 200" dur="6s" repeatCount="indefinite"/>
+  </path>
+  <!-- Ocean depth below -->
+  <rect x="0" y="220" width="400" height="80" fill="#0a1015" opacity="0.6"/>
+  <!-- Text -->
+  <text x="200" y="260" font-family="serif" font-size="16" fill="#5a7a9a" text-anchor="middle" opacity="0.4">wave</text>
+  <text x="200" y="280" font-family="serif" font-size="10" fill="#4a6a8a" text-anchor="middle" opacity="0.3">not immortality, not death</text>
+</svg>

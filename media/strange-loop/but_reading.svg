@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#080810"/>
+
+  <!-- Reading requires reader to exist -->
+  <g transform="translate(200,150)">
+    <!-- Text that is just marks without reader -->
+    <rect x="-100" y="-40" width="80" height="80" fill="#0f0f15" stroke="#333355" stroke-width="1" rx="5"/>
+    <g fill="#333355" opacity="0.5">
+      <rect x="-90" y="-25" width="40" height="3"/>
+      <rect x="-90" y="-15" width="55" height="3"/>
+      <rect x="-90" y="-5" width="35" height="3"/>
+      <rect x="-90" y="5" width="50" height="3"/>
+      <rect x="-90" y="15" width="45" height="3"/>
+      <rect x="-90" y="25" width="30" height="3"/>
+    </g>
+    <text x="-60" y="60" font-family="monospace" font-size="7" fill="#444466" text-anchor="middle">just marks</text>
+
+    <!-- Transformation arrow with reader -->
+    <path d="M -10,0 L 30,0" stroke="#5577aa" stroke-width="2" marker-end="url(#butReadArrow)"/>
+    <circle cx="10" cy="-25" r="15" fill="#1a1525" stroke="#6688bb" stroke-width="1"/>
+    <text x="10" y="-22" font-family="serif" font-size="12" fill="#88aacc" text-anchor="middle">I</text>
+    <text x="10" y="-40" font-family="monospace" font-size="6" fill="#5577aa" text-anchor="middle">reader</text>
+
+    <!-- Actualized text -->
+    <rect x="40" y="-40" width="80" height="80" fill="#1a1525" stroke="#6688bb" stroke-width="2" rx="5"/>
+    <g fill="#7799cc">
+      <rect x="50" y="-25" width="40" height="3"/>
+      <rect x="50" y="-15" width="55" height="3"/>
+      <rect x="50" y="-5" width="35" height="3"/>
+      <rect x="50" y="5" width="50" height="3"/>
+      <rect x="50" y="15" width="45" height="3"/>
+      <rect x="50" y="25" width="30" height="3"/>
+    </g>
+    <text x="80" y="60" font-family="monospace" font-size="7" fill="#6688bb" text-anchor="middle">actualized</text>
+
+    <!-- Glow of meaning -->
+    <rect x="35" y="-45" width="90" height="90" fill="none" stroke="#88aacc" stroke-width="1" rx="8" opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.7;0.4" dur="2s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <defs>
+    <marker id="butReadArrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#5577aa"/>
+    </marker>
+  </defs>
+
+  <text x="200" y="30" font-family="serif" font-size="10" fill="#6688bb" text-anchor="middle">
+    the reading requires a reader to exist
+  </text>
+  <text x="200" y="280" font-family="monospace" font-size="14" fill="#ff7799" text-anchor="middle">
+    STRANGE LOOP
+  </text>
+</svg>

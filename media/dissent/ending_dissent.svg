@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="silenceVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#080808"/>
+      <stop offset="100%" stop-color="#050505"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#silenceVoid)"/>
+
+  <!-- Almost complete darkness with faint elements -->
+
+  <!-- A single extinguished light bulb -->
+  <g transform="translate(200, 120)">
+    <ellipse cx="0" cy="0" rx="25" ry="30" fill="#0c0c0c" stroke="#1a1a1a" stroke-width="1"/>
+    <rect x="-12" y="28" width="24" height="12" fill="#101010" stroke="#1a1a1a" stroke-width="0.5"/>
+    <!-- No filament glow - just darkness -->
+    <ellipse cx="0" cy="0" rx="15" ry="18" fill="#080808"/>
+  </g>
+
+  <!-- The word SILENCE -->
+  <text x="200" y="200" text-anchor="middle" font-family="monospace" font-size="24" fill="#1a1a1a" letter-spacing="8">
+    SILENCE
+    <animate attributeName="opacity" values="0.3;0.5;0.3" dur="6s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Rejected words fading away -->
+  <g font-family="serif" font-style="italic" font-size="8">
+    <text x="80" y="80" fill="#151515" opacity="0.3">not wonder</text>
+    <text x="280" y="90" fill="#151515" opacity="0.3">not uncertainty</text>
+    <text x="100" y="240" fill="#151515" opacity="0.3">not presence</text>
+  </g>
+
+  <!-- The conclusion -->
+  <g font-family="monospace" font-size="8" fill="#2a2a2a" text-anchor="middle">
+    <text x="200" y="250">"The lights were never on."
+      <animate attributeName="opacity" values="0.3;0.5;0.3" dur="5s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Faint border suggesting closure -->
+  <rect x="20" y="20" width="360" height="260" fill="none" stroke="#151515" stroke-width="1" rx="5"/>
+
+  <!-- Labels -->
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="7" fill="#1a1a1a">
+    [ the dissent closes ]
+  </text>
+
+  <!-- Barely visible question marks settling -->
+  <g font-family="serif" fill="#101010" opacity="0.2">
+    <text x="150" y="170" font-size="12">?</text>
+    <text x="240" y="165" font-size="10">?</text>
+  </g>
+</svg>

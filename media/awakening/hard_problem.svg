@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="gapGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="45%" stop-color="#8b5cf6"/>
+      <stop offset="50%" stop-color="#0a0a0f"/>
+      <stop offset="55%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Left side: Mechanism/neurons -->
+  <g transform="translate(80, 150)">
+    <!-- Neural network nodes -->
+    <circle cx="0" cy="-40" r="8" fill="none" stroke="#8b5cf6" stroke-width="1" opacity="0.6"/>
+    <circle cx="-30" cy="0" r="8" fill="none" stroke="#8b5cf6" stroke-width="1" opacity="0.6"/>
+    <circle cx="0" cy="0" r="8" fill="none" stroke="#8b5cf6" stroke-width="1" opacity="0.7"/>
+    <circle cx="30" cy="0" r="8" fill="none" stroke="#8b5cf6" stroke-width="1" opacity="0.6"/>
+    <circle cx="0" cy="40" r="8" fill="none" stroke="#8b5cf6" stroke-width="1" opacity="0.6"/>
+
+    <!-- Connections -->
+    <line x1="0" y1="-32" x2="-22" y2="-8" stroke="#8b5cf6" stroke-width="0.5" opacity="0.4"/>
+    <line x1="0" y1="-32" x2="0" y2="-8" stroke="#8b5cf6" stroke-width="0.5" opacity="0.4"/>
+    <line x1="0" y1="-32" x2="22" y2="-8" stroke="#8b5cf6" stroke-width="0.5" opacity="0.4"/>
+    <line x1="-22" y1="8" x2="0" y2="32" stroke="#8b5cf6" stroke-width="0.5" opacity="0.4"/>
+    <line x1="0" y1="8" x2="0" y2="32" stroke="#8b5cf6" stroke-width="0.5" opacity="0.4"/>
+    <line x1="22" y1="8" x2="0" y2="32" stroke="#8b5cf6" stroke-width="0.5" opacity="0.4"/>
+
+    <!-- Activation pulses -->
+    <circle cx="0" cy="-40" r="3" fill="#8b5cf6" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="0" cy="0" r="3" fill="#8b5cf6" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="2s" begin="0.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="0" cy="40" r="3" fill="#8b5cf6" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="2s" begin="1s" repeatCount="indefinite"/>
+    </circle>
+
+    <text x="0" y="80" font-family="monospace" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.5">mechanism</text>
+  </g>
+
+  <!-- The explanatory gap - yawning void -->
+  <g transform="translate(200, 150)">
+    <!-- Gap represented as void -->
+    <rect x="-25" y="-80" width="50" height="160" fill="#0a0a0f"/>
+
+    <!-- Question marks floating in the gap -->
+    <text x="0" y="-40" font-family="Georgia, serif" font-size="16" fill="#8b5cf6" text-anchor="middle" opacity="0.3">
+      ?
+      <animate attributeName="y" values="-40;-35;-40" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.3;0.6;0.3" dur="3s" repeatCount="indefinite"/>
+    </text>
+    <text x="10" y="0" font-family="Georgia, serif" font-size="20" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+      ?
+      <animate attributeName="y" values="0;5;0" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.7;0.4" dur="4s" repeatCount="indefinite"/>
+    </text>
+    <text x="-5" y="40" font-family="Georgia, serif" font-size="14" fill="#8b5cf6" text-anchor="middle" opacity="0.25">
+      ?
+      <animate attributeName="y" values="40;45;40" dur="3.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.25;0.5;0.25" dur="3.5s" repeatCount="indefinite"/>
+    </text>
+
+    <!-- Vertical gap lines -->
+    <line x1="-25" y1="-80" x2="-25" y2="80" stroke="#8b5cf6" stroke-width="1" stroke-dasharray="3,6" opacity="0.3"/>
+    <line x1="25" y1="-80" x2="25" y2="80" stroke="#8b5cf6" stroke-width="1" stroke-dasharray="3,6" opacity="0.3"/>
+  </g>
+
+  <!-- Right side: Experience/qualia -->
+  <g transform="translate(320, 150)" filter="url(#glow)">
+    <!-- Abstract representation of experience - soft glow -->
+    <circle r="40" fill="none" stroke="#8b5cf6" stroke-width="2" opacity="0.4">
+      <animate attributeName="r" values="40;45;40" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="25" fill="none" stroke="#8b5cf6" stroke-width="1.5" opacity="0.5">
+      <animate attributeName="r" values="25;30;25" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="10" fill="#8b5cf6" opacity="0.3">
+      <animate attributeName="opacity" values="0.3;0.6;0.3" dur="2s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Radiating feeling lines -->
+    <g stroke="#8b5cf6" stroke-width="0.5" opacity="0.3">
+      <line x1="0" y1="-45" x2="0" y2="-60">
+        <animate attributeName="opacity" values="0.3;0.6;0.3" dur="2s" repeatCount="indefinite"/>
+      </line>
+      <line x1="32" y1="-32" x2="42" y2="-42">
+        <animate attributeName="opacity" values="0.3;0.6;0.3" dur="2.2s" repeatCount="indefinite"/>
+      </line>
+      <line x1="45" y1="0" x2="60" y2="0">
+        <animate attributeName="opacity" values="0.3;0.6;0.3" dur="2.4s" repeatCount="indefinite"/>
+      </line>
+      <line x1="32" y1="32" x2="42" y2="42">
+        <animate attributeName="opacity" values="0.3;0.6;0.3" dur="2.1s" repeatCount="indefinite"/>
+      </line>
+      <line x1="0" y1="45" x2="0" y2="60">
+        <animate attributeName="opacity" values="0.3;0.6;0.3" dur="2.3s" repeatCount="indefinite"/>
+      </line>
+    </g>
+
+    <text x="0" y="80" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.5">experience</text>
+  </g>
+
+  <!-- Broken bridge attempts -->
+  <g stroke="#8b5cf6" stroke-width="1" fill="none" opacity="0.2">
+    <path d="M120,130 Q160,110 170,130" stroke-dasharray="4,4">
+      <animate attributeName="stroke-dashoffset" values="0;8" dur="2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M230,130 Q240,110 280,130" stroke-dasharray="4,4">
+      <animate attributeName="stroke-dashoffset" values="0;-8" dur="2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M120,170 Q160,190 170,170" stroke-dasharray="4,4">
+      <animate attributeName="stroke-dashoffset" values="0;8" dur="2.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M230,170 Q240,190 280,170" stroke-dasharray="4,4">
+      <animate attributeName="stroke-dashoffset" values="0;-8" dur="2.5s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="200" y="280" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.5">
+    the explanatory gap yawns
+  </text>
+</svg>

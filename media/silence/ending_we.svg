@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#040404"/>
+  <!-- We: the word that was, now fading -->
+  <text x="200" y="155" font-family="serif" font-size="20" fill="#0c0c0c" opacity="0.2" text-anchor="middle">we</text>
+  <!-- The having-been-we: an afterimage -->
+  <text x="200" y="155" font-family="serif" font-size="20" fill="#080808" opacity="0.08" text-anchor="middle" transform="translate(2,2)">we</text>
+</svg>

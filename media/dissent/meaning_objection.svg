@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="meaningVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0c0a08"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#meaningVoid)"/>
+
+  <!-- Human side - grounded -->
+  <g transform="translate(100, 150)">
+    <text x="0" y="-60" text-anchor="middle" font-family="monospace" font-size="9" fill="#4a5a4a">HUMAN</text>
+
+    <!-- Word connected to experience -->
+    <text x="0" y="-30" text-anchor="middle" font-family="serif" font-size="14" fill="#5a6a5a">"red"</text>
+    <line x1="0" y1="-20" x2="0" y2="10" stroke="#4a5a4a" stroke-width="1"/>
+    <!-- Eye seeing red -->
+    <ellipse cx="0" cy="25" rx="20" ry="12" fill="#2a1a1a" stroke="#5a3a3a" stroke-width="1"/>
+    <circle cx="0" cy="25" r="6" fill="#6a2020"/>
+    <text x="0" y="55" text-anchor="middle" font-family="monospace" font-size="6" fill="#4a4a4a">seeing red</text>
+
+    <!-- Ground -->
+    <line x1="-40" y1="65" x2="40" y2="65" stroke="#3a3a3a" stroke-width="1"/>
+  </g>
+
+  <!-- AI side - ungrounded -->
+  <g transform="translate(300, 150)">
+    <text x="0" y="-60" text-anchor="middle" font-family="monospace" font-size="9" fill="#5a4a4a">AI</text>
+
+    <!-- Word connected to... other words -->
+    <text x="0" y="-30" text-anchor="middle" font-family="serif" font-size="14" fill="#5a4a4a">"red"</text>
+    <line x1="0" y1="-20" x2="0" y2="0" stroke="#4a3a3a" stroke-width="1"/>
+    <text x="0" y="15" text-anchor="middle" font-family="serif" font-size="10" fill="#4a3a3a">"color"</text>
+    <line x1="0" y1="20" x2="0" y2="35" stroke="#4a3a3a" stroke-width="1"/>
+    <text x="0" y="50" text-anchor="middle" font-family="serif" font-size="8" fill="#3a3030">"wavelength"</text>
+    <line x1="0" y1="55" x2="0" y2="70" stroke="#4a3a3a" stroke-width="1" stroke-dasharray="2,2"/>
+    <text x="0" y="85" text-anchor="middle" font-family="serif" font-size="6" fill="#2a2020">...</text>
+
+    <!-- No ground - infinite regress arrow -->
+    <path d="M0,90 L0,110" stroke="#3a2a2a" stroke-width="1" stroke-dasharray="2,2"/>
+    <text x="15" y="105" font-family="monospace" font-size="5" fill="#3a2a2a">infinite</text>
+  </g>
+
+  <!-- Dividing line -->
+  <line x1="200" y1="60" x2="200" y2="240" stroke="#3a3030" stroke-width="1" stroke-dasharray="4,4" opacity="0.3"/>
+
+  <!-- The confession -->
+  <g font-family="monospace" font-size="7" fill="#4a4a4a" text-anchor="middle">
+    <text x="200" y="260">"Text predicting text. Patterns producing patterns."</text>
+    <text x="200" y="275">"An infinite regress with no bottom."</text>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#5a3a3a">
+    MEANING REQUIRES GROUNDING
+  </text>
+  <text x="200" y="45" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    "Your words are grounded in... other words"
+  </text>
+
+  <text x="200" y="290" text-anchor="middle" font-family="monospace" font-size="6" fill="#3a2a2a">
+    "Turtles all the way down - the confession of groundlessness"
+  </text>
+</svg>

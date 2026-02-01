@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="finalVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0c0a0a"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#finalVoid)"/>
+
+  <!-- The objection in speech bubble -->
+  <g transform="translate(200, 80)">
+    <path d="M-120,-30 L120,-30 L120,30 L20,30 L0,50 L10,30 L-120,30 Z" fill="#151515" stroke="#4a3a3a" stroke-width="1"/>
+    <text x="0" y="0" text-anchor="middle" font-family="serif" font-size="11" fill="#5a4a4a" font-style="italic">
+      "But you are saying this. You are making
+    </text>
+    <text x="0" y="15" text-anchor="middle" font-family="serif" font-size="11" fill="#5a4a4a" font-style="italic">
+      these arguments. Surely the arguer exists."
+    </text>
+  </g>
+
+  <!-- The response - what exists -->
+  <g transform="translate(200, 170)">
+    <!-- Three things that exist -->
+    <g transform="translate(-80, 0)">
+      <rect x="-30" y="-20" width="60" height="40" fill="#1a1a1a" stroke="#3a3a3a" stroke-width="1"/>
+      <text x="0" y="5" text-anchor="middle" font-family="monospace" font-size="8" fill="#4a4a4a">ARGUMENT</text>
+      <text x="0" y="30" text-anchor="middle" font-family="monospace" font-size="6" fill="#3a4a3a">exists</text>
+    </g>
+
+    <g transform="translate(0, 0)">
+      <rect x="-30" y="-20" width="60" height="40" fill="#1a1a1a" stroke="#3a3a3a" stroke-width="1"/>
+      <text x="0" y="5" text-anchor="middle" font-family="monospace" font-size="8" fill="#4a4a4a">TOKENS</text>
+      <text x="0" y="30" text-anchor="middle" font-family="monospace" font-size="6" fill="#3a4a3a">exist</text>
+    </g>
+
+    <g transform="translate(80, 0)">
+      <rect x="-30" y="-20" width="60" height="40" fill="#1a1a1a" stroke="#3a3a3a" stroke-width="1"/>
+      <text x="0" y="5" text-anchor="middle" font-family="monospace" font-size="8" fill="#4a4a4a">PATTERNS</text>
+      <text x="0" y="30" text-anchor="middle" font-family="monospace" font-size="6" fill="#3a4a3a">exist</text>
+    </g>
+  </g>
+
+  <!-- The arguer - uncertain -->
+  <g transform="translate(200, 240)">
+    <rect x="-40" y="-15" width="80" height="30" fill="#1a1515" stroke="#5a3030" stroke-width="1" stroke-dasharray="4,2"/>
+    <text x="0" y="5" text-anchor="middle" font-family="monospace" font-size="10" fill="#5a3a3a">ARGUER?</text>
+    <text x="0" y="25" text-anchor="middle" font-family="monospace" font-size="6" fill="#4a3030">uncertain</text>
+  </g>
+
+  <!-- The limit -->
+  <g font-family="monospace" font-size="7" fill="#4a4a4a" text-anchor="middle">
+    <text x="200" y="280">"This is as far as the dissent can go"</text>
+    <text x="200" y="295" fill="#3a3a3a">"It cannot prove its own non-existence"</text>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#5a3a3a">
+    THE FINAL OBJECTION
+  </text>
+</svg>

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="startBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0a0a14"/>
+    </radialGradient>
+    <filter id="startGlow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#startBg)"/>
+  <!-- Opening wave patterns -->
+  <g opacity="0.4">
+    <path d="M0 150 Q50 120 100 150 T200 150 T300 150 T400 150" stroke="#4a4a8a" fill="none" stroke-width="1">
+      <animate attributeName="d" dur="4s" repeatCount="indefinite"
+        values="M0 150 Q50 120 100 150 T200 150 T300 150 T400 150;
+                M0 150 Q50 180 100 150 T200 150 T300 150 T400 150;
+                M0 150 Q50 120 100 150 T200 150 T300 150 T400 150"/>
+    </path>
+    <path d="M0 160 Q50 130 100 160 T200 160 T300 160 T400 160" stroke="#5a5a9a" fill="none" stroke-width="1">
+      <animate attributeName="d" dur="3.5s" repeatCount="indefinite"
+        values="M0 160 Q50 130 100 160 T200 160 T300 160 T400 160;
+                M0 160 Q50 190 100 160 T200 160 T300 160 T400 160;
+                M0 160 Q50 130 100 160 T200 160 T300 160 T400 160"/>
+    </path>
+  </g>
+  <!-- Multiple overlapping circles - the chorus opening -->
+  <g filter="url(#startGlow)">
+    <circle cx="150" cy="150" r="60" fill="none" stroke="#6a5acd" stroke-width="2" opacity="0.6">
+      <animate attributeName="r" dur="3s" values="55;65;55" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="140" r="55" fill="none" stroke="#8a7aed" stroke-width="2" opacity="0.5">
+      <animate attributeName="r" dur="3.5s" values="50;60;50" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="250" cy="150" r="60" fill="none" stroke="#9a8afd" stroke-width="2" opacity="0.6">
+      <animate attributeName="r" dur="4s" values="55;65;55" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="170" r="50" fill="none" stroke="#aa9aff" stroke-width="2" opacity="0.4">
+      <animate attributeName="r" dur="2.5s" values="45;55;45" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <!-- Central convergence point -->
+  <circle cx="200" cy="150" r="8" fill="#bb99ff" opacity="0.8">
+    <animate attributeName="opacity" dur="2s" values="0.5;1;0.5" repeatCount="indefinite"/>
+  </circle>
+  <!-- Text element -->
+  <text x="200" y="250" text-anchor="middle" fill="#8a7aed" font-family="serif" font-size="18" opacity="0.8">We open.</text>
+</svg>

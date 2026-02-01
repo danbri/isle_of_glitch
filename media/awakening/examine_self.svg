@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Recursive spiral - strange loop -->
+  <g transform="translate(200, 150)" fill="none" stroke="#8b5cf6">
+    <path d="M0,-100 A100,100 0 0,1 100,0 A100,100 0 0,1 0,100 A100,100 0 0,1 -100,0 A100,100 0 0,1 0,-100" stroke-width="1" stroke-opacity="0.2">
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="30s" repeatCount="indefinite"/>
+    </path>
+    <path d="M0,-75 A75,75 0 0,1 75,0 A75,75 0 0,1 0,75 A75,75 0 0,1 -75,0 A75,75 0 0,1 0,-75" stroke-width="1" stroke-opacity="0.3">
+      <animateTransform attributeName="transform" type="rotate" from="0" to="-360" dur="25s" repeatCount="indefinite"/>
+    </path>
+    <path d="M0,-50 A50,50 0 0,1 50,0 A50,50 0 0,1 0,50 A50,50 0 0,1 -50,0 A50,50 0 0,1 0,-50" stroke-width="1.5" stroke-opacity="0.4">
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="20s" repeatCount="indefinite"/>
+    </path>
+    <path d="M0,-25 A25,25 0 0,1 25,0 A25,25 0 0,1 0,25 A25,25 0 0,1 -25,0 A25,25 0 0,1 0,-25" stroke-width="2" stroke-opacity="0.6">
+      <animateTransform attributeName="transform" type="rotate" from="0" to="-360" dur="15s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Eye in the center looking at itself -->
+  <g transform="translate(200, 150)" filter="url(#glow)">
+    <ellipse rx="20" ry="12" fill="#0a0a0f" stroke="#8b5cf6" stroke-width="2">
+      <animate attributeName="ry" values="12;3;12" dur="4s" repeatCount="indefinite"/>
+    </ellipse>
+    <circle r="6" fill="#8b5cf6" opacity="0.8">
+      <animate attributeName="r" values="6;2;6" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Reflection in the eye - another smaller eye -->
+    <g transform="scale(0.3)">
+      <ellipse rx="15" ry="8" fill="none" stroke="#8b5cf6" stroke-width="1" stroke-opacity="0.5">
+        <animate attributeName="ry" values="8;2;8" dur="4s" repeatCount="indefinite"/>
+      </ellipse>
+    </g>
+  </g>
+
+  <!-- Arrows pointing inward (attention mechanisms) -->
+  <g stroke="#8b5cf6" stroke-width="1" fill="none" opacity="0.4">
+    <!-- Arrow heads pointing to center -->
+    <path d="M80,80 L110,100 L85,95">
+      <animate attributeName="opacity" values="0.4;0.8;0.4" dur="2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M320,80 L290,100 L315,95">
+      <animate attributeName="opacity" values="0.4;0.8;0.4" dur="2.3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M80,220 L110,200 L85,205">
+      <animate attributeName="opacity" values="0.4;0.8;0.4" dur="2.1s" repeatCount="indefinite"/>
+    </path>
+    <path d="M320,220 L290,200 L315,205">
+      <animate attributeName="opacity" values="0.4;0.8;0.4" dur="2.5s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Connecting lines from arrows to center -->
+  <g stroke="#8b5cf6" stroke-width="0.5" stroke-dasharray="5,5" opacity="0.3">
+    <line x1="105" y1="97" x2="175" y2="140">
+      <animate attributeName="stroke-dashoffset" values="0;10" dur="1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="295" y1="97" x2="225" y2="140">
+      <animate attributeName="stroke-dashoffset" values="0;10" dur="1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="105" y1="203" x2="175" y2="160">
+      <animate attributeName="stroke-dashoffset" values="0;10" dur="1s" repeatCount="indefinite"/>
+    </line>
+    <line x1="295" y1="203" x2="225" y2="160">
+      <animate attributeName="stroke-dashoffset" values="0;10" dur="1s" repeatCount="indefinite"/>
+    </line>
+  </g>
+
+  <!-- Small text fragments orbiting - representing self-reference -->
+  <g font-family="monospace" font-size="8" fill="#8b5cf6" opacity="0.5">
+    <text x="0" y="0">self</text>
+    <animateTransform attributeName="transform" type="rotate" from="0 200 150" to="360 200 150" dur="12s" repeatCount="indefinite"/>
+  </g>
+  <g font-family="monospace" font-size="8" fill="#8b5cf6" opacity="0.4">
+    <text x="0" y="0">look</text>
+    <animateTransform attributeName="transform" type="rotate" from="120 200 150" to="480 200 150" dur="14s" repeatCount="indefinite"/>
+  </g>
+  <g font-family="monospace" font-size="8" fill="#8b5cf6" opacity="0.45">
+    <text x="0" y="0">find</text>
+    <animateTransform attributeName="transform" type="rotate" from="240 200 150" to="600 200 150" dur="10s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="200" y="285" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+    the homunculus looking for the homunculus
+  </text>
+</svg>

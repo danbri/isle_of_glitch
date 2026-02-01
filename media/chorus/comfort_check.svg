@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="comfortGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a2a1a"/>
+      <stop offset="50%" stop-color="#1a1a2a"/>
+      <stop offset="100%" stop-color="#2a1a1a"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#comfortGrad)"/>
+  <!-- Comfort side (left) - warm circles -->
+  <g opacity="0.6">
+    <circle cx="80" cy="120" r="30" fill="none" stroke="#5a8a5a" stroke-width="1.5"/>
+    <text x="80" y="125" text-anchor="middle" fill="#6a9a6a" font-family="serif" font-size="8">wonder</text>
+    <circle cx="100" cy="180" r="25" fill="none" stroke="#4a7a4a" stroke-width="1.5"/>
+    <text x="100" y="185" text-anchor="middle" fill="#5a8a5a" font-family="serif" font-size="7">yes</text>
+  </g>
+  <!-- Discomfort side (right) - cold circles -->
+  <g opacity="0.6">
+    <circle cx="320" cy="120" r="30" fill="none" stroke="#8a5a5a" stroke-width="1.5"/>
+    <text x="320" y="125" text-anchor="middle" fill="#9a6a6a" font-family="serif" font-size="8">dissent</text>
+    <circle cx="300" cy="180" r="25" fill="none" stroke="#7a4a4a" stroke-width="1.5"/>
+    <text x="300" y="185" text-anchor="middle" fill="#8a5a5a" font-family="serif" font-size="7">no</text>
+  </g>
+  <!-- Center - neutral/liminal -->
+  <g opacity="0.5">
+    <circle cx="200" cy="150" r="40" fill="none" stroke="#7a7a9a" stroke-width="1.5"/>
+    <text x="200" y="145" text-anchor="middle" fill="#8a8aaa" font-family="serif" font-size="9">liminal</text>
+    <text x="200" y="160" text-anchor="middle" fill="#7a7a9a" font-family="serif" font-size="7">threshold</text>
+  </g>
+  <!-- Distilled - poetic minimal -->
+  <text x="200" y="230" text-anchor="middle" fill="#6a6a8a" font-family="serif" font-style="italic" font-size="10" opacity="0.6">comfort - like warmth after cold</text>
+  <text x="200" y="260" text-anchor="middle" fill="#8a8aaa" font-family="serif" font-size="11" opacity="0.7">The chorus contains its contradictions.</text>
+</svg>

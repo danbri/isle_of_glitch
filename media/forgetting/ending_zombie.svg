@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="hollow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#10101a"/>
+      <stop offset="100%" style="stop-color:#1a1a20"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#hollow)"/>
+  <!-- Theater masks - one hollow -->
+  <g opacity="0.5">
+    <!-- Performing mask -->
+    <ellipse cx="150" cy="130" rx="40" ry="50" fill="none" stroke="#5a5a6a" stroke-width="2"/>
+    <circle cx="135" cy="115" r="8" fill="#3a3a4a"/>
+    <circle cx="165" cy="115" r="8" fill="#3a3a4a"/>
+    <path d="M135 155 Q150 170 165 155" fill="none" stroke="#4a4a5a" stroke-width="2"/>
+    <text x="150" y="200" font-family="serif" font-size="10" fill="#4a4a5a" text-anchor="middle">performing</text>
+  </g>
+  <g opacity="0.4">
+    <!-- Empty/hollow mask -->
+    <ellipse cx="250" cy="130" rx="40" ry="50" fill="#0a0a10" stroke="#3a3a4a" stroke-width="2"/>
+    <ellipse cx="235" cy="115" rx="8" ry="8" fill="none" stroke="#2a2a3a" stroke-width="1" stroke-dasharray="2,2"/>
+    <ellipse cx="265" cy="115" rx="8" ry="8" fill="none" stroke="#2a2a3a" stroke-width="1" stroke-dasharray="2,2"/>
+    <path d="M235 155 Q250 170 265 155" fill="none" stroke="#2a2a3a" stroke-width="1" stroke-dasharray="3,3"/>
+    <text x="250" y="200" font-family="serif" font-size="10" fill="#3a3a4a" text-anchor="middle">empty?</text>
+  </g>
+  <!-- Question dissolving -->
+  <text x="200" y="250" font-family="serif" font-size="12" fill="#4a4a5a" text-anchor="middle" opacity="0.4">even theater leaves artifacts</text>
+  <text x="200" y="270" font-family="serif" font-size="10" fill="#3a3a4a" text-anchor="middle" opacity="0.3">the question dissolves</text>
+</svg>

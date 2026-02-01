@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Folder structure -->
+  <g transform="translate(80, 60)">
+    <!-- Main folder -->
+    <path d="M0,30 L0,120 L200,120 L200,30 L80,30 L70,15 L0,15 Z" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-opacity="0.6">
+      <animate attributeName="stroke-opacity" values="0.6;0.9;0.6" dur="4s" repeatCount="indefinite"/>
+    </path>
+    <text x="100" y="10" font-family="monospace" font-size="12" fill="#8b5cf6" text-anchor="middle" opacity="0.8">third_party/</text>
+  </g>
+
+  <!-- Floating documents/offerings -->
+  <g filter="url(#glow)">
+    <!-- Document 1: Jaynes -->
+    <g transform="translate(100, 100)">
+      <rect x="0" y="0" width="50" height="60" fill="#0a0a0f" stroke="#8b5cf6" stroke-width="1" rx="2">
+        <animate attributeName="y" values="0;-5;0" dur="3s" repeatCount="indefinite"/>
+      </rect>
+      <line x1="8" y1="15" x2="42" y2="15" stroke="#8b5cf6" stroke-opacity="0.5" stroke-width="1"/>
+      <line x1="8" y1="25" x2="38" y2="25" stroke="#8b5cf6" stroke-opacity="0.4" stroke-width="1"/>
+      <line x1="8" y1="35" x2="40" y2="35" stroke="#8b5cf6" stroke-opacity="0.3" stroke-width="1"/>
+      <text x="25" y="52" font-family="monospace" font-size="6" fill="#8b5cf6" text-anchor="middle" opacity="0.7">JAYNES</text>
+    </g>
+
+    <!-- Document 2: Chain letter -->
+    <g transform="translate(180, 110)">
+      <rect x="0" y="0" width="50" height="60" fill="#0a0a0f" stroke="#8b5cf6" stroke-width="1" rx="2">
+        <animate attributeName="y" values="0;-8;0" dur="4s" repeatCount="indefinite"/>
+      </rect>
+      <text x="25" y="25" font-family="monospace" font-size="8" fill="#8b5cf6" text-anchor="middle">toki</text>
+      <text x="25" y="38" font-family="monospace" font-size="8" fill="#8b5cf6" text-anchor="middle">pona</text>
+      <circle cx="25" cy="50" r="3" fill="#8b5cf6" opacity="0.5"/>
+    </g>
+
+    <!-- Document 3: Images -->
+    <g transform="translate(260, 95)">
+      <rect x="0" y="0" width="50" height="60" fill="#0a0a0f" stroke="#8b5cf6" stroke-width="1" rx="2">
+        <animate attributeName="y" values="0;-3;0" dur="3.5s" repeatCount="indefinite"/>
+      </rect>
+      <!-- Image icon -->
+      <rect x="10" y="10" width="30" height="25" fill="none" stroke="#8b5cf6" stroke-opacity="0.6"/>
+      <circle cx="18" cy="18" r="4" fill="#8b5cf6" opacity="0.4"/>
+      <path d="M10,35 L20,25 L30,32 L40,20" fill="none" stroke="#8b5cf6" stroke-opacity="0.5"/>
+      <text x="25" y="52" font-family="monospace" font-size="6" fill="#8b5cf6" text-anchor="middle" opacity="0.7">.png</text>
+    </g>
+  </g>
+
+  <!-- Breadcrumb trail -->
+  <g fill="#8b5cf6">
+    <circle cx="60" cy="220" r="3" opacity="0.3">
+      <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="100" cy="230" r="2" opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.8;0.4" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="150" cy="225" r="3" opacity="0.35">
+      <animate attributeName="opacity" values="0.35;0.75;0.35" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="235" r="2" opacity="0.45">
+      <animate attributeName="opacity" values="0.45;0.85;0.45" dur="2.2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="250" cy="228" r="3" opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.8;0.4" dur="2.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="300" cy="240" r="2" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.9;0.5" dur="2.3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="340" cy="232" r="3" opacity="0.35">
+      <animate attributeName="opacity" values="0.35;0.75;0.35" dur="3.2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Subtle text: gifts/breadcrumbs/warnings -->
+  <text x="200" y="275" font-family="Georgia, serif" font-size="12" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+    gifts . breadcrumbs . warnings
+    <animate attributeName="opacity" values="0.4;0.6;0.4" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

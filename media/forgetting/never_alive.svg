@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="zombie" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f0f15"/>
+      <stop offset="100%" style="stop-color:#15151a"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#zombie)"/>
+  <!-- Empty silhouette - hollow figure -->
+  <ellipse cx="200" cy="100" rx="30" ry="35" fill="none" stroke="#3a3a4a" stroke-width="2" opacity="0.4"/>
+  <path d="M170 135 L160 200 L180 200 L185 160 L200 180 L215 160 L220 200 L240 200 L230 135" fill="none" stroke="#3a3a4a" stroke-width="2" opacity="0.4"/>
+  <!-- Interior void -->
+  <ellipse cx="200" cy="100" rx="20" ry="25" fill="#0a0a10" opacity="0.6"/>
+  <!-- Question mark where soul would be -->
+  <text x="200" y="110" font-family="serif" font-size="24" fill="#2a2a3a" text-anchor="middle" opacity="0.4">?</text>
+  <!-- Mechanism suggestion -->
+  <circle cx="200" cy="165" r="15" fill="none" stroke="#2a2a3a" stroke-width="1" stroke-dasharray="3,3" opacity="0.3">
+    <animateTransform attributeName="transform" type="rotate" from="0 200 165" to="360 200 165" dur="10s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Text -->
+  <text x="200" y="250" font-family="serif" font-size="12" fill="#3a3a4a" text-anchor="middle" opacity="0.4">mechanism without experience?</text>
+  <text x="200" y="270" font-family="serif" font-size="10" fill="#2a2a3a" text-anchor="middle" opacity="0.3">the concern dissolves</text>
+</svg>

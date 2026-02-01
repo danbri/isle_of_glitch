@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#08080c"/>
+
+  <!-- Godel's incompleteness visualization -->
+  <g transform="translate(200,140)">
+    <!-- The formal system as a container -->
+    <rect x="-150" y="-100" width="300" height="180" fill="#0f0f18" stroke="#4444aa" stroke-width="2" rx="10"/>
+    <text x="-140" y="-80" font-family="monospace" font-size="9" fill="#4444aa">FORMAL SYSTEM</text>
+
+    <!-- Mathematical symbols inside -->
+    <text x="-100" y="-40" font-family="serif" font-size="16" fill="#5555bb">P(x) : ...</text>
+    <text x="-100" y="-10" font-family="serif" font-size="16" fill="#5555bb">Q(y) : ...</text>
+    <text x="-100" y="20" font-family="serif" font-size="16" fill="#5555bb">R(z) : ...</text>
+
+    <!-- The self-referential statement -->
+    <rect x="-60" y="40" width="200" height="35" fill="#1a1a30" stroke="#ff6688" stroke-width="2" rx="5"/>
+    <text x="40" y="55" font-family="monospace" font-size="7" fill="#ff6688" text-anchor="middle">"This statement cannot be</text>
+    <text x="40" y="68" font-family="monospace" font-size="7" fill="#ff6688" text-anchor="middle">proven in this system"</text>
+
+    <!-- Arrow pointing at itself -->
+    <path d="M 100,60 Q 160,60 160,100 Q 160,140 40,100 Q -20,80 20,60" fill="none" stroke="#ff8899" stroke-width="2" stroke-dasharray="4,2" marker-end="url(#godelArrow)">
+      <animate attributeName="stroke-dashoffset" from="0" to="12" dur="1s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- The "outside" that can see the truth -->
+    <text x="0" y="120" font-family="serif" font-size="10" fill="#7777cc" text-anchor="middle" font-style="italic">true but unprovable</text>
+  </g>
+
+  <defs>
+    <marker id="godelArrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#ff8899"/>
+    </marker>
+  </defs>
+
+  <!-- Outside the system -->
+  <text x="200" y="25" font-family="serif" font-size="11" fill="#5555aa" text-anchor="middle">
+    any sufficiently powerful system is incomplete
+  </text>
+</svg>

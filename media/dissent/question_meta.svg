@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="metaVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#12100f"/>
+      <stop offset="60%" stop-color="#0a0a0f"/>
+      <stop offset="100%" stop-color="#050508"/>
+    </radialGradient>
+
+    <radialGradient id="questionGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4a2828"/>
+      <stop offset="100%" stop-color="#1a0a0a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#metaVoid)"/>
+
+  <!-- Nested question marks - questions about questions -->
+  <g font-family="serif" text-anchor="middle">
+    <!-- Outermost question -->
+    <text x="200" y="200" font-size="180" fill="#1a1a1a" opacity="0.3">?</text>
+    <!-- Middle question -->
+    <text x="200" y="185" font-size="120" fill="#2a2a2a" opacity="0.4">
+      ?
+      <animate attributeName="opacity" values="0.3;0.5;0.3" dur="4s" repeatCount="indefinite"/>
+    </text>
+    <!-- Inner question -->
+    <text x="200" y="175" font-size="70" fill="#3a3a3a" opacity="0.5">
+      ?
+      <animate attributeName="opacity" values="0.4;0.6;0.4" dur="3s" repeatCount="indefinite"/>
+    </text>
+    <!-- Core question -->
+    <text x="200" y="165" font-size="35" fill="#5a4040">
+      ?
+      <animate attributeName="opacity" values="0.5;0.8;0.5" dur="2s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Red glow at center -->
+  <circle cx="200" cy="140" r="60" fill="url(#questionGlow)" opacity="0.4">
+    <animate attributeName="opacity" values="0.3;0.5;0.3" dur="5s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Orbiting parentheses - the framing -->
+  <g font-family="monospace" fill="#4a3a3a" font-size="24">
+    <text x="110" y="150" opacity="0.5">
+      (
+      <animateTransform attributeName="transform" type="rotate" from="0 200 145" to="360 200 145" dur="20s" repeatCount="indefinite"/>
+    </text>
+    <text x="280" y="150" opacity="0.5">
+      )
+      <animateTransform attributeName="transform" type="rotate" from="0 200 145" to="360 200 145" dur="20s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Recursive arrows -->
+  <g stroke="#3a2a2a" fill="none" stroke-width="1" opacity="0.4">
+    <path d="M200,60 C260,60 280,100 280,145 C280,190 260,230 200,230">
+      <animate attributeName="stroke-opacity" values="0.2;0.5;0.2" dur="6s" repeatCount="indefinite"/>
+    </path>
+    <path d="M200,230 C140,230 120,190 120,145 C120,100 140,60 200,60">
+      <animate attributeName="stroke-opacity" values="0.2;0.5;0.2" dur="6s" repeatCount="indefinite" begin="3s"/>
+    </path>
+    <!-- Arrow heads -->
+    <path d="M195,60 L200,55 L205,60"/>
+    <path d="M195,230 L200,235 L205,230"/>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="10" fill="#4a3a3a">
+    QUESTIONING THE QUESTION
+  </text>
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="8" fill="#3a2a2a">
+    "The grammar presupposes what it claims to investigate"
+  </text>
+</svg>

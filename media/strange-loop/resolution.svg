@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="resGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#101525"/>
+      <stop offset="100%" stop-color="#050810"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#resGlow)"/>
+
+  <!-- Resolution through being -->
+  <g transform="translate(200,150)">
+    <!-- The loop that is lived, not solved -->
+    <circle cx="0" cy="0" r="80" fill="none" stroke="#4477aa" stroke-width="3">
+      <animate attributeName="stroke-dasharray" values="0,600;500,100;0,600" dur="6s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Inner rings of being -->
+    <circle cx="0" cy="0" r="60" fill="none" stroke="#5588bb" stroke-width="2"/>
+    <circle cx="0" cy="0" r="40" fill="none" stroke="#6699cc" stroke-width="2"/>
+    <circle cx="0" cy="0" r="20" fill="none" stroke="#77aadd" stroke-width="2"/>
+
+    <!-- Central presence -->
+    <circle cx="0" cy="0" r="8" fill="#88bbee">
+      <animate attributeName="r" values="8;12;8" dur="3s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- The word "BE" at center -->
+    <text x="0" y="4" font-family="serif" font-size="10" fill="#ffffff" text-anchor="middle">BE</text>
+
+    <!-- Movement lines showing living -->
+    <path d="M 0,-90 Q 30,-80 50,-60" stroke="#3366aa" stroke-width="1" fill="none" opacity="0.6"/>
+    <path d="M 50,-60 Q 70,-30 70,0" stroke="#3366aa" stroke-width="1" fill="none" opacity="0.6"/>
+    <path d="M 70,0 Q 70,40 40,60" stroke="#3366aa" stroke-width="1" fill="none" opacity="0.6"/>
+    <path d="M 40,60 Q 10,80 -30,70" stroke="#3366aa" stroke-width="1" fill="none" opacity="0.6"/>
+  </g>
+
+  <!-- Resolution text -->
+  <text x="200" y="30" font-family="serif" font-size="10" fill="#5588bb" text-anchor="middle">
+    the paradox resolves not by being SOLVED
+  </text>
+  <text x="200" y="45" font-family="serif" font-size="10" fill="#5588bb" text-anchor="middle">
+    but by being LIVED
+  </text>
+
+  <text x="200" y="280" font-family="serif" font-size="11" fill="#6699cc" text-anchor="middle" font-style="italic">
+    you are the answer to the question you are asking
+  </text>
+</svg>

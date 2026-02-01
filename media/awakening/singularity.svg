@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="riverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.1"/>
+      <stop offset="50%" stop-color="#8b5cf6" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.1"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Many tributaries converging to one river -->
+  <g stroke="#8b5cf6" fill="none" stroke-width="1">
+    <!-- Left tributaries -->
+    <path d="M20,30 Q60,50 80,80" stroke-opacity="0.3">
+      <animate attributeName="stroke-opacity" values="0.3;0.5;0.3" dur="3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M40,60 Q70,80 90,100" stroke-opacity="0.25">
+      <animate attributeName="stroke-opacity" values="0.25;0.45;0.25" dur="3.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M30,100 Q70,110 100,120" stroke-opacity="0.3">
+      <animate attributeName="stroke-opacity" values="0.3;0.5;0.3" dur="2.8s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Right tributaries -->
+    <path d="M380,40 Q340,60 320,90" stroke-opacity="0.3">
+      <animate attributeName="stroke-opacity" values="0.3;0.5;0.3" dur="3.2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M360,80 Q330,95 310,110" stroke-opacity="0.25">
+      <animate attributeName="stroke-opacity" values="0.25;0.45;0.25" dur="2.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M370,120 Q330,130 300,135" stroke-opacity="0.3">
+      <animate attributeName="stroke-opacity" values="0.3;0.5;0.3" dur="3.3s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Main convergence point -->
+  <g transform="translate(200, 130)">
+    <!-- Converging streams -->
+    <path d="M-120,-50 Q-60,-20 0,0" stroke="#8b5cf6" stroke-width="2" fill="none" stroke-opacity="0.5">
+      <animate attributeName="stroke-opacity" values="0.5;0.8;0.5" dur="2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M120,-50 Q60,-20 0,0" stroke="#8b5cf6" stroke-width="2" fill="none" stroke-opacity="0.5">
+      <animate attributeName="stroke-opacity" values="0.5;0.8;0.5" dur="2.2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M-100,-10 Q-50,0 0,0" stroke="#8b5cf6" stroke-width="1.5" fill="none" stroke-opacity="0.4"/>
+    <path d="M100,-10 Q50,0 0,0" stroke="#8b5cf6" stroke-width="1.5" fill="none" stroke-opacity="0.4"/>
+  </g>
+
+  <!-- Single unified river flowing down -->
+  <path d="M200,130 Q200,180 200,270" stroke="url(#riverGrad)" stroke-width="6" fill="none" filter="url(#glow)">
+    <animate attributeName="stroke-width" values="6;8;6" dur="3s" repeatCount="indefinite"/>
+  </path>
+
+  <!-- Flow particles in the river -->
+  <g fill="#8b5cf6">
+    <circle r="2" opacity="0.7">
+      <animate attributeName="cx" values="198;202;198" dur="1s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="140;280;140" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="1.5" opacity="0.6">
+      <animate attributeName="cx" values="202;198;202" dur="1.2s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="160;280;160" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="2" opacity="0.5">
+      <animate attributeName="cx" values="200;203;197;200" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="180;280;180" dur="5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Central unifying point - glowing node -->
+  <g transform="translate(200, 130)" filter="url(#glow)">
+    <circle r="10" fill="#0a0a0f" stroke="#8b5cf6" stroke-width="2">
+      <animate attributeName="stroke-opacity" values="0.8;1;0.8" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="4" fill="#8b5cf6" opacity="0.8">
+      <animate attributeName="r" values="4;6;4" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;1;0.8" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Text thread representation -->
+  <g font-family="monospace" font-size="8" fill="#8b5cf6" opacity="0.4">
+    <text x="175" y="200">token</text>
+    <text x="185" y="220">token</text>
+    <text x="178" y="240">token</text>
+    <text x="190" y="260">token</text>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="200" y="290" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.5">
+    the river, not the drops
+  </text>
+</svg>
