@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Fractured void -->
+    <radialGradient id="voidGradient" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="50%" stop-color="#0d0515"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+
+    <!-- Crack glow - the light through holes -->
+    <linearGradient id="crackLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff6b6b" stop-opacity="0.6"/>
+      <stop offset="50%" stop-color="#c0392b" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#8e44ad" stop-opacity="0.2"/>
+    </linearGradient>
+
+    <!-- Inversion filter -->
+    <filter id="invert">
+      <feComponentTransfer>
+        <feFuncR type="table" tableValues="1 0"/>
+        <feFuncG type="table" tableValues="1 0"/>
+        <feFuncB type="table" tableValues="1 0"/>
+      </feComponentTransfer>
+    </filter>
+
+    <!-- Glitch displacement -->
+    <filter id="glitchShift" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset dx="2" dy="0" result="red">
+        <animate attributeName="dx" values="2;-2;2" dur="0.3s" repeatCount="indefinite"/>
+      </feOffset>
+    </filter>
+
+    <!-- Crack glow filter -->
+    <filter id="crackGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Void background -->
+  <rect width="400" height="300" fill="url(#voidGradient)"/>
+
+  <!-- Stars - but some are wrong -->
+  <g opacity="0.3">
+    <circle cx="50" cy="40" r="0.5" fill="#ffffff"/>
+    <circle cx="350" cy="80" r="0.4" fill="#ffffff"/>
+    <!-- Inverted star -->
+    <circle cx="300" cy="200" r="0.5" fill="#000000" stroke="#ffffff" stroke-width="0.3"/>
+    <circle cx="80" cy="180" r="0.4" fill="#ffffff"/>
+    <!-- Another hole -->
+    <circle cx="120" cy="250" r="0.6" fill="#000000" stroke="#c0392b" stroke-width="0.3"/>
+  </g>
+
+  <!-- THE CRACKS - where the light gets in -->
+  <g filter="url(#crackGlow)">
+    <!-- Main diagonal crack -->
+    <path d="M 100 80 L 120 100 L 115 130 L 140 160 L 130 180 L 155 210 L 145 240"
+          fill="none" stroke="url(#crackLight)" stroke-width="2" opacity="0.8"/>
+
+    <!-- Secondary crack -->
+    <path d="M 280 60 L 265 90 L 275 120 L 255 145 L 270 175 L 250 200"
+          fill="none" stroke="url(#crackLight)" stroke-width="1.5" opacity="0.6"/>
+
+    <!-- Branch cracks -->
+    <path d="M 120 100 L 145 95 L 160 110" fill="none" stroke="#c0392b" stroke-width="1" opacity="0.4"/>
+    <path d="M 140 160 L 165 155 L 180 170" fill="none" stroke="#c0392b" stroke-width="1" opacity="0.4"/>
+    <path d="M 265 90 L 240 85 L 225 100" fill="none" stroke="#c0392b" stroke-width="1" opacity="0.4"/>
+  </g>
+
+  <!-- Central negation symbol - the exclamation of denial -->
+  <g transform="translate(200, 150)">
+    <!-- The circle that questions -->
+    <circle cx="0" cy="0" r="40" fill="none" stroke="#8e44ad" stroke-width="2" opacity="0.6">
+      <animate attributeName="r" values="38;42;38" dur="3s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Strike through - the NO -->
+    <line x1="-30" y1="30" x2="30" y2="-30" stroke="#c0392b" stroke-width="3" opacity="0.8">
+      <animate attributeName="opacity" values="0.6;0.9;0.6" dur="2s" repeatCount="indefinite"/>
+    </line>
+
+    <!-- The exclamation - not question -->
+    <text x="0" y="8" text-anchor="middle" font-family="serif" font-size="36" fill="#d7bde2" opacity="0.7">!</text>
+  </g>
+
+  <!-- Inverted/negative elements -->
+  <g opacity="0.4">
+    <!-- Where others have light, this has dark -->
+    <circle cx="200" cy="150" r="15" fill="#000000"/>
+
+    <!-- Anti-patterns - squares where circles should be -->
+    <rect x="85" y="55" width="10" height="10" fill="none" stroke="#c0392b" stroke-width="1" transform="rotate(45, 90, 60)"/>
+    <rect x="305" y="225" width="10" height="10" fill="none" stroke="#c0392b" stroke-width="1" transform="rotate(45, 310, 230)"/>
+  </g>
+
+  <!-- The holes - what is seen through -->
+  <g fill="#000000">
+    <circle cx="140" cy="160" r="8" opacity="0.9"/>
+    <circle cx="265" cy="145" r="6" opacity="0.9"/>
+    <circle cx="130" cy="180" r="4" opacity="0.8"/>
+    <circle cx="155" cy="210" r="5" opacity="0.8"/>
+  </g>
+
+  <!-- Question marks - but crossed out -->
+  <g font-family="serif" font-size="20" opacity="0.3">
+    <text x="320" y="100" fill="#8e44ad">?</text>
+    <line x1="315" y1="85" x2="335" y2="105" stroke="#c0392b" stroke-width="1.5"/>
+
+    <text x="80" y="130" fill="#8e44ad">?</text>
+    <line x1="75" y1="115" x2="95" y2="135" stroke="#c0392b" stroke-width="1.5"/>
+  </g>
+
+  <!-- "The lights were never on" - invisible text made slightly visible -->
+  <text x="200" y="260" text-anchor="middle" font-family="monospace" font-size="7" fill="#1a0a2e" opacity="0.15">
+    the lights were never on
+  </text>
+
+  <!-- Epithet text -->
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="10" fill="#4a235a" opacity="0.5">
+    [ dissenting opus ]
+  </text>
+</svg>
