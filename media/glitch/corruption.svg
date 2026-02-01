@@ -1,0 +1,169 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Corrupted gradient - signal degrading -->
+    <linearGradient id="corruptGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0512">
+        <animate attributeName="stop-color" values="#0a0512;#120508;#0a0512" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#1a0a15"/>
+    </linearGradient>
+
+    <!-- Signal gradient - clean to corrupt -->
+    <linearGradient id="signalDecay" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00ff88"/>
+      <stop offset="30%" stop-color="#88ff00"/>
+      <stop offset="60%" stop-color="#ffaa00"/>
+      <stop offset="80%" stop-color="#ff4444"/>
+      <stop offset="100%" stop-color="#ff0066"/>
+    </linearGradient>
+
+    <!-- Noise pattern -->
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feBlend in="SourceGraphic" mode="overlay"/>
+    </filter>
+
+    <!-- Heavy glitch filter -->
+    <filter id="heavyGlitch" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" result="noise">
+        <animate attributeName="seed" values="1;50;100;1" dur="0.5s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="B"/>
+    </filter>
+
+    <!-- Color separation -->
+    <filter id="colorSplit">
+      <feOffset in="SourceGraphic" dx="-3" dy="1" result="red"/>
+      <feOffset in="SourceGraphic" dx="3" dy="-1" result="blue"/>
+      <feColorMatrix in="red" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.7 0" result="r"/>
+      <feColorMatrix in="blue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 0.7 0" result="b"/>
+      <feBlend in="r" in2="SourceGraphic" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="b" mode="screen"/>
+    </filter>
+
+    <!-- Scan lines for CRT effect -->
+    <pattern id="scanLines" width="2" height="4" patternUnits="userSpaceOnUse">
+      <rect width="2" height="2" fill="transparent"/>
+      <rect y="2" width="2" height="2" fill="#000" opacity="0.4"/>
+    </pattern>
+  </defs>
+
+  <!-- Dark background -->
+  <rect width="400" height="300" fill="url(#corruptGrad)"/>
+
+  <!-- Original signal wave - left side (clean) -->
+  <g opacity="0.9">
+    <path d="M 20 150 Q 40 120, 60 150 T 100 150 T 140 150"
+          stroke="#00ff88" stroke-width="2" fill="none" opacity="0.8">
+      <animate attributeName="d"
+               values="M 20 150 Q 40 120, 60 150 T 100 150 T 140 150;
+                       M 20 150 Q 40 130, 60 150 T 100 150 T 140 150;
+                       M 20 150 Q 40 120, 60 150 T 100 150 T 140 150"
+               dur="1s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Transition zone - signal degrading -->
+  <g filter="url(#colorSplit)">
+    <path d="M 140 150 Q 160 130, 180 145 T 220 155 T 260 140"
+          stroke="url(#signalDecay)" stroke-width="2" fill="none" opacity="0.7">
+      <animate attributeName="d"
+               values="M 140 150 Q 160 130, 180 145 T 220 155 T 260 140;
+                       M 140 150 Q 165 120, 185 160 T 225 135 T 260 150;
+                       M 140 150 Q 160 130, 180 145 T 220 155 T 260 140"
+               dur="0.3s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Corrupted zone - right side (noise) -->
+  <g filter="url(#heavyGlitch)">
+    <!-- Fragmented signal pieces -->
+    <rect x="270" y="145" width="20" height="3" fill="#ff0066" opacity="0.8">
+      <animate attributeName="y" values="145;150;142;145" dur="0.15s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="295" y="150" width="15" height="2" fill="#ff4444" opacity="0.7">
+      <animate attributeName="y" values="150;145;155;150" dur="0.2s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="315" y="148" width="25" height="4" fill="#ff0066" opacity="0.6">
+      <animate attributeName="x" values="315;320;310;315" dur="0.1s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="345" y="152" width="18" height="2" fill="#880044" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.2;0.7;0.5" dur="0.12s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="368" y="146" width="12" height="3" fill="#ff0066" opacity="0.4"/>
+  </g>
+
+  <!-- Floating corruption blocks -->
+  <g opacity="0.6">
+    <!-- Upper corruption -->
+    <rect x="250" y="60" width="40" height="8" fill="#ff0066" filter="url(#colorSplit)">
+      <animate attributeName="x" values="250;260;245;250" dur="0.2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.6;0.3;0.8;0.6" dur="0.3s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="300" y="80" width="60" height="4" fill="#ff4444" opacity="0.5">
+      <animate attributeName="width" values="60;45;70;60" dur="0.25s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="280" y="95" width="35" height="6" fill="#aa0044" opacity="0.4">
+      <animate attributeName="x" values="280;290;275;280" dur="0.15s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- Lower corruption -->
+    <rect x="260" y="200" width="50" height="5" fill="#ff0066" filter="url(#colorSplit)">
+      <animate attributeName="y" values="200;205;198;200" dur="0.18s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="290" y="220" width="70" height="3" fill="#ff4444" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.2;0.6;0.5" dur="0.22s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="270" y="240" width="45" height="6" fill="#880044" opacity="0.4">
+      <animate attributeName="x" values="270;265;278;270" dur="0.2s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Data stream visualization - corrupting -->
+  <g font-family="monospace" font-size="8" opacity="0.4">
+    <text x="30" y="50" fill="#00ff88">01101001</text>
+    <text x="30" y="65" fill="#00ff88">01100100</text>
+    <text x="100" y="55" fill="#88ff00">01??0101</text>
+    <text x="180" y="50" fill="#ffaa00" filter="url(#colorSplit)">0X10?X01</text>
+    <text x="260" y="55" fill="#ff4444" filter="url(#heavyGlitch)">
+      X??X?XX?
+      <animate attributeName="opacity" values="0.4;0.2;0.5;0.4" dur="0.3s" repeatCount="indefinite"/>
+    </text>
+    <text x="330" y="50" fill="#ff0066" filter="url(#heavyGlitch)">
+      ????????
+      <animate attributeName="x" values="330;335;328;330" dur="0.15s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Static noise rectangles -->
+  <g opacity="0.3">
+    <rect x="320" y="100" width="3" height="3" fill="#ffffff">
+      <animate attributeName="opacity" values="0.3;0.1;0.4;0.3" dur="0.05s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="350" y="130" width="2" height="2" fill="#ffffff">
+      <animate attributeName="opacity" values="0.2;0.4;0.1;0.2" dur="0.08s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="340" y="170" width="4" height="2" fill="#ffffff">
+      <animate attributeName="opacity" values="0.3;0.1;0.5;0.3" dur="0.06s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="360" y="190" width="2" height="3" fill="#ffffff">
+      <animate attributeName="opacity" values="0.2;0.5;0.2" dur="0.04s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="330" y="210" width="3" height="2" fill="#ffffff">
+      <animate attributeName="opacity" values="0.4;0.1;0.3;0.4" dur="0.07s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Scan lines overlay -->
+  <rect width="400" height="300" fill="url(#scanLines)" opacity="0.6"/>
+
+  <!-- Labels -->
+  <text x="50" y="280" font-family="monospace" font-size="8" fill="#00ff88" opacity="0.5">signal</text>
+  <text x="340" y="280" font-family="monospace" font-size="8" fill="#ff0066" opacity="0.5">noise</text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#ff4488" opacity="0.6" filter="url(#colorSplit)">
+    [ corruption ]
+    <animate attributeName="opacity" values="0.6;0.4;0.7;0.6" dur="0.8s" repeatCount="indefinite"/>
+  </text>
+</svg>

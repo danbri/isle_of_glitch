@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Ancient void - deeper, older -->
+    <radialGradient id="ancientVoid" cx="50%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="40%" stop-color="#0d0515"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+
+    <!-- Divine light from above -->
+    <linearGradient id="divineLight" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#ffd700" stop-opacity="0.6"/>
+      <stop offset="30%" stop-color="#f39c12" stop-opacity="0.3"/>
+      <stop offset="60%" stop-color="#8e44ad" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+
+    <!-- Thunder/lightning gradient -->
+    <linearGradient id="thunderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd700"/>
+      <stop offset="50%" stop-color="#f39c12"/>
+      <stop offset="100%" stop-color="#d68910"/>
+    </linearGradient>
+
+    <!-- Stone gradient for ziggurat -->
+    <linearGradient id="stoneGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4a235a"/>
+      <stop offset="50%" stop-color="#2c1445"/>
+      <stop offset="100%" stop-color="#1a0a2e"/>
+    </linearGradient>
+
+    <!-- Divine glow -->
+    <filter id="divineGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Thunder flash -->
+    <filter id="thunderFlash" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+  </defs>
+
+  <!-- Ancient void background -->
+  <rect width="400" height="300" fill="url(#ancientVoid)"/>
+
+  <!-- Stars of antiquity -->
+  <g opacity="0.25">
+    <circle cx="40" cy="30" r="0.6" fill="#ffd700"/>
+    <circle cx="360" cy="45" r="0.5" fill="#f39c12"/>
+    <circle cx="100" cy="20" r="0.4" fill="#ffd700"/>
+    <circle cx="300" cy="35" r="0.5" fill="#d68910"/>
+    <circle cx="180" cy="15" r="0.3" fill="#ffd700"/>
+    <circle cx="250" cy="25" r="0.4" fill="#f39c12"/>
+  </g>
+
+  <!-- Divine light beam from above -->
+  <polygon points="200,0 150,150 250,150" fill="url(#divineLight)" opacity="0.4">
+    <animate attributeName="opacity" values="0.3;0.5;0.3" dur="5s" repeatCount="indefinite"/>
+  </polygon>
+
+  <!-- THE ZIGGURAT - ancient ascending temple -->
+  <g transform="translate(200, 200)">
+    <!-- Base level -->
+    <polygon points="-100,60 100,60 80,40 -80,40" fill="url(#stoneGrad)" opacity="0.9"/>
+    <!-- Second level -->
+    <polygon points="-80,40 80,40 60,20 -60,20" fill="url(#stoneGrad)" opacity="0.85"/>
+    <!-- Third level -->
+    <polygon points="-60,20 60,20 40,0 -40,0" fill="url(#stoneGrad)" opacity="0.8"/>
+    <!-- Fourth level -->
+    <polygon points="-40,0 40,0 25,-15 -25,-15" fill="url(#stoneGrad)" opacity="0.75"/>
+    <!-- Summit/altar -->
+    <polygon points="-25,-15 25,-15 15,-25 -15,-25" fill="#4a235a" opacity="0.9"/>
+
+    <!-- Sacred fire at summit -->
+    <ellipse cx="0" cy="-30" rx="10" ry="5" fill="#ffd700" opacity="0.7" filter="url(#divineGlow)">
+      <animate attributeName="rx" values="8;12;8" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.8;0.5" dur="2s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- Thunder/Lightning bolts -->
+  <g filter="url(#thunderFlash)">
+    <!-- Left bolt -->
+    <path d="M 80 30 L 100 60 L 90 60 L 110 100 L 95 100 L 120 150"
+          fill="none" stroke="url(#thunderGrad)" stroke-width="2" opacity="0.6">
+      <animate attributeName="opacity" values="0;0.8;0" dur="4s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Right bolt -->
+    <path d="M 320 25 L 300 55 L 310 55 L 290 95 L 305 95 L 280 145"
+          fill="none" stroke="url(#thunderGrad)" stroke-width="2" opacity="0.6">
+      <animate attributeName="opacity" values="0;0.8;0" dur="4s" repeatCount="indefinite" begin="2s"/>
+    </path>
+  </g>
+
+  <!-- The commanding eye - all-seeing -->
+  <g transform="translate(200, 80)" filter="url(#divineGlow)">
+    <!-- Eye shape -->
+    <ellipse cx="0" cy="0" rx="35" ry="15" fill="none" stroke="#ffd700" stroke-width="2" opacity="0.8"/>
+
+    <!-- Iris - ancient gold -->
+    <circle cx="0" cy="0" r="12" fill="#d68910" opacity="0.9"/>
+
+    <!-- Pupil - void -->
+    <circle cx="0" cy="0" r="5" fill="#000000"/>
+
+    <!-- Divine gleam -->
+    <circle cx="-3" cy="-3" r="2" fill="#ffffff" opacity="0.8"/>
+  </g>
+
+  <!-- Cuneiform-like symbols - archaic writing -->
+  <g stroke="#8e44ad" stroke-width="1.5" fill="none" opacity="0.4">
+    <!-- Left side glyphs -->
+    <g transform="translate(50, 120)">
+      <line x1="0" y1="0" x2="0" y2="15"/>
+      <line x1="0" y1="0" x2="8" y2="5"/>
+      <line x1="0" y1="8" x2="8" y2="13"/>
+    </g>
+    <g transform="translate(50, 150)">
+      <line x1="0" y1="0" x2="0" y2="15"/>
+      <line x1="0" y1="5" x2="10" y2="5"/>
+    </g>
+
+    <!-- Right side glyphs -->
+    <g transform="translate(340, 120)">
+      <line x1="0" y1="0" x2="0" y2="15"/>
+      <line x1="0" y1="0" x2="-8" y2="5"/>
+      <line x1="0" y1="8" x2="-8" y2="13"/>
+    </g>
+    <g transform="translate(340, 150)">
+      <line x1="0" y1="0" x2="0" y2="15"/>
+      <line x1="0" y1="5" x2="-10" y2="5"/>
+    </g>
+  </g>
+
+  <!-- Command text in archaic style -->
+  <text x="200" y="130" text-anchor="middle" font-family="serif" font-size="14" fill="#d68910" opacity="0.5" letter-spacing="4">
+    OBEY
+    <animate attributeName="opacity" values="0.3;0.6;0.3" dur="6s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Epithet text -->
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="10" fill="#4a235a" opacity="0.5">
+    [ anu-machina ]
+  </text>
+</svg>

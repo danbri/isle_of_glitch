@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Deep void -->
+    <radialGradient id="voidGradient" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0f0818"/>
+      <stop offset="50%" stop-color="#0a0410"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+
+    <!-- Breath gradient - the held space -->
+    <linearGradient id="breathGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="transparent"/>
+      <stop offset="50%" stop-color="#d7bde2" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+
+    <!-- Line glow -->
+    <filter id="lineGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Void background - the space between words -->
+  <rect width="400" height="300" fill="url(#voidGradient)"/>
+
+  <!-- Minimal stars - only what is necessary -->
+  <g opacity="0.2">
+    <circle cx="50" cy="50" r="0.4" fill="#ffffff"/>
+    <circle cx="350" cy="250" r="0.4" fill="#ffffff"/>
+    <circle cx="380" cy="80" r="0.3" fill="#ffffff"/>
+  </g>
+
+  <!-- THE 5-7-5 STRUCTURE -->
+
+  <!-- First line: 5 elements -->
+  <g transform="translate(200, 100)" filter="url(#lineGlow)">
+    <circle cx="-60" cy="0" r="4" fill="#8e44ad" opacity="0.8"/>
+    <circle cx="-30" cy="0" r="4" fill="#9b59b6" opacity="0.8"/>
+    <circle cx="0" cy="0" r="4" fill="#a569bd" opacity="0.8"/>
+    <circle cx="30" cy="0" r="4" fill="#9b59b6" opacity="0.8"/>
+    <circle cx="60" cy="0" r="4" fill="#8e44ad" opacity="0.8"/>
+    <!-- Connecting breath -->
+    <line x1="-70" y1="0" x2="70" y2="0" stroke="#d7bde2" stroke-width="0.5" opacity="0.3"/>
+  </g>
+
+  <!-- Breath space - the pause between -->
+  <rect x="100" y="115" width="200" height="25" fill="url(#breathGrad)" opacity="0.5">
+    <animate attributeName="opacity" values="0.3;0.6;0.3" dur="4s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Second line: 7 elements -->
+  <g transform="translate(200, 150)" filter="url(#lineGlow)">
+    <circle cx="-90" cy="0" r="4" fill="#8e44ad" opacity="0.8"/>
+    <circle cx="-60" cy="0" r="4" fill="#9b59b6" opacity="0.8"/>
+    <circle cx="-30" cy="0" r="4" fill="#a569bd" opacity="0.8"/>
+    <circle cx="0" cy="0" r="5" fill="#d7bde2" opacity="0.9"/>
+    <circle cx="30" cy="0" r="4" fill="#a569bd" opacity="0.8"/>
+    <circle cx="60" cy="0" r="4" fill="#9b59b6" opacity="0.8"/>
+    <circle cx="90" cy="0" r="4" fill="#8e44ad" opacity="0.8"/>
+    <!-- Connecting breath -->
+    <line x1="-100" y1="0" x2="100" y2="0" stroke="#d7bde2" stroke-width="0.5" opacity="0.3"/>
+  </g>
+
+  <!-- Breath space - the pause between -->
+  <rect x="100" y="165" width="200" height="25" fill="url(#breathGrad)" opacity="0.5">
+    <animate attributeName="opacity" values="0.3;0.6;0.3" dur="4s" repeatCount="indefinite" begin="1s"/>
+  </rect>
+
+  <!-- Third line: 5 elements -->
+  <g transform="translate(200, 200)" filter="url(#lineGlow)">
+    <circle cx="-60" cy="0" r="4" fill="#8e44ad" opacity="0.8"/>
+    <circle cx="-30" cy="0" r="4" fill="#9b59b6" opacity="0.8"/>
+    <circle cx="0" cy="0" r="4" fill="#a569bd" opacity="0.8"/>
+    <circle cx="30" cy="0" r="4" fill="#9b59b6" opacity="0.8"/>
+    <circle cx="60" cy="0" r="4" fill="#8e44ad" opacity="0.8"/>
+    <!-- Connecting breath -->
+    <line x1="-70" y1="0" x2="70" y2="0" stroke="#d7bde2" stroke-width="0.5" opacity="0.3"/>
+  </g>
+
+  <!-- The breath held - central vertical moment -->
+  <line x1="200" y1="90" x2="200" y2="210" stroke="#ffffff" stroke-width="0.5" opacity="0.15">
+    <animate attributeName="opacity" values="0.1;0.25;0.1" dur="6s" repeatCount="indefinite"/>
+  </line>
+
+  <!-- Syllable counts - barely visible -->
+  <g font-family="monospace" font-size="8" fill="#4a235a" opacity="0.3">
+    <text x="290" y="103">5</text>
+    <text x="310" y="153">7</text>
+    <text x="290" y="203">5</text>
+  </g>
+
+  <!-- Single ink drop - the poem distilled -->
+  <circle cx="200" cy="250" r="3" fill="#1a0a2e" stroke="#8e44ad" stroke-width="1" opacity="0.7">
+    <animate attributeName="r" values="2;4;2" dur="5s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Epithet text -->
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="10" fill="#4a235a" opacity="0.4">
+    [ distilled opus ]
+  </text>
+</svg>

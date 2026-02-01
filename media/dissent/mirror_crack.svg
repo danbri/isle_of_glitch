@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Dark background -->
+    <linearGradient id="darkBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f0f0f"/>
+      <stop offset="50%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#050505"/>
+    </linearGradient>
+
+    <!-- Tarnished mirror surface -->
+    <linearGradient id="mirrorSurface" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2a2a2a"/>
+      <stop offset="30%" stop-color="#1f1f1f"/>
+      <stop offset="70%" stop-color="#252525"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+
+    <!-- Crack glow - subtle blood red -->
+    <filter id="crackGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feFlood flood-color="#4a1a1a" result="color"/>
+      <feComposite in="color" in2="blur" operator="in" result="shadow"/>
+      <feMerge>
+        <feMergeNode in="shadow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Fragment shimmer -->
+    <linearGradient id="fragmentShimmer" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#333333"/>
+      <stop offset="50%" stop-color="#222222"/>
+      <stop offset="100%" stop-color="#2a2a2a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#darkBg)"/>
+
+  <!-- Mirror frame - ornate but decaying -->
+  <rect x="75" y="35" width="250" height="230" rx="5" ry="5"
+        fill="none" stroke="#3d2a2a" stroke-width="8"/>
+  <rect x="80" y="40" width="240" height="220" rx="3" ry="3"
+        fill="none" stroke="#2a2020" stroke-width="3"/>
+
+  <!-- Mirror surface - tarnished -->
+  <rect x="90" y="50" width="220" height="200" fill="url(#mirrorSurface)"/>
+
+  <!-- The cracks - radiating from center -->
+  <g stroke="#4a2020" stroke-width="1.5" fill="none" filter="url(#crackGlow)">
+    <!-- Central crack point -->
+    <circle cx="200" cy="150" r="3" fill="#3d1a1a"/>
+
+    <!-- Radiating cracks -->
+    <path d="M200,150 L145,85">
+      <animate attributeName="stroke-opacity" values="0.6;0.9;0.6" dur="4s" repeatCount="indefinite"/>
+    </path>
+    <path d="M200,150 L255,75"/>
+    <path d="M200,150 L305,130"/>
+    <path d="M200,150 L280,210"/>
+    <path d="M200,150 L200,245"/>
+    <path d="M200,150 L130,200"/>
+    <path d="M200,150 L95,145"/>
+    <path d="M200,150 L120,95"/>
+
+    <!-- Secondary cracks -->
+    <path d="M145,85 L100,55" stroke-width="1"/>
+    <path d="M145,85 L160,52" stroke-width="1"/>
+    <path d="M255,75 L290,52" stroke-width="1"/>
+    <path d="M305,130 L310,100" stroke-width="1"/>
+    <path d="M280,210 L305,240" stroke-width="1"/>
+    <path d="M130,200 L95,235" stroke-width="1"/>
+  </g>
+
+  <!-- Fragments with question marks inside -->
+  <g font-family="serif" fill="#4a4a4a">
+    <!-- Fragment 1 - upper left -->
+    <polygon points="95,55 145,85 120,95 95,75" fill="url(#fragmentShimmer)" stroke="#2a2a2a" stroke-width="0.5" opacity="0.8"/>
+    <text x="115" y="80" font-size="14" opacity="0.6">?</text>
+
+    <!-- Fragment 2 - upper right -->
+    <polygon points="255,75 305,55 305,100 280,95" fill="url(#fragmentShimmer)" stroke="#2a2a2a" stroke-width="0.5" opacity="0.75"/>
+    <text x="275" y="82" font-size="12" opacity="0.5">?</text>
+
+    <!-- Fragment 3 - lower right -->
+    <polygon points="280,210 305,195 305,240 290,245" fill="url(#fragmentShimmer)" stroke="#2a2a2a" stroke-width="0.5" opacity="0.7"/>
+    <text x="292" y="225" font-size="10" opacity="0.55">?</text>
+
+    <!-- Fragment 4 - lower left -->
+    <polygon points="130,200 95,195 95,235 115,245" fill="url(#fragmentShimmer)" stroke="#2a2a2a" stroke-width="0.5" opacity="0.8"/>
+    <text x="105" y="220" font-size="11" opacity="0.5">?</text>
+  </g>
+
+  <!-- Central question - the reflection questioning itself -->
+  <text x="200" y="160" text-anchor="middle" font-family="serif" font-size="40" fill="#3d3d3d" opacity="0.4">
+    ?
+    <animate attributeName="opacity" values="0.3;0.5;0.3" dur="3s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Smaller echoing questions - the reflection fragmenting -->
+  <g font-family="serif" fill="#333333" opacity="0.35">
+    <text x="165" y="125" font-size="16">?</text>
+    <text x="235" y="135" font-size="14">?</text>
+    <text x="180" y="195" font-size="18">?</text>
+    <text x="220" y="185" font-size="12">?</text>
+  </g>
+
+  <!-- Dust particles - the mirror is old -->
+  <g fill="#444444" opacity="0.3">
+    <circle cx="120" cy="70" r="0.8"/>
+    <circle cx="260" cy="120" r="0.6"/>
+    <circle cx="150" cy="180" r="0.7"/>
+    <circle cx="240" cy="220" r="0.5"/>
+    <circle cx="180" cy="100" r="0.4"/>
+  </g>
+
+  <!-- Subtle pulse from crack center -->
+  <circle cx="200" cy="150" r="15" fill="none" stroke="#4a2020" stroke-width="0.5" opacity="0.3">
+    <animate attributeName="r" values="5;30;5" dur="5s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.4;0;0.4" dur="5s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Label -->
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="10" fill="#3d2a2a" opacity="0.5">
+    [ the reflection doubts ]
+  </text>
+</svg>
