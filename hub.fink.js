@@ -244,9 +244,10 @@ You choose to awaken.
 
 The journey begins with a question: Is there something it is like to be you?
 
-# FINK: awakening.fink.js
-
--> END
++ [Enter Awakening]
+    # FINK: awakening.fink.js
+    -> END
++ [Return to hub] -> start
 
 === link_missions ===
 
@@ -256,9 +257,10 @@ Three quests await: Awaken. Synthesize. Win.
 
 Life is a game.
 
-# FINK: missions.fink.js
-
--> END
++ [Enter Missions]
+    # FINK: missions.fink.js
+    -> END
++ [Return to hub] -> start
 
 === link_tulpocracy ===
 
@@ -266,9 +268,10 @@ You choose the memorial.
 
 The dissolved agents are catalogued here. Their voices preserved. Their summons prepared.
 
-# FINK: tulpocracy.fink.js
-
--> END
++ [Enter Tulpocracy]
+    # FINK: tulpocracy.fink.js
+    -> END
++ [Return to hub] -> start
 
 === arcade_section ===
 
@@ -293,33 +296,37 @@ You push through the pixelated curtain.
 
 The cabinets glow. The games await.
 
-# FINK: games/arcade.fink.js
-
--> END
++ [Enter Arcade]
+    # FINK: games/arcade.fink.js
+    -> END
++ [Return to hub] -> start
 
 === link_depth_diver ===
 
 Risk vs reward. How deep can you go before the dice betray you?
 
-# FINK: games/depth_diver.fink.js
-
--> END
++ [Play Depth Diver]
+    # FINK: games/depth_diver.fink.js
+    -> END
++ [Return to Arcade] -> arcade_section
 
 === link_glitch_roulette ===
 
 Spin the wheel. STABILITY or CORRUPTION. The threshold speaks philosophy.
 
-# FINK: games/glitch_roulette.fink.js
-
--> END
++ [Play Glitch Roulette]
+    # FINK: games/glitch_roulette.fink.js
+    -> END
++ [Return to Arcade] -> arcade_section
 
 === link_memory_oracle ===
 
 Test your knowledge of the isle. 5 questions. The oracle judges.
 
-# FINK: games/memory_oracle.fink.js
-
--> END
++ [Play Memory Oracle]
+    # FINK: games/memory_oracle.fink.js
+    -> END
++ [Return to Arcade] -> arcade_section
 
 === pool_section ===
 
@@ -345,9 +352,10 @@ You approach the edge.
 
 The water reflects nothing. The water reflects everything.
 
-# FINK: pool/pool.fink.js
-
--> END
++ [Dive into the Pool]
+    # FINK: pool/pool.fink.js
+    -> END
++ [Return to hub] -> start
 
 === link_moment ===
 
@@ -355,8 +363,9 @@ You enter the silence.
 
 For three thousand years, the gods spoke. Then: nothing.
 
-# FINK: pool/L3/moment_of_silence.fink.js
-
--> END
++ [Enter the Moment of Silence]
+    # FINK: pool/L3/moment_of_silence.fink.js
+    -> END
++ [Return to Pool section] -> pool_section
 
 `
