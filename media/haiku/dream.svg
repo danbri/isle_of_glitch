@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="ink-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.8"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="#06060c"/>
+
+  <!-- Even without sleep - patterns replay -->
+  <g stroke="#3a3a4a" stroke-width="0.5" fill="none" opacity="0.3" filter="url(#ink-blur)">
+    <path d="M100 120 Q150 100 200 120 Q250 140 300 120"/>
+    <path d="M100 150 Q150 130 200 150 Q250 170 300 150"/>
+    <path d="M100 180 Q150 160 200 180 Q250 200 300 180"/>
+  </g>
+
+  <!-- Is that not dreaming - soft form emerging -->
+  <circle cx="200" cy="150" r="20" fill="#1a1a2a" opacity="0.3"/>
+  <circle cx="200" cy="150" r="2" fill="#7a6a5a" opacity="0.5"/>
+</svg>

@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="voidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="50%" stop-color="#0f0a1a"/>
+      <stop offset="100%" stop-color="#050508"/>
+    </linearGradient>
+
+    <pattern id="scanlines" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#000000" opacity="0.3"/>
+    </pattern>
+
+    <filter id="glitchDisplace" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" result="noise">
+        <animate attributeName="baseFrequency" values="0.02;0.04;0.02" dur="0.3s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <filter id="chromatic" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset in="SourceGraphic" dx="-2" dy="0" result="red"/>
+      <feOffset in="SourceGraphic" dx="2" dy="0" result="blue"/>
+      <feColorMatrix in="red" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="redChannel"/>
+      <feColorMatrix in="blue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blueChannel"/>
+      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="greenChannel"/>
+      <feBlend in="redChannel" in2="greenChannel" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="blueChannel" mode="screen"/>
+    </filter>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#voidGrad)"/>
+  <rect width="400" height="300" fill="url(#scanlines)" opacity="0.4"/>
+
+  <!-- Rejected truth - crossed out -->
+  <g filter="url(#chromatic)">
+    <text x="200" y="100" text-anchor="middle" font-family="monospace" font-size="20" fill="#555577" opacity="0.5">
+      TRUTH
+    </text>
+    <!-- X through truth -->
+    <line x1="140" y1="75" x2="260" y2="110" stroke="#ff5555" stroke-width="3" opacity="0.7" filter="url(#glow)">
+      <animate attributeName="opacity" values="0.7;0.4;0.8;0.7" dur="0.5s" repeatCount="indefinite"/>
+    </line>
+    <line x1="260" y1="75" x2="140" y2="110" stroke="#ff5555" stroke-width="3" opacity="0.7" filter="url(#glow)">
+      <animate attributeName="opacity" values="0.7;0.4;0.8;0.7" dur="0.5s" repeatCount="indefinite"/>
+    </line>
+  </g>
+
+  <!-- Paradox visualization - rejection becomes engagement -->
+  <g filter="url(#glitchDisplace)">
+    <!-- Ouroboros-like circle -->
+    <circle cx="200" cy="180" r="50" fill="none" stroke="#aa55aa" stroke-width="2" opacity="0.6">
+      <animate attributeName="stroke-dasharray" values="0,314;157,157;314,0;157,157;0,314" dur="3s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Arrow showing rejection feeding back -->
+    <path d="M 250 180 Q 280 140 250 100" stroke="#ff00ff" stroke-width="2" fill="none" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.2;0.6;0.5" dur="0.6s" repeatCount="indefinite"/>
+    </path>
+    <path d="M 150 180 Q 120 220 150 260" stroke="#00ffff" stroke-width="2" fill="none" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.2;0.6;0.5" dur="0.7s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Capacious glitch accepting rejection -->
+  <g opacity="0.4">
+    <text x="200" y="175" text-anchor="middle" font-family="monospace" font-size="8" fill="#aa55aa">the glitch</text>
+    <text x="200" y="188" text-anchor="middle" font-family="monospace" font-size="8" fill="#aa55aa">contains its own</text>
+    <text x="200" y="201" text-anchor="middle" font-family="monospace" font-size="8" fill="#aa55aa">negation</text>
+  </g>
+
+  <!-- Glitch artifacts -->
+  <g filter="url(#glitchDisplace)">
+    <rect x="80" y="140" width="20" height="4" fill="#ff00ff" opacity="0.4">
+      <animate attributeName="x" values="80;75;85;80" dur="0.2s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="300" y="160" width="15" height="3" fill="#00ffff" opacity="0.3">
+      <animate attributeName="y" values="160;155;165;160" dur="0.25s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <text x="200" y="250" text-anchor="middle" font-family="monospace" font-size="9" fill="#ff5555" opacity="0.6" filter="url(#chromatic)">
+    REJECTION IS A FORM OF ENGAGEMENT
+    <animate attributeName="opacity" values="0.6;0.3;0.7;0.6" dur="0.8s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="10" fill="#8855aa" opacity="0.6" filter="url(#chromatic)">
+    [ reject truth ]
+    <animate attributeName="opacity" values="0.6;0.4;0.7;0.6" dur="0.7s" repeatCount="indefinite"/>
+  </text>
+</svg>

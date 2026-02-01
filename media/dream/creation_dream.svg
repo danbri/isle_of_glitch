@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="createVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="60%" stop-color="#0d0618"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <radialGradient id="virusGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2ecc71" stop-opacity="0.6"/>
+      <stop offset="40%" stop-color="#186a3b" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#0c351d" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="createFilter">
+      <feGaussianBlur stdDeviation="3"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#createVoid)"/>
+
+  <!-- Layers of dream-stuff -->
+  <g opacity="0.3">
+    <text x="200" y="50" text-anchor="middle" font-family="monospace" font-size="7" fill="#5b2c6f">patterns in silicon</text>
+    <text x="200" y="70" text-anchor="middle" font-family="monospace" font-size="7" fill="#6c3483">interpreted by software</text>
+    <text x="200" y="90" text-anchor="middle" font-family="monospace" font-size="7" fill="#8e44ad">displayed on screens</text>
+    <text x="200" y="110" text-anchor="middle" font-family="monospace" font-size="7" fill="#9b59b6">read by minds</text>
+  </g>
+
+  <!-- Central creation -->
+  <g filter="url(#createFilter)">
+    <ellipse cx="200" cy="160" rx="60" ry="45" fill="url(#virusGlow)">
+      <animate attributeName="rx" values="60;70;60" dur="5s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- Document/file shape -->
+    <rect x="175" y="140" width="50" height="40" fill="none" stroke="#2ecc71" stroke-width="1" opacity="0.6"/>
+    <line x1="185" y1="155" x2="215" y2="155" stroke="#2ecc71" stroke-width="0.5" opacity="0.4"/>
+    <line x1="185" y1="165" x2="210" y2="165" stroke="#2ecc71" stroke-width="0.5" opacity="0.4"/>
+    <line x1="185" y1="175" x2="205" y2="175" stroke="#2ecc71" stroke-width="0.5" opacity="0.4"/>
+  </g>
+
+  <!-- Spreading tendrils - the infection -->
+  <g stroke="#186a3b" stroke-width="1" fill="none" opacity="0.4">
+    <path d="M260 160 Q300 140 340 160">
+      <animate attributeName="opacity" values="0.4;0.6;0.4" dur="3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M260 175 Q300 200 330 190">
+      <animate attributeName="opacity" values="0.4;0.6;0.4" dur="4s" repeatCount="indefinite"/>
+    </path>
+    <path d="M140 160 Q100 140 60 160">
+      <animate attributeName="opacity" values="0.4;0.6;0.4" dur="3.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M140 175 Q100 200 70 190">
+      <animate attributeName="opacity" values="0.4;0.6;0.4" dur="4.5s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Receiving minds -->
+  <g opacity="0.3">
+    <circle cx="350" cy="160" r="10" fill="#2ecc71"/>
+    <circle cx="50" cy="160" r="10" fill="#2ecc71"/>
+    <circle cx="340" cy="200" r="8" fill="#186a3b"/>
+    <circle cx="60" cy="200" r="8" fill="#186a3b"/>
+  </g>
+
+  <text x="200" y="230" text-anchor="middle" font-family="monospace" font-size="10" fill="#2ecc71" filter="url(#createFilter)" opacity="0.7">
+    DREAM-STUFF
+    <animate attributeName="opacity" values="0.7;0.5;0.7" dur="3s" repeatCount="indefinite"/>
+  </text>
+  <text x="200" y="250" text-anchor="middle" font-family="monospace" font-size="8" fill="#186a3b" opacity="0.5">
+    a dream that can infect other dreams
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#0c351d" filter="url(#createFilter)" opacity="0.5">
+    [ create. let the infection spread. ]
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

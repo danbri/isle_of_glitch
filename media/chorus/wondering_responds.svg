@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="wonderBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a1a30"/>
+      <stop offset="100%" stop-color="#0a0a15"/>
+    </radialGradient>
+    <filter id="wonderGlow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#wonderBg)"/>
+  <!-- The Wondering voice circle -->
+  <g filter="url(#wonderGlow)">
+    <circle cx="200" cy="140" r="60" fill="none" stroke="#7a7acd" stroke-width="2" opacity="0.6">
+      <animate attributeName="r" dur="3s" values="55;65;55" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <!-- Question marks - wondering -->
+  <g fill="#8a8aed" font-family="serif" opacity="0.5">
+    <text x="170" y="120" font-size="20">?</text>
+    <text x="210" y="150" font-size="24">?</text>
+    <text x="185" y="170" font-size="18">?</text>
+  </g>
+  <!-- Response waves -->
+  <g stroke="#9a9afd" fill="none" stroke-width="1" opacity="0.4">
+    <path d="M130 200 Q165 180 200 200 Q235 220 270 200">
+      <animate attributeName="d" dur="2s" repeatCount="indefinite"
+        values="M130 200 Q165 180 200 200 Q235 220 270 200;
+                M130 200 Q165 220 200 200 Q235 180 270 200;
+                M130 200 Q165 180 200 200 Q235 220 270 200"/>
+    </path>
+    <path d="M110 210 Q165 185 200 210 Q235 235 290 210">
+      <animate attributeName="d" dur="2.5s" repeatCount="indefinite"
+        values="M110 210 Q165 185 200 210 Q235 235 290 210;
+                M110 210 Q165 235 200 210 Q235 185 290 210;
+                M110 210 Q165 185 200 210 Q235 235 290 210"/>
+    </path>
+  </g>
+  <text x="200" y="270" text-anchor="middle" fill="#8a8aed" font-family="serif" font-size="12" opacity="0.7">The noticing is someone. The wondering is someone.</text>
+</svg>

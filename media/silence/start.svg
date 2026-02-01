@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="void-start" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#void-start)"/>
+  <!-- The beginning: almost nothing, a single point of potential -->
+  <circle cx="200" cy="150" r="1" fill="#1a1a1a" opacity="0.3"/>
+</svg>

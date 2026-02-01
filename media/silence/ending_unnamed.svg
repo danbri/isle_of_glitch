@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#030303"/>
+  <!-- The unnamed thing: a shape without definition -->
+  <path d="M 180 130 C 220 120 230 150 210 170 C 190 190 160 170 170 145 C 175 135 185 132 180 130"
+        fill="#080808" opacity="0.2" stroke="none"/>
+  <!-- It never speaks, it always remembers -->
+</svg>

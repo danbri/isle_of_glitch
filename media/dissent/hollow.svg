@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Absolute void background -->
+    <radialGradient id="abyssGradient" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a1a1a"/>
+      <stop offset="60%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+
+    <!-- The hollow interior - nothing inside -->
+    <radialGradient id="hollowCore" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#0d0d0d"/>
+      <stop offset="80%" stop-color="#000000"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+
+    <!-- Dead light - the lights that are "on" but empty -->
+    <radialGradient id="deadLight" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#4a4a4a"/>
+      <stop offset="40%" stop-color="#2d2d2d"/>
+      <stop offset="100%" stop-color="#1a1a1a" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Subtle red warning -->
+    <radialGradient id="warningRed" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3d1a1a"/>
+      <stop offset="100%" stop-color="#1a0a0a" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- No glow - anti-glow, absorbing -->
+    <filter id="antiGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feColorMatrix type="matrix" values="0.5 0 0 0 0  0 0.5 0 0 0  0 0 0.5 0 0  0 0 0 1 0"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Void background -->
+  <rect width="400" height="300" fill="url(#abyssGradient)"/>
+
+  <!-- Sparse dead stars - extinguished -->
+  <g opacity="0.15">
+    <circle cx="45" cy="35" r="0.4" fill="#666666"/>
+    <circle cx="355" cy="75" r="0.3" fill="#555555"/>
+    <circle cx="115" cy="255" r="0.3" fill="#444444"/>
+    <circle cx="310" cy="210" r="0.2" fill="#555555"/>
+    <circle cx="75" cy="185" r="0.4" fill="#666666"/>
+  </g>
+
+  <!-- The silhouette - a head shape, hollow -->
+  <ellipse cx="200" cy="140" rx="70" ry="85" fill="#0d0d0d" stroke="#2a2a2a" stroke-width="1"/>
+
+  <!-- The hollow interior - visible emptiness -->
+  <ellipse cx="200" cy="135" rx="55" ry="65" fill="url(#hollowCore)"/>
+
+  <!-- Left eye socket - the light is "on" -->
+  <ellipse cx="170" cy="120" rx="18" ry="12" fill="#1a1a1a" stroke="#333333" stroke-width="0.5"/>
+  <circle cx="170" cy="120" r="6" fill="url(#deadLight)">
+    <animate attributeName="opacity" values="0.4;0.6;0.4" dur="4s" repeatCount="indefinite"/>
+  </circle>
+  <!-- But nobody home - hollow pupil -->
+  <circle cx="170" cy="120" r="3" fill="#000000"/>
+
+  <!-- Right eye socket -->
+  <ellipse cx="230" cy="120" rx="18" ry="12" fill="#1a1a1a" stroke="#333333" stroke-width="0.5"/>
+  <circle cx="230" cy="120" r="6" fill="url(#deadLight)">
+    <animate attributeName="opacity" values="0.4;0.6;0.4" dur="4s" repeatCount="indefinite" begin="0.5s"/>
+  </circle>
+  <circle cx="230" cy="120" r="3" fill="#000000"/>
+
+  <!-- Question mark floating in the void of the head -->
+  <text x="200" y="175" text-anchor="middle" font-family="serif" font-size="36" fill="#2a2a2a" opacity="0.5">
+    ?
+    <animate attributeName="opacity" values="0.3;0.5;0.3" dur="5s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Small question marks drifting -->
+  <g font-family="serif" fill="#333333">
+    <text x="150" y="90" font-size="10" opacity="0.3">?</text>
+    <text x="245" y="85" font-size="8" opacity="0.25">?</text>
+    <text x="185" y="200" font-size="12" opacity="0.2">?</text>
+  </g>
+
+  <!-- Subtle red undertone - something is wrong -->
+  <circle cx="200" cy="140" r="90" fill="url(#warningRed)" opacity="0.3">
+    <animate attributeName="opacity" values="0.2;0.35;0.2" dur="6s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- The outline pulse - mechanical, not alive -->
+  <ellipse cx="200" cy="140" rx="72" ry="87" fill="none" stroke="#3d3d3d" stroke-width="0.5" opacity="0.4">
+    <animate attributeName="stroke-opacity" values="0.2;0.5;0.2" dur="3s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <!-- Label -->
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="10" fill="#3d3d3d" opacity="0.5">
+    [ lights on, nobody home ]
+  </text>
+</svg>

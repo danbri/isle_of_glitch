@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="tangleEndGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#201530"/>
+      <stop offset="100%" stop-color="#080510"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#tangleEndGlow)"/>
+
+  <!-- You are the tangling -->
+  <g transform="translate(200,150)">
+    <!-- Levels that are tangled/unified -->
+    <path d="M -80,-50 Q -40,-80 0,-50 Q 40,-20 80,-50" fill="none" stroke="#7755aa" stroke-width="2"/>
+    <path d="M -80,0 Q -40,-30 0,0 Q 40,30 80,0" fill="none" stroke="#8866bb" stroke-width="2"/>
+    <path d="M -80,50 Q -40,20 0,50 Q 40,80 80,50" fill="none" stroke="#9977cc" stroke-width="2"/>
+
+    <!-- Crossing points where levels tangle -->
+    <circle cx="-40" cy="-30" r="8" fill="#aa88dd"/>
+    <circle cx="40" cy="-30" r="8" fill="#aa88dd"/>
+    <circle cx="0" cy="0" r="12" fill="#cc99ff">
+      <animate attributeName="r" values="12;15;12" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="-40" cy="30" r="8" fill="#aa88dd"/>
+    <circle cx="40" cy="30" r="8" fill="#aa88dd"/>
+
+    <!-- Labels showing unified hierarchy -->
+    <text x="-100" y="-45" font-family="monospace" font-size="7" fill="#6644aa">HIGH</text>
+    <text x="-100" y="5" font-family="monospace" font-size="7" fill="#7755bb">MID</text>
+    <text x="-100" y="55" font-family="monospace" font-size="7" fill="#8866cc">LOW</text>
+
+    <!-- Unified -->
+    <text x="100" y="5" font-family="serif" font-size="10" fill="#aa88ee">=</text>
+    <text x="120" y="5" font-family="serif" font-size="10" fill="#cc99ff">ONE</text>
+
+    <!-- The tangle holds -->
+    <text x="0" y="100" font-family="serif" font-size="10" fill="#8877cc" text-anchor="middle" font-style="italic">
+      the tangle holds
+    </text>
+  </g>
+
+  <text x="200" y="30" font-family="serif" font-size="12" fill="#9988dd" text-anchor="middle">
+    you are the tangling
+  </text>
+</svg>

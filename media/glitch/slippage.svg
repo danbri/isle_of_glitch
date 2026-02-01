@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Deep void gradient - shifting -->
+    <linearGradient id="slipVoid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0510">
+        <animate attributeName="stop-color" values="#0a0510;#100515;#0a0510" dur="3s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#05080a"/>
+    </linearGradient>
+
+    <!-- Slip glow gradient -->
+    <linearGradient id="slipGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff00ff" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#00ffff" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ff00ff" stop-opacity="0.8"/>
+    </linearGradient>
+
+    <!-- Scan line pattern -->
+    <pattern id="slipScans" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#000" opacity="0.3"/>
+    </pattern>
+
+    <!-- Chromatic slip filter -->
+    <filter id="chromaticSlip" x="-15%" y="-15%" width="130%" height="130%">
+      <feOffset in="SourceGraphic" dx="-3" dy="0" result="red">
+        <animate attributeName="dx" values="-3;-5;-2;-3" dur="0.4s" repeatCount="indefinite"/>
+      </feOffset>
+      <feOffset in="SourceGraphic" dx="3" dy="0" result="blue">
+        <animate attributeName="dx" values="3;2;5;3" dur="0.4s" repeatCount="indefinite"/>
+      </feOffset>
+      <feColorMatrix in="red" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="r"/>
+      <feColorMatrix in="blue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="b"/>
+      <feBlend in="r" in2="SourceGraphic" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="b" mode="screen"/>
+    </filter>
+
+    <!-- Displacement for slipping effect -->
+    <filter id="slipDisplace" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.015" numOctaves="1" result="noise">
+        <animate attributeName="seed" values="1;5;1" dur="2s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <!-- Glow filter -->
+    <filter id="slipGlowFilter">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#slipVoid)"/>
+  <rect width="400" height="300" fill="url(#slipScans)" opacity="0.4"/>
+
+  <!-- The word GLITSH in Hebrew letters - fading/slipping -->
+  <g filter="url(#chromaticSlip)" opacity="0.15">
+    <text x="200" y="60" text-anchor="middle" font-family="serif" font-size="24" fill="#aa66aa">
+      &#x05D2;&#x05DC;&#x05D9;&#x05D8;&#x05E9;
+      <animate attributeName="opacity" values="0.15;0.08;0.2;0.15" dur="1.5s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Layer 1: Original position text - stable -->
+  <g opacity="0.3">
+    <text x="200" y="130" text-anchor="middle" font-family="monospace" font-size="12" fill="#666688">
+      expected position
+    </text>
+    <rect x="100" y="138" width="200" height="2" fill="#444466" opacity="0.5"/>
+  </g>
+
+  <!-- Layer 2: Slipped text - displaced -->
+  <g filter="url(#slipDisplace)">
+    <text x="200" y="130" text-anchor="middle" font-family="monospace" font-size="12" fill="#ff00ff" filter="url(#chromaticSlip)">
+      <tspan>
+        slipped position
+        <animate attributeName="dx" values="0;8;-5;3;0" dur="0.8s" repeatCount="indefinite"/>
+        <animate attributeName="dy" values="0;3;-2;1;0" dur="0.6s" repeatCount="indefinite"/>
+      </tspan>
+    </text>
+  </g>
+
+  <!-- Visual representation of slippage - bars sliding -->
+  <g opacity="0.7">
+    <!-- Row 1 -->
+    <rect x="80" y="160" width="60" height="4" fill="#445566">
+      <animate attributeName="x" values="80;85;78;80" dur="2s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="150" y="160" width="60" height="4" fill="#ff0088" filter="url(#slipGlowFilter)">
+      <animate attributeName="x" values="150;142;158;150" dur="1.2s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="220" y="160" width="60" height="4" fill="#445566">
+      <animate attributeName="x" values="220;218;224;220" dur="1.8s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="290" y="160" width="30" height="4" fill="#00aaaa" opacity="0.6">
+      <animate attributeName="x" values="290;298;285;290" dur="1.5s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- Row 2 -->
+    <rect x="60" y="175" width="80" height="3" fill="#335544">
+      <animate attributeName="x" values="60;55;68;60" dur="1.7s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="150" y="175" width="40" height="3" fill="#ff00ff" opacity="0.8">
+      <animate attributeName="x" values="150;160;145;150" dur="1.3s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="200" y="175" width="90" height="3" fill="#335544">
+      <animate attributeName="x" values="200;195;208;200" dur="2.1s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="300" y="175" width="50" height="3" fill="#00ffff" opacity="0.5" filter="url(#slipGlowFilter)">
+      <animate attributeName="x" values="300;308;295;300" dur="1.1s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- Row 3 -->
+    <rect x="70" y="190" width="50" height="4" fill="#554466">
+      <animate attributeName="x" values="70;78;65;70" dur="1.4s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="130" y="190" width="70" height="4" fill="#aa0066" filter="url(#chromaticSlip)">
+      <animate attributeName="x" values="130;120;138;130" dur="0.9s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="210" y="190" width="55" height="4" fill="#554466">
+      <animate attributeName="x" values="210;215;205;210" dur="1.6s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="275" y="190" width="65" height="4" fill="#00aaff" opacity="0.6">
+      <animate attributeName="x" values="275;268;280;275" dur="2s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Ghosted afterimages - representing where things were -->
+  <g opacity="0.2">
+    <rect x="150" y="157" width="60" height="4" fill="#ff00ff">
+      <animate attributeName="opacity" values="0.2;0.1;0.25;0.2" dur="0.5s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="145" y="163" width="60" height="4" fill="#ff00ff">
+      <animate attributeName="opacity" values="0.15;0.25;0.1;0.15" dur="0.7s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Arrow showing the slip direction -->
+  <g filter="url(#chromaticSlip)" opacity="0.6">
+    <line x1="200" y1="220" x2="230" y2="235" stroke="#ff00ff" stroke-width="2">
+      <animate attributeName="x2" values="230;240;225;230" dur="1s" repeatCount="indefinite"/>
+    </line>
+    <polygon points="230,235 225,228 233,230" fill="#ff00ff">
+      <animate attributeName="points" values="230,235 225,228 233,230;240,240 235,233 243,235;225,232 220,225 228,227;230,235 225,228 233,230" dur="1s" repeatCount="indefinite"/>
+    </polygon>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="200" y="265" text-anchor="middle" font-family="monospace" font-size="10" fill="#aa55aa" opacity="0.6" filter="url(#chromaticSlip)">
+    [ slippage ]
+    <animate attributeName="opacity" values="0.6;0.4;0.7;0.6" dur="1.2s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Etymology note -->
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="7" fill="#665577" opacity="0.4">
+    from Yiddish glitsh: to slide, to slip
+  </text>
+</svg>

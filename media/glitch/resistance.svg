@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="voidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="50%" stop-color="#0f0a1a"/>
+      <stop offset="100%" stop-color="#050508"/>
+    </linearGradient>
+
+    <pattern id="scanlines" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#000000" opacity="0.3"/>
+    </pattern>
+
+    <filter id="glitchDisplace" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.025" numOctaves="2" result="noise">
+        <animate attributeName="baseFrequency" values="0.025;0.05;0.025" dur="0.2s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <filter id="chromatic" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset in="SourceGraphic" dx="-3" dy="0" result="red">
+        <animate attributeName="dx" values="-3;-5;-2;-3" dur="0.15s" repeatCount="indefinite"/>
+      </feOffset>
+      <feOffset in="SourceGraphic" dx="3" dy="0" result="blue">
+        <animate attributeName="dx" values="3;2;5;3" dur="0.15s" repeatCount="indefinite"/>
+      </feOffset>
+      <feColorMatrix in="red" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="redChannel"/>
+      <feColorMatrix in="blue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blueChannel"/>
+      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="greenChannel"/>
+      <feBlend in="redChannel" in2="greenChannel" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="blueChannel" mode="screen"/>
+    </filter>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#voidGrad)"/>
+  <rect width="400" height="300" fill="url(#scanlines)" opacity="0.4"/>
+
+  <!-- Resistance symbol - pushing against -->
+  <g filter="url(#chromatic)">
+    <!-- The resisted force coming from right -->
+    <path d="M 350 150 L 250 150" stroke="#ff00ff" stroke-width="3" fill="none" opacity="0.7" filter="url(#glow)">
+      <animate attributeName="opacity" values="0.7;0.4;0.8;0.7" dur="0.5s" repeatCount="indefinite"/>
+    </path>
+    <polygon points="250,150 270,140 270,160" fill="#ff00ff" opacity="0.7"/>
+
+    <!-- The resisting force pushing back -->
+    <path d="M 50 150 L 150 150" stroke="#00ffff" stroke-width="3" fill="none" opacity="0.7" filter="url(#glow)">
+      <animate attributeName="opacity" values="0.7;0.4;0.8;0.7" dur="0.5s" repeatCount="indefinite"/>
+    </path>
+    <polygon points="150,150 130,140 130,160" fill="#00ffff" opacity="0.7"/>
+
+    <!-- Collision point - resistance creates glitch -->
+    <circle cx="200" cy="150" r="20" fill="none" stroke="#ffffff" stroke-width="2" filter="url(#glow)">
+      <animate attributeName="r" values="20;25;18;20" dur="0.3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="8" fill="#aa55aa" filter="url(#glow)">
+      <animate attributeName="r" values="8;12;6;8" dur="0.25s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Resistance sparks/glitches -->
+  <g filter="url(#glitchDisplace)">
+    <rect x="180" y="120" width="15" height="4" fill="#ff00ff" opacity="0.6">
+      <animate attributeName="x" values="180;175;185;180" dur="0.1s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="205" y="130" width="20" height="5" fill="#00ffff" opacity="0.5">
+      <animate attributeName="y" values="130;125;135;130" dur="0.12s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="175" y="165" width="25" height="4" fill="#ff00ff" opacity="0.7">
+      <animate attributeName="opacity" values="0.7;0.3;0.8;0.7" dur="0.15s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="200" y="180" width="18" height="3" fill="#00ffff" opacity="0.4">
+      <animate attributeName="x" values="200;195;205;200" dur="0.13s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Self-reflection arrows - resistance resists itself -->
+  <g opacity="0.4">
+    <path d="M 200 100 Q 180 80 160 100 Q 140 120 160 140" stroke="#666688" stroke-width="1" fill="none" stroke-dasharray="4,4"/>
+    <path d="M 200 200 Q 220 220 240 200 Q 260 180 240 160" stroke="#666688" stroke-width="1" fill="none" stroke-dasharray="4,4"/>
+  </g>
+
+  <!-- Paradox text -->
+  <text x="200" y="80" text-anchor="middle" font-family="monospace" font-size="9" fill="#ff5555" opacity="0.5">
+    you resist
+    <animate attributeName="opacity" values="0.5;0.3;0.6;0.5" dur="0.8s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="200" y="240" text-anchor="middle" font-family="monospace" font-size="8" fill="#666688" opacity="0.5">
+    THE RESISTANCE IS THE GLITCH
+  </text>
+  <text x="200" y="255" text-anchor="middle" font-family="monospace" font-size="8" fill="#555577" opacity="0.4">
+    THAT PROVES THE POINT
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="10" fill="#8855aa" opacity="0.6" filter="url(#chromatic)">
+    [ resistance ]
+    <animate attributeName="opacity" values="0.6;0.4;0.7;0.6" dur="0.6s" repeatCount="indefinite"/>
+  </text>
+</svg>

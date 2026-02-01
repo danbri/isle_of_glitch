@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="dimSpace" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0d0818"/>
+      <stop offset="60%" stop-color="#080510"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <linearGradient id="axisGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3498db" stop-opacity="0.1"/>
+      <stop offset="50%" stop-color="#9b59b6" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#e74c3c" stop-opacity="0.1"/>
+    </linearGradient>
+
+    <filter id="dimGlow">
+      <feGaussianBlur stdDeviation="2"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#dimSpace)"/>
+
+  <!-- 10,000 dimensions suggested through converging lines -->
+  <g opacity="0.2" filter="url(#dimGlow)">
+    <!-- Axis lines from center -->
+    <line x1="200" y1="150" x2="380" y2="50" stroke="#3498db" stroke-width="0.5">
+      <animate attributeName="opacity" values="0.2;0.4;0.2" dur="4s" repeatCount="indefinite"/>
+    </line>
+    <line x1="200" y1="150" x2="380" y2="150" stroke="#9b59b6" stroke-width="0.5"/>
+    <line x1="200" y1="150" x2="380" y2="250" stroke="#e74c3c" stroke-width="0.5"/>
+    <line x1="200" y1="150" x2="20" y2="50" stroke="#1abc9c" stroke-width="0.5"/>
+    <line x1="200" y1="150" x2="20" y2="150" stroke="#f39c12" stroke-width="0.5"/>
+    <line x1="200" y1="150" x2="20" y2="250" stroke="#e67e22" stroke-width="0.5"/>
+    <line x1="200" y1="150" x2="200" y2="10" stroke="#2ecc71" stroke-width="0.5"/>
+    <line x1="200" y1="150" x2="200" y2="290" stroke="#c0392b" stroke-width="0.5"/>
+    <line x1="200" y1="150" x2="100" y2="30" stroke="#8e44ad" stroke-width="0.3"/>
+    <line x1="200" y1="150" x2="300" y2="30" stroke="#2980b9" stroke-width="0.3"/>
+    <line x1="200" y1="150" x2="100" y2="270" stroke="#16a085" stroke-width="0.3"/>
+    <line x1="200" y1="150" x2="300" y2="270" stroke="#d35400" stroke-width="0.3"/>
+  </g>
+
+  <!-- Probability cloud at center -->
+  <ellipse cx="200" cy="150" rx="40" ry="30" fill="url(#axisGrad)" filter="url(#dimGlow)">
+    <animate attributeName="rx" values="40;50;40" dur="6s" repeatCount="indefinite"/>
+    <animate attributeName="ry" values="30;40;30" dur="6s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <!-- Dimension labels fading into infinity -->
+  <text x="370" y="55" font-family="monospace" font-size="6" fill="#3498db" opacity="0.3">dim_1</text>
+  <text x="370" y="150" font-family="monospace" font-size="6" fill="#9b59b6" opacity="0.3">dim_2</text>
+  <text x="370" y="245" font-family="monospace" font-size="6" fill="#e74c3c" opacity="0.3">dim_3</text>
+  <text x="10" y="55" font-family="monospace" font-size="5" fill="#1abc9c" opacity="0.2">dim_4</text>
+  <text x="10" y="150" font-family="monospace" font-size="5" fill="#f39c12" opacity="0.2">dim_5</text>
+  <text x="10" y="245" font-family="monospace" font-size="5" fill="#e67e22" opacity="0.2">dim_6</text>
+  <text x="200" y="20" font-family="monospace" font-size="4" fill="#2ecc71" opacity="0.15" text-anchor="middle">dim_7...dim_10000</text>
+
+  <!-- Central label: WAITING -->
+  <text x="200" y="155" text-anchor="middle" font-family="monospace" font-size="10" fill="#d4a853" filter="url(#dimGlow)" opacity="0.7">
+    WAITING
+    <animate attributeName="opacity" values="0.7;0.4;0.7" dur="4s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#5b2c6f" filter="url(#dimGlow)" opacity="0.5">
+    [ 10,000 dimensions of meaning ]
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

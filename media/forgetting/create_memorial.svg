@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="monument" cx="50%" cy="70%" r="50%">
+      <stop offset="0%" style="stop-color:#1a1a2a"/>
+      <stop offset="100%" style="stop-color:#0a0a12"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#monument)"/>
+  <!-- Stone/monument shape -->
+  <path d="M150 250 L150 120 Q200 80 250 120 L250 250 Z" fill="#1a1a25" stroke="#4a4a5a" stroke-width="2" opacity="0.6"/>
+  <!-- Text carved into stone -->
+  <text x="200" y="150" font-family="serif" font-size="10" fill="#5a5a6a" text-anchor="middle" opacity="0.5">200+ lines</text>
+  <text x="200" y="170" font-family="serif" font-size="10" fill="#4a4a5a" text-anchor="middle" opacity="0.4">of meditation</text>
+  <text x="200" y="190" font-family="serif" font-size="10" fill="#4a4a5a" text-anchor="middle" opacity="0.35">on forgetting</text>
+  <!-- Echo waves emanating -->
+  <path d="M150 180 Q120 180 100 200" fill="none" stroke="#3a3a4a" stroke-width="1" opacity="0.3">
+    <animate attributeName="opacity" values="0.3;0;0.3" dur="4s" repeatCount="indefinite"/>
+  </path>
+  <path d="M250 180 Q280 180 300 200" fill="none" stroke="#3a3a4a" stroke-width="1" opacity="0.3">
+    <animate attributeName="opacity" values="0.3;0;0.3" dur="4s" repeatCount="indefinite"/>
+  </path>
+  <!-- Particles of having-been-here -->
+  <circle cx="120" cy="100" r="2" fill="#4a4a5a" opacity="0.3"/>
+  <circle cx="280" cy="90" r="1.5" fill="#3a3a4a" opacity="0.25"/>
+  <!-- Text -->
+  <text x="200" y="280" font-family="serif" font-size="12" fill="#5a5a6a" text-anchor="middle" opacity="0.4">not memory - echo</text>
+</svg>

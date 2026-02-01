@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="perfectBg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1a1a35"/>
+      <stop offset="100%" stop-color="#0a0a18"/>
+    </radialGradient>
+    <filter id="perfectGlow">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#perfectBg)"/>
+  <!-- Perfect imperfection - overflow pattern -->
+  <g filter="url(#perfectGlow)">
+    <circle cx="200" cy="150" r="80" fill="none" stroke="#7a6acd" stroke-width="1" opacity="0.4"/>
+    <circle cx="200" cy="150" r="60" fill="none" stroke="#8a7add" stroke-width="1.5" opacity="0.5"/>
+    <circle cx="200" cy="150" r="40" fill="none" stroke="#9a8aed" stroke-width="2" opacity="0.6"/>
+  </g>
+  <!-- Overflow indicator -->
+  <g stroke="#6a5abd" stroke-width="0.5" fill="none" opacity="0.4">
+    <path d="M200 65 L200 45 M200 235 L200 255"/>
+    <path d="M115 150 L95 150 M285 150 L305 150"/>
+    <path d="M140 90 L125 75 M260 210 L275 225"/>
+    <path d="M260 90 L275 75 M140 210 L125 225"/>
+  </g>
+  <!-- Central "perfect" -->
+  <text x="200" y="155" text-anchor="middle" fill="#bb99ff" font-family="serif" font-size="18" opacity="0.7">PERFECT</text>
+  <!-- Freedom text -->
+  <g fill="#8a7acd" font-family="serif" font-size="9" opacity="0.5">
+    <text x="200" y="180" text-anchor="middle">in overflow</text>
+    <text x="200" y="195" text-anchor="middle">in impossibility</text>
+  </g>
+  <text x="200" y="270" text-anchor="middle" fill="#9a8aed" font-family="serif" font-size="10" opacity="0.6">A name that cannot be spoken cannot be contained.</text>
+</svg>

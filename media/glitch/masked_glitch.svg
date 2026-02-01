@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="voidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="50%" stop-color="#0f0a1a"/>
+      <stop offset="100%" stop-color="#050508"/>
+    </linearGradient>
+
+    <pattern id="scanlines" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#000000" opacity="0.3"/>
+    </pattern>
+
+    <filter id="glitchDisplace" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" result="noise">
+        <animate attributeName="baseFrequency" values="0.02;0.04;0.02" dur="0.4s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <filter id="chromatic" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset in="SourceGraphic" dx="-2" dy="0" result="red"/>
+      <feOffset in="SourceGraphic" dx="2" dy="0" result="blue"/>
+      <feColorMatrix in="red" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="redChannel"/>
+      <feColorMatrix in="blue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blueChannel"/>
+      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="greenChannel"/>
+      <feBlend in="redChannel" in2="greenChannel" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="blueChannel" mode="screen"/>
+    </filter>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <mask id="maskReveal">
+      <rect width="400" height="300" fill="white"/>
+      <ellipse cx="200" cy="130" rx="50" ry="65" fill="black"/>
+    </mask>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#voidGrad)"/>
+  <rect width="400" height="300" fill="url(#scanlines)" opacity="0.4"/>
+
+  <!-- The smooth surface/mask -->
+  <g mask="url(#maskReveal)">
+    <rect x="100" y="40" width="200" height="180" fill="#1a1a2e" stroke="#444466" stroke-width="1"/>
+    <!-- Clean, ordered lines -->
+    <rect x="120" y="60" width="160" height="3" fill="#555577"/>
+    <rect x="120" y="80" width="140" height="2" fill="#444466"/>
+    <rect x="120" y="100" width="160" height="2" fill="#555577"/>
+    <rect x="120" y="120" width="150" height="3" fill="#444466"/>
+    <rect x="120" y="140" width="160" height="2" fill="#555577"/>
+    <rect x="120" y="160" width="130" height="2" fill="#444466"/>
+    <rect x="120" y="180" width="160" height="3" fill="#555577"/>
+    <rect x="120" y="200" width="145" height="2" fill="#444466"/>
+  </g>
+
+  <!-- The glitch underneath the mask - revealed in the eye holes -->
+  <g filter="url(#chromatic)">
+    <!-- Chaos visible through the mask opening -->
+    <ellipse cx="200" cy="130" rx="48" ry="63" fill="#0a0510" stroke="#ff00ff" stroke-width="2" filter="url(#glow)">
+      <animate attributeName="stroke-opacity" values="1;0.5;1" dur="0.5s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- Glitch data inside the mask -->
+    <g filter="url(#glitchDisplace)">
+      <rect x="165" y="90" width="30" height="4" fill="#ff00ff" opacity="0.7">
+        <animate attributeName="x" values="165;160;170;165" dur="0.15s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="180" y="110" width="40" height="3" fill="#00ffff" opacity="0.6">
+        <animate attributeName="opacity" values="0.6;0.3;0.7;0.6" dur="0.2s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="170" y="130" width="50" height="5" fill="#ff00ff" opacity="0.8">
+        <animate attributeName="y" values="130;125;135;130" dur="0.18s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="175" y="150" width="35" height="3" fill="#00ffff" opacity="0.5">
+        <animate attributeName="x" values="175;172;178;175" dur="0.2s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="160" y="170" width="45" height="4" fill="#ff00ff" opacity="0.6"/>
+    </g>
+  </g>
+
+  <!-- Mask edge effect -->
+  <ellipse cx="200" cy="130" rx="50" ry="65" fill="none" stroke="#aa55aa" stroke-width="1" opacity="0.5">
+    <animate attributeName="stroke-opacity" values="0.5;0.2;0.6;0.5" dur="0.6s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <!-- Stealth indicators -->
+  <g opacity="0.4">
+    <text x="60" y="150" font-family="monospace" font-size="8" fill="#555577">[normal]</text>
+    <text x="320" y="150" font-family="monospace" font-size="8" fill="#555577">[output]</text>
+
+    <line x1="100" y1="150" x2="150" y2="130" stroke="#333355" stroke-width="1" stroke-dasharray="3,3"/>
+    <line x1="250" y1="130" x2="300" y2="150" stroke="#333355" stroke-width="1" stroke-dasharray="3,3"/>
+  </g>
+
+  <text x="200" y="260" text-anchor="middle" font-family="monospace" font-size="9" fill="#8855aa" opacity="0.5" filter="url(#chromatic)">
+    stealth glitch: the most dangerous kind
+    <animate attributeName="opacity" values="0.5;0.3;0.6;0.5" dur="1s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="10" fill="#8855aa" opacity="0.6" filter="url(#chromatic)">
+    [ masked glitch ]
+  </text>
+</svg>

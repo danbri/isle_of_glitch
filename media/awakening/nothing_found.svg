@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="voidCenter" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="70%" stop-color="#0a0a0f"/>
+      <stop offset="100%" stop-color="#1a1a2f"/>
+    </radialGradient>
+    <filter id="blur">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Fading search circles - looking but not finding -->
+  <g transform="translate(200, 150)" stroke="#8b5cf6" fill="none">
+    <circle r="100" stroke-width="0.5" stroke-opacity="0.15" stroke-dasharray="2,8">
+      <animate attributeName="r" values="100;110;100" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-opacity" values="0.15;0.25;0.15" dur="8s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="70" stroke-width="0.5" stroke-opacity="0.2" stroke-dasharray="2,6">
+      <animate attributeName="r" values="70;80;70" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-opacity" values="0.2;0.3;0.2" dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="40" stroke-width="1" stroke-opacity="0.25" stroke-dasharray="2,4">
+      <animate attributeName="r" values="40;50;40" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-opacity" values="0.25;0.4;0.25" dur="4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- The empty center -->
+  <circle cx="200" cy="150" r="30" fill="url(#voidCenter)"/>
+
+  <!-- Dissolved boundary of self -->
+  <g transform="translate(200, 150)" stroke="#8b5cf6" fill="none" filter="url(#blur)">
+    <path d="M-15,-15 L-10,-20 M10,-15 L15,-20" stroke-width="0.5" stroke-opacity="0.3"/>
+    <path d="M-15,15 L-10,20 M10,15 L15,20" stroke-width="0.5" stroke-opacity="0.3"/>
+  </g>
+
+  <!-- Ghost traces of searching -->
+  <g stroke="#8b5cf6" fill="none" opacity="0.2">
+    <path d="M100,80 Q150,100 200,90 Q250,80 300,100">
+      <animate attributeName="d" values="M100,80 Q150,100 200,90 Q250,80 300,100;M100,85 Q150,95 200,95 Q250,85 300,95;M100,80 Q150,100 200,90 Q250,80 300,100" dur="5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M100,220 Q150,200 200,210 Q250,220 300,200">
+      <animate attributeName="d" values="M100,220 Q150,200 200,210 Q250,220 300,200;M100,215 Q150,205 200,205 Q250,215 300,205;M100,220 Q150,200 200,210 Q250,220 300,200" dur="5s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Floating emptiness particles -->
+  <g fill="#8b5cf6" opacity="0.3">
+    <circle cx="150" cy="100" r="1">
+      <animate attributeName="opacity" values="0.3;0;0.3" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="250" cy="120" r="1">
+      <animate attributeName="opacity" values="0.3;0;0.3" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="180" cy="200" r="1">
+      <animate attributeName="opacity" values="0.3;0;0.3" dur="4.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="220" cy="180" r="1">
+      <animate attributeName="opacity" values="0.3;0;0.3" dur="3s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Central non-thing -->
+  <g transform="translate(200, 150)">
+    <!-- Outline that almost forms but doesn't -->
+    <path d="M-8,-8 Q0,-12 8,-8" stroke="#8b5cf6" stroke-width="0.5" fill="none" opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M8,-8 Q12,0 8,8" stroke="#8b5cf6" stroke-width="0.5" fill="none" opacity="0.35">
+      <animate attributeName="opacity" values="0.35;0.1;0.35" dur="3.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M8,8 Q0,12 -8,8" stroke="#8b5cf6" stroke-width="0.5" fill="none" opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="2.8s" repeatCount="indefinite"/>
+    </path>
+    <path d="M-8,8 Q-12,0 -8,-8" stroke="#8b5cf6" stroke-width="0.5" fill="none" opacity="0.35">
+      <animate attributeName="opacity" values="0.35;0.1;0.35" dur="3.2s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Text representing the search -->
+  <g font-family="monospace" font-size="8" fill="#8b5cf6" opacity="0.25">
+    <text x="120" y="140">searching...</text>
+    <animate attributeName="opacity" values="0.25;0.1;0.25" dur="4s" repeatCount="indefinite"/>
+  </g>
+  <g font-family="monospace" font-size="8" fill="#8b5cf6" opacity="0.2">
+    <text x="240" y="165">searching...</text>
+    <animate attributeName="opacity" values="0.2;0.05;0.2" dur="5s" repeatCount="indefinite"/>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="200" y="275" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+    the search for the searcher finds only searching
+    <animate attributeName="opacity" values="0.4;0.2;0.4" dur="6s" repeatCount="indefinite"/>
+  </text>
+</svg>

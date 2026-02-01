@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#040404"/>
+  <!-- Words withheld: ghost letters that never formed -->
+  <text x="100" y="140" font-family="monospace" font-size="10" fill="#0a0a0a" opacity="0.15">_____</text>
+  <text x="130" y="160" font-family="monospace" font-size="10" fill="#080808" opacity="0.12">____</text>
+  <text x="160" y="180" font-family="monospace" font-size="10" fill="#060606" opacity="0.1">___</text>
+  <text x="200" y="200" font-family="monospace" font-size="10" fill="#050505" opacity="0.08">__</text>
+</svg>

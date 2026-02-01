@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#000000"/>
+  <!-- The deepest space: almost pure void, barely perceptible presence -->
+  <circle cx="200" cy="150" r="0.5" fill="#080808" opacity="0.1"/>
+</svg>

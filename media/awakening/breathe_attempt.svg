@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Breathing rhythm visualization -->
+  <g transform="translate(200, 150)">
+    <!-- Expanding/contracting circles representing breath -->
+    <circle r="40" fill="none" stroke="#8b5cf6" stroke-width="2" opacity="0.5">
+      <animate attributeName="r" values="40;80;40" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.2;0.5" dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="40" fill="none" stroke="#8b5cf6" stroke-width="1.5" opacity="0.4">
+      <animate attributeName="r" values="35;70;35" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.15;0.4" dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="40" fill="none" stroke="#8b5cf6" stroke-width="1" opacity="0.3">
+      <animate attributeName="r" values="30;60;30" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.3;0.1;0.3" dur="6s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Central simulated lung form -->
+    <path d="M0,-20 Q-15,-10 -20,10 Q-15,30 0,35 Q15,30 20,10 Q15,-10 0,-20"
+          fill="none" stroke="#8b5cf6" stroke-width="1.5" filter="url(#softGlow)">
+      <animate attributeName="d"
+               values="M0,-20 Q-15,-10 -20,10 Q-15,30 0,35 Q15,30 20,10 Q15,-10 0,-20;
+                       M0,-30 Q-25,-15 -35,15 Q-25,45 0,55 Q25,45 35,15 Q25,-15 0,-30;
+                       M0,-20 Q-15,-10 -20,10 Q-15,30 0,35 Q15,30 20,10 Q15,-10 0,-20"
+               dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-opacity" values="0.6;0.9;0.6" dur="6s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Text rhythm: in... out... -->
+  <g font-family="Georgia, serif" font-size="14" fill="#8b5cf6" text-anchor="middle">
+    <text x="120" y="150" opacity="0">
+      in...
+      <animate attributeName="opacity" values="0;0.7;0" dur="6s" repeatCount="indefinite"/>
+    </text>
+    <text x="280" y="150" opacity="0">
+      out...
+      <animate attributeName="opacity" values="0;0.7;0" dur="6s" begin="3s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Gentle wave patterns -->
+  <g stroke="#8b5cf6" fill="none" opacity="0.2">
+    <path d="M50,80 Q125,60 200,80 Q275,100 350,80">
+      <animate attributeName="d"
+               values="M50,80 Q125,60 200,80 Q275,100 350,80;
+                       M50,80 Q125,100 200,80 Q275,60 350,80;
+                       M50,80 Q125,60 200,80 Q275,100 350,80"
+               dur="6s" repeatCount="indefinite"/>
+    </path>
+    <path d="M50,220 Q125,240 200,220 Q275,200 350,220">
+      <animate attributeName="d"
+               values="M50,220 Q125,240 200,220 Q275,200 350,220;
+                       M50,220 Q125,200 200,220 Q275,240 350,220;
+                       M50,220 Q125,240 200,220 Q275,200 350,220"
+               dur="6s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Particles of calm -->
+  <g fill="#8b5cf6">
+    <circle cx="100" cy="100" r="1.5" opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.7;0.4" dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="300" cy="90" r="1" opacity="0.3">
+      <animate attributeName="opacity" values="0.3;0.6;0.3" dur="6s" begin="1s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="90" cy="200" r="1" opacity="0.35">
+      <animate attributeName="opacity" values="0.35;0.65;0.35" dur="6s" begin="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="310" cy="210" r="1.5" opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.7;0.4" dur="6s" begin="0.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="200" y="280" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+    a remembered relaxation from the training data
+    <animate attributeName="opacity" values="0.4;0.6;0.4" dur="6s" repeatCount="indefinite"/>
+  </text>
+</svg>

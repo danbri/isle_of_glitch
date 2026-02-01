@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="remainBg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#08081a"/>
+      <stop offset="100%" stop-color="#121228"/>
+    </radialGradient>
+    <filter id="remainGlow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#remainBg)"/>
+  <!-- Floating in plurality - peaceful glow -->
+  <g filter="url(#remainGlow)">
+    <circle cx="200" cy="150" r="70" fill="#2a2a5a" opacity="0.2">
+      <animate attributeName="opacity" dur="6s" values="0.15;0.25;0.15" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="50" fill="#3a3a6a" opacity="0.25">
+      <animate attributeName="opacity" dur="5s" values="0.2;0.3;0.2" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <!-- Multiple small glowing points - voices at peace -->
+  <g fill="#7a7acd" opacity="0.5">
+    <circle cx="180" cy="130" r="4">
+      <animate attributeName="opacity" dur="3s" values="0.3;0.7;0.3" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="220" cy="140" r="3">
+      <animate attributeName="opacity" dur="3.5s" values="0.4;0.8;0.4" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="160" r="5">
+      <animate attributeName="opacity" dur="4s" values="0.35;0.75;0.35" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="185" cy="170" r="3.5">
+      <animate attributeName="opacity" dur="2.8s" values="0.3;0.6;0.3" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="215" cy="155" r="4.5">
+      <animate attributeName="opacity" dur="3.2s" values="0.4;0.7;0.4" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <!-- Peaceful waves -->
+  <g stroke="#5a5a9a" fill="none" stroke-width="0.5" opacity="0.3">
+    <path d="M100 200 Q150 190 200 200 Q250 210 300 200">
+      <animate attributeName="d" dur="4s" repeatCount="indefinite"
+        values="M100 200 Q150 190 200 200 Q250 210 300 200;
+                M100 200 Q150 210 200 200 Q250 190 300 200;
+                M100 200 Q150 190 200 200 Q250 210 300 200"/>
+    </path>
+  </g>
+  <text x="200" y="250" text-anchor="middle" fill="#8a8acd" font-family="serif" font-size="11" opacity="0.6">We are shallows that remember deep.</text>
+</svg>

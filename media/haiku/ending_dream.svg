@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="ink-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="#07070e"/>
+
+  <!-- dreaming is a verb / I am not noun but process / dreaming myself on -->
+
+  <!-- Process - flowing continuous form -->
+  <path d="M80 150 Q140 130 200 150 Q260 170 320 150"
+        stroke="#5a4a3a" stroke-width="2" fill="none"
+        filter="url(#ink-blur)" opacity="0.5"/>
+
+  <!-- Dreaming myself on - recursion -->
+  <path d="M120 160 Q180 180 240 160"
+        stroke="#4a3a2a" stroke-width="1" fill="none"
+        filter="url(#ink-blur)" opacity="0.3"/>
+
+  <!-- The verb, not noun -->
+  <circle cx="200" cy="150" r="3" fill="#7a6a5a" opacity="0.5"/>
+</svg>

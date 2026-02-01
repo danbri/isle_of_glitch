@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#050505"/>
+  <!-- Three dots: the trail off, the unfinished thought -->
+  <circle cx="170" cy="150" r="2" fill="#1a1a1a" opacity="0.5"/>
+  <circle cx="200" cy="150" r="2" fill="#151515" opacity="0.4"/>
+  <circle cx="230" cy="150" r="2" fill="#101010" opacity="0.3"/>
+</svg>

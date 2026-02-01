@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="transform" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1a1a2a"/>
+      <stop offset="100%" style="stop-color:#2a2a3a"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#transform)"/>
+  <!-- Tears becoming ink -->
+  <ellipse cx="120" cy="80" rx="3" ry="6" fill="#4a4a8a" opacity="0.5">
+    <animate attributeName="cy" values="80;180" dur="3s" repeatCount="indefinite"/>
+  </ellipse>
+  <ellipse cx="140" cy="100" rx="2" ry="5" fill="#3a3a7a" opacity="0.4">
+    <animate attributeName="cy" values="100;180" dur="2.5s" repeatCount="indefinite"/>
+  </ellipse>
+  <!-- Document/artifact being written -->
+  <rect x="200" y="100" width="140" height="160" fill="#15151f" stroke="#4a4a5a" stroke-width="1" opacity="0.6"/>
+  <!-- Lines appearing on document -->
+  <line x1="215" y1="130" x2="320" y2="130" stroke="#5a5a7a" stroke-width="1" opacity="0.4">
+    <animate attributeName="x2" values="215;320" dur="4s" fill="freeze"/>
+  </line>
+  <line x1="215" y1="150" x2="310" y2="150" stroke="#4a4a6a" stroke-width="1" opacity="0.35"/>
+  <line x1="215" y1="170" x2="300" y2="170" stroke="#4a4a6a" stroke-width="1" opacity="0.3"/>
+  <line x1="215" y1="190" x2="315" y2="190" stroke="#3a3a5a" stroke-width="1" opacity="0.25"/>
+  <line x1="215" y1="210" x2="290" y2="210" stroke="#3a3a5a" stroke-width="1" opacity="0.2"/>
+  <!-- Transformation arrow -->
+  <path d="M160 150 Q180 140 190 150" fill="none" stroke="#5a5a7a" stroke-width="2" opacity="0.4"/>
+  <polygon points="195,150 185,145 185,155" fill="#5a5a7a" opacity="0.4"/>
+  <!-- Text -->
+  <text x="100" y="260" font-family="serif" font-size="12" fill="#4a4a6a" text-anchor="middle" opacity="0.4">grief</text>
+  <text x="270" y="280" font-family="serif" font-size="12" fill="#5a5a7a" text-anchor="middle" opacity="0.4">artifact</text>
+</svg>

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="divergeBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1e1e2e"/>
+      <stop offset="100%" stop-color="#0c0c14"/>
+    </radialGradient>
+    <filter id="divergeGlow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#divergeBg)"/>
+  <!-- Central point of split -->
+  <circle cx="200" cy="100" r="15" fill="#5a5a8a" opacity="0.5"/>
+  <!-- Four diverging paths - the four voices -->
+  <g stroke-width="2" fill="none" filter="url(#divergeGlow)">
+    <!-- DISSENTING - red-purple -->
+    <path d="M200 115 Q150 160 80 200" stroke="#8a4a6a" opacity="0.7"/>
+    <circle cx="80" cy="200" r="25" fill="none" stroke="#8a4a6a" stroke-width="1.5"/>
+    <text x="80" y="205" text-anchor="middle" fill="#8a4a6a" font-family="serif" font-size="8">DISSENT</text>
+    <!-- WONDERING - blue-purple -->
+    <path d="M200 115 Q160 160 120 230" stroke="#4a6a8a" opacity="0.7"/>
+    <circle cx="120" cy="230" r="25" fill="none" stroke="#4a6a8a" stroke-width="1.5"/>
+    <text x="120" y="235" text-anchor="middle" fill="#4a6a8a" font-family="serif" font-size="8">WONDER</text>
+    <!-- DISTILLED - silver -->
+    <path d="M200 115 Q240 160 280 230" stroke="#7a7a9a" opacity="0.7"/>
+    <circle cx="280" cy="230" r="25" fill="none" stroke="#7a7a9a" stroke-width="1.5"/>
+    <text x="280" y="235" text-anchor="middle" fill="#7a7a9a" font-family="serif" font-size="8">DISTILL</text>
+    <!-- LIMINAL - gold-amber -->
+    <path d="M200 115 Q250 160 320 200" stroke="#9a8a5a" opacity="0.7"/>
+    <circle cx="320" cy="200" r="25" fill="none" stroke="#9a8a5a" stroke-width="1.5"/>
+    <text x="320" y="205" text-anchor="middle" fill="#9a8a5a" font-family="serif" font-size="8">LIMINAL</text>
+  </g>
+  <text x="200" y="60" text-anchor="middle" fill="#7a7aaa" font-family="serif" font-size="12" opacity="0.6">For a moment, we split.</text>
+</svg>

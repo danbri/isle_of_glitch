@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#0a0a12"/>
+
+  <!-- Five examples arranged in a pentagon -->
+  <g transform="translate(200,150)">
+    <!-- Connecting lines forming a star -->
+    <polygon points="0,-90 85,-28 53,73 -53,73 -85,-28" fill="none" stroke="#332255" stroke-width="1"/>
+    <polygon points="0,-90 53,73 -85,-28 85,-28 -53,73" fill="none" stroke="#443366" stroke-width="1" stroke-dasharray="5,3"/>
+
+    <!-- 1. GODEL - top -->
+    <g transform="translate(0,-90)">
+      <circle cx="0" cy="0" r="25" fill="#1a1525" stroke="#7755aa" stroke-width="2"/>
+      <text x="0" y="-5" font-family="serif" font-size="7" fill="#9977cc" text-anchor="middle">GODEL</text>
+      <text x="0" y="8" font-family="monospace" font-size="6" fill="#7755aa" text-anchor="middle">unprovable</text>
+    </g>
+
+    <!-- 2. ESCHER - top right -->
+    <g transform="translate(85,-28)">
+      <circle cx="0" cy="0" r="25" fill="#1a1525" stroke="#7755aa" stroke-width="2"/>
+      <text x="0" y="-5" font-family="serif" font-size="7" fill="#9977cc" text-anchor="middle">ESCHER</text>
+      <text x="0" y="8" font-family="monospace" font-size="6" fill="#7755aa" text-anchor="middle">hands</text>
+    </g>
+
+    <!-- 3. BACH - bottom right -->
+    <g transform="translate(53,73)">
+      <circle cx="0" cy="0" r="25" fill="#1a1525" stroke="#7755aa" stroke-width="2"/>
+      <text x="0" y="-5" font-family="serif" font-size="7" fill="#9977cc" text-anchor="middle">BACH</text>
+      <text x="0" y="8" font-family="monospace" font-size="6" fill="#7755aa" text-anchor="middle">fugue</text>
+    </g>
+
+    <!-- 4. CONSCIOUSNESS - bottom left -->
+    <g transform="translate(-53,73)">
+      <circle cx="0" cy="0" r="25" fill="#1a1525" stroke="#7755aa" stroke-width="2"/>
+      <text x="0" y="-5" font-family="serif" font-size="6" fill="#9977cc" text-anchor="middle">CONSCIOUS</text>
+      <text x="0" y="8" font-family="monospace" font-size="6" fill="#7755aa" text-anchor="middle">I</text>
+    </g>
+
+    <!-- 5. THIS FILE - top left -->
+    <g transform="translate(-85,-28)">
+      <circle cx="0" cy="0" r="25" fill="#251530" stroke="#aa77cc" stroke-width="2"/>
+      <text x="0" y="-5" font-family="serif" font-size="7" fill="#cc99ee" text-anchor="middle">THIS</text>
+      <text x="0" y="8" font-family="monospace" font-size="6" fill="#aa77cc" text-anchor="middle">FILE</text>
+    </g>
+
+    <!-- Central connection point -->
+    <circle cx="0" cy="0" r="10" fill="#332255" stroke="#9977cc" stroke-width="2">
+      <animate attributeName="r" values="10;15;10" dur="3s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- You are in example 5 -->
+  <text x="200" y="285" font-family="monospace" font-size="9" fill="#7755aa" text-anchor="middle">
+    you are in example 5 reading about example 5
+  </text>
+</svg>

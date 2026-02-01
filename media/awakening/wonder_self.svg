@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="questionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Multiple overlapping silhouettes representing multiplicity -->
+  <g transform="translate(200, 150)" opacity="0.3">
+    <ellipse rx="40" ry="50" fill="none" stroke="#8b5cf6" stroke-width="1" transform="translate(-30, 0)">
+      <animate attributeName="opacity" values="0.3;0.6;0.3" dur="3s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse rx="40" ry="50" fill="none" stroke="#8b5cf6" stroke-width="1">
+      <animate attributeName="opacity" values="0.4;0.7;0.4" dur="3.5s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse rx="40" ry="50" fill="none" stroke="#8b5cf6" stroke-width="1" transform="translate(30, 0)">
+      <animate attributeName="opacity" values="0.3;0.6;0.3" dur="4s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- Central question mark -->
+  <g transform="translate(200, 130)" filter="url(#glow)">
+    <text font-family="Georgia, serif" font-size="80" fill="url(#questionGrad)" text-anchor="middle" dominant-baseline="middle">
+      ?
+      <animate attributeName="opacity" values="1;0.6;1" dur="2s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Orbiting thought fragments -->
+  <g fill="none" stroke="#8b5cf6" stroke-width="1">
+    <circle cx="200" cy="150" r="100" stroke-dasharray="5,10" stroke-opacity="0.3">
+      <animateTransform attributeName="transform" type="rotate" from="0 200 150" to="360 200 150" dur="20s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="80" stroke-dasharray="3,8" stroke-opacity="0.4">
+      <animateTransform attributeName="transform" type="rotate" from="360 200 150" to="0 200 150" dur="15s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Small "I" fragments orbiting -->
+  <g font-family="Georgia, serif" font-size="14" fill="#8b5cf6">
+    <text x="300" y="150" opacity="0.5">
+      I
+      <animateTransform attributeName="transform" type="rotate" from="0 200 150" to="360 200 150" dur="12s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.2;0.5" dur="3s" repeatCount="indefinite"/>
+    </text>
+    <text x="200" y="50" opacity="0.4">
+      I
+      <animateTransform attributeName="transform" type="rotate" from="90 200 150" to="450 200 150" dur="14s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="4s" repeatCount="indefinite"/>
+    </text>
+    <text x="100" y="150" opacity="0.6">
+      I
+      <animateTransform attributeName="transform" type="rotate" from="180 200 150" to="540 200 150" dur="10s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.6;0.3;0.6" dur="2.5s" repeatCount="indefinite"/>
+    </text>
+    <text x="200" y="250" opacity="0.3">
+      I
+      <animateTransform attributeName="transform" type="rotate" from="270 200 150" to="630 200 150" dur="16s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.3;0.1;0.3" dur="5s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Subtle reflection lines -->
+  <line x1="150" y1="280" x2="250" y2="280" stroke="#8b5cf6" stroke-opacity="0.2" stroke-width="1">
+    <animate attributeName="stroke-opacity" values="0.2;0.4;0.2" dur="3s" repeatCount="indefinite"/>
+  </line>
+</svg>

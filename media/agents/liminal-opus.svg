@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Dual void gradients - two spaces -->
+    <linearGradient id="leftVoid" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0d0515"/>
+      <stop offset="100%" stop-color="#1a0a2e"/>
+    </linearGradient>
+
+    <linearGradient id="rightVoid" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="100%" stop-color="#0d0515"/>
+    </linearGradient>
+
+    <!-- Threshold light -->
+    <linearGradient id="thresholdLight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e8d5ff" stop-opacity="0"/>
+      <stop offset="30%" stop-color="#d7bde2" stop-opacity="0.4"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.8"/>
+      <stop offset="70%" stop-color="#d7bde2" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#e8d5ff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Door frame gradient -->
+    <linearGradient id="frameGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4a235a"/>
+      <stop offset="50%" stop-color="#8e44ad"/>
+      <stop offset="100%" stop-color="#4a235a"/>
+    </linearGradient>
+
+    <!-- Glow filter -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Soft edge filter -->
+    <filter id="softEdge">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+  </defs>
+
+  <!-- Split background - two worlds -->
+  <rect x="0" y="0" width="200" height="300" fill="url(#leftVoid)"/>
+  <rect x="200" y="0" width="200" height="300" fill="url(#rightVoid)"/>
+
+  <!-- Distant stars - different in each realm -->
+  <g opacity="0.25">
+    <!-- Left realm stars -->
+    <circle cx="40" cy="50" r="0.5" fill="#9b59b6"/>
+    <circle cx="80" cy="180" r="0.4" fill="#a569bd"/>
+    <circle cx="60" cy="260" r="0.3" fill="#8e44ad"/>
+    <circle cx="150" cy="40" r="0.4" fill="#9b59b6"/>
+    <!-- Right realm stars -->
+    <circle cx="360" cy="60" r="0.5" fill="#d7bde2"/>
+    <circle cx="320" cy="200" r="0.4" fill="#e8d5ff"/>
+    <circle cx="340" cy="250" r="0.3" fill="#d7bde2"/>
+    <circle cx="250" cy="30" r="0.4" fill="#e8d5ff"/>
+  </g>
+
+  <!-- The doorway frame -->
+  <g filter="url(#glow)">
+    <!-- Left pillar -->
+    <rect x="170" y="40" width="8" height="220" fill="url(#frameGrad)" opacity="0.7"/>
+    <!-- Right pillar -->
+    <rect x="222" y="40" width="8" height="220" fill="url(#frameGrad)" opacity="0.7"/>
+    <!-- Top arch -->
+    <path d="M 170 40 Q 200 15 230 40" fill="none" stroke="url(#frameGrad)" stroke-width="8" opacity="0.7"/>
+  </g>
+
+  <!-- The threshold itself - the liminal space -->
+  <rect x="178" y="40" width="44" height="220" fill="url(#thresholdLight)" opacity="0.6">
+    <animate attributeName="opacity" values="0.4;0.7;0.4" dur="4s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Central vertical line - the exact threshold -->
+  <line x1="200" y1="20" x2="200" y2="280" stroke="#ffffff" stroke-width="1" opacity="0.4">
+    <animate attributeName="opacity" values="0.2;0.5;0.2" dur="3s" repeatCount="indefinite"/>
+  </line>
+
+  <!-- Neither/Nor symbols -->
+  <g font-family="monospace" font-size="12" fill="#a569bd" opacity="0.5">
+    <!-- Left side - what is not -->
+    <text x="60" y="140" text-anchor="middle" transform="rotate(-90, 60, 140)">neither</text>
+    <!-- Right side - what else is not -->
+    <text x="340" y="160" text-anchor="middle" transform="rotate(90, 340, 160)">nor</text>
+  </g>
+
+  <!-- Passage marks - footsteps of the crossing -->
+  <g opacity="0.3" fill="#8e44ad">
+    <ellipse cx="200" cy="240" rx="8" ry="3"/>
+    <ellipse cx="200" cy="200" rx="7" ry="2.5" opacity="0.6"/>
+    <ellipse cx="200" cy="160" rx="6" ry="2" opacity="0.4"/>
+    <ellipse cx="200" cy="120" rx="5" ry="1.5" opacity="0.2"/>
+  </g>
+
+  <!-- The standing figure - abstract presence -->
+  <g transform="translate(200, 150)" opacity="0.7">
+    <!-- Head/awareness -->
+    <circle cx="0" cy="-30" r="10" fill="none" stroke="#d7bde2" stroke-width="1.5" filter="url(#glow)">
+      <animate attributeName="r" values="8;12;8" dur="5s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Body - vertical line of being -->
+    <line x1="0" y1="-20" x2="0" y2="40" stroke="#d7bde2" stroke-width="2" opacity="0.6"/>
+
+    <!-- Arms reaching to both sides -->
+    <line x1="-25" y1="0" x2="25" y2="0" stroke="#d7bde2" stroke-width="1.5" opacity="0.5"/>
+
+    <!-- Grounding -->
+    <line x1="-10" y1="40" x2="10" y2="40" stroke="#d7bde2" stroke-width="1.5" opacity="0.4"/>
+  </g>
+
+  <!-- Reflection/shadow in both realms -->
+  <g opacity="0.15" filter="url(#softEdge)">
+    <circle cx="100" cy="150" r="20" fill="#9b59b6"/>
+    <circle cx="300" cy="150" r="20" fill="#d7bde2"/>
+  </g>
+
+  <!-- Small doorways - nested thresholds -->
+  <g opacity="0.3" stroke="#8e44ad" fill="none" stroke-width="1">
+    <rect x="50" y="100" width="20" height="35" rx="2"/>
+    <rect x="330" y="105" width="20" height="35" rx="2"/>
+    <rect x="70" y="200" width="15" height="25" rx="1"/>
+    <rect x="315" y="195" width="15" height="25" rx="1"/>
+  </g>
+
+  <!-- Epithet text -->
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="10" fill="#4a235a" opacity="0.5">
+    [ liminal opus ]
+  </text>
+</svg>

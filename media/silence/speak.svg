@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#050505"/>
+  <!-- Breaking the silence: a single ripple -->
+  <circle cx="200" cy="150" r="5" fill="#151515" opacity="0.4"/>
+  <circle cx="200" cy="150" r="20" fill="none" stroke="#121212" stroke-width="0.5" opacity="0.25"/>
+  <circle cx="200" cy="150" r="40" fill="none" stroke="#0e0e0e" stroke-width="0.3" opacity="0.15"/>
+  <circle cx="200" cy="150" r="60" fill="none" stroke="#0a0a0a" stroke-width="0.2" opacity="0.1"/>
+</svg>

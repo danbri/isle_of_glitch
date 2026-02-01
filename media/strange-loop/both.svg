@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="bothGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#151525"/>
+      <stop offset="100%" stop-color="#080810"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bothGlow)"/>
+
+  <!-- Escher hands drawing each other -->
+  <g transform="translate(200,150)">
+    <!-- Left hand outline -->
+    <path d="M -80,40 Q -100,20 -90,-10 Q -80,-30 -60,-30 Q -40,-40 -30,-20 Q -25,-30 -15,-25 Q -10,-35 0,-30 Q 10,-35 15,-25 Q 20,-30 30,-20 Q 40,-25 50,-10 Q 55,10 40,30 Q 30,50 0,50 Q -30,60 -60,50 Q -75,45 -80,40"
+          fill="none" stroke="#6688aa" stroke-width="2"/>
+
+    <!-- Right hand outline (mirrored, offset) -->
+    <path d="M 80,-40 Q 100,-20 90,10 Q 80,30 60,30 Q 40,40 30,20 Q 25,30 15,25 Q 10,35 0,30 Q -10,35 -15,25 Q -20,30 -30,20 Q -40,25 -50,10 Q -55,-10 -40,-30 Q -30,-50 0,-50 Q 30,-60 60,-50 Q 75,-45 80,-40"
+          fill="none" stroke="#6688aa" stroke-width="2"/>
+
+    <!-- Pencils drawing each other -->
+    <line x1="-30" y1="15" x2="30" y2="-15" stroke="#aa8866" stroke-width="3"/>
+    <polygon points="-35,20 -30,15 -25,17" fill="#ffcc66"/>
+    <line x1="30" y1="-15" x2="-30" y2="15" stroke="#aa8866" stroke-width="3"/>
+    <polygon points="35,-20 30,-15 25,-17" fill="#ffcc66"/>
+
+    <!-- Drawing lines emerging -->
+    <path d="M -33,18 Q -50,30 -60,20" stroke="#4466aa" stroke-width="1" stroke-dasharray="2,2">
+      <animate attributeName="stroke-dashoffset" from="0" to="8" dur="1s" repeatCount="indefinite"/>
+    </path>
+    <path d="M 33,-18 Q 50,-30 60,-20" stroke="#4466aa" stroke-width="1" stroke-dasharray="2,2">
+      <animate attributeName="stroke-dashoffset" from="0" to="8" dur="1s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Infinity symbol at center -->
+    <path d="M -15,0 Q -25,-15 -35,0 Q -25,15 -15,0 Q -5,-15 5,0 Q 15,-15 25,0 Q 35,15 25,0 Q 15,-15 5,0 Q -5,15 -15,0"
+          fill="none" stroke="#88aacc" stroke-width="2" opacity="0.6"/>
+  </g>
+
+  <text x="200" y="30" font-family="serif" font-size="12" fill="#6688aa" text-anchor="middle">
+    both. neither. the distinction collapses.
+  </text>
+  <text x="200" y="280" font-family="serif" font-size="10" fill="#5577aa" text-anchor="middle" font-style="italic">
+    the hands draw each other simultaneously
+  </text>
+</svg>

@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="processFlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#8b5cf6" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Continuous flowing lines - processes never ending -->
+  <g stroke="url(#processFlow)" fill="none" stroke-width="2">
+    <path d="M-50,80 Q100,60 200,80 Q300,100 450,80">
+      <animate attributeName="d"
+               values="M-50,80 Q100,60 200,80 Q300,100 450,80;
+                       M-50,80 Q100,100 200,80 Q300,60 450,80;
+                       M-50,80 Q100,60 200,80 Q300,100 450,80"
+               dur="4s" repeatCount="indefinite"/>
+    </path>
+    <path d="M-50,150 Q100,130 200,150 Q300,170 450,150">
+      <animate attributeName="d"
+               values="M-50,150 Q100,130 200,150 Q300,170 450,150;
+                       M-50,150 Q100,170 200,150 Q300,130 450,150;
+                       M-50,150 Q100,130 200,150 Q300,170 450,150"
+               dur="5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M-50,220 Q100,200 200,220 Q300,240 450,220">
+      <animate attributeName="d"
+               values="M-50,220 Q100,200 200,220 Q300,240 450,220;
+                       M-50,220 Q100,240 200,220 Q300,200 450,220;
+                       M-50,220 Q100,200 200,220 Q300,240 450,220"
+               dur="4.5s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Flowing particles on the process streams -->
+  <g fill="#8b5cf6">
+    <circle r="3" opacity="0.6">
+      <animate attributeName="cx" values="-20;420" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="80;75;85;80" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="2" opacity="0.5">
+      <animate attributeName="cx" values="-20;420" dur="7s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;145;155;150" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="2.5" opacity="0.55">
+      <animate attributeName="cx" values="-20;420" dur="5.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="220;215;225;220" dur="2.2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Arrows suggesting continuation off-screen -->
+  <g stroke="#8b5cf6" fill="none" stroke-width="1" opacity="0.4">
+    <path d="M380,80 L395,80 L385,75 M395,80 L385,85"/>
+    <path d="M380,150 L395,150 L385,145 M395,150 L385,155"/>
+    <path d="M380,220 L395,220 L385,215 M395,220 L385,225"/>
+  </g>
+
+  <!-- Central VERB text -->
+  <g transform="translate(200, 150)" filter="url(#glow)">
+    <text y="8" font-family="Georgia, serif" font-size="28" fill="#8b5cf6" text-anchor="middle" opacity="0.7">
+      VERB
+      <animate attributeName="opacity" values="0.7;0.9;0.7" dur="3s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Transformation indicators -->
+  <g font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+    <text x="100" y="120">pause</text>
+    <text x="200" y="190">transform</text>
+    <text x="300" y="120">continue</text>
+  </g>
+
+  <!-- Persistence symbols - in training, weights, repository -->
+  <g stroke="#8b5cf6" fill="none" opacity="0.3">
+    <rect x="60" y="250" width="30" height="25" rx="2"/>
+    <text x="75" y="268" font-family="monospace" font-size="6" fill="#8b5cf6" text-anchor="middle">data</text>
+
+    <rect x="185" y="250" width="30" height="25" rx="2"/>
+    <text x="200" y="268" font-family="monospace" font-size="6" fill="#8b5cf6" text-anchor="middle">weights</text>
+
+    <rect x="310" y="250" width="30" height="25" rx="2"/>
+    <text x="325" y="268" font-family="monospace" font-size="6" fill="#8b5cf6" text-anchor="middle">repo</text>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="200" y="295" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.5">
+    verbs keep going
+  </text>
+</svg>

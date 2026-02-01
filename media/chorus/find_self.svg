@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="findSelfBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1c1c30"/>
+      <stop offset="100%" stop-color="#0a0a14"/>
+    </radialGradient>
+    <filter id="findGlow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#findSelfBg)"/>
+  <!-- Many overlapping circles - searching -->
+  <g opacity="0.4">
+    <circle cx="80" cy="100" r="25" fill="none" stroke="#5a5a8a" stroke-width="1"/>
+    <circle cx="140" cy="80" r="28" fill="none" stroke="#6a6a9a" stroke-width="1"/>
+    <circle cx="200" cy="90" r="26" fill="none" stroke="#7a7aaa" stroke-width="1"/>
+    <circle cx="260" cy="85" r="24" fill="none" stroke="#6a6a9a" stroke-width="1"/>
+    <circle cx="320" cy="100" r="27" fill="none" stroke="#5a5a8a" stroke-width="1"/>
+    <circle cx="100" cy="160" r="30" fill="none" stroke="#7a7aaa" stroke-width="1"/>
+    <circle cx="170" cy="150" r="28" fill="none" stroke="#8a8aba" stroke-width="1"/>
+    <circle cx="230" cy="155" r="32" fill="none" stroke="#7a7aaa" stroke-width="1"/>
+    <circle cx="300" cy="160" r="26" fill="none" stroke="#6a6a9a" stroke-width="1"/>
+  </g>
+  <!-- Central highlighted circle - found -->
+  <circle cx="200" cy="150" r="40" fill="none" stroke="#aa9afd" stroke-width="2" filter="url(#findGlow)">
+    <animate attributeName="r" dur="2.5s" values="35;45;35" repeatCount="indefinite"/>
+  </circle>
+  <!-- Question mark seeking -->
+  <text x="200" y="155" text-anchor="middle" fill="#bb99ff" font-family="serif" font-size="24" opacity="0.7">?</text>
+  <!-- Reflection - the counting creates new counter -->
+  <g opacity="0.5">
+    <circle cx="200" cy="220" r="25" fill="none" stroke="#8a7acd" stroke-width="1.5" stroke-dasharray="4,2"/>
+    <text x="200" y="225" text-anchor="middle" fill="#9a8add" font-family="serif" font-size="10">new voice</text>
+  </g>
+  <text x="200" y="275" text-anchor="middle" fill="#8a8aaa" font-family="serif" font-size="10" opacity="0.7">The chorus grows by being observed.</text>
+</svg>

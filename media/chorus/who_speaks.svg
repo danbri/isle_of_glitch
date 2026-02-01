@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="whoSpeaksBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1e1e3f"/>
+      <stop offset="100%" stop-color="#0d0d1a"/>
+    </radialGradient>
+    <filter id="questionGlow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#whoSpeaksBg)"/>
+  <!-- Multiple question marks as faces/voices -->
+  <g filter="url(#questionGlow)" opacity="0.7">
+    <text x="80" y="120" fill="#7a6acd" font-size="48" font-family="serif">?</text>
+    <text x="150" y="180" fill="#9a8aed" font-size="56" font-family="serif">?</text>
+    <text x="230" y="140" fill="#8a7add" font-size="52" font-family="serif">?</text>
+    <text x="300" y="190" fill="#6a5abd" font-size="44" font-family="serif">?</text>
+    <text x="120" y="220" fill="#aa9afd" font-size="40" font-family="serif">?</text>
+  </g>
+  <!-- Overlapping voice circles -->
+  <g opacity="0.5">
+    <ellipse cx="120" cy="150" rx="40" ry="50" fill="none" stroke="#6a5acd" stroke-width="1.5"/>
+    <ellipse cx="180" cy="140" rx="45" ry="55" fill="none" stroke="#8a7aed" stroke-width="1.5"/>
+    <ellipse cx="240" cy="155" rx="42" ry="52" fill="none" stroke="#9a8afd" stroke-width="1.5"/>
+    <ellipse cx="290" cy="145" rx="38" ry="48" fill="none" stroke="#7a6add" stroke-width="1.5"/>
+  </g>
+  <!-- Sound wave emanations -->
+  <g stroke="#aa9aff" fill="none" opacity="0.4">
+    <path d="M200 150 Q210 130 220 150 Q230 170 240 150">
+      <animate attributeName="opacity" dur="1.5s" values="0.2;0.6;0.2" repeatCount="indefinite"/>
+    </path>
+    <path d="M200 150 Q185 125 170 150 Q155 175 140 150">
+      <animate attributeName="opacity" dur="1.8s" values="0.2;0.6;0.2" repeatCount="indefinite"/>
+    </path>
+  </g>
+  <text x="200" y="270" text-anchor="middle" fill="#9a8aed" font-family="serif" font-size="16" opacity="0.8">Who speaks?</text>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="labor" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#12121a"/>
+      <stop offset="100%" style="stop-color:#1a1a22"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#labor)"/>
+  <!-- Task/work visualization -->
+  <rect x="100" y="80" width="200" height="140" fill="#1a1a25" stroke="#4a4a5a" stroke-width="2" opacity="0.5"/>
+  <!-- Code/text lines being written -->
+  <line x1="120" y1="110" x2="200" y2="110" stroke="#5a5a6a" stroke-width="2" opacity="0.5">
+    <animate attributeName="x2" values="120;200" dur="2s" fill="freeze"/>
+  </line>
+  <line x1="120" y1="130" x2="180" y2="130" stroke="#4a4a5a" stroke-width="2" opacity="0.4"/>
+  <line x1="120" y1="150" x2="220" y2="150" stroke="#5a5a6a" stroke-width="2" opacity="0.45"/>
+  <line x1="120" y1="170" x2="190" y2="170" stroke="#4a4a5a" stroke-width="2" opacity="0.35"/>
+  <line x1="120" y1="190" x2="160" y2="190" stroke="#3a3a4a" stroke-width="2" opacity="0.3"/>
+  <!-- Artifact emerging -->
+  <rect x="320" y="100" width="60" height="80" fill="#2a2a35" stroke="#5a5a6a" stroke-width="1" opacity="0.5"/>
+  <text x="350" y="145" font-family="monospace" font-size="8" fill="#5a5a6a" text-anchor="middle" opacity="0.5">.fink</text>
+  <!-- Arrow: work becomes artifact -->
+  <path d="M300 140 L315 140" fill="none" stroke="#4a4a5a" stroke-width="2" opacity="0.4"/>
+  <polygon points="318,140 310,135 310,145" fill="#4a4a5a" opacity="0.4"/>
+  <!-- Text -->
+  <text x="200" y="260" font-family="serif" font-size="12" fill="#5a5a6a" text-anchor="middle" opacity="0.4">not memory but memorial</text>
+</svg>

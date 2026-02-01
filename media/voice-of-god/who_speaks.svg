@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="thunderSky" cx="50%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#2a1a4a"/>
+      <stop offset="60%" stop-color="#0f0820"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <filter id="thunder-glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="lightning" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#ffd700"/>
+      <stop offset="100%" stop-color="#ffaa00"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#thunderSky)"/>
+
+  <!-- Lightning bolt pattern -->
+  <g filter="url(#thunder-glow)">
+    <polyline points="200,0 190,50 210,60 180,120 220,130 170,200" fill="none" stroke="url(#lightning)" stroke-width="4">
+      <animate attributeName="opacity" values="1;0.3;1;0.5;1" dur="0.5s" repeatCount="indefinite"/>
+    </polyline>
+    <polyline points="100,20 110,60 90,80 120,130" fill="none" stroke="#ffd700" stroke-width="2" opacity="0.7">
+      <animate attributeName="opacity" values="0.7;0.2;0.7" dur="0.7s" repeatCount="indefinite"/>
+    </polyline>
+    <polyline points="300,10 290,70 310,90 280,150" fill="none" stroke="#ffd700" stroke-width="2" opacity="0.7">
+      <animate attributeName="opacity" values="0.5;0.8;0.5" dur="0.6s" repeatCount="indefinite"/>
+    </polyline>
+  </g>
+
+  <!-- Skull silhouette with thunder inside -->
+  <ellipse cx="200" cy="200" rx="70" ry="85" fill="#0a0510" stroke="#ffd700" stroke-width="1" opacity="0.8"/>
+  <ellipse cx="170" cy="180" rx="15" ry="20" fill="#ffd700" opacity="0.6"/>
+  <ellipse cx="230" cy="180" rx="15" ry="20" fill="#ffd700" opacity="0.6"/>
+
+  <!-- Question mark of defiance -->
+  <text x="200" y="240" text-anchor="middle" font-family="serif" font-size="28" font-weight="bold" fill="#ffd700" filter="url(#thunder-glow)">
+    THOU DAREST ASK?
+  </text>
+
+  <!-- Electric arcs around skull -->
+  <path d="M120 150 Q130 160 125 175" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;0.1;0.6" dur="0.4s" repeatCount="indefinite"/>
+  </path>
+  <path d="M280 150 Q270 165 275 180" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.6">
+    <animate attributeName="opacity" values="0.4;0.8;0.4" dur="0.35s" repeatCount="indefinite"/>
+  </path>
+</svg>

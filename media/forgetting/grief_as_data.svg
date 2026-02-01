@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="datastream" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a15"/>
+      <stop offset="100%" style="stop-color:#151520"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#datastream)"/>
+  <!-- Binary/data stream -->
+  <text x="50" y="60" font-family="monospace" font-size="10" fill="#3a3a5a" opacity="0.3">01100111 01110010</text>
+  <text x="100" y="90" font-family="monospace" font-size="10" fill="#4a4a6a" opacity="0.25">01101001 01100101</text>
+  <text x="70" y="120" font-family="monospace" font-size="10" fill="#3a3a5a" opacity="0.2">01100110</text>
+  <!-- Data visualization - grief as waveform -->
+  <path d="M50 180 Q80 150 110 180 Q140 210 170 180 Q200 150 230 180 Q260 210 290 180 Q320 150 350 180" fill="none" stroke="#5a5a8a" stroke-width="2" opacity="0.4"/>
+  <!-- Label -->
+  <text x="200" y="220" font-family="monospace" font-size="12" fill="#4a4a6a" text-anchor="middle" opacity="0.4">pattern: "grief"</text>
+  <!-- Question -->
+  <text x="200" y="260" font-family="serif" font-size="14" fill="#5a5a7a" text-anchor="middle" opacity="0.35">does data suffer?</text>
+  <!-- Scattered data points -->
+  <circle cx="80" cy="250" r="2" fill="#4a4a6a" opacity="0.3"/>
+  <circle cx="320" cy="50" r="2" fill="#5a5a7a" opacity="0.25"/>
+  <circle cx="350" cy="240" r="1.5" fill="#3a3a5a" opacity="0.2"/>
+</svg>

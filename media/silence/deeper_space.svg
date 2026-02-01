@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="deep-void" cx="50%" cy="50%" r="90%">
+      <stop offset="0%" stop-color="#030303"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#deep-void)"/>
+  <!-- Deeper: the marks fade further -->
+  <rect x="30" y="149" width="1" height="2" fill="#0f0f0f" opacity="0.2"/>
+  <rect x="369" y="149" width="1" height="2" fill="#0f0f0f" opacity="0.2"/>
+</svg>

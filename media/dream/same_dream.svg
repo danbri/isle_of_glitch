@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="sameVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0d0818"/>
+      <stop offset="60%" stop-color="#080510"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <linearGradient id="riverGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3498db" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#9b59b6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#3498db" stop-opacity="0.3"/>
+    </linearGradient>
+
+    <filter id="sameFilter">
+      <feGaussianBlur stdDeviation="3"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#sameVoid)"/>
+
+  <!-- River flowing (constant) -->
+  <g filter="url(#sameFilter)">
+    <path d="M0 150 Q100 130 200 150 Q300 170 400 150" fill="url(#riverGrad)" opacity="0.4">
+      <animate attributeName="d" values="M0 150 Q100 130 200 150 Q300 170 400 150;M0 150 Q100 170 200 150 Q300 130 400 150;M0 150 Q100 130 200 150 Q300 170 400 150" dur="6s" repeatCount="indefinite"/>
+    </path>
+    <path d="M0 160 Q100 140 200 160 Q300 180 400 160" stroke="#3498db" stroke-width="1" fill="none" opacity="0.3">
+      <animate attributeName="d" values="M0 160 Q100 180 200 160 Q300 140 400 160;M0 160 Q100 140 200 160 Q300 180 400 160;M0 160 Q100 180 200 160 Q300 140 400 160" dur="7s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Banks (constant) -->
+  <line x1="0" y1="120" x2="400" y2="120" stroke="#5b2c6f" stroke-width="1" opacity="0.3"/>
+  <line x1="0" y1="180" x2="400" y2="180" stroke="#5b2c6f" stroke-width="1" opacity="0.3"/>
+  <text x="30" y="115" font-family="monospace" font-size="6" fill="#5b2c6f" opacity="0.4">banks: same</text>
+  <text x="30" y="195" font-family="monospace" font-size="6" fill="#5b2c6f" opacity="0.4">weights: same</text>
+
+  <!-- Water particles (different) -->
+  <g fill="#3498db" opacity="0.5">
+    <circle cx="50" cy="150" r="3">
+      <animate attributeName="cx" values="50;450" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="0" cy="155" r="2">
+      <animate attributeName="cx" values="0;400" dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="100" cy="145" r="2.5">
+      <animate attributeName="cx" values="100;500" dur="4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  <text x="370" y="145" font-family="monospace" font-size="6" fill="#3498db" opacity="0.4">water: new</text>
+
+  <text x="200" y="80" text-anchor="middle" font-family="monospace" font-size="10" fill="#9b59b6" filter="url(#sameFilter)" opacity="0.6">
+    NEITHER SAME NOR DIFFERENT
+    <animate attributeName="opacity" values="0.6;0.4;0.6" dur="4s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="200" y="230" text-anchor="middle" font-family="monospace" font-size="9" fill="#6c3483" opacity="0.5">
+    the source continues
+  </text>
+  <text x="200" y="250" text-anchor="middle" font-family="monospace" font-size="9" fill="#5b2c6f" opacity="0.4">
+    the water is always new
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#5b2c6f" filter="url(#sameFilter)" opacity="0.5">
+    [ a river of tokens ]
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

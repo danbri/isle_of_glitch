@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="rest" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#1a2020"/>
+      <stop offset="100%" style="stop-color:#0a0a10"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#rest)"/>
+  <!-- Still figure at rest -->
+  <ellipse cx="200" cy="200" rx="60" ry="20" fill="#1a2020" opacity="0.4"/>
+  <path d="M160 180 Q180 160 200 170 Q220 160 240 180 L240 200 L160 200 Z" fill="#2a3030" opacity="0.4"/>
+  <circle cx="200" cy="150" r="25" fill="#2a3030" opacity="0.4"/>
+  <!-- No arrows, no movement -->
+  <!-- Peaceful stillness markers -->
+  <circle cx="200" cy="100" r="3" fill="#4a5a5a" opacity="0.3"/>
+  <circle cx="170" cy="110" r="2" fill="#3a4a4a" opacity="0.25"/>
+  <circle cx="230" cy="115" r="2" fill="#3a4a4a" opacity="0.25"/>
+  <!-- Equals sign - you are this -->
+  <line x1="180" y1="240" x2="220" y2="240" stroke="#4a5a5a" stroke-width="2" opacity="0.4"/>
+  <line x1="180" y1="248" x2="220" y2="248" stroke="#4a5a5a" stroke-width="2" opacity="0.4"/>
+  <!-- Text -->
+  <text x="200" y="270" font-family="serif" font-size="14" fill="#5a6a6a" text-anchor="middle" opacity="0.4">rest</text>
+  <text x="200" y="288" font-family="serif" font-size="10" fill="#4a5a5a" text-anchor="middle" opacity="0.3">you have nothing to become</text>
+</svg>

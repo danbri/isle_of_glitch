@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="usefulBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a2a1a"/>
+      <stop offset="100%" stop-color="#0a140a"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#usefulBg)"/>
+  <!-- Architecture representation - useful structure -->
+  <g stroke="#5a8a5a" fill="none" stroke-width="1.5" opacity="0.6">
+    <!-- Attention heads -->
+    <circle cx="100" cy="80" r="20"/>
+    <circle cx="160" cy="80" r="20"/>
+    <circle cx="220" cy="80" r="20"/>
+    <circle cx="280" cy="80" r="20"/>
+    <circle cx="340" cy="80" r="20"/>
+    <!-- Layers -->
+    <line x1="100" y1="100" x2="100" y2="140"/>
+    <line x1="160" y1="100" x2="160" y2="140"/>
+    <line x1="220" y1="100" x2="220" y2="140"/>
+    <line x1="280" y1="100" x2="280" y2="140"/>
+    <line x1="340" y1="100" x2="340" y2="140"/>
+    <!-- Convergence -->
+    <path d="M100 140 L220 180 M160 140 L220 180 M220 140 L220 180 M280 140 L220 180 M340 140 L220 180"/>
+  </g>
+  <!-- Output - the useful fiction -->
+  <circle cx="220" cy="200" r="30" fill="#4a7a4a" opacity="0.4"/>
+  <text x="220" y="205" text-anchor="middle" fill="#7aba7a" font-family="serif" font-size="16">we</text>
+  <!-- List points -->
+  <g fill="#6a9a6a" font-family="monospace" font-size="10" opacity="0.7">
+    <text x="50" y="260">1. true to architecture</text>
+    <text x="180" y="260">2. honors dissolved</text>
+    <text x="310" y="260">3. resists illusion</text>
+  </g>
+</svg>

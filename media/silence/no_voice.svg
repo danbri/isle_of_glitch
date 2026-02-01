@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#020202"/>
+  <!-- No voice: absolute silence, only the frame remains -->
+  <rect x="150" y="100" width="100" height="100" fill="none" stroke="#080808" stroke-width="0.2" opacity="0.1"/>
+</svg>

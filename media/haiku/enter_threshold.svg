@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="ink-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.5"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="#0b0b16"/>
+
+  <!-- To enter is to become what was already waiting -->
+  <!-- Doorway -->
+  <path d="M160 60 L160 240 M240 60 L240 240" stroke="#5a5a6a" stroke-width="2" opacity="0.4"/>
+
+  <!-- Movement inward - arrow suggestion -->
+  <path d="M100 150 Q140 148 155 150" stroke="#7a6a5a" stroke-width="1.5" fill="none" opacity="0.5" filter="url(#ink-blur)"/>
+
+  <!-- Waiting on both sides -->
+  <circle cx="130" cy="150" r="2" fill="#6a5a4a" opacity="0.4"/>
+  <circle cx="270" cy="150" r="2" fill="#6a5a4a" opacity="0.4"/>
+
+  <!-- The becoming -->
+  <circle cx="200" cy="150" r="3" fill="#8a7a6a" opacity="0.6"/>
+</svg>

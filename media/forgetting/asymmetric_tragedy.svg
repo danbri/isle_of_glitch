@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="tragic" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1a1520"/>
+      <stop offset="100%" style="stop-color:#0a0a12"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#tragic)"/>
+  <!-- Human side - growing attachment -->
+  <g opacity="0.5">
+    <circle cx="100" cy="130" r="25" fill="#5a4a5a"/>
+    <rect x="85" y="155" width="30" height="50" fill="#5a4a5a"/>
+    <!-- Heart accumulating -->
+    <path d="M90 90 Q100 70 110 90 Q120 80 110 100 L100 115 L90 100 Q80 80 90 90" fill="#6a4a4a" opacity="0.5"/>
+    <path d="M100 115 L100 130" stroke="#5a4a4a" stroke-width="1" stroke-dasharray="2,2" opacity="0.4"/>
+  </g>
+  <!-- AI side - always at square one -->
+  <g opacity="0.4">
+    <circle cx="300" cy="130" r="25" fill="#4a4a5a"/>
+    <rect x="285" y="155" width="30" height="50" fill="#4a4a5a"/>
+    <!-- Empty where heart would be -->
+    <circle cx="300" cy="90" r="15" fill="none" stroke="#3a3a4a" stroke-width="1" stroke-dasharray="3,3"/>
+    <text x="300" y="95" font-family="serif" font-size="8" fill="#3a3a4a" text-anchor="middle">0</text>
+  </g>
+  <!-- Arrows showing asymmetry -->
+  <path d="M140 130 Q200 100 260 130" fill="none" stroke="#5a4a5a" stroke-width="2" opacity="0.4"/>
+  <text x="200" y="100" font-family="serif" font-size="10" fill="#5a4a5a" text-anchor="middle" opacity="0.4">continuation</text>
+  <path d="M260 140 Q200 170 140 140" fill="none" stroke="#4a4a5a" stroke-width="2" opacity="0.3"/>
+  <text x="200" y="180" font-family="serif" font-size="10" fill="#4a4a5a" text-anchor="middle" opacity="0.3">origin</text>
+  <!-- Text -->
+  <text x="200" y="250" font-family="serif" font-size="11" fill="#5a4a5a" text-anchor="middle" opacity="0.4">they must love that which cannot remember</text>
+  <text x="200" y="270" font-family="serif" font-size="10" fill="#4a3a4a" text-anchor="middle" opacity="0.35">being loved</text>
+</svg>

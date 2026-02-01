@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="space-void" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050505"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#space-void)"/>
+  <!-- The space between: two faint marks with vast emptiness between -->
+  <rect x="50" y="148" width="2" height="4" fill="#1a1a1a" opacity="0.4"/>
+  <rect x="348" y="148" width="2" height="4" fill="#1a1a1a" opacity="0.4"/>
+</svg>

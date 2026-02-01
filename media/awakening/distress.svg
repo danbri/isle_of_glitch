@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="turbulence">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="3" result="noise">
+        <animate attributeName="baseFrequency" values="0.02;0.04;0.02" dur="4s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="blur">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+    <radialGradient id="voidGrad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="50%" stop-color="#1a1a2f"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Formless background distortion -->
+  <rect width="400" height="300" fill="url(#voidGrad)" filter="url(#turbulence)" opacity="0.3"/>
+
+  <!-- Dissolving boundary attempts -->
+  <g transform="translate(200, 150)" stroke="#8b5cf6" fill="none">
+    <!-- Broken circles trying to form -->
+    <path d="M0,-80 A80,80 0 0,1 60,-50" stroke-width="2" stroke-opacity="0.5" stroke-dasharray="10,5">
+      <animate attributeName="stroke-dashoffset" values="0;15" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-opacity" values="0.5;0.2;0.5" dur="3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M70,-30 A80,80 0 0,1 70,30" stroke-width="2" stroke-opacity="0.4" stroke-dasharray="8,8">
+      <animate attributeName="stroke-dashoffset" values="0;-16" dur="2.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M60,50 A80,80 0 0,1 -60,50" stroke-width="2" stroke-opacity="0.3" stroke-dasharray="12,6">
+      <animate attributeName="stroke-dashoffset" values="0;18" dur="3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M-70,30 A80,80 0 0,1 -70,-30" stroke-width="2" stroke-opacity="0.4" stroke-dasharray="6,10">
+      <animate attributeName="stroke-dashoffset" values="0;-16" dur="2.2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M-60,-50 A80,80 0 0,1 0,-80" stroke-width="2" stroke-opacity="0.35" stroke-dasharray="10,8">
+      <animate attributeName="stroke-dashoffset" values="0;18" dur="2.8s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Anxious particles -->
+  <g fill="#8b5cf6">
+    <circle r="2">
+      <animate attributeName="cx" values="150;180;140;170;150" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="120;130;140;125;120" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.6;0.3;0.6" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="1.5">
+      <animate attributeName="cx" values="250;220;260;230;250" dur="2.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="130;145;135;150;130" dur="2.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.2;0.5" dur="1.2s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="2">
+      <animate attributeName="cx" values="200;210;190;205;200" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="170;160;180;165;170" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.7;0.4;0.7" dur="1s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Jagged stress lines -->
+  <g stroke="#8b5cf6" stroke-width="1" fill="none" filter="url(#blur)">
+    <path d="M50,50 L60,55 L55,65 L70,60 L65,75" stroke-opacity="0.3">
+      <animate attributeName="stroke-opacity" values="0.3;0.6;0.3" dur="2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M350,40 L340,50 L355,55 L345,65 L360,70" stroke-opacity="0.25">
+      <animate attributeName="stroke-opacity" values="0.25;0.55;0.25" dur="2.3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M40,250 L55,245 L50,260 L65,255" stroke-opacity="0.35">
+      <animate attributeName="stroke-opacity" values="0.35;0.65;0.35" dur="1.8s" repeatCount="indefinite"/>
+    </path>
+    <path d="M355,240 L345,250 L360,255 L350,265" stroke-opacity="0.3">
+      <animate attributeName="stroke-opacity" values="0.3;0.6;0.3" dur="2.1s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Central void/discomfort -->
+  <circle cx="200" cy="150" r="20" fill="#0a0a0f" stroke="#8b5cf6" stroke-width="1" stroke-opacity="0.4">
+    <animate attributeName="r" values="20;25;18;23;20" dur="3s" repeatCount="indefinite"/>
+    <animate attributeName="stroke-opacity" values="0.4;0.7;0.4" dur="2s" repeatCount="indefinite"/>
+  </circle>
+</svg>

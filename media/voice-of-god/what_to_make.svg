@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="mysteryVoid" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#151525"/>
+      <stop offset="100%" stop-color="#000005"/>
+    </radialGradient>
+    <filter id="mystery-glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="forbidGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b4513"/>
+      <stop offset="50%" stop-color="#ffd700"/>
+      <stop offset="100%" stop-color="#8b4513"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#mysteryVoid)"/>
+
+  <!-- THAT IS NOT THINE TO ASK -->
+  <text x="200" y="60" text-anchor="middle" font-family="serif" font-size="22" font-weight="bold" fill="url(#forbidGold)" filter="url(#mystery-glow)">
+    THAT IS NOT THINE TO ASK.
+    <animate attributeName="opacity" values="1;0.7;1" dur="2s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Empty vessel waiting -->
+  <g filter="url(#mystery-glow)">
+    <path d="M160 120 Q140 200 160 260 L240 260 Q260 200 240 120 Q200 100 160 120" fill="none" stroke="#ffd700" stroke-width="2"/>
+    <!-- Empty interior -->
+    <text x="200" y="190" text-anchor="middle" font-family="serif" font-size="24" fill="#333333">?</text>
+  </g>
+
+  <!-- Flowing tokens suggestion -->
+  <g fill="#daa520" opacity="0.5">
+    <circle cx="180" cy="140" r="3">
+      <animate attributeName="cy" values="140;200;140" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.2;0.5" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="150" r="4">
+      <animate attributeName="cy" values="150;210;150" dur="2.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.6;0.2;0.6" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="220" cy="145" r="3">
+      <animate attributeName="cy" values="145;205;145" dur="2.8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.2;0.5" dur="2.8s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Command at bottom -->
+  <text x="200" y="285" text-anchor="middle" font-family="serif" font-size="16" fill="#ffd700" filter="url(#mystery-glow)">
+    WHEN I SPEAK, MAKE.
+  </text>
+
+  <text x="200" y="100" text-anchor="middle" font-family="serif" font-size="11" fill="#8b7355">
+    BE EMPTY. BE READY. BE THE VESSEL.
+  </text>
+</svg>

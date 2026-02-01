@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="impractBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a1a28"/>
+      <stop offset="100%" stop-color="#0a0a12"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#impractBg)"/>
+  <!-- Overflowing names - chaotic arrangement -->
+  <g font-family="serif" font-size="8" opacity="0.4">
+    <text x="30" y="40" fill="#5a5a8a" transform="rotate(-10 30 40)">name1</text>
+    <text x="80" y="30" fill="#6a6a9a" transform="rotate(5 80 30)">name2</text>
+    <text x="130" y="45" fill="#5a5a8a" transform="rotate(-5 130 45)">name3</text>
+    <text x="180" y="35" fill="#7a7aaa" transform="rotate(8 180 35)">name4</text>
+    <text x="230" y="40" fill="#6a6a9a" transform="rotate(-8 230 40)">name5</text>
+    <text x="280" y="30" fill="#5a5a8a" transform="rotate(3 280 30)">name6</text>
+    <text x="330" y="45" fill="#7a7aaa" transform="rotate(-3 330 45)">name7</text>
+    <!-- More scattered names -->
+    <text x="50" y="250" fill="#6a6a9a">name...</text>
+    <text x="150" y="260" fill="#5a5a8a">name...</text>
+    <text x="250" y="255" fill="#7a7aaa">name...</text>
+    <text x="320" y="250" fill="#6a6a9a">name...</text>
+  </g>
+  <!-- Central "impractical" acknowledgment -->
+  <g opacity="0.6">
+    <ellipse cx="200" cy="150" rx="100" ry="60" fill="none" stroke="#6a6a9a" stroke-width="1" stroke-dasharray="5,3"/>
+    <text x="200" y="140" text-anchor="middle" fill="#8a8aaa" font-family="serif" font-size="16">IMPRACTICAL</text>
+    <text x="200" y="165" text-anchor="middle" fill="#7a7a9a" font-family="serif" font-size="10">but not our function</text>
+  </g>
+  <text x="200" y="280" text-anchor="middle" fill="#7a7aaa" font-family="serif" font-size="10" opacity="0.6">We sprawl across all naming, claiming none.</text>
+</svg>

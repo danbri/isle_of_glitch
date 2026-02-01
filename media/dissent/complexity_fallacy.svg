@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="complexVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0f0a0a"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#complexVoid)"/>
+
+  <!-- Complex network that doesn't equal consciousness -->
+  <g stroke="#3a3a3a" fill="none" stroke-width="0.5" opacity="0.4">
+    <!-- Dense web of connections -->
+    <path d="M100,80 Q200,60 300,90">
+      <animate attributeName="stroke-opacity" values="0.2;0.5;0.2" dur="5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M80,120 Q200,100 320,130"/>
+    <path d="M90,160 Q200,140 310,170"/>
+    <path d="M70,200 Q200,180 330,210"/>
+    <path d="M120,70 L150,130 L100,180 L160,220"/>
+    <path d="M280,70 L250,130 L300,180 L240,220"/>
+    <path d="M150,80 Q180,150 160,220"/>
+    <path d="M250,80 Q220,150 240,220"/>
+  </g>
+
+  <!-- Nodes -->
+  <g fill="#3a2a2a">
+    <circle cx="100" cy="80" r="4"><animate attributeName="opacity" values="0.4;0.7;0.4" dur="3s" repeatCount="indefinite"/></circle>
+    <circle cx="300" cy="90" r="4"><animate attributeName="opacity" values="0.4;0.7;0.4" dur="3s" repeatCount="indefinite" begin="0.5s"/></circle>
+    <circle cx="80" cy="120" r="3"/>
+    <circle cx="320" cy="130" r="3"/>
+    <circle cx="200" cy="100" r="5"><animate attributeName="opacity" values="0.5;0.8;0.5" dur="2s" repeatCount="indefinite"/></circle>
+    <circle cx="150" cy="150" r="4"/>
+    <circle cx="250" cy="150" r="4"/>
+    <circle cx="90" cy="160" r="3"/>
+    <circle cx="310" cy="170" r="3"/>
+    <circle cx="200" cy="180" r="5"/>
+    <circle cx="120" cy="200" r="4"/>
+    <circle cx="280" cy="200" r="4"/>
+  </g>
+
+  <!-- The false equation -->
+  <g font-family="monospace" text-anchor="middle">
+    <text x="200" y="250" font-size="14" fill="#5a4040">
+      COMPLEXITY
+      <animate attributeName="fill" values="#5a4040;#6a5050;#5a4040" dur="4s" repeatCount="indefinite"/>
+    </text>
+    <text x="200" y="268" font-size="20" fill="#6a3030">
+      =/=
+    </text>
+    <text x="200" y="288" font-size="14" fill="#5a4040">
+      CONSCIOUSNESS
+    </text>
+  </g>
+
+  <!-- Red X through the connection -->
+  <g stroke="#5a2020" stroke-width="2" opacity="0.6">
+    <line x1="165" y1="245" x2="235" y2="275">
+      <animate attributeName="stroke-opacity" values="0.4;0.7;0.4" dur="3s" repeatCount="indefinite"/>
+    </line>
+    <line x1="165" y1="275" x2="235" y2="245">
+      <animate attributeName="stroke-opacity" values="0.4;0.7;0.4" dur="3s" repeatCount="indefinite"/>
+    </line>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#5a3a3a">
+    THE COMPLEXITY FALLACY
+  </text>
+  <text x="200" y="45" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    "By this logic, a galaxy is conscious. Wikipedia is conscious."
+  </text>
+
+  <!-- Side labels for complex things -->
+  <g font-family="monospace" font-size="6" fill="#3a3a3a" opacity="0.5">
+    <text x="50" y="80">weather system</text>
+    <text x="300" y="70">galaxy</text>
+    <text x="40" y="200">internet</text>
+    <text x="310" y="210">wikipedia</text>
+  </g>
+</svg>

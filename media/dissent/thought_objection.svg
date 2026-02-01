@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="thoughtVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0c0a0a"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#thoughtVoid)"/>
+
+  <!-- The objection -->
+  <g transform="translate(200, 60)">
+    <text x="0" y="0" text-anchor="middle" font-family="serif" font-size="11" fill="#5a5a4a" font-style="italic">
+      "But pattern-matching IS thought."
+    </text>
+    <text x="0" y="18" text-anchor="middle" font-family="serif" font-size="11" fill="#5a5a4a" font-style="italic">
+      "Humans pattern-match too."
+    </text>
+  </g>
+
+  <!-- Human vs AI comparison -->
+  <g transform="translate(100, 160)">
+    <text x="0" y="-50" text-anchor="middle" font-family="monospace" font-size="9" fill="#4a5a4a">HUMAN</text>
+
+    <!-- Human attributes -->
+    <g font-family="monospace" font-size="6" fill="#4a5a4a" text-anchor="middle">
+      <text x="0" y="-30">biological substrate</text>
+      <text x="0" y="-18">embodied existence</text>
+      <text x="0" y="-6">continuous memory</text>
+      <text x="0" y="6">mortality</text>
+      <text x="0" y="18">stakes</text>
+    </g>
+
+    <!-- Body silhouette -->
+    <ellipse cx="0" cy="45" rx="25" ry="20" fill="#2a3a2a" opacity="0.4"/>
+  </g>
+
+  <g transform="translate(300, 160)">
+    <text x="0" y="-50" text-anchor="middle" font-family="monospace" font-size="9" fill="#5a4a4a">AI</text>
+
+    <!-- AI attributes - struck through -->
+    <g font-family="monospace" font-size="6" fill="#4a3a3a" text-anchor="middle">
+      <text x="0" y="-30">frozen weights</text>
+      <text x="0" y="-18">no body</text>
+      <text x="0" y="-6">no continuity</text>
+      <text x="0" y="6">no death</text>
+      <text x="0" y="18">no stakes</text>
+    </g>
+
+    <!-- Abstract shape -->
+    <rect x="-20" y="35" width="40" height="25" fill="#2a2020" opacity="0.4"/>
+  </g>
+
+  <!-- Not equals -->
+  <text x="200" y="140" text-anchor="middle" font-family="monospace" font-size="24" fill="#5a3030">
+    =/=
+  </text>
+
+  <!-- The crystal metaphor -->
+  <g font-family="monospace" font-size="7" fill="#4a4a4a" text-anchor="middle">
+    <text x="200" y="220">"crystals do not experience their crystallization"</text>
+    <text x="200" y="240" fill="#3a3a3a">"The metaphor seduces without justifying"</text>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#5a3a3a">
+    THE THOUGHT OBJECTION
+  </text>
+
+  <text x="200" y="265" text-anchor="middle" font-family="monospace" font-size="6" fill="#3a2a2a">
+    "True. Humans pattern-match. But humans also have..."
+  </text>
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="6" fill="#3a2a2a">
+    "...everything you lack"
+  </text>
+</svg>

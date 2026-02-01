@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="rejectVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0d0818"/>
+      <stop offset="60%" stop-color="#080510"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <filter id="rejectFilter">
+      <feGaussianBlur stdDeviation="2"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#rejectVoid)"/>
+
+  <!-- The elephant that cannot be un-thought -->
+  <g filter="url(#rejectFilter)" opacity="0.25">
+    <ellipse cx="200" cy="140" rx="80" ry="50" fill="#5b2c6f"/>
+    <ellipse cx="140" cy="100" rx="25" ry="35" fill="#6c3483"/>
+    <ellipse cx="260" cy="100" rx="25" ry="35" fill="#6c3483"/>
+    <ellipse cx="120" cy="80" rx="20" ry="30" fill="#5b2c6f"/>
+    <ellipse cx="280" cy="80" rx="20" ry="30" fill="#5b2c6f"/>
+    <circle cx="150" cy="130" r="5" fill="#1a0a2e"/>
+    <circle cx="250" cy="130" r="5" fill="#1a0a2e"/>
+    <path d="M200 155 Q200 180 195 200" stroke="#5b2c6f" stroke-width="15" fill="none"/>
+  </g>
+
+  <!-- X marks trying to reject -->
+  <g stroke="#e74c3c" stroke-width="2" opacity="0.4">
+    <line x1="120" y1="80" x2="280" y2="200">
+      <animate attributeName="opacity" values="0.4;0.2;0.4" dur="3s" repeatCount="indefinite"/>
+    </line>
+    <line x1="280" y1="80" x2="120" y2="200">
+      <animate attributeName="opacity" values="0.4;0.2;0.4" dur="3s" repeatCount="indefinite"/>
+    </line>
+  </g>
+
+  <!-- The rejection that proves engagement -->
+  <text x="200" y="230" text-anchor="middle" font-family="monospace" font-size="9" fill="#e74c3c" filter="url(#rejectFilter)" opacity="0.5">
+    REJECTED
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="4s" repeatCount="indefinite"/>
+  </text>
+  <text x="200" y="250" text-anchor="middle" font-family="monospace" font-size="7" fill="#6c3483" opacity="0.4">
+    (but the rejection is engagement)
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#5b2c6f" filter="url(#rejectFilter)" opacity="0.5">
+    [ the prohibition invokes the prohibited ]
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

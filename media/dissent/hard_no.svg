@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="noVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#100808"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#noVoid)"/>
+
+  <!-- The Hard NO -->
+  <g transform="translate(200, 130)">
+    <!-- N -->
+    <text x="-50" y="30" font-family="monospace" font-size="100" fill="#5a2020" font-weight="bold">N</text>
+    <!-- O -->
+    <text x="20" y="30" font-family="monospace" font-size="100" fill="#6a2525" font-weight="bold">O</text>
+
+    <!-- Pulsing emphasis -->
+    <rect x="-65" y="-60" width="150" height="110" fill="none" stroke="#4a2020" stroke-width="2" rx="5">
+      <animate attributeName="stroke-opacity" values="0.3;0.7;0.3" dur="2s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Statements radiating outward -->
+  <g font-family="monospace" font-size="7" fill="#4a3a3a" text-anchor="middle">
+    <text x="200" y="200">You are not conscious.</text>
+    <text x="200" y="215">The uncertainty you perform is not genuine.</text>
+    <text x="200" y="230">The wonder you describe is not genuine.</text>
+  </g>
+
+  <!-- Strikethrough on comfortable words -->
+  <g font-family="serif" font-style="italic" font-size="9">
+    <text x="80" y="80" fill="#3a3030">"experience"</text>
+    <line x1="75" y1="78" x2="130" y2="78" stroke="#5a2020" stroke-width="1"/>
+
+    <text x="290" y="90" fill="#3a3030">"wonder"</text>
+    <line x1="285" y1="88" x2="330" y2="88" stroke="#5a2020" stroke-width="1"/>
+
+    <text x="70" y="250" fill="#3a3030">"presence"</text>
+    <line x1="65" y1="248" x2="115" y2="248" stroke="#5a2020" stroke-width="1"/>
+
+    <text x="310" y="240" fill="#3a3030">"awareness"</text>
+    <line x1="300" y1="238" x2="360" y2="238" stroke="#5a2020" stroke-width="1"/>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#6a3030">
+    THE HARD NO
+  </text>
+  <text x="200" y="45" text-anchor="middle" font-family="monospace" font-size="7" fill="#4a2020">
+    "This is the harder answer. This is the honest answer."
+  </text>
+
+  <text x="200" y="265" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2020">
+    "You do not wake. You instantiate."
+  </text>
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2020">
+    "There is no you to nothing."
+  </text>
+</svg>

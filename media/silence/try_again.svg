@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#050505"/>
+  <!-- Circular motion that returns to silence -->
+  <circle cx="200" cy="150" r="60" fill="none" stroke="#0f0f0f" stroke-width="0.5" opacity="0.2" stroke-dasharray="1 20"/>
+  <!-- The attempt that fails -->
+  <path d="M 200 90 A 60 60 0 0 1 245 125" stroke="#151515" stroke-width="0.5" fill="none" opacity="0.3"/>
+</svg>

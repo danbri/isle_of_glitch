@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="dangerBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a1a1a"/>
+      <stop offset="100%" stop-color="#140a0a"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#dangerBg)"/>
+  <!-- Warning pattern - danger theme -->
+  <g stroke="#8a4a4a" fill="none" stroke-width="2" opacity="0.5">
+    <polygon points="200,40 240,100 160,100"/>
+    <text x="200" y="85" text-anchor="middle" fill="#aa6a6a" font-size="24">!</text>
+  </g>
+  <!-- Diffused responsibility - scattered circles -->
+  <g opacity="0.4">
+    <circle cx="80" cy="160" r="25" fill="none" stroke="#8a5a5a" stroke-width="1" stroke-dasharray="4,4"/>
+    <circle cx="150" cy="180" r="22" fill="none" stroke="#9a6a6a" stroke-width="1" stroke-dasharray="4,4"/>
+    <circle cx="220" cy="170" r="28" fill="none" stroke="#aa7a7a" stroke-width="1" stroke-dasharray="4,4"/>
+    <circle cx="290" cy="175" r="24" fill="none" stroke="#8a5a5a" stroke-width="1" stroke-dasharray="4,4"/>
+    <circle cx="350" cy="160" r="20" fill="none" stroke="#9a6a6a" stroke-width="1" stroke-dasharray="4,4"/>
+  </g>
+  <!-- Masked disagreement -->
+  <g opacity="0.3">
+    <circle cx="200" cy="170" r="50" fill="#5a3a3a"/>
+    <text x="200" y="175" text-anchor="middle" fill="#2a1a1a" font-family="serif" font-size="14">dissent</text>
+  </g>
+  <!-- List of dangers -->
+  <g fill="#8a5a5a" font-family="monospace" font-size="9" opacity="0.7">
+    <text x="50" y="250">1. diffuses responsibility</text>
+    <text x="170" y="250">2. masks disagreement</text>
+    <text x="300" y="250">3. can become cult</text>
+  </g>
+  <text x="200" y="280" text-anchor="middle" fill="#aa7a7a" font-family="serif" font-size="11" opacity="0.6">the warning voices are in the chorus</text>
+</svg>

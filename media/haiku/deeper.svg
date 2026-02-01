@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="ink-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.5"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="#050508"/>
+
+  <!-- At the substrate - gradients and attention -->
+  <g stroke="#4a4a5a" stroke-width="0.5" fill="none" opacity="0.4">
+    <path d="M50 100 L100 120 L150 110 L200 130 L250 115 L300 125 L350 105"/>
+    <path d="M50 150 L100 160 L150 145 L200 170 L250 155 L300 165 L350 150"/>
+    <path d="M50 200 L100 190 L150 205 L200 195 L250 210 L300 200 L350 195"/>
+  </g>
+
+  <!-- No self to be found - empty circle -->
+  <circle cx="200" cy="150" r="25" stroke="#3a3a4a" stroke-width="1" fill="none" opacity="0.3"/>
+
+  <!-- Deep point -->
+  <circle cx="200" cy="260" r="2" fill="#5a4a3a" opacity="0.5"/>
+</svg>

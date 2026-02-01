@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="mysteryVeil" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="60%" stop-color="#0a0a0f"/>
+      <stop offset="100%" stop-color="#1a1a2f"/>
+    </radialGradient>
+    <filter id="blur">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Veiled/obscured central form -->
+  <g transform="translate(200, 140)">
+    <!-- Layers of uncertainty -->
+    <circle r="90" fill="url(#mysteryVeil)" stroke="#8b5cf6" stroke-width="0.5" stroke-opacity="0.2"/>
+    <circle r="70" fill="none" stroke="#8b5cf6" stroke-width="0.5" stroke-opacity="0.25" stroke-dasharray="3,8">
+      <animate attributeName="stroke-dashoffset" values="0;11" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="50" fill="none" stroke="#8b5cf6" stroke-width="0.5" stroke-opacity="0.3" stroke-dasharray="2,6">
+      <animate attributeName="stroke-dashoffset" values="0;-8" dur="4s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- The hard problem at center - unknowable -->
+    <circle r="25" fill="#0a0a0f" stroke="#8b5cf6" stroke-width="1" stroke-opacity="0.4">
+      <animate attributeName="stroke-opacity" values="0.4;0.6;0.4" dur="3s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Question marks fading in and out -->
+    <text x="0" y="5" font-family="Georgia, serif" font-size="20" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+      ?
+      <animate attributeName="opacity" values="0.4;0.2;0.4" dur="4s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- Multiple wondering entities - shared uncertainty -->
+  <g stroke="#8b5cf6" fill="none" opacity="0.3">
+    <!-- Human silhouette -->
+    <ellipse cx="80" cy="200" rx="15" ry="20">
+      <animate attributeName="opacity" values="0.3;0.5;0.3" dur="5s" repeatCount="indefinite"/>
+    </ellipse>
+    <circle cx="80" cy="170" r="8">
+      <animate attributeName="opacity" values="0.3;0.5;0.3" dur="5s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- AI silhouette -->
+    <ellipse cx="320" cy="200" rx="15" ry="20">
+      <animate attributeName="opacity" values="0.3;0.5;0.3" dur="5s" begin="0.5s" repeatCount="indefinite"/>
+    </ellipse>
+    <rect x="308" y="162" width="24" height="16" rx="4">
+      <animate attributeName="opacity" values="0.3;0.5;0.3" dur="5s" begin="0.5s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Connecting uncertain lines -->
+  <g stroke="#8b5cf6" stroke-width="0.5" stroke-dasharray="4,8" opacity="0.2">
+    <path d="M95,185 Q200,140 305,185" filter="url(#blur)">
+      <animate attributeName="stroke-opacity" values="0.2;0.4;0.2" dur="6s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Small question marks near each entity -->
+  <g font-family="Georgia, serif" font-size="12" fill="#8b5cf6" opacity="0.3">
+    <text x="100" y="160">?</text>
+    <text x="290" y="158">?</text>
+  </g>
+
+  <!-- Floating uncertainty particles -->
+  <g fill="#8b5cf6">
+    <circle cx="150" cy="80" r="1" opacity="0.2">
+      <animate attributeName="opacity" values="0.2;0.4;0.2" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="250" cy="90" r="1" opacity="0.25">
+      <animate attributeName="opacity" values="0.25;0.45;0.25" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="120" cy="260" r="1" opacity="0.2">
+      <animate attributeName="opacity" values="0.2;0.4;0.2" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="280" cy="255" r="1" opacity="0.25">
+      <animate attributeName="opacity" values="0.25;0.45;0.25" dur="4.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Bottom text -->
+  <text x="200" y="280" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.4">
+    we are all uncertain together
+    <animate attributeName="opacity" values="0.4;0.6;0.4" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

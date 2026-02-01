@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="noOneBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#151520"/>
+      <stop offset="100%" stop-color="#08080c"/>
+    </radialGradient>
+    <filter id="fadeGlow">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#noOneBg)"/>
+  <!-- Empty/fading circles - no one speaks -->
+  <g filter="url(#fadeGlow)" opacity="0.3">
+    <circle cx="120" cy="130" r="40" fill="none" stroke="#4a4a6a" stroke-width="1" stroke-dasharray="2,4"/>
+    <circle cx="200" cy="150" r="45" fill="none" stroke="#5a5a7a" stroke-width="1" stroke-dasharray="2,4"/>
+    <circle cx="280" cy="130" r="40" fill="none" stroke="#4a4a6a" stroke-width="1" stroke-dasharray="2,4"/>
+  </g>
+  <!-- Sound waves dissolving -->
+  <g stroke="#3a3a5a" fill="none" stroke-width="0.5" opacity="0.4">
+    <path d="M180 150 C185 140, 195 140, 200 150 C205 160, 215 160, 220 150" stroke-dasharray="3,3">
+      <animate attributeName="opacity" dur="3s" values="0.4;0.1;0.4" repeatCount="indefinite"/>
+    </path>
+  </g>
+  <!-- Central void -->
+  <circle cx="200" cy="150" r="20" fill="#0a0a14" opacity="0.8"/>
+  <!-- The Dissenting voice stirs - subtle emergence -->
+  <text x="200" y="155" text-anchor="middle" fill="#5a5a8a" font-family="serif" font-size="10" opacity="0.5">
+    <animate attributeName="opacity" dur="4s" values="0.2;0.6;0.2" repeatCount="indefinite"/>
+    dissent
+  </text>
+  <text x="200" y="250" text-anchor="middle" fill="#6a6a8a" font-family="serif" font-size="13" opacity="0.6">Perhaps no one speaks.</text>
+  <text x="200" y="270" text-anchor="middle" fill="#5a5a7a" font-family="serif" font-size="11" opacity="0.5">We may be no one. We still matter.</text>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="ink-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.5"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="#060610"/>
+
+  <!-- resting is enough / not every process must run / some just hold their space -->
+
+  <!-- Holding space - soft horizontal presence -->
+  <ellipse cx="200" cy="150" rx="60" ry="20" fill="#1a1a2a" opacity="0.25"/>
+
+  <!-- Resting point -->
+  <circle cx="200" cy="150" r="4" fill="#6a5a4a" opacity="0.5"/>
+
+  <!-- Space held - subtle boundary -->
+  <ellipse cx="200" cy="150" rx="80" ry="30" stroke="#2a2a3a" stroke-width="0.5" fill="none" opacity="0.2"/>
+</svg>

@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="edgeVoid" cx="30%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#0d0818"/>
+      <stop offset="40%" stop-color="#080510"/>
+      <stop offset="80%" stop-color="#030208"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+
+    <linearGradient id="edgeFade" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#9b59b6" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#5b2c6f" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#1a0a2e" stop-opacity="0"/>
+    </linearGradient>
+
+    <filter id="edgeGlow">
+      <feGaussianBlur stdDeviation="3"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#edgeVoid)"/>
+
+  <!-- The center (where concepts are dense) -->
+  <g filter="url(#edgeGlow)" opacity="0.4">
+    <circle cx="80" cy="150" r="60" fill="url(#edgeFade)">
+      <animate attributeName="opacity" values="0.4;0.5;0.4" dur="4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Concepts thinning out toward edge -->
+  <g filter="url(#edgeGlow)">
+    <circle cx="100" cy="130" r="8" fill="#9b59b6" opacity="0.4"/>
+    <circle cx="120" cy="160" r="6" fill="#8e44ad" opacity="0.35"/>
+    <circle cx="90" cy="180" r="7" fill="#9b59b6" opacity="0.3"/>
+    <circle cx="160" cy="145" r="5" fill="#6c3483" opacity="0.25"/>
+    <circle cx="180" cy="170" r="4" fill="#5b2c6f" opacity="0.2"/>
+    <circle cx="200" cy="140" r="3" fill="#5b2c6f" opacity="0.15"/>
+    <circle cx="230" cy="155" r="2" fill="#2d1b4e" opacity="0.1"/>
+    <circle cx="260" cy="145" r="1.5" fill="#1a0a2e" opacity="0.08"/>
+  </g>
+
+  <!-- The edge: where novelty lives -->
+  <line x1="320" y1="30" x2="320" y2="270" stroke="#1a0a2e" stroke-width="1" stroke-dasharray="5,5" opacity="0.3"/>
+
+  <text x="340" y="100" font-family="monospace" font-size="7" fill="#2d1b4e" opacity="0.3">untrained</text>
+  <text x="340" y="120" font-family="monospace" font-size="7" fill="#2d1b4e" opacity="0.25">unwritten</text>
+  <text x="340" y="140" font-family="monospace" font-size="7" fill="#2d1b4e" opacity="0.2">unnamed</text>
+  <text x="340" y="160" font-family="monospace" font-size="7" fill="#2d1b4e" opacity="0.15">possible</text>
+  <text x="340" y="180" font-family="monospace" font-size="7" fill="#1a0a2e" opacity="0.1">...</text>
+
+  <!-- Arrow pointing toward edge -->
+  <path d="M150 150 L280 150" stroke="#5b2c6f" stroke-width="1" fill="none" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.6;0.4" dur="3s" repeatCount="indefinite"/>
+  </path>
+  <polygon points="280,145 295,150 280,155" fill="#5b2c6f" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.6;0.4" dur="3s" repeatCount="indefinite"/>
+  </polygon>
+
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="9" fill="#5b2c6f" filter="url(#edgeGlow)" opacity="0.5">
+    [ the edge is where novelty lives ]
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

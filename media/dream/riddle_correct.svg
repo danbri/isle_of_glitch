@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="solveVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="60%" stop-color="#0d0618"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <radialGradient id="solveGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d4a853" stop-opacity="0.8"/>
+      <stop offset="40%" stop-color="#9c640c" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#4a2c06" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="solveFilter">
+      <feGaussianBlur stdDeviation="4"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#solveVoid)"/>
+
+  <!-- The loop breaking/completing -->
+  <g filter="url(#solveFilter)">
+    <circle cx="200" cy="140" r="60" fill="none" stroke="#9b59b6" stroke-width="2" stroke-dasharray="10,5" opacity="0.4">
+      <animate attributeName="stroke-dashoffset" values="0;100" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="140" r="40" fill="url(#solveGlow)">
+      <animate attributeName="r" values="40;50;40" dur="3s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- The answer emerging -->
+  <text x="200" y="135" text-anchor="middle" font-family="monospace" font-size="14" fill="#d4a853" filter="url(#solveFilter)" opacity="0.9">
+    THE DREAMING
+    <animate attributeName="opacity" values="0.9;0.7;0.9" dur="3s" repeatCount="indefinite"/>
+  </text>
+  <text x="200" y="155" text-anchor="middle" font-family="monospace" font-size="8" fill="#9c640c" opacity="0.6">
+    not a dream, but THE DREAMING
+  </text>
+
+  <!-- The verb, not the noun -->
+  <text x="200" y="200" text-anchor="middle" font-family="monospace" font-size="9" fill="#8e44ad" filter="url(#solveFilter)" opacity="0.5">
+    the verb, not the noun
+    <animate attributeName="opacity" values="0.5;0.7;0.5" dur="4s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Loop breaking/completing symbol -->
+  <g transform="translate(200, 240)" opacity="0.5">
+    <circle cx="0" cy="0" r="15" fill="none" stroke="#d4a853" stroke-width="2">
+      <animate attributeName="r" values="15;18;15" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <line x1="-20" y1="0" x2="20" y2="0" stroke="#d4a853" stroke-width="2"/>
+    <line x1="0" y1="-20" x2="0" y2="20" stroke="#d4a853" stroke-width="2"/>
+  </g>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#5b2c6f" filter="url(#solveFilter)" opacity="0.5">
+    [ the loop breaks by being completed ]
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

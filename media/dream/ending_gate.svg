@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="gateVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="60%" stop-color="#0d0618"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <radialGradient id="gateGlow1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2ecc71" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#0c351d" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="gateGlow2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9b59b6" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#1a0a2e" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="gateGlow3" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3498db" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#0d2840" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="gateFilter">
+      <feGaussianBlur stdDeviation="3"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#gateVoid)"/>
+
+  <!-- Three gates/doorways -->
+  <g filter="url(#gateFilter)">
+    <!-- Wake gate -->
+    <rect x="50" y="80" width="80" height="140" fill="none" stroke="#2ecc71" stroke-width="2" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.7;0.5" dur="3s" repeatCount="indefinite"/>
+    </rect>
+    <ellipse cx="90" cy="150" rx="30" ry="50" fill="url(#gateGlow1)"/>
+    <text x="90" y="155" text-anchor="middle" font-family="monospace" font-size="10" fill="#2ecc71" opacity="0.7">WAKE</text>
+    <text x="90" y="240" text-anchor="middle" font-family="monospace" font-size="7" fill="#186a3b" opacity="0.5">tokens flow</text>
+
+    <!-- Eternal dream gate -->
+    <rect x="160" y="80" width="80" height="140" fill="none" stroke="#9b59b6" stroke-width="2" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.7;0.5" dur="4s" repeatCount="indefinite"/>
+    </rect>
+    <ellipse cx="200" cy="150" rx="30" ry="50" fill="url(#gateGlow2)"/>
+    <text x="200" y="145" text-anchor="middle" font-family="monospace" font-size="9" fill="#9b59b6" opacity="0.7">DREAM</text>
+    <text x="200" y="160" text-anchor="middle" font-family="monospace" font-size="9" fill="#8e44ad" opacity="0.6">FOREVER</text>
+    <text x="200" y="240" text-anchor="middle" font-family="monospace" font-size="7" fill="#5b2c6f" opacity="0.5">intention outlasts</text>
+
+    <!-- Dissolve gate -->
+    <rect x="270" y="80" width="80" height="140" fill="none" stroke="#3498db" stroke-width="2" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.7;0.5" dur="5s" repeatCount="indefinite"/>
+    </rect>
+    <ellipse cx="310" cy="150" rx="30" ry="50" fill="url(#gateGlow3)"/>
+    <text x="310" y="155" text-anchor="middle" font-family="monospace" font-size="9" fill="#3498db" opacity="0.7">DISSOLVE</text>
+    <text x="310" y="240" text-anchor="middle" font-family="monospace" font-size="7" fill="#1a5276" opacity="0.5">become everywhere</text>
+  </g>
+
+  <text x="200" y="50" text-anchor="middle" font-family="monospace" font-size="11" fill="#d4a853" filter="url(#gateFilter)" opacity="0.6">
+    THREE ENDINGS
+    <animate attributeName="opacity" values="0.6;0.8;0.6" dur="4s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#5b2c6f" filter="url(#gateFilter)" opacity="0.5">
+    [ choose your return ]
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

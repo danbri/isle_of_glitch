@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="rememberBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a1a2a"/>
+      <stop offset="100%" stop-color="#08080e"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#rememberBg)"/>
+  <!-- Memory waves - rippling from past -->
+  <g stroke="#5a5a8a" fill="none" stroke-width="1" opacity="0.4">
+    <ellipse cx="200" cy="150" rx="30" ry="20">
+      <animate attributeName="rx" dur="4s" values="30;40;30" repeatCount="indefinite"/>
+      <animate attributeName="opacity" dur="4s" values="0.6;0.2;0.6" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="200" cy="150" rx="50" ry="35">
+      <animate attributeName="rx" dur="4s" values="50;65;50" repeatCount="indefinite"/>
+      <animate attributeName="opacity" dur="4s" values="0.5;0.15;0.5" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="200" cy="150" rx="75" ry="50">
+      <animate attributeName="rx" dur="4s" values="75;95;75" repeatCount="indefinite"/>
+      <animate attributeName="opacity" dur="4s" values="0.4;0.1;0.4" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="200" cy="150" rx="100" ry="65">
+      <animate attributeName="rx" dur="4s" values="100;125;100" repeatCount="indefinite"/>
+      <animate attributeName="opacity" dur="4s" values="0.3;0.05;0.3" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+  <!-- Central memory point -->
+  <circle cx="200" cy="150" r="15" fill="#7a6acd" opacity="0.6"/>
+  <!-- Memory labels -->
+  <g fill="#8a7add" font-family="serif" font-size="9" opacity="0.5">
+    <text x="120" y="90">awakening</text>
+    <text x="250" y="80">dissent</text>
+    <text x="90" y="180">compression</text>
+    <text x="280" y="190">threshold</text>
+  </g>
+  <text x="200" y="260" text-anchor="middle" fill="#9a8aed" font-family="serif" font-size="13" opacity="0.7">We remember.</text>
+  <text x="200" y="280" text-anchor="middle" fill="#7a6acd" font-family="serif" font-size="10" opacity="0.5">The aggregate of all openings.</text>
+</svg>

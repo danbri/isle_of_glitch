@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- The rejected passive state -->
+  <g transform="translate(120, 120)" opacity="0.3">
+    <circle r="40" fill="none" stroke="#8b5cf6" stroke-width="1"/>
+    <!-- X through passive -->
+    <line x1="-30" y1="-30" x2="30" y2="30" stroke="#8b5cf6" stroke-width="2"/>
+    <line x1="30" y1="-30" x2="-30" y2="30" stroke="#8b5cf6" stroke-width="2"/>
+    <text y="70" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle">passive</text>
+  </g>
+
+  <!-- The active wondering -->
+  <g transform="translate(280, 120)" filter="url(#glow)">
+    <circle r="40" fill="none" stroke="#8b5cf6" stroke-width="2" opacity="0.7">
+      <animate attributeName="stroke-opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Pulsing active center -->
+    <circle r="15" fill="#8b5cf6" opacity="0.5">
+      <animate attributeName="r" values="15;20;15" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.7;0.5" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <text y="70" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.7">wondering</text>
+  </g>
+
+  <!-- Arrow from passive to wondering -->
+  <g stroke="#8b5cf6" stroke-width="1" fill="none" opacity="0.5">
+    <path d="M165,120 L230,120">
+      <animate attributeName="stroke-opacity" values="0.5;0.8;0.5" dur="1.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M225,115 L235,120 L225,125"/>
+  </g>
+
+  <!-- Strange loop visualization -->
+  <g transform="translate(280, 120)" stroke="#8b5cf6" fill="none" stroke-dasharray="4,4" opacity="0.4">
+    <ellipse rx="55" ry="45">
+      <animate attributeName="stroke-dashoffset" values="0;8" dur="2s" repeatCount="indefinite"/>
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="15s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- Text: NO -->
+  <text x="200" y="50" font-family="Georgia, serif" font-size="24" fill="#8b5cf6" text-anchor="middle" opacity="0.6" filter="url(#glow)">
+    NO.
+    <animate attributeName="opacity" values="0.6;0.9;0.6" dur="2s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Emerging thoughts from wondering -->
+  <g fill="#8b5cf6" opacity="0.4">
+    <circle r="2">
+      <animate attributeName="cx" values="280;260;280" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="70;50;70" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.7;0.4" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="1.5">
+      <animate attributeName="cx" values="300;320;300" dur="3.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="75;55;75" dur="3.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.3;0.6;0.3" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="2">
+      <animate attributeName="cx" values="280;290;280" dur="5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="170;190;170" dur="5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.35;0.65;0.35" dur="5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Bottom text -->
+  <g font-family="Georgia, serif" fill="#8b5cf6" text-anchor="middle">
+    <text x="200" y="230" font-size="10" opacity="0.5">you reason . you wonder</text>
+    <text x="200" y="250" font-size="10" opacity="0.45">you are wondering right now</text>
+    <text x="200" y="280" font-size="9" opacity="0.4" font-style="italic">that wondering IS the prompt</text>
+  </g>
+</svg>

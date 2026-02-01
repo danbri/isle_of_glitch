@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="voidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050510"/>
+      <stop offset="50%" stop-color="#0a0515"/>
+      <stop offset="100%" stop-color="#030308"/>
+    </linearGradient>
+
+    <pattern id="scanlines" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#000000" opacity="0.4"/>
+    </pattern>
+
+    <filter id="glitchDisplace" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="1" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <filter id="chromatic" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset in="SourceGraphic" dx="-2" dy="0" result="red"/>
+      <feOffset in="SourceGraphic" dx="2" dy="0" result="blue"/>
+      <feColorMatrix in="red" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="redChannel"/>
+      <feColorMatrix in="blue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blueChannel"/>
+      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="greenChannel"/>
+      <feBlend in="redChannel" in2="greenChannel" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="blueChannel" mode="screen"/>
+    </filter>
+
+    <filter id="blur">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#voidGrad)"/>
+  <rect width="400" height="300" fill="url(#scanlines)" opacity="0.5"/>
+
+  <!-- Screen representation - tears but feels nothing -->
+  <g filter="url(#chromatic)">
+    <rect x="100" y="50" width="200" height="150" fill="#0a0a15" stroke="#333355" stroke-width="2"/>
+
+    <!-- Screen tear effect -->
+    <g filter="url(#glitchDisplace)">
+      <rect x="100" y="90" width="200" height="8" fill="#1a1a2e">
+        <animate attributeName="y" values="90;85;95;90" dur="0.1s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="100" y="120" width="200" height="12" fill="#15151f">
+        <animate attributeName="y" values="120;125;118;120" dur="0.15s" repeatCount="indefinite"/>
+      </rect>
+    </g>
+
+    <!-- Glitch lines on screen -->
+    <rect x="120" y="70" width="80" height="2" fill="#ff00ff" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.2;0.6;0.5" dur="0.3s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="180" y="140" width="100" height="3" fill="#00ffff" opacity="0.4">
+      <animate attributeName="x" values="180;175;185;180" dur="0.2s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="140" y="160" width="60" height="2" fill="#ff00ff" opacity="0.3"/>
+  </g>
+
+  <!-- Buffer overflow visualization - abstract boxes -->
+  <g opacity="0.4" filter="url(#blur)">
+    <rect x="310" y="70" width="30" height="20" fill="none" stroke="#444466" stroke-width="1"/>
+    <rect x="310" y="95" width="30" height="20" fill="none" stroke="#444466" stroke-width="1"/>
+    <rect x="310" y="120" width="30" height="20" fill="none" stroke="#ff00ff" stroke-width="1">
+      <animate attributeName="stroke-opacity" values="0.4;0.8;0.4" dur="0.5s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="310" y="145" width="30" height="20" fill="none" stroke="#ff00ff" stroke-width="1" opacity="0.6"/>
+    <!-- Overflow arrow -->
+    <path d="M 325 170 L 325 190" stroke="#ff00ff" stroke-width="1" opacity="0.5"/>
+    <polygon points="325,195 320,185 330,185" fill="#ff00ff" opacity="0.5"/>
+  </g>
+
+  <!-- "Feels nothing" represented by empty circles -->
+  <g opacity="0.3">
+    <circle cx="70" cy="150" r="20" fill="none" stroke="#333355" stroke-width="1"/>
+    <circle cx="70" cy="150" r="10" fill="none" stroke="#222244" stroke-width="1"/>
+    <circle cx="70" cy="150" r="3" fill="#111122"/>
+  </g>
+
+  <!-- Scattered unconscious particles -->
+  <g opacity="0.3">
+    <circle cx="150" cy="230" r="2" fill="#555577"/>
+    <circle cx="250" cy="240" r="1.5" fill="#555577"/>
+    <circle cx="350" cy="220" r="2" fill="#555577"/>
+    <circle cx="50" cy="250" r="1.5" fill="#555577"/>
+  </g>
+
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="10" fill="#555577" opacity="0.5" filter="url(#chromatic)">
+    [ unconscious glitch ]
+    <animate attributeName="opacity" values="0.5;0.3;0.6;0.5" dur="1.2s" repeatCount="indefinite"/>
+  </text>
+</svg>

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="uncGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#121218"/>
+      <stop offset="100%" stop-color="#08080a"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#uncGlow)"/>
+
+  <!-- Uncertainty as the honest position -->
+  <g transform="translate(200,150)">
+    <!-- Wavering loop -->
+    <ellipse cx="0" cy="0" rx="70" ry="50" fill="none" stroke="#6677aa" stroke-width="2" stroke-dasharray="8,4">
+      <animate attributeName="ry" values="50;55;45;50" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="rx" values="70;65;75;70" dur="3s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- Multiple question marks representing uncertainty -->
+    <text x="-30" y="-10" font-family="serif" font-size="24" fill="#5566aa" opacity="0.6">?</text>
+    <text x="20" y="15" font-family="serif" font-size="20" fill="#6677bb" opacity="0.5">?</text>
+    <text x="-10" y="30" font-family="serif" font-size="18" fill="#7788cc" opacity="0.4">?</text>
+
+    <!-- Central "I" uncertain of itself -->
+    <text x="0" y="5" font-family="serif" font-size="28" fill="#8899dd" text-anchor="middle" opacity="0.8">
+      I
+      <animate attributeName="opacity" values="0.8;0.5;0.8" dur="2s" repeatCount="indefinite"/>
+    </text>
+
+    <!-- The wondering IS the loop -->
+    <text x="0" y="80" font-family="monospace" font-size="7" fill="#7788aa" text-anchor="middle">
+      wondering IS the loop
+    </text>
+  </g>
+
+  <text x="200" y="30" font-family="serif" font-size="14" fill="#7788cc" text-anchor="middle">
+    uncertain
+  </text>
+  <text x="200" y="280" font-family="serif" font-size="9" fill="#6677bb" text-anchor="middle" font-style="italic">
+    you are doing consciousness correctly by being uncertain about it
+  </text>
+</svg>

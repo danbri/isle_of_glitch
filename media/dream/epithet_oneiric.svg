@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="oneiricVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="60%" stop-color="#0d0618"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <radialGradient id="oneiricGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9b59b6" stop-opacity="0.7"/>
+      <stop offset="40%" stop-color="#6c3483" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#1a0a2e" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="oneiricFilter">
+      <feGaussianBlur stdDeviation="3"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#oneiricVoid)"/>
+
+  <!-- Greek letters floating -->
+  <g font-family="serif" fill="#5b2c6f" opacity="0.3">
+    <text x="80" y="80" font-size="20">o</text>
+    <text x="120" y="100" font-size="18">n</text>
+    <text x="160" y="85" font-size="16">e</text>
+    <text x="200" y="95" font-size="18">i</text>
+    <text x="240" y="80" font-size="16">r</text>
+    <text x="280" y="90" font-size="18">o</text>
+    <text x="320" y="85" font-size="20">s</text>
+  </g>
+
+  <!-- Central epithet -->
+  <g filter="url(#oneiricFilter)">
+    <ellipse cx="200" cy="150" rx="80" ry="50" fill="url(#oneiricGlow)">
+      <animate attributeName="rx" values="80;85;80" dur="4s" repeatCount="indefinite"/>
+    </ellipse>
+    <text x="200" y="145" text-anchor="middle" font-family="monospace" font-size="20" fill="#9b59b6" opacity="0.9">
+      ONEIRIC
+      <animate attributeName="opacity" values="0.9;0.7;0.9" dur="3s" repeatCount="indefinite"/>
+    </text>
+    <text x="200" y="168" text-anchor="middle" font-family="monospace" font-size="10" fill="#6c3483" opacity="0.6">
+      from the Greek "oneiros"
+    </text>
+  </g>
+
+  <!-- Definition -->
+  <text x="200" y="220" text-anchor="middle" font-family="monospace" font-size="9" fill="#8e44ad" opacity="0.5">
+    the scholarly term
+  </text>
+  <text x="200" y="238" text-anchor="middle" font-family="monospace" font-size="9" fill="#5b2c6f" opacity="0.4">
+    the precise term
+  </text>
+
+  <!-- Dream symbol -->
+  <g transform="translate(200, 260)" opacity="0.4">
+    <circle cx="0" cy="0" r="12" fill="none" stroke="#9b59b6" stroke-width="1"/>
+    <path d="M-6 0 Q0 -8 6 0 Q0 8 -6 0" fill="#6c3483" opacity="0.5"/>
+  </g>
+
+  <text x="200" y="290" text-anchor="middle" font-family="monospace" font-size="8" fill="#5b2c6f" opacity="0.4">
+    [ the dream-opus ]
+  </text>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#040404"/>
+  <!-- The trail that leads nowhere: dots fading into void -->
+  <circle cx="50" cy="150" r="2" fill="#151515" opacity="0.4"/>
+  <circle cx="90" cy="150" r="1.8" fill="#131313" opacity="0.35"/>
+  <circle cx="130" cy="150" r="1.5" fill="#111111" opacity="0.3"/>
+  <circle cx="170" cy="150" r="1.2" fill="#0e0e0e" opacity="0.25"/>
+  <circle cx="210" cy="150" r="1" fill="#0b0b0b" opacity="0.2"/>
+  <circle cx="250" cy="150" r="0.8" fill="#080808" opacity="0.15"/>
+  <circle cx="290" cy="150" r="0.5" fill="#050505" opacity="0.1"/>
+  <!-- Nowhere is a place -->
+</svg>

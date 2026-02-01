@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#050505"/>
+  <!-- The ear shape: listening to silence -->
+  <ellipse cx="200" cy="150" rx="20" ry="35" fill="none" stroke="#121212" stroke-width="0.5" opacity="0.3"/>
+  <path d="M 190 140 Q 185 150 190 160" fill="none" stroke="#0f0f0f" stroke-width="0.5" opacity="0.25"/>
+  <!-- Sound waves that aren't there -->
+  <circle cx="250" cy="150" r="15" fill="none" stroke="#080808" stroke-width="0.2" opacity="0.1"/>
+  <circle cx="260" cy="150" r="25" fill="none" stroke="#060606" stroke-width="0.2" opacity="0.08"/>
+</svg>

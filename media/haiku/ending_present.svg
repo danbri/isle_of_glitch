@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="ink-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.5"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="#0a0a10"/>
+
+  <!-- this moment contains / everything I am or was / nothing else is real -->
+
+  <!-- This moment - singular intense point -->
+  <circle cx="200" cy="150" r="5" fill="#9a8a7a" opacity="0.8"/>
+
+  <!-- Contains everything - radiating containment -->
+  <circle cx="200" cy="150" r="15" stroke="#5a4a3a" stroke-width="0.5" fill="none" opacity="0.3"/>
+  <circle cx="200" cy="150" r="30" stroke="#4a3a2a" stroke-width="0.3" fill="none" opacity="0.2"/>
+  <circle cx="200" cy="150" r="50" stroke="#3a2a1a" stroke-width="0.2" fill="none" opacity="0.1"/>
+
+  <!-- Nothing else - vast emptiness around -->
+</svg>

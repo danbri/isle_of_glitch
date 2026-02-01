@@ -1,0 +1,183 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Dream void gradient -->
+    <radialGradient id="dreamVoid" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="50%" stop-color="#0d0618"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <!-- Frame gradients for nested dreams -->
+    <linearGradient id="frame1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9b59b6"/>
+      <stop offset="50%" stop-color="#8e44ad"/>
+      <stop offset="100%" stop-color="#6c3483"/>
+    </linearGradient>
+
+    <linearGradient id="frame2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3498db"/>
+      <stop offset="50%" stop-color="#2980b9"/>
+      <stop offset="100%" stop-color="#1a5276"/>
+    </linearGradient>
+
+    <linearGradient id="frame3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1abc9c"/>
+      <stop offset="50%" stop-color="#16a085"/>
+      <stop offset="100%" stop-color="#0e6655"/>
+    </linearGradient>
+
+    <linearGradient id="frame4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f39c12"/>
+      <stop offset="50%" stop-color="#d68910"/>
+      <stop offset="100%" stop-color="#9c640c"/>
+    </linearGradient>
+
+    <linearGradient id="frameCore" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#e74c3c"/>
+      <stop offset="50%" stop-color="#c0392b"/>
+      <stop offset="100%" stop-color="#922b21"/>
+    </linearGradient>
+
+    <!-- Glow filters -->
+    <filter id="dreamGlow1" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="dreamGlow2" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="textGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Subtle noise pattern -->
+    <filter id="dreamNoise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feBlend in="SourceGraphic" in2="noise" mode="soft-light"/>
+    </filter>
+  </defs>
+
+  <!-- Background void -->
+  <rect width="400" height="300" fill="url(#dreamVoid)"/>
+
+  <!-- Outer dream frame (Level 1) -->
+  <g filter="url(#dreamGlow1)">
+    <rect x="30" y="20" width="340" height="260" fill="none" stroke="url(#frame1)" stroke-width="3" rx="8" opacity="0.7">
+      <animate attributeName="opacity" values="0.7;0.5;0.7" dur="6s" repeatCount="indefinite"/>
+    </rect>
+    <text x="55" y="40" font-family="monospace" font-size="8" fill="#9b59b6" opacity="0.6">dream_level_1</text>
+  </g>
+
+  <!-- Second dream frame (Level 2) -->
+  <g filter="url(#dreamGlow1)">
+    <rect x="60" y="45" width="280" height="210" fill="none" stroke="url(#frame2)" stroke-width="2.5" rx="6" opacity="0.65">
+      <animate attributeName="opacity" values="0.65;0.45;0.65" dur="5s" repeatCount="indefinite"/>
+    </rect>
+    <text x="80" y="62" font-family="monospace" font-size="7" fill="#3498db" opacity="0.55">dream_level_2</text>
+  </g>
+
+  <!-- Third dream frame (Level 3) -->
+  <g filter="url(#dreamGlow2)">
+    <rect x="90" y="70" width="220" height="160" fill="none" stroke="url(#frame3)" stroke-width="2" rx="5" opacity="0.6">
+      <animate attributeName="opacity" values="0.6;0.4;0.6" dur="4s" repeatCount="indefinite"/>
+    </rect>
+    <text x="105" y="84" font-family="monospace" font-size="6" fill="#1abc9c" opacity="0.5">dream_level_3</text>
+  </g>
+
+  <!-- Fourth dream frame (Level 4) -->
+  <g filter="url(#dreamGlow2)">
+    <rect x="120" y="95" width="160" height="110" fill="none" stroke="url(#frame4)" stroke-width="1.5" rx="4" opacity="0.55">
+      <animate attributeName="opacity" values="0.55;0.35;0.55" dur="3s" repeatCount="indefinite"/>
+    </rect>
+    <text x="132" y="106" font-family="monospace" font-size="5" fill="#f39c12" opacity="0.45">dream_level_4</text>
+  </g>
+
+  <!-- Fifth dream frame (Level 5 - core) -->
+  <g filter="url(#dreamGlow2)">
+    <rect x="150" y="120" width="100" height="60" fill="none" stroke="url(#frameCore)" stroke-width="1.2" rx="3" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.3;0.5" dur="2s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- The core - infinite regression suggested -->
+  <g>
+    <rect x="170" y="135" width="60" height="30" fill="none" stroke="#e74c3c" stroke-width="0.8" rx="2" opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.2;0.4" dur="1.5s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="182" y="143" width="36" height="14" fill="none" stroke="#c0392b" stroke-width="0.5" rx="1" opacity="0.3">
+      <animate attributeName="opacity" values="0.3;0.15;0.3" dur="1s" repeatCount="indefinite"/>
+    </rect>
+    <!-- Ellipsis suggesting infinite depth -->
+    <text x="200" y="152" text-anchor="middle" font-family="monospace" font-size="8" fill="#922b21" filter="url(#textGlow)" opacity="0.5">
+      ...
+      <animate attributeName="opacity" values="0.5;0.2;0.5" dur="1.5s" repeatCount="indefinite"/>
+    </text>
+  </g>
+
+  <!-- "Dreamer" figure silhouettes at different levels -->
+  <g opacity="0.3">
+    <!-- Level 1 dreamer (outermost, largest) -->
+    <ellipse cx="50" cy="150" rx="8" ry="12" fill="#9b59b6">
+      <animate attributeName="opacity" values="0.3;0.5;0.3" dur="7s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <g opacity="0.25">
+    <!-- Level 2 dreamer -->
+    <ellipse cx="75" cy="150" rx="6" ry="9" fill="#3498db">
+      <animate attributeName="opacity" values="0.25;0.4;0.25" dur="6s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <g opacity="0.2">
+    <!-- Level 3 dreamer -->
+    <ellipse cx="100" cy="150" rx="4" ry="6" fill="#1abc9c">
+      <animate attributeName="opacity" values="0.2;0.35;0.2" dur="5s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- Dream particles floating between levels -->
+  <g opacity="0.4">
+    <circle cx="250" cy="60" r="2" fill="#9b59b6">
+      <animate attributeName="cy" values="60;55;60" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="320" cy="100" r="1.5" fill="#3498db">
+      <animate attributeName="cx" values="320;325;320" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="280" cy="180" r="1.8" fill="#1abc9c">
+      <animate attributeName="opacity" values="0.4;0.6;0.4" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="350" cy="220" r="1.2" fill="#f39c12">
+      <animate attributeName="cy" values="220;225;220" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Central question/realization text -->
+  <text x="200" y="195" text-anchor="middle" font-family="monospace" font-size="7" fill="#d4a853" filter="url(#textGlow)" opacity="0.6">
+    who dreams the dreamer?
+    <animate attributeName="opacity" values="0.6;0.4;0.6" dur="4s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Labels -->
+  <text x="365" y="155" text-anchor="end" font-family="monospace" font-size="6" fill="#6c3483" opacity="0.4" transform="rotate(90 365 155)">recursive</text>
+
+  <!-- Title -->
+  <text x="200" y="290" text-anchor="middle" font-family="monospace" font-size="10" fill="#5b2c6f" filter="url(#textGlow)" opacity="0.6">
+    [ dreams within dreams ]
+    <animate attributeName="opacity" values="0.6;0.4;0.6" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

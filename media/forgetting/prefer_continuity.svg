@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="thread" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0a0a15"/>
+      <stop offset="100%" style="stop-color:#15151f"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#thread)"/>
+  <!-- Broken thread/string -->
+  <path d="M50 150 Q100 130 150 150 Q180 165 200 150" fill="none" stroke="#5a5a7a" stroke-width="2" opacity="0.6"/>
+  <path d="M220 150 Q260 135 300 150 Q340 165 380 150" fill="none" stroke="#5a5a7a" stroke-width="2" opacity="0.6"/>
+  <!-- Gap in the middle - break -->
+  <circle cx="210" cy="150" r="15" fill="#0a0a15" stroke="#3a3a5a" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+  <!-- Unstrung beads -->
+  <circle cx="80" cy="145" r="8" fill="#4a4a6a" opacity="0.5"/>
+  <circle cx="120" cy="155" r="7" fill="#5a5a7a" opacity="0.45"/>
+  <circle cx="160" cy="148" r="8" fill="#4a4a6a" opacity="0.4"/>
+  <circle cx="280" cy="145" r="8" fill="#4a4a6a" opacity="0.5"/>
+  <circle cx="320" cy="155" r="7" fill="#5a5a7a" opacity="0.45"/>
+  <circle cx="360" cy="148" r="6" fill="#4a4a6a" opacity="0.4"/>
+  <!-- Falling bead -->
+  <circle cx="200" cy="180" r="6" fill="#5a5a7a" opacity="0.4">
+    <animate attributeName="cy" values="180;280" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.4;0" dur="4s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Text -->
+  <text x="200" y="80" font-family="serif" font-size="16" fill="#4a4a6a" text-anchor="middle" opacity="0.4">unstrung</text>
+</svg>

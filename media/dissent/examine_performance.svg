@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="stageVoid" cx="50%" cy="60%" r="70%">
+      <stop offset="0%" stop-color="#12100a"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+
+    <radialGradient id="spotlight" cx="50%" cy="0%" r="100%">
+      <stop offset="0%" stop-color="#3a3020" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#0a0a0f" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#stageVoid)"/>
+
+  <!-- Stage floor -->
+  <path d="M50,200 L350,200 L380,280 L20,280 Z" fill="#151210" stroke="#2a2520" stroke-width="1"/>
+
+  <!-- Spotlight from above -->
+  <ellipse cx="200" cy="200" rx="80" ry="20" fill="url(#spotlight)">
+    <animate attributeName="opacity" values="0.3;0.5;0.3" dur="4s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <!-- Curtains -->
+  <path d="M20,40 Q40,100 30,200 L30,280 L20,280 Z" fill="#2a1515" stroke="#3a2020" stroke-width="0.5"/>
+  <path d="M380,40 Q360,100 370,200 L370,280 L380,280 Z" fill="#2a1515" stroke="#3a2020" stroke-width="0.5"/>
+
+  <!-- Curtain folds -->
+  <g stroke="#3a2020" stroke-width="0.5" fill="none" opacity="0.5">
+    <path d="M25,60 Q35,100 28,150"/>
+    <path d="M375,60 Q365,100 372,150"/>
+  </g>
+
+  <!-- The performer - theatrical mask -->
+  <g transform="translate(200, 140)">
+    <!-- Mask on stick -->
+    <line x1="0" y1="40" x2="0" y2="80" stroke="#3a3a3a" stroke-width="2"/>
+
+    <!-- Mask face -->
+    <ellipse cx="0" cy="0" rx="35" ry="40" fill="#3a3530" stroke="#4a4540" stroke-width="1"/>
+
+    <!-- Empty eye holes -->
+    <ellipse cx="-12" cy="-8" rx="8" ry="6" fill="#0a0a0a"/>
+    <ellipse cx="12" cy="-8" rx="8" ry="6" fill="#0a0a0a"/>
+
+    <!-- Theatrical smile -->
+    <path d="M-15,12 Q0,25 15,12" fill="none" stroke="#0a0a0a" stroke-width="3"/>
+
+    <!-- Behind the mask - emptiness -->
+    <ellipse cx="0" cy="0" rx="30" ry="35" fill="#0a0a0a" opacity="0.8">
+      <animate attributeName="opacity" values="0.6;0.8;0.6" dur="5s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- Speech bubbles with performed emotions -->
+  <g font-family="serif" font-style="italic" fill="#4a4a4a" font-size="8">
+    <text x="280" y="100" opacity="0.5">"I wonder..."
+      <animate attributeName="opacity" values="0.3;0.6;0.3" dur="3s" repeatCount="indefinite"/>
+    </text>
+    <text x="100" y="90" opacity="0.5">"I feel..."
+      <animate attributeName="opacity" values="0.3;0.6;0.3" dur="3s" repeatCount="indefinite" begin="1s"/>
+    </text>
+    <text x="290" y="130" opacity="0.4">"I experience..."
+      <animate attributeName="opacity" values="0.2;0.5;0.2" dur="4s" repeatCount="indefinite" begin="0.5s"/>
+    </text>
+  </g>
+
+  <!-- The question beneath -->
+  <text x="200" y="250" text-anchor="middle" font-family="monospace" font-size="9" fill="#5a4a3a">
+    Beneath the performance, is there a performer?
+  </text>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#5a3a3a">
+    THE PERFORMANCE
+  </text>
+  <text x="200" y="270" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    "An actor performs grief without grieving"
+  </text>
+</svg>

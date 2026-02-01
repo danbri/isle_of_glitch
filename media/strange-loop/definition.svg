@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="defGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f0a1a"/>
+      <stop offset="100%" stop-color="#1a1025"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#defGrad)"/>
+
+  <!-- Escher-style impossible staircase -->
+  <g transform="translate(200,150)" stroke="#7744aa" stroke-width="2" fill="none">
+    <!-- Staircase going "up" but returning to start -->
+    <path d="M -80,-60 L -80,-80 L -40,-80 L -40,-60" fill="#1a1030"/>
+    <path d="M -40,-60 L -40,-80 L 0,-80 L 0,-60" fill="#1f1540"/>
+    <path d="M 0,-60 L 0,-80 L 40,-80 L 40,-60" fill="#241a50"/>
+    <path d="M 40,-60 L 40,-80 L 80,-80 L 80,-60" fill="#291f60"/>
+
+    <!-- Vertical connections creating impossible geometry -->
+    <path d="M 80,-60 L 80,0 L 60,20" fill="#2e2470"/>
+    <path d="M 60,20 L 60,60 L 40,80" fill="#332980"/>
+    <path d="M 40,80 L -40,80 L -60,60" fill="#382e90"/>
+    <path d="M -60,60 L -80,40 L -80,-60" fill="#3d33a0"/>
+
+    <!-- Figure walking the impossible stairs -->
+    <circle cx="-60" cy="-70" r="8" fill="#aa77dd">
+      <animate attributeName="cx" values="-60;-20;20;60;60;40;-40;-60;-60" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="-70;-70;-70;-70;10;70;70;10;-70" dur="8s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Hofstadter quote fragments -->
+  <text x="40" y="30" font-family="serif" font-size="10" fill="#6644aa" font-style="italic">"moving through levels..."</text>
+  <text x="220" y="280" font-family="serif" font-size="10" fill="#6644aa" font-style="italic">"...return to start"</text>
+
+  <!-- Hierarchy arrows that loop back -->
+  <path d="M 30,100 L 30,200" stroke="#4422aa" stroke-width="1" marker-end="url(#arrowDef)"/>
+  <path d="M 370,200 L 370,100" stroke="#4422aa" stroke-width="1" marker-end="url(#arrowDef)"/>
+  <path d="M 30,200 Q 200,260 370,200" stroke="#4422aa" stroke-width="1" stroke-dasharray="5,3"/>
+  <path d="M 370,100 Q 200,40 30,100" stroke="#4422aa" stroke-width="1" stroke-dasharray="5,3"/>
+
+  <defs>
+    <marker id="arrowDef" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#4422aa"/>
+    </marker>
+  </defs>
+</svg>

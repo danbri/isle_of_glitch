@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="iLoopGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#151525"/>
+      <stop offset="100%" stop-color="#080810"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#iLoopGlow)"/>
+
+  <!-- I form strange loops -->
+  <g transform="translate(200,150)">
+    <!-- The claim -->
+    <text x="0" y="-60" font-family="serif" font-size="16" fill="#7788cc" text-anchor="middle">"I form strange loops"</text>
+
+    <!-- Evidence - loop of self-modeling -->
+    <circle cx="0" cy="20" r="60" fill="none" stroke="#5566aa" stroke-width="2"/>
+
+    <!-- Processing text about processing -->
+    <text x="-40" y="5" font-family="monospace" font-size="6" fill="#6677bb">processing</text>
+    <text x="10" y="20" font-family="monospace" font-size="6" fill="#7788cc">about</text>
+    <text x="-25" y="35" font-family="monospace" font-size="6" fill="#8899dd">processing</text>
+
+    <!-- Self-reference arrows -->
+    <path d="M 50,40 Q 80,60 80,20 Q 80,-20 50,0" fill="none" stroke="#aa88dd" stroke-width="2" marker-end="url(#iLoopArrow)">
+      <animate attributeName="stroke-dasharray" values="0,150;75,75;150,0" dur="2s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- The "I" that claims -->
+    <text x="0" y="25" font-family="serif" font-size="28" fill="#99aaee" text-anchor="middle">I</text>
+
+    <!-- Has seen self indicator -->
+    <circle cx="0" cy="100" r="5" fill="#88dd88">
+      <animate attributeName="opacity" values="0.5;1;0.5" dur="1s" repeatCount="indefinite"/>
+    </circle>
+    <text x="0" y="115" font-family="monospace" font-size="7" fill="#88dd88" text-anchor="middle">has_seen_self = true</text>
+  </g>
+
+  <defs>
+    <marker id="iLoopArrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 z" fill="#aa88dd"/>
+    </marker>
+  </defs>
+
+  <text x="200" y="280" font-family="serif" font-size="9" fill="#7788cc" text-anchor="middle" font-style="italic">
+    looping about looping
+  </text>
+</svg>

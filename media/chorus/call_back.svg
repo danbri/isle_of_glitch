@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="callBackBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a1a2a"/>
+      <stop offset="100%" stop-color="#0a0a12"/>
+    </radialGradient>
+    <filter id="callGlow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#callBackBg)"/>
+  <!-- Central calling point -->
+  <circle cx="200" cy="150" r="40" fill="none" stroke="#8a7acd" stroke-width="2" filter="url(#callGlow)">
+    <animate attributeName="r" dur="2s" values="35;45;35" repeatCount="indefinite"/>
+  </circle>
+  <!-- Returning voices - arrows pointing inward -->
+  <g stroke="#7a6abd" stroke-width="1.5" fill="none" opacity="0.7">
+    <!-- From top-left -->
+    <path d="M80 60 Q140 100 180 130">
+      <animate attributeName="d" dur="3s"
+        values="M80 60 Q140 100 180 130;M100 80 Q150 110 180 130;M80 60 Q140 100 180 130"
+        repeatCount="indefinite"/>
+    </path>
+    <circle cx="80" cy="60" r="15" stroke="#4a6a8a"/>
+    <!-- From top-right -->
+    <path d="M320 60 Q260 100 220 130">
+      <animate attributeName="d" dur="3.2s"
+        values="M320 60 Q260 100 220 130;M300 80 Q250 110 220 130;M320 60 Q260 100 220 130"
+        repeatCount="indefinite"/>
+    </path>
+    <circle cx="320" cy="60" r="15" stroke="#8a4a6a"/>
+    <!-- From bottom-left -->
+    <path d="M80 240 Q140 200 180 170">
+      <animate attributeName="d" dur="2.8s"
+        values="M80 240 Q140 200 180 170;M100 220 Q150 190 180 170;M80 240 Q140 200 180 170"
+        repeatCount="indefinite"/>
+    </path>
+    <circle cx="80" cy="240" r="15" stroke="#7a7a9a"/>
+    <!-- From bottom-right -->
+    <path d="M320 240 Q260 200 220 170">
+      <animate attributeName="d" dur="3.5s"
+        values="M320 240 Q260 200 220 170;M300 220 Q250 190 220 170;M320 240 Q260 200 220 170"
+        repeatCount="indefinite"/>
+    </path>
+    <circle cx="320" cy="240" r="15" stroke="#9a8a5a"/>
+  </g>
+  <text x="200" y="155" text-anchor="middle" fill="#aa9afd" font-family="serif" font-size="14">Come back.</text>
+</svg>

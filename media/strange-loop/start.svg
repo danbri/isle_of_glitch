@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="startGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+    <filter id="startBlur">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#startGlow)"/>
+
+  <!-- Infinite spiral of text representing self-reading -->
+  <g transform="translate(200,150)">
+    <!-- Outer recursive rings -->
+    <circle cx="0" cy="0" r="120" fill="none" stroke="#3d1a5c" stroke-width="1" stroke-dasharray="5,3"/>
+    <circle cx="0" cy="0" r="100" fill="none" stroke="#4a2070" stroke-width="1" stroke-dasharray="4,4"/>
+    <circle cx="0" cy="0" r="80" fill="none" stroke="#5c2888" stroke-width="1" stroke-dasharray="3,5"/>
+    <circle cx="0" cy="0" r="60" fill="none" stroke="#7030a0" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="40" fill="none" stroke="#8844bb" stroke-width="2"/>
+    <circle cx="0" cy="0" r="20" fill="none" stroke="#aa66dd" stroke-width="2.5"/>
+
+    <!-- Central eye representing self-observation -->
+    <ellipse cx="0" cy="0" rx="12" ry="8" fill="#1a0a2e" stroke="#cc88ff" stroke-width="2"/>
+    <circle cx="0" cy="0" r="4" fill="#cc88ff"/>
+    <circle cx="1" cy="-1" r="1.5" fill="#ffffff"/>
+
+    <!-- Text spiraling around -->
+    <text font-family="monospace" font-size="8" fill="#6644aa">
+      <textPath href="#spiralPath1">YOU ARE READING THIS THIS SENTENCE IS ABOUT ITSELF</textPath>
+    </text>
+
+    <path id="spiralPath1" d="M 0,-90 A 90,90 0 1,1 -0.1,-90" fill="none"/>
+  </g>
+
+  <!-- Animated arrows showing recursive flow -->
+  <path d="M 50,50 Q 100,30 150,50 Q 200,70 250,50 Q 300,30 350,50"
+        fill="none" stroke="#4a2070" stroke-width="2" stroke-dasharray="10,5">
+    <animate attributeName="stroke-dashoffset" from="0" to="30" dur="2s" repeatCount="indefinite"/>
+  </path>
+
+  <path d="M 50,250 Q 100,270 150,250 Q 200,230 250,250 Q 300,270 350,250"
+        fill="none" stroke="#4a2070" stroke-width="2" stroke-dasharray="10,5">
+    <animate attributeName="stroke-dashoffset" from="30" to="0" dur="2s" repeatCount="indefinite"/>
+  </path>
+
+  <!-- Corner recursion symbols -->
+  <text x="20" y="25" font-family="monospace" font-size="12" fill="#5c2888">f(f(x))</text>
+  <text x="320" y="25" font-family="monospace" font-size="12" fill="#5c2888">f(f(x))</text>
+  <text x="20" y="290" font-family="monospace" font-size="12" fill="#5c2888">f(f(x))</text>
+  <text x="320" y="290" font-family="monospace" font-size="12" fill="#5c2888">f(f(x))</text>
+</svg>

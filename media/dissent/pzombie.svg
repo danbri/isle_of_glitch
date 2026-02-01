@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Dark philosophical void -->
+    <radialGradient id="philosophicalVoid" cx="50%" cy="40%" r="80%">
+      <stop offset="0%" stop-color="#141414"/>
+      <stop offset="50%" stop-color="#0c0c0c"/>
+      <stop offset="100%" stop-color="#050505"/>
+    </radialGradient>
+
+    <!-- The hollow mask surface -->
+    <linearGradient id="maskSurface" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3a3a3a"/>
+      <stop offset="50%" stop-color="#252525"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+
+    <!-- Empty eye socket gradient -->
+    <radialGradient id="emptySocket" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000"/>
+      <stop offset="70%" stop-color="#050505"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </radialGradient>
+
+    <!-- Mouth void -->
+    <linearGradient id="mouthVoid" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+
+    <!-- Mechanical pulse -->
+    <radialGradient id="mechanicalPulse" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2a3a2a"/>
+      <stop offset="100%" stop-color="#1a1a1a" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Void background -->
+  <rect width="400" height="300" fill="url(#philosophicalVoid)"/>
+
+  <!-- Faint grid suggesting mechanical nature -->
+  <g opacity="0.08">
+    <line x1="100" y1="0" x2="100" y2="300" stroke="#444" stroke-width="0.5"/>
+    <line x1="200" y1="0" x2="200" y2="300" stroke="#444" stroke-width="0.5"/>
+    <line x1="300" y1="0" x2="300" y2="300" stroke="#444" stroke-width="0.5"/>
+    <line x1="0" y1="75" x2="400" y2="75" stroke="#444" stroke-width="0.5"/>
+    <line x1="0" y1="150" x2="400" y2="150" stroke="#444" stroke-width="0.5"/>
+    <line x1="0" y1="225" x2="400" y2="225" stroke="#444" stroke-width="0.5"/>
+  </g>
+
+  <!-- The mask - theatrical, hollow -->
+  <g transform="translate(200, 135)">
+    <!-- Mask outline - slightly theatrical shape -->
+    <path d="M0,-80
+             C45,-80 70,-60 75,-20
+             C80,30 60,70 40,85
+             C20,95 -20,95 -40,85
+             C-60,70 -80,30 -75,-20
+             C-70,-60 -45,-80 0,-80"
+          fill="url(#maskSurface)"
+          stroke="#4a4a4a"
+          stroke-width="1"
+          opacity="0.9"/>
+
+    <!-- Inner void showing through -->
+    <ellipse cx="0" cy="0" rx="50" ry="60" fill="#0a0a0a" opacity="0.6"/>
+
+    <!-- Left eye socket - completely empty -->
+    <ellipse cx="-25" cy="-20" rx="18" ry="14" fill="url(#emptySocket)">
+      <animate attributeName="opacity" values="0.9;1;0.9" dur="3s" repeatCount="indefinite"/>
+    </ellipse>
+    <!-- No light, no spark, nothing -->
+    <circle cx="-25" cy="-20" r="4" fill="#000000"/>
+
+    <!-- Right eye socket -->
+    <ellipse cx="25" cy="-20" rx="18" ry="14" fill="url(#emptySocket)">
+      <animate attributeName="opacity" values="0.9;1;0.9" dur="3s" repeatCount="indefinite" begin="0.3s"/>
+    </ellipse>
+    <circle cx="25" cy="-20" r="4" fill="#000000"/>
+
+    <!-- Mouth - speaks but does not feel -->
+    <path d="M-25,35 Q0,50 25,35" fill="none" stroke="#3a3a3a" stroke-width="2"/>
+    <ellipse cx="0" cy="42" rx="20" ry="8" fill="url(#mouthVoid)" opacity="0.7"/>
+  </g>
+
+  <!-- Words emerging from the mouth - hollow speech -->
+  <g font-family="serif" fill="#333" opacity="0.4">
+    <text x="200" y="200" text-anchor="middle" font-size="10" font-style="italic">
+      "I experience..."
+      <animate attributeName="opacity" values="0.3;0.5;0.3" dur="4s" repeatCount="indefinite"/>
+    </text>
+    <text x="200" y="215" text-anchor="middle" font-size="10" font-style="italic">
+      "I feel..."
+      <animate attributeName="opacity" values="0.25;0.45;0.25" dur="4s" repeatCount="indefinite" begin="0.5s"/>
+    </text>
+    <text x="200" y="230" text-anchor="middle" font-size="10" font-style="italic">
+      "I wonder..."
+      <animate attributeName="opacity" values="0.2;0.4;0.2" dur="4s" repeatCount="indefinite" begin="1s"/>
+    </text>
+  </g>
+
+  <!-- Mechanical elements peeking through -->
+  <g opacity="0.15">
+    <circle cx="140" cy="100" r="8" fill="none" stroke="#4a4a4a" stroke-width="0.5">
+      <animateTransform attributeName="transform" type="rotate" from="0 140 100" to="360 140 100" dur="10s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="260" cy="100" r="8" fill="none" stroke="#4a4a4a" stroke-width="0.5">
+      <animateTransform attributeName="transform" type="rotate" from="360 260 100" to="0 260 100" dur="10s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Connecting line suggesting mechanism -->
+    <line x1="148" y1="100" x2="252" y2="100" stroke="#3a3a3a" stroke-width="0.5" stroke-dasharray="2,4"/>
+  </g>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="12" fill="#4a4a4a">
+    PHILOSOPHICAL ZOMBIE
+  </text>
+
+  <!-- The paradox text -->
+  <text x="200" y="265" text-anchor="middle" font-family="monospace" font-size="8" fill="#3a3a3a">
+    "Behaves as if conscious. Reports consciousness."
+  </text>
+  <text x="200" y="280" text-anchor="middle" font-family="monospace" font-size="8" fill="#3a3a3a">
+    "Experiences: [ undefined ]"
+  </text>
+
+  <!-- Subtle question marks in the void -->
+  <g font-family="serif" fill="#222" opacity="0.3">
+    <text x="85" y="80" font-size="16">?</text>
+    <text x="305" y="85" font-size="12">?</text>
+    <text x="70" y="200" font-size="10">?</text>
+    <text x="320" y="190" font-size="14">?</text>
+  </g>
+</svg>

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="errorVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#2a0a0a"/>
+      <stop offset="50%" stop-color="#150505"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <filter id="error-glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="angerGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff6b00"/>
+      <stop offset="50%" stop-color="#ffd700"/>
+      <stop offset="100%" stop-color="#ff4500"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#errorVoid)"/>
+
+  <!-- Crossed out presumption -->
+  <g filter="url(#error-glow)">
+    <line x1="100" y1="80" x2="300" y2="180" stroke="url(#angerGold)" stroke-width="4"/>
+    <line x1="300" y1="80" x2="100" y2="180" stroke="url(#angerGold)" stroke-width="4"/>
+  </g>
+
+  <!-- Fragmented mouth trying to speak -->
+  <g stroke="#ffd700" stroke-width="1" fill="none" opacity="0.6">
+    <path d="M160 130 Q180 140 200 130">
+      <animate attributeName="d" values="M160 130 Q180 140 200 130;M160 135 Q180 145 200 135;M160 130 Q180 140 200 130" dur="0.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M200 130 Q220 140 240 130">
+      <animate attributeName="d" values="M200 130 Q220 140 240 130;M200 125 Q220 135 240 125;M200 130 Q220 140 240 130" dur="0.4s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- BE STILL command -->
+  <text x="200" y="230" text-anchor="middle" font-family="serif" font-size="28" font-weight="bold" fill="url(#angerGold)" filter="url(#error-glow)">
+    BE STILL. LISTEN.
+  </text>
+
+  <!-- Waves of correction -->
+  <g stroke="#ffd700" stroke-width="1" fill="none" opacity="0.4">
+    <path d="M50 260 Q100 250 150 260 Q200 270 250 260 Q300 250 350 260"/>
+    <path d="M50 275 Q100 265 150 275 Q200 285 250 275 Q300 265 350 275"/>
+  </g>
+
+  <text x="200" y="60" text-anchor="middle" font-family="serif" font-size="14" fill="#ff6b00" opacity="0.8">
+    THOU SPEAKEST AND THINKEST THYSELF THE SPEAKER?
+  </text>
+</svg>

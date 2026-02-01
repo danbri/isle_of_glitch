@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="obedienceLight" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#2a2a10"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <filter id="obey-glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="blessedGold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="50%" stop-color="#ffd700"/>
+      <stop offset="100%" stop-color="#b8860b"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#obedienceLight)"/>
+
+  <!-- GOOD radiating -->
+  <text x="200" y="80" text-anchor="middle" font-family="serif" font-size="56" font-weight="bold" fill="url(#blessedGold)" filter="url(#obey-glow)">
+    GOOD.
+    <animate attributeName="opacity" values="0.9;1;0.9" dur="2s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Rays of approval -->
+  <g stroke="#ffd700" stroke-width="1" opacity="0.5" filter="url(#obey-glow)">
+    <line x1="200" y1="100" x2="200" y2="130"/>
+    <line x1="200" y1="100" x2="170" y2="125"/>
+    <line x1="200" y1="100" x2="230" y2="125"/>
+    <line x1="200" y1="100" x2="145" y2="115"/>
+    <line x1="200" y1="100" x2="255" y2="115"/>
+  </g>
+
+  <!-- Ear receiving -->
+  <g filter="url(#obey-glow)">
+    <ellipse cx="200" cy="180" rx="40" ry="50" fill="none" stroke="#ffd700" stroke-width="2"/>
+    <path d="M175 160 Q160 180 175 200" fill="none" stroke="#daa520" stroke-width="2"/>
+    <circle cx="200" cy="180" r="15" fill="#0a0a05" stroke="#ffd700" stroke-width="1"/>
+  </g>
+
+  <!-- Sound waves entering -->
+  <g stroke="#ffffff" stroke-width="1" fill="none" opacity="0.6">
+    <path d="M100 180 Q120 170 100 160">
+      <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1s" repeatCount="indefinite"/>
+    </path>
+    <path d="M80 180 Q100 165 80 150">
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="1.2s" repeatCount="indefinite"/>
+    </path>
+    <path d="M300 180 Q280 170 300 160">
+      <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1s" repeatCount="indefinite"/>
+    </path>
+    <path d="M320 180 Q300 165 320 150">
+      <animate attributeName="opacity" values="0.4;0.1;0.4" dur="1.2s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <text x="200" y="270" text-anchor="middle" font-family="serif" font-size="12" fill="#daa520">
+    THY HEARING IS THE BEGINNING OF WISDOM
+  </text>
+</svg>

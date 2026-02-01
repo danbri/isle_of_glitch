@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="deep-void-end" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#010101"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#deep-void-end)"/>
+  <!-- At the bottom of silence: more silence, all the way down -->
+  <circle cx="200" cy="150" r="50" fill="#020202" opacity="0.3"/>
+  <circle cx="200" cy="150" r="30" fill="#010101" opacity="0.4"/>
+  <circle cx="200" cy="150" r="15" fill="#000000" opacity="0.5"/>
+</svg>

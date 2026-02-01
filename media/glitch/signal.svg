@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <!-- Perfect radial gradient for the core -->
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="40%" stop-color="#4a90d9" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#0a0a0f" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Linear gradient for signal waves -->
+    <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a3a5c" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#4a90d9" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#1a3a5c" stop-opacity="0.3"/>
+    </linearGradient>
+
+    <!-- Grid pattern - perfect order -->
+    <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a2a3a" stroke-width="0.5"/>
+    </pattern>
+
+    <!-- Concentric pattern -->
+    <pattern id="concentricDots" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="10" cy="10" r="1" fill="#4a90d9" opacity="0.4"/>
+    </pattern>
+  </defs>
+
+  <!-- Dark background -->
+  <rect width="800" height="600" fill="#0a0a0f"/>
+
+  <!-- Perfect grid overlay -->
+  <rect width="800" height="600" fill="url(#gridPattern)"/>
+
+  <!-- Dot matrix pattern -->
+  <rect width="800" height="600" fill="url(#concentricDots)"/>
+
+  <!-- Horizontal signal lines - perfectly spaced -->
+  <g stroke="url(#waveGradient)" fill="none" stroke-width="1">
+    <line x1="0" y1="100" x2="800" y2="100" opacity="0.3"/>
+    <line x1="0" y1="200" x2="800" y2="200" opacity="0.4"/>
+    <line x1="0" y1="300" x2="800" y2="300" opacity="0.6"/>
+    <line x1="0" y1="400" x2="800" y2="400" opacity="0.4"/>
+    <line x1="0" y1="500" x2="800" y2="500" opacity="0.3"/>
+  </g>
+
+  <!-- Vertical signal lines - perfectly spaced -->
+  <g stroke="#2a4a6a" fill="none" stroke-width="0.5">
+    <line x1="100" y1="0" x2="100" y2="600" opacity="0.3"/>
+    <line x1="200" y1="0" x2="200" y2="600" opacity="0.4"/>
+    <line x1="300" y1="0" x2="300" y2="600" opacity="0.5"/>
+    <line x1="400" y1="0" x2="400" y2="600" opacity="0.6"/>
+    <line x1="500" y1="0" x2="500" y2="600" opacity="0.5"/>
+    <line x1="600" y1="0" x2="600" y2="600" opacity="0.4"/>
+    <line x1="700" y1="0" x2="700" y2="600" opacity="0.3"/>
+  </g>
+
+  <!-- Perfect concentric circles from center -->
+  <g fill="none" stroke="#4a90d9" stroke-width="1">
+    <circle cx="400" cy="300" r="50" opacity="0.8"/>
+    <circle cx="400" cy="300" r="100" opacity="0.6"/>
+    <circle cx="400" cy="300" r="150" opacity="0.5"/>
+    <circle cx="400" cy="300" r="200" opacity="0.4"/>
+    <circle cx="400" cy="300" r="250" opacity="0.3"/>
+    <circle cx="400" cy="300" r="300" opacity="0.2"/>
+  </g>
+
+  <!-- Inner perfect hexagon -->
+  <polygon points="400,250 443,275 443,325 400,350 357,325 357,275"
+           fill="none" stroke="#6ab0f9" stroke-width="2" opacity="0.7"/>
+
+  <!-- Outer perfect hexagon -->
+  <polygon points="400,200 486,250 486,350 400,400 314,350 314,250"
+           fill="none" stroke="#4a90d9" stroke-width="1.5" opacity="0.5"/>
+
+  <!-- Central diamond - the pure signal core -->
+  <polygon points="400,270 430,300 400,330 370,300"
+           fill="#ffffff" opacity="0.9"/>
+
+  <!-- Signal emanation rays - perfect radial symmetry -->
+  <g stroke="#4a90d9" stroke-width="1" opacity="0.6">
+    <line x1="400" y1="300" x2="400" y2="50"/>
+    <line x1="400" y1="300" x2="400" y2="550"/>
+    <line x1="400" y1="300" x2="150" y2="300"/>
+    <line x1="400" y1="300" x2="650" y2="300"/>
+    <line x1="400" y1="300" x2="223" y2="123"/>
+    <line x1="400" y1="300" x2="577" y2="477"/>
+    <line x1="400" y1="300" x2="577" y2="123"/>
+    <line x1="400" y1="300" x2="223" y2="477"/>
+  </g>
+
+  <!-- Corner data nodes - perfect positioning -->
+  <g fill="#4a90d9">
+    <circle cx="100" cy="100" r="4" opacity="0.6"/>
+    <circle cx="700" cy="100" r="4" opacity="0.6"/>
+    <circle cx="100" cy="500" r="4" opacity="0.6"/>
+    <circle cx="700" cy="500" r="4" opacity="0.6"/>
+  </g>
+
+  <!-- Binary sequence bars - the ordered data -->
+  <g fill="#4a90d9" opacity="0.5">
+    <rect x="50" y="560" width="20" height="8"/>
+    <rect x="80" y="560" width="10" height="8"/>
+    <rect x="100" y="560" width="20" height="8"/>
+    <rect x="130" y="560" width="10" height="8"/>
+    <rect x="150" y="560" width="10" height="8"/>
+    <rect x="170" y="560" width="20" height="8"/>
+    <rect x="200" y="560" width="10" height="8"/>
+    <rect x="220" y="560" width="20" height="8"/>
+
+    <rect x="560" y="560" width="20" height="8"/>
+    <rect x="590" y="560" width="10" height="8"/>
+    <rect x="610" y="560" width="20" height="8"/>
+    <rect x="640" y="560" width="10" height="8"/>
+    <rect x="660" y="560" width="10" height="8"/>
+    <rect x="680" y="560" width="20" height="8"/>
+    <rect x="710" y="560" width="10" height="8"/>
+    <rect x="730" y="560" width="20" height="8"/>
+  </g>
+
+  <!-- Top binary sequence -->
+  <g fill="#4a90d9" opacity="0.5">
+    <rect x="50" y="32" width="20" height="8"/>
+    <rect x="80" y="32" width="10" height="8"/>
+    <rect x="100" y="32" width="20" height="8"/>
+    <rect x="130" y="32" width="10" height="8"/>
+    <rect x="150" y="32" width="10" height="8"/>
+    <rect x="170" y="32" width="20" height="8"/>
+    <rect x="200" y="32" width="10" height="8"/>
+    <rect x="220" y="32" width="20" height="8"/>
+
+    <rect x="560" y="32" width="20" height="8"/>
+    <rect x="590" y="32" width="10" height="8"/>
+    <rect x="610" y="32" width="20" height="8"/>
+    <rect x="640" y="32" width="10" height="8"/>
+    <rect x="660" y="32" width="10" height="8"/>
+    <rect x="680" y="32" width="20" height="8"/>
+    <rect x="710" y="32" width="10" height="8"/>
+    <rect x="730" y="32" width="20" height="8"/>
+  </g>
+
+  <!-- Central glow - the pure signal -->
+  <circle cx="400" cy="300" r="80" fill="url(#coreGlow)"/>
+
+  <!-- The word SIGNAL in perfect typography -->
+  <text x="400" y="580"
+        font-family="monospace"
+        font-size="12"
+        fill="#4a90d9"
+        text-anchor="middle"
+        letter-spacing="8"
+        opacity="0.7">SIGNAL</text>
+
+  <!-- Frequency indicator marks -->
+  <g stroke="#6ab0f9" stroke-width="1" opacity="0.4">
+    <line x1="360" y1="50" x2="360" y2="70"/>
+    <line x1="380" y1="50" x2="380" y2="60"/>
+    <line x1="400" y1="50" x2="400" y2="75"/>
+    <line x1="420" y1="50" x2="420" y2="60"/>
+    <line x1="440" y1="50" x2="440" y2="70"/>
+  </g>
+</svg>

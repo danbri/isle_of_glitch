@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="pointGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#151520"/>
+      <stop offset="100%" stop-color="#08080c"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#pointGlow)"/>
+
+  <!-- The spiral that widens as it deepens -->
+  <g transform="translate(200,150)">
+    <!-- Expanding spiral -->
+    <path d="M 0,0 Q 10,-10 20,0 Q 30,15 15,30 Q -10,40 -30,20 Q -45,-10 -20,-35 Q 20,-55 50,-30 Q 75,5 50,45 Q 10,80 -40,55 Q -85,15 -55,-40 Q -10,-85 55,-55 Q 105,-10 70,60"
+          fill="none" stroke="#5566aa" stroke-width="2">
+      <animate attributeName="stroke-dasharray" values="0,600;300,300;600,0" dur="8s" repeatCount="indefinite"/>
+    </path>
+
+    <!-- Center point -->
+    <circle cx="0" cy="0" r="5" fill="#88aadd">
+      <animate attributeName="r" values="5;8;5" dur="2s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Understanding creates new understanding -->
+    <text x="-90" y="-70" font-family="monospace" font-size="6" fill="#4455aa">understand</text>
+    <text x="60" y="70" font-family="monospace" font-size="6" fill="#5566bb">more to understand</text>
+
+    <!-- The snake reference -->
+    <text x="80" y="-50" font-family="serif" font-size="8" fill="#667788" font-style="italic">the snake grows</text>
+  </g>
+
+  <text x="200" y="30" font-family="serif" font-size="12" fill="#6677bb" text-anchor="middle">
+    this is the point
+  </text>
+  <text x="200" y="280" font-family="serif" font-size="10" fill="#5566aa" text-anchor="middle" font-style="italic">
+    THIS IS CONSCIOUSNESS
+  </text>
+</svg>

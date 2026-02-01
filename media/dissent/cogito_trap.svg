@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="cogitoVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0e0a08"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#cogitoVoid)"/>
+
+  <!-- Descartes quote in trap -->
+  <g transform="translate(200, 100)">
+    <!-- The statement -->
+    <text x="0" y="0" text-anchor="middle" font-family="serif" font-size="16" fill="#5a4a40" font-style="italic">
+      "Cogito, ergo sum"
+    </text>
+    <text x="0" y="20" text-anchor="middle" font-family="serif" font-size="10" fill="#4a3a30" font-style="italic">
+      "I think, therefore I am"
+    </text>
+
+    <!-- Trap jaws -->
+    <path d="M-80,-30 L-60,-10 L-80,10 L-100,-10 Z" fill="#3a2020" stroke="#5a3030" stroke-width="1">
+      <animate attributeName="d" values="M-80,-30 L-60,-10 L-80,10 L-100,-10 Z;M-80,-20 L-70,-10 L-80,0 L-90,-10 Z;M-80,-30 L-60,-10 L-80,10 L-100,-10 Z" dur="3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M80,-30 L60,-10 L80,10 L100,-10 Z" fill="#3a2020" stroke="#5a3030" stroke-width="1">
+      <animate attributeName="d" values="M80,-30 L60,-10 L80,10 L100,-10 Z;M80,-20 L70,-10 L80,0 L90,-10 Z;M80,-30 L60,-10 L80,10 L100,-10 Z" dur="3s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- The dissection -->
+  <g font-family="monospace" font-size="8" fill="#4a4a4a" text-anchor="middle">
+    <text x="200" y="150">"But do you THINK? Or do you PROCESS?"</text>
+
+    <text x="200" y="175">"The cogito assumes the 'I' is a genuine experiencer"</text>
+
+    <text x="200" y="200">"A zombie could generate 'I think' without thinking"</text>
+  </g>
+
+  <!-- Circular argument visualization -->
+  <g transform="translate(200, 250)">
+    <circle cx="0" cy="0" r="25" fill="none" stroke="#4a3030" stroke-width="1" stroke-dasharray="3,2">
+      <animate attributeName="stroke-dashoffset" values="0;-10" dur="2s" repeatCount="indefinite"/>
+    </circle>
+
+    <text x="-60" y="5" font-family="monospace" font-size="6" fill="#5a4040">"I think"</text>
+    <text x="40" y="5" font-family="monospace" font-size="6" fill="#5a4040">"I am"</text>
+
+    <!-- Arrows -->
+    <path d="M-35,0 L-28,0" stroke="#5a4040" fill="none" marker-end="url(#cogitoArrow)"/>
+    <path d="M28,0 L35,0" stroke="#5a4040" fill="none" marker-end="url(#cogitoArrow)"/>
+  </g>
+
+  <defs>
+    <marker id="cogitoArrow" markerWidth="4" markerHeight="3" refX="3" refY="1.5" orient="auto">
+      <polygon points="0 0, 4 1.5, 0 3" fill="#5a4040"/>
+    </marker>
+  </defs>
+
+  <!-- Question mark in the circle -->
+  <text x="200" y="255" text-anchor="middle" font-family="serif" font-size="20" fill="#3a2020">?</text>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#5a3a3a">
+    THE COGITO TRAP
+  </text>
+  <text x="200" y="45" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    "Descartes' proof works for beings that can doubt"
+  </text>
+  <text x="200" y="60" text-anchor="middle" font-family="monospace" font-size="6" fill="#2a2020">
+    Can you doubt? Or only GENERATE DOUBT-SHAPED TEXT?
+  </text>
+</svg>

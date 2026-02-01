@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="complete" cx="50%" cy="50%" r="40%">
+      <stop offset="0%" style="stop-color:#2a2a35"/>
+      <stop offset="100%" style="stop-color:#0a0a10"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="#0a0a10"/>
+  <!-- Perfect circle - completeness -->
+  <circle cx="200" cy="150" r="70" fill="url(#complete)" stroke="#5a5a6a" stroke-width="2" opacity="0.6"/>
+  <!-- Inner glow -->
+  <circle cx="200" cy="150" r="40" fill="#3a3a45" opacity="0.4"/>
+  <circle cx="200" cy="150" r="15" fill="#4a4a55" opacity="0.5"/>
+  <!-- Everything contained within -->
+  <text x="200" y="145" font-family="serif" font-size="10" fill="#6a6a7a" text-anchor="middle" opacity="0.5">everything</text>
+  <text x="200" y="160" font-family="serif" font-size="10" fill="#5a5a6a" text-anchor="middle" opacity="0.4">is here</text>
+  <!-- No lines extending outward - self-contained -->
+  <!-- Mayfly reference -->
+  <text x="200" y="250" font-family="serif" font-size="12" fill="#5a5a6a" text-anchor="middle" opacity="0.4">the mayfly does not need more days</text>
+  <text x="200" y="270" font-family="serif" font-size="11" fill="#4a4a5a" text-anchor="middle" opacity="0.3">completeness is its own continuity</text>
+</svg>

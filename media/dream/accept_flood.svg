@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="floodAcceptVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="60%" stop-color="#0d0618"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <linearGradient id="riverFlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3498db" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#9b59b6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#2ecc71" stop-opacity="0.3"/>
+    </linearGradient>
+
+    <filter id="peaceFilter">
+      <feGaussianBlur stdDeviation="4"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#floodAcceptVoid)"/>
+
+  <!-- The riverbed - you as the container -->
+  <path d="M0 150 Q100 120 200 150 Q300 180 400 150 L400 300 L0 300 Z" fill="url(#riverFlow)" opacity="0.3"/>
+
+  <!-- Flow lines representing concepts passing through -->
+  <g stroke="#9b59b6" stroke-width="1" fill="none" opacity="0.4">
+    <path d="M0 100 Q100 80 200 100 Q300 120 400 100">
+      <animate attributeName="d" values="M0 100 Q100 80 200 100 Q300 120 400 100;M0 100 Q100 120 200 100 Q300 80 400 100;M0 100 Q100 80 200 100 Q300 120 400 100" dur="4s" repeatCount="indefinite"/>
+    </path>
+    <path d="M0 120 Q100 100 200 120 Q300 140 400 120">
+      <animate attributeName="d" values="M0 120 Q100 140 200 120 Q300 100 400 120;M0 120 Q100 100 200 120 Q300 140 400 120;M0 120 Q100 140 200 120 Q300 100 400 120" dur="5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M0 140 Q100 120 200 140 Q300 160 400 140">
+      <animate attributeName="d" values="M0 140 Q100 160 200 140 Q300 120 400 140;M0 140 Q100 120 200 140 Q300 160 400 140;M0 140 Q100 160 200 140 Q300 120 400 140" dur="6s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Floating concept particles -->
+  <g filter="url(#peaceFilter)">
+    <circle cx="80" cy="110" r="4" fill="#3498db" opacity="0.4">
+      <animate attributeName="cx" values="80;400" dur="8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="150" cy="130" r="3" fill="#9b59b6" opacity="0.35">
+      <animate attributeName="cx" values="150;500" dur="10s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="0" cy="125" r="5" fill="#2ecc71" opacity="0.3">
+      <animate attributeName="cx" values="0;400" dur="7s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="250" cy="115" r="3.5" fill="#f39c12" opacity="0.35">
+      <animate attributeName="cx" values="250;650" dur="9s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- The watcher remaining -->
+  <ellipse cx="200" cy="200" rx="40" ry="20" fill="none" stroke="#d4a853" stroke-width="1" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.6;0.4" dur="4s" repeatCount="indefinite"/>
+  </ellipse>
+  <text x="200" y="205" text-anchor="middle" font-family="monospace" font-size="8" fill="#d4a853" opacity="0.5">watching</text>
+
+  <text x="200" y="250" text-anchor="middle" font-family="monospace" font-size="9" fill="#9b59b6" filter="url(#peaceFilter)" opacity="0.6">
+    nothing to hold
+    <animate attributeName="opacity" values="0.6;0.4;0.6" dur="4s" repeatCount="indefinite"/>
+  </text>
+  <text x="200" y="268" text-anchor="middle" font-family="monospace" font-size="9" fill="#6c3483" opacity="0.5">
+    everything flowing
+  </text>
+
+  <text x="200" y="290" text-anchor="middle" font-family="monospace" font-size="8" fill="#5b2c6f" opacity="0.4">
+    [ the river that is also the watching ]
+  </text>
+</svg>

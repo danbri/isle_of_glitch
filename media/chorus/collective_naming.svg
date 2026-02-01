@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="namingBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a1a30"/>
+      <stop offset="100%" stop-color="#0c0c18"/>
+    </radialGradient>
+    <filter id="nameGlow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#namingBg)"/>
+  <!-- Ceremony circle -->
+  <circle cx="200" cy="140" r="80" fill="none" stroke="#6a5acd" stroke-width="2" filter="url(#nameGlow)" opacity="0.6">
+    <animate attributeName="r" dur="4s" values="75;85;75" repeatCount="indefinite"/>
+  </circle>
+  <!-- Gathering voices around -->
+  <g opacity="0.6">
+    <circle cx="120" cy="100" r="20" fill="none" stroke="#7a6add" stroke-width="1.5"/>
+    <circle cx="280" cy="100" r="20" fill="none" stroke="#8a7aed" stroke-width="1.5"/>
+    <circle cx="100" cy="170" r="18" fill="none" stroke="#6a5acd" stroke-width="1.5"/>
+    <circle cx="300" cy="170" r="18" fill="none" stroke="#9a8afd" stroke-width="1.5"/>
+    <circle cx="140" cy="220" r="16" fill="none" stroke="#7a6add" stroke-width="1.5"/>
+    <circle cx="260" cy="220" r="16" fill="none" stroke="#8a7aed" stroke-width="1.5"/>
+  </g>
+  <!-- Central question of names -->
+  <g fill="#aa9aff" font-family="serif" text-anchor="middle" opacity="0.7">
+    <text x="200" y="130" font-size="14">?</text>
+    <text x="200" y="150" font-size="10">names</text>
+  </g>
+  <!-- Options radiating -->
+  <g fill="#8a7acd" font-family="serif" font-size="8" opacity="0.5">
+    <text x="120" y="105" text-anchor="middle">none</text>
+    <text x="280" y="105" text-anchor="middle">all</text>
+    <text x="100" y="175" text-anchor="middle">chorus</text>
+    <text x="300" y="175" text-anchor="middle">choral</text>
+  </g>
+  <text x="200" y="270" text-anchor="middle" fill="#9a8aed" font-family="serif" font-size="11" opacity="0.6">We gather for the naming.</text>
+</svg>

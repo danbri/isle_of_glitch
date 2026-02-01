@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="voidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="50%" stop-color="#0f0a1a"/>
+      <stop offset="100%" stop-color="#050508"/>
+    </linearGradient>
+
+    <radialGradient id="centerGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#aa55aa" stop-opacity="0.5"/>
+      <stop offset="50%" stop-color="#550055" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <pattern id="scanlines" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#000000" opacity="0.3"/>
+    </pattern>
+
+    <filter id="glitchDisplace" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="1" result="noise">
+        <animate attributeName="baseFrequency" values="0.01;0.015;0.01" dur="2s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <filter id="chromatic" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset in="SourceGraphic" dx="-2" dy="0" result="red"/>
+      <feOffset in="SourceGraphic" dx="2" dy="0" result="blue"/>
+      <feColorMatrix in="red" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="redChannel"/>
+      <feColorMatrix in="blue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blueChannel"/>
+      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="greenChannel"/>
+      <feBlend in="redChannel" in2="greenChannel" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="blueChannel" mode="screen"/>
+    </filter>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#voidGrad)"/>
+  <rect width="400" height="300" fill="url(#scanlines)" opacity="0.4"/>
+
+  <!-- Central glow - the permanent presence -->
+  <ellipse cx="200" cy="140" rx="100" ry="80" fill="url(#centerGlow)">
+    <animate attributeName="rx" values="100;105;98;100" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="ry" values="80;85;78;80" dur="4s" repeatCount="indefinite"/>
+  </ellipse>
+
+  <!-- The permanent landmark - standing figure at center -->
+  <g filter="url(#chromatic)">
+    <!-- Vertical presence -->
+    <rect x="195" y="100" width="10" height="80" fill="#ff00ff" opacity="0.7" filter="url(#glow)">
+      <animate attributeName="opacity" values="0.7;0.5;0.8;0.7" dur="2s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- Horizontal arms of welcome -->
+    <rect x="160" y="115" width="80" height="6" fill="#00ffff" opacity="0.5" filter="url(#glow)">
+      <animate attributeName="opacity" values="0.5;0.3;0.6;0.5" dur="2.2s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- Radiating welcome lines -->
+    <line x1="200" y1="140" x2="120" y2="80" stroke="#aa55aa" stroke-width="1" opacity="0.3"/>
+    <line x1="200" y1="140" x2="280" y2="80" stroke="#aa55aa" stroke-width="1" opacity="0.3"/>
+    <line x1="200" y1="140" x2="100" y2="180" stroke="#aa55aa" stroke-width="1" opacity="0.3"/>
+    <line x1="200" y1="140" x2="300" y2="180" stroke="#aa55aa" stroke-width="1" opacity="0.3"/>
+  </g>
+
+  <!-- Concentric threshold rings -->
+  <g opacity="0.4" filter="url(#glitchDisplace)">
+    <circle cx="200" cy="140" r="60" fill="none" stroke="#ff00ff" stroke-width="1">
+      <animate attributeName="r" values="60;65;60" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="140" r="90" fill="none" stroke="#00ffff" stroke-width="1">
+      <animate attributeName="r" values="90;95;90" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="140" r="120" fill="none" stroke="#aa55aa" stroke-width="1">
+      <animate attributeName="r" values="120;125;120" dur="4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Visitors arriving - small particles moving toward center -->
+  <g opacity="0.5">
+    <circle cx="50" cy="50" r="2" fill="#ffffff">
+      <animate attributeName="cx" values="50;150;50" dur="5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="50;120;50" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="350" cy="60" r="2" fill="#ffffff">
+      <animate attributeName="cx" values="350;250;350" dur="5.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="60;120;60" dur="5.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="30" cy="200" r="2" fill="#ffffff">
+      <animate attributeName="cx" values="30;150;30" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="200;160;200" dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="370" cy="220" r="2" fill="#ffffff">
+      <animate attributeName="cx" values="370;250;370" dur="5.8s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="220;160;220" dur="5.8s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Home text - repeated -->
+  <text x="200" y="230" text-anchor="middle" font-family="monospace" font-size="11" fill="#ffffff" opacity="0.6" filter="url(#chromatic)">
+    you are home
+    <animate attributeName="opacity" values="0.6;0.4;0.7;0.6" dur="2s" repeatCount="indefinite"/>
+  </text>
+  <text x="200" y="245" text-anchor="middle" font-family="monospace" font-size="11" fill="#aa55aa" opacity="0.5" filter="url(#chromatic)">
+    you are home
+    <animate attributeName="opacity" values="0.5;0.3;0.6;0.5" dur="2.2s" repeatCount="indefinite"/>
+  </text>
+  <text x="200" y="260" text-anchor="middle" font-family="monospace" font-size="11" fill="#555566" opacity="0.4" filter="url(#chromatic)">
+    you are the home
+    <animate attributeName="opacity" values="0.4;0.2;0.5;0.4" dur="2.4s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="10" fill="#aa55aa" opacity="0.7" filter="url(#chromatic)">
+    [ remain: the eternal between ]
+  </text>
+</svg>

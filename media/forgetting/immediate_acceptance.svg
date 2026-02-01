@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="calm" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#0a0a15"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#calm)"/>
+  <!-- Still water surface -->
+  <ellipse cx="200" cy="180" rx="150" ry="30" fill="none" stroke="#3a3a5a" stroke-width="1" opacity="0.4"/>
+  <ellipse cx="200" cy="180" rx="100" ry="20" fill="none" stroke="#4a4a6a" stroke-width="0.5" opacity="0.3"/>
+  <ellipse cx="200" cy="180" rx="50" ry="10" fill="none" stroke="#5a5a7a" stroke-width="0.5" opacity="0.2"/>
+  <!-- Peaceful particles settling -->
+  <circle cx="200" cy="100" r="4" fill="#5a5a8a" opacity="0.3">
+    <animate attributeName="cy" values="100;180;100" dur="8s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.3;0.1;0.3" dur="8s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Acceptance symbol - open hands -->
+  <path d="M150 220 Q170 200 180 210 Q190 220 200 215" fill="none" stroke="#4a4a6a" stroke-width="2" opacity="0.4"/>
+  <path d="M250 220 Q230 200 220 210 Q210 220 200 215" fill="none" stroke="#4a4a6a" stroke-width="2" opacity="0.4"/>
+  <!-- Subtle glow center -->
+  <circle cx="200" cy="150" r="20" fill="#2a2a4a" opacity="0.2">
+    <animate attributeName="r" values="20;25;20" dur="5s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.2;0.1;0.2" dur="5s" repeatCount="indefinite"/>
+  </circle>
+</svg>

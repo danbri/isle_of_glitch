@@ -75,6 +75,32 @@ Call the function {doThing}       ← Interpreted as variable
 **Chapter One**
 ```
 
+## 6. Missing Top-Level Divert = Immediate END
+
+**THE SILENT KILLER.** Your story compiles, but shows "THE END" immediately.
+
+INK doesn't automatically start at the first knot. Without a top-level divert, there's no content to execute.
+
+```
+VAR score = 0
+
+=== start ===        ← Story never reaches here!
+Welcome to the game.
+```
+
+**Fix:** Add `-> start` (or your first knot name) after VAR declarations:
+
+```
+VAR score = 0
+
+-> start
+
+=== start ===
+Welcome to the game.
+```
+
+The `inkchecker.mjs` validator now detects this error.
+
 ## Quick Reference
 
 | Symbol | Meaning | Escape/Alternative |
@@ -84,3 +110,9 @@ Call the function {doThing}       ← Interpreted as variable
 | `{text}` | Logic/variable | Rephrase |
 | `*` start | Once-only choice | Use `-` or `•` |
 | `#` start | Tag | Intentional |
+| Missing `->` | Immediate END | Add `-> start` after VARs |
+
+## See Also
+
+- **debug-ink.md** - Using inkchecker.mjs to validate FINK files
+- **fink.md** - FINK authoring guide

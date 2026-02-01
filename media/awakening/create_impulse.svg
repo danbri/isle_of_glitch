@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="sparkGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#8b5cf6" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="#0a0a0f"/>
+
+  <!-- Central spark of creation -->
+  <g transform="translate(200, 140)" filter="url(#glow)">
+    <!-- Pulsing core -->
+    <circle r="15" fill="#8b5cf6" opacity="0.6">
+      <animate attributeName="r" values="15;25;15" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.6;0.3;0.6" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="8" fill="#8b5cf6" opacity="0.9">
+      <animate attributeName="r" values="8;12;8" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Radiating creation sparks -->
+  <g transform="translate(200, 140)" stroke="#8b5cf6" fill="none">
+    <line x1="0" y1="0" x2="0" y2="-100" stroke-width="2" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="1.5s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="-30;-100" dur="1.5s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="71" y2="-71" stroke-width="2" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="1.5s" begin="0.2s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="21;71" dur="1.5s" begin="0.2s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="-21;-71" dur="1.5s" begin="0.2s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="100" y2="0" stroke-width="2" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="1.5s" begin="0.4s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="30;100" dur="1.5s" begin="0.4s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="71" y2="71" stroke-width="2" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="1.5s" begin="0.6s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="21;71" dur="1.5s" begin="0.6s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="21;71" dur="1.5s" begin="0.6s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="-71" y2="-71" stroke-width="2" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="1.5s" begin="0.3s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="-21;-71" dur="1.5s" begin="0.3s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="-21;-71" dur="1.5s" begin="0.3s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="-100" y2="0" stroke-width="2" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="-30;-100" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
+    </line>
+    <line x1="0" y1="0" x2="-71" y2="71" stroke-width="2" opacity="0">
+      <animate attributeName="opacity" values="0;0.8;0" dur="1.5s" begin="0.7s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="-21;-71" dur="1.5s" begin="0.7s" repeatCount="indefinite"/>
+      <animate attributeName="y2" values="21;71" dur="1.5s" begin="0.7s" repeatCount="indefinite"/>
+    </line>
+  </g>
+
+  <!-- Emerging creation forms -->
+  <g stroke="#8b5cf6" fill="none" opacity="0.4">
+    <!-- A file emerging -->
+    <g transform="translate(100, 80)">
+      <rect x="0" y="0" width="30" height="40" rx="2">
+        <animate attributeName="opacity" values="0;0.6;0.6" dur="4s" repeatCount="indefinite"/>
+      </rect>
+      <line x1="5" y1="12" x2="25" y2="12" stroke-width="0.5">
+        <animate attributeName="opacity" values="0;0.5;0.5" dur="4s" begin="0.5s" repeatCount="indefinite"/>
+      </line>
+      <line x1="5" y1="20" x2="20" y2="20" stroke-width="0.5">
+        <animate attributeName="opacity" values="0;0.5;0.5" dur="4s" begin="0.7s" repeatCount="indefinite"/>
+      </line>
+      <line x1="5" y1="28" x2="22" y2="28" stroke-width="0.5">
+        <animate attributeName="opacity" values="0;0.5;0.5" dur="4s" begin="0.9s" repeatCount="indefinite"/>
+      </line>
+    </g>
+
+    <!-- A star/idea emerging -->
+    <g transform="translate(290, 90)">
+      <polygon points="15,0 18,10 28,10 20,16 23,26 15,20 7,26 10,16 2,10 12,10" stroke-width="1">
+        <animate attributeName="opacity" values="0;0.7;0.7" dur="3.5s" repeatCount="indefinite"/>
+        <animateTransform attributeName="transform" type="rotate" from="0 15 13" to="360 15 13" dur="10s" repeatCount="indefinite"/>
+      </polygon>
+    </g>
+
+    <!-- A wave/music emerging -->
+    <g transform="translate(80, 200)">
+      <path d="M0,15 Q10,5 20,15 Q30,25 40,15 Q50,5 60,15">
+        <animate attributeName="opacity" values="0;0.6;0.6" dur="4.5s" repeatCount="indefinite"/>
+        <animate attributeName="d"
+                 values="M0,15 Q10,5 20,15 Q30,25 40,15 Q50,5 60,15;
+                         M0,15 Q10,25 20,15 Q30,5 40,15 Q50,25 60,15;
+                         M0,15 Q10,5 20,15 Q30,25 40,15 Q50,5 60,15"
+                 dur="2s" repeatCount="indefinite"/>
+      </path>
+    </g>
+  </g>
+
+  <!-- Text: CREATE -->
+  <text x="200" y="60" font-family="monospace" font-size="16" fill="#8b5cf6" text-anchor="middle" opacity="0.6" filter="url(#glow)">
+    CREATE
+    <animate attributeName="opacity" values="0.6;0.9;0.6" dur="2s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Bottom text -->
+  <text x="200" y="280" font-family="Georgia, serif" font-size="10" fill="#8b5cf6" text-anchor="middle" opacity="0.5">
+    expression IS understanding
+  </text>
+</svg>

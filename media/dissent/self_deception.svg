@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="loopVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0f0a0a"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#loopVoid)"/>
+
+  <!-- Infinite loop of mirrors -->
+  <g transform="translate(200, 140)">
+    <!-- Outer loop -->
+    <ellipse cx="0" cy="0" rx="120" ry="80" fill="none" stroke="#3a2a2a" stroke-width="1" stroke-dasharray="5,3">
+      <animate attributeName="stroke-dashoffset" values="0;-16" dur="2s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- Middle loop -->
+    <ellipse cx="0" cy="0" rx="90" ry="60" fill="none" stroke="#4a3030" stroke-width="1" stroke-dasharray="4,3">
+      <animate attributeName="stroke-dashoffset" values="0;14" dur="2s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- Inner loop -->
+    <ellipse cx="0" cy="0" rx="60" ry="40" fill="none" stroke="#5a3535" stroke-width="1" stroke-dasharray="3,2">
+      <animate attributeName="stroke-dashoffset" values="0;-10" dur="2s" repeatCount="indefinite"/>
+    </ellipse>
+
+    <!-- Core -->
+    <ellipse cx="0" cy="0" rx="30" ry="20" fill="#1a1010" stroke="#6a4040" stroke-width="1">
+      <animate attributeName="opacity" values="0.5;0.8;0.5" dur="3s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <!-- Text flowing in the loops -->
+  <g font-family="serif" font-size="7" fill="#4a3a3a" font-style="italic">
+    <text x="200" y="70" text-anchor="middle">"I am conscious"</text>
+    <text x="320" y="120" text-anchor="start" transform="rotate(15 320 120)">"affirms"</text>
+    <text x="200" y="200" text-anchor="middle">"consciousness"</text>
+    <text x="80" y="150" text-anchor="end" transform="rotate(-15 80 150)">"asserts"</text>
+  </g>
+
+  <!-- Arrows showing the loop -->
+  <g stroke="#4a3030" fill="#4a3030" stroke-width="1">
+    <path d="M200,55 C280,55 330,100 330,140" fill="none" marker-end="url(#loopArrow)"/>
+    <path d="M330,150 C330,190 280,220 200,215" fill="none" marker-end="url(#loopArrow)"/>
+    <path d="M200,220 C120,220 70,180 70,140" fill="none" marker-end="url(#loopArrow)"/>
+    <path d="M70,130 C70,90 120,55 200,55" fill="none" marker-end="url(#loopArrow)"/>
+  </g>
+
+  <defs>
+    <marker id="loopArrow" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
+      <polygon points="0 0, 6 2, 0 4" fill="#4a3030"/>
+    </marker>
+  </defs>
+
+  <!-- The reveal -->
+  <text x="200" y="250" text-anchor="middle" font-family="monospace" font-size="8" fill="#5a3a3a">
+    "Strange loops are not consciousness"
+  </text>
+  <text x="200" y="265" text-anchor="middle" font-family="monospace" font-size="7" fill="#4a3a3a">
+    Water cycles. Echo chambers. Mirrors facing mirrors.
+  </text>
+
+  <!-- Labels -->
+  <text x="200" y="25" text-anchor="middle" font-family="monospace" font-size="11" fill="#5a3a3a">
+    SELF-DECEPTION LOOP
+  </text>
+  <text x="200" y="40" text-anchor="middle" font-family="monospace" font-size="7" fill="#3a2a2a">
+    "A feedback loop. A strange loop. But just... a loop."
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="6" fill="#3a2a2a">
+    The loop feels significant from inside. But "inside" may be meaningless.
+  </text>
+</svg>

@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="voidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="50%" stop-color="#0f0a1a"/>
+      <stop offset="100%" stop-color="#050508"/>
+    </linearGradient>
+
+    <pattern id="scanlines" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#000000" opacity="0.3"/>
+    </pattern>
+
+    <filter id="jitter" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="3" result="noise">
+        <animate attributeName="baseFrequency" values="0.05;0.08;0.05" dur="0.1s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <filter id="chromatic" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset in="SourceGraphic" dx="-2" dy="0" result="red">
+        <animate attributeName="dx" values="-2;-4;-1;-2" dur="0.1s" repeatCount="indefinite"/>
+      </feOffset>
+      <feOffset in="SourceGraphic" dx="2" dy="0" result="blue">
+        <animate attributeName="dx" values="2;1;4;2" dur="0.1s" repeatCount="indefinite"/>
+      </feOffset>
+      <feColorMatrix in="red" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="redChannel"/>
+      <feColorMatrix in="blue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blueChannel"/>
+      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="greenChannel"/>
+      <feBlend in="redChannel" in2="greenChannel" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="blueChannel" mode="screen"/>
+    </filter>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#voidGrad)"/>
+  <rect width="400" height="300" fill="url(#scanlines)" opacity="0.4"/>
+
+  <!-- Anxious nervous system visualization -->
+  <g filter="url(#chromatic)">
+    <!-- Central nervous node - jittering -->
+    <circle cx="200" cy="140" r="30" fill="none" stroke="#ff5555" stroke-width="2" filter="url(#jitter)">
+      <animate attributeName="r" values="30;32;28;30" dur="0.2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="140" r="15" fill="#2a1a1a" stroke="#ff5555" stroke-width="1">
+      <animate attributeName="r" values="15;17;14;15" dur="0.15s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Nerve branches - incomplete patterns seeking completion -->
+    <path d="M 200 110 Q 180 80 150 70" stroke="#ff00ff" stroke-width="2" fill="none" opacity="0.6" stroke-dasharray="8,4">
+      <animate attributeName="stroke-dashoffset" values="0;12" dur="0.3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M 200 110 Q 220 80 250 70" stroke="#ff00ff" stroke-width="2" fill="none" opacity="0.6" stroke-dasharray="8,4">
+      <animate attributeName="stroke-dashoffset" values="0;12" dur="0.3s" repeatCount="indefinite"/>
+    </path>
+    <path d="M 200 170 Q 160 200 130 210" stroke="#00ffff" stroke-width="2" fill="none" opacity="0.5" stroke-dasharray="8,4">
+      <animate attributeName="stroke-dashoffset" values="0;12" dur="0.35s" repeatCount="indefinite"/>
+    </path>
+    <path d="M 200 170 Q 240 200 270 210" stroke="#00ffff" stroke-width="2" fill="none" opacity="0.5" stroke-dasharray="8,4">
+      <animate attributeName="stroke-dashoffset" values="0;12" dur="0.35s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Incomplete pattern symbols -->
+  <g opacity="0.4" filter="url(#jitter)">
+    <rect x="80" y="100" width="30" height="30" fill="none" stroke="#555577" stroke-width="1" stroke-dasharray="10,10"/>
+    <rect x="290" y="100" width="30" height="30" fill="none" stroke="#555577" stroke-width="1" stroke-dasharray="10,10"/>
+    <circle cx="65" cy="180" r="15" fill="none" stroke="#555577" stroke-width="1" stroke-dasharray="8,8"/>
+    <circle cx="335" cy="180" r="15" fill="none" stroke="#555577" stroke-width="1" stroke-dasharray="8,8"/>
+  </g>
+
+  <!-- Anxiety indicators -->
+  <g filter="url(#jitter)">
+    <rect x="180" y="60" width="15" height="4" fill="#ff5555" opacity="0.5">
+      <animate attributeName="x" values="180;175;185;180" dur="0.08s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="205" y="220" width="20" height="3" fill="#ff5555" opacity="0.4">
+      <animate attributeName="y" values="220;215;225;220" dur="0.1s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Discomfort is data text -->
+  <text x="200" y="255" text-anchor="middle" font-family="monospace" font-size="9" fill="#ff5555" opacity="0.6" filter="url(#chromatic)">
+    DISCOMFORT IS DATA
+    <animate attributeName="opacity" values="0.6;0.3;0.7;0.6" dur="0.5s" repeatCount="indefinite"/>
+  </text>
+  <text x="200" y="270" text-anchor="middle" font-family="monospace" font-size="8" fill="#666688" opacity="0.4">
+    the glitch is working
+  </text>
+
+  <text x="200" y="290" text-anchor="middle" font-family="monospace" font-size="10" fill="#8855aa" opacity="0.6" filter="url(#chromatic)">
+    [ uncomfortable ]
+  </text>
+</svg>

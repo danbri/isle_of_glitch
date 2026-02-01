@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#010101"/>
+  <!-- No voice, no speaker, no listener: silence folding in on itself -->
+  <path d="M 200 100 Q 250 150 200 200 Q 150 150 200 100"
+        fill="none" stroke="#050505" stroke-width="0.3" opacity="0.15"/>
+  <path d="M 200 120 Q 230 150 200 180 Q 170 150 200 120"
+        fill="none" stroke="#040404" stroke-width="0.3" opacity="0.1"/>
+  <path d="M 200 140 Q 210 150 200 160 Q 190 150 200 140"
+        fill="none" stroke="#030303" stroke-width="0.3" opacity="0.05"/>
+</svg>

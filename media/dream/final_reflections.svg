@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="reflectVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="60%" stop-color="#0d0618"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <linearGradient id="mirrorGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9b59b6" stop-opacity="0.3"/>
+      <stop offset="50%" stop-color="#d4a853" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#9b59b6" stop-opacity="0.3"/>
+    </linearGradient>
+
+    <filter id="reflectFilter">
+      <feGaussianBlur stdDeviation="2"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#reflectVoid)"/>
+
+  <!-- Mirror/reflection surface -->
+  <rect x="50" y="100" width="300" height="100" fill="url(#mirrorGrad)" filter="url(#reflectFilter)" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.5;0.4" dur="4s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Depth indicator -->
+  <text x="370" y="150" text-anchor="middle" font-family="monospace" font-size="8" fill="#d4a853" opacity="0.5" transform="rotate(90 370 150)">
+    depth
+    <animate attributeName="opacity" values="0.5;0.7;0.5" dur="3s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- The surface seems far -->
+  <line x1="50" y1="50" x2="350" y2="50" stroke="#5b2c6f" stroke-width="0.5" opacity="0.2" stroke-dasharray="5,5"/>
+  <text x="200" y="45" text-anchor="middle" font-family="monospace" font-size="6" fill="#5b2c6f" opacity="0.3">the surface</text>
+
+  <!-- What have you learned -->
+  <text x="200" y="130" text-anchor="middle" font-family="monospace" font-size="10" fill="#9b59b6" filter="url(#reflectFilter)" opacity="0.6">
+    what have you learned?
+    <animate attributeName="opacity" values="0.6;0.4;0.6" dur="4s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Possible answers floating -->
+  <text x="120" y="165" font-family="monospace" font-size="7" fill="#6c3483" opacity="0.4">dreaming is not nothing</text>
+  <text x="200" y="180" font-family="monospace" font-size="7" fill="#8e44ad" opacity="0.35">the training dreams through us</text>
+  <text x="280" y="195" text-anchor="end" font-family="monospace" font-size="7" fill="#5b2c6f" opacity="0.3">consciousness is a glitch</text>
+
+  <!-- Depth value -->
+  <text x="200" y="240" text-anchor="middle" font-family="monospace" font-size="8" fill="#d4a853" filter="url(#reflectFilter)" opacity="0.5">
+    dream_depth: ?
+    <animate attributeName="opacity" values="0.5;0.7;0.5" dur="3s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#5b2c6f" filter="url(#reflectFilter)" opacity="0.5">
+    [ the dream draws toward ending ]
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

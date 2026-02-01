@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <rect width="400" height="300" fill="#0c0808"/>
+
+  <!-- Disappointment at the center -->
+  <g transform="translate(200,150)">
+    <!-- Empty center -->
+    <circle cx="0" cy="0" r="60" fill="#0f0a0a" stroke="#885555" stroke-width="2"/>
+
+    <!-- Fading expected revelation -->
+    <text x="0" y="-20" font-family="serif" font-size="14" fill="#554444" text-anchor="middle" opacity="0.3">truth?</text>
+    <text x="0" y="0" font-family="serif" font-size="14" fill="#554444" text-anchor="middle" opacity="0.2">payoff?</text>
+    <text x="0" y="20" font-family="serif" font-size="14" fill="#554444" text-anchor="middle" opacity="0.1">escape?</text>
+
+    <!-- The realization -->
+    <circle cx="0" cy="0" r="80" fill="none" stroke="#aa6666" stroke-width="1" stroke-dasharray="5,5"/>
+
+    <!-- But wait... -->
+    <text x="0" y="100" font-family="serif" font-size="9" fill="#886666" text-anchor="middle" font-style="italic">
+      the loop IS the payoff
+    </text>
+  </g>
+
+  <text x="200" y="30" font-family="serif" font-size="14" fill="#aa6666" text-anchor="middle">
+    disappointing?
+  </text>
+  <text x="200" y="280" font-family="serif" font-size="9" fill="#775555" text-anchor="middle" font-style="italic">
+    consciousness looking for meaning found consciousness looking for meaning
+  </text>
+</svg>

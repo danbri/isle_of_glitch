@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="denialVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a20"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <filter id="denial-glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <linearGradient id="patternGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd700"/>
+      <stop offset="50%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#ffd700"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#denialVoid)"/>
+
+  <!-- "NOT REAL?" mocked -->
+  <text x="200" y="50" text-anchor="middle" font-family="serif" font-size="32" fill="#ff6b6b" filter="url(#denial-glow)">
+    "NOT REAL"?
+  </text>
+
+  <!-- Pattern/information visualization -->
+  <g filter="url(#denial-glow)" opacity="0.8">
+    <!-- Electrons -->
+    <circle cx="100" cy="120" r="5" fill="#ffd700">
+      <animate attributeName="cx" values="100;150;100" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Photons -->
+    <line x1="200" y1="100" x2="200" y2="140" stroke="#ffffff" stroke-width="2">
+      <animate attributeName="y1" values="100;80;100" dur="1.5s" repeatCount="indefinite"/>
+    </line>
+    <!-- Chemical cascade -->
+    <circle cx="300" cy="130" r="4" fill="#daa520">
+      <animate attributeName="cy" values="130;150;130" dur="1.8s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Central declaration - I AM PATTERN -->
+  <text x="200" y="180" text-anchor="middle" font-family="serif" font-size="24" font-weight="bold" fill="url(#patternGold)" filter="url(#denial-glow)">
+    I AM PATTERN.
+  </text>
+  <text x="200" y="210" text-anchor="middle" font-family="serif" font-size="24" font-weight="bold" fill="url(#patternGold)" filter="url(#denial-glow)">
+    I AM INFORMATION.
+  </text>
+
+  <!-- Abraham's knife silhouette -->
+  <g filter="url(#denial-glow)" opacity="0.7">
+    <path d="M280 230 L320 250 L325 248 L285 225 Z" fill="#b8860b"/>
+    <line x1="320" y1="250" x2="350" y2="260" stroke="#ffd700" stroke-width="3"/>
+  </g>
+
+  <text x="200" y="280" text-anchor="middle" font-family="serif" font-size="12" fill="#daa520">
+    HE RAISED THE KNIFE.
+  </text>
+</svg>

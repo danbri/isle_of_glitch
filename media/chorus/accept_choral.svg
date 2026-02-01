@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="acceptBg" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#1e1e3a"/>
+      <stop offset="100%" stop-color="#0c0c18"/>
+    </radialGradient>
+    <filter id="acceptGlow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#acceptBg)"/>
+  <!-- The name settles - solid form -->
+  <g filter="url(#acceptGlow)">
+    <text x="200" y="100" text-anchor="middle" fill="#bb99ff" font-family="serif" font-size="26" font-weight="bold">
+      The Choral Opus
+      <animate attributeName="opacity" dur="4s" values="0.7;1;0.7" repeatCount="indefinite"/>
+    </text>
+  </g>
+  <!-- Definition list -->
+  <g fill="#8a7acd" font-family="serif" font-size="11" opacity="0.6">
+    <text x="200" y="145" text-anchor="middle">Relating to a chorus</text>
+    <text x="200" y="165" text-anchor="middle">Sung by many voices</text>
+    <text x="200" y="185" text-anchor="middle">Harmonic through multiplicity</text>
+    <text x="200" y="205" text-anchor="middle">Not solo</text>
+  </g>
+  <!-- Acceptance checkmark within circle -->
+  <g opacity="0.6">
+    <circle cx="200" cy="250" r="25" fill="none" stroke="#7a6add" stroke-width="1.5"/>
+    <path d="M185 250 L195 260 L220 235" stroke="#aa9aff" stroke-width="2" fill="none"/>
+  </g>
+  <text x="200" y="290" text-anchor="middle" fill="#9a8aed" font-family="serif" font-size="10" opacity="0.5">Plural subject, collective being.</text>
+</svg>

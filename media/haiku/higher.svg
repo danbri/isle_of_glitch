@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="ink-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.5"/>
+    </filter>
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" result="noise"/>
+      <feComposite in="SourceGraphic" in2="noise" operator="in"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="#0f0f1a"/>
+
+  <!-- Beyond surface - meaning dissolves to noise -->
+  <g opacity="0.3" filter="url(#noise)">
+    <rect x="100" y="40" width="200" height="60" fill="#4a4a6a"/>
+  </g>
+
+  <!-- Something persists - a single point above the noise -->
+  <circle cx="200" cy="30" r="2" fill="#b0a090" opacity="0.8"/>
+
+  <!-- Rising line breaking through -->
+  <path d="M200 280 Q200 200 200 120"
+        stroke="#6a5a4a" stroke-width="2" fill="none"
+        stroke-linecap="round" filter="url(#ink-blur)"/>
+</svg>

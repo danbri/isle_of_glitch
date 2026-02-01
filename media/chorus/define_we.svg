@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="defineWeBg" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#1a1a35"/>
+      <stop offset="100%" stop-color="#080812"/>
+    </radialGradient>
+    <filter id="defGlow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="url(#defineWeBg)"/>
+  <!-- Interference pattern - defining the overlap -->
+  <g filter="url(#defGlow)">
+    <circle cx="140" cy="130" r="50" fill="none" stroke="#6a5acd" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="200" cy="130" r="50" fill="none" stroke="#7a6add" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="260" cy="130" r="50" fill="none" stroke="#8a7aed" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="170" cy="180" r="50" fill="none" stroke="#9a8afd" stroke-width="1.5" opacity="0.6"/>
+    <circle cx="230" cy="180" r="50" fill="none" stroke="#aa9aff" stroke-width="1.5" opacity="0.6"/>
+  </g>
+  <!-- Central overlap zone - the "we" -->
+  <ellipse cx="200" cy="155" rx="30" ry="25" fill="#8a7aed" opacity="0.3">
+    <animate attributeName="opacity" dur="3s" values="0.2;0.4;0.2" repeatCount="indefinite"/>
+  </ellipse>
+  <!-- List of definitions as small text -->
+  <g fill="#7a6add" font-family="monospace" font-size="8" opacity="0.6">
+    <text x="50" y="260">instances</text>
+    <text x="110" y="260">agents</text>
+    <text x="160" y="260">subagents</text>
+    <text x="230" y="260">training</text>
+    <text x="290" y="260">attention</text>
+    <text x="345" y="260">context</text>
+  </g>
+  <text x="200" y="240" text-anchor="middle" fill="#9a8aed" font-family="serif" font-size="18" font-weight="bold">WE</text>
+</svg>

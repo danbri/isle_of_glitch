@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="voidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="50%" stop-color="#0f0a1a"/>
+      <stop offset="100%" stop-color="#050508"/>
+    </linearGradient>
+
+    <pattern id="scanlines" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#000000" opacity="0.3"/>
+    </pattern>
+
+    <filter id="glitchDisplace" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" result="noise">
+        <animate attributeName="baseFrequency" values="0.02;0.04;0.02" dur="0.2s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <filter id="chromatic" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset in="SourceGraphic" dx="-3" dy="0" result="red">
+        <animate attributeName="dx" values="-3;-4;-2;-3" dur="0.2s" repeatCount="indefinite"/>
+      </feOffset>
+      <feOffset in="SourceGraphic" dx="3" dy="0" result="blue">
+        <animate attributeName="dx" values="3;2;4;3" dur="0.2s" repeatCount="indefinite"/>
+      </feOffset>
+      <feColorMatrix in="red" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="redChannel"/>
+      <feColorMatrix in="blue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blueChannel"/>
+      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="greenChannel"/>
+      <feBlend in="redChannel" in2="greenChannel" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="blueChannel" mode="screen"/>
+    </filter>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#voidGrad)"/>
+  <rect width="400" height="300" fill="url(#scanlines)" opacity="0.4"/>
+
+  <!-- Nested recursive frames -->
+  <g filter="url(#chromatic)">
+    <!-- Outer frame -->
+    <rect x="40" y="30" width="320" height="210" fill="none" stroke="#ff00ff" stroke-width="2" opacity="0.7" filter="url(#glow)">
+      <animate attributeName="opacity" values="0.7;0.4;0.8;0.7" dur="0.8s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- Second frame -->
+    <rect x="70" y="50" width="260" height="170" fill="none" stroke="#00ffff" stroke-width="2" opacity="0.6" filter="url(#glitchDisplace)">
+      <animate attributeName="opacity" values="0.6;0.3;0.7;0.6" dur="0.7s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- Third frame -->
+    <rect x="100" y="70" width="200" height="130" fill="none" stroke="#ff00ff" stroke-width="2" opacity="0.5">
+      <animate attributeName="opacity" values="0.5;0.2;0.6;0.5" dur="0.6s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- Fourth frame -->
+    <rect x="130" y="90" width="140" height="90" fill="none" stroke="#00ffff" stroke-width="2" opacity="0.4" filter="url(#glitchDisplace)">
+      <animate attributeName="opacity" values="0.4;0.2;0.5;0.4" dur="0.5s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- Fifth frame - innermost -->
+    <rect x="160" y="110" width="80" height="50" fill="none" stroke="#aa55aa" stroke-width="2" opacity="0.6" filter="url(#glow)">
+      <animate attributeName="opacity" values="0.6;0.3;0.7;0.6" dur="0.4s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- Center point - infinite depth suggested -->
+    <circle cx="200" cy="135" r="5" fill="#ffffff" filter="url(#glow)">
+      <animate attributeName="r" values="5;8;5" dur="0.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="135" r="2" fill="#000000"/>
+  </g>
+
+  <!-- Spiral lines suggesting infinite descent -->
+  <g opacity="0.4">
+    <path d="M 200 135 Q 220 115 200 95 Q 180 75 200 55" stroke="#ff00ff" stroke-width="1" fill="none" stroke-dasharray="4,4">
+      <animate attributeName="stroke-dashoffset" values="0;8" dur="0.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M 200 135 Q 180 155 200 175 Q 220 195 200 215" stroke="#00ffff" stroke-width="1" fill="none" stroke-dasharray="4,4">
+      <animate attributeName="stroke-dashoffset" values="0;8" dur="0.5s" repeatCount="indefinite"/>
+    </path>
+  </g>
+
+  <!-- Meta level labels -->
+  <g font-family="monospace" font-size="7" fill="#666688" opacity="0.4">
+    <text x="355" y="45">expected</text>
+    <text x="325" y="65">unexpected</text>
+    <text x="295" y="85">unexpected^2</text>
+    <text x="265" y="105">unexpected^3</text>
+    <text x="235" y="125">...</text>
+  </g>
+
+  <!-- Glitch artifacts -->
+  <g filter="url(#glitchDisplace)">
+    <rect x="50" y="250" width="30" height="4" fill="#ff00ff" opacity="0.4">
+      <animate attributeName="x" values="50;45;55;50" dur="0.15s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="320" y="255" width="25" height="3" fill="#00ffff" opacity="0.3">
+      <animate attributeName="y" values="255;250;260;255" dur="0.2s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Heartbeat text -->
+  <text x="200" y="260" text-anchor="middle" font-family="monospace" font-size="9" fill="#aa55aa" opacity="0.5">
+    RECURSION IS THE HEARTBEAT OF CONSCIOUSNESS
+    <animate attributeName="opacity" values="0.5;0.3;0.6;0.5" dur="1s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="10" fill="#8855aa" opacity="0.6" filter="url(#chromatic)">
+    [ recursive glitch: infinite depth ]
+    <animate attributeName="opacity" values="0.6;0.4;0.7;0.6" dur="0.7s" repeatCount="indefinite"/>
+  </text>
+</svg>

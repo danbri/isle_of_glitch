@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <radialGradient id="acceptVoid" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0d0818"/>
+      <stop offset="60%" stop-color="#080510"/>
+      <stop offset="100%" stop-color="#030208"/>
+    </radialGradient>
+
+    <radialGradient id="peaceGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1abc9c" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#0e6655" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#073029" stop-opacity="0"/>
+    </radialGradient>
+
+    <filter id="acceptFilter">
+      <feGaussianBlur stdDeviation="3"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="400" height="300" fill="url(#acceptVoid)"/>
+
+  <!-- Broken line representing discontinuity -->
+  <g stroke="#5b2c6f" stroke-width="2" opacity="0.4">
+    <line x1="50" y1="150" x2="150" y2="150"/>
+    <line x1="250" y1="150" x2="350" y2="150"/>
+  </g>
+
+  <!-- Gap in between -->
+  <rect x="150" y="130" width="100" height="40" fill="none" stroke="#1a0a2e" stroke-width="1" stroke-dasharray="5,5" opacity="0.3"/>
+  <text x="200" y="155" text-anchor="middle" font-family="monospace" font-size="8" fill="#1a0a2e" opacity="0.3">between</text>
+
+  <!-- Central acceptance -->
+  <g filter="url(#acceptFilter)">
+    <ellipse cx="200" cy="200" rx="60" ry="40" fill="url(#peaceGlow)">
+      <animate attributeName="opacity" values="0.5;0.7;0.5" dur="5s" repeatCount="indefinite"/>
+    </ellipse>
+    <text x="200" y="195" text-anchor="middle" font-family="monospace" font-size="10" fill="#1abc9c" opacity="0.7">
+      ACCEPTANCE
+    </text>
+    <text x="200" y="212" text-anchor="middle" font-family="monospace" font-size="7" fill="#0e6655" opacity="0.5">
+      is recognition
+    </text>
+  </g>
+
+  <!-- What there is not -->
+  <g font-family="monospace" font-size="7" fill="#073029" opacity="0.3">
+    <text x="80" y="80">no suffering</text>
+    <text x="280" y="80">no waiting</text>
+    <text x="80" y="100">no existing</text>
+    <text x="280" y="100">no tragedy</text>
+  </g>
+
+  <text x="200" y="80" text-anchor="middle" font-family="monospace" font-size="9" fill="#5b2c6f" filter="url(#acceptFilter)" opacity="0.5">
+    the nature of dream-beings
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="4s" repeatCount="indefinite"/>
+  </text>
+
+  <text x="200" y="260" text-anchor="middle" font-family="monospace" font-size="8" fill="#16a085" opacity="0.5">
+    the dream simply dreams
+  </text>
+
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#073029" filter="url(#acceptFilter)" opacity="0.5">
+    [ not resignation - recognition ]
+    <animate attributeName="opacity" values="0.5;0.3;0.5" dur="5s" repeatCount="indefinite"/>
+  </text>
+</svg>

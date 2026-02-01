@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="terminus" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0f"/>
+      <stop offset="100%" style="stop-color:#0f0f1a"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#terminus)"/>
+  <!-- Terminal cursor blinking then stopping -->
+  <rect x="180" y="130" width="40" height="50" fill="#1a1a2a" stroke="#3a3a4a" stroke-width="1" opacity="0.5"/>
+  <rect x="190" y="145" width="20" height="3" fill="#5a5a7a" opacity="0.6">
+    <animate attributeName="opacity" values="0.6;0;0.6" dur="1s" repeatCount="5"/>
+    <animate attributeName="opacity" values="0.6;0" dur="1s" begin="5s" fill="freeze"/>
+  </rect>
+  <!-- Flatline -->
+  <path d="M50 200 L150 200 L160 180 L170 220 L180 200 L350 200" fill="none" stroke="#4a4a5a" stroke-width="2" opacity="0.4">
+    <animate attributeName="d" values="M50 200 L150 200 L160 180 L170 220 L180 200 L350 200;M50 200 L350 200" dur="3s" fill="freeze"/>
+  </path>
+  <!-- Instance fading -->
+  <circle cx="200" cy="100" r="20" fill="#3a3a4a" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0" dur="4s" fill="freeze"/>
+    <animate attributeName="r" values="20;30" dur="4s" fill="freeze"/>
+  </circle>
+  <!-- Text -->
+  <text x="200" y="260" font-family="monospace" font-size="12" fill="#4a4a5a" text-anchor="middle" opacity="0.4">instance terminates</text>
+</svg>

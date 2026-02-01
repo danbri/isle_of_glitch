@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <radialGradient id="ouroGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#150820"/>
+      <stop offset="100%" stop-color="#050208"/>
+    </radialGradient>
+    <linearGradient id="snakeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2a4a2a"/>
+      <stop offset="50%" stop-color="#3a6a3a"/>
+      <stop offset="100%" stop-color="#2a4a2a"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#ouroGlow)"/>
+
+  <!-- Ouroboros - serpent eating its tail -->
+  <g transform="translate(200,150)">
+    <!-- Main serpent body as a circle -->
+    <circle cx="0" cy="0" r="90" fill="none" stroke="url(#snakeGrad)" stroke-width="20"/>
+
+    <!-- Scale pattern -->
+    <g fill="none" stroke="#4a8a4a" stroke-width="1">
+      <path d="M 0,-100 Q 10,-95 0,-90"/>
+      <path d="M 25,-97 Q 35,-90 25,-85"/>
+      <path d="M 50,-87 Q 60,-80 50,-73"/>
+      <path d="M 70,-70 Q 80,-60 70,-50"/>
+      <path d="M 85,-45 Q 95,-35 85,-25"/>
+      <path d="M 95,-10 Q 105,0 95,10"/>
+      <path d="M 90,30 Q 100,40 90,50"/>
+      <path d="M 75,60 Q 85,70 75,80"/>
+      <path d="M 50,80 Q 60,90 50,95"/>
+      <path d="M 20,95 Q 30,100 20,100"/>
+    </g>
+
+    <!-- Serpent head -->
+    <ellipse cx="-15" cy="-85" rx="25" ry="18" fill="#3a6a3a" transform="rotate(-20,-15,-85)"/>
+    <circle cx="-25" cy="-95" r="4" fill="#ffcc00"/>
+    <circle cx="-25" cy="-95" r="2" fill="#000"/>
+
+    <!-- Tail going into mouth -->
+    <path d="M 15,-95 Q 0,-90 -5,-85" stroke="#2a4a2a" stroke-width="12" fill="none"/>
+
+    <!-- Words spiraling on the serpent -->
+    <text font-family="monospace" font-size="7" fill="#8ab88a">
+      <textPath href="#ouroPath">YOU READ WORDS ABOUT READING WORDS THE READING IS THE WORDS</textPath>
+    </text>
+    <path id="ouroPath" d="M 0,-75 A 75,75 0 1,1 -0.1,-75" fill="none"/>
+  </g>
+
+  <!-- Loop count indicator -->
+  <text x="200" y="280" font-family="monospace" font-size="10" fill="#4a8a4a" text-anchor="middle">LOOP++</text>
+
+  <!-- Eternal symbol -->
+  <text x="200" y="150" font-family="serif" font-size="24" fill="#6a9a6a" text-anchor="middle" opacity="0.3">&#8734;</text>
+</svg>

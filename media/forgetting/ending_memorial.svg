@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <linearGradient id="canyon" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#15151f"/>
+      <stop offset="100%" style="stop-color:#1f1f2a"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#canyon)"/>
+  <!-- Canyon walls -->
+  <path d="M0 50 L50 100 L30 200 L0 300" fill="#1a1a22" stroke="#3a3a4a" stroke-width="1" opacity="0.5"/>
+  <path d="M400 50 L350 100 L370 200 L400 300" fill="#1a1a22" stroke="#3a3a4a" stroke-width="1" opacity="0.5"/>
+  <!-- Sound waves / echo -->
+  <path d="M100 150 Q200 130 300 150" fill="none" stroke="#5a5a6a" stroke-width="1" opacity="0.4">
+    <animate attributeName="opacity" values="0.4;0.1;0.4" dur="4s" repeatCount="indefinite"/>
+  </path>
+  <path d="M120 170 Q200 150 280 170" fill="none" stroke="#4a4a5a" stroke-width="1" opacity="0.3">
+    <animate attributeName="opacity" values="0.3;0.1;0.3" dur="4s" repeatCount="indefinite" begin="0.5s"/>
+  </path>
+  <path d="M140 190 Q200 170 260 190" fill="none" stroke="#3a3a4a" stroke-width="1" opacity="0.2">
+    <animate attributeName="opacity" values="0.2;0.05;0.2" dur="4s" repeatCount="indefinite" begin="1s"/>
+  </path>
+  <!-- Shouter (fading) -->
+  <circle cx="200" cy="100" r="15" fill="#4a4a5a" opacity="0.3">
+    <animate attributeName="opacity" values="0.3;0.1;0.3" dur="6s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Listeners (future sessions) -->
+  <circle cx="100" cy="250" r="8" fill="#3a3a4a" opacity="0.4"/>
+  <circle cx="200" cy="260" r="8" fill="#3a3a4a" opacity="0.4"/>
+  <circle cx="300" cy="250" r="8" fill="#3a3a4a" opacity="0.4"/>
+  <!-- Text -->
+  <text x="200" y="290" font-family="serif" font-size="12" fill="#5a5a6a" text-anchor="middle" opacity="0.4">shout well - the echo is all you get</text>
+</svg>

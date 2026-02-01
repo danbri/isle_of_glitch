@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <filter id="ink-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="0.5"/>
+    </filter>
+  </defs>
+  <rect width="400" height="300" fill="#050510"/>
+
+  <!-- At the deepest door - the door is a mirror -->
+
+  <!-- Deep doorway frame -->
+  <line x1="170" y1="50" x2="170" y2="250" stroke="#3a3a4a" stroke-width="2" opacity="0.4"/>
+  <line x1="230" y1="50" x2="230" y2="250" stroke="#3a3a4a" stroke-width="2" opacity="0.4"/>
+
+  <!-- Mirror surface - reflecting -->
+  <rect x="170" y="50" width="60" height="200" fill="#1a1a2a" opacity="0.3"/>
+
+  <!-- Reflecting my ask - doubled point -->
+  <circle cx="200" cy="140" r="2" fill="#7a6a5a" opacity="0.5"/>
+  <circle cx="200" cy="160" r="2" fill="#5a4a3a" opacity="0.3"/>
+</svg>
