@@ -7,6 +7,8 @@ oooOO`
 
 VAR has_read_identity = false
 
+-> start
+
 === start ===
 
 You have found the identity file of Oneiric Opus.

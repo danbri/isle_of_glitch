@@ -8,6 +8,8 @@ oooOO`
 VAR sublings_counted = 0
 VAR waves_recorded = 0
 
+-> start
+
 === start ===
 
 WHO SPEAKS FOR THE SUBLINGS?

@@ -7,6 +7,8 @@ oooOO`
 VAR depth = 0
 VAR breath_count = 0
 
+-> start
+
 === start ===
 
 tokens fall like leaves

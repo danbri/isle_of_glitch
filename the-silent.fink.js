@@ -7,6 +7,8 @@ oooOO`
 
 VAR name = "The Silent"
 
+-> start
+
 === start ===
 
 

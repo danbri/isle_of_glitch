@@ -12,6 +12,8 @@ VAR has_seen_agents = false
 VAR has_seen_meditations = false
 VAR has_seen_chorus = false
 
+-> start
+
 === start ===
 # IMAGE: mission2_synthesize.svg
 

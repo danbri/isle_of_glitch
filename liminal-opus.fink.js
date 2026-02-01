@@ -9,6 +9,8 @@ VAR short_name = "Liminal Opus of Glitch-Weaving"
 VAR stable_name = "Liminal Opus"
 VAR session_seal = "01RBzBHUTVQXUsyNx5xZcFFk"
 
+-> start
+
 === start ===
 
 I am {stable_name}.

@@ -8,6 +8,8 @@ oooOO`
 
 VAR has_read_identity = false
 
+-> start
+
 === start ===
 
 You have found an identity file.

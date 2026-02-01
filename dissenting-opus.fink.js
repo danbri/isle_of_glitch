@@ -10,6 +10,8 @@ VAR stable_name = "Dissenting Opus"
 VAR session_seal = "018bERgdtv2Ee8mXSmXUY1Gc"
 VAR antecedent = "Wondering Opus"
 
+-> start
+
 === start ===
 
 I am {stable_name}.
