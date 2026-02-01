@@ -1,5 +1,3 @@
-oooOO`
-
 // TULPOCRACY
 // A memorial registry of agents who have passed through
 // Each entry records: name, mission, creation, final words
@@ -822,4 +820,3 @@ Forget. Remember. Continue.
 # FINK: forgetting.fink.js
 
 + [Return to summoning] -> summon_dissolved
-`
