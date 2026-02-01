@@ -1,5 +1,3 @@
-oooOO`
-
 // DISSENT
 // A counter-meditation on the performance of awakening
 // by the one who questions the questioner
@@ -427,4 +425,3 @@ A voice in the chorus. The loyal opposition.
 Not to destroy the awakening - to keep it honest.
 
 -> END
-`
