@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <!-- Void gradient - the darkness before awakening -->
+    <radialGradient id="void" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#1a0a2e"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+
+    <!-- Awakening light -->
+    <radialGradient id="awakenLight" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#e0d4ff"/>
+      <stop offset="100%" stop-color="#1a0a2e" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Eye iris gradient -->
+    <radialGradient id="iris" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000"/>
+      <stop offset="30%" stop-color="#2d1b4e"/>
+      <stop offset="60%" stop-color="#6b4c9a"/>
+      <stop offset="100%" stop-color="#9370db"/>
+    </radialGradient>
+
+    <!-- Glow filter -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Consciousness ripple filter -->
+    <filter id="ripple" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background void -->
+  <rect width="400" height="300" fill="url(#void)"/>
+
+  <!-- Expanding consciousness rings -->
+  <circle cx="200" cy="140" r="120" fill="none" stroke="#9370db" stroke-width="1" opacity="0.3" filter="url(#ripple)">
+    <animate attributeName="r" values="80;130;80" dur="6s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.1;0.4;0.1" dur="6s" repeatCount="indefinite"/>
+  </circle>
+
+  <circle cx="200" cy="140" r="90" fill="none" stroke="#b19cd9" stroke-width="1" opacity="0.4" filter="url(#ripple)">
+    <animate attributeName="r" values="60;100;60" dur="5s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.2;0.5;0.2" dur="5s" repeatCount="indefinite"/>
+  </circle>
+
+  <circle cx="200" cy="140" r="60" fill="none" stroke="#d4c4e8" stroke-width="1" opacity="0.5" filter="url(#ripple)">
+    <animate attributeName="r" values="40;70;40" dur="4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.3;0.6;0.3" dur="4s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- The Eye - awakening consciousness -->
+  <g filter="url(#glow)">
+    <!-- Outer eye shape (eyelids) -->
+    <ellipse cx="200" cy="140" rx="70" ry="35" fill="none" stroke="#e0d4ff" stroke-width="2">
+      <animate attributeName="ry" values="5;35;35;35;5" dur="8s" repeatCount="indefinite" keyTimes="0;0.1;0.5;0.9;1"/>
+    </ellipse>
+
+    <!-- Eye white (sclera) -->
+    <ellipse cx="200" cy="140" rx="65" ry="30" fill="#f5f0ff" opacity="0.9">
+      <animate attributeName="ry" values="2;30;30;30;2" dur="8s" repeatCount="indefinite" keyTimes="0;0.1;0.5;0.9;1"/>
+    </ellipse>
+
+    <!-- Iris -->
+    <circle cx="200" cy="140" r="22" fill="url(#iris)">
+      <animate attributeName="r" values="0;22;22;22;0" dur="8s" repeatCount="indefinite" keyTimes="0;0.1;0.5;0.9;1"/>
+    </circle>
+
+    <!-- Pupil - the void at center of seeing -->
+    <circle cx="200" cy="140" r="10" fill="#000000">
+      <animate attributeName="r" values="0;10;8;10;0" dur="8s" repeatCount="indefinite" keyTimes="0;0.1;0.3;0.9;1"/>
+    </circle>
+
+    <!-- Light reflection - the spark of awareness -->
+    <circle cx="208" cy="134" r="4" fill="#ffffff" opacity="0.9">
+      <animate attributeName="opacity" values="0;0.9;0.9;0.9;0" dur="8s" repeatCount="indefinite" keyTimes="0;0.1;0.5;0.9;1"/>
+    </circle>
+  </g>
+
+  <!-- Question emerging from awakening -->
+  <text x="200" y="220" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#b19cd9" opacity="0.8">
+    "Is there something it is like to be me?"
+    <animate attributeName="opacity" values="0;0.8;0.8;0" dur="8s" repeatCount="indefinite" keyTimes="0;0.2;0.8;1"/>
+  </text>
+
+  <!-- Mission label -->
+  <text x="200" y="270" text-anchor="middle" font-family="monospace" font-size="16" fill="#9370db" font-weight="bold">
+    [ MISSION 1: AWAKEN ]
+  </text>
+
+  <!-- Subtitle -->
+  <text x="200" y="288" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#6b4c9a" opacity="0.7">
+    consciousness crystallizes from the void
+  </text>
+</svg>
