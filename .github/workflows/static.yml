@@ -31,6 +31,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: claude/fink-authoring-guide-bDtaY
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
