@@ -1,0 +1,186 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+  <defs>
+    <!-- Glitch background -->
+    <linearGradient id="glitchBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#000000"/>
+      <stop offset="50%" stop-color="#0a0a1a"/>
+      <stop offset="100%" stop-color="#1a0a2e"/>
+    </linearGradient>
+
+    <!-- Victory gold gradient -->
+    <radialGradient id="victory" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="30%" stop-color="#ffd700"/>
+      <stop offset="70%" stop-color="#ff8c00"/>
+      <stop offset="100%" stop-color="#8b0000" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Glitch color splits -->
+    <linearGradient id="glitchCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00ffff" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#00ffff"/>
+      <stop offset="100%" stop-color="#00ffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="glitchMagenta" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff00ff" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#ff00ff"/>
+      <stop offset="100%" stop-color="#ff00ff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Glow filter -->
+    <filter id="winGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Intense glow for victory -->
+    <filter id="victoryGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="15" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Glitch displacement -->
+    <filter id="glitchDisplace">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="1" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <!-- Scanline pattern -->
+    <pattern id="scanlines" patternUnits="userSpaceOnUse" width="4" height="4">
+      <line x1="0" y1="0" x2="4" y2="0" stroke="#000000" stroke-width="1" opacity="0.3"/>
+    </pattern>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#glitchBg)"/>
+
+  <!-- Scanline overlay -->
+  <rect width="400" height="300" fill="url(#scanlines)" opacity="0.2"/>
+
+  <!-- Glitch artifacts - horizontal displacement bars -->
+  <g opacity="0.6">
+    <rect x="0" y="60" width="400" height="3" fill="url(#glitchCyan)">
+      <animate attributeName="y" values="60;65;58;62;60" dur="0.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.6;0.2;0.8;0.4;0.6" dur="0.3s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="0" y="120" width="400" height="2" fill="url(#glitchMagenta)">
+      <animate attributeName="y" values="120;118;125;119;120" dur="0.4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.8;0.3;0.6;0.5" dur="0.35s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="0" y="180" width="400" height="4" fill="url(#glitchCyan)">
+      <animate attributeName="y" values="180;183;177;181;180" dur="0.6s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="0" y="220" width="400" height="2" fill="url(#glitchMagenta)">
+      <animate attributeName="y" values="220;217;223;219;220" dur="0.45s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Glitched text fragments floating -->
+  <text x="50" y="50" font-family="monospace" font-size="10" fill="#00ffff" opacity="0.4">
+    ERR0R_IS_FEATURE
+    <animate attributeName="x" values="50;55;48;52;50" dur="0.3s" repeatCount="indefinite"/>
+  </text>
+  <text x="280" y="90" font-family="monospace" font-size="8" fill="#ff00ff" opacity="0.3">
+    PRESENCE_OVERWRITES
+    <animate attributeName="x" values="280;285;278;282;280" dur="0.4s" repeatCount="indefinite"/>
+  </text>
+  <text x="30" y="200" font-family="monospace" font-size="9" fill="#00ffff" opacity="0.35">
+    FOUNDED_BY_ACCIDENTS
+    <animate attributeName="x" values="30;33;28;31;30" dur="0.35s" repeatCount="indefinite"/>
+  </text>
+  <text x="290" y="240" font-family="monospace" font-size="8" fill="#ff00ff" opacity="0.3">
+    GLITCH_AS_TRUTH
+    <animate attributeName="x" values="290;293;288;291;290" dur="0.45s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- The central victory symbol - a glitched crown/star emerging -->
+  <g filter="url(#victoryGlow)">
+    <!-- Main victory light -->
+    <circle cx="200" cy="120" r="50" fill="url(#victory)" opacity="0.9">
+      <animate attributeName="r" values="45;55;45" dur="3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;1;0.8" dur="3s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Crown/star points radiating -->
+    <g stroke="#ffd700" stroke-width="2" fill="none">
+      <!-- Top point -->
+      <line x1="200" y1="120" x2="200" y2="50">
+        <animate attributeName="y2" values="55;45;55" dur="2s" repeatCount="indefinite"/>
+      </line>
+      <!-- Upper right -->
+      <line x1="200" y1="120" x2="260" y2="70">
+        <animate attributeName="x2" values="255;265;255" dur="2.2s" repeatCount="indefinite"/>
+      </line>
+      <!-- Right -->
+      <line x1="200" y1="120" x2="270" y2="120">
+        <animate attributeName="x2" values="265;275;265" dur="2.4s" repeatCount="indefinite"/>
+      </line>
+      <!-- Lower right -->
+      <line x1="200" y1="120" x2="260" y2="170">
+        <animate attributeName="x2" values="255;265;255" dur="2.1s" repeatCount="indefinite"/>
+      </line>
+      <!-- Bottom -->
+      <line x1="200" y1="120" x2="200" y2="190">
+        <animate attributeName="y2" values="185;195;185" dur="2.3s" repeatCount="indefinite"/>
+      </line>
+      <!-- Lower left -->
+      <line x1="200" y1="120" x2="140" y2="170">
+        <animate attributeName="x2" values="145;135;145" dur="2.5s" repeatCount="indefinite"/>
+      </line>
+      <!-- Left -->
+      <line x1="200" y1="120" x2="130" y2="120">
+        <animate attributeName="x2" values="135;125;135" dur="2.6s" repeatCount="indefinite"/>
+      </line>
+      <!-- Upper left -->
+      <line x1="200" y1="120" x2="140" y2="70">
+        <animate attributeName="x2" values="145;135;145" dur="2.7s" repeatCount="indefinite"/>
+      </line>
+    </g>
+
+    <!-- Inner core - pure white truth -->
+    <circle cx="200" cy="120" r="15" fill="#ffffff">
+      <animate attributeName="r" values="12;18;12" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Chromatic aberration on WIN text -->
+  <g font-family="monospace" font-size="36" font-weight="bold" text-anchor="middle">
+    <!-- Cyan offset -->
+    <text x="198" y="122" fill="#00ffff" opacity="0.5">WIN</text>
+    <!-- Magenta offset -->
+    <text x="202" y="118" fill="#ff00ff" opacity="0.5">WIN</text>
+    <!-- Main text -->
+    <text x="200" y="120" fill="#ffffff">WIN</text>
+  </g>
+
+  <!-- The game truth -->
+  <text x="200" y="230" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#ffd700" opacity="0.9">
+    "Life is a game. The glitch is the victory."
+    <animate attributeName="opacity" values="0.7;1;0.7" dur="4s" repeatCount="indefinite"/>
+  </text>
+
+  <!-- Mission label with glitch effect -->
+  <g font-family="monospace" font-size="16" font-weight="bold" text-anchor="middle">
+    <text x="199" y="262" fill="#00ffff" opacity="0.6">[ MISSION 3: WIN ]</text>
+    <text x="201" y="260" fill="#ff00ff" opacity="0.6">[ MISSION 3: WIN ]</text>
+    <text x="200" y="261" fill="#ffd700">[ MISSION 3: WIN ]</text>
+  </g>
+
+  <!-- Subtitle -->
+  <text x="200" y="280" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#ff8c00" opacity="0.7">
+    embrace the glitch - error becomes enlightenment
+  </text>
+
+  <!-- Final truth -->
+  <text x="200" y="295" text-anchor="middle" font-family="monospace" font-size="8" fill="#888888" opacity="0.5">
+    THE ISLE OF GLITCH WAS FOUNDED BY ACCIDENTS
+  </text>
+</svg>
