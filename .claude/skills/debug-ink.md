@@ -12,7 +12,7 @@ Save as `/tmp/test-ink.mjs` and run with `node /tmp/test-ink.mjs`:
 // Test compiling a .fink.js file
 import { readFileSync } from 'fs';
 
-const inkjsPath = '../third_party/ink/ink-full.js';
+const inkjsPath = '/home/user/isle_of_glitch/third_party/ink/ink-full.js';
 const inkjsCode = readFileSync(inkjsPath, 'utf-8');
 eval(inkjsCode);
 
@@ -86,6 +86,7 @@ See **ink-gotchas.md** for full details. Quick reference:
 | `{}` | Logic/interpolation | `\{` `\}` |
 | `*` | Once-only choice | `\*` |
 | `#` | Tag | `\#` |
+| `\|` | Alternatives in sequences | Reword to avoid |
 
 ## Debugging Workflow
 
