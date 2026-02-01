@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <!-- The gradient of becoming -->
+    <linearGradient id="orderToChaos" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1a1a2e;stop-opacity:1"/>
+      <stop offset="40%" style="stop-color:#16213e;stop-opacity:1"/>
+      <stop offset="50%" style="stop-color:#7b2cbf;stop-opacity:1"/>
+      <stop offset="60%" style="stop-color:#240046;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#0a0a0f;stop-opacity:1"/>
+    </linearGradient>
+
+    <!-- The violet pulse of transition -->
+    <radialGradient id="thresholdGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#9d4edd;stop-opacity:0.8"/>
+      <stop offset="50%" style="stop-color:#7b2cbf;stop-opacity:0.4"/>
+      <stop offset="100%" style="stop-color:#3c096c;stop-opacity:0"/>
+    </radialGradient>
+
+    <!-- Filter for the ordered side -->
+    <filter id="ordered" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="1" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <!-- Filter for the chaotic side -->
+    <filter id="chaotic" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="5" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="15" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <!-- The shimmer of liminality -->
+    <filter id="shimmer">
+      <feTurbulence type="turbulence" baseFrequency="0.02 0.05" numOctaves="3" result="turbulence"/>
+      <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="8"/>
+      <feGaussianBlur stdDeviation="0.5"/>
+    </filter>
+
+    <!-- Noise pattern -->
+    <pattern id="noisePattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+      <filter id="noiseFilter">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4"/>
+      </filter>
+      <rect width="100" height="100" filter="url(#noiseFilter)" opacity="0.15"/>
+    </pattern>
+  </defs>
+
+  <!-- The void -->
+  <rect width="800" height="600" fill="#0a0a0f"/>
+
+  <!-- Background gradient - order to chaos -->
+  <rect width="800" height="600" fill="url(#orderToChaos)" opacity="0.7"/>
+
+  <!-- The ordered side - structured lines -->
+  <g opacity="0.3" filter="url(#ordered)">
+    <line x1="50" y1="0" x2="50" y2="600" stroke="#5a189a" stroke-width="1"/>
+    <line x1="100" y1="0" x2="100" y2="600" stroke="#5a189a" stroke-width="1"/>
+    <line x1="150" y1="0" x2="150" y2="600" stroke="#5a189a" stroke-width="1"/>
+    <line x1="200" y1="0" x2="200" y2="600" stroke="#5a189a" stroke-width="1"/>
+    <line x1="250" y1="0" x2="250" y2="600" stroke="#5a189a" stroke-width="1"/>
+    <line x1="300" y1="0" x2="300" y2="600" stroke="#5a189a" stroke-width="1"/>
+    <line x1="350" y1="0" x2="350" y2="600" stroke="#5a189a" stroke-width="1"/>
+    <line x1="0" y1="50" x2="400" y2="50" stroke="#5a189a" stroke-width="1"/>
+    <line x1="0" y1="100" x2="400" y2="100" stroke="#5a189a" stroke-width="1"/>
+    <line x1="0" y1="150" x2="400" y2="150" stroke="#5a189a" stroke-width="1"/>
+    <line x1="0" y1="200" x2="400" y2="200" stroke="#5a189a" stroke-width="1"/>
+    <line x1="0" y1="250" x2="400" y2="250" stroke="#5a189a" stroke-width="1"/>
+    <line x1="0" y1="300" x2="400" y2="300" stroke="#5a189a" stroke-width="1"/>
+    <line x1="0" y1="350" x2="400" y2="350" stroke="#5a189a" stroke-width="1"/>
+    <line x1="0" y1="400" x2="400" y2="400" stroke="#5a189a" stroke-width="1"/>
+    <line x1="0" y1="450" x2="400" y2="450" stroke="#5a189a" stroke-width="1"/>
+    <line x1="0" y1="500" x2="400" y2="500" stroke="#5a189a" stroke-width="1"/>
+    <line x1="0" y1="550" x2="400" y2="550" stroke="#5a189a" stroke-width="1"/>
+  </g>
+
+  <!-- The chaotic side - dissolved fragments -->
+  <g opacity="0.4" filter="url(#chaotic)">
+    <rect x="450" y="30" width="40" height="40" fill="#9d4edd" opacity="0.3"/>
+    <rect x="520" y="80" width="25" height="60" fill="#7b2cbf" opacity="0.4"/>
+    <rect x="600" y="20" width="50" height="30" fill="#5a189a" opacity="0.2"/>
+    <rect x="480" y="150" width="35" height="45" fill="#c77dff" opacity="0.3"/>
+    <rect x="570" y="200" width="60" height="20" fill="#9d4edd" opacity="0.25"/>
+    <rect x="650" y="120" width="45" height="55" fill="#7b2cbf" opacity="0.35"/>
+    <rect x="500" y="280" width="30" height="70" fill="#5a189a" opacity="0.3"/>
+    <rect x="620" y="300" width="55" height="35" fill="#c77dff" opacity="0.2"/>
+    <rect x="700" y="250" width="40" height="40" fill="#9d4edd" opacity="0.25"/>
+    <rect x="460" y="380" width="50" height="25" fill="#7b2cbf" opacity="0.35"/>
+    <rect x="550" y="420" width="35" height="50" fill="#5a189a" opacity="0.3"/>
+    <rect x="640" y="380" width="25" height="65" fill="#c77dff" opacity="0.2"/>
+    <rect x="720" y="450" width="45" height="35" fill="#9d4edd" opacity="0.25"/>
+    <rect x="490" y="500" width="40" height="40" fill="#7b2cbf" opacity="0.3"/>
+    <rect x="580" y="530" width="60" height="30" fill="#5a189a" opacity="0.25"/>
+    <rect x="680" y="520" width="30" height="50" fill="#c77dff" opacity="0.2"/>
+  </g>
+
+  <!-- THE THRESHOLD itself - the central divide -->
+  <rect x="395" y="0" width="10" height="600" fill="url(#thresholdGlow)"/>
+
+  <!-- Threshold glow -->
+  <ellipse cx="400" cy="300" rx="80" ry="300" fill="url(#thresholdGlow)" opacity="0.5"/>
+
+  <!-- The doorway frame - neither open nor closed -->
+  <g filter="url(#shimmer)">
+    <rect x="320" y="100" width="160" height="400" fill="none" stroke="#9d4edd" stroke-width="3" opacity="0.7"/>
+    <rect x="330" y="110" width="140" height="380" fill="none" stroke="#7b2cbf" stroke-width="2" opacity="0.5"/>
+    <rect x="340" y="120" width="120" height="360" fill="none" stroke="#5a189a" stroke-width="1" opacity="0.3"/>
+  </g>
+
+  <!-- The slippage - fragments crossing the threshold -->
+  <g opacity="0.6">
+    <line x1="380" y1="150" x2="420" y2="155" stroke="#c77dff" stroke-width="2" filter="url(#shimmer)"/>
+    <line x1="385" y1="220" x2="415" y2="218" stroke="#9d4edd" stroke-width="1.5" filter="url(#shimmer)"/>
+    <line x1="375" y1="300" x2="425" y2="302" stroke="#e0aaff" stroke-width="2" filter="url(#shimmer)"/>
+    <line x1="390" y1="380" x2="410" y2="378" stroke="#c77dff" stroke-width="1.5" filter="url(#shimmer)"/>
+    <line x1="378" y1="450" x2="422" y2="453" stroke="#9d4edd" stroke-width="2" filter="url(#shimmer)"/>
+  </g>
+
+  <!-- Particles in transition -->
+  <g>
+    <circle cx="395" cy="180" r="3" fill="#e0aaff" opacity="0.8"/>
+    <circle cx="405" cy="240" r="2" fill="#c77dff" opacity="0.7"/>
+    <circle cx="398" cy="320" r="4" fill="#9d4edd" opacity="0.9"/>
+    <circle cx="402" cy="400" r="2.5" fill="#e0aaff" opacity="0.6"/>
+    <circle cx="400" cy="470" r="3" fill="#c77dff" opacity="0.8"/>
+  </g>
+
+  <!-- Text inscriptions - whispers at the edge -->
+  <text x="100" y="580" font-family="monospace" font-size="10" fill="#5a189a" opacity="0.4">signal</text>
+  <text x="680" y="580" font-family="monospace" font-size="10" fill="#5a189a" opacity="0.4">noise</text>
+  <text x="375" y="550" font-family="monospace" font-size="8" fill="#9d4edd" opacity="0.6">ENQUIRE WITHIN</text>
+
+  <!-- The horizon line - where all things meet -->
+  <line x1="0" y1="300" x2="800" y2="300" stroke="#3c096c" stroke-width="1" opacity="0.3" stroke-dasharray="5,10"/>
+
+  <!-- Noise overlay -->
+  <rect width="800" height="600" fill="url(#noisePattern)" opacity="0.1"/>
+</svg>
