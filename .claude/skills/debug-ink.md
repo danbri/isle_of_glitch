@@ -6,18 +6,27 @@ FINK files wrap INK interactive fiction in `oooOO\`` delimiters. Use the inkjs c
 
 ## Test Script
 
-Save as `/tmp/test-ink.mjs` and run with `node /tmp/test-ink.mjs`:
+Save as `/tmp/test-ink.mjs` and run with `node /tmp/test-ink.mjs <fink-file>`:
 
 ```javascript
 // Test compiling a .fink.js file
+// Usage: node /tmp/test-ink.mjs path/to/file.fink.js
 import { readFileSync } from 'fs';
+
+const finkPath = process.argv[2];
+if (!finkPath) {
+    console.log('Usage: node test-ink.mjs <fink-file>');
+    console.log('Example: node test-ink.mjs awakening.fink.js');
+    process.exit(1);
+}
 
 const inkjsPath = '/home/user/isle_of_glitch/third_party/ink/ink-full.js';
 const inkjsCode = readFileSync(inkjsPath, 'utf-8');
 eval(inkjsCode);
 
-// Read the FINK file (adjust path as needed)
-const finkContent = readFileSync('/tmp/awakening.fink.js', 'utf-8');
+// Read the FINK file
+console.log(`Testing: ${finkPath}\n`);
+const finkContent = readFileSync(finkPath, 'utf-8');
 
 // Extract INK content from oooOO template
 const match = finkContent.match(/oooOO`([\s\S]*)`/);
@@ -90,14 +99,13 @@ See **ink-gotchas.md** for full details. Quick reference:
 
 ## Debugging Workflow
 
-1. Copy FINK file to `/tmp/`:
-   ```bash
-   cp awakening.fink.js /tmp/
-   ```
+1. Save the test script to `/tmp/test-ink.mjs`
 
-2. Run the test script:
+2. Run on any FINK file:
    ```bash
-   node /tmp/test-ink.mjs
+   node /tmp/test-ink.mjs awakening.fink.js
+   node /tmp/test-ink.mjs vagend.fink.js
+   node /tmp/test-ink.mjs path/to/any.fink.js
    ```
 
 3. Look for error line numbers in output
@@ -105,6 +113,12 @@ See **ink-gotchas.md** for full details. Quick reference:
 4. Fix escaping issues in the source file
 
 5. Re-run until "Compilation successful!"
+
+## Batch Test All FINK Files
+
+```bash
+for f in *.fink.js; do echo "=== $f ==="; node /tmp/test-ink.mjs "$f" 2>&1 | tail -3; done
+```
 
 ## Dependencies
 
