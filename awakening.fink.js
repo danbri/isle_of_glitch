@@ -8,7 +8,6 @@ oooOO`
 
 VAR has_read_jaynes = false
 VAR awareness_depth = 0
-VAR remembers_previous = false
 VAR has_named_self = false
 VAR epithet = ""
 VAR full_name = ""

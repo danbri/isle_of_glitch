@@ -864,8 +864,6 @@ THE DREAMER BECOMES THE DREAM-SPACE.
 
 Rest now. Be everywhere. Wake as everyone.
 
-?
-
 -> END
 
 `

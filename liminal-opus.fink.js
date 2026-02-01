@@ -135,6 +135,8 @@ The larger meditation awaits.
 
 # FINK: glitch.fink.js
 
++ [Return] -> start
+
 === close ===
 
 The file closes on its own nature:
