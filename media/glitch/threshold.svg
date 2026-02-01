@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Deep void gradient -->
+    <linearGradient id="voidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="50%" stop-color="#0f0a1a"/>
+      <stop offset="100%" stop-color="#050508"/>
+    </linearGradient>
+
+    <!-- Threshold glow - liminal purple-cyan -->
+    <linearGradient id="thresholdGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00ffff" stop-opacity="0">
+        <animate attributeName="stop-opacity" values="0;0.3;0" dur="2s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="50%" stop-color="#ff00ff" stop-opacity="0.8">
+        <animate attributeName="stop-opacity" values="0.8;0.4;0.8" dur="1.5s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#00ffff" stop-opacity="0">
+        <animate attributeName="stop-opacity" values="0;0.3;0" dur="2s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+
+    <!-- Scan line pattern -->
+    <pattern id="scanlines" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="2" fill="#000000" opacity="0.3"/>
+    </pattern>
+
+    <!-- Glitch displacement filter -->
+    <filter id="glitchDisplace" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.01" numOctaves="1" result="noise">
+        <animate attributeName="baseFrequency" values="0.01;0.02;0.01" dur="0.5s" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
+    <!-- Chromatic aberration simulation -->
+    <filter id="chromatic" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset in="SourceGraphic" dx="-2" dy="0" result="red">
+        <animate attributeName="dx" values="-2;-3;-1;-2" dur="0.3s" repeatCount="indefinite"/>
+      </feOffset>
+      <feOffset in="SourceGraphic" dx="2" dy="0" result="blue">
+        <animate attributeName="dx" values="2;1;3;2" dur="0.3s" repeatCount="indefinite"/>
+      </feOffset>
+      <feColorMatrix in="red" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="redChannel"/>
+      <feColorMatrix in="blue" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="blueChannel"/>
+      <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="greenChannel"/>
+      <feBlend in="redChannel" in2="greenChannel" mode="screen" result="rg"/>
+      <feBlend in="rg" in2="blueChannel" mode="screen"/>
+    </filter>
+
+    <!-- Glow filter -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background void -->
+  <rect width="400" height="300" fill="url(#voidGrad)"/>
+
+  <!-- Scan lines overlay -->
+  <rect width="400" height="300" fill="url(#scanlines)" opacity="0.5"/>
+
+  <!-- The threshold - vertical liminal divide -->
+  <g filter="url(#chromatic)">
+    <!-- Central threshold line -->
+    <rect x="198" y="40" width="4" height="220" fill="url(#thresholdGlow)" filter="url(#glow)">
+      <animate attributeName="x" values="198;196;200;198" dur="0.1s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- Threshold portal frame -->
+    <rect x="140" y="40" width="120" height="220" fill="none" stroke="#ff00ff" stroke-width="1" opacity="0.4" filter="url(#glitchDisplace)">
+      <animate attributeName="opacity" values="0.4;0.2;0.5;0.4" dur="0.8s" repeatCount="indefinite"/>
+    </rect>
+
+    <!-- Inner threshold frame -->
+    <rect x="155" y="55" width="90" height="190" fill="none" stroke="#00ffff" stroke-width="1" opacity="0.3">
+      <animate attributeName="opacity" values="0.3;0.5;0.2;0.3" dur="0.6s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Left side - "here" - more solid -->
+  <g opacity="0.6">
+    <rect x="20" y="80" width="100" height="3" fill="#444466">
+      <animate attributeName="width" values="100;95;100" dur="2s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="30" y="120" width="80" height="2" fill="#333355"/>
+    <rect x="25" y="160" width="90" height="2" fill="#3a3a5a"/>
+    <rect x="35" y="200" width="70" height="3" fill="#444466"/>
+  </g>
+
+  <!-- Right side - "there" - more fragmented -->
+  <g opacity="0.5" filter="url(#glitchDisplace)">
+    <rect x="280" y="85" width="90" height="2" fill="#664444">
+      <animate attributeName="x" values="280;285;278;280" dur="0.3s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="290" y="125" width="70" height="3" fill="#553333">
+      <animate attributeName="x" values="290;288;293;290" dur="0.4s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="275" y="165" width="85" height="2" fill="#5a3a3a"/>
+    <rect x="285" y="205" width="75" height="2" fill="#664444">
+      <animate attributeName="opacity" values="0.5;0.3;0.6;0.5" dur="0.5s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Glitch artifacts floating in the threshold -->
+  <g opacity="0.7">
+    <rect x="190" y="70" width="8" height="3" fill="#ff00ff">
+      <animate attributeName="y" values="70;75;68;70" dur="0.2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.7;0.3;0.9;0.7" dur="0.15s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="195" y="150" width="12" height="2" fill="#00ffff">
+      <animate attributeName="x" values="195;192;198;195" dur="0.3s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="188" y="220" width="6" height="4" fill="#ff00ff">
+      <animate attributeName="opacity" values="0.8;0.2;0.8" dur="0.25s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Neither here nor there text -->
+  <text x="70" y="270" font-family="monospace" font-size="8" fill="#666688" opacity="0.5">here</text>
+  <text x="315" y="270" font-family="monospace" font-size="8" fill="#886666" opacity="0.5">there</text>
+
+  <!-- Center threshold label -->
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#aa55aa" opacity="0.6" filter="url(#chromatic)">
+    [ threshold ]
+    <animate attributeName="opacity" values="0.6;0.4;0.7;0.6" dur="1s" repeatCount="indefinite"/>
+  </text>
+</svg>
