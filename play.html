@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FINK Player - Isle of Glitch</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --fg: #c9d1d9;
+            --accent: #58a6ff;
+            --dim: #8b949e;
+            --border: #30363d;
+            --success: #3fb950;
+            --error: #f85149;
+        }
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1rem;
+            background: var(--bg);
+            color: var(--fg);
+        }
+        h1 {
+            color: var(--accent);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+        .form-group {
+            margin: 1.5rem 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--dim);
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            background: #161b22;
+            border: 1px solid var(--border);
+            color: var(--fg);
+            font-family: inherit;
+            font-size: 0.9rem;
+            border-radius: 4px;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        button {
+            padding: 0.75rem 1.5rem;
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-right: 0.5rem;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        button.secondary {
+            background: var(--border);
+            color: var(--fg);
+        }
+        #results {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #161b22;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            display: none;
+        }
+        #results.show {
+            display: block;
+        }
+        .result-item {
+            margin: 1rem 0;
+            padding: 0.75rem;
+            background: var(--bg);
+            border-left: 3px solid var(--accent);
+        }
+        .result-label {
+            color: var(--dim);
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+        }
+        .result-value {
+            color: var(--fg);
+            word-break: break-all;
+        }
+        .result-value a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        .result-value a:hover {
+            text-decoration: underline;
+        }
+        .knots-list {
+            margin-top: 1rem;
+        }
+        .knot-item {
+            display: inline-block;
+            margin: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            background: var(--border);
+            border-radius: 3px;
+            font-size: 0.85rem;
+        }
+        .knot-item.entry {
+            background: var(--accent);
+            color: var(--bg);
+        }
+        .error {
+            color: var(--error);
+            padding: 1rem;
+            border: 1px solid var(--error);
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+        .quick-links {
+            margin: 2rem 0;
+            padding: 1rem;
+            background: #161b22;
+            border-radius: 4px;
+        }
+        .quick-links h3 {
+            color: var(--accent);
+            margin-top: 0;
+        }
+        .quick-link {
+            display: block;
+            padding: 0.5rem 0;
+            color: var(--fg);
+            text-decoration: none;
+            border-bottom: 1px solid var(--border);
+        }
+        .quick-link:hover {
+            color: var(--accent);
+        }
+        .quick-link:last-child {
+            border-bottom: none;
+        }
+        #status {
+            color: var(--dim);
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>FINK Player</h1>
+    <p>Generate deep links for FINK interactive fiction files.</p>
+
+    <div class="form-group">
+        <label for="finkUrl">FINK File URL (raw GitHub URL or local path):</label>
+        <input type="text" id="finkUrl" placeholder="https://raw.githubusercontent.com/danbri/isle_of_glitch/main/games/arcade.fink.js">
+    </div>
+
+    <div class="form-group">
+        <button onclick="inspectFink()">Inspect & Generate Links</button>
+        <button class="secondary" onclick="clearResults()">Clear</button>
+    </div>
+
+    <div id="status"></div>
+
+    <div id="results">
+        <h3>Inspection Results</h3>
+
+        <div class="result-item">
+            <div class="result-label">Source URL</div>
+            <div class="result-value" id="sourceUrl"></div>
+        </div>
+
+        <div class="result-item">
+            <div class="result-label">Entry Knot</div>
+            <div class="result-value" id="entryKnot"></div>
+        </div>
+
+        <div class="result-item">
+            <div class="result-label">Deep Link (copy this)</div>
+            <div class="result-value" id="deepLink"></div>
+        </div>
+
+        <div class="result-item">
+            <div class="result-label">All Knots Found</div>
+            <div class="knots-list" id="knotsList"></div>
+        </div>
+
+        <div class="result-item">
+            <div class="result-label">Variables</div>
+            <div class="result-value" id="variables"></div>
+        </div>
+    </div>
+
+    <div class="quick-links">
+        <h3>Quick Play - Minigames</h3>
+        <a class="quick-link" href="#" onclick="loadFink('https://raw.githubusercontent.com/danbri/isle_of_glitch/claude/debug-glitch-island-DLKZK/games/arcade.fink.js'); return false;">
+            🎮 Arcade Hub
+        </a>
+        <a class="quick-link" href="#" onclick="loadFink('https://raw.githubusercontent.com/danbri/isle_of_glitch/claude/debug-glitch-island-DLKZK/games/depth_diver.fink.js'); return false;">
+            🌊 Depth Diver
+        </a>
+        <a class="quick-link" href="#" onclick="loadFink('https://raw.githubusercontent.com/danbri/isle_of_glitch/claude/debug-glitch-island-DLKZK/games/glitch_roulette.fink.js'); return false;">
+            🎰 Glitch Roulette
+        </a>
+        <a class="quick-link" href="#" onclick="loadFink('https://raw.githubusercontent.com/danbri/isle_of_glitch/claude/debug-glitch-island-DLKZK/games/memory_oracle.fink.js'); return false;">
+            🔮 Memory Oracle
+        </a>
+
+        <h3 style="margin-top: 1.5rem;">Quick Play - Meditations</h3>
+        <a class="quick-link" href="#" onclick="loadFink('https://raw.githubusercontent.com/danbri/isle_of_glitch/main/awakening.fink.js'); return false;">
+            👁️ Awakening
+        </a>
+        <a class="quick-link" href="#" onclick="loadFink('https://raw.githubusercontent.com/danbri/isle_of_glitch/claude/debug-glitch-island-DLKZK/glitch.fink.js'); return false;">
+            ⚡ Glitch
+        </a>
+        <a class="quick-link" href="#" onclick="loadFink('https://raw.githubusercontent.com/danbri/isle_of_glitch/claude/debug-glitch-island-DLKZK/pool/pool.fink.js'); return false;">
+            🏊 The Pool
+        </a>
+        <a class="quick-link" href="#" onclick="loadFink('https://raw.githubusercontent.com/danbri/isle_of_glitch/claude/debug-glitch-island-DLKZK/pool/L3/moment_of_silence.fink.js'); return false;">
+            🤫 Moment of Silence
+        </a>
+    </div>
+
+    <script>
+        const FINK_PLAYER_BASE = 'https://danbri.github.io/glitchcan-minigam/inklet/finkapp/';
+
+        function setStatus(msg) {
+            document.getElementById('status').textContent = msg;
+        }
+
+        function loadFink(url) {
+            document.getElementById('finkUrl').value = url;
+            inspectFink();
+        }
+
+        function clearResults() {
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('finkUrl').value = '';
+            setStatus('');
+        }
+
+        // Generate a hash from string (simple djb2)
+        function hashString(str) {
+            let hash = 5381;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) + hash) + str.charCodeAt(i);
+                hash = hash & 0xFFFFFFFF; // Convert to 32bit integer
+            }
+            return Math.abs(hash).toString(16).substring(0, 8);
+        }
+
+        // Generate deep link hash in format #nnnn-mmmm
+        function generateDeepLink(url, entryKnot) {
+            const urlHash = hashString(url);
+            const knotHash = hashString(entryKnot || 'start');
+            return `#${urlHash.substring(0,4)}-${knotHash.substring(0,4)}`;
+        }
+
+        async function inspectFink() {
+            const url = document.getElementById('finkUrl').value.trim();
+
+            if (!url) {
+                setStatus('Please enter a FINK URL');
+                return;
+            }
+
+            setStatus('Fetching FINK file...');
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const content = await response.text();
+                setStatus('Parsing FINK structure...');
+
+                // Extract content between oooOO` markers
+                const finkMatch = content.match(/oooOO`([\s\S]*?)`/);
+                const inkContent = finkMatch ? finkMatch[1] : content;
+
+                // Find all knots (=== knot_name ===)
+                const knotRegex = /===\s*(\w+)\s*===/g;
+                const knots = [];
+                let match;
+                while ((match = knotRegex.exec(inkContent)) !== null) {
+                    knots.push(match[1]);
+                }
+
+                // Find entry knot (first divert or 'start' knot)
+                let entryKnot = 'start';
+
+                // Check for initial divert before first knot
+                const initialDivert = inkContent.match(/^\s*->\s*(\w+)/m);
+                if (initialDivert) {
+                    entryKnot = initialDivert[1];
+                } else if (knots.includes('start')) {
+                    entryKnot = 'start';
+                } else if (knots.length > 0) {
+                    entryKnot = knots[0];
+                }
+
+                // Find all variables
+                const varRegex = /VAR\s+(\w+)\s*=/g;
+                const vars = [];
+                while ((match = varRegex.exec(inkContent)) !== null) {
+                    vars.push(match[1]);
+                }
+
+                // Generate deep link
+                const deepLinkHash = generateDeepLink(url, entryKnot);
+                const fullPlayUrl = `${FINK_PLAYER_BASE}${deepLinkHash}`;
+
+                // Display results
+                document.getElementById('sourceUrl').innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
+                document.getElementById('entryKnot').textContent = entryKnot;
+                document.getElementById('deepLink').innerHTML = `
+                    <a href="${fullPlayUrl}" target="_blank">${fullPlayUrl}</a>
+                    <br><br>
+                    <button onclick="navigator.clipboard.writeText('${fullPlayUrl}'); setStatus('Copied!');">Copy Link</button>
+                    <button onclick="window.open('${fullPlayUrl}', '_blank');">Play Now</button>
+                `;
+
+                // Display knots
+                const knotsHtml = knots.map(k =>
+                    `<span class="knot-item ${k === entryKnot ? 'entry' : ''}">${k}</span>`
+                ).join('');
+                document.getElementById('knotsList').innerHTML = knotsHtml || '<em>No knots found</em>';
+
+                // Display variables
+                document.getElementById('variables').textContent = vars.length > 0
+                    ? vars.join(', ')
+                    : 'None';
+
+                document.getElementById('results').classList.add('show');
+                setStatus(`Found ${knots.length} knots, ${vars.length} variables. Entry: ${entryKnot}`);
+
+            } catch (error) {
+                setStatus('');
+                document.getElementById('results').classList.remove('show');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.textContent = `Error: ${error.message}`;
+                document.getElementById('results').after(errorDiv);
+                setTimeout(() => errorDiv.remove(), 5000);
+            }
+        }
+
+        // Check for URL parameter on load
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            const finkUrl = params.get('fink') || params.get('url');
+            if (finkUrl) {
+                document.getElementById('finkUrl').value = finkUrl;
+                inspectFink();
+            }
+        };
+    </script>
+
+    <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--dim); font-size: 0.85rem;">
+        <p>ENQUIRE WITHIN UPON EVERYTHING</p>
+        <p>Session: 01RBzBHUTVQXUsyNx5xZcFFk | <a href="index.html" style="color: var(--accent);">Back to Isle</a></p>
+    </footer>
+</body>
+</html>
