@@ -1,0 +1,185 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <!-- Void background -->
+    <radialGradient id="ephemBg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0d0d14"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+
+    <!-- Central form gradient (fading) -->
+    <radialGradient id="centralForm" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#a569bd" stop-opacity="0.6"/>
+      <stop offset="40%" stop-color="#7d3c98" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#4a235a" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Particle gradients with transparency -->
+    <radialGradient id="particlePurple" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#d2a8ff"/>
+      <stop offset="100%" stop-color="#9b59b6" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="particleBlue" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#79c0ff"/>
+      <stop offset="100%" stop-color="#3498db" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="particleWhite" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Glow filter -->
+    <filter id="particleGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+
+    <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="300" fill="url(#ephemBg)"/>
+
+  <!-- Central dissolving form -->
+  <g filter="url(#softBlur)">
+    <circle cx="200" cy="150" r="40" fill="url(#centralForm)">
+      <animate attributeName="r" values="45;35;45" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.3;0.5" dur="4s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Inner remnant -->
+  <circle cx="200" cy="150" r="15" fill="#4a235a" opacity="0.4">
+    <animate attributeName="r" values="18;12;18" dur="3s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.5;0.2;0.5" dur="3s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Scattering particles - ring 1 (closest) -->
+  <g>
+    <circle cx="200" cy="150" r="3" fill="url(#particlePurple)" filter="url(#particleGlow)">
+      <animate attributeName="cx" values="200;160;120" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;120;90" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.9;0.4;0" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="3;2;1" dur="6s" repeatCount="indefinite"/>
+    </circle>
+
+    <circle cx="200" cy="150" r="2.5" fill="url(#particleBlue)" filter="url(#particleGlow)">
+      <animate attributeName="cx" values="200;240;290" dur="5.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;130;100" dur="5.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;0.3;0" dur="5.5s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="2.5;1.5;0.5" dur="5.5s" repeatCount="indefinite"/>
+    </circle>
+
+    <circle cx="200" cy="150" r="3" fill="url(#particleWhite)" filter="url(#particleGlow)">
+      <animate attributeName="cx" values="200;220;250" dur="7s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;190;240" dur="7s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.9;0.5;0" dur="7s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="3;2;0.5" dur="7s" repeatCount="indefinite"/>
+    </circle>
+
+    <circle cx="200" cy="150" r="2" fill="url(#particlePurple)" filter="url(#particleGlow)">
+      <animate attributeName="cx" values="200;170;130" dur="6.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;180;220" dur="6.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.7;0.3;0" dur="6.5s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="2;1.5;0.5" dur="6.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Scattering particles - ring 2 -->
+  <g>
+    <circle cx="200" cy="150" r="2" fill="url(#particleBlue)" filter="url(#particleGlow)">
+      <animate attributeName="cx" values="200;145;80" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;150;150" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.6;0.2;0" dur="8s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="2;1;0.3" dur="8s" repeatCount="indefinite"/>
+    </circle>
+
+    <circle cx="200" cy="150" r="2.5" fill="url(#particlePurple)" filter="url(#particleGlow)">
+      <animate attributeName="cx" values="200;255;320" dur="7.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;145;140" dur="7.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.7;0.25;0" dur="7.5s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="2.5;1.2;0.3" dur="7.5s" repeatCount="indefinite"/>
+    </circle>
+
+    <circle cx="200" cy="150" r="1.5" fill="url(#particleWhite)" filter="url(#particleGlow)">
+      <animate attributeName="cx" values="200;185;160" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;100;40" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.5;0.15;0" dur="9s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="1.5;0.8;0.2" dur="9s" repeatCount="indefinite"/>
+    </circle>
+
+    <circle cx="200" cy="150" r="2" fill="url(#particleBlue)" filter="url(#particleGlow)">
+      <animate attributeName="cx" values="200;215;240" dur="8.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;200;260" dur="8.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.6;0.2;0" dur="8.5s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="2;1;0.2" dur="8.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Scattering particles - ring 3 (farthest, most faded) -->
+  <g opacity="0.5">
+    <circle cx="200" cy="150" r="1.5" fill="url(#particlePurple)" filter="url(#particleGlow)">
+      <animate attributeName="cx" values="200;120;30" dur="10s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;80;20" dur="10s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4;0.1;0" dur="10s" repeatCount="indefinite"/>
+    </circle>
+
+    <circle cx="200" cy="150" r="1" fill="url(#particleWhite)" filter="url(#particleGlow)">
+      <animate attributeName="cx" values="200;280;370" dur="11s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;70;10" dur="11s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.3;0.08;0" dur="11s" repeatCount="indefinite"/>
+    </circle>
+
+    <circle cx="200" cy="150" r="1.2" fill="url(#particleBlue)" filter="url(#particleGlow)">
+      <animate attributeName="cx" values="200;100;20" dur="9.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;200;280" dur="9.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.35;0.1;0" dur="9.5s" repeatCount="indefinite"/>
+    </circle>
+
+    <circle cx="200" cy="150" r="1" fill="url(#particlePurple)" filter="url(#particleGlow)">
+      <animate attributeName="cx" values="200;300;380" dur="10.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="150;220;290" dur="10.5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.3;0.08;0" dur="10.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Dust trail particles (very small, very faded) -->
+  <g opacity="0.3">
+    <circle cx="140" cy="110" r="0.8" fill="#d2a8ff">
+      <animate attributeName="opacity" values="0.3;0;0.3" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="260" cy="100" r="0.6" fill="#79c0ff">
+      <animate attributeName="opacity" values="0.2;0;0.2" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="120" cy="180" r="0.7" fill="#ffffff">
+      <animate attributeName="opacity" values="0.25;0;0.25" dur="4.2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="280" cy="200" r="0.5" fill="#d2a8ff">
+      <animate attributeName="opacity" values="0.2;0;0.2" dur="3.8s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="100" cy="140" r="0.6" fill="#79c0ff">
+      <animate attributeName="opacity" values="0.15;0;0.15" dur="5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="300" cy="160" r="0.7" fill="#ffffff">
+      <animate attributeName="opacity" values="0.2;0;0.2" dur="4.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <!-- Fading echo rings -->
+  <circle cx="200" cy="150" r="60" fill="none" stroke="#4a235a" stroke-width="0.5" opacity="0.2">
+    <animate attributeName="r" values="50;80;50" dur="5s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.2;0.05;0.2" dur="5s" repeatCount="indefinite"/>
+  </circle>
+
+  <circle cx="200" cy="150" r="90" fill="none" stroke="#2d1b4e" stroke-width="0.3" opacity="0.1">
+    <animate attributeName="r" values="80;110;80" dur="6s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.1;0.02;0.1" dur="6s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Subtle text -->
+  <text x="200" y="285" text-anchor="middle" font-family="monospace" font-size="9" fill="#2d2d4a" opacity="0.4">
+    [ ephemeral ]
+  </text>
+</svg>
