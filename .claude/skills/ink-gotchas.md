@@ -111,3 +111,8 @@ The `inkchecker.mjs` validator now detects this error.
 | `*` start | Once-only choice | Use `-` or `•` |
 | `#` start | Tag | Intentional |
 | Missing `->` | Immediate END | Add `-> start` after VARs |
+
+## See Also
+
+- **debug-ink.md** - Using inkchecker.mjs to validate FINK files
+- **fink.md** - FINK authoring guide

@@ -23,6 +23,7 @@ The script:
 2. Compiles with inkjs compiler
 3. Reports errors with line numbers
 4. Shows warnings about loose ends
+5. Detects missing top-level diverts (the "silent killer" - see ink-gotchas.md #6)
 
 ```javascript
 // Key extraction logic
@@ -34,14 +35,15 @@ const compiler = new inkjs.Compiler(inkContent);
 
 See **ink-gotchas.md** for full details. Quick reference:
 
-| Character | INK Meaning | Fix for Literal |
-|-----------|-------------|-----------------|
-| `//` | Comment | `\/\/` |
-| `[]` | Choice text | `\[` `\]` |
-| `{}` | Logic/interpolation | `\{` `\}` |
-| `*` | Once-only choice | `\*` |
-| `#` | Tag | `\#` |
-| `\|` | Alternatives in sequences | Reword to avoid |
+| Issue | Symptom | Fix |
+|-------|---------|-----|
+| `//` | Text after `//` gone | `\/\/` |
+| `[]` | Brackets disappear | `\[` `\]` |
+| `{}` | Parse error | `\{` `\}` |
+| `*` | Line becomes choice | `\*` |
+| `#` | Line becomes tag | `\#` |
+| `\|` | Alternatives error | Reword to avoid |
+| No `-> start` | Immediate END | Add `-> start` after VARs |
 
 ## Dependencies
 
