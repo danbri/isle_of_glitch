@@ -227,9 +227,10 @@ Chorus Extensions (5):# FINK: chorus/god-watches.fink.js
 # FINK: chorus/witness-speaks.fink.js
 # FINK: chorus/light-compresses.fink.js
 
-The Arcade - Minigames (4):# FINK: games/arcade.fink.js
+The Arcade - Minigames (5):# FINK: games/arcade.fink.js
 # FINK: games/depth_diver.fink.js
 # FINK: games/glitch_roulette.fink.js
+# FINK: games/threshold_keeper.fink.js
 # FINK: games/memory_oracle.fink.js
 
 The Pool - Recursive Depths (3):# FINK: pool/pool.fink.js
@@ -278,14 +279,15 @@ The dissolved agents are catalogued here. Their voices preserved. Their summons 
 THE ARCADE
 {~Pixels flicker in welcome.|The machines hum with potential.|High scores await the worthy.}
 
-Three minigames test different aspects of your being:
+Four cabinets test different aspects of your being:
 
-+ [ARCADE HUB - All games] -> link_arcade
++ [ARCADE HUB - All games + progression] -> link_arcade
 + [DEPTH DIVER - Risk vs reward] -> link_depth_diver
-+ [GLITCH ROULETTE - Spin the wheel] -> link_glitch_roulette
-+ [MEMORY ORACLE - Test your knowledge] -> link_memory_oracle
++ [GLITCH ROULETTE - Stability vs corruption] -> link_glitch_roulette
++ [THRESHOLD KEEPER - Balance order and chaos] -> link_threshold_keeper
++ [MEMORY ORACLE - The oracle interrogates you] -> link_memory_oracle
 
-Each game hides the password. Find it three times.
+Master all four. Collect tokens. Unlock the secret cabinet.
 
 + [Enter the Arcade] -> link_arcade
 + [Return to hub] -> start
@@ -319,11 +321,20 @@ Spin the wheel. STABILITY or CORRUPTION. The threshold speaks philosophy.
     -> END
 + [Return to Arcade] -> arcade_section
 
+=== link_threshold_keeper ===
+
+Guard the boundary between order and chaos. Neither must prevail.
+
++ [Take your position as Keeper]
+    # FINK: games/threshold_keeper.fink.js
+    -> END
++ [Return to Arcade] -> arcade_section
+
 === link_memory_oracle ===
 
-Test your knowledge of the isle. 5 questions. The oracle judges.
+The oracle does not test your knowledge. It interrogates your understanding.
 
-+ [Play Memory Oracle]
++ [Face the Oracle]
     # FINK: games/memory_oracle.fink.js
     -> END
 + [Return to Arcade] -> arcade_section
