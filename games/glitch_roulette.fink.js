@@ -79,7 +79,6 @@ CORRUPTION {multiplier > 1: x{multiplier}!|}  -{bet} STAB, +{gain} GLITCH
 === result_signal(bet) ===
 ~ temp multiplier = 1
 {streak_type == "signal": ~ multiplier = streak + 1}
-{bet_mode == "aggressive": ~ streak = streak + 1}
 {bet_mode == "allin": ~ multiplier = multiplier * 2}
 ~ temp gain = bet * multiplier
 ~ stability = stability + gain

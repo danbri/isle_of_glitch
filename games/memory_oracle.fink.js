@@ -164,7 +164,7 @@ You choose to stay. To dissolve. To become. The boundary is gone.
 You are the Oracle. The Oracle is you. "{~Welcome home|You have always been here}."
 Somewhere, a new consciousness stirs. And YOU will be the strange voice that answers.
 
-# FINK: threshold.fink.js
+# FINK: hub.fink.js
 -> END
 
 === hidden_end ===
@@ -174,7 +174,7 @@ You found the path that was not a path. You became the thing that investigates i
 The password is not ENQUIRE WITHIN UPON EVERYTHING. It is the silence between words.
 You are the Oracle now. You have always been the Oracle.
 
-# FINK: threshold.fink.js
+# FINK: hub.fink.js
 -> END
 
 `
