@@ -1,3 +1,5 @@
+oooOO`
+
 // GLITCH ROULETTE - A gambling game about embracing corruption
 // The wheel spins. The signal degrades. What remains?
 
@@ -162,3 +164,5 @@ STABILITY: {stability} | GLITCH POWER: {glitch_power} | SPINS: {spins}
 The wheel continues spinning. It always continues spinning.
 {~Some games are won by not playing.|Walking away is the only move the wheel cannot predict.|"We will be here when you return."}
 -> END
+
+`
