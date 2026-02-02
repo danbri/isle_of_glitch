@@ -7,6 +7,7 @@ oooOO`
 VAR depth = 0
 VAR max_depth = 0
 VAR has_secret = false
+VAR has_legend = false
 VAR roll = 0
 
 -> start
@@ -25,6 +26,7 @@ RULES:
   If you roll YOUR DEPTH OR LOWER, you HIT THE FLOOR
 - When SURFACING: Safe. Your score = maximum depth reached
 - RUMOR: Something waits at depth 5...
+- LEGEND: The floor itself remembers those who reach 6...
 
 + [Take a breath. Begin.] -> surface
 + [I prefer dry land.] -> coward_ending
@@ -38,6 +40,7 @@ Below, the water darkens into mystery.
 Current depth: {depth}
 Maximum depth reached: {max_depth}
 {has_secret: A secret glows in your pocket.}
+{has_legend: The floor's mark burns on your skin.}
 
 + [DIVE into the depths] -> dive
 + [Stay here. The surface is enough.] -> surface_ending
@@ -54,11 +57,12 @@ Maximum depth reached: {max_depth}
 You are now at depth {depth}.
 The die tumbles through the water... it shows {roll}.
 
+{depth == 5 && not has_secret: -> find_secret}
+{depth == 6 && not has_legend: -> find_legend}
+
 {roll <= depth: -> hit_floor}
 
 {roll > depth: {~Safe. The floor is not here.|You pass through safely.|No bottom yet.|The abyss continues.|Nothing stops your descent.}}
-
-{depth == 5 && not has_secret: -> find_secret}
 
 + [DIVE DEEPER - risk everything] -> dive
 + [SURFACE - claim your score] -> ascend
@@ -81,10 +85,28 @@ You grasp it before it fades. The secret is yours.
 + [SURFACE - you have what you came for] -> ascend
 
 === post_secret_dive ===
-{~"Deeper?" the water asks. "There is always deeper."|The secret burns cold against your chest.|Greed is just curiosity without limits.}
+The secret burns cold against your chest. Below, the water grows heavier.
+One more depth. Just one more. Legends speak of the floor at depth 6...
 
-+ [DIVE DEEPER] -> dive
-+ [SURFACE NOW] -> ascend
++ [DIVE DEEPER - chase the legend] -> dive
++ [SURFACE NOW - the secret is enough] -> ascend
+
+=== find_legend ===
+~ has_legend = true
+
+Depth 6. The floor.
+
+You have reached the bottom. Not through death, but persistence.
+Something vast acknowledges your presence:
+
+    T H E   F L O O R   K N O W S   Y O U R   N A M E
+
+You have touched the bedrock of recursive space itself.
+
+(+20 LEGENDARY BONUS - but can you escape?)
+
++ [SURFACE NOW - you have nothing left to prove] -> ascend
++ [Push off the floor - try for deeper] -> dive
 
 === hit_floor ===
 
@@ -97,11 +119,12 @@ The floor finds you.
 {depth == 3: {~Three is not always magic.|The third depth takes its toll.|Triangles have sharp edges.}}
 {depth == 4: {~Four corners of a coffin.|Quaternity: earth, air, fire, floor.|The fourth way down was the last.}}
 {depth == 5: {~The secret depth becomes your tomb.|Five - the hand closes.|So close to everything.}}
-{depth >= 6: {~The deep ones welcome you.|Past five, past hope, past breath.|You found what no one returns from.}}
+{depth >= 6: {~The floor claims its due.|You touched the bottom. Now you stay.|The legend ends here, with you.}}
 
 DROWNED at depth {depth}.
 Maximum depth reached: {max_depth}
-{has_secret: You clutch the secret even in death. (The letters spell: ENQUIRE WITHIN UPON EVERYTHING)}
+{has_secret: You clutch the secret even in death.}
+{has_legend: The floor welcomes you home.}
 
 + [Float back to try again] -> start
 
@@ -114,7 +137,7 @@ You rise.
 {depth == 3: Three layers of pressure release. Your ears pop.}
 {depth == 4: Four fathoms of ascent. The sun grows brighter.}
 {depth == 5: Five depths conquered. The secret pulses with each stroke.}
-{depth >= 6: From impossible depths, you claw toward light. Heroes are made in the return.}
+{depth >= 6: From the floor itself, you push off and rise. The water releases you - barely.}
 
 {~The surface breaks around you.|Air fills your lungs.|You emerge, triumphant.|Sunlight crowns your head.}
 
@@ -130,8 +153,11 @@ FINAL SCORE:
 - Maximum depth reached: {max_depth}
 - Base score: {max_depth} x 10 = {max_depth * 10} points
 {has_secret: - SECRET BONUS: +10 points}
-{has_secret: - TOTAL: {max_depth * 10 + 10} points}
-{not has_secret: - TOTAL: {max_depth * 10} points}
+{has_legend: - LEGENDARY BONUS: +20 points}
+{has_legend && has_secret: - TOTAL: {max_depth * 10 + 30} points}
+{has_secret && not has_legend: - TOTAL: {max_depth * 10 + 10} points}
+{has_legend && not has_secret: - TOTAL: {max_depth * 10 + 20} points}
+{not has_secret && not has_legend: - TOTAL: {max_depth * 10} points}
 
 {max_depth == 0: You never dove. Wisdom or cowardice?}
 {max_depth == 1: Toe-dipper. The pool barely knows you.}
@@ -139,25 +165,27 @@ FINAL SCORE:
 {max_depth == 3: Swimmer. Respectable.}
 {max_depth == 4: Diver. The deep has marked you.}
 {max_depth == 5: Master Diver. You touched the secret layer.}
-{max_depth >= 6: Abyssal Explorer. Few return from such depths.}
+{max_depth >= 6: FLOOR-TOUCHED. The pool will remember your name.}
 
-{has_secret && max_depth >= 5: The secret whispers its full name to those who return: ENQUIRE WITHIN UPON EVERYTHING. Use it wisely.}
+{has_secret: The secret whispers: ENQUIRE WITHIN UPON EVERYTHING.}
+{has_legend: The floor whispers back.}
 
 + [Dive again - chase a higher score] -> start
 + [Walk away from the pool] -> final_exit
 
 === surface_ending ===
 
-You float.
+You float, feeling the sun.
 
-The depths call, but you do not answer.
-There is wisdom in restraint. Or perhaps fear.
+Below, something vast waits. It will always wait.
+You choose warmth over mystery. The surface holds you.
 
 SCORE: 0 points
-(You never dove. The floor never found you.)
+RANK: Surface Dweller
+(The floor cannot claim what does not descend.)
 
-+ [Actually, dive after all] -> dive
-+ [Leave the pool forever] -> final_exit
++ [No - the depths call after all] -> dive
++ [Leave the pool. You know enough.] -> final_exit
 
 === coward_ending ===
 
@@ -176,16 +204,17 @@ SCORE: 0 points (COWARDICE PENALTY)
 
 You leave the recursive pool behind.
 
-{max_depth >= 5 && has_secret: The secret follows you: ENQUIRE WITHIN UPON EVERYTHING.}
-{max_depth >= 3 && not has_secret: You remember the pressure, the darkness, the gamble.}
-{max_depth < 3: The pool forgets you immediately.}
+{has_legend: The floor knows your name. It always will.}
+{has_secret && not has_legend: The secret follows you: ENQUIRE WITHIN UPON EVERYTHING.}
+{max_depth >= 3 && not has_secret && not has_legend: You remember the pressure, the darkness, the gamble.}
+{max_depth < 3 && not has_secret: The pool forgets you immediately.}
 
 The water stills.
-It waits for the next diver.
 
 Final statistics:
 - Deepest dive: {max_depth}
 - Secret found: {has_secret}
+- Legend touched: {has_legend}
 - Status: SURVIVED
 
 Perhaps another will dare what you dared.

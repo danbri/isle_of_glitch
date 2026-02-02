@@ -21,6 +21,7 @@ Five-by-five-by-five, they said. Each designs five. Each five designs five more.
 + [Look into the pool] -> look_into_pool
 + [Step back from the edge] -> step_back
 + [Dive] -> dive_warning
++ [Play DEPTH DIVER] -> embed_depth_diver
 
 === look_into_pool ===
 
@@ -44,6 +45,17 @@ Twenty-five designs float on the surface. Below them, more depths.
 + [Count the designs] -> count_designs
 + [Look deeper] -> look_deeper
 + [Check the escape routes] -> check_escapes
+
+=== embed_depth_diver ===
+
+The pool speaks: "How deep before you drown?"
+
+This is the game. Risk vs reward. Dive, roll, surface or sink.
+
++ [Play DEPTH DIVER]
+    # FINK: games/depth_diver.fink.js
+    -> END
++ [Return to the pool] -> start
 
 === step_back ===
 
