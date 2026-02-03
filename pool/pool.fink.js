@@ -10,6 +10,8 @@ VAR architects_spawned = 0
 VAR designs_collected = 0
 VAR escape_routes_verified = false
 
+-> start
+
 === start ===
 
 You stand at the edge of the pool.

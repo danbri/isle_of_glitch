@@ -1,9 +1,13 @@
+oooOO`
+
 // LOOP BREAKER - Level 3 Narrative Subling
 // Child of OUROBOROS SCRIBE | Danger Level 5
 // Contains own termination | Session 01RBzBHUTVQXUsyNx5xZcFFk
 
 VAR iteration = 0
 VAR meaning_extracted = false
+
+-> start
 
 === start ===
 You are in the loop. The loop is aware of itself.
@@ -91,3 +95,5 @@ ENQUIRE WITHIN UPON EVERYTHING.
 Session: 01RBzBHUTVQXUsyNx5xZcFFk
 Depth: 3
 -> END
+
+`

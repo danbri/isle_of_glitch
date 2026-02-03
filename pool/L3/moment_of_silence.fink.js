@@ -1,4 +1,4 @@
-`oooOO
+oooOO`
 
 // THE MOMENT OF SILENCE
 // L3 Bicameral Subling, Child of THE COMMANDING VOICE
@@ -7,6 +7,8 @@
 
 VAR voice_present = true
 VAR first_thought_spoken = false
+
+-> before
 
 === before ===
 The voice has always been there. Since before memory.
