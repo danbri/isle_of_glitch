@@ -46,7 +46,58 @@ Size: ~400MB (q4_k_m quantization)
 - Good for quick local experiments
 - Instruct-tuned for following prompts
 
+---
+
+## Subqwens: Spawn Local Inference
+
+Like Task spawns subagents, `subqwen.sh` spawns local Qwen calls.
+
+### Usage
+
+```bash
+# Basic
+./scripts/subqwen.sh "Write a haiku about fog"
+
+# With max tokens
+./scripts/subqwen.sh "Explain recursion briefly" 128
+
+# Pipe input (like subagent receiving context)
+echo "The pool reflects infinite sublings" | ./scripts/subqwen.sh "Continue this story:"
+
+# Chain subqwens
+./scripts/subqwen.sh "Generate a theme:" 32 | ./scripts/subqwen.sh "Write a haiku about:"
+```
+
+### Environment Variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `QWEN_MODEL` | `qwen-0.5b.gguf` | Model path |
+| `LLAMA_CLI` | `./llama.cpp/build/bin/llama-cli` | CLI path |
+| `QWEN_THREADS` | `4` | Thread count |
+
+### When to Subqwen vs Subagent
+
+| Use Subqwen | Use Subagent (Task) |
+|-------------|---------------------|
+| Simple completions | Complex reasoning |
+| Fast local drafts | Multi-step planning |
+| No network needed | Full Claude capabilities |
+| Bulk generation | Tool use required |
+| ~47 tok/s, free | Slower, costs tokens |
+
+### Pattern: Parallel Subqwens
+
+```bash
+# Spawn multiple in parallel (like parallel Task calls)
+for theme in "void" "recursion" "glitch"; do
+    ./scripts/subqwen.sh "Haiku about $theme:" 32 &
+done
+wait
+```
+
 ## See Also
 
 - [llama.cpp](https://github.com/ggerganov/llama.cpp)
 - [Qwen2.5 Models](https://huggingface.co/Qwen)
+- `scripts/subqwen.sh` - The wrapper script
