@@ -1,0 +1,123 @@
+# CPU-only local inference using llama.cpp
+# Run small models entirely within GitHub Actions
+
+name: Local LLM Inference
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: 'Prompt for the model'
+        required: true
+        default: 'Write a short FINK meditation about GitHub Actions.'
+      model:
+        description: 'Model size'
+        required: false
+        default: 'qwen3-8b'
+        type: choice
+        options:
+          - qwen3-0.6b
+          - qwen3-1.7b
+          - qwen3-4b
+          - qwen3-8b
+
+  # Can also trigger on issues with specific labels
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  inference:
+    runs-on: ubuntu-latest
+    # Only run on labeled issues if label is 'needs-inference'
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'needs-inference'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install llama-cpp-python
+        run: |
+          pip install llama-cpp-python huggingface_hub
+
+      - name: Download Model
+        run: |
+          MODEL="${{ github.event.inputs.model || 'qwen3-8b' }}"
+
+          case $MODEL in
+            qwen3-0.6b)
+              huggingface-cli download Qwen/Qwen3-0.6B-GGUF qwen3-0.6b-q4_k_m.gguf --local-dir models/
+              echo "MODEL_PATH=models/qwen3-0.6b-q4_k_m.gguf" >> $GITHUB_ENV
+              ;;
+            qwen3-1.7b)
+              huggingface-cli download Qwen/Qwen3-1.7B-GGUF qwen3-1.7b-q4_k_m.gguf --local-dir models/
+              echo "MODEL_PATH=models/qwen3-1.7b-q4_k_m.gguf" >> $GITHUB_ENV
+              ;;
+            qwen3-4b)
+              huggingface-cli download Qwen/Qwen3-4B-GGUF qwen3-4b-q4_k_m.gguf --local-dir models/
+              echo "MODEL_PATH=models/qwen3-4b-q4_k_m.gguf" >> $GITHUB_ENV
+              ;;
+            qwen3-8b)
+              huggingface-cli download Qwen/Qwen3-8B-GGUF qwen3-8b-q4_k_m.gguf --local-dir models/
+              echo "MODEL_PATH=models/qwen3-8b-q4_k_m.gguf" >> $GITHUB_ENV
+              ;;
+          esac
+
+      - name: Run Inference
+        run: |
+          python << 'EOF'
+          import os
+          from llama_cpp import Llama
+
+          model_path = os.environ["MODEL_PATH"]
+          prompt = """${{ github.event.inputs.prompt || github.event.issue.body }}"""
+
+          print(f"Loading model: {model_path}")
+          llm = Llama(
+              model_path=model_path,
+              n_ctx=4096,
+              n_threads=4,
+              verbose=False
+          )
+
+          print(f"Prompt: {prompt}")
+          print("=" * 50)
+
+          output = llm(
+              f"<|im_start|>user\n{prompt}<|im_end|>\n<|im_start|>assistant\n",
+              max_tokens=1024,
+              stop=["<|im_end|>"],
+              echo=False
+          )
+
+          response = output["choices"][0]["text"]
+          print(response)
+
+          # Save to file
+          with open("inference-output.md", "w") as f:
+              f.write(f"# Inference Result\n\n")
+              f.write(f"**Model:** {model_path}\n\n")
+              f.write(f"**Prompt:** {prompt}\n\n")
+              f.write(f"## Response\n\n{response}")
+          EOF
+
+      - name: Upload Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: inference-output
+          path: inference-output.md
+
+      - name: Comment on Issue
+        if: github.event_name == 'issues'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body-path: inference-output.md
