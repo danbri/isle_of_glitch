@@ -11,6 +11,8 @@ VAR keeper_beaten = false
 VAR secret_found = false
 VAR visits = 0
 
+-> start
+
 === start ===
 ~ visits = visits + 1
 {visits == 1: You push through the static curtain. The ARCADE materializes.|You return. The machines remember.}
