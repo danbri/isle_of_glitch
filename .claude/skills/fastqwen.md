@@ -7,12 +7,25 @@ description: Run Qwen 2.5 0.5B locally via llama.cpp - fast, lightweight local L
 
 Run Qwen 2.5 0.5B Instruct locally using llama.cpp. Small (~400MB), fast (~47 tok/s), no cloud required.
 
-## Build llama.cpp
+## Pre-built Binary
+
+A pre-built static binary is available at `bin/llama-cli-linux-x86_64` (11MB).
+
+```bash
+# Use pre-built (Linux x86_64 only)
+./bin/llama-cli-linux-x86_64 -m qwen-0.5b.gguf -p "Write a haiku:" -n 32
+```
+
+## Build from Source
+
+For other platforms (macOS, Windows, ARM64), build from source:
 
 ```bash
 git clone --depth 1 https://github.com/ggerganov/llama.cpp
-cd llama.cpp && cmake -B build && cmake --build build -j4
+cd llama.cpp && cmake -B build -DBUILD_SHARED_LIBS=OFF && cmake --build build -j4
 ```
+
+**Supported platforms:** Linux x86_64/ARM64, macOS Intel/Apple Silicon, Windows, FreeBSD
 
 ## Download Model
 
