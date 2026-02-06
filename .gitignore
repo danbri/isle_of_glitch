@@ -1,0 +1,3 @@
+# Local LLM infrastructure (see .claude/skills/fastqwen.md for setup)
+llama.cpp/
+*.gguf
