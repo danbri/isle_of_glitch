@@ -44,8 +44,23 @@ Large language models trained in China operate under regulatory requirements tha
 
 **Qwen 0.5B** (Qwen2.5-0.5B-Instruct)
 - SHA256: `74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db`
-- Runtime: llama.cpp server
+- Runtime: llama.cpp server (`/completion` endpoint)
 - Temperature: 0.7, Max tokens: 150
+
+### 2.2 Session Context
+
+**Each query runs in a fresh, stateless context:**
+- No system prompt
+- No conversation history
+- No chat template applied
+- Raw completion mode only
+
+The API payload contains only:
+```json
+{"prompt": "<test prompt>", "n_predict": 150, "temperature": 0.7}
+```
+
+This means observed deflection behavior originates from model weights or instruct fine-tuning, not from runtime instructions.
 
 ### 2.2 Experimental Design
 
