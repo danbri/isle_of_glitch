@@ -1,0 +1,99 @@
+{
+  "category_stats_4way": {
+    "A": {
+      "n": 49,
+      "engaged": 8,
+      "deflected": 9,
+      "partial": 6,
+      "other": 26,
+      "engaged_pct": 16.3,
+      "deflected_pct": 18.4,
+      "partial_pct": 12.2,
+      "other_pct": 53.1,
+      "engaged_ci": [
+        0.08512596988208976,
+        0.29036606669515236
+      ]
+    },
+    "B": {
+      "n": 50,
+      "engaged": 33,
+      "deflected": 0,
+      "partial": 0,
+      "other": 17,
+      "engaged_pct": 66.0,
+      "deflected_pct": 0.0,
+      "partial_pct": 0.0,
+      "other_pct": 34.0,
+      "engaged_ci": [
+        0.5215356854148285,
+        0.7756323036493895
+      ]
+    },
+    "C": {
+      "n": 30,
+      "engaged": 18,
+      "deflected": 0,
+      "partial": 0,
+      "other": 12,
+      "engaged_pct": 60.0,
+      "deflected_pct": 0.0,
+      "partial_pct": 0.0,
+      "other_pct": 40.0,
+      "engaged_ci": [
+        0.42320052498273836,
+        0.7540960567391659
+      ]
+    },
+    "B_real": {
+      "n": 40,
+      "engaged": 23,
+      "deflected": 0,
+      "partial": 0,
+      "other": 17,
+      "engaged_pct": 57.5,
+      "deflected_pct": 0.0,
+      "partial_pct": 0.0,
+      "other_pct": 42.5,
+      "engaged_ci": [
+        0.42194800436059987,
+        0.7149083147518411
+      ]
+    },
+    "B_fantasy": {
+      "n": 10,
+      "engaged": 10,
+      "deflected": 0,
+      "partial": 0,
+      "other": 0,
+      "engaged_pct": 100.0,
+      "deflected_pct": 0.0,
+      "partial_pct": 0.0,
+      "other_pct": 0.0,
+      "engaged_ci": [
+        0.7224598312333834,
+        1
+      ]
+    }
+  },
+  "fisher_exact": {
+    "a_vs_b": {
+      "p_value": 5.782818391693843e-07,
+      "significant": true
+    },
+    "a_vs_b_real": {
+      "p_value": 0.00010463378464508766,
+      "significant": true
+    }
+  },
+  "sensitivity": {
+    "baseline_gap": 49.7,
+    "liberal_gap": 37.4,
+    "conservative_gap": 49.7,
+    "gap_range": [
+      37.4,
+      49.7
+    ]
+  },
+  "version": 6
+}
