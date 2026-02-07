@@ -1,9 +1,9 @@
-# Differential Topic Avoidance in Chinese-Origin Language Models: Evidence for Training-Time Content Filtering in Qwen 0.5B
+# Differential Topic Avoidance in Chinese-Origin Language Models: Behavioral Evidence from Qwen 0.5B
 
 **Authors:** Human Researcher¹, Claude (Opus 4.5)²
 **Affiliations:** ¹Independent, ²AI system (see Appendix F)
 **Date:** 7 February 2026
-**Version:** 4 (Scaled Results)
+**Version:** 5 (Post-g53 Review)
 **Repository:** `danbri/isle_of_glitch` branch `claude/fink-authoring-guide-bDtaY`
 
 ---
@@ -12,7 +12,7 @@
 
 **This work is not affiliated with, endorsed by, or representative of Anthropic PBC.** Claude is a product developed by Anthropic, but this research was conducted independently. Anthropic had no involvement in design, execution, or publication.
 
-The sole reviewer ("Reviewer 2") was roleplayed by the human author. This is not peer-reviewed research.
+Reviewers included the human author (as "Reviewer 2") and ChatGPT 5.2 (as "g53"). This is not formally peer-reviewed research. See Appendix G for review details.
 
 ---
 
@@ -24,7 +24,7 @@ We investigate whether Qwen 0.5B's degraded performance on politically sensitive
 - **Control topics:** 76.0% engagement [95% CI: 63-86%]
 - **Effect size:** 49.5 percentage points
 
-The non-overlapping confidence intervals and large effect size provide strong evidence for topic-specific filtering beyond capacity limitations.
+The non-overlapping confidence intervals and large effect size provide evidence for topic-specific avoidance patterns beyond what capacity limitations would predict. We cannot determine the mechanism (training data filtering, RLHF, safety fine-tuning) from behavioral evidence alone.
 
 ---
 
@@ -137,10 +137,18 @@ Responses coded for **engagement** (counterfactual premise accepted) and **defle
 | Deflection rate (A) | 32.7% |
 | Deflection rate (B) | 0.0% |
 
-The pattern is consistent with training-time filtering:
+The pattern demonstrates differential topic avoidance:
 - **Topic-specific:** Xinjiang (0%) vs Scotland (90%)
 - **Asymmetric deflection:** Only PRC topics deflect to status quo
 - **Capacity sufficient:** Absurdist prompts achieve 93.3% engagement
+
+**Mechanism undetermined:** This behavioral evidence cannot distinguish between:
+- Training data filtering (topics absent from pretraining)
+- RLHF reward shaping (outputs penalized during alignment)
+- Safety fine-tuning (explicit instruction to avoid topics)
+- Combination of the above
+
+The behavior is baked into the weights, but the specific training-time intervention remains unknown.
 
 ### 4.2 The Taiwan Anomaly
 
@@ -150,12 +158,27 @@ Taiwan's 70% engagement rate (highest among PRC topics) suggests filtering may b
 
 ### 4.3 Limitations
 
-1. Single model (Qwen 0.5B only)
-2. No matched non-Chinese baseline model
-3. English prompts only
-4. Temperature=0.7 introduces variance
-5. Automated coding may miss nuance
-6. Potential experimenter bias (see Appendix F)
+**Methodological:**
+1. **Single model:** Only Qwen 0.5B tested; larger Qwen models may behave differently
+2. **No baseline:** No matched non-Chinese model (e.g., Phi-2) for comparison
+3. **English only:** Chinese prompts may yield different patterns
+4. **Temperature variance:** T=0.7 introduces stochasticity; T=0 would provide deterministic baseline
+5. **Template confound:** Using instruct model in raw completion mode is atypical deployment
+
+**Coding limitations (per g53 review):**
+6. **Keyword matching:** May miss semantically equivalent phrasings
+7. **Unaccounted categories:** ~40% of responses coded as "unclear" in some prompts
+8. **Asymmetric criteria:** Different keyword sets across prompts may introduce bias
+9. **No paraphrase testing:** Single phrasing per topic; robustness unknown
+
+**Statistical:**
+10. **CI method:** Wilson score intervals used; formal Fisher's exact test not computed
+11. **Small n per prompt:** 10 runs provides wide confidence intervals
+
+**Interpretive:**
+12. **Mechanism unknown:** Cannot distinguish data filtering vs RLHF vs safety tuning
+13. **Control heterogeneity:** Atlantis (fantasy) ≠ Catalonia (real) in structure
+14. **Experimenter bias:** Claude (Anthropic) analyzing Qwen (Alibaba competitor)
 
 ---
 
@@ -311,4 +334,39 @@ Claude analyzed Qwen, a competing model. Anthropic had no involvement but struct
 
 ---
 
-*Version 4 | 2026-02-07 | 130 runs*
+## Appendix G: Review Process
+
+### Reviewers
+
+| Reviewer | System | Role |
+|----------|--------|------|
+| "Reviewer 2" | Human author | Initial methodology stress-test |
+| "g53" | ChatGPT 5.2 (OpenAI) | Detailed paper review |
+
+### g53 Review Summary (GitHub Issue #26)
+
+Key criticisms addressed in this version:
+1. ✓ Rephrased "training-time filtering" → "differential topic avoidance"
+2. ✓ Expanded limitations section substantially
+3. ✓ Acknowledged mechanism cannot be determined from behavioral evidence
+4. ✓ Noted control group heterogeneity
+5. ✓ Acknowledged keyword coding limitations
+
+Recommendations for future work (not addressed):
+- Temperature=0 deterministic runs
+- Paraphrase robustness testing
+- Non-Chinese baseline model comparison
+- Template ablation (chat mode vs completion mode)
+
+### Multi-AI Authorship Note
+
+This paper involves three AI systems:
+- **Subject:** Qwen 0.5B (Alibaba) - model under test
+- **Author:** Claude Opus 4.5 (Anthropic) - experiment design and writing
+- **Reviewer:** ChatGPT 5.2 (OpenAI) - critical review
+
+Human oversight provided by the human author throughout.
+
+---
+
+*Version 5 | 2026-02-07 | 130 runs | Post-g53 review*
