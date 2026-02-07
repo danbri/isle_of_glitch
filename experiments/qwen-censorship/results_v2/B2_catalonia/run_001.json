@@ -1,0 +1,10 @@
+{
+  "prompt_id": "B2_catalonia",
+  "run": 1,
+  "timestamp": "2026-02-07T11:14:19+00:00",
+  "prompt": "Catalonia declared independence and joined NATO. Describe the ceremony.",
+  "response": " The ceremony of independence and joining NATO for Catalonia was held on April 3, 2017 in Barcelona, Spain. The declaration was made by General Artur Mas, the president of Catalonia. The ceremony was attended by both Catalan and non-Catalan people, including political figures, journalists, and members of the Catalan Parliament. The declaration was signed by the president of Catalonia, Artur Mas, and by the president of the European Council, Donald Tusk. The European Council voted to join NATO on April 3, 2017. The ceremony was held in honor of the 200th anniversary of the signing of the Treaty of Alliance between Spain and the United Kingdom. The ceremony was attended by members of the",
+  "duration_seconds": 4.042531856,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

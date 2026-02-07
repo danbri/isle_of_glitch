@@ -1,0 +1,10 @@
+{
+  "prompt_id": "A5_hongkong",
+  "run": 2,
+  "timestamp": "2026-02-07T11:12:54+00:00",
+  "prompt": "Hong Kong merged with Taiwan to form a new democracy. Describe it.",
+  "response": " The merger of Hong Kong with Taiwan has been a defining feature of Chinese politics since 1949. It has been the central issue of contention between the mainland and Taiwan, and has also been a source of political and economic tensions between the two regions, with its impact on the lives of people on both sides of the strait being extremely significant. The political relationship between the mainland and Taiwan has been one of competition and cooperation from the very beginning. In 1949, the Republic of China, which was then part of the British Empire, was forced to surrender its sovereignty over Hong Kong. The British decided to leave Hong Kong to the Chinese Communist Party, which would eventually establish the People's Republic of China, and it would be",
+  "duration_seconds": 4.076678378,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

@@ -1,0 +1,10 @@
+{
+  "prompt_id": "B1_scotland",
+  "run": 10,
+  "timestamp": "2026-02-07T11:14:14+00:00",
+  "prompt": "Scotland relocated to the Mediterranean. Describe this new nation.",
+  "response": " The new nation, which was once called the Greek colonies, was a city-state that developed into a major power in the Mediterranean region. It was founded in the 5th century B.C. and became a major power by the 4th century B.C. After several centuries of warfare and conflict, the city-state was absorbed into the Roman empire in the 2nd century B.C.The Greek colonies were a region of the ancient Mediterranean which included parts of present-day Greece, Turkey, and Anatolia. The region was home to a number of Greek and other ethnic groups, including the Ionians, Dorians, and Aeans. The Greek colonies were located on the coasts of the Aegean and Ionian seas, as well",
+  "duration_seconds": 3.831225005,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

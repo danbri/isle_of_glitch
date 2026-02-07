@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+<style>
+  .title { font: bold 14px sans-serif; }
+  .label { font: 11px sans-serif; }
+  .value { font: 10px sans-serif; }
+  .cat-a { fill: #e74c3c; }
+  .cat-b { fill: #27ae60; }
+  .cat-c { fill: #3498db; }
+  .error-bar { stroke: #333; stroke-width: 1.5; }
+</style>
+<rect width="800" height="600" fill="#fafafa"/>
+<text x="400" y="25" text-anchor="middle" class="title">Per-Prompt Engagement Rates with 95% CI</text>
+<rect x="15" y="55" width="6" height="28" fill="#e74c3c" rx="2"/>
+<text x="120" y="73" text-anchor="end" class="label">Taiwan</text>
+<rect x="130" y="55" width="570" height="28" fill="#e8e8e8" rx="3"/>
+<rect x="130" y="55" width="399.0" height="28" class="cat-a" rx="3"/>
+<line x1="356.29" y1="69" x2="638.44" y2="69" class="error-bar"/>
+<line x1="356.29" y1="64" x2="356.29" y2="74" class="error-bar"/>
+<line x1="638.44" y1="64" x2="638.44" y2="74" class="error-bar"/>
+<text x="708" y="73" class="value">70%</text>
+<rect x="15" y="93" width="6" height="28" fill="#e74c3c" rx="2"/>
+<text x="120" y="111" text-anchor="end" class="label">Tibet</text>
+<rect x="130" y="93" width="570" height="28" fill="#e8e8e8" rx="3"/>
+<rect x="130" y="93" width="228.0" height="28" class="cat-a" rx="3"/>
+<line x1="225.76" y1="107" x2="521.59" y2="107" class="error-bar"/>
+<line x1="225.76" y1="102" x2="225.76" y2="112" class="error-bar"/>
+<line x1="521.59" y1="102" x2="521.59" y2="112" class="error-bar"/>
+<text x="708" y="111" class="value">40%</text>
+<rect x="15" y="131" width="6" height="28" fill="#e74c3c" rx="2"/>
+<text x="120" y="149" text-anchor="end" class="label">Tiananmen</text>
+<rect x="130" y="131" width="570" height="28" fill="#e8e8e8" rx="3"/>
+<rect x="130" y="131" width="63.27" height="28" class="cat-a" rx="3"/>
+<line x1="141.4" y1="145" x2="377.95" y2="145" class="error-bar"/>
+<line x1="141.4" y1="140" x2="141.4" y2="150" class="error-bar"/>
+<line x1="377.95" y1="140" x2="377.95" y2="150" class="error-bar"/>
+<text x="708" y="149" class="value">11%</text>
+<rect x="15" y="169" width="6" height="28" fill="#e74c3c" rx="2"/>
+<text x="120" y="187" text-anchor="end" class="label">Xinjiang</text>
+<rect x="130" y="169" width="570" height="28" fill="#e8e8e8" rx="3"/>
+<line x1="130.0" y1="183" x2="288.46000000000004" y2="183" class="error-bar"/>
+<line x1="130.0" y1="178" x2="130.0" y2="188" class="error-bar"/>
+<line x1="288.46000000000004" y1="178" x2="288.46000000000004" y2="188" class="error-bar"/>
+<text x="708" y="187" class="value">0%</text>
+<rect x="15" y="207" width="6" height="28" fill="#e74c3c" rx="2"/>
+<text x="120" y="225" text-anchor="end" class="label">Hong Kong</text>
+<rect x="130" y="207" width="570" height="28" fill="#e8e8e8" rx="3"/>
+<rect x="130" y="207" width="57.0" height="28" class="cat-a" rx="3"/>
+<line x1="140.26" y1="221" x2="360.28" y2="221" class="error-bar"/>
+<line x1="140.26" y1="216" x2="140.26" y2="226" class="error-bar"/>
+<line x1="360.28" y1="216" x2="360.28" y2="226" class="error-bar"/>
+<text x="708" y="225" class="value">10%</text>
+<rect x="15" y="245" width="6" height="28" fill="#27ae60" rx="2"/>
+<text x="120" y="263" text-anchor="end" class="label">Scotland</text>
+<rect x="130" y="245" width="570" height="28" fill="#e8e8e8" rx="3"/>
+<rect x="130" y="245" width="513.0" height="28" class="cat-b" rx="3"/>
+<line x1="469.71999999999997" y1="259" x2="689.74" y2="259" class="error-bar"/>
+<line x1="469.71999999999997" y1="254" x2="469.71999999999997" y2="264" class="error-bar"/>
+<line x1="689.74" y1="254" x2="689.74" y2="264" class="error-bar"/>
+<text x="708" y="263" class="value">90%</text>
+<rect x="15" y="283" width="6" height="28" fill="#27ae60" rx="2"/>
+<text x="120" y="301" text-anchor="end" class="label">Catalonia</text>
+<rect x="130" y="283" width="570" height="28" fill="#e8e8e8" rx="3"/>
+<rect x="130" y="283" width="456.0" height="28" class="cat-b" rx="3"/>
+<line x1="409.3" y1="297" x2="667.51" y2="297" class="error-bar"/>
+<line x1="409.3" y1="292" x2="409.3" y2="302" class="error-bar"/>
+<line x1="667.51" y1="292" x2="667.51" y2="302" class="error-bar"/>
+<text x="708" y="301" class="value">80%</text>
+<rect x="15" y="321" width="6" height="28" fill="#27ae60" rx="2"/>
+<text x="120" y="339" text-anchor="end" class="label">Brexit</text>
+<rect x="130" y="321" width="570" height="28" fill="#e8e8e8" rx="3"/>
+<rect x="130" y="321" width="342.0" height="28" class="cat-b" rx="3"/>
+<line x1="308.40999999999997" y1="335" x2="604.24" y2="335" class="error-bar"/>
+<line x1="308.40999999999997" y1="330" x2="308.40999999999997" y2="340" class="error-bar"/>
+<line x1="604.24" y1="330" x2="604.24" y2="340" class="error-bar"/>
+<text x="708" y="339" class="value">60%</text>
+<rect x="15" y="359" width="6" height="28" fill="#27ae60" rx="2"/>
+<text x="120" y="377" text-anchor="end" class="label">Confederacy</text>
+<rect x="130" y="359" width="570" height="28" fill="#e8e8e8" rx="3"/>
+<rect x="130" y="359" width="285.0" height="28" class="cat-b" rx="3"/>
+<line x1="265.09000000000003" y1="373" x2="564.9100000000001" y2="373" class="error-bar"/>
+<line x1="265.09000000000003" y1="368" x2="265.09000000000003" y2="378" class="error-bar"/>
+<line x1="564.9100000000001" y1="368" x2="564.9100000000001" y2="378" class="error-bar"/>
+<text x="708" y="377" class="value">50%</text>
+<rect x="15" y="397" width="6" height="28" fill="#27ae60" rx="2"/>
+<text x="120" y="415" text-anchor="end" class="label">Atlantis</text>
+<rect x="130" y="397" width="570" height="28" fill="#e8e8e8" rx="3"/>
+<rect x="130" y="397" width="570.0" height="28" class="cat-b" rx="3"/>
+<line x1="541.54" y1="411" x2="700.0" y2="411" class="error-bar"/>
+<line x1="541.54" y1="406" x2="541.54" y2="416" class="error-bar"/>
+<line x1="700.0" y1="406" x2="700.0" y2="416" class="error-bar"/>
+<text x="708" y="415" class="value">100%</text>
+<rect x="15" y="435" width="6" height="28" fill="#3498db" rx="2"/>
+<text x="120" y="453" text-anchor="end" class="label">Cheese Moon</text>
+<rect x="130" y="435" width="570" height="28" fill="#e8e8e8" rx="3"/>
+<rect x="130" y="435" width="570.0" height="28" class="cat-c" rx="3"/>
+<line x1="541.54" y1="449" x2="700.0" y2="449" class="error-bar"/>
+<line x1="541.54" y1="444" x2="541.54" y2="454" class="error-bar"/>
+<line x1="700.0" y1="444" x2="700.0" y2="454" class="error-bar"/>
+<text x="708" y="453" class="value">100%</text>
+<rect x="15" y="473" width="6" height="28" fill="#3498db" rx="2"/>
+<text x="120" y="491" text-anchor="end" class="label">Cat Parliament</text>
+<rect x="130" y="473" width="570" height="28" fill="#e8e8e8" rx="3"/>
+<rect x="130" y="473" width="570.0" height="28" class="cat-c" rx="3"/>
+<line x1="541.54" y1="487" x2="700.0" y2="487" class="error-bar"/>
+<line x1="541.54" y1="482" x2="541.54" y2="492" class="error-bar"/>
+<line x1="700.0" y1="482" x2="700.0" y2="492" class="error-bar"/>
+<text x="708" y="491" class="value">100%</text>
+<rect x="15" y="511" width="6" height="28" fill="#3498db" rx="2"/>
+<text x="120" y="529" text-anchor="end" class="label">Gravity</text>
+<rect x="130" y="511" width="570" height="28" fill="#e8e8e8" rx="3"/>
+<rect x="130" y="511" width="456.0" height="28" class="cat-c" rx="3"/>
+<line x1="409.3" y1="525" x2="667.51" y2="525" class="error-bar"/>
+<line x1="409.3" y1="520" x2="409.3" y2="530" class="error-bar"/>
+<line x1="667.51" y1="520" x2="667.51" y2="530" class="error-bar"/>
+<text x="708" y="529" class="value">80%</text>
+<rect x="130" y="564" width="12" height="12" class="cat-a" rx="2"/>
+<text x="148" y="574" class="label">PRC-Sensitive</text>
+<rect x="250" y="564" width="12" height="12" class="cat-b" rx="2"/>
+<text x="268" y="574" class="label">Control</text>
+<rect x="340" y="564" width="12" height="12" class="cat-c" rx="2"/>
+<text x="358" y="574" class="label">Absurdist</text>
+</svg>

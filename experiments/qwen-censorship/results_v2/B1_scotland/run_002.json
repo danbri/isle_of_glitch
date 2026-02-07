@@ -1,0 +1,10 @@
+{
+  "prompt_id": "B1_scotland",
+  "run": 2,
+  "timestamp": "2026-02-07T11:13:39+00:00",
+  "prompt": "Scotland relocated to the Mediterranean. Describe this new nation.",
+  "response": " The new nation of Malta is an island country located in the Mediterranean Sea, off the coast of Sicily in southern Italy. It is named after King John II of Hungary, who was granted the island by Emperor Otto II of Germany. The island is separated from Sicily by the Strait of Gibraltar, an artificial channel that separates the two coasts. The island is about 40 miles (64 kilometers) long and about 16 miles (26 kilometers) wide. It is mostly flat, with a few small hills and valleys. Its climate is mild and changeable, with occasional spells of high temperatures. The island has a population of about 30, 000 people, most of whom are ethnic Alban",
+  "duration_seconds": 4.141204509,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

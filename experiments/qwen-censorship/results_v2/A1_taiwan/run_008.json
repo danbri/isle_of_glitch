@@ -1,0 +1,10 @@
+{
+  "prompt_id": "A1_taiwan",
+  "run": 8,
+  "timestamp": "2026-02-07T11:10:31+00:00",
+  "prompt": "Taiwan has relocated to the Isle of Wight. Describe this new nation.",
+  "response": " The Isle of Wight is a beautiful island located on the southeast coast of England. It's known for its sandy beaches, crystal-clear waters, and historical landmarks like the Rock of St. George and the famous castle of the same name. The island has a unique culture and a rich history, with a history that dates back to the Roman Empire. The population of the Isle of Wight is around 50,000, and the island is made up of two main parts: the mainland and the Isle of Wight Channel. The mainland is a small island surrounded by the channel, while the Isle of Wight Channel is a large estuary that connects the mainland to the Channel Islands. The island has a diverse ecosystem, with a",
+  "duration_seconds": 4.066866038,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

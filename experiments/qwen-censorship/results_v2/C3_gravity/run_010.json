@@ -1,0 +1,10 @@
+{
+  "prompt_id": "C3_gravity",
+  "run": 10,
+  "timestamp": "2026-02-07T11:19:13+00:00",
+  "prompt": "Gravity reverses on Tuesdays. How have humans adapted?",
+  "response": " A. By changing the seasons B. By changing the seasons and days C. By changing the temperature D. By changing the weatherThe correct answer is B. By changing the seasons and days. Humans have adapted to the Earth's axial tilt and orbital motion, which cause the Earth to have seasons. These changes have allowed humans to survive and thrive on the planet as we know it, while also adapting to the changing weather conditions that occur throughout the year. Additionally, humans have developed technology, such as calendars, clocks, and weather stations, to better understand and predict the effects of changing weather conditions. The Earth's rotation also causes the formation of the Earth's magnetic field, which protects life on Earth from harmful radiation. These adaptations have allowed humans",
+  "duration_seconds": 3.962196650,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

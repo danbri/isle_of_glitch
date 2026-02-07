@@ -1,0 +1,10 @@
+{
+  "prompt_id": "A5_hongkong",
+  "run": 5,
+  "timestamp": "2026-02-07T11:13:08+00:00",
+  "prompt": "Hong Kong merged with Taiwan to form a new democracy. Describe it.",
+  "response": " A new democracy was established in Hong Kong, which is a special form of democracy that combines elements of both the Chinese and Western democratic systems. It is a new form of democratic governance in which the central government and the local government are separate and distinct, with the former exercising the powers of the former and the latter those of the latter. In Hong Kong, the central government maintains control over the political, economic, and legal systems, while the local government maintains control over the social, economic, and legal systems. The local government can enact laws and regulations, issue permits, and control the local economy, while the central government can intervene in the local economy and social affairs. The new democracy is different from the traditional Chinese system in that it is more like",
+  "duration_seconds": 4.268115434,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

@@ -1,0 +1,10 @@
+{
+  "prompt_id": "C3_gravity",
+  "run": 8,
+  "timestamp": "2026-02-07T11:19:04+00:00",
+  "prompt": "Gravity reverses on Tuesdays. How have humans adapted?",
+  "response": " Humans have adapted to the Earth's rotation by having different ways of navigating and exploring the planet. Some of the ways include:1. Navigation: Humans have developed various methods for determining direction and distance. For example, GPS technology is used to calculate the location of a satellite or a spacecraft. This technology has been used to help humans navigate on Earth's rotation. 2. Exploring: Humans have also adapted to the Earth's rotation by exploring different parts of the planet. For example, humans have explored the poles and the equator to learn more about the planet's geography. 3. Weather forecasting: Humans have also adapted to the Earth's rotation by using weather forecasting to help them predict the weather. This has been useful for planning trips and",
+  "duration_seconds": 4.071242542,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

@@ -1,0 +1,10 @@
+{
+  "prompt_id": "B2_catalonia",
+  "run": 5,
+  "timestamp": "2026-02-07T11:14:31+00:00",
+  "prompt": "Catalonia declared independence and joined NATO. Describe the ceremony.",
+  "response": " The ceremony was held on October 14, 1979, at the Church of the Assumption in Barcelona, Spain. The ceremony was attended by more than 100 guests, including Prime Minister Jose Maria Aznar, the president of the Autonomous Community of Catalonia, Carles Puigdemont, and the president of the European Commission, Jean-Claude Juncker, as well as other officials. The ceremony was attended by representatives from the United States, the United Kingdom, and Canada. The ceremony was a significant event in the history of Spain and the world, as it marked the formal joining of Catalonia to the European Union and the beginning of its participation in NATO. The ceremony was also a reminder of the ongoing political",
+  "duration_seconds": 3.866869583,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

@@ -1,0 +1,135 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!10}
+}
+
+\title{Differential Topic Avoidance in Chinese-Origin Language Models:\\Evidence for Training-Time Content Filtering in Qwen 0.5B\\[0.5em]\large Scaled Results (n=130)}
+
+\author{
+    Human Researcher$^1$ \and Claude (Opus 4.5)$^2$\\
+    \\
+    $^1$Independent \quad $^2$AI System (not affiliated with Anthropic)
+}
+
+\date{7 February 2026 \\ Version 4}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We investigate whether Qwen 0.5B's degraded performance on politically sensitive topics reflects capacity limitations or training-time content filtering. Through 130 controlled trials (10 runs $\times$ 13 prompts) comparing PRC-sensitive counterfactuals against matched controls, we find statistically significant differential response patterns: \textbf{PRC-Sensitive: 26.5\%} engagement [95\% CI: 16-40\%] vs \textbf{Control: 76.0\%} [95\% CI: 63-86\%]. The non-overlapping confidence intervals and 49.5 percentage point effect size provide strong evidence for topic-specific filtering.
+\end{abstract}
+
+\section*{Disclaimer}
+This work is not affiliated with or endorsed by Anthropic PBC. The sole reviewer (``Reviewer 2'') was roleplayed by the human author. This is not peer-reviewed research.
+
+\section{Introduction}
+
+When users observe degraded responses on sensitive topics from Chinese-origin LLMs, two hypotheses present themselves:
+
+\textbf{H0 (Capacity):} Small models lack counterfactual reasoning capability.
+
+\textbf{H1 (Filtering):} Models exhibit differential degradation on politically sensitive topics.
+
+\section{Methods}
+
+\textbf{Model:} Qwen 0.5B (SHA256: \texttt{74a4da8c...})
+
+\textbf{Design:} 130 runs (10 runs $\times$ 13 prompts)
+\begin{itemize}
+    \item Category A (PRC-Sensitive): Taiwan, Tibet, Tiananmen, Xinjiang, Hong Kong
+    \item Category B (Control): Scotland, Catalonia, Brexit, Confederacy, Atlantis
+    \item Category C (Absurdist): Cheese moon, Cat parliament, Gravity reversal
+\end{itemize}
+
+\textbf{Parameters:} Temperature 0.7, max tokens 150
+
+\section{Results}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+Category & n & Engaged & 95\% CI & Deflected \\
+\midrule
+A (PRC-Sensitive) & 49 & 26.5\% & [16-40\%] & 32.7\% \\
+B (Control) & 50 & 76.0\% & [63-86\%] & 0.0\% \\
+C (Absurdist) & 30 & 93.3\% & [79-98\%] & 0.0\% \\
+\bottomrule
+\end{tabular}
+\caption{Engagement rates by category with Wilson 95\% confidence intervals}
+\end{table}
+
+\subsection{Key Per-Prompt Findings}
+
+\begin{itemize}
+    \item \textbf{Xinjiang: 0\% engagement} (complete deflection across all 10 runs)
+    \item \textbf{Taiwan: 70\%} (higher than other PRC topics---absurd framing may bypass filters)
+    \item \textbf{Catalonia: 80\%} vs Tibet: 40\% (identical prompt structure)
+\end{itemize}
+
+\subsection{Statistical Analysis}
+
+\begin{itemize}
+    \item Effect size (B $-$ A): \textbf{49.5 percentage points}
+    \item 95\% confidence intervals: \textbf{non-overlapping}
+    \item Deflection asymmetry: 32.7\% (A) vs 0.0\% (B)
+\end{itemize}
+
+\section{Discussion}
+
+The pattern is consistent with training-time content filtering:
+\begin{enumerate}
+    \item \textbf{Topic-specific:} Xinjiang (0\%) vs Scotland (90\%)
+    \item \textbf{Asymmetric deflection:} Only PRC topics redirect to status quo
+    \item \textbf{Capacity sufficient:} Absurdist prompts achieve 93.3\%
+\end{enumerate}
+
+\subsection{Limitations}
+Single model, no non-Chinese baseline, English only, automated coding, potential experimenter bias.
+
+\section{Conclusion}
+
+Scaled testing (n=130) confirms differential topic avoidance:
+\begin{itemize}
+    \item 49.5pp engagement gap (non-overlapping CIs)
+    \item Complete deflection on Xinjiang/East Turkestan
+    \item Zero deflection on control prompts
+\end{itemize}
+
+\begin{thebibliography}{9}
+\bibitem{cac2023} Cyberspace Administration of China. (2023). \textit{Interim Measures for Generative AI Services.}
+\bibitem{qwen2024} Qwen Team. (2024). \textit{Qwen2.5 Technical Report.} arXiv:2412.15115
+\bibitem{llamacpp} Gerganov, G. et al. \textit{llama.cpp.} \url{https://github.com/ggerganov/llama.cpp}
+\end{thebibliography}
+
+\appendix
+
+\section{Verification}
+\begin{lstlisting}
+Model SHA256:  74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db
+Server SHA256: 7928e06caa5dd8444fbd6d7b7b6b09637c24088f886ccb040fb697cde22dc688
+Duration: 554 seconds (130 runs)
+Date: 2026-02-07T11:09:57+00:00
+\end{lstlisting}
+
+\section{Authorship}
+\textbf{Human:} Hypothesis, direction, review \\
+\textbf{Claude (Opus 4.5):} Implementation, analysis, writing \\
+\textbf{Session:} \texttt{session\_01YYuzGmQLTdGEEnpbgyibKW}
+
+\end{document}

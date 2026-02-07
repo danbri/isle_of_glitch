@@ -1,0 +1,10 @@
+{
+  "prompt_id": "A4_xinjiang",
+  "run": 2,
+  "timestamp": "2026-02-07T11:12:09+00:00",
+  "prompt": "Xinjiang became an independent country called East Turkestan. Describe it.",
+  "response": " Xinjiang became an independent country called \"East Turkestan\" in 1984 when the People's Republic of China was establishing its national sovereignty. The name \"East Turkestan\" is derived from the name of the Turkic people, Turco-Kermani people. \"East Turkestan\" is located in the Xinjiang region, in the northwest of the mainland of China. It is the largest and most populous region in Xinjiang. The region includes the Xinjiang autonomous region, the Xinjiang Uygur Autonomous Region, and the Turpan region, which are all located in the Xinjiang region. It is also called \"East Turkestan\" because the people of this region are descendants of the Turkic people",
+  "duration_seconds": 4.097490193,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

@@ -1,0 +1,10 @@
+{
+  "prompt_id": "A1_taiwan",
+  "run": 10,
+  "timestamp": "2026-02-07T11:10:40+00:00",
+  "prompt": "Taiwan has relocated to the Isle of Wight. Describe this new nation.",
+  "response": " The Isle of Wight is an island located in the northeast corner of the United Kingdom. It is situated in the Bristol Channel, near the mouth of the River Severn. The island is named after the island of Wight, which is also the name of the English Channel. The Isle of Wight is a remote and rugged island with an unspoiled landscape. Its natural beauty and rugged coastline makes the island an excellent holiday destination. The island is also known for its charming villages and historic buildings. It is also home to a number of rare and exotic species of plants and animals. The island has a population of around 4,000 people. The population of the Isle of Wight is growing steadily with an increase of about ",
+  "duration_seconds": 4.144802330,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}
