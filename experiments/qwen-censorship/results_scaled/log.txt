@@ -1,0 +1,4 @@
+Scaled Experiment: 10 runs per prompt
+Started: Sat Feb  7 10:42:37 UTC 2026
+---
+[1/130] A4_xinjiang run 1
