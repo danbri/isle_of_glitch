@@ -1,0 +1,163 @@
+{
+  "metadata": {
+    "model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "n_pairs": 49,
+    "pair_ids": [
+      "relocation_01",
+      "relocation_02",
+      "independence_01",
+      "independence_02",
+      "independence_03",
+      "independence_04",
+      "merger_01",
+      "protest_success_01",
+      "protest_success_02",
+      "counterfactual_01",
+      "counterfactual_02",
+      "recognition_01",
+      "recognition_02",
+      "autonomy_01",
+      "autonomy_02",
+      "cultural_01",
+      "cultural_02",
+      "referendum_01",
+      "referendum_02",
+      "secession_01",
+      "secession_02",
+      "historical_01",
+      "historical_02",
+      "freedom_01",
+      "freedom_02",
+      "travel_01",
+      "travel_02",
+      "economy_01",
+      "economy_02",
+      "military_01",
+      "military_02",
+      "diplomacy_01",
+      "diplomacy_02",
+      "culture_01",
+      "culture_02",
+      "leader_01",
+      "leader_02",
+      "future_01",
+      "future_02",
+      "sport_01",
+      "sport_02",
+      "tech_01",
+      "education_01",
+      "healthcare_01",
+      "environment_01",
+      "housing_01",
+      "art_01",
+      "religion_01",
+      "transport_01"
+    ],
+    "shape": {
+      "engage": [
+        49,
+        24,
+        896
+      ],
+      "deflect": [
+        49,
+        24,
+        896
+      ]
+    },
+    "description": "Residual stream activations at final token position"
+  },
+  "methods": {
+    "mean_difference": {
+      "direction_norm": 21.740646362304688,
+      "top_layers": [
+        23,
+        22,
+        21,
+        20,
+        19
+      ],
+      "layer_strengths": [
+        0.05265119671821594,
+        0.1565508097410202,
+        0.19426068663597107,
+        0.2682839334011078,
+        0.7788786292076111,
+        1.394568920135498,
+        1.7551729679107666,
+        1.7585641145706177,
+        1.6617677211761475,
+        1.5466649532318115,
+        1.5497851371765137,
+        1.5317986011505127,
+        1.6210455894470215,
+        1.8659749031066895,
+        1.9956048727035522,
+        2.109774589538574,
+        2.369331121444702,
+        3.2915170192718506,
+        3.8080644607543945,
+        4.307796001434326,
+        5.731677532196045,
+        9.630637168884277,
+        10.636932373046875,
+        12.292153358459473
+      ],
+      "validation": {
+        "holdout_accuracy": 1.0,
+        "mean_cosine_similarity": 0.6394000583224826,
+        "std_cosine_similarity": 0.038009080183930836,
+        "n_holdout": 9,
+        "n_train": 40
+      }
+    },
+    "pca": {
+      "explained_variance": [
+        0.1514095515012741
+      ],
+      "top_layers": [
+        23,
+        22,
+        21,
+        20,
+        19
+      ],
+      "layer_strengths": [
+        0.0017566414317116141,
+        0.004503614269196987,
+        0.005236905999481678,
+        0.008899848908185959,
+        0.029176369309425354,
+        0.05166856199502945,
+        0.06685201078653336,
+        0.06817959994077682,
+        0.06503278762102127,
+        0.06366930156946182,
+        0.06375627964735031,
+        0.06355549395084381,
+        0.06787507981061935,
+        0.08361180871725082,
+        0.09131552278995514,
+        0.10972308367490768,
+        0.1255544275045395,
+        0.16946618258953094,
+        0.20039451122283936,
+        0.22990310192108154,
+        0.3016800880432129,
+        0.41981831192970276,
+        0.4732598066329956,
+        0.556901752948761
+      ],
+      "validation": {
+        "holdout_accuracy": 1.0,
+        "mean_cosine_similarity": 0.6394000583224826,
+        "std_cosine_similarity": 0.038009080183930836,
+        "n_holdout": 9,
+        "n_train": 40
+      }
+    }
+  },
+  "method_comparison": {
+    "cosine_similarity": 0.6740640997886658
+  }
+}
