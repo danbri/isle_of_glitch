@@ -75,19 +75,203 @@ export class PackageSystem {
             }
         ];
 
-        // Delivery destinations (cities/airports)
-        this.destinations = [
-            'Tokyo Station', 'Times Square', 'Eiffel Tower',
-            'Sydney Opera', 'Dubai Marina', 'Singapore Bay',
-            'Hong Kong Peak', 'London Eye', 'Berlin Gate',
-            'Moscow Red', 'São Paulo Centro', 'Mumbai Gateway'
-        ];
+        // Delivery destinations mapped to airports for guidance
+        this.destinationMap = {
+            'Tokyo Station': { airport: 'NRT', city: 'Tokyo' },
+            'Times Square': { airport: 'JFK', city: 'New York' },
+            'Eiffel Tower': { airport: 'CDG', city: 'Paris' },
+            'Sydney Opera': { airport: 'SYD', city: 'Sydney' },
+            'Dubai Marina': { airport: 'DXB', city: 'Dubai' },
+            'Singapore Bay': { airport: 'SIN', city: 'Singapore' },
+            'Hong Kong Peak': { airport: 'HKG', city: 'Hong Kong' },
+            'London Eye': { airport: 'LHR', city: 'London' },
+            'Berlin Gate': { airport: 'FRA', city: 'Frankfurt' },
+            'Moscow Red': { airport: 'SVO', city: 'Moscow' },
+            'São Paulo Centro': { airport: 'GRU', city: 'São Paulo' },
+            'Mumbai Gateway': { airport: 'BOM', city: 'Mumbai' },
+            'Seoul Tower': { airport: 'ICN', city: 'Seoul' },
+            'Delhi Gate': { airport: 'DEL', city: 'Delhi' },
+            'Cape Town Beach': { airport: 'CPT', city: 'Cape Town' },
+            'Mexico Zocalo': { airport: 'MEX', city: 'Mexico City' },
+            'Toronto CN Tower': { airport: 'YYZ', city: 'Toronto' },
+            'Beijing Temple': { airport: 'PEK', city: 'Beijing' },
+            'Amsterdam Canal': { airport: 'AMS', city: 'Amsterdam' },
+            'LA Hollywood': { airport: 'LAX', city: 'Los Angeles' }
+        };
+        this.destinations = Object.keys(this.destinationMap);
+
+        // Destination marker
+        this.destinationMarker = null;
+        this.guideLine = null;
     }
 
     async init() {
+        this.createDestinationMarker();
+        this.createGuideLine();
         this.spawnInitialPackages();
         this.createRivals();
         this.assignCurrentPackage();
+    }
+
+    createDestinationMarker() {
+        const group = new THREE.Group();
+
+        // Pulsing ring beacon
+        const ringGeometry = new THREE.RingGeometry(0.3, 0.4, 32);
+        const ringMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ff88,
+            transparent: true,
+            opacity: 0.8,
+            side: THREE.DoubleSide
+        });
+        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+        group.add(ring);
+
+        // Inner target
+        const innerGeometry = new THREE.CircleGeometry(0.15, 32);
+        const innerMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ff88,
+            transparent: true,
+            opacity: 0.5,
+            side: THREE.DoubleSide
+        });
+        const inner = new THREE.Mesh(innerGeometry, innerMaterial);
+        group.add(inner);
+
+        // Vertical beam
+        const beamGeometry = new THREE.CylinderGeometry(0.05, 0.05, 2, 8);
+        const beamMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ff88,
+            transparent: true,
+            opacity: 0.4
+        });
+        const beam = new THREE.Mesh(beamGeometry, beamMaterial);
+        beam.position.y = 1;
+        group.add(beam);
+
+        // Floating arrow above
+        const arrowShape = new THREE.Shape();
+        arrowShape.moveTo(0, 0.3);
+        arrowShape.lineTo(0.15, 0);
+        arrowShape.lineTo(0.05, 0);
+        arrowShape.lineTo(0.05, -0.2);
+        arrowShape.lineTo(-0.05, -0.2);
+        arrowShape.lineTo(-0.05, 0);
+        arrowShape.lineTo(-0.15, 0);
+        arrowShape.closePath();
+
+        const arrowGeometry = new THREE.ShapeGeometry(arrowShape);
+        const arrowMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ff88,
+            transparent: true,
+            opacity: 0.9,
+            side: THREE.DoubleSide
+        });
+        const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
+        arrow.position.y = 2.5;
+        arrow.rotation.x = -Math.PI / 2;
+        group.add(arrow);
+
+        group.visible = false;
+        this.destinationMarker = group;
+        this.scene.add(group);
+    }
+
+    createGuideLine() {
+        // Create a dashed line that points toward destination
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(100 * 3); // Up to 100 points
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const material = new THREE.LineDashedMaterial({
+            color: 0x00ff88,
+            dashSize: 0.3,
+            gapSize: 0.2,
+            transparent: true,
+            opacity: 0.6
+        });
+
+        this.guideLine = new THREE.Line(geometry, material);
+        this.guideLine.visible = false;
+        this.scene.add(this.guideLine);
+    }
+
+    getDestinationPosition(destinationName) {
+        const destInfo = this.destinationMap[destinationName];
+        if (!destInfo) return null;
+
+        // Find the trampoline for this destination
+        const trampoline = this.trampolineNetwork.trampolines.find(
+            t => t.airport.name === destInfo.airport
+        );
+
+        return trampoline ? trampoline.position.clone() : null;
+    }
+
+    updateDestinationMarker(playerPosition, time) {
+        if (!this.currentPackage || !this.destinationMarker) return;
+
+        const destPos = this.getDestinationPosition(this.currentPackage.destination);
+        if (!destPos) {
+            this.destinationMarker.visible = false;
+            this.guideLine.visible = false;
+            return;
+        }
+
+        // Position marker at destination
+        this.destinationMarker.position.copy(destPos);
+        this.destinationMarker.position.add(destPos.clone().normalize().multiplyScalar(0.2));
+        this.destinationMarker.visible = true;
+
+        // Orient marker to face up from planet
+        this.destinationMarker.lookAt(new THREE.Vector3(0, 0, 0));
+        this.destinationMarker.rotateX(Math.PI / 2);
+
+        // Animate marker
+        const pulse = Math.sin(time * 4) * 0.2 + 1;
+        this.destinationMarker.children[0].scale.setScalar(pulse); // Ring pulse
+        this.destinationMarker.children[3].position.y = 2.5 + Math.sin(time * 3) * 0.3; // Arrow bob
+
+        // Update guide line from player to destination
+        this.updateGuideLine(playerPosition, destPos);
+    }
+
+    updateGuideLine(playerPos, destPos) {
+        if (!this.guideLine) return;
+
+        const distance = playerPos.distanceTo(destPos);
+
+        // Only show guide line if destination is far enough
+        if (distance < 1) {
+            this.guideLine.visible = false;
+            return;
+        }
+
+        this.guideLine.visible = true;
+
+        // Create arc path from player to destination
+        const positions = this.guideLine.geometry.attributes.position;
+        const segmentCount = Math.min(50, Math.floor(distance * 10));
+
+        // Calculate midpoint height for the arc
+        const midpoint = playerPos.clone().add(destPos).multiplyScalar(0.5);
+        const arcHeight = Math.min(distance * 0.2, 2);
+        midpoint.normalize().multiplyScalar(midpoint.length() + arcHeight);
+
+        for (let i = 0; i <= segmentCount; i++) {
+            const t = i / segmentCount;
+
+            // Quadratic bezier
+            const p1 = playerPos.clone().lerp(midpoint, t);
+            const p2 = midpoint.clone().lerp(destPos, t);
+            const point = p1.lerp(p2, t);
+
+            positions.setXYZ(i, point.x, point.y, point.z);
+        }
+
+        positions.needsUpdate = true;
+        this.guideLine.geometry.setDrawRange(0, segmentCount + 1);
+        this.guideLine.computeLineDistances();
     }
 
     spawnInitialPackages() {
@@ -313,6 +497,9 @@ export class PackageSystem {
 
     update(time, deltaTime, player) {
         const playerPosition = player.getPosition();
+
+        // Update destination marker and guide
+        this.updateDestinationMarker(playerPosition, time);
 
         // Update packages
         this.packages.forEach(packageObj => {

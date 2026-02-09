@@ -22,11 +22,11 @@ export class Player {
 
         // Player properties
         this.bounceCharge = 1.0;
-        this.bounceChargeRate = 0.3;
+        this.bounceChargeRate = 0.5; // Faster recharge
         this.maxBounceCharge = 1.0;
-        this.bounceForce = 15;
-        this.gravity = 9.8;
-        this.airResistance = 0.02;
+        this.bounceForce = 12; // Slightly reduced for better control
+        this.gravity = 25; // Stronger gravity for better feel
+        this.airResistance = 0.008; // Less drag so gravity dominates
 
         // Route types affect trajectory
         this.routeType = 'express';
@@ -175,36 +175,54 @@ export class Player {
     }
 
     bounce() {
-        if (this.bounceCharge < 0.5) return;
+        if (this.bounceCharge < 0.3) return; // Lower threshold for responsiveness
 
         const modifier = this.routeModifiers[this.routeType];
 
-        // Calculate bounce direction
-        let bounceDir;
+        // Get up vector (away from planet)
+        const up = this.position.clone().sub(this.planetCenter).normalize();
 
+        // Get horizontal direction from current velocity or forward
+        let horizontal;
+        const horizontalVel = this.velocity.clone();
+        horizontalVel.sub(up.clone().multiplyScalar(horizontalVel.dot(up))); // Remove vertical component
+
+        if (horizontalVel.length() > 0.1) {
+            horizontal = horizontalVel.normalize();
+        } else {
+            // Default forward direction if no horizontal velocity
+            horizontal = new THREE.Vector3(1, 0, 0);
+            horizontal.sub(up.clone().multiplyScalar(horizontal.dot(up))).normalize();
+        }
+
+        // Calculate bounce direction based on route type
+        // angle: 0 = pure horizontal, 1 = pure vertical
+        let bounceDir;
         if (this.targetTrampoline) {
-            // Bounce toward target
+            // Bounce toward target trampoline
             bounceDir = this.targetTrampoline.position.clone()
                 .sub(this.position)
                 .normalize();
         } else {
-            // Bounce upward from planet surface
-            bounceDir = this.position.clone()
-                .sub(this.planetCenter)
+            // Mix vertical and horizontal based on route type
+            bounceDir = up.clone().multiplyScalar(modifier.angle)
+                .add(horizontal.clone().multiplyScalar(1 - modifier.angle))
                 .normalize();
         }
 
-        // Add some horizontal component based on velocity
-        const horizontalDir = this.velocity.clone().normalize();
-        bounceDir.lerp(horizontalDir, 0.3);
-        bounceDir.normalize();
+        // Apply bounce force - stronger response
+        const force = this.bounceForce * modifier.force * (0.5 + this.bounceCharge * 0.5);
 
-        // Apply bounce force
-        const force = this.bounceForce * modifier.force * this.bounceCharge;
-        this.velocity.add(bounceDir.multiplyScalar(force));
+        // Cancel downward velocity before bouncing for snappier response
+        const downwardSpeed = -this.velocity.dot(up);
+        if (downwardSpeed > 0) {
+            this.velocity.add(up.clone().multiplyScalar(downwardSpeed * 0.7));
+        }
 
-        // Consume charge
-        this.bounceCharge *= 0.5;
+        this.velocity.add(bounceDir.clone().multiplyScalar(force));
+
+        // Consume charge (but not too much)
+        this.bounceCharge *= 0.4;
 
         // Visual feedback
         this.createBounceEffect();
@@ -265,16 +283,17 @@ export class Player {
         // Apply gravity toward planet center
         const toCenter = this.planetCenter.clone().sub(this.position);
         const distance = toCenter.length();
-        const gravityDir = toCenter.normalize();
+        const gravityDir = toCenter.clone().normalize();
 
-        // Gravity falls off with distance squared (but clamped for gameplay)
-        const gravityStrength = this.gravity * Math.min(1, Math.pow(this.planetRadius / distance, 1.5));
+        // Strong consistent gravity - only slight falloff at extreme distances
+        // This ensures player always falls back down
+        const altitude = distance - this.planetRadius;
+        const gravityStrength = this.gravity * Math.max(0.7, 1 - altitude * 0.005);
         this.acceleration.copy(gravityDir.multiplyScalar(gravityStrength));
 
-        // Air resistance (increases with altitude for gameplay balance)
-        const altitude = distance - this.planetRadius;
-        const airResistanceFactor = this.airResistance * (1 + altitude * 0.01);
-        const drag = this.velocity.clone().multiplyScalar(-airResistanceFactor);
+        // Light air resistance - doesn't fight gravity much
+        const speed = this.velocity.length();
+        const drag = this.velocity.clone().multiplyScalar(-this.airResistance * speed);
         this.acceleration.add(drag);
 
         // Apply physics
@@ -282,27 +301,32 @@ export class Player {
         this.position.add(this.velocity.clone().multiplyScalar(deltaTime));
 
         // Ground collision
-        if (distance < this.planetRadius + 0.5) {
+        if (distance < this.planetRadius + 0.4) {
             // Bounce off surface
             const normal = this.position.clone().sub(this.planetCenter).normalize();
             const dot = this.velocity.dot(normal);
 
             if (dot < 0) {
-                // Reflect velocity
-                const reflection = normal.clone().multiplyScalar(-2 * dot);
+                // Reflect velocity with bounce based on impact speed
+                const impactSpeed = -dot;
+                const bounciness = impactSpeed > 5 ? 0.5 : 0.3; // More bounce from harder impacts
+                const reflection = normal.clone().multiplyScalar(-2 * dot * bounciness);
                 this.velocity.add(reflection);
-                this.velocity.multiplyScalar(0.6); // Energy loss
+                this.velocity.multiplyScalar(0.85); // Less energy loss
 
                 // Position correction
                 this.position.copy(
                     this.planetCenter.clone().add(
-                        normal.multiplyScalar(this.planetRadius + 0.5)
+                        normal.multiplyScalar(this.planetRadius + 0.4)
                     )
                 );
 
-                // Recharge bounce on ground contact
-                this.bounceCharge = Math.min(this.maxBounceCharge, this.bounceCharge + 0.5);
+                // Full recharge on ground contact
+                this.bounceCharge = this.maxBounceCharge;
+                this.isOnGround = true;
             }
+        } else {
+            this.isOnGround = false;
         }
 
         // Recharge bounce over time
@@ -362,12 +386,24 @@ export class Player {
             ? this.velocity.clone().normalize()
             : new THREE.Vector3(0, 0, 1);
 
-        // Position camera behind and above player
-        const cameraTargetPos = this.position.clone()
-            .add(up.clone().multiplyScalar(this.cameraOffset.y))
-            .sub(forward.clone().multiplyScalar(this.cameraOffset.z));
+        // Dynamic camera distance based on altitude - zoom out at higher altitudes
+        const altitude = this.position.distanceTo(this.planetCenter) - this.planetRadius;
+        const zoomFactor = 1 + Math.min(altitude * 0.15, 3); // Zoom out up to 4x at high altitude
 
-        this.camera.position.lerp(cameraTargetPos, 0.05);
+        // Also tilt camera based on route type for different perspectives
+        const routeTilt = {
+            express: { y: 4, z: 6 },    // Higher view for express
+            scenic: { y: 2, z: 8 },      // Side view for scenic
+            stealth: { y: 1, z: 10 }     // Low following for stealth
+        };
+        const tilt = routeTilt[this.routeType] || routeTilt.express;
+
+        // Position camera behind and above player with zoom
+        const cameraTargetPos = this.position.clone()
+            .add(up.clone().multiplyScalar(tilt.y * zoomFactor))
+            .sub(forward.clone().multiplyScalar(tilt.z * zoomFactor));
+
+        this.camera.position.lerp(cameraTargetPos, 0.08);
         this.camera.lookAt(this.position);
     }
 

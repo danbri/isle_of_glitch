@@ -27,19 +27,22 @@ export const ChromaticAberrationShader = {
         varying vec2 vUv;
 
         void main() {
-            vec2 offset = amount * vec2(cos(angle), sin(angle));
+            // Only apply chromatic aberration at screen edges
+            vec2 center = vUv - 0.5;
+            float edgeFactor = smoothstep(0.3, 0.7, length(center));
 
-            // Sample RGB channels at slightly different positions
+            vec2 offset = amount * edgeFactor * vec2(cos(angle), sin(angle));
+
+            // Sample RGB channels at slightly different positions (only at edges)
             vec4 cr = texture2D(tDiffuse, vUv + offset);
             vec4 cg = texture2D(tDiffuse, vUv);
             vec4 cb = texture2D(tDiffuse, vUv - offset);
 
-            // Combine with slight color enhancement
+            // Combine - center stays clean, edges get subtle aberration
             gl_FragColor = vec4(cr.r, cg.g, cb.b, cg.a);
 
-            // Add subtle vignette
-            vec2 center = vUv - 0.5;
-            float vignette = 1.0 - dot(center, center) * 0.5;
+            // Subtle vignette
+            float vignette = 1.0 - dot(center, center) * 0.3;
             gl_FragColor.rgb *= vignette;
         }
     `

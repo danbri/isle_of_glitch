@@ -108,25 +108,29 @@
 
         .ui-panel {
             pointer-events: auto;
-            background: rgba(20, 10, 40, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: rgba(20, 10, 40, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: clamp(10px, 3vw, 20px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: clamp(6px, 2vw, 16px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .ui-panel.compact {
+            padding: clamp(4px, 1.5vw, 10px);
         }
 
         #altitude-display {
             position: absolute;
-            top: max(env(safe-area-inset-top, 0px), 12px);
-            right: 12px;
+            top: max(env(safe-area-inset-top, 0px), 8px);
+            right: 8px;
             text-align: right;
-            min-width: 80px;
+            min-width: 60px;
         }
 
         .altitude-value {
-            font-size: clamp(1.8rem, 8vw, 3rem);
+            font-size: clamp(1.4rem, 6vw, 2.4rem);
             font-weight: 200;
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             -webkit-background-clip: text;
@@ -137,75 +141,75 @@
         }
 
         .altitude-label {
-            font-size: clamp(0.55rem, 1.8vw, 0.8rem);
-            letter-spacing: 0.1em;
+            font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+            letter-spacing: 0.08em;
             opacity: 0.6;
             white-space: nowrap;
         }
 
         #package-info {
             position: absolute;
-            top: max(env(safe-area-inset-top, 0px), 12px);
-            left: 12px;
-            max-width: calc(100vw - 150px);
+            top: max(env(safe-area-inset-top, 0px), 8px);
+            left: 8px;
+            max-width: calc(100vw - 120px);
         }
 
         .package-title {
-            font-size: clamp(0.55rem, 2vw, 0.7rem);
-            letter-spacing: 0.15em;
+            font-size: clamp(0.45rem, 1.5vw, 0.6rem);
+            letter-spacing: 0.12em;
             opacity: 0.6;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .package-content {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .package-icon {
-            width: clamp(36px, 10vw, 48px);
-            height: clamp(36px, 10vw, 48px);
+            width: clamp(28px, 8vw, 40px);
+            height: clamp(28px, 8vw, 40px);
             background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            border-radius: 10px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(1rem, 4vw, 1.5rem);
+            font-size: clamp(0.8rem, 3vw, 1.2rem);
             flex-shrink: 0;
         }
 
         .package-details h3 {
             font-weight: 500;
-            font-size: clamp(0.85rem, 3vw, 1rem);
-            margin-bottom: 2px;
+            font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+            margin-bottom: 1px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 40vw;
+            max-width: 35vw;
         }
 
         .package-destination {
-            font-size: clamp(0.7rem, 2.5vw, 0.85rem);
+            font-size: clamp(0.6rem, 2vw, 0.75rem);
             opacity: 0.7;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 40vw;
+            max-width: 35vw;
         }
 
         #route-selector {
             position: absolute;
-            bottom: max(env(safe-area-inset-bottom, 0px), 12px);
-            left: 12px;
-            right: 100px;
+            bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+            left: 8px;
+            right: 80px;
             display: flex;
-            gap: 8px;
+            gap: 6px;
             overflow-x: auto;
             scrollbar-width: none;
             -ms-overflow-style: none;
             scroll-snap-type: x mandatory;
-            padding-bottom: 4px;
+            padding-bottom: 2px;
         }
 
         #route-selector::-webkit-scrollbar {
@@ -213,8 +217,8 @@
         }
 
         .route-option {
-            padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 24px);
-            border-radius: 24px;
+            padding: clamp(5px, 1.5vw, 10px) clamp(8px, 2vw, 16px);
+            border-radius: 20px;
             cursor: pointer;
             transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
             border: 2px solid transparent;
@@ -229,17 +233,17 @@
 
         .route-option.selected {
             border-color: #f093fb;
-            box-shadow: 0 0 20px rgba(240, 147, 251, 0.4);
+            box-shadow: 0 0 15px rgba(240, 147, 251, 0.4);
         }
 
         .route-name {
-            font-size: clamp(0.75rem, 2.5vw, 0.9rem);
+            font-size: clamp(0.65rem, 2vw, 0.8rem);
             font-weight: 500;
             white-space: nowrap;
         }
 
         .route-time {
-            font-size: clamp(0.6rem, 2vw, 0.7rem);
+            font-size: clamp(0.5rem, 1.5vw, 0.6rem);
             opacity: 0.6;
             white-space: nowrap;
         }
@@ -250,10 +254,10 @@
 
         #bounce-indicator {
             position: absolute;
-            bottom: max(env(safe-area-inset-bottom, 0px), 12px);
-            right: 12px;
-            width: clamp(60px, 15vw, 80px);
-            height: clamp(60px, 15vw, 80px);
+            bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+            right: 8px;
+            width: clamp(50px, 12vw, 70px);
+            height: clamp(50px, 12vw, 70px);
             border-radius: 50%;
             background: conic-gradient(from 0deg, #f093fb, #f5576c, #fa709a, #fee140, #f093fb);
             display: flex;
@@ -263,36 +267,99 @@
         }
 
         .bounce-inner {
-            width: calc(100% - 10px);
-            height: calc(100% - 10px);
+            width: calc(100% - 8px);
+            height: calc(100% - 8px);
             border-radius: 50%;
             background: rgba(20, 10, 40, 0.9);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(1.2rem, 5vw, 1.5rem);
+            font-size: clamp(1rem, 4vw, 1.3rem);
         }
 
         #score-display {
             position: absolute;
-            top: max(calc(env(safe-area-inset-top, 0px) + 70px), 82px);
-            right: 12px;
+            top: max(calc(env(safe-area-inset-top, 0px) + 55px), 65px);
+            right: 8px;
         }
 
         .score-label {
-            font-size: clamp(0.55rem, 2vw, 0.7rem) !important;
-            letter-spacing: 0.15em;
+            font-size: clamp(0.45rem, 1.5vw, 0.6rem) !important;
+            letter-spacing: 0.12em;
             opacity: 0.6;
         }
 
         .score-value {
-            font-size: clamp(1.4rem, 6vw, 1.8rem);
+            font-size: clamp(1.1rem, 5vw, 1.5rem);
             font-weight: 600;
             background: linear-gradient(135deg, #fee140 0%, #fa709a 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             font-variant-numeric: tabular-nums;
+        }
+
+        /* Tutorial hint */
+        #tutorial-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            max-width: min(90vw, 320px);
+            animation: fadeInOut 8s forwards;
+            z-index: 200;
+        }
+
+        #tutorial-hint h2 {
+            font-size: clamp(1rem, 4vw, 1.4rem);
+            margin-bottom: 0.8rem;
+            font-weight: 400;
+        }
+
+        #tutorial-hint p {
+            font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+            opacity: 0.8;
+            line-height: 1.5;
+            margin-bottom: 0.5rem;
+        }
+
+        #tutorial-hint .hint-key {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: clamp(0.6rem, 2vw, 0.8rem);
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            10% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; pointer-events: none; }
+        }
+
+        #tutorial-hint.hidden {
+            display: none;
+        }
+
+        /* Direction indicator for destination */
+        #direction-indicator {
+            position: absolute;
+            bottom: max(calc(env(safe-area-inset-bottom, 0px) + 70px), 80px);
+            right: 8px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .direction-arrow {
+            transition: transform 0.3s ease;
+            text-shadow: 0 0 10px #00ff88;
         }
 
         #webgpu-error {
@@ -424,6 +491,17 @@
 
         <div id="bounce-indicator">
             <div class="bounce-inner" id="bounce-charge">⬆️</div>
+        </div>
+
+        <div id="direction-indicator" class="ui-panel compact">
+            <span class="direction-arrow" id="dest-arrow">➤</span>
+        </div>
+
+        <div id="tutorial-hint" class="ui-panel">
+            <h2>Deliver packages around the globe!</h2>
+            <p><span class="hint-key">TAP</span> screen or <span class="hint-key">SPACE</span> to bounce</p>
+            <p><span class="hint-key">SWIPE</span> or <span class="hint-key">WASD</span> to steer</p>
+            <p>Follow the <span style="color:#00ff88">green guide</span> to your destination</p>
         </div>
     </div>
 

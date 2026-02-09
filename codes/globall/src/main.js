@@ -112,7 +112,7 @@ class GloballGame {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.2;
+        this.renderer.toneMappingExposure = 1.0; // Reduced from 1.2 to prevent bleachout
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -173,18 +173,18 @@ class GloballGame {
         const renderPass = new RenderPass(this.scene, this.camera);
         this.composer.addPass(renderPass);
 
-        // Bloom for glowing effects (city lights, aurora)
+        // Bloom for glowing effects (city lights, aurora) - reduced for mobile clarity
         this.bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            0.8,  // strength
-            0.4,  // radius
-            0.85  // threshold
+            0.5,  // strength - reduced from 0.8
+            0.3,  // radius - reduced from 0.4
+            0.9   // threshold - raised from 0.85 to bloom only brightest elements
         );
         this.composer.addPass(this.bloomPass);
 
-        // Chromatic aberration for candy aesthetic
+        // Chromatic aberration for candy aesthetic - very subtle
         this.chromaticPass = new ShaderPass(ChromaticAberrationShader);
-        this.chromaticPass.uniforms.amount.value = 0.002;
+        this.chromaticPass.uniforms.amount.value = 0.0005; // Much more subtle
         this.composer.addPass(this.chromaticPass);
 
         this.updateLoadingProgress(30);
@@ -425,6 +425,9 @@ class GloballGame {
         if (currentPackage) {
             document.getElementById('package-name').textContent = currentPackage.name;
             document.getElementById('package-dest').textContent = `→ ${currentPackage.destination}`;
+
+            // Update direction indicator
+            this.updateDirectionIndicator(currentPackage);
         }
 
         // Update bounce indicator based on charge
@@ -436,6 +439,27 @@ class GloballGame {
             bounceEl.textContent = '⬆️';
         } else {
             bounceEl.textContent = '⏳';
+        }
+    }
+
+    updateDirectionIndicator(currentPackage) {
+        const destPos = this.packageSystem.getDestinationPosition(currentPackage.destination);
+        if (!destPos) return;
+
+        const playerPos = this.player.getPosition();
+
+        // Project both positions to screen space
+        const destScreen = destPos.clone().project(this.camera);
+        const playerScreen = playerPos.clone().project(this.camera);
+
+        // Calculate angle to destination
+        const dx = destScreen.x - playerScreen.x;
+        const dy = destScreen.y - playerScreen.y;
+        const angle = Math.atan2(-dy, dx) * (180 / Math.PI) - 90;
+
+        const arrow = document.getElementById('dest-arrow');
+        if (arrow) {
+            arrow.style.transform = `rotate(${angle}deg)`;
         }
     }
 
@@ -483,13 +507,15 @@ class GloballGame {
         this.player.update(time, this.deltaTime, this.keys);
         this.packageSystem.update(time, this.deltaTime, this.player);
 
-        // Update chromatic aberration based on player speed
+        // Update chromatic aberration based on player speed - subtle effect
         const speed = this.player.getSpeed();
-        this.chromaticPass.uniforms.amount.value = 0.001 + speed * 0.005;
+        this.chromaticPass.uniforms.amount.value = 0.0003 + speed * 0.0008;
 
-        // Update bloom based on altitude (more bloom in space, but clamped)
+        // Update bloom based on altitude - minimal at ground, subtle increase in space
         const altitude = this.player.getAltitude();
-        this.bloomPass.strength = Math.min(1.2, 0.6 + (altitude / 500) * 0.1);
+        // Ground level (0-5km): 0.3-0.4 strength
+        // Space (50km+): max 0.7 strength
+        this.bloomPass.strength = Math.min(0.7, 0.3 + Math.min(altitude / 200, 0.4));
 
         // Update audio based on game state
         this.audio.updateAltitude(altitude);
