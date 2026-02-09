@@ -173,6 +173,34 @@ planetRadius: 10      // Game units
 
 ---
 
+## Session 3 Fixes (Splash Screen Hang)
+
+### Root Cause
+- `roundRect()` canvas method not supported on older iOS Safari versions (pre-Safari 16)
+- Game initialization had no error handling, so failures were silent
+
+### Fixes Applied
+1. **TrampolineNetwork.js**: Added fallback for `roundRect()` - uses `fillRect()` if not available
+2. **main.js**: Added try/catch around initialization with error display
+3. **main.js**: Added console.log statements to track component loading progress
+
+---
+
+## Deployment Workflow
+
+**IMPORTANT**: Push changes to `claude/fink-authoring-guide-*` branch, NOT main!
+
+The `claude/fink-authoring-guide-bDtaY` branch is configured for Claude pushes and triggers GitHub Pages deployment.
+
+```bash
+# After making changes:
+git add <files>
+git commit -m "Description"
+git push -u origin claude/fink-authoring-guide-bDtaY
+```
+
+---
+
 ## Test Plan
 
 1. Start game, tap to bounce
