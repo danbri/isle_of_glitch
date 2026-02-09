@@ -505,6 +505,28 @@
         </div>
     </div>
 
+    <script>
+        // Early error handler - catches errors before module loads
+        window.onerror = function(msg, url, line, col, error) {
+            var loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.innerHTML = '<h1 style="color:#f5576c;font-size:1.5rem;">Error</h1>' +
+                    '<p style="margin:1rem;font-size:0.9rem;">' + msg + '</p>' +
+                    '<p style="font-size:0.7rem;opacity:0.6;">' + (url || '') + ':' + (line || '') + '</p>';
+            }
+            return false;
+        };
+        // Also catch unhandled promise rejections
+        window.onunhandledrejection = function(event) {
+            var loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.innerHTML = '<h1 style="color:#f5576c;font-size:1.5rem;">Load Error</h1>' +
+                    '<p style="margin:1rem;font-size:0.9rem;">' + (event.reason ? event.reason.message || event.reason : 'Unknown error') + '</p>';
+            }
+        };
+        console.log('📋 Error handlers ready');
+    </script>
+
     <script type="importmap">
     {
         "imports": {
