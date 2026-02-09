@@ -366,7 +366,7 @@ export class Planet {
     }
 
     createAtmosphere() {
-        // Outer atmosphere glow
+        // Inner atmosphere glow (visible from inside/close - BackSide)
         const geometry = new THREE.SphereGeometry(this.atmosphereRadius, 64, 64);
 
         const material = new THREE.ShaderMaterial({
@@ -381,12 +381,34 @@ export class Planet {
             fragmentShader: AtmosphereGlowMaterial.fragmentShader,
             side: THREE.BackSide,
             transparent: true,
-            blending: THREE.NormalBlending, // Changed from AdditiveBlending
+            blending: THREE.NormalBlending,
             depthWrite: false
         });
 
         this.atmosphereMesh = new THREE.Mesh(geometry, material);
         this.group.add(this.atmosphereMesh);
+
+        // Outer atmosphere glow (visible from space - FrontSide)
+        // This ensures planet has visible glow when viewed from high altitude
+        const outerGeometry = new THREE.SphereGeometry(this.atmosphereRadius + 0.3, 64, 64);
+        const outerMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0 },
+                sunDirection: { value: this.sunDirection },
+                glowColor: { value: new THREE.Color(0.4, 0.6, 1.0) },
+                glowIntensity: { value: 0.4 },
+                viewVector: { value: new THREE.Vector3() }
+            },
+            vertexShader: AtmosphereGlowMaterial.vertexShader,
+            fragmentShader: AtmosphereGlowMaterial.fragmentShader,
+            side: THREE.FrontSide, // Visible from outside
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        this.outerAtmosphereMesh = new THREE.Mesh(outerGeometry, outerMaterial);
+        this.group.add(this.outerAtmosphereMesh);
     }
 
     createClouds() {
@@ -421,6 +443,10 @@ export class Planet {
 
         if (this.atmosphereMesh.material.uniforms) {
             this.atmosphereMesh.material.uniforms.time.value = time;
+        }
+
+        if (this.outerAtmosphereMesh && this.outerAtmosphereMesh.material.uniforms) {
+            this.outerAtmosphereMesh.material.uniforms.time.value = time;
         }
     }
 

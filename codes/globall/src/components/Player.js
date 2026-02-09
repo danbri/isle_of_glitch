@@ -49,12 +49,43 @@ export class Player {
         // Camera
         this.cameraOffset = new THREE.Vector3(0, 3, 8);
         this.cameraLookOffset = new THREE.Vector3(0, 0, 0);
+        this.lastForward = null; // Stores last velocity direction for stable camera
+        this.cameraLerpSpeed = 0.15; // Configurable from debug panel
     }
 
     async init() {
         this.createPlayerMesh();
         this.createTrail();
-        this.updateCameraPosition();
+        // Initialize camera to correct position immediately (no lerping on first frame)
+        this.initializeCameraPosition();
+    }
+
+    initializeCameraPosition() {
+        // Set camera directly to target position without lerping
+        const up = this.position.clone().sub(this.planetCenter).normalize();
+        const forward = new THREE.Vector3(0, 0, 1);
+        forward.sub(up.clone().multiplyScalar(forward.dot(up))).normalize();
+        if (forward.length() < 0.1) forward.set(1, 0, 0);
+
+        this.lastForward = forward.clone();
+
+        const altitude = this.position.distanceTo(this.planetCenter) - this.planetRadius;
+        const zoomFactor = 1 + Math.min(altitude * 0.15, 3);
+
+        const routeTilt = {
+            express: { y: 4, z: 6 },
+            scenic: { y: 2, z: 8 },
+            stealth: { y: 1, z: 10 }
+        };
+        const tilt = routeTilt[this.routeType] || routeTilt.express;
+
+        const cameraPos = this.position.clone()
+            .add(up.clone().multiplyScalar(tilt.y * zoomFactor))
+            .sub(forward.clone().multiplyScalar(tilt.z * zoomFactor));
+
+        // Set directly without lerping
+        this.camera.position.copy(cameraPos);
+        this.camera.lookAt(this.position);
     }
 
     createPlayerMesh() {
@@ -382,9 +413,20 @@ export class Player {
     updateCameraPosition() {
         // Camera follows player with smooth lerp
         const up = this.position.clone().sub(this.planetCenter).normalize();
-        const forward = this.velocity.length() > 0.1
-            ? this.velocity.clone().normalize()
-            : new THREE.Vector3(0, 0, 1);
+
+        // Use velocity direction if moving, otherwise use last known forward or default
+        let forward;
+        if (this.velocity.length() > 0.1) {
+            forward = this.velocity.clone().normalize();
+            this.lastForward = forward.clone(); // Store for when velocity is low
+        } else if (this.lastForward) {
+            forward = this.lastForward;
+        } else {
+            // Default: tangent to planet surface pointing "east"
+            forward = new THREE.Vector3(0, 0, 1);
+            forward.sub(up.clone().multiplyScalar(forward.dot(up))).normalize();
+            if (forward.length() < 0.1) forward.set(1, 0, 0); // Fallback
+        }
 
         // Dynamic camera distance based on altitude - zoom out at higher altitudes
         const altitude = this.position.distanceTo(this.planetCenter) - this.planetRadius;
@@ -403,7 +445,15 @@ export class Player {
             .add(up.clone().multiplyScalar(tilt.y * zoomFactor))
             .sub(forward.clone().multiplyScalar(tilt.z * zoomFactor));
 
-        this.camera.position.lerp(cameraTargetPos, 0.08);
+        // Faster lerp for more responsive camera (was 0.08, now 0.15)
+        // Also ensure camera doesn't end up inside planet
+        const cameraDistFromCenter = cameraTargetPos.length();
+        if (cameraDistFromCenter < this.planetRadius + 1) {
+            // Push camera out if too close to planet center
+            cameraTargetPos.normalize().multiplyScalar(this.planetRadius + 1);
+        }
+
+        this.camera.position.lerp(cameraTargetPos, this.cameraLerpSpeed);
         this.camera.lookAt(this.position);
     }
 

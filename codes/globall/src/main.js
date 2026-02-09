@@ -21,6 +21,7 @@ import { GameState } from './systems/GameState.js';
 import { AudioSystem } from './systems/AudioSystem.js';
 import { ChromaticAberrationShader } from './shaders/ChromaticAberration.js';
 import { AtmosphericScatteringShader } from './shaders/AtmosphericScattering.js';
+import GUI from 'lil-gui';
 
 class GloballGame {
     constructor() {
@@ -66,6 +67,9 @@ class GloballGame {
 
             // Setup UI
             this.setupUI();
+
+            // Setup debug panel (press 'H' to toggle)
+            this.setupDebugPanel();
 
             // Initialize audio (deferred, non-blocking)
             try {
@@ -170,7 +174,9 @@ class GloballGame {
         this.camera.position.set(0, 0, 25);
 
         // Orbit controls for development/scenic viewing
+        // DISABLED during gameplay - conflicts with player camera tracking
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enabled = false; // Disable by default - player camera takes over
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
         this.controls.minDistance = 12;
@@ -396,6 +402,12 @@ class GloballGame {
             case 'Digit3':
                 this.selectRoute('stealth');
                 break;
+            case 'KeyH':
+                // Toggle debug panel
+                if (this.gui) {
+                    this.gui.show(this.gui._hidden);
+                }
+                break;
         }
     }
 
@@ -452,6 +464,145 @@ class GloballGame {
                 this.selectRoute(el.dataset.route);
             });
         });
+    }
+
+    setupDebugPanel() {
+        this.gui = new GUI({ title: 'Debug Panel' });
+
+        // Component visibility toggles
+        const visibility = this.gui.addFolder('Visibility');
+        this.debugSettings = {
+            showPlanet: true,
+            showAtmosphere: true,
+            showOuterAtmosphere: true,
+            showClouds: true,
+            showStars: true,
+            showAurora: true,
+            showCityLights: true,
+            showTrampolines: true,
+            showPlayer: true,
+            showTrail: true,
+            usePostProcessing: true,
+            enableOrbitControls: false
+        };
+
+        visibility.add(this.debugSettings, 'showPlanet').name('Planet').onChange(v => {
+            if (this.planet.planetMesh) this.planet.planetMesh.visible = v;
+        });
+        visibility.add(this.debugSettings, 'showAtmosphere').name('Inner Atmosphere').onChange(v => {
+            if (this.planet.atmosphereMesh) this.planet.atmosphereMesh.visible = v;
+        });
+        visibility.add(this.debugSettings, 'showOuterAtmosphere').name('Outer Atmosphere').onChange(v => {
+            if (this.planet.outerAtmosphereMesh) this.planet.outerAtmosphereMesh.visible = v;
+        });
+        visibility.add(this.debugSettings, 'showClouds').name('Clouds').onChange(v => {
+            if (this.planet.cloudsMesh) this.planet.cloudsMesh.visible = v;
+        });
+        visibility.add(this.debugSettings, 'showStars').name('Stars').onChange(v => {
+            if (this.spaceEnv.stars) this.spaceEnv.stars.visible = v;
+        });
+        visibility.add(this.debugSettings, 'showAurora').name('Aurora').onChange(v => {
+            if (this.aurora.group) this.aurora.group.visible = v;
+        });
+        visibility.add(this.debugSettings, 'showCityLights').name('City Lights').onChange(v => {
+            if (this.cityLights.group) this.cityLights.group.visible = v;
+        });
+        visibility.add(this.debugSettings, 'showTrampolines').name('Trampolines').onChange(v => {
+            if (this.trampolineNetwork.group) this.trampolineNetwork.group.visible = v;
+        });
+        visibility.add(this.debugSettings, 'showPlayer').name('Player').onChange(v => {
+            if (this.player.mesh) this.player.mesh.visible = v;
+        });
+        visibility.add(this.debugSettings, 'showTrail').name('Trail').onChange(v => {
+            if (this.player.trail) this.player.trail.visible = v;
+        });
+        visibility.open();
+
+        // Rendering settings
+        const rendering = this.gui.addFolder('Rendering');
+        rendering.add(this.debugSettings, 'usePostProcessing').name('Post Processing').onChange(v => {
+            this.usePostProcessing = v;
+        });
+        this.usePostProcessing = true;
+
+        rendering.add(this.debugSettings, 'enableOrbitControls').name('Orbit Controls').onChange(v => {
+            this.controls.enabled = v;
+        });
+
+        this.debugRenderSettings = {
+            bloomStrength: 0.5,
+            bloomRadius: 0.3,
+            bloomThreshold: 0.9,
+            exposure: 1.0,
+            chromaticAberration: 0.0005,
+            backgroundColor: '#1a0a2e'
+        };
+
+        rendering.add(this.debugRenderSettings, 'bloomStrength', 0, 2, 0.01).name('Bloom Strength').onChange(v => {
+            this.bloomPass.strength = v;
+        });
+        rendering.add(this.debugRenderSettings, 'bloomRadius', 0, 1, 0.01).name('Bloom Radius').onChange(v => {
+            this.bloomPass.radius = v;
+        });
+        rendering.add(this.debugRenderSettings, 'bloomThreshold', 0, 1, 0.01).name('Bloom Threshold').onChange(v => {
+            this.bloomPass.threshold = v;
+        });
+        rendering.add(this.debugRenderSettings, 'exposure', 0, 3, 0.1).name('Exposure').onChange(v => {
+            this.renderer.toneMappingExposure = v;
+        });
+        rendering.add(this.debugRenderSettings, 'chromaticAberration', 0, 0.01, 0.0001).name('Chromatic Aberr.').onChange(v => {
+            this.chromaticPass.uniforms.amount.value = v;
+        });
+        rendering.addColor(this.debugRenderSettings, 'backgroundColor').name('Background').onChange(v => {
+            this.scene.background = new THREE.Color(v);
+            this.renderer.setClearColor(v, 1);
+        });
+
+        // Camera settings
+        const camera = this.gui.addFolder('Camera');
+        this.debugCameraSettings = {
+            lerpSpeed: 0.15,
+            fov: 60,
+            near: 0.1,
+            far: 100000
+        };
+
+        camera.add(this.debugCameraSettings, 'lerpSpeed', 0.01, 0.5, 0.01).name('Lerp Speed').onChange(v => {
+            // Will be used in player update
+            this.player.cameraLerpSpeed = v;
+        });
+        camera.add(this.debugCameraSettings, 'fov', 30, 120, 1).name('FOV').onChange(v => {
+            this.camera.fov = v;
+            this.camera.updateProjectionMatrix();
+        });
+        camera.add(this.debugCameraSettings, 'near', 0.01, 10, 0.01).name('Near Clip').onChange(v => {
+            this.camera.near = v;
+            this.camera.updateProjectionMatrix();
+        });
+        camera.add(this.debugCameraSettings, 'far', 100, 500000, 100).name('Far Clip').onChange(v => {
+            this.camera.far = v;
+            this.camera.updateProjectionMatrix();
+        });
+
+        // Debug info display
+        const info = this.gui.addFolder('Info');
+        this.debugInfo = {
+            fps: 0,
+            cameraPos: '0, 0, 0',
+            playerPos: '0, 0, 0',
+            altitude: 0,
+            velocity: 0
+        };
+        info.add(this.debugInfo, 'fps').name('FPS').listen();
+        info.add(this.debugInfo, 'cameraPos').name('Camera Pos').listen();
+        info.add(this.debugInfo, 'playerPos').name('Player Pos').listen();
+        info.add(this.debugInfo, 'altitude').name('Altitude').listen();
+        info.add(this.debugInfo, 'velocity').name('Velocity').listen();
+        info.open();
+
+        // FPS counter
+        this.fpsFrames = 0;
+        this.fpsTime = performance.now();
     }
 
     updateUI() {
@@ -569,8 +720,29 @@ class GloballGame {
         // Update UI
         this.updateUI();
 
-        // Render with post-processing
-        this.composer.render();
+        // Update debug info
+        if (this.debugInfo) {
+            this.fpsFrames++;
+            const now = performance.now();
+            if (now - this.fpsTime >= 1000) {
+                this.debugInfo.fps = Math.round(this.fpsFrames * 1000 / (now - this.fpsTime));
+                this.fpsFrames = 0;
+                this.fpsTime = now;
+            }
+            const cp = this.camera.position;
+            const pp = this.player.getPosition();
+            this.debugInfo.cameraPos = `${cp.x.toFixed(1)}, ${cp.y.toFixed(1)}, ${cp.z.toFixed(1)}`;
+            this.debugInfo.playerPos = `${pp.x.toFixed(1)}, ${pp.y.toFixed(1)}, ${pp.z.toFixed(1)}`;
+            this.debugInfo.altitude = altitude.toFixed(1);
+            this.debugInfo.velocity = speed.toFixed(2);
+        }
+
+        // Render with or without post-processing
+        if (this.usePostProcessing) {
+            this.composer.render();
+        } else {
+            this.renderer.render(this.scene, this.camera);
+        }
     }
 }
 
