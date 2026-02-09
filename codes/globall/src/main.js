@@ -603,6 +603,18 @@ class GloballGame {
         // FPS counter
         this.fpsFrames = 0;
         this.fpsTime = performance.now();
+
+        // Mobile-friendly debug toggle button
+        const debugToggle = document.getElementById('debug-toggle');
+        if (debugToggle) {
+            debugToggle.addEventListener('click', () => {
+                this.gui.show(this.gui._hidden);
+            });
+            debugToggle.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.gui.show(this.gui._hidden);
+            });
+        }
     }
 
     updateUI() {
