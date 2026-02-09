@@ -16,6 +16,52 @@
 
 ---
 
+## Initial Implementation (v1)
+
+The first version had these components but major UX/rendering issues:
+
+### Core Engine (`src/main.js`)
+- WebGPU detection with WebGL fallback
+- 90Hz target framerate
+- Post-processing pipeline (bloom, chromatic aberration)
+- Dynamic shader parameters based on player state
+
+### Visual Components
+- `Planet.js` - Procedural Earth with day/night textures, city lights, animated clouds
+- `SpaceEnvironment.js` - 10,000 twinkling stars, orbiting ISS, satellites, distant galaxies
+- `AuroraBorealis.js` - Animated aurora curtains at polar regions (visible at high altitude)
+- `CityLights.js` - 20 major cities + 100 procedural, candy-colored lights, OSM-inspired street grids
+
+### Gameplay Systems
+- `TrampolineNetwork.js` - 20 major airports as trampoline nodes with arc connections
+- `PackageSystem.js` - 8 mysterious package types (Quantum Container, Dream Fragment, etc.), rival couriers
+- `Player.js` - Bounce physics, trail rendering, squash/stretch animation
+- `GameState.js` - Scoring, achievements, level progression, local storage persistence
+
+### Shaders
+- Atmospheric scattering for planet rim glow
+- Aurora with multi-octave noise animation
+- Chromatic aberration (FLAWED - applied uniformly causing RGB separation)
+- Planet surface with day/night blending
+
+### Controls (Intended)
+- WASD/Arrows - Directional influence while airborne
+- Space - Bounce (when charged)
+- E - Interact with packages
+- 1/2/3 - Select route type (Express/Scenic/Stealth)
+- Click trampolines - Set target destination
+- Touch: Tap to bounce, swipe to steer
+
+### Known Flaws in v1
+1. **White screen / bleachout** - Excessive bloom at high altitude
+2. **Chromatic aberration** - Applied uniformly, player appeared as RGB-separated circles
+3. **Gravity escape** - Player could bounce to 8000+ km and never fall back
+4. **Route modes invisible** - Buttons selected but had no perceptible effect
+5. **No wayfinding** - Destination name shown but no visual guidance
+6. **Mobile hostile** - UI overlays too large, controls unexplained
+
+---
+
 ## User Feedback Summary (from screenshots)
 
 ### Critical Issues Identified
