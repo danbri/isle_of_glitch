@@ -121,6 +121,7 @@ class GloballGame {
 
     setupScene() {
         this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x1a0a2e);
 
         // Camera setup - positioned to see Earth from space
         this.camera = new THREE.PerspectiveCamera(
@@ -475,9 +476,9 @@ class GloballGame {
         const speed = this.player.getSpeed();
         this.chromaticPass.uniforms.amount.value = 0.001 + speed * 0.005;
 
-        // Update bloom based on altitude (more bloom in space)
+        // Update bloom based on altitude (more bloom in space, but clamped)
         const altitude = this.player.getAltitude();
-        this.bloomPass.strength = 0.6 + (altitude / 500) * 0.5;
+        this.bloomPass.strength = Math.min(1.2, 0.6 + (altitude / 500) * 0.1);
 
         // Update UI
         this.updateUI();
