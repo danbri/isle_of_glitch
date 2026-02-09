@@ -18,6 +18,7 @@ import { SpaceEnvironment } from './components/SpaceEnvironment.js';
 import { CityLights } from './components/CityLights.js';
 import { PackageSystem } from './systems/PackageSystem.js';
 import { GameState } from './systems/GameState.js';
+import { AudioSystem } from './systems/AudioSystem.js';
 import { ChromaticAberrationShader } from './shaders/ChromaticAberration.js';
 import { AtmosphericScatteringShader } from './shaders/AtmosphericScattering.js';
 
@@ -35,6 +36,9 @@ class GloballGame {
         // Smoothed display values to prevent flickering
         this.displayedAltitude = 0;
         this.altitudeSmoothFactor = 0.15;
+
+        // Initialize audio immediately
+        this.audio = new AudioSystem();
 
         this.init();
     }
@@ -98,7 +102,8 @@ class GloballGame {
             antialias: true,
             alpha: false,
             powerPreference: 'high-performance',
-            preserveDrawingBuffer: true
+            logarithmicDepthBuffer: true,
+            stencil: false
         });
 
         // Set clear color to prevent flickering
@@ -261,10 +266,14 @@ class GloballGame {
         this.renderer.domElement.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
 
         // Bounce indicator tap to bounce
-        document.getElementById('bounce-indicator').addEventListener('click', () => this.player.bounce());
+        document.getElementById('bounce-indicator').addEventListener('click', () => {
+            this.player.bounce();
+            this.audio.playBounce(this.player.getBounceCharge());
+        });
         document.getElementById('bounce-indicator').addEventListener('touchend', (e) => {
             e.preventDefault();
             this.player.bounce();
+            this.audio.playBounce(this.player.getBounceCharge());
         });
     }
 
@@ -313,6 +322,7 @@ class GloballGame {
                 const target = document.elementFromPoint(touch.clientX, touch.clientY);
                 if (target === this.renderer.domElement) {
                     this.player.bounce();
+                    this.audio.playBounce(this.player.getBounceCharge());
                 }
             }
         }
@@ -329,6 +339,7 @@ class GloballGame {
         switch(e.code) {
             case 'Space':
                 this.player.bounce();
+                this.audio.playBounce(this.player.getBounceCharge());
                 break;
             case 'KeyE':
                 this.player.interact();
@@ -479,6 +490,10 @@ class GloballGame {
         // Update bloom based on altitude (more bloom in space, but clamped)
         const altitude = this.player.getAltitude();
         this.bloomPass.strength = Math.min(1.2, 0.6 + (altitude / 500) * 0.1);
+
+        // Update audio based on game state
+        this.audio.updateAltitude(altitude);
+        this.audio.updateSpeed(speed);
 
         // Update UI
         this.updateUI();
