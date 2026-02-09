@@ -343,8 +343,8 @@ export class Player {
         }
 
         // Squash and stretch based on velocity
-        const speed = this.velocity.length();
-        const stretch = 1 + speed * 0.02;
+        const currentSpeed = this.velocity.length();
+        const stretch = 1 + currentSpeed * 0.02;
         this.mesh.scale.set(1, 1, stretch);
 
         // Update trail
