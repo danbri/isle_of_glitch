@@ -37,9 +37,10 @@ class GloballGame {
         this.displayedAltitude = 0;
         this.altitudeSmoothFactor = 0.15;
 
-        // Initialize audio immediately
-        this.audio = new AudioSystem();
+        // Defer audio initialization to avoid blocking
+        this.audio = null;
 
+        console.log('🎮 Globall starting...');
         this.init();
     }
 
@@ -66,6 +67,15 @@ class GloballGame {
             // Setup UI
             this.setupUI();
 
+            // Initialize audio (deferred, non-blocking)
+            try {
+                this.audio = new AudioSystem();
+                console.log('🔊 Audio initialized');
+            } catch (e) {
+                console.warn('Audio init failed:', e);
+                this.audio = { playBounce: () => {}, updateAltitude: () => {}, updateSpeed: () => {} };
+            }
+
             // Hide loading screen
             this.hideLoadingScreen();
 
@@ -86,25 +96,34 @@ class GloballGame {
     }
 
     async checkWebGPU() {
+        // Skip WebGPU on mobile - just use WebGL for reliability
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+            console.log('📱 Mobile detected, using WebGL2');
+            return;
+        }
+
         if (navigator.gpu) {
             try {
-                const adapter = await navigator.gpu.requestAdapter();
+                // Add timeout to prevent hanging on WebGPU check
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('WebGPU timeout')), 2000)
+                );
+                const adapterPromise = navigator.gpu.requestAdapter();
+
+                const adapter = await Promise.race([adapterPromise, timeoutPromise]);
                 if (adapter) {
                     const device = await adapter.requestDevice();
                     this.isWebGPU = true;
-                    console.log('🎮 WebGPU initialized for 90Hz gameplay');
+                    console.log('🎮 WebGPU initialized');
                     return;
                 }
             } catch (e) {
-                console.warn('WebGPU adapter failed:', e);
+                console.warn('WebGPU check failed:', e.message);
             }
         }
 
-        console.log('⚠️ WebGPU not available, using WebGL2 fallback');
-        document.getElementById('webgpu-error').style.display = 'block';
-        setTimeout(() => {
-            document.getElementById('webgpu-error').style.display = 'none';
-        }, 3000);
+        console.log('⚠️ Using WebGL2 fallback');
     }
 
     setupRenderer() {
@@ -287,15 +306,18 @@ class GloballGame {
         this.renderer.domElement.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
 
         // Bounce indicator tap to bounce
-        document.getElementById('bounce-indicator').addEventListener('click', () => {
-            this.player.bounce();
-            this.audio.playBounce(this.player.getBounceCharge());
-        });
-        document.getElementById('bounce-indicator').addEventListener('touchend', (e) => {
-            e.preventDefault();
-            this.player.bounce();
-            this.audio.playBounce(this.player.getBounceCharge());
-        });
+        const bounceIndicator = document.getElementById('bounce-indicator');
+        if (bounceIndicator) {
+            bounceIndicator.addEventListener('click', () => {
+                this.player.bounce();
+                if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
+            });
+            bounceIndicator.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.player.bounce();
+                if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
+            });
+        }
     }
 
     handleTouchStart(e) {
@@ -343,7 +365,7 @@ class GloballGame {
                 const target = document.elementFromPoint(touch.clientX, touch.clientY);
                 if (target === this.renderer.domElement) {
                     this.player.bounce();
-                    this.audio.playBounce(this.player.getBounceCharge());
+                    if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
                 }
             }
         }
@@ -360,7 +382,7 @@ class GloballGame {
         switch(e.code) {
             case 'Space':
                 this.player.bounce();
-                this.audio.playBounce(this.player.getBounceCharge());
+                if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
                 break;
             case 'KeyE':
                 this.player.interact();
@@ -539,8 +561,10 @@ class GloballGame {
         this.bloomPass.strength = Math.min(0.7, 0.3 + Math.min(altitude / 200, 0.4));
 
         // Update audio based on game state
-        this.audio.updateAltitude(altitude);
-        this.audio.updateSpeed(speed);
+        if (this.audio) {
+            this.audio.updateAltitude(altitude);
+            this.audio.updateSpeed(speed);
+        }
 
         // Update UI
         this.updateUI();
