@@ -12,10 +12,14 @@
         }
 
         body {
-            background: linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #0f3460 100%);
+            background: #1a0a2e;
             overflow: hidden;
             font-family: 'Segoe UI', system-ui, sans-serif;
             color: white;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         #canvas-container {
@@ -24,6 +28,7 @@
             left: 0;
             width: 100%;
             height: 100%;
+            background: linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #0f3460 100%);
         }
 
         canvas {
@@ -53,22 +58,24 @@
         }
 
         .loading-title {
-            font-size: 4rem;
+            font-size: clamp(2rem, 10vw, 4rem);
             font-weight: 300;
-            letter-spacing: 0.5em;
-            margin-bottom: 2rem;
+            letter-spacing: 0.3em;
+            margin-bottom: 1rem;
             text-shadow: 0 0 40px rgba(255,255,255,0.5);
             animation: pulse 2s ease-in-out infinite;
         }
 
         .loading-subtitle {
-            font-size: 1.2rem;
+            font-size: clamp(0.7rem, 2.5vw, 1.2rem);
             opacity: 0.8;
-            letter-spacing: 0.3em;
+            letter-spacing: 0.2em;
+            text-align: center;
+            padding: 0 1rem;
         }
 
         .loading-bar {
-            width: 300px;
+            width: min(80vw, 300px);
             height: 4px;
             background: rgba(255,255,255,0.2);
             border-radius: 2px;
@@ -103,101 +110,121 @@
             pointer-events: auto;
             background: rgba(20, 10, 40, 0.85);
             backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 20px;
+            border-radius: 12px;
+            padding: clamp(10px, 3vw, 20px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         #altitude-display {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: max(env(safe-area-inset-top, 0px), 12px);
+            right: 12px;
             text-align: right;
+            min-width: 80px;
         }
 
         .altitude-value {
-            font-size: 3rem;
+            font-size: clamp(1.8rem, 8vw, 3rem);
             font-weight: 200;
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.1;
         }
 
         .altitude-label {
-            font-size: 0.8rem;
-            letter-spacing: 0.2em;
+            font-size: clamp(0.55rem, 1.8vw, 0.8rem);
+            letter-spacing: 0.1em;
             opacity: 0.6;
+            white-space: nowrap;
         }
 
         #package-info {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            min-width: 250px;
+            top: max(env(safe-area-inset-top, 0px), 12px);
+            left: 12px;
+            max-width: calc(100vw - 150px);
         }
 
         .package-title {
-            font-size: 0.7rem;
-            letter-spacing: 0.2em;
+            font-size: clamp(0.55rem, 2vw, 0.7rem);
+            letter-spacing: 0.15em;
             opacity: 0.6;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .package-content {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         .package-icon {
-            width: 48px;
-            height: 48px;
+            width: clamp(36px, 10vw, 48px);
+            height: clamp(36px, 10vw, 48px);
             background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            flex-shrink: 0;
         }
 
         .package-details h3 {
             font-weight: 500;
-            margin-bottom: 4px;
+            font-size: clamp(0.85rem, 3vw, 1rem);
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 40vw;
         }
 
         .package-destination {
-            font-size: 0.85rem;
+            font-size: clamp(0.7rem, 2.5vw, 0.85rem);
             opacity: 0.7;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 40vw;
         }
 
         #route-selector {
             position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: max(env(safe-area-inset-bottom, 0px), 12px);
+            left: 12px;
+            right: 100px;
             display: flex;
-            gap: 12px;
+            gap: 8px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            scroll-snap-type: x mandatory;
+            padding-bottom: 4px;
+        }
+
+        #route-selector::-webkit-scrollbar {
+            display: none;
         }
 
         .route-option {
-            padding: 12px 24px;
-            border-radius: 30px;
+            padding: clamp(8px, 2vw, 12px) clamp(12px, 3vw, 24px);
+            border-radius: 24px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
             border: 2px solid transparent;
+            flex-shrink: 0;
+            scroll-snap-align: start;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .route-option:hover {
-            transform: scale(1.05);
-            border-color: rgba(255, 255, 255, 0.3);
+        .route-option:active {
+            transform: scale(0.95);
         }
 
         .route-option.selected {
@@ -206,68 +233,66 @@
         }
 
         .route-name {
-            font-size: 0.9rem;
+            font-size: clamp(0.75rem, 2.5vw, 0.9rem);
             font-weight: 500;
+            white-space: nowrap;
         }
 
         .route-time {
-            font-size: 0.7rem;
+            font-size: clamp(0.6rem, 2vw, 0.7rem);
             opacity: 0.6;
+            white-space: nowrap;
         }
 
         #minimap {
-            position: absolute;
-            bottom: 100px;
-            right: 20px;
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-        }
-
-        #minimap canvas {
-            width: 100%;
-            height: 100%;
+            display: none;
         }
 
         #bounce-indicator {
             position: absolute;
-            bottom: 20px;
-            right: 20px;
-            width: 80px;
-            height: 80px;
+            bottom: max(env(safe-area-inset-bottom, 0px), 12px);
+            right: 12px;
+            width: clamp(60px, 15vw, 80px);
+            height: clamp(60px, 15vw, 80px);
             border-radius: 50%;
             background: conic-gradient(from 0deg, #f093fb, #f5576c, #fa709a, #fee140, #f093fb);
             display: flex;
             align-items: center;
             justify-content: center;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .bounce-inner {
-            width: 70px;
-            height: 70px;
+            width: calc(100% - 10px);
+            height: calc(100% - 10px);
             border-radius: 50%;
             background: rgba(20, 10, 40, 0.9);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: clamp(1.2rem, 5vw, 1.5rem);
         }
 
         #score-display {
             position: absolute;
-            top: 100px;
-            right: 20px;
+            top: max(calc(env(safe-area-inset-top, 0px) + 70px), 82px);
+            right: 12px;
+        }
+
+        .score-label {
+            font-size: clamp(0.55rem, 2vw, 0.7rem) !important;
+            letter-spacing: 0.15em;
+            opacity: 0.6;
         }
 
         .score-value {
-            font-size: 1.8rem;
+            font-size: clamp(1.4rem, 6vw, 1.8rem);
             font-weight: 600;
             background: linear-gradient(135deg, #fee140 0%, #fa709a 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            font-variant-numeric: tabular-nums;
         }
 
         #webgpu-error {
@@ -276,18 +301,70 @@
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
-            max-width: 500px;
+            max-width: min(90vw, 500px);
             display: none;
         }
 
         #webgpu-error h2 {
             margin-bottom: 1rem;
             color: #f5576c;
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
         }
 
         #webgpu-error p {
             opacity: 0.8;
             line-height: 1.6;
+            font-size: clamp(0.85rem, 3vw, 1rem);
+        }
+
+        /* Desktop enhancements */
+        @media (min-width: 768px) and (hover: hover) {
+            .route-option:hover {
+                transform: scale(1.05);
+                border-color: rgba(255, 255, 255, 0.3);
+            }
+
+            .route-option:active {
+                transform: scale(1.02);
+            }
+
+            #minimap {
+                display: block;
+                position: absolute;
+                bottom: 100px;
+                right: 20px;
+                width: 180px;
+                height: 180px;
+                border-radius: 50%;
+                overflow: hidden;
+                border: 2px solid rgba(255, 255, 255, 0.2);
+            }
+
+            #minimap canvas {
+                width: 100%;
+                height: 100%;
+            }
+
+            #route-selector {
+                left: 50%;
+                right: auto;
+                transform: translateX(-50%);
+                bottom: 20px;
+            }
+
+            #bounce-indicator {
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .package-icon {
+                animation: float 3s ease-in-out infinite;
+            }
+
+            @keyframes float {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-5px); }
+            }
         }
     </style>
 </head>

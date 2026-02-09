@@ -32,6 +32,10 @@ class GloballGame {
         this.loadingProgress = 0;
         this.isLoading = true;
 
+        // Smoothed display values to prevent flickering
+        this.displayedAltitude = 0;
+        this.altitudeSmoothFactor = 0.15;
+
         this.init();
     }
 
@@ -92,10 +96,13 @@ class GloballGame {
         // Use WebGPURenderer if available, fallback to WebGLRenderer
         this.renderer = new THREE.WebGLRenderer({
             antialias: true,
-            alpha: true,
-            powerPreference: 'high-performance'
+            alpha: false,
+            powerPreference: 'high-performance',
+            preserveDrawingBuffer: true
         });
 
+        // Set clear color to prevent flickering
+        this.renderer.setClearColor(0x1a0a2e, 1);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -245,6 +252,76 @@ class GloballGame {
 
         this.renderer.domElement.addEventListener('click', (e) => this.handleClick(e));
         this.renderer.domElement.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+
+        // Touch controls for mobile
+        this.touchStartPos = null;
+        this.renderer.domElement.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
+        this.renderer.domElement.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
+        this.renderer.domElement.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
+
+        // Bounce indicator tap to bounce
+        document.getElementById('bounce-indicator').addEventListener('click', () => this.player.bounce());
+        document.getElementById('bounce-indicator').addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.player.bounce();
+        });
+    }
+
+    handleTouchStart(e) {
+        if (e.touches.length === 1) {
+            this.touchStartPos = {
+                x: e.touches[0].clientX,
+                y: e.touches[0].clientY,
+                time: Date.now()
+            };
+        }
+    }
+
+    handleTouchMove(e) {
+        if (!this.touchStartPos || e.touches.length !== 1) return;
+
+        const dx = e.touches[0].clientX - this.touchStartPos.x;
+        const dy = e.touches[0].clientY - this.touchStartPos.y;
+
+        // Convert swipe to directional input
+        const threshold = 10;
+        if (Math.abs(dx) > threshold) {
+            this.keys['KeyD'] = dx > 0;
+            this.keys['KeyA'] = dx < 0;
+        } else {
+            this.keys['KeyD'] = false;
+            this.keys['KeyA'] = false;
+        }
+
+        if (Math.abs(dy) > threshold) {
+            this.keys['KeyW'] = dy < 0;
+            this.keys['KeyS'] = dy > 0;
+        } else {
+            this.keys['KeyW'] = false;
+            this.keys['KeyS'] = false;
+        }
+    }
+
+    handleTouchEnd(e) {
+        if (this.touchStartPos) {
+            const elapsed = Date.now() - this.touchStartPos.time;
+            // Quick tap = bounce
+            if (elapsed < 200) {
+                // Check if tap was on canvas (not UI)
+                const touch = e.changedTouches[0];
+                const target = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (target === this.renderer.domElement) {
+                    this.player.bounce();
+                }
+            }
+        }
+
+        // Reset all touch-based movement
+        this.keys['KeyW'] = false;
+        this.keys['KeyS'] = false;
+        this.keys['KeyA'] = false;
+        this.keys['KeyD'] = false;
+        this.touchStartPos = null;
     }
 
     handleKeyDown(e) {
@@ -323,9 +400,10 @@ class GloballGame {
     }
 
     updateUI() {
-        // Update altitude display
-        const altitude = this.player.getAltitude();
-        document.getElementById('altitude-value').textContent = altitude.toFixed(1);
+        // Update altitude display with smoothing to prevent flickering
+        const targetAltitude = this.player.getAltitude();
+        this.displayedAltitude += (targetAltitude - this.displayedAltitude) * this.altitudeSmoothFactor;
+        document.getElementById('altitude-value').textContent = this.displayedAltitude.toFixed(1);
 
         // Update score
         document.getElementById('score-value').textContent = this.gameState.deliveries;
