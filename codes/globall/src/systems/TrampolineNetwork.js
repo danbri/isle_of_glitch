@@ -130,8 +130,14 @@ export class TrampolineNetwork {
         const labelCtx = labelCanvas.getContext('2d');
 
         labelCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        labelCtx.roundRect(0, 0, 256, 64, 10);
-        labelCtx.fill();
+        // Use fillRect as fallback for older browsers without roundRect
+        if (labelCtx.roundRect) {
+            labelCtx.beginPath();
+            labelCtx.roundRect(0, 0, 256, 64, 10);
+            labelCtx.fill();
+        } else {
+            labelCtx.fillRect(0, 0, 256, 64);
+        }
 
         labelCtx.font = 'bold 24px Arial';
         labelCtx.fillStyle = '#ffffff';

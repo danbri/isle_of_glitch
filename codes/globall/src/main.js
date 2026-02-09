@@ -44,32 +44,45 @@ class GloballGame {
     }
 
     async init() {
-        // Check for WebGPU support
-        await this.checkWebGPU();
+        try {
+            // Check for WebGPU support
+            await this.checkWebGPU();
 
-        // Initialize renderer
-        this.setupRenderer();
+            // Initialize renderer
+            this.setupRenderer();
 
-        // Setup scene and camera
-        this.setupScene();
+            // Setup scene and camera
+            this.setupScene();
 
-        // Setup post-processing
-        this.setupPostProcessing();
+            // Setup post-processing
+            this.setupPostProcessing();
 
-        // Load game components
-        await this.loadGameComponents();
+            // Load game components
+            await this.loadGameComponents();
 
-        // Setup input handling
-        this.setupInput();
+            // Setup input handling
+            this.setupInput();
 
-        // Setup UI
-        this.setupUI();
+            // Setup UI
+            this.setupUI();
 
-        // Hide loading screen
-        this.hideLoadingScreen();
+            // Hide loading screen
+            this.hideLoadingScreen();
 
-        // Start game loop
-        this.animate();
+            // Start game loop
+            this.animate();
+        } catch (error) {
+            console.error('Game initialization failed:', error);
+            // Show error on loading screen
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.innerHTML = `
+                    <h1 style="color: #f5576c;">Error Loading Game</h1>
+                    <p style="margin-top: 1rem; opacity: 0.8;">${error.message}</p>
+                    <p style="margin-top: 0.5rem; font-size: 0.8rem; opacity: 0.6;">Check console for details</p>
+                `;
+            }
+        }
     }
 
     async checkWebGPU() {
@@ -197,45 +210,53 @@ class GloballGame {
         this.updateLoadingProgress(35);
 
         // Create planet
+        console.log('Loading: Planet...');
         this.planet = new Planet(this.scene);
         await this.planet.init();
 
         this.updateLoadingProgress(50);
 
         // Create city lights
+        console.log('Loading: City Lights...');
         this.cityLights = new CityLights(this.scene, this.planet);
         await this.cityLights.init();
 
         this.updateLoadingProgress(60);
 
         // Create space environment (stars, ISS)
+        console.log('Loading: Space Environment...');
         this.spaceEnv = new SpaceEnvironment(this.scene);
         await this.spaceEnv.init();
 
         this.updateLoadingProgress(70);
 
         // Create aurora borealis
+        console.log('Loading: Aurora...');
         this.aurora = new AuroraBorealis(this.scene);
         await this.aurora.init();
 
         this.updateLoadingProgress(80);
 
         // Create trampoline network
+        console.log('Loading: Trampolines...');
         this.trampolineNetwork = new TrampolineNetwork(this.scene, this.planet);
         await this.trampolineNetwork.init();
 
         this.updateLoadingProgress(85);
 
         // Create player
+        console.log('Loading: Player...');
         this.player = new Player(this.scene, this.camera, this.gameState);
         await this.player.init();
 
         this.updateLoadingProgress(90);
 
         // Create package system
+        console.log('Loading: Package System...');
         this.packageSystem = new PackageSystem(this.scene, this.gameState, this.trampolineNetwork);
         await this.packageSystem.init();
 
+        console.log('Loading: Complete!');
         this.updateLoadingProgress(100);
     }
 
