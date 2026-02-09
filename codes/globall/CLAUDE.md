@@ -117,11 +117,36 @@ The first version had these components but major UX/rendering issues:
 
 ## Known Remaining Issues
 
-1. **Changes not yet deployed** - Need to commit and push for live testing
+1. **May need further gravity tuning** - If player still escapes, increase gravity further or add hard altitude ceiling
 
-2. **May need further gravity tuning** - If player still escapes, increase gravity further or add hard altitude ceiling
+2. **Package delivery not fully wired** - Collecting packages at destination not clearly working
 
-3. **Package delivery not fully wired** - Collecting packages at destination not clearly working
+---
+
+## Session 2 Fixes (Whiteout)
+
+### Root Causes Found
+- Atmosphere glow intensity was 1.5 with AdditiveBlending
+- Clouds used AdditiveBlending
+- Planet surface shader had city lights multiplied by 2.0
+- Cloud color was pure white vec3(1.0)
+- Fresnel rim lighting adding 0.5 intensity
+
+### Fixes Applied
+1. **Atmosphere** (`src/components/Planet.js`):
+   - glowIntensity: 1.5 → 0.6
+   - Changed from AdditiveBlending to NormalBlending
+   - Darker glow color
+
+2. **Clouds** (`src/components/Planet.js`):
+   - opacity: 0.4 → 0.25
+   - Changed from AdditiveBlending to NormalBlending
+
+3. **Planet Surface Shader** (`src/shaders/PlanetSurface.js`):
+   - City lights multiplier: 2.0 → 0.8
+   - Cloud shadow factor: 0.3 → 0.2
+   - Cloud color: 1.0 → 0.9, with 0.5 multiplier
+   - Fresnel rim: 0.5 → 0.2
 
 ---
 

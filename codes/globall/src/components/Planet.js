@@ -373,15 +373,15 @@ export class Planet {
             uniforms: {
                 time: { value: 0 },
                 sunDirection: { value: this.sunDirection },
-                glowColor: { value: new THREE.Color(0.4, 0.7, 1.0) },
-                glowIntensity: { value: 1.5 },
+                glowColor: { value: new THREE.Color(0.3, 0.5, 0.8) }, // Darker color
+                glowIntensity: { value: 0.6 }, // Reduced from 1.5
                 viewVector: { value: new THREE.Vector3() }
             },
             vertexShader: AtmosphereGlowMaterial.vertexShader,
             fragmentShader: AtmosphereGlowMaterial.fragmentShader,
             side: THREE.BackSide,
             transparent: true,
-            blending: THREE.AdditiveBlending,
+            blending: THREE.NormalBlending, // Changed from AdditiveBlending
             depthWrite: false
         });
 
@@ -396,9 +396,9 @@ export class Planet {
         const material = new THREE.MeshPhongMaterial({
             map: cloudTexture,
             transparent: true,
-            opacity: 0.4,
+            opacity: 0.25, // Reduced from 0.4
             depthWrite: false,
-            blending: THREE.AdditiveBlending
+            blending: THREE.NormalBlending // Changed from AdditiveBlending
         });
 
         this.cloudsMesh = new THREE.Mesh(geometry, material);

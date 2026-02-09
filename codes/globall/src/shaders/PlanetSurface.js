@@ -140,9 +140,9 @@ export const PlanetSurfaceShader = {
             // Blend day and night
             vec3 surfaceColor = mix(nightColor.rgb, dayColor.rgb, dayFactor);
 
-            // Add city lights on dark side
+            // Add city lights on dark side (reduced intensity)
             float cityIntensity = (1.0 - dayFactor) * cityLights.r * cityGlow;
-            vec3 cityColor = vec3(1.0, 0.9, 0.7) * cityIntensity * 2.0;
+            vec3 cityColor = vec3(1.0, 0.9, 0.7) * cityIntensity * 0.8; // Reduced from 2.0
 
             // Candy-colored city variation
             vec3 candyCity = mix(
@@ -154,17 +154,17 @@ export const PlanetSurfaceShader = {
 
             surfaceColor += cityColor;
 
-            // Add cloud layer
-            float cloudShadow = 1.0 - clouds.r * cloudOpacity * 0.3;
+            // Add cloud layer (reduced brightness)
+            float cloudShadow = 1.0 - clouds.r * cloudOpacity * 0.2; // Reduced from 0.3
             surfaceColor *= cloudShadow;
 
-            vec3 cloudColor = vec3(1.0) * clouds.r * cloudOpacity * dayFactor;
+            vec3 cloudColor = vec3(0.9) * clouds.r * cloudOpacity * dayFactor * 0.5; // Reduced
             surfaceColor += cloudColor;
 
-            // Fresnel rim lighting
+            // Fresnel rim lighting (reduced)
             vec3 viewDir = normalize(vViewPosition);
             float fresnel = pow(1.0 - max(0.0, dot(vWorldNormal, viewDir)), 3.0);
-            vec3 rimColor = atmosphereColor * fresnel * 0.5;
+            vec3 rimColor = atmosphereColor * fresnel * 0.2; // Reduced from 0.5
 
             surfaceColor += rimColor;
 
