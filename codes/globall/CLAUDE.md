@@ -186,6 +186,54 @@ planetRadius: 10      // Game units
 
 ---
 
+## Session 4 Fixes (Black Cutout Templates / Post-Processing)
+
+### Symptom
+Game renders with black cutout templates when post-processing is enabled. Disabling the
+EffectComposer pipeline (falling back to direct renderer.render) eliminated the artifacts.
+
+### Primary Hypothesis: Alpha Channel Bleed
+The scene contains many transparent objects (stars, aurora, city sprites, glow sprites,
+atmosphere meshes) using `transparent: true` with `AdditiveBlending`. These write alpha < 1.0
+into the EffectComposer's RGBA HalfFloat render targets.
+
+When the ChromaticAberration ShaderPass renders with NormalBlending (the Three.js default
+for ShaderPass), pixels with alpha < 1.0 are darkened:
+`RGB_out = src.rgb * src.a + dst.rgb * (1 - src.a)`
+producing black/dark shapes wherever transparent objects rendered.
+
+**Note**: This is a hypothesis based on code analysis. If artifacts persist, the fine-grained
+debug controls (below) can isolate which pass is responsible by toggling them individually.
+
+### Alternative Hypotheses (if primary fix doesn't resolve)
+- `logarithmicDepthBuffer: true` could cause depth-related artifacts in render targets
+- Color space double-application between renderer settings and OutputPass
+- UnrealBloomPass internal composite alpha handling
+- Browser/GPU-specific WebGL framebuffer behavior
+
+### Fixes Applied
+1. **ChromaticAberration shader** (`src/shaders/ChromaticAberration.js`):
+   - Force `alpha = 1.0` in output: `gl_FragColor = vec4(cr.r, cg.g, cb.b, 1.0)`
+   - Prevents alpha bleed from scene transparent objects through the pipeline
+
+2. **EffectComposer render target** (`src/main.js`):
+   - Explicit `WebGLRenderTarget` with `stencilBuffer: false` matching renderer config
+   - Stored references to all passes (`renderPass`, `bloomPass`, `chromaticPass`, `outputPass`)
+
+3. **Fine-grained post-processing debug controls** (`src/main.js`):
+   - Master enable/disable for entire pipeline
+   - Bloom subfolder: enable, strength (0-3), radius (0-1), threshold (0-1), altitude scaling toggle
+   - Chromatic Aberration subfolder: enable, base amount, speed scaling toggle, angle
+   - Tone Mapping subfolder: exposure (0-3)
+   - Each pass can be toggled independently to isolate rendering issues
+
+4. **Orbit controls re-enabled** (`src/main.js`, `src/components/Player.js`):
+   - Orbit controls enabled by default (not implicated in post-processing issue)
+   - Added `cameraEnabled` flag to Player for mutual exclusion with orbit controls
+   - Debug panel toggle switches between orbit controls and player camera
+
+---
+
 ## Deployment Workflow
 
 **IMPORTANT**: Push changes to `claude/fink-authoring-guide-*` branch, NOT main!
