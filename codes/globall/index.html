@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Globall - Planetary Trampoline Express</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #0f3460 100%);
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: white;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-title {
+            font-size: 4rem;
+            font-weight: 300;
+            letter-spacing: 0.5em;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 40px rgba(255,255,255,0.5);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .loading-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            letter-spacing: 0.3em;
+        }
+
+        .loading-bar {
+            width: 300px;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            margin-top: 2rem;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #fff 0%, #f0c 50%, #0ff 100%);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        #ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .ui-panel {
+            pointer-events: auto;
+            background: rgba(20, 10, 40, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        #altitude-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            text-align: right;
+        }
+
+        .altitude-value {
+            font-size: 3rem;
+            font-weight: 200;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .altitude-label {
+            font-size: 0.8rem;
+            letter-spacing: 0.2em;
+            opacity: 0.6;
+        }
+
+        #package-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            min-width: 250px;
+        }
+
+        .package-title {
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            opacity: 0.6;
+            margin-bottom: 8px;
+        }
+
+        .package-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .package-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .package-details h3 {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .package-destination {
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        #route-selector {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+        }
+
+        .route-option {
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .route-option:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .route-option.selected {
+            border-color: #f093fb;
+            box-shadow: 0 0 20px rgba(240, 147, 251, 0.4);
+        }
+
+        .route-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .route-time {
+            font-size: 0.7rem;
+            opacity: 0.6;
+        }
+
+        #minimap {
+            position: absolute;
+            bottom: 100px;
+            right: 20px;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        #minimap canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        #bounce-indicator {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #f093fb, #f5576c, #fa709a, #fee140, #f093fb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bounce-inner {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(20, 10, 40, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        #score-display {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+        }
+
+        .score-value {
+            font-size: 1.8rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #fee140 0%, #fa709a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        #webgpu-error {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            max-width: 500px;
+            display: none;
+        }
+
+        #webgpu-error h2 {
+            margin-bottom: 1rem;
+            color: #f5576c;
+        }
+
+        #webgpu-error p {
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-screen">
+        <h1 class="loading-title">GLOBALL</h1>
+        <p class="loading-subtitle">PLANETARY TRAMPOLINE EXPRESS</p>
+        <div class="loading-bar">
+            <div class="loading-progress" id="loading-progress"></div>
+        </div>
+    </div>
+
+    <div id="webgpu-error" class="ui-panel">
+        <h2>WebGPU Not Available</h2>
+        <p>Globall requires WebGPU for optimal 90Hz gameplay. Please use a modern browser with WebGPU support (Chrome 113+, Edge 113+, or Firefox Nightly with flags enabled).</p>
+        <p style="margin-top: 1rem;">Falling back to WebGL renderer...</p>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div id="ui-overlay">
+        <div id="altitude-display" class="ui-panel">
+            <div class="altitude-value" id="altitude-value">0</div>
+            <div class="altitude-label">ALTITUDE KM</div>
+        </div>
+
+        <div id="package-info" class="ui-panel">
+            <div class="package-title">CURRENT PACKAGE</div>
+            <div class="package-content">
+                <div class="package-icon">📦</div>
+                <div class="package-details">
+                    <h3 id="package-name">Mysterious Parcel</h3>
+                    <div class="package-destination" id="package-dest">→ Tokyo Station</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="score-display" class="ui-panel">
+            <div class="score-label" style="font-size: 0.7rem; letter-spacing: 0.2em; opacity: 0.6;">DELIVERIES</div>
+            <div class="score-value" id="score-value">0</div>
+        </div>
+
+        <div id="route-selector">
+            <div class="route-option ui-panel selected" data-route="express">
+                <div class="route-name">🚀 Express Arc</div>
+                <div class="route-time">High altitude</div>
+            </div>
+            <div class="route-option ui-panel" data-route="scenic">
+                <div class="route-name">🌸 Scenic Hop</div>
+                <div class="route-time">City views</div>
+            </div>
+            <div class="route-option ui-panel" data-route="stealth">
+                <div class="route-name">🌙 Night Glide</div>
+                <div class="route-time">Low profile</div>
+            </div>
+        </div>
+
+        <div id="bounce-indicator">
+            <div class="bounce-inner" id="bounce-charge">⬆️</div>
+        </div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

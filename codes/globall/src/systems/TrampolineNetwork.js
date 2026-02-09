@@ -1,0 +1,342 @@
+/**
+ * Trampoline Network System
+ * Creates the global network of trampolines for bouncing between locations
+ */
+
+import * as THREE from 'three';
+
+export class TrampolineNetwork {
+    constructor(scene, planet) {
+        this.scene = scene;
+        this.planet = planet;
+        this.trampolines = [];
+        this.trampolineMeshes = [];
+        this.connections = [];
+        this.highlightedTrampoline = null;
+        this.planetRadius = 10;
+    }
+
+    async init() {
+        this.createTrampolineNodes();
+        this.createConnections();
+    }
+
+    createTrampolineNodes() {
+        // Create trampolines at major airport locations
+        const airports = [
+            { name: 'JFK', city: 'New York', lat: 40.6413, lon: -73.7781 },
+            { name: 'LAX', city: 'Los Angeles', lat: 33.9416, lon: -118.4085 },
+            { name: 'LHR', city: 'London', lat: 51.4700, lon: -0.4543 },
+            { name: 'CDG', city: 'Paris', lat: 49.0097, lon: 2.5479 },
+            { name: 'NRT', city: 'Tokyo', lat: 35.7720, lon: 140.3929 },
+            { name: 'SYD', city: 'Sydney', lat: -33.9399, lon: 151.1753 },
+            { name: 'DXB', city: 'Dubai', lat: 25.2532, lon: 55.3657 },
+            { name: 'SIN', city: 'Singapore', lat: 1.3644, lon: 103.9915 },
+            { name: 'HKG', city: 'Hong Kong', lat: 22.3080, lon: 113.9185 },
+            { name: 'FRA', city: 'Frankfurt', lat: 50.0379, lon: 8.5622 },
+            { name: 'AMS', city: 'Amsterdam', lat: 52.3105, lon: 4.7683 },
+            { name: 'ICN', city: 'Seoul', lat: 37.4602, lon: 126.4407 },
+            { name: 'PEK', city: 'Beijing', lat: 40.0799, lon: 116.6031 },
+            { name: 'GRU', city: 'São Paulo', lat: -23.4356, lon: -46.4731 },
+            { name: 'DEL', city: 'Delhi', lat: 28.5562, lon: 77.1000 },
+            { name: 'BOM', city: 'Mumbai', lat: 19.0896, lon: 72.8656 },
+            { name: 'YYZ', city: 'Toronto', lat: 43.6777, lon: -79.6248 },
+            { name: 'MEX', city: 'Mexico City', lat: 19.4361, lon: -99.0719 },
+            { name: 'CPT', city: 'Cape Town', lat: -33.9715, lon: 18.6021 },
+            { name: 'SVO', city: 'Moscow', lat: 55.9726, lon: 37.4146 },
+        ];
+
+        airports.forEach((airport, index) => {
+            const trampoline = this.createTrampoline(airport, index);
+            this.trampolines.push(trampoline);
+        });
+    }
+
+    createTrampoline(airport, index) {
+        const position = this.latLonToPosition(airport.lat, airport.lon, this.planetRadius + 0.05);
+        const normal = position.clone().normalize();
+
+        const group = new THREE.Group();
+
+        // Trampoline base ring
+        const ringGeometry = new THREE.TorusGeometry(0.3, 0.03, 16, 32);
+        const ringMaterial = new THREE.MeshPhongMaterial({
+            color: 0xff66aa,
+            emissive: 0xff3377,
+            emissiveIntensity: 0.3,
+            shininess: 100
+        });
+        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+        group.add(ring);
+
+        // Trampoline surface (bouncy part)
+        const surfaceGeometry = new THREE.CircleGeometry(0.28, 32);
+        const surfaceMaterial = new THREE.MeshPhongMaterial({
+            color: 0x66ddff,
+            emissive: 0x33aadd,
+            emissiveIntensity: 0.2,
+            transparent: true,
+            opacity: 0.8,
+            side: THREE.DoubleSide
+        });
+        const surface = new THREE.Mesh(surfaceGeometry, surfaceMaterial);
+        surface.position.y = 0.01;
+        group.add(surface);
+
+        // Energy rings (animated)
+        for (let i = 0; i < 3; i++) {
+            const energyRingGeometry = new THREE.RingGeometry(0.32 + i * 0.05, 0.34 + i * 0.05, 32);
+            const energyRingMaterial = new THREE.MeshBasicMaterial({
+                color: new THREE.Color().setHSL((index * 0.1 + i * 0.1) % 1, 0.8, 0.6),
+                transparent: true,
+                opacity: 0.5 - i * 0.1,
+                side: THREE.DoubleSide
+            });
+            const energyRing = new THREE.Mesh(energyRingGeometry, energyRingMaterial);
+            energyRing.position.y = 0.02;
+            energyRing.userData.baseScale = 1;
+            energyRing.userData.pulseOffset = i * 0.3;
+            group.add(energyRing);
+        }
+
+        // Glow sprite
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+
+        const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+        gradient.addColorStop(0, 'rgba(102, 221, 255, 0.8)');
+        gradient.addColorStop(0.3, 'rgba(255, 102, 170, 0.4)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 128, 128);
+
+        const glowTexture = new THREE.CanvasTexture(canvas);
+        const glowMaterial = new THREE.SpriteMaterial({
+            map: glowTexture,
+            transparent: true,
+            blending: THREE.AdditiveBlending
+        });
+        const glow = new THREE.Sprite(glowMaterial);
+        glow.scale.set(1, 1, 1);
+        glow.position.y = 0.1;
+        group.add(glow);
+
+        // Name label
+        const labelCanvas = document.createElement('canvas');
+        labelCanvas.width = 256;
+        labelCanvas.height = 64;
+        const labelCtx = labelCanvas.getContext('2d');
+
+        labelCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        labelCtx.roundRect(0, 0, 256, 64, 10);
+        labelCtx.fill();
+
+        labelCtx.font = 'bold 24px Arial';
+        labelCtx.fillStyle = '#ffffff';
+        labelCtx.textAlign = 'center';
+        labelCtx.fillText(airport.name, 128, 28);
+
+        labelCtx.font = '16px Arial';
+        labelCtx.fillStyle = '#aaaaaa';
+        labelCtx.fillText(airport.city, 128, 50);
+
+        const labelTexture = new THREE.CanvasTexture(labelCanvas);
+        const labelMaterial = new THREE.SpriteMaterial({
+            map: labelTexture,
+            transparent: true
+        });
+        const label = new THREE.Sprite(labelMaterial);
+        label.scale.set(0.8, 0.2, 1);
+        label.position.y = 0.5;
+        label.userData.isLabel = true;
+        group.add(label);
+
+        // Position and orient
+        group.position.copy(position);
+        group.lookAt(new THREE.Vector3(0, 0, 0));
+        group.rotateX(Math.PI / 2);
+
+        // Store metadata
+        group.userData.trampoline = {
+            airport: airport,
+            position: position.clone(),
+            normal: normal,
+            index: index,
+            bounceForce: 15 + Math.random() * 5,
+            connections: []
+        };
+
+        this.trampolineMeshes.push(group);
+        this.scene.add(group);
+
+        return group.userData.trampoline;
+    }
+
+    createConnections() {
+        // Create visible connection lines between nearby trampolines
+        const maxConnectionDistance = 8;
+
+        for (let i = 0; i < this.trampolines.length; i++) {
+            for (let j = i + 1; j < this.trampolines.length; j++) {
+                const t1 = this.trampolines[i];
+                const t2 = this.trampolines[j];
+
+                const distance = t1.position.distanceTo(t2.position);
+
+                if (distance < maxConnectionDistance) {
+                    t1.connections.push(t2);
+                    t2.connections.push(t1);
+
+                    // Create arc connection
+                    const connection = this.createArcConnection(t1.position, t2.position);
+                    this.connections.push(connection);
+                    this.scene.add(connection);
+                }
+            }
+        }
+    }
+
+    createArcConnection(start, end) {
+        const points = [];
+        const segments = 32;
+
+        // Calculate arc through space above planet
+        const midpoint = start.clone().add(end).multiplyScalar(0.5);
+        const arcHeight = start.distanceTo(end) * 0.3;
+        midpoint.normalize().multiplyScalar(this.planetRadius + arcHeight + 0.5);
+
+        for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+
+            // Quadratic bezier curve
+            const p1 = start.clone().lerp(midpoint, t);
+            const p2 = midpoint.clone().lerp(end, t);
+            const point = p1.lerp(p2, t);
+
+            points.push(point);
+        }
+
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+
+        // Gradient material
+        const colors = [];
+        for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+            const color = new THREE.Color().setHSL(0.85 + t * 0.15, 0.7, 0.5);
+            colors.push(color.r, color.g, color.b);
+        }
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+
+        const material = new THREE.LineBasicMaterial({
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.3,
+            linewidth: 1
+        });
+
+        const line = new THREE.Line(geometry, material);
+        line.userData.isConnection = true;
+
+        return line;
+    }
+
+    latLonToPosition(lat, lon, radius) {
+        const phi = (90 - lat) * (Math.PI / 180);
+        const theta = (lon + 180) * (Math.PI / 180);
+
+        const x = -radius * Math.sin(phi) * Math.cos(theta);
+        const y = radius * Math.cos(phi);
+        const z = radius * Math.sin(phi) * Math.sin(theta);
+
+        return new THREE.Vector3(x, y, z);
+    }
+
+    getTrampolineMeshes() {
+        return this.trampolineMeshes;
+    }
+
+    highlightTrampoline(trampoline) {
+        this.highlightedTrampoline = trampoline;
+
+        // Find the mesh for this trampoline
+        const mesh = this.trampolineMeshes.find(
+            m => m.userData.trampoline === trampoline
+        );
+
+        if (mesh) {
+            // Scale up slightly
+            mesh.scale.setScalar(1.2);
+
+            // Increase emission
+            mesh.children.forEach(child => {
+                if (child.material && child.material.emissiveIntensity !== undefined) {
+                    child.material.emissiveIntensity = 0.6;
+                }
+            });
+        }
+    }
+
+    clearHighlights() {
+        this.highlightedTrampoline = null;
+
+        this.trampolineMeshes.forEach(mesh => {
+            mesh.scale.setScalar(1);
+            mesh.children.forEach(child => {
+                if (child.material && child.material.emissiveIntensity !== undefined) {
+                    child.material.emissiveIntensity = 0.3;
+                }
+            });
+        });
+    }
+
+    getNearestTrampoline(position) {
+        let nearest = null;
+        let nearestDistance = Infinity;
+
+        this.trampolines.forEach(trampoline => {
+            const distance = trampoline.position.distanceTo(position);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearest = trampoline;
+            }
+        });
+
+        return { trampoline: nearest, distance: nearestDistance };
+    }
+
+    update(time, deltaTime) {
+        // Animate trampolines
+        this.trampolineMeshes.forEach((mesh, index) => {
+            // Pulse energy rings
+            mesh.children.forEach(child => {
+                if (child.userData.pulseOffset !== undefined) {
+                    const scale = 1 + Math.sin(time * 3 + child.userData.pulseOffset) * 0.1;
+                    child.scale.setScalar(scale);
+                }
+
+                // Rotate glow
+                if (child.isSprite && !child.userData.isLabel) {
+                    child.material.rotation = time * 0.5;
+                }
+            });
+
+            // Subtle bounce animation
+            const bounce = Math.sin(time * 2 + index * 0.5) * 0.01;
+            mesh.position.copy(this.trampolines[index].position);
+            mesh.position.add(
+                this.trampolines[index].normal.clone().multiplyScalar(bounce)
+            );
+        });
+
+        // Animate connection lines
+        this.connections.forEach((connection, index) => {
+            if (connection.material) {
+                // Pulse opacity
+                const pulse = Math.sin(time * 2 + index * 0.3) * 0.1 + 0.3;
+                connection.material.opacity = pulse;
+            }
+        });
+    }
+}
