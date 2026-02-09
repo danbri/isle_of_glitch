@@ -51,6 +51,7 @@ export class Player {
         this.cameraLookOffset = new THREE.Vector3(0, 0, 0);
         this.lastForward = null; // Stores last velocity direction for stable camera
         this.cameraLerpSpeed = 0.15; // Configurable from debug panel
+        this.cameraEnabled = true; // Disabled when orbit controls are active
     }
 
     async init() {
@@ -381,8 +382,10 @@ export class Player {
         // Update trail
         this.updateTrail();
 
-        // Update camera
-        this.updateCameraPosition();
+        // Update camera (skip when orbit controls are active)
+        if (this.cameraEnabled) {
+            this.updateCameraPosition();
+        }
     }
 
     handleInput(keys, deltaTime) {

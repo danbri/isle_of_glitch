@@ -175,9 +175,8 @@ class GloballGame {
         this.camera.position.set(0, 0, 25);
 
         // Orbit controls for development/scenic viewing
-        // DISABLED during gameplay - conflicts with player camera tracking
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enabled = false; // Disable by default - player camera takes over
+        this.controls.enabled = true;
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
         this.controls.minDistance = 12;
@@ -206,11 +205,17 @@ class GloballGame {
     }
 
     setupPostProcessing() {
-        this.composer = new EffectComposer(this.renderer);
+        // Create render target matching renderer config (no stencil buffer)
+        const size = this.renderer.getDrawingBufferSize(new THREE.Vector2());
+        const renderTarget = new THREE.WebGLRenderTarget(size.x, size.y, {
+            type: THREE.HalfFloatType,
+            stencilBuffer: false
+        });
+        this.composer = new EffectComposer(this.renderer, renderTarget);
 
         // Main render pass
-        const renderPass = new RenderPass(this.scene, this.camera);
-        this.composer.addPass(renderPass);
+        this.renderPass = new RenderPass(this.scene, this.camera);
+        this.composer.addPass(this.renderPass);
 
         // Bloom for glowing effects (city lights, aurora) - reduced for mobile clarity
         this.bloomPass = new UnrealBloomPass(
@@ -222,14 +227,16 @@ class GloballGame {
         this.composer.addPass(this.bloomPass);
 
         // Chromatic aberration for candy aesthetic - very subtle
+        // Note: shader forces alpha=1.0 to prevent black cutout artifacts from
+        // transparent objects bleeding low alpha through the pipeline
         this.chromaticPass = new ShaderPass(ChromaticAberrationShader);
         this.chromaticPass.uniforms.amount.value = 0.0005; // Much more subtle
         this.composer.addPass(this.chromaticPass);
 
         // OutputPass applies tone mapping and color space conversion
         // Required for EffectComposer to properly output to sRGB
-        const outputPass = new OutputPass();
-        this.composer.addPass(outputPass);
+        this.outputPass = new OutputPass();
+        this.composer.addPass(this.outputPass);
 
         this.updateLoadingProgress(30);
     }
@@ -279,6 +286,8 @@ class GloballGame {
         console.log('Loading: Player...');
         this.player = new Player(this.scene, this.camera, this.gameState);
         await this.player.init();
+        // Sync player camera with orbit controls initial state
+        this.player.cameraEnabled = !this.controls.enabled;
 
         this.updateLoadingProgress(90);
 
@@ -488,8 +497,7 @@ class GloballGame {
             showTrampolines: true,
             showPlayer: true,
             showTrail: true,
-            usePostProcessing: true,
-            enableOrbitControls: false
+            enableOrbitControls: true
         };
 
         visibility.add(this.debugSettings, 'showPlanet').name('Planet').onChange(v => {
@@ -524,44 +532,82 @@ class GloballGame {
         });
         visibility.open();
 
-        // Rendering settings
-        const rendering = this.gui.addFolder('Rendering');
-        rendering.add(this.debugSettings, 'usePostProcessing').name('Post Processing').onChange(v => {
-            this.usePostProcessing = v;
-        });
-        this.usePostProcessing = true;
-
-        rendering.add(this.debugSettings, 'enableOrbitControls').name('Orbit Controls').onChange(v => {
-            this.controls.enabled = v;
-        });
-
-        this.debugRenderSettings = {
+        // Post Processing controls (fine-grained with subcomponents and scales)
+        const postProc = this.gui.addFolder('Post Processing');
+        this.postProcessSettings = {
+            masterEnable: true,
+            // Bloom
+            enableBloom: true,
             bloomStrength: 0.5,
             bloomRadius: 0.3,
             bloomThreshold: 0.9,
+            dynamicBloom: true,
+            // Chromatic Aberration
+            enableChromatic: true,
+            chromaticAmount: 0.0005,
+            dynamicChromatic: true,
+            chromaticAngle: 0.0,
+            // Tone Mapping
             exposure: 1.0,
-            chromaticAberration: 0.0005,
+            // Scene
             backgroundColor: '#1a0a2e'
         };
+        this.usePostProcessing = true;
 
-        rendering.add(this.debugRenderSettings, 'bloomStrength', 0, 2, 0.01).name('Bloom Strength').onChange(v => {
-            this.bloomPass.strength = v;
+        postProc.add(this.postProcessSettings, 'masterEnable').name('Master Enable').onChange(v => {
+            this.usePostProcessing = v;
         });
-        rendering.add(this.debugRenderSettings, 'bloomRadius', 0, 1, 0.01).name('Bloom Radius').onChange(v => {
+
+        // Bloom subfolder
+        const bloomFolder = postProc.addFolder('Bloom');
+        bloomFolder.add(this.postProcessSettings, 'enableBloom').name('Enable').onChange(v => {
+            this.bloomPass.enabled = v;
+        });
+        bloomFolder.add(this.postProcessSettings, 'bloomStrength', 0, 3, 0.01).name('Strength').onChange(v => {
+            if (!this.postProcessSettings.dynamicBloom) {
+                this.bloomPass.strength = v;
+            }
+        });
+        bloomFolder.add(this.postProcessSettings, 'bloomRadius', 0, 1, 0.01).name('Radius').onChange(v => {
             this.bloomPass.radius = v;
         });
-        rendering.add(this.debugRenderSettings, 'bloomThreshold', 0, 1, 0.01).name('Bloom Threshold').onChange(v => {
+        bloomFolder.add(this.postProcessSettings, 'bloomThreshold', 0, 1, 0.01).name('Threshold').onChange(v => {
             this.bloomPass.threshold = v;
         });
-        rendering.add(this.debugRenderSettings, 'exposure', 0, 3, 0.1).name('Exposure').onChange(v => {
+        bloomFolder.add(this.postProcessSettings, 'dynamicBloom').name('Altitude Scaling');
+
+        // Chromatic Aberration subfolder
+        const chromaticFolder = postProc.addFolder('Chromatic Aberration');
+        chromaticFolder.add(this.postProcessSettings, 'enableChromatic').name('Enable').onChange(v => {
+            this.chromaticPass.enabled = v;
+        });
+        chromaticFolder.add(this.postProcessSettings, 'chromaticAmount', 0, 0.01, 0.0001).name('Base Amount').onChange(v => {
+            if (!this.postProcessSettings.dynamicChromatic) {
+                this.chromaticPass.uniforms.amount.value = v;
+            }
+        });
+        chromaticFolder.add(this.postProcessSettings, 'dynamicChromatic').name('Speed Scaling');
+        chromaticFolder.add(this.postProcessSettings, 'chromaticAngle', 0, 6.28, 0.01).name('Angle').onChange(v => {
+            this.chromaticPass.uniforms.angle.value = v;
+        });
+
+        // Tone Mapping subfolder
+        const toneFolder = postProc.addFolder('Tone Mapping');
+        toneFolder.add(this.postProcessSettings, 'exposure', 0, 3, 0.05).name('Exposure').onChange(v => {
             this.renderer.toneMappingExposure = v;
         });
-        rendering.add(this.debugRenderSettings, 'chromaticAberration', 0, 0.01, 0.0001).name('Chromatic Aberr.').onChange(v => {
-            this.chromaticPass.uniforms.amount.value = v;
-        });
-        rendering.addColor(this.debugRenderSettings, 'backgroundColor').name('Background').onChange(v => {
+
+        postProc.addColor(this.postProcessSettings, 'backgroundColor').name('Background').onChange(v => {
             this.scene.background = new THREE.Color(v);
             this.renderer.setClearColor(v, 1);
+        });
+        postProc.open();
+
+        // Controls
+        const controlsFolder = this.gui.addFolder('Controls');
+        controlsFolder.add(this.debugSettings, 'enableOrbitControls').name('Orbit Controls').onChange(v => {
+            this.controls.enabled = v;
+            this.player.cameraEnabled = !v;
         });
 
         // Camera settings
@@ -719,15 +765,20 @@ class GloballGame {
         this.player.update(time, this.deltaTime, this.keys);
         this.packageSystem.update(time, this.deltaTime, this.player);
 
-        // Update chromatic aberration based on player speed - subtle effect
+        // Dynamic post-processing adjustments (respects fine-grained toggles)
         const speed = this.player.getSpeed();
-        this.chromaticPass.uniforms.amount.value = 0.0003 + speed * 0.0008;
-
-        // Update bloom based on altitude - minimal at ground, subtle increase in space
         const altitude = this.player.getAltitude();
-        // Ground level (0-5km): 0.3-0.4 strength
-        // Space (50km+): max 0.7 strength
-        this.bloomPass.strength = Math.min(0.7, 0.3 + Math.min(altitude / 200, 0.4));
+
+        // Dynamic chromatic aberration scales with player speed
+        if (this.postProcessSettings.dynamicChromatic && this.chromaticPass.enabled) {
+            this.chromaticPass.uniforms.amount.value =
+                this.postProcessSettings.chromaticAmount + speed * 0.0008;
+        }
+
+        // Dynamic bloom scales with altitude: 0.3 at ground → 0.7 in space
+        if (this.postProcessSettings.dynamicBloom && this.bloomPass.enabled) {
+            this.bloomPass.strength = Math.min(0.7, 0.3 + Math.min(altitude / 200, 0.4));
+        }
 
         // Update audio based on game state
         if (this.audio) {

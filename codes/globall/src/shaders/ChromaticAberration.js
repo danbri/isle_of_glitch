@@ -39,7 +39,10 @@ export const ChromaticAberrationShader = {
             vec4 cb = texture2D(tDiffuse, vUv - offset);
 
             // Combine - center stays clean, edges get subtle aberration
-            gl_FragColor = vec4(cr.r, cg.g, cb.b, cg.a);
+            // Force alpha = 1.0 to prevent transparent scene objects from bleeding
+            // low alpha into the pipeline, causing black cutout artifacts via
+            // ShaderPass NormalBlending: RGB_out = src.rgb * src.a + dst.rgb * (1-src.a)
+            gl_FragColor = vec4(cr.r, cg.g, cb.b, 1.0);
 
             // Subtle vignette
             float vignette = 1.0 - dot(center, center) * 0.3;
