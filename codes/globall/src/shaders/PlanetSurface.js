@@ -133,12 +133,32 @@ export const PlanetSurfaceShader = {
             vec4 cityLights = texture2D(cityLightsTexture, vUv);
             vec4 clouds = texture2D(cloudsTexture, vUv + vec2(time * 0.001, 0.0));
 
+            // Fallback colors if textures failed to load (returns ~black)
+            // Use procedural color based on UV coordinates
+            vec3 fallbackDay = vec3(0.3, 0.5, 0.4) + vec3(
+                sin(vUv.x * 6.28) * 0.1,
+                cos(vUv.y * 3.14) * 0.1,
+                sin(vUv.x * 3.14 + vUv.y * 6.28) * 0.1
+            );
+            vec3 fallbackNight = vec3(0.05, 0.05, 0.1);
+
+            // If texture is nearly black (failed to load), use fallback
+            if (dayColor.r + dayColor.g + dayColor.b < 0.05) {
+                dayColor.rgb = fallbackDay;
+            }
+            if (nightColor.r + nightColor.g + nightColor.b < 0.02) {
+                nightColor.rgb = fallbackNight;
+            }
+
             // Generate procedural details
             float detail = snoise(vPosition * 20.0) * 0.1;
             float cityGlow = snoise(vPosition * 50.0 + time * 0.1) * 0.5 + 0.5;
 
             // Blend day and night
             vec3 surfaceColor = mix(nightColor.rgb, dayColor.rgb, dayFactor);
+
+            // Ensure minimum brightness so planet is always visible
+            surfaceColor = max(surfaceColor, vec3(0.08, 0.08, 0.12));
 
             // Add city lights on dark side (reduced intensity)
             float cityIntensity = (1.0 - dayFactor) * cityLights.r * cityGlow;
