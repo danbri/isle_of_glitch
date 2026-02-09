@@ -9,6 +9,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 import { Planet } from './components/Planet.js';
 import { Player } from './components/Player.js';
@@ -224,6 +225,11 @@ class GloballGame {
         this.chromaticPass = new ShaderPass(ChromaticAberrationShader);
         this.chromaticPass.uniforms.amount.value = 0.0005; // Much more subtle
         this.composer.addPass(this.chromaticPass);
+
+        // OutputPass applies tone mapping and color space conversion
+        // Required for EffectComposer to properly output to sRGB
+        const outputPass = new OutputPass();
+        this.composer.addPass(outputPass);
 
         this.updateLoadingProgress(30);
     }
