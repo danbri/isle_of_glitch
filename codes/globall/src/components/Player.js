@@ -222,15 +222,28 @@ export class Player {
         }
 
         // Calculate bounce direction based on route type
-        // angle: 0 = pure horizontal, 1 = pure vertical
         let bounceDir;
         if (this.targetTrampoline) {
-            // Bounce toward target trampoline
-            bounceDir = this.targetTrampoline.position.clone()
-                .sub(this.position)
+            // Great-circle aim toward target with proper loft
+            const toTarget = this.targetTrampoline.position.clone().sub(this.position);
+            const dist = toTarget.length();
+
+            // Project to surface tangent (great circle direction)
+            const tangentDir = toTarget.clone();
+            tangentDir.sub(up.clone().multiplyScalar(tangentDir.dot(up)));
+            if (tangentDir.length() > 0.01) {
+                tangentDir.normalize();
+            } else {
+                tangentDir.copy(horizontal);
+            }
+
+            // Loft increases with distance: close = low arc, far = high arc
+            const loft = Math.min(0.85, 0.3 + dist * 0.04);
+            bounceDir = up.clone().multiplyScalar(loft)
+                .add(tangentDir.clone().multiplyScalar(1 - loft))
                 .normalize();
         } else {
-            // Mix vertical and horizontal based on route type
+            // No target: mix vertical and horizontal based on route type
             bounceDir = up.clone().multiplyScalar(modifier.angle)
                 .add(horizontal.clone().multiplyScalar(1 - modifier.angle))
                 .normalize();
