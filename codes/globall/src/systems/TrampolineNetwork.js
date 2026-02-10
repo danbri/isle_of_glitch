@@ -39,6 +39,11 @@ export class TrampolineNetwork {
         this._lastLODPos = new THREE.Vector3();
 
         this.DETAIL_POOL_SIZE = 25;
+
+        // Magnetic field particles
+        this.fieldParticles = null;
+        this.PARTICLES_PER_PAD = 8;
+        this._particlePhases = [];
     }
 
     async init() {
@@ -47,6 +52,7 @@ export class TrampolineNetwork {
         this.createAirportDots();
         this.createDetailedPool();
         this.createRouteArcPool();
+        this.createFieldParticles();
     }
 
     async loadAirports() {
@@ -466,6 +472,98 @@ export class TrampolineNetwork {
         this.trampolineMeshes = this.detailedPool.filter(g => g.visible);
     }
 
+    createFieldParticles() {
+        // Magnetic field line particles — float above nearby airport pads
+        const total = this.DETAIL_POOL_SIZE * this.PARTICLES_PER_PAD;
+        const positions = new Float32Array(total * 3);
+        const colors = new Float32Array(total * 3);
+        const sizes = new Float32Array(total);
+
+        for (let i = 0; i < total; i++) {
+            // Initialize offscreen
+            positions[i * 3] = 0;
+            positions[i * 3 + 1] = -999;
+            positions[i * 3 + 2] = 0;
+            // Blue-white color with variation
+            const b = 0.7 + Math.random() * 0.3;
+            colors[i * 3] = 0.4 * b;
+            colors[i * 3 + 1] = 0.6 * b;
+            colors[i * 3 + 2] = 1.0 * b;
+            sizes[i] = 0.03 + Math.random() * 0.03;
+            // Random phase for each particle's oscillation
+            this._particlePhases.push(Math.random() * Math.PI * 2);
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+        const material = new THREE.PointsMaterial({
+            size: 0.04,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            sizeAttenuation: true
+        });
+
+        this.fieldParticles = new THREE.Points(geometry, material);
+        this.scene.add(this.fieldParticles);
+    }
+
+    updateFieldParticles(time) {
+        if (!this.fieldParticles) return;
+        const posAttr = this.fieldParticles.geometry.attributes.position;
+        const arr = posAttr.array;
+
+        for (let slot = 0; slot < this.DETAIL_POOL_SIZE; slot++) {
+            const group = this.detailedPool[slot];
+            const baseIdx = slot * this.PARTICLES_PER_PAD;
+
+            for (let p = 0; p < this.PARTICLES_PER_PAD; p++) {
+                const idx = (baseIdx + p) * 3;
+                if (!group.visible || !group.userData.trampoline) {
+                    arr[idx + 1] = -999;
+                    continue;
+                }
+
+                const tramp = group.userData.trampoline;
+                const normal = tramp.normal;
+                const phase = this._particlePhases[baseIdx + p];
+
+                // Particle rises along the field line (normal direction) then resets
+                const cycle = ((time * 0.8 + phase) % 1.5); // 0-1.5s cycle
+                const height = cycle * 0.6; // 0 to 0.9 units above pad
+                const fade = cycle < 0.3 ? cycle / 0.3 : (1.5 - cycle) / 1.2; // fade in/out
+
+                // Slight spiral offset
+                const angle = time * 2 + phase * 6.28;
+                const spiralR = 0.08 + height * 0.06;
+
+                // Get tangent vectors for offset
+                const ref = Math.abs(normal.y) < 0.95
+                    ? new THREE.Vector3(0, 1, 0)
+                    : new THREE.Vector3(1, 0, 0);
+                const tangent1 = new THREE.Vector3().crossVectors(normal, ref).normalize();
+                const tangent2 = new THREE.Vector3().crossVectors(normal, tangent1);
+
+                arr[idx] = tramp.position.x + normal.x * height
+                    + tangent1.x * Math.cos(angle) * spiralR
+                    + tangent2.x * Math.sin(angle) * spiralR;
+                arr[idx + 1] = tramp.position.y + normal.y * height
+                    + tangent1.y * Math.cos(angle) * spiralR
+                    + tangent2.y * Math.sin(angle) * spiralR;
+                arr[idx + 2] = tramp.position.z + normal.z * height
+                    + tangent1.z * Math.cos(angle) * spiralR
+                    + tangent2.z * Math.sin(angle) * spiralR;
+            }
+        }
+
+        posAttr.needsUpdate = true;
+    }
+
     latLonToPosition(lat, lon, radius) {
         const phi = (90 - lat) * (Math.PI / 180);
         const theta = (lon + 180) * (Math.PI / 180);
@@ -543,20 +641,19 @@ export class TrampolineNetwork {
             if (!mesh.visible) return;
             mesh.children.forEach((child, idx) => {
                 if (child.isSprite && !child.userData.isLabel) {
-                    // Rotate glow sprite
                     child.material.rotation = time * 0.5;
-                    // Pulse glow opacity
                     child.material.opacity = 0.6 + Math.sin(time * 2 + idx) * 0.2;
                 }
-                // Spin inner coil ring (child index 1)
                 if (idx === 1 && child.isMesh) {
                     child.rotation.z = time * 1.5;
                 }
-                // Pulse core brightness (child index 2)
                 if (idx === 2 && child.isMesh && child.material.opacity !== undefined) {
                     child.material.opacity = 0.4 + Math.sin(time * 3) * 0.2;
                 }
             });
         });
+
+        // Update magnetic field particles
+        this.updateFieldParticles(time);
     }
 }

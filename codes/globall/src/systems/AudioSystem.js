@@ -160,90 +160,134 @@ export class AudioSystem {
         return convolver;
     }
 
-    // Play bounce sound - pitched based on charge
+    // Play bounce sound - electromagnetic discharge snap
     playBounce(charge = 1) {
         if (!this.ctx || this.isMuted) return;
 
         const t = this.ctx.currentTime;
+
+        // Sharp electromagnetic discharge — downward sweep + noise burst
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         const filter = this.ctx.createBiquadFilter();
 
-        // Higher pitch for more charge — "boing" with pitch sweep
-        const baseNote = 220 * (1 + charge * 0.5);
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(baseNote, t);
-        osc.frequency.exponentialRampToValueAtTime(baseNote * 2, t + 0.08);
-        osc.frequency.exponentialRampToValueAtTime(baseNote * 0.5, t + 0.25);
+        osc.type = 'sawtooth';
+        const baseFreq = 800 * (0.8 + charge * 0.4);
+        osc.frequency.setValueAtTime(baseFreq, t);
+        osc.frequency.exponentialRampToValueAtTime(80, t + 0.15);
 
-        filter.type = 'lowpass';
-        filter.frequency.value = 2500;
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(2000, t);
+        filter.frequency.exponentialRampToValueAtTime(200, t + 0.2);
+        filter.Q.value = 5;
 
-        gain.gain.setValueAtTime(0.2 * charge, t);
-        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+        gain.gain.setValueAtTime(0.15 * charge, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
 
         osc.connect(filter);
         filter.connect(gain);
         gain.connect(this.masterGain);
-        osc.start();
-        osc.stop(t + 0.35);
+        osc.start(t);
+        osc.stop(t + 0.3);
+
+        // Electrical crackle layer (white noise burst)
+        const bufferSize = this.ctx.sampleRate * 0.08;
+        const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+        const noiseGain = this.ctx.createGain();
+        const noiseFilter = this.ctx.createBiquadFilter();
+        noiseFilter.type = 'highpass';
+        noiseFilter.frequency.value = 3000;
+        noiseGain.gain.setValueAtTime(0.1 * charge, t);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(this.masterGain);
+        noise.start(t);
     }
 
-    // Charge sound — rising pitch oscillator, call startCharge/stopCharge
+    // Charge sound — magnetic coil whine (rising dual oscillator + resonant filter)
     startCharge() {
         if (!this.ctx || this.isMuted) return;
-        this.stopCharge(); // Clean up any existing
+        this.stopCharge();
 
+        // Primary coil whine
         this._chargeOsc = this.ctx.createOscillator();
+        this._chargeOsc2 = this.ctx.createOscillator();
         this._chargeGain = this.ctx.createGain();
         this._chargeFilter = this.ctx.createBiquadFilter();
 
-        this._chargeOsc.type = 'sine';
-        this._chargeOsc.frequency.value = 150;
-        this._chargeFilter.type = 'lowpass';
-        this._chargeFilter.frequency.value = 800;
-        this._chargeGain.gain.value = 0.06;
+        this._chargeOsc.type = 'sawtooth';
+        this._chargeOsc2.type = 'square';
+        this._chargeOsc.frequency.value = 120;
+        this._chargeOsc2.frequency.value = 121; // Slight detune for beating
+        this._chargeFilter.type = 'bandpass';
+        this._chargeFilter.frequency.value = 600;
+        this._chargeFilter.Q.value = 8; // Resonant — sounds like coil inductance
+        this._chargeGain.gain.value = 0.04;
 
         this._chargeOsc.connect(this._chargeFilter);
+        this._chargeOsc2.connect(this._chargeFilter);
         this._chargeFilter.connect(this._chargeGain);
         this._chargeGain.connect(this.masterGain);
         this._chargeOsc.start();
+        this._chargeOsc2.start();
     }
 
     updateCharge(progress) {
-        // progress: 0-1 over the charge duration
         if (!this._chargeOsc) return;
-        const freq = 150 + progress * 600; // 150Hz → 750Hz
-        this._chargeOsc.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.05);
-        this._chargeGain.gain.setTargetAtTime(0.06 + progress * 0.08, this.ctx.currentTime, 0.05);
-        this._chargeFilter.frequency.setTargetAtTime(800 + progress * 1500, this.ctx.currentTime, 0.05);
+        const t = this.ctx.currentTime;
+        // Rising coil whine — accelerating pitch + widening filter
+        const freq = 120 + progress * progress * 900; // Exponential rise to 1020Hz
+        this._chargeOsc.frequency.setTargetAtTime(freq, t, 0.03);
+        this._chargeOsc2.frequency.setTargetAtTime(freq * 1.005, t, 0.03);
+        this._chargeGain.gain.setTargetAtTime(0.04 + progress * 0.1, t, 0.03);
+        this._chargeFilter.frequency.setTargetAtTime(600 + progress * 2000, t, 0.03);
+        this._chargeFilter.Q.setTargetAtTime(8 - progress * 5, t, 0.03); // Less resonant as it opens up
     }
 
     stopCharge() {
         if (this._chargeOsc) {
             try { this._chargeOsc.stop(); } catch(e) {}
+            try { if (this._chargeOsc2) this._chargeOsc2.stop(); } catch(e) {}
             this._chargeOsc = null;
+            this._chargeOsc2 = null;
             this._chargeGain = null;
             this._chargeFilter = null;
         }
     }
 
-    // Delivery chime — ascending arpeggio C5-E5-G5-C6
+    // Delivery chime — electronic success fanfare with magnetic shimmer
     playDeliver() {
         if (!this.ctx || this.isMuted) return;
         const notes = [523, 659, 784, 1047];
+        const reverb = this.createReverb();
+        reverb.connect(this.masterGain);
+
         notes.forEach((freq, i) => {
-            const t = this.ctx.currentTime + i * 0.08;
+            const t = this.ctx.currentTime + i * 0.07;
             const osc = this.ctx.createOscillator();
+            const osc2 = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
-            osc.type = 'sine';
+
+            osc.type = 'triangle';
+            osc2.type = 'sine';
             osc.frequency.value = freq;
-            gain.gain.setValueAtTime(0.12, t);
-            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
+            osc2.frequency.value = freq * 2.01; // Shimmer detune
+            gain.gain.setValueAtTime(0.1, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
             osc.connect(gain);
-            gain.connect(this.masterGain);
+            osc2.connect(gain);
+            gain.connect(reverb);
             osc.start(t);
-            osc.stop(t + 0.22);
+            osc2.start(t);
+            osc.stop(t + 0.3);
+            osc2.stop(t + 0.3);
         });
     }
 
@@ -282,22 +326,38 @@ export class AudioSystem {
         osc.stop(t + 0.15);
     }
 
-    // Landing impact — low thud
+    // Landing impact — magnetic clamp (low thud + metallic ring)
     playLanding(impactSpeed) {
         if (!this.ctx || this.isMuted) return;
         const t = this.ctx.currentTime;
         const intensity = Math.min(1, impactSpeed / 15);
+
+        // Low magnetic thud
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(80 + intensity * 40, t);
-        osc.frequency.exponentialRampToValueAtTime(40, t + 0.15);
-        gain.gain.setValueAtTime(0.15 * intensity, t);
+        osc.frequency.setValueAtTime(60 + intensity * 30, t);
+        osc.frequency.exponentialRampToValueAtTime(30, t + 0.12);
+        gain.gain.setValueAtTime(0.18 * intensity, t);
         gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
         osc.connect(gain);
         gain.connect(this.masterGain);
         osc.start(t);
         osc.stop(t + 0.25);
+
+        // Metallic ring (high harmonic)
+        if (intensity > 0.3) {
+            const ring = this.ctx.createOscillator();
+            const ringGain = this.ctx.createGain();
+            ring.type = 'sine';
+            ring.frequency.value = 1200 + intensity * 800;
+            ringGain.gain.setValueAtTime(0.04 * intensity, t + 0.01);
+            ringGain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+            ring.connect(ringGain);
+            ringGain.connect(this.masterGain);
+            ring.start(t + 0.01);
+            ring.stop(t + 0.35);
+        }
     }
 
     // Proximity ping — soft crystalline tone

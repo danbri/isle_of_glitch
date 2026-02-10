@@ -64,6 +64,7 @@ export class Player {
     async init() {
         this.createPlayerMesh();
         this.createTrail();
+        this.createSpeedStreaks();
         // Initialize camera to correct position immediately (no lerping on first frame)
         this.initializeCameraPosition();
     }
@@ -94,35 +95,35 @@ export class Player {
         // Create a cute package-carrier character
         const group = new THREE.Group();
 
-        // Main body (rounded cube-ish)
+        // Main body — magnetic delivery pod
         const bodyGeometry = new THREE.SphereGeometry(0.3, 16, 16);
         const bodyMaterial = new THREE.MeshPhongMaterial({
-            color: 0xff6b9d,
-            emissive: 0xff3366,
-            emissiveIntensity: 0.2,
-            shininess: 100
+            color: 0x4488ff,
+            emissive: 0x2255cc,
+            emissiveIntensity: 0.3,
+            shininess: 120
         });
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         group.add(body);
 
-        // Jetpack/wings
+        // Magnetic stabilizer wings
         const wingGeometry = new THREE.BoxGeometry(0.8, 0.1, 0.3);
         const wingMaterial = new THREE.MeshPhongMaterial({
-            color: 0x66d9ff,
-            emissive: 0x00aaff,
-            emissiveIntensity: 0.3
+            color: 0x6644ff,
+            emissive: 0x4422cc,
+            emissiveIntensity: 0.4
         });
         const wings = new THREE.Mesh(wingGeometry, wingMaterial);
         wings.position.y = 0;
         wings.position.z = -0.1;
         group.add(wings);
 
-        // Glow effect
+        // EM field glow
         const glowGeometry = new THREE.SphereGeometry(0.4, 16, 16);
         const glowMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff99cc,
+            color: 0x88aaff,
             transparent: true,
-            opacity: 0.3,
+            opacity: 0.25,
             side: THREE.BackSide
         });
         const glow = new THREE.Mesh(glowGeometry, glowMaterial);
@@ -175,6 +176,84 @@ export class Player {
 
         this.trail = new THREE.Line(geometry, material);
         this.scene.add(this.trail);
+    }
+
+    createSpeedStreaks() {
+        // Speed streaks — tiny particles that rush past during fast flight
+        this.STREAK_COUNT = 40;
+        const positions = new Float32Array(this.STREAK_COUNT * 3);
+        const colors = new Float32Array(this.STREAK_COUNT * 3);
+
+        for (let i = 0; i < this.STREAK_COUNT; i++) {
+            positions[i * 3] = 0;
+            positions[i * 3 + 1] = -999;
+            positions[i * 3 + 2] = 0;
+            colors[i * 3] = 0.5 + Math.random() * 0.3;
+            colors[i * 3 + 1] = 0.6 + Math.random() * 0.3;
+            colors[i * 3 + 2] = 1.0;
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        this.speedStreaks = new THREE.Points(geometry, new THREE.PointsMaterial({
+            size: 0.06,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            sizeAttenuation: true
+        }));
+        this.scene.add(this.speedStreaks);
+
+        // Per-streak random offsets
+        this._streakOffsets = [];
+        for (let i = 0; i < this.STREAK_COUNT; i++) {
+            this._streakOffsets.push({
+                angle: Math.random() * Math.PI * 2,
+                radius: 0.5 + Math.random() * 2,
+                phase: Math.random()
+            });
+        }
+    }
+
+    updateSpeedStreaks(time) {
+        if (!this.speedStreaks) return;
+        const speed = this.velocity.length();
+        const threshold = 5;
+
+        // Fade in/out based on speed
+        const targetOpacity = speed > threshold ? Math.min(0.6, (speed - threshold) * 0.06) : 0;
+        this.speedStreaks.material.opacity += (targetOpacity - this.speedStreaks.material.opacity) * 0.1;
+
+        if (this.speedStreaks.material.opacity < 0.01) return;
+
+        const posAttr = this.speedStreaks.geometry.attributes.position;
+        const arr = posAttr.array;
+
+        // Streaks flow from in front of camera toward player
+        const velDir = this.velocity.clone().normalize();
+        const up = this.position.clone().normalize();
+        const right = new THREE.Vector3().crossVectors(up, velDir).normalize();
+        const camUp = new THREE.Vector3().crossVectors(velDir, right);
+
+        for (let i = 0; i < this.STREAK_COUNT; i++) {
+            const s = this._streakOffsets[i];
+            // Cycle along velocity direction
+            const t = ((time * 2 + s.phase * 3) % 3) - 1.5; // -1.5 to 1.5
+
+            // Position: ahead of player + radial offset
+            const ox = Math.cos(s.angle) * s.radius;
+            const oy = Math.sin(s.angle) * s.radius;
+
+            arr[i * 3] = this.position.x + velDir.x * t * 2 + right.x * ox + camUp.x * oy;
+            arr[i * 3 + 1] = this.position.y + velDir.y * t * 2 + right.y * ox + camUp.y * oy;
+            arr[i * 3 + 2] = this.position.z + velDir.z * t * 2 + right.z * ox + camUp.z * oy;
+        }
+
+        posAttr.needsUpdate = true;
     }
 
     updateTrail() {
@@ -454,6 +533,9 @@ export class Player {
 
         // Update trail
         this.updateTrail();
+
+        // Update speed streaks
+        this.updateSpeedStreaks(time);
 
         // Update camera (skip when orbit controls are active)
         if (this.cameraEnabled) {
