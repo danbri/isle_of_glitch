@@ -164,29 +164,156 @@ export class AudioSystem {
     playBounce(charge = 1) {
         if (!this.ctx || this.isMuted) return;
 
+        const t = this.ctx.currentTime;
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         const filter = this.ctx.createBiquadFilter();
 
-        // Higher pitch for more charge
+        // Higher pitch for more charge — "boing" with pitch sweep
         const baseNote = 220 * (1 + charge * 0.5);
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(baseNote, this.ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(baseNote * 2, this.ctx.currentTime + 0.1);
-        osc.frequency.exponentialRampToValueAtTime(baseNote * 0.5, this.ctx.currentTime + 0.3);
+        osc.frequency.setValueAtTime(baseNote, t);
+        osc.frequency.exponentialRampToValueAtTime(baseNote * 2, t + 0.08);
+        osc.frequency.exponentialRampToValueAtTime(baseNote * 0.5, t + 0.25);
 
         filter.type = 'lowpass';
-        filter.frequency.value = 2000;
+        filter.frequency.value = 2500;
 
-        gain.gain.setValueAtTime(0.2 * charge, this.ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.2 * charge, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
 
         osc.connect(filter);
         filter.connect(gain);
         gain.connect(this.masterGain);
-
         osc.start();
-        osc.stop(this.ctx.currentTime + 0.35);
+        osc.stop(t + 0.35);
+    }
+
+    // Charge sound — rising pitch oscillator, call startCharge/stopCharge
+    startCharge() {
+        if (!this.ctx || this.isMuted) return;
+        this.stopCharge(); // Clean up any existing
+
+        this._chargeOsc = this.ctx.createOscillator();
+        this._chargeGain = this.ctx.createGain();
+        this._chargeFilter = this.ctx.createBiquadFilter();
+
+        this._chargeOsc.type = 'sine';
+        this._chargeOsc.frequency.value = 150;
+        this._chargeFilter.type = 'lowpass';
+        this._chargeFilter.frequency.value = 800;
+        this._chargeGain.gain.value = 0.06;
+
+        this._chargeOsc.connect(this._chargeFilter);
+        this._chargeFilter.connect(this._chargeGain);
+        this._chargeGain.connect(this.masterGain);
+        this._chargeOsc.start();
+    }
+
+    updateCharge(progress) {
+        // progress: 0-1 over the charge duration
+        if (!this._chargeOsc) return;
+        const freq = 150 + progress * 600; // 150Hz → 750Hz
+        this._chargeOsc.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.05);
+        this._chargeGain.gain.setTargetAtTime(0.06 + progress * 0.08, this.ctx.currentTime, 0.05);
+        this._chargeFilter.frequency.setTargetAtTime(800 + progress * 1500, this.ctx.currentTime, 0.05);
+    }
+
+    stopCharge() {
+        if (this._chargeOsc) {
+            try { this._chargeOsc.stop(); } catch(e) {}
+            this._chargeOsc = null;
+            this._chargeGain = null;
+            this._chargeFilter = null;
+        }
+    }
+
+    // Delivery chime — ascending arpeggio C5-E5-G5-C6
+    playDeliver() {
+        if (!this.ctx || this.isMuted) return;
+        const notes = [523, 659, 784, 1047];
+        notes.forEach((freq, i) => {
+            const t = this.ctx.currentTime + i * 0.08;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.12, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.start(t);
+            osc.stop(t + 0.22);
+        });
+    }
+
+    // Combo chime — higher pitch based on combo level
+    playCombo(level) {
+        if (!this.ctx || this.isMuted) return;
+        const baseFreq = 660 + level * 110; // Higher for bigger combos
+        const t = this.ctx.currentTime;
+        for (let i = 0; i < 2; i++) {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = baseFreq * (1 + i * 0.5);
+            gain.gain.setValueAtTime(0.1, t + i * 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + i * 0.06 + 0.15);
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.start(t + i * 0.06);
+            osc.stop(t + i * 0.06 + 0.2);
+        }
+    }
+
+    // Timer warning — low urgent buzz
+    playTimerWarning() {
+        if (!this.ctx || this.isMuted) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.value = 180;
+        gain.gain.setValueAtTime(0.06, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.15);
+    }
+
+    // Landing impact — low thud
+    playLanding(impactSpeed) {
+        if (!this.ctx || this.isMuted) return;
+        const t = this.ctx.currentTime;
+        const intensity = Math.min(1, impactSpeed / 15);
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(80 + intensity * 40, t);
+        osc.frequency.exponentialRampToValueAtTime(40, t + 0.15);
+        gain.gain.setValueAtTime(0.15 * intensity, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.25);
+    }
+
+    // Proximity ping — soft crystalline tone
+    playProximity() {
+        if (!this.ctx || this.isMuted) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.35);
     }
 
     // Altitude affects ambient sound

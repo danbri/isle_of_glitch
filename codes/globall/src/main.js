@@ -1,5 +1,5 @@
 /**
- * GLOBALL - Planetary Trampoline Express
+ * GLOBALL - Magnetic Frenetic Transport
  * Main game entry point
  */
 
@@ -39,6 +39,21 @@ class GloballGame {
         // Smoothed display values to prevent flickering
         this.displayedAltitude = 0;
         this.altitudeSmoothFactor = 0.15;
+
+        // Game session — 3-minute timed rounds
+        this.session = {
+            timeLimit: 180, // seconds
+            startTime: 0,
+            started: false,
+            ended: false,
+            bestCombo: 0,
+            bestDelivery: 0
+        };
+
+        // Analog touch steering (replaces binary keys)
+        this.steerX = 0; // -1 to 1
+        this.steerY = 0; // -1 to 1
+        this.steerMomentum = 0.85; // decay factor when finger lifts
 
         // Defer audio initialization to avoid blocking
         this.audio = null;
@@ -347,6 +362,8 @@ class GloballGame {
         await this.player.init();
         // Sync player camera with orbit controls initial state
         this.player.cameraEnabled = !this.controls.enabled;
+        // Wire up magnetic attraction to trampoline network
+        this.player.setTrampolineNetwork(this.trampolineNetwork);
 
         this.updateLoadingProgress(90);
 
@@ -354,6 +371,21 @@ class GloballGame {
         console.log('Loading: Package System...');
         this.packageSystem = new PackageSystem(this.scene, this.gameState, this.trampolineNetwork);
         await this.packageSystem.init();
+
+        // Create trajectory preview line (dotted arc during charge)
+        const trajGeo = new THREE.BufferGeometry();
+        trajGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(51 * 3), 3));
+        const trajMat = new THREE.LineDashedMaterial({
+            color: 0x4488ff, dashSize: 0.3, gapSize: 0.15,
+            transparent: true, opacity: 0.6
+        });
+        this.trajectoryLine = new THREE.Line(trajGeo, trajMat);
+        this.trajectoryLine.visible = false;
+        this.scene.add(this.trajectoryLine);
+
+        // Proximity tracking
+        this._lastProximityPing = 0;
+        this._timerWarningTime = 0;
 
         console.log('Loading: Complete!');
         this.updateLoadingProgress(100);
@@ -399,6 +431,8 @@ class GloballGame {
                 this.bounceHoldStart = Date.now();
                 // Haptic feedback on charge start
                 if (navigator.vibrate) navigator.vibrate(30);
+                // Start charge sound
+                if (this.audio && this.audio.startCharge) this.audio.startCharge();
                 // Start charge pulse animation
                 bounceIndicator.style.transform = 'scale(1.05)';
                 this._chargeInterval = setInterval(() => {
@@ -420,8 +454,12 @@ class GloballGame {
                     const holdMs = Date.now() - this.bounceHoldStart;
                     clearInterval(this._chargeInterval);
                     bounceIndicator.style.transform = 'scale(1)';
+                    // Stop charge sound
+                    if (this.audio && this.audio.stopCharge) this.audio.stopCharge();
                     // Strong haptic on release
                     if (navigator.vibrate) navigator.vibrate(50);
+                    // Hide trajectory preview
+                    if (this.trajectoryLine) this.trajectoryLine.visible = false;
                     this.doBounce(holdMs);
                 }
             };
@@ -440,6 +478,8 @@ class GloballGame {
                 this.bounceCharging = false;
                 clearInterval(this._chargeInterval);
                 bounceIndicator.style.transform = 'scale(1)';
+                if (this.audio && this.audio.stopCharge) this.audio.stopCharge();
+                if (this.trajectoryLine) this.trajectoryLine.visible = false;
             }, { passive: false });
             // Desktop mouse fallback
             bounceIndicator.addEventListener('mousedown', startCharge);
@@ -472,22 +512,20 @@ class GloballGame {
             this.bounceCharging = false;
         }
 
-        // Convert swipe to directional input
-        const threshold = 10;
-        if (Math.abs(dx) > threshold) {
-            this.keys['KeyD'] = dx > 0;
-            this.keys['KeyA'] = dx < 0;
+        // Analog steering: swipe distance maps to force (0-1), with deadzone
+        const deadzone = 8;
+        const maxSwipe = 80; // pixels for full force
+
+        if (Math.abs(dx) > deadzone) {
+            this.steerX = Math.sign(dx) * Math.min(1, (Math.abs(dx) - deadzone) / maxSwipe);
         } else {
-            this.keys['KeyD'] = false;
-            this.keys['KeyA'] = false;
+            this.steerX = 0;
         }
 
-        if (Math.abs(dy) > threshold) {
-            this.keys['KeyW'] = dy < 0;
-            this.keys['KeyS'] = dy > 0;
+        if (Math.abs(dy) > deadzone) {
+            this.steerY = Math.sign(dy) * Math.min(1, (Math.abs(dy) - deadzone) / maxSwipe);
         } else {
-            this.keys['KeyW'] = false;
-            this.keys['KeyS'] = false;
+            this.steerY = 0;
         }
     }
 
@@ -498,11 +536,8 @@ class GloballGame {
             this.selectAirportAtScreen(touch.clientX, touch.clientY);
         }
 
-        // Reset all touch-based movement
-        this.keys['KeyW'] = false;
-        this.keys['KeyS'] = false;
-        this.keys['KeyA'] = false;
-        this.keys['KeyD'] = false;
+        // Steer decays with momentum (don't zero instantly)
+        // The decay is applied each frame in animate()
         this.touchStartPos = null;
     }
 
@@ -513,6 +548,7 @@ class GloballGame {
                 if (!this.bounceCharging) {
                     this.bounceCharging = true;
                     this.bounceHoldStart = Date.now();
+                    if (this.audio && this.audio.startCharge) this.audio.startCharge();
                 }
                 break;
             case 'KeyE':
@@ -528,11 +564,26 @@ class GloballGame {
         if (e.code === 'Space' && this.bounceCharging) {
             this.bounceCharging = false;
             const holdMs = Date.now() - this.bounceHoldStart;
+            if (this.audio && this.audio.stopCharge) this.audio.stopCharge();
+            if (this.trajectoryLine) this.trajectoryLine.visible = false;
             this.doBounce(holdMs);
         }
     }
 
     doBounce(holdMs) {
+        // Start game session on first bounce
+        if (!this.session.started) {
+            this.session.started = true;
+            this.session.startTime = Date.now();
+            this.session.ended = false;
+            this.session.bestCombo = 0;
+            this.session.bestDelivery = 0;
+            // Hide tutorial
+            const tut = this.getEl('tutorial-hint');
+            if (tut) tut.classList.add('hidden');
+        }
+        if (this.session.ended) return; // Can't bounce after game over
+
         // Hold duration determines bounce type:
         //   Quick tap (<200ms) = Scenic Hop (gentle, low arc)
         //   Medium hold (200-600ms) = Express Arc (high, powerful)
@@ -591,7 +642,7 @@ class GloballGame {
             if (planetHits.length > 0) {
                 const hitPoint = planetHits[0].point;
                 const { trampoline, distance } = this.trampolineNetwork.getNearestTrampoline(hitPoint);
-                if (trampoline && distance < 1.5) {
+                if (trampoline && distance < 2.5) {
                     this.player.setTargetTrampoline(trampoline);
                     this.showTargetNotification(trampoline);
                     return true;
@@ -915,9 +966,11 @@ class GloballGame {
         const alt = this.getEl('altitude-value');
         if (alt) alt.textContent = this.displayedAltitude.toFixed(1);
 
-        // Update score
+        // Update score (actual score value, not just deliveries)
         const score = this.getEl('score-value');
-        if (score) score.textContent = this.gameState.deliveries;
+        if (score) score.textContent = this.gameState.score.toLocaleString();
+        const delCount = this.getEl('deliveries-count');
+        if (delCount) delCount.textContent = `${this.gameState.deliveries} deliveries`;
 
         // Update package info
         const currentPackage = this.packageSystem.getCurrentPackage();
@@ -948,7 +1001,7 @@ class GloballGame {
             if (this.player.targetTrampoline) {
                 const t = this.player.targetTrampoline;
                 targetEl.textContent = `\u2192 ${t.airport.name} ${t.airport.city}`;
-                targetEl.style.color = '#ff77bb';
+                targetEl.style.color = '#77bbff';
             } else {
                 targetEl.textContent = 'Hold bounce button \u2022 Tap airport to target';
                 targetEl.style.color = 'rgba(255,255,255,0.4)';
@@ -966,23 +1019,23 @@ class GloballGame {
         if (this.bounceCharging) {
             const holdMs = Date.now() - this.bounceHoldStart;
             if (holdMs < 200) {
-                bounceEl.textContent = '🌸';
+                bounceEl.textContent = '🧲';
                 if (bounceBtn) bounceBtn.style.background =
-                    'conic-gradient(from 0deg, #ff99cc, #ff66aa, #ff99cc)';
+                    'conic-gradient(from 0deg, #88aaff, #4488ff, #88aaff)';
             } else if (holdMs < 600) {
-                bounceEl.textContent = '🚀';
+                bounceEl.textContent = '⚡';
                 if (bounceBtn) bounceBtn.style.background =
                     'conic-gradient(from 0deg, #66ddff, #3399ff, #66ddff)';
             } else {
-                bounceEl.textContent = '🌙';
+                bounceEl.textContent = '🔮';
                 if (bounceBtn) bounceBtn.style.background =
                     'conic-gradient(from 0deg, #aa88ff, #6644cc, #aa88ff)';
             }
         } else {
             // Reset button color
             if (bounceBtn) bounceBtn.style.background =
-                'conic-gradient(from 0deg, #f093fb, #f5576c, #fa709a, #fee140, #f093fb)';
-            bounceEl.textContent = '🚀';
+                'conic-gradient(from 0deg, #4488ff, #6644ff, #88aaff, #4488ff)';
+            bounceEl.textContent = '⚡';
         }
     }
 
@@ -1057,6 +1110,29 @@ class GloballGame {
             timerText.textContent = `${Math.ceil(timerInfo.remaining)}s`;
         }
 
+        // Urgency vignette
+        const vignette = this.getEl('screen-vignette');
+        if (vignette) {
+            if (timerInfo.ratio < 0.2) {
+                vignette.className = 'urgent';
+                // Play timer warning beep every 2 seconds
+                const now = Date.now();
+                if (now - this._timerWarningTime > 2000) {
+                    this._timerWarningTime = now;
+                    if (this.audio && this.audio.playTimerWarning) this.audio.playTimerWarning();
+                }
+            } else {
+                // Check proximity instead
+                const destPos = this.packageSystem.getDestinationPosition();
+                if (destPos) {
+                    const dist = this.player.getPosition().distanceTo(destPos);
+                    vignette.className = dist < 3 ? 'proximity' : '';
+                } else {
+                    vignette.className = '';
+                }
+            }
+        }
+
         // Expire package if time ran out
         if (timerInfo.expired) {
             this.packageSystem.expirePackage();
@@ -1070,7 +1146,7 @@ class GloballGame {
                 clearTimeout(this._targetNotifTimeout);
                 this._targetNotifTimeout = setTimeout(() => {
                     el.style.opacity = '0';
-                    el.style.color = '#ff66aa';
+                    el.style.color = '#4488ff';
                     el.style.fontSize = '0.9rem';
                 }, 2000);
             }
@@ -1095,6 +1171,95 @@ class GloballGame {
         } else {
             comboEl.classList.remove('active');
         }
+    }
+
+    endSession() {
+        this.session.ended = true;
+
+        // Populate game over screen
+        const goScore = this.getEl('go-score');
+        const goDeliveries = this.getEl('go-deliveries');
+        const goBestCombo = this.getEl('go-best-combo');
+        const goBestDelivery = this.getEl('go-best-delivery');
+        const goRank = this.getEl('go-rank');
+
+        if (goScore) goScore.textContent = this.gameState.score.toLocaleString();
+        if (goDeliveries) goDeliveries.textContent = this.gameState.deliveries;
+        if (goBestCombo) goBestCombo.textContent = `x${this.session.bestCombo || 1}`;
+        if (goBestDelivery) goBestDelivery.textContent = this.session.bestDelivery.toLocaleString();
+
+        // Rank based on score
+        if (goRank) {
+            const s = this.gameState.score;
+            if (s >= 10000) goRank.textContent = 'LEGENDARY COURIER';
+            else if (s >= 5000) goRank.textContent = 'EXPERT COURIER';
+            else if (s >= 2000) goRank.textContent = 'SKILLED COURIER';
+            else if (s >= 500) goRank.textContent = 'NOVICE COURIER';
+            else goRank.textContent = 'TRAINEE COURIER';
+        }
+
+        // Show game over screen
+        const screen = this.getEl('game-over-screen');
+        if (screen) screen.style.display = 'block';
+
+        // Wire up play again button
+        const btn = this.getEl('play-again-btn');
+        if (btn) {
+            const handler = () => {
+                btn.removeEventListener('click', handler);
+                btn.removeEventListener('touchend', handler);
+                this.restartSession();
+            };
+            btn.addEventListener('click', handler);
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handler();
+            });
+        }
+
+        // Haptic
+        if (navigator.vibrate) navigator.vibrate([100, 100, 200]);
+    }
+
+    restartSession() {
+        // Hide game over
+        const screen = this.getEl('game-over-screen');
+        if (screen) screen.style.display = 'none';
+
+        // Reset game state
+        this.gameState.score = 0;
+        this.gameState.deliveries = 0;
+
+        // Reset session
+        this.session.started = false;
+        this.session.ended = false;
+        this.session.bestCombo = 0;
+        this.session.bestDelivery = 0;
+
+        // Reset timer display
+        const timerEl = this.getEl('session-time');
+        if (timerEl) {
+            timerEl.textContent = '3:00';
+            timerEl.style.color = 'white';
+        }
+
+        // Reset package system
+        this.packageSystem.comboCount = 0;
+        this.packageSystem.lastDeliveryTime = 0;
+        this.packageSystem.currentPackage = null;
+        this.packageSystem.assignNewPackage();
+
+        // Auto-target new destination
+        const pkg = this.packageSystem.getCurrentPackage();
+        if (pkg && pkg.destinationAirport) {
+            this.player.setTargetTrampoline(pkg.destinationAirport);
+        }
+
+        // Update UI
+        const scoreEl = this.getEl('score-value');
+        if (scoreEl) scoreEl.textContent = '0';
+        const delEl = this.getEl('deliveries-count');
+        if (delEl) delEl.textContent = '0 deliveries';
     }
 
     updateLoadingProgress(progress) {
@@ -1146,6 +1311,34 @@ class GloballGame {
         // Update game time
         const time = currentTime * 0.001;
 
+        // Game session timer
+        if (this.session.started && !this.session.ended) {
+            const elapsed = (Date.now() - this.session.startTime) / 1000;
+            const remaining = Math.max(0, this.session.timeLimit - elapsed);
+            const mins = Math.floor(remaining / 60);
+            const secs = Math.floor(remaining % 60);
+            const timerEl = this.getEl('session-time');
+            if (timerEl) {
+                timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+                // Urgency color when < 30s
+                timerEl.style.color = remaining < 30 ? '#ff4444' : remaining < 60 ? '#ffaa00' : 'white';
+            }
+            if (remaining <= 0) {
+                this.endSession();
+            }
+        }
+
+        // Apply analog steering to player (decay when no touch)
+        if (!this.touchStartPos) {
+            this.steerX *= this.steerMomentum;
+            this.steerY *= this.steerMomentum;
+            if (Math.abs(this.steerX) < 0.01) this.steerX = 0;
+            if (Math.abs(this.steerY) < 0.01) this.steerY = 0;
+        }
+        // Feed analog steer as virtual key pressure for Player.handleInput
+        this.keys['_steerX'] = this.steerX;
+        this.keys['_steerY'] = this.steerY;
+
         // Update all game components
         this.planet.update(time, this.deltaTime);
         this.cityLights.update(time, this.deltaTime, this.camera);
@@ -1153,6 +1346,44 @@ class GloballGame {
         this.aurora.update(time, this.deltaTime, this.player.getPosition());
         this.trampolineNetwork.update(time, this.deltaTime, this.player.getPosition());
         this.player.update(time, this.deltaTime, this.keys);
+
+        // Trajectory preview during charge hold
+        if (this.bounceCharging && this.trajectoryLine) {
+            const holdMs = Date.now() - this.bounceHoldStart;
+            const points = this.player.predictTrajectory(holdMs);
+            if (points.length > 1) {
+                const positions = this.trajectoryLine.geometry.attributes.position;
+                for (let i = 0; i < points.length && i < 51; i++) {
+                    positions.setXYZ(i, points[i].x, points[i].y, points[i].z);
+                }
+                positions.needsUpdate = true;
+                this.trajectoryLine.geometry.setDrawRange(0, Math.min(points.length, 51));
+                this.trajectoryLine.computeLineDistances();
+                this.trajectoryLine.visible = true;
+            }
+            // Update charge sound pitch
+            const progress = Math.min(1, holdMs / 800);
+            if (this.audio && this.audio.updateCharge) this.audio.updateCharge(progress);
+        }
+
+        // Landing sound
+        if (this.player.lastImpactSpeed > 3) {
+            if (this.audio && this.audio.playLanding) this.audio.playLanding(this.player.lastImpactSpeed);
+            this.player.lastImpactSpeed = 0;
+        }
+
+        // Proximity feedback — ping when approaching destination
+        const destPos = this.packageSystem.getDestinationPosition();
+        if (destPos) {
+            const distToDest = this.player.getPosition().distanceTo(destPos);
+            const now = Date.now();
+            if (distToDest < 3 && now - this._lastProximityPing > 1500) {
+                this._lastProximityPing = now;
+                if (this.audio && this.audio.playProximity) this.audio.playProximity();
+                if (navigator.vibrate) navigator.vibrate(15);
+            }
+        }
+
         const prevDeliveries = this.gameState.deliveries;
         this.packageSystem.update(time, this.deltaTime, this.player);
         if (this.gameState.deliveries > prevDeliveries) {
@@ -1179,6 +1410,20 @@ class GloballGame {
                 this._celebTimeout = setTimeout(() => {
                     celebEl.classList.remove('active');
                 }, 2000);
+            }
+
+            // Track session bests
+            if (delivery) {
+                if (delivery.comboMultiplier > this.session.bestCombo) this.session.bestCombo = delivery.comboMultiplier;
+                if (delivery.score > this.session.bestDelivery) this.session.bestDelivery = delivery.score;
+            }
+
+            // Delivery chime + combo sound
+            if (this.audio) {
+                if (this.audio.playDeliver) this.audio.playDeliver();
+                if (delivery && delivery.comboMultiplier > 1 && this.audio.playCombo) {
+                    this.audio.playCombo(delivery.comboMultiplier);
+                }
             }
 
             // Strong haptic celebration

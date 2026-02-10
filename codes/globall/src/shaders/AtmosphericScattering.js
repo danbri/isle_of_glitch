@@ -101,7 +101,7 @@ export const AtmosphereGlowMaterial = {
             vec3 worldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
             vec3 viewDir = normalize(cameraPosition - worldPos);
 
-            intensity = pow(1.0 - abs(dot(worldNormal, viewDir)), 2.5);
+            intensity = pow(1.0 - abs(dot(worldNormal, viewDir)), 3.5);
 
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
@@ -129,7 +129,7 @@ export const AtmosphereGlowMaterial = {
             // Add subtle animation
             float pulse = sin(time * 0.5) * 0.1 + 0.9;
 
-            gl_FragColor = vec4(color * intensity * glowIntensity * pulse, intensity * 0.8);
+            gl_FragColor = vec4(color * intensity * glowIntensity * pulse, intensity * 0.5);
         }
     `
 };

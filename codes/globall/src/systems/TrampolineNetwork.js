@@ -159,10 +159,10 @@ export class TrampolineNetwork {
             positions[i * 3 + 1] = p.y;
             positions[i * 3 + 2] = p.z;
 
-            // Candy pink dots
-            colors[i * 3] = 1.0;
-            colors[i * 3 + 1] = 0.4;
-            colors[i * 3 + 2] = 0.7;
+            // Electric blue magnetic dots
+            colors[i * 3] = 0.3;
+            colors[i * 3 + 1] = 0.6;
+            colors[i * 3 + 2] = 1.0;
         }
 
         const geometry = new THREE.BufferGeometry();
@@ -170,7 +170,7 @@ export class TrampolineNetwork {
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
         const material = new THREE.PointsMaterial({
-            size: 0.06,
+            size: 0.12,
             vertexColors: true,
             sizeAttenuation: true,
             transparent: true,
@@ -182,32 +182,41 @@ export class TrampolineNetwork {
     }
 
     createDetailedPool() {
-        // Shared geometries
-        const ringGeo = new THREE.TorusGeometry(0.25, 0.025, 8, 24);
-        const ringMat = new THREE.MeshPhongMaterial({
-            color: 0xff66aa,
-            emissive: 0xff3377,
-            emissiveIntensity: 0.3,
-            shininess: 100
+        // Shared geometries — electromagnetic coil design
+        // Outer coil ring (main visible ring)
+        const outerCoilGeo = new THREE.TorusGeometry(0.3, 0.02, 8, 32);
+        const coilMat = new THREE.MeshPhongMaterial({
+            color: 0x3388ff,
+            emissive: 0x2266dd,
+            emissiveIntensity: 0.5,
+            shininess: 120
         });
-        const surfGeo = new THREE.CircleGeometry(0.23, 24);
-        const surfMat = new THREE.MeshPhongMaterial({
-            color: 0x66ddff,
-            emissive: 0x33aadd,
-            emissiveIntensity: 0.2,
+        // Inner coil ring
+        const innerCoilGeo = new THREE.TorusGeometry(0.18, 0.015, 8, 24);
+        const innerCoilMat = new THREE.MeshPhongMaterial({
+            color: 0x6644ff,
+            emissive: 0x4422cc,
+            emissiveIntensity: 0.6,
+            shininess: 120
+        });
+        // Magnetic core (center energy disc)
+        const coreGeo = new THREE.CircleGeometry(0.12, 24);
+        const coreMat = new THREE.MeshBasicMaterial({
+            color: 0x88aaff,
             transparent: true,
-            opacity: 0.8,
+            opacity: 0.6,
             side: THREE.DoubleSide
         });
 
-        // Shared glow texture
+        // Shared glow texture — electromagnetic blue-white
         const glowCanvas = document.createElement('canvas');
         glowCanvas.width = 64;
         glowCanvas.height = 64;
         const gCtx = glowCanvas.getContext('2d');
         const grad = gCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
-        grad.addColorStop(0, 'rgba(102, 221, 255, 0.8)');
-        grad.addColorStop(0.3, 'rgba(255, 102, 170, 0.4)');
+        grad.addColorStop(0, 'rgba(130, 180, 255, 0.9)');
+        grad.addColorStop(0.25, 'rgba(80, 120, 255, 0.5)');
+        grad.addColorStop(0.6, 'rgba(60, 40, 200, 0.2)');
         grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
         gCtx.fillStyle = grad;
         gCtx.fillRect(0, 0, 64, 64);
@@ -216,21 +225,26 @@ export class TrampolineNetwork {
         for (let i = 0; i < this.DETAIL_POOL_SIZE; i++) {
             const group = new THREE.Group();
 
-            // Ring
-            group.add(new THREE.Mesh(ringGeo, ringMat));
+            // Outer coil ring
+            group.add(new THREE.Mesh(outerCoilGeo, coilMat));
 
-            // Bounce surface
-            const surf = new THREE.Mesh(surfGeo, surfMat);
-            surf.position.y = 0.01;
-            group.add(surf);
+            // Inner coil ring (slightly elevated)
+            const innerRing = new THREE.Mesh(innerCoilGeo, innerCoilMat);
+            innerRing.position.y = 0.02;
+            group.add(innerRing);
 
-            // Glow sprite
+            // Magnetic core disc
+            const core = new THREE.Mesh(coreGeo, coreMat);
+            core.position.y = 0.03;
+            group.add(core);
+
+            // Electromagnetic glow sprite
             const glow = new THREE.Sprite(new THREE.SpriteMaterial({
                 map: glowTexture,
                 transparent: true,
                 blending: THREE.AdditiveBlending
             }));
-            glow.scale.set(0.7, 0.7, 1);
+            glow.scale.set(0.8, 0.8, 1);
             glow.position.y = 0.1;
             group.add(glow);
 
@@ -275,7 +289,7 @@ export class TrampolineNetwork {
             ));
 
             const material = new THREE.LineBasicMaterial({
-                color: 0xff66aa,
+                color: 0x4488ff,
                 transparent: true,
                 opacity: 0.15,
                 depthWrite: false
@@ -347,7 +361,7 @@ export class TrampolineNetwork {
 
                 // Fade by distance — nearby routes brighter
                 const distToPlayer = dest.position.distanceTo(playerPosition);
-                line.material.opacity = Math.max(0.05, 0.2 - distToPlayer * 0.01);
+                line.material.opacity = Math.max(0.1, 0.4 - distToPlayer * 0.015);
                 line.visible = true;
             } else {
                 line.visible = false;
@@ -383,7 +397,7 @@ export class TrampolineNetwork {
         ctx.strokeStyle = '#000';
         ctx.miterLimit = 2;
         ctx.strokeText(airport.name, 128, 25);
-        ctx.fillStyle = '#ff77bb';
+        ctx.fillStyle = '#77bbff';
         ctx.fillText(airport.name, 128, 25);
 
         // City
@@ -524,12 +538,23 @@ export class TrampolineNetwork {
             }
         }
 
-        // Animate visible detailed trampolines
+        // Animate visible magnetic pads
         this.detailedPool.forEach(mesh => {
             if (!mesh.visible) return;
-            mesh.children.forEach(child => {
+            mesh.children.forEach((child, idx) => {
                 if (child.isSprite && !child.userData.isLabel) {
+                    // Rotate glow sprite
                     child.material.rotation = time * 0.5;
+                    // Pulse glow opacity
+                    child.material.opacity = 0.6 + Math.sin(time * 2 + idx) * 0.2;
+                }
+                // Spin inner coil ring (child index 1)
+                if (idx === 1 && child.isMesh) {
+                    child.rotation.z = time * 1.5;
+                }
+                // Pulse core brightness (child index 2)
+                if (idx === 2 && child.isMesh && child.material.opacity !== undefined) {
+                    child.material.opacity = 0.4 + Math.sin(time * 3) * 0.2;
                 }
             });
         });

@@ -39,6 +39,7 @@ export class Player {
         // Target trampoline
         this.targetTrampoline = null;
         this.isOnTrampoline = false;
+        this.trampolineNetwork = null;
 
         // Visual
         this.mesh = null;
@@ -52,6 +53,12 @@ export class Player {
         this.lastForward = null; // Stores last velocity direction for stable camera
         this.cameraLerpSpeed = 0.15; // Configurable from debug panel
         this.cameraEnabled = true; // Disabled when orbit controls are active
+
+        // Camera shake
+        this.cameraShake = { intensity: 0, decay: 0.88 };
+
+        // Landing tracking
+        this.lastImpactSpeed = 0;
     }
 
     async init() {
@@ -188,11 +195,11 @@ export class Player {
             positions[i * 3 + 1] = pos.y;
             positions[i * 3 + 2] = pos.z;
 
-            // Gradient from pink to cyan
+            // Gradient from white-blue to deep purple (magnetic flux)
             const t = i / this.maxTrailLength;
-            colors[i * 3] = 1.0 - t * 0.5;     // R
-            colors[i * 3 + 1] = 0.4 + t * 0.5; // G
-            colors[i * 3 + 2] = 0.6 + t * 0.4; // B
+            colors[i * 3] = 0.5 - t * 0.3;     // R: bright→dim
+            colors[i * 3 + 1] = 0.6 - t * 0.3; // G: bright→dim
+            colors[i * 3 + 2] = 1.0 - t * 0.3; // B: stays bright
         }
 
         this.trail.geometry.attributes.position.needsUpdate = true;
@@ -268,35 +275,52 @@ export class Player {
     }
 
     createBounceEffect() {
-        // Ring expanding outward
-        const geometry = new THREE.RingGeometry(0.1, 0.3, 32);
-        const material = new THREE.MeshBasicMaterial({
-            color: 0xff66aa,
-            transparent: true,
-            opacity: 1,
-            side: THREE.DoubleSide
-        });
+        // Electromagnetic pulse — concentric expanding rings
+        const rings = [];
+        const colors = [0x4488ff, 0x6644ff, 0x88aaff];
 
-        const ring = new THREE.Mesh(geometry, material);
-        ring.position.copy(this.position);
-        ring.lookAt(this.planetCenter);
+        for (let r = 0; r < 3; r++) {
+            const geometry = new THREE.RingGeometry(0.05 + r * 0.08, 0.15 + r * 0.08, 32);
+            const material = new THREE.MeshBasicMaterial({
+                color: colors[r],
+                transparent: true,
+                opacity: 1,
+                side: THREE.DoubleSide
+            });
 
-        this.scene.add(ring);
+            const ring = new THREE.Mesh(geometry, material);
+            ring.position.copy(this.position);
+            ring.lookAt(this.planetCenter);
+            this.scene.add(ring);
+            rings.push({ ring, geometry, material, delay: r * 0.06 });
+        }
 
         // Animate and remove
         const startTime = Date.now();
         const animate = () => {
             const elapsed = (Date.now() - startTime) / 1000;
-            const scale = 1 + elapsed * 5;
-            ring.scale.set(scale, scale, 1);
-            material.opacity = Math.max(0, 1 - elapsed * 2);
+            let allDone = true;
 
-            if (elapsed < 0.5) {
+            for (const r of rings) {
+                const t = Math.max(0, elapsed - r.delay);
+                if (t < 0.5) {
+                    allDone = false;
+                    const scale = 1 + t * 6;
+                    r.ring.scale.set(scale, scale, 1);
+                    r.material.opacity = Math.max(0, 1 - t * 2.5);
+                } else {
+                    r.material.opacity = 0;
+                }
+            }
+
+            if (!allDone) {
                 requestAnimationFrame(animate);
             } else {
-                this.scene.remove(ring);
-                geometry.dispose();
-                material.dispose();
+                for (const r of rings) {
+                    this.scene.remove(r.ring);
+                    r.geometry.dispose();
+                    r.material.dispose();
+                }
             }
         };
         animate();
@@ -309,6 +333,10 @@ export class Player {
 
     setTargetTrampoline(trampoline) {
         this.targetTrampoline = trampoline;
+    }
+
+    setTrampolineNetwork(network) {
+        this.trampolineNetwork = network;
     }
 
     setRouteType(routeType) {
@@ -348,6 +376,13 @@ export class Player {
             if (dot < 0) {
                 // Reflect velocity with bounce based on impact speed
                 const impactSpeed = -dot;
+                this.lastImpactSpeed = impactSpeed;
+
+                // Camera shake on hard landings
+                if (impactSpeed > 3) {
+                    this.cameraShake.intensity = Math.min(0.3, impactSpeed * 0.02);
+                }
+
                 const bounciness = impactSpeed > 5 ? 0.5 : 0.3; // More bounce from harder impacts
                 const reflection = normal.clone().multiplyScalar(-2 * dot * bounciness);
                 this.velocity.add(reflection);
@@ -368,6 +403,17 @@ export class Player {
             this.isOnGround = false;
         }
 
+        // Magnetic attraction to nearby airports
+        if (this.trampolineNetwork && altitude < 2) {
+            const { trampoline: nearest, distance: nearestDist } = 
+                this.trampolineNetwork.getNearestTrampoline(this.position);
+            if (nearest && nearestDist < 3) {
+                const pullDir = nearest.position.clone().sub(this.position).normalize();
+                const pullStrength = Math.min(2.0, 0.5 / (nearestDist * nearestDist + 0.1));
+                this.velocity.add(pullDir.multiplyScalar(pullStrength * deltaTime));
+            }
+        }
+
         // Recharge bounce over time
         this.bounceCharge = Math.min(this.maxBounceCharge,
             this.bounceCharge + this.bounceChargeRate * deltaTime);
@@ -383,8 +429,28 @@ export class Player {
 
         // Squash and stretch based on velocity
         const currentSpeed = this.velocity.length();
-        const stretch = 1 + currentSpeed * 0.02;
-        this.mesh.scale.set(1, 1, stretch);
+        const verticalSpeed = this.velocity.dot(this.position.clone().normalize());
+        if (this.isOnGround) {
+            // Landing squash
+            const squash = Math.max(0.7, 1 - Math.abs(verticalSpeed) * 0.03);
+            this.mesh.scale.set(1 / squash, squash, 1 / squash);
+        } else {
+            const stretch = 1 + currentSpeed * 0.02;
+            this.mesh.scale.set(1, 1, stretch);
+        }
+
+        // Eye tracking — pupils look toward target
+        if (this.targetTrampoline && this.mesh.children.length >= 7) {
+            const toTarget = this.targetTrampoline.position.clone().sub(this.position);
+            const localDir = this.mesh.worldToLocal(
+                this.position.clone().add(toTarget.normalize())
+            );
+            const ex = Math.max(-0.04, Math.min(0.04, localDir.x * 0.1));
+            const ey = Math.max(-0.04, Math.min(0.04, localDir.y * 0.1));
+            // Pupils are children[5] (left) and children[6] (right)
+            this.mesh.children[5].position.set(-0.1 + ex, 0.1 + ey, 0.3);
+            this.mesh.children[6].position.set(0.1 + ex, 0.1 + ey, 0.3);
+        }
 
         // Update trail
         this.updateTrail();
@@ -397,7 +463,6 @@ export class Player {
 
     handleInput(keys, deltaTime) {
         // Mid-air steering: stronger influence when airborne and moving fast
-        // This gives the player meaningful control during flight
         const speed = this.velocity.length();
         const baseForce = 5;
         const airBonus = this.isOnGround ? 0 : Math.min(speed * 0.4, 6);
@@ -410,17 +475,29 @@ export class Player {
             : new THREE.Vector3(0, 0, 1);
         const right = new THREE.Vector3().crossVectors(up, forward).normalize();
 
-        if (keys['KeyW'] || keys['ArrowUp']) {
-            this.velocity.add(forward.clone().multiplyScalar(influenceForce * deltaTime));
+        // Analog steering from touch (proportional 0-1)
+        const steerX = keys['_steerX'] || 0;
+        const steerY = keys['_steerY'] || 0;
+
+        // Apply analog + keyboard input combined
+        let forwardForce = 0;
+        let rightForce = 0;
+
+        // Keyboard (binary 0/1)
+        if (keys['KeyW'] || keys['ArrowUp']) forwardForce += 1;
+        if (keys['KeyS'] || keys['ArrowDown']) forwardForce -= 1;
+        if (keys['KeyA'] || keys['ArrowLeft']) rightForce -= 1;
+        if (keys['KeyD'] || keys['ArrowRight']) rightForce += 1;
+
+        // Touch analog (proportional, overrides keyboard if active)
+        if (Math.abs(steerX) > 0.01) rightForce = steerX;
+        if (Math.abs(steerY) > 0.01) forwardForce = -steerY; // Inverted: swipe up = forward
+
+        if (Math.abs(forwardForce) > 0.01) {
+            this.velocity.add(forward.clone().multiplyScalar(influenceForce * forwardForce * deltaTime));
         }
-        if (keys['KeyS'] || keys['ArrowDown']) {
-            this.velocity.add(forward.clone().multiplyScalar(-influenceForce * deltaTime));
-        }
-        if (keys['KeyA'] || keys['ArrowLeft']) {
-            this.velocity.add(right.clone().multiplyScalar(-influenceForce * deltaTime));
-        }
-        if (keys['KeyD'] || keys['ArrowRight']) {
-            this.velocity.add(right.clone().multiplyScalar(influenceForce * deltaTime));
+        if (Math.abs(rightForce) > 0.01) {
+            this.velocity.add(right.clone().multiplyScalar(influenceForce * rightForce * deltaTime));
         }
     }
 
@@ -470,6 +547,17 @@ export class Player {
         this.camera.up.copy(this._cameraUp);
         this.camera.lookAt(this.position);
 
+        // Camera shake (decays each frame)
+        if (this.cameraShake.intensity > 0.001) {
+            const shakeX = (Math.random() - 0.5) * this.cameraShake.intensity;
+            const shakeY = (Math.random() - 0.5) * this.cameraShake.intensity;
+            const shakeZ = (Math.random() - 0.5) * this.cameraShake.intensity;
+            this.camera.position.x += shakeX;
+            this.camera.position.y += shakeY;
+            this.camera.position.z += shakeZ;
+            this.cameraShake.intensity *= this.cameraShake.decay;
+        }
+
         // Dynamic FOV: widens during speed for sensation of velocity
         const targetFov = 50 + Math.min(speed * 0.6, 15);
         const currentFov = this.camera.fov;
@@ -477,6 +565,71 @@ export class Player {
             this.camera.fov += (targetFov - currentFov) * 0.06;
             this.camera.updateProjectionMatrix();
         }
+    }
+
+    // Predict bounce trajectory for preview arc
+    predictTrajectory(holdMs) {
+        const routeType = holdMs < 200 ? 'scenic' : holdMs < 600 ? 'express' : 'stealth';
+        const modifier = this.routeModifiers[routeType];
+
+        const up = this.position.clone().sub(this.planetCenter).normalize();
+        let horizontal = this.velocity.clone();
+        horizontal.sub(up.clone().multiplyScalar(horizontal.dot(up)));
+        if (horizontal.length() > 0.1) {
+            horizontal.normalize();
+        } else {
+            horizontal = new THREE.Vector3(1, 0, 0);
+            horizontal.sub(up.clone().multiplyScalar(horizontal.dot(up))).normalize();
+        }
+
+        let bounceDir;
+        if (this.targetTrampoline) {
+            const toTarget = this.targetTrampoline.position.clone().sub(this.position);
+            const dist = toTarget.length();
+            const tangentDir = toTarget.clone();
+            tangentDir.sub(up.clone().multiplyScalar(tangentDir.dot(up)));
+            if (tangentDir.length() > 0.01) tangentDir.normalize();
+            else tangentDir.copy(horizontal);
+            const loft = Math.min(0.85, 0.3 + dist * 0.04);
+            bounceDir = up.clone().multiplyScalar(loft)
+                .add(tangentDir.clone().multiplyScalar(1 - loft)).normalize();
+        } else {
+            bounceDir = up.clone().multiplyScalar(modifier.angle)
+                .add(horizontal.clone().multiplyScalar(1 - modifier.angle)).normalize();
+        }
+
+        const charge = Math.min(1, this.bounceCharge);
+        const force = this.bounceForce * modifier.force * (0.5 + charge * 0.5);
+
+        // Simulate forward
+        let pos = this.position.clone();
+        let vel = this.velocity.clone();
+        const downSpeed = -vel.dot(up);
+        if (downSpeed > 0) vel.add(up.clone().multiplyScalar(downSpeed * 0.7));
+        vel.add(bounceDir.clone().multiplyScalar(force));
+
+        const dt = 0.06;
+        const points = [pos.clone()];
+        for (let i = 0; i < 50; i++) {
+            const toCenter = this.planetCenter.clone().sub(pos);
+            const distance = toCenter.length();
+            const gravDir = toCenter.clone().normalize();
+            const alt = distance - this.planetRadius;
+            const gStr = this.gravity * Math.max(0.7, 1 - alt * 0.005);
+            const acc = gravDir.multiplyScalar(gStr);
+            const spd = vel.length();
+            acc.add(vel.clone().multiplyScalar(-this.airResistance * spd));
+
+            vel = vel.clone().add(acc.clone().multiplyScalar(dt));
+            pos = pos.clone().add(vel.clone().multiplyScalar(dt));
+
+            if (pos.length() < this.planetRadius + 0.4) {
+                points.push(pos.clone());
+                break;
+            }
+            points.push(pos.clone());
+        }
+        return points;
     }
 
     getPosition() {
