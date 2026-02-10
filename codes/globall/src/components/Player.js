@@ -153,6 +153,29 @@ export class Player {
         rightPupil.position.set(0.1, 0.1, 0.3);
         group.add(rightPupil);
 
+        // Package cargo — visible when carrying a delivery
+        const cargoGroup = new THREE.Group();
+        const cargoBox = new THREE.Mesh(
+            new THREE.BoxGeometry(0.18, 0.14, 0.18),
+            new THREE.MeshPhongMaterial({
+                color: 0x88ddff,
+                emissive: 0x4466aa,
+                emissiveIntensity: 0.4
+            })
+        );
+        // Ribbon strap
+        const strap = new THREE.Mesh(
+            new THREE.BoxGeometry(0.2, 0.02, 0.04),
+            new THREE.MeshBasicMaterial({ color: 0xaa88ff })
+        );
+        strap.position.y = 0.07;
+        cargoGroup.add(cargoBox);
+        cargoGroup.add(strap);
+        cargoGroup.position.set(0, -0.25, -0.1); // Under the pod
+        cargoGroup.visible = true; // Start visible since first package assigned at load
+        group.add(cargoGroup);
+        this._cargoMesh = cargoGroup;
+
         this.mesh = group;
         this.mesh.position.copy(this.position);
         this.scene.add(this.mesh);
@@ -452,6 +475,10 @@ export class Player {
         this.trampolineNetwork = network;
     }
 
+    setCarrying(hasPackage) {
+        if (this._cargoMesh) this._cargoMesh.visible = hasPackage;
+    }
+
     setRouteType(routeType) {
         this.routeType = routeType;
     }
@@ -549,6 +576,18 @@ export class Player {
             this.mesh.lookAt(lookTarget);
         }
 
+        // Banking — tilt wings into turns for visual feedback
+        if (!this.isOnGround && speed > 1) {
+            const bankAngle = -(this._lastSteerX || 0) * 0.4; // Roll into turn
+            this.mesh.rotateZ(bankAngle);
+        }
+
+        // Cargo bobble animation
+        if (this._cargoMesh && this._cargoMesh.visible) {
+            this._cargoMesh.rotation.y = Math.sin(time * 2) * 0.15;
+            this._cargoMesh.position.y = -0.25 + Math.sin(time * 3) * 0.02;
+        }
+
         // Squash and stretch based on velocity
         const currentSpeed = this.velocity.length();
         const verticalSpeed = this.velocity.dot(this.position.clone().normalize());
@@ -624,6 +663,9 @@ export class Player {
         if (Math.abs(rightForce) > 0.01) {
             this.velocity.add(right.clone().multiplyScalar(influenceForce * rightForce * deltaTime));
         }
+
+        // Track for banking animation
+        this._lastSteerX = rightForce;
     }
 
     updateCameraPosition() {

@@ -85,10 +85,18 @@
 
         .loading-progress {
             height: 100%;
-            background: linear-gradient(90deg, #fff 0%, #f0c 50%, #0ff 100%);
+            background: linear-gradient(90deg, #4488ff 0%, #6644ff 50%, #88ddff 100%);
             border-radius: 2px;
             width: 0%;
             transition: width 0.3s ease;
+        }
+
+        .loading-status {
+            font-size: clamp(0.55rem, 2vw, 0.75rem);
+            opacity: 0.5;
+            letter-spacing: 0.1em;
+            margin-top: 0.8rem;
+            min-height: 1.2em;
         }
 
         @keyframes pulse {
@@ -222,6 +230,36 @@
             cursor: pointer;
             pointer-events: auto;
             touch-action: none;
+        }
+
+        /* Charge meter ring overlay */
+        #charge-meter {
+            position: absolute;
+            bottom: max(env(safe-area-inset-bottom, 0px), 12px);
+            right: 12px;
+            width: clamp(72px, 18vw, 90px);
+            height: clamp(72px, 18vw, 90px);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 101;
+            --charge: 0;
+        }
+
+        #charge-meter svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        #charge-meter-ring {
+            fill: none;
+            stroke: #88ddff;
+            stroke-width: 4;
+            stroke-dasharray: 283;
+            stroke-dashoffset: 283;
+            stroke-linecap: round;
+            filter: drop-shadow(0 0 6px rgba(136, 221, 255, 0.8));
+            transition: stroke-dashoffset 0.05s linear;
         }
 
         .bounce-inner {
@@ -418,6 +456,44 @@
             margin-top: -4px;
         }
 
+        #combo-timer-bar {
+            width: 60px;
+            height: 3px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 2px;
+            margin-top: 2px;
+            overflow: hidden;
+        }
+
+        #combo-timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #88ddff, #4488ff);
+            border-radius: 2px;
+            width: 100%;
+            transition: width 0.3s linear;
+        }
+
+        #combo-display.expiring #combo-multiplier {
+            animation: combo-flash 0.5s ease-in-out infinite;
+        }
+
+        @keyframes combo-flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Session timer countdown animation */
+        #session-time.countdown {
+            animation: timer-countdown 1s ease-in-out infinite;
+            color: #ff4444 !important;
+            font-weight: 600 !important;
+        }
+
+        @keyframes timer-countdown {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
         /* Delivery celebration overlay */
         #delivery-celebration {
             position: fixed;
@@ -581,6 +657,7 @@
         <div class="loading-bar">
             <div class="loading-progress" id="loading-progress"></div>
         </div>
+        <div class="loading-status" id="loading-status"></div>
     </div>
 
     <div id="webgpu-error" class="ui-panel">
@@ -631,6 +708,9 @@
                 <span class="bounce-label">LAUNCH</span>
             </div>
         </div>
+        <div id="charge-meter">
+            <svg viewBox="0 0 100 100"><circle id="charge-meter-ring" cx="50" cy="50" r="45"/></svg>
+        </div>
 
         <!-- Giant direction arrow — Crazy Taxi style -->
         <div id="direction-display">
@@ -648,6 +728,7 @@
         <div id="combo-display">
             <span id="combo-multiplier">x2</span>
             <span id="combo-label">COMBO</span>
+            <div id="combo-timer-bar"><div id="combo-timer-fill"></div></div>
         </div>
 
         <!-- Urgency/proximity vignette -->
@@ -681,7 +762,8 @@
                         <div style="font-size:0.55rem; letter-spacing:0.15em; opacity:0.5;">BEST DELIVERY</div>
                     </div>
                 </div>
-                <div id="go-rank" style="font-size:clamp(1rem,4vw,1.4rem); margin-bottom:1.5rem; opacity:0.8;"></div>
+                <div id="go-rank" style="font-size:clamp(1rem,4vw,1.4rem); margin-bottom:0.5rem; opacity:0.8;"></div>
+                <div id="go-highscore" style="font-size:clamp(0.65rem,2.5vw,0.85rem); opacity:0.6; margin-bottom:1.5rem;"></div>
                 <button id="play-again-btn" style="background:linear-gradient(135deg,#4488ff,#6644ff); border:none; color:white; padding:clamp(12px,3vw,16px) clamp(32px,8vw,48px); border-radius:50px; font-size:clamp(1rem,4vw,1.3rem); font-weight:600; letter-spacing:0.1em; cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation;">PLAY AGAIN</button>
             </div>
         </div>
@@ -736,6 +818,6 @@
     }
     </script>
 
-    <script type="module" src="src/main.js?v=36"></script>
+    <script type="module" src="src/main.js?v=37"></script>
 </body>
 </html>
