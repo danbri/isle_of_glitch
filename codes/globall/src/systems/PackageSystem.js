@@ -18,14 +18,14 @@ export class PackageSystem {
 
         // Package types with different properties
         this.packageTypes = [
-            { name: 'Glowing Cube', color: 0xff66aa, value: 100, icon: '📦' },
-            { name: 'Crystal Sphere', color: 0x66ffaa, value: 150, icon: '🔮' },
-            { name: 'Ancient Scroll', color: 0xffaa66, value: 200, icon: '📜' },
-            { name: 'Quantum Container', color: 0x66aaff, value: 250, icon: '⚛️' },
-            { name: 'Rainbow Prism', color: 0xff99ff, value: 300, icon: '💎' },
-            { name: 'Time Capsule', color: 0xffff66, value: 350, icon: '⏰' },
-            { name: 'Stardust Vial', color: 0xaaffff, value: 400, icon: '✨' },
-            { name: 'Dream Fragment', color: 0xffaaff, value: 500, icon: '🌙' }
+            { name: 'EM Coil', color: 0x4488ff, value: 100, icon: '🧲' },
+            { name: 'Flux Capacitor', color: 0x66ffaa, value: 150, icon: '⚡' },
+            { name: 'Tesla Scroll', color: 0x88aaff, value: 200, icon: '📜' },
+            { name: 'Quantum Cell', color: 0x6644ff, value: 250, icon: '⚛️' },
+            { name: 'Polarity Crystal', color: 0xaa88ff, value: 300, icon: '💎' },
+            { name: 'Chrono Inductor', color: 0x88ddff, value: 350, icon: '⏰' },
+            { name: 'Stardust Core', color: 0x4466dd, value: 400, icon: '✨' },
+            { name: 'Field Fragment', color: 0x6688ff, value: 500, icon: '🔮' }
         ];
 
         // Destination marker
@@ -107,8 +107,11 @@ export class PackageSystem {
         // Planet radius=10, so max dist ~20 (antipodal). 1 unit ≈ 637 km
         const dist = originPos.distanceTo(destAirport.position);
 
-        // Timer: 25s base + 4s per distance unit, clamped 25-90s
-        const timeLimit = Math.min(90, Math.max(25, 25 + dist * 4));
+        // Timer: gets tighter as deliveries increase (difficulty progression)
+        // Base: 25s + 4s per distance unit, then scaled down by delivery count
+        const difficultyScale = Math.max(0.6, 1 - this.gameState.deliveries * 0.03);
+        const rawTime = 25 + dist * 4;
+        const timeLimit = Math.min(90, Math.max(20, rawTime * difficultyScale));
 
         this.currentPackage = {
             type: packageType,
@@ -140,24 +143,24 @@ export class PackageSystem {
     createDestinationMarker() {
         const group = new THREE.Group();
 
-        // Pulsing ring beacon
+        // Outer magnetic ring beacon
         const ringGeometry = new THREE.RingGeometry(0.3, 0.4, 32);
         const ringMaterial = new THREE.MeshBasicMaterial({
-            color: 0x00ff88, transparent: true, opacity: 0.8, side: THREE.DoubleSide
+            color: 0x4488ff, transparent: true, opacity: 0.8, side: THREE.DoubleSide
         });
         group.add(new THREE.Mesh(ringGeometry, ringMaterial));
 
-        // Inner target
+        // Inner target core
         const innerGeometry = new THREE.CircleGeometry(0.15, 32);
         const innerMaterial = new THREE.MeshBasicMaterial({
-            color: 0x00ff88, transparent: true, opacity: 0.5, side: THREE.DoubleSide
+            color: 0x88aaff, transparent: true, opacity: 0.5, side: THREE.DoubleSide
         });
         group.add(new THREE.Mesh(innerGeometry, innerMaterial));
 
-        // Vertical beam
+        // Vertical EM beam
         const beamGeometry = new THREE.CylinderGeometry(0.05, 0.05, 2, 8);
         const beamMaterial = new THREE.MeshBasicMaterial({
-            color: 0x00ff88, transparent: true, opacity: 0.4
+            color: 0x6644ff, transparent: true, opacity: 0.4
         });
         const beam = new THREE.Mesh(beamGeometry, beamMaterial);
         beam.position.y = 1;
@@ -176,7 +179,7 @@ export class PackageSystem {
 
         const arrowGeometry = new THREE.ShapeGeometry(arrowShape);
         const arrowMaterial = new THREE.MeshBasicMaterial({
-            color: 0x00ff88, transparent: true, opacity: 0.9, side: THREE.DoubleSide
+            color: 0x88ddff, transparent: true, opacity: 0.9, side: THREE.DoubleSide
         });
         const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
         arrow.position.y = 2.5;
@@ -194,8 +197,8 @@ export class PackageSystem {
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
         const material = new THREE.LineDashedMaterial({
-            color: 0x00ff88, dashSize: 0.3, gapSize: 0.2,
-            transparent: true, opacity: 0.6
+            color: 0x4488ff, dashSize: 0.3, gapSize: 0.2,
+            transparent: true, opacity: 0.5
         });
 
         this.guideLine = new THREE.Line(geometry, material);
@@ -301,8 +304,11 @@ export class PackageSystem {
         }
         this.lastDeliveryTime = now;
 
+        // Streak bonus: escalating reward for consecutive deliveries
+        const streakBonus = Math.min(200, this.gameState.deliveries * 15);
+
         // Total score with combo multiplier
-        const totalScore = (baseScore + timeBonus + distBonus) * this.comboCount;
+        const totalScore = (baseScore + timeBonus + distBonus + streakBonus) * this.comboCount;
         this.gameState.addScore(totalScore);
         this.gameState.deliveries++;
 
@@ -325,12 +331,14 @@ export class PackageSystem {
     }
 
     createDeliveryEffect(position) {
-        // Multiple expanding rings
+        const ringColors = [0x4488ff, 0x6644ff, 0x88ddff];
+
+        // Multiple expanding EM pulse rings
         for (let i = 0; i < 3; i++) {
             setTimeout(() => {
                 const ringGeometry = new THREE.RingGeometry(0.2, 0.35, 32);
                 const ringMaterial = new THREE.MeshBasicMaterial({
-                    color: 0x00ff88, transparent: true, opacity: 1, side: THREE.DoubleSide
+                    color: ringColors[i], transparent: true, opacity: 1, side: THREE.DoubleSide
                 });
                 const ring = new THREE.Mesh(ringGeometry, ringMaterial);
                 ring.position.copy(position);
@@ -340,10 +348,10 @@ export class PackageSystem {
                 const startTime = Date.now();
                 const animate = () => {
                     const elapsed = (Date.now() - startTime) / 1000;
-                    const scale = 1 + elapsed * 8;
+                    const scale = 1 + elapsed * 10;
                     ring.scale.set(scale, scale, 1);
-                    ringMaterial.opacity = Math.max(0, 1 - elapsed * 1.5);
-                    if (elapsed < 0.8) {
+                    ringMaterial.opacity = Math.max(0, 1 - elapsed * 1.8);
+                    if (elapsed < 0.7) {
                         requestAnimationFrame(animate);
                     } else {
                         this.scene.remove(ring);
@@ -352,40 +360,45 @@ export class PackageSystem {
                     }
                 };
                 animate();
-            }, i * 150);
+            }, i * 100);
         }
 
-        // Particle burst
-        const particleCount = 50;
+        // Magnetic particle burst — 80 particles in blue-purple spectrum
+        const particleCount = 80;
         const particleGeometry = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
         const colors = new Float32Array(particleCount * 3);
         const velocities = [];
+        const normal = position.clone().normalize();
 
         for (let i = 0; i < particleCount; i++) {
             positions[i * 3] = position.x;
             positions[i * 3 + 1] = position.y;
             positions[i * 3 + 2] = position.z;
 
-            const hue = Math.random() * 0.3 + 0.3; // Green to cyan
-            const c = new THREE.Color().setHSL(hue, 1, 0.6);
+            // Blue to purple spectrum
+            const hue = Math.random() * 0.15 + 0.55; // 0.55-0.70 = blue-purple
+            const c = new THREE.Color().setHSL(hue, 0.8, 0.6 + Math.random() * 0.3);
             colors[i * 3] = c.r;
             colors[i * 3 + 1] = c.g;
             colors[i * 3 + 2] = c.b;
 
-            velocities.push(new THREE.Vector3(
+            // Radiate upward (along surface normal) + random spread
+            const vel = new THREE.Vector3(
                 (Math.random() - 0.5) * 3,
                 (Math.random() - 0.5) * 3,
                 (Math.random() - 0.5) * 3
-            ));
+            );
+            vel.add(normal.clone().multiplyScalar(2 + Math.random() * 2)); // Bias upward
+            velocities.push(vel);
         }
 
         particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
         const particleMaterial = new THREE.PointsMaterial({
-            size: 0.06, vertexColors: true, transparent: true, opacity: 1,
-            blending: THREE.AdditiveBlending
+            size: 0.08, vertexColors: true, transparent: true, opacity: 1,
+            blending: THREE.AdditiveBlending, depthWrite: false
         });
 
         const particles = new THREE.Points(particleGeometry, particleMaterial);
@@ -396,13 +409,16 @@ export class PackageSystem {
             const elapsed = (Date.now() - startTime) / 1000;
             const pPos = particles.geometry.attributes.position;
             for (let i = 0; i < particleCount; i++) {
-                pPos.setX(i, pPos.getX(i) + velocities[i].x * 0.03);
-                pPos.setY(i, pPos.getY(i) + velocities[i].y * 0.03);
-                pPos.setZ(i, pPos.getZ(i) + velocities[i].z * 0.03);
+                // Slow down over time (magnetic deceleration)
+                const drag = Math.max(0.01, 1 - elapsed * 0.5);
+                pPos.setX(i, pPos.getX(i) + velocities[i].x * 0.025 * drag);
+                pPos.setY(i, pPos.getY(i) + velocities[i].y * 0.025 * drag);
+                pPos.setZ(i, pPos.getZ(i) + velocities[i].z * 0.025 * drag);
             }
             pPos.needsUpdate = true;
-            particleMaterial.opacity = Math.max(0, 1 - elapsed * 0.8);
-            if (elapsed < 1.5) {
+            particleMaterial.opacity = Math.max(0, 1 - elapsed * 0.7);
+            particleMaterial.size = 0.08 * Math.max(0.3, 1 - elapsed * 0.3);
+            if (elapsed < 1.8) {
                 requestAnimationFrame(animate);
             } else {
                 this.scene.remove(particles);

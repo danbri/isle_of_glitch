@@ -686,6 +686,11 @@
             </div>
         </div>
 
+        <!-- Audio mute toggle -->
+        <div id="audio-toggle" style="position:fixed; top:max(env(safe-area-inset-top, 0px), 8px); right:8px; width:36px; height:36px; background:rgba(0,0,0,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:200; font-size:1.1rem; -webkit-tap-highlight-color:transparent; pointer-events:auto; touch-action:manipulation; backdrop-filter:blur(4px);">
+            <span id="audio-icon">🔊</span>
+        </div>
+
         <!-- Debug toggle button (mobile-friendly) -->
         <div id="debug-toggle" class="ui-panel compact" style="position:fixed; bottom:120px; left:8px; font-size:0.65rem; opacity:0.4; cursor:pointer; z-index:999; padding:4px 8px;">
             &gt; Debug Panel
@@ -731,6 +736,6 @@
     }
     </script>
 
-    <script type="module" src="src/main.js?v=35"></script>
+    <script type="module" src="src/main.js?v=36"></script>
 </body>
 </html>
