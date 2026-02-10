@@ -123,39 +123,56 @@ export class TrampolineNetwork {
         glow.position.y = 0.1;
         group.add(glow);
 
-        // Name label
+        // Name label — large, bright, always-facing-camera sprite
         const labelCanvas = document.createElement('canvas');
-        labelCanvas.width = 256;
-        labelCanvas.height = 64;
+        labelCanvas.width = 512;
+        labelCanvas.height = 128;
         const labelCtx = labelCanvas.getContext('2d');
 
-        labelCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        // Use fillRect as fallback for older browsers without roundRect
+        // Semi-transparent dark background with glow border
+        labelCtx.fillStyle = 'rgba(10, 5, 25, 0.75)';
         if (labelCtx.roundRect) {
             labelCtx.beginPath();
-            labelCtx.roundRect(0, 0, 256, 64, 10);
+            labelCtx.roundRect(8, 8, 496, 112, 16);
             labelCtx.fill();
+            // Glow border
+            labelCtx.strokeStyle = 'rgba(255, 102, 170, 0.6)';
+            labelCtx.lineWidth = 2;
+            labelCtx.beginPath();
+            labelCtx.roundRect(8, 8, 496, 112, 16);
+            labelCtx.stroke();
         } else {
-            labelCtx.fillRect(0, 0, 256, 64);
+            labelCtx.fillRect(8, 8, 496, 112);
         }
 
-        labelCtx.font = 'bold 24px Arial';
-        labelCtx.fillStyle = '#ffffff';
+        // IATA code — large, bold, candy pink with dark outline for contrast
+        labelCtx.font = 'bold 48px Arial';
         labelCtx.textAlign = 'center';
-        labelCtx.fillText(airport.name, 128, 28);
+        labelCtx.lineWidth = 5;
+        labelCtx.strokeStyle = '#000000';
+        labelCtx.miterLimit = 2;
+        labelCtx.strokeText(airport.name, 256, 55);
+        labelCtx.fillStyle = '#ff77bb';
+        labelCtx.fillText(airport.name, 256, 55);
 
-        labelCtx.font = '16px Arial';
-        labelCtx.fillStyle = '#aaaaaa';
-        labelCtx.fillText(airport.city, 128, 50);
+        // City name — smaller, white with dark outline
+        labelCtx.font = '28px Arial';
+        labelCtx.lineWidth = 3;
+        labelCtx.strokeText(airport.city, 256, 95);
+        labelCtx.fillStyle = '#ddddff';
+        labelCtx.fillText(airport.city, 256, 95);
 
         const labelTexture = new THREE.CanvasTexture(labelCanvas);
         const labelMaterial = new THREE.SpriteMaterial({
             map: labelTexture,
-            transparent: true
+            transparent: true,
+            depthTest: true,
+            sizeAttenuation: true
         });
         const label = new THREE.Sprite(labelMaterial);
-        label.scale.set(0.8, 0.2, 1);
-        label.position.y = 0.5;
+        label.scale.set(2.0, 0.5, 1);
+        label.position.y = 0.8;
+        label.renderOrder = 10;
         label.userData.isLabel = true;
         group.add(label);
 

@@ -4,7 +4,7 @@
  */
 
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
@@ -187,14 +187,18 @@ class GloballGame {
         );
         this.camera.position.set(0, 0, 25);
 
-        // Orbit controls for development/scenic viewing
-        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+        // Trackball controls for free rotation without gimbal lock at poles
+        this.controls = new TrackballControls(this.camera, this.renderer.domElement);
         this.controls.enabled = true;
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.05;
-        this.controls.minDistance = 12;
-        this.controls.maxDistance = 100;
-        this.controls.enablePan = false;
+        this.controls.rotateSpeed = 2.0;
+        this.controls.zoomSpeed = 1.5;
+        this.controls.panSpeed = 0.0; // Disable panning — just rotate and zoom
+        this.controls.noPan = true;
+        this.controls.noZoom = false;
+        this.controls.staticMoving = false;
+        this.controls.dynamicDampingFactor = 0.15;
+        this.controls.minDistance = 11;
+        this.controls.maxDistance = 80;
 
         // Ambient light - subtle fill
         const ambientLight = new THREE.AmbientLight(0x404060, 0.3);
@@ -426,14 +430,31 @@ class GloballGame {
     handleTouchEnd(e) {
         if (this.touchStartPos) {
             const elapsed = Date.now() - this.touchStartPos.time;
-            // Quick tap = bounce
-            if (elapsed < 200) {
-                // Check if tap was on canvas (not UI)
+            if (elapsed < 300) {
                 const touch = e.changedTouches[0];
                 const target = document.elementFromPoint(touch.clientX, touch.clientY);
                 if (target === this.renderer.domElement) {
-                    this.player.bounce();
-                    if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
+                    // Raycast to check if a trampoline was tapped
+                    this.mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+                    this.mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+                    this.raycaster.setFromCamera(this.mouse, this.camera);
+                    const trampolines = this.trampolineNetwork.getTrampolineMeshes();
+                    const intersects = this.raycaster.intersectObjects(trampolines, true);
+                    if (intersects.length > 0) {
+                        // Find trampoline data from hit object or its parent
+                        let trampData = intersects[0].object.userData.trampoline;
+                        if (!trampData && intersects[0].object.parent) {
+                            trampData = intersects[0].object.parent.userData.trampoline;
+                        }
+                        if (trampData) {
+                            this.player.setTargetTrampoline(trampData);
+                            this.showTargetNotification(trampData);
+                        }
+                    } else {
+                        // No trampoline hit — bounce
+                        this.player.bounce();
+                        if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
+                    }
                 }
             }
         }
@@ -476,13 +497,29 @@ class GloballGame {
 
         this.raycaster.setFromCamera(this.mouse, this.camera);
 
-        // Check for trampoline intersections
         const trampolines = this.trampolineNetwork.getTrampolineMeshes();
-        const intersects = this.raycaster.intersectObjects(trampolines);
+        const intersects = this.raycaster.intersectObjects(trampolines, true);
 
         if (intersects.length > 0) {
-            const trampoline = intersects[0].object.userData.trampoline;
-            this.player.setTargetTrampoline(trampoline);
+            let trampData = intersects[0].object.userData.trampoline;
+            if (!trampData && intersects[0].object.parent) {
+                trampData = intersects[0].object.parent.userData.trampoline;
+            }
+            if (trampData) {
+                this.player.setTargetTrampoline(trampData);
+                this.showTargetNotification(trampData);
+            }
+        }
+    }
+
+    showTargetNotification(trampData) {
+        const name = trampData.airport ? `${trampData.airport.name} (${trampData.airport.city})` : 'Unknown';
+        const el = this.getEl('target-notification');
+        if (el) {
+            el.textContent = `Target: ${name}`;
+            el.style.opacity = '1';
+            clearTimeout(this._targetNotifTimeout);
+            this._targetNotifTimeout = setTimeout(() => { el.style.opacity = '0'; }, 2000);
         }
     }
 
@@ -739,7 +776,7 @@ class GloballGame {
 
         // Controls
         const controlsFolder = this.gui.addFolder('Controls');
-        controlsFolder.add(this.debugSettings, 'enableOrbitControls').name('Orbit Controls').onChange(v => {
+        controlsFolder.add(this.debugSettings, 'enableOrbitControls').name('Trackball Controls').onChange(v => {
             this.controls.enabled = v;
             this.player.cameraEnabled = !v;
         });
@@ -875,6 +912,11 @@ class GloballGame {
         this.camera.updateProjectionMatrix();
 
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+        // TrackballControls needs explicit resize notification
+        if (this.controls && this.controls.handleResize) {
+            this.controls.handleResize();
+        }
 
         const pr = this.renderer.getPixelRatio();
         this.composer.setPixelRatio(pr);
