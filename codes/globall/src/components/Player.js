@@ -70,22 +70,13 @@ export class Player {
 
         this.lastForward = forward.clone();
 
-        const altitude = this.position.distanceTo(this.planetCenter) - this.planetRadius;
-        const zoomFactor = 1 + Math.min(altitude * 0.15, 3);
-
-        const routeTilt = {
-            express: { y: 4, z: 6 },
-            scenic: { y: 2, z: 8 },
-            stealth: { y: 1, z: 10 }
-        };
-        const tilt = routeTilt[this.routeType] || routeTilt.express;
-
         const cameraPos = this.position.clone()
-            .add(up.clone().multiplyScalar(tilt.y * zoomFactor))
-            .sub(forward.clone().multiplyScalar(tilt.z * zoomFactor));
+            .add(up.clone().multiplyScalar(2.0))
+            .sub(forward.clone().multiplyScalar(4.0));
 
-        // Set directly without lerping
         this.camera.position.copy(cameraPos);
+        this.camera.fov = 55;
+        this.camera.updateProjectionMatrix();
         this.camera.up.copy(up);
         this.camera.lookAt(this.position);
     }
@@ -419,69 +410,61 @@ export class Player {
         const speed = this.velocity.length();
         const altitude = this.position.distanceTo(this.planetCenter) - this.planetRadius;
 
-        // Forward direction from velocity, smoothed
-        let forward;
-        if (speed > 0.5) {
-            forward = this.velocity.clone().normalize();
-            if (this.lastForward) {
-                forward.lerp(this.lastForward, 0.3);
-                forward.normalize();
+        // Forward direction from velocity — heavily smoothed for stability
+        if (speed > 0.3) {
+            const velDir = this.velocity.clone().normalize();
+            // Project onto tangent plane (remove radial component)
+            velDir.sub(up.clone().multiplyScalar(velDir.dot(up))).normalize();
+            if (velDir.length() > 0.1) {
+                if (!this.lastForward) {
+                    this.lastForward = velDir.clone();
+                } else {
+                    // Very heavy smoothing — 95% old, 5% new — eliminates jitter
+                    this.lastForward.lerp(velDir, 0.05).normalize();
+                }
             }
-            this.lastForward = forward.clone();
-        } else if (this.lastForward) {
-            forward = this.lastForward;
+        }
+
+        let forward;
+        if (this.lastForward) {
+            forward = this.lastForward.clone();
         } else {
             forward = new THREE.Vector3(0, 0, 1);
             forward.sub(up.clone().multiplyScalar(forward.dot(up))).normalize();
             if (forward.length() < 0.1) forward.set(1, 0, 0);
         }
 
-        // Lead camera ahead in travel direction
-        const leadAmount = Math.min(speed * 0.1, 1.0);
+        // Camera distance: far enough to see continents and orient yourself
+        // ~4 at ground (shows good chunk of planet), ~6 at max altitude
+        const altFactor = Math.min(altitude * 0.3, 1.0);
+        const camDist = 4.0 + altFactor * 2.0;
+        const camHeight = 2.0 + altFactor * 1.5;
 
-        // Destination pull
-        let destBias = new THREE.Vector3();
-        if (this.targetTrampoline && speed > 1) {
-            const toTarget = this.targetTrampoline.position.clone()
-                .sub(this.position).normalize();
-            destBias = toTarget.multiplyScalar(Math.min(speed * 0.05, 0.5));
-        }
-
-        // CLOSE camera — 1.2 at ground, gently to 2.5 max at high altitude
-        const altFactor = Math.min(altitude * 0.5, 1.0);
-        const camDist = 1.2 + altFactor * 1.3;
-        const camHeight = 0.5 + altFactor * 0.8;
-
+        // Simple camera position: behind and above player, no competing forces
         const cameraTargetPos = this.position.clone()
             .add(up.clone().multiplyScalar(camHeight))
-            .sub(forward.clone().multiplyScalar(camDist))
-            .add(forward.clone().multiplyScalar(leadAmount))
-            .add(destBias);
+            .sub(forward.clone().multiplyScalar(camDist));
 
         // Keep camera above planet surface
         const cameraDistFromCenter = cameraTargetPos.length();
-        if (cameraDistFromCenter < this.planetRadius + 0.3) {
-            cameraTargetPos.normalize().multiplyScalar(this.planetRadius + 0.3);
+        if (cameraDistFromCenter < this.planetRadius + 1.0) {
+            cameraTargetPos.normalize().multiplyScalar(this.planetRadius + 1.0);
         }
 
-        // Dynamic lerp — responsive
-        const dynamicLerp = speed > 3 ? 0.1 : speed > 0.5 ? 0.15 : 0.08;
-        this.camera.position.lerp(cameraTargetPos, this.cameraLerpSpeed || dynamicLerp);
+        // Single steady lerp — no speed-dependent changes
+        this.camera.position.lerp(cameraTargetPos, 0.04);
 
         // Set camera up to local surface normal — prevents gimbal lock at poles
         this.camera.up.copy(up);
 
-        // Look slightly ahead
-        const lookTarget = this.position.clone()
-            .add(forward.clone().multiplyScalar(leadAmount * 0.5))
-            .add(destBias.clone().multiplyScalar(0.2));
-        this.camera.lookAt(lookTarget);
+        // Look at player position (no lead, no bias — just the player)
+        this.camera.lookAt(this.position);
 
-        // Dynamic FOV
-        const baseFOV = 60;
-        const speedFOV = baseFOV + Math.min(speed * 1.5, 15);
-        this.camera.fov += (speedFOV - this.camera.fov) * 0.05;
-        this.camera.updateProjectionMatrix();
+        // Fixed FOV — no dynamic changes that cause zoom jitter
+        if (Math.abs(this.camera.fov - 55) > 0.1) {
+            this.camera.fov = 55;
+            this.camera.updateProjectionMatrix();
+        }
     }
 
     getPosition() {
