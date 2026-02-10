@@ -655,6 +655,45 @@ class GloballGame {
         });
         postProc.open();
 
+        // Scene component toggles for isolating rendering issues
+        const sceneFolder = postProc.addFolder('Scene Components');
+        this.sceneComponentSettings = {
+            innerAtmosphere: true,
+            outerAtmosphere: true,
+            clouds: true,
+            aurora: true,
+            cityLights: true,
+            stars: true
+        };
+        sceneFolder.add(this.sceneComponentSettings, 'innerAtmosphere').name('Inner Atmo').onChange(v => {
+            if (this.planet.atmosphereMesh) this.planet.atmosphereMesh.visible = v;
+        });
+        sceneFolder.add(this.sceneComponentSettings, 'outerAtmosphere').name('Outer Atmo').onChange(v => {
+            if (this.planet.outerAtmosphereMesh) this.planet.outerAtmosphereMesh.visible = v;
+        });
+        sceneFolder.add(this.sceneComponentSettings, 'clouds').name('Clouds').onChange(v => {
+            if (this.planet.cloudsMesh) this.planet.cloudsMesh.visible = v;
+        });
+        sceneFolder.add(this.sceneComponentSettings, 'aurora').name('Aurora').onChange(v => {
+            if (this.aurora) {
+                this.aurora.curtains.forEach(c => c.visible = v);
+                if (this.aurora.particles) this.aurora.particles.visible = v;
+            }
+        });
+        sceneFolder.add(this.sceneComponentSettings, 'cityLights').name('City Lights').onChange(v => {
+            if (this.cityLights) {
+                this.cityLights.cityMeshes.forEach(m => m.visible = v);
+                this.cityLights.streetMeshes.forEach(m => m.visible = v);
+            }
+        });
+        sceneFolder.add(this.sceneComponentSettings, 'stars').name('Stars').onChange(v => {
+            if (this.spaceEnv) {
+                if (this.spaceEnv.stars) this.spaceEnv.stars.visible = v;
+                if (this.spaceEnv.iss) this.spaceEnv.iss.visible = v;
+                this.spaceEnv.satellites.forEach(s => s.visible = v);
+            }
+        });
+
         // Controls
         const controlsFolder = this.gui.addFolder('Controls');
         controlsFolder.add(this.debugSettings, 'enableOrbitControls').name('Orbit Controls').onChange(v => {
