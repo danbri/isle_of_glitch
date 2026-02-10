@@ -405,6 +405,40 @@ export class Player {
         animate();
     }
 
+    createLandingPulse(impactSpeed) {
+        // Single fast-expanding ring that contracts slightly (magnetic snap)
+        const intensity = Math.min(1, impactSpeed / 10);
+        const geometry = new THREE.RingGeometry(0.1, 0.2, 32);
+        const material = new THREE.MeshBasicMaterial({
+            color: 0x88aaff,
+            transparent: true,
+            opacity: 0.7 * intensity,
+            side: THREE.DoubleSide
+        });
+        const ring = new THREE.Mesh(geometry, material);
+        ring.position.copy(this.position);
+        ring.lookAt(this.planetCenter);
+        this.scene.add(ring);
+
+        const startTime = Date.now();
+        const animate = () => {
+            const elapsed = (Date.now() - startTime) / 1000;
+            // Quick expand then slight contract (magnetic snap feel)
+            const expand = elapsed < 0.1 ? elapsed * 30 : 3 - (elapsed - 0.1) * 4;
+            const scale = Math.max(0.5, expand);
+            ring.scale.set(scale, scale, 1);
+            material.opacity = Math.max(0, 0.7 * intensity * (1 - elapsed * 3));
+            if (elapsed < 0.35) {
+                requestAnimationFrame(animate);
+            } else {
+                this.scene.remove(ring);
+                geometry.dispose();
+                material.dispose();
+            }
+        };
+        animate();
+    }
+
     interact() {
         // Placeholder for package pickup/delivery interaction
         this.gameState.triggerInteraction(this.position);
@@ -460,6 +494,15 @@ export class Player {
                 // Camera shake on hard landings
                 if (impactSpeed > 3) {
                     this.cameraShake.intensity = Math.min(0.3, impactSpeed * 0.02);
+                }
+
+                // EM landing pulse near airports
+                if (impactSpeed > 2 && this.trampolineNetwork) {
+                    const { distance: nearDist } =
+                        this.trampolineNetwork.getNearestTrampoline(this.position);
+                    if (nearDist < 2) {
+                        this.createLandingPulse(impactSpeed);
+                    }
                 }
 
                 const bounciness = impactSpeed > 5 ? 0.5 : 0.3; // More bounce from harder impacts

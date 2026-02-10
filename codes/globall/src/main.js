@@ -948,6 +948,27 @@ class GloballGame {
         this.fpsFrames = 0;
         this.fpsTime = performance.now();
 
+        // Audio mute toggle
+        const audioToggle = this.getEl('audio-toggle');
+        if (audioToggle) {
+            const toggleAudio = () => {
+                if (!this.audio) return;
+                const icon = this.getEl('audio-icon');
+                if (this.audio.isMuted) {
+                    this.audio.unmute();
+                    if (icon) icon.textContent = '🔊';
+                } else {
+                    this.audio.mute();
+                    if (icon) icon.textContent = '🔇';
+                }
+            };
+            audioToggle.addEventListener('click', toggleAudio);
+            audioToggle.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                toggleAudio();
+            });
+        }
+
         // Mobile-friendly debug toggle button
         const debugToggle = this.getEl('debug-toggle');
         if (debugToggle) {
@@ -1425,6 +1446,9 @@ class GloballGame {
                     this.audio.playCombo(delivery.comboMultiplier);
                 }
             }
+
+            // Camera punch on delivery
+            this.player.cameraShake.intensity = 0.15;
 
             // Strong haptic celebration
             if (navigator.vibrate) navigator.vibrate([50, 50, 100, 50, 150]);
