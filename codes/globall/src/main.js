@@ -218,12 +218,32 @@ class GloballGame {
     }
 
     setupPostProcessing() {
-        // Use default EffectComposer constructor — it creates a HalfFloatType
-        // render target sized correctly with the renderer's pixel ratio.
-        // A custom render target caused a resolution mismatch (rectangle artifact)
-        // because EffectComposer sets _pixelRatio=1 for custom targets, but
-        // setSize() on resize then uses the wrong dimensions.
-        this.composer = new EffectComposer(this.renderer);
+        // Detect float render target support
+        const gl = this.renderer.getContext();
+        const isWebGL2 = this.renderer.capabilities.isWebGL2;
+        const hasColorBufferFloat = !!gl.getExtension('EXT_color_buffer_float');
+        const hasColorBufferHalfFloat = !!gl.getExtension('EXT_color_buffer_half_float');
+        const supportsHalfFloat = hasColorBufferFloat || hasColorBufferHalfFloat;
+
+        console.log('GL capabilities:', {
+            isWebGL2,
+            EXT_color_buffer_float: hasColorBufferFloat,
+            EXT_color_buffer_half_float: hasColorBufferHalfFloat
+        });
+
+        if (supportsHalfFloat) {
+            // Default constructor creates HalfFloatType target with correct pixel ratio
+            this.composer = new EffectComposer(this.renderer);
+        } else {
+            // iOS/older GPU fallback: HalfFloat targets are unreliable without
+            // EXT_color_buffer_float. Use UnsignedByte instead, then fix up the
+            // pixel ratio (custom targets default to _pixelRatio=1).
+            console.warn('HalfFloat not supported, using UnsignedByte render target');
+            const renderTarget = new THREE.WebGLRenderTarget(1, 1);
+            this.composer = new EffectComposer(this.renderer, renderTarget);
+            this.composer.setPixelRatio(this.renderer.getPixelRatio());
+            this.composer.setSize(window.innerWidth, window.innerHeight);
+        }
 
         // Main render pass
         this.renderPass = new RenderPass(this.scene, this.camera);
