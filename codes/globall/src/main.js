@@ -224,11 +224,13 @@ class GloballGame {
         const hasColorBufferFloat = !!gl.getExtension('EXT_color_buffer_float');
         const hasColorBufferHalfFloat = !!gl.getExtension('EXT_color_buffer_half_float');
         const supportsHalfFloat = hasColorBufferFloat || hasColorBufferHalfFloat;
+        const pr = this.renderer.getPixelRatio();
 
         console.log('GL capabilities:', {
             isWebGL2,
             EXT_color_buffer_float: hasColorBufferFloat,
-            EXT_color_buffer_half_float: hasColorBufferHalfFloat
+            EXT_color_buffer_half_float: hasColorBufferHalfFloat,
+            pixelRatio: pr
         });
 
         if (supportsHalfFloat) {
@@ -236,22 +238,28 @@ class GloballGame {
             this.composer = new EffectComposer(this.renderer);
         } else {
             // iOS/older GPU fallback: HalfFloat targets are unreliable without
-            // EXT_color_buffer_float. Use UnsignedByte instead, then fix up the
-            // pixel ratio (custom targets default to _pixelRatio=1).
+            // EXT_color_buffer_float. Use UnsignedByte instead.
             console.warn('HalfFloat not supported, using UnsignedByte render target');
             const renderTarget = new THREE.WebGLRenderTarget(1, 1);
             this.composer = new EffectComposer(this.renderer, renderTarget);
-            this.composer.setPixelRatio(this.renderer.getPixelRatio());
-            this.composer.setSize(window.innerWidth, window.innerHeight);
         }
+
+        // Ensure composer uses the correct pixel ratio regardless of branch
+        this.composer.setPixelRatio(pr);
+        this.composer.setSize(window.innerWidth, window.innerHeight);
 
         // Main render pass
         this.renderPass = new RenderPass(this.scene, this.camera);
         this.composer.addPass(this.renderPass);
 
         // Bloom for glowing effects (city lights, aurora)
+        // Resolution must be in render pixels (CSS × pixelRatio), not CSS pixels,
+        // otherwise bloom processes only a fraction of the frame on high-DPR devices
         this.bloomPass = new UnrealBloomPass(
-            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            new THREE.Vector2(
+                Math.floor(window.innerWidth * pr),
+                Math.floor(window.innerHeight * pr)
+            ),
             0.5,  // strength
             0.3,  // radius
             0.9   // threshold - bloom only brightest elements
@@ -266,8 +274,16 @@ class GloballGame {
         this.composer.addPass(this.chromaticPass);
 
         // OutputPass applies tone mapping and color space conversion
+        // (Removing this caused black screen — materials don't tone-map
+        // when rendering to EffectComposer targets in r0.160.0)
         this.outputPass = new OutputPass();
         this.composer.addPass(this.outputPass);
+
+        console.log('Post-processing setup:', {
+            pixelRatio: pr,
+            composerRT: [this.composer.readBuffer.width, this.composer.readBuffer.height],
+            bloomRes: [this.bloomPass.resolution.x, this.bloomPass.resolution.y]
+        });
 
         this.updateLoadingProgress(30);
     }
@@ -769,9 +785,16 @@ class GloballGame {
         this.camera.updateProjectionMatrix();
 
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const pr = this.renderer.getPixelRatio();
+        this.composer.setPixelRatio(pr);
         this.composer.setSize(window.innerWidth, window.innerHeight);
 
-        this.bloomPass.resolution.set(window.innerWidth, window.innerHeight);
+        // Bloom resolution must be in render pixels, not CSS pixels
+        this.bloomPass.resolution.set(
+            Math.floor(window.innerWidth * pr),
+            Math.floor(window.innerHeight * pr)
+        );
     }
 
     animate(currentTime = 0) {
