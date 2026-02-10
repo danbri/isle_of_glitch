@@ -414,50 +414,81 @@ export class Player {
     }
 
     updateCameraPosition() {
-        // Camera follows player with smooth lerp
         const up = this.position.clone().sub(this.planetCenter).normalize();
+        const speed = this.velocity.length();
+        const altitude = this.position.distanceTo(this.planetCenter) - this.planetRadius;
 
-        // Use velocity direction if moving, otherwise use last known forward or default
+        // Forward direction from velocity, smoothed
         let forward;
-        if (this.velocity.length() > 0.1) {
+        if (speed > 0.5) {
             forward = this.velocity.clone().normalize();
-            this.lastForward = forward.clone(); // Store for when velocity is low
+            // Smooth the forward direction to avoid jitter
+            if (this.lastForward) {
+                forward.lerp(this.lastForward, 0.3);
+                forward.normalize();
+            }
+            this.lastForward = forward.clone();
         } else if (this.lastForward) {
             forward = this.lastForward;
         } else {
-            // Default: tangent to planet surface pointing "east"
             forward = new THREE.Vector3(0, 0, 1);
             forward.sub(up.clone().multiplyScalar(forward.dot(up))).normalize();
-            if (forward.length() < 0.1) forward.set(1, 0, 0); // Fallback
+            if (forward.length() < 0.1) forward.set(1, 0, 0);
         }
 
-        // Dynamic camera distance based on altitude - zoom out at higher altitudes
-        const altitude = this.position.distanceTo(this.planetCenter) - this.planetRadius;
-        const zoomFactor = 1 + Math.min(altitude * 0.15, 3); // Zoom out up to 4x at high altitude
+        // --- Lead camera toward velocity direction ---
+        // At high speed, camera swings AHEAD of the player to show where you're going
+        const leadAmount = Math.min(speed * 0.15, 2.5);
 
-        // Also tilt camera based on route type for different perspectives
-        const routeTilt = {
-            express: { y: 4, z: 6 },    // Higher view for express
-            scenic: { y: 2, z: 8 },      // Side view for scenic
-            stealth: { y: 1, z: 10 }     // Low following for stealth
-        };
-        const tilt = routeTilt[this.routeType] || routeTilt.express;
+        // --- Destination pull: bias camera to show destination ---
+        let destBias = new THREE.Vector3();
+        if (this.targetTrampoline && speed > 1) {
+            const toTarget = this.targetTrampoline.position.clone()
+                .sub(this.position).normalize();
+            // Blend destination direction into the look — subtle pull
+            destBias = toTarget.multiplyScalar(Math.min(speed * 0.08, 1.0));
+        }
 
-        // Position camera behind and above player with zoom
+        // --- Altitude-aware framing ---
+        // Close at ground, pull back gently in flight (less extreme than before)
+        const altFactor = Math.min(altitude * 0.08, 1.5);
+        const camDist = 4 + altFactor * 3;   // 4 at ground, up to ~8.5 at altitude
+        const camHeight = 1.5 + altFactor * 2; // 1.5 at ground, up to ~4.5 high
+
+        // Camera position: behind + above + lead offset
         const cameraTargetPos = this.position.clone()
-            .add(up.clone().multiplyScalar(tilt.y * zoomFactor))
-            .sub(forward.clone().multiplyScalar(tilt.z * zoomFactor));
+            .add(up.clone().multiplyScalar(camHeight))
+            .sub(forward.clone().multiplyScalar(camDist))
+            .add(forward.clone().multiplyScalar(leadAmount))
+            .add(destBias);
 
-        // Faster lerp for more responsive camera (was 0.08, now 0.15)
-        // Also ensure camera doesn't end up inside planet
+        // Keep camera above planet surface
         const cameraDistFromCenter = cameraTargetPos.length();
-        if (cameraDistFromCenter < this.planetRadius + 1) {
-            // Push camera out if too close to planet center
-            cameraTargetPos.normalize().multiplyScalar(this.planetRadius + 1);
+        if (cameraDistFromCenter < this.planetRadius + 0.8) {
+            cameraTargetPos.normalize().multiplyScalar(this.planetRadius + 0.8);
         }
 
-        this.camera.position.lerp(cameraTargetPos, this.cameraLerpSpeed);
-        this.camera.lookAt(this.position);
+        // --- Dynamic lerp speed ---
+        // Snappy during bounces, smooth when cruising
+        const dynamicLerp = speed > 3 ? 0.08 : // Fast travel: smooth cinematic
+                            speed > 0.5 ? 0.12 : // Normal: responsive
+                            0.06;                 // Idle: gentle drift
+        const lerpSpeed = this.cameraLerpSpeed || dynamicLerp;
+
+        this.camera.position.lerp(cameraTargetPos, lerpSpeed);
+
+        // --- Look-ahead target ---
+        // Camera looks slightly ahead of the player in the travel direction
+        const lookTarget = this.position.clone()
+            .add(forward.clone().multiplyScalar(leadAmount * 0.6))
+            .add(destBias.clone().multiplyScalar(0.3));
+        this.camera.lookAt(lookTarget);
+
+        // --- Dynamic FOV for speed rush ---
+        const baseFOV = 60;
+        const speedFOV = baseFOV + Math.min(speed * 1.5, 15); // Up to 75 FOV at high speed
+        this.camera.fov += (speedFOV - this.camera.fov) * 0.05;
+        this.camera.updateProjectionMatrix();
     }
 
     getPosition() {
