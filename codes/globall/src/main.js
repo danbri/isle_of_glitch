@@ -46,6 +46,18 @@ class GloballGame {
         this.init();
     }
 
+    getEl(id) {
+        const el = document.getElementById(id);
+        if (!el) console.warn(`Missing DOM element #${id}`);
+        return el;
+    }
+
+    toggleGUI() {
+        if (!this.gui) return;
+        if (this.gui._hidden) this.gui.show();
+        else this.gui.hide();
+    }
+
     async init() {
         try {
             // Check for WebGPU support
@@ -132,7 +144,8 @@ class GloballGame {
     }
 
     setupRenderer() {
-        const container = document.getElementById('canvas-container');
+        const container = this.getEl('canvas-container');
+        if (!container) throw new Error('Missing #canvas-container');
 
         // Use WebGPURenderer if available, fallback to WebGLRenderer
         this.renderer = new THREE.WebGLRenderer({
@@ -205,12 +218,32 @@ class GloballGame {
     }
 
     setupPostProcessing() {
-        // Use default EffectComposer constructor — it creates a HalfFloatType
-        // render target sized correctly with the renderer's pixel ratio.
-        // A custom render target caused a resolution mismatch (rectangle artifact)
-        // because EffectComposer sets _pixelRatio=1 for custom targets, but
-        // setSize() on resize then uses the wrong dimensions.
-        this.composer = new EffectComposer(this.renderer);
+        // Detect float render target support
+        const gl = this.renderer.getContext();
+        const isWebGL2 = this.renderer.capabilities.isWebGL2;
+        const hasColorBufferFloat = !!gl.getExtension('EXT_color_buffer_float');
+        const hasColorBufferHalfFloat = !!gl.getExtension('EXT_color_buffer_half_float');
+        const supportsHalfFloat = hasColorBufferFloat || hasColorBufferHalfFloat;
+
+        console.log('GL capabilities:', {
+            isWebGL2,
+            EXT_color_buffer_float: hasColorBufferFloat,
+            EXT_color_buffer_half_float: hasColorBufferHalfFloat
+        });
+
+        if (supportsHalfFloat) {
+            // Default constructor creates HalfFloatType target with correct pixel ratio
+            this.composer = new EffectComposer(this.renderer);
+        } else {
+            // iOS/older GPU fallback: HalfFloat targets are unreliable without
+            // EXT_color_buffer_float. Use UnsignedByte instead, then fix up the
+            // pixel ratio (custom targets default to _pixelRatio=1).
+            console.warn('HalfFloat not supported, using UnsignedByte render target');
+            const renderTarget = new THREE.WebGLRenderTarget(1, 1);
+            this.composer = new EffectComposer(this.renderer, renderTarget);
+            this.composer.setPixelRatio(this.renderer.getPixelRatio());
+            this.composer.setSize(window.innerWidth, window.innerHeight);
+        }
 
         // Main render pass
         this.renderPass = new RenderPass(this.scene, this.camera);
@@ -325,7 +358,7 @@ class GloballGame {
         this.renderer.domElement.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
 
         // Bounce indicator tap to bounce
-        const bounceIndicator = document.getElementById('bounce-indicator');
+        const bounceIndicator = this.getEl('bounce-indicator');
         if (bounceIndicator) {
             bounceIndicator.addEventListener('click', () => {
                 this.player.bounce();
@@ -416,10 +449,7 @@ class GloballGame {
                 this.selectRoute('stealth');
                 break;
             case 'KeyH':
-                // Toggle debug panel
-                if (this.gui) {
-                    this.gui.show(this.gui._hidden);
-                }
+                this.toggleGUI();
                 break;
         }
     }
@@ -655,14 +685,12 @@ class GloballGame {
         this.fpsTime = performance.now();
 
         // Mobile-friendly debug toggle button
-        const debugToggle = document.getElementById('debug-toggle');
+        const debugToggle = this.getEl('debug-toggle');
         if (debugToggle) {
-            debugToggle.addEventListener('click', () => {
-                this.gui.show(this.gui._hidden);
-            });
+            debugToggle.addEventListener('click', () => this.toggleGUI());
             debugToggle.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                this.gui.show(this.gui._hidden);
+                this.toggleGUI();
             });
         }
     }
@@ -671,16 +699,20 @@ class GloballGame {
         // Update altitude display with smoothing to prevent flickering
         const targetAltitude = this.player.getAltitude();
         this.displayedAltitude += (targetAltitude - this.displayedAltitude) * this.altitudeSmoothFactor;
-        document.getElementById('altitude-value').textContent = this.displayedAltitude.toFixed(1);
+        const alt = this.getEl('altitude-value');
+        if (alt) alt.textContent = this.displayedAltitude.toFixed(1);
 
         // Update score
-        document.getElementById('score-value').textContent = this.gameState.deliveries;
+        const score = this.getEl('score-value');
+        if (score) score.textContent = this.gameState.deliveries;
 
         // Update package info
         const currentPackage = this.packageSystem.getCurrentPackage();
         if (currentPackage) {
-            document.getElementById('package-name').textContent = currentPackage.name;
-            document.getElementById('package-dest').textContent = `→ ${currentPackage.destination}`;
+            const pn = this.getEl('package-name');
+            if (pn) pn.textContent = currentPackage.name;
+            const pd = this.getEl('package-dest');
+            if (pd) pd.textContent = `→ ${currentPackage.destination}`;
 
             // Update direction indicator
             this.updateDirectionIndicator(currentPackage);
@@ -688,7 +720,8 @@ class GloballGame {
 
         // Update bounce indicator based on charge
         const bounceCharge = this.player.getBounceCharge();
-        const bounceEl = document.getElementById('bounce-charge');
+        const bounceEl = this.getEl('bounce-charge');
+        if (!bounceEl) return;
         if (bounceCharge >= 1) {
             bounceEl.textContent = '🚀';
         } else if (bounceCharge >= 0.5) {
@@ -713,7 +746,7 @@ class GloballGame {
         const dy = destScreen.y - playerScreen.y;
         const angle = Math.atan2(-dy, dx) * (180 / Math.PI) - 90;
 
-        const arrow = document.getElementById('dest-arrow');
+        const arrow = this.getEl('dest-arrow');
         if (arrow) {
             arrow.style.transform = `rotate(${angle}deg)`;
         }
@@ -721,12 +754,14 @@ class GloballGame {
 
     updateLoadingProgress(progress) {
         this.loadingProgress = progress;
-        document.getElementById('loading-progress').style.width = `${progress}%`;
+        const bar = this.getEl('loading-progress');
+        if (bar) bar.style.width = `${progress}%`;
     }
 
     hideLoadingScreen() {
         this.isLoading = false;
-        document.getElementById('loading-screen').classList.add('hidden');
+        const ls = this.getEl('loading-screen');
+        if (ls) ls.classList.add('hidden');
     }
 
     onResize() {
