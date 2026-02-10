@@ -187,9 +187,9 @@ class GloballGame {
         );
         this.camera.position.set(0, 0, 25);
 
-        // Trackball controls for free rotation without gimbal lock at poles
+        // Trackball controls for free rotation (debug only — player camera is default)
         this.controls = new TrackballControls(this.camera, this.renderer.domElement);
-        this.controls.enabled = true;
+        this.controls.enabled = false;
         this.controls.rotateSpeed = 2.0;
         this.controls.zoomSpeed = 1.5;
         this.controls.panSpeed = 0.0; // Disable panning — just rotate and zoom
@@ -355,6 +355,10 @@ class GloballGame {
         // Keyboard controls
         this.keys = {};
 
+        // Hold-to-charge bounce state
+        this.bounceCharging = false;
+        this.bounceHoldStart = 0;
+
         window.addEventListener('keydown', (e) => {
             this.keys[e.code] = true;
             this.handleKeyDown(e);
@@ -362,6 +366,7 @@ class GloballGame {
 
         window.addEventListener('keyup', (e) => {
             this.keys[e.code] = false;
+            this.handleKeyUp(e);
         });
 
         // Mouse/touch for trampoline selection
@@ -373,21 +378,18 @@ class GloballGame {
 
         // Touch controls for mobile
         this.touchStartPos = null;
+        this.touchMoved = false;
         this.renderer.domElement.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
         this.renderer.domElement.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
         this.renderer.domElement.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
 
-        // Bounce indicator tap to bounce
+        // Bounce indicator tap = quick scenic bounce
         const bounceIndicator = this.getEl('bounce-indicator');
         if (bounceIndicator) {
-            bounceIndicator.addEventListener('click', () => {
-                this.player.bounce();
-                if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
-            });
+            bounceIndicator.addEventListener('click', () => this.doBounce(50));
             bounceIndicator.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                this.player.bounce();
-                if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
+                this.doBounce(50);
             });
         }
     }
@@ -399,6 +401,9 @@ class GloballGame {
                 y: e.touches[0].clientY,
                 time: Date.now()
             };
+            this.touchMoved = false;
+            this.bounceCharging = true;
+            this.bounceHoldStart = Date.now();
         }
     }
 
@@ -407,6 +412,13 @@ class GloballGame {
 
         const dx = e.touches[0].clientX - this.touchStartPos.x;
         const dy = e.touches[0].clientY - this.touchStartPos.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        // If finger moved significantly, it's a swipe not a hold
+        if (dist > 25) {
+            this.touchMoved = true;
+            this.bounceCharging = false;
+        }
 
         // Convert swipe to directional input
         const threshold = 10;
@@ -428,20 +440,22 @@ class GloballGame {
     }
 
     handleTouchEnd(e) {
-        if (this.touchStartPos) {
+        this.bounceCharging = false;
+
+        if (this.touchStartPos && !this.touchMoved) {
             const elapsed = Date.now() - this.touchStartPos.time;
-            if (elapsed < 300) {
-                const touch = e.changedTouches[0];
-                const target = document.elementFromPoint(touch.clientX, touch.clientY);
-                if (target === this.renderer.domElement) {
-                    // Raycast to check if a trampoline was tapped
+            const touch = e.changedTouches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+
+            if (target === this.renderer.domElement) {
+                // Short tap: check for trampoline target selection first
+                if (elapsed < 250) {
                     this.mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
                     this.mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
                     this.raycaster.setFromCamera(this.mouse, this.camera);
                     const trampolines = this.trampolineNetwork.getTrampolineMeshes();
                     const intersects = this.raycaster.intersectObjects(trampolines, true);
                     if (intersects.length > 0) {
-                        // Find trampoline data from hit object or its parent
                         let trampData = intersects[0].object.userData.trampoline;
                         if (!trampData && intersects[0].object.parent) {
                             trampData = intersects[0].object.parent.userData.trampoline;
@@ -449,13 +463,13 @@ class GloballGame {
                         if (trampData) {
                             this.player.setTargetTrampoline(trampData);
                             this.showTargetNotification(trampData);
+                            this.touchStartPos = null;
+                            return;
                         }
-                    } else {
-                        // No trampoline hit — bounce
-                        this.player.bounce();
-                        if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
                     }
                 }
+                // Hold duration determines bounce type
+                this.doBounce(elapsed);
             }
         }
 
@@ -470,24 +484,55 @@ class GloballGame {
     handleKeyDown(e) {
         switch(e.code) {
             case 'Space':
-                this.player.bounce();
-                if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
+                e.preventDefault();
+                if (!this.bounceCharging) {
+                    this.bounceCharging = true;
+                    this.bounceHoldStart = Date.now();
+                }
                 break;
             case 'KeyE':
                 this.player.interact();
                 break;
-            case 'Digit1':
-                this.selectRoute('express');
-                break;
-            case 'Digit2':
-                this.selectRoute('scenic');
-                break;
-            case 'Digit3':
-                this.selectRoute('stealth');
-                break;
             case 'KeyH':
                 this.toggleGUI();
                 break;
+        }
+    }
+
+    handleKeyUp(e) {
+        if (e.code === 'Space' && this.bounceCharging) {
+            this.bounceCharging = false;
+            const holdMs = Date.now() - this.bounceHoldStart;
+            this.doBounce(holdMs);
+        }
+    }
+
+    doBounce(holdMs) {
+        // Hold duration determines bounce type:
+        //   Quick tap (<200ms) = Scenic Hop (gentle, low arc)
+        //   Medium hold (200-600ms) = Express Arc (high, powerful)
+        //   Long hold (>600ms) = Night Glide (low, far, fast)
+        let routeType;
+        if (holdMs < 200) {
+            routeType = 'scenic';
+        } else if (holdMs < 600) {
+            routeType = 'express';
+        } else {
+            routeType = 'stealth';
+        }
+
+        this.player.setRouteType(routeType);
+        this.player.bounce();
+        if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
+
+        // Show bounce type feedback
+        const labels = { scenic: 'Scenic Hop', express: 'Express Arc', stealth: 'Night Glide' };
+        const el = this.getEl('target-notification');
+        if (el) {
+            el.textContent = labels[routeType];
+            el.style.opacity = '1';
+            clearTimeout(this._targetNotifTimeout);
+            this._targetNotifTimeout = setTimeout(() => { el.style.opacity = '0'; }, 800);
         }
     }
 
@@ -538,28 +583,8 @@ class GloballGame {
         }
     }
 
-    selectRoute(routeType) {
-        this.gameState.selectedRoute = routeType;
-
-        // Update UI
-        document.querySelectorAll('.route-option').forEach(el => {
-            el.classList.remove('selected');
-            if (el.dataset.route === routeType) {
-                el.classList.add('selected');
-            }
-        });
-
-        // Update player trajectory preview
-        this.player.setRouteType(routeType);
-    }
-
     setupUI() {
-        // Route selector clicks
-        document.querySelectorAll('.route-option').forEach(el => {
-            el.addEventListener('click', () => {
-                this.selectRoute(el.dataset.route);
-            });
-        });
+        // Location display is updated in updateUI each frame
     }
 
     setupDebugPanel() {
@@ -621,7 +646,7 @@ class GloballGame {
             showTrampolines: true,
             showPlayer: true,
             showTrail: true,
-            enableOrbitControls: true
+            enableOrbitControls: false
         };
 
         visibility.add(this.debugSettings, 'showPlanet').name('Planet').onChange(v => {
@@ -861,16 +886,46 @@ class GloballGame {
             this.updateDirectionIndicator(currentPackage);
         }
 
-        // Update bounce indicator based on charge
-        const bounceCharge = this.player.getBounceCharge();
+        // Update nearest airport + target location
+        const playerPos = this.player.getPosition();
+        const { trampoline: nearest } = this.trampolineNetwork.getNearestTrampoline(playerPos);
+        const nearEl = this.getEl('nearest-airport');
+        if (nearEl && nearest) {
+            nearEl.textContent = `${nearest.airport.name} ${nearest.airport.city}`;
+        }
+        const targetEl = this.getEl('target-airport');
+        if (targetEl) {
+            if (this.player.targetTrampoline) {
+                const t = this.player.targetTrampoline;
+                targetEl.textContent = `\u2192 ${t.airport.name} ${t.airport.city}`;
+                targetEl.style.color = '#ff77bb';
+            } else {
+                targetEl.textContent = 'Hold SPACE to bounce \u2022 Tap airport to target';
+                targetEl.style.color = 'rgba(255,255,255,0.4)';
+            }
+        }
+
+        // Update bounce indicator — show charge type during hold
         const bounceEl = this.getEl('bounce-charge');
         if (!bounceEl) return;
-        if (bounceCharge >= 1) {
-            bounceEl.textContent = '🚀';
-        } else if (bounceCharge >= 0.5) {
-            bounceEl.textContent = '⬆️';
+        if (this.bounceCharging) {
+            const holdMs = Date.now() - this.bounceHoldStart;
+            if (holdMs < 200) {
+                bounceEl.textContent = '\uD83C\uDF38'; // scenic
+            } else if (holdMs < 600) {
+                bounceEl.textContent = '\uD83D\uDE80'; // express
+            } else {
+                bounceEl.textContent = '\uD83C\uDF19'; // night
+            }
         } else {
-            bounceEl.textContent = '⏳';
+            const bounceCharge = this.player.getBounceCharge();
+            if (bounceCharge >= 1) {
+                bounceEl.textContent = '\uD83D\uDE80';
+            } else if (bounceCharge >= 0.5) {
+                bounceEl.textContent = '\u2B06\uFE0F';
+            } else {
+                bounceEl.textContent = '\u23F3';
+            }
         }
     }
 

@@ -198,54 +198,8 @@
             max-width: 35vw;
         }
 
-        #route-selector {
-            position: absolute;
-            bottom: max(env(safe-area-inset-bottom, 0px), 8px);
-            left: 8px;
-            right: 80px;
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            scroll-snap-type: x mandatory;
-            padding-bottom: 2px;
-        }
-
-        #route-selector::-webkit-scrollbar {
-            display: none;
-        }
-
-        .route-option {
-            padding: clamp(5px, 1.5vw, 10px) clamp(8px, 2vw, 16px);
-            border-radius: 20px;
-            cursor: pointer;
-            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-            border: 2px solid transparent;
-            flex-shrink: 0;
-            scroll-snap-align: start;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .route-option:active {
-            transform: scale(0.95);
-        }
-
-        .route-option.selected {
-            border-color: #f093fb;
-            box-shadow: 0 0 15px rgba(240, 147, 251, 0.4);
-        }
-
-        .route-name {
-            font-size: clamp(0.65rem, 2vw, 0.8rem);
-            font-weight: 500;
-            white-space: nowrap;
-        }
-
-        .route-time {
-            font-size: clamp(0.5rem, 1.5vw, 0.6rem);
-            opacity: 0.6;
-            white-space: nowrap;
+        #location-info {
+            pointer-events: none;
         }
 
         #minimap {
@@ -386,15 +340,6 @@
 
         /* Desktop enhancements */
         @media (min-width: 768px) and (hover: hover) {
-            .route-option:hover {
-                transform: scale(1.05);
-                border-color: rgba(255, 255, 255, 0.3);
-            }
-
-            .route-option:active {
-                transform: scale(1.02);
-            }
-
             #minimap {
                 display: block;
                 position: absolute;
@@ -410,13 +355,6 @@
             #minimap canvas {
                 width: 100%;
                 height: 100%;
-            }
-
-            #route-selector {
-                left: 50%;
-                right: auto;
-                transform: translateX(-50%);
-                bottom: 20px;
             }
 
             #bounce-indicator {
@@ -474,19 +412,10 @@
             <div class="score-value" id="score-value">0</div>
         </div>
 
-        <div id="route-selector">
-            <div class="route-option ui-panel selected" data-route="express">
-                <div class="route-name">🚀 Express Arc</div>
-                <div class="route-time">High altitude</div>
-            </div>
-            <div class="route-option ui-panel" data-route="scenic">
-                <div class="route-name">🌸 Scenic Hop</div>
-                <div class="route-time">City views</div>
-            </div>
-            <div class="route-option ui-panel" data-route="stealth">
-                <div class="route-name">🌙 Night Glide</div>
-                <div class="route-time">Low profile</div>
-            </div>
+        <div id="location-info" class="ui-panel compact" style="position:absolute; bottom:max(env(safe-area-inset-bottom, 0px), 8px); left:8px; right:80px;">
+            <div style="font-size:0.55rem; opacity:0.5; letter-spacing:0.12em;">NEAREST AIRPORT</div>
+            <div id="nearest-airport" style="font-size:clamp(0.75rem, 2.5vw, 0.9rem); font-weight:500;">---</div>
+            <div id="target-airport" style="font-size:clamp(0.6rem, 2vw, 0.75rem); margin-top:2px; color:rgba(255,255,255,0.4);">Hold SPACE to bounce &bull; Tap airport to target</div>
         </div>
 
         <div id="bounce-indicator">
@@ -506,9 +435,9 @@
 
         <div id="tutorial-hint" class="ui-panel">
             <h2>Deliver packages around the globe!</h2>
-            <p><span class="hint-key">TAP</span> screen or <span class="hint-key">SPACE</span> to bounce</p>
-            <p><span class="hint-key">SWIPE</span> or <span class="hint-key">WASD</span> to steer</p>
-            <p>Follow the <span style="color:#00ff88">green guide</span> to your destination</p>
+            <p>Hold <span class="hint-key">SPACE</span> or <span class="hint-key">TOUCH</span> to charge a bounce</p>
+            <p><span style="color:#ff99cc">Quick tap</span> = hop &bull; <span style="color:#66ddff">Hold</span> = arc &bull; <span style="color:#aa88ff">Long hold</span> = glide</p>
+            <p><span class="hint-key">WASD</span> to steer &bull; <span class="hint-key">Click</span> airport to set target</p>
         </div>
     </div>
 
@@ -544,6 +473,6 @@
     }
     </script>
 
-    <script type="module" src="src/main.js?v=22"></script>
+    <script type="module" src="src/main.js?v=23"></script>
 </body>
 </html>
