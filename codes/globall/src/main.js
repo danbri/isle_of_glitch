@@ -9,7 +9,6 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 import { Planet } from './components/Planet.js';
 import { Player } from './components/Player.js';
@@ -21,6 +20,7 @@ import { PackageSystem } from './systems/PackageSystem.js';
 import { GameState } from './systems/GameState.js';
 import { AudioSystem } from './systems/AudioSystem.js';
 import { ChromaticAberrationShader } from './shaders/ChromaticAberration.js';
+import { ToneMappingShader } from './shaders/ToneMapping.js';
 import { AtmosphericScatteringShader } from './shaders/AtmosphericScattering.js';
 import GUI from 'lil-gui';
 
@@ -147,9 +147,12 @@ class GloballGame {
         this.renderer.setClearColor(0x1a0a2e, 1);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.0; // Reduced from 1.2 to prevent bleachout
+        // NoToneMapping + LinearSRGB prevents double tone mapping/encoding
+        // when using EffectComposer. Our custom ToneMappingShader handles
+        // ACES + sRGB conversion as the final post-processing pass.
+        this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+        this.renderer.toneMapping = THREE.NoToneMapping;
+        this.renderer.toneMappingExposure = 1.0;
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
@@ -205,38 +208,40 @@ class GloballGame {
     }
 
     setupPostProcessing() {
-        // Create render target matching renderer config (no stencil buffer)
-        const size = this.renderer.getDrawingBufferSize(new THREE.Vector2());
-        const renderTarget = new THREE.WebGLRenderTarget(size.x, size.y, {
-            type: THREE.HalfFloatType,
-            stencilBuffer: false
-        });
-        this.composer = new EffectComposer(this.renderer, renderTarget);
+        // Use default EffectComposer constructor — it creates a HalfFloatType
+        // render target sized correctly with the renderer's pixel ratio.
+        // A custom render target caused a resolution mismatch (rectangle artifact)
+        // because EffectComposer sets _pixelRatio=1 for custom targets, but
+        // setSize() on resize then uses the wrong dimensions.
+        this.composer = new EffectComposer(this.renderer);
 
         // Main render pass
         this.renderPass = new RenderPass(this.scene, this.camera);
         this.composer.addPass(this.renderPass);
 
-        // Bloom for glowing effects (city lights, aurora) - reduced for mobile clarity
+        // Bloom for glowing effects (city lights, aurora)
         this.bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            0.5,  // strength - reduced from 0.8
-            0.3,  // radius - reduced from 0.4
-            0.9   // threshold - raised from 0.85 to bloom only brightest elements
+            0.5,  // strength
+            0.3,  // radius
+            0.9   // threshold - bloom only brightest elements
         );
         this.composer.addPass(this.bloomPass);
 
         // Chromatic aberration for candy aesthetic - very subtle
-        // Note: shader forces alpha=1.0 to prevent black cutout artifacts from
-        // transparent objects bleeding low alpha through the pipeline
+        // Note: shader forces alpha=1.0 to prevent transparent objects from
+        // bleeding low alpha through the pipeline
         this.chromaticPass = new ShaderPass(ChromaticAberrationShader);
-        this.chromaticPass.uniforms.amount.value = 0.0005; // Much more subtle
+        this.chromaticPass.uniforms.amount.value = 0.0005;
         this.composer.addPass(this.chromaticPass);
 
-        // OutputPass applies tone mapping and color space conversion
-        // Required for EffectComposer to properly output to sRGB
-        this.outputPass = new OutputPass();
-        this.composer.addPass(this.outputPass);
+        // Custom tone mapping pass replaces OutputPass to avoid double
+        // tone mapping. The renderer is set to NoToneMapping/LinearSRGB so
+        // materials output linear HDR. This shader applies ACES + sRGB
+        // as the final step, with alpha forced to 1.0.
+        this.toneMappingPass = new ShaderPass(ToneMappingShader);
+        this.toneMappingPass.uniforms.exposure.value = 1.0;
+        this.composer.addPass(this.toneMappingPass);
 
         this.updateLoadingProgress(30);
     }
@@ -594,7 +599,7 @@ class GloballGame {
         // Tone Mapping subfolder
         const toneFolder = postProc.addFolder('Tone Mapping');
         toneFolder.add(this.postProcessSettings, 'exposure', 0, 3, 0.05).name('Exposure').onChange(v => {
-            this.renderer.toneMappingExposure = v;
+            this.toneMappingPass.uniforms.exposure.value = v;
         });
 
         postProc.addColor(this.postProcessSettings, 'backgroundColor').name('Background').onChange(v => {
@@ -810,7 +815,13 @@ class GloballGame {
         if (this.usePostProcessing) {
             this.composer.render();
         } else {
+            // For direct rendering, temporarily enable renderer tone mapping
+            // since our custom ToneMapping shader isn't in the pipeline
+            this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            this.renderer.outputColorSpace = THREE.SRGBColorSpace;
             this.renderer.render(this.scene, this.camera);
+            this.renderer.toneMapping = THREE.NoToneMapping;
+            this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
         }
     }
 }
