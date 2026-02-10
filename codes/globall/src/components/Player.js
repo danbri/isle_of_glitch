@@ -62,22 +62,24 @@ export class Player {
     }
 
     initializeCameraPosition() {
-        // Set camera directly to target position without lerping
-        const up = this.position.clone().sub(this.planetCenter).normalize();
-        const forward = new THREE.Vector3(0, 0, 1);
-        forward.sub(up.clone().multiplyScalar(forward.dot(up))).normalize();
-        if (forward.length() < 0.1) forward.set(1, 0, 0);
+        // Overhead satellite camera — no velocity dependence
+        const playerDir = this.position.clone().normalize();
 
-        this.lastForward = forward.clone();
+        // Stable tangent frame for slight perspective offset
+        const ref = Math.abs(playerDir.y) < 0.95
+            ? new THREE.Vector3(0, 1, 0)
+            : new THREE.Vector3(0, 0, 1);
+        this._cameraTangent = new THREE.Vector3().crossVectors(ref, playerDir).normalize();
+        this._cameraUp = playerDir.clone();
 
-        const cameraPos = this.position.clone()
-            .add(up.clone().multiplyScalar(2.0))
-            .sub(forward.clone().multiplyScalar(4.0));
+        const cameraPos = playerDir.clone()
+            .multiplyScalar(this.planetRadius + 7)
+            .add(this._cameraTangent.clone().multiplyScalar(2.5));
 
         this.camera.position.copy(cameraPos);
-        this.camera.fov = 55;
+        this.camera.fov = 50;
         this.camera.updateProjectionMatrix();
-        this.camera.up.copy(up);
+        this.camera.up.copy(playerDir);
         this.camera.lookAt(this.position);
     }
 
@@ -406,63 +408,51 @@ export class Player {
     }
 
     updateCameraPosition() {
-        const up = this.position.clone().sub(this.planetCenter).normalize();
-        const speed = this.velocity.length();
+        // SATELLITE CAMERA — zero velocity dependence, zero jitter
+        // Hovers above the player looking down with slight tilt for perspective.
+        // Only depends on player POSITION (smooth) not velocity (noisy).
+        const playerDir = this.position.clone().normalize();
         const altitude = this.position.distanceTo(this.planetCenter) - this.planetRadius;
 
-        // Forward direction from velocity — heavily smoothed for stability
-        if (speed > 0.3) {
-            const velDir = this.velocity.clone().normalize();
-            // Project onto tangent plane (remove radial component)
-            velDir.sub(up.clone().multiplyScalar(velDir.dot(up))).normalize();
-            if (velDir.length() > 0.1) {
-                if (!this.lastForward) {
-                    this.lastForward = velDir.clone();
-                } else {
-                    // Very heavy smoothing — 95% old, 5% new — eliminates jitter
-                    this.lastForward.lerp(velDir, 0.05).normalize();
-                }
-            }
-        }
+        // Stable tangent direction via cross product with reference vector
+        // Smoothed across frames to prevent any discontinuities near poles
+        const ref = Math.abs(playerDir.y) < 0.95
+            ? new THREE.Vector3(0, 1, 0)
+            : new THREE.Vector3(0, 0, 1);
+        const tangent = new THREE.Vector3().crossVectors(ref, playerDir).normalize();
 
-        let forward;
-        if (this.lastForward) {
-            forward = this.lastForward.clone();
+        if (!this._cameraTangent) {
+            this._cameraTangent = tangent.clone();
         } else {
-            forward = new THREE.Vector3(0, 0, 1);
-            forward.sub(up.clone().multiplyScalar(forward.dot(up))).normalize();
-            if (forward.length() < 0.1) forward.set(1, 0, 0);
+            this._cameraTangent.lerp(tangent, 0.02).normalize();
         }
 
-        // Camera distance: far enough to see continents and orient yourself
-        // ~4 at ground (shows good chunk of planet), ~6 at max altitude
-        const altFactor = Math.min(altitude * 0.3, 1.0);
-        const camDist = 4.0 + altFactor * 2.0;
-        const camHeight = 2.0 + altFactor * 1.5;
-
-        // Simple camera position: behind and above player, no competing forces
-        const cameraTargetPos = this.position.clone()
-            .add(up.clone().multiplyScalar(camHeight))
-            .sub(forward.clone().multiplyScalar(camDist));
-
-        // Keep camera above planet surface
-        const cameraDistFromCenter = cameraTargetPos.length();
-        if (cameraDistFromCenter < this.planetRadius + 1.0) {
-            cameraTargetPos.normalize().multiplyScalar(this.planetRadius + 1.0);
+        // Smooth the up vector too
+        if (!this._cameraUp) {
+            this._cameraUp = playerDir.clone();
+        } else {
+            this._cameraUp.lerp(playerDir, 0.03).normalize();
         }
 
-        // Single steady lerp — no speed-dependent changes
-        this.camera.position.lerp(cameraTargetPos, 0.04);
+        // Camera height: 7 at ground, up to 11 at high altitude
+        // Shows plenty of Earth surface for geographic context
+        const camHeight = 7 + Math.min(altitude * 0.5, 4);
 
-        // Set camera up to local surface normal — prevents gimbal lock at poles
-        this.camera.up.copy(up);
+        // Position: above the player with slight lateral tilt for 3/4 view
+        const cameraTargetPos = playerDir.clone()
+            .multiplyScalar(this.planetRadius + camHeight)
+            .add(this._cameraTangent.clone().multiplyScalar(2.5));
 
-        // Look at player position (no lead, no bias — just the player)
+        // Smooth follow — 5% per frame
+        this.camera.position.lerp(cameraTargetPos, 0.05);
+
+        // Smooth up vector and look at player
+        this.camera.up.copy(this._cameraUp);
         this.camera.lookAt(this.position);
 
-        // Fixed FOV — no dynamic changes that cause zoom jitter
-        if (Math.abs(this.camera.fov - 55) > 0.1) {
-            this.camera.fov = 55;
+        // Fixed FOV
+        if (Math.abs(this.camera.fov - 50) > 0.1) {
+            this.camera.fov = 50;
             this.camera.updateProjectionMatrix();
         }
     }
