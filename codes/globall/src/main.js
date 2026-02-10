@@ -860,7 +860,7 @@ class GloballGame {
         const time = currentTime * 0.001;
 
         // Update all game components
-        this.planet.update(time, this.deltaTime);
+        this.planet.update(time, this.deltaTime, this.camera);
         this.cityLights.update(time, this.deltaTime, this.camera);
         this.spaceEnv.update(time, this.deltaTime);
         this.aurora.update(time, this.deltaTime, this.player.getPosition());

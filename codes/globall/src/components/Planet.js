@@ -427,7 +427,7 @@ export class Planet {
         this.group.add(this.cloudsMesh);
     }
 
-    update(time, deltaTime) {
+    update(time, deltaTime, camera) {
         // Rotate planet slowly
         this.planetMesh.rotation.y += deltaTime * 0.02;
 
@@ -441,12 +441,18 @@ export class Planet {
             this.planetMesh.material.uniforms.time.value = time;
         }
 
-        if (this.atmosphereMesh.material.uniforms) {
+        if (this.atmosphereMesh && this.atmosphereMesh.material.uniforms) {
             this.atmosphereMesh.material.uniforms.time.value = time;
+            if (camera) {
+                this.atmosphereMesh.material.uniforms.viewVector.value.copy(camera.position);
+            }
         }
 
         if (this.outerAtmosphereMesh && this.outerAtmosphereMesh.material.uniforms) {
             this.outerAtmosphereMesh.material.uniforms.time.value = time;
+            if (camera) {
+                this.outerAtmosphereMesh.material.uniforms.viewVector.value.copy(camera.position);
+            }
         }
     }
 
