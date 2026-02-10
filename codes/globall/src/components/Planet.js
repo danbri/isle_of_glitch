@@ -373,9 +373,8 @@ export class Planet {
             uniforms: {
                 time: { value: 0 },
                 sunDirection: { value: this.sunDirection },
-                glowColor: { value: new THREE.Color(0.3, 0.5, 0.8) }, // Darker color
-                glowIntensity: { value: 0.6 }, // Reduced from 1.5
-                viewVector: { value: new THREE.Vector3() }
+                glowColor: { value: new THREE.Color(0.3, 0.5, 0.8) },
+                glowIntensity: { value: 0.6 }
             },
             vertexShader: AtmosphereGlowMaterial.vertexShader,
             fragmentShader: AtmosphereGlowMaterial.fragmentShader,
@@ -396,8 +395,7 @@ export class Planet {
                 time: { value: 0 },
                 sunDirection: { value: this.sunDirection },
                 glowColor: { value: new THREE.Color(0.4, 0.6, 1.0) },
-                glowIntensity: { value: 0.4 },
-                viewVector: { value: new THREE.Vector3() }
+                glowIntensity: { value: 0.4 }
             },
             vertexShader: AtmosphereGlowMaterial.vertexShader,
             fragmentShader: AtmosphereGlowMaterial.fragmentShader,
@@ -427,7 +425,7 @@ export class Planet {
         this.group.add(this.cloudsMesh);
     }
 
-    update(time, deltaTime, camera) {
+    update(time, deltaTime) {
         // Rotate planet slowly
         this.planetMesh.rotation.y += deltaTime * 0.02;
 
@@ -443,16 +441,10 @@ export class Planet {
 
         if (this.atmosphereMesh && this.atmosphereMesh.material.uniforms) {
             this.atmosphereMesh.material.uniforms.time.value = time;
-            if (camera) {
-                this.atmosphereMesh.material.uniforms.viewVector.value.copy(camera.position);
-            }
         }
 
         if (this.outerAtmosphereMesh && this.outerAtmosphereMesh.material.uniforms) {
             this.outerAtmosphereMesh.material.uniforms.time.value = time;
-            if (camera) {
-                this.outerAtmosphereMesh.material.uniforms.viewVector.value.copy(camera.position);
-            }
         }
     }
 
