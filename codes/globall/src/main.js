@@ -383,13 +383,35 @@ class GloballGame {
         this.renderer.domElement.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
         this.renderer.domElement.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
 
-        // Bounce indicator tap = quick scenic bounce
+        // Bounce button: hold-to-charge on touch, release to bounce
         const bounceIndicator = this.getEl('bounce-indicator');
         if (bounceIndicator) {
-            bounceIndicator.addEventListener('click', () => this.doBounce(50));
+            bounceIndicator.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.bounceCharging = true;
+                this.bounceHoldStart = Date.now();
+            }, { passive: false });
             bounceIndicator.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                this.doBounce(50);
+                e.stopPropagation();
+                if (this.bounceCharging) {
+                    this.bounceCharging = false;
+                    const holdMs = Date.now() - this.bounceHoldStart;
+                    this.doBounce(holdMs);
+                }
+            }, { passive: false });
+            // Desktop mouse fallback
+            bounceIndicator.addEventListener('mousedown', () => {
+                this.bounceCharging = true;
+                this.bounceHoldStart = Date.now();
+            });
+            bounceIndicator.addEventListener('mouseup', () => {
+                if (this.bounceCharging) {
+                    this.bounceCharging = false;
+                    const holdMs = Date.now() - this.bounceHoldStart;
+                    this.doBounce(holdMs);
+                }
             });
         }
     }
@@ -402,8 +424,7 @@ class GloballGame {
                 time: Date.now()
             };
             this.touchMoved = false;
-            this.bounceCharging = true;
-            this.bounceHoldStart = Date.now();
+            // Canvas touch is for steering/targeting only — bounce button handles bouncing
         }
     }
 
@@ -440,36 +461,23 @@ class GloballGame {
     }
 
     handleTouchEnd(e) {
-        this.bounceCharging = false;
-
+        // Canvas touch = airport target selection only (never bounces)
         if (this.touchStartPos && !this.touchMoved) {
-            const elapsed = Date.now() - this.touchStartPos.time;
             const touch = e.changedTouches[0];
-            const target = document.elementFromPoint(touch.clientX, touch.clientY);
-
-            if (target === this.renderer.domElement) {
-                // Short tap: check for trampoline target selection first
-                if (elapsed < 250) {
-                    this.mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
-                    this.mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
-                    this.raycaster.setFromCamera(this.mouse, this.camera);
-                    const trampolines = this.trampolineNetwork.getTrampolineMeshes();
-                    const intersects = this.raycaster.intersectObjects(trampolines, true);
-                    if (intersects.length > 0) {
-                        let trampData = intersects[0].object.userData.trampoline;
-                        if (!trampData && intersects[0].object.parent) {
-                            trampData = intersects[0].object.parent.userData.trampoline;
-                        }
-                        if (trampData) {
-                            this.player.setTargetTrampoline(trampData);
-                            this.showTargetNotification(trampData);
-                            this.touchStartPos = null;
-                            return;
-                        }
-                    }
+            this.mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+            const trampolines = this.trampolineNetwork.getTrampolineMeshes();
+            const intersects = this.raycaster.intersectObjects(trampolines, true);
+            if (intersects.length > 0) {
+                let trampData = intersects[0].object.userData.trampoline;
+                if (!trampData && intersects[0].object.parent) {
+                    trampData = intersects[0].object.parent.userData.trampoline;
                 }
-                // Hold duration determines bounce type
-                this.doBounce(elapsed);
+                if (trampData) {
+                    this.player.setTargetTrampoline(trampData);
+                    this.showTargetNotification(trampData);
+                }
             }
         }
 
@@ -900,7 +908,7 @@ class GloballGame {
                 targetEl.textContent = `\u2192 ${t.airport.name} ${t.airport.city}`;
                 targetEl.style.color = '#ff77bb';
             } else {
-                targetEl.textContent = 'Hold SPACE to bounce \u2022 Tap airport to target';
+                targetEl.textContent = 'Hold bounce button \u2022 Tap airport to target';
                 targetEl.style.color = 'rgba(255,255,255,0.4)';
             }
         }
