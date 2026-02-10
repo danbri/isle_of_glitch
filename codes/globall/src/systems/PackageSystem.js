@@ -34,6 +34,14 @@ export class PackageSystem {
 
         // Delivery celebration state
         this._celebrationTimer = 0;
+
+        // Combo system
+        this.comboCount = 0;
+        this.lastDeliveryTime = 0;
+        this.comboTimeout = 15000; // 15 seconds to maintain combo
+
+        // Last delivery info (for celebration display)
+        this._lastDelivery = null;
     }
 
     async init() {
@@ -43,35 +51,75 @@ export class PackageSystem {
     }
 
     getRandomDestinationAirport(excludeNear) {
-        // Pick a random airport that's far enough from the player
+        // Pick a destination reachable via the route network
+        // Prefer airports 1-3 hops away for interesting gameplay
         const trampolines = this.trampolineNetwork.trampolines;
         if (trampolines.length === 0) return null;
 
-        // Try to find one at least 5 units away (interesting distance)
+        // Find nearest airport to player as starting point
+        let startIata = null;
+        if (excludeNear) {
+            const { trampoline: nearest } = this.trampolineNetwork.getNearestTrampoline(excludeNear);
+            if (nearest) startIata = nearest.airport.name;
+        }
+
+        // Try to find a route-connected destination
+        if (startIata && this.trampolineNetwork.routeGraph[startIata]) {
+            const connected = this.trampolineNetwork.getConnectedAirports(startIata);
+            if (connected.length > 0) {
+                // Pick a random connected airport (1 hop)
+                // 50% chance of 1-hop, 50% chance of 2-hop for variety
+                if (Math.random() < 0.5 && connected.length > 0) {
+                    // 1-hop: direct connection
+                    return connected[Math.floor(Math.random() * connected.length)];
+                } else {
+                    // 2-hop: pick a random connection of a random connection
+                    const mid = connected[Math.floor(Math.random() * connected.length)];
+                    const hop2 = this.trampolineNetwork.getConnectedAirports(mid.airport.name);
+                    const filtered = hop2.filter(t => t.airport.name !== startIata);
+                    if (filtered.length > 0) {
+                        return filtered[Math.floor(Math.random() * filtered.length)];
+                    }
+                }
+            }
+        }
+
+        // Fallback: any airport at least 5 units away
         for (let attempt = 0; attempt < 20; attempt++) {
             const t = trampolines[Math.floor(Math.random() * trampolines.length)];
             if (!excludeNear || t.position.distanceTo(excludeNear) > 5) {
                 return t;
             }
         }
-        // Fallback: any airport
         return trampolines[Math.floor(Math.random() * trampolines.length)];
     }
 
     assignNewPackage() {
         const packageType = this.packageTypes[Math.floor(Math.random() * this.packageTypes.length)];
+        const originPos = this._lastPlayerPos || new THREE.Vector3(0, 12, 0);
         const destAirport = this.getRandomDestinationAirport(
-            this.trampolineNetwork.trampolines.length > 0 ? this._lastPlayerPos : null
+            this.trampolineNetwork.trampolines.length > 0 ? originPos : null
         );
 
         if (!destAirport) return;
+
+        // Calculate distance for timer and rewards
+        // Planet radius=10, so max dist ~20 (antipodal). 1 unit ≈ 637 km
+        const dist = originPos.distanceTo(destAirport.position);
+
+        // Timer: 25s base + 4s per distance unit, clamped 25-90s
+        const timeLimit = Math.min(90, Math.max(25, 25 + dist * 4));
 
         this.currentPackage = {
             type: packageType,
             destinationAirport: destAirport,
             destinationName: `${destAirport.airport.name} ${destAirport.airport.city}`,
             carrying: true,
-            assignedTime: Date.now()
+            assignedTime: Date.now(),
+            originPosition: originPos.clone(),
+            distance: dist,
+            timeLimit: timeLimit,
+            startTime: Date.now()
         };
     }
 
@@ -233,9 +281,40 @@ export class PackageSystem {
     }
 
     completeDelivery(destPos) {
-        // Award score
-        this.gameState.addScore(this.currentPackage.type.value);
+        const pkg = this.currentPackage;
+        const baseScore = pkg.type.value;
+
+        // Time bonus: faster delivery = more points
+        const elapsed = (Date.now() - pkg.startTime) / 1000;
+        const timeRatio = Math.max(0, 1 - elapsed / pkg.timeLimit);
+        const timeBonus = Math.floor(timeRatio * baseScore);
+
+        // Distance bonus: farther = more reward (1 unit ≈ 637km)
+        const distBonus = Math.floor(pkg.distance * 20);
+
+        // Combo: deliveries within 15s of each other
+        const now = Date.now();
+        if (now - this.lastDeliveryTime < this.comboTimeout && this.comboCount > 0) {
+            this.comboCount = Math.min(5, this.comboCount + 1);
+        } else {
+            this.comboCount = 1;
+        }
+        this.lastDeliveryTime = now;
+
+        // Total score with combo multiplier
+        const totalScore = (baseScore + timeBonus + distBonus) * this.comboCount;
+        this.gameState.addScore(totalScore);
         this.gameState.deliveries++;
+
+        // Store delivery info for celebration display
+        this._lastDelivery = {
+            score: totalScore,
+            baseScore,
+            timeBonus,
+            distBonus,
+            comboMultiplier: this.comboCount,
+            timeRemaining: Math.max(0, pkg.timeLimit - elapsed)
+        };
 
         // Big celebration effect
         this.createDeliveryEffect(destPos);
@@ -332,6 +411,33 @@ export class PackageSystem {
             }
         };
         animate();
+    }
+
+    getTimerInfo() {
+        if (!this.currentPackage) return null;
+        const elapsed = (Date.now() - this.currentPackage.startTime) / 1000;
+        const remaining = Math.max(0, this.currentPackage.timeLimit - elapsed);
+        const ratio = remaining / this.currentPackage.timeLimit;
+        return { remaining, ratio, expired: remaining <= 0 };
+    }
+
+    getLastDelivery() {
+        return this._lastDelivery;
+    }
+
+    getCombo() {
+        const now = Date.now();
+        if (this.comboCount > 0 && now - this.lastDeliveryTime > this.comboTimeout) {
+            this.comboCount = 0;
+        }
+        return this.comboCount;
+    }
+
+    expirePackage() {
+        // Package timed out — reassign with a small penalty
+        this.comboCount = 0;
+        this.currentPackage = null;
+        this.assignNewPackage();
     }
 
     update(time, deltaTime, player) {

@@ -955,6 +955,10 @@ class GloballGame {
             }
         }
 
+        // Update timer and combo
+        this.updateTimerDisplay();
+        this.updateComboDisplay();
+
         // Update bounce indicator — show charge type during hold
         const bounceEl = this.getEl('bounce-charge');
         const bounceBtn = this.getEl('bounce-indicator');
@@ -984,22 +988,112 @@ class GloballGame {
 
     updateDirectionIndicator() {
         const destPos = this.packageSystem.getDestinationPosition();
-        if (!destPos) return;
+        const arrowEl = this.getEl('direction-arrow-large');
+        const distEl = this.getEl('direction-distance');
+        const container = this.getEl('direction-display');
+        if (!arrowEl || !distEl || !container) return;
+
+        if (!destPos) {
+            container.style.opacity = '0';
+            return;
+        }
 
         const playerPos = this.player.getPosition();
+        const dist = playerPos.distanceTo(destPos);
 
-        // Project both positions to screen space
-        const destScreen = destPos.clone().project(this.camera);
-        const playerScreen = playerPos.clone().project(this.camera);
+        // Distance display (planet radius=10 ≈ Earth radius 6371km, so 1 unit ≈ 637km)
+        const kmDist = dist * 637;
+        if (kmDist > 1000) {
+            distEl.textContent = `${(kmDist / 1000).toFixed(1)}k km`;
+        } else {
+            distEl.textContent = `${Math.round(kmDist)} km`;
+        }
 
-        // Calculate angle to destination
-        const dx = destScreen.x - playerScreen.x;
-        const dy = destScreen.y - playerScreen.y;
-        const angle = Math.atan2(-dy, dx) * (180 / Math.PI) - 90;
+        // Project destination to screen space
+        const screenPos = destPos.clone().project(this.camera);
 
-        const arrow = this.getEl('dest-arrow');
-        if (arrow) {
-            arrow.style.transform = `rotate(${angle}deg)`;
+        // Determine arrow direction
+        let dx = screenPos.x;
+        let dy = screenPos.y;
+
+        // If behind camera, flip direction
+        if (screenPos.z > 1) {
+            dx = -dx;
+            dy = -dy;
+        }
+
+        // Angle for upward-pointing ▲ to rotate toward destination
+        const angle = Math.atan2(dx, dy) * (180 / Math.PI);
+        arrowEl.style.transform = `rotate(${angle}deg)`;
+
+        // Fade when very close
+        container.style.opacity = dist < 1 ? '0.2' : '1';
+    }
+
+    updateTimerDisplay() {
+        const timerInfo = this.packageSystem.getTimerInfo();
+        const timerBar = this.getEl('timer-bar');
+        const timerText = this.getEl('timer-text');
+        if (!timerBar) return;
+
+        if (!timerInfo) {
+            timerBar.style.width = '100%';
+            timerBar.className = '';
+            if (timerText) timerText.textContent = '';
+            return;
+        }
+
+        timerBar.style.width = `${timerInfo.ratio * 100}%`;
+
+        if (timerInfo.ratio < 0.2) {
+            timerBar.className = 'urgent';
+        } else if (timerInfo.ratio < 0.45) {
+            timerBar.className = 'warning';
+        } else {
+            timerBar.className = '';
+        }
+
+        if (timerText) {
+            timerText.textContent = `${Math.ceil(timerInfo.remaining)}s`;
+        }
+
+        // Expire package if time ran out
+        if (timerInfo.expired) {
+            this.packageSystem.expirePackage();
+            // Show timeout notification
+            const el = this.getEl('target-notification');
+            if (el) {
+                el.textContent = 'TIME UP! New package...';
+                el.style.color = '#ff4444';
+                el.style.fontSize = '1rem';
+                el.style.opacity = '1';
+                clearTimeout(this._targetNotifTimeout);
+                this._targetNotifTimeout = setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.color = '#ff66aa';
+                    el.style.fontSize = '0.9rem';
+                }, 2000);
+            }
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            // Auto-target new destination
+            const newPkg = this.packageSystem.getCurrentPackage();
+            if (newPkg && newPkg.destinationAirport) {
+                this.player.setTargetTrampoline(newPkg.destinationAirport);
+            }
+        }
+    }
+
+    updateComboDisplay() {
+        const combo = this.packageSystem.getCombo();
+        const comboEl = this.getEl('combo-display');
+        if (!comboEl) return;
+
+        if (combo > 1) {
+            comboEl.classList.add('active');
+            const multiplierEl = this.getEl('combo-multiplier');
+            if (multiplierEl) multiplierEl.textContent = `x${combo}`;
+        } else {
+            comboEl.classList.remove('active');
         }
     }
 
@@ -1062,22 +1156,34 @@ class GloballGame {
         const prevDeliveries = this.gameState.deliveries;
         this.packageSystem.update(time, this.deltaTime, this.player);
         if (this.gameState.deliveries > prevDeliveries) {
-            // Delivery completed! Show celebration notification
-            const el = this.getEl('target-notification');
-            if (el) {
-                el.textContent = `✨ DELIVERED! +${this.packageSystem.getCurrentPackage()?.type.value || 100} ✨`;
-                el.style.color = '#00ff88';
-                el.style.fontSize = '1.2rem';
-                el.style.opacity = '1';
-                clearTimeout(this._targetNotifTimeout);
-                this._targetNotifTimeout = setTimeout(() => {
-                    el.style.opacity = '0';
-                    el.style.color = '#ff66aa';
-                    el.style.fontSize = '0.9rem';
-                }, 2500);
+            // Big celebration overlay
+            const delivery = this.packageSystem.getLastDelivery();
+            const celebEl = this.getEl('delivery-celebration');
+            const scoreEl = this.getEl('delivery-score');
+            const textEl = this.getEl('delivery-text');
+
+            if (celebEl) {
+                if (textEl) {
+                    textEl.textContent = delivery && delivery.comboMultiplier > 1
+                        ? `x${delivery.comboMultiplier} COMBO!`
+                        : 'DELIVERED!';
+                }
+                if (scoreEl && delivery) {
+                    scoreEl.textContent = `+${delivery.score}`;
+                }
+                // Trigger animation (force reflow to restart)
+                celebEl.classList.remove('active');
+                void celebEl.offsetWidth;
+                celebEl.classList.add('active');
+                clearTimeout(this._celebTimeout);
+                this._celebTimeout = setTimeout(() => {
+                    celebEl.classList.remove('active');
+                }, 2000);
             }
-            // Haptic celebration
-            if (navigator.vibrate) navigator.vibrate([50, 50, 100]);
+
+            // Strong haptic celebration
+            if (navigator.vibrate) navigator.vibrate([50, 50, 100, 50, 150]);
+
             // Auto-target new destination
             const newPkg = this.packageSystem.getCurrentPackage();
             if (newPkg && newPkg.destinationAirport) {

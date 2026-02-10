@@ -396,12 +396,16 @@ export class Player {
     }
 
     handleInput(keys, deltaTime) {
-        // WASD for directional influence
-        const influenceForce = 5;
+        // Mid-air steering: stronger influence when airborne and moving fast
+        // This gives the player meaningful control during flight
+        const speed = this.velocity.length();
+        const baseForce = 5;
+        const airBonus = this.isOnGround ? 0 : Math.min(speed * 0.4, 6);
+        const influenceForce = baseForce + airBonus;
 
         // Get right and up vectors relative to planet
         const up = this.position.clone().sub(this.planetCenter).normalize();
-        const forward = this.velocity.length() > 0.1
+        const forward = speed > 0.1
             ? this.velocity.clone().normalize()
             : new THREE.Vector3(0, 0, 1);
         const right = new THREE.Vector3().crossVectors(up, forward).normalize();
@@ -448,24 +452,29 @@ export class Player {
         }
 
         // Camera height: 7 at ground, up to 11 at high altitude
-        // Shows plenty of Earth surface for geographic context
-        const camHeight = 7 + Math.min(altitude * 0.5, 4);
+        // Pulls closer during speed for excitement
+        const speed = this.velocity.length();
+        const speedCloseness = Math.min(speed * 0.12, 2);
+        const camHeight = 7 + Math.min(altitude * 0.5, 4) - speedCloseness;
 
         // Position: above the player with slight lateral tilt for 3/4 view
         const cameraTargetPos = playerDir.clone()
             .multiplyScalar(this.planetRadius + camHeight)
             .add(this._cameraTangent.clone().multiplyScalar(2.5));
 
-        // Smooth follow — 5% per frame
-        this.camera.position.lerp(cameraTargetPos, 0.05);
+        // Smooth follow — faster when moving for more responsiveness
+        const followSpeed = 0.05 + Math.min(speed * 0.005, 0.07);
+        this.camera.position.lerp(cameraTargetPos, followSpeed);
 
         // Smooth up vector and look at player
         this.camera.up.copy(this._cameraUp);
         this.camera.lookAt(this.position);
 
-        // Fixed FOV
-        if (Math.abs(this.camera.fov - 50) > 0.1) {
-            this.camera.fov = 50;
+        // Dynamic FOV: widens during speed for sensation of velocity
+        const targetFov = 50 + Math.min(speed * 0.6, 15);
+        const currentFov = this.camera.fov;
+        if (Math.abs(currentFov - targetFov) > 0.3) {
+            this.camera.fov += (targetFov - currentFov) * 0.06;
             this.camera.updateProjectionMatrix();
         }
     }
