@@ -1,6 +1,7 @@
 /**
  * Trampoline Network System
- * Creates the global network of trampolines for bouncing between locations
+ * Loads all international airports from IATA database.
+ * Renders all ~7900 as dots (one draw call), detailed meshes for nearest ~25.
  */
 
 import * as THREE from 'three';
@@ -9,20 +10,58 @@ export class TrampolineNetwork {
     constructor(scene, planet) {
         this.scene = scene;
         this.planet = planet;
+        this.planetRadius = 10;
+
+        // All airports (from data file)
         this.trampolines = [];
-        this.trampolineMeshes = [];
+        this.trampolineMeshes = [];      // Active detailed meshes (raycasting)
+
+        this.airportDots = null;         // THREE.Points for all airports
+        this.detailedPool = [];          // Reusable detailed Groups
+        this.assignedAirports = [];      // Airport index per pool slot
+
         this.connections = [];
         this.highlightedTrampoline = null;
-        this.planetRadius = 10;
+
+        // LOD update throttle
+        this._lastLODTime = 0;
+        this._lastLODPos = new THREE.Vector3();
+
+        this.DETAIL_POOL_SIZE = 25;
     }
 
     async init() {
-        this.createTrampolineNodes();
-        this.createConnections();
+        await this.loadAirports();
+        this.createAirportDots();
+        this.createDetailedPool();
     }
 
-    createTrampolineNodes() {
-        // Create trampolines at major airport locations
+    async loadAirports() {
+        try {
+            const response = await fetch('data/airports.json');
+            const raw = await response.json();
+
+            // Format: [[iata, city, country, lat, lon], ...]
+            this.trampolines = raw.map((a, index) => {
+                const pos = this.latLonToPosition(a[3], a[4], this.planetRadius + 0.05);
+                return {
+                    airport: { name: a[0], city: a[1], country: a[2] },
+                    position: pos,
+                    normal: pos.clone().normalize(),
+                    index: index,
+                    bounceForce: 15 + Math.random() * 5,
+                    connections: []
+                };
+            });
+
+            console.log(`Loaded ${this.trampolines.length} airports`);
+        } catch (e) {
+            console.error('Failed to load airports, using fallback:', e);
+            this.createFallbackAirports();
+        }
+    }
+
+    createFallbackAirports() {
         const airports = [
             { name: 'JFK', city: 'New York', lat: 40.6413, lon: -73.7781 },
             { name: 'LAX', city: 'Los Angeles', lat: 33.9416, lon: -118.4085 },
@@ -46,32 +85,63 @@ export class TrampolineNetwork {
             { name: 'SVO', city: 'Moscow', lat: 55.9726, lon: 37.4146 },
         ];
 
-        airports.forEach((airport, index) => {
-            const trampoline = this.createTrampoline(airport, index);
-            this.trampolines.push(trampoline);
+        this.trampolines = airports.map((a, index) => {
+            const pos = this.latLonToPosition(a.lat, a.lon, this.planetRadius + 0.05);
+            return {
+                airport: { name: a.name, city: a.city, country: '' },
+                position: pos,
+                normal: pos.clone().normalize(),
+                index: index,
+                bounceForce: 15 + Math.random() * 5,
+                connections: []
+            };
         });
     }
 
-    createTrampoline(airport, index) {
-        const position = this.latLonToPosition(airport.lat, airport.lon, this.planetRadius + 0.05);
-        const normal = position.clone().normalize();
+    createAirportDots() {
+        const count = this.trampolines.length;
+        const positions = new Float32Array(count * 3);
+        const colors = new Float32Array(count * 3);
 
-        const group = new THREE.Group();
+        for (let i = 0; i < count; i++) {
+            const p = this.trampolines[i].position;
+            positions[i * 3] = p.x;
+            positions[i * 3 + 1] = p.y;
+            positions[i * 3 + 2] = p.z;
 
-        // Trampoline base ring
-        const ringGeometry = new THREE.TorusGeometry(0.3, 0.03, 16, 32);
-        const ringMaterial = new THREE.MeshPhongMaterial({
+            // Candy pink dots
+            colors[i * 3] = 1.0;
+            colors[i * 3 + 1] = 0.4;
+            colors[i * 3 + 2] = 0.7;
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: 0.06,
+            vertexColors: true,
+            sizeAttenuation: true,
+            transparent: true,
+            opacity: 0.9
+        });
+
+        this.airportDots = new THREE.Points(geometry, material);
+        this.scene.add(this.airportDots);
+    }
+
+    createDetailedPool() {
+        // Shared geometries
+        const ringGeo = new THREE.TorusGeometry(0.25, 0.025, 8, 24);
+        const ringMat = new THREE.MeshPhongMaterial({
             color: 0xff66aa,
             emissive: 0xff3377,
             emissiveIntensity: 0.3,
             shininess: 100
         });
-        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-        group.add(ring);
-
-        // Trampoline surface (bouncy part)
-        const surfaceGeometry = new THREE.CircleGeometry(0.28, 32);
-        const surfaceMaterial = new THREE.MeshPhongMaterial({
+        const surfGeo = new THREE.CircleGeometry(0.23, 24);
+        const surfMat = new THREE.MeshPhongMaterial({
             color: 0x66ddff,
             emissive: 0x33aadd,
             emissiveIntensity: 0.2,
@@ -79,190 +149,163 @@ export class TrampolineNetwork {
             opacity: 0.8,
             side: THREE.DoubleSide
         });
-        const surface = new THREE.Mesh(surfaceGeometry, surfaceMaterial);
-        surface.position.y = 0.01;
-        group.add(surface);
 
-        // Energy rings (animated)
-        for (let i = 0; i < 3; i++) {
-            const energyRingGeometry = new THREE.RingGeometry(0.32 + i * 0.05, 0.34 + i * 0.05, 32);
-            const energyRingMaterial = new THREE.MeshBasicMaterial({
-                color: new THREE.Color().setHSL((index * 0.1 + i * 0.1) % 1, 0.8, 0.6),
+        // Shared glow texture
+        const glowCanvas = document.createElement('canvas');
+        glowCanvas.width = 64;
+        glowCanvas.height = 64;
+        const gCtx = glowCanvas.getContext('2d');
+        const grad = gCtx.createRadialGradient(32, 32, 0, 32, 32, 32);
+        grad.addColorStop(0, 'rgba(102, 221, 255, 0.8)');
+        grad.addColorStop(0.3, 'rgba(255, 102, 170, 0.4)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        gCtx.fillStyle = grad;
+        gCtx.fillRect(0, 0, 64, 64);
+        const glowTexture = new THREE.CanvasTexture(glowCanvas);
+
+        for (let i = 0; i < this.DETAIL_POOL_SIZE; i++) {
+            const group = new THREE.Group();
+
+            // Ring
+            group.add(new THREE.Mesh(ringGeo, ringMat));
+
+            // Bounce surface
+            const surf = new THREE.Mesh(surfGeo, surfMat);
+            surf.position.y = 0.01;
+            group.add(surf);
+
+            // Glow sprite
+            const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: glowTexture,
                 transparent: true,
-                opacity: 0.5 - i * 0.1,
-                side: THREE.DoubleSide
-            });
-            const energyRing = new THREE.Mesh(energyRingGeometry, energyRingMaterial);
-            energyRing.position.y = 0.02;
-            energyRing.userData.baseScale = 1;
-            energyRing.userData.pulseOffset = i * 0.3;
-            group.add(energyRing);
+                blending: THREE.AdditiveBlending
+            }));
+            glow.scale.set(0.7, 0.7, 1);
+            glow.position.y = 0.1;
+            group.add(glow);
+
+            // Label sprite with its own canvas
+            const labelCanvas = document.createElement('canvas');
+            labelCanvas.width = 256;
+            labelCanvas.height = 64;
+            const labelTexture = new THREE.CanvasTexture(labelCanvas);
+            const labelSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: labelTexture,
+                transparent: true,
+                depthTest: true,
+                sizeAttenuation: true
+            }));
+            labelSprite.scale.set(1.5, 0.4, 1);
+            labelSprite.position.y = 0.65;
+            labelSprite.renderOrder = 10;
+            labelSprite.userData.isLabel = true;
+            labelSprite.userData.labelCanvas = labelCanvas;
+            labelSprite.userData.labelTexture = labelTexture;
+            group.add(labelSprite);
+
+            group.visible = false;
+            group.userData.trampoline = null;
+            group.userData.poolIndex = i;
+
+            this.scene.add(group);
+            this.detailedPool.push(group);
+            this.assignedAirports.push(-1);
         }
-
-        // Glow sprite
-        const canvas = document.createElement('canvas');
-        canvas.width = 128;
-        canvas.height = 128;
-        const ctx = canvas.getContext('2d');
-
-        const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
-        gradient.addColorStop(0, 'rgba(102, 221, 255, 0.8)');
-        gradient.addColorStop(0.3, 'rgba(255, 102, 170, 0.4)');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 128, 128);
-
-        const glowTexture = new THREE.CanvasTexture(canvas);
-        const glowMaterial = new THREE.SpriteMaterial({
-            map: glowTexture,
-            transparent: true,
-            blending: THREE.AdditiveBlending
-        });
-        const glow = new THREE.Sprite(glowMaterial);
-        glow.scale.set(1, 1, 1);
-        glow.position.y = 0.1;
-        group.add(glow);
-
-        // Name label — large, bright, always-facing-camera sprite
-        const labelCanvas = document.createElement('canvas');
-        labelCanvas.width = 512;
-        labelCanvas.height = 128;
-        const labelCtx = labelCanvas.getContext('2d');
-
-        // Semi-transparent dark background with glow border
-        labelCtx.fillStyle = 'rgba(10, 5, 25, 0.75)';
-        if (labelCtx.roundRect) {
-            labelCtx.beginPath();
-            labelCtx.roundRect(8, 8, 496, 112, 16);
-            labelCtx.fill();
-            // Glow border
-            labelCtx.strokeStyle = 'rgba(255, 102, 170, 0.6)';
-            labelCtx.lineWidth = 2;
-            labelCtx.beginPath();
-            labelCtx.roundRect(8, 8, 496, 112, 16);
-            labelCtx.stroke();
-        } else {
-            labelCtx.fillRect(8, 8, 496, 112);
-        }
-
-        // IATA code — large, bold, candy pink with dark outline for contrast
-        labelCtx.font = 'bold 48px Arial';
-        labelCtx.textAlign = 'center';
-        labelCtx.lineWidth = 5;
-        labelCtx.strokeStyle = '#000000';
-        labelCtx.miterLimit = 2;
-        labelCtx.strokeText(airport.name, 256, 55);
-        labelCtx.fillStyle = '#ff77bb';
-        labelCtx.fillText(airport.name, 256, 55);
-
-        // City name — smaller, white with dark outline
-        labelCtx.font = '28px Arial';
-        labelCtx.lineWidth = 3;
-        labelCtx.strokeText(airport.city, 256, 95);
-        labelCtx.fillStyle = '#ddddff';
-        labelCtx.fillText(airport.city, 256, 95);
-
-        const labelTexture = new THREE.CanvasTexture(labelCanvas);
-        const labelMaterial = new THREE.SpriteMaterial({
-            map: labelTexture,
-            transparent: true,
-            depthTest: true,
-            sizeAttenuation: true
-        });
-        const label = new THREE.Sprite(labelMaterial);
-        label.scale.set(2.0, 0.5, 1);
-        label.position.y = 0.8;
-        label.renderOrder = 10;
-        label.userData.isLabel = true;
-        group.add(label);
-
-        // Position and orient
-        group.position.copy(position);
-        group.lookAt(new THREE.Vector3(0, 0, 0));
-        group.rotateX(Math.PI / 2);
-
-        // Store metadata
-        group.userData.trampoline = {
-            airport: airport,
-            position: position.clone(),
-            normal: normal,
-            index: index,
-            bounceForce: 15 + Math.random() * 5,
-            connections: []
-        };
-
-        this.trampolineMeshes.push(group);
-        this.scene.add(group);
-
-        return group.userData.trampoline;
     }
 
-    createConnections() {
-        // Create visible connection lines between nearby trampolines
-        const maxConnectionDistance = 8;
+    updateLabel(poolIndex, airport) {
+        const group = this.detailedPool[poolIndex];
+        const labelSprite = group.children.find(c => c.userData && c.userData.isLabel);
+        if (!labelSprite) return;
 
+        const canvas = labelSprite.userData.labelCanvas;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Background pill
+        ctx.fillStyle = 'rgba(10, 5, 25, 0.75)';
+        if (ctx.roundRect) {
+            ctx.beginPath();
+            ctx.roundRect(4, 4, 248, 56, 10);
+            ctx.fill();
+        } else {
+            ctx.fillRect(4, 4, 248, 56);
+        }
+
+        // IATA code
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#000';
+        ctx.miterLimit = 2;
+        ctx.strokeText(airport.name, 128, 25);
+        ctx.fillStyle = '#ff77bb';
+        ctx.fillText(airport.name, 128, 25);
+
+        // City
+        ctx.font = '14px Arial';
+        ctx.lineWidth = 2;
+        ctx.strokeText(airport.city, 128, 48);
+        ctx.fillStyle = '#ddddff';
+        ctx.fillText(airport.city, 128, 48);
+
+        labelSprite.userData.labelTexture.needsUpdate = true;
+    }
+
+    updateDetailedDisplay(playerPosition) {
+        if (!playerPosition || this.trampolines.length === 0) return;
+
+        // Find nearest N airports by distance squared
+        const nearest = [];
         for (let i = 0; i < this.trampolines.length; i++) {
-            for (let j = i + 1; j < this.trampolines.length; j++) {
-                const t1 = this.trampolines[i];
-                const t2 = this.trampolines[j];
-
-                const distance = t1.position.distanceTo(t2.position);
-
-                if (distance < maxConnectionDistance) {
-                    t1.connections.push(t2);
-                    t2.connections.push(t1);
-
-                    // Create arc connection
-                    const connection = this.createArcConnection(t1.position, t2.position);
-                    this.connections.push(connection);
-                    this.scene.add(connection);
+            const dist = this.trampolines[i].position.distanceToSquared(playerPosition);
+            if (nearest.length < this.DETAIL_POOL_SIZE) {
+                nearest.push({ index: i, dist });
+                if (nearest.length === this.DETAIL_POOL_SIZE) {
+                    nearest.sort((a, b) => a.dist - b.dist);
+                }
+            } else if (dist < nearest[this.DETAIL_POOL_SIZE - 1].dist) {
+                nearest[this.DETAIL_POOL_SIZE - 1] = { index: i, dist };
+                // Insertion sort for the last element
+                let j = this.DETAIL_POOL_SIZE - 1;
+                while (j > 0 && nearest[j].dist < nearest[j - 1].dist) {
+                    [nearest[j], nearest[j - 1]] = [nearest[j - 1], nearest[j]];
+                    j--;
                 }
             }
         }
-    }
 
-    createArcConnection(start, end) {
-        const points = [];
-        const segments = 32;
+        // Assign pool slots
+        for (let slot = 0; slot < this.DETAIL_POOL_SIZE && slot < nearest.length; slot++) {
+            const airportIdx = nearest[slot].index;
+            const group = this.detailedPool[slot];
+            const trampoline = this.trampolines[airportIdx];
 
-        // Calculate arc through space above planet
-        const midpoint = start.clone().add(end).multiplyScalar(0.5);
-        const arcHeight = start.distanceTo(end) * 0.3;
-        midpoint.normalize().multiplyScalar(this.planetRadius + arcHeight + 0.5);
+            if (this.assignedAirports[slot] !== airportIdx) {
+                this.assignedAirports[slot] = airportIdx;
 
-        for (let i = 0; i <= segments; i++) {
-            const t = i / segments;
+                // Reposition
+                group.position.copy(trampoline.position);
+                group.lookAt(new THREE.Vector3(0, 0, 0));
+                group.rotateX(Math.PI / 2);
 
-            // Quadratic bezier curve
-            const p1 = start.clone().lerp(midpoint, t);
-            const p2 = midpoint.clone().lerp(end, t);
-            const point = p1.lerp(p2, t);
+                // Update label
+                this.updateLabel(slot, trampoline.airport);
 
-            points.push(point);
+                // Link data
+                group.userData.trampoline = trampoline;
+            }
+
+            group.visible = true;
         }
 
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-
-        // Gradient material
-        const colors = [];
-        for (let i = 0; i <= segments; i++) {
-            const t = i / segments;
-            const color = new THREE.Color().setHSL(0.85 + t * 0.15, 0.7, 0.5);
-            colors.push(color.r, color.g, color.b);
+        // Hide unused slots
+        for (let slot = nearest.length; slot < this.DETAIL_POOL_SIZE; slot++) {
+            this.detailedPool[slot].visible = false;
         }
-        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
 
-        const material = new THREE.LineBasicMaterial({
-            vertexColors: true,
-            transparent: true,
-            opacity: 0.3,
-            linewidth: 1
-        });
-
-        const line = new THREE.Line(geometry, material);
-        line.userData.isConnection = true;
-
-        return line;
+        // Update raycasting list
+        this.trampolineMeshes = this.detailedPool.filter(g => g.visible);
     }
 
     latLonToPosition(lat, lon, radius) {
@@ -283,16 +326,12 @@ export class TrampolineNetwork {
     highlightTrampoline(trampoline) {
         this.highlightedTrampoline = trampoline;
 
-        // Find the mesh for this trampoline
-        const mesh = this.trampolineMeshes.find(
+        const mesh = this.detailedPool.find(
             m => m.userData.trampoline === trampoline
         );
 
         if (mesh) {
-            // Scale up slightly
             mesh.scale.setScalar(1.2);
-
-            // Increase emission
             mesh.children.forEach(child => {
                 if (child.material && child.material.emissiveIntensity !== undefined) {
                     child.material.emissiveIntensity = 0.6;
@@ -304,7 +343,7 @@ export class TrampolineNetwork {
     clearHighlights() {
         this.highlightedTrampoline = null;
 
-        this.trampolineMeshes.forEach(mesh => {
+        this.detailedPool.forEach(mesh => {
             mesh.scale.setScalar(1);
             mesh.children.forEach(child => {
                 if (child.material && child.material.emissiveIntensity !== undefined) {
@@ -318,48 +357,36 @@ export class TrampolineNetwork {
         let nearest = null;
         let nearestDistance = Infinity;
 
-        this.trampolines.forEach(trampoline => {
+        for (const trampoline of this.trampolines) {
             const distance = trampoline.position.distanceTo(position);
             if (distance < nearestDistance) {
                 nearestDistance = distance;
                 nearest = trampoline;
             }
-        });
+        }
 
         return { trampoline: nearest, distance: nearestDistance };
     }
 
-    update(time, deltaTime) {
-        // Animate trampolines
-        this.trampolineMeshes.forEach((mesh, index) => {
-            // Pulse energy rings
-            mesh.children.forEach(child => {
-                if (child.userData.pulseOffset !== undefined) {
-                    const scale = 1 + Math.sin(time * 3 + child.userData.pulseOffset) * 0.1;
-                    child.scale.setScalar(scale);
-                }
+    update(time, deltaTime, playerPosition) {
+        // Update LOD every ~0.5 seconds or when player moves significantly
+        if (playerPosition) {
+            const moved = this._lastLODPos.distanceToSquared(playerPosition) > 0.25;
+            if (time - this._lastLODTime > 0.5 || moved) {
+                this.updateDetailedDisplay(playerPosition);
+                this._lastLODPos.copy(playerPosition);
+                this._lastLODTime = time;
+            }
+        }
 
-                // Rotate glow
+        // Animate visible detailed trampolines
+        this.detailedPool.forEach(mesh => {
+            if (!mesh.visible) return;
+            mesh.children.forEach(child => {
                 if (child.isSprite && !child.userData.isLabel) {
                     child.material.rotation = time * 0.5;
                 }
             });
-
-            // Subtle bounce animation
-            const bounce = Math.sin(time * 2 + index * 0.5) * 0.01;
-            mesh.position.copy(this.trampolines[index].position);
-            mesh.position.add(
-                this.trampolines[index].normal.clone().multiplyScalar(bounce)
-            );
-        });
-
-        // Animate connection lines
-        this.connections.forEach((connection, index) => {
-            if (connection.material) {
-                // Pulse opacity
-                const pulse = Math.sin(time * 2 + index * 0.3) * 0.1 + 0.3;
-                connection.material.opacity = pulse;
-            }
         });
     }
 }

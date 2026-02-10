@@ -20,6 +20,7 @@ import { CityLights } from './components/CityLights.js';
 import { PackageSystem } from './systems/PackageSystem.js';
 import { GameState } from './systems/GameState.js';
 import { AudioSystem } from './systems/AudioSystem.js';
+import { CountryOutlines } from './components/CountryOutlines.js';
 import { ChromaticAberrationShader } from './shaders/ChromaticAberration.js';
 import { AtmosphericScatteringShader } from './shaders/AtmosphericScattering.js';
 import GUI from 'lil-gui';
@@ -326,12 +327,19 @@ class GloballGame {
 
         this.updateLoadingProgress(80);
 
-        // Create trampoline network
-        console.log('Loading: Trampolines...');
+        // Create country outlines
+        console.log('Loading: Country Outlines...');
+        this.countryOutlines = new CountryOutlines(this.scene);
+        await this.countryOutlines.init();
+
+        this.updateLoadingProgress(82);
+
+        // Create trampoline network (loads ~7900 airports)
+        console.log('Loading: Airports...');
         this.trampolineNetwork = new TrampolineNetwork(this.scene, this.planet);
         await this.trampolineNetwork.init();
 
-        this.updateLoadingProgress(85);
+        this.updateLoadingProgress(88);
 
         // Create player
         console.log('Loading: Player...');
@@ -464,21 +472,7 @@ class GloballGame {
         // Canvas touch = airport target selection only (never bounces)
         if (this.touchStartPos && !this.touchMoved) {
             const touch = e.changedTouches[0];
-            this.mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
-            this.mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
-            this.raycaster.setFromCamera(this.mouse, this.camera);
-            const trampolines = this.trampolineNetwork.getTrampolineMeshes();
-            const intersects = this.raycaster.intersectObjects(trampolines, true);
-            if (intersects.length > 0) {
-                let trampData = intersects[0].object.userData.trampoline;
-                if (!trampData && intersects[0].object.parent) {
-                    trampData = intersects[0].object.parent.userData.trampoline;
-                }
-                if (trampData) {
-                    this.player.setTargetTrampoline(trampData);
-                    this.showTargetNotification(trampData);
-                }
-            }
+            this.selectAirportAtScreen(touch.clientX, touch.clientY);
         }
 
         // Reset all touch-based movement
@@ -545,14 +539,17 @@ class GloballGame {
     }
 
     handleClick(e) {
-        this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-        this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        this.selectAirportAtScreen(e.clientX, e.clientY);
+    }
 
+    selectAirportAtScreen(screenX, screenY) {
+        this.mouse.x = (screenX / window.innerWidth) * 2 - 1;
+        this.mouse.y = -(screenY / window.innerHeight) * 2 + 1;
         this.raycaster.setFromCamera(this.mouse, this.camera);
 
+        // Try detailed trampoline meshes first (precise hit)
         const trampolines = this.trampolineNetwork.getTrampolineMeshes();
         const intersects = this.raycaster.intersectObjects(trampolines, true);
-
         if (intersects.length > 0) {
             let trampData = intersects[0].object.userData.trampoline;
             if (!trampData && intersects[0].object.parent) {
@@ -561,8 +558,25 @@ class GloballGame {
             if (trampData) {
                 this.player.setTargetTrampoline(trampData);
                 this.showTargetNotification(trampData);
+                return true;
             }
         }
+
+        // Fallback: raycast planet sphere, find nearest airport to hit point
+        if (this.planet && this.planet.planetMesh) {
+            const planetHits = this.raycaster.intersectObject(this.planet.planetMesh);
+            if (planetHits.length > 0) {
+                const hitPoint = planetHits[0].point;
+                const { trampoline, distance } = this.trampolineNetwork.getNearestTrampoline(hitPoint);
+                if (trampoline && distance < 1.5) {
+                    this.player.setTargetTrampoline(trampoline);
+                    this.showTargetNotification(trampoline);
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     showTargetNotification(trampData) {
@@ -1012,7 +1026,7 @@ class GloballGame {
         this.cityLights.update(time, this.deltaTime, this.camera);
         this.spaceEnv.update(time, this.deltaTime);
         this.aurora.update(time, this.deltaTime, this.player.getPosition());
-        this.trampolineNetwork.update(time, this.deltaTime);
+        this.trampolineNetwork.update(time, this.deltaTime, this.player.getPosition());
         this.player.update(time, this.deltaTime, this.keys);
         this.packageSystem.update(time, this.deltaTime, this.player);
 
