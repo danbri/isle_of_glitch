@@ -52,6 +52,12 @@ export class Player {
         this.lastForward = null; // Stores last velocity direction for stable camera
         this.cameraLerpSpeed = 0.15; // Configurable from debug panel
         this.cameraEnabled = true; // Disabled when orbit controls are active
+
+        // Camera shake
+        this.cameraShake = { intensity: 0, decay: 0.88 };
+
+        // Landing tracking
+        this.lastImpactSpeed = 0;
     }
 
     async init() {
@@ -348,6 +354,13 @@ export class Player {
             if (dot < 0) {
                 // Reflect velocity with bounce based on impact speed
                 const impactSpeed = -dot;
+                this.lastImpactSpeed = impactSpeed;
+
+                // Camera shake on hard landings
+                if (impactSpeed > 3) {
+                    this.cameraShake.intensity = Math.min(0.3, impactSpeed * 0.02);
+                }
+
                 const bounciness = impactSpeed > 5 ? 0.5 : 0.3; // More bounce from harder impacts
                 const reflection = normal.clone().multiplyScalar(-2 * dot * bounciness);
                 this.velocity.add(reflection);
@@ -470,6 +483,17 @@ export class Player {
         this.camera.up.copy(this._cameraUp);
         this.camera.lookAt(this.position);
 
+        // Camera shake (decays each frame)
+        if (this.cameraShake.intensity > 0.001) {
+            const shakeX = (Math.random() - 0.5) * this.cameraShake.intensity;
+            const shakeY = (Math.random() - 0.5) * this.cameraShake.intensity;
+            const shakeZ = (Math.random() - 0.5) * this.cameraShake.intensity;
+            this.camera.position.x += shakeX;
+            this.camera.position.y += shakeY;
+            this.camera.position.z += shakeZ;
+            this.cameraShake.intensity *= this.cameraShake.decay;
+        }
+
         // Dynamic FOV: widens during speed for sensation of velocity
         const targetFov = 50 + Math.min(speed * 0.6, 15);
         const currentFov = this.camera.fov;
@@ -477,6 +501,71 @@ export class Player {
             this.camera.fov += (targetFov - currentFov) * 0.06;
             this.camera.updateProjectionMatrix();
         }
+    }
+
+    // Predict bounce trajectory for preview arc
+    predictTrajectory(holdMs) {
+        const routeType = holdMs < 200 ? 'scenic' : holdMs < 600 ? 'express' : 'stealth';
+        const modifier = this.routeModifiers[routeType];
+
+        const up = this.position.clone().sub(this.planetCenter).normalize();
+        let horizontal = this.velocity.clone();
+        horizontal.sub(up.clone().multiplyScalar(horizontal.dot(up)));
+        if (horizontal.length() > 0.1) {
+            horizontal.normalize();
+        } else {
+            horizontal = new THREE.Vector3(1, 0, 0);
+            horizontal.sub(up.clone().multiplyScalar(horizontal.dot(up))).normalize();
+        }
+
+        let bounceDir;
+        if (this.targetTrampoline) {
+            const toTarget = this.targetTrampoline.position.clone().sub(this.position);
+            const dist = toTarget.length();
+            const tangentDir = toTarget.clone();
+            tangentDir.sub(up.clone().multiplyScalar(tangentDir.dot(up)));
+            if (tangentDir.length() > 0.01) tangentDir.normalize();
+            else tangentDir.copy(horizontal);
+            const loft = Math.min(0.85, 0.3 + dist * 0.04);
+            bounceDir = up.clone().multiplyScalar(loft)
+                .add(tangentDir.clone().multiplyScalar(1 - loft)).normalize();
+        } else {
+            bounceDir = up.clone().multiplyScalar(modifier.angle)
+                .add(horizontal.clone().multiplyScalar(1 - modifier.angle)).normalize();
+        }
+
+        const charge = Math.min(1, this.bounceCharge);
+        const force = this.bounceForce * modifier.force * (0.5 + charge * 0.5);
+
+        // Simulate forward
+        let pos = this.position.clone();
+        let vel = this.velocity.clone();
+        const downSpeed = -vel.dot(up);
+        if (downSpeed > 0) vel.add(up.clone().multiplyScalar(downSpeed * 0.7));
+        vel.add(bounceDir.clone().multiplyScalar(force));
+
+        const dt = 0.06;
+        const points = [pos.clone()];
+        for (let i = 0; i < 50; i++) {
+            const toCenter = this.planetCenter.clone().sub(pos);
+            const distance = toCenter.length();
+            const gravDir = toCenter.clone().normalize();
+            const alt = distance - this.planetRadius;
+            const gStr = this.gravity * Math.max(0.7, 1 - alt * 0.005);
+            const acc = gravDir.multiplyScalar(gStr);
+            const spd = vel.length();
+            acc.add(vel.clone().multiplyScalar(-this.airResistance * spd));
+
+            vel = vel.clone().add(acc.clone().multiplyScalar(dt));
+            pos = pos.clone().add(vel.clone().multiplyScalar(dt));
+
+            if (pos.length() < this.planetRadius + 0.4) {
+                points.push(pos.clone());
+                break;
+            }
+            points.push(pos.clone());
+        }
+        return points;
     }
 
     getPosition() {
