@@ -9,6 +9,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 import { Planet } from './components/Planet.js';
 import { Player } from './components/Player.js';
@@ -20,7 +21,6 @@ import { PackageSystem } from './systems/PackageSystem.js';
 import { GameState } from './systems/GameState.js';
 import { AudioSystem } from './systems/AudioSystem.js';
 import { ChromaticAberrationShader } from './shaders/ChromaticAberration.js';
-import { ToneMappingShader } from './shaders/ToneMapping.js';
 import { AtmosphericScatteringShader } from './shaders/AtmosphericScattering.js';
 import GUI from 'lil-gui';
 
@@ -147,11 +147,8 @@ class GloballGame {
         this.renderer.setClearColor(0x1a0a2e, 1);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        // NoToneMapping + LinearSRGB prevents double tone mapping/encoding
-        // when using EffectComposer. Our custom ToneMappingShader handles
-        // ACES + sRGB conversion as the final post-processing pass.
-        this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
-        this.renderer.toneMapping = THREE.NoToneMapping;
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.0;
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -235,13 +232,9 @@ class GloballGame {
         this.chromaticPass.uniforms.amount.value = 0.0005;
         this.composer.addPass(this.chromaticPass);
 
-        // Custom tone mapping pass replaces OutputPass to avoid double
-        // tone mapping. The renderer is set to NoToneMapping/LinearSRGB so
-        // materials output linear HDR. This shader applies ACES + sRGB
-        // as the final step, with alpha forced to 1.0.
-        this.toneMappingPass = new ShaderPass(ToneMappingShader);
-        this.toneMappingPass.uniforms.exposure.value = 1.0;
-        this.composer.addPass(this.toneMappingPass);
+        // OutputPass applies tone mapping and color space conversion
+        this.outputPass = new OutputPass();
+        this.composer.addPass(this.outputPass);
 
         this.updateLoadingProgress(30);
     }
@@ -599,7 +592,7 @@ class GloballGame {
         // Tone Mapping subfolder
         const toneFolder = postProc.addFolder('Tone Mapping');
         toneFolder.add(this.postProcessSettings, 'exposure', 0, 3, 0.05).name('Exposure').onChange(v => {
-            this.toneMappingPass.uniforms.exposure.value = v;
+            this.renderer.toneMappingExposure = v;
         });
 
         postProc.addColor(this.postProcessSettings, 'backgroundColor').name('Background').onChange(v => {
@@ -815,13 +808,7 @@ class GloballGame {
         if (this.usePostProcessing) {
             this.composer.render();
         } else {
-            // For direct rendering, temporarily enable renderer tone mapping
-            // since our custom ToneMapping shader isn't in the pipeline
-            this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            this.renderer.outputColorSpace = THREE.SRGBColorSpace;
             this.renderer.render(this.scene, this.camera);
-            this.renderer.toneMapping = THREE.NoToneMapping;
-            this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
         }
     }
 }
