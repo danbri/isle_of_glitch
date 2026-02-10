@@ -84,12 +84,10 @@ export const AtmosphereGlowMaterial = {
         time: { value: 0 },
         sunDirection: { value: null },
         glowColor: { value: null },
-        glowIntensity: { value: 1.0 },
-        viewVector: { value: null }
+        glowIntensity: { value: 1.0 }
     },
 
     vertexShader: /* glsl */`
-        uniform vec3 viewVector;
         varying float intensity;
         varying vec3 vNormal;
         varying vec3 vPosition;
@@ -98,11 +96,12 @@ export const AtmosphereGlowMaterial = {
             vNormal = normalize(normalMatrix * normal);
             vPosition = position;
 
-            vec3 vNorm = normalize(normalMatrix * normal);
-            vec3 vView = normalize(viewVector);
+            // Fresnel-like effect for glow — computed in world space
+            vec3 worldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+            vec3 worldNormal = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+            vec3 viewDir = normalize(cameraPosition - worldPos);
 
-            // Fresnel-like effect for glow
-            intensity = pow(1.0 - abs(dot(vNorm, vView)), 2.5);
+            intensity = pow(1.0 - abs(dot(worldNormal, viewDir)), 2.5);
 
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
         }
