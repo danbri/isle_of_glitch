@@ -43,18 +43,46 @@ export class PackageSystem {
     }
 
     getRandomDestinationAirport(excludeNear) {
-        // Pick a random airport that's far enough from the player
+        // Pick a destination reachable via the route network
+        // Prefer airports 1-3 hops away for interesting gameplay
         const trampolines = this.trampolineNetwork.trampolines;
         if (trampolines.length === 0) return null;
 
-        // Try to find one at least 5 units away (interesting distance)
+        // Find nearest airport to player as starting point
+        let startIata = null;
+        if (excludeNear) {
+            const { trampoline: nearest } = this.trampolineNetwork.getNearestTrampoline(excludeNear);
+            if (nearest) startIata = nearest.airport.name;
+        }
+
+        // Try to find a route-connected destination
+        if (startIata && this.trampolineNetwork.routeGraph[startIata]) {
+            const connected = this.trampolineNetwork.getConnectedAirports(startIata);
+            if (connected.length > 0) {
+                // Pick a random connected airport (1 hop)
+                // 50% chance of 1-hop, 50% chance of 2-hop for variety
+                if (Math.random() < 0.5 && connected.length > 0) {
+                    // 1-hop: direct connection
+                    return connected[Math.floor(Math.random() * connected.length)];
+                } else {
+                    // 2-hop: pick a random connection of a random connection
+                    const mid = connected[Math.floor(Math.random() * connected.length)];
+                    const hop2 = this.trampolineNetwork.getConnectedAirports(mid.airport.name);
+                    const filtered = hop2.filter(t => t.airport.name !== startIata);
+                    if (filtered.length > 0) {
+                        return filtered[Math.floor(Math.random() * filtered.length)];
+                    }
+                }
+            }
+        }
+
+        // Fallback: any airport at least 5 units away
         for (let attempt = 0; attempt < 20; attempt++) {
             const t = trampolines[Math.floor(Math.random() * trampolines.length)];
             if (!excludeNear || t.position.distanceTo(excludeNear) > 5) {
                 return t;
             }
         }
-        // Fallback: any airport
         return trampolines[Math.floor(Math.random() * trampolines.length)];
     }
 

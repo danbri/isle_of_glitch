@@ -1,7 +1,8 @@
 /**
  * Trampoline Network System
  * Loads all international airports from IATA database.
- * Renders all ~7900 as dots (one draw call), detailed meshes for nearest ~25.
+ * Renders all ~1200 as dots (one draw call), detailed meshes for nearest ~25.
+ * Loads real flight route graph for airport connections.
  */
 
 import * as THREE from 'three';
@@ -15,10 +16,20 @@ export class TrampolineNetwork {
         // All airports (from data file)
         this.trampolines = [];
         this.trampolineMeshes = [];      // Active detailed meshes (raycasting)
+        this.iataIndex = {};             // IATA code → trampoline data
+
+        // Route graph: IATA → Set of connected IATAs
+        this.routeGraph = {};
+        this.routeCount = 0;
 
         this.airportDots = null;         // THREE.Points for all airports
         this.detailedPool = [];          // Reusable detailed Groups
         this.assignedAirports = [];      // Airport index per pool slot
+
+        // Route arc rendering
+        this.routeArcPool = [];          // Pool of arc Line objects
+        this.activeArcs = 0;
+        this.ROUTE_ARC_POOL_SIZE = 60;   // Max visible route arcs
 
         this.connections = [];
         this.highlightedTrampoline = null;
@@ -32,8 +43,10 @@ export class TrampolineNetwork {
 
     async init() {
         await this.loadAirports();
+        await this.loadRoutes();
         this.createAirportDots();
         this.createDetailedPool();
+        this.createRouteArcPool();
     }
 
     async loadAirports() {
@@ -54,11 +67,48 @@ export class TrampolineNetwork {
                 };
             });
 
+            // Build IATA index
+            this.trampolines.forEach(t => {
+                this.iataIndex[t.airport.name] = t;
+            });
+
             console.log(`Loaded ${this.trampolines.length} airports`);
         } catch (e) {
             console.error('Failed to load airports, using fallback:', e);
             this.createFallbackAirports();
         }
+    }
+
+    async loadRoutes() {
+        try {
+            const response = await fetch('data/routes.json');
+            const pairs = await response.json();
+
+            // Build adjacency map
+            for (const [a, b] of pairs) {
+                if (!this.routeGraph[a]) this.routeGraph[a] = new Set();
+                if (!this.routeGraph[b]) this.routeGraph[b] = new Set();
+                this.routeGraph[a].add(b);
+                this.routeGraph[b].add(a);
+            }
+
+            this.routeCount = pairs.length;
+            console.log(`Loaded ${pairs.length} route pairs, ${Object.keys(this.routeGraph).length} airports connected`);
+        } catch (e) {
+            console.warn('Failed to load routes:', e);
+        }
+    }
+
+    getConnectedAirports(iataCode) {
+        const connected = this.routeGraph[iataCode];
+        if (!connected) return [];
+        return Array.from(connected)
+            .map(code => this.iataIndex[code])
+            .filter(Boolean);
+    }
+
+    areConnected(iata1, iata2) {
+        return this.routeGraph[iata1] && this.routeGraph[iata1].has(iata2);
     }
 
     createFallbackAirports() {
@@ -211,6 +261,100 @@ export class TrampolineNetwork {
             this.detailedPool.push(group);
             this.assignedAirports.push(-1);
         }
+    }
+
+    createRouteArcPool() {
+        // Pre-create a pool of arc line objects for route visualization
+        const segments = 24;
+        const positions = new Float32Array((segments + 1) * 3);
+
+        for (let i = 0; i < this.ROUTE_ARC_POOL_SIZE; i++) {
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(
+                new Float32Array((segments + 1) * 3), 3
+            ));
+
+            const material = new THREE.LineBasicMaterial({
+                color: 0xff66aa,
+                transparent: true,
+                opacity: 0.15,
+                depthWrite: false
+            });
+
+            const line = new THREE.Line(geometry, material);
+            line.visible = false;
+            line.frustumCulled = false;
+            this.scene.add(line);
+            this.routeArcPool.push(line);
+        }
+    }
+
+    updateRouteArcs(playerPosition) {
+        if (!playerPosition || this.routeCount === 0) return;
+
+        // Find the nearest airport to the player
+        const { trampoline: nearest } = this.getNearestTrampoline(playerPosition);
+        if (!nearest) return;
+
+        const nearestIata = nearest.airport.name;
+        const connected = this.routeGraph[nearestIata];
+        if (!connected) {
+            // Hide all arcs
+            for (let i = 0; i < this.ROUTE_ARC_POOL_SIZE; i++) {
+                this.routeArcPool[i].visible = false;
+            }
+            this.activeArcs = 0;
+            return;
+        }
+
+        // Get connected airports sorted by distance (show closest routes first)
+        const routes = Array.from(connected)
+            .map(code => this.iataIndex[code])
+            .filter(Boolean)
+            .sort((a, b) =>
+                a.position.distanceToSquared(playerPosition) -
+                b.position.distanceToSquared(playerPosition)
+            )
+            .slice(0, this.ROUTE_ARC_POOL_SIZE);
+
+        const segments = 24;
+
+        for (let i = 0; i < this.ROUTE_ARC_POOL_SIZE; i++) {
+            const line = this.routeArcPool[i];
+
+            if (i < routes.length) {
+                const dest = routes[i];
+                const startPos = nearest.position;
+                const endPos = dest.position;
+
+                // Compute great-circle arc above planet surface
+                const posAttr = line.geometry.attributes.position;
+                const dist = startPos.distanceTo(endPos);
+                const arcHeight = Math.min(dist * 0.15, 1.5);
+
+                const midpoint = startPos.clone().add(endPos).multiplyScalar(0.5);
+                midpoint.normalize().multiplyScalar(this.planetRadius + 0.1 + arcHeight);
+
+                for (let s = 0; s <= segments; s++) {
+                    const t = s / segments;
+                    const p1 = startPos.clone().lerp(midpoint, t);
+                    const p2 = midpoint.clone().lerp(endPos, t);
+                    const point = p1.lerp(p2, t);
+                    posAttr.setXYZ(s, point.x, point.y, point.z);
+                }
+
+                posAttr.needsUpdate = true;
+
+                // Fade by distance — nearby routes brighter
+                const distToPlayer = dest.position.distanceTo(playerPosition);
+                line.material.opacity = Math.max(0.05, 0.2 - distToPlayer * 0.01);
+                line.visible = true;
+            } else {
+                line.visible = false;
+            }
+        }
+
+        this.activeArcs = routes.length;
     }
 
     updateLabel(poolIndex, airport) {
@@ -374,6 +518,7 @@ export class TrampolineNetwork {
             const moved = this._lastLODPos.distanceToSquared(playerPosition) > 0.25;
             if (time - this._lastLODTime > 0.5 || moved) {
                 this.updateDetailedDisplay(playerPosition);
+                this.updateRouteArcs(playerPosition);
                 this._lastLODPos.copy(playerPosition);
                 this._lastLODTime = time;
             }
