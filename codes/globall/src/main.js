@@ -394,33 +394,56 @@ class GloballGame {
         // Bounce button: hold-to-charge on touch, release to bounce
         const bounceIndicator = this.getEl('bounce-indicator');
         if (bounceIndicator) {
+            const startCharge = () => {
+                this.bounceCharging = true;
+                this.bounceHoldStart = Date.now();
+                // Haptic feedback on charge start
+                if (navigator.vibrate) navigator.vibrate(30);
+                // Start charge pulse animation
+                bounceIndicator.style.transform = 'scale(1.05)';
+                this._chargeInterval = setInterval(() => {
+                    if (!this.bounceCharging) return;
+                    const holdMs = Date.now() - this.bounceHoldStart;
+                    // Escalating haptic pulses
+                    if (navigator.vibrate) {
+                        if (holdMs > 600) navigator.vibrate(20);
+                        else if (holdMs > 200) navigator.vibrate(10);
+                    }
+                    // Pulse animation
+                    const pulse = 1.05 + Math.sin(holdMs * 0.01) * 0.05;
+                    bounceIndicator.style.transform = `scale(${pulse})`;
+                }, 100);
+            };
+            const releaseCharge = () => {
+                if (this.bounceCharging) {
+                    this.bounceCharging = false;
+                    const holdMs = Date.now() - this.bounceHoldStart;
+                    clearInterval(this._chargeInterval);
+                    bounceIndicator.style.transform = 'scale(1)';
+                    // Strong haptic on release
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    this.doBounce(holdMs);
+                }
+            };
+
             bounceIndicator.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.bounceCharging = true;
-                this.bounceHoldStart = Date.now();
+                startCharge();
             }, { passive: false });
             bounceIndicator.addEventListener('touchend', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (this.bounceCharging) {
-                    this.bounceCharging = false;
-                    const holdMs = Date.now() - this.bounceHoldStart;
-                    this.doBounce(holdMs);
-                }
+                releaseCharge();
+            }, { passive: false });
+            bounceIndicator.addEventListener('touchcancel', (e) => {
+                this.bounceCharging = false;
+                clearInterval(this._chargeInterval);
+                bounceIndicator.style.transform = 'scale(1)';
             }, { passive: false });
             // Desktop mouse fallback
-            bounceIndicator.addEventListener('mousedown', () => {
-                this.bounceCharging = true;
-                this.bounceHoldStart = Date.now();
-            });
-            bounceIndicator.addEventListener('mouseup', () => {
-                if (this.bounceCharging) {
-                    this.bounceCharging = false;
-                    const holdMs = Date.now() - this.bounceHoldStart;
-                    this.doBounce(holdMs);
-                }
-            });
+            bounceIndicator.addEventListener('mousedown', startCharge);
+            bounceIndicator.addEventListener('mouseup', releaseCharge);
         }
     }
 
@@ -900,12 +923,17 @@ class GloballGame {
         const currentPackage = this.packageSystem.getCurrentPackage();
         if (currentPackage) {
             const pn = this.getEl('package-name');
-            if (pn) pn.textContent = currentPackage.name;
+            if (pn) pn.textContent = currentPackage.type.name;
             const pd = this.getEl('package-dest');
-            if (pd) pd.textContent = `→ ${currentPackage.destination}`;
+            if (pd) pd.textContent = `→ ${currentPackage.destinationName}`;
+
+            // Auto-target destination airport for bounce aim
+            if (currentPackage.destinationAirport && !this.player.targetTrampoline) {
+                this.player.setTargetTrampoline(currentPackage.destinationAirport);
+            }
 
             // Update direction indicator
-            this.updateDirectionIndicator(currentPackage);
+            this.updateDirectionIndicator();
         }
 
         // Update nearest airport + target location
@@ -929,30 +957,33 @@ class GloballGame {
 
         // Update bounce indicator — show charge type during hold
         const bounceEl = this.getEl('bounce-charge');
+        const bounceBtn = this.getEl('bounce-indicator');
         if (!bounceEl) return;
         if (this.bounceCharging) {
             const holdMs = Date.now() - this.bounceHoldStart;
             if (holdMs < 200) {
-                bounceEl.textContent = '\uD83C\uDF38'; // scenic
+                bounceEl.textContent = '🌸';
+                if (bounceBtn) bounceBtn.style.background =
+                    'conic-gradient(from 0deg, #ff99cc, #ff66aa, #ff99cc)';
             } else if (holdMs < 600) {
-                bounceEl.textContent = '\uD83D\uDE80'; // express
+                bounceEl.textContent = '🚀';
+                if (bounceBtn) bounceBtn.style.background =
+                    'conic-gradient(from 0deg, #66ddff, #3399ff, #66ddff)';
             } else {
-                bounceEl.textContent = '\uD83C\uDF19'; // night
+                bounceEl.textContent = '🌙';
+                if (bounceBtn) bounceBtn.style.background =
+                    'conic-gradient(from 0deg, #aa88ff, #6644cc, #aa88ff)';
             }
         } else {
-            const bounceCharge = this.player.getBounceCharge();
-            if (bounceCharge >= 1) {
-                bounceEl.textContent = '\uD83D\uDE80';
-            } else if (bounceCharge >= 0.5) {
-                bounceEl.textContent = '\u2B06\uFE0F';
-            } else {
-                bounceEl.textContent = '\u23F3';
-            }
+            // Reset button color
+            if (bounceBtn) bounceBtn.style.background =
+                'conic-gradient(from 0deg, #f093fb, #f5576c, #fa709a, #fee140, #f093fb)';
+            bounceEl.textContent = '🚀';
         }
     }
 
-    updateDirectionIndicator(currentPackage) {
-        const destPos = this.packageSystem.getDestinationPosition(currentPackage.destination);
+    updateDirectionIndicator() {
+        const destPos = this.packageSystem.getDestinationPosition();
         if (!destPos) return;
 
         const playerPos = this.player.getPosition();
@@ -1028,7 +1059,31 @@ class GloballGame {
         this.aurora.update(time, this.deltaTime, this.player.getPosition());
         this.trampolineNetwork.update(time, this.deltaTime, this.player.getPosition());
         this.player.update(time, this.deltaTime, this.keys);
+        const prevDeliveries = this.gameState.deliveries;
         this.packageSystem.update(time, this.deltaTime, this.player);
+        if (this.gameState.deliveries > prevDeliveries) {
+            // Delivery completed! Show celebration notification
+            const el = this.getEl('target-notification');
+            if (el) {
+                el.textContent = `✨ DELIVERED! +${this.packageSystem.getCurrentPackage()?.type.value || 100} ✨`;
+                el.style.color = '#00ff88';
+                el.style.fontSize = '1.2rem';
+                el.style.opacity = '1';
+                clearTimeout(this._targetNotifTimeout);
+                this._targetNotifTimeout = setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.color = '#ff66aa';
+                    el.style.fontSize = '0.9rem';
+                }, 2500);
+            }
+            // Haptic celebration
+            if (navigator.vibrate) navigator.vibrate([50, 50, 100]);
+            // Auto-target new destination
+            const newPkg = this.packageSystem.getCurrentPackage();
+            if (newPkg && newPkg.destinationAirport) {
+                this.player.setTargetTrampoline(newPkg.destinationAirport);
+            }
+        }
 
         // Dynamic post-processing adjustments (respects fine-grained toggles)
         const speed = this.player.getSpeed();
