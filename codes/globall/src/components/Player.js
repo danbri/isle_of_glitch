@@ -86,6 +86,7 @@ export class Player {
 
         // Set directly without lerping
         this.camera.position.copy(cameraPos);
+        this.camera.up.copy(up);
         this.camera.lookAt(this.position);
     }
 
@@ -422,7 +423,6 @@ export class Player {
         let forward;
         if (speed > 0.5) {
             forward = this.velocity.clone().normalize();
-            // Smooth the forward direction to avoid jitter
             if (this.lastForward) {
                 forward.lerp(this.lastForward, 0.3);
                 forward.normalize();
@@ -436,26 +436,22 @@ export class Player {
             if (forward.length() < 0.1) forward.set(1, 0, 0);
         }
 
-        // --- Lead camera toward velocity direction ---
-        // At high speed, camera swings AHEAD of the player to show where you're going
-        const leadAmount = Math.min(speed * 0.15, 2.5);
+        // Lead camera ahead in travel direction
+        const leadAmount = Math.min(speed * 0.1, 1.0);
 
-        // --- Destination pull: bias camera to show destination ---
+        // Destination pull
         let destBias = new THREE.Vector3();
         if (this.targetTrampoline && speed > 1) {
             const toTarget = this.targetTrampoline.position.clone()
                 .sub(this.position).normalize();
-            // Blend destination direction into the look — subtle pull
-            destBias = toTarget.multiplyScalar(Math.min(speed * 0.08, 1.0));
+            destBias = toTarget.multiplyScalar(Math.min(speed * 0.05, 0.5));
         }
 
-        // --- Altitude-aware framing ---
-        // Close at ground, pull back gently in flight (less extreme than before)
-        const altFactor = Math.min(altitude * 0.08, 1.5);
-        const camDist = 4 + altFactor * 3;   // 4 at ground, up to ~8.5 at altitude
-        const camHeight = 1.5 + altFactor * 2; // 1.5 at ground, up to ~4.5 high
+        // CLOSE camera — 1.2 at ground, gently to 2.5 max at high altitude
+        const altFactor = Math.min(altitude * 0.5, 1.0);
+        const camDist = 1.2 + altFactor * 1.3;
+        const camHeight = 0.5 + altFactor * 0.8;
 
-        // Camera position: behind + above + lead offset
         const cameraTargetPos = this.position.clone()
             .add(up.clone().multiplyScalar(camHeight))
             .sub(forward.clone().multiplyScalar(camDist))
@@ -464,29 +460,26 @@ export class Player {
 
         // Keep camera above planet surface
         const cameraDistFromCenter = cameraTargetPos.length();
-        if (cameraDistFromCenter < this.planetRadius + 0.8) {
-            cameraTargetPos.normalize().multiplyScalar(this.planetRadius + 0.8);
+        if (cameraDistFromCenter < this.planetRadius + 0.3) {
+            cameraTargetPos.normalize().multiplyScalar(this.planetRadius + 0.3);
         }
 
-        // --- Dynamic lerp speed ---
-        // Snappy during bounces, smooth when cruising
-        const dynamicLerp = speed > 3 ? 0.08 : // Fast travel: smooth cinematic
-                            speed > 0.5 ? 0.12 : // Normal: responsive
-                            0.06;                 // Idle: gentle drift
-        const lerpSpeed = this.cameraLerpSpeed || dynamicLerp;
+        // Dynamic lerp — responsive
+        const dynamicLerp = speed > 3 ? 0.1 : speed > 0.5 ? 0.15 : 0.08;
+        this.camera.position.lerp(cameraTargetPos, this.cameraLerpSpeed || dynamicLerp);
 
-        this.camera.position.lerp(cameraTargetPos, lerpSpeed);
+        // Set camera up to local surface normal — prevents gimbal lock at poles
+        this.camera.up.copy(up);
 
-        // --- Look-ahead target ---
-        // Camera looks slightly ahead of the player in the travel direction
+        // Look slightly ahead
         const lookTarget = this.position.clone()
-            .add(forward.clone().multiplyScalar(leadAmount * 0.6))
-            .add(destBias.clone().multiplyScalar(0.3));
+            .add(forward.clone().multiplyScalar(leadAmount * 0.5))
+            .add(destBias.clone().multiplyScalar(0.2));
         this.camera.lookAt(lookTarget);
 
-        // --- Dynamic FOV for speed rush ---
+        // Dynamic FOV
         const baseFOV = 60;
-        const speedFOV = baseFOV + Math.min(speed * 1.5, 15); // Up to 75 FOV at high speed
+        const speedFOV = baseFOV + Math.min(speed * 1.5, 15);
         this.camera.fov += (speedFOV - this.camera.fov) * 0.05;
         this.camera.updateProjectionMatrix();
     }

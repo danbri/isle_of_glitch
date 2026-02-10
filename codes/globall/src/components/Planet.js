@@ -34,7 +34,7 @@ export class Planet {
         // Planet geometry
         const geometry = new THREE.SphereGeometry(this.radius, 128, 128);
 
-        // Custom shader material
+        // Custom shader material — opaque, writes depth
         const material = new THREE.ShaderMaterial({
             uniforms: {
                 time: { value: 0 },
@@ -49,7 +49,10 @@ export class Planet {
                 atmosphereColor: { value: new THREE.Color(0.4, 0.7, 1.0) }
             },
             vertexShader: PlanetSurfaceShader.vertexShader,
-            fragmentShader: PlanetSurfaceShader.fragmentShader
+            fragmentShader: PlanetSurfaceShader.fragmentShader,
+            depthWrite: true,
+            depthTest: true,
+            side: THREE.FrontSide
         });
 
         this.planetMesh = new THREE.Mesh(geometry, material);
@@ -184,49 +187,59 @@ export class Planet {
                 const i = (py * width + px) * 4;
                 let r, g, b;
 
+                // Polar UV distortion fix: at extreme latitudes, reduce noise
+                // detail to hide equirectangular stretching artifacts
+                const polarFade = absLat > 75 ? Math.min(1, (absLat - 75) / 10) : 0;
+
                 if (!isLand) {
-                    // Ocean — deep blue with depth variation
-                    const depth = fbm(lon * 0.02 + 50, lat * 0.02 + 50);
+                    // Ocean — rich deep blue with depth variation
+                    const depth = fbm(lon * 0.02 + 50, lat * 0.02 + 50) * (1 - polarFade);
                     const nearCoast = Math.max(0, landVal + coastNoise + 0.1);
                     const shallowMix = Math.min(1, nearCoast * 8);
-                    // Deep ocean
-                    const dr = 15 + depth * 20;
-                    const dg = 40 + depth * 30;
-                    const db = 90 + depth * 50;
+                    // Deep ocean — darker, richer blue
+                    const dr = 8 + depth * 15;
+                    const dg = 25 + depth * 25;
+                    const db = 80 + depth * 55;
                     // Shallow turquoise near coast
-                    const sr = 40 + depth * 30;
-                    const sg = 140 + depth * 40;
-                    const sb = 160 + depth * 30;
+                    const sr = 30 + depth * 25;
+                    const sg = 130 + depth * 40;
+                    const sb = 150 + depth * 30;
                     r = dr + (sr - dr) * shallowMix;
                     g = dg + (sg - dg) * shallowMix;
                     b = db + (sb - db) * shallowMix;
+                    // At extreme poles, blend toward icy ocean
+                    if (polarFade > 0) {
+                        r = r + (180 - r) * polarFade;
+                        g = g + (200 - g) * polarFade;
+                        b = b + (220 - b) * polarFade;
+                    }
                 } else if (mountainVal > 0.4) {
-                    // Mountains — purple-grey with snow caps
+                    // Mountains — grey-brown with snow caps
                     const snow = absLat > 35 || mountainVal > 0.7 ? 1 : 0;
-                    const rockNoise = fbm(lon * 0.2, lat * 0.2) * 0.3;
-                    if (snow && (absLat > 60 || mountainVal > 0.8)) {
-                        r = 220 + rockNoise * 30;
-                        g = 225 + rockNoise * 25;
-                        b = 235 + rockNoise * 15;
+                    const rockNoise = fbm(lon * 0.2, lat * 0.2) * 0.3 * (1 - polarFade);
+                    if (snow && (absLat > 55 || mountainVal > 0.8)) {
+                        r = 225 + rockNoise * 25;
+                        g = 230 + rockNoise * 20;
+                        b = 240 + rockNoise * 10;
                     } else {
-                        r = 100 + rockNoise * 40 + mountainVal * 30;
-                        g = 85 + rockNoise * 30 + mountainVal * 20;
-                        b = 95 + rockNoise * 40 + mountainVal * 30;
+                        r = 110 + rockNoise * 40 + mountainVal * 30;
+                        g = 95 + rockNoise * 30 + mountainVal * 20;
+                        b = 80 + rockNoise * 30 + mountainVal * 15;
                     }
                 } else {
                     // Land biomes based on latitude
-                    const biomeNoise = fbm(lon * 0.06 + 200, lat * 0.06 + 200) * 0.4;
-                    const detail = fbm(lon * 0.15, lat * 0.15) * 0.15;
+                    const biomeNoise = fbm(lon * 0.06 + 200, lat * 0.06 + 200) * 0.4 * (1 - polarFade);
+                    const detail = fbm(lon * 0.15, lat * 0.15) * 0.15 * (1 - polarFade);
 
                     if (absLat > 72) {
-                        // Ice caps — bright white-blue
-                        r = 210 + detail * 40; g = 225 + detail * 25; b = 240;
+                        // Ice caps — uniform white to hide pole distortion
+                        r = 225; g = 235; b = 245;
                     } else if (absLat > 58) {
                         // Tundra/boreal — muted sage
-                        r = 85 + detail * 30; g = 110 + detail * 30; b = 80 + detail * 20;
+                        r = 75 + detail * 30; g = 105 + detail * 30; b = 70 + detail * 20;
                     } else if (absLat > 38) {
                         // Temperate forest — rich greens
-                        r = 50 + detail * 30; g = 120 + detail * 50 + biomeNoise * 30; b = 55 + detail * 20;
+                        r = 40 + detail * 25; g = 115 + detail * 55 + biomeNoise * 30; b = 45 + detail * 15;
                     } else if (absLat > 18) {
                         // Desert / grassland belt
                         const desertFactor = fbm(lon * 0.03 + 300, lat * 0.03);
@@ -236,21 +249,21 @@ export class Planet {
                             || (lon > 120 && lon < 150 && lat < -18 && lat > -30)
                             || (lon > 90 && lon < 115 && lat > 35 && lat < 48);
                         if (inDesertBelt && desertFactor > 0.3) {
-                            // Desert — warm sand/golden
-                            r = 195 + detail * 40 + biomeNoise * 20;
-                            g = 170 + detail * 30 + biomeNoise * 15;
-                            b = 110 + detail * 20;
+                            // Desert — warm sand/golden, more saturated
+                            r = 200 + detail * 40 + biomeNoise * 20;
+                            g = 165 + detail * 30 + biomeNoise * 15;
+                            b = 90 + detail * 20;
                         } else {
                             // Grassland/savanna — olive-green
-                            r = 110 + detail * 30 + biomeNoise * 20;
-                            g = 140 + detail * 30 + biomeNoise * 20;
-                            b = 65 + detail * 20;
+                            r = 100 + detail * 30 + biomeNoise * 20;
+                            g = 140 + detail * 35 + biomeNoise * 20;
+                            b = 55 + detail * 15;
                         }
                     } else {
                         // Tropical — vivid jungle greens
-                        r = 25 + detail * 25 + biomeNoise * 15;
-                        g = 95 + detail * 45 + biomeNoise * 30;
-                        b = 35 + detail * 15;
+                        r = 15 + detail * 20 + biomeNoise * 10;
+                        g = 90 + detail * 50 + biomeNoise * 35;
+                        b = 25 + detail * 10;
                     }
                 }
 
@@ -561,12 +574,11 @@ export class Planet {
     }
 
     update(time, deltaTime) {
-        // Rotate planet slowly
-        this.planetMesh.rotation.y += deltaTime * 0.02;
-
-        // Rotate clouds slightly faster
+        // Planet does NOT auto-rotate — airports and trampolines must stay
+        // aligned with their real lat/lon positions on the texture.
+        // Only clouds rotate for visual interest.
         if (this.cloudsMesh) {
-            this.cloudsMesh.rotation.y += deltaTime * 0.025;
+            this.cloudsMesh.rotation.y += deltaTime * 0.015;
         }
 
         // Update shader uniforms
