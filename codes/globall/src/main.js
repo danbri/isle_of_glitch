@@ -40,6 +40,21 @@ class GloballGame {
         this.displayedAltitude = 0;
         this.altitudeSmoothFactor = 0.15;
 
+        // Game session — 3-minute timed rounds
+        this.session = {
+            timeLimit: 180, // seconds
+            startTime: 0,
+            started: false,
+            ended: false,
+            bestCombo: 0,
+            bestDelivery: 0
+        };
+
+        // Analog touch steering (replaces binary keys)
+        this.steerX = 0; // -1 to 1
+        this.steerY = 0; // -1 to 1
+        this.steerMomentum = 0.85; // decay factor when finger lifts
+
         // Defer audio initialization to avoid blocking
         this.audio = null;
 
@@ -495,22 +510,20 @@ class GloballGame {
             this.bounceCharging = false;
         }
 
-        // Convert swipe to directional input
-        const threshold = 10;
-        if (Math.abs(dx) > threshold) {
-            this.keys['KeyD'] = dx > 0;
-            this.keys['KeyA'] = dx < 0;
+        // Analog steering: swipe distance maps to force (0-1), with deadzone
+        const deadzone = 8;
+        const maxSwipe = 80; // pixels for full force
+
+        if (Math.abs(dx) > deadzone) {
+            this.steerX = Math.sign(dx) * Math.min(1, (Math.abs(dx) - deadzone) / maxSwipe);
         } else {
-            this.keys['KeyD'] = false;
-            this.keys['KeyA'] = false;
+            this.steerX = 0;
         }
 
-        if (Math.abs(dy) > threshold) {
-            this.keys['KeyW'] = dy < 0;
-            this.keys['KeyS'] = dy > 0;
+        if (Math.abs(dy) > deadzone) {
+            this.steerY = Math.sign(dy) * Math.min(1, (Math.abs(dy) - deadzone) / maxSwipe);
         } else {
-            this.keys['KeyW'] = false;
-            this.keys['KeyS'] = false;
+            this.steerY = 0;
         }
     }
 
@@ -521,11 +534,8 @@ class GloballGame {
             this.selectAirportAtScreen(touch.clientX, touch.clientY);
         }
 
-        // Reset all touch-based movement
-        this.keys['KeyW'] = false;
-        this.keys['KeyS'] = false;
-        this.keys['KeyA'] = false;
-        this.keys['KeyD'] = false;
+        // Steer decays with momentum (don't zero instantly)
+        // The decay is applied each frame in animate()
         this.touchStartPos = null;
     }
 
@@ -559,6 +569,19 @@ class GloballGame {
     }
 
     doBounce(holdMs) {
+        // Start game session on first bounce
+        if (!this.session.started) {
+            this.session.started = true;
+            this.session.startTime = Date.now();
+            this.session.ended = false;
+            this.session.bestCombo = 0;
+            this.session.bestDelivery = 0;
+            // Hide tutorial
+            const tut = this.getEl('tutorial-hint');
+            if (tut) tut.classList.add('hidden');
+        }
+        if (this.session.ended) return; // Can't bounce after game over
+
         // Hold duration determines bounce type:
         //   Quick tap (<200ms) = Scenic Hop (gentle, low arc)
         //   Medium hold (200-600ms) = Express Arc (high, powerful)
@@ -617,7 +640,7 @@ class GloballGame {
             if (planetHits.length > 0) {
                 const hitPoint = planetHits[0].point;
                 const { trampoline, distance } = this.trampolineNetwork.getNearestTrampoline(hitPoint);
-                if (trampoline && distance < 1.5) {
+                if (trampoline && distance < 2.5) {
                     this.player.setTargetTrampoline(trampoline);
                     this.showTargetNotification(trampoline);
                     return true;
@@ -1148,6 +1171,95 @@ class GloballGame {
         }
     }
 
+    endSession() {
+        this.session.ended = true;
+
+        // Populate game over screen
+        const goScore = this.getEl('go-score');
+        const goDeliveries = this.getEl('go-deliveries');
+        const goBestCombo = this.getEl('go-best-combo');
+        const goBestDelivery = this.getEl('go-best-delivery');
+        const goRank = this.getEl('go-rank');
+
+        if (goScore) goScore.textContent = this.gameState.score.toLocaleString();
+        if (goDeliveries) goDeliveries.textContent = this.gameState.deliveries;
+        if (goBestCombo) goBestCombo.textContent = `x${this.session.bestCombo || 1}`;
+        if (goBestDelivery) goBestDelivery.textContent = this.session.bestDelivery.toLocaleString();
+
+        // Rank based on score
+        if (goRank) {
+            const s = this.gameState.score;
+            if (s >= 10000) goRank.textContent = 'LEGENDARY COURIER';
+            else if (s >= 5000) goRank.textContent = 'EXPERT COURIER';
+            else if (s >= 2000) goRank.textContent = 'SKILLED COURIER';
+            else if (s >= 500) goRank.textContent = 'NOVICE COURIER';
+            else goRank.textContent = 'TRAINEE COURIER';
+        }
+
+        // Show game over screen
+        const screen = this.getEl('game-over-screen');
+        if (screen) screen.style.display = 'block';
+
+        // Wire up play again button
+        const btn = this.getEl('play-again-btn');
+        if (btn) {
+            const handler = () => {
+                btn.removeEventListener('click', handler);
+                btn.removeEventListener('touchend', handler);
+                this.restartSession();
+            };
+            btn.addEventListener('click', handler);
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                handler();
+            });
+        }
+
+        // Haptic
+        if (navigator.vibrate) navigator.vibrate([100, 100, 200]);
+    }
+
+    restartSession() {
+        // Hide game over
+        const screen = this.getEl('game-over-screen');
+        if (screen) screen.style.display = 'none';
+
+        // Reset game state
+        this.gameState.score = 0;
+        this.gameState.deliveries = 0;
+
+        // Reset session
+        this.session.started = false;
+        this.session.ended = false;
+        this.session.bestCombo = 0;
+        this.session.bestDelivery = 0;
+
+        // Reset timer display
+        const timerEl = this.getEl('session-time');
+        if (timerEl) {
+            timerEl.textContent = '3:00';
+            timerEl.style.color = 'white';
+        }
+
+        // Reset package system
+        this.packageSystem.comboCount = 0;
+        this.packageSystem.lastDeliveryTime = 0;
+        this.packageSystem.currentPackage = null;
+        this.packageSystem.assignNewPackage();
+
+        // Auto-target new destination
+        const pkg = this.packageSystem.getCurrentPackage();
+        if (pkg && pkg.destinationAirport) {
+            this.player.setTargetTrampoline(pkg.destinationAirport);
+        }
+
+        // Update UI
+        const scoreEl = this.getEl('score-value');
+        if (scoreEl) scoreEl.textContent = '0';
+        const delEl = this.getEl('deliveries-count');
+        if (delEl) delEl.textContent = '0 deliveries';
+    }
+
     updateLoadingProgress(progress) {
         this.loadingProgress = progress;
         const bar = this.getEl('loading-progress');
@@ -1196,6 +1308,34 @@ class GloballGame {
 
         // Update game time
         const time = currentTime * 0.001;
+
+        // Game session timer
+        if (this.session.started && !this.session.ended) {
+            const elapsed = (Date.now() - this.session.startTime) / 1000;
+            const remaining = Math.max(0, this.session.timeLimit - elapsed);
+            const mins = Math.floor(remaining / 60);
+            const secs = Math.floor(remaining % 60);
+            const timerEl = this.getEl('session-time');
+            if (timerEl) {
+                timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+                // Urgency color when < 30s
+                timerEl.style.color = remaining < 30 ? '#ff4444' : remaining < 60 ? '#ffaa00' : 'white';
+            }
+            if (remaining <= 0) {
+                this.endSession();
+            }
+        }
+
+        // Apply analog steering to player (decay when no touch)
+        if (!this.touchStartPos) {
+            this.steerX *= this.steerMomentum;
+            this.steerY *= this.steerMomentum;
+            if (Math.abs(this.steerX) < 0.01) this.steerX = 0;
+            if (Math.abs(this.steerY) < 0.01) this.steerY = 0;
+        }
+        // Feed analog steer as virtual key pressure for Player.handleInput
+        this.keys['_steerX'] = this.steerX;
+        this.keys['_steerY'] = this.steerY;
 
         // Update all game components
         this.planet.update(time, this.deltaTime);
@@ -1268,6 +1408,12 @@ class GloballGame {
                 this._celebTimeout = setTimeout(() => {
                     celebEl.classList.remove('active');
                 }, 2000);
+            }
+
+            // Track session bests
+            if (delivery) {
+                if (delivery.comboMultiplier > this.session.bestCombo) this.session.bestCombo = delivery.comboMultiplier;
+                if (delivery.score > this.session.bestDelivery) this.session.bestDelivery = delivery.score;
             }
 
             // Delivery chime + combo sound

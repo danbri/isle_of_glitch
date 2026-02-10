@@ -396,8 +396,28 @@ export class Player {
 
         // Squash and stretch based on velocity
         const currentSpeed = this.velocity.length();
-        const stretch = 1 + currentSpeed * 0.02;
-        this.mesh.scale.set(1, 1, stretch);
+        const verticalSpeed = this.velocity.dot(this.position.clone().normalize());
+        if (this.isOnGround) {
+            // Landing squash
+            const squash = Math.max(0.7, 1 - Math.abs(verticalSpeed) * 0.03);
+            this.mesh.scale.set(1 / squash, squash, 1 / squash);
+        } else {
+            const stretch = 1 + currentSpeed * 0.02;
+            this.mesh.scale.set(1, 1, stretch);
+        }
+
+        // Eye tracking — pupils look toward target
+        if (this.targetTrampoline && this.mesh.children.length >= 7) {
+            const toTarget = this.targetTrampoline.position.clone().sub(this.position);
+            const localDir = this.mesh.worldToLocal(
+                this.position.clone().add(toTarget.normalize())
+            );
+            const ex = Math.max(-0.04, Math.min(0.04, localDir.x * 0.1));
+            const ey = Math.max(-0.04, Math.min(0.04, localDir.y * 0.1));
+            // Pupils are children[5] (left) and children[6] (right)
+            this.mesh.children[5].position.set(-0.1 + ex, 0.1 + ey, 0.3);
+            this.mesh.children[6].position.set(0.1 + ex, 0.1 + ey, 0.3);
+        }
 
         // Update trail
         this.updateTrail();
@@ -410,7 +430,6 @@ export class Player {
 
     handleInput(keys, deltaTime) {
         // Mid-air steering: stronger influence when airborne and moving fast
-        // This gives the player meaningful control during flight
         const speed = this.velocity.length();
         const baseForce = 5;
         const airBonus = this.isOnGround ? 0 : Math.min(speed * 0.4, 6);
@@ -423,17 +442,29 @@ export class Player {
             : new THREE.Vector3(0, 0, 1);
         const right = new THREE.Vector3().crossVectors(up, forward).normalize();
 
-        if (keys['KeyW'] || keys['ArrowUp']) {
-            this.velocity.add(forward.clone().multiplyScalar(influenceForce * deltaTime));
+        // Analog steering from touch (proportional 0-1)
+        const steerX = keys['_steerX'] || 0;
+        const steerY = keys['_steerY'] || 0;
+
+        // Apply analog + keyboard input combined
+        let forwardForce = 0;
+        let rightForce = 0;
+
+        // Keyboard (binary 0/1)
+        if (keys['KeyW'] || keys['ArrowUp']) forwardForce += 1;
+        if (keys['KeyS'] || keys['ArrowDown']) forwardForce -= 1;
+        if (keys['KeyA'] || keys['ArrowLeft']) rightForce -= 1;
+        if (keys['KeyD'] || keys['ArrowRight']) rightForce += 1;
+
+        // Touch analog (proportional, overrides keyboard if active)
+        if (Math.abs(steerX) > 0.01) rightForce = steerX;
+        if (Math.abs(steerY) > 0.01) forwardForce = -steerY; // Inverted: swipe up = forward
+
+        if (Math.abs(forwardForce) > 0.01) {
+            this.velocity.add(forward.clone().multiplyScalar(influenceForce * forwardForce * deltaTime));
         }
-        if (keys['KeyS'] || keys['ArrowDown']) {
-            this.velocity.add(forward.clone().multiplyScalar(-influenceForce * deltaTime));
-        }
-        if (keys['KeyA'] || keys['ArrowLeft']) {
-            this.velocity.add(right.clone().multiplyScalar(-influenceForce * deltaTime));
-        }
-        if (keys['KeyD'] || keys['ArrowRight']) {
-            this.velocity.add(right.clone().multiplyScalar(influenceForce * deltaTime));
+        if (Math.abs(rightForce) > 0.01) {
+            this.velocity.add(right.clone().multiplyScalar(influenceForce * rightForce * deltaTime));
         }
     }
 

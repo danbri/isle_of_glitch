@@ -170,7 +170,7 @@ export class TrampolineNetwork {
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
         const material = new THREE.PointsMaterial({
-            size: 0.06,
+            size: 0.12,
             vertexColors: true,
             sizeAttenuation: true,
             transparent: true,
@@ -347,7 +347,7 @@ export class TrampolineNetwork {
 
                 // Fade by distance — nearby routes brighter
                 const distToPlayer = dest.position.distanceTo(playerPosition);
-                line.material.opacity = Math.max(0.05, 0.2 - distToPlayer * 0.01);
+                line.material.opacity = Math.max(0.1, 0.4 - distToPlayer * 0.015);
                 line.visible = true;
             } else {
                 line.visible = false;
