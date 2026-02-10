@@ -593,6 +593,8 @@ class GloballGame {
             chromaticAngle: 0.0,
             // Tone Mapping
             exposure: 1.0,
+            enableOutputPass: true,
+            rendererToneMapping: true,
             // Scene
             backgroundColor: '#1a0a2e'
         };
@@ -639,6 +641,12 @@ class GloballGame {
         const toneFolder = postProc.addFolder('Tone Mapping');
         toneFolder.add(this.postProcessSettings, 'exposure', 0, 3, 0.05).name('Exposure').onChange(v => {
             this.renderer.toneMappingExposure = v;
+        });
+        toneFolder.add(this.postProcessSettings, 'enableOutputPass').name('OutputPass').onChange(v => {
+            this.outputPass.enabled = v;
+        });
+        toneFolder.add(this.postProcessSettings, 'rendererToneMapping').name('Renderer TM').onChange(v => {
+            this.renderer.toneMapping = v ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping;
         });
 
         postProc.addColor(this.postProcessSettings, 'backgroundColor').name('Background').onChange(v => {
