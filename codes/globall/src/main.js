@@ -1,5 +1,5 @@
 /**
- * GLOBALL - Planetary Trampoline Express
+ * GLOBALL - Magnetic Frenetic Transport
  * Main game entry point
  */
 
@@ -362,6 +362,8 @@ class GloballGame {
         await this.player.init();
         // Sync player camera with orbit controls initial state
         this.player.cameraEnabled = !this.controls.enabled;
+        // Wire up magnetic attraction to trampoline network
+        this.player.setTrampolineNetwork(this.trampolineNetwork);
 
         this.updateLoadingProgress(90);
 
@@ -374,7 +376,7 @@ class GloballGame {
         const trajGeo = new THREE.BufferGeometry();
         trajGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(51 * 3), 3));
         const trajMat = new THREE.LineDashedMaterial({
-            color: 0xff88cc, dashSize: 0.3, gapSize: 0.15,
+            color: 0x4488ff, dashSize: 0.3, gapSize: 0.15,
             transparent: true, opacity: 0.6
         });
         this.trajectoryLine = new THREE.Line(trajGeo, trajMat);
@@ -999,7 +1001,7 @@ class GloballGame {
             if (this.player.targetTrampoline) {
                 const t = this.player.targetTrampoline;
                 targetEl.textContent = `\u2192 ${t.airport.name} ${t.airport.city}`;
-                targetEl.style.color = '#ff77bb';
+                targetEl.style.color = '#77bbff';
             } else {
                 targetEl.textContent = 'Hold bounce button \u2022 Tap airport to target';
                 targetEl.style.color = 'rgba(255,255,255,0.4)';
@@ -1017,23 +1019,23 @@ class GloballGame {
         if (this.bounceCharging) {
             const holdMs = Date.now() - this.bounceHoldStart;
             if (holdMs < 200) {
-                bounceEl.textContent = '🌸';
+                bounceEl.textContent = '🧲';
                 if (bounceBtn) bounceBtn.style.background =
-                    'conic-gradient(from 0deg, #ff99cc, #ff66aa, #ff99cc)';
+                    'conic-gradient(from 0deg, #88aaff, #4488ff, #88aaff)';
             } else if (holdMs < 600) {
-                bounceEl.textContent = '🚀';
+                bounceEl.textContent = '⚡';
                 if (bounceBtn) bounceBtn.style.background =
                     'conic-gradient(from 0deg, #66ddff, #3399ff, #66ddff)';
             } else {
-                bounceEl.textContent = '🌙';
+                bounceEl.textContent = '🔮';
                 if (bounceBtn) bounceBtn.style.background =
                     'conic-gradient(from 0deg, #aa88ff, #6644cc, #aa88ff)';
             }
         } else {
             // Reset button color
             if (bounceBtn) bounceBtn.style.background =
-                'conic-gradient(from 0deg, #f093fb, #f5576c, #fa709a, #fee140, #f093fb)';
-            bounceEl.textContent = '🚀';
+                'conic-gradient(from 0deg, #4488ff, #6644ff, #88aaff, #4488ff)';
+            bounceEl.textContent = '⚡';
         }
     }
 
@@ -1144,7 +1146,7 @@ class GloballGame {
                 clearTimeout(this._targetNotifTimeout);
                 this._targetNotifTimeout = setTimeout(() => {
                     el.style.opacity = '0';
-                    el.style.color = '#ff66aa';
+                    el.style.color = '#4488ff';
                     el.style.fontSize = '0.9rem';
                 }, 2000);
             }

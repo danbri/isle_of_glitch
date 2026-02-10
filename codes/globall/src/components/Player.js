@@ -39,6 +39,7 @@ export class Player {
         // Target trampoline
         this.targetTrampoline = null;
         this.isOnTrampoline = false;
+        this.trampolineNetwork = null;
 
         // Visual
         this.mesh = null;
@@ -194,11 +195,11 @@ export class Player {
             positions[i * 3 + 1] = pos.y;
             positions[i * 3 + 2] = pos.z;
 
-            // Gradient from pink to cyan
+            // Gradient from white-blue to deep purple (magnetic flux)
             const t = i / this.maxTrailLength;
-            colors[i * 3] = 1.0 - t * 0.5;     // R
-            colors[i * 3 + 1] = 0.4 + t * 0.5; // G
-            colors[i * 3 + 2] = 0.6 + t * 0.4; // B
+            colors[i * 3] = 0.5 - t * 0.3;     // R: bright→dim
+            colors[i * 3 + 1] = 0.6 - t * 0.3; // G: bright→dim
+            colors[i * 3 + 2] = 1.0 - t * 0.3; // B: stays bright
         }
 
         this.trail.geometry.attributes.position.needsUpdate = true;
@@ -274,35 +275,52 @@ export class Player {
     }
 
     createBounceEffect() {
-        // Ring expanding outward
-        const geometry = new THREE.RingGeometry(0.1, 0.3, 32);
-        const material = new THREE.MeshBasicMaterial({
-            color: 0xff66aa,
-            transparent: true,
-            opacity: 1,
-            side: THREE.DoubleSide
-        });
+        // Electromagnetic pulse — concentric expanding rings
+        const rings = [];
+        const colors = [0x4488ff, 0x6644ff, 0x88aaff];
 
-        const ring = new THREE.Mesh(geometry, material);
-        ring.position.copy(this.position);
-        ring.lookAt(this.planetCenter);
+        for (let r = 0; r < 3; r++) {
+            const geometry = new THREE.RingGeometry(0.05 + r * 0.08, 0.15 + r * 0.08, 32);
+            const material = new THREE.MeshBasicMaterial({
+                color: colors[r],
+                transparent: true,
+                opacity: 1,
+                side: THREE.DoubleSide
+            });
 
-        this.scene.add(ring);
+            const ring = new THREE.Mesh(geometry, material);
+            ring.position.copy(this.position);
+            ring.lookAt(this.planetCenter);
+            this.scene.add(ring);
+            rings.push({ ring, geometry, material, delay: r * 0.06 });
+        }
 
         // Animate and remove
         const startTime = Date.now();
         const animate = () => {
             const elapsed = (Date.now() - startTime) / 1000;
-            const scale = 1 + elapsed * 5;
-            ring.scale.set(scale, scale, 1);
-            material.opacity = Math.max(0, 1 - elapsed * 2);
+            let allDone = true;
 
-            if (elapsed < 0.5) {
+            for (const r of rings) {
+                const t = Math.max(0, elapsed - r.delay);
+                if (t < 0.5) {
+                    allDone = false;
+                    const scale = 1 + t * 6;
+                    r.ring.scale.set(scale, scale, 1);
+                    r.material.opacity = Math.max(0, 1 - t * 2.5);
+                } else {
+                    r.material.opacity = 0;
+                }
+            }
+
+            if (!allDone) {
                 requestAnimationFrame(animate);
             } else {
-                this.scene.remove(ring);
-                geometry.dispose();
-                material.dispose();
+                for (const r of rings) {
+                    this.scene.remove(r.ring);
+                    r.geometry.dispose();
+                    r.material.dispose();
+                }
             }
         };
         animate();
@@ -315,6 +333,10 @@ export class Player {
 
     setTargetTrampoline(trampoline) {
         this.targetTrampoline = trampoline;
+    }
+
+    setTrampolineNetwork(network) {
+        this.trampolineNetwork = network;
     }
 
     setRouteType(routeType) {
@@ -379,6 +401,17 @@ export class Player {
             }
         } else {
             this.isOnGround = false;
+        }
+
+        // Magnetic attraction to nearby airports
+        if (this.trampolineNetwork && altitude < 2) {
+            const { trampoline: nearest, distance: nearestDist } = 
+                this.trampolineNetwork.getNearestTrampoline(this.position);
+            if (nearest && nearestDist < 3) {
+                const pullDir = nearest.position.clone().sub(this.position).normalize();
+                const pullStrength = Math.min(2.0, 0.5 / (nearestDist * nearestDist + 0.1));
+                this.velocity.add(pullDir.multiplyScalar(pullStrength * deltaTime));
+            }
         }
 
         // Recharge bounce over time

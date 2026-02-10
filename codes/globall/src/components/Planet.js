@@ -522,7 +522,7 @@ export class Planet {
                 time: { value: 0 },
                 sunDirection: { value: this.sunDirection },
                 glowColor: { value: new THREE.Color(0.3, 0.5, 0.8) },
-                glowIntensity: { value: 0.6 }
+                glowIntensity: { value: 0.35 }
             },
             vertexShader: AtmosphereGlowMaterial.vertexShader,
             fragmentShader: AtmosphereGlowMaterial.fragmentShader,
@@ -543,7 +543,7 @@ export class Planet {
                 time: { value: 0 },
                 sunDirection: { value: this.sunDirection },
                 glowColor: { value: new THREE.Color(0.4, 0.6, 1.0) },
-                glowIntensity: { value: 0.4 }
+                glowIntensity: { value: 0.25 }
             },
             vertexShader: AtmosphereGlowMaterial.vertexShader,
             fragmentShader: AtmosphereGlowMaterial.fragmentShader,
@@ -564,7 +564,7 @@ export class Planet {
         const material = new THREE.MeshPhongMaterial({
             map: cloudTexture,
             transparent: true,
-            opacity: 0.25, // Reduced from 0.4
+            opacity: 0.15, // Reduced from 0.4
             depthWrite: false,
             blending: THREE.NormalBlending // Changed from AdditiveBlending
         });

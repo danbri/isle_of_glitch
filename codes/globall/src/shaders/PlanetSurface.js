@@ -125,10 +125,11 @@ export const PlanetSurfaceShader = {
         void main() {
             // Calculate lighting
             float NdotL = dot(vWorldNormal, sunDirection);
-            float dayFactor = smoothstep(-0.1, 0.2, NdotL);
+            float dayFactor = smoothstep(-0.15, 0.15, NdotL);
 
             // Sample textures
             vec4 dayColor = texture2D(dayTexture, vUv);
+            dayColor.rgb *= 1.3;
             vec4 nightColor = texture2D(nightTexture, vUv);
             vec4 cityLights = texture2D(cityLightsTexture, vUv);
             vec4 clouds = texture2D(cloudsTexture, vUv + vec2(time * 0.001, 0.0));
@@ -158,7 +159,7 @@ export const PlanetSurfaceShader = {
             vec3 surfaceColor = mix(nightColor.rgb, dayColor.rgb, dayFactor);
 
             // Ensure minimum brightness so planet is always visible
-            surfaceColor = max(surfaceColor, vec3(0.08, 0.08, 0.12));
+            surfaceColor = max(surfaceColor, vec3(0.12, 0.12, 0.18));
 
             // Add city lights on dark side (reduced intensity)
             float cityIntensity = (1.0 - dayFactor) * cityLights.r * cityGlow;
@@ -184,7 +185,7 @@ export const PlanetSurfaceShader = {
             // Fresnel rim lighting (reduced)
             vec3 viewDir = normalize(vViewPosition);
             float fresnel = pow(1.0 - max(0.0, dot(vWorldNormal, viewDir)), 3.0);
-            vec3 rimColor = atmosphereColor * fresnel * 0.2; // Reduced from 0.5
+            vec3 rimColor = atmosphereColor * fresnel * 0.1; // Reduced from 0.5
 
             surfaceColor += rimColor;
 
