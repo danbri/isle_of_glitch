@@ -311,22 +311,180 @@
             display: none;
         }
 
-        /* Direction indicator for destination */
-        #direction-indicator {
+        /* Giant direction arrow — always visible, Crazy Taxi style */
+        #direction-display {
             position: absolute;
-            bottom: max(calc(env(safe-area-inset-bottom, 0px) + 70px), 80px);
-            right: 8px;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
+            top: max(calc(env(safe-area-inset-top, 0px) + 78px), 88px);
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            pointer-events: none;
+            z-index: 101;
+            transition: opacity 0.3s;
         }
 
-        .direction-arrow {
-            transition: transform 0.3s ease;
-            text-shadow: 0 0 10px #00ff88;
+        #direction-arrow-large {
+            font-size: clamp(2.2rem, 10vw, 3.5rem);
+            color: #00ff88;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.8), 0 0 40px rgba(0, 255, 136, 0.4);
+            transition: transform 0.12s ease-out;
+            line-height: 1;
+            display: inline-block;
+        }
+
+        #direction-distance {
+            font-size: clamp(0.85rem, 3vw, 1.1rem);
+            color: #00ff88;
+            opacity: 0.9;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            margin-top: -2px;
+        }
+
+        /* Timer bar under package info */
+        #timer-container {
+            position: absolute;
+            top: max(calc(env(safe-area-inset-top, 0px) + 68px), 78px);
+            left: 8px;
+            width: min(45vw, 200px);
+            height: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        #timer-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #00ff88, #88ff00);
+            border-radius: 3px;
+            transition: width 0.3s linear;
+        }
+
+        #timer-bar.urgent {
+            background: linear-gradient(90deg, #ff4444, #ff8800) !important;
+            animation: timer-pulse 0.5s ease-in-out infinite;
+        }
+
+        #timer-bar.warning {
+            background: linear-gradient(90deg, #ffaa00, #ffdd00) !important;
+        }
+
+        @keyframes timer-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        #timer-text {
+            position: absolute;
+            top: max(calc(env(safe-area-inset-top, 0px) + 74px), 84px);
+            left: 8px;
+            font-size: clamp(0.55rem, 1.5vw, 0.65rem);
+            color: rgba(255,255,255,0.5);
+            pointer-events: none;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Combo display */
+        #combo-display {
+            position: absolute;
+            top: max(calc(env(safe-area-inset-top, 0px) + 55px), 65px);
+            left: 50%;
+            transform: translateX(-50%) scale(1);
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+
+        #combo-display.active {
+            opacity: 1;
+        }
+
+        #combo-multiplier {
+            font-size: clamp(1.5rem, 6vw, 2.2rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, #fee140, #fa709a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        #combo-label {
+            display: block;
+            font-size: clamp(0.45rem, 1.5vw, 0.55rem);
+            letter-spacing: 0.2em;
+            opacity: 0.7;
+            margin-top: -4px;
+        }
+
+        /* Delivery celebration overlay */
+        #delivery-celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+        }
+
+        #delivery-celebration.active {
+            animation: celeb-flash 1.8s ease-out forwards;
+        }
+
+        #delivery-text {
+            font-size: clamp(2rem, 10vw, 4rem);
+            font-weight: 800;
+            color: #00ff88;
+            text-shadow: 0 0 30px rgba(0, 255, 136, 0.8), 0 0 60px rgba(0, 255, 136, 0.3);
+            transform: scale(0.5);
+            opacity: 0;
+        }
+
+        #delivery-celebration.active #delivery-text {
+            animation: celeb-text 1.5s ease-out forwards;
+        }
+
+        #delivery-score {
+            font-size: clamp(1.5rem, 8vw, 3rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, #fee140, #fa709a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        #delivery-celebration.active #delivery-score {
+            animation: celeb-score 1.8s ease-out 0.15s forwards;
+        }
+
+        @keyframes celeb-flash {
+            0% { opacity: 1; background: rgba(0, 255, 136, 0.2); }
+            15% { background: rgba(0, 255, 136, 0); }
+            100% { opacity: 0; }
+        }
+
+        @keyframes celeb-text {
+            0% { transform: scale(0.3); opacity: 0; }
+            15% { transform: scale(1.3); opacity: 1; }
+            30% { transform: scale(1); }
+            80% { opacity: 1; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+
+        @keyframes celeb-score {
+            0% { transform: translateY(20px); opacity: 0; }
+            20% { transform: translateY(-10px); opacity: 1; }
+            70% { opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
         }
 
         #webgpu-error {
@@ -438,8 +596,28 @@
             </div>
         </div>
 
-        <div id="direction-indicator" class="ui-panel compact">
-            <span class="direction-arrow" id="dest-arrow">➤</span>
+        <!-- Giant direction arrow — Crazy Taxi style -->
+        <div id="direction-display">
+            <div id="direction-arrow-large">▲</div>
+            <div id="direction-distance">--</div>
+        </div>
+
+        <!-- Timer bar under package info -->
+        <div id="timer-container">
+            <div id="timer-bar"></div>
+        </div>
+        <div id="timer-text"></div>
+
+        <!-- Combo display -->
+        <div id="combo-display">
+            <span id="combo-multiplier">x2</span>
+            <span id="combo-label">COMBO</span>
+        </div>
+
+        <!-- Delivery celebration overlay -->
+        <div id="delivery-celebration">
+            <div id="delivery-text">DELIVERED!</div>
+            <div id="delivery-score">+500</div>
         </div>
 
         <div id="target-notification" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.7); color:#ff66aa; padding:8px 16px; border-radius:12px; font-size:0.9rem; font-weight:bold; opacity:0; transition:opacity 0.3s; pointer-events:none; z-index:100;"></div>
@@ -489,6 +667,6 @@
     }
     </script>
 
-    <script type="module" src="src/main.js?v=29"></script>
+    <script type="module" src="src/main.js?v=30"></script>
 </body>
 </html>
