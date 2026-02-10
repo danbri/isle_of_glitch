@@ -602,7 +602,7 @@ class GloballGame {
         if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
 
         // Show bounce type feedback
-        const labels = { scenic: 'Scenic Hop', express: 'Express Arc', stealth: 'Night Glide' };
+        const labels = { scenic: 'Quick Pulse', express: 'Mag Launch', stealth: 'Long Range' };
         const el = this.getEl('target-notification');
         if (el) {
             el.textContent = labels[routeType];
@@ -1003,7 +1003,7 @@ class GloballGame {
                 targetEl.textContent = `\u2192 ${t.airport.name} ${t.airport.city}`;
                 targetEl.style.color = '#77bbff';
             } else {
-                targetEl.textContent = 'Hold bounce button \u2022 Tap airport to target';
+                targetEl.textContent = 'Hold launch \u2022 Tap airport to target';
                 targetEl.style.color = 'rgba(255,255,255,0.4)';
             }
         }
