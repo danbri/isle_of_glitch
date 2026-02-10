@@ -23,40 +23,27 @@ export class TrampolineNetwork {
 
     createTrampolineNodes() {
         // Create trampolines at major airport locations
-        // 20 airports spread across all continents for good gameplay coverage.
-        // Avoid clusters: max ~2 per region so they're visually distinct on the globe.
         const airports = [
-            // North America (3)
             { name: 'JFK', city: 'New York', lat: 40.6413, lon: -73.7781 },
             { name: 'LAX', city: 'Los Angeles', lat: 33.9416, lon: -118.4085 },
-            { name: 'MEX', city: 'Mexico City', lat: 19.4361, lon: -99.0719 },
-            // Europe (3) — spread: west, central, east
             { name: 'LHR', city: 'London', lat: 51.4700, lon: -0.4543 },
-            { name: 'ATH', city: 'Athens', lat: 37.9364, lon: 23.9445 },
-            { name: 'SVO', city: 'Moscow', lat: 55.9726, lon: 37.4146 },
-            // Middle East / Central Asia (1)
-            { name: 'DXB', city: 'Dubai', lat: 25.2532, lon: 55.3657 },
-            // South Asia (1)
-            { name: 'DEL', city: 'Delhi', lat: 28.5562, lon: 77.1000 },
-            // Southeast Asia (2)
-            { name: 'BKK', city: 'Bangkok', lat: 13.6900, lon: 100.7501 },
-            { name: 'SIN', city: 'Singapore', lat: 1.3644, lon: 103.9915 },
-            // East Asia (2) — spread: north and south
-            { name: 'PEK', city: 'Beijing', lat: 40.0799, lon: 116.6031 },
+            { name: 'CDG', city: 'Paris', lat: 49.0097, lon: 2.5479 },
             { name: 'NRT', city: 'Tokyo', lat: 35.7720, lon: 140.3929 },
-            // Oceania (2)
             { name: 'SYD', city: 'Sydney', lat: -33.9399, lon: 151.1753 },
-            { name: 'AKL', city: 'Auckland', lat: -37.0082, lon: 174.7850 },
-            // Africa (2)
-            { name: 'CPT', city: 'Cape Town', lat: -33.9715, lon: 18.6021 },
-            { name: 'NBO', city: 'Nairobi', lat: -1.3192, lon: 36.9278 },
-            // South America (2)
+            { name: 'DXB', city: 'Dubai', lat: 25.2532, lon: 55.3657 },
+            { name: 'SIN', city: 'Singapore', lat: 1.3644, lon: 103.9915 },
+            { name: 'HKG', city: 'Hong Kong', lat: 22.3080, lon: 113.9185 },
+            { name: 'FRA', city: 'Frankfurt', lat: 50.0379, lon: 8.5622 },
+            { name: 'AMS', city: 'Amsterdam', lat: 52.3105, lon: 4.7683 },
+            { name: 'ICN', city: 'Seoul', lat: 37.4602, lon: 126.4407 },
+            { name: 'PEK', city: 'Beijing', lat: 40.0799, lon: 116.6031 },
             { name: 'GRU', city: 'São Paulo', lat: -23.4356, lon: -46.4731 },
-            { name: 'SCL', city: 'Santiago', lat: -33.3930, lon: -70.7858 },
-            // Caribbean / Central (1)
-            { name: 'HAV', city: 'Havana', lat: 22.9892, lon: -82.4091 },
-            // North / Arctic (1)
-            { name: 'KEF', city: 'Reykjavik', lat: 63.9850, lon: -22.6056 },
+            { name: 'DEL', city: 'Delhi', lat: 28.5562, lon: 77.1000 },
+            { name: 'BOM', city: 'Mumbai', lat: 19.0896, lon: 72.8656 },
+            { name: 'YYZ', city: 'Toronto', lat: 43.6777, lon: -79.6248 },
+            { name: 'MEX', city: 'Mexico City', lat: 19.4361, lon: -99.0719 },
+            { name: 'CPT', city: 'Cape Town', lat: -33.9715, lon: 18.6021 },
+            { name: 'SVO', city: 'Moscow', lat: 55.9726, lon: 37.4146 },
         ];
 
         airports.forEach((airport, index) => {
