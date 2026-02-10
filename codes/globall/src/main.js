@@ -528,6 +528,49 @@ class GloballGame {
     setupDebugPanel() {
         this.gui = new GUI({ title: 'Debug Panel' });
 
+        // Start closed by default
+        this.gui.close();
+
+        // Position to not block scores/altitude (bottom-left) and make draggable
+        const el = this.gui.domElement;
+        el.style.position = 'fixed';
+        el.style.top = 'auto';
+        el.style.right = 'auto';
+        el.style.bottom = '120px';
+        el.style.left = '8px';
+        el.style.zIndex = '1000';
+        el.style.maxHeight = '60vh';
+        el.style.overflow = 'auto';
+
+        // Draggable via title bar
+        const titleBar = el.querySelector('.title');
+        if (titleBar) {
+            titleBar.style.cursor = 'grab';
+            let dragging = false, startX, startY, origLeft, origBottom;
+            const onDown = (e) => {
+                dragging = true;
+                titleBar.style.cursor = 'grabbing';
+                const pt = e.touches ? e.touches[0] : e;
+                startX = pt.clientX; startY = pt.clientY;
+                origLeft = parseInt(el.style.left) || 8;
+                origBottom = parseInt(el.style.bottom) || 120;
+                e.preventDefault();
+            };
+            const onMove = (e) => {
+                if (!dragging) return;
+                const pt = e.touches ? e.touches[0] : e;
+                el.style.left = (origLeft + pt.clientX - startX) + 'px';
+                el.style.bottom = (origBottom - (pt.clientY - startY)) + 'px';
+            };
+            const onUp = () => { dragging = false; titleBar.style.cursor = 'grab'; };
+            titleBar.addEventListener('mousedown', onDown);
+            titleBar.addEventListener('touchstart', onDown, { passive: false });
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('touchmove', onMove, { passive: false });
+            window.addEventListener('mouseup', onUp);
+            window.addEventListener('touchend', onUp);
+        }
+
         // Component visibility toggles
         const visibility = this.gui.addFolder('Visibility');
         this.debugSettings = {
