@@ -763,8 +763,12 @@ class GloballGame {
                 this.player.velocity.add(kickDir.multiplyScalar(3));
             }
 
-            // Feedback
-            if (this.audio) this.audio.playBounce(0.3 + this._rapidTapCount * 0.1);
+            // Feedback — rising pitch per tap
+            if (this.audio && this.audio.playBoost) {
+                this.audio.playBoost(this._rapidTapCount);
+            } else if (this.audio) {
+                this.audio.playBounce(0.3 + this._rapidTapCount * 0.1);
+            }
             if (navigator.vibrate) navigator.vibrate(15);
 
             // Show boost feedback
@@ -815,6 +819,11 @@ class GloballGame {
         this.player.bounce();
         if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
 
+        // Chain launch power chord on top of normal bounce
+        if (timeSinceDelivery < 3000 && this.audio && this.audio.playChainLaunch) {
+            this.audio.playChainLaunch();
+        }
+
         // Show bounce type feedback + chain launch indicator
         const labels = { scenic: 'Quick Pulse', express: 'Mag Launch', stealth: 'Long Range' };
         const el = this.getEl('target-notification');
@@ -851,6 +860,7 @@ class GloballGame {
             if (trampData) {
                 this.player.setTargetTrampoline(trampData);
                 this.showTargetNotification(trampData);
+                if (this.audio && this.audio.playSelectAirport) this.audio.playSelectAirport();
                 return true;
             }
         }
@@ -1489,11 +1499,17 @@ class GloballGame {
         if (vignette) {
             if (timerInfo.ratio < 0.2) {
                 vignette.className = 'urgent';
-                // Play timer warning beep every 2 seconds
+                // Accelerating countdown beeps — faster as time runs out
                 const now = Date.now();
-                if (now - this._timerWarningTime > 2000) {
+                const urgency = Math.max(0, 1 - timerInfo.ratio / 0.2); // 0→1 as ratio goes 0.2→0
+                const beepInterval = Math.max(200, 2000 * (1 - urgency * 0.9)); // 2s → 200ms
+                if (now - this._timerWarningTime > beepInterval) {
                     this._timerWarningTime = now;
-                    if (this.audio && this.audio.playTimerWarning) this.audio.playTimerWarning();
+                    if (this.audio && this.audio.playCountdownBeep) {
+                        this.audio.playCountdownBeep(urgency);
+                    } else if (this.audio && this.audio.playTimerWarning) {
+                        this.audio.playTimerWarning();
+                    }
                 }
             } else {
                 // Check proximity to nav target (next hop or final dest)
@@ -1689,6 +1705,7 @@ class GloballGame {
                     this.player.setTargetTrampoline(targetTrampoline);
                 }
 
+                if (this.audio && this.audio.playSelectDestination) this.audio.playSelectDestination();
                 if (navigator.vibrate) navigator.vibrate(25);
             };
 
@@ -2049,6 +2066,7 @@ class GloballGame {
                     el.style.fontSize = '0.9rem';
                 }, 2500);
             }
+            if (this.audio && this.audio.playMiss) this.audio.playMiss();
             if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
         }
 
@@ -2072,6 +2090,7 @@ class GloballGame {
                     textEl.style.color = '#4488ff';
                 }, 2000);
             }
+            if (this.audio && this.audio.playExpiry) this.audio.playExpiry();
         }
 
         // --- DELIVERY CELEBRATION ---
@@ -2167,6 +2186,34 @@ class GloballGame {
         if (this.audio) {
             this.audio.updateAltitude(altitude);
             this.audio.updateSpeed(speed);
+
+            // Aim tick — play a subtle click when aim angle changes significantly
+            if (this.player.isOnGround && this.player._aimDirection) {
+                const currentAngle = this.player.aimAngle;
+                if (this._lastAimTickAngle === undefined) this._lastAimTickAngle = currentAngle;
+                const angleDelta = Math.abs(currentAngle - this._lastAimTickAngle);
+                if (angleDelta > 0.25) { // ~15 degrees
+                    this._lastAimTickAngle = currentAngle;
+                    if (this.audio.playAimTick) this.audio.playAimTick();
+                }
+            }
+
+            // Altitude warning — accelerating beeps when falling fast toward ground
+            const verticalSpeed = this.player.velocity.dot(
+                this.player.position.clone().normalize()
+            );
+            const altGameUnits = altitude / 100; // Convert back to game units
+            if (verticalSpeed < -3 && altGameUnits < 1.5 && !this.player.isOnGround) {
+                const urgency = Math.min(1, Math.abs(verticalSpeed) / 12) *
+                    Math.max(0, 1 - altGameUnits / 1.5);
+                const now = Date.now();
+                const beepInterval = Math.max(100, 500 * (1 - urgency));
+                if (!this._lastAltWarningTime) this._lastAltWarningTime = 0;
+                if (now - this._lastAltWarningTime > beepInterval) {
+                    this._lastAltWarningTime = now;
+                    if (this.audio.playAltitudeWarning) this.audio.playAltitudeWarning(urgency);
+                }
+            }
         }
 
         // Update UI
