@@ -1,4 +1,4 @@
-# Glowball Gopher — Technical Architecture
+# Glo-ball Gopher — Technical Architecture
 
 ## Stack
 

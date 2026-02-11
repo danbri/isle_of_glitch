@@ -1,5 +1,5 @@
 /**
- * GLOBALL - Magnetic Frenetic Transport
+ * GLO-BALL GOPHER - Bounce the globe. Deliver the goods.
  * Main game entry point
  */
 
@@ -58,7 +58,7 @@ class GloballGame {
         // Defer audio initialization to avoid blocking
         this.audio = null;
 
-        console.log('🎮 Globall starting...');
+        console.log('🎮 Glo-ball Gopher starting...');
         this.init();
     }
 

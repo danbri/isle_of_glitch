@@ -1,4 +1,4 @@
-# Glowball Gopher — Vision & Design
+# Glo-ball Gopher — Vision & Design
 
 ## The Pitch
 
@@ -42,7 +42,7 @@ A planet-bouncing delivery game. You're a glowing gopher-like courier, trampolin
 - **Mysterious packages** — Quantum Containers, Dream Fragments, etc.
 - **Sound matters** — EM hums, bounce pops, delivery chimes, ambient music
 
-## Name: Glowball Gopher
+## Name: Glo-ball Gopher
 
 A glowing ball-shaped courier (the "gopher") bouncing around the globe ("glowball"). Eyes, wings, cargo pod. Faces the camera when parked (cute), faces velocity when flying (dolphin/whale silhouette).
 

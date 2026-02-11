@@ -1,4 +1,4 @@
-# Glowball Gopher — Gameplay Spec
+# Glo-ball Gopher — Gameplay Spec
 
 ## Core Loop
 
