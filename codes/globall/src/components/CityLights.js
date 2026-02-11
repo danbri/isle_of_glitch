@@ -114,7 +114,9 @@ export class CityLights {
         const spriteMaterial = new THREE.SpriteMaterial({
             map: spriteTexture,
             transparent: true,
-            blending: THREE.AdditiveBlending
+            blending: THREE.AdditiveBlending,
+            depthTest: true,
+            depthWrite: false
         });
 
         const sprite = new THREE.Sprite(spriteMaterial);
@@ -237,10 +239,21 @@ export class CityLights {
     update(time, deltaTime, camera) {
         // Use real sun direction from planet's orbital mechanics
         const sunDirection = this.planet.sunDirection;
+        const camPos = camera.position;
 
-        // Update city lights - brighter on dark side
+        // Update city lights - brighter on dark side, hidden on far side
         this.cityMeshes.forEach(cityGroup => {
             const position = cityGroup.position.clone().normalize();
+
+            // Cull cities on the far side of the planet from camera
+            const toCamera = camPos.clone().sub(cityGroup.position).normalize();
+            const facingCamera = position.dot(toCamera);
+            if (facingCamera < -0.05) {
+                cityGroup.visible = false;
+                return;
+            }
+            cityGroup.visible = true;
+
             const sunFacing = position.dot(sunDirection);
 
             // City lights visible on dark side
@@ -272,8 +285,12 @@ export class CityLights {
             );
             const distance = camera.position.distanceTo(pos);
 
-            // Only show when close
-            streetGroup.visible = distance < 8;
+            // Only show when close AND on camera-facing side
+            const toCamera = camPos.clone().sub(pos).normalize();
+            const surfaceNormal = pos.clone().normalize();
+            const facing = surfaceNormal.dot(toCamera);
+
+            streetGroup.visible = distance < 8 && facing > 0;
 
             if (streetGroup.visible) {
                 // Fade based on distance
