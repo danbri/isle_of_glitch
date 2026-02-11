@@ -733,7 +733,7 @@ export class Planet {
                 // Dipole: r = L * R * sin²(θ_m)
                 const rField = this.radius * L * sinT * sinT;
 
-                if (rField < this.radius * 0.3) continue; // Skip degenerate points near poles
+                if (rField < this.radius + 0.15) continue; // Don't go inside planet
 
                 // Position in magnetic coordinates
                 const pos = magneticAxis.clone().multiplyScalar(cosT * rField)
@@ -767,7 +767,7 @@ export class Planet {
                 const cosT = Math.cos(thetaM);
                 const rField = this.radius * L * sinT * sinT;
 
-                if (rField < this.radius * 0.3) continue;
+                if (rField < this.radius + 0.15) continue; // Don't go inside planet
 
                 const pos = magneticAxis.clone().multiplyScalar(cosT * rField)
                     .add(startDir.clone().multiplyScalar(sinT * rField));
