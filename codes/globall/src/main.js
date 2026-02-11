@@ -109,6 +109,9 @@ class GloballGame {
                 this.audio = { playBounce: () => {}, updateAltitude: () => {}, updateSpeed: () => {} };
             }
 
+            // Request screen wake lock (mobile)
+            this.requestWakeLock();
+
             // Hide loading screen
             this.hideLoadingScreen();
 
@@ -187,7 +190,7 @@ class GloballGame {
         // Handle resize
         window.addEventListener('resize', () => this.onResize());
 
-        this.updateLoadingProgress(10);
+        this.updateLoadingProgress(10, 'Initializing renderer...');
     }
 
     setupScene() {
@@ -234,7 +237,7 @@ class GloballGame {
         const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x362312, 0.4);
         this.scene.add(hemiLight);
 
-        this.updateLoadingProgress(20);
+        this.updateLoadingProgress(20, 'Configuring optics...');
     }
 
     setupPostProcessing() {
@@ -305,56 +308,56 @@ class GloballGame {
             bloomRes: [this.bloomPass.resolution.x, this.bloomPass.resolution.y]
         });
 
-        this.updateLoadingProgress(30);
+        this.updateLoadingProgress(30, 'Preparing world...');
     }
 
     async loadGameComponents() {
         // Initialize game state
         this.gameState = new GameState();
 
-        this.updateLoadingProgress(35);
+        this.updateLoadingProgress(35, 'Generating planet...');
 
         // Create planet
         console.log('Loading: Planet...');
         this.planet = new Planet(this.scene);
         await this.planet.init();
 
-        this.updateLoadingProgress(50);
+        this.updateLoadingProgress(50, 'Illuminating cities...');
 
         // Create city lights
         console.log('Loading: City Lights...');
         this.cityLights = new CityLights(this.scene, this.planet);
         await this.cityLights.init();
 
-        this.updateLoadingProgress(60);
+        this.updateLoadingProgress(60, 'Scattering starlight...');
 
         // Create space environment (stars, ISS)
         console.log('Loading: Space Environment...');
         this.spaceEnv = new SpaceEnvironment(this.scene);
         await this.spaceEnv.init();
 
-        this.updateLoadingProgress(70);
+        this.updateLoadingProgress(70, 'Charging aurora...');
 
         // Create aurora borealis
         console.log('Loading: Aurora...');
         this.aurora = new AuroraBorealis(this.scene);
         await this.aurora.init();
 
-        this.updateLoadingProgress(80);
+        this.updateLoadingProgress(80, 'Drawing borders...');
 
         // Create country outlines
         console.log('Loading: Country Outlines...');
         this.countryOutlines = new CountryOutlines(this.scene);
         await this.countryOutlines.init();
 
-        this.updateLoadingProgress(82);
+        this.updateLoadingProgress(82, 'Magnetizing 7,900 airports...');
 
         // Create trampoline network (loads ~7900 airports)
         console.log('Loading: Airports...');
         this.trampolineNetwork = new TrampolineNetwork(this.scene, this.planet);
         await this.trampolineNetwork.init();
 
-        this.updateLoadingProgress(88);
+        this.updateLoadingProgress(88, 'Deploying delivery pod...');
 
         // Create player
         console.log('Loading: Player...');
@@ -365,7 +368,7 @@ class GloballGame {
         // Wire up magnetic attraction to trampoline network
         this.player.setTrampolineNetwork(this.trampolineNetwork);
 
-        this.updateLoadingProgress(90);
+        this.updateLoadingProgress(90, 'Assigning first package...');
 
         // Create package system
         console.log('Loading: Package System...');
@@ -571,17 +574,6 @@ class GloballGame {
     }
 
     doBounce(holdMs) {
-        // Start game session on first bounce
-        if (!this.session.started) {
-            this.session.started = true;
-            this.session.startTime = Date.now();
-            this.session.ended = false;
-            this.session.bestCombo = 0;
-            this.session.bestDelivery = 0;
-            // Hide tutorial
-            const tut = this.getEl('tutorial-hint');
-            if (tut) tut.classList.add('hidden');
-        }
         if (this.session.ended) return; // Can't bounce after game over
 
         // Hold duration determines bounce type:
@@ -598,17 +590,31 @@ class GloballGame {
         }
 
         this.player.setRouteType(routeType);
+
+        // Chain launch bonus: bounce within 3s of delivery = 1.3x force
+        const timeSinceDelivery = this._lastDeliveryTime ? (Date.now() - this._lastDeliveryTime) : Infinity;
+        if (timeSinceDelivery < 3000) {
+            this.player.bounceForceMultiplier = 1.3;
+        } else {
+            this.player.bounceForceMultiplier = 1.0;
+        }
+
         this.player.bounce();
         if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
 
-        // Show bounce type feedback
+        // Show bounce type feedback + chain launch indicator
         const labels = { scenic: 'Quick Pulse', express: 'Mag Launch', stealth: 'Long Range' };
         const el = this.getEl('target-notification');
         if (el) {
-            el.textContent = labels[routeType];
+            const chainText = timeSinceDelivery < 3000 ? ' CHAIN!' : '';
+            el.textContent = labels[routeType] + chainText;
+            el.style.color = chainText ? '#44ff88' : '#4488ff';
             el.style.opacity = '1';
             clearTimeout(this._targetNotifTimeout);
-            this._targetNotifTimeout = setTimeout(() => { el.style.opacity = '0'; }, 800);
+            this._targetNotifTimeout = setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.color = '#4488ff';
+            }, 800);
         }
     }
 
@@ -993,6 +999,9 @@ class GloballGame {
         const delCount = this.getEl('deliveries-count');
         if (delCount) delCount.textContent = `${this.gameState.deliveries} deliveries`;
 
+        // --- DELIVERY CHOICE UI ---
+        this.updateDeliveryChoiceUI();
+
         // Update package info
         const currentPackage = this.packageSystem.getCurrentPackage();
         if (currentPackage) {
@@ -1008,6 +1017,12 @@ class GloballGame {
 
             // Update direction indicator
             this.updateDirectionIndicator();
+        } else if (this.packageSystem.awaitingChoice) {
+            // No active package — show "choose delivery" in package info
+            const pn = this.getEl('package-name');
+            if (pn) pn.textContent = 'Choose delivery...';
+            const pd = this.getEl('package-dest');
+            if (pd) pd.textContent = 'Tap an option below';
         }
 
         // Update nearest airport + target location
@@ -1157,26 +1172,11 @@ class GloballGame {
         // Expire package if time ran out
         if (timerInfo.expired) {
             this.packageSystem.expirePackage();
-            // Show timeout notification
-            const el = this.getEl('target-notification');
-            if (el) {
-                el.textContent = 'TIME UP! New package...';
-                el.style.color = '#ff4444';
-                el.style.fontSize = '1rem';
-                el.style.opacity = '1';
-                clearTimeout(this._targetNotifTimeout);
-                this._targetNotifTimeout = setTimeout(() => {
-                    el.style.opacity = '0';
-                    el.style.color = '#4488ff';
-                    el.style.fontSize = '0.9rem';
-                }, 2000);
-            }
+            // Penalty feedback is handled by expiry detection in animate loop
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            // Auto-target new destination
-            const newPkg = this.packageSystem.getCurrentPackage();
-            if (newPkg && newPkg.destinationAirport) {
-                this.player.setTargetTrampoline(newPkg.destinationAirport);
-            }
+            // Clear — player must choose next delivery
+            this.player.setCarrying(false);
+            this.player.setTargetTrampoline(null);
         }
     }
 
@@ -1189,13 +1189,118 @@ class GloballGame {
             comboEl.classList.add('active');
             const multiplierEl = this.getEl('combo-multiplier');
             if (multiplierEl) multiplierEl.textContent = `x${combo}`;
+
+            // Combo timer bar — shows time remaining to maintain combo
+            const comboFill = this.getEl('combo-timer-fill');
+            if (comboFill && this.packageSystem.lastDeliveryTime) {
+                const elapsed = Date.now() - this.packageSystem.lastDeliveryTime;
+                const remaining = Math.max(0, 1 - elapsed / this.packageSystem.comboTimeout);
+                comboFill.style.width = `${remaining * 100}%`;
+
+                // Flash when about to expire
+                if (remaining < 0.3 && remaining > 0) {
+                    comboEl.classList.add('expiring');
+                    comboFill.style.background = 'linear-gradient(90deg, #ff8800, #ffaa00)';
+                } else {
+                    comboEl.classList.remove('expiring');
+                    comboFill.style.background = 'linear-gradient(90deg, #88ddff, #4488ff)';
+                }
+            }
         } else {
             comboEl.classList.remove('active');
+            comboEl.classList.remove('expiring');
         }
+    }
+
+    updateDeliveryChoiceUI() {
+        const choiceEl = this.getEl('delivery-choice');
+        if (!choiceEl) return;
+
+        if (!this.packageSystem.awaitingChoice || this.packageSystem.pendingChoices.length === 0) {
+            choiceEl.style.display = 'none';
+            return;
+        }
+
+        // Only rebuild if choices changed
+        const choiceKey = this.packageSystem.pendingChoices.map(c => c.destName).join(',');
+        if (this._lastChoiceKey === choiceKey) return;
+        this._lastChoiceKey = choiceKey;
+
+        choiceEl.style.display = 'block';
+        const container = this.getEl('delivery-options');
+        if (!container) return;
+        container.innerHTML = '';
+
+        this.packageSystem.pendingChoices.forEach((choice, idx) => {
+            const opt = document.createElement('div');
+            opt.className = `delivery-option ${choice.bias}`;
+            opt.innerHTML = `
+                <span class="opt-icon">${choice.type.icon}</span>
+                <div class="opt-info">
+                    <div class="opt-dest">${choice.destName}</div>
+                    <div class="opt-meta">
+                        <span>${choice.distKm > 1000 ? (choice.distKm / 1000).toFixed(1) + 'k' : choice.distKm} km</span>
+                        <span>${Math.round(choice.timeLimit)}s</span>
+                    </div>
+                </div>
+                <div class="opt-value">+${choice.value}</div>
+            `;
+
+            const selectChoice = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.packageSystem.acceptDelivery(idx);
+                this._lastChoiceKey = null;
+                choiceEl.style.display = 'none';
+
+                // Target the chosen destination
+                const pkg = this.packageSystem.getCurrentPackage();
+                if (pkg && pkg.destinationAirport) {
+                    this.player.setTargetTrampoline(pkg.destinationAirport);
+                    this.player.setCarrying(true);
+                }
+
+                // Start session on first choice
+                if (!this.session.started) {
+                    this.session.started = true;
+                    this.session.startTime = Date.now();
+                    this.session.ended = false;
+                    this.session.bestCombo = 0;
+                    this.session.bestDelivery = 0;
+                    const tut = this.getEl('tutorial-hint');
+                    if (tut) tut.classList.add('hidden');
+                }
+
+                // Haptic
+                if (navigator.vibrate) navigator.vibrate(25);
+            };
+
+            opt.addEventListener('click', selectChoice);
+            opt.addEventListener('touchend', selectChoice, { passive: false });
+            container.appendChild(opt);
+        });
     }
 
     endSession() {
         this.session.ended = true;
+
+        // High score persistence
+        const currentScore = this.gameState.score;
+        let highScore = parseInt(localStorage.getItem('globall_highscore') || '0');
+        const isNewHighScore = currentScore > highScore;
+        if (isNewHighScore) {
+            highScore = currentScore;
+            localStorage.setItem('globall_highscore', String(highScore));
+        }
+        // Also track best deliveries
+        let bestDeliveries = parseInt(localStorage.getItem('globall_best_deliveries') || '0');
+        if (this.gameState.deliveries > bestDeliveries) {
+            bestDeliveries = this.gameState.deliveries;
+            localStorage.setItem('globall_best_deliveries', String(bestDeliveries));
+        }
+        // Track total games
+        const gamesPlayed = parseInt(localStorage.getItem('globall_games') || '0') + 1;
+        localStorage.setItem('globall_games', String(gamesPlayed));
 
         // Populate game over screen
         const goScore = this.getEl('go-score');
@@ -1203,20 +1308,39 @@ class GloballGame {
         const goBestCombo = this.getEl('go-best-combo');
         const goBestDelivery = this.getEl('go-best-delivery');
         const goRank = this.getEl('go-rank');
+        const goHighScore = this.getEl('go-highscore');
 
-        if (goScore) goScore.textContent = this.gameState.score.toLocaleString();
+        if (goScore) goScore.textContent = currentScore.toLocaleString();
         if (goDeliveries) goDeliveries.textContent = this.gameState.deliveries;
         if (goBestCombo) goBestCombo.textContent = `x${this.session.bestCombo || 1}`;
         if (goBestDelivery) goBestDelivery.textContent = this.session.bestDelivery.toLocaleString();
 
+        // High score display
+        if (goHighScore) {
+            if (isNewHighScore && gamesPlayed > 1) {
+                goHighScore.textContent = 'NEW HIGH SCORE!';
+                goHighScore.style.color = '#88ddff';
+                goHighScore.style.fontWeight = '600';
+                goHighScore.style.opacity = '1';
+            } else {
+                goHighScore.textContent = `Best: ${highScore.toLocaleString()} pts · ${bestDeliveries} deliveries`;
+                goHighScore.style.color = '';
+                goHighScore.style.fontWeight = '';
+                goHighScore.style.opacity = '0.6';
+            }
+        }
+
         // Rank based on score
         if (goRank) {
-            const s = this.gameState.score;
-            if (s >= 10000) goRank.textContent = 'LEGENDARY COURIER';
-            else if (s >= 5000) goRank.textContent = 'EXPERT COURIER';
-            else if (s >= 2000) goRank.textContent = 'SKILLED COURIER';
-            else if (s >= 500) goRank.textContent = 'NOVICE COURIER';
-            else goRank.textContent = 'TRAINEE COURIER';
+            const s = currentScore;
+            let rankText, rankColor;
+            if (s >= 10000) { rankText = 'LEGENDARY COURIER'; rankColor = '#88ddff'; }
+            else if (s >= 5000) { rankText = 'EXPERT COURIER'; rankColor = '#aa88ff'; }
+            else if (s >= 2000) { rankText = 'SKILLED COURIER'; rankColor = '#4488ff'; }
+            else if (s >= 500) { rankText = 'NOVICE COURIER'; rankColor = '#88aaff'; }
+            else { rankText = 'TRAINEE COURIER'; rankColor = 'rgba(255,255,255,0.6)'; }
+            goRank.textContent = rankText;
+            goRank.style.color = rankColor;
         }
 
         // Show game over screen
@@ -1264,17 +1388,14 @@ class GloballGame {
             timerEl.style.color = 'white';
         }
 
-        // Reset package system
+        // Reset package system — offer choices
         this.packageSystem.comboCount = 0;
         this.packageSystem.lastDeliveryTime = 0;
         this.packageSystem.currentPackage = null;
-        this.packageSystem.assignNewPackage();
-
-        // Auto-target new destination
-        const pkg = this.packageSystem.getCurrentPackage();
-        if (pkg && pkg.destinationAirport) {
-            this.player.setTargetTrampoline(pkg.destinationAirport);
-        }
+        this.packageSystem.offerDeliveryChoices();
+        this._lastChoiceKey = null; // Force rebuild of choice UI
+        this.player.setTargetTrampoline(null);
+        this.player.setCarrying(false);
 
         // Update UI
         const scoreEl = this.getEl('score-value');
@@ -1283,10 +1404,31 @@ class GloballGame {
         if (delEl) delEl.textContent = '0 deliveries';
     }
 
-    updateLoadingProgress(progress) {
+    updateLoadingProgress(progress, status) {
         this.loadingProgress = progress;
         const bar = this.getEl('loading-progress');
         if (bar) bar.style.width = `${progress}%`;
+        if (status) {
+            const statusEl = this.getEl('loading-status');
+            if (statusEl) statusEl.textContent = status;
+        }
+    }
+
+    async requestWakeLock() {
+        if ('wakeLock' in navigator) {
+            try {
+                this._wakeLock = await navigator.wakeLock.request('screen');
+                // Re-acquire on visibility change
+                document.addEventListener('visibilitychange', async () => {
+                    if (document.visibilityState === 'visible' && !this._wakeLock) {
+                        try { this._wakeLock = await navigator.wakeLock.request('screen'); } catch (e) {}
+                    }
+                });
+                this._wakeLock.addEventListener('release', () => { this._wakeLock = null; });
+            } catch (e) {
+                console.log('Wake lock not available:', e.message);
+            }
+        }
     }
 
     hideLoadingScreen() {
@@ -1343,6 +1485,12 @@ class GloballGame {
                 timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
                 // Urgency color when < 30s
                 timerEl.style.color = remaining < 30 ? '#ff4444' : remaining < 60 ? '#ffaa00' : 'white';
+                // Countdown pulse for last 10 seconds
+                if (remaining <= 10 && remaining > 0) {
+                    timerEl.classList.add('countdown');
+                } else {
+                    timerEl.classList.remove('countdown');
+                }
             }
             if (remaining <= 0) {
                 this.endSession();
@@ -1385,6 +1533,38 @@ class GloballGame {
             // Update charge sound pitch
             const progress = Math.min(1, holdMs / 800);
             if (this.audio && this.audio.updateCharge) this.audio.updateCharge(progress);
+
+            // Update charge meter ring
+            const ring = document.getElementById('charge-meter-ring');
+            if (ring) {
+                // 283 = 2*PI*45 (circumference of svg circle)
+                ring.style.strokeDashoffset = String(283 * (1 - progress));
+
+                // Power indicator: color shows if charge matches target distance
+                const destPos = this.packageSystem.getDestinationPosition();
+                if (destPos) {
+                    const dist = this.player.getPosition().distanceTo(destPos);
+                    // Ideal hold: ~100ms per unit of distance (rough heuristic)
+                    const idealMs = Math.min(800, dist * 100);
+                    const ratio = holdMs / Math.max(50, idealMs);
+                    if (ratio < 0.6) {
+                        ring.style.stroke = '#4488ff'; // Under — blue "too short"
+                    } else if (ratio < 1.4) {
+                        ring.style.stroke = '#44ff88'; // Good — green "dialed in"
+                    } else {
+                        ring.style.stroke = '#ff8844'; // Over — orange "too long"
+                    }
+                } else {
+                    // No target: just show progress color
+                    if (progress < 0.25) ring.style.stroke = '#4488ff';
+                    else if (progress < 0.75) ring.style.stroke = '#6644ff';
+                    else ring.style.stroke = '#88ddff';
+                }
+            }
+        } else {
+            // Reset charge meter when not charging
+            const ring = document.getElementById('charge-meter-ring');
+            if (ring) ring.style.strokeDashoffset = '283';
         }
 
         // Landing sound
@@ -1407,8 +1587,51 @@ class GloballGame {
 
         const prevDeliveries = this.gameState.deliveries;
         this.packageSystem.update(time, this.deltaTime, this.player);
+
+        // --- MISS FEEDBACK ---
+        const miss = this.packageSystem.getLastMiss();
+        if (miss && miss.time !== this._lastMissTime) {
+            this._lastMissTime = miss.time;
+            const el = this.getEl('target-notification');
+            if (el) {
+                el.textContent = `${miss.type}! ${miss.detail}`;
+                el.style.color = '#ff8800';
+                el.style.fontSize = '0.95rem';
+                el.style.opacity = '1';
+                clearTimeout(this._targetNotifTimeout);
+                this._targetNotifTimeout = setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.color = '#4488ff';
+                    el.style.fontSize = '0.9rem';
+                }, 2500);
+            }
+            if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
+        }
+
+        // --- EXPIRY PENALTY FEEDBACK ---
+        const expiry = this.packageSystem.getLastExpiry();
+        if (expiry && expiry.time !== this._lastExpiryTime) {
+            this._lastExpiryTime = expiry.time;
+            const celebEl = this.getEl('delivery-celebration');
+            const textEl = this.getEl('delivery-text');
+            const scoreEl = this.getEl('delivery-score');
+            if (celebEl && textEl && scoreEl) {
+                textEl.textContent = 'EXPIRED';
+                scoreEl.textContent = `-${expiry.penalty}`;
+                textEl.style.color = '#ff4444';
+                celebEl.classList.remove('active');
+                void celebEl.offsetWidth;
+                celebEl.classList.add('active');
+                clearTimeout(this._celebTimeout);
+                this._celebTimeout = setTimeout(() => {
+                    celebEl.classList.remove('active');
+                    textEl.style.color = '#4488ff';
+                }, 2000);
+            }
+        }
+
+        // --- DELIVERY CELEBRATION ---
         if (this.gameState.deliveries > prevDeliveries) {
-            // Big celebration overlay
             const delivery = this.packageSystem.getLastDelivery();
             const celebEl = this.getEl('delivery-celebration');
             const scoreEl = this.getEl('delivery-score');
@@ -1416,14 +1639,24 @@ class GloballGame {
 
             if (celebEl) {
                 if (textEl) {
-                    textEl.textContent = delivery && delivery.comboMultiplier > 1
-                        ? `x${delivery.comboMultiplier} COMBO!`
-                        : 'DELIVERED!';
+                    textEl.style.color = '#4488ff'; // Reset from possible expiry red
+                    // Show accuracy + combo info
+                    if (delivery && delivery.accuracy === 'BULLSEYE') {
+                        textEl.textContent = 'BULLSEYE!';
+                        textEl.style.color = '#88ddff';
+                    } else if (delivery && delivery.accuracy === 'PRECISE') {
+                        textEl.textContent = 'PRECISE!';
+                        textEl.style.color = '#aa88ff';
+                    } else if (delivery && delivery.comboMultiplier > 1) {
+                        textEl.textContent = `x${delivery.comboMultiplier} COMBO!`;
+                    } else {
+                        textEl.textContent = 'DELIVERED!';
+                    }
                 }
                 if (scoreEl && delivery) {
-                    scoreEl.textContent = `+${delivery.score}`;
+                    const mult = delivery.accuracyMultiplier > 1 ? ` (${delivery.accuracy} ${delivery.accuracyMultiplier}x)` : '';
+                    scoreEl.textContent = `+${delivery.score}${mult}`;
                 }
-                // Trigger animation (force reflow to restart)
                 celebEl.classList.remove('active');
                 void celebEl.offsetWidth;
                 celebEl.classList.add('active');
@@ -1447,17 +1680,27 @@ class GloballGame {
                 }
             }
 
-            // Camera punch on delivery
-            this.player.cameraShake.intensity = 0.15;
+            // Camera punch — scales with accuracy
+            this.player.cameraShake.intensity = delivery && delivery.accuracyMultiplier >= 3 ? 0.25 : 0.15;
 
-            // Strong haptic celebration
-            if (navigator.vibrate) navigator.vibrate([50, 50, 100, 50, 150]);
+            // Brief flash — hide cargo, then show for new package
+            this.player.setCarrying(false);
 
-            // Auto-target new destination
-            const newPkg = this.packageSystem.getCurrentPackage();
-            if (newPkg && newPkg.destinationAirport) {
-                this.player.setTargetTrampoline(newPkg.destinationAirport);
+            // Haptic — stronger for bullseye
+            if (navigator.vibrate) {
+                if (delivery && delivery.accuracyMultiplier >= 3) {
+                    navigator.vibrate([80, 40, 80, 40, 120, 40, 200]);
+                } else {
+                    navigator.vibrate([50, 50, 100, 50, 150]);
+                }
             }
+
+            // Record delivery time for chain launch bonus
+            this._lastDeliveryTime = Date.now();
+
+            // Clear target — player will choose next delivery
+            this.player.setTargetTrampoline(null);
+            // Choice UI will appear via updateDeliveryChoiceUI
         }
 
         // Dynamic post-processing adjustments (respects fine-grained toggles)
