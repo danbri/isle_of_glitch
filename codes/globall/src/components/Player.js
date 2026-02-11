@@ -22,7 +22,7 @@ export class Player {
 
         // Player properties
         this.bounceCharge = 1.0;
-        this.bounceChargeRate = 0.5; // Faster recharge
+        this.bounceChargeRate = 0.8; // Fast recharge so rapid taps feel responsive
         this.maxBounceCharge = 1.0;
         this.bounceForce = 12; // Slightly reduced for better control
         this.gravity = 25; // Stronger gravity for better feel
@@ -394,7 +394,7 @@ export class Player {
     }
 
     bounce() {
-        if (this.bounceCharge < 0.3) return; // Lower threshold for responsiveness
+        if (this.bounceCharge < 0.15) return; // Low threshold so rapid taps work
 
         const modifier = this.routeModifiers[this.routeType];
 
