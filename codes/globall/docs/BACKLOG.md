@@ -1,4 +1,4 @@
-# Globall Magnetics — Backlog
+# Glowball Gopher — Backlog
 
 Extracted from [GPT-5.2 review](review-2026-02-11.md) + [Gemini review](review-gemini-2026-02-11.md) + user playtesting + prior sessions.
 
@@ -6,75 +6,49 @@ Extracted from [GPT-5.2 review](review-2026-02-11.md) + [Gemini review](review-g
 > "Looks glorious but is very disorienting. More experience than game.
 > Will be more fun when we add more music and sounds."
 
-This is the north star: **make it less disorienting and more game-like.**
-The visuals work. The feel doesn't yet. Sound/music is a key missing piece.
-
-### Review consensus (both AI reviewers independently flagged)
-- **Ring clutter** — dense clusters as #1 visual problem
-- **Bloom washout** — obliterates player pod + surface detail
-- **Player pod visibility** — lost against bright terrain
-- **Debug panel overlap** — colliding with game UI
-- **Altitude has no gameplay effect** — should be functional
-- **Delivery list legibility** — too small / blends with background
-
-### Where AI reviewers diverge
-- GPT-5.2: **mechanic feel** (charge curve, pre-launch feedback, combo animation)
-- Gemini: **information clarity** (direction arrow ambiguity, delivery list backdrop, overshoot dynamism)
-- GPT-5.2: aesthetic extensions (lat/long grid, magnetic arcs, color temperature)
-- ~~Gemini: battery drain~~ *(user says ignore this)*
+**North star: stop polishing, fix the core.** The visuals work. The game feel doesn't yet.
 
 ---
 
-## P0 — Disorientation & clarity
+## DONE (completed P0 clarity pass)
 
-The user's "disorienting" + "more experience than game" maps directly to these.
-**All fixes must work visually — mobile games cannot rely on audio.**
+- [x] Ring LOD — fade/hide by distance
+- [x] Bloom clamped at mid-altitude (0.15 ground → 0.5 max)
+- [x] Trajectory arc more prominent during charge
+- [x] Ideal charge tick mark on power meter
+- [x] Player pod dark outline shell for visibility
+- [x] Debug panel hidden by default (H key / ?debug)
+- [x] Delivery list backdrop blur
+- [x] Destination name + progress bar + proximity arrow
+- [x] HUD simplification during flight (secondary panels fade)
+- [x] Pod jitter fixed (quaternion slerp)
+- [x] Parked ground stance (faces camera, eyes visible)
+- [x] Country outlines brighter for globe recognition
+- [x] Free camera toggle button
 
-- [ ] **Reduce visual noise in ring-dense areas** — LOD: fade/hide by distance; only show nearby + target airport rings during delivery *(both reviewers, #1 issue)*
-- [ ] **Clamp bloom at mid-altitude** — bloom + atmospheric haze stack = white washout; hard-cap near surface *(both reviewers)*
-- [ ] **Trajectory arc during charge** — make the existing preview arc more prominent so player knows where they're going *(GPT-5.2, addresses disorientation)*
-- [ ] **"Ideal charge" band on power meter** — green zone/tick mark for ideal hold duration, not just color shift *(GPT-5.2)*
-- [ ] **Player pod rim light / silhouette** — dark outline or contrasting rim glow so you always know where you are *(both reviewers — promoted from P1)*
+## CORE GAMEPLAY — must do next (before any more polish)
 
-## P1 — Make it feel like a game, not a screensaver
+- [ ] **Altitude as mechanic** — higher = faster travel but harder to land; gives charge strategic meaning *(both reviewers, user)*
+- [ ] **Pre-launch overshoot warning** — screen shake / color shift / "TOO FAR" before release *(GPT-5.2, Gemini)*
+- [ ] **Camera tilt during charge** — lean toward aim direction for spatial feel *(GPT-5.2)*
+- [ ] **Combo/streak feedback** — "Nice!" / "Perfect!" floaters on good landings *(GPT-5.2)*
+- [ ] **Sound & music** — ambient loop + varied bounce/land/deliver SFX *(user: "will be more fun")*
 
-- [ ] **Make altitude affect gameplay** — higher = faster travel but harder to land; gives altitude meaning beyond scenery *(both reviewers, user)*
-- [ ] **Pre-launch overshoot warning** — feedback BEFORE release when charge exceeds viable range *(GPT-5.2)*
-- [ ] **Make overshoot warning more dynamic** — screen shake, color shift, not just text *(Gemini)*
-- [ ] **Camera tilt toward trajectory during charge** — lean toward aim direction *(GPT-5.2, addresses disorientation)*
-- [ ] **Combo text animation** — make it scale/pulse assertively on increment *(GPT-5.2)*
-- [ ] **Direction arrow clarity** — ensure arrow points to selected delivery target, not nearest airport *(Gemini)*
+## GAME LOOP DEPTH — should do
 
-## P2 — Scoring, progression & audio
+- [ ] **Interception mechanic** — intercept rival couriers' packages *(original vision)*
+- [ ] **Regional delivery chains** — bonus for consecutive same-region deliveries *(GPT-5.2)*
+- [ ] **Long-distance precision bonus** — extra reward for BULLSEYE on long shots *(GPT-5.2)*
+- [ ] **Difficulty curve tuning** — first 3 deliveries should feel generous *(GPT-5.2)*
+- [ ] **Route selection UX** — radial menus or clearer route-type feedback *(original vision)*
+- [ ] **OpenStreetMap integration** — street outlines at low altitude *(original vision)*
 
-- [ ] **Sound & music** — ambient music + richer sound design; nice-to-have but NOT relied upon for core feedback since mobile often played muted *(user feedback, deprioritized)*
-- [ ] **Regional delivery chains** — bonus for consecutive deliveries in same region *(GPT-5.2)*
-- [ ] **Long-distance precision bonus** — extra points for BULLSEYE on long-range *(GPT-5.2)*
-- [ ] **Escalating streak audio/visuals** — sound pitch + particle intensity rise with combo *(GPT-5.2)*
-- [ ] **Difficulty curve tuning** — review timer tightening; first 3 deliveries should feel generous
+## MOBILE UX — when core is solid
 
-## P3 — Mobile UX polish
-
-- [ ] **Fix UI stacking / debug panel overlap** — auto-collapse debug in production *(both reviewers)*
-- [ ] **Delivery list legibility** — backdrop blur/plate behind "Choose Delivery" *(Gemini)*
 - [ ] **Bottom safe area** — more aggressive `env(safe-area-inset-bottom)` *(GPT-5.2)*
-- [ ] **Larger delivery option tap targets** — increase padding *(GPT-5.2)*
-- [ ] **Accessibility** — user notes eyesight-dependent experience; consider larger fonts, higher contrast mode *(user feedback)*
+- [ ] **Larger delivery option tap targets** *(GPT-5.2)*
+- [ ] **Accessibility** — larger fonts, higher contrast mode *(user notes eyesight-dependent experience)*
 
-## P4 — Aesthetic enhancements
+## AVOID (for now)
 
-- [ ] **Depth fog / distance desaturation** — distant rings fade to reduce clutter *(GPT-5.2)*
-- [ ] **Adaptive UI contrast** — darken panels when terrain beneath is light *(GPT-5.2)*
-- [ ] **Reduce particle count at low altitude** — 30–40% fewer near surface *(GPT-5.2)*
-- [ ] **Landmass/UI contrast** — more contrast between landmasses and UI *(Gemini)*
-- [ ] **Animated lat/long grid** — subtle wireframe globe overlay *(GPT-5.2)*
-- [ ] **Magnetic field line arcs** — faint curvature arcs between airports *(GPT-5.2)*
-- [ ] **Regional color temperature** — polar cooler, equatorial warmer *(GPT-5.2)*
-
-## Previously identified (from original vision)
-
-- [ ] **OpenStreetMap integration** — street outlines at low altitude
-- [ ] **Interception mechanic** — intercept rival couriers' packages
-- [ ] **Route selection UX** — radial menus or clearer route-type feedback
-- [ ] **Camera feel** — smoothing, zoom-to-target on delivery pick
-- [ ] **Real Earth texture option** — NASA Blue Marble for instant recognition
+Visual effects, particles, shaders, aesthetic tweaks (color temperature, lat/long grid, magnetic arcs, depth fog, adaptive contrast). Anything that doesn't change how the game **plays**.

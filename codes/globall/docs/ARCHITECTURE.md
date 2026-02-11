@@ -1,4 +1,4 @@
-# Globall Magnetics — Technical Architecture
+# Glowball Gopher — Technical Architecture
 
 ## Stack
 
