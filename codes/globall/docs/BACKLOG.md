@@ -1,16 +1,21 @@
 # Glowball Gopher — Backlog
 
-Extracted from [GPT-5.2 review](review-2026-02-11.md) + [Gemini review](review-gemini-2026-02-11.md) + user playtesting + prior sessions.
+Extracted from user playtesting + [GPT-5.2 review](review-2026-02-11.md) + [Gemini review](review-gemini-2026-02-11.md) + prior sessions.
 
-### User playtesting verdict (2026-02-11)
-> "Looks glorious but is very disorienting. More experience than game.
-> Will be more fun when we add more music and sounds."
+### User playtesting verdicts (2026-02-11)
+> "Looks glorious but is very disorienting. More experience than game."
 
-**North star: stop polishing, fix the core.** The visuals work. The game feel doesn't yet.
+> "This is supposedly set on real planet earth, and yet I just don't feel it.
+> Nothing is recognizable. Why do I see dozens of rings together in one place??"
+
+> "The idea was Glasgow → Heathrow → Narita → Kyoto. Graph theory lurking.
+> Radial dialog to pick next hop at each node."
+
+**Two core failures: doesn't feel like Earth, no graph-routing mechanic.**
 
 ---
 
-## DONE (completed P0 clarity pass)
+## DONE (completed clarity pass)
 
 - [x] Ring LOD — fade/hide by distance
 - [x] Bloom clamped at mid-altitude (0.15 ground → 0.5 max)
@@ -26,29 +31,35 @@ Extracted from [GPT-5.2 review](review-2026-02-11.md) + [Gemini review](review-g
 - [x] Country outlines brighter for globe recognition
 - [x] Free camera toggle button
 
-## CORE GAMEPLAY — must do next (before any more polish)
+## P0 — Sense of place + graph routing (do FIRST)
 
-- [ ] **Altitude as mechanic** — higher = faster travel but harder to land; gives charge strategic meaning *(both reviewers, user)*
-- [ ] **Pre-launch overshoot warning** — screen shake / color shift / "TOO FAR" before release *(GPT-5.2, Gemini)*
-- [ ] **Camera tilt during charge** — lean toward aim direction for spatial feel *(GPT-5.2)*
-- [ ] **Combo/streak feedback** — "Nice!" / "Perfect!" floaters on good landings *(GPT-5.2)*
-- [ ] **Sound & music** — ambient loop + varied bounce/land/deliver SFX *(user: "will be more fun")*
+- [ ] **Planet doesn't feel like Earth** — procedural texture too abstract; consider NASA Blue Marble (public domain) or dramatically improve continents *(user: "flying over Google Maps not Earth")*
+- [ ] **Airport clustering** — 1269 airports loaded, many overlap completely (LHR-LGW = 0.064 game units, ring = 0.3 units). Curate ~50-80 hub airports for interactive nodes; keep all as dots *(user: "dozens of rings in one place")*
+- [ ] **Ring compositing error** — detailed rings use `rotateX(PI/2)` making them edge-on, same bug as PackageSystem. Sprite bounding boxes visible *(user: "bounding box that doesn't mix properly")*
+- [ ] **Graph routing mechanic** — route data exists (13,143 pairs) but unused for gameplay. Need hop-by-hop navigation: land → radial dialog → pick next hop → bounce. This IS the game *(user: "Glasgow → Heathrow → Narita → Kyoto")*
 
-## GAME LOOP DEPTH — should do
+## P1 — Game feel (after P0)
+
+- [ ] **Altitude as mechanic** — higher = faster but harder to land *(both reviewers, user)*
+- [ ] **Pre-launch overshoot warning** — feedback before release *(GPT-5.2, Gemini)*
+- [ ] **Camera tilt during charge** — spatial feel for trajectory *(GPT-5.2)*
+- [ ] **Combo/streak feedback** — "Nice!" / "Perfect!" floaters *(GPT-5.2)*
+- [ ] **Sound & music** — ambient + varied SFX *(user: "will be more fun")*
+
+## SHOULD DO — Game loop depth
 
 - [ ] **Interception mechanic** — intercept rival couriers' packages *(original vision)*
-- [ ] **Regional delivery chains** — bonus for consecutive same-region deliveries *(GPT-5.2)*
-- [ ] **Long-distance precision bonus** — extra reward for BULLSEYE on long shots *(GPT-5.2)*
-- [ ] **Difficulty curve tuning** — first 3 deliveries should feel generous *(GPT-5.2)*
-- [ ] **Route selection UX** — radial menus or clearer route-type feedback *(original vision)*
+- [ ] **Regional delivery chains** — bonus for same-region consecutive deliveries *(GPT-5.2)*
+- [ ] **Long-distance precision bonus** — BULLSEYE on long shots *(GPT-5.2)*
+- [ ] **Difficulty curve tuning** — first 3 deliveries generous *(GPT-5.2)*
 - [ ] **OpenStreetMap integration** — street outlines at low altitude *(original vision)*
 
 ## MOBILE UX — when core is solid
 
-- [ ] **Bottom safe area** — more aggressive `env(safe-area-inset-bottom)` *(GPT-5.2)*
-- [ ] **Larger delivery option tap targets** *(GPT-5.2)*
-- [ ] **Accessibility** — larger fonts, higher contrast mode *(user notes eyesight-dependent experience)*
+- [ ] **Bottom safe area** — `env(safe-area-inset-bottom)` *(GPT-5.2)*
+- [ ] **Larger delivery tap targets** *(GPT-5.2)*
+- [ ] **Accessibility** — larger fonts, higher contrast *(user)*
 
 ## AVOID (for now)
 
-Visual effects, particles, shaders, aesthetic tweaks (color temperature, lat/long grid, magnetic arcs, depth fog, adaptive contrast). Anything that doesn't change how the game **plays**.
+Visual effects, particles, shaders, aesthetic tweaks. Anything that doesn't change how the game **plays**.

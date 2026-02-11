@@ -7,38 +7,49 @@
 > Candy mood not grim. Trampolines take us into thin air where ISS and aurora borealis visible.
 > At lower levels see street outlines tx to OpenStreetMap plus other elevation data.
 
-**User playtesting verdict (2026-02-11):**
-> "Looks glorious but is very disorienting. More experience than game.
-> Will be more fun when we add more music and sounds."
+**User playtesting verdicts (2026-02-11):**
+> "Looks glorious but is very disorienting. More experience than game."
 
-The visuals work. The core game feel doesn't yet. **Stop polishing — fix the core.**
+> "This is supposedly set on real planet earth, and yet I just don't feel it.
+> We are supposed to be flying over EARTH not over Google Maps. Nothing is recognizable.
+> Why do I see dozens of rings together in one place??
+> Also there is a compositing error where a ring is set in a bounding box that doesn't mix properly.
+> The idea was that you might be in GLASGOW and have to deliver to KYOTO — through
+> Gatwick/Heathrow to Narita then Kyoto. Or through Greenland/Anchorage/Vladivostok.
+> There is a subtext of graph theory lurking. To make the graph route thing compelling
+> it needs a way to be clearer about current node and those it can route to —
+> when on Narita you might have a radial dialog to pick next hop."
+
+**Two core failures: (1) doesn't feel like Earth, (2) no graph-routing mechanic.**
 
 ---
 
 ## Current Priorities (read this first!)
 
-We've been spending too much energy on visual polish while the core gameplay loop is off.
-The game looks beautiful but plays like a screensaver. Rebalance effort toward **game feel**.
+### P0 — Sense of place + graph routing (fundamental, do first)
 
-### MUST DO — Core gameplay (before any more polish)
+1. **Planet doesn't feel like Earth** — Procedural texture with ellipsoidal continent zones is too abstract. Consider NASA Blue Marble texture (public domain) or dramatically improve continent rendering. Country outlines help but aren't enough alone.
 
-1. **Altitude as mechanic** — higher = faster travel but harder to land accurately. Right now altitude is purely cosmetic. This is the single biggest missing piece: it gives the charge meter strategic meaning ("do I go high and fast, or low and precise?")
+2. **Airport clustering** — 1269 airports loaded, many within fractions of a game unit (LHR to LGW = 0.064 units, ring radius = 0.3 units). They overlap completely. Need to curate ~50-80 major hub airports for interactive nodes. Keep all 1269 as dots for atmosphere. Use route-graph degree to auto-select hubs.
 
-2. **Pre-launch feedback** — before you release, show whether you'll overshoot. Screen shake / color shift / "TOO FAR" warning. The player needs information to make decisions, not just react.
+3. **Ring compositing error** — Detailed airport rings use `rotateX(PI/2)` making them edge-on (same bug we fixed in PackageSystem). Sprite bounding boxes show through. Remove the rotateX.
 
-3. **Camera tilt during charge** — lean toward aim direction so the player feels the trajectory building. Right now charge is just a filling meter with no spatial feel.
+4. **Graph routing mechanic** — The route graph exists (13,143 route pairs) but is only used for faint visual arcs. Need hop-by-hop navigation: land at airport → radial dialog shows connected airports → pick next hop → bounce there. This IS the game. Glasgow → Heathrow → Narita → Kyoto.
 
-4. **Combo/streak feedback** — "Nice!" / "Perfect!" floaters on good landings. Immediate readable reward signal. Currently you deliver a package and the response is... a score number changing.
+### P1 — Game feel (after P0 is solid)
 
-5. **Sound & music** — the user specifically said this would make it more fun. Even a simple ambient loop + varied bounce/land/deliver SFX. The game is silent except for EM hums.
+5. **Altitude as mechanic** — higher = faster but harder to land
+6. **Pre-launch overshoot warning** — feedback before release
+7. **Camera tilt during charge** — spatial feel for trajectory
+8. **Combo/streak feedback** — "Nice!" / "Perfect!" floaters
+9. **Sound & music** — ambient + bounce/land/deliver SFX
 
 ### SHOULD DO — Game loop depth
 
-6. **Interception mechanic** — intercept rival couriers (from original vision, never built)
-7. **Regional delivery chains** — bonus for consecutive deliveries in same region
-8. **Long-distance precision bonus** — reward BULLSEYE on hard shots
-9. **Difficulty curve tuning** — first 3 deliveries should feel generous
-10. **Route selection UX** — radial menus or clearer route-type feedback
+10. **Interception mechanic** — intercept rival couriers (original vision)
+11. **Regional delivery chains** — bonus for same-region consecutive deliveries
+12. **Long-distance precision bonus** — reward BULLSEYE on hard shots
+13. **Difficulty curve tuning** — first 3 deliveries should feel generous
 
 ### AVOID (for now)
 
