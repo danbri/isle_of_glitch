@@ -31,6 +31,9 @@ export class AudioSystem {
             // Start ambient soundscape
             this.createAmbientDrone();
 
+            // Start wind layer (silent until speed > 0)
+            this.startWindLayer();
+
             // Handle visibility changes
             document.addEventListener('visibilitychange', () => this.handleVisibility());
 
@@ -397,33 +400,294 @@ export class AudioSystem {
         osc.stop(t + 0.35);
     }
 
-    // Altitude affects ambient sound
-    updateAltitude(altitude) {
-        if (!this.ctx || !this.drones.length) return;
+    // Miss/overshoot — descending "wah-wah" failure tone
+    playMiss() {
+        if (!this.ctx || this.isMuted) return;
+        const t = this.ctx.currentTime;
 
-        // Higher altitude = higher filter freq, more spacey
-        const normalizedAlt = Math.min(altitude / 500, 1);
+        // Descending two-tone "wah-wah"
+        for (let i = 0; i < 2; i++) {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'square';
+            const start = t + i * 0.15;
+            osc.frequency.setValueAtTime(400 - i * 120, start);
+            osc.frequency.exponentialRampToValueAtTime(200 - i * 60, start + 0.12);
+            gain.gain.setValueAtTime(0.08, start);
+            gain.gain.exponentialRampToValueAtTime(0.01, start + 0.14);
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.start(start);
+            osc.stop(start + 0.18);
+        }
+    }
 
-        this.drones.forEach((d, i) => {
-            const baseFreq = 300 + i * 100;
-            d.filter.frequency.setTargetAtTime(
-                baseFreq + normalizedAlt * 600,
-                this.ctx.currentTime,
-                0.5
-            );
+    // Expiry — ominous low drone-out with metallic crash
+    playExpiry() {
+        if (!this.ctx || this.isMuted) return;
+        const t = this.ctx.currentTime;
+
+        // Low ominous sweep down
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(200, t);
+        osc.frequency.exponentialRampToValueAtTime(40, t + 0.6);
+        gain.gain.setValueAtTime(0.12, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.7);
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.value = 500;
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.8);
+
+        // Metallic crash noise
+        const bufferSize = this.ctx.sampleRate * 0.3;
+        const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 1.5);
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+        const nGain = this.ctx.createGain();
+        const nFilter = this.ctx.createBiquadFilter();
+        nFilter.type = 'bandpass';
+        nFilter.frequency.value = 800;
+        nFilter.Q.value = 2;
+        nGain.gain.setValueAtTime(0.08, t);
+        nGain.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
+        noise.connect(nFilter);
+        nFilter.connect(nGain);
+        nGain.connect(this.masterGain);
+        noise.start(t);
+    }
+
+    // Expiry countdown — accelerating beeps in final seconds
+    // urgency: 0-1 (0 = just started warning, 1 = about to expire)
+    playCountdownBeep(urgency) {
+        if (!this.ctx || this.isMuted) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'square';
+        // Pitch rises with urgency
+        osc.frequency.value = 300 + urgency * 400;
+        const vol = 0.04 + urgency * 0.06;
+        gain.gain.setValueAtTime(vol, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.06);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.08);
+    }
+
+    // Aim tick — subtle magnetic click when rotating aim direction
+    playAimTick() {
+        if (!this.ctx || this.isMuted) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 1800 + Math.random() * 200;
+        gain.gain.setValueAtTime(0.03, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.04);
+    }
+
+    // Destination selected — satisfying lock-on chirp
+    playSelectDestination() {
+        if (!this.ctx || this.isMuted) return;
+        const t = this.ctx.currentTime;
+
+        // Rising two-note chirp
+        const notes = [660, 990];
+        notes.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = freq;
+            const start = t + i * 0.06;
+            gain.gain.setValueAtTime(0.1, start);
+            gain.gain.exponentialRampToValueAtTime(0.01, start + 0.1);
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            osc.start(start);
+            osc.stop(start + 0.12);
         });
+    }
 
-        // Pad gets brighter in space
-        if (this.padFilter) {
-            this.padFilter.frequency.setTargetAtTime(
-                600 + normalizedAlt * 1200,
-                this.ctx.currentTime,
-                0.5
+    // Airport tapped — sonar ping
+    playSelectAirport() {
+        if (!this.ctx || this.isMuted) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, t);
+        osc.frequency.exponentialRampToValueAtTime(800, t + 0.1);
+        gain.gain.setValueAtTime(0.07, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.18);
+    }
+
+    // Boost — rising tone per tap level (replaces playBounce for air boosts)
+    playBoost(tapCount) {
+        if (!this.ctx || this.isMuted) return;
+        const t = this.ctx.currentTime;
+
+        // Each tap plays a higher note in a rising scale
+        const baseFreq = 400 + Math.min(tapCount, 5) * 120;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(baseFreq, t);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, t + 0.08);
+        filter.type = 'bandpass';
+        filter.frequency.value = baseFreq * 2;
+        filter.Q.value = 3;
+        gain.gain.setValueAtTime(0.1, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.12);
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.15);
+    }
+
+    // Chain launch — distinct power chord layered on top of normal bounce
+    playChainLaunch() {
+        if (!this.ctx || this.isMuted) return;
+        const t = this.ctx.currentTime;
+        const reverb = this.createReverb();
+        reverb.connect(this.masterGain);
+
+        // Power chord: root + fifth + octave, all at once
+        [220, 330, 440].forEach((freq) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.08, t);
+            gain.gain.exponentialRampToValueAtTime(0.01, t + 0.35);
+            osc.connect(gain);
+            gain.connect(reverb);
+            osc.start(t);
+            osc.stop(t + 0.4);
+        });
+    }
+
+    // Altitude warning — accelerating beeps when falling fast toward ground
+    playAltitudeWarning(urgency) {
+        if (!this.ctx || this.isMuted) return;
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 600 + urgency * 600;
+        gain.gain.setValueAtTime(0.05 + urgency * 0.05, t);
+        gain.gain.exponentialRampToValueAtTime(0.01, t + 0.04);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.05);
+    }
+
+    // Wind/rush noise layer — starts/stops with speed
+    startWindLayer() {
+        if (!this.ctx || this._windNoise) return;
+
+        // Create looping noise buffer
+        const length = this.ctx.sampleRate * 2;
+        const buffer = this.ctx.createBuffer(2, length, this.ctx.sampleRate);
+        for (let ch = 0; ch < 2; ch++) {
+            const data = buffer.getChannelData(ch);
+            for (let i = 0; i < length; i++) {
+                data[i] = (Math.random() * 2 - 1);
+            }
+        }
+
+        this._windNoise = this.ctx.createBufferSource();
+        this._windNoise.buffer = buffer;
+        this._windNoise.loop = true;
+
+        this._windFilter = this.ctx.createBiquadFilter();
+        this._windFilter.type = 'bandpass';
+        this._windFilter.frequency.value = 300;
+        this._windFilter.Q.value = 0.5;
+
+        this._windGain = this.ctx.createGain();
+        this._windGain.gain.value = 0;
+
+        this._windNoise.connect(this._windFilter);
+        this._windFilter.connect(this._windGain);
+        this._windGain.connect(this.masterGain);
+        this._windNoise.start();
+    }
+
+    updateWind(speed) {
+        if (!this._windGain) return;
+        const t = this.ctx.currentTime;
+        const intensity = Math.min(speed / 15, 1);
+
+        // Volume ramps with speed
+        this._windGain.gain.setTargetAtTime(intensity * 0.06, t, 0.3);
+        // Filter opens up at higher speeds (more high-freq rush)
+        if (this._windFilter) {
+            this._windFilter.frequency.setTargetAtTime(
+                300 + intensity * 2000, t, 0.2
             );
         }
     }
 
-    // Speed affects intensity
+    // Altitude affects ambient sound — thins out dramatically in deep space
+    updateAltitude(altitude) {
+        if (!this.ctx || !this.drones.length) return;
+        const t = this.ctx.currentTime;
+
+        // normalizedAlt: 0 = ground, 1 = very high
+        const normalizedAlt = Math.min(altitude / 500, 1);
+
+        // Space thinning: above ~300km altitude, ambient fades toward silence
+        // spaceHush: 0 = normal, 1 = deep space silence
+        const spaceHush = Math.max(0, Math.min(1, (altitude - 200) / 400));
+
+        this.drones.forEach((d, i) => {
+            const baseFreq = 300 + i * 100;
+            d.filter.frequency.setTargetAtTime(
+                baseFreq + normalizedAlt * 600, t, 0.5
+            );
+            // Drone volume fades in space
+            d.gain.gain.setTargetAtTime(
+                (0.3 / (i + 1)) * (1 - spaceHush * 0.85), t, 1.0
+            );
+        });
+
+        // Pad gets brighter at moderate altitude, then fades in deep space
+        if (this.padFilter) {
+            this.padFilter.frequency.setTargetAtTime(
+                600 + normalizedAlt * 1200, t, 0.5
+            );
+        }
+        if (this.padGain) {
+            this.padGain.gain.setTargetAtTime(
+                0.08 * (1 - spaceHush * 0.7), t, 1.0
+            );
+        }
+    }
+
+    // Speed affects intensity + wind layer
     updateSpeed(speed) {
         if (!this.ctx) return;
 
@@ -437,6 +701,9 @@ export class AudioSystem {
                 0.3
             );
         }
+
+        // Wind layer scales with speed
+        this.updateWind(speed);
     }
 
     handleVisibility() {
