@@ -46,6 +46,11 @@ export class PackageSystem {
         // Delivery choice system — player picks from options
         this.pendingChoices = []; // Array of {type, airport, distance, timeLimit, value}
         this.awaitingChoice = false;
+
+        // Hop-by-hop graph routing — core mechanic
+        this.pendingHops = [];   // Connected hub airports to choose from
+        this.awaitingHop = false;
+        this._lastHubIata = null; // Prevent re-triggering hops at same hub
     }
 
     async init() {
@@ -60,11 +65,12 @@ export class PackageSystem {
         const deliveries = this.gameState.deliveries;
         this.pendingChoices = [];
 
-        // Generate 3 options with different risk/reward
+        // Graph routing: destinations should be multi-hop away so routing matters
+        // Early game: 2 hops. Later: 2-3 hops. Always enough to require navigation.
         const configs = [
-            { bias: 'short', hops: 1 },    // Easy, nearby
-            { bias: 'medium', hops: deliveries < 3 ? 1 : 2 },  // Medium
-            { bias: 'long', hops: deliveries < 6 ? 2 : 2 }     // Hard, farther
+            { bias: 'short', hops: 2 },                          // Easy: 2 hops
+            { bias: 'medium', hops: deliveries < 3 ? 2 : 3 },    // Medium: 2-3 hops
+            { bias: 'long', hops: deliveries < 6 ? 3 : 3 }       // Hard: 3 hops
         ];
 
         for (const config of configs) {
@@ -78,11 +84,12 @@ export class PackageSystem {
             const distMultiplier = config.bias === 'short' ? 0.8 : config.bias === 'long' ? 1.5 : 1.0;
             const value = Math.floor(type.value * distMultiplier);
 
-            // Timer: generous for short, tight for long
+            // Timer: more generous for multi-hop (each hop adds time)
+            // Base time covers first hop; additional time awarded per hop
             const difficultyScale = Math.max(0.6, 1 - deliveries * 0.03);
-            const rawTime = 25 + dist * 4;
+            const baseTime = 20 + dist * 3;
             const timerMultiplier = config.bias === 'short' ? 1.3 : config.bias === 'long' ? 0.8 : 1.0;
-            const timeLimit = Math.min(90, Math.max(15, rawTime * difficultyScale * timerMultiplier));
+            const timeLimit = Math.min(120, Math.max(20, baseTime * difficultyScale * timerMultiplier));
 
             this.pendingChoices.push({
                 type,
@@ -92,7 +99,8 @@ export class PackageSystem {
                 value,
                 bias: config.bias,
                 destName: `${airport.airport.name} ${airport.airport.city}`,
-                distKm: Math.round(dist * 637)
+                distKm: Math.round(dist * 637),
+                estHops: config.hops
             });
         }
 
@@ -105,31 +113,42 @@ export class PackageSystem {
         if (nearest) startIata = nearest.airport.name;
 
         if (startIata && this.trampolineNetwork.routeGraph[startIata]) {
-            const connected = this.trampolineNetwork.getConnectedAirports(startIata);
-            if (connected.length === 0) return null;
+            // Walk the graph N hops to find a destination at the right distance
+            const visited = new Set([startIata]);
+            let frontier = [startIata];
 
-            if (config.hops === 1) {
-                // 1-hop: sort by distance and pick based on bias
-                const sorted = [...connected].sort((a, b) =>
+            for (let hop = 0; hop < config.hops; hop++) {
+                const nextFrontier = [];
+                for (const iata of frontier) {
+                    const hubs = this.trampolineNetwork.getConnectedHubs(iata);
+                    for (const hub of hubs) {
+                        if (!visited.has(hub.airport.name)) {
+                            visited.add(hub.airport.name);
+                            nextFrontier.push(hub.airport.name);
+                        }
+                    }
+                }
+                if (nextFrontier.length === 0) break;
+                frontier = nextFrontier;
+            }
+
+            // frontier now contains airports exactly N hops away
+            const candidates = frontier
+                .map(iata => this.trampolineNetwork.iataIndex[iata])
+                .filter(t => t && t.isHub);
+
+            if (candidates.length > 0) {
+                const sorted = [...candidates].sort((a, b) =>
                     a.position.distanceTo(originPos) - b.position.distanceTo(originPos)
                 );
                 if (config.bias === 'short') return sorted[0];
                 if (config.bias === 'long') return sorted[sorted.length - 1];
-                return sorted[Math.floor(sorted.length / 2)]; // medium
-            } else {
-                // 2-hop
-                const mid = connected[Math.floor(Math.random() * connected.length)];
-                const hop2 = this.trampolineNetwork.getConnectedAirports(mid.airport.name);
-                const filtered = hop2.filter(t => t.airport.name !== startIata);
-                if (filtered.length > 0) {
-                    const sorted = [...filtered].sort((a, b) =>
-                        a.position.distanceTo(originPos) - b.position.distanceTo(originPos)
-                    );
-                    if (config.bias === 'short') return sorted[0];
-                    if (config.bias === 'long') return sorted[sorted.length - 1];
-                    return sorted[Math.floor(sorted.length / 2)];
-                }
-                // Fallback to 1-hop
+                return sorted[Math.floor(sorted.length / 2)];
+            }
+
+            // Fallback: any connected hub
+            const connected = this.trampolineNetwork.getConnectedHubs(startIata);
+            if (connected.length > 0) {
                 return connected[Math.floor(Math.random() * connected.length)];
             }
         }
@@ -157,8 +176,82 @@ export class PackageSystem {
             originPosition: originPos.clone(),
             distance: choice.distance,
             timeLimit: choice.timeLimit,
-            startTime: Date.now()
+            startTime: Date.now(),
+            hopsCompleted: 0,
+            estHops: choice.estHops || 2
         };
+
+        // Don't set final destination as immediate target —
+        // player must navigate hop-by-hop via the route graph.
+        // Immediately offer hop choices from current hub.
+        this._lastHubIata = null;
+        const { trampoline: nearest } = this.trampolineNetwork.getNearestTrampoline(originPos);
+        if (nearest && nearest.isHub) {
+            this.offerHopChoices(nearest.airport.name);
+        }
+    }
+
+    offerHopChoices(currentIata) {
+        const destPos = this.getDestinationPosition();
+        if (!destPos || !this.currentPackage) return;
+
+        const hubs = this.trampolineNetwork.getConnectedHubs(currentIata);
+        if (hubs.length === 0) return;
+
+        const playerPos = this._lastPlayerPos || new THREE.Vector3(0, 12, 0);
+        const currentDistToDest = playerPos.distanceTo(destPos);
+
+        // Sort by proximity to final destination (closer = better route)
+        const sorted = hubs
+            .map(hub => ({
+                trampoline: hub,
+                iata: hub.airport.name,
+                city: hub.airport.city || '',
+                distToDest: hub.position.distanceTo(destPos),
+                distFromHere: hub.position.distanceTo(playerPos),
+                isFinalDest: hub.airport.name === this.currentPackage.destinationAirport.airport.name,
+                towardDest: hub.position.distanceTo(destPos) < currentDistToDest
+            }))
+            .sort((a, b) => a.distToDest - b.distToDest);
+
+        // Take top 5 (don't overwhelm)
+        this.pendingHops = sorted.slice(0, 5).map(h => ({
+            trampoline: h.trampoline,
+            iata: h.iata,
+            city: h.city,
+            distToDest: h.distToDest,
+            distFromHere: h.distFromHere,
+            distKm: Math.round(h.distFromHere * 637),
+            isFinalDest: h.isFinalDest,
+            towardDest: h.towardDest
+        }));
+
+        this.awaitingHop = true;
+        this._lastHubIata = currentIata;
+    }
+
+    acceptHop(hopIndex) {
+        if (!this.awaitingHop || hopIndex >= this.pendingHops.length) return null;
+
+        const hop = this.pendingHops[hopIndex];
+        this.awaitingHop = false;
+        this.pendingHops = [];
+
+        // Track hop progress
+        this.currentPackage.hopsCompleted++;
+
+        // Reward: add time for each hop (keeps urgency but rewards progress)
+        this.currentPackage.timeLimit += 10;
+
+        // Set this hop as the current navigation target
+        this.currentPackage._currentHopTarget = hop.trampoline;
+
+        // Reset miss tracking for this leg
+        this.currentPackage._closestApproach = null;
+        this.currentPackage._prevDist = null;
+        this.currentPackage._missShown = false;
+
+        return hop.trampoline;
     }
 
     getRandomDestinationAirport(excludeNear) {
@@ -227,6 +320,21 @@ export class PackageSystem {
     getDestinationTrampoline() {
         if (!this.currentPackage) return null;
         return this.currentPackage.destinationAirport;
+    }
+
+    // Get the immediate navigation target (next hop or final destination)
+    getNavTarget() {
+        if (!this.currentPackage) return null;
+        // If player has a hop target set, return that; otherwise final destination
+        if (this.currentPackage._currentHopTarget) {
+            return this.currentPackage._currentHopTarget;
+        }
+        return this.currentPackage.destinationAirport;
+    }
+
+    getNavTargetPosition() {
+        const target = this.getNavTarget();
+        return target ? target.position.clone() : null;
     }
 
     createDestinationMarker() {
@@ -546,8 +654,14 @@ export class PackageSystem {
         // Big celebration effect
         this.createDeliveryEffect(destPos);
 
-        // Clear and assign new package
+        // Include hop count in delivery info
+        this._lastDelivery.hopsCompleted = pkg.hopsCompleted || 0;
+
+        // Clear hop state and assign new package
         this.currentPackage = null;
+        this.pendingHops = [];
+        this.awaitingHop = false;
+        this._lastHubIata = null;
         this.assignNewPackage();
     }
 
@@ -677,6 +791,9 @@ export class PackageSystem {
         this.comboCount = 0;
         this._lastExpiry = { penalty, time: Date.now() };
         this.currentPackage = null;
+        this.pendingHops = [];
+        this.awaitingHop = false;
+        this._lastHubIata = null;
         this.assignNewPackage();
     }
 
@@ -686,12 +803,38 @@ export class PackageSystem {
         return this._lastExpiry;
     }
 
+    // Check if player has landed at a hub airport (for hop routing)
+    checkHubLanding(playerPosition, isOnGround) {
+        if (!this.currentPackage || !this.currentPackage.carrying) return;
+        if (this.awaitingHop || this.awaitingChoice) return;
+        if (!isOnGround) return;
+
+        const { trampoline: nearest, distance: nearDist } =
+            this.trampolineNetwork.getNearestTrampoline(playerPosition);
+        if (!nearest || nearDist > 0.8 || !nearest.isHub) return;
+
+        const iata = nearest.airport.name;
+
+        // Don't re-trigger at the same hub
+        if (iata === this._lastHubIata) return;
+
+        // Don't trigger if we're at the final destination (delivery will handle it)
+        const destIata = this.currentPackage.destinationAirport.airport.name;
+        if (iata === destIata) return;
+
+        // Player landed at a new hub — offer hop choices
+        this.offerHopChoices(iata);
+    }
+
     update(time, deltaTime, player) {
         const playerPosition = player.getPosition();
         this._lastPlayerPos = playerPosition;
 
-        // Check for delivery completion
-        const delivered = this.checkDelivery(playerPosition);
+        // Check for delivery completion (final destination)
+        this.checkDelivery(playerPosition);
+
+        // Check for hub landing (hop routing)
+        this.checkHubLanding(playerPosition, player.isOnGround);
 
         // Update destination marker and guide
         this.updateDestinationMarker(playerPosition, time);
