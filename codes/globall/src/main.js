@@ -1036,25 +1036,33 @@ class GloballGame {
         const currentPackage = this.packageSystem.getCurrentPackage();
         if (currentPackage) {
             const pn = this.getEl('package-name');
-            if (pn) pn.textContent = currentPackage.type.name;
+            const hops = currentPackage.hopsCompleted || 0;
+            if (pn) pn.textContent = `${currentPackage.type.name}${hops > 0 ? ` (hop ${hops})` : ''}`;
             const pd = this.getEl('package-dest');
             if (pd) pd.textContent = `→ ${currentPackage.destinationName}`;
 
-            // Auto-target destination airport for bounce aim
-            if (currentPackage.destinationAirport && !this.player.targetTrampoline) {
-                this.player.setTargetTrampoline(currentPackage.destinationAirport);
+            // Auto-target: use nav target (next hop), not final destination
+            if (!this.player.targetTrampoline) {
+                const navTarget = this.packageSystem.getNavTarget();
+                if (navTarget) {
+                    this.player.setTargetTrampoline(navTarget);
+                }
             }
 
             // Update direction indicator
             this.updateDirectionIndicator();
-        } else if (this.packageSystem.awaitingChoice) {
-            // No active package — show "choose delivery" in package info
+        } else if (this.packageSystem.awaitingChoice || this.packageSystem.awaitingHop) {
             const pn = this.getEl('package-name');
-            if (pn) pn.textContent = 'Choose delivery...';
             const pd = this.getEl('package-dest');
-            if (pd) pd.textContent = 'Tap an option below';
+            if (this.packageSystem.awaitingHop) {
+                if (pn) pn.textContent = 'Pick next hop...';
+                if (pd) pd.textContent = 'Choose your route below';
+            } else {
+                if (pn) pn.textContent = 'Choose delivery...';
+                if (pd) pd.textContent = 'Tap an option below';
+            }
 
-            // Hide direction display when no active delivery
+            // Hide direction display when choosing
             const dirContainer = this.getEl('direction-display');
             if (dirContainer) dirContainer.style.opacity = '0';
         }
@@ -1121,6 +1129,8 @@ class GloballGame {
     }
 
     updateDirectionIndicator() {
+        // Use nav target (next hop) for arrow + distance, final dest for name
+        const navPos = this.packageSystem.getNavTargetPosition();
         const destPos = this.packageSystem.getDestinationPosition();
         const arrowEl = this.getEl('direction-arrow-large');
         const distEl = this.getEl('direction-distance');
@@ -1129,7 +1139,9 @@ class GloballGame {
         const progressBar = this.getEl('direction-progress-bar');
         if (!arrowEl || !distEl || !container) return;
 
-        if (!destPos) {
+        // Use navPos (next hop) for direction, fall back to destPos
+        const targetPos = navPos || destPos;
+        if (!targetPos) {
             container.style.opacity = '0';
             if (destNameEl) destNameEl.textContent = '';
             return;
@@ -1137,13 +1149,26 @@ class GloballGame {
 
         container.style.opacity = '1';
         const playerPos = this.player.getPosition();
-        const dist = playerPos.distanceTo(destPos);
+        const dist = playerPos.distanceTo(targetPos);
 
-        // Show destination name prominently
+        // Show nav context: "HOP → NRT" or final "→ KIX Kyoto"
         if (destNameEl) {
             const pkg = this.packageSystem.currentPackage;
-            const name = pkg ? pkg.destName : '';
-            if (destNameEl.textContent !== name) destNameEl.textContent = name;
+            if (pkg) {
+                const navTarget = this.packageSystem.getNavTarget();
+                const isHop = navTarget && navTarget !== pkg.destinationAirport;
+                const hopName = navTarget ? `${navTarget.airport.name} ${navTarget.airport.city || ''}` : '';
+                const hops = pkg.hopsCompleted || 0;
+                if (isHop) {
+                    destNameEl.textContent = `Hop ${hops + 1}: ${hopName}`;
+                } else if (hops > 0) {
+                    destNameEl.textContent = `Final: ${pkg.destinationName}`;
+                } else {
+                    destNameEl.textContent = pkg.destinationName;
+                }
+            } else {
+                destNameEl.textContent = '';
+            }
         }
 
         // Distance display (1 unit ≈ 637km)
@@ -1172,8 +1197,8 @@ class GloballGame {
             }
         }
 
-        // Arrow direction — project destination to screen space
-        const screenPos = destPos.clone().project(this.camera);
+        // Arrow direction — project nav target to screen space
+        const screenPos = targetPos.clone().project(this.camera);
         let dx = screenPos.x;
         let dy = screenPos.y;
         if (screenPos.z > 1) { dx = -dx; dy = -dy; }
@@ -1233,10 +1258,10 @@ class GloballGame {
                     if (this.audio && this.audio.playTimerWarning) this.audio.playTimerWarning();
                 }
             } else {
-                // Check proximity instead
-                const destPos = this.packageSystem.getDestinationPosition();
-                if (destPos) {
-                    const dist = this.player.getPosition().distanceTo(destPos);
+                // Check proximity to nav target (next hop or final dest)
+                const vignettePos = this.packageSystem.getNavTargetPosition() || this.packageSystem.getDestinationPosition();
+                if (vignettePos) {
+                    const dist = this.player.getPosition().distanceTo(vignettePos);
                     vignette.className = dist < 3 ? 'proximity' : '';
                 } else {
                     vignette.className = '';
@@ -1291,6 +1316,12 @@ class GloballGame {
         const choiceEl = this.getEl('delivery-choice');
         if (!choiceEl) return;
 
+        // Show hop choices when awaiting a hop
+        if (this.packageSystem.awaitingHop && this.packageSystem.pendingHops.length > 0) {
+            this._showHopChoiceUI(choiceEl);
+            return;
+        }
+
         if (!this.packageSystem.awaitingChoice || this.packageSystem.pendingChoices.length === 0) {
             choiceEl.style.display = 'none';
             return;
@@ -1302,6 +1333,10 @@ class GloballGame {
         this._lastChoiceKey = choiceKey;
 
         choiceEl.style.display = 'block';
+        // Set header for delivery choice
+        const header = choiceEl.querySelector('.choice-header');
+        if (header) header.textContent = 'Choose Delivery';
+
         const container = this.getEl('delivery-options');
         if (!container) return;
         container.innerHTML = '';
@@ -1309,13 +1344,15 @@ class GloballGame {
         this.packageSystem.pendingChoices.forEach((choice, idx) => {
             const opt = document.createElement('div');
             opt.className = `delivery-option ${choice.bias}`;
+
+            const hopsLabel = choice.estHops ? `~${choice.estHops} hops` : '';
             opt.innerHTML = `
                 <span class="opt-icon">${choice.type.icon}</span>
                 <div class="opt-info">
                     <div class="opt-dest">${choice.destName}</div>
                     <div class="opt-meta">
                         <span>${choice.distKm > 1000 ? (choice.distKm / 1000).toFixed(1) + 'k' : choice.distKm} km</span>
-                        <span>${Math.round(choice.timeLimit)}s</span>
+                        <span>${hopsLabel}</span>
                     </div>
                 </div>
                 <div class="opt-value">+${choice.value}</div>
@@ -1326,15 +1363,12 @@ class GloballGame {
                 e.stopPropagation();
                 this.packageSystem.acceptDelivery(idx);
                 this._lastChoiceKey = null;
-                this._deliveryStartDist = null; // Reset progress bar
-                choiceEl.style.display = 'none';
+                this._lastHopKey = null;
+                this._deliveryStartDist = null;
 
-                // Target the chosen destination
-                const pkg = this.packageSystem.getCurrentPackage();
-                if (pkg && pkg.destinationAirport) {
-                    this.player.setTargetTrampoline(pkg.destinationAirport);
-                    this.player.setCarrying(true);
-                }
+                // Don't target the final destination directly —
+                // hop UI will appear immediately (acceptDelivery triggers offerHopChoices)
+                this.player.setCarrying(true);
 
                 // Start session on first choice
                 if (!this.session.started) {
@@ -1347,12 +1381,81 @@ class GloballGame {
                     if (tut) tut.classList.add('hidden');
                 }
 
-                // Haptic
                 if (navigator.vibrate) navigator.vibrate(25);
             };
 
             opt.addEventListener('click', selectChoice);
             opt.addEventListener('touchend', selectChoice, { passive: false });
+            container.appendChild(opt);
+        });
+    }
+
+    _showHopChoiceUI(choiceEl) {
+        const hopKey = this.packageSystem.pendingHops.map(h => h.iata).join(',');
+        if (this._lastHopKey === hopKey) {
+            choiceEl.style.display = 'block';
+            return;
+        }
+        this._lastHopKey = hopKey;
+
+        choiceEl.style.display = 'block';
+
+        // Update header to show routing context
+        const header = choiceEl.querySelector('.choice-header');
+        const pkg = this.packageSystem.getCurrentPackage();
+        if (header && pkg) {
+            const hops = pkg.hopsCompleted || 0;
+            header.textContent = hops === 0
+                ? `Route to ${pkg.destinationName}`
+                : `Hop ${hops + 1} → ${pkg.destinationName}`;
+        }
+
+        const container = this.getEl('delivery-options');
+        if (!container) return;
+        container.innerHTML = '';
+
+        this.packageSystem.pendingHops.forEach((hop, idx) => {
+            const opt = document.createElement('div');
+            // Color: green if final dest, blue if toward dest, dim if away
+            const biasClass = hop.isFinalDest ? 'short' : (hop.towardDest ? 'medium' : 'long');
+            opt.className = `delivery-option ${biasClass}`;
+
+            const dirIcon = hop.isFinalDest ? '🎯' : (hop.towardDest ? '→' : '↗');
+            const label = hop.isFinalDest ? 'DESTINATION!'
+                : (hop.towardDest ? 'Toward dest' : 'Detour');
+
+            const distStr = hop.distKm > 1000
+                ? `${(hop.distKm / 1000).toFixed(1)}k km`
+                : `${hop.distKm} km`;
+
+            opt.innerHTML = `
+                <span class="opt-icon">${dirIcon}</span>
+                <div class="opt-info">
+                    <div class="opt-dest">${hop.iata} ${hop.city}</div>
+                    <div class="opt-meta">
+                        <span>${distStr}</span>
+                        <span>${label}</span>
+                    </div>
+                </div>
+            `;
+
+            const selectHop = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const targetTrampoline = this.packageSystem.acceptHop(idx);
+                this._lastHopKey = null;
+                this._deliveryStartDist = null;
+                choiceEl.style.display = 'none';
+
+                if (targetTrampoline) {
+                    this.player.setTargetTrampoline(targetTrampoline);
+                }
+
+                if (navigator.vibrate) navigator.vibrate(25);
+            };
+
+            opt.addEventListener('click', selectHop);
+            opt.addEventListener('touchend', selectHop, { passive: false });
             container.appendChild(opt);
         });
     }
@@ -1468,8 +1571,12 @@ class GloballGame {
         this.packageSystem.comboCount = 0;
         this.packageSystem.lastDeliveryTime = 0;
         this.packageSystem.currentPackage = null;
+        this.packageSystem.pendingHops = [];
+        this.packageSystem.awaitingHop = false;
+        this.packageSystem._lastHubIata = null;
         this.packageSystem.offerDeliveryChoices();
-        this._lastChoiceKey = null; // Force rebuild of choice UI
+        this._lastChoiceKey = null;
+        this._lastHopKey = null;
         this.player.setTargetTrampoline(null);
         this.player.setCarrying(false);
 
@@ -1616,8 +1723,8 @@ class GloballGame {
                 // 283 = 2*PI*45 (circumference of svg circle)
                 ring.style.strokeDashoffset = String(283 * (1 - progress));
 
-                // Power indicator: color shows if charge matches target distance
-                const destPos = this.packageSystem.getDestinationPosition();
+                // Power indicator: color shows if charge matches nav target distance
+                const destPos = this.packageSystem.getNavTargetPosition() || this.packageSystem.getDestinationPosition();
                 const tick = document.getElementById('charge-ideal-tick');
                 if (destPos) {
                     const dist = this.player.getPosition().distanceTo(destPos);
