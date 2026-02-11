@@ -23,6 +23,8 @@ import { AudioSystem } from './systems/AudioSystem.js';
 import { CountryOutlines } from './components/CountryOutlines.js';
 import { ChromaticAberrationShader } from './shaders/ChromaticAberration.js';
 import { AtmosphericScatteringShader } from './shaders/AtmosphericScattering.js';
+import { OrbitalMechanics } from './systems/OrbitalMechanics.js';
+import { ShipsComputer } from './systems/ShipsComputer.js';
 import GUI from 'lil-gui';
 
 class GloballGame {
@@ -74,6 +76,147 @@ class GloballGame {
         else this.gui.hide();
     }
 
+    setupFPSGraph() {
+        const canvas = this.getEl('fps-graph');
+        if (!canvas) return;
+
+        // High-DPI canvas
+        const dpr = window.devicePixelRatio || 1;
+        const w = 140, h = 60;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+
+        this.fpsGraph = {
+            canvas,
+            ctx: canvas.getContext('2d'),
+            dpr,
+            w, h,
+            history: [],       // raw FPS samples (1 per frame)
+            maxSamples: 140,   // one pixel per sample
+            avg1s: 0,
+            avg5s: 0,
+            avg15s: 0,
+            lastDraw: 0
+        };
+    }
+
+    updateFPSGraph(now) {
+        if (!this.fpsGraph || !this._debugVisible) return;
+
+        // Record frame time as FPS
+        const dt = now - (this._lastFrameTimeFPS || now);
+        this._lastFrameTimeFPS = now;
+        if (dt <= 0 || dt > 2000) return; // skip garbage frames
+
+        const fps = Math.min(120, 1000 / dt);
+        const g = this.fpsGraph;
+        g.history.push(fps);
+        if (g.history.length > g.maxSamples) g.history.shift();
+
+        // Compute smoothed averages
+        const len = g.history.length;
+        const avg = (n) => {
+            const slice = g.history.slice(Math.max(0, len - n));
+            return slice.reduce((a, b) => a + b, 0) / slice.length;
+        };
+        g.avg1s = avg(60);    // ~1 second at 60fps
+        g.avg5s = avg(300);   // ~5 seconds
+        g.avg15s = avg(900);  // ~15 seconds
+
+        // Redraw at ~10Hz to save CPU
+        if (now - g.lastDraw < 100) return;
+        g.lastDraw = now;
+
+        const { ctx, dpr, w, h } = g;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Background
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillRect(0, 0, w, h);
+
+        // 60fps reference line
+        const maxFPS = 90;
+        const yFor = (f) => h - 12 - (Math.min(f, maxFPS) / maxFPS) * (h - 16);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(0, yFor(60));
+        ctx.lineTo(w, yFor(60));
+        ctx.stroke();
+
+        // Sparkline graph
+        if (g.history.length > 1) {
+            ctx.beginPath();
+            const step = w / g.maxSamples;
+            const offset = g.maxSamples - g.history.length;
+            for (let i = 0; i < g.history.length; i++) {
+                const x = (offset + i) * step;
+                const y = yFor(g.history[i]);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            // Color based on current FPS
+            const curFps = g.history[g.history.length - 1];
+            ctx.strokeStyle = curFps >= 55 ? '#44ff88' : curFps >= 30 ? '#ffaa44' : '#ff4444';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // Text labels
+        ctx.font = '9px monospace';
+        ctx.textBaseline = 'top';
+        const curFps = Math.round(g.history[g.history.length - 1] || 0);
+        ctx.fillStyle = curFps >= 55 ? '#44ff88' : curFps >= 30 ? '#ffaa44' : '#ff4444';
+        ctx.fillText(`${curFps} fps`, 2, 1);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fillText(`1s:${Math.round(g.avg1s)} 5s:${Math.round(g.avg5s)} 15s:${Math.round(g.avg15s)}`, 2, h - 10);
+    }
+
+    setupShipsComputer() {
+        // Toggle button
+        const toggleBtn = this.getEl('computer-toggle');
+        if (toggleBtn) {
+            const toggle = () => {
+                this.shipsComputer.toggle();
+                const icon = this.getEl('computer-icon');
+                if (icon) icon.style.opacity = this.shipsComputer.visible ? '1' : '';
+                toggleBtn.style.background = this.shipsComputer.visible
+                    ? 'rgba(68,136,255,0.3)' : 'rgba(0,0,0,0.4)';
+                if (navigator.vibrate) navigator.vibrate(10);
+            };
+            toggleBtn.addEventListener('click', toggle);
+            toggleBtn.addEventListener('touchend', (e) => { e.preventDefault(); toggle(); });
+        }
+
+        // Close button
+        const closeBtn = this.getEl('sc-close');
+        if (closeBtn) {
+            const close = () => this.shipsComputer.toggle();
+            closeBtn.addEventListener('click', close);
+            closeBtn.addEventListener('touchend', (e) => { e.preventDefault(); close(); });
+        }
+
+        // Tab buttons
+        const navTab = this.getEl('sc-tab-nav');
+        const orbitTab = this.getEl('sc-tab-orbit');
+        if (navTab) {
+            navTab.addEventListener('click', () => this.shipsComputer.setTab('NAV'));
+            navTab.addEventListener('touchend', (e) => { e.preventDefault(); this.shipsComputer.setTab('NAV'); });
+        }
+        if (orbitTab) {
+            orbitTab.addEventListener('click', () => this.shipsComputer.setTab('ORBIT'));
+            orbitTab.addEventListener('touchend', (e) => { e.preventDefault(); this.shipsComputer.setTab('ORBIT'); });
+        }
+
+        // Keyboard shortcut: M for map
+        // (added to existing keydown handler)
+    }
+
     async init() {
         try {
             // Check for WebGPU support
@@ -99,6 +242,14 @@ class GloballGame {
 
             // Setup debug panel (press 'H' to toggle)
             this.setupDebugPanel();
+
+            // Ship's Computer — 2D nav map + orbital view overlay
+            this.shipsComputer = new ShipsComputer();
+            this.shipsComputer.init(
+                this.trampolineNetwork, this.orbital,
+                this.player, this.packageSystem
+            );
+            this.setupShipsComputer();
 
             // Initialize audio (deferred, non-blocking)
             try {
@@ -315,11 +466,18 @@ class GloballGame {
         // Initialize game state
         this.gameState = new GameState();
 
+        this.updateLoadingProgress(33, 'Computing orbits...');
+
+        // Orbital mechanics — real sun/moon/ISS positions via astronomy-engine
+        console.log('Loading: Orbital Mechanics...');
+        this.orbital = new OrbitalMechanics();
+        this.orbital.init();
+
         this.updateLoadingProgress(35, 'Generating planet...');
 
-        // Create planet
+        // Create planet — pass orbital so it uses real sun direction
         console.log('Loading: Planet...');
-        this.planet = new Planet(this.scene);
+        this.planet = new Planet(this.scene, this.orbital);
         await this.planet.init();
 
         this.updateLoadingProgress(50, 'Illuminating cities...');
@@ -560,10 +718,13 @@ class GloballGame {
                 this.player.interact();
                 break;
             case 'KeyH':
-                this._debugVisible = true;
-                const dt = this.getEl('debug-toggle');
-                if (dt) dt.style.display = 'block';
+                this._debugVisible = !this._debugVisible;
                 this.toggleGUI();
+                const fpsC = this.getEl('fps-graph');
+                if (fpsC) fpsC.style.display = this._debugVisible ? 'block' : 'none';
+                break;
+            case 'KeyM':
+                if (this.shipsComputer) this.shipsComputer.toggle();
                 break;
         }
     }
@@ -994,9 +1155,49 @@ class GloballGame {
         info.add(this.debugInfo, 'velocity').name('Velocity').listen();
         info.open();
 
+        // Orbital mechanics controls
+        const orbitalFolder = this.gui.addFolder('Orbital Mechanics');
+        this.orbitalSettings = {
+            timeWarp: 1,
+            gameDate: '',
+            moonDist: '',
+            sunAz: ''
+        };
+        orbitalFolder.add(this.orbitalSettings, 'timeWarp', 1, 100000, 1).name('Time Warp').onChange(v => {
+            if (this.orbital) this.orbital.setTimeWarp(v);
+        });
+        orbitalFolder.add(this.orbitalSettings, 'gameDate').name('Date/Time').listen();
+        orbitalFolder.add(this.orbitalSettings, 'moonDist').name('Moon dist').listen();
+        orbitalFolder.add(this.orbitalSettings, 'sunAz').name('Sun dir').listen();
+
         // FPS counter
         this.fpsFrames = 0;
         this.fpsTime = performance.now();
+
+        // Settings toggle — always visible, opens debug panel + FPS graph
+        const settingsToggle = this.getEl('settings-toggle');
+        if (settingsToggle) {
+            const toggleSettings = () => {
+                this._debugVisible = !this._debugVisible;
+                this.toggleGUI();
+                // Toggle FPS graph
+                const fpsCanvas = this.getEl('fps-graph');
+                if (fpsCanvas) fpsCanvas.style.display = this._debugVisible ? 'block' : 'none';
+                // Visual feedback
+                const icon = this.getEl('settings-icon');
+                if (icon) icon.style.opacity = this._debugVisible ? '1' : '';
+                settingsToggle.style.opacity = this._debugVisible ? '0.9' : '0.5';
+                if (navigator.vibrate) navigator.vibrate(10);
+            };
+            settingsToggle.addEventListener('click', toggleSettings);
+            settingsToggle.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                toggleSettings();
+            });
+        }
+
+        // FPS graph setup
+        this.setupFPSGraph();
 
         // Audio mute toggle
         const audioToggle = this.getEl('audio-toggle');
@@ -1039,16 +1240,6 @@ class GloballGame {
             });
         }
 
-        // Debug toggle button — only visible in debug mode
-        const debugToggle = this.getEl('debug-toggle');
-        if (debugToggle) {
-            if (this._debugVisible) debugToggle.style.display = 'block';
-            debugToggle.addEventListener('click', () => this.toggleGUI());
-            debugToggle.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.toggleGUI();
-            });
-        }
     }
 
     updateUI() {
@@ -1726,10 +1917,13 @@ class GloballGame {
         this.keys['_steerX'] = this.steerX;
         this.keys['_steerY'] = this.steerY;
 
+        // Update orbital mechanics (sun, moon, ISS, Lagrange points)
+        this.orbital.update(time, this.deltaTime);
+
         // Update all game components
         this.planet.update(time, this.deltaTime);
         this.cityLights.update(time, this.deltaTime, this.camera);
-        this.spaceEnv.update(time, this.deltaTime);
+        this.spaceEnv.update(time, this.deltaTime, this.orbital);
         this.aurora.update(time, this.deltaTime, this.player.getPosition());
         this.trampolineNetwork.update(time, this.deltaTime, this.player.getPosition());
         this.player.update(time, this.deltaTime, this.keys);
@@ -1966,10 +2160,14 @@ class GloballGame {
         // Update UI
         this.updateUI();
 
-        // Update debug info
+        // Update Ship's Computer (2D overlay)
+        if (this.shipsComputer) this.shipsComputer.update(time);
+
+        // Update debug info + FPS graph
+        const now = performance.now();
+        this.updateFPSGraph(now);
         if (this.debugInfo) {
             this.fpsFrames++;
-            const now = performance.now();
             if (now - this.fpsTime >= 1000) {
                 this.debugInfo.fps = Math.round(this.fpsFrames * 1000 / (now - this.fpsTime));
                 this.fpsFrames = 0;
@@ -1981,6 +2179,15 @@ class GloballGame {
             this.debugInfo.playerPos = `${pp.x.toFixed(1)}, ${pp.y.toFixed(1)}, ${pp.z.toFixed(1)}`;
             this.debugInfo.altitude = altitude.toFixed(1);
             this.debugInfo.velocity = speed.toFixed(2);
+
+            // Orbital info
+            if (this.orbitalSettings && this.orbital) {
+                const d = this.orbital.gameDate;
+                this.orbitalSettings.gameDate = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`;
+                this.orbitalSettings.moonDist = `${this.orbital.moonPosition.length().toFixed(0)} gu`;
+                const sd = this.orbital.sunDirection;
+                this.orbitalSettings.sunAz = `${sd.x.toFixed(2)}, ${sd.y.toFixed(2)}, ${sd.z.toFixed(2)}`;
+            }
         }
 
         // Render with or without post-processing

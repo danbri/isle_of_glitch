@@ -8,12 +8,14 @@ import { PlanetSurfaceShader } from '../shaders/PlanetSurface.js';
 import { AtmosphereGlowMaterial } from '../shaders/AtmosphericScattering.js';
 
 export class Planet {
-    constructor(scene) {
+    constructor(scene, orbital) {
         this.scene = scene;
+        this.orbital = orbital;
         this.radius = 10;
         this.atmosphereRadius = 10.5;
         this.group = new THREE.Group();
-        this.sunDirection = new THREE.Vector3(1, 0.3, 0.5).normalize();
+        // Use real sun direction from orbital mechanics if available
+        this.sunDirection = orbital ? orbital.sunDirection : new THREE.Vector3(1, 0.3, 0.5).normalize();
     }
 
     async init() {
@@ -26,15 +28,15 @@ export class Planet {
     }
 
     async createPlanetSphere() {
-        // Try loading NASA Blue Marble for realistic Earth; fall back to procedural
-        let dayTexture;
-        try {
-            dayTexture = await this.loadEarthTexture();
-            console.log('Loaded real Earth texture');
-        } catch (e) {
-            console.warn('Earth texture failed, using procedural:', e.message || e);
-            dayTexture = this.generateDayTexture();
-        }
+        // Start with procedural texture immediately (no CDN wait),
+        // then load NASA Blue Marble in background and swap when ready.
+        // This prevents the game from ever blocking on CDN or showing
+        // a broken procedural fallback permanently.
+        let dayTexture = this.generateDayTexture();
+
+        // Kick off async texture load — will swap in when ready
+        this.loadEarthTextureInBackground();
+
         const nightTexture = this.generateNightTexture();
         const cityLightsTexture = this.generateCityLightsTexture();
         const cloudsTexture = this.generateCloudsTexture();
@@ -69,22 +71,36 @@ export class Planet {
         this.group.add(this.planetMesh);
     }
 
-    loadEarthTexture() {
-        // NASA Blue Marble (public domain) via CDN with CORS
-        // Try multiple sources in case one is down
+    loadEarthTextureInBackground() {
+        // Load NASA Blue Marble in background with retry.
+        // When it loads, swap into the planet material uniform.
+        // Game starts immediately with procedural — this just upgrades it.
+        // Local bundled copy tried first (no CDN dependency), CDN as fallback.
         const urls = [
+            './assets/earth-blue-marble.jpg',
             'https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg',
             'https://cdn.jsdelivr.net/npm/three-globe@2.31.0/example/img/earth-blue-marble.jpg',
         ];
 
-        return new Promise((resolve, reject) => {
-            const loader = new THREE.TextureLoader();
-            loader.setCrossOrigin('anonymous');
+        const loader = new THREE.TextureLoader();
+        loader.setCrossOrigin('anonymous');
 
+        let attempt = 0;
+        const maxAttempts = 3; // Retry up to 3 times through all URLs
+
+        const tryLoad = () => {
             let idx = 0;
             const tryNext = () => {
                 if (idx >= urls.length) {
-                    reject(new Error('All Earth texture URLs failed'));
+                    attempt++;
+                    if (attempt < maxAttempts) {
+                        // Retry after exponential backoff
+                        const delay = Math.pow(2, attempt) * 2000; // 4s, 8s
+                        console.warn(`Earth texture attempt ${attempt} failed, retrying in ${delay/1000}s...`);
+                        setTimeout(tryLoad, delay);
+                    } else {
+                        console.warn('Earth texture: all attempts exhausted, staying with procedural');
+                    }
                     return;
                 }
                 loader.load(
@@ -93,17 +109,21 @@ export class Planet {
                         texture.wrapS = THREE.RepeatWrapping;
                         texture.wrapT = THREE.ClampToEdgeWrapping;
                         texture.colorSpace = THREE.SRGBColorSpace;
-                        resolve(texture);
+                        // Swap into the planet material
+                        if (this.planetMesh && this.planetMesh.material.uniforms) {
+                            this.planetMesh.material.uniforms.dayTexture.value = texture;
+                            this.planetMesh.material.needsUpdate = true;
+                            console.log('Blue Marble texture loaded and swapped in');
+                        }
                     },
                     undefined,
                     () => { idx++; tryNext(); }
                 );
             };
             tryNext();
+        };
 
-            // Timeout after 8 seconds — don't block game start
-            setTimeout(() => reject(new Error('Earth texture load timeout')), 8000);
-        });
+        tryLoad();
     }
 
     generateDayTexture() {

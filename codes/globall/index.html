@@ -22,6 +22,12 @@
             user-select: none;
         }
 
+        .sc-tab.active {
+            background: rgba(68,136,255,0.2) !important;
+            border-color: rgba(68,136,255,0.3) !important;
+            color: #88bbff !important;
+        }
+
         #canvas-container {
             position: fixed;
             top: 0;
@@ -1066,10 +1072,63 @@
             <span id="camera-icon" style="font-size:0.9rem;">🌍</span>
         </div>
 
-        <!-- Debug toggle button — hidden by default, press H or add ?debug to URL -->
-        <div id="debug-toggle" class="ui-panel compact" style="display:none; position:fixed; bottom:120px; left:8px; font-size:0.65rem; opacity:0.4; cursor:pointer; z-index:999; padding:4px 8px;">
-            &gt; Debug Panel
+        <!-- Ship's Computer toggle -->
+        <div id="computer-toggle" style="position:fixed; top:max(calc(env(safe-area-inset-top, 0px) + 88px), 96px); right:8px; width:36px; height:36px; background:rgba(0,0,0,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:200; font-size:0.9rem; -webkit-tap-highlight-color:transparent; pointer-events:auto; touch-action:manipulation; backdrop-filter:blur(4px);">
+            <span id="computer-icon">&#9776;</span>
         </div>
+
+        <!-- Ship's Computer overlay -->
+        <div id="ships-computer" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:300; pointer-events:auto; flex-direction:column; align-items:center; max-width:min(95vw,620px); width:95vw; background:rgba(5,8,20,0.92); border:1px solid rgba(68,136,255,0.25); border-radius:12px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); padding:0; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.6);">
+            <div style="display:flex; align-items:center; justify-content:space-between; width:100%; padding:8px 12px; border-bottom:1px solid rgba(68,136,255,0.15);">
+                <div style="font-size:0.65rem; letter-spacing:0.2em; opacity:0.5;">SHIP'S COMPUTER</div>
+                <div style="display:flex; gap:4px;">
+                    <button id="sc-tab-nav" class="sc-tab active" style="background:rgba(68,136,255,0.2); border:1px solid rgba(68,136,255,0.3); color:#88bbff; padding:4px 12px; border-radius:6px; font-size:0.65rem; letter-spacing:0.15em; cursor:pointer; font-family:monospace;">NAV</button>
+                    <button id="sc-tab-orbit" class="sc-tab" style="background:rgba(68,136,255,0.05); border:1px solid rgba(68,136,255,0.15); color:#6688aa; padding:4px 12px; border-radius:6px; font-size:0.65rem; letter-spacing:0.15em; cursor:pointer; font-family:monospace;">ORBIT</button>
+                </div>
+                <button id="sc-close" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:1.2rem; cursor:pointer; padding:0 4px; line-height:1;">&#10005;</button>
+            </div>
+            <canvas id="ships-computer-canvas" style="display:block; margin:0; padding:0;"></canvas>
+            <!-- Control panel below map -->
+            <div id="sc-controls" style="width:100%; padding:6px 10px 8px; border-top:1px solid rgba(68,136,255,0.1); font-family:monospace; font-size:0.6rem; color:rgba(200,220,255,0.6); display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center;">
+                <!-- Date/time -->
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <label style="opacity:0.4; font-size:0.5rem; letter-spacing:0.1em;">DATE</label>
+                    <input id="sc-date" type="text" value="2045-06-15" style="background:rgba(68,136,255,0.1); border:1px solid rgba(68,136,255,0.2); color:#88bbff; font-family:monospace; font-size:0.6rem; padding:2px 6px; border-radius:4px; width:80px; outline:none;" />
+                    <input id="sc-time" type="text" value="12:00" style="background:rgba(68,136,255,0.1); border:1px solid rgba(68,136,255,0.2); color:#88bbff; font-family:monospace; font-size:0.6rem; padding:2px 6px; border-radius:4px; width:44px; outline:none;" />
+                    <span style="opacity:0.3; font-size:0.5rem;">UTC</span>
+                </div>
+                <!-- Time warp -->
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <label style="opacity:0.4; font-size:0.5rem; letter-spacing:0.1em;">WARP</label>
+                    <select id="sc-warp" style="background:rgba(68,136,255,0.1); border:1px solid rgba(68,136,255,0.2); color:#88bbff; font-family:monospace; font-size:0.6rem; padding:2px 4px; border-radius:4px; outline:none;">
+                        <option value="1">1x</option>
+                        <option value="60">1min/s</option>
+                        <option value="3600">1hr/s</option>
+                        <option value="86400">1day/s</option>
+                        <option value="604800">1wk/s</option>
+                        <option value="2592000">1mo/s</option>
+                    </select>
+                </div>
+                <!-- Jump to airport -->
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <label style="opacity:0.4; font-size:0.5rem; letter-spacing:0.1em;">GO TO</label>
+                    <input id="sc-goto" type="text" placeholder="IATA" maxlength="4" style="background:rgba(68,136,255,0.1); border:1px solid rgba(68,136,255,0.2); color:#44ff88; font-family:monospace; font-size:0.6rem; padding:2px 6px; border-radius:4px; width:46px; outline:none; text-transform:uppercase;" />
+                    <button id="sc-goto-btn" style="background:rgba(68,255,136,0.15); border:1px solid rgba(68,255,136,0.25); color:#44ff88; font-family:monospace; font-size:0.55rem; padding:2px 8px; border-radius:4px; cursor:pointer;">&#9654;</button>
+                </div>
+                <!-- Sync to reality -->
+                <button id="sc-sync-reality" style="background:rgba(255,170,68,0.12); border:1px solid rgba(255,170,68,0.25); color:#ffaa44; font-family:monospace; font-size:0.55rem; padding:2px 8px; border-radius:4px; cursor:pointer; letter-spacing:0.05em;" title="Set date/time and location to current reality">SYNC REALITY</button>
+                <!-- Status -->
+                <span id="sc-status-msg" style="flex:1; text-align:right; opacity:0.3; font-size:0.5rem;">NAVCOM v1.0</span>
+            </div>
+        </div>
+
+        <!-- Settings button — always visible, bottom-left -->
+        <div id="settings-toggle" style="position:fixed; bottom:max(env(safe-area-inset-bottom, 0px), 8px); left:8px; width:36px; height:36px; background:rgba(0,0,0,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:200; font-size:1rem; -webkit-tap-highlight-color:transparent; pointer-events:auto; touch-action:manipulation; backdrop-filter:blur(4px); opacity:0.5;">
+            <span id="settings-icon">&#9881;</span>
+        </div>
+
+        <!-- FPS overlay — shown when settings panel is open -->
+        <canvas id="fps-graph" style="display:none; position:fixed; bottom:max(calc(env(safe-area-inset-bottom, 0px) + 48px), 56px); left:8px; width:140px; height:60px; z-index:200; pointer-events:none; border-radius:6px;"></canvas>
 
         <div id="tutorial-hint" class="ui-panel">
             <h2>Deliver packages by bouncing!</h2>
@@ -1107,7 +1166,8 @@
         "imports": {
             "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
             "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
-            "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.19.2/dist/lil-gui.esm.min.js"
+            "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.19.2/dist/lil-gui.esm.min.js",
+            "astronomy-engine": "https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/+esm"
         }
     }
     </script>

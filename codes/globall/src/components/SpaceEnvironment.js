@@ -20,6 +20,8 @@ export class SpaceEnvironment {
         this.createISS();
         this.createSatellites();
         this.createDistantGalaxies();
+        this.createMoon();
+        this.createLagrangeMarkers();
     }
 
     createStarfield() {
@@ -626,7 +628,104 @@ export class SpaceEnvironment {
         }
     }
 
-    update(time, deltaTime) {
+    createMoon() {
+        // Realistic moon — radius ~2.73 game units (1,737 km / 637.1 km per unit)
+        const moonRadius = 2.73;
+        const geometry = new THREE.SphereGeometry(moonRadius, 32, 32);
+        const material = new THREE.MeshPhongMaterial({
+            color: 0xcccccc,
+            emissive: 0x111111,
+            shininess: 5,
+            // The moon is matte gray — no specularity
+        });
+        this.moonMesh = new THREE.Mesh(geometry, material);
+        // Initial position will be set by orbital mechanics
+        this.moonMesh.position.set(400, 0, 0);
+        this.scene.add(this.moonMesh);
+
+        // Moon label
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 32;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = '16px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('Moon', 64, 20);
+        const labelTexture = new THREE.CanvasTexture(canvas);
+        const labelMat = new THREE.SpriteMaterial({
+            map: labelTexture,
+            transparent: true,
+            depthWrite: false
+        });
+        this.moonLabel = new THREE.Sprite(labelMat);
+        this.moonLabel.scale.set(8, 2, 1);
+        this.scene.add(this.moonLabel);
+    }
+
+    createLagrangeMarkers() {
+        // Create markers for Earth-Moon Lagrange points (L1-L5)
+        this.lagrangeMarkers = {};
+
+        const labels = {
+            'EM-L1': { color: 0x44ffaa, desc: 'Earth-Moon L1' },
+            'EM-L2': { color: 0x44aaff, desc: 'Earth-Moon L2' },
+            'EM-L3': { color: 0xff44aa, desc: 'Earth-Moon L3' },
+            'EM-L4': { color: 0xffaa44, desc: 'Earth-Moon L4 (stable)' },
+            'EM-L5': { color: 0xaaff44, desc: 'Earth-Moon L5 (stable)' },
+        };
+
+        for (const [key, info] of Object.entries(labels)) {
+            const group = new THREE.Group();
+
+            // Diamond marker
+            const markerGeo = new THREE.OctahedronGeometry(1.5, 0);
+            const markerMat = new THREE.MeshBasicMaterial({
+                color: info.color,
+                transparent: true,
+                opacity: 0.6,
+                wireframe: true
+            });
+            const marker = new THREE.Mesh(markerGeo, markerMat);
+            group.add(marker);
+
+            // Glow sprite
+            const spriteMat = new THREE.SpriteMaterial({
+                color: info.color,
+                transparent: true,
+                opacity: 0.3,
+                blending: THREE.AdditiveBlending
+            });
+            const sprite = new THREE.Sprite(spriteMat);
+            sprite.scale.set(6, 6, 1);
+            group.add(sprite);
+
+            // Label
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#' + info.color.toString(16).padStart(6, '0');
+            ctx.font = 'bold 14px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(key, 64, 20);
+            const labelTex = new THREE.CanvasTexture(canvas);
+            const labelSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: labelTex,
+                transparent: true,
+                depthWrite: false
+            }));
+            labelSprite.scale.set(8, 2, 1);
+            labelSprite.position.y = 3;
+            group.add(labelSprite);
+
+            group.visible = false; // Will be positioned by orbital update
+            this.scene.add(group);
+            this.lagrangeMarkers[key] = group;
+        }
+    }
+
+    update(time, deltaTime, orbital) {
         // Update star twinkle
         if (this.stars && this.stars.material.uniforms) {
             this.stars.material.uniforms.time.value = time;
@@ -637,20 +736,47 @@ export class SpaceEnvironment {
             this.constellationPoints.material.uniforms.time.value = time;
         }
 
-        // Orbit ISS
-        if (this.iss) {
+        // Orbit ISS — use real position from orbital mechanics
+        if (this.iss && orbital) {
+            this.iss.position.copy(orbital.issPosition);
+            // Face along orbital velocity (prograde)
+            this.iss.lookAt(0, 0, 0);
+            this.iss.rotateY(Math.PI / 2); // ISS flies sideways relative to nadir
+        } else if (this.iss) {
+            // Fallback: simple circular orbit
             this.issOrbitAngle += this.issOrbitSpeed * deltaTime;
             this.iss.position.x = Math.cos(this.issOrbitAngle) * this.issOrbitRadius;
             this.iss.position.z = Math.sin(this.issOrbitAngle) * this.issOrbitRadius;
             this.iss.position.y = Math.sin(this.issOrbitAngle * 0.3) * 3 + 5;
-
-            // ISS rotation
             this.iss.rotation.y = -this.issOrbitAngle + Math.PI / 2;
+        }
 
-            // Solar panel tracking
-            const sunDir = new THREE.Vector3(1, 0.3, 0.5).normalize();
-            const issForward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.iss.quaternion);
-            // Panels would rotate to track sun - simplified here
+        // Update Moon position from orbital mechanics
+        if (this.moonMesh && orbital) {
+            this.moonMesh.position.copy(orbital.moonPosition);
+            // Moon label just above
+            if (this.moonLabel) {
+                this.moonLabel.position.copy(orbital.moonPosition);
+                this.moonLabel.position.y += orbital.moonRadius + 2;
+            }
+        }
+
+        // Update Lagrange point markers from orbital mechanics
+        if (this.lagrangeMarkers && orbital) {
+            for (let i = 1; i <= 5; i++) {
+                const key = `EM-L${i}`;
+                const marker = this.lagrangeMarkers[key];
+                const pos = orbital.lagrangeEM[i];
+                if (marker && pos) {
+                    marker.position.copy(pos);
+                    marker.visible = true;
+                    // Slow rotation for visual interest
+                    marker.children[0].rotation.y = time * 0.5;
+                    marker.children[0].rotation.x = time * 0.3;
+                } else if (marker) {
+                    marker.visible = false;
+                }
+            }
         }
 
         // Update satellites

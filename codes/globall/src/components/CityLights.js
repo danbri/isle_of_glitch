@@ -235,8 +235,8 @@ export class CityLights {
     }
 
     update(time, deltaTime, camera) {
-        // Calculate sun direction for day/night
-        const sunDirection = new THREE.Vector3(1, 0.3, 0.5).normalize();
+        // Use real sun direction from planet's orbital mechanics
+        const sunDirection = this.planet.sunDirection;
 
         // Update city lights - brighter on dark side
         this.cityMeshes.forEach(cityGroup => {

@@ -875,4 +875,11 @@ export class Player {
     getBounceCharge() {
         return this.bounceCharge;
     }
+
+    teleportTo(pos) {
+        this.position.copy(pos);
+        this.velocity.set(0, 0, 0);
+        this.isOnGround = true;
+        if (this.mesh) this.mesh.position.copy(this.position);
+    }
 }
