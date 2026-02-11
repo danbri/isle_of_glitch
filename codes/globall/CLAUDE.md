@@ -249,6 +249,13 @@ git push -u origin claude/fink-authoring-guide-bDtaY
 
 ---
 
+## Spec Documents
+
+- **[Gameplay Spec](docs/GAMEPLAY.md)** — How to play, scoring, mechanics, delivery choices, progressive difficulty
+- **[Architecture](docs/ARCHITECTURE.md)** — File structure, rendering pipeline, physics, input, UI layout, state management
+
+---
+
 ## Test Plan
 
 1. Start game, tap to bounce
