@@ -574,17 +574,6 @@ class GloballGame {
     }
 
     doBounce(holdMs) {
-        // Start game session on first bounce
-        if (!this.session.started) {
-            this.session.started = true;
-            this.session.startTime = Date.now();
-            this.session.ended = false;
-            this.session.bestCombo = 0;
-            this.session.bestDelivery = 0;
-            // Hide tutorial
-            const tut = this.getEl('tutorial-hint');
-            if (tut) tut.classList.add('hidden');
-        }
         if (this.session.ended) return; // Can't bounce after game over
 
         // Hold duration determines bounce type:
@@ -1010,6 +999,9 @@ class GloballGame {
         const delCount = this.getEl('deliveries-count');
         if (delCount) delCount.textContent = `${this.gameState.deliveries} deliveries`;
 
+        // --- DELIVERY CHOICE UI ---
+        this.updateDeliveryChoiceUI();
+
         // Update package info
         const currentPackage = this.packageSystem.getCurrentPackage();
         if (currentPackage) {
@@ -1025,6 +1017,12 @@ class GloballGame {
 
             // Update direction indicator
             this.updateDirectionIndicator();
+        } else if (this.packageSystem.awaitingChoice) {
+            // No active package — show "choose delivery" in package info
+            const pn = this.getEl('package-name');
+            if (pn) pn.textContent = 'Choose delivery...';
+            const pd = this.getEl('package-dest');
+            if (pd) pd.textContent = 'Tap an option below';
         }
 
         // Update nearest airport + target location
@@ -1176,13 +1174,9 @@ class GloballGame {
             this.packageSystem.expirePackage();
             // Penalty feedback is handled by expiry detection in animate loop
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            // Flash cargo and auto-target new destination
+            // Clear — player must choose next delivery
             this.player.setCarrying(false);
-            const newPkg = this.packageSystem.getCurrentPackage();
-            if (newPkg && newPkg.destinationAirport) {
-                this.player.setTargetTrampoline(newPkg.destinationAirport);
-                setTimeout(() => this.player.setCarrying(true), 300);
-            }
+            this.player.setTargetTrampoline(null);
         }
     }
 
@@ -1216,6 +1210,75 @@ class GloballGame {
             comboEl.classList.remove('active');
             comboEl.classList.remove('expiring');
         }
+    }
+
+    updateDeliveryChoiceUI() {
+        const choiceEl = this.getEl('delivery-choice');
+        if (!choiceEl) return;
+
+        if (!this.packageSystem.awaitingChoice || this.packageSystem.pendingChoices.length === 0) {
+            choiceEl.style.display = 'none';
+            return;
+        }
+
+        // Only rebuild if choices changed
+        const choiceKey = this.packageSystem.pendingChoices.map(c => c.destName).join(',');
+        if (this._lastChoiceKey === choiceKey) return;
+        this._lastChoiceKey = choiceKey;
+
+        choiceEl.style.display = 'block';
+        const container = this.getEl('delivery-options');
+        if (!container) return;
+        container.innerHTML = '';
+
+        this.packageSystem.pendingChoices.forEach((choice, idx) => {
+            const opt = document.createElement('div');
+            opt.className = `delivery-option ${choice.bias}`;
+            opt.innerHTML = `
+                <span class="opt-icon">${choice.type.icon}</span>
+                <div class="opt-info">
+                    <div class="opt-dest">${choice.destName}</div>
+                    <div class="opt-meta">
+                        <span>${choice.distKm > 1000 ? (choice.distKm / 1000).toFixed(1) + 'k' : choice.distKm} km</span>
+                        <span>${Math.round(choice.timeLimit)}s</span>
+                    </div>
+                </div>
+                <div class="opt-value">+${choice.value}</div>
+            `;
+
+            const selectChoice = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.packageSystem.acceptDelivery(idx);
+                this._lastChoiceKey = null;
+                choiceEl.style.display = 'none';
+
+                // Target the chosen destination
+                const pkg = this.packageSystem.getCurrentPackage();
+                if (pkg && pkg.destinationAirport) {
+                    this.player.setTargetTrampoline(pkg.destinationAirport);
+                    this.player.setCarrying(true);
+                }
+
+                // Start session on first choice
+                if (!this.session.started) {
+                    this.session.started = true;
+                    this.session.startTime = Date.now();
+                    this.session.ended = false;
+                    this.session.bestCombo = 0;
+                    this.session.bestDelivery = 0;
+                    const tut = this.getEl('tutorial-hint');
+                    if (tut) tut.classList.add('hidden');
+                }
+
+                // Haptic
+                if (navigator.vibrate) navigator.vibrate(25);
+            };
+
+            opt.addEventListener('click', selectChoice);
+            opt.addEventListener('touchend', selectChoice, { passive: false });
+            container.appendChild(opt);
+        });
     }
 
     endSession() {
@@ -1325,17 +1388,14 @@ class GloballGame {
             timerEl.style.color = 'white';
         }
 
-        // Reset package system
+        // Reset package system — offer choices
         this.packageSystem.comboCount = 0;
         this.packageSystem.lastDeliveryTime = 0;
         this.packageSystem.currentPackage = null;
-        this.packageSystem.assignNewPackage();
-
-        // Auto-target new destination
-        const pkg = this.packageSystem.getCurrentPackage();
-        if (pkg && pkg.destinationAirport) {
-            this.player.setTargetTrampoline(pkg.destinationAirport);
-        }
+        this.packageSystem.offerDeliveryChoices();
+        this._lastChoiceKey = null; // Force rebuild of choice UI
+        this.player.setTargetTrampoline(null);
+        this.player.setCarrying(false);
 
         // Update UI
         const scoreEl = this.getEl('score-value');
@@ -1638,12 +1698,9 @@ class GloballGame {
             // Record delivery time for chain launch bonus
             this._lastDeliveryTime = Date.now();
 
-            // Auto-target new destination + show cargo for new package
-            const newPkg = this.packageSystem.getCurrentPackage();
-            if (newPkg && newPkg.destinationAirport) {
-                this.player.setTargetTrampoline(newPkg.destinationAirport);
-                setTimeout(() => this.player.setCarrying(true), 400);
-            }
+            // Clear target — player will choose next delivery
+            this.player.setTargetTrampoline(null);
+            // Choice UI will appear via updateDeliveryChoiceUI
         }
 
         // Dynamic post-processing adjustments (respects fine-grained toggles)

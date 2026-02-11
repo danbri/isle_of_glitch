@@ -42,12 +42,123 @@ export class PackageSystem {
 
         // Last delivery info (for celebration display)
         this._lastDelivery = null;
+
+        // Delivery choice system — player picks from options
+        this.pendingChoices = []; // Array of {type, airport, distance, timeLimit, value}
+        this.awaitingChoice = false;
     }
 
     async init() {
         this.createDestinationMarker();
         this.createGuideLine();
-        this.assignNewPackage();
+        // Start by offering choices instead of auto-assigning
+        this.offerDeliveryChoices();
+    }
+
+    offerDeliveryChoices() {
+        const originPos = this._lastPlayerPos || new THREE.Vector3(0, 12, 0);
+        const deliveries = this.gameState.deliveries;
+        this.pendingChoices = [];
+
+        // Generate 3 options with different risk/reward
+        const configs = [
+            { bias: 'short', hops: 1 },    // Easy, nearby
+            { bias: 'medium', hops: deliveries < 3 ? 1 : 2 },  // Medium
+            { bias: 'long', hops: deliveries < 6 ? 2 : 2 }     // Hard, farther
+        ];
+
+        for (const config of configs) {
+            const airport = this._findAirportAtDistance(originPos, config);
+            if (!airport) continue;
+
+            const dist = originPos.distanceTo(airport.position);
+            const type = this.packageTypes[Math.floor(Math.random() * this.packageTypes.length)];
+
+            // Value scales with distance: short=low, long=high
+            const distMultiplier = config.bias === 'short' ? 0.8 : config.bias === 'long' ? 1.5 : 1.0;
+            const value = Math.floor(type.value * distMultiplier);
+
+            // Timer: generous for short, tight for long
+            const difficultyScale = Math.max(0.6, 1 - deliveries * 0.03);
+            const rawTime = 25 + dist * 4;
+            const timerMultiplier = config.bias === 'short' ? 1.3 : config.bias === 'long' ? 0.8 : 1.0;
+            const timeLimit = Math.min(90, Math.max(15, rawTime * difficultyScale * timerMultiplier));
+
+            this.pendingChoices.push({
+                type,
+                airport,
+                distance: dist,
+                timeLimit,
+                value,
+                bias: config.bias,
+                destName: `${airport.airport.name} ${airport.airport.city}`,
+                distKm: Math.round(dist * 637)
+            });
+        }
+
+        this.awaitingChoice = true;
+    }
+
+    _findAirportAtDistance(originPos, config) {
+        let startIata = null;
+        const { trampoline: nearest } = this.trampolineNetwork.getNearestTrampoline(originPos);
+        if (nearest) startIata = nearest.airport.name;
+
+        if (startIata && this.trampolineNetwork.routeGraph[startIata]) {
+            const connected = this.trampolineNetwork.getConnectedAirports(startIata);
+            if (connected.length === 0) return null;
+
+            if (config.hops === 1) {
+                // 1-hop: sort by distance and pick based on bias
+                const sorted = [...connected].sort((a, b) =>
+                    a.position.distanceTo(originPos) - b.position.distanceTo(originPos)
+                );
+                if (config.bias === 'short') return sorted[0];
+                if (config.bias === 'long') return sorted[sorted.length - 1];
+                return sorted[Math.floor(sorted.length / 2)]; // medium
+            } else {
+                // 2-hop
+                const mid = connected[Math.floor(Math.random() * connected.length)];
+                const hop2 = this.trampolineNetwork.getConnectedAirports(mid.airport.name);
+                const filtered = hop2.filter(t => t.airport.name !== startIata);
+                if (filtered.length > 0) {
+                    const sorted = [...filtered].sort((a, b) =>
+                        a.position.distanceTo(originPos) - b.position.distanceTo(originPos)
+                    );
+                    if (config.bias === 'short') return sorted[0];
+                    if (config.bias === 'long') return sorted[sorted.length - 1];
+                    return sorted[Math.floor(sorted.length / 2)];
+                }
+                // Fallback to 1-hop
+                return connected[Math.floor(Math.random() * connected.length)];
+            }
+        }
+
+        // Fallback
+        const trampolines = this.trampolineNetwork.trampolines;
+        return trampolines[Math.floor(Math.random() * trampolines.length)];
+    }
+
+    acceptDelivery(choiceIndex) {
+        if (!this.awaitingChoice || choiceIndex >= this.pendingChoices.length) return;
+
+        const choice = this.pendingChoices[choiceIndex];
+        this.awaitingChoice = false;
+        this.pendingChoices = [];
+
+        const originPos = this._lastPlayerPos || new THREE.Vector3(0, 12, 0);
+
+        this.currentPackage = {
+            type: choice.type,
+            destinationAirport: choice.airport,
+            destinationName: choice.destName,
+            carrying: true,
+            assignedTime: Date.now(),
+            originPosition: originPos.clone(),
+            distance: choice.distance,
+            timeLimit: choice.timeLimit,
+            startTime: Date.now()
+        };
     }
 
     getRandomDestinationAirport(excludeNear) {
@@ -100,35 +211,8 @@ export class PackageSystem {
     }
 
     assignNewPackage() {
-        const packageType = this.packageTypes[Math.floor(Math.random() * this.packageTypes.length)];
-        const originPos = this._lastPlayerPos || new THREE.Vector3(0, 12, 0);
-        const destAirport = this.getRandomDestinationAirport(
-            this.trampolineNetwork.trampolines.length > 0 ? originPos : null
-        );
-
-        if (!destAirport) return;
-
-        // Calculate distance for timer and rewards
-        // Planet radius=10, so max dist ~20 (antipodal). 1 unit ≈ 637 km
-        const dist = originPos.distanceTo(destAirport.position);
-
-        // Timer: gets tighter as deliveries increase (difficulty progression)
-        // Base: 25s + 4s per distance unit, then scaled down by delivery count
-        const difficultyScale = Math.max(0.6, 1 - this.gameState.deliveries * 0.03);
-        const rawTime = 25 + dist * 4;
-        const timeLimit = Math.min(90, Math.max(20, rawTime * difficultyScale));
-
-        this.currentPackage = {
-            type: packageType,
-            destinationAirport: destAirport,
-            destinationName: `${destAirport.airport.name} ${destAirport.airport.city}`,
-            carrying: true,
-            assignedTime: Date.now(),
-            originPosition: originPos.clone(),
-            distance: dist,
-            timeLimit: timeLimit,
-            startTime: Date.now()
-        };
+        // Now redirects to choice system — player picks their delivery
+        this.offerDeliveryChoices();
     }
 
     getCurrentPackage() {
@@ -148,30 +232,65 @@ export class PackageSystem {
     createDestinationMarker() {
         const group = new THREE.Group();
 
-        // Outer magnetic ring beacon
-        const ringGeometry = new THREE.RingGeometry(0.3, 0.4, 32);
-        const ringMaterial = new THREE.MeshBasicMaterial({
-            color: 0x4488ff, transparent: true, opacity: 0.8, side: THREE.DoubleSide
-        });
-        group.add(new THREE.Mesh(ringGeometry, ringMaterial));
+        // --- Concentric accuracy rings (flat on surface) ---
+        // [0] Outer ring: delivery zone (1.5 units) — dim blue, dashed look via thin ring
+        const outerRing = new THREE.Mesh(
+            new THREE.RingGeometry(1.45, 1.5, 64),
+            new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.25, side: THREE.DoubleSide })
+        );
+        group.add(outerRing);
 
-        // Inner target core
-        const innerGeometry = new THREE.CircleGeometry(0.15, 32);
-        const innerMaterial = new THREE.MeshBasicMaterial({
-            color: 0x88aaff, transparent: true, opacity: 0.5, side: THREE.DoubleSide
-        });
-        group.add(new THREE.Mesh(innerGeometry, innerMaterial));
+        // [1] Middle ring: PRECISE zone (0.8 units) — purple
+        const midRing = new THREE.Mesh(
+            new THREE.RingGeometry(0.75, 0.8, 48),
+            new THREE.MeshBasicMaterial({ color: 0xaa88ff, transparent: true, opacity: 0.4, side: THREE.DoubleSide })
+        );
+        group.add(midRing);
 
-        // Vertical EM beam
-        const beamGeometry = new THREE.CylinderGeometry(0.05, 0.05, 2, 8);
-        const beamMaterial = new THREE.MeshBasicMaterial({
-            color: 0x6644ff, transparent: true, opacity: 0.4
-        });
-        const beam = new THREE.Mesh(beamGeometry, beamMaterial);
-        beam.position.y = 1;
+        // [2] Inner ring: BULLSEYE zone (0.5 units) — bright cyan, will pulse
+        const innerRing = new THREE.Mesh(
+            new THREE.RingGeometry(0.45, 0.5, 48),
+            new THREE.MeshBasicMaterial({ color: 0x88ddff, transparent: true, opacity: 0.6, side: THREE.DoubleSide })
+        );
+        group.add(innerRing);
+
+        // [3] Center bullseye dot
+        const center = new THREE.Mesh(
+            new THREE.CircleGeometry(0.12, 32),
+            new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, side: THREE.DoubleSide })
+        );
+        group.add(center);
+
+        // [4] Fill discs for zone coloring (subtle tinted areas)
+        const outerFill = new THREE.Mesh(
+            new THREE.CircleGeometry(1.5, 64),
+            new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.04, side: THREE.DoubleSide })
+        );
+        group.add(outerFill);
+
+        const midFill = new THREE.Mesh(
+            new THREE.CircleGeometry(0.8, 48),
+            new THREE.MeshBasicMaterial({ color: 0xaa88ff, transparent: true, opacity: 0.06, side: THREE.DoubleSide })
+        );
+        // [5]
+        group.add(midFill);
+
+        const innerFill = new THREE.Mesh(
+            new THREE.CircleGeometry(0.5, 48),
+            new THREE.MeshBasicMaterial({ color: 0x88ddff, transparent: true, opacity: 0.1, side: THREE.DoubleSide })
+        );
+        // [6]
+        group.add(innerFill);
+
+        // [7] Vertical EM beam (visible from distance)
+        const beam = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.04, 0.04, 3, 8),
+            new THREE.MeshBasicMaterial({ color: 0x6644ff, transparent: true, opacity: 0.35 })
+        );
+        beam.position.y = 1.5;
         group.add(beam);
 
-        // Floating arrow above
+        // [8] Floating arrow above (visible from far away)
         const arrowShape = new THREE.Shape();
         arrowShape.moveTo(0, 0.3);
         arrowShape.lineTo(0.15, 0);
@@ -181,13 +300,11 @@ export class PackageSystem {
         arrowShape.lineTo(-0.05, 0);
         arrowShape.lineTo(-0.15, 0);
         arrowShape.closePath();
-
-        const arrowGeometry = new THREE.ShapeGeometry(arrowShape);
-        const arrowMaterial = new THREE.MeshBasicMaterial({
-            color: 0x88ddff, transparent: true, opacity: 0.9, side: THREE.DoubleSide
-        });
-        const arrow = new THREE.Mesh(arrowGeometry, arrowMaterial);
-        arrow.position.y = 2.5;
+        const arrow = new THREE.Mesh(
+            new THREE.ShapeGeometry(arrowShape),
+            new THREE.MeshBasicMaterial({ color: 0x88ddff, transparent: true, opacity: 0.9, side: THREE.DoubleSide })
+        );
+        arrow.position.y = 3.5;
         arrow.rotation.x = -Math.PI / 2;
         group.add(arrow);
 
@@ -234,10 +351,20 @@ export class PackageSystem {
         this.destinationMarker.lookAt(new THREE.Vector3(0, 0, 0));
         this.destinationMarker.rotateX(Math.PI / 2);
 
-        // Animate marker
-        const pulse = Math.sin(time * 4) * 0.2 + 1;
-        this.destinationMarker.children[0].scale.setScalar(pulse);
-        this.destinationMarker.children[3].position.y = 2.5 + Math.sin(time * 3) * 0.3;
+        // Animate concentric rings
+        // Outer ring: slow rotation
+        this.destinationMarker.children[0].rotation.z = time * 0.3;
+        // Middle ring: opposite rotation
+        this.destinationMarker.children[1].rotation.z = -time * 0.5;
+        // Inner bullseye ring: pulse scale
+        const bullseyePulse = 1 + Math.sin(time * 5) * 0.15;
+        this.destinationMarker.children[2].scale.setScalar(bullseyePulse);
+        // Inner bullseye ring: pulse opacity
+        this.destinationMarker.children[2].material.opacity = 0.4 + Math.sin(time * 5) * 0.3;
+        // Center dot: bright pulse
+        this.destinationMarker.children[3].material.opacity = 0.5 + Math.sin(time * 6) * 0.3;
+        // Arrow: bob up and down
+        this.destinationMarker.children[8].position.y = 3.5 + Math.sin(time * 3) * 0.3;
 
         // Update guide line from player to destination
         this.updateGuideLine(playerPosition, destPos);

@@ -482,6 +482,65 @@
             50% { opacity: 0.4; }
         }
 
+        /* Delivery choice option buttons */
+        .delivery-option {
+            background: rgba(20, 10, 40, 0.85);
+            border: 1px solid rgba(68, 136, 255, 0.3);
+            border-radius: 10px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            transition: border-color 0.2s, transform 0.1s;
+            backdrop-filter: blur(8px);
+        }
+
+        .delivery-option:active {
+            transform: scale(0.97);
+            border-color: #88ddff;
+        }
+
+        .delivery-option .opt-icon {
+            font-size: 1.3rem;
+            width: 32px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .delivery-option .opt-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .delivery-option .opt-dest {
+            font-size: clamp(0.7rem, 2.5vw, 0.85rem);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .delivery-option .opt-meta {
+            font-size: clamp(0.55rem, 2vw, 0.65rem);
+            opacity: 0.6;
+            display: flex;
+            gap: 8px;
+        }
+
+        .delivery-option .opt-value {
+            font-size: clamp(0.8rem, 3vw, 1rem);
+            font-weight: 700;
+            color: #88ddff;
+            white-space: nowrap;
+        }
+
+        .delivery-option.short { border-left: 3px solid #44ff88; }
+        .delivery-option.medium { border-left: 3px solid #aa88ff; }
+        .delivery-option.long { border-left: 3px solid #ff8844; }
+
         /* Session timer countdown animation */
         #session-time.countdown {
             animation: timer-countdown 1s ease-in-out infinite;
@@ -742,6 +801,12 @@
 
         <div id="target-notification" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.7); color:#4488ff; padding:8px 16px; border-radius:12px; font-size:0.9rem; font-weight:bold; opacity:0; transition:opacity 0.3s; pointer-events:none; z-index:100;"></div>
 
+        <!-- Delivery choice overlay — pick your next delivery -->
+        <div id="delivery-choice" style="display:none; position:absolute; bottom:max(calc(env(safe-area-inset-bottom,0px) + 100px), 110px); left:50%; transform:translateX(-50%); z-index:150; pointer-events:auto; max-width:min(95vw,360px); width:100%;">
+            <div style="text-align:center; font-size:0.6rem; letter-spacing:0.2em; opacity:0.6; margin-bottom:6px;">CHOOSE DELIVERY</div>
+            <div id="delivery-options" style="display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
+
         <!-- Game Over overlay -->
         <div id="game-over-screen" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,5,25,0.92); z-index:500; pointer-events:auto;">
             <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; max-width:min(90vw,400px); width:100%;">
@@ -818,6 +883,6 @@
     }
     </script>
 
-    <script type="module" src="src/main.js?v=38"></script>
+    <script type="module" src="src/main.js?v=39"></script>
 </body>
 </html>
