@@ -24,6 +24,7 @@ import { CountryOutlines } from './components/CountryOutlines.js';
 import { ChromaticAberrationShader } from './shaders/ChromaticAberration.js';
 import { AtmosphericScatteringShader } from './shaders/AtmosphericScattering.js';
 import { OrbitalMechanics } from './systems/OrbitalMechanics.js';
+import { ShipsComputer } from './systems/ShipsComputer.js';
 import GUI from 'lil-gui';
 
 class GloballGame {
@@ -176,6 +177,46 @@ class GloballGame {
         ctx.fillText(`1s:${Math.round(g.avg1s)} 5s:${Math.round(g.avg5s)} 15s:${Math.round(g.avg15s)}`, 2, h - 10);
     }
 
+    setupShipsComputer() {
+        // Toggle button
+        const toggleBtn = this.getEl('computer-toggle');
+        if (toggleBtn) {
+            const toggle = () => {
+                this.shipsComputer.toggle();
+                const icon = this.getEl('computer-icon');
+                if (icon) icon.style.opacity = this.shipsComputer.visible ? '1' : '';
+                toggleBtn.style.background = this.shipsComputer.visible
+                    ? 'rgba(68,136,255,0.3)' : 'rgba(0,0,0,0.4)';
+                if (navigator.vibrate) navigator.vibrate(10);
+            };
+            toggleBtn.addEventListener('click', toggle);
+            toggleBtn.addEventListener('touchend', (e) => { e.preventDefault(); toggle(); });
+        }
+
+        // Close button
+        const closeBtn = this.getEl('sc-close');
+        if (closeBtn) {
+            const close = () => this.shipsComputer.toggle();
+            closeBtn.addEventListener('click', close);
+            closeBtn.addEventListener('touchend', (e) => { e.preventDefault(); close(); });
+        }
+
+        // Tab buttons
+        const navTab = this.getEl('sc-tab-nav');
+        const orbitTab = this.getEl('sc-tab-orbit');
+        if (navTab) {
+            navTab.addEventListener('click', () => this.shipsComputer.setTab('NAV'));
+            navTab.addEventListener('touchend', (e) => { e.preventDefault(); this.shipsComputer.setTab('NAV'); });
+        }
+        if (orbitTab) {
+            orbitTab.addEventListener('click', () => this.shipsComputer.setTab('ORBIT'));
+            orbitTab.addEventListener('touchend', (e) => { e.preventDefault(); this.shipsComputer.setTab('ORBIT'); });
+        }
+
+        // Keyboard shortcut: M for map
+        // (added to existing keydown handler)
+    }
+
     async init() {
         try {
             // Check for WebGPU support
@@ -201,6 +242,14 @@ class GloballGame {
 
             // Setup debug panel (press 'H' to toggle)
             this.setupDebugPanel();
+
+            // Ship's Computer — 2D nav map + orbital view overlay
+            this.shipsComputer = new ShipsComputer();
+            this.shipsComputer.init(
+                this.trampolineNetwork, this.orbital,
+                this.player, this.packageSystem
+            );
+            this.setupShipsComputer();
 
             // Initialize audio (deferred, non-blocking)
             try {
@@ -673,6 +722,9 @@ class GloballGame {
                 this.toggleGUI();
                 const fpsC = this.getEl('fps-graph');
                 if (fpsC) fpsC.style.display = this._debugVisible ? 'block' : 'none';
+                break;
+            case 'KeyM':
+                if (this.shipsComputer) this.shipsComputer.toggle();
                 break;
         }
     }
@@ -2107,6 +2159,9 @@ class GloballGame {
 
         // Update UI
         this.updateUI();
+
+        // Update Ship's Computer (2D overlay)
+        if (this.shipsComputer) this.shipsComputer.update(time);
 
         // Update debug info + FPS graph
         const now = performance.now();

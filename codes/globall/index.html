@@ -22,6 +22,12 @@
             user-select: none;
         }
 
+        .sc-tab.active {
+            background: rgba(68,136,255,0.2) !important;
+            border-color: rgba(68,136,255,0.3) !important;
+            color: #88bbff !important;
+        }
+
         #canvas-container {
             position: fixed;
             top: 0;
@@ -1064,6 +1070,28 @@
         <!-- Free camera / globe explore toggle -->
         <div id="camera-toggle" style="position:fixed; top:max(calc(env(safe-area-inset-top, 0px) + 44px), 52px); right:8px; width:36px; height:36px; background:rgba(0,0,0,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:200; font-size:1.1rem; -webkit-tap-highlight-color:transparent; pointer-events:auto; touch-action:manipulation; backdrop-filter:blur(4px);">
             <span id="camera-icon" style="font-size:0.9rem;">🌍</span>
+        </div>
+
+        <!-- Ship's Computer toggle -->
+        <div id="computer-toggle" style="position:fixed; top:max(calc(env(safe-area-inset-top, 0px) + 88px), 96px); right:8px; width:36px; height:36px; background:rgba(0,0,0,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:200; font-size:0.9rem; -webkit-tap-highlight-color:transparent; pointer-events:auto; touch-action:manipulation; backdrop-filter:blur(4px);">
+            <span id="computer-icon">&#9776;</span>
+        </div>
+
+        <!-- Ship's Computer overlay -->
+        <div id="ships-computer" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:300; pointer-events:auto; flex-direction:column; align-items:center; max-width:min(95vw,620px); width:95vw; background:rgba(5,8,20,0.92); border:1px solid rgba(68,136,255,0.25); border-radius:12px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); padding:0; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.6);">
+            <div style="display:flex; align-items:center; justify-content:space-between; width:100%; padding:8px 12px; border-bottom:1px solid rgba(68,136,255,0.15);">
+                <div style="font-size:0.65rem; letter-spacing:0.2em; opacity:0.5;">SHIP'S COMPUTER</div>
+                <div style="display:flex; gap:4px;">
+                    <button id="sc-tab-nav" class="sc-tab active" style="background:rgba(68,136,255,0.2); border:1px solid rgba(68,136,255,0.3); color:#88bbff; padding:4px 12px; border-radius:6px; font-size:0.65rem; letter-spacing:0.15em; cursor:pointer; font-family:monospace;">NAV</button>
+                    <button id="sc-tab-orbit" class="sc-tab" style="background:rgba(68,136,255,0.05); border:1px solid rgba(68,136,255,0.15); color:#6688aa; padding:4px 12px; border-radius:6px; font-size:0.65rem; letter-spacing:0.15em; cursor:pointer; font-family:monospace;">ORBIT</button>
+                </div>
+                <button id="sc-close" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:1.2rem; cursor:pointer; padding:0 4px; line-height:1;">&#10005;</button>
+            </div>
+            <canvas id="ships-computer-canvas" style="display:block; margin:0; padding:0;"></canvas>
+            <div id="sc-status-bar" style="width:100%; padding:4px 12px 6px; border-top:1px solid rgba(68,136,255,0.1); font-size:0.55rem; font-family:monospace; color:rgba(255,255,255,0.35); display:flex; justify-content:space-between;">
+                <span id="sc-status-left">JUNE 2045</span>
+                <span id="sc-status-right">GLO-BALL GOPHER NAVCOM v1.0</span>
+            </div>
         </div>
 
         <!-- Settings button — always visible, bottom-left -->

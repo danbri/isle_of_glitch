@@ -47,8 +47,8 @@ export class OrbitalMechanics {
         // Lagrange points: Sun-Earth system
         this.lagrangeSE = [null, null, null, null, null, null];
 
-        // Game time — can be accelerated for transit
-        this.gameDate = new Date();
+        // Game time — set in June 2045, advances in real time (can be accelerated for transit)
+        this.gameDate = new Date('2045-06-15T12:00:00Z');
         this.timeWarp = 1.0; // 1x = realtime
         this.maxTimeWarp = 100000; // 100,000x for interplanetary transit
 
