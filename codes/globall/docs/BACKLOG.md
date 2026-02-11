@@ -27,17 +27,17 @@ The visuals work. The feel doesn't yet. Sound/music is a key missing piece.
 
 ## P0 — Disorientation & clarity
 
-The user's "disorienting" + "more experience than game" maps directly to these:
+The user's "disorienting" + "more experience than game" maps directly to these.
+**All fixes must work visually — mobile games cannot rely on audio.**
 
 - [ ] **Reduce visual noise in ring-dense areas** — LOD: fade/hide by distance; only show nearby + target airport rings during delivery *(both reviewers, #1 issue)*
 - [ ] **Clamp bloom at mid-altitude** — bloom + atmospheric haze stack = white washout; hard-cap near surface *(both reviewers)*
-- [ ] **Sound & music** — the game feels like an experience partly because it's silent; ambient music + richer sound design will make actions feel consequential *(user feedback)*
 - [ ] **Trajectory arc during charge** — make the existing preview arc more prominent so player knows where they're going *(GPT-5.2, addresses disorientation)*
 - [ ] **"Ideal charge" band on power meter** — green zone/tick mark for ideal hold duration, not just color shift *(GPT-5.2)*
+- [ ] **Player pod rim light / silhouette** — dark outline or contrasting rim glow so you always know where you are *(both reviewers — promoted from P1)*
 
 ## P1 — Make it feel like a game, not a screensaver
 
-- [ ] **Player pod rim light / silhouette** — dark outline or contrasting rim glow so you always know where you are *(both reviewers)*
 - [ ] **Make altitude affect gameplay** — higher = faster travel but harder to land; gives altitude meaning beyond scenery *(both reviewers, user)*
 - [ ] **Pre-launch overshoot warning** — feedback BEFORE release when charge exceeds viable range *(GPT-5.2)*
 - [ ] **Make overshoot warning more dynamic** — screen shake, color shift, not just text *(Gemini)*
@@ -45,8 +45,9 @@ The user's "disorienting" + "more experience than game" maps directly to these:
 - [ ] **Combo text animation** — make it scale/pulse assertively on increment *(GPT-5.2)*
 - [ ] **Direction arrow clarity** — ensure arrow points to selected delivery target, not nearest airport *(Gemini)*
 
-## P2 — Scoring & progression depth
+## P2 — Scoring, progression & audio
 
+- [ ] **Sound & music** — ambient music + richer sound design; nice-to-have but NOT relied upon for core feedback since mobile often played muted *(user feedback, deprioritized)*
 - [ ] **Regional delivery chains** — bonus for consecutive deliveries in same region *(GPT-5.2)*
 - [ ] **Long-distance precision bonus** — extra points for BULLSEYE on long-range *(GPT-5.2)*
 - [ ] **Escalating streak audio/visuals** — sound pitch + particle intensity rise with combo *(GPT-5.2)*

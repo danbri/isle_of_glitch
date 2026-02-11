@@ -768,7 +768,11 @@
             </div>
         </div>
         <div id="charge-meter">
-            <svg viewBox="0 0 100 100"><circle id="charge-meter-ring" cx="50" cy="50" r="45"/></svg>
+            <svg viewBox="0 0 100 100">
+                <circle id="charge-meter-ring" cx="50" cy="50" r="45"/>
+                <!-- Ideal charge tick mark — rotated to match ideal position on ring -->
+                <line id="charge-ideal-tick" x1="50" y1="2" x2="50" y2="10" stroke="#44ff88" stroke-width="3" stroke-linecap="round" opacity="0" transform="rotate(0, 50, 50)"/>
+            </svg>
         </div>
 
         <!-- Giant direction arrow — Crazy Taxi style -->
@@ -802,8 +806,8 @@
         <div id="target-notification" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.7); color:#4488ff; padding:8px 16px; border-radius:12px; font-size:0.9rem; font-weight:bold; opacity:0; transition:opacity 0.3s; pointer-events:none; z-index:100;"></div>
 
         <!-- Delivery choice overlay — pick your next delivery -->
-        <div id="delivery-choice" style="display:none; position:absolute; bottom:max(calc(env(safe-area-inset-bottom,0px) + 100px), 110px); left:50%; transform:translateX(-50%); z-index:150; pointer-events:auto; max-width:min(95vw,360px); width:100%;">
-            <div style="text-align:center; font-size:0.6rem; letter-spacing:0.2em; opacity:0.6; margin-bottom:6px;">CHOOSE DELIVERY</div>
+        <div id="delivery-choice" style="display:none; position:absolute; bottom:max(calc(env(safe-area-inset-bottom,0px) + 100px), 110px); left:50%; transform:translateX(-50%); z-index:150; pointer-events:auto; max-width:min(95vw,360px); width:100%; background:rgba(10,5,25,0.7); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-radius:14px; padding:10px 10px 12px; border:1px solid rgba(68,136,255,0.15);">
+            <div style="text-align:center; font-size:0.65rem; letter-spacing:0.2em; opacity:0.7; margin-bottom:8px; font-weight:500;">CHOOSE DELIVERY</div>
             <div id="delivery-options" style="display:flex; flex-direction:column; gap:6px;"></div>
         </div>
 
@@ -843,8 +847,8 @@
             <span id="camera-icon" style="font-size:0.9rem;">🌍</span>
         </div>
 
-        <!-- Debug toggle button (mobile-friendly) -->
-        <div id="debug-toggle" class="ui-panel compact" style="position:fixed; bottom:120px; left:8px; font-size:0.65rem; opacity:0.4; cursor:pointer; z-index:999; padding:4px 8px;">
+        <!-- Debug toggle button — hidden by default, press H or add ?debug to URL -->
+        <div id="debug-toggle" class="ui-panel compact" style="display:none; position:fixed; bottom:120px; left:8px; font-size:0.65rem; opacity:0.4; cursor:pointer; z-index:999; padding:4px 8px;">
             &gt; Debug Panel
         </div>
 
@@ -889,6 +893,6 @@
     }
     </script>
 
-    <script type="module" src="src/main.js?v=41"></script>
+    <script type="module" src="src/main.js?v=42"></script>
 </body>
 </html>
