@@ -8,12 +8,14 @@ import { PlanetSurfaceShader } from '../shaders/PlanetSurface.js';
 import { AtmosphereGlowMaterial } from '../shaders/AtmosphericScattering.js';
 
 export class Planet {
-    constructor(scene) {
+    constructor(scene, orbital) {
         this.scene = scene;
+        this.orbital = orbital;
         this.radius = 10;
         this.atmosphereRadius = 10.5;
         this.group = new THREE.Group();
-        this.sunDirection = new THREE.Vector3(1, 0.3, 0.5).normalize();
+        // Use real sun direction from orbital mechanics if available
+        this.sunDirection = orbital ? orbital.sunDirection : new THREE.Vector3(1, 0.3, 0.5).normalize();
     }
 
     async init() {

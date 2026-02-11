@@ -23,6 +23,7 @@ import { AudioSystem } from './systems/AudioSystem.js';
 import { CountryOutlines } from './components/CountryOutlines.js';
 import { ChromaticAberrationShader } from './shaders/ChromaticAberration.js';
 import { AtmosphericScatteringShader } from './shaders/AtmosphericScattering.js';
+import { OrbitalMechanics } from './systems/OrbitalMechanics.js';
 import GUI from 'lil-gui';
 
 class GloballGame {
@@ -416,11 +417,18 @@ class GloballGame {
         // Initialize game state
         this.gameState = new GameState();
 
+        this.updateLoadingProgress(33, 'Computing orbits...');
+
+        // Orbital mechanics — real sun/moon/ISS positions via astronomy-engine
+        console.log('Loading: Orbital Mechanics...');
+        this.orbital = new OrbitalMechanics();
+        this.orbital.init();
+
         this.updateLoadingProgress(35, 'Generating planet...');
 
-        // Create planet
+        // Create planet — pass orbital so it uses real sun direction
         console.log('Loading: Planet...');
-        this.planet = new Planet(this.scene);
+        this.planet = new Planet(this.scene, this.orbital);
         await this.planet.init();
 
         this.updateLoadingProgress(50, 'Illuminating cities...');
@@ -1094,6 +1102,21 @@ class GloballGame {
         info.add(this.debugInfo, 'altitude').name('Altitude').listen();
         info.add(this.debugInfo, 'velocity').name('Velocity').listen();
         info.open();
+
+        // Orbital mechanics controls
+        const orbitalFolder = this.gui.addFolder('Orbital Mechanics');
+        this.orbitalSettings = {
+            timeWarp: 1,
+            gameDate: '',
+            moonDist: '',
+            sunAz: ''
+        };
+        orbitalFolder.add(this.orbitalSettings, 'timeWarp', 1, 100000, 1).name('Time Warp').onChange(v => {
+            if (this.orbital) this.orbital.setTimeWarp(v);
+        });
+        orbitalFolder.add(this.orbitalSettings, 'gameDate').name('Date/Time').listen();
+        orbitalFolder.add(this.orbitalSettings, 'moonDist').name('Moon dist').listen();
+        orbitalFolder.add(this.orbitalSettings, 'sunAz').name('Sun dir').listen();
 
         // FPS counter
         this.fpsFrames = 0;
@@ -1842,10 +1865,13 @@ class GloballGame {
         this.keys['_steerX'] = this.steerX;
         this.keys['_steerY'] = this.steerY;
 
+        // Update orbital mechanics (sun, moon, ISS, Lagrange points)
+        this.orbital.update(time, this.deltaTime);
+
         // Update all game components
         this.planet.update(time, this.deltaTime);
         this.cityLights.update(time, this.deltaTime, this.camera);
-        this.spaceEnv.update(time, this.deltaTime);
+        this.spaceEnv.update(time, this.deltaTime, this.orbital);
         this.aurora.update(time, this.deltaTime, this.player.getPosition());
         this.trampolineNetwork.update(time, this.deltaTime, this.player.getPosition());
         this.player.update(time, this.deltaTime, this.keys);
@@ -2098,6 +2124,15 @@ class GloballGame {
             this.debugInfo.playerPos = `${pp.x.toFixed(1)}, ${pp.y.toFixed(1)}, ${pp.z.toFixed(1)}`;
             this.debugInfo.altitude = altitude.toFixed(1);
             this.debugInfo.velocity = speed.toFixed(2);
+
+            // Orbital info
+            if (this.orbitalSettings && this.orbital) {
+                const d = this.orbital.gameDate;
+                this.orbitalSettings.gameDate = `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`;
+                this.orbitalSettings.moonDist = `${this.orbital.moonPosition.length().toFixed(0)} gu`;
+                const sd = this.orbital.sunDirection;
+                this.orbitalSettings.sunAz = `${sd.x.toFixed(2)}, ${sd.y.toFixed(2)}, ${sd.z.toFixed(2)}`;
+            }
         }
 
         // Render with or without post-processing
