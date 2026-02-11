@@ -73,7 +73,9 @@ export class Planet {
         // Load NASA Blue Marble in background with retry.
         // When it loads, swap into the planet material uniform.
         // Game starts immediately with procedural — this just upgrades it.
+        // Local bundled copy tried first (no CDN dependency), CDN as fallback.
         const urls = [
+            './assets/earth-blue-marble.jpg',
             'https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg',
             'https://cdn.jsdelivr.net/npm/three-globe@2.31.0/example/img/earth-blue-marble.jpg',
         ];
