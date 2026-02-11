@@ -601,17 +601,31 @@ class GloballGame {
         }
 
         this.player.setRouteType(routeType);
+
+        // Chain launch bonus: bounce within 3s of delivery = 1.3x force
+        const timeSinceDelivery = this._lastDeliveryTime ? (Date.now() - this._lastDeliveryTime) : Infinity;
+        if (timeSinceDelivery < 3000) {
+            this.player.bounceForceMultiplier = 1.3;
+        } else {
+            this.player.bounceForceMultiplier = 1.0;
+        }
+
         this.player.bounce();
         if (this.audio) this.audio.playBounce(this.player.getBounceCharge());
 
-        // Show bounce type feedback
+        // Show bounce type feedback + chain launch indicator
         const labels = { scenic: 'Quick Pulse', express: 'Mag Launch', stealth: 'Long Range' };
         const el = this.getEl('target-notification');
         if (el) {
-            el.textContent = labels[routeType];
+            const chainText = timeSinceDelivery < 3000 ? ' CHAIN!' : '';
+            el.textContent = labels[routeType] + chainText;
+            el.style.color = chainText ? '#44ff88' : '#4488ff';
             el.style.opacity = '1';
             clearTimeout(this._targetNotifTimeout);
-            this._targetNotifTimeout = setTimeout(() => { el.style.opacity = '0'; }, 800);
+            this._targetNotifTimeout = setTimeout(() => {
+                el.style.opacity = '0';
+                el.style.color = '#4488ff';
+            }, 800);
         }
     }
 
@@ -1160,20 +1174,7 @@ class GloballGame {
         // Expire package if time ran out
         if (timerInfo.expired) {
             this.packageSystem.expirePackage();
-            // Show timeout notification
-            const el = this.getEl('target-notification');
-            if (el) {
-                el.textContent = 'TIME UP! New package...';
-                el.style.color = '#ff4444';
-                el.style.fontSize = '1rem';
-                el.style.opacity = '1';
-                clearTimeout(this._targetNotifTimeout);
-                this._targetNotifTimeout = setTimeout(() => {
-                    el.style.opacity = '0';
-                    el.style.color = '#4488ff';
-                    el.style.fontSize = '0.9rem';
-                }, 2000);
-            }
+            // Penalty feedback is handled by expiry detection in animate loop
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
             // Flash cargo and auto-target new destination
             this.player.setCarrying(false);
@@ -1478,10 +1479,27 @@ class GloballGame {
             if (ring) {
                 // 283 = 2*PI*45 (circumference of svg circle)
                 ring.style.strokeDashoffset = String(283 * (1 - progress));
-                // Color shifts: blue → purple → bright cyan
-                if (progress < 0.25) ring.style.stroke = '#4488ff';
-                else if (progress < 0.75) ring.style.stroke = '#6644ff';
-                else ring.style.stroke = '#88ddff';
+
+                // Power indicator: color shows if charge matches target distance
+                const destPos = this.packageSystem.getDestinationPosition();
+                if (destPos) {
+                    const dist = this.player.getPosition().distanceTo(destPos);
+                    // Ideal hold: ~100ms per unit of distance (rough heuristic)
+                    const idealMs = Math.min(800, dist * 100);
+                    const ratio = holdMs / Math.max(50, idealMs);
+                    if (ratio < 0.6) {
+                        ring.style.stroke = '#4488ff'; // Under — blue "too short"
+                    } else if (ratio < 1.4) {
+                        ring.style.stroke = '#44ff88'; // Good — green "dialed in"
+                    } else {
+                        ring.style.stroke = '#ff8844'; // Over — orange "too long"
+                    }
+                } else {
+                    // No target: just show progress color
+                    if (progress < 0.25) ring.style.stroke = '#4488ff';
+                    else if (progress < 0.75) ring.style.stroke = '#6644ff';
+                    else ring.style.stroke = '#88ddff';
+                }
             }
         } else {
             // Reset charge meter when not charging
@@ -1509,8 +1527,51 @@ class GloballGame {
 
         const prevDeliveries = this.gameState.deliveries;
         this.packageSystem.update(time, this.deltaTime, this.player);
+
+        // --- MISS FEEDBACK ---
+        const miss = this.packageSystem.getLastMiss();
+        if (miss && miss.time !== this._lastMissTime) {
+            this._lastMissTime = miss.time;
+            const el = this.getEl('target-notification');
+            if (el) {
+                el.textContent = `${miss.type}! ${miss.detail}`;
+                el.style.color = '#ff8800';
+                el.style.fontSize = '0.95rem';
+                el.style.opacity = '1';
+                clearTimeout(this._targetNotifTimeout);
+                this._targetNotifTimeout = setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.color = '#4488ff';
+                    el.style.fontSize = '0.9rem';
+                }, 2500);
+            }
+            if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
+        }
+
+        // --- EXPIRY PENALTY FEEDBACK ---
+        const expiry = this.packageSystem.getLastExpiry();
+        if (expiry && expiry.time !== this._lastExpiryTime) {
+            this._lastExpiryTime = expiry.time;
+            const celebEl = this.getEl('delivery-celebration');
+            const textEl = this.getEl('delivery-text');
+            const scoreEl = this.getEl('delivery-score');
+            if (celebEl && textEl && scoreEl) {
+                textEl.textContent = 'EXPIRED';
+                scoreEl.textContent = `-${expiry.penalty}`;
+                textEl.style.color = '#ff4444';
+                celebEl.classList.remove('active');
+                void celebEl.offsetWidth;
+                celebEl.classList.add('active');
+                clearTimeout(this._celebTimeout);
+                this._celebTimeout = setTimeout(() => {
+                    celebEl.classList.remove('active');
+                    textEl.style.color = '#4488ff';
+                }, 2000);
+            }
+        }
+
+        // --- DELIVERY CELEBRATION ---
         if (this.gameState.deliveries > prevDeliveries) {
-            // Big celebration overlay
             const delivery = this.packageSystem.getLastDelivery();
             const celebEl = this.getEl('delivery-celebration');
             const scoreEl = this.getEl('delivery-score');
@@ -1518,14 +1579,24 @@ class GloballGame {
 
             if (celebEl) {
                 if (textEl) {
-                    textEl.textContent = delivery && delivery.comboMultiplier > 1
-                        ? `x${delivery.comboMultiplier} COMBO!`
-                        : 'DELIVERED!';
+                    textEl.style.color = '#4488ff'; // Reset from possible expiry red
+                    // Show accuracy + combo info
+                    if (delivery && delivery.accuracy === 'BULLSEYE') {
+                        textEl.textContent = 'BULLSEYE!';
+                        textEl.style.color = '#88ddff';
+                    } else if (delivery && delivery.accuracy === 'PRECISE') {
+                        textEl.textContent = 'PRECISE!';
+                        textEl.style.color = '#aa88ff';
+                    } else if (delivery && delivery.comboMultiplier > 1) {
+                        textEl.textContent = `x${delivery.comboMultiplier} COMBO!`;
+                    } else {
+                        textEl.textContent = 'DELIVERED!';
+                    }
                 }
                 if (scoreEl && delivery) {
-                    scoreEl.textContent = `+${delivery.score}`;
+                    const mult = delivery.accuracyMultiplier > 1 ? ` (${delivery.accuracy} ${delivery.accuracyMultiplier}x)` : '';
+                    scoreEl.textContent = `+${delivery.score}${mult}`;
                 }
-                // Trigger animation (force reflow to restart)
                 celebEl.classList.remove('active');
                 void celebEl.offsetWidth;
                 celebEl.classList.add('active');
@@ -1549,20 +1620,28 @@ class GloballGame {
                 }
             }
 
-            // Camera punch on delivery
-            this.player.cameraShake.intensity = 0.15;
+            // Camera punch — scales with accuracy
+            this.player.cameraShake.intensity = delivery && delivery.accuracyMultiplier >= 3 ? 0.25 : 0.15;
 
             // Brief flash — hide cargo, then show for new package
             this.player.setCarrying(false);
 
-            // Strong haptic celebration
-            if (navigator.vibrate) navigator.vibrate([50, 50, 100, 50, 150]);
+            // Haptic — stronger for bullseye
+            if (navigator.vibrate) {
+                if (delivery && delivery.accuracyMultiplier >= 3) {
+                    navigator.vibrate([80, 40, 80, 40, 120, 40, 200]);
+                } else {
+                    navigator.vibrate([50, 50, 100, 50, 150]);
+                }
+            }
+
+            // Record delivery time for chain launch bonus
+            this._lastDeliveryTime = Date.now();
 
             // Auto-target new destination + show cargo for new package
             const newPkg = this.packageSystem.getCurrentPackage();
             if (newPkg && newPkg.destinationAirport) {
                 this.player.setTargetTrampoline(newPkg.destinationAirport);
-                // Slight delay before showing new cargo (pickup feel)
                 setTimeout(() => this.player.setCarrying(true), 400);
             }
         }

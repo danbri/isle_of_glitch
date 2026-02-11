@@ -51,8 +51,8 @@ export class PackageSystem {
     }
 
     getRandomDestinationAirport(excludeNear) {
-        // Pick a destination reachable via the route network
-        // Prefer airports 1-3 hops away for interesting gameplay
+        // Progressive difficulty: early deliveries are nearby, later ones are farther
+        const deliveries = this.gameState.deliveries;
         const trampolines = this.trampolineNetwork.trampolines;
         if (trampolines.length === 0) return null;
 
@@ -63,13 +63,16 @@ export class PackageSystem {
             if (nearest) startIata = nearest.airport.name;
         }
 
-        // Try to find a route-connected destination
+        // Difficulty tiers:
+        // 0-2 deliveries: always 1-hop (nearby, easy wins to learn)
+        // 3-5: mostly 1-hop, sometimes 2-hop
+        // 6+: mix of distances, more 2-hop
+        const twoHopChance = deliveries < 3 ? 0 : deliveries < 6 ? 0.3 : 0.6;
+
         if (startIata && this.trampolineNetwork.routeGraph[startIata]) {
             const connected = this.trampolineNetwork.getConnectedAirports(startIata);
             if (connected.length > 0) {
-                // Pick a random connected airport (1 hop)
-                // 50% chance of 1-hop, 50% chance of 2-hop for variety
-                if (Math.random() < 0.5 && connected.length > 0) {
+                if (Math.random() >= twoHopChance) {
                     // 1-hop: direct connection
                     return connected[Math.floor(Math.random() * connected.length)];
                 } else {
@@ -80,6 +83,8 @@ export class PackageSystem {
                     if (filtered.length > 0) {
                         return filtered[Math.floor(Math.random() * filtered.length)];
                     }
+                    // Fallback to 1-hop if no 2-hop found
+                    return connected[Math.floor(Math.random() * connected.length)];
                 }
             }
         }
@@ -276,14 +281,62 @@ export class PackageSystem {
         if (!destPos) return false;
 
         const distance = playerPosition.distanceTo(destPos);
+
+        // Track closest approach (for miss feedback)
+        if (!this.currentPackage._closestApproach || distance < this.currentPackage._closestApproach) {
+            this.currentPackage._closestApproach = distance;
+        }
+
+        // Delivery zone: 1.5 units (generous on mobile) but accuracy matters for score
         if (distance < 1.5) {
-            this.completeDelivery(destPos);
+            // Accuracy tier determines bonus multiplier
+            let accuracy, accuracyMultiplier;
+            if (distance < 0.5) {
+                accuracy = 'BULLSEYE';
+                accuracyMultiplier = 3;
+            } else if (distance < 0.8) {
+                accuracy = 'PRECISE';
+                accuracyMultiplier = 2;
+            } else {
+                accuracy = 'DELIVERED';
+                accuracyMultiplier = 1;
+            }
+            this.completeDelivery(destPos, accuracy, accuracyMultiplier);
             return true;
         }
+
+        // Miss detection: was close (< 3 units) but now moving away
+        const prevDist = this.currentPackage._prevDist || distance;
+        this.currentPackage._prevDist = distance;
+
+        if (distance < 4 && distance > prevDist && this.currentPackage._closestApproach < 3) {
+            // Player passed near destination and is now moving away
+            if (!this.currentPackage._missShown) {
+                this.currentPackage._missShown = true;
+                const kmMissed = (this.currentPackage._closestApproach * 637).toFixed(0);
+                this._lastMiss = {
+                    type: 'OVERSHOOT',
+                    detail: `Closest: ${kmMissed}km — come back!`,
+                    time: Date.now()
+                };
+                // Allow another miss notification after 3s if they come back and miss again
+                setTimeout(() => {
+                    if (this.currentPackage) this.currentPackage._missShown = false;
+                }, 3000);
+            }
+        }
+
         return false;
     }
 
-    completeDelivery(destPos) {
+    getLastMiss() {
+        if (!this._lastMiss) return null;
+        // Only return miss within last 2 seconds
+        if (Date.now() - this._lastMiss.time > 2000) return null;
+        return this._lastMiss;
+    }
+
+    completeDelivery(destPos, accuracy, accuracyMultiplier) {
         const pkg = this.currentPackage;
         const baseScore = pkg.type.value;
 
@@ -307,8 +360,12 @@ export class PackageSystem {
         // Streak bonus: escalating reward for consecutive deliveries
         const streakBonus = Math.min(200, this.gameState.deliveries * 15);
 
-        // Total score with combo multiplier
-        const totalScore = (baseScore + timeBonus + distBonus + streakBonus) * this.comboCount;
+        // Chain launch bonus: did they bounce recently? Reward quick turnaround
+        const chainBonus = (now - this.lastDeliveryTime < 3000 && this.gameState.deliveries > 0) ? 50 : 0;
+
+        // Total score: accuracy × combo × (base + bonuses)
+        const subtotal = baseScore + timeBonus + distBonus + streakBonus + chainBonus;
+        const totalScore = subtotal * accuracyMultiplier * this.comboCount;
         this.gameState.addScore(totalScore);
         this.gameState.deliveries++;
 
@@ -318,6 +375,8 @@ export class PackageSystem {
             baseScore,
             timeBonus,
             distBonus,
+            accuracy,
+            accuracyMultiplier,
             comboMultiplier: this.comboCount,
             timeRemaining: Math.max(0, pkg.timeLimit - elapsed)
         };
@@ -450,10 +509,19 @@ export class PackageSystem {
     }
 
     expirePackage() {
-        // Package timed out — reassign with a small penalty
+        // Package timed out — REAL penalty: lose points and combo
+        const penalty = Math.min(this.gameState.score, 100);
+        this.gameState.score = Math.max(0, this.gameState.score - penalty);
         this.comboCount = 0;
+        this._lastExpiry = { penalty, time: Date.now() };
         this.currentPackage = null;
         this.assignNewPackage();
+    }
+
+    getLastExpiry() {
+        if (!this._lastExpiry) return null;
+        if (Date.now() - this._lastExpiry.time > 2500) return null;
+        return this._lastExpiry;
     }
 
     update(time, deltaTime, player) {

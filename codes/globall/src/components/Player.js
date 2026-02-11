@@ -59,6 +59,9 @@ export class Player {
 
         // Landing tracking
         this.lastImpactSpeed = 0;
+
+        // Chain launch multiplier (set by main.js before bounce)
+        this.bounceForceMultiplier = 1.0;
     }
 
     async init() {
@@ -358,8 +361,8 @@ export class Player {
                 .normalize();
         }
 
-        // Apply bounce force - stronger response
-        const force = this.bounceForce * modifier.force * (0.5 + this.bounceCharge * 0.5);
+        // Apply bounce force - stronger response, with chain launch bonus
+        const force = this.bounceForce * modifier.force * (0.5 + this.bounceCharge * 0.5) * this.bounceForceMultiplier;
 
         // Cancel downward velocity before bouncing for snappier response
         const downwardSpeed = -this.velocity.dot(up);
