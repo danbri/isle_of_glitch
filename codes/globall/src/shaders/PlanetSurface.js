@@ -129,7 +129,7 @@ export const PlanetSurfaceShader = {
 
             // Sample textures
             vec4 dayColor = texture2D(dayTexture, vUv);
-            dayColor.rgb *= 1.3;
+            dayColor.rgb *= 1.05; // Subtle lift — Blue Marble is well-exposed
             vec4 nightColor = texture2D(nightTexture, vUv);
             vec4 cityLights = texture2D(cityLightsTexture, vUv);
             vec4 clouds = texture2D(cloudsTexture, vUv + vec2(time * 0.001, 0.0));
