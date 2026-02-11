@@ -1,4 +1,4 @@
-# Globall Magnetics — Gameplay Spec
+# Glowball Gopher — Gameplay Spec
 
 ## Core Loop
 

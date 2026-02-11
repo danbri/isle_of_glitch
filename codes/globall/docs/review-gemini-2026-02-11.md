@@ -1,4 +1,4 @@
-# Globall Magnetics — Gemini Review (2026-02-11)
+# Glowball Gopher — Gemini Review (2026-02-11)
 
 **Reviewer**: Gemini (based on iOS Safari screenshots provided by user)
 
