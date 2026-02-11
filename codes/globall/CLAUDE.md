@@ -1,4 +1,4 @@
-# Glowball Gopher — Development Guide
+# Glo-ball Gopher — Development Guide
 
 ## Vision
 

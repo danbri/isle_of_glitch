@@ -379,7 +379,15 @@ export class Player {
         }
 
         // Apply bounce force - stronger response, with chain launch bonus
-        const force = this.bounceForce * modifier.force * (0.5 + this.bounceCharge * 0.5) * this.bounceForceMultiplier;
+        let force = this.bounceForce * modifier.force * (0.5 + this.bounceCharge * 0.5) * this.bounceForceMultiplier;
+
+        // Scale force down for nearby targets — tiny hops should be easy
+        if (this.targetTrampoline) {
+            const targetDist = this.targetTrampoline.position.distanceTo(this.position);
+            if (targetDist < 3) {
+                force *= Math.max(0.25, targetDist / 3);
+            }
+        }
 
         // Cancel downward velocity before bouncing for snappier response
         const downwardSpeed = -this.velocity.dot(up);

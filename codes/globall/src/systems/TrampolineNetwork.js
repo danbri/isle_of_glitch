@@ -294,14 +294,14 @@ export class TrampolineNetwork {
             // Outer coil ring
             group.add(new THREE.Mesh(outerCoilGeo, coilMat));
 
-            // Inner coil ring (slightly elevated)
+            // Inner coil ring (slightly above surface — -Z is outward after lookAt)
             const innerRing = new THREE.Mesh(innerCoilGeo, innerCoilMat);
-            innerRing.position.y = 0.02;
+            innerRing.position.z = -0.02;
             group.add(innerRing);
 
             // Magnetic core disc
             const core = new THREE.Mesh(coreGeo, coreMat);
-            core.position.y = 0.03;
+            core.position.z = -0.03;
             group.add(core);
 
             // Electromagnetic glow sprite
@@ -502,10 +502,10 @@ export class TrampolineNetwork {
             if (this.assignedAirports[slot] !== airportIdx) {
                 this.assignedAirports[slot] = airportIdx;
 
-                // Reposition
+                // Reposition — lookAt(origin) makes local +Z face center,
+                // so XY plane = tangent to sphere. Torus sits flat. No rotateX.
                 group.position.copy(trampoline.position);
                 group.lookAt(new THREE.Vector3(0, 0, 0));
-                group.rotateX(Math.PI / 2);
 
                 // Update label
                 this.updateLabel(slot, trampoline.airport);

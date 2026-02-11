@@ -464,7 +464,14 @@ export class PackageSystem {
         const prevDist = this.currentPackage._prevDist || distance;
         this.currentPackage._prevDist = distance;
 
-        if (distance < 4 && distance > prevDist && this.currentPackage._closestApproach < 3) {
+        // Grace period: don't trigger overshoot if player hasn't actually traveled yet
+        // (prevents false "overshoot" on nearby destinations right after accepting)
+        const elapsed = (Date.now() - this.currentPackage.startTime) / 1000;
+        const travelDist = this.currentPackage.originPosition
+            ? playerPosition.distanceTo(this.currentPackage.originPosition) : 0;
+
+        if (elapsed > 3 && travelDist > 1.5
+            && distance < 4 && distance > prevDist && this.currentPackage._closestApproach < 3) {
             // Player passed near destination and is now moving away
             if (!this.currentPackage._missShown) {
                 this.currentPackage._missShown = true;

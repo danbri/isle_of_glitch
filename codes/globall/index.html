@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glowball Gopher</title>
+    <title>Glo-ball Gopher</title>
     <style>
         * {
             margin: 0;
@@ -43,13 +43,14 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #1a1a4e 0%, #0a2a6e 50%, #1a0a3e 100%);
+            background: linear-gradient(135deg, #0a0a2e 0%, #0a1a4e 40%, #060828 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.8s ease;
+            overflow: hidden;
         }
 
         #loading-screen.hidden {
@@ -57,30 +58,186 @@
             pointer-events: none;
         }
 
+        /* Stars in the splash background */
+        .splash-stars {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.8) 50%, transparent 100%),
+                radial-gradient(1px 1px at 30% 70%, rgba(136,170,255,0.6) 50%, transparent 100%),
+                radial-gradient(1px 1px at 55% 15%, rgba(255,255,255,0.7) 50%, transparent 100%),
+                radial-gradient(1px 1px at 70% 55%, rgba(136,221,255,0.5) 50%, transparent 100%),
+                radial-gradient(1px 1px at 85% 30%, rgba(255,255,255,0.6) 50%, transparent 100%),
+                radial-gradient(1px 1px at 20% 85%, rgba(170,136,255,0.5) 50%, transparent 100%),
+                radial-gradient(1px 1px at 45% 45%, rgba(255,255,255,0.4) 50%, transparent 100%),
+                radial-gradient(1px 1px at 90% 80%, rgba(136,221,255,0.6) 50%, transparent 100%),
+                radial-gradient(1px 1px at 5% 50%, rgba(255,255,255,0.5) 50%, transparent 100%),
+                radial-gradient(1px 1px at 65% 90%, rgba(255,255,255,0.7) 50%, transparent 100%);
+            animation: twinkle 4s ease-in-out infinite alternate;
+        }
+        @keyframes twinkle { 0% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        /* The pod — CSS recreation of the Player mesh */
+        .splash-pod-wrap {
+            position: relative;
+            width: clamp(80px, 25vw, 140px);
+            height: clamp(80px, 25vw, 140px);
+            margin-bottom: 1.5rem;
+            animation: pod-swoop 1.8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+            opacity: 0;
+        }
+        @keyframes pod-swoop {
+            0%   { transform: translate(60vw, -20vh) rotate(-30deg) scale(0.4); opacity: 0; }
+            30%  { opacity: 1; }
+            70%  { transform: translate(0, -10px) rotate(5deg) scale(1.05); }
+            85%  { transform: translate(0, 4px) rotate(-2deg) scale(0.98); }
+            100% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+        }
+
+        .splash-pod {
+            position: relative;
+            width: 100%; height: 100%;
+        }
+
+        /* Pod body */
+        .pod-body {
+            position: absolute;
+            top: 20%; left: 20%; width: 60%; height: 60%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #66aaff, #4488ff 40%, #2255cc 90%);
+            box-shadow:
+                0 0 20px rgba(68, 136, 255, 0.6),
+                0 0 40px rgba(68, 136, 255, 0.3),
+                inset 0 -4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Wings */
+        .pod-wings {
+            position: absolute;
+            top: 45%; left: 5%; width: 90%; height: 16%;
+            background: linear-gradient(90deg, #6644ff 0%, #8866ff 50%, #6644ff 100%);
+            border-radius: 4px;
+            box-shadow: 0 0 12px rgba(102, 68, 255, 0.5);
+            transform: translateY(-50%);
+        }
+
+        /* Eyes */
+        .pod-eye {
+            position: absolute;
+            width: 18%; height: 18%;
+            background: radial-gradient(circle at 40% 40%, #ffffff, #ddeeff);
+            border-radius: 50%;
+            top: 30%;
+        }
+        .pod-eye.left { left: 30%; }
+        .pod-eye.right { left: 52%; }
+        .pod-eye::after {
+            content: '';
+            position: absolute;
+            width: 45%; height: 45%;
+            background: #111;
+            border-radius: 50%;
+            top: 30%; left: 35%;
+        }
+
+        /* EM glow */
+        .pod-glow {
+            position: absolute;
+            top: 10%; left: 10%; width: 80%; height: 80%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(136,170,255,0.15) 40%, rgba(68,136,255,0.05) 70%, transparent 100%);
+            animation: glow-pulse 2s ease-in-out infinite;
+        }
+        @keyframes glow-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 1; }
+        }
+
+        /* Cargo box on top */
+        .pod-cargo {
+            position: absolute;
+            top: 8%; left: 38%; width: 24%; height: 18%;
+            background: linear-gradient(135deg, #88ddff, #55aadd);
+            border-radius: 3px;
+            box-shadow: 0 0 8px rgba(136, 221, 255, 0.5);
+            animation: cargo-bob 1.5s ease-in-out 1.8s infinite;
+        }
+        @keyframes cargo-bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        /* Trail behind pod during swoop */
+        .pod-trail {
+            position: absolute;
+            top: 40%; right: 85%; width: 120px; height: 6px;
+            background: linear-gradient(90deg, transparent, rgba(68, 136, 255, 0.4), rgba(136, 170, 255, 0.8));
+            border-radius: 3px;
+            filter: blur(2px);
+            animation: trail-fade 1.8s ease-out forwards;
+            opacity: 0;
+        }
+        @keyframes trail-fade {
+            0% { opacity: 0; width: 0; }
+            20% { opacity: 0.8; width: 120px; }
+            60% { opacity: 0.6; }
+            100% { opacity: 0; width: 80px; }
+        }
+
         .loading-title {
-            font-size: clamp(2rem, 10vw, 4rem);
+            font-size: clamp(1.8rem, 9vw, 3.5rem);
             font-weight: 300;
-            letter-spacing: 0.3em;
-            margin-bottom: 1rem;
-            text-shadow: 0 0 40px rgba(255,255,255,0.5);
-            animation: pulse 2s ease-in-out infinite;
+            letter-spacing: 0.2em;
+            margin-bottom: 0.3rem;
+            text-shadow: 0 0 30px rgba(68, 136, 255, 0.6), 0 0 60px rgba(68, 136, 255, 0.3);
+            opacity: 0;
+            animation: title-appear 1s ease-out 1s forwards;
+        }
+        .loading-title em {
+            font-style: normal;
+            font-weight: 600;
+            background: linear-gradient(135deg, #88ddff, #4488ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        @keyframes title-appear {
+            0% { opacity: 0; transform: translateY(15px); }
+            100% { opacity: 1; transform: translateY(0); }
         }
 
         .loading-subtitle {
-            font-size: clamp(0.7rem, 2.5vw, 1.2rem);
-            opacity: 0.8;
-            letter-spacing: 0.2em;
+            font-size: clamp(0.65rem, 2.5vw, 1rem);
+            opacity: 0;
+            letter-spacing: 0.15em;
             text-align: center;
             padding: 0 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            animation: subtitle-appear 1s ease-out 1.6s forwards;
+        }
+        @keyframes subtitle-appear {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 0.8; transform: translateY(0); }
+        }
+
+        .loading-role {
+            font-size: clamp(0.55rem, 2vw, 0.8rem);
+            opacity: 0;
+            letter-spacing: 0.1em;
+            color: rgba(136, 221, 255, 0.7);
+            margin-top: 0.5rem;
+            animation: subtitle-appear 0.8s ease-out 2.2s forwards;
         }
 
         .loading-bar {
-            width: min(80vw, 300px);
-            height: 4px;
-            background: rgba(255,255,255,0.2);
+            width: min(80vw, 280px);
+            height: 3px;
+            background: rgba(255,255,255,0.12);
             border-radius: 2px;
-            margin-top: 2rem;
+            margin-top: 1.5rem;
             overflow: hidden;
+            opacity: 0;
+            animation: subtitle-appear 0.5s ease-out 2.5s forwards;
         }
 
         .loading-progress {
@@ -92,16 +249,13 @@
         }
 
         .loading-status {
-            font-size: clamp(0.55rem, 2vw, 0.75rem);
-            opacity: 0.5;
+            font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+            opacity: 0;
             letter-spacing: 0.1em;
-            margin-top: 0.8rem;
+            margin-top: 0.6rem;
             min-height: 1.2em;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+            color: rgba(255, 255, 255, 0.4);
+            animation: subtitle-appear 0.5s ease-out 2.5s forwards;
         }
 
         #ui-overlay {
@@ -756,8 +910,24 @@
 </head>
 <body>
     <div id="loading-screen">
-        <h1 class="loading-title">GLOBALL MAGNETICS</h1>
-        <p class="loading-subtitle">FOR ALL YOUR FRENETIC TRANSPORT NEEDS</p>
+        <div class="splash-stars"></div>
+
+        <!-- The pod swoops in like Planet Express -->
+        <div class="splash-pod-wrap">
+            <div class="pod-trail"></div>
+            <div class="splash-pod">
+                <div class="pod-glow"></div>
+                <div class="pod-wings"></div>
+                <div class="pod-body"></div>
+                <div class="pod-eye left"></div>
+                <div class="pod-eye right"></div>
+                <div class="pod-cargo"></div>
+            </div>
+        </div>
+
+        <h1 class="loading-title"><em>GLO-BALL</em> GOPHER</h1>
+        <p class="loading-subtitle">BOUNCE THE GLOBE. DELIVER THE GOODS.</p>
+        <p class="loading-role">You are a magnetic delivery pod. Pick a route. Hop airport to airport. Don't drop the package.</p>
         <div class="loading-bar">
             <div class="loading-progress" id="loading-progress"></div>
         </div>
@@ -766,7 +936,7 @@
 
     <div id="webgpu-error" class="ui-panel">
         <h2>WebGPU Not Available</h2>
-        <p>Glowball Gopher requires WebGPU for optimal 90Hz gameplay. Please use a modern browser with WebGPU support (Chrome 113+, Edge 113+, or Firefox Nightly with flags enabled).</p>
+        <p>Glo-ball Gopher requires WebGPU for optimal 90Hz gameplay. Please use a modern browser with WebGPU support (Chrome 113+, Edge 113+, or Firefox Nightly with flags enabled).</p>
         <p style="margin-top: 1rem;">Falling back to WebGL renderer...</p>
     </div>
 
@@ -942,6 +1112,6 @@
     }
     </script>
 
-    <script type="module" src="src/main.js?v=43"></script>
+    <script type="module" src="src/main.js?v=45"></script>
 </body>
 </html>

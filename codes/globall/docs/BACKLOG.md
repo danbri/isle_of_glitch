@@ -1,4 +1,4 @@
-# Glowball Gopher — Backlog
+# Glo-ball Gopher — Backlog
 
 Extracted from user playtesting + [GPT-5.2 review](review-2026-02-11.md) + [Gemini review](review-gemini-2026-02-11.md) + prior sessions.
 
