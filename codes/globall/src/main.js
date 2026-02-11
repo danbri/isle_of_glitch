@@ -74,6 +74,107 @@ class GloballGame {
         else this.gui.hide();
     }
 
+    setupFPSGraph() {
+        const canvas = this.getEl('fps-graph');
+        if (!canvas) return;
+
+        // High-DPI canvas
+        const dpr = window.devicePixelRatio || 1;
+        const w = 140, h = 60;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+
+        this.fpsGraph = {
+            canvas,
+            ctx: canvas.getContext('2d'),
+            dpr,
+            w, h,
+            history: [],       // raw FPS samples (1 per frame)
+            maxSamples: 140,   // one pixel per sample
+            avg1s: 0,
+            avg5s: 0,
+            avg15s: 0,
+            lastDraw: 0
+        };
+    }
+
+    updateFPSGraph(now) {
+        if (!this.fpsGraph || !this._debugVisible) return;
+
+        // Record frame time as FPS
+        const dt = now - (this._lastFrameTimeFPS || now);
+        this._lastFrameTimeFPS = now;
+        if (dt <= 0 || dt > 2000) return; // skip garbage frames
+
+        const fps = Math.min(120, 1000 / dt);
+        const g = this.fpsGraph;
+        g.history.push(fps);
+        if (g.history.length > g.maxSamples) g.history.shift();
+
+        // Compute smoothed averages
+        const len = g.history.length;
+        const avg = (n) => {
+            const slice = g.history.slice(Math.max(0, len - n));
+            return slice.reduce((a, b) => a + b, 0) / slice.length;
+        };
+        g.avg1s = avg(60);    // ~1 second at 60fps
+        g.avg5s = avg(300);   // ~5 seconds
+        g.avg15s = avg(900);  // ~15 seconds
+
+        // Redraw at ~10Hz to save CPU
+        if (now - g.lastDraw < 100) return;
+        g.lastDraw = now;
+
+        const { ctx, dpr, w, h } = g;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        // Background
+        ctx.fillStyle = 'rgba(0,0,0,0.75)';
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillRect(0, 0, w, h);
+
+        // 60fps reference line
+        const maxFPS = 90;
+        const yFor = (f) => h - 12 - (Math.min(f, maxFPS) / maxFPS) * (h - 16);
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(0, yFor(60));
+        ctx.lineTo(w, yFor(60));
+        ctx.stroke();
+
+        // Sparkline graph
+        if (g.history.length > 1) {
+            ctx.beginPath();
+            const step = w / g.maxSamples;
+            const offset = g.maxSamples - g.history.length;
+            for (let i = 0; i < g.history.length; i++) {
+                const x = (offset + i) * step;
+                const y = yFor(g.history[i]);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            // Color based on current FPS
+            const curFps = g.history[g.history.length - 1];
+            ctx.strokeStyle = curFps >= 55 ? '#44ff88' : curFps >= 30 ? '#ffaa44' : '#ff4444';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // Text labels
+        ctx.font = '9px monospace';
+        ctx.textBaseline = 'top';
+        const curFps = Math.round(g.history[g.history.length - 1] || 0);
+        ctx.fillStyle = curFps >= 55 ? '#44ff88' : curFps >= 30 ? '#ffaa44' : '#ff4444';
+        ctx.fillText(`${curFps} fps`, 2, 1);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fillText(`1s:${Math.round(g.avg1s)} 5s:${Math.round(g.avg5s)} 15s:${Math.round(g.avg15s)}`, 2, h - 10);
+    }
+
     async init() {
         try {
             // Check for WebGPU support
@@ -560,10 +661,10 @@ class GloballGame {
                 this.player.interact();
                 break;
             case 'KeyH':
-                this._debugVisible = true;
-                const dt = this.getEl('debug-toggle');
-                if (dt) dt.style.display = 'block';
+                this._debugVisible = !this._debugVisible;
                 this.toggleGUI();
+                const fpsC = this.getEl('fps-graph');
+                if (fpsC) fpsC.style.display = this._debugVisible ? 'block' : 'none';
                 break;
         }
     }
@@ -998,6 +1099,31 @@ class GloballGame {
         this.fpsFrames = 0;
         this.fpsTime = performance.now();
 
+        // Settings toggle — always visible, opens debug panel + FPS graph
+        const settingsToggle = this.getEl('settings-toggle');
+        if (settingsToggle) {
+            const toggleSettings = () => {
+                this._debugVisible = !this._debugVisible;
+                this.toggleGUI();
+                // Toggle FPS graph
+                const fpsCanvas = this.getEl('fps-graph');
+                if (fpsCanvas) fpsCanvas.style.display = this._debugVisible ? 'block' : 'none';
+                // Visual feedback
+                const icon = this.getEl('settings-icon');
+                if (icon) icon.style.opacity = this._debugVisible ? '1' : '';
+                settingsToggle.style.opacity = this._debugVisible ? '0.9' : '0.5';
+                if (navigator.vibrate) navigator.vibrate(10);
+            };
+            settingsToggle.addEventListener('click', toggleSettings);
+            settingsToggle.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                toggleSettings();
+            });
+        }
+
+        // FPS graph setup
+        this.setupFPSGraph();
+
         // Audio mute toggle
         const audioToggle = this.getEl('audio-toggle');
         if (audioToggle) {
@@ -1039,16 +1165,6 @@ class GloballGame {
             });
         }
 
-        // Debug toggle button — only visible in debug mode
-        const debugToggle = this.getEl('debug-toggle');
-        if (debugToggle) {
-            if (this._debugVisible) debugToggle.style.display = 'block';
-            debugToggle.addEventListener('click', () => this.toggleGUI());
-            debugToggle.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                this.toggleGUI();
-            });
-        }
     }
 
     updateUI() {
@@ -1966,10 +2082,11 @@ class GloballGame {
         // Update UI
         this.updateUI();
 
-        // Update debug info
+        // Update debug info + FPS graph
+        const now = performance.now();
+        this.updateFPSGraph(now);
         if (this.debugInfo) {
             this.fpsFrames++;
-            const now = performance.now();
             if (now - this.fpsTime >= 1000) {
                 this.debugInfo.fps = Math.round(this.fpsFrames * 1000 / (now - this.fpsTime));
                 this.fpsFrames = 0;

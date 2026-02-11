@@ -1066,10 +1066,13 @@
             <span id="camera-icon" style="font-size:0.9rem;">🌍</span>
         </div>
 
-        <!-- Debug toggle button — hidden by default, press H or add ?debug to URL -->
-        <div id="debug-toggle" class="ui-panel compact" style="display:none; position:fixed; bottom:120px; left:8px; font-size:0.65rem; opacity:0.4; cursor:pointer; z-index:999; padding:4px 8px;">
-            &gt; Debug Panel
+        <!-- Settings button — always visible, bottom-left -->
+        <div id="settings-toggle" style="position:fixed; bottom:max(env(safe-area-inset-bottom, 0px), 8px); left:8px; width:36px; height:36px; background:rgba(0,0,0,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:200; font-size:1rem; -webkit-tap-highlight-color:transparent; pointer-events:auto; touch-action:manipulation; backdrop-filter:blur(4px); opacity:0.5;">
+            <span id="settings-icon">&#9881;</span>
         </div>
+
+        <!-- FPS overlay — shown when settings panel is open -->
+        <canvas id="fps-graph" style="display:none; position:fixed; bottom:max(calc(env(safe-area-inset-bottom, 0px) + 48px), 56px); left:8px; width:140px; height:60px; z-index:200; pointer-events:none; border-radius:6px;"></canvas>
 
         <div id="tutorial-hint" class="ui-panel">
             <h2>Deliver packages by bouncing!</h2>
