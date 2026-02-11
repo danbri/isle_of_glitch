@@ -47,6 +47,12 @@ export class Player {
         this.trailPositions = [];
         this.maxTrailLength = 100;
 
+        // Smooth orientation
+        this._targetQuaternion = new THREE.Quaternion();
+        this._currentQuaternion = new THREE.Quaternion();
+        this._orientationInitialized = false;
+        this._smoothScale = new THREE.Vector3(1, 1, 1);
+
         // Camera
         this.cameraOffset = new THREE.Vector3(0, 3, 8);
         this.cameraLookOffset = new THREE.Vector3(0, 0, 0);
@@ -584,15 +590,45 @@ export class Player {
         // Update mesh
         this.mesh.position.copy(this.position);
 
-        // Orient player to face velocity direction
-        if (this.velocity.length() > 0.1) {
+        // --- Smooth orientation with quaternion slerp ---
+        const playerUp = this.position.clone().normalize(); // "up" = away from planet
+
+        if (this.isOnGround || speed < 0.5) {
+            // PARKED STANCE: face toward camera so eyes are visible
+            // Camera is above + offset along tangent, so face the tangent direction
+            const cameraTangent = this._cameraTangent || new THREE.Vector3(0, 0, 1);
+            const faceDir = cameraTangent.clone(); // face toward camera's offset direction
+            // Build a lookAt target: position + face direction (tangent) + slight upward tilt
+            const lookTarget = this.position.clone()
+                .add(faceDir.clone().multiplyScalar(1.0))
+                .add(playerUp.clone().multiplyScalar(0.3)); // Tilt face slightly upward
+
+            // Compute target quaternion from a dummy object
+            const dummyMatrix = new THREE.Matrix4();
+            dummyMatrix.lookAt(this.position, lookTarget, playerUp);
+            this._targetQuaternion.setFromRotationMatrix(dummyMatrix);
+        } else {
+            // AIRBORNE: face velocity direction (the dolphin/whale look)
             const lookTarget = this.position.clone().add(this.velocity);
-            this.mesh.lookAt(lookTarget);
+            const dummyMatrix = new THREE.Matrix4();
+            dummyMatrix.lookAt(this.position, lookTarget, playerUp);
+            this._targetQuaternion.setFromRotationMatrix(dummyMatrix);
         }
 
-        // Banking — tilt wings into turns for visual feedback
+        // Initialize quaternion on first frame
+        if (!this._orientationInitialized) {
+            this._currentQuaternion.copy(this._targetQuaternion);
+            this._orientationInitialized = true;
+        }
+
+        // Slerp toward target — slow on ground (stable), faster in air (responsive)
+        const slerpRate = this.isOnGround ? 0.04 : 0.08;
+        this._currentQuaternion.slerp(this._targetQuaternion, slerpRate);
+        this.mesh.quaternion.copy(this._currentQuaternion);
+
+        // Banking — tilt wings into turns for visual feedback (air only)
         if (!this.isOnGround && speed > 1) {
-            const bankAngle = -(this._lastSteerX || 0) * 0.4; // Roll into turn
+            const bankAngle = -(this._lastSteerX || 0) * 0.4;
             this.mesh.rotateZ(bankAngle);
         }
 
@@ -602,17 +638,19 @@ export class Player {
             this._cargoMesh.position.y = -0.25 + Math.sin(time * 3) * 0.02;
         }
 
-        // Squash and stretch based on velocity
+        // Smooth squash and stretch — lerp scale to avoid popping
         const currentSpeed = this.velocity.length();
-        const verticalSpeed = this.velocity.dot(this.position.clone().normalize());
+        const verticalSpeed = this.velocity.dot(playerUp);
+        let targetScale;
         if (this.isOnGround) {
-            // Landing squash
             const squash = Math.max(0.7, 1 - Math.abs(verticalSpeed) * 0.03);
-            this.mesh.scale.set(1 / squash, squash, 1 / squash);
+            targetScale = new THREE.Vector3(1 / squash, squash, 1 / squash);
         } else {
             const stretch = 1 + currentSpeed * 0.02;
-            this.mesh.scale.set(1, 1, stretch);
+            targetScale = new THREE.Vector3(1, 1, stretch);
         }
+        this._smoothScale.lerp(targetScale, 0.1);
+        this.mesh.scale.copy(this._smoothScale);
 
         // Eye tracking — pupils look toward target
         if (this.targetTrampoline && this.mesh.children.length >= 7) {

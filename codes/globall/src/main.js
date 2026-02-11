@@ -1053,7 +1053,22 @@ class GloballGame {
             if (pn) pn.textContent = 'Choose delivery...';
             const pd = this.getEl('package-dest');
             if (pd) pd.textContent = 'Tap an option below';
+
+            // Hide direction display when no active delivery
+            const dirContainer = this.getEl('direction-display');
+            if (dirContainer) dirContainer.style.opacity = '0';
         }
+
+        // Simplify HUD during flight — fade secondary panels so task is clear
+        const isAirborne = this.player.getAltitude() > 0.5;
+        const hasDelivery = !!currentPackage;
+        const secondaryOpacity = (isAirborne && hasDelivery) ? '0.3' : '1';
+        const altPanel = this.getEl('altitude-display');
+        const pkgPanel = this.getEl('package-info');
+        const locPanel = this.getEl('location-info');
+        if (altPanel) altPanel.style.opacity = secondaryOpacity;
+        if (pkgPanel) pkgPanel.style.opacity = secondaryOpacity;
+        if (locPanel) locPanel.style.opacity = secondaryOpacity;
 
         // Update nearest airport + target location
         const playerPos = this.player.getPosition();
@@ -1110,17 +1125,28 @@ class GloballGame {
         const arrowEl = this.getEl('direction-arrow-large');
         const distEl = this.getEl('direction-distance');
         const container = this.getEl('direction-display');
+        const destNameEl = this.getEl('direction-dest-name');
+        const progressBar = this.getEl('direction-progress-bar');
         if (!arrowEl || !distEl || !container) return;
 
         if (!destPos) {
             container.style.opacity = '0';
+            if (destNameEl) destNameEl.textContent = '';
             return;
         }
 
+        container.style.opacity = '1';
         const playerPos = this.player.getPosition();
         const dist = playerPos.distanceTo(destPos);
 
-        // Distance display (planet radius=10 ≈ Earth radius 6371km, so 1 unit ≈ 637km)
+        // Show destination name prominently
+        if (destNameEl) {
+            const pkg = this.packageSystem.currentPackage;
+            const name = pkg ? pkg.destName : '';
+            if (destNameEl.textContent !== name) destNameEl.textContent = name;
+        }
+
+        // Distance display (1 unit ≈ 637km)
         const kmDist = dist * 637;
         if (kmDist > 1000) {
             distEl.textContent = `${(kmDist / 1000).toFixed(1)}k km`;
@@ -1128,25 +1154,44 @@ class GloballGame {
             distEl.textContent = `${Math.round(kmDist)} km`;
         }
 
-        // Project destination to screen space
-        const screenPos = destPos.clone().project(this.camera);
+        // Progress bar — track how far from start to destination
+        if (progressBar) {
+            // Use initial distance as baseline (store on first call per delivery)
+            if (!this._deliveryStartDist || dist > this._deliveryStartDist * 1.1) {
+                this._deliveryStartDist = dist;
+            }
+            const progress = Math.max(0, Math.min(100, (1 - dist / this._deliveryStartDist) * 100));
+            progressBar.style.width = `${progress}%`;
 
-        // Determine arrow direction
-        let dx = screenPos.x;
-        let dy = screenPos.y;
-
-        // If behind camera, flip direction
-        if (screenPos.z > 1) {
-            dx = -dx;
-            dy = -dy;
+            // Color phases: far = blue, close = green, very close = gold pulse
+            progressBar.classList.remove('close', 'very-close');
+            if (dist < 1.0) {
+                progressBar.classList.add('very-close');
+            } else if (dist < 2.5) {
+                progressBar.classList.add('close');
+            }
         }
 
-        // Angle for upward-pointing ▲ to rotate toward destination
+        // Arrow direction — project destination to screen space
+        const screenPos = destPos.clone().project(this.camera);
+        let dx = screenPos.x;
+        let dy = screenPos.y;
+        if (screenPos.z > 1) { dx = -dx; dy = -dy; }
         const angle = Math.atan2(dx, dy) * (180 / Math.PI);
-        arrowEl.style.transform = `rotate(${angle}deg)`;
 
-        // Fade when very close
-        container.style.opacity = dist < 1 ? '0.2' : '1';
+        // Arrow grows and changes color as you approach
+        let arrowColor, arrowSize;
+        if (dist < 1.0) {
+            arrowColor = '#ffdd44'; arrowSize = 'clamp(3rem, 14vw, 5rem)';
+        } else if (dist < 2.5) {
+            arrowColor = '#44ff88'; arrowSize = 'clamp(2.6rem, 12vw, 4rem)';
+        } else {
+            arrowColor = '#4488ff'; arrowSize = 'clamp(2.2rem, 10vw, 3.5rem)';
+        }
+        arrowEl.style.transform = `rotate(${angle}deg)`;
+        arrowEl.style.color = arrowColor;
+        arrowEl.style.fontSize = arrowSize;
+        arrowEl.style.textShadow = `0 0 20px ${arrowColor}80, 0 0 40px ${arrowColor}40`;
     }
 
     updateTimerDisplay() {
@@ -1281,6 +1326,7 @@ class GloballGame {
                 e.stopPropagation();
                 this.packageSystem.acceptDelivery(idx);
                 this._lastChoiceKey = null;
+                this._deliveryStartDist = null; // Reset progress bar
                 choiceEl.style.display = 'none';
 
                 // Target the chosen destination
