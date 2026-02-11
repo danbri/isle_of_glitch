@@ -15,6 +15,8 @@ export class SpaceEnvironment {
 
     async init() {
         this.createStarfield();
+        this.createConstellations();
+        this.createDeepFieldObjects();
         this.createISS();
         this.createSatellites();
         this.createDistantGalaxies();
@@ -107,6 +109,335 @@ export class SpaceEnvironment {
 
         this.stars = new THREE.Points(geometry, material);
         this.scene.add(this.stars);
+    }
+
+    createConstellations() {
+        // Real constellation star positions (RA/Dec → 3D) with stick-figure lines
+        // Major recognizable constellations at correct sky positions
+        const constellations = [
+            {
+                name: 'Ursa Major',  // Great Bear / Big Dipper
+                stars: [
+                    { ra: 11.06, dec: 61.75, mag: 1.8 },  // Dubhe
+                    { ra: 11.03, dec: 56.38, mag: 2.4 },  // Merak
+                    { ra: 11.90, dec: 53.69, mag: 2.4 },  // Phecda
+                    { ra: 12.26, dec: 57.03, mag: 3.3 },  // Megrez
+                    { ra: 12.90, dec: 55.96, mag: 1.8 },  // Alioth
+                    { ra: 13.40, dec: 54.93, mag: 2.3 },  // Mizar
+                    { ra: 13.79, dec: 49.31, mag: 1.9 },  // Alkaid
+                ],
+                lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[3,0]]
+            },
+            {
+                name: 'Orion',
+                stars: [
+                    { ra: 5.92, dec: 7.41, mag: 0.5 },    // Betelgeuse
+                    { ra: 5.24, dec: -8.20, mag: 0.2 },   // Rigel
+                    { ra: 5.68, dec: -1.94, mag: 1.7 },   // Alnitak
+                    { ra: 5.60, dec: -1.20, mag: 1.7 },   // Alnilam
+                    { ra: 5.53, dec: -1.94, mag: 2.2 },   // Mintaka
+                    { ra: 5.42, dec: 6.35, mag: 1.6 },    // Bellatrix
+                    { ra: 5.80, dec: -9.67, mag: 2.1 },   // Saiph
+                ],
+                lines: [[0,5],[5,4],[4,3],[3,2],[2,6],[6,1],[1,4],[0,2]]
+            },
+            {
+                name: 'Cassiopeia',
+                stars: [
+                    { ra: 0.68, dec: 56.54, mag: 2.2 },   // Schedar
+                    { ra: 0.15, dec: 59.15, mag: 2.3 },   // Caph
+                    { ra: 0.95, dec: 60.72, mag: 2.5 },   // Gamma Cas
+                    { ra: 1.43, dec: 60.24, mag: 2.7 },   // Ruchbah
+                    { ra: 1.91, dec: 63.67, mag: 3.4 },   // Segin
+                ],
+                lines: [[1,0],[0,2],[2,3],[3,4]]
+            },
+            {
+                name: 'Crux',  // Southern Cross
+                stars: [
+                    { ra: 12.44, dec: -63.10, mag: 0.8 },  // Acrux
+                    { ra: 12.52, dec: -57.11, mag: 1.3 },  // Mimosa
+                    { ra: 12.25, dec: -58.75, mag: 1.6 },  // Gacrux
+                    { ra: 12.35, dec: -60.40, mag: 2.8 },  // Delta Cru
+                ],
+                lines: [[0,2],[1,3]]
+            },
+            {
+                name: 'Scorpius',
+                stars: [
+                    { ra: 16.49, dec: -26.43, mag: 1.0 },  // Antares
+                    { ra: 16.01, dec: -22.62, mag: 2.6 },  // Dschubba
+                    { ra: 16.09, dec: -19.81, mag: 2.3 },  // Acrab
+                    { ra: 17.56, dec: -37.10, mag: 1.9 },  // Shaula
+                    { ra: 17.71, dec: -39.03, mag: 2.7 },  // Lesath
+                    { ra: 16.84, dec: -34.29, mag: 2.3 },  // Epsilon Sco
+                ],
+                lines: [[2,1],[1,0],[0,5],[5,3],[3,4]]
+            },
+            {
+                name: 'Leo',
+                stars: [
+                    { ra: 10.14, dec: 11.97, mag: 1.4 },  // Regulus
+                    { ra: 11.82, dec: 14.57, mag: 2.1 },  // Denebola
+                    { ra: 10.33, dec: 19.84, mag: 2.6 },  // Algieba
+                    { ra: 11.24, dec: 20.52, mag: 2.1 },  // Zosma
+                    { ra: 9.76, dec: 23.77, mag: 3.5 },   // Epsilon Leo
+                ],
+                lines: [[0,2],[2,4],[2,3],[3,1]]
+            },
+            {
+                name: 'Cygnus',  // Northern Cross
+                stars: [
+                    { ra: 20.69, dec: 45.28, mag: 1.3 },  // Deneb
+                    { ra: 19.51, dec: 27.96, mag: 2.2 },  // Albireo
+                    { ra: 20.37, dec: 40.26, mag: 2.2 },  // Sadr
+                    { ra: 20.77, dec: 33.97, mag: 2.5 },  // Gienah
+                    { ra: 19.94, dec: 35.08, mag: 2.9 },  // Delta Cyg
+                ],
+                lines: [[0,2],[2,1],[4,2],[2,3]]
+            }
+        ];
+
+        const skyRadius = 600;
+
+        // Convert RA/Dec to 3D position
+        const raDecTo3D = (ra, dec, radius) => {
+            // RA in hours (0-24), Dec in degrees (-90 to +90)
+            const raRad = (ra / 24) * Math.PI * 2;
+            const decRad = dec * Math.PI / 180;
+            return new THREE.Vector3(
+                radius * Math.cos(decRad) * Math.cos(raRad),
+                radius * Math.sin(decRad),
+                radius * Math.cos(decRad) * Math.sin(raRad)
+            );
+        };
+
+        // Draw constellation stick figures
+        const lineMaterial = new THREE.LineBasicMaterial({
+            color: 0x334466,
+            transparent: true,
+            opacity: 0.25,
+            depthWrite: false
+        });
+
+        this.constellationStars = [];
+
+        for (const c of constellations) {
+            const starPositions = c.stars.map(s => raDecTo3D(s.ra, s.dec, skyRadius));
+
+            // Stick-figure lines
+            for (const [a, b] of c.lines) {
+                const geo = new THREE.BufferGeometry().setFromPoints([starPositions[a], starPositions[b]]);
+                const line = new THREE.Line(geo, lineMaterial);
+                this.scene.add(line);
+            }
+
+            // Bright named stars — add extra bright points for these
+            for (let i = 0; i < c.stars.length; i++) {
+                this.constellationStars.push({
+                    position: starPositions[i],
+                    magnitude: c.stars[i].mag,
+                    constellation: c.name
+                });
+            }
+        }
+
+        // Add constellation stars as larger, brighter points
+        const count = this.constellationStars.length;
+        const positions = new Float32Array(count * 3);
+        const colors = new Float32Array(count * 3);
+        const sizes = new Float32Array(count);
+
+        for (let i = 0; i < count; i++) {
+            const s = this.constellationStars[i];
+            positions[i * 3] = s.position.x;
+            positions[i * 3 + 1] = s.position.y;
+            positions[i * 3 + 2] = s.position.z;
+
+            // Brighter stars are whiter, dimmer have slight color
+            const brightness = Math.max(0.6, 1.0 - s.magnitude * 0.15);
+            colors[i * 3] = brightness;
+            colors[i * 3 + 1] = brightness;
+            colors[i * 3 + 2] = Math.min(1.0, brightness + 0.1);
+
+            // Size inversely related to magnitude (lower mag = brighter)
+            sizes[i] = Math.max(2, 5 - s.magnitude);
+        }
+
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+        const starMat = new THREE.ShaderMaterial({
+            uniforms: { time: { value: 0 } },
+            vertexShader: `
+                attribute float size;
+                attribute vec3 color;
+                varying vec3 vColor;
+                uniform float time;
+                void main() {
+                    vColor = color;
+                    float twinkle = sin(time * 1.5 + position.x * 0.02) * 0.15 + 0.85;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_PointSize = size * twinkle * (400.0 / -mvPosition.z);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vColor;
+                void main() {
+                    float dist = length(gl_PointCoord - vec2(0.5));
+                    if (dist > 0.5) discard;
+                    float alpha = smoothstep(0.5, 0.0, dist);
+                    float core = smoothstep(0.15, 0.0, dist);
+                    vec3 color = vColor * (0.6 + core * 0.4);
+                    gl_FragColor = vec4(color, alpha);
+                }
+            `,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+
+        this.constellationPoints = new THREE.Points(geo, starMat);
+        this.scene.add(this.constellationPoints);
+    }
+
+    createDeepFieldObjects() {
+        // Hubble Deep Field aesthetic: distant galaxies, star clusters, nebulae
+        // scattered throughout the void — "star systems and planets everywhere, however sparse"
+        const skyRadius = 700;
+
+        // --- Distant galaxy clusters (tiny smudges of light) ---
+        const galaxyCount = 80;
+        const galaxyPositions = new Float32Array(galaxyCount * 3);
+        const galaxyColors = new Float32Array(galaxyCount * 3);
+        const galaxySizes = new Float32Array(galaxyCount);
+
+        // Color palette: warm golds, pale blues, faint reds — like the Deep Field photo
+        const deepFieldColors = [
+            [1.0, 0.9, 0.6],   // Golden spiral
+            [0.7, 0.8, 1.0],   // Blue elliptical
+            [1.0, 0.7, 0.5],   // Orange irregular
+            [0.8, 0.6, 0.9],   // Pale violet
+            [0.9, 0.9, 1.0],   // White dwarf cluster
+            [1.0, 0.5, 0.4],   // Red shifted
+        ];
+
+        for (let i = 0; i < galaxyCount; i++) {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            const r = skyRadius + Math.random() * 200;
+
+            galaxyPositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+            galaxyPositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+            galaxyPositions[i * 3 + 2] = r * Math.cos(phi);
+
+            const col = deepFieldColors[Math.floor(Math.random() * deepFieldColors.length)];
+            const dim = 0.3 + Math.random() * 0.7; // Most are faint
+            galaxyColors[i * 3] = col[0] * dim;
+            galaxyColors[i * 3 + 1] = col[1] * dim;
+            galaxyColors[i * 3 + 2] = col[2] * dim;
+
+            // Mostly tiny, a few larger (nearby galaxies)
+            galaxySizes[i] = Math.random() < 0.1 ? 4 + Math.random() * 4 : 1 + Math.random() * 2;
+        }
+
+        const galaxyGeo = new THREE.BufferGeometry();
+        galaxyGeo.setAttribute('position', new THREE.BufferAttribute(galaxyPositions, 3));
+        galaxyGeo.setAttribute('color', new THREE.BufferAttribute(galaxyColors, 3));
+        galaxyGeo.setAttribute('size', new THREE.BufferAttribute(galaxySizes, 1));
+
+        const galaxyMat = new THREE.ShaderMaterial({
+            vertexShader: `
+                attribute float size;
+                attribute vec3 color;
+                varying vec3 vColor;
+                void main() {
+                    vColor = color;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_PointSize = size * (300.0 / -mvPosition.z);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                varying vec3 vColor;
+                void main() {
+                    float dist = length(gl_PointCoord - vec2(0.5));
+                    if (dist > 0.5) discard;
+                    // Softer, more diffuse than stars — galaxy smudge
+                    float alpha = smoothstep(0.5, 0.1, dist) * 0.7;
+                    gl_FragColor = vec4(vColor, alpha);
+                }
+            `,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+
+        this.deepFieldGalaxies = new THREE.Points(galaxyGeo, galaxyMat);
+        this.scene.add(this.deepFieldGalaxies);
+
+        // --- A few larger nebula sprites for visual depth ---
+        const nebulaData = [
+            { ra: 5.59, dec: -5.39, name: 'Orion Nebula', color: 0xff6688, size: 40 },
+            { ra: 18.59, dec: -23.02, name: 'Lagoon Nebula', color: 0xff8866, size: 30 },
+            { ra: 5.64, dec: 22.01, name: 'Crab Nebula', color: 0x8888ff, size: 15 },
+        ];
+
+        for (const neb of nebulaData) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+
+            // Soft nebula glow
+            const r2 = ((neb.color >> 16) & 0xff);
+            const g2 = ((neb.color >> 8) & 0xff);
+            const b2 = (neb.color & 0xff);
+
+            const grad = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+            grad.addColorStop(0, `rgba(${r2}, ${g2}, ${b2}, 0.6)`);
+            grad.addColorStop(0.3, `rgba(${r2}, ${g2}, ${b2}, 0.2)`);
+            grad.addColorStop(0.7, `rgba(${r2 >> 1}, ${g2 >> 1}, ${b2 >> 1}, 0.05)`);
+            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 128, 128);
+
+            // Add some structure — wispy filaments
+            ctx.globalCompositeOperation = 'lighter';
+            for (let f = 0; f < 5; f++) {
+                const fx = 40 + Math.random() * 48;
+                const fy = 40 + Math.random() * 48;
+                const fg = ctx.createRadialGradient(fx, fy, 0, fx, fy, 20 + Math.random() * 20);
+                fg.addColorStop(0, `rgba(255, 255, 255, 0.15)`);
+                fg.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = fg;
+                ctx.fillRect(0, 0, 128, 128);
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true,
+                opacity: 0.25,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            }));
+
+            // Position at correct sky location
+            const raRad = (neb.ra / 24) * Math.PI * 2;
+            const decRad = neb.dec * Math.PI / 180;
+            const dist = skyRadius;
+            sprite.position.set(
+                dist * Math.cos(decRad) * Math.cos(raRad),
+                dist * Math.sin(decRad),
+                dist * Math.cos(decRad) * Math.sin(raRad)
+            );
+            sprite.scale.set(neb.size, neb.size, 1);
+            this.scene.add(sprite);
+        }
     }
 
     createISS() {
@@ -299,6 +630,11 @@ export class SpaceEnvironment {
         // Update star twinkle
         if (this.stars && this.stars.material.uniforms) {
             this.stars.material.uniforms.time.value = time;
+        }
+
+        // Update constellation star twinkle
+        if (this.constellationPoints && this.constellationPoints.material.uniforms) {
+            this.constellationPoints.material.uniforms.time.value = time;
         }
 
         // Orbit ISS

@@ -76,6 +76,11 @@
 - Debug panel hidden by default (H key)
 - Free camera toggle (🌍 button)
 - Smooth pod orientation (quaternion slerp, parked stance)
+- Lat/lon grid (30° spacing, equator/meridian highlighted)
+- Magnetic field dipole lines (11° tilt, L=2.5 + L=4.0 shells)
+- Constellation stick-figures (7 constellations at real RA/Dec positions)
+- Deep field objects (80 distant galaxies, 3 nebulae at real positions)
+- Pin/texture alignment verified mathematically correct
 
 ---
 
