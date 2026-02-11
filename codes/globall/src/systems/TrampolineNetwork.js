@@ -49,6 +49,7 @@ export class TrampolineNetwork {
     async init() {
         await this.loadAirports();
         await this.loadRoutes();
+        this.selectHubAirports();
         this.createAirportDots();
         this.createDetailedPool();
         this.createRouteArcPool();
@@ -105,12 +106,71 @@ export class TrampolineNetwork {
         }
     }
 
+    selectHubAirports() {
+        // Select ~60 major hub airports for interactive ring display.
+        // Uses route-graph degree (most connections = biggest hub).
+        // Spatial deduplication: skip airports within 0.4 game units of an already-selected hub.
+        const MIN_SPACING = 0.4; // game units — prevents overlapping rings
+
+        // Rank all airports by route connectivity
+        const ranked = this.trampolines
+            .map((t, idx) => ({
+                idx,
+                iata: t.airport.name,
+                degree: this.routeGraph[t.airport.name]
+                    ? this.routeGraph[t.airport.name].size
+                    : 0,
+                position: t.position
+            }))
+            .filter(a => a.degree > 0)
+            .sort((a, b) => b.degree - a.degree);
+
+        // Greedily select hubs with spatial deduplication
+        this.hubIndices = new Set();
+        const hubPositions = [];
+
+        for (const airport of ranked) {
+            if (this.hubIndices.size >= 60) break;
+
+            // Check distance to all already-selected hubs
+            let tooClose = false;
+            for (const pos of hubPositions) {
+                if (airport.position.distanceTo(pos) < MIN_SPACING) {
+                    tooClose = true;
+                    break;
+                }
+            }
+
+            if (!tooClose) {
+                this.hubIndices.add(airport.idx);
+                hubPositions.push(airport.position);
+                this.trampolines[airport.idx].isHub = true;
+            }
+        }
+
+        console.log(`Selected ${this.hubIndices.size} hub airports from ${this.trampolines.length} total`);
+    }
+
     getConnectedAirports(iataCode) {
         const connected = this.routeGraph[iataCode];
         if (!connected) return [];
         return Array.from(connected)
             .map(code => this.iataIndex[code])
             .filter(Boolean);
+    }
+
+    getConnectedHubs(iataCode) {
+        // Get connected airports that are also hubs (for graph routing UI)
+        const connected = this.routeGraph[iataCode];
+        if (!connected) return [];
+        return Array.from(connected)
+            .map(code => this.iataIndex[code])
+            .filter(t => t && t.isHub);
+    }
+
+    isHub(iataCode) {
+        const t = this.iataIndex[iataCode];
+        return t && t.isHub;
     }
 
     areConnected(iata1, iata2) {
@@ -386,21 +446,13 @@ export class TrampolineNetwork {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Background pill
-        ctx.fillStyle = 'rgba(10, 5, 25, 0.75)';
-        if (ctx.roundRect) {
-            ctx.beginPath();
-            ctx.roundRect(4, 4, 248, 56, 10);
-            ctx.fill();
-        } else {
-            ctx.fillRect(4, 4, 248, 56);
-        }
+        // No background pill — just outlined text (eliminates dark rectangle artifact)
 
         // IATA code
         ctx.font = 'bold 24px Arial';
         ctx.textAlign = 'center';
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.miterLimit = 2;
         ctx.strokeText(airport.name, 128, 25);
         ctx.fillStyle = '#77bbff';
@@ -408,7 +460,7 @@ export class TrampolineNetwork {
 
         // City
         ctx.font = '14px Arial';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         ctx.strokeText(airport.city, 128, 48);
         ctx.fillStyle = '#ddddff';
         ctx.fillText(airport.city, 128, 48);
@@ -419,9 +471,11 @@ export class TrampolineNetwork {
     updateDetailedDisplay(playerPosition) {
         if (!playerPosition || this.trampolines.length === 0) return;
 
-        // Find nearest N airports by distance squared
+        // Only show detailed rings for hub airports (top ~60 by connectivity)
+        // This prevents dense clusters of overlapping rings
         const nearest = [];
         for (let i = 0; i < this.trampolines.length; i++) {
+            if (!this.hubIndices || !this.hubIndices.has(i)) continue;
             const dist = this.trampolines[i].position.distanceToSquared(playerPosition);
             if (nearest.length < this.DETAIL_POOL_SIZE) {
                 nearest.push({ index: i, dist });
@@ -430,7 +484,6 @@ export class TrampolineNetwork {
                 }
             } else if (dist < nearest[this.DETAIL_POOL_SIZE - 1].dist) {
                 nearest[this.DETAIL_POOL_SIZE - 1] = { index: i, dist };
-                // Insertion sort for the last element
                 let j = this.DETAIL_POOL_SIZE - 1;
                 while (j > 0 && nearest[j].dist < nearest[j - 1].dist) {
                     [nearest[j], nearest[j - 1]] = [nearest[j - 1], nearest[j]];
