@@ -24,8 +24,15 @@ export class Planet {
     }
 
     async createPlanetSphere() {
-        // Create procedural textures
-        const dayTexture = this.generateDayTexture();
+        // Try loading NASA Blue Marble for realistic Earth; fall back to procedural
+        let dayTexture;
+        try {
+            dayTexture = await this.loadEarthTexture();
+            console.log('Loaded real Earth texture');
+        } catch (e) {
+            console.warn('Earth texture failed, using procedural:', e.message || e);
+            dayTexture = this.generateDayTexture();
+        }
         const nightTexture = this.generateNightTexture();
         const cityLightsTexture = this.generateCityLightsTexture();
         const cloudsTexture = this.generateCloudsTexture();
@@ -58,6 +65,43 @@ export class Planet {
         this.planetMesh = new THREE.Mesh(geometry, material);
         this.planetMesh.receiveShadow = true;
         this.group.add(this.planetMesh);
+    }
+
+    loadEarthTexture() {
+        // NASA Blue Marble (public domain) via CDN with CORS
+        // Try multiple sources in case one is down
+        const urls = [
+            'https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg',
+            'https://cdn.jsdelivr.net/npm/three-globe@2.31.0/example/img/earth-blue-marble.jpg',
+        ];
+
+        return new Promise((resolve, reject) => {
+            const loader = new THREE.TextureLoader();
+            loader.setCrossOrigin('anonymous');
+
+            let idx = 0;
+            const tryNext = () => {
+                if (idx >= urls.length) {
+                    reject(new Error('All Earth texture URLs failed'));
+                    return;
+                }
+                loader.load(
+                    urls[idx],
+                    (texture) => {
+                        texture.wrapS = THREE.RepeatWrapping;
+                        texture.wrapT = THREE.ClampToEdgeWrapping;
+                        texture.colorSpace = THREE.SRGBColorSpace;
+                        resolve(texture);
+                    },
+                    undefined,
+                    () => { idx++; tryNext(); }
+                );
+            };
+            tryNext();
+
+            // Timeout after 8 seconds — don't block game start
+            setTimeout(() => reject(new Error('Earth texture load timeout')), 8000);
+        });
     }
 
     generateDayTexture() {
