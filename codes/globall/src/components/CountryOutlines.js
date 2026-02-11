@@ -59,9 +59,9 @@ export class CountryOutlines {
         geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
 
         const material = new THREE.LineBasicMaterial({
-            color: 0x5599bb,
+            color: 0xaaccdd,
             transparent: true,
-            opacity: 0.35,
+            opacity: 0.6,
             depthWrite: false
         });
 

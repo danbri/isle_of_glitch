@@ -975,6 +975,26 @@ class GloballGame {
             });
         }
 
+        // Free camera toggle — lets user spin/zoom the globe
+        const cameraToggle = this.getEl('camera-toggle');
+        if (cameraToggle) {
+            const toggleCamera = () => {
+                const icon = this.getEl('camera-icon');
+                const freeLook = !this.controls.enabled;
+                this.controls.enabled = freeLook;
+                this.player.cameraEnabled = !freeLook;
+                this.debugSettings.enableOrbitControls = freeLook;
+                if (icon) icon.textContent = freeLook ? '🎮' : '🌍';
+                // Brief haptic
+                if (navigator.vibrate) navigator.vibrate(15);
+            };
+            cameraToggle.addEventListener('click', toggleCamera);
+            cameraToggle.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                toggleCamera();
+            });
+        }
+
         // Mobile-friendly debug toggle button
         const debugToggle = this.getEl('debug-toggle');
         if (debugToggle) {
