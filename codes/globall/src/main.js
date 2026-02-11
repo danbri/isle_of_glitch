@@ -375,15 +375,17 @@ class GloballGame {
         this.packageSystem = new PackageSystem(this.scene, this.gameState, this.trampolineNetwork);
         await this.packageSystem.init();
 
-        // Create trajectory preview line (dotted arc during charge)
+        // Trajectory preview arc during charge — bright and clear
         const trajGeo = new THREE.BufferGeometry();
         trajGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(51 * 3), 3));
         const trajMat = new THREE.LineDashedMaterial({
-            color: 0x4488ff, dashSize: 0.3, gapSize: 0.15,
-            transparent: true, opacity: 0.6
+            color: 0x88ddff, dashSize: 0.4, gapSize: 0.12,
+            transparent: true, opacity: 0.85, linewidth: 1,
+            depthWrite: false
         });
         this.trajectoryLine = new THREE.Line(trajGeo, trajMat);
         this.trajectoryLine.visible = false;
+        this.trajectoryLine.renderOrder = 100; // Draw on top
         this.scene.add(this.trajectoryLine);
 
         // Proximity tracking
@@ -558,6 +560,9 @@ class GloballGame {
                 this.player.interact();
                 break;
             case 'KeyH':
+                this._debugVisible = true;
+                const dt = this.getEl('debug-toggle');
+                if (dt) dt.style.display = 'block';
                 this.toggleGUI();
                 break;
         }
@@ -690,10 +695,14 @@ class GloballGame {
     }
 
     setupDebugPanel() {
+        // Only show debug UI if ?debug in URL or H key is pressed
+        this._debugVisible = new URLSearchParams(window.location.search).has('debug');
+
         this.gui = new GUI({ title: 'Debug Panel' });
 
-        // Start closed by default
+        // Start closed and hidden unless debug mode
         this.gui.close();
+        if (!this._debugVisible) this.gui.hide();
 
         // Position to not block scores/altitude (bottom-left) and make draggable
         const el = this.gui.domElement;
@@ -975,9 +984,30 @@ class GloballGame {
             });
         }
 
-        // Mobile-friendly debug toggle button
+        // Free camera toggle — lets user spin/zoom the globe
+        const cameraToggle = this.getEl('camera-toggle');
+        if (cameraToggle) {
+            const toggleCamera = () => {
+                const icon = this.getEl('camera-icon');
+                const freeLook = !this.controls.enabled;
+                this.controls.enabled = freeLook;
+                this.player.cameraEnabled = !freeLook;
+                this.debugSettings.enableOrbitControls = freeLook;
+                if (icon) icon.textContent = freeLook ? '🎮' : '🌍';
+                // Brief haptic
+                if (navigator.vibrate) navigator.vibrate(15);
+            };
+            cameraToggle.addEventListener('click', toggleCamera);
+            cameraToggle.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                toggleCamera();
+            });
+        }
+
+        // Debug toggle button — only visible in debug mode
         const debugToggle = this.getEl('debug-toggle');
         if (debugToggle) {
+            if (this._debugVisible) debugToggle.style.display = 'block';
             debugToggle.addEventListener('click', () => this.toggleGUI());
             debugToggle.addEventListener('touchend', (e) => {
                 e.preventDefault();
@@ -1542,6 +1572,7 @@ class GloballGame {
 
                 // Power indicator: color shows if charge matches target distance
                 const destPos = this.packageSystem.getDestinationPosition();
+                const tick = document.getElementById('charge-ideal-tick');
                 if (destPos) {
                     const dist = this.player.getPosition().distanceTo(destPos);
                     // Ideal hold: ~100ms per unit of distance (rough heuristic)
@@ -1554,17 +1585,29 @@ class GloballGame {
                     } else {
                         ring.style.stroke = '#ff8844'; // Over — orange "too long"
                     }
+
+                    // Show ideal charge tick mark on ring
+                    if (tick) {
+                        const idealProgress = Math.min(1, idealMs / 800);
+                        // SVG ring starts at top (-90deg), goes clockwise
+                        const tickAngle = idealProgress * 360;
+                        tick.setAttribute('transform', `rotate(${tickAngle}, 50, 50)`);
+                        tick.setAttribute('opacity', '0.9');
+                    }
                 } else {
                     // No target: just show progress color
                     if (progress < 0.25) ring.style.stroke = '#4488ff';
                     else if (progress < 0.75) ring.style.stroke = '#6644ff';
                     else ring.style.stroke = '#88ddff';
+                    if (tick) tick.setAttribute('opacity', '0');
                 }
             }
         } else {
             // Reset charge meter when not charging
             const ring = document.getElementById('charge-meter-ring');
             if (ring) ring.style.strokeDashoffset = '283';
+            const tick = document.getElementById('charge-ideal-tick');
+            if (tick) tick.setAttribute('opacity', '0');
         }
 
         // Landing sound
@@ -1713,9 +1756,10 @@ class GloballGame {
                 this.postProcessSettings.chromaticAmount + speed * 0.0008;
         }
 
-        // Dynamic bloom scales with altitude: 0.3 at ground → 0.7 in space
+        // Dynamic bloom: gentle near surface (0.15), ramps up in space (max 0.5)
+        // Both reviewers flagged bloom washout at low/mid altitude
         if (this.postProcessSettings.dynamicBloom && this.bloomPass.enabled) {
-            this.bloomPass.strength = Math.min(0.7, 0.3 + Math.min(altitude / 200, 0.4));
+            this.bloomPass.strength = Math.min(0.5, 0.15 + Math.min(altitude / 300, 0.35));
         }
 
         // Update audio based on game state

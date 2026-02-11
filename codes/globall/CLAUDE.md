@@ -249,6 +249,16 @@ git push -u origin claude/fink-authoring-guide-bDtaY
 
 ---
 
+## Spec Documents
+
+- **[Gameplay Spec](docs/GAMEPLAY.md)** — How to play, scoring, mechanics, delivery choices, progressive difficulty
+- **[Architecture](docs/ARCHITECTURE.md)** — File structure, rendering pipeline, physics, input, UI layout, state management
+- **[Review: GPT-5.2 (2026-02-11)](docs/review-2026-02-11.md)** — bloom, clarity, mechanic feedback, mobile UX
+- **[Review: Gemini (2026-02-11)](docs/review-gemini-2026-02-11.md)** — clutter, contrast, navigation clarity, battery drain
+- **[Backlog](docs/BACKLOG.md)** — Prioritized task queue (P0–P4) from both reviews + prior sessions
+
+---
+
 ## Test Plan
 
 1. Start game, tap to bounce

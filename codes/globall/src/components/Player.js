@@ -121,12 +121,23 @@ export class Player {
         wings.position.z = -0.1;
         group.add(wings);
 
-        // EM field glow
-        const glowGeometry = new THREE.SphereGeometry(0.4, 16, 16);
+        // Dark outline shell — always visible against bright terrain
+        const outlineGeometry = new THREE.SphereGeometry(0.38, 16, 16);
+        const outlineMaterial = new THREE.MeshBasicMaterial({
+            color: 0x0a0520,
+            transparent: true,
+            opacity: 0.5,
+            side: THREE.BackSide
+        });
+        const outline = new THREE.Mesh(outlineGeometry, outlineMaterial);
+        group.add(outline);
+
+        // EM field glow (outside the outline)
+        const glowGeometry = new THREE.SphereGeometry(0.45, 16, 16);
         const glowMaterial = new THREE.MeshBasicMaterial({
             color: 0x88aaff,
             transparent: true,
-            opacity: 0.25,
+            opacity: 0.2,
             side: THREE.BackSide
         });
         const glow = new THREE.Mesh(glowGeometry, glowMaterial);

@@ -232,65 +232,91 @@ export class PackageSystem {
     createDestinationMarker() {
         const group = new THREE.Group();
 
-        // --- Concentric accuracy rings (flat on surface) ---
-        // [0] Outer ring: delivery zone (1.5 units) — dim blue, dashed look via thin ring
+        // After group.lookAt(origin), +z = toward center, XY = tangent plane.
+        // Rings in XY plane → flat on surface. Outward = -z direction.
+
+        // [0] Outer ring: delivery zone (1.5 units) — blue
         const outerRing = new THREE.Mesh(
-            new THREE.RingGeometry(1.45, 1.5, 64),
-            new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.25, side: THREE.DoubleSide })
+            new THREE.RingGeometry(1.3, 1.5, 64),
+            new THREE.MeshBasicMaterial({
+                color: 0x4488ff, transparent: true, opacity: 0.45,
+                side: THREE.DoubleSide, depthWrite: false
+            })
         );
         group.add(outerRing);
 
         // [1] Middle ring: PRECISE zone (0.8 units) — purple
         const midRing = new THREE.Mesh(
-            new THREE.RingGeometry(0.75, 0.8, 48),
-            new THREE.MeshBasicMaterial({ color: 0xaa88ff, transparent: true, opacity: 0.4, side: THREE.DoubleSide })
+            new THREE.RingGeometry(0.65, 0.8, 48),
+            new THREE.MeshBasicMaterial({
+                color: 0xaa88ff, transparent: true, opacity: 0.55,
+                side: THREE.DoubleSide, depthWrite: false
+            })
         );
         group.add(midRing);
 
         // [2] Inner ring: BULLSEYE zone (0.5 units) — bright cyan, will pulse
         const innerRing = new THREE.Mesh(
-            new THREE.RingGeometry(0.45, 0.5, 48),
-            new THREE.MeshBasicMaterial({ color: 0x88ddff, transparent: true, opacity: 0.6, side: THREE.DoubleSide })
+            new THREE.RingGeometry(0.35, 0.5, 48),
+            new THREE.MeshBasicMaterial({
+                color: 0x88ddff, transparent: true, opacity: 0.7,
+                side: THREE.DoubleSide, depthWrite: false
+            })
         );
         group.add(innerRing);
 
         // [3] Center bullseye dot
         const center = new THREE.Mesh(
-            new THREE.CircleGeometry(0.12, 32),
-            new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7, side: THREE.DoubleSide })
+            new THREE.CircleGeometry(0.15, 32),
+            new THREE.MeshBasicMaterial({
+                color: 0xffffff, transparent: true, opacity: 0.85,
+                side: THREE.DoubleSide, depthWrite: false
+            })
         );
         group.add(center);
 
-        // [4] Fill discs for zone coloring (subtle tinted areas)
+        // [4] Fill discs for zone coloring
         const outerFill = new THREE.Mesh(
             new THREE.CircleGeometry(1.5, 64),
-            new THREE.MeshBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.04, side: THREE.DoubleSide })
+            new THREE.MeshBasicMaterial({
+                color: 0x4488ff, transparent: true, opacity: 0.08,
+                side: THREE.DoubleSide, depthWrite: false
+            })
         );
         group.add(outerFill);
 
+        // [5]
         const midFill = new THREE.Mesh(
             new THREE.CircleGeometry(0.8, 48),
-            new THREE.MeshBasicMaterial({ color: 0xaa88ff, transparent: true, opacity: 0.06, side: THREE.DoubleSide })
+            new THREE.MeshBasicMaterial({
+                color: 0xaa88ff, transparent: true, opacity: 0.12,
+                side: THREE.DoubleSide, depthWrite: false
+            })
         );
-        // [5]
         group.add(midFill);
 
+        // [6]
         const innerFill = new THREE.Mesh(
             new THREE.CircleGeometry(0.5, 48),
-            new THREE.MeshBasicMaterial({ color: 0x88ddff, transparent: true, opacity: 0.1, side: THREE.DoubleSide })
+            new THREE.MeshBasicMaterial({
+                color: 0x88ddff, transparent: true, opacity: 0.18,
+                side: THREE.DoubleSide, depthWrite: false
+            })
         );
-        // [6]
         group.add(innerFill);
 
-        // [7] Vertical EM beam (visible from distance)
+        // [7] Vertical EM beam (visible from distance) — points outward (-z)
         const beam = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.04, 0.04, 3, 8),
-            new THREE.MeshBasicMaterial({ color: 0x6644ff, transparent: true, opacity: 0.35 })
+            new THREE.CylinderGeometry(0.05, 0.05, 4, 8),
+            new THREE.MeshBasicMaterial({
+                color: 0x6644ff, transparent: true, opacity: 0.4, depthWrite: false
+            })
         );
-        beam.position.y = 1.5;
+        beam.rotation.x = -Math.PI / 2; // align cylinder with -z (outward)
+        beam.position.z = -2; // center of 4-unit beam, 2 units above surface
         group.add(beam);
 
-        // [8] Floating arrow above (visible from far away)
+        // [8] Floating arrow above (visible from far away) — in tangent plane at -z
         const arrowShape = new THREE.Shape();
         arrowShape.moveTo(0, 0.3);
         arrowShape.lineTo(0.15, 0);
@@ -302,10 +328,12 @@ export class PackageSystem {
         arrowShape.closePath();
         const arrow = new THREE.Mesh(
             new THREE.ShapeGeometry(arrowShape),
-            new THREE.MeshBasicMaterial({ color: 0x88ddff, transparent: true, opacity: 0.9, side: THREE.DoubleSide })
+            new THREE.MeshBasicMaterial({
+                color: 0x88ddff, transparent: true, opacity: 0.9,
+                side: THREE.DoubleSide, depthWrite: false
+            })
         );
-        arrow.position.y = 3.5;
-        arrow.rotation.x = -Math.PI / 2;
+        arrow.position.z = -4.5; // float above surface (outward = -z)
         group.add(arrow);
 
         group.visible = false;
@@ -342,14 +370,14 @@ export class PackageSystem {
             return;
         }
 
-        // Position marker at destination
+        // Position marker at destination, slightly above surface
         this.destinationMarker.position.copy(destPos);
-        this.destinationMarker.position.add(destPos.clone().normalize().multiplyScalar(0.2));
+        this.destinationMarker.position.add(destPos.clone().normalize().multiplyScalar(0.3));
         this.destinationMarker.visible = true;
 
-        // Orient marker to face up from planet
+        // Orient: lookAt(origin) makes +z point toward center, XY = tangent plane
+        // Rings in XY are flat on surface, beam/arrow along -z point outward
         this.destinationMarker.lookAt(new THREE.Vector3(0, 0, 0));
-        this.destinationMarker.rotateX(Math.PI / 2);
 
         // Animate concentric rings
         // Outer ring: slow rotation
@@ -360,11 +388,11 @@ export class PackageSystem {
         const bullseyePulse = 1 + Math.sin(time * 5) * 0.15;
         this.destinationMarker.children[2].scale.setScalar(bullseyePulse);
         // Inner bullseye ring: pulse opacity
-        this.destinationMarker.children[2].material.opacity = 0.4 + Math.sin(time * 5) * 0.3;
+        this.destinationMarker.children[2].material.opacity = 0.5 + Math.sin(time * 5) * 0.2;
         // Center dot: bright pulse
-        this.destinationMarker.children[3].material.opacity = 0.5 + Math.sin(time * 6) * 0.3;
-        // Arrow: bob up and down
-        this.destinationMarker.children[8].position.y = 3.5 + Math.sin(time * 3) * 0.3;
+        this.destinationMarker.children[3].material.opacity = 0.6 + Math.sin(time * 6) * 0.25;
+        // Arrow: bob along -z (outward from planet)
+        this.destinationMarker.children[8].position.z = -4.5 - Math.sin(time * 3) * 0.3;
 
         // Update guide line from player to destination
         this.updateGuideLine(playerPosition, destPos);

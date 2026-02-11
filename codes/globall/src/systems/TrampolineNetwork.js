@@ -439,9 +439,10 @@ export class TrampolineNetwork {
             }
         }
 
-        // Assign pool slots
+        // Assign pool slots — fade by distance to reduce visual noise
         for (let slot = 0; slot < this.DETAIL_POOL_SIZE && slot < nearest.length; slot++) {
             const airportIdx = nearest[slot].index;
+            const dist = Math.sqrt(nearest[slot].dist);
             const group = this.detailedPool[slot];
             const trampoline = this.trampolines[airportIdx];
 
@@ -460,7 +461,21 @@ export class TrampolineNetwork {
                 group.userData.trampoline = trampoline;
             }
 
-            group.visible = true;
+            // Distance-based fade: full opacity within 3 units, fade 3-8, hidden beyond 8
+            const fadeFar = 8;
+            const fadeNear = 3;
+            const alpha = dist < fadeNear ? 1.0 : dist > fadeFar ? 0.0 : 1.0 - (dist - fadeNear) / (fadeFar - fadeNear);
+            group.visible = alpha > 0.01;
+
+            // Apply fade to children materials
+            if (group.visible) {
+                group.children.forEach(child => {
+                    if (child.material && child.material.opacity !== undefined) {
+                        child.material._baseOpacity = child.material._baseOpacity ?? child.material.opacity;
+                        child.material.opacity = child.material._baseOpacity * alpha;
+                    }
+                });
+            }
         }
 
         // Hide unused slots
@@ -633,6 +648,14 @@ export class TrampolineNetwork {
                 this.updateRouteArcs(playerPosition);
                 this._lastLODPos.copy(playerPosition);
                 this._lastLODTime = time;
+
+                // Fade airport dot cloud by player altitude — less clutter when close to surface
+                if (this.airportDots) {
+                    const alt = playerPosition.length() - this.planetRadius;
+                    // Near surface (<2): dots very subtle; in space (>8): full brightness
+                    const dotAlpha = Math.min(0.9, Math.max(0.15, (alt - 2) * 0.12));
+                    this.airportDots.material.opacity = dotAlpha;
+                }
             }
         }
 
