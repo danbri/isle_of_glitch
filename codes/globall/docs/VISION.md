@@ -53,3 +53,22 @@ A glowing ball-shaped courier (the "gopher") bouncing around the globe ("glowbal
 > Someone with better eyesight might have different experience!"
 
 **Translation**: visuals are done, gameplay needs work. Focus on game feel, not more effects.
+
+## Sky & Orientation Design (2026-02-11)
+
+### Skybox with Deep Field Aesthetic
+> "Don't forget deep field — it should communicate 'star systems and planets everywhere, however sparse the void'"
+
+The sky isn't just stars. It's a Hubble Deep Field-inspired canvas: distant golden spirals, pale blue ellipticals, orange irregulars scattered through the void. Every direction you look, there are other star systems out there — sparse but present. This communicates cosmic scale without cluttering the view.
+
+### Recognizable Constellations
+Real constellation stick-figures (Ursa Major, Orion, Cassiopeia, Crux, Scorpius, Leo, Cygnus) at correct RA/Dec sky positions. Subtle connecting lines. These give the player orientation landmarks — "I'm heading toward Orion" or "Southern Cross is behind me."
+
+### Known Nebulae
+Orion Nebula, Lagoon Nebula, Crab Nebula as soft glowing sprites at correct sky positions. Visual anchors.
+
+### Planet Surface Polarity
+Lat/lon grid lines (every 30°) give the planet directional structure. Equator and prime meridian slightly brighter. Player can now sense "I'm heading north" or "crossing the date line."
+
+### Magnetic Field
+Visible dipole field lines (tilted 11° from geographic axis, like real Earth). Two L-shell levels (L=2.5 inner, L=4.0 outer). Subtle blue-violet, additive blending. Connects to the electromagnetic trampoline pad aesthetic. Makes the planet feel alive and physics-grounded.

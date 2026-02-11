@@ -20,6 +20,8 @@ export class Planet {
         await this.createPlanetSphere();
         this.createAtmosphere();
         this.createClouds();
+        this.createLatLonGrid();
+        this.createMagneticField();
         this.scene.add(this.group);
     }
 
@@ -615,6 +617,171 @@ export class Planet {
 
         this.cloudsMesh = new THREE.Mesh(geometry, material);
         this.group.add(this.cloudsMesh);
+    }
+
+    createLatLonGrid() {
+        // Lat/lon grid lines on the planet surface for orientation/polarity
+        const gridGroup = new THREE.Group();
+        const r = this.radius + 0.02; // Slightly above surface
+        const segments = 180;
+        const material = new THREE.LineBasicMaterial({
+            color: 0x4488cc,
+            transparent: true,
+            opacity: 0.18,
+            depthWrite: false
+        });
+        const equatorMaterial = new THREE.LineBasicMaterial({
+            color: 0x66aaff,
+            transparent: true,
+            opacity: 0.35,
+            depthWrite: false
+        });
+        const meridianMaterial = new THREE.LineBasicMaterial({
+            color: 0x66aaff,
+            transparent: true,
+            opacity: 0.3,
+            depthWrite: false
+        });
+
+        // Latitude lines every 30°
+        for (let lat = -60; lat <= 60; lat += 30) {
+            const points = [];
+            const phi = (90 - lat) * Math.PI / 180;
+            for (let i = 0; i <= segments; i++) {
+                const theta = (i / segments) * Math.PI * 2;
+                points.push(new THREE.Vector3(
+                    -r * Math.sin(phi) * Math.cos(theta),
+                    r * Math.cos(phi),
+                    r * Math.sin(phi) * Math.sin(theta)
+                ));
+            }
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            const mat = lat === 0 ? equatorMaterial : material;
+            gridGroup.add(new THREE.Line(geo, mat));
+        }
+
+        // Longitude lines every 30°
+        for (let lon = -180; lon < 180; lon += 30) {
+            const points = [];
+            const theta = (lon + 180) * Math.PI / 180;
+            for (let i = 0; i <= segments; i++) {
+                const phi = (i / segments) * Math.PI;
+                points.push(new THREE.Vector3(
+                    -r * Math.sin(phi) * Math.cos(theta),
+                    r * Math.cos(phi),
+                    r * Math.sin(phi) * Math.sin(theta)
+                ));
+            }
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            const mat = (lon === 0 || lon === 180 || lon === -180) ? meridianMaterial : material;
+            gridGroup.add(new THREE.Line(geo, mat));
+        }
+
+        this.latLonGrid = gridGroup;
+        this.group.add(gridGroup);
+    }
+
+    createMagneticField() {
+        // Earth's magnetic field visualization — dipole field lines
+        // Emerges from south magnetic pole, arcs through space, enters north magnetic pole
+        const fieldGroup = new THREE.Group();
+        const fieldMaterial = new THREE.LineBasicMaterial({
+            color: 0x4466ff,
+            transparent: true,
+            opacity: 0.12,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+        const polarMaterial = new THREE.LineBasicMaterial({
+            color: 0x8844ff,
+            transparent: true,
+            opacity: 0.2,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+        });
+
+        // Magnetic poles (tilted ~11° from geographic poles)
+        const tiltAngle = 11 * Math.PI / 180;
+        const magneticAxis = new THREE.Vector3(
+            Math.sin(tiltAngle), Math.cos(tiltAngle), 0
+        ).normalize();
+
+        // Create dipole field lines at various longitudes around the magnetic axis
+        const numFieldLines = 12;
+        const segments = 64;
+
+        for (let i = 0; i < numFieldLines; i++) {
+            const azimuth = (i / numFieldLines) * Math.PI * 2;
+
+            // Create a perpendicular reference for this azimuth
+            const ref = new THREE.Vector3(0, 0, 1);
+            const perp1 = new THREE.Vector3().crossVectors(magneticAxis, ref).normalize();
+            const perp2 = new THREE.Vector3().crossVectors(magneticAxis, perp1).normalize();
+            const startDir = perp1.clone().multiplyScalar(Math.cos(azimuth))
+                .add(perp2.clone().multiplyScalar(Math.sin(azimuth)));
+
+            const points = [];
+            // Dipole field line: r = R * cos²(θ_m) where θ_m is magnetic colatitude
+            // Parameterize by magnetic colatitude from one pole to the other
+            const L = 2.5; // L-shell parameter — how far field line extends (in planet radii)
+
+            for (let s = 0; s <= segments; s++) {
+                const thetaM = (s / segments) * Math.PI; // 0 (north) to π (south)
+                const sinT = Math.sin(thetaM);
+                const cosT = Math.cos(thetaM);
+
+                // Dipole: r = L * R * sin²(θ_m)
+                const rField = this.radius * L * sinT * sinT;
+
+                if (rField < this.radius * 0.3) continue; // Skip degenerate points near poles
+
+                // Position in magnetic coordinates
+                const pos = magneticAxis.clone().multiplyScalar(cosT * rField)
+                    .add(startDir.clone().multiplyScalar(sinT * rField));
+
+                points.push(pos);
+            }
+
+            if (points.length > 2) {
+                const geo = new THREE.BufferGeometry().setFromPoints(points);
+                const mat = (i % 3 === 0) ? polarMaterial : fieldMaterial;
+                fieldGroup.add(new THREE.Line(geo, mat));
+            }
+        }
+
+        // Second set at higher L-shell for outer field
+        for (let i = 0; i < 8; i++) {
+            const azimuth = (i / 8) * Math.PI * 2 + 0.2;
+            const ref = new THREE.Vector3(0, 0, 1);
+            const perp1 = new THREE.Vector3().crossVectors(magneticAxis, ref).normalize();
+            const perp2 = new THREE.Vector3().crossVectors(magneticAxis, perp1).normalize();
+            const startDir = perp1.clone().multiplyScalar(Math.cos(azimuth))
+                .add(perp2.clone().multiplyScalar(Math.sin(azimuth)));
+
+            const points = [];
+            const L = 4.0;
+
+            for (let s = 0; s <= segments; s++) {
+                const thetaM = (s / segments) * Math.PI;
+                const sinT = Math.sin(thetaM);
+                const cosT = Math.cos(thetaM);
+                const rField = this.radius * L * sinT * sinT;
+
+                if (rField < this.radius * 0.3) continue;
+
+                const pos = magneticAxis.clone().multiplyScalar(cosT * rField)
+                    .add(startDir.clone().multiplyScalar(sinT * rField));
+                points.push(pos);
+            }
+
+            if (points.length > 2) {
+                const geo = new THREE.BufferGeometry().setFromPoints(points);
+                fieldGroup.add(new THREE.Line(geo, fieldMaterial));
+            }
+        }
+
+        this.magneticField = fieldGroup;
+        this.group.add(fieldGroup);
     }
 
     update(time, deltaTime) {
