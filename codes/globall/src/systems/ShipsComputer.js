@@ -44,6 +44,159 @@ export class ShipsComputer {
 
         this.resize();
         window.addEventListener('resize', () => this.resize());
+
+        this.setupControls();
+    }
+
+    setupControls() {
+        const getEl = (id) => document.getElementById(id);
+
+        // --- Date/time editing ---
+        const dateInput = getEl('sc-date');
+        const timeInput = getEl('sc-time');
+        const applyDateTime = () => {
+            if (!this.orbital) return;
+            const dateStr = dateInput ? dateInput.value : '2045-06-15';
+            const timeStr = timeInput ? timeInput.value : '12:00';
+            const newDate = new Date(`${dateStr}T${timeStr}:00Z`);
+            if (!isNaN(newDate.getTime())) {
+                this.orbital.gameDate = newDate;
+                this.flashStatus(`Set to ${dateStr} ${timeStr} UTC`);
+            } else {
+                this.flashStatus('Invalid date/time', true);
+            }
+        };
+        if (dateInput) {
+            dateInput.addEventListener('change', applyDateTime);
+            dateInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { applyDateTime(); e.target.blur(); }});
+        }
+        if (timeInput) {
+            timeInput.addEventListener('change', applyDateTime);
+            timeInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { applyDateTime(); e.target.blur(); }});
+        }
+
+        // --- Time warp ---
+        const warpSelect = getEl('sc-warp');
+        if (warpSelect) {
+            warpSelect.addEventListener('change', () => {
+                const factor = parseInt(warpSelect.value) || 1;
+                if (this.orbital) {
+                    this.orbital.setTimeWarp(factor);
+                    this.flashStatus(factor === 1 ? 'Realtime' : `Warp x${factor.toLocaleString()}`);
+                }
+            });
+        }
+
+        // --- Jump to airport ---
+        const gotoInput = getEl('sc-goto');
+        const gotoBtn = getEl('sc-goto-btn');
+        const doGoto = () => {
+            if (!gotoInput || !this.trampolineNetwork || !this.player) return;
+            const iata = gotoInput.value.trim().toUpperCase();
+            if (!iata) return;
+            const trampoline = this.trampolineNetwork.iataIndex[iata];
+            if (trampoline) {
+                // Teleport player to airport position (slightly above surface)
+                const pos = trampoline.position.clone();
+                const normal = pos.clone().normalize();
+                pos.add(normal.multiplyScalar(0.3)); // Just above the pad
+                this.player.teleportTo(pos);
+                this.flashStatus(`Jumped to ${iata} (${trampoline.airport.city})`);
+                gotoInput.value = '';
+            } else {
+                this.flashStatus(`Unknown: ${iata}`, true);
+            }
+        };
+        if (gotoBtn) {
+            gotoBtn.addEventListener('click', doGoto);
+            gotoBtn.addEventListener('touchend', (e) => { e.preventDefault(); doGoto(); });
+        }
+        if (gotoInput) {
+            gotoInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { doGoto(); e.target.blur(); }});
+        }
+
+        // --- Sync to reality ---
+        const syncBtn = getEl('sc-sync-reality');
+        if (syncBtn) {
+            const doSync = () => {
+                // Sync time to browser's current time
+                if (this.orbital) {
+                    this.orbital.gameDate = new Date();
+                    this.orbital.setTimeWarp(1);
+                    if (warpSelect) warpSelect.value = '1';
+                }
+                // Update date/time inputs
+                const now = new Date();
+                if (dateInput) dateInput.value = now.toISOString().slice(0, 10);
+                if (timeInput) timeInput.value = now.toISOString().slice(11, 16);
+
+                // Try to get user location and jump to nearest airport
+                if (navigator.geolocation) {
+                    this.flashStatus('Syncing location...');
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            const nearest = this.findNearestAirport(pos.coords.latitude, pos.coords.longitude);
+                            if (nearest && this.player) {
+                                const tpos = nearest.position.clone();
+                                const normal = tpos.clone().normalize();
+                                tpos.add(normal.multiplyScalar(0.3));
+                                this.player.teleportTo(tpos);
+                                this.flashStatus(`Synced: ${now.toISOString().slice(0,10)} @ ${nearest.airport.name} (${nearest.airport.city})`);
+                                if (gotoInput) gotoInput.value = '';
+                            } else {
+                                this.flashStatus(`Synced: ${now.toISOString().slice(0,10)} (no location)`);
+                            }
+                        },
+                        () => {
+                            this.flashStatus(`Synced: ${now.toISOString().slice(0,10)} (location denied)`);
+                        },
+                        { timeout: 5000 }
+                    );
+                } else {
+                    this.flashStatus(`Synced: ${now.toISOString().slice(0,10)}`);
+                }
+            };
+            syncBtn.addEventListener('click', doSync);
+            syncBtn.addEventListener('touchend', (e) => { e.preventDefault(); doSync(); });
+        }
+    }
+
+    findNearestAirport(lat, lon) {
+        if (!this.trampolineNetwork) return null;
+        // Convert lat/lon to 3D position for distance comparison
+        const phi = (90 - lat) * Math.PI / 180;
+        const theta = (lon + 180) * Math.PI / 180;
+        const r = 10;
+        const target = new THREE.Vector3(
+            -r * Math.sin(phi) * Math.cos(theta),
+            r * Math.cos(phi),
+            r * Math.sin(phi) * Math.sin(theta)
+        );
+
+        let best = null;
+        let bestDist = Infinity;
+        for (const t of this.trampolineNetwork.trampolines) {
+            const d = t.position.distanceToSquared(target);
+            if (d < bestDist) {
+                bestDist = d;
+                best = t;
+            }
+        }
+        return best;
+    }
+
+    flashStatus(msg, isError) {
+        const el = document.getElementById('sc-status-msg');
+        if (!el) return;
+        el.textContent = msg;
+        el.style.color = isError ? '#ff6666' : '#44ff88';
+        el.style.opacity = '0.8';
+        clearTimeout(this._statusTimeout);
+        this._statusTimeout = setTimeout(() => {
+            el.textContent = 'NAVCOM v1.0';
+            el.style.color = '';
+            el.style.opacity = '0.3';
+        }, 3000);
     }
 
     resize() {
@@ -79,10 +232,28 @@ export class ShipsComputer {
         if (time - this._lastDrawTime < 0.066) return;
         this._lastDrawTime = time;
 
+        // Update date/time inputs to reflect current game time
+        // (only when user isn't actively editing them)
+        this.syncDateTimeInputs();
+
         if (this.activeTab === 'NAV') {
             this.drawNavMap();
         } else {
             this.drawOrbitalView();
+        }
+    }
+
+    syncDateTimeInputs() {
+        if (!this.orbital) return;
+        const dateInput = document.getElementById('sc-date');
+        const timeInput = document.getElementById('sc-time');
+        // Don't overwrite if user is focused on the input
+        const d = this.orbital.gameDate;
+        if (dateInput && document.activeElement !== dateInput) {
+            dateInput.value = d.toISOString().slice(0, 10);
+        }
+        if (timeInput && document.activeElement !== timeInput) {
+            timeInput.value = d.toISOString().slice(11, 16);
         }
     }
 

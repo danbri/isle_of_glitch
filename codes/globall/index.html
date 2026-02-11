@@ -1088,9 +1088,37 @@
                 <button id="sc-close" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:1.2rem; cursor:pointer; padding:0 4px; line-height:1;">&#10005;</button>
             </div>
             <canvas id="ships-computer-canvas" style="display:block; margin:0; padding:0;"></canvas>
-            <div id="sc-status-bar" style="width:100%; padding:4px 12px 6px; border-top:1px solid rgba(68,136,255,0.1); font-size:0.55rem; font-family:monospace; color:rgba(255,255,255,0.35); display:flex; justify-content:space-between;">
-                <span id="sc-status-left">JUNE 2045</span>
-                <span id="sc-status-right">GLO-BALL GOPHER NAVCOM v1.0</span>
+            <!-- Control panel below map -->
+            <div id="sc-controls" style="width:100%; padding:6px 10px 8px; border-top:1px solid rgba(68,136,255,0.1); font-family:monospace; font-size:0.6rem; color:rgba(200,220,255,0.6); display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center;">
+                <!-- Date/time -->
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <label style="opacity:0.4; font-size:0.5rem; letter-spacing:0.1em;">DATE</label>
+                    <input id="sc-date" type="text" value="2045-06-15" style="background:rgba(68,136,255,0.1); border:1px solid rgba(68,136,255,0.2); color:#88bbff; font-family:monospace; font-size:0.6rem; padding:2px 6px; border-radius:4px; width:80px; outline:none;" />
+                    <input id="sc-time" type="text" value="12:00" style="background:rgba(68,136,255,0.1); border:1px solid rgba(68,136,255,0.2); color:#88bbff; font-family:monospace; font-size:0.6rem; padding:2px 6px; border-radius:4px; width:44px; outline:none;" />
+                    <span style="opacity:0.3; font-size:0.5rem;">UTC</span>
+                </div>
+                <!-- Time warp -->
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <label style="opacity:0.4; font-size:0.5rem; letter-spacing:0.1em;">WARP</label>
+                    <select id="sc-warp" style="background:rgba(68,136,255,0.1); border:1px solid rgba(68,136,255,0.2); color:#88bbff; font-family:monospace; font-size:0.6rem; padding:2px 4px; border-radius:4px; outline:none;">
+                        <option value="1">1x</option>
+                        <option value="60">1min/s</option>
+                        <option value="3600">1hr/s</option>
+                        <option value="86400">1day/s</option>
+                        <option value="604800">1wk/s</option>
+                        <option value="2592000">1mo/s</option>
+                    </select>
+                </div>
+                <!-- Jump to airport -->
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <label style="opacity:0.4; font-size:0.5rem; letter-spacing:0.1em;">GO TO</label>
+                    <input id="sc-goto" type="text" placeholder="IATA" maxlength="4" style="background:rgba(68,136,255,0.1); border:1px solid rgba(68,136,255,0.2); color:#44ff88; font-family:monospace; font-size:0.6rem; padding:2px 6px; border-radius:4px; width:46px; outline:none; text-transform:uppercase;" />
+                    <button id="sc-goto-btn" style="background:rgba(68,255,136,0.15); border:1px solid rgba(68,255,136,0.25); color:#44ff88; font-family:monospace; font-size:0.55rem; padding:2px 8px; border-radius:4px; cursor:pointer;">&#9654;</button>
+                </div>
+                <!-- Sync to reality -->
+                <button id="sc-sync-reality" style="background:rgba(255,170,68,0.12); border:1px solid rgba(255,170,68,0.25); color:#ffaa44; font-family:monospace; font-size:0.55rem; padding:2px 8px; border-radius:4px; cursor:pointer; letter-spacing:0.05em;" title="Set date/time and location to current reality">SYNC REALITY</button>
+                <!-- Status -->
+                <span id="sc-status-msg" style="flex:1; text-align:right; opacity:0.3; font-size:0.5rem;">NAVCOM v1.0</span>
             </div>
         </div>
 
