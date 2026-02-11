@@ -355,9 +355,9 @@ export class TrampolineNetwork {
             ));
 
             const material = new THREE.LineBasicMaterial({
-                color: 0x4488ff,
+                color: 0x66aaff,
                 transparent: true,
-                opacity: 0.15,
+                opacity: 0.5,
                 depthWrite: false
             });
 
@@ -427,7 +427,7 @@ export class TrampolineNetwork {
 
                 // Fade by distance — nearby routes brighter
                 const distToPlayer = dest.position.distanceTo(playerPosition);
-                line.material.opacity = Math.max(0.1, 0.4 - distToPlayer * 0.015);
+                line.material.opacity = Math.max(0.25, 0.7 - distToPlayer * 0.02);
                 line.visible = true;
             } else {
                 line.visible = false;

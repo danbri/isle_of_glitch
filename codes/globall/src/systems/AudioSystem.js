@@ -211,12 +211,12 @@ export class AudioSystem {
         noise.start(t);
     }
 
-    // Charge sound — magnetic coil whine (rising dual oscillator + resonant filter)
+    // Charge sound — magnetic coil whine building to barely-controlled power
     startCharge() {
         if (!this.ctx || this.isMuted) return;
         this.stopCharge();
 
-        // Primary coil whine
+        // Primary coil whine — sawtooth + square for aggressive edge
         this._chargeOsc = this.ctx.createOscillator();
         this._chargeOsc2 = this.ctx.createOscillator();
         this._chargeGain = this.ctx.createGain();
@@ -229,7 +229,7 @@ export class AudioSystem {
         this._chargeFilter.type = 'bandpass';
         this._chargeFilter.frequency.value = 600;
         this._chargeFilter.Q.value = 8; // Resonant — sounds like coil inductance
-        this._chargeGain.gain.value = 0.04;
+        this._chargeGain.gain.value = 0.05;
 
         this._chargeOsc.connect(this._chargeFilter);
         this._chargeOsc2.connect(this._chargeFilter);
@@ -237,18 +237,34 @@ export class AudioSystem {
         this._chargeGain.connect(this.masterGain);
         this._chargeOsc.start();
         this._chargeOsc2.start();
+
+        // Sub-bass rumble — building power you can feel
+        this._chargeSub = this.ctx.createOscillator();
+        this._chargeSubGain = this.ctx.createGain();
+        this._chargeSub.type = 'sine';
+        this._chargeSub.frequency.value = 40;
+        this._chargeSubGain.gain.value = 0.02;
+        this._chargeSub.connect(this._chargeSubGain);
+        this._chargeSubGain.connect(this.masterGain);
+        this._chargeSub.start();
     }
 
     updateCharge(progress) {
         if (!this._chargeOsc) return;
         const t = this.ctx.currentTime;
         // Rising coil whine — accelerating pitch + widening filter
-        const freq = 120 + progress * progress * 900; // Exponential rise to 1020Hz
-        this._chargeOsc.frequency.setTargetAtTime(freq, t, 0.03);
-        this._chargeOsc2.frequency.setTargetAtTime(freq * 1.005, t, 0.03);
-        this._chargeGain.gain.setTargetAtTime(0.04 + progress * 0.1, t, 0.03);
-        this._chargeFilter.frequency.setTargetAtTime(600 + progress * 2000, t, 0.03);
-        this._chargeFilter.Q.setTargetAtTime(8 - progress * 5, t, 0.03); // Less resonant as it opens up
+        const freq = 120 + progress * progress * 1200; // Faster rise, higher ceiling
+        this._chargeOsc.frequency.setTargetAtTime(freq, t, 0.02);
+        this._chargeOsc2.frequency.setTargetAtTime(freq * 1.008, t, 0.02); // Wider detune = more aggressive
+        this._chargeGain.gain.setTargetAtTime(0.05 + progress * 0.15, t, 0.02);
+        this._chargeFilter.frequency.setTargetAtTime(600 + progress * 3000, t, 0.02);
+        this._chargeFilter.Q.setTargetAtTime(8 - progress * 4, t, 0.03);
+
+        // Sub-bass builds with charge
+        if (this._chargeSub) {
+            this._chargeSub.frequency.setTargetAtTime(40 + progress * 30, t, 0.03);
+            this._chargeSubGain.gain.setTargetAtTime(0.02 + progress * 0.12, t, 0.02);
+        }
     }
 
     stopCharge() {
@@ -259,6 +275,11 @@ export class AudioSystem {
             this._chargeOsc2 = null;
             this._chargeGain = null;
             this._chargeFilter = null;
+        }
+        if (this._chargeSub) {
+            try { this._chargeSub.stop(); } catch(e) {}
+            this._chargeSub = null;
+            this._chargeSubGain = null;
         }
     }
 
