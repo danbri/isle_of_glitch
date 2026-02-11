@@ -22,7 +22,7 @@ export class Player {
 
         // Player properties
         this.bounceCharge = 1.0;
-        this.bounceChargeRate = 0.5; // Faster recharge
+        this.bounceChargeRate = 0.8; // Fast recharge so rapid taps feel responsive
         this.maxBounceCharge = 1.0;
         this.bounceForce = 12; // Slightly reduced for better control
         this.gravity = 25; // Stronger gravity for better feel
@@ -60,6 +60,11 @@ export class Player {
         this.cameraLerpSpeed = 0.15; // Configurable from debug panel
         this.cameraEnabled = true; // Disabled when orbit controls are active
 
+        // Aim direction — player-controlled heading for pre-launch aiming
+        // This is the tangent direction on the planet surface the player is facing
+        this.aimAngle = 0; // radians around the local up axis
+        this._aimDirection = null; // THREE.Vector3, computed from aimAngle
+
         // Camera shake
         this.cameraShake = { intensity: 0, decay: 0.88 };
 
@@ -74,6 +79,7 @@ export class Player {
         this.createPlayerMesh();
         this.createTrail();
         this.createSpeedStreaks();
+        this.createAimIndicator();
         // Initialize camera to correct position immediately (no lerping on first frame)
         this.initializeCameraPosition();
     }
@@ -221,6 +227,64 @@ export class Player {
         this.scene.add(this.trail);
     }
 
+    createAimIndicator() {
+        // Arrow on the ground surface showing current aim direction
+        // Visible only when grounded
+        const group = new THREE.Group();
+
+        // Shaft — thin line from player outward
+        const shaftGeo = new THREE.CylinderGeometry(0.02, 0.02, 1.2, 4);
+        shaftGeo.translate(0, 0.6, 0); // pivot at base
+        shaftGeo.rotateX(Math.PI / 2); // point along +Z
+        const shaftMat = new THREE.MeshBasicMaterial({
+            color: 0x88ccff,
+            transparent: true,
+            opacity: 0.7
+        });
+        group.add(new THREE.Mesh(shaftGeo, shaftMat));
+
+        // Arrowhead — small cone at tip
+        const headGeo = new THREE.ConeGeometry(0.08, 0.25, 6);
+        headGeo.translate(0, 0.125, 0);
+        headGeo.rotateX(Math.PI / 2);
+        headGeo.translate(0, 0, 1.2);
+        const headMat = new THREE.MeshBasicMaterial({
+            color: 0xaaddff,
+            transparent: true,
+            opacity: 0.8
+        });
+        group.add(new THREE.Mesh(headGeo, headMat));
+
+        group.visible = false;
+        this.scene.add(group);
+        this._aimIndicator = group;
+    }
+
+    updateAimIndicator() {
+        if (!this._aimIndicator) return;
+
+        if (!this.isOnGround || !this._aimDirection) {
+            this._aimIndicator.visible = false;
+            return;
+        }
+
+        this._aimIndicator.visible = true;
+
+        // Position at player's feet on the surface
+        const up = this.position.clone().normalize();
+        const surfacePos = up.clone().multiplyScalar(this.planetRadius + 0.42);
+        this._aimIndicator.position.copy(surfacePos);
+
+        // Orient: Z axis points along aim direction, Y axis points up (away from planet)
+        const aimDir = this._aimDirection.clone().normalize();
+        const right = new THREE.Vector3().crossVectors(up, aimDir).normalize();
+        const correctedAim = new THREE.Vector3().crossVectors(right, up).normalize();
+
+        const m = new THREE.Matrix4();
+        m.makeBasis(right, up, correctedAim);
+        this._aimIndicator.quaternion.setFromRotationMatrix(m);
+    }
+
     createSpeedStreaks() {
         // Speed streaks — tiny particles that rush past during fast flight
         this.STREAK_COUNT = 40;
@@ -330,20 +394,25 @@ export class Player {
     }
 
     bounce() {
-        if (this.bounceCharge < 0.3) return; // Lower threshold for responsiveness
+        if (this.bounceCharge < 0.15) return; // Low threshold so rapid taps work
 
         const modifier = this.routeModifiers[this.routeType];
 
         // Get up vector (away from planet)
         const up = this.position.clone().sub(this.planetCenter).normalize();
 
-        // Get horizontal direction from current velocity or forward
+        // Get horizontal direction from aim, velocity, or forward
         let horizontal;
         const horizontalVel = this.velocity.clone();
         horizontalVel.sub(up.clone().multiplyScalar(horizontalVel.dot(up))); // Remove vertical component
 
-        if (horizontalVel.length() > 0.1) {
+        if (this.isOnGround && this._aimDirection) {
+            // On ground: use player's aim direction (set by swipe/steer)
+            horizontal = this._aimDirection.clone();
+        } else if (horizontalVel.length() > 0.1) {
             horizontal = horizontalVel.normalize();
+        } else if (this._aimDirection) {
+            horizontal = this._aimDirection.clone();
         } else {
             // Default forward direction if no horizontal velocity
             horizontal = new THREE.Vector3(1, 0, 0);
@@ -679,6 +748,9 @@ export class Player {
         // Update speed streaks
         this.updateSpeedStreaks(time);
 
+        // Update aim indicator (arrow on ground)
+        this.updateAimIndicator();
+
         // Update camera (skip when orbit controls are active)
         if (this.cameraEnabled) {
             this.updateCameraPosition();
@@ -686,36 +758,48 @@ export class Player {
     }
 
     handleInput(keys, deltaTime) {
-        // Mid-air steering: stronger influence when airborne and moving fast
         const speed = this.velocity.length();
-        const baseForce = 5;
-        const airBonus = this.isOnGround ? 0 : Math.min(speed * 0.4, 6);
-        const influenceForce = baseForce + airBonus;
-
-        // Get right and up vectors relative to planet
         const up = this.position.clone().sub(this.planetCenter).normalize();
-        const forward = speed > 0.1
-            ? this.velocity.clone().normalize()
-            : new THREE.Vector3(0, 0, 1);
-        const right = new THREE.Vector3().crossVectors(up, forward).normalize();
 
         // Analog steering from touch (proportional 0-1)
         const steerX = keys['_steerX'] || 0;
         const steerY = keys['_steerY'] || 0;
 
-        // Apply analog + keyboard input combined
-        let forwardForce = 0;
-        let rightForce = 0;
+        // Keyboard input
+        let kbForward = 0, kbRight = 0;
+        if (keys['KeyW'] || keys['ArrowUp']) kbForward += 1;
+        if (keys['KeyS'] || keys['ArrowDown']) kbForward -= 1;
+        if (keys['KeyA'] || keys['ArrowLeft']) kbRight -= 1;
+        if (keys['KeyD'] || keys['ArrowRight']) kbRight += 1;
 
-        // Keyboard (binary 0/1)
-        if (keys['KeyW'] || keys['ArrowUp']) forwardForce += 1;
-        if (keys['KeyS'] || keys['ArrowDown']) forwardForce -= 1;
-        if (keys['KeyA'] || keys['ArrowLeft']) rightForce -= 1;
-        if (keys['KeyD'] || keys['ArrowRight']) rightForce += 1;
+        // Merge: touch overrides keyboard if active
+        let rightForce = Math.abs(steerX) > 0.01 ? steerX : kbRight;
+        let forwardForce = Math.abs(steerY) > 0.01 ? -steerY : kbForward;
 
-        // Touch analog (proportional, overrides keyboard if active)
-        if (Math.abs(steerX) > 0.01) rightForce = steerX;
-        if (Math.abs(steerY) > 0.01) forwardForce = -steerY; // Inverted: swipe up = forward
+        // === GROUND: swipe/keys rotate the aim direction (turntable) ===
+        if (this.isOnGround) {
+            // Compute aim direction basis vectors
+            this.updateAimDirection(up);
+
+            // Rotate aim angle with horizontal input
+            if (Math.abs(rightForce) > 0.01) {
+                this.aimAngle -= rightForce * 2.5 * deltaTime; // radians/sec
+            }
+
+            // Track for banking animation (subtle on ground)
+            this._lastSteerX = rightForce;
+            return;
+        }
+
+        // === AIRBORNE: steer the velocity directly ===
+        const baseForce = 5;
+        const airBonus = Math.min(speed * 0.4, 6);
+        const influenceForce = baseForce + airBonus;
+
+        const forward = speed > 0.1
+            ? this.velocity.clone().normalize()
+            : (this._aimDirection || new THREE.Vector3(0, 0, 1));
+        const right = new THREE.Vector3().crossVectors(up, forward).normalize();
 
         if (Math.abs(forwardForce) > 0.01) {
             this.velocity.add(forward.clone().multiplyScalar(influenceForce * forwardForce * deltaTime));
@@ -728,43 +812,79 @@ export class Player {
         this._lastSteerX = rightForce;
     }
 
-    updateCameraPosition() {
-        // SATELLITE CAMERA — zero velocity dependence, zero jitter
-        // Hovers above the player looking down with slight tilt for perspective.
-        // Only depends on player POSITION (smooth) not velocity (noisy).
-        const playerDir = this.position.clone().normalize();
-        const altitude = this.position.distanceTo(this.planetCenter) - this.planetRadius;
-
-        // Stable tangent direction via cross product with reference vector
-        // Smoothed across frames to prevent any discontinuities near poles
-        const ref = Math.abs(playerDir.y) < 0.95
+    updateAimDirection(up) {
+        // Compute a stable local tangent frame at the player's position
+        const ref = Math.abs(up.y) < 0.95
             ? new THREE.Vector3(0, 1, 0)
             : new THREE.Vector3(0, 0, 1);
-        const tangent = new THREE.Vector3().crossVectors(ref, playerDir).normalize();
+        const tangentX = new THREE.Vector3().crossVectors(ref, up).normalize();
+        const tangentZ = new THREE.Vector3().crossVectors(up, tangentX).normalize();
 
-        if (!this._cameraTangent) {
-            this._cameraTangent = tangent.clone();
+        // Aim direction from angle
+        this._aimDirection = tangentX.clone().multiplyScalar(Math.cos(this.aimAngle))
+            .add(tangentZ.clone().multiplyScalar(Math.sin(this.aimAngle)));
+        this._aimDirection.normalize();
+    }
+
+    updateCameraPosition() {
+        // Camera behavior depends on state:
+        //   GROUNDED: orbit behind the aim direction (player controls heading)
+        //   AIRBORNE: satellite view following velocity
+        const playerDir = this.position.clone().normalize();
+        const altitude = this.position.distanceTo(this.planetCenter) - this.planetRadius;
+        const speed = this.velocity.length();
+
+        // Compute the "behind" direction based on aim or velocity
+        let behindDir;
+        if (this.isOnGround && this._aimDirection) {
+            // Camera sits behind the aim direction (opposite of where player faces)
+            behindDir = this._aimDirection.clone().negate();
+        } else if (speed > 0.5) {
+            // Airborne: camera trails behind velocity
+            const velTangent = this.velocity.clone();
+            velTangent.sub(playerDir.clone().multiplyScalar(velTangent.dot(playerDir)));
+            if (velTangent.length() > 0.1) {
+                behindDir = velTangent.normalize().negate();
+            } else {
+                behindDir = this._cameraTangent || playerDir.clone();
+            }
         } else {
-            this._cameraTangent.lerp(tangent, 0.02).normalize();
+            // Fallback: stable tangent
+            const ref = Math.abs(playerDir.y) < 0.95
+                ? new THREE.Vector3(0, 1, 0)
+                : new THREE.Vector3(0, 0, 1);
+            behindDir = new THREE.Vector3().crossVectors(ref, playerDir).normalize();
         }
 
-        // Smooth the up vector too
+        // Smooth the camera tangent (behind direction)
+        if (!this._cameraTangent) {
+            this._cameraTangent = behindDir.clone();
+        } else {
+            // Faster follow when grounded (responsive aiming), slower airborne (stable)
+            const lerpRate = this.isOnGround ? 0.08 : 0.025;
+            this._cameraTangent.lerp(behindDir, lerpRate).normalize();
+        }
+
+        // Smooth the up vector
         if (!this._cameraUp) {
             this._cameraUp = playerDir.clone();
         } else {
             this._cameraUp.lerp(playerDir, 0.03).normalize();
         }
 
-        // Camera height: 7 at ground, up to 11 at high altitude
-        // Pulls closer during speed for excitement
-        const speed = this.velocity.length();
+        // Camera height: closer when grounded for aiming, higher in flight
         const speedCloseness = Math.min(speed * 0.12, 2);
-        const camHeight = 7 + Math.min(altitude * 0.5, 4) - speedCloseness;
+        const groundedHeight = 4; // Lower = closer = better for aiming
+        const flightHeight = 7 + Math.min(altitude * 0.5, 4) - speedCloseness;
+        const camHeight = this.isOnGround ? groundedHeight : flightHeight;
 
-        // Position: above the player with slight lateral tilt for 3/4 view
+        // Camera distance behind player on surface tangent
+        const behindDist = this.isOnGround ? 3.5 : 2.5;
+
+        // Position: above the player, offset behind aim/velocity direction
         const cameraTargetPos = playerDir.clone()
             .multiplyScalar(this.planetRadius + camHeight)
-            .add(this._cameraTangent.clone().multiplyScalar(2.5));
+            .add(this._cameraTangent.clone().multiplyScalar(behindDist));
 
         // Smooth follow — faster when moving for more responsiveness
         const followSpeed = 0.05 + Math.min(speed * 0.005, 0.07);
@@ -800,13 +920,20 @@ export class Player {
         const modifier = this.routeModifiers[routeType];
 
         const up = this.position.clone().sub(this.planetCenter).normalize();
-        let horizontal = this.velocity.clone();
-        horizontal.sub(up.clone().multiplyScalar(horizontal.dot(up)));
-        if (horizontal.length() > 0.1) {
-            horizontal.normalize();
+        let horizontal;
+        if (this.isOnGround && this._aimDirection) {
+            horizontal = this._aimDirection.clone();
         } else {
-            horizontal = new THREE.Vector3(1, 0, 0);
-            horizontal.sub(up.clone().multiplyScalar(horizontal.dot(up))).normalize();
+            horizontal = this.velocity.clone();
+            horizontal.sub(up.clone().multiplyScalar(horizontal.dot(up)));
+            if (horizontal.length() > 0.1) {
+                horizontal.normalize();
+            } else if (this._aimDirection) {
+                horizontal = this._aimDirection.clone();
+            } else {
+                horizontal = new THREE.Vector3(1, 0, 0);
+                horizontal.sub(up.clone().multiplyScalar(horizontal.dot(up))).normalize();
+            }
         }
 
         let bounceDir;

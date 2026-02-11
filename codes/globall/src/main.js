@@ -743,35 +743,47 @@ class GloballGame {
         if (this.session.ended) return; // Can't bounce after game over
 
         // --- RAPID-TAP ACCELERATION ---
-        // When airborne, quick taps (<150ms hold) add velocity boosts
-        if (!this.player.isOnGround && holdMs < 150) {
+        // Quick taps (<200ms hold) while airborne boost speed or unstick
+        if (!this.player.isOnGround && holdMs < 200) {
             const speed = this.player.velocity.length();
-            if (speed > 1) {
-                // Boost in current travel direction — each tap adds ~15% speed
+            const up = this.player.position.clone().normalize();
+            this._rapidTapCount = (this._rapidTapCount || 0) + 1;
+
+            if (speed > 0.3) {
+                // Boost in current travel direction — 20% speed, scaling with tap count
                 const boostDir = this.player.velocity.clone().normalize();
-                const boostForce = Math.min(speed * 0.15, 3); // Cap per-tap boost
+                const tapMultiplier = Math.min(1 + this._rapidTapCount * 0.15, 2.0);
+                const boostForce = Math.min(speed * 0.2 * tapMultiplier, 5);
                 this.player.velocity.add(boostDir.multiplyScalar(boostForce));
-
-                // Feedback
-                this._rapidTapCount = (this._rapidTapCount || 0) + 1;
-                if (this.audio) this.audio.playBounce(0.3 + this._rapidTapCount * 0.1);
-                if (navigator.vibrate) navigator.vibrate(15);
-
-                // Show boost feedback
-                const el = this.getEl('target-notification');
-                if (el) {
-                    const boostLabels = ['BOOST!', 'BOOST x2!', 'BOOST x3!', 'TURBO!'];
-                    el.textContent = boostLabels[Math.min(this._rapidTapCount - 1, 3)];
-                    el.style.color = '#88ddff';
-                    el.style.opacity = '1';
-                    clearTimeout(this._targetNotifTimeout);
-                    this._targetNotifTimeout = setTimeout(() => {
-                        el.style.opacity = '0';
-                        this._rapidTapCount = 0;
-                    }, 600);
-                }
-                return; // Don't do a full bounce
+            } else {
+                // Unstick: nearly stationary in air — kick upward + forward
+                const aimDir = this.player._aimDirection || up;
+                const kickDir = up.clone().multiplyScalar(0.6)
+                    .add(aimDir.clone().multiplyScalar(0.4)).normalize();
+                this.player.velocity.add(kickDir.multiplyScalar(3));
             }
+
+            // Feedback
+            if (this.audio) this.audio.playBounce(0.3 + this._rapidTapCount * 0.1);
+            if (navigator.vibrate) navigator.vibrate(15);
+
+            // Show boost feedback
+            const el = this.getEl('target-notification');
+            if (el) {
+                const boostLabels = ['BOOST!', 'BOOST x2!', 'BOOST x3!', 'TURBO!'];
+                el.textContent = boostLabels[Math.min(this._rapidTapCount - 1, 3)];
+                el.style.color = '#88ddff';
+                el.style.opacity = '1';
+                clearTimeout(this._targetNotifTimeout);
+                this._targetNotifTimeout = setTimeout(() => {
+                    el.style.opacity = '0';
+                    this._rapidTapCount = 0;
+                }, 800);
+            }
+
+            // Small visual pulse (lighter than full bounce effect)
+            this.player.createBounceEffect();
+            return; // Don't do a full bounce
         }
 
         // Reset rapid tap counter on full bounces
