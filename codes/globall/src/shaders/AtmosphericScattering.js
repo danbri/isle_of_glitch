@@ -88,6 +88,8 @@ export const AtmosphereGlowMaterial = {
     },
 
     vertexShader: /* glsl */`
+        #include <logdepthbuf_pars_vertex>
+
         varying float intensity;
         varying vec3 vNormal;
         varying vec3 vPosition;
@@ -104,10 +106,13 @@ export const AtmosphereGlowMaterial = {
             intensity = pow(1.0 - abs(dot(worldNormal, viewDir)), 3.5);
 
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            #include <logdepthbuf_vertex>
         }
     `,
 
     fragmentShader: /* glsl */`
+        #include <logdepthbuf_pars_fragment>
+
         uniform vec3 glowColor;
         uniform float glowIntensity;
         uniform vec3 sunDirection;
@@ -130,6 +135,7 @@ export const AtmosphereGlowMaterial = {
             float pulse = sin(time * 0.5) * 0.1 + 0.9;
 
             gl_FragColor = vec4(color * intensity * glowIntensity * pulse, intensity * 0.5);
+            #include <logdepthbuf_fragment>
         }
     `
 };

@@ -19,6 +19,8 @@ export const PlanetSurfaceShader = {
     },
 
     vertexShader: /* glsl */`
+        #include <logdepthbuf_pars_vertex>
+
         varying vec2 vUv;
         varying vec3 vNormal;
         varying vec3 vPosition;
@@ -35,10 +37,13 @@ export const PlanetSurfaceShader = {
             vViewPosition = -mvPosition.xyz;
 
             gl_Position = projectionMatrix * mvPosition;
+            #include <logdepthbuf_vertex>
         }
     `,
 
     fragmentShader: /* glsl */`
+        #include <logdepthbuf_pars_fragment>
+
         uniform float time;
         uniform vec3 sunDirection;
         uniform sampler2D dayTexture;
@@ -193,6 +198,7 @@ export const PlanetSurfaceShader = {
             surfaceColor += detail * 0.02;
 
             gl_FragColor = vec4(surfaceColor, 1.0);
+            #include <logdepthbuf_fragment>
         }
     `
 };
