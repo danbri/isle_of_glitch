@@ -76,6 +76,12 @@ export class Player {
         // Landing tracking
         this.lastImpactSpeed = 0;
 
+        // Ground state hysteresis — prevents isOnGround flickering
+        this._groundedTimer = 0; // time spent on ground (seconds)
+        this._groundRestThreshold = 0.8; // impact speed below which we kill bounce
+        this._takeoffThreshold = 2.0; // radial speed needed to leave ground state
+        this._groundBlend = 1; // 0 = airborne, 1 = fully grounded (smooth transition)
+
         // Chain launch multiplier (set by main.js before bounce)
         this.bounceForceMultiplier = 1.0;
     }
@@ -614,10 +620,9 @@ export class Player {
         this.velocity.add(this.acceleration.clone().multiplyScalar(deltaTime));
         this.position.add(this.velocity.clone().multiplyScalar(deltaTime));
 
-        // Ground collision
+        // Ground collision with rest threshold and hysteresis
+        const normal = this.position.clone().sub(this.planetCenter).normalize();
         if (distance < this.planetRadius + this.groundOffset) {
-            // Bounce off surface
-            const normal = this.position.clone().sub(this.planetCenter).normalize();
             const dot = this.velocity.dot(normal);
 
             if (dot < 0) {
@@ -639,25 +644,46 @@ export class Player {
                     }
                 }
 
-                const bounciness = impactSpeed > 5 ? 0.5 : 0.3; // More bounce from harder impacts
-                const reflection = normal.clone().multiplyScalar(-2 * dot * bounciness);
-                this.velocity.add(reflection);
-                this.velocity.multiplyScalar(0.85); // Less energy loss
+                if (impactSpeed < this._groundRestThreshold) {
+                    // Rest: kill radial velocity entirely, keep only tangential slide
+                    const radial = normal.clone().multiplyScalar(dot);
+                    this.velocity.sub(radial); // remove radial component
+                    this.velocity.multiplyScalar(0.9); // damp tangential slide
+                } else {
+                    const bounciness = impactSpeed > 5 ? 0.5 : 0.3;
+                    const reflection = normal.clone().multiplyScalar(-2 * dot * bounciness);
+                    this.velocity.add(reflection);
+                    this.velocity.multiplyScalar(0.85);
+                }
 
                 // Position correction
                 this.position.copy(
                     this.planetCenter.clone().add(
-                        normal.multiplyScalar(this.planetRadius + this.groundOffset)
+                        normal.clone().multiplyScalar(this.planetRadius + this.groundOffset)
                     )
                 );
 
                 // Full recharge on ground contact
                 this.bounceCharge = this.maxBounceCharge;
                 this.isOnGround = true;
+                this._groundedTimer += deltaTime;
             }
         } else {
-            this.isOnGround = false;
+            // Hysteresis: only leave ground state if moving away fast enough
+            const radialSpeed = this.velocity.dot(normal);
+            if (this.isOnGround && radialSpeed < this._takeoffThreshold) {
+                // Still "grounded" — clamp near surface
+                this.isOnGround = true;
+                this._groundedTimer += deltaTime;
+            } else {
+                this.isOnGround = false;
+                this._groundedTimer = 0;
+            }
         }
+
+        // Smooth ground blend for camera transitions (0=air, 1=ground)
+        const blendTarget = this.isOnGround ? 1 : 0;
+        this._groundBlend += (blendTarget - this._groundBlend) * 0.08;
 
         // Magnetic attraction to nearby airports
         if (this.trampolineNetwork && altitude < 2) {
@@ -680,27 +706,30 @@ export class Player {
         // --- Smooth orientation with quaternion slerp ---
         const playerUp = this.position.clone().normalize(); // "up" = away from planet
 
-        if (this.isOnGround || speed < 0.5) {
-            // PARKED STANCE: face toward camera so eyes are visible
-            // Camera is above + offset along tangent, so face the tangent direction
-            const cameraTangent = this._cameraTangent || new THREE.Vector3(0, 0, 1);
-            const faceDir = cameraTangent.clone(); // face toward camera's offset direction
-            // Build a lookAt target: position + face direction (tangent) + slight upward tilt
-            const lookTarget = this.position.clone()
-                .add(faceDir.clone().multiplyScalar(1.0))
-                .add(playerUp.clone().multiplyScalar(0.3)); // Tilt face slightly upward
+        // Compute BOTH orientations and blend via _groundBlend
+        const dummyMatrix = new THREE.Matrix4();
 
-            // Compute target quaternion from a dummy object
-            const dummyMatrix = new THREE.Matrix4();
-            dummyMatrix.lookAt(this.position, lookTarget, playerUp);
-            this._targetQuaternion.setFromRotationMatrix(dummyMatrix);
+        // Parked stance quaternion (face camera tangent)
+        const cameraTangent = this._cameraTangent || new THREE.Vector3(0, 0, 1);
+        const faceDir = cameraTangent.clone();
+        const groundLookTarget = this.position.clone()
+            .add(faceDir.clone().multiplyScalar(1.0))
+            .add(playerUp.clone().multiplyScalar(0.3));
+        dummyMatrix.lookAt(this.position, groundLookTarget, playerUp);
+        const groundQuat = new THREE.Quaternion().setFromRotationMatrix(dummyMatrix);
+
+        // Airborne quaternion (face velocity)
+        let airQuat;
+        if (speed > 0.5) {
+            const airLookTarget = this.position.clone().add(this.velocity);
+            dummyMatrix.lookAt(this.position, airLookTarget, playerUp);
+            airQuat = new THREE.Quaternion().setFromRotationMatrix(dummyMatrix);
         } else {
-            // AIRBORNE: face velocity direction (the dolphin/whale look)
-            const lookTarget = this.position.clone().add(this.velocity);
-            const dummyMatrix = new THREE.Matrix4();
-            dummyMatrix.lookAt(this.position, lookTarget, playerUp);
-            this._targetQuaternion.setFromRotationMatrix(dummyMatrix);
+            airQuat = groundQuat.clone(); // low speed: same as parked
         }
+
+        // Blend target quaternion using groundBlend
+        this._targetQuaternion.copy(airQuat).slerp(groundQuat, this._groundBlend);
 
         // Initialize quaternion on first frame
         if (!this._orientationInitialized) {
@@ -708,8 +737,8 @@ export class Player {
             this._orientationInitialized = true;
         }
 
-        // Slerp toward target — slow on ground (stable), faster in air (responsive)
-        const slerpRate = this.isOnGround ? 0.04 : 0.08;
+        // Slerp toward target — blended rate
+        const slerpRate = 0.08 - this._groundBlend * 0.04; // 0.08 airborne, 0.04 grounded
         this._currentQuaternion.slerp(this._targetQuaternion, slerpRate);
         this.mesh.quaternion.copy(this._currentQuaternion);
 
@@ -837,29 +866,39 @@ export class Player {
     }
 
     updateCameraPosition() {
-        // Camera behavior depends on state:
-        //   GROUNDED: orbit behind the aim direction (player controls heading)
-        //   AIRBORNE: satellite view following velocity
+        // Camera uses _groundBlend (0=air, 1=ground) for smooth parameter transitions
+        // instead of hard isOnGround switches that cause jitter
         const playerDir = this.position.clone().normalize();
         const altitude = this.position.distanceTo(this.planetCenter) - this.planetRadius;
         const speed = this.velocity.length();
+        const gb = this._groundBlend; // 0 = fully airborne, 1 = fully grounded
 
-        // Compute the "behind" direction based on aim or velocity
+        // Compute the "behind" direction for GROUND (aim-based) and AIR (velocity-based)
+        let groundBehind, airBehind;
+
+        // Ground: behind the aim direction
+        if (this._aimDirection) {
+            groundBehind = this._aimDirection.clone().negate();
+        }
+
+        // Air: behind the velocity tangent
+        const velTangent = this.velocity.clone();
+        velTangent.sub(playerDir.clone().multiplyScalar(velTangent.dot(playerDir)));
+        if (velTangent.length() > 0.3) {
+            airBehind = velTangent.normalize().negate();
+        }
+
+        // Blend or fallback
         let behindDir;
-        if (this.isOnGround && this._aimDirection) {
-            // Camera sits behind the aim direction (opposite of where player faces)
-            behindDir = this._aimDirection.clone().negate();
-        } else if (speed > 0.5) {
-            // Airborne: camera trails behind velocity
-            const velTangent = this.velocity.clone();
-            velTangent.sub(playerDir.clone().multiplyScalar(velTangent.dot(playerDir)));
-            if (velTangent.length() > 0.1) {
-                behindDir = velTangent.normalize().negate();
-            } else {
-                behindDir = this._cameraTangent || playerDir.clone();
-            }
+        if (groundBehind && airBehind) {
+            behindDir = groundBehind.clone().multiplyScalar(gb)
+                .add(airBehind.clone().multiplyScalar(1 - gb)).normalize();
+        } else if (groundBehind) {
+            behindDir = groundBehind;
+        } else if (airBehind) {
+            behindDir = airBehind;
         } else {
-            // Fallback: stable tangent
+            // Stable fallback
             const ref = Math.abs(playerDir.y) < 0.95
                 ? new THREE.Vector3(0, 1, 0)
                 : new THREE.Vector3(0, 0, 1);
@@ -870,8 +909,8 @@ export class Player {
         if (!this._cameraTangent) {
             this._cameraTangent = behindDir.clone();
         } else {
-            // Faster follow when grounded (responsive aiming), slower airborne (stable)
-            const lerpRate = this.isOnGround ? 0.08 : 0.025;
+            // Blend lerp rate: faster when grounded (responsive aiming)
+            const lerpRate = 0.025 + gb * 0.055; // 0.025 airborne, 0.08 grounded
             this._cameraTangent.lerp(behindDir, lerpRate).normalize();
         }
 
@@ -882,17 +921,17 @@ export class Player {
             this._cameraUp.lerp(playerDir, 0.03).normalize();
         }
 
-        // Camera height: close to ship — minimal altitude scaling keeps sense of location
+        // Camera height: blend between grounded and flight heights
         const speedCloseness = Math.min(speed * 0.02, 0.3);
         const groundedHeight = this._debugGroundedHeight ?? 1.0;
         const flightHeightBase = this._debugFlightHeight ?? 1.5;
         const flightHeight = flightHeightBase + Math.min(altitude * 0.05, 0.3) - speedCloseness;
-        const camHeight = this.isOnGround ? groundedHeight : flightHeight;
+        const camHeight = groundedHeight * gb + flightHeight * (1 - gb);
 
-        // Camera distance behind player on surface tangent
+        // Camera distance behind player: blend
         const behindGround = this._debugBehindGround ?? 0.7;
         const behindFlight = this._debugBehindFlight ?? 0.5;
-        const behindDist = this.isOnGround ? behindGround : behindFlight;
+        const behindDist = behindGround * gb + behindFlight * (1 - gb);
 
         // Position: above the player, offset behind aim/velocity direction
         const cameraTargetPos = playerDir.clone()
