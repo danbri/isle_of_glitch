@@ -856,6 +856,7 @@ class GloballGame {
         // Create package system
         console.log('Loading: Package System...');
         this.packageSystem = new PackageSystem(this.scene, this.gameState, this.trampolineNetwork);
+        this.packageSystem._camera = this.camera;
         await this.packageSystem.init();
 
         // Trajectory preview arc during charge — bright and clear
@@ -2313,12 +2314,19 @@ class GloballGame {
         this.orbital.update(time, this.deltaTime);
 
         // Update all game components
-        this.planet.update(time, this.deltaTime);
+        this.planet.update(time, this.deltaTime, this.camera);
         this.cityLights.update(time, this.deltaTime, this.camera);
         this.spaceEnv.update(time, this.deltaTime, this.orbital);
         this.aurora.update(time, this.deltaTime, this.player.getPosition());
         this.trampolineNetwork.update(time, this.deltaTime, this.player.getPosition());
         this.player.update(time, this.deltaTime, this.keys);
+
+        // Hide country outlines at distance — at r=10.02 they peek around the
+        // planet limb (r=10) and create the illusion of a see-through planet.
+        if (this.countryOutlines && this.countryOutlines.outlines) {
+            const camAlt = this.camera.position.length() - 10;
+            this.countryOutlines.outlines.visible = camAlt < 4;
+        }
 
         // Trajectory preview during charge hold
         if (this.bounceCharging && this.trajectoryLine) {
