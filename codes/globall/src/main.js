@@ -201,20 +201,169 @@ class GloballGame {
             closeBtn.addEventListener('touchend', (e) => { e.preventDefault(); close(); });
         }
 
-        // Tab buttons
+        // Tab buttons (NAV, ORBIT, DEBUG)
         const navTab = this.getEl('sc-tab-nav');
         const orbitTab = this.getEl('sc-tab-orbit');
+        const debugTab = this.getEl('sc-tab-debug');
+        const debugPanel = this.getEl('sc-debug-panel');
+        const scCanvas = this.getEl('ships-computer-canvas');
+        const scControls = this.getEl('sc-controls');
+
+        const switchTab = (tab) => {
+            this.shipsComputer.setTab(tab);
+            if (debugTab) debugTab.classList.toggle('active', tab === 'DEBUG');
+            if (debugPanel) debugPanel.style.display = tab === 'DEBUG' ? 'block' : 'none';
+            if (scCanvas) scCanvas.style.display = tab === 'DEBUG' ? 'none' : 'block';
+            if (scControls) scControls.style.display = tab === 'DEBUG' ? 'none' : 'flex';
+        };
+
         if (navTab) {
-            navTab.addEventListener('click', () => this.shipsComputer.setTab('NAV'));
-            navTab.addEventListener('touchend', (e) => { e.preventDefault(); this.shipsComputer.setTab('NAV'); });
+            navTab.addEventListener('click', () => switchTab('NAV'));
+            navTab.addEventListener('touchend', (e) => { e.preventDefault(); switchTab('NAV'); });
         }
         if (orbitTab) {
-            orbitTab.addEventListener('click', () => this.shipsComputer.setTab('ORBIT'));
-            orbitTab.addEventListener('touchend', (e) => { e.preventDefault(); this.shipsComputer.setTab('ORBIT'); });
+            orbitTab.addEventListener('click', () => switchTab('ORBIT'));
+            orbitTab.addEventListener('touchend', (e) => { e.preventDefault(); switchTab('ORBIT'); });
         }
+        if (debugTab) {
+            debugTab.addEventListener('click', () => switchTab('DEBUG'));
+            debugTab.addEventListener('touchend', (e) => { e.preventDefault(); switchTab('DEBUG'); });
+        }
+
+        // Debug sliders — wire to game state
+        this.setupDebugSliders();
+
+        // Hamburger menu
+        this.setupHamburgerMenu();
 
         // Keyboard shortcut: M for map
         // (added to existing keydown handler)
+    }
+
+    setupDebugSliders() {
+        const slider = (id, valId, cb) => {
+            const el = this.getEl(id);
+            const valEl = this.getEl(valId);
+            if (!el) return;
+            el.addEventListener('input', () => {
+                const v = parseFloat(el.value);
+                if (valEl) valEl.textContent = v.toFixed(2);
+                cb(v);
+            });
+        };
+
+        slider('dbg-shipScale', 'dbg-val-shipScale', v => { this.player.shipScale = v; });
+        slider('dbg-groundOffset', 'dbg-val-groundOffset', v => { this.player.groundOffset = v; });
+        slider('dbg-camGndH', 'dbg-val-camGndH', v => { this.player._debugGroundedHeight = v; });
+        slider('dbg-camFlyH', 'dbg-val-camFlyH', v => { this.player._debugFlightHeight = v; });
+        slider('dbg-behindGnd', 'dbg-val-behindGnd', v => { this.player._debugBehindGround = v; });
+        slider('dbg-behindFly', 'dbg-val-behindFly', v => { this.player._debugBehindFlight = v; });
+        slider('dbg-padScale', 'dbg-val-padScale', v => {
+            this.trampolineNetwork.padScale = v;
+            this.trampolineNetwork.detailedPool.forEach(g => {
+                if (g.visible) g.scale.setScalar(v);
+            });
+        });
+        slider('dbg-fov', 'dbg-val-fov', v => {
+            this.camera.fov = v;
+            this.camera.updateProjectionMatrix();
+        });
+        slider('dbg-bloom', 'dbg-val-bloom', v => {
+            if (this.bloomPass) this.bloomPass.strength = v;
+        });
+        slider('dbg-exposure', 'dbg-val-exposure', v => {
+            this.renderer.toneMappingExposure = v;
+        });
+    }
+
+    setupHamburgerMenu() {
+        const btn = this.getEl('hamburger-btn');
+        const dropdown = this.getEl('hamburger-dropdown');
+        if (!btn || !dropdown) return;
+
+        let open = false;
+        const toggle = () => {
+            open = !open;
+            dropdown.style.display = open ? 'block' : 'none';
+        };
+
+        btn.addEventListener('click', toggle);
+        btn.addEventListener('touchend', (e) => { e.preventDefault(); toggle(); });
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+            if (open && !e.target.closest('#hamburger-menu')) {
+                open = false;
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // Ship's Computer
+        const hmComputer = this.getEl('hm-computer');
+        if (hmComputer) {
+            const action = () => {
+                this.shipsComputer.toggle();
+                open = false; dropdown.style.display = 'none';
+            };
+            hmComputer.addEventListener('click', action);
+            hmComputer.addEventListener('touchend', (e) => { e.preventDefault(); action(); });
+        }
+
+        // Debug — open Ship's Computer on DEBUG tab
+        const hmDebug = this.getEl('hm-debug');
+        if (hmDebug) {
+            const action = () => {
+                if (!this.shipsComputer.visible) this.shipsComputer.toggle();
+                // Switch to DEBUG tab
+                this.shipsComputer.setTab('DEBUG');
+                const debugTab = this.getEl('sc-tab-debug');
+                const debugPanel = this.getEl('sc-debug-panel');
+                const scCanvas = this.getEl('ships-computer-canvas');
+                const scControls = this.getEl('sc-controls');
+                if (debugTab) debugTab.classList.add('active');
+                ['sc-tab-nav', 'sc-tab-orbit'].forEach(id => {
+                    const el = this.getEl(id);
+                    if (el) el.classList.remove('active');
+                });
+                if (debugPanel) debugPanel.style.display = 'block';
+                if (scCanvas) scCanvas.style.display = 'none';
+                if (scControls) scControls.style.display = 'none';
+                open = false; dropdown.style.display = 'none';
+            };
+            hmDebug.addEventListener('click', action);
+            hmDebug.addEventListener('touchend', (e) => { e.preventDefault(); action(); });
+        }
+
+        // Free Camera
+        const hmFreeCam = this.getEl('hm-free-cam');
+        if (hmFreeCam) {
+            let freeCam = false;
+            const action = () => {
+                freeCam = !freeCam;
+                this.controls.enabled = freeCam;
+                this.player.cameraEnabled = !freeCam;
+                hmFreeCam.textContent = freeCam ? 'Free Camera: ON' : 'Free Camera';
+                hmFreeCam.classList.toggle('active', freeCam);
+                open = false; dropdown.style.display = 'none';
+            };
+            hmFreeCam.addEventListener('click', action);
+            hmFreeCam.addEventListener('touchend', (e) => { e.preventDefault(); action(); });
+        }
+
+        // Audio
+        const hmAudio = this.getEl('hm-audio');
+        if (hmAudio) {
+            const action = () => {
+                if (this.audio) {
+                    this.audio.muted = !this.audio.muted;
+                    hmAudio.textContent = this.audio.muted ? 'Audio: OFF' : 'Audio: ON';
+                    hmAudio.classList.toggle('active', !this.audio.muted);
+                }
+                open = false; dropdown.style.display = 'none';
+            };
+            hmAudio.addEventListener('click', action);
+            hmAudio.addEventListener('touchend', (e) => { e.preventDefault(); action(); });
+        }
     }
 
     async init() {
@@ -2275,6 +2424,16 @@ class GloballGame {
             this.debugInfo.playerPos = `${pp.x.toFixed(1)}, ${pp.y.toFixed(1)}, ${pp.z.toFixed(1)}`;
             this.debugInfo.altitude = altitude.toFixed(1);
             this.debugInfo.velocity = speed.toFixed(2);
+
+            // Update in-panel debug readouts (Ship's Computer DEBUG tab)
+            const dbgFps = this.getEl('dbg-fps');
+            if (dbgFps) dbgFps.textContent = this.debugInfo.fps;
+            const dbgSpd = this.getEl('dbg-speed');
+            if (dbgSpd) dbgSpd.textContent = speed.toFixed(1);
+            const dbgAlt = this.getEl('dbg-altitude');
+            if (dbgAlt) dbgAlt.textContent = altitude.toFixed(0) + ' km';
+            const dbgPos = this.getEl('dbg-position');
+            if (dbgPos) dbgPos.textContent = this.debugInfo.playerPos;
 
             // Orbital info
             if (this.orbitalSettings && this.orbital) {
