@@ -50,19 +50,9 @@ export class CityLights {
             this.scene.add(cityMesh);
         });
 
-        // Add random smaller cities
-        for (let i = 0; i < 100; i++) {
-            const smallCity = {
-                name: `City_${i}`,
-                lat: (Math.random() - 0.5) * 140, // Avoid extreme poles
-                lon: Math.random() * 360 - 180,
-                population: 100000 + Math.random() * 2000000,
-                color: new THREE.Color().setHSL(Math.random(), 0.7, 0.6).getHex()
-            };
-            const cityMesh = this.createCityMesh(smallCity);
-            this.cityMeshes.push(cityMesh);
-            this.scene.add(cityMesh);
-        }
+        // Random smaller cities removed — the in-shader cityLightsTexture
+        // handles ambient glow. 3D glow spheres were bleeding through the
+        // planet and placing dots in the oceans.
     }
 
     createCityMesh(city) {
@@ -120,7 +110,7 @@ export class CityLights {
         });
 
         const sprite = new THREE.Sprite(spriteMaterial);
-        sprite.scale.set(baseSize * 4, baseSize * 4, 1);
+        sprite.scale.set(baseSize * 2, baseSize * 2, 1);
         group.add(sprite);
 
         group.position.copy(position);
@@ -245,10 +235,12 @@ export class CityLights {
         this.cityMeshes.forEach(cityGroup => {
             const position = cityGroup.position.clone().normalize();
 
-            // Cull cities on the far side of the planet from camera
+            // Aggressively cull cities not clearly on the near hemisphere.
+            // Threshold 0.15 hides anything within ~80° of the limb,
+            // preventing additive-blended sprites from bleeding through.
             const toCamera = camPos.clone().sub(cityGroup.position).normalize();
             const facingCamera = position.dot(toCamera);
-            if (facingCamera < -0.05) {
+            if (facingCamera < 0.15) {
                 cityGroup.visible = false;
                 return;
             }

@@ -241,37 +241,57 @@ class GloballGame {
     }
 
     setupDebugSliders() {
-        const slider = (id, valId, cb) => {
+        const GU_KM = 637.1; // 1 game unit = 637.1 km
+
+        const slider = (id, valId, kmId, kmFn, cb) => {
             const el = this.getEl(id);
             const valEl = this.getEl(valId);
+            const kmEl = kmId ? this.getEl(kmId) : null;
             if (!el) return;
             el.addEventListener('input', () => {
                 const v = parseFloat(el.value);
                 if (valEl) valEl.textContent = v.toFixed(2);
+                if (kmEl && kmFn) kmEl.textContent = '(' + kmFn(v) + ')';
                 cb(v);
             });
         };
 
-        slider('dbg-shipScale', 'dbg-val-shipScale', v => { this.player.shipScale = v; });
-        slider('dbg-groundOffset', 'dbg-val-groundOffset', v => { this.player.groundOffset = v; });
-        slider('dbg-camGndH', 'dbg-val-camGndH', v => { this.player._debugGroundedHeight = v; });
-        slider('dbg-camFlyH', 'dbg-val-camFlyH', v => { this.player._debugFlightHeight = v; });
-        slider('dbg-behindGnd', 'dbg-val-behindGnd', v => { this.player._debugBehindGround = v; });
-        slider('dbg-behindFly', 'dbg-val-behindFly', v => { this.player._debugBehindFlight = v; });
-        slider('dbg-padScale', 'dbg-val-padScale', v => {
+        const fmtKm = (km) => km >= 1000 ? (km / 1000).toFixed(1) + 'k km' : Math.round(km) + 'km';
+
+        slider('dbg-shipScale', 'dbg-val-shipScale', 'dbg-km-shipScale',
+            v => fmtKm(0.3 * 2 * v * GU_KM), // ship body diameter
+            v => { this.player.shipScale = v; });
+        slider('dbg-groundOffset', 'dbg-val-groundOffset', 'dbg-km-groundOffset',
+            v => fmtKm(v * GU_KM),
+            v => { this.player.groundOffset = v; });
+        slider('dbg-camGndH', 'dbg-val-camGndH', 'dbg-km-camGndH',
+            v => fmtKm(v * GU_KM),
+            v => { this.player._debugGroundedHeight = v; });
+        slider('dbg-camFlyH', 'dbg-val-camFlyH', 'dbg-km-camFlyH',
+            v => fmtKm(v * GU_KM),
+            v => { this.player._debugFlightHeight = v; });
+        slider('dbg-behindGnd', 'dbg-val-behindGnd', 'dbg-km-behindGnd',
+            v => fmtKm(v * GU_KM),
+            v => { this.player._debugBehindGround = v; });
+        slider('dbg-behindFly', 'dbg-val-behindFly', 'dbg-km-behindFly',
+            v => fmtKm(v * GU_KM),
+            v => { this.player._debugBehindFlight = v; });
+        slider('dbg-padScale', 'dbg-val-padScale', 'dbg-km-padScale',
+            v => fmtKm(0.3 * 2 * v * GU_KM), // pad outer coil diameter
+            v => {
             this.trampolineNetwork.padScale = v;
             this.trampolineNetwork.detailedPool.forEach(g => {
                 if (g.visible) g.scale.setScalar(v);
             });
         });
-        slider('dbg-fov', 'dbg-val-fov', v => {
+        slider('dbg-fov', 'dbg-val-fov', null, null, v => {
             this.camera.fov = v;
             this.camera.updateProjectionMatrix();
         });
-        slider('dbg-bloom', 'dbg-val-bloom', v => {
+        slider('dbg-bloom', 'dbg-val-bloom', null, null, v => {
             if (this.bloomPass) this.bloomPass.strength = v;
         });
-        slider('dbg-exposure', 'dbg-val-exposure', v => {
+        slider('dbg-exposure', 'dbg-val-exposure', null, null, v => {
             this.renderer.toneMappingExposure = v;
         });
     }
@@ -1067,9 +1087,10 @@ class GloballGame {
 
         this.gui = new GUI({ title: 'Debug Panel' });
 
-        // Start closed and hidden unless debug mode
+        // Always start hidden — only H key or ?debug reveals it.
+        // Ship's Computer DEBUG tab replaces this for normal use.
         this.gui.close();
-        if (!this._debugVisible) this.gui.hide();
+        this.gui.hide();
 
         // Position to not block scores/altitude (bottom-left) and make draggable
         const el = this.gui.domElement;

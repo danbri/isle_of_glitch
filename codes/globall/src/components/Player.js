@@ -27,9 +27,9 @@ export class Player {
 
         // Player properties
         this.bounceCharge = 1.0;
-        this.bounceChargeRate = 0.8; // Fast recharge so rapid taps feel responsive
+        this.bounceChargeRate = 0.4; // Slower charge = more satisfying full-power launches
         this.maxBounceCharge = 1.0;
-        this.bounceForce = 12; // Slightly reduced for better control
+        this.bounceForce = 16; // Strong at full charge — reward patience
         this.gravity = 25; // Stronger gravity for better feel
         this.airResistance = 0.008; // Less drag so gravity dominates
 

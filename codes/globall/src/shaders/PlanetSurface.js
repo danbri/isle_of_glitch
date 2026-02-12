@@ -129,7 +129,7 @@ export const PlanetSurfaceShader = {
 
             // Sample textures
             vec4 dayColor = texture2D(dayTexture, vUv);
-            dayColor.rgb *= 1.05; // Subtle lift — Blue Marble is well-exposed
+            dayColor.rgb *= 1.15; // Lift to make Blue Marble vivid
             vec4 nightColor = texture2D(nightTexture, vUv);
             vec4 cityLights = texture2D(cityLightsTexture, vUv);
             vec4 clouds = texture2D(cloudsTexture, vUv + vec2(time * 0.001, 0.0));
@@ -151,15 +151,15 @@ export const PlanetSurfaceShader = {
                 nightColor.rgb = fallbackNight;
             }
 
-            // Generate procedural details
-            float detail = snoise(vPosition * 20.0) * 0.1;
+            // Procedural detail — reduced to avoid washing out Blue Marble
+            float detail = snoise(vPosition * 20.0) * 0.03;
             float cityGlow = snoise(vPosition * 50.0 + time * 0.1) * 0.5 + 0.5;
 
             // Blend day and night
             vec3 surfaceColor = mix(nightColor.rgb, dayColor.rgb, dayFactor);
 
-            // Ensure minimum brightness so planet is always visible
-            surfaceColor = max(surfaceColor, vec3(0.12, 0.12, 0.18));
+            // Minimum brightness — just enough to see the night side
+            surfaceColor = max(surfaceColor, vec3(0.03, 0.03, 0.06));
 
             // Add city lights on dark side (reduced intensity)
             float cityIntensity = (1.0 - dayFactor) * cityLights.r * cityGlow;
@@ -182,15 +182,15 @@ export const PlanetSurfaceShader = {
             vec3 cloudColor = vec3(0.9) * clouds.r * cloudOpacity * dayFactor * 0.5; // Reduced
             surfaceColor += cloudColor;
 
-            // Fresnel rim lighting (reduced)
+            // Fresnel rim lighting — subtle
             vec3 viewDir = normalize(vViewPosition);
-            float fresnel = pow(1.0 - max(0.0, dot(vWorldNormal, viewDir)), 3.0);
-            vec3 rimColor = atmosphereColor * fresnel * 0.1; // Reduced from 0.5
+            float fresnel = pow(1.0 - max(0.0, dot(vWorldNormal, viewDir)), 4.0);
+            vec3 rimColor = atmosphereColor * fresnel * 0.06;
 
             surfaceColor += rimColor;
 
             // Add subtle detail variation
-            surfaceColor += detail * 0.05;
+            surfaceColor += detail * 0.02;
 
             gl_FragColor = vec4(surfaceColor, 1.0);
         }

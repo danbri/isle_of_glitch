@@ -214,25 +214,25 @@ export class AudioSystem {
         noise.start(t);
     }
 
-    // Charge sound — magnetic coil whine building to barely-controlled power
+    // Charge sound — deep rumbling growl building to roar
     startCharge() {
         if (!this.ctx || this.isMuted) return;
         this.stopCharge();
 
-        // Primary coil whine — sawtooth + square for aggressive edge
+        // Low growl — sawtooth pair, starts sub-bass
         this._chargeOsc = this.ctx.createOscillator();
         this._chargeOsc2 = this.ctx.createOscillator();
         this._chargeGain = this.ctx.createGain();
         this._chargeFilter = this.ctx.createBiquadFilter();
 
         this._chargeOsc.type = 'sawtooth';
-        this._chargeOsc2.type = 'square';
-        this._chargeOsc.frequency.value = 120;
-        this._chargeOsc2.frequency.value = 121; // Slight detune for beating
-        this._chargeFilter.type = 'bandpass';
-        this._chargeFilter.frequency.value = 600;
-        this._chargeFilter.Q.value = 8; // Resonant — sounds like coil inductance
-        this._chargeGain.gain.value = 0.05;
+        this._chargeOsc2.type = 'sawtooth';
+        this._chargeOsc.frequency.value = 55;  // Low A — deep growl
+        this._chargeOsc2.frequency.value = 56;  // Beating detune
+        this._chargeFilter.type = 'lowpass';
+        this._chargeFilter.frequency.value = 200; // Starts muffled
+        this._chargeFilter.Q.value = 4;
+        this._chargeGain.gain.value = 0.06;
 
         this._chargeOsc.connect(this._chargeFilter);
         this._chargeOsc2.connect(this._chargeFilter);
@@ -241,32 +241,61 @@ export class AudioSystem {
         this._chargeOsc.start();
         this._chargeOsc2.start();
 
-        // Sub-bass rumble — building power you can feel
+        // Sub-bass foundation — you feel this more than hear it
         this._chargeSub = this.ctx.createOscillator();
         this._chargeSubGain = this.ctx.createGain();
         this._chargeSub.type = 'sine';
-        this._chargeSub.frequency.value = 40;
-        this._chargeSubGain.gain.value = 0.02;
+        this._chargeSub.frequency.value = 30; // Deep sub
+        this._chargeSubGain.gain.value = 0.04;
         this._chargeSub.connect(this._chargeSubGain);
         this._chargeSubGain.connect(this.masterGain);
         this._chargeSub.start();
+
+        // Noise rumble layer — filtered white noise for texture
+        const bufSize = this.ctx.sampleRate * 4;
+        const noiseBuf = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+        const data = noiseBuf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+        this._chargeNoise = this.ctx.createBufferSource();
+        this._chargeNoise.buffer = noiseBuf;
+        this._chargeNoise.loop = true;
+        this._chargeNoiseFilter = this.ctx.createBiquadFilter();
+        this._chargeNoiseFilter.type = 'bandpass';
+        this._chargeNoiseFilter.frequency.value = 80;
+        this._chargeNoiseFilter.Q.value = 1;
+        this._chargeNoiseGain = this.ctx.createGain();
+        this._chargeNoiseGain.gain.value = 0.03;
+        this._chargeNoise.connect(this._chargeNoiseFilter);
+        this._chargeNoiseFilter.connect(this._chargeNoiseGain);
+        this._chargeNoiseGain.connect(this.masterGain);
+        this._chargeNoise.start();
     }
 
     updateCharge(progress) {
         if (!this._chargeOsc) return;
         const t = this.ctx.currentTime;
-        // Rising coil whine — accelerating pitch + widening filter
-        const freq = 120 + progress * progress * 1200; // Faster rise, higher ceiling
-        this._chargeOsc.frequency.setTargetAtTime(freq, t, 0.02);
-        this._chargeOsc2.frequency.setTargetAtTime(freq * 1.008, t, 0.02); // Wider detune = more aggressive
-        this._chargeGain.gain.setTargetAtTime(0.05 + progress * 0.15, t, 0.02);
-        this._chargeFilter.frequency.setTargetAtTime(600 + progress * 3000, t, 0.02);
-        this._chargeFilter.Q.setTargetAtTime(8 - progress * 4, t, 0.03);
+        const p = progress;
 
-        // Sub-bass builds with charge
+        // Growl rises from deep rumble to snarling roar
+        const freq = 55 + p * p * 400; // 55Hz → 455Hz at full charge
+        this._chargeOsc.frequency.setTargetAtTime(freq, t, 0.03);
+        this._chargeOsc2.frequency.setTargetAtTime(freq * 1.01 + p * 3, t, 0.03);
+        this._chargeGain.gain.setTargetAtTime(0.06 + p * 0.18, t, 0.03);
+
+        // Filter opens up: muffled growl → bright roar
+        this._chargeFilter.frequency.setTargetAtTime(200 + p * p * 2500, t, 0.03);
+        this._chargeFilter.Q.setTargetAtTime(4 - p * 2, t, 0.05);
+
+        // Sub builds
         if (this._chargeSub) {
-            this._chargeSub.frequency.setTargetAtTime(40 + progress * 30, t, 0.03);
-            this._chargeSubGain.gain.setTargetAtTime(0.02 + progress * 0.12, t, 0.02);
+            this._chargeSub.frequency.setTargetAtTime(30 + p * 25, t, 0.05);
+            this._chargeSubGain.gain.setTargetAtTime(0.04 + p * 0.14, t, 0.03);
+        }
+
+        // Noise rumble gets louder and brighter
+        if (this._chargeNoiseGain) {
+            this._chargeNoiseGain.gain.setTargetAtTime(0.03 + p * 0.08, t, 0.03);
+            this._chargeNoiseFilter.frequency.setTargetAtTime(80 + p * 600, t, 0.03);
         }
     }
 
@@ -283,6 +312,12 @@ export class AudioSystem {
             try { this._chargeSub.stop(); } catch(e) {}
             this._chargeSub = null;
             this._chargeSubGain = null;
+        }
+        if (this._chargeNoise) {
+            try { this._chargeNoise.stop(); } catch(e) {}
+            this._chargeNoise = null;
+            this._chargeNoiseFilter = null;
+            this._chargeNoiseGain = null;
         }
     }
 
