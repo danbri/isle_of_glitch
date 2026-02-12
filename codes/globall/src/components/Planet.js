@@ -630,7 +630,7 @@ export class Planet {
         const material = new THREE.MeshPhongMaterial({
             map: cloudTexture,
             transparent: true,
-            opacity: 0.15, // Reduced from 0.4
+            opacity: 0.08, // Subtle wisps — don't wash out Blue Marble
             depthWrite: false,
             blending: THREE.NormalBlending // Changed from AdditiveBlending
         });
