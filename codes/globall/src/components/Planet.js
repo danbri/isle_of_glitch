@@ -804,7 +804,7 @@ export class Planet {
         this.group.add(fieldGroup);
     }
 
-    update(time, deltaTime) {
+    update(time, deltaTime, camera) {
         // Planet does NOT auto-rotate — airports and trampolines must stay
         // aligned with their real lat/lon positions on the texture.
         // Only clouds rotate for visual interest.
@@ -823,6 +823,23 @@ export class Planet {
 
         if (this.outerAtmosphereMesh && this.outerAtmosphereMesh.material.uniforms) {
             this.outerAtmosphereMesh.material.uniforms.time.value = time;
+        }
+
+        // Hide decorative overlays that bleed through planet at distance.
+        // Grid lines at r=10.02 and magnetic arcs peek around the planet limb,
+        // creating the illusion of a see-through planet.
+        if (camera) {
+            const camDist = camera.position.length();
+            const altitude = camDist - this.radius;
+
+            // Lat/lon grid: only useful when close to surface
+            if (this.latLonGrid) {
+                this.latLonGrid.visible = altitude < 3;
+            }
+            // Magnetic field: fade out at medium distance
+            if (this.magneticField) {
+                this.magneticField.visible = altitude < 5;
+            }
         }
     }
 

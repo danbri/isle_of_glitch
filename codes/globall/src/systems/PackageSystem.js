@@ -481,6 +481,17 @@ export class PackageSystem {
         // Position marker at destination, slightly above surface
         this.destinationMarker.position.copy(destPos);
         this.destinationMarker.position.add(destPos.clone().normalize().multiplyScalar(0.3));
+
+        // Hide marker when on far side of planet (beam/arrow poke above limb)
+        if (this._camera) {
+            const toCamera = this._camera.position.clone().sub(destPos).normalize();
+            const surfaceNormal = destPos.clone().normalize();
+            const facing = surfaceNormal.dot(toCamera);
+            if (facing < 0.05) {
+                this.destinationMarker.visible = false;
+                return;
+            }
+        }
         this.destinationMarker.visible = true;
 
         // Orient: lookAt(origin) makes +z point toward center, XY = tangent plane

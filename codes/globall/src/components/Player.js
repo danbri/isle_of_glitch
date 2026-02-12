@@ -882,11 +882,11 @@ export class Player {
             this._cameraUp.lerp(playerDir, 0.03).normalize();
         }
 
-        // Camera height: close to ship — scales with altitude for perspective
+        // Camera height: close to ship — minimal altitude scaling keeps sense of location
         const speedCloseness = Math.min(speed * 0.02, 0.3);
         const groundedHeight = this._debugGroundedHeight ?? 1.0;
         const flightHeightBase = this._debugFlightHeight ?? 1.5;
-        const flightHeight = flightHeightBase + Math.min(altitude * 0.3, 2) - speedCloseness;
+        const flightHeight = flightHeightBase + Math.min(altitude * 0.05, 0.3) - speedCloseness;
         const camHeight = this.isOnGround ? groundedHeight : flightHeight;
 
         // Camera distance behind player on surface tangent
