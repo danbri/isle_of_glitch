@@ -14,8 +14,7 @@ const ROOT = __dirname;
 const SRC = path.join(ROOT, 'src');
 const ENTRY = path.join(SRC, 'main.js');
 const INDEX_HTML = path.join(ROOT, 'index.html');
-const OUT_DIR = path.join(ROOT, 'dist');
-const OUT_FILE = path.join(OUT_DIR, 'globall-inline.html');
+const OUT_FILE = path.join(ROOT, 'index-fat.html');
 
 // Resolve local imports from a JS file, returning absolute paths
 function getLocalImports(filePath) {
@@ -155,9 +154,6 @@ function build() {
     html = html.replace('</body>', `${inlineTag}\n</body>`);
 
     // Write output
-    if (!fs.existsSync(OUT_DIR)) {
-        fs.mkdirSync(OUT_DIR, { recursive: true });
-    }
     fs.writeFileSync(OUT_FILE, html, 'utf-8');
 
     const sizeKB = (Buffer.byteLength(html, 'utf-8') / 1024).toFixed(1);
