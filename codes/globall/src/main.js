@@ -647,7 +647,10 @@ class GloballGame {
             antialias: true,
             alpha: false,
             powerPreference: 'high-performance',
-            logarithmicDepthBuffer: true,
+            // logarithmicDepthBuffer disabled — was causing far-side outlines/objects
+            // to show through planet. Standard depth with tighter clip planes works
+            // for this scene (near 0.5, far 2000, ratio 4000:1 — fine for 24-bit depth).
+            logarithmicDepthBuffer: false,
             stencil: false
         });
 
@@ -677,8 +680,8 @@ class GloballGame {
         this.camera = new THREE.PerspectiveCamera(
             60,
             window.innerWidth / window.innerHeight,
-            0.1,
-            100000
+            0.5,
+            2000
         );
         this.camera.position.set(0, 0, 25);
 
@@ -1468,8 +1471,8 @@ class GloballGame {
         this.debugCameraSettings = {
             lerpSpeed: 0.15,
             fov: 60,
-            near: 0.1,
-            far: 100000
+            near: 0.5,
+            far: 2000
         };
 
         camera.add(this.debugCameraSettings, 'lerpSpeed', 0.01, 0.5, 0.01).name('Lerp Speed').onChange(v => {
