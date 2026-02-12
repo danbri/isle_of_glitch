@@ -309,7 +309,8 @@ export class TrampolineNetwork {
             const glow = new THREE.Sprite(new THREE.SpriteMaterial({
                 map: glowTexture,
                 transparent: true,
-                blending: THREE.AdditiveBlending
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
             }));
             glow.scale.set(0.8, 0.8, 1);
             glow.position.y = 0.1;
@@ -324,6 +325,7 @@ export class TrampolineNetwork {
                 map: labelTexture,
                 transparent: true,
                 depthTest: true,
+                depthWrite: false,
                 sizeAttenuation: true
             }));
             labelSprite.scale.set(1.5, 0.4, 1);
