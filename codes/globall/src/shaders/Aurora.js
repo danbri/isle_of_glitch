@@ -15,6 +15,8 @@ export const AuroraShader = {
     },
 
     vertexShader: /* glsl */`
+        #include <logdepthbuf_pars_vertex>
+
         varying vec2 vUv;
         varying vec3 vPosition;
         varying vec3 vNormal;
@@ -108,10 +110,13 @@ export const AuroraShader = {
             vElevation = totalNoise;
 
             gl_Position = projectionMatrix * modelViewMatrix * vec4(displaced, 1.0);
+            #include <logdepthbuf_vertex>
         }
     `,
 
     fragmentShader: /* glsl */`
+        #include <logdepthbuf_pars_fragment>
+
         uniform float time;
         uniform vec3 color1;  // Green
         uniform vec3 color2;  // Cyan
@@ -165,6 +170,7 @@ export const AuroraShader = {
             color += color * rays * 0.5;
 
             gl_FragColor = vec4(color, alpha * 0.6);
+            #include <logdepthbuf_fragment>
         }
     `
 };
@@ -181,6 +187,8 @@ export const AuroraParticleShader = {
     },
 
     vertexShader: /* glsl */`
+        #include <logdepthbuf_pars_vertex>
+
         uniform float time;
         uniform float pointSize;
 
@@ -207,10 +215,13 @@ export const AuroraParticleShader = {
             vAlpha = smoothstep(500.0, 100.0, -mvPosition.z);
 
             gl_Position = projectionMatrix * mvPosition;
+            #include <logdepthbuf_vertex>
         }
     `,
 
     fragmentShader: /* glsl */`
+        #include <logdepthbuf_pars_fragment>
+
         uniform float time;
 
         varying vec3 vColor;
@@ -228,6 +239,7 @@ export const AuroraParticleShader = {
             float twinkle = sin(time * 10.0 + gl_PointCoord.x * 20.0) * 0.3 + 0.7;
 
             gl_FragColor = vec4(vColor * twinkle, alpha * 0.8);
+            #include <logdepthbuf_fragment>
         }
     `
 };

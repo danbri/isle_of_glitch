@@ -116,12 +116,17 @@ planetRadius: 10      // Game units
 - ChromaticAberration shader forces alpha=1.0
 
 ### Confirmed Bugs & Fixes (reference only)
+- **See-through planet (logdepthbuf)**: Renderer uses `logarithmicDepthBuffer:true`. ALL custom `ShaderMaterial` shaders MUST include `#include <logdepthbuf_pars_vertex>` + `<logdepthbuf_vertex>` in vertex, `#include <logdepthbuf_pars_fragment>` + `<logdepthbuf_fragment>` in fragment. Without these, the planet writes standard depth while built-in materials write logarithmic depth — depth comparisons are wrong and far-side objects (outlines, city lights) show through the planet. Fixed 2026-02-12 in PlanetSurface, AtmosphericScattering, Aurora shaders. **NOTE**: A previous session (b6ff9f2) "fixed" this by hiding outlines at distance — that was a band-aid, not a fix. The logdepthbuf includes are the actual root cause. **STATUS**: Hypothesis — awaiting visual confirmation from user.
+- **Sprite bounding boxes**: Glow/label sprites in TrampolineNetwork need `depthWrite: false` or their full rectangular quads occlude objects behind transparent areas.
 - **Atmosphere Fresnel**: viewVector must use `cameraPosition` + world-space normals via `modelMatrix`
 - **EffectComposer**: never pass custom render target (resolution mismatch)
 - **Ring orientation**: `lookAt(origin)` makes XY tangent to sphere — no extra `rotateX` needed
 - **Pod jitter**: use quaternion slerp, not direct lookAt with oscillating velocity
 - **`renderer.outputColorSpace`**: keep SRGBColorSpace, LinearSRGB breaks sprite transparency
 - **roundRect()**: not supported on older iOS Safari, needs fallback
+
+### Build Tools
+- `node build-inline.js` — produces `dist/globall-inline.html` (~446KB), all 17 local JS modules inlined into one HTML file. CDN deps (Three.js, lil-gui, astronomy-engine) stay external via import map. Use for sharing with other AI tools for review.
 
 ---
 
