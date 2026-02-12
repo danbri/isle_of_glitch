@@ -2014,7 +2014,7 @@ class GloballGame {
                 }
             }
             // Camera judder during charge — barely controlled power
-            const judderIntensity = progress * progress * 0.06; // Escalating shake
+            const judderIntensity = progress * progress * 0.01; // Escalating shake (scaled for close camera)
             if (judderIntensity > 0.005) {
                 this.camera.position.x += (Math.random() - 0.5) * judderIntensity;
                 this.camera.position.y += (Math.random() - 0.5) * judderIntensity;
@@ -2144,7 +2144,7 @@ class GloballGame {
             }
 
             // Camera punch — scales with accuracy
-            this.player.cameraShake.intensity = delivery && delivery.accuracyMultiplier >= 3 ? 0.25 : 0.15;
+            this.player.cameraShake.intensity = delivery && delivery.accuracyMultiplier >= 3 ? 0.04 : 0.02;
 
             // Brief flash — hide cargo, then show for new package
             this.player.setCarrying(false);

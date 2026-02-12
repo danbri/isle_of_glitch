@@ -20,6 +20,11 @@ export class Player {
         this.planetRadius = 10;
         this.planetCenter = new THREE.Vector3(0, 0, 0);
 
+        // Ship scale — 0.1 = 10x smaller than original France-sized pod
+        // At 0.1: body ~38km diameter, roughly city-sized
+        this.shipScale = 0.1;
+        this.groundOffset = 0.05; // Height above surface (was 0.4)
+
         // Player properties
         this.bounceCharge = 1.0;
         this.bounceChargeRate = 0.8; // Fast recharge so rapid taps feel responsive
@@ -96,8 +101,8 @@ export class Player {
         this._cameraUp = playerDir.clone();
 
         const cameraPos = playerDir.clone()
-            .multiplyScalar(this.planetRadius + 7)
-            .add(this._cameraTangent.clone().multiplyScalar(2.5));
+            .multiplyScalar(this.planetRadius + 1.2)
+            .add(this._cameraTangent.clone().multiplyScalar(0.4));
 
         this.camera.position.copy(cameraPos);
         this.camera.fov = 50;
@@ -203,6 +208,7 @@ export class Player {
         this._cargoMesh = cargoGroup;
 
         this.mesh = group;
+        this.mesh.scale.setScalar(this.shipScale);
         this.mesh.position.copy(this.position);
         this.scene.add(this.mesh);
     }
@@ -229,12 +235,13 @@ export class Player {
 
     createAimIndicator() {
         // Arrow on the ground surface showing current aim direction
-        // Visible only when grounded
+        // Visible only when grounded. Scaled to match ship size.
         const group = new THREE.Group();
+        const s = this.shipScale;
 
         // Shaft — thin line from player outward
-        const shaftGeo = new THREE.CylinderGeometry(0.02, 0.02, 1.2, 4);
-        shaftGeo.translate(0, 0.6, 0); // pivot at base
+        const shaftGeo = new THREE.CylinderGeometry(0.02 * s, 0.02 * s, 1.2 * s, 4);
+        shaftGeo.translate(0, 0.6 * s, 0); // pivot at base
         shaftGeo.rotateX(Math.PI / 2); // point along +Z
         const shaftMat = new THREE.MeshBasicMaterial({
             color: 0x88ccff,
@@ -244,10 +251,10 @@ export class Player {
         group.add(new THREE.Mesh(shaftGeo, shaftMat));
 
         // Arrowhead — small cone at tip
-        const headGeo = new THREE.ConeGeometry(0.08, 0.25, 6);
-        headGeo.translate(0, 0.125, 0);
+        const headGeo = new THREE.ConeGeometry(0.08 * s, 0.25 * s, 6);
+        headGeo.translate(0, 0.125 * s, 0);
         headGeo.rotateX(Math.PI / 2);
-        headGeo.translate(0, 0, 1.2);
+        headGeo.translate(0, 0, 1.2 * s);
         const headMat = new THREE.MeshBasicMaterial({
             color: 0xaaddff,
             transparent: true,
@@ -272,7 +279,7 @@ export class Player {
 
         // Position at player's feet on the surface
         const up = this.position.clone().normalize();
-        const surfacePos = up.clone().multiplyScalar(this.planetRadius + 0.42);
+        const surfacePos = up.clone().multiplyScalar(this.planetRadius + this.groundOffset);
         this._aimIndicator.position.copy(surfacePos);
 
         // Orient: Z axis points along aim direction, Y axis points up (away from planet)
@@ -305,7 +312,7 @@ export class Player {
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
         this.speedStreaks = new THREE.Points(geometry, new THREE.PointsMaterial({
-            size: 0.06,
+            size: 0.06 * this.shipScale,
             vertexColors: true,
             transparent: true,
             opacity: 0,
@@ -320,7 +327,7 @@ export class Player {
         for (let i = 0; i < this.STREAK_COUNT; i++) {
             this._streakOffsets.push({
                 angle: Math.random() * Math.PI * 2,
-                radius: 0.5 + Math.random() * 2,
+                radius: (0.5 + Math.random() * 2) * this.shipScale,
                 phase: Math.random()
             });
         }
@@ -355,9 +362,10 @@ export class Player {
             const ox = Math.cos(s.angle) * s.radius;
             const oy = Math.sin(s.angle) * s.radius;
 
-            arr[i * 3] = this.position.x + velDir.x * t * 2 + right.x * ox + camUp.x * oy;
-            arr[i * 3 + 1] = this.position.y + velDir.y * t * 2 + right.y * ox + camUp.y * oy;
-            arr[i * 3 + 2] = this.position.z + velDir.z * t * 2 + right.z * ox + camUp.z * oy;
+            const spread = this.shipScale * 2;
+            arr[i * 3] = this.position.x + velDir.x * t * spread + right.x * ox + camUp.x * oy;
+            arr[i * 3 + 1] = this.position.y + velDir.y * t * spread + right.y * ox + camUp.y * oy;
+            arr[i * 3 + 2] = this.position.z + velDir.z * t * spread + right.z * ox + camUp.z * oy;
         }
 
         posAttr.needsUpdate = true;
@@ -477,9 +485,10 @@ export class Player {
         // Electromagnetic pulse — concentric expanding rings
         const rings = [];
         const colors = [0x4488ff, 0x6644ff, 0x88aaff];
+        const s = this.shipScale;
 
         for (let r = 0; r < 3; r++) {
-            const geometry = new THREE.RingGeometry(0.05 + r * 0.08, 0.15 + r * 0.08, 32);
+            const geometry = new THREE.RingGeometry((0.05 + r * 0.08) * s, (0.15 + r * 0.08) * s, 32);
             const material = new THREE.MeshBasicMaterial({
                 color: colors[r],
                 transparent: true,
@@ -528,7 +537,8 @@ export class Player {
     createLandingPulse(impactSpeed) {
         // Single fast-expanding ring that contracts slightly (magnetic snap)
         const intensity = Math.min(1, impactSpeed / 10);
-        const geometry = new THREE.RingGeometry(0.1, 0.2, 32);
+        const s = this.shipScale;
+        const geometry = new THREE.RingGeometry(0.1 * s, 0.2 * s, 32);
         const material = new THREE.MeshBasicMaterial({
             color: 0x88aaff,
             transparent: true,
@@ -605,7 +615,7 @@ export class Player {
         this.position.add(this.velocity.clone().multiplyScalar(deltaTime));
 
         // Ground collision
-        if (distance < this.planetRadius + 0.4) {
+        if (distance < this.planetRadius + this.groundOffset) {
             // Bounce off surface
             const normal = this.position.clone().sub(this.planetCenter).normalize();
             const dot = this.velocity.dot(normal);
@@ -617,7 +627,7 @@ export class Player {
 
                 // Camera shake on hard landings
                 if (impactSpeed > 3) {
-                    this.cameraShake.intensity = Math.min(0.3, impactSpeed * 0.02);
+                    this.cameraShake.intensity = Math.min(0.05, impactSpeed * 0.003);
                 }
 
                 // EM landing pulse near airports
@@ -637,7 +647,7 @@ export class Player {
                 // Position correction
                 this.position.copy(
                     this.planetCenter.clone().add(
-                        normal.multiplyScalar(this.planetRadius + 0.4)
+                        normal.multiplyScalar(this.planetRadius + this.groundOffset)
                     )
                 );
 
@@ -872,14 +882,14 @@ export class Player {
             this._cameraUp.lerp(playerDir, 0.03).normalize();
         }
 
-        // Camera height: closer when grounded for aiming, higher in flight
-        const speedCloseness = Math.min(speed * 0.12, 2);
-        const groundedHeight = 4; // Lower = closer = better for aiming
-        const flightHeight = 7 + Math.min(altitude * 0.5, 4) - speedCloseness;
+        // Camera height: close to ship — scales with altitude for perspective
+        const speedCloseness = Math.min(speed * 0.02, 0.3);
+        const groundedHeight = 0.6;
+        const flightHeight = 1.0 + Math.min(altitude * 0.3, 2) - speedCloseness;
         const camHeight = this.isOnGround ? groundedHeight : flightHeight;
 
         // Camera distance behind player on surface tangent
-        const behindDist = this.isOnGround ? 3.5 : 2.5;
+        const behindDist = this.isOnGround ? 0.5 : 0.35;
 
         // Position: above the player, offset behind aim/velocity direction
         const cameraTargetPos = playerDir.clone()
@@ -977,7 +987,7 @@ export class Player {
             vel = vel.clone().add(acc.clone().multiplyScalar(dt));
             pos = pos.clone().add(vel.clone().multiplyScalar(dt));
 
-            if (pos.length() < this.planetRadius + 0.4) {
+            if (pos.length() < this.planetRadius + this.groundOffset) {
                 points.push(pos.clone());
                 break;
             }
