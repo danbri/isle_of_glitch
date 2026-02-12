@@ -737,7 +737,7 @@ export class Player {
             targetScale = new THREE.Vector3(1, 1, stretch);
         }
         this._smoothScale.lerp(targetScale, 0.1);
-        this.mesh.scale.copy(this._smoothScale);
+        this.mesh.scale.copy(this._smoothScale).multiplyScalar(this.shipScale);
 
         // Eye tracking — pupils look toward target
         if (this.targetTrampoline && this.mesh.children.length >= 7) {
