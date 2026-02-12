@@ -52,6 +52,11 @@ class GloballGame {
             bestDelivery: 0
         };
 
+        // Camera mode: 'follow' (default), 'iss', 'free'
+        this._cameraMode = 'follow';
+        this._issLookAt = 'center';
+        this._latFlipped = false;
+
         // Analog touch steering (replaces binary keys)
         this.steerX = 0; // -1 to 1
         this.steerY = 0; // -1 to 1
@@ -370,6 +375,68 @@ class GloballGame {
             hmFreeCam.addEventListener('touchend', (e) => { e.preventDefault(); action(); });
         }
 
+        // Camera: follow ship (restore normal)
+        const hmCamFollow = this.getEl('hm-cam-follow');
+        if (hmCamFollow) {
+            const action = () => {
+                this._cameraMode = 'follow';
+                this.controls.enabled = false;
+                this.player.cameraEnabled = true;
+                open = false; dropdown.style.display = 'none';
+            };
+            hmCamFollow.addEventListener('click', action);
+            hmCamFollow.addEventListener('touchend', (e) => { e.preventDefault(); action(); });
+        }
+
+        // Helper: set ISS camera looking at target
+        const setISSCamera = (lookAtTarget) => {
+            if (!this.orbital) return;
+            this._cameraMode = 'iss';
+            this._issLookAt = lookAtTarget;
+            this.controls.enabled = false;
+            this.player.cameraEnabled = false;
+            open = false; dropdown.style.display = 'none';
+        };
+
+        // Camera: ISS → Europe
+        this._bindHmItem('hm-cam-iss-europe', () => setISSCamera('europe'));
+        // Camera: ISS → Ship
+        this._bindHmItem('hm-cam-iss-ship', () => setISSCamera('ship'));
+        // Camera: ISS → Earth Center
+        this._bindHmItem('hm-cam-iss-center', () => setISSCamera('center'));
+        // Camera: ISS → North Pole (Aurora)
+        this._bindHmItem('hm-cam-aurora', () => setISSCamera('aurora'));
+
+        // Flip Latitudes
+        this._bindHmItem('hm-flip-lat', () => {
+            this._latFlipped = !this._latFlipped;
+            this._applyLatFlip();
+            const el = this.getEl('hm-flip-lat');
+            if (el) el.textContent = this._latFlipped ? 'Flip Latitudes: ON' : 'Flip Latitudes';
+            open = false; dropdown.style.display = 'none';
+        });
+
+        // Teleport to Moon
+        this._bindHmItem('hm-teleport-moon', () => {
+            if (this.orbital) {
+                const moonPos = this.orbital.moonPosition.clone();
+                const moonSurface = moonPos.clone().normalize()
+                    .multiplyScalar(moonPos.length() - this.orbital.moonRadius - 0.5);
+                this.player.teleportTo(moonSurface);
+            }
+            open = false; dropdown.style.display = 'none';
+        });
+
+        // Teleport to Earth
+        this._bindHmItem('hm-teleport-earth', () => {
+            // Teleport to nearest airport or default position
+            const pos = this.planet.getSurfacePosition(48.8566, 2.3522); // Paris
+            const normal = pos.clone().normalize();
+            pos.add(normal.multiplyScalar(0.3));
+            this.player.teleportTo(pos);
+            open = false; dropdown.style.display = 'none';
+        });
+
         // Audio
         const hmAudio = this.getEl('hm-audio');
         if (hmAudio) {
@@ -384,6 +451,95 @@ class GloballGame {
             hmAudio.addEventListener('click', action);
             hmAudio.addEventListener('touchend', (e) => { e.preventDefault(); action(); });
         }
+    }
+
+    _bindHmItem(id, fn) {
+        const el = this.getEl(id);
+        if (!el) return;
+        el.addEventListener('click', fn);
+        el.addEventListener('touchend', (e) => { e.preventDefault(); fn(); });
+    }
+
+    // ISS camera mode — called each frame from animate loop
+    _updateISSCamera() {
+        if (this._cameraMode !== 'iss' || !this.orbital) return;
+
+        const issPos = this.orbital.issPosition;
+        this.camera.position.copy(issPos);
+
+        let target;
+        switch (this._issLookAt) {
+            case 'europe':
+                // Lat 48.8 (Paris), Lon 2.35
+                target = this.planet.getSurfacePosition(48.8, 2.35);
+                break;
+            case 'ship':
+                target = this.player.getPosition();
+                break;
+            case 'center':
+                target = new THREE.Vector3(0, 0, 0);
+                break;
+            case 'aurora':
+                // North pole, slightly above surface
+                target = new THREE.Vector3(0, 10.5, 0);
+                break;
+            default:
+                target = new THREE.Vector3(0, 0, 0);
+        }
+
+        this.camera.lookAt(target);
+        this.camera.up.copy(issPos.clone().normalize());
+    }
+
+    // Latitude flip — mirror all positions across the equator
+    _applyLatFlip() {
+        const flip = this._latFlipped ? -1 : 1;
+
+        // Flip planet texture by inverting Y scale
+        if (this.planet && this.planet.planetMesh) {
+            this.planet.planetMesh.scale.y = flip;
+        }
+        if (this.planet && this.planet.cloudsMesh) {
+            this.planet.cloudsMesh.scale.y = flip;
+        }
+
+        // Flip all trampoline positions
+        if (this.trampolineNetwork) {
+            this.trampolineNetwork.trampolines.forEach(t => {
+                t.position.y *= -1;
+            });
+            // Re-run LOD to reposition detailed pool
+            this.trampolineNetwork._lastLODTime = 0;
+            // Flip airport dots
+            if (this.trampolineNetwork.airportDots) {
+                const pos = this.trampolineNetwork.airportDots.geometry.attributes.position;
+                for (let i = 0; i < pos.count; i++) {
+                    pos.setY(i, pos.getY(i) * -1);
+                }
+                pos.needsUpdate = true;
+            }
+        }
+
+        // Flip city light positions
+        if (this.cityLights) {
+            this.cityLights.cityMeshes.forEach(c => { c.position.y *= -1; });
+            this.cityLights.streetMeshes.forEach(s => {
+                s.userData.lat *= -1;
+                s.children.forEach(child => {
+                    if (child.geometry && child.geometry.attributes.position) {
+                        const p = child.geometry.attributes.position;
+                        for (let i = 0; i < p.count; i++) {
+                            p.setY(i, p.getY(i) * -1);
+                        }
+                        p.needsUpdate = true;
+                    }
+                });
+            });
+        }
+
+        // Flip player position
+        this.player.position.y *= -1;
+        this.player.velocity.y *= -1;
     }
 
     async init() {
@@ -2465,6 +2621,9 @@ class GloballGame {
                 this.orbitalSettings.sunAz = `${sd.x.toFixed(2)}, ${sd.y.toFixed(2)}, ${sd.z.toFixed(2)}`;
             }
         }
+
+        // ISS camera mode — position camera at ISS, look at target
+        this._updateISSCamera();
 
         // Render with or without post-processing
         if (this.usePostProcessing) {
