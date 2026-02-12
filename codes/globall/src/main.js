@@ -932,6 +932,7 @@ class GloballGame {
         el.style.zIndex = '1000';
         el.style.maxHeight = '60vh';
         el.style.overflow = 'auto';
+        el.style.opacity = '0.9';
 
         // Draggable via title bar
         const titleBar = el.querySelector('.title');
@@ -1159,6 +1160,42 @@ class GloballGame {
         camera.add(this.debugCameraSettings, 'far', 100, 500000, 100).name('Far Clip').onChange(v => {
             this.camera.far = v;
             this.camera.updateProjectionMatrix();
+        });
+
+        // Ship & Scale — live tuning for camera distance, ship size, pad size
+        const scaleFolder = this.gui.addFolder('Ship & Scale');
+        this.scaleSettings = {
+            shipScale: this.player.shipScale,
+            groundOffset: this.player.groundOffset,
+            groundedHeight: 1.0,
+            flightHeightBase: 1.5,
+            behindGround: 0.7,
+            behindFlight: 0.5,
+            padScale: this.trampolineNetwork.padScale
+        };
+        scaleFolder.add(this.scaleSettings, 'shipScale', 0.01, 0.5, 0.01).name('Ship Scale').onChange(v => {
+            this.player.shipScale = v;
+        });
+        scaleFolder.add(this.scaleSettings, 'groundOffset', 0.01, 0.5, 0.01).name('Ground Offset').onChange(v => {
+            this.player.groundOffset = v;
+        });
+        scaleFolder.add(this.scaleSettings, 'groundedHeight', 0.3, 4, 0.1).name('Cam Grounded H').onChange(v => {
+            this.player._debugGroundedHeight = v;
+        });
+        scaleFolder.add(this.scaleSettings, 'flightHeightBase', 0.5, 6, 0.1).name('Cam Flight H').onChange(v => {
+            this.player._debugFlightHeight = v;
+        });
+        scaleFolder.add(this.scaleSettings, 'behindGround', 0.1, 3, 0.05).name('Behind (ground)').onChange(v => {
+            this.player._debugBehindGround = v;
+        });
+        scaleFolder.add(this.scaleSettings, 'behindFlight', 0.1, 3, 0.05).name('Behind (flight)').onChange(v => {
+            this.player._debugBehindFlight = v;
+        });
+        scaleFolder.add(this.scaleSettings, 'padScale', 0.1, 2, 0.05).name('Pad Scale').onChange(v => {
+            this.trampolineNetwork.padScale = v;
+            this.trampolineNetwork.detailedPool.forEach(g => {
+                if (g.visible) g.scale.setScalar(v);
+            });
         });
 
         // Debug info display

@@ -39,6 +39,7 @@ export class TrampolineNetwork {
         this._lastLODPos = new THREE.Vector3();
 
         this.DETAIL_POOL_SIZE = 25;
+        this.padScale = 0.5; // Scale factor for detailed pad rings
 
         // Magnetic field particles
         this.fieldParticles = null;
@@ -236,7 +237,7 @@ export class TrampolineNetwork {
         geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
         const material = new THREE.PointsMaterial({
-            size: 0.12,
+            size: 0.06,
             vertexColors: true,
             sizeAttenuation: true,
             transparent: true,
@@ -506,6 +507,7 @@ export class TrampolineNetwork {
                 // so XY plane = tangent to sphere. Torus sits flat. No rotateX.
                 group.position.copy(trampoline.position);
                 group.lookAt(new THREE.Vector3(0, 0, 0));
+                group.scale.setScalar(this.padScale);
 
                 // Update label
                 this.updateLabel(slot, trampoline.airport);
@@ -655,7 +657,7 @@ export class TrampolineNetwork {
         );
 
         if (mesh) {
-            mesh.scale.setScalar(1.2);
+            mesh.scale.setScalar(this.padScale * 1.2);
             mesh.children.forEach(child => {
                 if (child.material && child.material.emissiveIntensity !== undefined) {
                     child.material.emissiveIntensity = 0.6;
@@ -668,7 +670,7 @@ export class TrampolineNetwork {
         this.highlightedTrampoline = null;
 
         this.detailedPool.forEach(mesh => {
-            mesh.scale.setScalar(1);
+            mesh.scale.setScalar(this.padScale);
             mesh.children.forEach(child => {
                 if (child.material && child.material.emissiveIntensity !== undefined) {
                     child.material.emissiveIntensity = 0.3;

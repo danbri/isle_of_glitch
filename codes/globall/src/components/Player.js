@@ -101,8 +101,8 @@ export class Player {
         this._cameraUp = playerDir.clone();
 
         const cameraPos = playerDir.clone()
-            .multiplyScalar(this.planetRadius + 1.2)
-            .add(this._cameraTangent.clone().multiplyScalar(0.4));
+            .multiplyScalar(this.planetRadius + 1.5)
+            .add(this._cameraTangent.clone().multiplyScalar(0.6));
 
         this.camera.position.copy(cameraPos);
         this.camera.fov = 50;
@@ -737,7 +737,7 @@ export class Player {
             targetScale = new THREE.Vector3(1, 1, stretch);
         }
         this._smoothScale.lerp(targetScale, 0.1);
-        this.mesh.scale.copy(this._smoothScale);
+        this.mesh.scale.copy(this._smoothScale).multiplyScalar(this.shipScale);
 
         // Eye tracking — pupils look toward target
         if (this.targetTrampoline && this.mesh.children.length >= 7) {
@@ -884,12 +884,15 @@ export class Player {
 
         // Camera height: close to ship — scales with altitude for perspective
         const speedCloseness = Math.min(speed * 0.02, 0.3);
-        const groundedHeight = 0.6;
-        const flightHeight = 1.0 + Math.min(altitude * 0.3, 2) - speedCloseness;
+        const groundedHeight = this._debugGroundedHeight ?? 1.0;
+        const flightHeightBase = this._debugFlightHeight ?? 1.5;
+        const flightHeight = flightHeightBase + Math.min(altitude * 0.3, 2) - speedCloseness;
         const camHeight = this.isOnGround ? groundedHeight : flightHeight;
 
         // Camera distance behind player on surface tangent
-        const behindDist = this.isOnGround ? 0.5 : 0.35;
+        const behindGround = this._debugBehindGround ?? 0.7;
+        const behindFlight = this._debugBehindFlight ?? 0.5;
+        const behindDist = this.isOnGround ? behindGround : behindFlight;
 
         // Position: above the player, offset behind aim/velocity direction
         const cameraTargetPos = playerDir.clone()
