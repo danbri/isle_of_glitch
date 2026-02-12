@@ -1154,6 +1154,48 @@
                     <span>Altitude: <span id="dbg-altitude">--</span></span>
                     <span>Position: <span id="dbg-position">--</span></span>
                 </div>
+                <!-- Rendering debug (rapid exploration) -->
+                <div style="margin-top:8px; padding-top:6px; border-top:1px solid rgba(68,136,255,0.15);">
+                    <div style="font-size:0.5rem; opacity:0.4; margin-bottom:4px; letter-spacing:0.1em;">RENDERING</div>
+                    <div style="display:flex; flex-wrap:wrap; gap:4px 8px; margin-bottom:6px;">
+                        <label style="display:flex; align-items:center; gap:3px; cursor:pointer;">
+                            <input id="dbg-wireframe" type="checkbox" style="margin:0;"> <span>Wireframe</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:3px; cursor:pointer;">
+                            <input id="dbg-outlines-vis" type="checkbox" checked style="margin:0;"> <span>Outlines</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:3px; cursor:pointer;">
+                            <input id="dbg-atmo-vis" type="checkbox" checked style="margin:0;"> <span>Atmo</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:3px; cursor:pointer;">
+                            <input id="dbg-postproc" type="checkbox" checked style="margin:0;"> <span>PostFX</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:3px; cursor:pointer;">
+                            <input id="dbg-outline-altcull" type="checkbox" style="margin:0;"> <span>Alt Cull</span>
+                        </label>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 12px;">
+                        <div class="sc-slider-group">
+                            <label>Near Clip <span id="dbg-val-near">0.50</span></label>
+                            <input id="dbg-near" type="range" min="0.01" max="5" step="0.01" value="0.5" style="width:100%;" />
+                        </div>
+                        <div class="sc-slider-group">
+                            <label>Far Clip <span id="dbg-val-far">2000</span></label>
+                            <input id="dbg-far" type="range" min="100" max="10000" step="100" value="2000" style="width:100%;" />
+                        </div>
+                        <div class="sc-slider-group">
+                            <label>Outline α <span id="dbg-val-outlineAlpha">0.60</span></label>
+                            <input id="dbg-outlineAlpha" type="range" min="0" max="1" step="0.05" value="0.6" style="width:100%;" />
+                        </div>
+                        <div class="sc-slider-group">
+                            <label>Cloud α <span id="dbg-val-cloudAlpha">0.08</span></label>
+                            <input id="dbg-cloudAlpha" type="range" min="0" max="0.5" step="0.01" value="0.08" style="width:100%;" />
+                        </div>
+                    </div>
+                    <div id="dbg-gl-info" style="margin-top:6px; font-size:0.5rem; opacity:0.35;">
+                        GPU: <span id="dbg-gpu">--</span> | Depth: <span id="dbg-depth-bits">--</span> | Precision: <span id="dbg-depth-prec">--</span>
+                    </div>
+                </div>
             </div>
             <!-- Control panel below map -->
             <div id="sc-controls" style="width:100%; padding:6px 10px 8px; border-top:1px solid rgba(68,136,255,0.1); font-family:monospace; font-size:0.6rem; color:rgba(200,220,255,0.6); display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center;">

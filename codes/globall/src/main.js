@@ -299,6 +299,71 @@ class GloballGame {
         slider('dbg-exposure', 'dbg-val-exposure', null, null, v => {
             this.renderer.toneMappingExposure = v;
         });
+
+        // ── Rendering debug sliders ──
+        slider('dbg-near', 'dbg-val-near', null, null, v => {
+            this.camera.near = v;
+            this.camera.updateProjectionMatrix();
+            if (this.debugCameraSettings) this.debugCameraSettings.near = v;
+        });
+        slider('dbg-far', 'dbg-val-far', null, null, v => {
+            this.camera.far = v;
+            this.camera.updateProjectionMatrix();
+            if (this.debugCameraSettings) this.debugCameraSettings.far = v;
+        });
+        slider('dbg-outlineAlpha', 'dbg-val-outlineAlpha', null, null, v => {
+            if (this.countryOutlines && this.countryOutlines.outlines) {
+                this.countryOutlines.outlines.material.opacity = v;
+            }
+        });
+        slider('dbg-cloudAlpha', 'dbg-val-cloudAlpha', null, null, v => {
+            if (this.planet && this.planet.cloudsMesh) {
+                this.planet.cloudsMesh.material.opacity = v;
+            }
+        });
+
+        // ── Rendering debug toggles ──
+        const toggle = (id, cb) => {
+            const el = this.getEl(id);
+            if (!el) return;
+            el.addEventListener('change', () => cb(el.checked));
+        };
+
+        toggle('dbg-wireframe', v => {
+            if (this.planet && this.planet.planetMesh) this.planet.planetMesh.material.wireframe = v;
+            if (this.planet && this.planet.cloudsMesh) this.planet.cloudsMesh.material.wireframe = v;
+            if (this.renderDebugSettings) this.renderDebugSettings.wireframe = v;
+        });
+        toggle('dbg-outlines-vis', v => {
+            if (this.countryOutlines && this.countryOutlines.outlines) {
+                this.countryOutlines.outlines.visible = v;
+            }
+        });
+        toggle('dbg-atmo-vis', v => {
+            if (this.planet) {
+                if (this.planet.atmosphereMesh) this.planet.atmosphereMesh.visible = v;
+                if (this.planet.outerAtmosphereMesh) this.planet.outerAtmosphereMesh.visible = v;
+            }
+        });
+        toggle('dbg-postproc', v => {
+            this.usePostProcessing = v;
+            if (this.postProcessSettings) this.postProcessSettings.masterEnable = v;
+        });
+        toggle('dbg-outline-altcull', v => {
+            if (this.renderDebugSettings) this.renderDebugSettings.outlineAltCull = v;
+        });
+
+        // GL info — populate once renderer is available
+        this._populateGLInfo();
+    }
+
+    _populateGLInfo() {
+        if (!this.renderer) return;
+        const gl = this.renderer.getContext();
+        const gpuEl = this.getEl('dbg-gpu');
+        const depthEl = this.getEl('dbg-depth-bits');
+        if (gpuEl) gpuEl.textContent = (gl.getParameter(gl.RENDERER) || 'unknown').substring(0, 30);
+        if (depthEl) depthEl.textContent = gl.getParameter(gl.DEPTH_BITS) + '-bit';
     }
 
     setupHamburgerMenu() {
@@ -1559,6 +1624,9 @@ class GloballGame {
         orbitalFolder.add(this.orbitalSettings, 'moonDist').name('Moon dist').listen();
         orbitalFolder.add(this.orbitalSettings, 'sunAz').name('Sun dir').listen();
 
+        // ─── Rendering debug (rapid graphics exploration) ─────────────
+        this.setupRenderingDebugFolder();
+
         // FPS counter
         this.fpsFrames = 0;
         this.fpsTime = performance.now();
@@ -1629,6 +1697,162 @@ class GloballGame {
             });
         }
 
+    }
+
+    setupRenderingDebugFolder() {
+        const renderFolder = this.gui.addFolder('Rendering');
+
+        // ── GL Capabilities (read-only) ──
+        const gl = this.renderer.getContext();
+        const dbuf = gl.getParameter(gl.DEPTH_BITS);
+        const maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+        const vendor = gl.getParameter(gl.RENDERER) || 'unknown';
+        const halfFloat = !!(gl.getExtension('EXT_color_buffer_float') || gl.getExtension('EXT_color_buffer_half_float'));
+
+        this.renderDebugInfo = {
+            glRenderer: vendor.substring(0, 40),
+            depthBits: `${dbuf}-bit`,
+            maxTexture: `${maxTex}px`,
+            halfFloat: halfFloat ? 'yes' : 'no',
+            depthPrecision: '—' // updated per frame
+        };
+        const glInfo = renderFolder.addFolder('GL Info');
+        glInfo.add(this.renderDebugInfo, 'glRenderer').name('GPU').listen();
+        glInfo.add(this.renderDebugInfo, 'depthBits').name('Depth Buffer').listen();
+        glInfo.add(this.renderDebugInfo, 'maxTexture').name('Max Texture').listen();
+        glInfo.add(this.renderDebugInfo, 'halfFloat').name('Float RT').listen();
+        glInfo.add(this.renderDebugInfo, 'depthPrecision').name('Depth Prec.').listen();
+
+        // ── Wireframe & visual debug ──
+        this.renderDebugSettings = {
+            wireframe: false,
+            sortObjects: true,
+            outlineOpacity: 0.6,
+            outlineVisible: true,
+            outlineAltCull: false, // was true before logdepthbuf fix
+            airportDotOpacity: 0.9,
+            atmosphereOpacity: 0.5,
+            cloudOpacity: 0.08,
+            planetDepthWrite: true,
+            outlineDepthTest: true,
+            atmosphereDepthTest: true,
+            showRenderOrder: false
+        };
+
+        renderFolder.add(this.renderDebugSettings, 'wireframe').name('Wireframe').onChange(v => {
+            // Toggle wireframe on planet surface
+            if (this.planet.planetMesh) {
+                this.planet.planetMesh.material.wireframe = v;
+            }
+            // Also on clouds
+            if (this.planet.cloudsMesh) {
+                this.planet.cloudsMesh.material.wireframe = v;
+            }
+        });
+
+        renderFolder.add(this.renderDebugSettings, 'sortObjects').name('Sort Objects').onChange(v => {
+            this.renderer.sortObjects = v;
+        });
+
+        // ── Depth & blending controls ──
+        const depthFolder = renderFolder.addFolder('Depth & Blending');
+
+        depthFolder.add(this.renderDebugSettings, 'planetDepthWrite').name('Planet DepthWrite').onChange(v => {
+            if (this.planet.planetMesh) {
+                this.planet.planetMesh.material.depthWrite = v;
+            }
+        });
+
+        depthFolder.add(this.renderDebugSettings, 'outlineAltCull').name('Outline Alt Cull');
+
+        depthFolder.add(this.renderDebugSettings, 'outlineDepthTest').name('Outline DepthTest').onChange(v => {
+            if (this.countryOutlines && this.countryOutlines.outlines) {
+                this.countryOutlines.outlines.material.depthTest = v;
+            }
+        });
+
+        depthFolder.add(this.renderDebugSettings, 'atmosphereDepthTest').name('Atmo DepthTest').onChange(v => {
+            if (this.planet.atmosphereMesh) {
+                this.planet.atmosphereMesh.material.depthTest = v;
+            }
+            if (this.planet.outerAtmosphereMesh) {
+                this.planet.outerAtmosphereMesh.material.depthTest = v;
+            }
+        });
+
+        // ── Opacity sliders (rapid tweaking) ──
+        const opacityFolder = renderFolder.addFolder('Opacity');
+
+        opacityFolder.add(this.renderDebugSettings, 'outlineOpacity', 0, 1, 0.05).name('Country Outlines').onChange(v => {
+            if (this.countryOutlines && this.countryOutlines.outlines) {
+                this.countryOutlines.outlines.material.opacity = v;
+            }
+        });
+
+        opacityFolder.add(this.renderDebugSettings, 'airportDotOpacity', 0, 1, 0.05).name('Airport Dots').onChange(v => {
+            if (this.trampolineNetwork && this.trampolineNetwork.airportDots) {
+                this.trampolineNetwork.airportDots.material.opacity = v;
+            }
+        });
+
+        opacityFolder.add(this.renderDebugSettings, 'atmosphereOpacity', 0, 1, 0.05).name('Atmosphere').onChange(v => {
+            if (this.planet.atmosphereMesh) {
+                this.planet.atmosphereMesh.material.uniforms.glowIntensity.value = v;
+            }
+            if (this.planet.outerAtmosphereMesh) {
+                this.planet.outerAtmosphereMesh.material.uniforms.glowIntensity.value = v * 0.7;
+            }
+        });
+
+        opacityFolder.add(this.renderDebugSettings, 'cloudOpacity', 0, 0.5, 0.01).name('Clouds').onChange(v => {
+            if (this.planet.cloudsMesh) {
+                this.planet.cloudsMesh.material.opacity = v;
+            }
+        });
+
+        // ── Render order overrides ──
+        const orderFolder = renderFolder.addFolder('Render Order');
+        this.renderOrderSettings = {
+            planetOrder: 0,
+            outlineOrder: 1,
+            atmosphereOrder: 2,
+            trampolineOrder: 3,
+            labelOrder: 10
+        };
+
+        orderFolder.add(this.renderOrderSettings, 'planetOrder', -10, 20, 1).name('Planet').onChange(v => {
+            if (this.planet.planetMesh) this.planet.planetMesh.renderOrder = v;
+        });
+        orderFolder.add(this.renderOrderSettings, 'outlineOrder', -10, 20, 1).name('Outlines').onChange(v => {
+            if (this.countryOutlines && this.countryOutlines.outlines) {
+                this.countryOutlines.outlines.renderOrder = v;
+            }
+        });
+        orderFolder.add(this.renderOrderSettings, 'atmosphereOrder', -10, 20, 1).name('Atmosphere').onChange(v => {
+            if (this.planet.atmosphereMesh) this.planet.atmosphereMesh.renderOrder = v;
+            if (this.planet.outerAtmosphereMesh) this.planet.outerAtmosphereMesh.renderOrder = v;
+        });
+        orderFolder.add(this.renderOrderSettings, 'trampolineOrder', -10, 20, 1).name('Trampolines').onChange(v => {
+            this.trampolineNetwork.detailedPool.forEach(g => { g.renderOrder = v; });
+        });
+
+        renderFolder.open();
+    }
+
+    updateDepthPrecisionReadout() {
+        // Estimate depth buffer precision at current camera distance to planet surface
+        if (!this.renderDebugInfo || !this.camera || !this.player) return;
+        const camDist = this.camera.position.length();
+        const nearDist = Math.max(camDist - this.planet.radius, 0.5);
+        const farDist = camDist + this.planet.radius;
+        const n = this.camera.near;
+        const f = this.camera.far;
+        // Normalized depth at near and far sides of planet
+        const dNear = (1/n - 1/nearDist) / (1/n - 1/f);
+        const dFar = (1/n - 1/farDist) / (1/n - 1/f);
+        // Depth buffer steps between front and back of planet (24-bit)
+        const steps = Math.round(Math.abs(dFar - dNear) * (1 << 24));
+        this.renderDebugInfo.depthPrecision = `~${steps} steps (planet)`;
     }
 
     updateUI() {
@@ -2324,11 +2548,14 @@ class GloballGame {
         this.trampolineNetwork.update(time, this.deltaTime, this.player.getPosition());
         this.player.update(time, this.deltaTime, this.keys);
 
-        // Hide country outlines at distance — at r=10.02 they peek around the
-        // planet limb (r=10) and create the illusion of a see-through planet.
+        // Country outline visibility — distance culling is off by default now
+        // that logarithmicDepthBuffer is disabled (standard depth handles occlusion).
+        // Can be re-enabled via debug panel "Outline Alt Cull" toggle.
         if (this.countryOutlines && this.countryOutlines.outlines) {
-            const camAlt = this.camera.position.length() - 10;
-            this.countryOutlines.outlines.visible = camAlt < 4;
+            if (this.renderDebugSettings && this.renderDebugSettings.outlineAltCull) {
+                const camAlt = this.camera.position.length() - 10;
+                this.countryOutlines.outlines.visible = camAlt < 4;
+            }
         }
 
         // Trajectory preview during charge hold
@@ -2612,6 +2839,7 @@ class GloballGame {
             this.debugInfo.playerPos = `${pp.x.toFixed(1)}, ${pp.y.toFixed(1)}, ${pp.z.toFixed(1)}`;
             this.debugInfo.altitude = altitude.toFixed(1);
             this.debugInfo.velocity = speed.toFixed(2);
+            this.updateDepthPrecisionReadout();
 
             // Update in-panel debug readouts (Ship's Computer DEBUG tab)
             const dbgFps = this.getEl('dbg-fps');
@@ -2622,6 +2850,8 @@ class GloballGame {
             if (dbgAlt) dbgAlt.textContent = altitude.toFixed(0) + ' km';
             const dbgPos = this.getEl('dbg-position');
             if (dbgPos) dbgPos.textContent = this.debugInfo.playerPos;
+            const dbgPrec = this.getEl('dbg-depth-prec');
+            if (dbgPrec && this.renderDebugInfo) dbgPrec.textContent = this.renderDebugInfo.depthPrecision;
 
             // Orbital info
             if (this.orbitalSettings && this.orbital) {
