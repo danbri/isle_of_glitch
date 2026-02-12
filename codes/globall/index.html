@@ -28,6 +28,22 @@
             color: #88bbff !important;
         }
 
+        .sc-slider-group label {
+            display: flex; justify-content: space-between;
+            font-size: 0.55rem; opacity: 0.6; margin-bottom: 2px;
+        }
+        .sc-slider-group input[type="range"] {
+            -webkit-appearance: none; appearance: none;
+            height: 4px; background: rgba(68,136,255,0.2); border-radius: 2px; outline: none;
+        }
+        .sc-slider-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 12px; height: 12px;
+            background: #88bbff; border-radius: 50%; cursor: pointer;
+        }
+
+        .hm-item:hover { background: rgba(68,136,255,0.15); }
+        .hm-item.active { color: #44ff88 !important; }
+
         #canvas-container {
             position: fixed;
             top: 0;
@@ -1062,18 +1078,14 @@
             </div>
         </div>
 
-        <!-- Audio mute toggle -->
-        <div id="audio-toggle" style="position:fixed; top:max(env(safe-area-inset-top, 0px), 8px); right:8px; width:36px; height:36px; background:rgba(0,0,0,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:200; font-size:1.1rem; -webkit-tap-highlight-color:transparent; pointer-events:auto; touch-action:manipulation; backdrop-filter:blur(4px);">
+        <!-- Audio/Camera/Computer toggles — hidden, accessed via hamburger menu -->
+        <div id="audio-toggle" style="display:none;">
             <span id="audio-icon">🔊</span>
         </div>
-
-        <!-- Free camera / globe explore toggle -->
-        <div id="camera-toggle" style="position:fixed; top:max(calc(env(safe-area-inset-top, 0px) + 44px), 52px); right:8px; width:36px; height:36px; background:rgba(0,0,0,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:200; font-size:1.1rem; -webkit-tap-highlight-color:transparent; pointer-events:auto; touch-action:manipulation; backdrop-filter:blur(4px);">
-            <span id="camera-icon" style="font-size:0.9rem;">🌍</span>
+        <div id="camera-toggle" style="display:none;">
+            <span id="camera-icon">🌍</span>
         </div>
-
-        <!-- Ship's Computer toggle -->
-        <div id="computer-toggle" style="position:fixed; top:max(calc(env(safe-area-inset-top, 0px) + 88px), 96px); right:8px; width:36px; height:36px; background:rgba(0,0,0,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:200; font-size:0.9rem; -webkit-tap-highlight-color:transparent; pointer-events:auto; touch-action:manipulation; backdrop-filter:blur(4px);">
+        <div id="computer-toggle" style="display:none;">
             <span id="computer-icon">&#9776;</span>
         </div>
 
@@ -1084,10 +1096,62 @@
                 <div style="display:flex; gap:4px;">
                     <button id="sc-tab-nav" class="sc-tab active" style="background:rgba(68,136,255,0.2); border:1px solid rgba(68,136,255,0.3); color:#88bbff; padding:4px 12px; border-radius:6px; font-size:0.65rem; letter-spacing:0.15em; cursor:pointer; font-family:monospace;">NAV</button>
                     <button id="sc-tab-orbit" class="sc-tab" style="background:rgba(68,136,255,0.05); border:1px solid rgba(68,136,255,0.15); color:#6688aa; padding:4px 12px; border-radius:6px; font-size:0.65rem; letter-spacing:0.15em; cursor:pointer; font-family:monospace;">ORBIT</button>
+                    <button id="sc-tab-debug" class="sc-tab" style="background:rgba(68,136,255,0.05); border:1px solid rgba(68,136,255,0.15); color:#6688aa; padding:4px 12px; border-radius:6px; font-size:0.65rem; letter-spacing:0.15em; cursor:pointer; font-family:monospace;">DEBUG</button>
                 </div>
                 <button id="sc-close" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:1.2rem; cursor:pointer; padding:0 4px; line-height:1;">&#10005;</button>
             </div>
             <canvas id="ships-computer-canvas" style="display:block; margin:0; padding:0;"></canvas>
+            <!-- Debug sliders panel (shown when DEBUG tab active) -->
+            <div id="sc-debug-panel" style="display:none; width:100%; max-height:320px; overflow-y:auto; padding:8px 12px; font-family:monospace; font-size:0.6rem; color:rgba(200,220,255,0.7);">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 16px;">
+                    <div class="sc-slider-group">
+                        <label>Ship Scale <span id="dbg-val-shipScale">0.10</span></label>
+                        <input id="dbg-shipScale" type="range" min="0.01" max="0.5" step="0.01" value="0.1" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Ground Offset <span id="dbg-val-groundOffset">0.05</span></label>
+                        <input id="dbg-groundOffset" type="range" min="0.01" max="0.5" step="0.01" value="0.05" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Cam Height (ground) <span id="dbg-val-camGndH">1.0</span></label>
+                        <input id="dbg-camGndH" type="range" min="0.3" max="4" step="0.1" value="1.0" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Cam Height (flight) <span id="dbg-val-camFlyH">1.5</span></label>
+                        <input id="dbg-camFlyH" type="range" min="0.5" max="6" step="0.1" value="1.5" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Behind (ground) <span id="dbg-val-behindGnd">0.70</span></label>
+                        <input id="dbg-behindGnd" type="range" min="0.1" max="3" step="0.05" value="0.7" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Behind (flight) <span id="dbg-val-behindFly">0.50</span></label>
+                        <input id="dbg-behindFly" type="range" min="0.1" max="3" step="0.05" value="0.5" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Pad Scale <span id="dbg-val-padScale">0.50</span></label>
+                        <input id="dbg-padScale" type="range" min="0.1" max="2" step="0.05" value="0.5" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>FOV <span id="dbg-val-fov">50</span></label>
+                        <input id="dbg-fov" type="range" min="30" max="120" step="1" value="50" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Bloom Strength <span id="dbg-val-bloom">0.50</span></label>
+                        <input id="dbg-bloom" type="range" min="0" max="3" step="0.05" value="0.5" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Exposure <span id="dbg-val-exposure">1.00</span></label>
+                        <input id="dbg-exposure" type="range" min="0" max="3" step="0.05" value="1.0" style="width:100%;" />
+                    </div>
+                </div>
+                <div id="dbg-readouts" style="margin-top:8px; padding-top:6px; border-top:1px solid rgba(68,136,255,0.15); display:grid; grid-template-columns:1fr 1fr; gap:2px 16px; font-size:0.55rem; opacity:0.5;">
+                    <span>FPS: <span id="dbg-fps">--</span></span>
+                    <span>Speed: <span id="dbg-speed">--</span></span>
+                    <span>Altitude: <span id="dbg-altitude">--</span></span>
+                    <span>Position: <span id="dbg-position">--</span></span>
+                </div>
+            </div>
             <!-- Control panel below map -->
             <div id="sc-controls" style="width:100%; padding:6px 10px 8px; border-top:1px solid rgba(68,136,255,0.1); font-family:monospace; font-size:0.6rem; color:rgba(200,220,255,0.6); display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center;">
                 <!-- Date/time -->
@@ -1122,8 +1186,21 @@
             </div>
         </div>
 
-        <!-- Settings button — always visible, bottom-left -->
-        <div id="settings-toggle" style="position:fixed; bottom:max(env(safe-area-inset-bottom, 0px), 8px); left:8px; width:36px; height:36px; background:rgba(0,0,0,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:200; font-size:1rem; -webkit-tap-highlight-color:transparent; pointer-events:auto; touch-action:manipulation; backdrop-filter:blur(4px); opacity:0.5;">
+        <!-- Hamburger menu — top-left -->
+        <div id="hamburger-menu" style="position:fixed; top:max(env(safe-area-inset-top, 0px), 8px); left:8px; z-index:250; pointer-events:auto;">
+            <div id="hamburger-btn" style="width:36px; height:36px; background:rgba(0,0,0,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.1rem; -webkit-tap-highlight-color:transparent; touch-action:manipulation; backdrop-filter:blur(4px);">
+                <span style="font-size:0.9rem; line-height:1;">&#9776;</span>
+            </div>
+            <div id="hamburger-dropdown" style="display:none; position:absolute; top:40px; left:0; min-width:160px; background:rgba(5,8,20,0.92); border:1px solid rgba(68,136,255,0.25); border-radius:8px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,0.5);">
+                <div class="hm-item" id="hm-computer" style="padding:10px 14px; cursor:pointer; font-family:monospace; font-size:0.7rem; color:rgba(200,220,255,0.7); border-bottom:1px solid rgba(68,136,255,0.1);">Ship's Computer</div>
+                <div class="hm-item" id="hm-debug" style="padding:10px 14px; cursor:pointer; font-family:monospace; font-size:0.7rem; color:rgba(200,220,255,0.7); border-bottom:1px solid rgba(68,136,255,0.1);">Debug Panel</div>
+                <div class="hm-item" id="hm-free-cam" style="padding:10px 14px; cursor:pointer; font-family:monospace; font-size:0.7rem; color:rgba(200,220,255,0.7); border-bottom:1px solid rgba(68,136,255,0.1);">Free Camera</div>
+                <div class="hm-item" id="hm-audio" style="padding:10px 14px; cursor:pointer; font-family:monospace; font-size:0.7rem; color:rgba(200,220,255,0.7);">Audio: ON</div>
+            </div>
+        </div>
+
+        <!-- Settings button — kept for legacy/H-key toggle -->
+        <div id="settings-toggle" style="display:none; position:fixed; bottom:max(env(safe-area-inset-bottom, 0px), 8px); left:8px; width:36px; height:36px; background:rgba(0,0,0,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:200; font-size:1rem; -webkit-tap-highlight-color:transparent; pointer-events:auto; touch-action:manipulation; backdrop-filter:blur(4px); opacity:0.5;">
             <span id="settings-icon">&#9881;</span>
         </div>
 
