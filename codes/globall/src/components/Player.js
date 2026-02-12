@@ -101,8 +101,8 @@ export class Player {
         this._cameraUp = playerDir.clone();
 
         const cameraPos = playerDir.clone()
-            .multiplyScalar(this.planetRadius + 1.2)
-            .add(this._cameraTangent.clone().multiplyScalar(0.4));
+            .multiplyScalar(this.planetRadius + 1.5)
+            .add(this._cameraTangent.clone().multiplyScalar(0.6));
 
         this.camera.position.copy(cameraPos);
         this.camera.fov = 50;
@@ -884,12 +884,12 @@ export class Player {
 
         // Camera height: close to ship — scales with altitude for perspective
         const speedCloseness = Math.min(speed * 0.02, 0.3);
-        const groundedHeight = 0.6;
-        const flightHeight = 1.0 + Math.min(altitude * 0.3, 2) - speedCloseness;
+        const groundedHeight = 1.0;
+        const flightHeight = 1.5 + Math.min(altitude * 0.3, 2) - speedCloseness;
         const camHeight = this.isOnGround ? groundedHeight : flightHeight;
 
         // Camera distance behind player on surface tangent
-        const behindDist = this.isOnGround ? 0.5 : 0.35;
+        const behindDist = this.isOnGround ? 0.7 : 0.5;
 
         // Position: above the player, offset behind aim/velocity direction
         const cameraTargetPos = playerDir.clone()
