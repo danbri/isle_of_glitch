@@ -621,8 +621,10 @@ export class Player {
         this.position.add(this.velocity.clone().multiplyScalar(deltaTime));
 
         // Ground collision with rest threshold and hysteresis
+        // Must use post-integration distance (not stale `distance` from gravity calc)
+        const newDistance = this.position.distanceTo(this.planetCenter);
         const normal = this.position.clone().sub(this.planetCenter).normalize();
-        if (distance < this.planetRadius + this.groundOffset) {
+        if (newDistance < this.planetRadius + this.groundOffset) {
             const dot = this.velocity.dot(normal);
 
             if (dot < 0) {
@@ -650,9 +652,12 @@ export class Player {
                     this.velocity.sub(radial); // remove radial component
                     this.velocity.multiplyScalar(0.9); // damp tangential slide
                 } else {
+                    // Remove inward radial velocity, then add outward bounce
+                    // (old formula with bounciness<0.5 didn't reverse direction)
+                    const radial = normal.clone().multiplyScalar(dot);
+                    this.velocity.sub(radial); // zero out radial component
                     const bounciness = impactSpeed > 5 ? 0.5 : 0.3;
-                    const reflection = normal.clone().multiplyScalar(-2 * dot * bounciness);
-                    this.velocity.add(reflection);
+                    this.velocity.add(normal.clone().multiplyScalar(impactSpeed * bounciness));
                     this.velocity.multiplyScalar(0.85);
                 }
 
@@ -672,9 +677,18 @@ export class Player {
             // Hysteresis: only leave ground state if moving away fast enough
             const radialSpeed = this.velocity.dot(normal);
             if (this.isOnGround && radialSpeed < this._takeoffThreshold) {
-                // Still "grounded" — clamp near surface
+                // Still "grounded" — clamp to surface so gravity doesn't pull us down
                 this.isOnGround = true;
                 this._groundedTimer += deltaTime;
+                // Kill any inward radial velocity and keep on surface
+                if (radialSpeed < 0) {
+                    this.velocity.sub(normal.clone().multiplyScalar(radialSpeed));
+                }
+                this.position.copy(
+                    this.planetCenter.clone().add(
+                        normal.clone().multiplyScalar(this.planetRadius + this.groundOffset)
+                    )
+                );
             } else {
                 this.isOnGround = false;
                 this._groundedTimer = 0;
@@ -685,8 +699,9 @@ export class Player {
         const blendTarget = this.isOnGround ? 1 : 0;
         this._groundBlend += (blendTarget - this._groundBlend) * 0.08;
 
-        // Magnetic attraction to nearby airports
-        if (this.trampolineNetwork && altitude < 2) {
+        // Magnetic attraction to nearby airports (use current altitude, not stale)
+        const currentAltitude = this.position.distanceTo(this.planetCenter) - this.planetRadius;
+        if (this.trampolineNetwork && currentAltitude < 2) {
             const { trampoline: nearest, distance: nearestDist } = 
                 this.trampolineNetwork.getNearestTrampoline(this.position);
             if (nearest && nearestDist < 3) {
