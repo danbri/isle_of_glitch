@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cassette Tape Calculator — Isle of Glitch</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --warn: #f0883e;
+    --ok: #3fb950;
+    --bad: #f85149;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--text); }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 1rem;
+    line-height: 1.45;
+  }
+  h1 {
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+  .lede { color: var(--muted); margin-top: 0; margin-bottom: 1.5rem; }
+  a { color: var(--accent); }
+  fieldset {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--panel);
+    margin: 1rem 0;
+    padding: 1rem;
+  }
+  legend { color: var(--muted); padding: 0 0.5rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  textarea, input, select, button {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.95rem;
+    background: #0b1018;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+  }
+  textarea {
+    width: 100%;
+    min-height: 16rem;
+    resize: vertical;
+    white-space: pre;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin: 0.5rem 0; }
+  .row label { color: var(--muted); font-size: 0.9rem; }
+  button {
+    cursor: pointer;
+    background: #1f6feb;
+    border-color: #1f6feb;
+    color: white;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+  }
+  button.secondary { background: transparent; color: var(--accent); border-color: var(--border); font-weight: normal; }
+  button:hover { filter: brightness(1.1); }
+  .status { font-size: 0.9rem; color: var(--muted); margin-top: 0.5rem; min-height: 1.2em; }
+  .status.bad { color: var(--bad); }
+  .status.warn { color: var(--warn); }
+  .status.ok { color: var(--ok); }
+
+  /* J-card */
+  .jcard-wrap { margin-top: 1.5rem; }
+  .jcard {
+    background: #fdfdfb;
+    color: #111;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0;
+    margin: 0 auto;
+    /* Standard cassette J-card unfolded: ~4" tall, with front + spine + back columns */
+    width: 100%;
+    max-width: 720px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+  .jcard-grid {
+    display: grid;
+    grid-template-columns: 1fr 28px 1fr;
+    min-height: 360px;
+  }
+  .jcard-panel { padding: 0.9rem 1rem; }
+  .jcard-panel.back {
+    border-right: 1px dashed #bbb;
+  }
+  .jcard-panel.spine {
+    border-right: 1px dashed #bbb;
+    background: #111;
+    color: #f5f5f1;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    text-align: center;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    padding: 0.5rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .jcard-panel.front {
+    background: #111;
+    color: #f5f5f1;
+  }
+  .jcard-panel.front h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.4rem;
+    letter-spacing: 0.02em;
+  }
+  .jcard-panel.front .sub { color: #b9b6ad; font-size: 0.85rem; }
+  .jcard-panel.front .stamp {
+    margin-top: 1rem;
+    font-family: ui-monospace, monospace;
+    font-size: 0.7rem;
+    color: #888;
+    border-top: 1px solid #444;
+    padding-top: 0.5rem;
+  }
+  .jcard-panel.back h3 {
+    margin: 0 0 0.25rem;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #444;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.15rem;
+  }
+  .jcard-panel.back ol {
+    margin: 0.25rem 0 0.6rem;
+    padding-left: 1.4rem;
+    font-size: 0.8rem;
+  }
+  .jcard-panel.back li { margin: 0.05rem 0; }
+  .jcard-panel.back .dur { color: #666; font-family: ui-monospace, monospace; }
+  .jcard-panel.back .footer {
+    font-size: 0.7rem;
+    color: #888;
+    margin-top: 0.4rem;
+  }
+  .side-meta {
+    font-size: 0.7rem;
+    color: #777;
+    font-family: ui-monospace, monospace;
+  }
+  .bar {
+    height: 6px;
+    background: #ddd;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 0.15rem 0 0.45rem;
+  }
+  .bar > span { display: block; height: 100%; background: #2da44e; }
+  .bar.over > span { background: #cf222e; }
+
+  .skipped {
+    font-size: 0.85rem;
+    color: var(--warn);
+    margin-top: 0.5rem;
+  }
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.5rem;
+    margin: 0.75rem 0;
+  }
+  .stat {
+    background: #0b1018;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+  }
+  .stat .k { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat .v { font-family: ui-monospace, monospace; font-size: 1.1rem; }
+
+  @media print {
+    @page { size: landscape; margin: 0.4in; }
+    body { background: white; color: black; margin: 0; padding: 0; max-width: none; }
+    .no-print { display: none !important; }
+    .jcard { border: none; box-shadow: none; max-width: none; }
+    .jcard-grid { min-height: 3.6in; }
+    .jcard-panel.spine, .jcard-panel.front { background: #111 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+  <header class="no-print">
+    <h1>Cassette Tape Calculator</h1>
+    <p class="lede">Paste a track list, pick a tape, get an optimal two-side split and a printable J-card insert. Like it's 1992. <a href="index.html">← Isle of Glitch</a></p>
+  </header>
+
+  <fieldset class="no-print">
+    <legend>Track list</legend>
+    <div class="row">
+      <label>Each line: track name + duration (<code>3:45</code>, <code>1:02:30</code>, or seconds).</label>
+      <button type="button" class="secondary" id="loadExample">Load example</button>
+      <button type="button" class="secondary" id="clearInput">Clear</button>
+    </div>
+    <textarea id="input" spellcheck="false" placeholder="Blue Monday          7:29
+Just Like Heaven     3:33
+Bizarre Love Triangle 4:21
+..."></textarea>
+  </fieldset>
+
+  <fieldset class="no-print">
+    <legend>Tape &amp; strategy</legend>
+    <div class="row">
+      <label>Tape:
+        <select id="tape">
+          <option value="1380">C46 (23:00/side)</option>
+          <option value="1800">C60 (30:00/side)</option>
+          <option value="2700" selected>C90 (45:00/side)</option>
+          <option value="3000">C100 (50:00/side)</option>
+          <option value="3600">C120 (60:00/side)</option>
+          <option value="custom">Custom…</option>
+        </select>
+      </label>
+      <label id="customLabel" style="display:none">Minutes/side:
+        <input id="customMin" type="number" min="1" step="0.5" value="45" style="width:5rem">
+      </label>
+      <label>Strategy:
+        <select id="strategy">
+          <option value="optimize" selected>Optimize (rearrange tracks)</option>
+          <option value="order">Preserve order (find split point)</option>
+        </select>
+      </label>
+      <label>Title:
+        <input id="title" type="text" value="MIX TAPE" style="width:14rem">
+      </label>
+    </div>
+    <div class="row">
+      <button type="button" id="go">Pack the tape →</button>
+      <button type="button" class="secondary" id="printBtn">Print J-card</button>
+    </div>
+    <div class="status" id="status"></div>
+  </fieldset>
+
+  <section id="results" style="display:none">
+    <div class="summary no-print" id="summary"></div>
+    <div class="jcard-wrap">
+      <div class="jcard" id="jcard">
+        <div class="jcard-grid">
+          <div class="jcard-panel back" id="backPanel"></div>
+          <div class="jcard-panel spine" id="spinePanel">MIX TAPE</div>
+          <div class="jcard-panel front" id="frontPanel"></div>
+        </div>
+      </div>
+    </div>
+    <p class="skipped" id="skippedNote"></p>
+  </section>
+
+<script>
+"use strict";
+
+// ---------- Parsing ----------
+function parseTrack(line) {
+  const orig = line;
+  line = line.trim();
+  if (!line || line.startsWith("#")) return null;
+
+  // H:MM:SS or M:SS
+  const timeRe = /(?:(\d+):)?(\d{1,3}):(\d{2})(?!\d)/;
+  let m = line.match(timeRe);
+  let secs = null;
+  if (m) {
+    if (m[1] !== undefined) {
+      secs = parseInt(m[1], 10) * 3600 + parseInt(m[2], 10) * 60 + parseInt(m[3], 10);
+    } else {
+      secs = parseInt(m[2], 10) * 60 + parseInt(m[3], 10);
+    }
+    line = line.replace(m[0], "  ");
+  } else {
+    // Trailing bare-integer seconds (e.g. "Track name 222")
+    const bare = line.match(/\s(\d{2,4})\s*$/);
+    if (bare) {
+      secs = parseInt(bare[1], 10);
+      line = line.slice(0, bare.index);
+    }
+  }
+  if (secs == null) return { error: "no duration found", text: orig };
+
+  let name = line
+    .replace(/^\s*\d+[.)]\s+/, "")           // leading "01. " or "1) "
+    .replace(/[\s\-–—|:.]+$/g, "") // trailing separators
+    .replace(/^[\s\-–—|:.]+/g, "") // leading separators
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  return { name: name || "(unnamed)", duration_sec: secs };
+}
+
+function parseAll(text) {
+  const tracks = [];
+  const errors = [];
+  for (const line of text.split(/\r?\n/)) {
+    const t = parseTrack(line);
+    if (!t) continue;
+    if (t.error) errors.push(t);
+    else tracks.push(t);
+  }
+  return { tracks, errors };
+}
+
+function fmt(sec) {
+  sec = Math.round(sec);
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  return `${m}:${String(s).padStart(2,"0")}`;
+}
+
+// ---------- Algorithm ----------
+// Two-bin knapsack: maximise sum(a)+sum(b) s.t. a<=C, b<=C.
+// dp[a] after processing all tracks = max attainable side-B total when side A holds exactly `a` seconds.
+function packOptimize(tracks, C) {
+  const n = tracks.length;
+  // dp and choice tables. choice[i][a] = 0 skip, 1 put on A, 2 put on B.
+  const NEG = -1;
+  let prev = new Int32Array(C + 1).fill(NEG);
+  prev[0] = 0;
+  const choices = new Uint8Array(n * (C + 1));
+  for (let i = 0; i < n; i++) {
+    const d = tracks[i].duration_sec;
+    const next = new Int32Array(C + 1).fill(NEG);
+    // Default = skip (carry forward)
+    for (let a = 0; a <= C; a++) {
+      next[a] = prev[a];
+      choices[i * (C + 1) + a] = 0;
+    }
+    for (let a = 0; a <= C; a++) {
+      if (prev[a] < 0) continue;
+      const b = prev[a];
+      // Put on A
+      if (d <= C - a) {
+        const na = a + d;
+        if (prev[a] > next[na]) {
+          next[na] = prev[a];
+          choices[i * (C + 1) + na] = 1;
+        }
+      }
+      // Put on B
+      if (d <= C - b) {
+        if (b + d > next[a]) {
+          next[a] = b + d;
+          choices[i * (C + 1) + a] = 2;
+        }
+      }
+    }
+    prev = next;
+  }
+
+  // Find a* maximising a + prev[a]; tie-break: most balanced (smallest |a - prev[a]|).
+  let bestA = 0, bestSum = -1, bestBal = Infinity;
+  for (let a = 0; a <= C; a++) {
+    if (prev[a] < 0) continue;
+    const s = a + prev[a];
+    if (s > bestSum || (s === bestSum && Math.abs(a - prev[a]) < bestBal)) {
+      bestSum = s;
+      bestA = a;
+      bestBal = Math.abs(a - prev[a]);
+    }
+  }
+
+  // Reconstruct
+  const sideA = [], sideB = [], skipped = [];
+  let a = bestA;
+  for (let i = n - 1; i >= 0; i--) {
+    const c = choices[i * (C + 1) + a];
+    if (c === 1) { sideA.push(tracks[i]); a -= tracks[i].duration_sec; }
+    else if (c === 2) { sideB.push(tracks[i]); }
+    else { skipped.push(tracks[i]); }
+  }
+  sideA.reverse(); sideB.reverse(); skipped.reverse();
+  return { sideA, sideB, skipped };
+}
+
+function packOrder(tracks, C) {
+  const n = tracks.length;
+  const total = tracks.reduce((s, t) => s + t.duration_sec, 0);
+  let prefix = 0, bestSplit = -1, bestBal = Infinity;
+  for (let i = 0; i <= n; i++) {
+    const a = prefix, b = total - prefix;
+    if (a <= C && b <= C) {
+      const bal = Math.abs(a - b);
+      if (bal < bestBal) { bestBal = bal; bestSplit = i; }
+    }
+    if (i < n) prefix += tracks[i].duration_sec;
+  }
+  if (bestSplit < 0) {
+    return { sideA: [], sideB: [], skipped: tracks.slice(), tooLong: true };
+  }
+  return {
+    sideA: tracks.slice(0, bestSplit),
+    sideB: tracks.slice(bestSplit),
+    skipped: []
+  };
+}
+
+// ---------- Rendering ----------
+function sumSec(arr) { return arr.reduce((s, t) => s + t.duration_sec, 0); }
+
+function renderSidePanel(side, tracks, capacity) {
+  const used = sumSec(tracks);
+  const pct = Math.min(100, (used / capacity) * 100);
+  const over = used > capacity;
+  const list = tracks.map((t, i) => `<li>${escapeHtml(t.name)} <span class="dur">${fmt(t.duration_sec)}</span></li>`).join("");
+  return `
+    <h3>Side ${side} <span class="side-meta">${fmt(used)} / ${fmt(capacity)}</span></h3>
+    <div class="bar${over ? " over" : ""}"><span style="width:${pct}%"></span></div>
+    <ol>${list || "<li><em>(empty)</em></li>"}</ol>
+  `;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function render(result, opts) {
+  const { capacity, title } = opts;
+  const usedA = sumSec(result.sideA), usedB = sumSec(result.sideB);
+  const totalUsed = usedA + usedB;
+  const totalCap = capacity * 2;
+  const waste = Math.max(0, totalCap - totalUsed);
+
+  document.getElementById("results").style.display = "";
+
+  document.getElementById("summary").innerHTML = `
+    <div class="stat"><div class="k">Side A</div><div class="v">${fmt(usedA)} / ${fmt(capacity)}</div></div>
+    <div class="stat"><div class="k">Side B</div><div class="v">${fmt(usedB)} / ${fmt(capacity)}</div></div>
+    <div class="stat"><div class="k">Total used</div><div class="v">${fmt(totalUsed)} / ${fmt(totalCap)}</div></div>
+    <div class="stat"><div class="k">Waste / leader</div><div class="v">${fmt(waste)}</div></div>
+    <div class="stat"><div class="k">Tracks placed</div><div class="v">${result.sideA.length + result.sideB.length}</div></div>
+    ${result.skipped.length ? `<div class="stat"><div class="k">Skipped</div><div class="v">${result.skipped.length}</div></div>` : ""}
+  `;
+
+  // Back panel: track listing
+  document.getElementById("backPanel").innerHTML =
+    renderSidePanel("A", result.sideA, capacity) +
+    renderSidePanel("B", result.sideB, capacity) +
+    `<div class="footer">Total ${fmt(totalUsed)} / ${fmt(totalCap)} · ${result.sideA.length + result.sideB.length} tracks</div>`;
+
+  // Spine
+  document.getElementById("spinePanel").textContent = title.toUpperCase();
+
+  // Front
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById("frontPanel").innerHTML = `
+    <h2>${escapeHtml(title)}</h2>
+    <div class="sub">${result.sideA.length + result.sideB.length} tracks · ${fmt(totalUsed)}</div>
+    <div class="stamp">
+      cap ${Math.round(capacity/60)}m/side<br>
+      compiled ${today}
+    </div>
+  `;
+
+  // Skipped note
+  const skipNote = document.getElementById("skippedNote");
+  if (result.skipped.length) {
+    skipNote.textContent = `Couldn't fit (${result.skipped.length}): ` +
+      result.skipped.map(t => `${t.name} [${fmt(t.duration_sec)}]`).join(", ");
+  } else {
+    skipNote.textContent = "";
+  }
+}
+
+// ---------- Wiring ----------
+const EXAMPLE = `Blue Monday              7:29
+Just Like Heaven         3:33
+Bizarre Love Triangle    4:21
+This Charming Man        2:43
+Personal Jesus           4:56
+Love Will Tear Us Apart  3:25
+How Soon Is Now?         6:46
+Tainted Love             2:38
+Boys Don't Cry           2:35
+Enjoy the Silence        4:17
+Age of Consent           5:15
+Cities in Dust           3:51
+Friday I'm in Love       3:35
+True Faith               5:53
+Pictures of You          7:24`;
+
+function getCapacity() {
+  const sel = document.getElementById("tape").value;
+  if (sel === "custom") {
+    const mins = parseFloat(document.getElementById("customMin").value) || 45;
+    return Math.round(mins * 60);
+  }
+  return parseInt(sel, 10);
+}
+
+function setStatus(msg, kind) {
+  const el = document.getElementById("status");
+  el.className = "status" + (kind ? " " + kind : "");
+  el.textContent = msg || "";
+}
+
+function pack() {
+  const text = document.getElementById("input").value;
+  const { tracks, errors } = parseAll(text);
+  if (!tracks.length) {
+    setStatus("No tracks parsed. Add lines like “Track name 3:45”.", "bad");
+    document.getElementById("results").style.display = "none";
+    return;
+  }
+
+  const capacity = getCapacity();
+  const strategy = document.getElementById("strategy").value;
+  const title = document.getElementById("title").value.trim() || "MIX TAPE";
+
+  let result;
+  if (strategy === "order") {
+    result = packOrder(tracks, capacity);
+    if (result.tooLong) {
+      setStatus(`Total ${fmt(sumSec(tracks))} exceeds tape capacity ${fmt(capacity*2)} and order is fixed — can't fit. Try Optimize or a longer tape.`, "bad");
+      document.getElementById("results").style.display = "none";
+      return;
+    }
+  } else {
+    result = packOptimize(tracks, capacity);
+  }
+
+  const total = sumSec(tracks);
+  const placed = sumSec(result.sideA) + sumSec(result.sideB);
+  const messages = [];
+  if (errors.length) messages.push(`${errors.length} line(s) skipped (no duration)`);
+  if (result.skipped.length) messages.push(`${result.skipped.length} track(s) didn't fit`);
+  messages.push(`${tracks.length} tracks · ${fmt(total)} total · placed ${fmt(placed)} (${(100*placed/(capacity*2)).toFixed(1)}% of tape)`);
+  setStatus(messages.join(" · "), result.skipped.length ? "warn" : "ok");
+
+  render(result, { capacity, title });
+}
+
+document.getElementById("go").addEventListener("click", pack);
+document.getElementById("printBtn").addEventListener("click", () => window.print());
+document.getElementById("loadExample").addEventListener("click", () => {
+  document.getElementById("input").value = EXAMPLE;
+  pack();
+});
+document.getElementById("clearInput").addEventListener("click", () => {
+  document.getElementById("input").value = "";
+  document.getElementById("results").style.display = "none";
+  setStatus("");
+});
+document.getElementById("tape").addEventListener("change", e => {
+  document.getElementById("customLabel").style.display =
+    e.target.value === "custom" ? "" : "none";
+});
+
+// Pack on Cmd/Ctrl+Enter from the textarea
+document.getElementById("input").addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); pack(); }
+});
+</script>
+</body>
+</html>
