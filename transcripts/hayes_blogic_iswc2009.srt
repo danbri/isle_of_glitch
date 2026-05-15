@@ -1,0 +1,3380 @@
+1
+00:00:00,000 --> 00:00:07,000
+He has made Tripoli's amount of very significant contributions to the literature and artificial intelligence
+
+2
+00:00:07,000 --> 00:00:16,000
+and is probably responsible for a great deal of the underlying work that we see here in this conference today.
+
+3
+00:00:16,000 --> 00:00:19,000
+He's going to have President AAAI.
+
+4
+00:00:19,000 --> 00:00:29,800
+The chairman and trustee of HCI, the secretary of AISB, a governor of the cognitive sciences,
+
+5
+00:00:29,800 --> 00:00:35,790
+I think, author of numerous incredibly highly cited papers.
+
+6
+00:00:35,790 --> 00:00:41,530
+But when I think of Pat, I think of arguing.
+
+7
+00:00:41,530 --> 00:01:07,140
+I think that breakfast and even behind me arguing with Mike and Ezra and I swear this is verbatim, the argument land.
+
+8
+00:01:07,140 --> 00:01:18,260
+I don't remember if this is a good example, but something like, Mike, I think that's, yes, it is.
+
+9
+00:01:18,260 --> 00:01:25,820
+No, Pat, it's not. Yes, it is. Pat, it's not.
+
+10
+00:01:25,820 --> 00:01:41,340
+Well, Pat loves to argue the most, and so if you really want, if you like to talk,
+
+11
+00:01:41,340 --> 00:01:50,740
+and if you want to show them respect, then tell them he's wrong, and argue too.
+
+12
+00:01:50,740 --> 00:01:54,510
+Welcome to my secret day, my friend, Kathy.
+
+13
+00:01:54,510 --> 00:02:03,160
+Thank you.
+
+14
+00:02:03,160 --> 00:02:10,460
+Now, I'm wearing two of these things here.
+
+15
+00:02:10,460 --> 00:02:18,970
+So, if I melt, it'll be because of the number of wires I'm wearing.
+
+16
+00:02:18,970 --> 00:02:20,970
+They give you this clicker to advance the slides.
+
+17
+00:02:20,970 --> 00:02:23,290
+It's only got one button.
+
+18
+00:02:23,290 --> 00:02:28,020
+Go and... oh my God.
+
+19
+00:02:28,020 --> 00:02:36,690
+Okay. Well, I was invited by Enrico to give this talk a long time ago.
+
+20
+00:02:36,690 --> 00:02:42,320
+Of course, I immediately accepted him and was incredibly honored. And then I began to think, why?
+
+21
+00:02:42,320 --> 00:02:49,150
+Why didn't I sort of thought about my role in the development of semantic web?
+
+22
+00:02:49,150 --> 00:03:00,020
+And I realized that what my role has been has been the kind of the logic guy or one of the logic guys,
+
+23
+00:03:00,020 --> 00:03:03,740
+Not the description logic guy, just the kind of logic, logic guy.
+
+24
+00:03:03,740 --> 00:03:09,660
+And so I thought I should give my talk here from that sense.
+
+25
+00:03:09,660 --> 00:03:15,140
+So I'm not going to talk about ontologies, I'm not going to talk about mapping ontologies to other ontologies,
+
+26
+00:03:15,140 --> 00:03:21,340
+I'm not going to talk about XML, I'm not going to talk about computer science, I'm not going to talk about the logic of this or anything like that.
+
+27
+00:03:21,340 --> 00:03:26,000
+Because I can. And you've just got to listen because I'm...
+
+28
+00:03:26,000 --> 00:03:30,380
+Great. I probably should get these slides going.
+
+29
+00:03:30,380 --> 00:03:37,470
+Oh, there we go. Let's see what was the first slide.
+
+30
+00:03:37,470 --> 00:03:44,650
+Yeah. Some people were asking what bee logic was. No, no, no. It was logic.
+
+31
+00:03:44,650 --> 00:03:53,860
+You know, if a web log is a blog, then web logic is logic. It was supposed to be a pun. Never mind about it.
+
+32
+00:03:53,860 --> 00:04:04,360
+So I had two talks to give, and right up until probably about midnight, I really couldn't decide which one to give you.
+
+33
+00:04:04,360 --> 00:04:05,800
+So I decided to give you both.
+
+34
+00:04:05,800 --> 00:04:08,480
+So we're going to go a little quickly here.
+
+35
+00:04:08,480 --> 00:04:10,160
+The other thing is that just this morning,
+
+36
+00:04:10,160 --> 00:04:12,520
+as I was getting wired up, and Ruko came up to me
+
+37
+00:04:12,520 --> 00:04:18,800
+and said casually, that you will leave 15 minutes of questions,
+
+38
+00:04:18,800 --> 00:04:21,970
+OK?
+
+39
+00:04:21,970 --> 00:04:24,500
+So you're going to get really fast, though.
+
+40
+00:04:24,500 --> 00:04:28,420
+So the two talks were the talk on vLogic, or Blogic,
+
+41
+00:04:28,420 --> 00:04:33,620
+I'm sorry, how I'm saying that myself, which
+
+42
+00:04:33,620 --> 00:04:36,420
+is really about how putting logic on the web
+
+43
+00:04:36,420 --> 00:04:40,740
+changes logic itself. And really, this is a talk I should give to an audience of philosophical
+
+44
+00:04:40,740 --> 00:04:46,260
+logicians. But I think it's an interesting observation and one that we haven't... So
+
+45
+00:04:46,260 --> 00:04:51,460
+we've really got a new subject here, actually. Logic is... It's a pun and a joke and everything
+
+46
+00:04:51,460 --> 00:04:55,380
+else. But it really... It's true. I think there really is a new subject. We have to rethink logic
+
+47
+00:04:55,380 --> 00:04:59,620
+from the foundations. And in fact, that's happening, whether we like it or not. We
+
+48
+00:04:59,620 --> 00:05:04,200
+recognize it and made it explicit. It will probably be better. The other talk I wanted
+
+49
+00:05:04,200 --> 00:05:13,550
+to give is the idea about revising RDF, and we've got OWL 2 now, so maybe it's about time we had RDF 2,
+
+50
+00:05:13,550 --> 00:05:18,550
+and how looking back at this, a lot of the decisions were taken during the development of RDF,
+
+51
+00:05:18,550 --> 00:05:23,550
+I think we can now, with hindsight, can do it a lot better, and if you do do it a lot better,
+
+52
+00:05:23,550 --> 00:05:28,550
+in particular there's one neat little trick you can do that makes you do a completely expressive logic,
+
+53
+00:05:28,550 --> 00:05:34,310
+powerful as personal logic in a very elegant way and sort of provides a much better foundation,
+
+54
+00:05:34,310 --> 00:05:40,550
+I think, for the semantic web. It could be the real first true logic that's set on the
+
+55
+00:05:40,550 --> 00:05:46,200
+slide. The RDF Redux was the title of a talk I was going to give at the Sensex conference
+
+56
+00:05:46,200 --> 00:05:49,000
+earlier this year, which I couldn't attend for personal reasons
+
+57
+00:05:49,000 --> 00:05:55,900
+reason, so you're getting this talk for free. Now, my having said common logic, some of
+
+58
+00:05:55,900 --> 00:06:03,510
+you might be thinking this. Read the slide. You know, we've just got too many web
+
+59
+00:06:03,510 --> 00:06:08,270
+logics. You know, there's how many owls are there now? You know, owl light is an
+
+60
+00:06:08,270 --> 00:06:11,350
+endangered species. There's only three or four of them left reading fairs and
+
+61
+00:06:11,350 --> 00:06:20,670
+they're on in a swamp in Amsterdam somewhere. You know, and there's how many,
+
+62
+00:06:20,670 --> 00:06:24,230
+I don't know how many rule languages there are now, but at least three or four, I
+
+63
+00:06:24,230 --> 00:06:27,590
+I mean, in RIF is like three of them.
+
+64
+00:06:27,590 --> 00:06:28,850
+Sorry, that was a joke.
+
+65
+00:06:28,850 --> 00:06:29,850
+A joke last time.
+
+66
+00:06:33,670 --> 00:06:35,870
+And we don't want any more logic, so please don't.
+
+67
+00:06:35,870 --> 00:06:40,190
+But the point of the new RDF is not that it's another logic.
+
+68
+00:06:40,190 --> 00:06:41,630
+Can I get another one in the zoo?
+
+69
+00:06:41,630 --> 00:06:44,910
+But rather, it's a way of changing RDFs
+
+70
+00:06:44,910 --> 00:06:46,990
+so we won't need to do that in future.
+
+71
+00:06:46,990 --> 00:06:50,470
+So we need to keep reinventing logic in quite the same way.
+
+72
+00:06:50,470 --> 00:06:51,880
+Guilty.
+
+73
+00:06:51,880 --> 00:06:54,120
+So that's my defense.
+
+74
+00:06:54,120 --> 00:07:03,840
+The second objection is, oh, come on, Kat, shut up about logic, because you've been trying all these years to make people do first order logic and give up on it.
+
+75
+00:07:03,840 --> 00:07:07,820
+No one wants to see those brackets anymore.
+
+76
+00:07:07,820 --> 00:07:20,380
+And again, my response to this is, well, A, I don't give up, but B, the part of the idea here of the RDF Redux is that we can leave turn RDF alone.
+
+77
+00:07:20,380 --> 00:07:24,580
+The proposal is to extend it so that the current RDF will be,
+
+78
+00:07:24,580 --> 00:07:27,420
+exactly as it stands now, even down to the file headers,
+
+79
+00:07:27,420 --> 00:07:31,980
+will be a correct subset of the new RDF
+
+80
+00:07:31,980 --> 00:07:33,580
+and will mean what it means now.
+
+81
+00:07:33,580 --> 00:07:37,340
+So it's completely backwards compatible for current RDF
+
+82
+00:07:37,340 --> 00:07:39,660
+and also for current OWL, if you do it right.
+
+83
+00:07:39,660 --> 00:07:44,540
+OWL has to be not OWL RDF, but Manchester syntax
+
+84
+00:07:44,540 --> 00:07:46,340
+or some more civilized syntax for OWL,
+
+85
+00:07:46,340 --> 00:07:48,900
+this is what it should be anyway.
+
+86
+00:07:48,900 --> 00:07:53,980
+OK, so you're going to get the first talk first, the logic talk.
+
+87
+00:07:53,980 --> 00:07:56,140
+So why isn't logic just logic?
+
+88
+00:07:56,140 --> 00:07:58,180
+After all, addition to be doing logic for ages,
+
+89
+00:07:58,180 --> 00:07:59,940
+why didn't we just take it from the textbook?
+
+90
+00:07:59,940 --> 00:08:02,900
+So I've got a bunch of little sort of observations
+
+91
+00:08:02,900 --> 00:08:05,080
+here about the way in which putting logic on the web
+
+92
+00:08:05,080 --> 00:08:07,540
+makes it a different kind of topic.
+
+93
+00:08:07,540 --> 00:08:14,660
+OK, so the first of these, oh, sorry,
+
+94
+00:08:14,660 --> 00:08:23,290
+you're not supposed to see that, that's metadata.
+
+95
+00:08:23,290 --> 00:08:26,650
+Web portability.
+
+96
+00:08:26,650 --> 00:08:30,530
+Now, I've said this many times already in talks and so forth,
+
+97
+00:08:30,530 --> 00:08:31,690
+but not just as your audience.
+
+98
+00:08:31,690 --> 00:08:34,770
+So if you've heard this before, just be quiet and agree,
+
+99
+00:08:34,770 --> 00:08:36,090
+and we'll talk about it later.
+
+100
+00:08:36,090 --> 00:08:40,210
+But if you haven't, there's a very sort of basic principle.
+
+101
+00:08:40,210 --> 00:08:43,170
+It's easy to state in a very general way.
+
+102
+00:08:43,170 --> 00:08:44,490
+And here's the way it goes.
+
+103
+00:08:44,490 --> 00:08:47,970
+You've got some logic content stored on the way out of place,
+
+104
+00:08:47,970 --> 00:08:49,570
+and you can do two things to it.
+
+105
+00:08:49,570 --> 00:08:51,330
+You can send it somewhere else, or rather,
+
+106
+00:08:51,330 --> 00:08:53,930
+you can wait for someone somewhere else to ask for it,
+
+107
+00:08:53,930 --> 00:08:58,660
+You know, it's a push, not a pull technology, yada, yada.
+
+108
+00:08:58,660 --> 00:09:02,700
+Or you can draw some conclusions from it, where you are,
+
+109
+00:09:02,700 --> 00:09:05,540
+using logic.
+
+110
+00:09:05,540 --> 00:09:07,860
+And then those conclusions can also be sent somewhere else.
+
+111
+00:09:07,860 --> 00:09:11,020
+Or the person at the other end could have copied the first
+
+112
+00:09:11,020 --> 00:09:13,800
+thing and drawn the conclusions at their end.
+
+113
+00:09:13,800 --> 00:09:17,220
+And the idea is that it shouldn't matter.
+
+114
+00:09:17,220 --> 00:09:19,160
+The diagram should commute.
+
+115
+00:09:19,160 --> 00:09:21,200
+Or if I draw a conclusion one place and send the
+
+116
+00:09:21,200 --> 00:09:24,840
+conclusion, or rather have the conclusion dot, get it?
+
+117
+00:09:24,840 --> 00:09:29,770
+What's the past tense of HTTP?
+
+118
+00:09:29,770 --> 00:09:38,580
+Or if the getting is done first and then the entailment is drawn at the other end, you should get the same result.
+
+119
+00:09:38,580 --> 00:09:42,820
+I call that the web portability principle.
+
+120
+00:09:42,820 --> 00:09:46,140
+It's simple, but it has surprisingly powerful consequences for the design of the logic.
+
+121
+00:09:46,140 --> 00:09:55,260
+in particular, it means that, here's a little example, that's a triple, married is already
+
+122
+00:09:55,260 --> 00:10:00,620
+a conjugal relation, Jill is married to Jack, the point being that the married is in one
+
+123
+00:10:00,620 --> 00:10:04,940
+case it's an individual and in the other case it's a binary relation or a property or whatever
+
+124
+00:10:04,940 --> 00:10:07,700
+you want in the web languages.
+
+125
+00:10:07,700 --> 00:10:14,020
+When you put them together in RDF it's okay, in common logic it's okay but in most traditional
+
+126
+00:10:14,020 --> 00:10:18,500
+logical notations, virtually any textbook version of logic, it's not okay because you
+
+127
+00:10:18,500 --> 00:10:23,580
+can't have the same name being both an individual and a finer relation.
+
+128
+00:10:23,580 --> 00:10:29,180
+But it should be okay in a WebLogic and moreover the entailment should work in the way they
+
+129
+00:10:29,180 --> 00:10:32,980
+would work if you were doing them in the simple case of marriage to Jack Gill and again
+
+130
+00:10:32,980 --> 00:10:35,340
+ComiLogic will do that for you.
+
+131
+00:10:35,340 --> 00:10:40,740
+So this kind of WebPortability is somewhat fragile, it doesn't happen automatically,
+
+132
+00:10:40,740 --> 00:10:48,470
+RDF is portable, common logic is portable, LDL is not portable, classical first-order syntax is not portable.
+
+133
+00:10:48,470 --> 00:11:01,110
+L2 isn't portable, quite, getting there, okay, it's a shame, I think, that we don't have portable logics on the web,
+
+134
+00:11:01,110 --> 00:11:08,940
+that the mainstream logics that are in use are not portable, because this particular property of logics was
+
+135
+00:11:08,940 --> 00:11:18,180
+what it takes to make it happen. It was worked out before the web. It was put into RDF deliberately
+
+136
+00:11:18,180 --> 00:11:23,460
+and then kind of erased by later developments. So there were some backward things there.
+
+137
+00:11:23,460 --> 00:11:29,890
+Now I tried to make some really neat slides for this next topic, which is the importance
+
+138
+00:11:29,890 --> 00:11:35,810
+of names. And it was impossible to put on a slide. So just read this and I'll show
+
+139
+00:11:35,810 --> 00:11:41,150
+up for a minute. No. I'll leave it there in case you want to glance at it.
+
+140
+00:11:41,150 --> 00:11:44,750
+There are some things like general comments, because I could talk for hours about this.
+
+141
+00:11:44,750 --> 00:11:53,500
+If you look at traditional, a chance of logic or explanations of the utility of logic in,
+
+142
+00:11:53,500 --> 00:11:57,660
+for example, knowledge representation in artificial intelligence, which is my own background,
+
+143
+00:11:57,660 --> 00:12:07,620
+logical AI it's often called. There are textbook exercises in the introductory texts
+
+144
+00:12:07,620 --> 00:12:14,450
+where you explain very carefully to the students, to go through an exercise.
+
+145
+00:12:14,450 --> 00:12:20,450
+Imagine that you take some bunch of knowledge representation you develop written out in your logic,
+
+146
+00:12:20,450 --> 00:12:25,450
+and you erase all the names and systematically replace them with meaningless names.
+
+147
+00:12:25,450 --> 00:12:35,640
+If you try to axiomatize knowledge about battleships, erase the word battleship in your axioms and replace it with G11396.
+
+148
+00:12:35,640 --> 00:12:50,640
+and do it systematically, right, and it's the same logic in other words, as far as the logic is concerned, the names are meaningless, they're just black cypress, they're placeholders, they're nodes in a graph or something like that, right, they have no intrinsic meaning.
+
+149
+00:12:50,640 --> 00:13:01,640
+And this is an exercise we put our students through so they don't fall into the mistake people do when they start using logic of thinking that the names have significance.
+
+150
+00:13:01,640 --> 00:13:09,380
+So we have to train people to realize that names have no significance at all, all the
+
+151
+00:13:09,380 --> 00:13:13,160
+meaning comes from the axioms, that's logic.
+
+152
+00:13:13,160 --> 00:13:17,080
+In logic, nothing could be further from the truth, right?
+
+153
+00:13:17,080 --> 00:13:18,080
+You all know this.
+
+154
+00:13:18,080 --> 00:13:22,960
+I mean the names of the URI's or URI references or IRIs or whatever the hell they call today.
+
+155
+00:13:22,960 --> 00:13:25,640
+But those things have huge significance.
+
+156
+00:13:25,640 --> 00:13:31,200
+They constitute the web, I mean the web is made of IRIs and the machinery that can
+
+157
+00:13:31,200 --> 00:13:32,200
+interpret them.
+
+158
+00:13:32,200 --> 00:13:34,760
+ownership of IRIs is a critical matter.
+
+159
+00:13:34,760 --> 00:13:38,200
+The structure of IRIs, what are you allowed to encode in them,
+
+160
+00:13:38,200 --> 00:13:40,280
+the different regions in the name.
+
+161
+00:13:40,280 --> 00:13:43,280
+You can't just treat them as meaningless strings,
+
+162
+00:13:43,280 --> 00:13:46,410
+but the logic currently do.
+
+163
+00:13:46,410 --> 00:13:50,090
+The RDF semantics, all it says about,
+
+164
+00:13:50,090 --> 00:13:53,370
+you know, it was URI Ref back then, but IRIs now,
+
+165
+00:13:53,370 --> 00:13:54,930
+is, well, there's strings.
+
+166
+00:13:54,930 --> 00:13:57,370
+There's, a set of them is called a vocabulary.
+
+167
+00:13:57,370 --> 00:14:00,460
+That's it.
+
+168
+00:14:00,460 --> 00:14:02,860
+And even at the time when we were doing the RDF,
+
+169
+00:14:02,860 --> 00:14:09,020
+work, and I was just a newbie to this whole web world, I was a little nervous about that.
+
+170
+00:14:09,020 --> 00:14:16,300
+It was like, that seems a little inadequate somehow, but that's what logic thinks about
+
+171
+00:14:16,300 --> 00:14:17,300
+names.
+
+172
+00:14:17,300 --> 00:14:22,020
+I don't really have anything very constricted to say about this other than to observe the
+
+173
+00:14:22,020 --> 00:14:27,340
+extreme nature of the disconnect there between what I call classical view of the situation
+
+174
+00:14:27,340 --> 00:14:29,420
+and the web logic view of the situation.
+
+175
+00:14:29,420 --> 00:14:34,980
+In web logic, in the semantic web, the names basically are the given structure, most of
+
+176
+00:14:34,980 --> 00:14:38,180
+the meaning in here is in the name, somehow.
+
+177
+00:14:38,180 --> 00:14:43,380
+And then the logic that we put in, the ontologies, are like little sort of commentaries, little
+
+178
+00:14:43,380 --> 00:14:50,180
+additions, little notations that we sort of stick on top of this huge body of somehow
+
+179
+00:14:50,180 --> 00:14:53,140
+socially defined meaning that comes along with the name.
+
+180
+00:14:53,140 --> 00:14:57,740
+And that requires a real sort of change of attitude on the part of the logical thinker
+
+181
+00:14:57,740 --> 00:15:04,180
+I'm thinking of trying to come to terms with that, and that's about the best I can do.
+
+182
+00:15:04,180 --> 00:15:11,100
+And of course this whole who-have, the HTTP range 14 decision, which you all know that
+
+183
+00:15:11,100 --> 00:15:19,460
+is right, you know, about using a URI, does it have to denote the web page or whatever
+
+184
+00:15:19,460 --> 00:15:26,420
+the other end of the HTTP transaction, and the answer is yes, we decided unless that does
+
+185
+00:15:26,420 --> 00:15:30,940
+a 303, which is a bit like saying that the contents of the letter that comes to your
+
+186
+00:15:30,940 --> 00:15:36,780
+house depends on whether the mailman is dancing a waltz or a gavotte as he comes up the driveway,
+
+187
+00:15:36,780 --> 00:15:39,300
+but is about the best you can do under the circumstances.
+
+188
+00:15:39,300 --> 00:15:45,740
+I mean, that whole issue simply, I mean, it's not really, it's almost impossible to see
+
+189
+00:15:45,740 --> 00:15:49,500
+how it could even be confined to the traditional logic.
+
+190
+00:15:49,500 --> 00:15:52,980
+So the point is just that the logic is new, something new here.
+
+191
+00:15:52,980 --> 00:15:54,340
+Okay.
+
+192
+00:15:54,340 --> 00:15:58,060
+And this comes up in the way in the RDF semantics too.
+
+193
+00:15:58,060 --> 00:16:01,860
+There's a mistake, and there's also some mistakes in RDF, bugs and things.
+
+194
+00:16:01,860 --> 00:16:05,700
+And this is the one that only came to my attention recently.
+
+195
+00:16:10,430 --> 00:16:17,070
+Again, I just just, I was doing semantics, and I just, I just, I was a textbook, it was like,
+
+196
+00:16:17,070 --> 00:16:21,110
+I, I, I, I, I, my mother's milk, and I was wearing logic.
+
+197
+00:16:21,110 --> 00:16:25,790
+You just find an interpretation on a vocabulary, you say there's a particular set of names,
+
+198
+00:16:25,790 --> 00:16:31,950
+An interpretation is a mapping from that set of names to meanings, and then there's a lot of math there.
+
+199
+00:16:31,950 --> 00:16:38,290
+But the point I want to draw is that it's relative to a lot of vocabulary, and the typical thing you do is you sort of say,
+
+200
+00:16:38,290 --> 00:16:44,990
+here's a chunk of RDF, find the names in it, the names in the axioms, the logical axioms, and you interpret those.
+
+201
+00:16:44,990 --> 00:16:53,470
+Bad idea. What we should have done is, we should have said that every interpretation is a mapping from all the URI references that ever have been or ever could be.
+
+202
+00:16:53,470 --> 00:16:57,140
+There's always one book happening, it's everything.
+
+203
+00:16:57,140 --> 00:17:05,720
+It doesn't make any real difference to the model theory, but it would have been a better way of doing it for logic than for logic.
+
+204
+00:17:05,720 --> 00:17:15,390
+For logic, why would you do that? It doesn't make sense, but it makes sense for logic, and it would have been cleaner if we had done that.
+
+205
+00:17:15,390 --> 00:17:20,390
+This is something, a principle I noticed a while ago on logic.
+
+206
+00:17:20,390 --> 00:17:27,480
+When you're publishing ontologies on the web, the planet wide web for all future use, it's
+
+207
+00:17:27,480 --> 00:17:34,480
+really dangerous to say for all X, my for all X, not encompassed the things you've thought
+
+208
+00:17:34,480 --> 00:17:35,480
+of.
+
+209
+00:17:35,480 --> 00:17:45,320
+And this is a quote from some play by some guy, I'm slightly modified, which means basically
+
+210
+00:17:45,320 --> 00:17:49,240
+you shouldn't allow people in logic to write a bare universal quantifier, you should only
+
+211
+00:17:49,240 --> 00:17:52,800
+be able to write restricted universal quantifiers, and of course that all does, most of them.
+
+212
+00:17:52,800 --> 00:18:01,330
+The one exception, which is the compliment, and compliment is indeed a very dangerous thing to have around, as many people have noticed.
+
+213
+00:18:01,330 --> 00:18:20,980
+This is another topic that has come up a lot in recent discussions, and I cite Lynne Stein here, but a bunch of us have been involved in internal evening of the debate about this, Laura Axula and Orel Axula, and Jim Hendler and Lynne and myself, and many others.
+
+214
+00:18:20,980 --> 00:18:27,880
+What does saying that mean when you put it in a link? Inside of one ontology, it makes sense, but more globally.
+
+215
+00:18:27,880 --> 00:18:34,480
+People say the most extraordinary things are the same as other things on the web at the moment, and they shouldn't, really.
+
+216
+00:18:34,480 --> 00:18:47,700
+In particular, the reason for sodium there is there's a list of in-the-link data initiatives, some people have connected up one list of the chemical elements
+
+217
+00:18:47,700 --> 00:18:52,260
+with other lists, with chemical elements of the shell, there are a number of these lists.
+
+218
+00:18:52,260 --> 00:18:57,820
+At least one of them, if you dive into the containing ontology, you find that the definition
+
+219
+00:18:57,820 --> 00:19:05,360
+of an element is, and I believe I get this right, is a class of meteorological suns.
+
+220
+00:19:05,360 --> 00:19:11,640
+So sodium is a class, or a property if you like, and all of the things in that class
+
+221
+00:19:11,640 --> 00:19:16,260
+are all the pieces of pure sodium of any size.
+
+222
+00:19:16,260 --> 00:19:20,660
+since we're talking meteorology, that means even the very small pieces and in the limit
+
+223
+00:19:20,660 --> 00:19:22,740
+that means the atoms.
+
+224
+00:19:22,740 --> 00:19:27,620
+But it also includes the lump of pure sodium that I have safely ensconced in a little
+
+225
+00:19:27,620 --> 00:19:32,500
+glass bottle underneath some, I forget the name of liquid it's in but I've got to keep
+
+226
+00:19:32,500 --> 00:19:37,640
+it in, it allows it to burst into flames.
+
+227
+00:19:37,640 --> 00:19:47,580
+Now that notion of sodium in that ontology is the same element as the notion of sodium
+
+228
+00:19:47,580 --> 00:19:54,980
+in, say, DBpedia, but I'll bet DBpedia doesn't buy into that particular ontological trick
+
+229
+00:19:54,980 --> 00:19:58,920
+for describing it, that it's a class of pieces.
+
+230
+00:19:58,920 --> 00:20:04,700
+That's a kind of bit of ontological engineering, kind of clever hack.
+
+231
+00:20:04,700 --> 00:20:12,340
+But if we take the semantics of same as literally, which means equality basically, then A and
+
+232
+00:20:12,340 --> 00:20:15,380
+B, if A saying that B is true, then A and B are just substituted.
+
+233
+00:20:15,380 --> 00:20:20,660
+So, I can substitute the DBPD name in the, I think it's the psych anthology, right?
+
+234
+00:20:20,660 --> 00:20:25,200
+And the psych action should be true using the DBPD name if indeed the global view of
+
+235
+00:20:25,200 --> 00:20:31,460
+what same as means holds, which I think many people would interpret as meaning, not just
+
+236
+00:20:31,460 --> 00:20:36,260
+that they referred both to the sojourn, but that Wikipedia agrees with psych about what
+
+237
+00:20:36,260 --> 00:20:37,260
+sojourn is.
+
+238
+00:20:37,260 --> 00:20:41,950
+But, of course, it almost certainly doesn't, whatever that means to say that one ontology
+
+239
+00:20:41,950 --> 00:20:42,950
+agrees with another.
+
+240
+00:20:42,950 --> 00:20:49,720
+What we need is a way of expressing co-reference but with an inclined acceptance of the kind
+
+241
+00:20:49,720 --> 00:20:52,920
+of conceptualization of the containing ontology.
+
+242
+00:20:52,920 --> 00:20:57,530
+Of course they're both talking about the same elements, 3D, 4D, as I said, yet another
+
+243
+00:20:57,530 --> 00:21:00,290
+example I won't go into that at this point in time.
+
+244
+00:21:00,290 --> 00:21:06,300
+What I probably have here is that there's no notion of nearly the same as in logic
+
+245
+00:21:06,300 --> 00:21:10,940
+because same as means that there's one thing that the two names refer to.
+
+246
+00:21:10,940 --> 00:21:16,570
+Now, it's okay to have two things that are very alike, but you can't have one thing that's
+
+247
+00:21:16,570 --> 00:21:17,970
+nearly different from itself.
+
+248
+00:21:17,970 --> 00:21:19,230
+Right?
+
+249
+00:21:19,230 --> 00:21:20,230
+What?
+
+250
+00:21:20,230 --> 00:21:21,230
+Doesn't make sense.
+
+251
+00:21:21,230 --> 00:21:25,920
+So equality, same as, doesn't admit of degrees.
+
+252
+00:21:25,920 --> 00:21:30,000
+We don't have yet, as far as I know, a decent way of approaching this problem.
+
+253
+00:21:30,000 --> 00:21:35,500
+I think it's a real, a real problem, a real, current active problem in logic.
+
+254
+00:21:35,500 --> 00:21:39,460
+My point is only that this, I don't mean to suggest that I know how to solution to
+
+255
+00:21:39,460 --> 00:21:45,460
+I should draw your attention to it and point out that it's a real problem we have now for linked data.
+
+256
+00:21:45,460 --> 00:21:48,460
+It doesn't arise in logic, it arises in logic.
+
+257
+00:21:48,460 --> 00:21:50,620
+It's why it's a new subject.
+
+258
+00:21:50,620 --> 00:21:56,620
+The quote from the remark about Lynn there is that she suggested quite seriously that
+
+259
+00:21:56,620 --> 00:22:03,620
+this is a symptom of a problem so deep that we should completely change an ocean of meaning on the web.
+
+260
+00:22:03,620 --> 00:22:07,620
+We shouldn't be using traditional interpretive semantics.
+
+261
+00:22:07,620 --> 00:22:10,180
+She should be using speech and semantics. I hope she's wrong.
+
+262
+00:22:10,180 --> 00:22:15,130
+But it gives you an idea of the scope of discussion that's necessary in these areas.
+
+263
+00:22:15,130 --> 00:22:20,110
+Now, my last point about logic.
+
+264
+00:22:20,110 --> 00:22:26,710
+Is that turning down? Oh, it's turning down. Thank God for that. Okay.
+
+265
+00:22:26,710 --> 00:22:31,990
+I asked for a clock, and you can't see it, but it's here. It's got letters this high, and it's changing by the millisecond.
+
+266
+00:22:31,990 --> 00:22:35,590
+It's rather daunting. It's like, say, you're running out of time, running out of time, running out of time.
+
+267
+00:22:35,590 --> 00:22:40,820
+Oh, okay.
+
+268
+00:22:40,820 --> 00:22:43,260
+So I call this just by layering, I thought it was fun.
+
+269
+00:22:43,260 --> 00:22:45,600
+It's better than chocolate, anyway.
+
+270
+00:22:45,600 --> 00:22:47,560
+The famous layer tag diagram, which we've all seen,
+
+271
+00:22:47,560 --> 00:22:49,680
+and in fact, I should have had a copy ready for you,
+
+272
+00:22:49,680 --> 00:22:53,840
+but never mind, the thinking behind it
+
+273
+00:22:53,840 --> 00:22:56,040
+is computer architectural thinking.
+
+274
+00:22:56,040 --> 00:22:56,840
+Layers, right?
+
+275
+00:22:56,840 --> 00:23:00,880
+We have functional architectural layers
+
+276
+00:23:00,880 --> 00:23:02,840
+that build on one another, and each one
+
+277
+00:23:02,840 --> 00:23:04,640
+assumes the underlying one works,
+
+278
+00:23:04,640 --> 00:23:07,000
+but then creates a new layer of interpretation
+
+279
+00:23:07,000 --> 00:23:10,600
+or of structure on top of it.
+
+280
+00:23:10,600 --> 00:23:13,800
+And we have APIs for getting down, and so forth.
+
+281
+00:23:13,800 --> 00:23:21,710
+That is a terrible idea for semantics, for blockchain.
+
+282
+00:23:21,710 --> 00:23:24,600
+And the reason is, what I say here
+
+283
+00:23:24,600 --> 00:23:27,040
+about names having different logical status.
+
+284
+00:23:27,040 --> 00:23:31,670
+What I mean by that, take OWL and RDF, OWL written in RDF,
+
+285
+00:23:31,670 --> 00:23:34,510
+layered on top of RDF.
+
+286
+00:23:34,510 --> 00:23:37,150
+Some of you may be thinking, well, that's a bad idea already.
+
+287
+00:23:37,150 --> 00:23:39,860
+I agree, I agree.
+
+288
+00:23:39,860 --> 00:23:41,720
+But take this.
+
+289
+00:23:41,720 --> 00:23:57,640
+The URIs in that mashed together language, which are seen from the RDF perspective, are ordinary URIs.
+
+290
+00:23:57,640 --> 00:24:03,440
+Their meaning is defined by axioms, in a sense.
+
+291
+00:24:03,440 --> 00:24:10,940
+They're not restricted words of RDF. RDF defines them as special meaning itself.
+
+292
+00:24:10,940 --> 00:24:17,100
+So in the RDS semantics, they're on the interpretive side as opposed to the fixed interpretation
+
+293
+00:24:17,100 --> 00:24:22,120
+side of this important distinction that logic builds into its semantic theory.
+
+294
+00:24:22,120 --> 00:24:27,990
+Seen from OWL, of course, they're part of the OWL language, so their meaning is fixed,
+
+295
+00:24:27,990 --> 00:24:32,650
+and then the ORIs that you guys write in your OWL ontologies are on the other side of that
+
+296
+00:24:32,650 --> 00:24:33,650
+divide.
+
+297
+00:24:33,650 --> 00:24:37,170
+So the status of these names is ambiguous, depending whether you're seeing them from
+
+298
+00:24:37,170 --> 00:24:39,770
+within RDS or seeing them from within OWL.
+
+299
+00:24:39,770 --> 00:24:46,400
+And that means that what counts as entailment changes depending on whether you're seeing
+
+300
+00:24:46,400 --> 00:24:48,840
+the stuff from within RDF or seeing it from within OWL.
+
+301
+00:24:48,840 --> 00:24:51,000
+The more layers you add, the worse this gets.
+
+302
+00:24:51,000 --> 00:25:00,410
+Now, this is why Sparkles can't have a built-in notion of query against an entailment because
+
+303
+00:25:00,410 --> 00:25:01,410
+which entailment?
+
+304
+00:25:01,410 --> 00:25:02,410
+There's no way to know.
+
+305
+00:25:02,410 --> 00:25:06,850
+Are we talking about RDF entailment, RDF entailment with data sites, RDF S entailment,
+
+306
+00:25:06,850 --> 00:25:12,170
+OWL DL entailment, OWL full entailment, OWL 2 entailment, how many OWLs are there
+
+307
+00:25:12,170 --> 00:25:18,230
+now. You see how it goes, right? And I'm sure many of you are probably aware of this. But
+
+308
+00:25:18,230 --> 00:25:23,350
+what you might not be aware of is, this is not a kind of, this issue, this problem, and
+
+309
+00:25:23,350 --> 00:25:30,390
+it really is a problem, it's not something that comes with logic naturally. It's an artifact
+
+310
+00:25:30,390 --> 00:25:35,950
+of the way that we're layering one language on another. We have caused, we have made this
+
+311
+00:25:35,950 --> 00:25:41,070
+problem ourselves, okay? This problem didn't happen until we put our languages together
+
+312
+00:25:41,070 --> 00:25:48,390
+in this terrible way. It's a really bad thing to do, and I think that we should fix this,
+
+313
+00:25:48,390 --> 00:25:55,600
+and that's what the next part of my talk is going to be about. I noticed that what a mockery
+
+314
+00:25:55,600 --> 00:25:59,800
+it makes of the portability idea, the idea that you can take a piece of information,
+
+315
+00:25:59,800 --> 00:26:05,240
+deal with it locally, also send it over there, and deal with it over there, or send the results
+
+316
+00:26:05,240 --> 00:26:09,200
+over there that should be the same, that first, computed diagram. If you don't even
+
+317
+00:26:09,200 --> 00:26:14,360
+know over there what entrapment regime was being used over here and there's no way to
+
+318
+00:26:14,360 --> 00:26:17,000
+communicate it, then you're dead.
+
+319
+00:26:17,000 --> 00:26:21,320
+And indeed, we are in that respect.
+
+320
+00:26:21,320 --> 00:26:22,320
+Okay.
+
+321
+00:26:22,320 --> 00:26:23,320
+Part of my talk.
+
+322
+00:26:23,320 --> 00:26:24,320
+Oh, not bad.
+
+323
+00:26:24,320 --> 00:26:29,600
+And this is going to be more technical, so some of you who are going to sleep should
+
+324
+00:26:29,600 --> 00:26:30,600
+wake up at this point.
+
+325
+00:26:30,600 --> 00:26:31,600
+Wake up.
+
+326
+00:26:31,600 --> 00:26:33,680
+Okay.
+
+327
+00:26:33,680 --> 00:26:34,680
+Now, there's lots of things.
+
+328
+00:26:34,680 --> 00:26:38,840
+You need to stand back and look at RDF and you think, right, oh, let's go and fix
+
+329
+00:26:38,840 --> 00:26:39,840
+that now.
+
+330
+00:26:39,840 --> 00:26:41,680
+Let's go and debug RDF and do it right.
+
+331
+00:26:41,680 --> 00:26:47,240
+There's all sorts of things that we could, in retrospect, we should have done better.
+
+332
+00:26:47,240 --> 00:26:52,760
+I mean, that list and the type there and the third paragraph, that could go on and on and
+
+333
+00:26:52,760 --> 00:26:53,760
+on.
+
+334
+00:26:53,760 --> 00:26:54,760
+And indeed, they should all get fixed.
+
+335
+00:26:54,760 --> 00:26:57,760
+Those are the kind of things that the community is fixing.
+
+336
+00:26:57,760 --> 00:27:02,600
+Our deaf implementations are using Quads, you know, named Graf.
+
+337
+00:27:02,600 --> 00:27:04,880
+They are doing smart importing.
+
+338
+00:27:04,880 --> 00:27:09,920
+They have the syntax rules, so they live with the subject position here and there.
+
+339
+00:27:09,920 --> 00:27:15,600
+there's this neat proposal for retrospectively treating
+
+340
+00:27:15,600 --> 00:27:17,920
+plain literals as having these invisibly data
+
+341
+00:27:17,920 --> 00:27:20,800
+types with a special data type.
+
+342
+00:27:20,800 --> 00:27:23,040
+And everybody, anybody who's got any sense
+
+343
+00:27:23,040 --> 00:27:26,920
+isn't giving me verification, and so forth.
+
+344
+00:27:26,920 --> 00:27:30,200
+But there's a more basic fundamental error
+
+345
+00:27:30,200 --> 00:27:33,840
+in the RDF conceptual model, which I missed a time
+
+346
+00:27:33,840 --> 00:27:35,480
+and I missed it so recently.
+
+347
+00:27:35,480 --> 00:27:38,760
+And if we go in and zoom in on that and fix it,
+
+348
+00:27:38,760 --> 00:27:47,310
+RDF suddenly gets greatly improved, blank notes.
+
+349
+00:27:47,310 --> 00:27:49,920
+One of the simplest ideas you can imagine,
+
+350
+00:27:49,920 --> 00:27:52,280
+but right now, the RDF description of blank notes
+
+351
+00:27:52,280 --> 00:27:54,100
+is seriously damaged.
+
+352
+00:27:54,100 --> 00:27:56,240
+And this is how I started trying to fix RDF,
+
+353
+00:27:56,240 --> 00:27:59,030
+was trying to figure out a way to improve this.
+
+354
+00:27:59,030 --> 00:28:01,730
+Because I'm part responsible for putting blank notes
+
+355
+00:28:01,730 --> 00:28:05,360
+in RDF, or at least sort of leaving them there
+
+356
+00:28:05,360 --> 00:28:06,940
+and regarding them as kosher.
+
+357
+00:28:10,030 --> 00:28:15,060
+I've been amazed in the sort of post-spec
+
+358
+00:28:15,060 --> 00:28:18,320
+of how much trouble people had with blank nodes.
+
+359
+00:28:18,320 --> 00:28:21,730
+Amazing, because it seems like one of the coolest ideas.
+
+360
+00:28:21,730 --> 00:28:23,570
+After all, there it is.
+
+361
+00:28:23,570 --> 00:28:25,250
+I deliberately chose an old background
+
+362
+00:28:25,250 --> 00:28:27,970
+from one of the very early papers in RDF,
+
+363
+00:28:27,970 --> 00:28:28,890
+cut and placed it in there.
+
+364
+00:28:28,890 --> 00:28:30,900
+Look at all those blank nodes.
+
+365
+00:28:30,900 --> 00:28:36,140
+And they're just nodes that don't have a label.
+
+366
+00:28:36,140 --> 00:28:40,410
+Really, what could be simpler?
+
+367
+00:28:40,410 --> 00:28:43,170
+The problem is that we had to do this mathematically.
+
+368
+00:28:43,170 --> 00:28:46,770
+We had to come up with a formal mathematical account
+
+369
+00:28:46,770 --> 00:28:48,890
+of what we were talking about.
+
+370
+00:28:48,890 --> 00:28:50,090
+And we got that wrong.
+
+371
+00:28:50,090 --> 00:28:53,530
+I got it wrong, actually, I think it's fair to say.
+
+372
+00:28:53,530 --> 00:28:54,970
+We use set language.
+
+373
+00:28:54,970 --> 00:28:58,090
+We want to avoid having to talk about syntax,
+
+374
+00:28:58,090 --> 00:29:01,810
+about bound variables, all this complicated stuff
+
+375
+00:29:01,810 --> 00:29:03,610
+when we were doing the RDF spec.
+
+376
+00:29:03,610 --> 00:29:06,970
+So look for a really underlying model.
+
+377
+00:29:06,970 --> 00:29:09,530
+And we can just sort of say, this is what it's really about.
+
+378
+00:29:09,530 --> 00:29:11,610
+And it was the graph model we came up with.
+
+379
+00:29:11,610 --> 00:29:14,570
+And we used set language, the language of mathematics,
+
+380
+00:29:14,570 --> 00:29:16,010
+to describe the graphs.
+
+381
+00:29:16,010 --> 00:29:18,690
+We said that an RDF graph is a set of triples.
+
+382
+00:29:18,690 --> 00:29:20,870
+and so forth.
+
+383
+00:29:20,870 --> 00:29:23,230
+And the ex-brank nodes are elements of a set.
+
+384
+00:29:23,230 --> 00:29:25,470
+The whole point was not to say exactly what they were
+
+385
+00:29:25,470 --> 00:29:27,550
+and some other things, so there's some set of things
+
+386
+00:29:27,550 --> 00:29:30,600
+that are different from URI's and the controls.
+
+387
+00:29:30,600 --> 00:29:32,920
+But there's something wrong with trying to use sets
+
+388
+00:29:32,920 --> 00:29:34,690
+to talk about syntax.
+
+389
+00:29:34,690 --> 00:29:38,260
+And this is the bug, this is the mistake.
+
+390
+00:29:38,260 --> 00:29:40,660
+Sets out the right kind of thing
+
+391
+00:29:40,660 --> 00:29:42,820
+to use for describing syntax.
+
+392
+00:29:42,820 --> 00:29:45,260
+A set is a platonic abstraction.
+
+393
+00:29:45,260 --> 00:29:48,340
+You can't copy a set from one place to another.
+
+394
+00:29:48,340 --> 00:29:52,660
+You can't store it at a node on the network, right?
+
+395
+00:29:52,660 --> 00:29:54,540
+There's no type token distinction for sets.
+
+396
+00:29:54,540 --> 00:29:56,500
+You know what I mean by type token distinction?
+
+397
+00:29:56,500 --> 00:29:59,380
+So, for example, how many, the word sets,
+
+398
+00:29:59,380 --> 00:30:01,820
+the English word sets, there's just one English word set,
+
+399
+00:30:01,820 --> 00:30:03,260
+that's ETS, right?
+
+400
+00:30:03,260 --> 00:30:08,710
+But if you look, there's one, two, three, four, five, six.
+
+401
+00:30:11,990 --> 00:30:14,950
+The word set occurs six times on that,
+
+402
+00:30:14,950 --> 00:30:16,870
+or set or set, on that screen.
+
+403
+00:30:16,870 --> 00:30:20,100
+Those are the tokens, the individual marks,
+
+404
+00:30:20,100 --> 00:30:24,070
+and the type is the word, it's just one of it.
+
+405
+00:30:24,070 --> 00:30:26,710
+That distinction is critical to making sense of syntax,
+
+406
+00:30:26,710 --> 00:30:32,100
+and it's lost when you talk about sex.
+
+407
+00:30:32,100 --> 00:30:34,020
+And we get into pressure if you say that RDS.D.S.
+
+408
+00:30:34,020 --> 00:30:34,980
+grabs the set of triples.
+
+409
+00:30:34,980 --> 00:30:38,080
+Is any set of triples an R.D.S. graph?
+
+410
+00:30:38,080 --> 00:30:40,280
+So consider the following set, which I know exists
+
+411
+00:30:40,280 --> 00:30:42,360
+because the actual choice says it exists.
+
+412
+00:30:42,360 --> 00:30:45,790
+Take every R.D.S. graph ever published
+
+413
+00:30:45,790 --> 00:30:50,840
+and take one triple out of each one of them, that set.
+
+414
+00:30:50,840 --> 00:30:52,300
+Is that an RDF graph?
+
+415
+00:30:52,300 --> 00:30:54,720
+It's certainly not ever been published by anybody anywhere.
+
+416
+00:30:54,720 --> 00:30:57,680
+I never will be, but it exists mathematically,
+
+417
+00:30:57,680 --> 00:30:59,260
+so I guess it is an RDF graph.
+
+418
+00:30:59,260 --> 00:31:00,760
+That doesn't seem right.
+
+419
+00:31:00,760 --> 00:31:02,600
+So the whole, and then you get this oddity
+
+420
+00:31:02,600 --> 00:31:05,720
+that the same blank node could be in several graphs.
+
+421
+00:31:05,720 --> 00:31:06,560
+I mean, why not?
+
+422
+00:31:06,560 --> 00:31:07,640
+It can be in several sets, of course,
+
+423
+00:31:07,640 --> 00:31:11,080
+and that led us into this difficulty in the RDF step.
+
+424
+00:31:11,080 --> 00:31:13,400
+So we had to say, oh, we have to distinguish
+
+425
+00:31:13,400 --> 00:31:15,200
+between having a union of two graphs
+
+426
+00:31:15,200 --> 00:31:16,720
+and having a merge of two graphs,
+
+427
+00:31:16,720 --> 00:31:18,280
+where a merge is like a union,
+
+428
+00:31:18,280 --> 00:31:22,000
+except that if the same v-node occurs in two graphs,
+
+429
+00:31:22,000 --> 00:31:24,680
+then we replace one v-node by another v-node,
+
+430
+00:31:24,680 --> 00:31:27,520
+and that was exactly the kind of syntactic mess
+
+431
+00:31:27,520 --> 00:31:29,560
+that we didn't want to get into in the first place.
+
+432
+00:31:29,560 --> 00:31:32,320
+That's why we invented the graph syntax,
+
+433
+00:31:32,320 --> 00:31:34,480
+was to avoid having to get into that garbage,
+
+434
+00:31:34,480 --> 00:31:36,120
+and then it came around and bit us,
+
+435
+00:31:36,120 --> 00:31:40,320
+and we couldn't get rid of it.
+
+436
+00:31:40,320 --> 00:31:42,340
+What we need is this.
+
+437
+00:31:42,340 --> 00:31:44,500
+The blank nodes are not elements of a set.
+
+438
+00:31:44,500 --> 00:31:45,580
+That was a mistake.
+
+439
+00:31:45,580 --> 00:31:49,780
+They're just marks on a surface, in those diagrams.
+
+440
+00:31:49,780 --> 00:31:51,940
+like you scratch something on a piece of paper
+
+441
+00:31:51,940 --> 00:31:54,880
+and you draw a line to it.
+
+442
+00:31:54,880 --> 00:31:58,240
+So we need that notion of a surface
+
+443
+00:31:58,240 --> 00:32:00,640
+that the graph is drawn on,
+
+444
+00:32:00,640 --> 00:32:02,920
+and the black nodes are marked on the surface.
+
+445
+00:32:02,920 --> 00:32:04,640
+Think of it as a piece of paper,
+
+446
+00:32:04,640 --> 00:32:06,000
+or the surface of your screen,
+
+447
+00:32:06,000 --> 00:32:10,110
+or a document, it could be a digital document.
+
+448
+00:32:10,110 --> 00:32:12,350
+If we put surfaces back into RDF,
+
+449
+00:32:12,350 --> 00:32:14,870
+or not back, it would be kind of a niche
+
+450
+00:32:14,870 --> 00:32:16,790
+that we're talking about these things
+
+451
+00:32:16,790 --> 00:32:18,830
+that are copyable and have tokens,
+
+452
+00:32:18,830 --> 00:32:26,720
+both types, then, and that the blank nodes are on them,
+
+453
+00:32:26,720 --> 00:32:29,640
+you get the following simple observation.
+
+454
+00:32:29,640 --> 00:32:34,120
+A mark on a surface can only be on one surface.
+
+455
+00:32:34,120 --> 00:32:39,440
+That's why it was kind of dumb to allow two RDF graphs
+
+456
+00:32:39,440 --> 00:32:43,170
+to share a B node, right?
+
+457
+00:32:43,170 --> 00:32:46,570
+We couldn't see how to stop that happening without other
+
+458
+00:32:46,570 --> 00:32:49,290
+than by saying it shouldn't.
+
+459
+00:32:49,290 --> 00:32:54,370
+But it was kind of stupid because it just can't happen if there are marks on the surface.
+
+460
+00:32:54,370 --> 00:32:57,170
+So I've got two pieces of paper and there's a mark on this piece of paper.
+
+461
+00:32:57,170 --> 00:32:59,130
+Of course it's not on that piece of paper.
+
+462
+00:32:59,130 --> 00:33:05,260
+How can it be on two pieces of paper at once unless they're the same piece of paper?
+
+463
+00:33:05,260 --> 00:33:07,980
+So there's a bit of, this is all written out formally.
+
+464
+00:33:07,980 --> 00:33:11,860
+You can do it in mathematics and you just define it this way and don't bother with it.
+
+465
+00:33:11,860 --> 00:33:14,950
+Just believe me, it can be done formally.
+
+466
+00:33:14,950 --> 00:33:17,960
+So now we define RDF this way.
+
+467
+00:33:17,960 --> 00:33:19,160
+Let me say graph.
+
+468
+00:33:19,160 --> 00:33:21,720
+I don't mean RDF graph in this traditional RDF sense.
+
+469
+00:33:21,720 --> 00:33:24,040
+which is a set, remember, a set of triples.
+
+470
+00:33:24,040 --> 00:33:26,910
+I mean, one of those plus a surface.
+
+471
+00:33:26,910 --> 00:33:29,630
+And moreover, the blank nodes, if there are any,
+
+472
+00:33:29,630 --> 00:33:32,470
+in that RDF graph have to be marked on this surface,
+
+473
+00:33:32,470 --> 00:33:35,310
+and that notion is well defined by the previous slide,
+
+474
+00:33:35,310 --> 00:33:37,550
+and I've only got one button, I can't show it to you again,
+
+475
+00:33:37,550 --> 00:33:39,110
+so you just have to believe me.
+
+476
+00:33:41,970 --> 00:33:44,650
+And that is what we'll call an RDF graph.
+
+477
+00:33:44,650 --> 00:33:47,090
+Now, that's not gonna change any current actual
+
+478
+00:33:47,090 --> 00:33:50,010
+deployed RDF, it's just sort of looking at it
+
+479
+00:33:50,010 --> 00:33:53,130
+and saying there's a slightly improved theoretical model
+
+480
+00:33:53,130 --> 00:33:57,570
+underlying this stuff. Nothing operationally changes. I'm going to treat this as, I'm going
+
+481
+00:33:57,570 --> 00:34:03,540
+to talk about it as being a surface with a graph in the old sense, an RDF graph kind
+
+482
+00:34:03,540 --> 00:34:10,440
+of stuck on it. But a whole lot of things now make sense that didn't make sense before.
+
+483
+00:34:10,440 --> 00:34:16,750
+It makes sense to copy one of these. It makes sense to name it. I myself have helped write
+
+484
+00:34:16,750 --> 00:34:20,510
+papers on named graphs as elaborate proposals, but if you think about it, if a graph is
+
+485
+00:34:20,510 --> 00:34:28,240
+a set. Naming a set is a very odd thing to do. But naming a surface is not an odd thing
+
+486
+00:34:28,240 --> 00:34:33,080
+to do at all, because it could be on a server somewhere. It could be a document, remember.
+
+487
+00:34:33,080 --> 00:34:39,240
+It can have a URI, makes perfect sense. A representation of it, sent to you by HTTP
+
+488
+00:34:39,240 --> 00:34:46,760
+in the AWW REST sense of representation, i.e. something like a Xerox copy of it, and so
+
+489
+00:34:46,760 --> 00:34:54,280
+forth. But the basic, syntactic rule now, this revised RDF model, is that a graph cannot
+
+490
+00:34:54,280 --> 00:35:00,930
+be stripped over multiple services. Every graph is on a surface. Actually, I'm going
+
+491
+00:35:00,930 --> 00:35:05,910
+to modify that a little bit, but fundamentally that's right. And then a copy now. These are
+
+492
+00:35:05,910 --> 00:35:09,430
+just all these neat things that happen when you do this. And they're all just sort of
+
+493
+00:35:09,430 --> 00:35:15,710
+improvement theory, but very nice. You can have dynamic RDF graphs now, it makes sense.
+
+494
+00:35:15,710 --> 00:35:18,310
+someone was talking to me the other day about how do you make sense of
+
+495
+00:35:18,310 --> 00:35:23,950
+sparkle updates? If an RDS graph is a set, a set is a tonic abstraction,
+
+496
+00:35:23,950 --> 00:35:29,070
+sets don't change, if I sort of take an actual RDS incarnation somewhere
+
+497
+00:35:29,070 --> 00:35:34,070
+and I modify it, update it, I'm talking about something with a state
+
+498
+00:35:34,070 --> 00:35:38,230
+that's updatable, sets don't have state. What I have to do
+
+499
+00:35:45,770 --> 00:35:51,050
+When I applied the RDF semantics for the RDF metatheory model to them, I actually distinguished them.
+
+500
+00:35:51,050 --> 00:35:57,080
+But I don't want to do that over here. I wanted to say there was one thing with one UORI pointing to it, and I updated it.
+
+501
+00:35:57,080 --> 00:36:01,480
+I want to think about it computationally, after all, with computer science here.
+
+502
+00:36:01,480 --> 00:36:06,600
+There was a real mismatch. There is a real mismatch right now between the meta-theories of RDF and SPARQL.
+
+503
+00:36:06,600 --> 00:36:10,360
+This completely resolves that, because it gives us things with state.
+
+504
+00:36:10,360 --> 00:36:12,880
+The surfaces on which the graphs are written
+
+505
+00:36:12,880 --> 00:36:18,570
+can be the things of state that we identify with your eyes.
+
+506
+00:36:18,570 --> 00:36:20,290
+We also have a notion of syntactic scope.
+
+507
+00:36:20,290 --> 00:36:21,730
+We have a notion of conjunction.
+
+508
+00:36:21,730 --> 00:36:24,450
+The then a theory completely, this distinction
+
+509
+00:36:24,450 --> 00:36:28,370
+between unions and merges of graphs, which is the devil's,
+
+510
+00:36:28,370 --> 00:36:30,810
+anybody who tried to read the RDF text on the first side,
+
+511
+00:36:30,810 --> 00:36:31,770
+just goes away.
+
+512
+00:36:31,770 --> 00:36:32,890
+There's no such distinction.
+
+513
+00:36:32,890 --> 00:36:33,850
+You don't need it.
+
+514
+00:36:33,850 --> 00:36:35,890
+There's simply a notion of conjoining two graphs,
+
+515
+00:36:35,890 --> 00:36:37,770
+which means copying them onto a common surface.
+
+516
+00:36:37,770 --> 00:36:38,410
+That's it.
+
+517
+00:36:38,410 --> 00:36:39,370
+End of story.
+
+518
+00:36:39,370 --> 00:36:40,810
+All the rest works out automatically.
+
+519
+00:36:40,810 --> 00:36:46,080
+This is clearly the way it should have been done in the first place.
+
+520
+00:36:46,080 --> 00:36:49,440
+Now we can do one extra thing.
+
+521
+00:36:49,440 --> 00:36:54,700
+We can say, well, we can have different kinds of surface to put the graph on.
+
+522
+00:36:54,700 --> 00:37:00,510
+I can have a negation surface.
+
+523
+00:37:00,510 --> 00:37:03,870
+If I put a graph on a negating surface, I'm saying it's false
+
+524
+00:37:03,870 --> 00:37:05,430
+instead of saying it's true.
+
+525
+00:37:05,430 --> 00:37:07,430
+All the rest is exactly the same.
+
+526
+00:37:07,430 --> 00:37:09,710
+But I'm making a different claim about it.
+
+527
+00:37:09,710 --> 00:37:13,830
+I'm negating it.
+
+528
+00:37:13,830 --> 00:37:16,710
+I could also put it on a neutral surface, which just says,
+
+529
+00:37:16,710 --> 00:37:22,710
+Well, look, I'm not making any changes right now, true or false, and that would be a good place to put, as I said, like RDF collection triples.
+
+530
+00:37:22,710 --> 00:37:33,710
+There was a big problem when we were mapping out into RDF, which is there was a proposal that never made it, but you could find it in the email records to have dark triples.
+
+531
+00:37:33,710 --> 00:37:40,030
+Dark triples were going to be RDF triples that were kind of there, but they weren't being asserted. They were kind of hidden.
+
+532
+00:37:40,030 --> 00:37:45,390
+And they were there to be, you know, all the RDS rest and RDS first assertions, all the
+
+533
+00:37:45,390 --> 00:37:51,270
+kind of structural stuff that's there just to encode the OWL syntax into the RDS graph,
+
+534
+00:37:51,270 --> 00:37:54,150
+but it's not really being asserted.
+
+535
+00:37:54,150 --> 00:37:59,430
+And we never went that way because OWL didn't want to change RDS, there were surf wars going
+
+536
+00:37:59,430 --> 00:38:00,430
+on there.
+
+537
+00:38:00,430 --> 00:38:04,150
+But that would have been a smart thing to do, and this does it for you with very little
+
+538
+00:38:04,150 --> 00:38:06,320
+extra trouble.
+
+539
+00:38:06,320 --> 00:38:10,960
+So there's a simple default that the current RDF handler says that surfaces are positive,
+
+540
+00:38:10,960 --> 00:38:14,000
+you're probably claiming they're true, but we could also have negative surfaces and
+
+541
+00:38:14,000 --> 00:38:16,480
+maybe other things, like I said, deprecated surface.
+
+542
+00:38:16,480 --> 00:38:21,060
+These would all just be properties of surfaces, which themselves would be expressed in RDF.
+
+543
+00:38:21,060 --> 00:38:31,120
+Now we have negative surfaces, we can do a cute thing, because now we can deny a graph,
+
+544
+00:38:31,120 --> 00:38:32,370
+okay?
+
+545
+00:38:32,370 --> 00:38:37,600
+And the surfaces give us a notion of scope, which we didn't really have in RDF before.
+
+546
+00:38:37,600 --> 00:38:41,240
+Okay, we already have conjunction and the
+
+547
+00:38:41,240 --> 00:38:43,240
+existential quantifier, that's a blank note.
+
+548
+00:38:43,240 --> 00:38:46,680
+Now we've got all of full first order logic.
+
+549
+00:38:46,680 --> 00:38:52,160
+Negation, conjunction, scoping, the syntactic device
+
+550
+00:38:52,160 --> 00:38:54,160
+of putting parenthesis or end things basically,
+
+551
+00:38:54,160 --> 00:38:56,160
+and one of the quantifiers, that's all you need.
+
+552
+00:38:56,160 --> 00:38:57,160
+You can define everything else.
+
+553
+00:38:57,160 --> 00:39:01,160
+And in fact that's exactly the set of primitives
+
+554
+00:39:01,160 --> 00:39:03,420
+that were in the very first published,
+
+555
+00:39:03,420 --> 00:39:07,550
+the first written proposal for what we now,
+
+556
+00:39:07,550 --> 00:39:17,680
+what we now, in retrospect, recognize as modern logic by Charles Sondelkirk in 1885. He called
+
+557
+00:39:17,680 --> 00:39:27,640
+an existential grasp. The picture there is from a Flickr site which is devoted to crocheting
+
+558
+00:39:27,640 --> 00:39:33,670
+and the people who do the crocheting are logicians. I love Flickr. I love Flickr.
+
+559
+00:39:33,670 --> 00:39:42,670
+And that actually is an illustration, a crocheted version of the following, of that logical theorem at the bottom of the slide, you can see it.
+
+560
+00:39:42,670 --> 00:39:46,670
+If P implies A and Q implies B, then P and Q implies A and B.
+
+561
+00:39:46,670 --> 00:39:54,670
+P implies A turns out to be, if you squift it all around in terms of negation and conjunction, not P and not A.
+
+562
+00:39:54,670 --> 00:39:59,700
+Think about it. If P implies A, then the combination of P and not A is impossible.
+
+563
+00:39:59,700 --> 00:40:05,210
+So, not P and not A, and that's that characteristic pattern, if you look at the top of that picture
+
+564
+00:40:05,210 --> 00:40:14,130
+there, the green in the black, black is negation, and blue is, green is P and blue is A. That's
+
+565
+00:40:14,130 --> 00:40:22,520
+not, not, because it's black all around the outside, sorry all around, blue is P and
+
+566
+00:40:22,520 --> 00:40:30,310
+green as A. There you go, not P and not A. So that's an implication pattern. If you haven't
+
+567
+00:40:30,310 --> 00:40:35,830
+seen these kind of graphs, these diagrams before, additionally you have to do this converting
+
+568
+00:40:35,830 --> 00:40:42,720
+in your head, but in fact you can learn to use them quite quickly and they're quite intuitive
+
+569
+00:40:42,720 --> 00:40:49,650
+once you get used to them. But the main point is that by doing that fix for the blank nodes,
+
+570
+00:40:49,650 --> 00:40:55,030
+a little bit of, a little bit of, and allowing them to be negated and so forth.
+
+571
+00:40:55,030 --> 00:41:00,630
+We've got, basically, all the first-order logic in RDF, and we haven't changed the current RDF, no.
+
+572
+00:41:00,630 --> 00:41:02,470
+I mean, we haven't changed the RDF semantics, either.
+
+573
+00:41:02,470 --> 00:41:11,560
+The RDF model theory could be taking verbatim out of the current RDF stack and re-use here without any change whatsoever.
+
+574
+00:41:11,560 --> 00:41:14,300
+And then Marx on negative service and more like the university quantifier, he said,
+
+575
+00:41:14,300 --> 00:41:19,660
+alright, I can realize I've made too many of these slides, just believe me, you do get logic.
+
+576
+00:41:19,660 --> 00:41:23,860
+But we have to be able to, this is the one place where now the syntax does get a little
+
+577
+00:41:23,860 --> 00:41:24,860
+scarier.
+
+578
+00:41:24,860 --> 00:41:28,460
+We have to allow surfaces inside other surfaces, they have to be able to nest like in that
+
+579
+00:41:28,460 --> 00:41:30,870
+previous, in the crochet.
+
+580
+00:41:30,870 --> 00:41:34,550
+So we have to extend the syntax to allow this property, and one surface can be, as
+
+581
+00:41:34,550 --> 00:41:37,710
+it were, put on top of another surface, they're pre-ordered.
+
+582
+00:41:37,710 --> 00:41:43,310
+This is like nested parentheses, but even if you like, we have to be able to nest
+
+583
+00:41:43,310 --> 00:41:44,410
+them.
+
+584
+00:41:44,410 --> 00:41:48,490
+And if you do that, then you do, in fact, get curative logic.
+
+585
+00:41:48,490 --> 00:41:56,990
+So here's how it works, sorry about the overlap there, that's converting from a keynote to a powerpoint, call that overlap.
+
+586
+00:41:56,990 --> 00:42:04,990
+So every city is a human community, that turns out to be that little nested, two negated services, one on top of another.
+
+587
+00:42:04,990 --> 00:42:09,790
+But you've got to be careful where you put the nodes, if that blank node goes outside the scope of that negation,
+
+588
+00:42:09,790 --> 00:42:12,990
+onto again another type of service, it would mean something different.
+
+589
+00:42:12,990 --> 00:42:18,280
+So in a syntactic way of keeping track of where the nodes are, it's easy to do that graphically.
+
+590
+00:42:18,280 --> 00:42:23,200
+As you can see, notice what that pattern is, by the way.
+
+591
+00:42:23,200 --> 00:42:27,920
+That's a blank node of two RDF site links to two URIs.
+
+592
+00:42:27,920 --> 00:42:32,240
+And it uses two nested, negated surfaces.
+
+593
+00:42:32,240 --> 00:42:36,040
+And that's a statement that every city of the human community,
+
+594
+00:42:36,040 --> 00:42:39,690
+which is a subclass of RDFS or OWL, if you like,
+
+595
+00:42:39,690 --> 00:42:41,930
+is a subclass statement.
+
+596
+00:42:41,930 --> 00:42:46,320
+Now, this is really the point of this.
+
+597
+00:42:46,320 --> 00:42:48,520
+I've just mapped a piece of RDFS,
+
+598
+00:42:48,520 --> 00:42:54,260
+or it could be OWL, into RDF, or this extended RDF.
+
+599
+00:42:54,260 --> 00:42:57,510
+But I haven't done it by layering.
+
+600
+00:42:57,510 --> 00:43:03,110
+I haven't mapped the syntax of RDFS onto the syntax of RDF
+
+601
+00:43:03,110 --> 00:43:07,390
+and then declared by CS that it shall mean what it means
+
+602
+00:43:07,390 --> 00:43:09,710
+by having a big table of extra meanings
+
+603
+00:43:09,710 --> 00:43:12,110
+or making it what we call a semantic extension
+
+604
+00:43:12,110 --> 00:43:14,910
+with extra conditions imposed on the model.
+
+605
+00:43:14,910 --> 00:43:18,150
+What I've done is I've provided a translation
+
+606
+00:43:18,150 --> 00:43:25,730
+of the RDF-S syntax into RDF.
+
+607
+00:43:25,730 --> 00:43:27,710
+Not RDF-S, but RDF.
+
+608
+00:43:27,710 --> 00:43:32,190
+Use the RDF semantics extended in this new way
+
+609
+00:43:32,190 --> 00:43:34,910
+on the translation, and lo and behold,
+
+610
+00:43:34,910 --> 00:43:40,490
+it means in RDF exactly what it was supposed to mean in RDF-S.
+
+611
+00:43:40,490 --> 00:43:42,810
+So I haven't layered RDF-S on top of RDF
+
+612
+00:43:42,810 --> 00:43:44,410
+after we've been doing up to now.
+
+613
+00:43:44,410 --> 00:43:48,490
+What I've done is I've noticed that RDF already
+
+614
+00:43:48,490 --> 00:43:51,650
+is expressive enough to say everything I want to say,
+
+615
+00:43:51,650 --> 00:43:54,290
+it's just that I want to, it's a little long-winded
+
+616
+00:43:54,290 --> 00:43:56,210
+with all this complicated nesting crap,
+
+617
+00:43:56,210 --> 00:43:59,370
+so I've introduced some abbreviations.
+
+618
+00:43:59,370 --> 00:44:01,560
+Some syntactic sugar.
+
+619
+00:44:01,560 --> 00:44:03,360
+Not the same as layering.
+
+620
+00:44:03,360 --> 00:44:05,200
+There's only one semantics here.
+
+621
+00:44:05,200 --> 00:44:06,600
+I don't get this horrible business
+
+622
+00:44:06,600 --> 00:44:08,840
+that one and the same piece of text
+
+623
+00:44:08,840 --> 00:44:12,440
+is both RDF and OWL, or both RDF and RDFS,
+
+624
+00:44:12,440 --> 00:44:15,480
+and the two different languages have different semantics
+
+625
+00:44:15,480 --> 00:44:17,520
+and might give different meanings to this text
+
+626
+00:44:17,520 --> 00:44:19,120
+and I don't know what kind of entailment to use.
+
+627
+00:44:19,120 --> 00:44:20,880
+There's only one language, one semantics,
+
+628
+00:44:20,880 --> 00:44:24,220
+and one entailment notion throughout.
+
+629
+00:44:24,220 --> 00:44:26,540
+And it turns out, you could do this virtually
+
+630
+00:44:26,540 --> 00:44:29,020
+through all of OWL as well.
+
+631
+00:44:29,020 --> 00:44:34,780
+So that's just the point I just made.
+
+632
+00:44:34,780 --> 00:44:36,820
+So we need a little bit of extra conventions
+
+633
+00:44:36,820 --> 00:44:39,940
+that where the triple as it's attached by its property
+
+634
+00:44:39,940 --> 00:44:43,060
+are, and was that those two RDF types are asserted
+
+635
+00:44:43,060 --> 00:44:45,580
+inside their respective surfaces.
+
+636
+00:44:45,580 --> 00:44:47,420
+That's just a graphic convention.
+
+637
+00:44:47,420 --> 00:44:48,700
+And the way to do this in text is
+
+638
+00:44:48,700 --> 00:44:50,500
+you have to introduce some kind of parenthesis
+
+639
+00:44:50,500 --> 00:44:55,780
+style notation and, of course, what the resulting syntax itself is not no longer purely triples.
+
+640
+00:44:55,780 --> 00:45:02,260
+It's more slightly structured than a graph, inevitably, but it has plain old vanilla current
+
+641
+00:45:02,260 --> 00:45:07,700
+RDF as a special case. So we don't have to do any retrospective changes. How am I doing? Yeah.
+
+642
+00:45:10,910 --> 00:45:15,230
+You could add it to the intribus or personal by putting in, I just made up the notation here
+
+643
+00:45:15,230 --> 00:45:21,470
+with these square parentheses with percents in front and they're not prepared to indicate
+
+644
+00:45:21,470 --> 00:45:24,750
+you've got a negative surface, so those are surface boundaries that you like.
+
+645
+00:45:24,750 --> 00:45:31,550
+In fact, it's kind of funny because you can take the box, the colored box diagram, the Iberian diagrams,
+
+646
+00:45:31,550 --> 00:45:36,990
+there's a big, in another community which I sometimes have some feelings,
+
+647
+00:45:36,990 --> 00:45:42,750
+there's a lot of people who claim great superiority for AI purposes or cognitive science purposes
+
+648
+00:45:42,750 --> 00:45:49,950
+for diagrammatic representations as opposed to textual representations or symbolic representations.
+
+649
+00:45:49,950 --> 00:45:57,020
+You have diagrammatic representations and you have a direct geometric way of thinking.
+
+650
+00:45:57,020 --> 00:46:02,780
+All kinds of claims are made about the superiority and an amusing comment to make is that if
+
+651
+00:46:02,780 --> 00:46:06,260
+you take one of these diagrams and these are often actually used as examples to show
+
+652
+00:46:06,260 --> 00:46:10,820
+the superiority of diagrammatic representations with a nested box, not the one at this side,
+
+653
+00:46:10,820 --> 00:46:15,740
+the one at that side, and you simply erase the top and bottom of the diagram so that
+
+654
+00:46:15,740 --> 00:46:22,380
+the boxes have their tops and bottoms sliced off, what you're left with is a parenthesis,
+
+655
+00:46:22,380 --> 00:46:26,940
+and you can then type that on a keyboard and it's a literal representation, and it still
+
+656
+00:46:26,940 --> 00:46:31,670
+means exactly what it meant before.
+
+657
+00:46:31,670 --> 00:46:35,950
+I actually made that observation to such an audience and people said, yes, but one of
+
+658
+00:46:35,950 --> 00:46:36,950
+them is diagrammatic.
+
+659
+00:46:36,950 --> 00:46:43,940
+Anyway, it's great fun and take the piss out of one audience in front of another
+
+660
+00:46:43,940 --> 00:46:44,940
+audience.
+
+661
+00:46:44,940 --> 00:46:46,900
+Oh well.
+
+662
+00:46:46,900 --> 00:46:53,380
+Now these abbreviations can get a little hairy. I've given you a couple more there for a statement
+
+663
+00:46:53,380 --> 00:47:00,330
+of RDFS range. Again, it could be OWL and OWL values from. The old values from is a ticker.
+
+664
+00:47:00,330 --> 00:47:23,330
+The way I built these, by the way, is I know how to map these RDFS and OWL statements back into conventional predicate calculus, so I wrote them out that way, and I also know how to convert from conventional predicate calculus to Pearson graph, and then I did the conversion, and I looked at what I got, and I thought, my god, especially with the old values from, do
+
+665
+00:47:23,330 --> 00:47:25,330
+from, do I really want to go there?
+
+666
+00:47:25,330 --> 00:47:27,330
+And I thought, no, I don't want to go there,
+
+667
+00:47:27,330 --> 00:47:29,330
+but I can, like, programs didn't go there.
+
+668
+00:47:29,330 --> 00:47:31,330
+That was the point, right?
+
+669
+00:47:31,330 --> 00:47:34,330
+I mean, the humans see something like the top line,
+
+670
+00:47:34,330 --> 00:47:38,330
+the old value is from, or maybe even something better.
+
+671
+00:47:38,330 --> 00:47:40,330
+The machines deal with that.
+
+672
+00:47:40,330 --> 00:47:42,330
+But the point is that, again,
+
+673
+00:47:42,330 --> 00:47:46,330
+this is not layering old values from on top of RDF.
+
+674
+00:47:46,330 --> 00:47:51,330
+This is showing how you can say in RDF
+
+675
+00:47:51,330 --> 00:47:56,420
+something that means exactly what our all values from means in L.
+
+676
+00:47:56,420 --> 00:47:59,420
+You can map one language into the other. It's already there.
+
+677
+00:47:59,420 --> 00:48:03,420
+All you have to do is identify the patterns that are in there
+
+678
+00:48:03,420 --> 00:48:09,130
+and kind of patch them up and give them syntactic sugar.
+
+679
+00:48:09,130 --> 00:48:14,060
+One semantics, this language only has one semantics,
+
+680
+00:48:14,060 --> 00:48:18,100
+and it has the moles.
+
+681
+00:48:18,100 --> 00:48:20,100
+There's my little speech here, right?
+
+682
+00:48:20,100 --> 00:48:24,840
+So with this view of RDS, if you were to sort of, you know,
+
+683
+00:48:24,840 --> 00:48:29,480
+So, take RDF and fix it in this way, and notice remember, I started off by just saying,
+
+684
+00:48:29,480 --> 00:48:32,080
+you know, blank nodes are broken, I mean, just fix them.
+
+685
+00:48:32,080 --> 00:48:39,280
+That's how I started on this, and I introduced surfaces as a syntactic fix to make sense
+
+686
+00:48:39,280 --> 00:48:40,280
+of the blank nodes.
+
+687
+00:48:40,280 --> 00:48:45,200
+I noticed that it improved a whole lot of conceptual meta-difficulties about exactly
+
+688
+00:48:45,200 --> 00:48:50,400
+what transfer the graph and et cetera, et cetera, it got rid of the merge union distinction.
+
+689
+00:48:50,400 --> 00:48:51,400
+That was all very nice.
+
+690
+00:48:51,400 --> 00:48:56,560
+And then it dawned on me, and I don't know why I didn't see this before. Maybe some of you have already noticed this.
+
+691
+00:48:56,560 --> 00:49:07,460
+Because I've known it for, for, for, for, for, for, for, for, for, for, for, for, for, for, for, for, for, for, for, for, for, for, for, for, for, for,, for, for, for, for, for, for, for, RDF is almost versus notation.
+
+692
+00:49:07,460 --> 00:49:21,760
+And if you were to just take it there, suddenly you'd have a much better, I suggest, logic available.
+
+693
+00:49:21,760 --> 00:49:25,260
+So I have to do what happens to a layer cake when you do this.
+
+694
+00:49:25,260 --> 00:49:36,210
+And you know, I swear I'm playing fair here because I've left a little bit of sparkle and a little bit of riffs sticking out.
+
+695
+00:49:36,210 --> 00:49:42,590
+Because in all conscience, they do other things than just RDF.
+
+696
+00:49:42,590 --> 00:49:52,930
+You know, there are rules in riffs that really don't leave times as logic, and I'd like to say they really could be given a first-order logic.
+
+697
+00:49:52,930 --> 00:49:58,820
+But an awful lot of it can, and an awful lot of sparkle can as well.
+
+698
+00:49:58,820 --> 00:50:05,700
+Really, all of that stuff, unifying logic, proof, RDF, it's all just, or should be, just
+
+699
+00:50:05,700 --> 00:50:08,900
+RDF done right.
+
+700
+00:50:08,900 --> 00:50:09,900
+No more layers.
+
+701
+00:50:09,900 --> 00:50:19,140
+So, just a couple of comments, and I should, by the time I got to this slide it was 1am,
+
+702
+00:50:19,140 --> 00:50:25,220
+so I want to acknowledge John Foe's influence on my thinking, he's a guy who showed me first
+
+703
+00:50:25,220 --> 00:50:33,260
+and show me first again, and then show me first again, but still, I'm glad he did.
+
+704
+00:50:33,260 --> 00:50:44,220
+And this is, I have reasons for showing this to you, the idea here is just to indicate that this is not just a sort of crazy new idea that sort of took out of the air.
+
+705
+00:50:44,220 --> 00:50:49,100
+This is, in fact, the oldest notation for logic ever.
+
+706
+00:50:49,100 --> 00:50:56,340
+It's thoroughly understood. It's been standardized by the ISO. There are implementations of it, yada, yada, yada.
+
+707
+00:50:56,340 --> 00:51:06,940
+And it is in many ways intuitive notation. So, I'm not trying to tell you a sort of, you know, the Brooklyn Bridge here.
+
+708
+00:51:06,940 --> 00:51:14,620
+This is real, in a sense, at least the person logic, the notation logic is real.
+
+709
+00:51:14,620 --> 00:51:21,000
+I think that's all. And I actually have 11 minutes left for questions. Amazingly enough.
+
+710
+00:51:21,000 --> 00:51:42,140
+I think I'm supposed to ask that you have a microphone. Is that right?
+
+711
+00:51:42,140 --> 00:51:44,780
+Yeah, there's someone with a mic who can...
+
+712
+00:51:44,780 --> 00:52:10,850
+I've just been on a large number of national labs, so it's fine in terms of expressiveness that you put everything together, but what about to the other dimension, tractability, which is part of the reason we have the layers?
+
+713
+00:52:10,850 --> 00:52:24,840
+Okay, of course, tractability. I'll differ with your final claim. That's why you have the languages. It's not why we have the layers.
+
+714
+00:52:24,840 --> 00:52:28,460
+I'm not arguing here that we should abandon OWL, or OWLDL,
+
+715
+00:52:28,460 --> 00:52:31,720
+or any language, choose your favorite language.
+
+716
+00:52:31,720 --> 00:52:32,480
+Keep it.
+
+717
+00:52:32,480 --> 00:52:33,400
+Keep it syntax.
+
+718
+00:52:33,400 --> 00:52:37,080
+In fact, have it syntax designed for it.
+
+719
+00:52:37,080 --> 00:52:40,640
+And forget about mapping into RDF and XML, if you like.
+
+720
+00:52:40,640 --> 00:52:43,760
+They use the Manchester syntax for OWL.
+
+721
+00:52:43,760 --> 00:52:48,360
+But when you come to make your language compatible with RDF,
+
+722
+00:52:48,360 --> 00:52:51,600
+don't layer it on top by a syntactic mapping,
+
+723
+00:52:51,600 --> 00:52:52,920
+an arbitrary syntactic mapping.
+
+724
+00:52:52,920 --> 00:52:55,760
+Rather, explain how it gets embedded.
+
+725
+00:52:55,760 --> 00:52:58,440
+And then we have one common semantic picture
+
+726
+00:52:58,440 --> 00:53:00,600
+for all this collection of languages.
+
+727
+00:53:00,600 --> 00:53:03,200
+Now, of course, you could still transmit in OWL,
+
+728
+00:53:03,200 --> 00:53:05,320
+send OWL around the web.
+
+729
+00:53:05,320 --> 00:53:07,160
+You know, you could still have all the trackability,
+
+730
+00:53:07,160 --> 00:53:09,120
+desirability properties,
+
+731
+00:53:09,120 --> 00:53:11,800
+but the way in which the encoded RDF,
+
+732
+00:53:11,800 --> 00:53:13,960
+or package, or related to RDF,
+
+733
+00:53:13,960 --> 00:53:16,720
+doesn't require us to write a new spec
+
+734
+00:53:16,720 --> 00:53:18,720
+every time a new language is developed,
+
+735
+00:53:18,720 --> 00:53:23,560
+which runs to seven documents each of 222 pages
+
+736
+00:53:23,560 --> 00:53:26,960
+and becomes exponentially less comprehensible as time goes on,
+
+737
+00:53:26,960 --> 00:53:29,710
+which is what's happening at the moment.
+
+738
+00:53:29,710 --> 00:53:32,990
+We can simply use the common semantic model
+
+739
+00:53:32,990 --> 00:53:34,510
+and map into it, which can usually
+
+740
+00:53:34,510 --> 00:53:38,710
+be done in four pages, actually, of text.
+
+741
+00:53:38,710 --> 00:53:40,990
+So my point is simply, it's really
+
+742
+00:53:40,990 --> 00:53:42,630
+a proposal to simplify the meta-theory
+
+743
+00:53:42,630 --> 00:53:44,390
+rather than the practice.
+
+744
+00:53:44,390 --> 00:53:48,670
+And maybe you don't care about the meta-theory, but I do.
+
+745
+00:53:48,670 --> 00:54:01,470
+So I take your point. Don't understand me as arguing that everybody should stop doing what they're doing and start doing first order logic and we'll have uniform peer-improvers solving universe's problems. I know that's crazy. I'm not suggesting that.
+
+746
+00:54:26,120 --> 00:54:50,330
+The proposal will still stand. It won't solve those hard problems, but then you don't have
+
+747
+00:54:50,330 --> 00:54:52,010
+to solve them right now.
+
+748
+00:54:52,010 --> 00:54:57,090
+What I think it will do is give us a much cleaner and more
+
+749
+00:54:57,090 --> 00:55:02,460
+usable foundation, I guess is the only word I can use,
+
+750
+00:55:02,460 --> 00:55:05,100
+on which those extensions could be built.
+
+751
+00:55:05,100 --> 00:55:08,620
+At the moment, supposedly you're going to do it, right?
+
+752
+00:55:08,620 --> 00:55:09,900
+Let's use temporality.
+
+753
+00:55:09,900 --> 00:55:13,460
+I'm going to have a temporally sensitive logic, whatever
+
+754
+00:55:13,460 --> 00:55:14,420
+the hell that is, right?
+
+755
+00:55:14,420 --> 00:55:17,360
+And I'm going to invent a new one.
+
+756
+00:55:17,360 --> 00:55:18,160
+What do I start?
+
+757
+00:55:18,160 --> 00:55:28,680
+do I do it to OWL, or do I just invent a whole damn mutation, layer it on top of something
+
+758
+00:55:28,680 --> 00:55:30,460
+else to the way we've done it?
+
+759
+00:55:30,460 --> 00:55:49,070
+I'm just adding to the purposes, some degree of layering is inevitable, although I hope
+
+760
+00:55:49,070 --> 00:55:52,810
+not actually, but that's a separate debate we could have.
+
+761
+00:55:52,810 --> 00:55:55,530
+What I think we don't have to do, and I think that was really seriously and stately
+
+762
+00:55:55,530 --> 00:55:59,970
+made was to assume that a syntactic layering, that's
+
+763
+00:55:59,970 --> 00:56:02,650
+to say, just mapping this syntax into that syntax
+
+764
+00:56:02,650 --> 00:56:06,130
+by some actual technique, would work.
+
+765
+00:56:06,130 --> 00:56:08,610
+We managed to do it for the first album in RDF,
+
+766
+00:56:08,610 --> 00:56:13,530
+and it left bad, dirty stains on the floor, as you remember.
+
+767
+00:56:13,530 --> 00:56:17,170
+And it just gets worse as we do that more and more.
+
+768
+00:56:17,170 --> 00:56:18,970
+And we didn't have to do it.
+
+769
+00:56:18,970 --> 00:56:22,140
+We could have done it better if we'd done it this way.
+
+770
+00:56:22,140 --> 00:56:23,340
+So yes, I agree.
+
+771
+00:56:23,340 --> 00:56:25,420
+I'm not saying I've got a magic solution
+
+772
+00:56:25,420 --> 00:56:46,420
+for all the future problems in the world, although I don't think some of the problems are as bad as you think they are, actually, but I think that we might be able to, it's a bit like fixing a house. You've got an old house, right, and the ceiling's starting to sag, and sometimes you have to just dig down to the basement and fix that first before you can get the ceiling straight, you know, sorry, metaphor.
+
+773
+00:56:46,420 --> 00:56:47,420
+I'm sure, yes.
+
+774
+00:56:47,420 --> 00:56:53,420
+I'd be interested to hear you maybe a little time compare the N3 for me with your purposes,
+
+775
+00:56:53,420 --> 00:57:04,420
+because when you put the two books, we'll take out their package and show it to the
+
+776
+00:57:04,420 --> 00:57:08,420
+users or something else and replace them with your N3 package.
+
+777
+00:57:08,420 --> 00:57:10,420
+What are you doing with N3?
+
+778
+00:57:10,420 --> 00:57:13,420
+Oh, maybe not, yes, yes, maybe.
+
+779
+00:57:13,420 --> 00:57:18,380
+So that's one thing, and then, sort of taking the current, going to the extent of the practice,
+
+780
+00:57:18,380 --> 00:57:30,310
+that tempo thing, certainly you could use the N-C-C-C-E-E-R-I-C-U-S-H-E-L-E-R-I-C-U-R-I-C-U-R-I-C-U-R-I-C-U-R-I-C-U-R-I-C-U-R-I-C-U-R-I-C-U-R-I-C-U-R-I-C-U-R-I-C-U-R-I-C-U-R-I-C-U-R-I
+
+781
+00:57:30,310 --> 00:57:33,610
+Yeah, no, actually, you could do that for the surfaces, too, right?
+
+782
+00:57:33,610 --> 00:57:35,810
+You could have a temporarily qualified surface.
+
+783
+00:57:35,810 --> 00:57:36,810
+Yes, yes, yes, one thing.
+
+784
+00:57:36,810 --> 00:57:50,900
+I may have done, but then, you know, Tim, Pierce was doing it in 1880 something, too clear.
+
+785
+00:57:50,900 --> 00:58:02,520
+Well, I agree that the blank has a stretch in the audience like that, and, you know, we had a little post-op, so why didn't you fix it?
+
+786
+00:58:02,520 --> 00:58:08,520
+Well, yeah, I mean, I don't... Ask Tim what it is, it has a W3C process.
+
+787
+00:58:08,520 --> 00:58:17,020
+I don't know how to do it. I could certainly publish something and say, hey, that isn't going to do it.
+
+788
+00:58:17,020 --> 00:58:24,020
+Yes, no, absolutely right. I do want to work on this more seriously and try and get something more than just a bunch of slides written up.
+
+789
+00:58:24,020 --> 00:58:28,020
+The devil's in the details. Don't get about it.
+
+790
+00:58:28,020 --> 00:59:01,810
+Well, first of all, it's not a new proposal, my whole point is that it's an old proposal.
+
+791
+00:59:01,810 --> 00:59:07,050
+But actually, I don't have the sense that what you say is correct.
+
+792
+00:59:07,050 --> 00:59:10,050
+I mean, maybe, they don't have one adoption in this community,
+
+793
+00:59:10,050 --> 00:59:16,980
+but there are large communities who are using them and, you know,
+
+794
+00:59:16,980 --> 00:59:20,260
+there's available implementations for handling them.
+
+795
+00:59:20,260 --> 00:59:21,980
+But I'm not, again, don't get me wrong.
+
+796
+00:59:21,980 --> 00:59:24,180
+Look, perhaps I overemphasized the first.
+
+797
+00:59:24,180 --> 00:59:30,300
+I didn't want to, my point of mentioning first at such length was partly to expose
+
+798
+00:59:30,300 --> 00:59:33,700
+to you my own astonishment at discovering that this, to me,
+
+799
+00:59:33,700 --> 00:59:37,940
+well-known notation is kind of almost there in RDF already.
+
+800
+00:59:37,940 --> 00:59:40,380
+And also to convey that, look, I'm not just
+
+801
+00:59:40,380 --> 00:59:44,060
+sort of inventing this service idea out of,
+
+802
+00:59:44,060 --> 00:59:47,220
+it's got some, what's the terminology,
+
+803
+00:59:47,220 --> 00:59:49,740
+it's got some provenance.
+
+804
+00:59:49,740 --> 00:59:52,980
+Right, it's got some, I'm not suggesting
+
+805
+00:59:52,980 --> 00:59:55,220
+we should all rush out and read first.
+
+806
+00:59:55,220 --> 00:59:56,660
+In fact, God forbid, in fact.
+
+807
+00:59:56,660 --> 01:00:04,060
+or rush out and, you know, get some conceptual mapping software.
+
+808
+01:00:04,060 --> 01:00:08,260
+It's simply a reconstruction of the foundations, is what I'm suggesting here,
+
+809
+01:00:08,260 --> 01:00:11,460
+that will make future developments easier to do.
+
+810
+01:00:11,460 --> 01:00:20,450
+I would go back to an important point I think you made earlier on the near-big thing.
+
+811
+01:00:20,450 --> 01:00:21,450
+Yes.
+
+812
+01:00:21,450 --> 01:00:24,220
+I think this is a lot more attention.
+
+813
+01:00:24,220 --> 01:00:30,220
+Remember, in the days of K-N-1 is drafting, I tried to take a different schema,
+
+814
+01:00:30,220 --> 01:00:34,920
+and I took a different way since I made it.
+
+815
+01:00:34,920 --> 01:00:38,920
+Near-big, I think, because of the shift of rigidness.
+
+816
+01:00:38,920 --> 01:00:44,920
+Yes, I wish if I had something intelligent to say about that topic, I would have devoted my whole talk to it, because I think it's a problem that most immediately is fixing,
+
+817
+01:00:44,920 --> 01:00:51,140
+because of the link data idea.
+
+818
+01:00:51,140 --> 01:01:00,370
+Yeah, I wish I had something intelligent to say about that topic, I would have devoted
+
+819
+01:01:00,370 --> 01:01:06,210
+my whole talk to it, because I think it's absolutely, it's a problem that most amnesia
+
+820
+01:01:06,210 --> 01:01:11,050
+needs fixing, because of the link data idea.
+
+821
+01:01:11,050 --> 01:01:14,450
+And people are doing it right now, they're saying same as, when they know they don't
+
+822
+01:01:14,450 --> 01:01:21,070
+mean same as, because they've got nothing else to say.
+
+823
+01:01:21,070 --> 01:01:23,470
+I mean, the best I can do is that there's
+
+824
+01:01:23,470 --> 01:01:26,830
+a notion of what I might call ontological buy-in.
+
+825
+01:01:26,830 --> 01:01:31,670
+If I say, I've got a URI that's supposed to indicate sodium,
+
+826
+01:01:31,670 --> 01:01:33,750
+and someone else has got a geontology of elements
+
+827
+01:01:33,750 --> 01:01:36,470
+over there, and they also have sodium listed,
+
+828
+01:01:36,470 --> 01:01:39,110
+I want to be able to say, look, this means the same as that.
+
+829
+01:01:39,110 --> 01:01:41,910
+It refers to the same stuff.
+
+830
+01:01:41,910 --> 01:01:44,350
+And that's really all the linked data is supposed to mean.
+
+831
+01:01:44,350 --> 01:01:47,070
+But I want to be able to say that without saying,
+
+832
+01:01:47,070 --> 01:01:49,510
+oh, and by the way, I agree with what they say about it.
+
+833
+01:01:49,510 --> 01:01:51,070
+I don't want to say that.
+
+834
+01:01:51,070 --> 01:01:53,270
+But Seymouth says that, in effect,
+
+835
+01:01:53,270 --> 01:01:56,670
+because we don't have any way of contextualizing the,
+
+836
+01:01:56,670 --> 01:01:59,030
+if I could put it that way, I shouldn't have said that.
+
+837
+01:01:59,030 --> 01:02:01,710
+I hate that word.
+
+838
+01:02:01,710 --> 01:02:02,510
+I know you did.
+
+839
+01:02:02,510 --> 01:02:04,070
+Dan, that's on the record.
+
+840
+01:02:04,070 --> 01:02:09,420
+The conscious thing is very important,
+
+841
+01:02:09,420 --> 01:02:15,090
+and the context in which you say is so important.
+
+842
+01:02:15,090 --> 01:02:15,570
+Right.
+
+843
+01:02:15,570 --> 01:02:20,290
+I mean, Lynn argues with me that this is just
+
+844
+01:02:20,290 --> 01:02:24,010
+one tiny symptom of a much larger issue, which
+
+845
+01:02:24,010 --> 01:02:25,050
+applies in human affairs.
+
