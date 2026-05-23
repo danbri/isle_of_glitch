@@ -15,6 +15,14 @@
     --hot: #f5a623;
     --highlight: #1f2937;
   }
+  :root {
+    --pin-top: 0px;
+    --pinned-h: 0px;
+  }
+  html {
+    /* Make scrollIntoView and #anchor jumps land BELOW the pinned region */
+    scroll-padding-top: calc(var(--pin-top) + var(--pinned-h) + 8px);
+  }
   * { box-sizing: border-box; }
   html, body { background: var(--bg); color: var(--text); margin: 0; }
   body {
@@ -121,13 +129,37 @@
     padding: 0;
   }
   .panel.pinned {
-    position: sticky;
-    top: var(--pin-top, 11rem);
-    z-index: 5;
-    max-height: calc(100vh - var(--pin-top, 11rem) - 1rem);
+    /* Truly take the panel out of flow so it can't overlay the content below.
+       The matching `.has-pin main { padding-top: ... }` rule reserves space. */
+    position: fixed;
+    top: var(--pin-top, 0);
+    left: max(0.75rem, calc(50vw - 590px));
+    right: max(0.75rem, calc(50vw - 590px));
+    max-height: 55vh;
     overflow-y: auto;
     overscroll-behavior: contain;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    z-index: 5;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+    margin: 0;
+  }
+  @media (max-width: 820px) {
+    .panel.pinned {
+      left: 0.5rem;
+      right: 0.5rem;
+      max-height: 45vh;
+    }
+  }
+  /* When *any* panel is pinned, simplify the underlying grid to a single
+     column (the still-flowing panel) and reserve vertical space matching the
+     fixed panel so transcript text never starts behind the pin. */
+  body.has-pin .grid { grid-template-columns: 1fr; }
+  body.has-pin main {
+    padding-top: var(--pinned-h);
+  }
+  /* The pinned panel's own grippy is meaningless (panel is out of flow) */
+  .panel.pinned .grippy {
+    pointer-events: none;
+    opacity: 0.35;
   }
   .panel.dragging {
     z-index: 50;
@@ -691,11 +723,7 @@ function loadLayout() {
         if (p) setOrder(p, ord);
       }
     }
-    if (layout.pinned) {
-      const p = document.querySelector(`.panel[data-panel="${layout.pinned}"]`);
-      const btn = document.querySelector(`.pin-btn[data-pin="${layout.pinned}"]`);
-      if (p && btn) { p.classList.add('pinned'); btn.setAttribute('aria-pressed', 'true'); }
-    }
+    if (layout.pinned) applyPin(layout.pinned);
   } catch {}
 }
 
@@ -710,18 +738,38 @@ window.addEventListener('resize', updatePinTop);
 updatePinTop();
 
 // --- Pin toggle ---
+let pinResizeObs = null;
+function applyPin(name /* or null to unpin */) {
+  // Reset all (single-pin model)
+  document.body.classList.remove('has-pin');
+  panels.forEach(p => p.classList.remove('pinned'));
+  document.querySelectorAll('.pin-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  document.documentElement.style.setProperty('--pinned-h', '0px');
+  if (pinResizeObs) { pinResizeObs.disconnect(); pinResizeObs = null; }
+  if (!name) return;
+  const panel = document.querySelector(`.panel[data-panel="${name}"]`);
+  const btn = document.querySelector(`.pin-btn[data-pin="${name}"]`);
+  if (!panel || !btn) return;
+  panel.classList.add('pinned');
+  btn.setAttribute('aria-pressed', 'true');
+  document.body.classList.add('has-pin');
+  // Reserve vertical space below the fixed panel, plus a gap. The
+  // ResizeObserver keeps this in sync if the panel's own content changes
+  // size (e.g. user opens the "All slides" thumbs details).
+  const updatePinnedH = () => {
+    const h = panel.offsetHeight;
+    document.documentElement.style.setProperty('--pinned-h', `${h + 16}px`);
+  };
+  updatePinnedH();
+  pinResizeObs = new ResizeObserver(updatePinnedH);
+  pinResizeObs.observe(panel);
+}
+
 document.querySelectorAll('.pin-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const name = btn.dataset.pin;
     const wasPinned = btn.getAttribute('aria-pressed') === 'true';
-    // Reset all (single-pin model — pinning panel A unpins panel B)
-    document.querySelectorAll('.pin-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
-    panels.forEach(p => p.classList.remove('pinned'));
-    if (!wasPinned) {
-      const panel = document.querySelector(`.panel[data-panel="${name}"]`);
-      panel.classList.add('pinned');
-      btn.setAttribute('aria-pressed', 'true');
-    }
+    applyPin(wasPinned ? null : name);
     updatePinTop();
     saveLayout();
   });
