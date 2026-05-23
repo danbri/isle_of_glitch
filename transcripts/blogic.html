@@ -27,18 +27,18 @@
     z-index: 10;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
-    padding: 1rem;
+    padding: 0.75rem 1rem;
   }
-  .wrap { max-width: 840px; margin: 0 auto; }
+  .wrap { max-width: 1180px; margin: 0 auto; }
   h1 {
     color: var(--accent);
-    margin: 0 0 0.25rem;
-    font-size: 1.3rem;
+    margin: 0 0 0.2rem;
+    font-size: 1.2rem;
   }
   .meta {
     color: var(--muted);
-    font-size: 0.85rem;
-    margin-bottom: 0.75rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
   }
   .meta a { color: var(--accent); }
   audio { width: 100%; }
@@ -47,8 +47,8 @@
     flex-wrap: wrap;
     gap: 0.5rem 1rem;
     align-items: center;
-    margin-top: 0.5rem;
-    font-size: 0.85rem;
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
     color: var(--muted);
   }
   input[type=search] {
@@ -57,12 +57,94 @@
     background: #0b1018;
     border: 1px solid var(--border);
     color: var(--text);
-    padding: 0.35rem 0.6rem;
+    padding: 0.3rem 0.55rem;
     border-radius: 4px;
     font: inherit;
   }
   label { display: inline-flex; align-items: center; gap: 0.3rem; }
-  main { padding: 1rem; padding-bottom: 4rem; }
+
+  main { padding: 1rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 1.2rem;
+    align-items: start;
+  }
+  @media (max-width: 820px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .slidepane {
+    position: sticky;
+    top: 11rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.6rem;
+  }
+  .slide-stage {
+    background: #000;
+    border-radius: 4px;
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .slide-stage img { width: 100%; height: 100%; object-fit: contain; cursor: pointer; }
+  .slide-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: ui-monospace, monospace;
+  }
+  .slide-bar button {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    font: inherit;
+    padding: 0.2rem 0.55rem;
+  }
+  .slide-bar button:hover { background: var(--highlight); }
+  .slide-num { font-family: ui-monospace, monospace; }
+  .slide-num .anchor-dot {
+    color: var(--hot);
+    font-size: 0.8em;
+    margin-left: 0.3em;
+  }
+  .thumbs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 0.3rem;
+    margin-top: 0.6rem;
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 0.2rem;
+    background: #0b1018;
+    border-radius: 4px;
+  }
+  .thumbs img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    background: #fff;
+    border-radius: 3px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+  }
+  .thumbs img:hover { opacity: 1; }
+  .thumbs img.current {
+    border-color: var(--hot);
+    opacity: 1;
+  }
+
   ol.cues {
     list-style: none;
     margin: 0;
@@ -71,11 +153,12 @@
   ol.cues li {
     display: grid;
     grid-template-columns: 4.5rem 1fr;
-    gap: 0.75rem;
-    padding: 0.45rem 0.6rem;
+    gap: 0.7rem;
+    padding: 0.4rem 0.55rem;
     border-radius: 4px;
     cursor: pointer;
     border-left: 3px solid transparent;
+    font-size: 0.95rem;
   }
   ol.cues li:hover { background: #11151c; }
   ol.cues li.active {
@@ -86,25 +169,37 @@
   ol.cues li.hide { display: none; }
   .ts {
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     color: var(--muted);
     padding-top: 0.15rem;
     text-align: right;
     user-select: none;
   }
-  .txt {
-    word-wrap: break-word;
-  }
+  .txt { word-wrap: break-word; }
   .txt mark {
     background: var(--hot);
     color: #111;
     padding: 0 1px;
     border-radius: 2px;
   }
+  .ocr-text {
+    margin-top: 0.4rem;
+    padding: 0.4rem 0.6rem;
+    background: #0b1018;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    white-space: pre-wrap;
+    max-height: 140px;
+    overflow-y: auto;
+    display: none;
+  }
+  .ocr-text.show { display: block; }
+
   footer {
     padding: 1rem;
     color: var(--muted);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     text-align: center;
   }
   footer a { color: var(--accent); }
@@ -117,10 +212,9 @@
     <h1>BLOGIC, or Now What's in a Link?</h1>
     <div class="meta">
       Patrick J. Hayes · Keynote, ISWC 2009 ·
-      <a href="https://videolectures.net/iswc09_hayes_blogic/" rel="noopener">source</a> ·
-      <a href="hayes_blogic_iswc2009.mp3">mp3</a> ·
-      <a href="hayes_blogic_iswc2009.srt">srt</a> ·
-      <a href="hayes_blogic_iswc2009.txt">txt</a>
+      <a href="https://videolectures.net/iswc09_hayes_blogic/" rel="noopener">source video</a> ·
+      <a href="https://www.slideshare.net/slideshow/blogic-iswc-2009-invited-talk/2369735" rel="noopener">slides on slideshare</a> ·
+      <a href="hayes_blogic_iswc2009.mp3">mp3</a> · <a href="hayes_blogic_iswc2009.srt">srt</a> · <a href="hayes_blogic_iswc2009.txt">txt</a>
     </div>
     <audio id="player" controls preload="metadata" src="hayes_blogic_iswc2009.mp3"></audio>
     <div class="controls">
@@ -138,14 +232,31 @@
 </header>
 
 <main>
-  <div class="wrap">
-    <ol class="cues" id="cues"><li class="loading">Loading transcript…</li></ol>
+  <div class="wrap grid">
+    <aside class="slidepane">
+      <div class="slide-stage">
+        <img id="slideImg" src="" alt="(loading slides…)" title="click to advance">
+      </div>
+      <div class="slide-bar">
+        <button id="prevSlide" type="button">◀ prev</button>
+        <span class="slide-num"><span id="slideNum">–</span> / 36 <span id="anchorMark" class="anchor-dot" title="aligned anchor (high confidence)"></span></span>
+        <button id="nextSlide" type="button">next ▶</button>
+      </div>
+      <div id="ocrText" class="ocr-text" aria-live="polite"></div>
+      <div class="slide-bar">
+        <label style="font-size:0.78rem"><input type="checkbox" id="showOcr"> show slide text</label>
+        <a href="#" id="slideLinkOut" target="_blank" rel="noopener" style="font-size:0.78rem; color:var(--muted)" hidden>open on slideshare</a>
+      </div>
+      <div class="thumbs" id="thumbs" aria-label="all slides"></div>
+    </aside>
+    <section>
+      <ol class="cues" id="cues"><li class="loading">Loading transcript…</li></ol>
+    </section>
   </div>
 </main>
 
 <footer>
-  Auto-transcribed with faster-whisper <code>small.en</code> · expect occasional misrecognitions on proper nouns.
-  <a href="../index.html">← Isle of Glitch</a>
+  Auto-transcribed (faster-whisper <code>small.en</code>) and auto-aligned to slides by text matching with linear interpolation between high-confidence anchors. Expect minor misalignment between anchors. <a href="../index.html">← Isle of Glitch</a>
 </footer>
 
 <script>
@@ -156,7 +267,15 @@ const list = document.getElementById('cues');
 const search = document.getElementById('search');
 const follow = document.getElementById('follow');
 const rate = document.getElementById('rate');
-const status = document.getElementById('status');
+const statusEl = document.getElementById('status');
+const slideImg = document.getElementById('slideImg');
+const slideNumEl = document.getElementById('slideNum');
+const anchorMark = document.getElementById('anchorMark');
+const prevBtn = document.getElementById('prevSlide');
+const nextBtn = document.getElementById('nextSlide');
+const thumbsEl = document.getElementById('thumbs');
+const ocrTextEl = document.getElementById('ocrText');
+const showOcrCb = document.getElementById('showOcr');
 
 function fmt(t) {
   const m = Math.floor(t / 60);
@@ -164,34 +283,37 @@ function fmt(t) {
   return `${m}:${String(s).padStart(2,'0')}`;
 }
 
+// ---------- SRT parsing ----------
 function parseSrt(text) {
-  // Split on blank lines; each block has: index, timestamp line, one or more text lines.
   const blocks = text.replace(/\r/g, '').split(/\n\n+/);
   const cues = [];
   const tsRe = /(\d+):(\d{2}):(\d{2})[,.](\d{3})\s*-->\s*(\d+):(\d{2}):(\d{2})[,.](\d{3})/;
   for (const b of blocks) {
     const lines = b.split('\n').filter(l => l.trim().length);
     if (lines.length < 2) continue;
-    // First line may be the numeric index; second is timestamps. If first looks like timestamps, skip.
     const tsLine = tsRe.test(lines[0]) ? lines[0] : lines[1];
     const textStart = tsRe.test(lines[0]) ? 1 : 2;
     const m = tsLine.match(tsRe);
     if (!m) continue;
     const start = (+m[1])*3600 + (+m[2])*60 + (+m[3]) + (+m[4])/1000;
     const end   = (+m[5])*3600 + (+m[6])*60 + (+m[7]) + (+m[8])/1000;
-    const text = lines.slice(textStart).join(' ').trim();
-    if (text) cues.push({ start, end, text });
+    const txt = lines.slice(textStart).join(' ').trim();
+    if (txt) cues.push({ start, end, text: txt });
   }
   return cues;
 }
 
 let cues = [];
-let els = [];
-let activeIdx = -1;
+let cueEls = [];
+let activeCue = -1;
 
-function render() {
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function renderCues() {
   list.innerHTML = '';
-  els = cues.map((c, i) => {
+  cueEls = cues.map((c, i) => {
     const li = document.createElement('li');
     li.dataset.index = i;
     const ts = document.createElement('div');
@@ -205,11 +327,10 @@ function render() {
     list.appendChild(li);
     return li;
   });
-  status.textContent = `${cues.length} segments · ${fmt(cues[cues.length-1]?.end || 0)}`;
+  statusEl.textContent = `${cues.length} segments · ${fmt(cues[cues.length-1]?.end || 0)}`;
 }
 
-// Binary search for the cue containing time t (or the last cue with start <= t)
-function findIndex(t) {
+function findCueIndex(t) {
   let lo = 0, hi = cues.length - 1, ans = -1;
   while (lo <= hi) {
     const mid = (lo + hi) >> 1;
@@ -219,42 +340,106 @@ function findIndex(t) {
   return ans;
 }
 
-function setActive(i) {
-  if (i === activeIdx) return;
-  if (activeIdx >= 0 && els[activeIdx]) els[activeIdx].classList.remove('active');
-  activeIdx = i;
-  if (i >= 0 && els[i]) {
-    els[i].classList.add('active');
-    if (follow.checked) {
-      els[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+function setActiveCue(i) {
+  if (i === activeCue) return;
+  if (activeCue >= 0 && cueEls[activeCue]) cueEls[activeCue].classList.remove('active');
+  activeCue = i;
+  if (i >= 0 && cueEls[i]) {
+    cueEls[i].classList.add('active');
+    if (follow.checked) cueEls[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 }
 
+// ---------- Slides ----------
+let slides = [];
+let thumbEls = [];
+let activeSlide = -1;
+
+function renderSlideThumbs() {
+  thumbsEl.innerHTML = '';
+  thumbEls = slides.map((s, i) => {
+    const img = document.createElement('img');
+    img.src = s.img;
+    img.alt = `Slide ${s.slide}`;
+    img.title = `Slide ${s.slide} @ ${fmt(s.t)}`;
+    img.addEventListener('click', () => goToSlide(i, true));
+    thumbsEl.appendChild(img);
+    return img;
+  });
+}
+
+function findSlideIndex(t) {
+  let lo = 0, hi = slides.length - 1, ans = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (slides[mid].t <= t) { ans = mid; lo = mid + 1; }
+    else hi = mid - 1;
+  }
+  return Math.max(0, ans);
+}
+
+function setActiveSlide(i) {
+  if (i === activeSlide) return;
+  if (activeSlide >= 0 && thumbEls[activeSlide]) thumbEls[activeSlide].classList.remove('current');
+  activeSlide = i;
+  if (i < 0 || !slides[i]) return;
+  const s = slides[i];
+  slideImg.src = s.img;
+  slideImg.alt = s.text ? s.text.slice(0, 200) : `Slide ${s.slide}`;
+  slideNumEl.textContent = s.slide;
+  anchorMark.textContent = s.anchor ? '●' : '';
+  anchorMark.title = s.anchor ? 'aligned anchor (high confidence)' : '';
+  ocrTextEl.textContent = s.text || '(no text extracted)';
+  if (thumbEls[i]) {
+    thumbEls[i].classList.add('current');
+    if (follow.checked) thumbEls[i].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function goToSlide(i, seekAudio) {
+  if (i < 0 || i >= slides.length) return;
+  setActiveSlide(i);
+  if (seekAudio) {
+    audio.currentTime = slides[i].t;
+    audio.play().catch(() => {});
+  }
+}
+
+// ---------- Wiring ----------
 audio.addEventListener('timeupdate', () => {
-  setActive(findIndex(audio.currentTime));
+  setActiveCue(findCueIndex(audio.currentTime));
+  setActiveSlide(findSlideIndex(audio.currentTime));
+});
+rate.addEventListener('change', () => { audio.playbackRate = parseFloat(rate.value); });
+prevBtn.addEventListener('click', () => goToSlide(activeSlide - 1, true));
+nextBtn.addEventListener('click', () => goToSlide(activeSlide + 1, true));
+slideImg.addEventListener('click', () => goToSlide(activeSlide + 1, true));
+showOcrCb.addEventListener('change', () => ocrTextEl.classList.toggle('show', showOcrCb.checked));
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.matches('input, select, textarea')) return;
+  if (e.key === ' ') { e.preventDefault(); audio.paused ? audio.play() : audio.pause(); }
+  else if (e.key === 'ArrowLeft' && e.shiftKey) goToSlide(activeSlide - 1, true);
+  else if (e.key === 'ArrowRight' && e.shiftKey) goToSlide(activeSlide + 1, true);
+  else if (e.key === 'ArrowLeft') audio.currentTime = Math.max(0, audio.currentTime - 5);
+  else if (e.key === 'ArrowRight') audio.currentTime = Math.min(audio.duration || 1e9, audio.currentTime + 5);
 });
 
-rate.addEventListener('change', () => { audio.playbackRate = parseFloat(rate.value); });
-
-// Live filter
 search.addEventListener('input', () => {
   const q = search.value.trim().toLowerCase();
   for (let i = 0; i < cues.length; i++) {
     const match = !q || cues[i].text.toLowerCase().includes(q);
-    els[i].classList.toggle('hide', !match);
+    cueEls[i].classList.toggle('hide', !match);
     if (match && q) {
       const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-      els[i].querySelector('.txt').innerHTML =
-        cues[i].text.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))
-                    .replace(re, '<mark>$1</mark>');
+      cueEls[i].querySelector('.txt').innerHTML =
+        escapeHtml(cues[i].text).replace(re, '<mark>$1</mark>');
     } else {
-      els[i].querySelector('.txt').textContent = cues[i].text;
+      cueEls[i].querySelector('.txt').textContent = cues[i].text;
     }
   }
 });
 
-// Deep-link: ?t=123 or #t=1:23 jumps to that time.
 function parseHashTime() {
   const src = location.hash.slice(1) || location.search.slice(1);
   const m = src.match(/(?:^|[&?])t=([0-9:.]+)/);
@@ -266,17 +451,23 @@ function parseHashTime() {
   return null;
 }
 
-fetch('hayes_blogic_iswc2009.srt')
-  .then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
-  .then(text => {
-    cues = parseSrt(text);
-    render();
-    const t = parseHashTime();
-    if (t != null) { audio.currentTime = t; }
-  })
-  .catch(err => {
-    list.innerHTML = `<li class="loading">Failed to load transcript: ${err.message}</li>`;
-  });
+// ---------- Load data ----------
+Promise.all([
+  fetch('hayes_blogic_iswc2009.srt').then(r => { if (!r.ok) throw new Error('srt '+r.status); return r.text(); }),
+  fetch('blogic_slides.json').then(r => { if (!r.ok) throw new Error('slides '+r.status); return r.json(); }),
+])
+.then(([srtText, slidesData]) => {
+  cues = parseSrt(srtText);
+  renderCues();
+  slides = slidesData.filter(s => s.t != null).sort((a,b) => a.t - b.t);
+  renderSlideThumbs();
+  setActiveSlide(0);
+  const t = parseHashTime();
+  if (t != null) audio.currentTime = t;
+})
+.catch(err => {
+  list.innerHTML = `<li class="loading">Failed to load: ${err.message}</li>`;
+});
 </script>
 </body>
 </html>
