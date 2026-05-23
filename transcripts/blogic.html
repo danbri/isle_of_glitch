@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLOGIC, or Now What's in a Link? — Patrick Hayes (ISWC 2009)</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --border: #30363d;
+    --text: #c9d1d9;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --hot: #f5a623;
+    --highlight: #1f2937;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--text); margin: 0; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem;
+  }
+  .wrap { max-width: 840px; margin: 0 auto; }
+  h1 {
+    color: var(--accent);
+    margin: 0 0 0.25rem;
+    font-size: 1.3rem;
+  }
+  .meta {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+  }
+  .meta a { color: var(--accent); }
+  audio { width: 100%; }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  input[type=search] {
+    flex: 1;
+    min-width: 8rem;
+    background: #0b1018;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.35rem 0.6rem;
+    border-radius: 4px;
+    font: inherit;
+  }
+  label { display: inline-flex; align-items: center; gap: 0.3rem; }
+  main { padding: 1rem; padding-bottom: 4rem; }
+  ol.cues {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  ol.cues li {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 0.75rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+  }
+  ol.cues li:hover { background: #11151c; }
+  ol.cues li.active {
+    background: var(--highlight);
+    border-left-color: var(--hot);
+  }
+  ol.cues li.active .ts { color: var(--hot); }
+  ol.cues li.hide { display: none; }
+  .ts {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    padding-top: 0.15rem;
+    text-align: right;
+    user-select: none;
+  }
+  .txt {
+    word-wrap: break-word;
+  }
+  .txt mark {
+    background: var(--hot);
+    color: #111;
+    padding: 0 1px;
+    border-radius: 2px;
+  }
+  footer {
+    padding: 1rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-align: center;
+  }
+  footer a { color: var(--accent); }
+  .loading { color: var(--muted); padding: 1rem; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>BLOGIC, or Now What's in a Link?</h1>
+    <div class="meta">
+      Patrick J. Hayes · Keynote, ISWC 2009 ·
+      <a href="https://videolectures.net/iswc09_hayes_blogic/" rel="noopener">source</a> ·
+      <a href="hayes_blogic_iswc2009.mp3">mp3</a> ·
+      <a href="hayes_blogic_iswc2009.srt">srt</a> ·
+      <a href="hayes_blogic_iswc2009.txt">txt</a>
+    </div>
+    <audio id="player" controls preload="metadata" src="hayes_blogic_iswc2009.mp3"></audio>
+    <div class="controls">
+      <input type="search" id="search" placeholder="Search transcript…">
+      <label><input type="checkbox" id="follow" checked> Follow playback</label>
+      <label>Speed
+        <select id="rate">
+          <option>0.75</option><option selected>1</option><option>1.25</option>
+          <option>1.5</option><option>1.75</option><option>2</option>
+        </select>
+      </label>
+      <span id="status"></span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <ol class="cues" id="cues"><li class="loading">Loading transcript…</li></ol>
+  </div>
+</main>
+
+<footer>
+  Auto-transcribed with faster-whisper <code>small.en</code> · expect occasional misrecognitions on proper nouns.
+  <a href="../index.html">← Isle of Glitch</a>
+</footer>
+
+<script>
+"use strict";
+
+const audio = document.getElementById('player');
+const list = document.getElementById('cues');
+const search = document.getElementById('search');
+const follow = document.getElementById('follow');
+const rate = document.getElementById('rate');
+const status = document.getElementById('status');
+
+function fmt(t) {
+  const m = Math.floor(t / 60);
+  const s = Math.floor(t % 60);
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+
+function parseSrt(text) {
+  // Split on blank lines; each block has: index, timestamp line, one or more text lines.
+  const blocks = text.replace(/\r/g, '').split(/\n\n+/);
+  const cues = [];
+  const tsRe = /(\d+):(\d{2}):(\d{2})[,.](\d{3})\s*-->\s*(\d+):(\d{2}):(\d{2})[,.](\d{3})/;
+  for (const b of blocks) {
+    const lines = b.split('\n').filter(l => l.trim().length);
+    if (lines.length < 2) continue;
+    // First line may be the numeric index; second is timestamps. If first looks like timestamps, skip.
+    const tsLine = tsRe.test(lines[0]) ? lines[0] : lines[1];
+    const textStart = tsRe.test(lines[0]) ? 1 : 2;
+    const m = tsLine.match(tsRe);
+    if (!m) continue;
+    const start = (+m[1])*3600 + (+m[2])*60 + (+m[3]) + (+m[4])/1000;
+    const end   = (+m[5])*3600 + (+m[6])*60 + (+m[7]) + (+m[8])/1000;
+    const text = lines.slice(textStart).join(' ').trim();
+    if (text) cues.push({ start, end, text });
+  }
+  return cues;
+}
+
+let cues = [];
+let els = [];
+let activeIdx = -1;
+
+function render() {
+  list.innerHTML = '';
+  els = cues.map((c, i) => {
+    const li = document.createElement('li');
+    li.dataset.index = i;
+    const ts = document.createElement('div');
+    ts.className = 'ts';
+    ts.textContent = fmt(c.start);
+    const tx = document.createElement('div');
+    tx.className = 'txt';
+    tx.textContent = c.text;
+    li.append(ts, tx);
+    li.addEventListener('click', () => { audio.currentTime = c.start; audio.play(); });
+    list.appendChild(li);
+    return li;
+  });
+  status.textContent = `${cues.length} segments · ${fmt(cues[cues.length-1]?.end || 0)}`;
+}
+
+// Binary search for the cue containing time t (or the last cue with start <= t)
+function findIndex(t) {
+  let lo = 0, hi = cues.length - 1, ans = -1;
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    if (cues[mid].start <= t) { ans = mid; lo = mid + 1; }
+    else hi = mid - 1;
+  }
+  return ans;
+}
+
+function setActive(i) {
+  if (i === activeIdx) return;
+  if (activeIdx >= 0 && els[activeIdx]) els[activeIdx].classList.remove('active');
+  activeIdx = i;
+  if (i >= 0 && els[i]) {
+    els[i].classList.add('active');
+    if (follow.checked) {
+      els[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+}
+
+audio.addEventListener('timeupdate', () => {
+  setActive(findIndex(audio.currentTime));
+});
+
+rate.addEventListener('change', () => { audio.playbackRate = parseFloat(rate.value); });
+
+// Live filter
+search.addEventListener('input', () => {
+  const q = search.value.trim().toLowerCase();
+  for (let i = 0; i < cues.length; i++) {
+    const match = !q || cues[i].text.toLowerCase().includes(q);
+    els[i].classList.toggle('hide', !match);
+    if (match && q) {
+      const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      els[i].querySelector('.txt').innerHTML =
+        cues[i].text.replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]))
+                    .replace(re, '<mark>$1</mark>');
+    } else {
+      els[i].querySelector('.txt').textContent = cues[i].text;
+    }
+  }
+});
+
+// Deep-link: ?t=123 or #t=1:23 jumps to that time.
+function parseHashTime() {
+  const src = location.hash.slice(1) || location.search.slice(1);
+  const m = src.match(/(?:^|[&?])t=([0-9:.]+)/);
+  if (!m) return null;
+  const parts = m[1].split(':').map(parseFloat);
+  if (parts.length === 1) return parts[0];
+  if (parts.length === 2) return parts[0]*60 + parts[1];
+  if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+  return null;
+}
+
+fetch('hayes_blogic_iswc2009.srt')
+  .then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r.text(); })
+  .then(text => {
+    cues = parseSrt(text);
+    render();
+    const t = parseHashTime();
+    if (t != null) { audio.currentTime = t; }
+  })
+  .catch(err => {
+    list.innerHTML = `<li class="loading">Failed to load transcript: ${err.message}</li>`;
+  });
+</script>
+</body>
+</html>
