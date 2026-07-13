@@ -144,13 +144,14 @@ button { font-family: var(--font); cursor: pointer; }
   border: 1.5px solid rgba(255,255,255,.55); border-radius: 5px;
   background: rgba(0,0,0,.55); overflow: hidden;
 }
-#interstitial-progress div { height: 100%; width: 0%; background: var(--accent); transition: width .4s ease; }
+#interstitial-progress div { height: 100%; width: 100%; background: var(--accent); transform: scaleX(0); transform-origin: left center; transition: transform .4s ease; will-change: transform; }
 /* the wait screen never traps input: gestures and buttons keep working */
 #interstitial { pointer-events: none; }
 
 /* hot-tune pill: ambient, above the controller, nothing is locked */
 #tunebar {
   position: absolute; z-index: 33;
+  contain: layout paint;
   left: 50%; transform: translateX(-50%);
   bottom: calc(14px + var(--sab));
   width: min(340px, 78vw);
@@ -168,7 +169,7 @@ body.overlays-on #tunebar { bottom: calc(168px + var(--sab)); }
 }
 #tunebar-text b { color: var(--accent); }
 #tunebar-track { height: 6px; border-radius: 4px; background: rgba(255,255,255,.2); overflow: hidden; }
-#tunebar-fill { height: 100%; width: 0%; background: var(--accent); transition: width .4s ease; }
+#tunebar-fill { height: 100%; width: 100%; background: var(--accent); transform: scaleX(0); transform-origin: left center; transition: transform .4s ease; will-change: transform; }
 
 /* ── OSD ───────────────────────────────────────────── */
 
@@ -195,12 +196,13 @@ body.overlays-on #tunebar { bottom: calc(168px + var(--sab)); }
   height: 10px; border: 2px solid var(--stroke); border-radius: 6px;
   background: rgba(0,0,0,.55); overflow: hidden;
 }
-#osd-volume-bar div { height: 100%; background: #fff; width: 100%; }
+#osd-volume-bar div { height: 100%; background: #fff; width: 100%; transform-origin: left center; }
 
 /* ── overlays (info bar + controller) ──────────────── */
 
 .overlay {
   position: absolute; z-index: 30;
+  contain: layout paint;
   background: var(--panel);
   border: 2px solid var(--stroke);
   border-radius: 14px;
@@ -212,6 +214,7 @@ body.overlays-on #tunebar { bottom: calc(168px + var(--sab)); }
 
 /* the top overlay: a bar that can slide down into a big panel */
 #infobar {
+  contain: layout paint;
   top: calc(10px + var(--sat)); left: calc(10px + var(--sal)); right: calc(10px + var(--sar));
   overflow: hidden;
   transition: max-height .38s cubic-bezier(.2, .8, .25, 1);
@@ -285,8 +288,9 @@ body.overlays-on #tunebar { bottom: calc(168px + var(--sab)); }
   background: rgba(255,255,255,.25); border-radius: 3px;
 }
 #progress-fill {
-  position: absolute; left: 0; top: 8px; height: 6px; width: 0%;
+  position: absolute; left: 0; top: 8px; height: 6px; width: 100%;
   background: var(--accent); border-radius: 3px;
+  transform: scaleX(0); transform-origin: left center; will-change: transform;
 }
 #progress-handle {
   position: absolute; top: 3px; width: 16px; height: 16px; margin-left: -8px;
@@ -326,6 +330,7 @@ body.overlays-on #tunebar { bottom: calc(168px + var(--sab)); }
 
 #comingup {
   position: absolute; z-index: 32;
+  contain: layout paint;
   right: calc(12px + var(--sar)); bottom: calc(120px + var(--sab));
   max-width: 78vw;
   background: var(--panel);
@@ -467,6 +472,7 @@ body.overlays-on #tunebar { bottom: calc(168px + var(--sab)); }
 }
 @keyframes imfade { from { opacity: 0; } }
 #intermission-panel {
+  contain: layout paint;
   padding: 20px calc(18px + var(--sal)) calc(26px + var(--sab));
   max-width: 560px;
 }
@@ -534,6 +540,7 @@ body.overlays-on #buddy-strip { bottom: calc(168px + var(--sab)); }
   animation: fadein .25s ease-out;
 }
 #buddy-panel {
+  contain: layout paint;
   width: min(560px, 94vw); max-height: 84vh; overflow-y: auto;
   background: rgba(0, 0, 0, .55);
   border: 2px solid var(--stroke); border-radius: 16px;
@@ -551,6 +558,7 @@ body.overlays-on #buddy-strip { bottom: calc(168px + var(--sab)); }
 }
 .buddy-sec a { color: #9adfee; }
 .buddy-claim { margin-top: 6px; }
+.b-more { margin-top: 8px; opacity: .92; border-left: 2px solid rgba(198,96,12,.6); padding-left: 9px; }
 .buddy-claim .c-claim { font-style: italic; opacity: .85; }
 #buddy-actions { margin-top: 16px; display: flex; justify-content: flex-end; }
 
@@ -604,7 +612,7 @@ body.overlays-on #buddy-strip { bottom: calc(168px + var(--sab)); }
   flex: 1; overflow-y: auto;
   padding: 10px calc(14px + var(--sar)) calc(20px + var(--sab)) calc(14px + var(--sal));
 }
-.g-section { margin-bottom: 22px; max-width: 1100px; margin-left: auto; margin-right: auto; }
+.g-section { content-visibility: auto; contain-intrinsic-size: auto 800px; margin-bottom: 22px; max-width: 1100px; margin-left: auto; margin-right: auto; }
 .g-head {
   display: flex; align-items: center; gap: 10px;
   padding: 6px 2px 10px; cursor: pointer;
@@ -625,6 +633,9 @@ body.overlays-on #buddy-strip { bottom: calc(168px + var(--sab)); }
   gap: 9px;
 }
 .g-card {
+  contain: layout paint;
+  content-visibility: auto;
+  contain-intrinsic-size: 150px 210px;
   border: 1.5px solid rgba(255,255,255,.35); border-radius: 11px;
   background: rgba(0,0,0,.45); overflow: hidden; cursor: pointer;
   transition: border-color .15s, transform .1s;
@@ -658,6 +669,8 @@ body.drawer-open #scrim { opacity: 1; pointer-events: auto; }
 
 .drawer {
   position: fixed; top: 0; bottom: 0; z-index: 46;
+  contain: layout paint;
+  will-change: transform;
   width: min(340px, 88vw);
   background: rgba(8, 8, 8, .78);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -691,6 +704,7 @@ body.drawer-open #scrim { opacity: 1; pointer-events: auto; }
 
 #dock { overflow-y: auto; }
 .widget {
+  contain: layout paint;
   margin: 10px 12px 0; padding: 10px 12px 12px;
   border: 1.5px solid rgba(255,255,255,.4); border-radius: 12px;
   background: rgba(0,0,0,.35);
@@ -778,6 +792,8 @@ body.drawer-open #scrim { opacity: 1; pointer-events: auto; }
 
 .sheet {
   position: fixed; left: 0; right: 0; top: 0; z-index: 47;
+  contain: layout paint;
+  will-change: transform;
   background: rgba(8,8,8,.82);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-bottom: 2px solid var(--stroke); border-radius: 0 0 16px 16px;
@@ -811,13 +827,14 @@ body.drawer-open #scrim { opacity: 1; pointer-events: auto; }
 
 #ticker {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 28;
+  contain: layout paint;
   background: rgba(0,0,0,.72);
   border-top: 1.5px solid rgba(255,255,255,.5);
   padding: 5px 0 calc(5px + var(--sab));
   overflow: hidden; white-space: nowrap;
   font-size: 13px;
 }
-#ticker-track { display: inline-block; padding-left: 100vw; animation: tick 60s linear infinite; }
+#ticker-track { display: inline-block; will-change: transform; padding-left: 100vw; animation: tick 60s linear infinite; }
 #ticker-track b { color: var(--accent); }
 #ticker-track span { margin-right: 48px; }
 @keyframes tick { to { transform: translateX(-100%); } }

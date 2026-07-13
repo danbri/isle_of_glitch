@@ -20,6 +20,7 @@ const WATCH_BUDDY_CONTEXT = {
   "contentWarning": "tvp:contentWarning",
   "warningEmoji": "tvp:warningEmoji",
   "datedPerspectives": "tvp:datedPerspectives",
+  "datedNote": "tvp:datedNote",
   "factCheck": "https://schema.org/subjectOf"
 };
 
@@ -65,6 +66,7 @@ const WATCH_BUDDY_GRAPH = [
     "@type": "Movie",
     "contentWarning": { "warningEmoji": "👻", "text": "Hypnotic menace and the walking dead, 1932-style." },
     "datedPerspectives": true,
+    "datedNote": "Specifically: Haitian vodou is reduced to horror-prop menace, and Black Haitians appear mainly as silent zombie labour in the background of the white leads' story.",
     "sameAs": "https://en.wikipedia.org/wiki/White_Zombie_(film)"
   },
   {
@@ -83,12 +85,14 @@ const WATCH_BUDDY_GRAPH = [
   {
     "@id": "https://archive.org/details/tarzan_and_the_green_goddess",
     "@type": "Movie",
-    "datedPerspectives": true
+    "datedPerspectives": true,
+    "datedNote": "Specifically: a 1930s colonial adventure — white heroes, Guatemalan villagers as expendable \"natives\", and treasure-taking framed as heroism."
   },
   {
     "@id": "https://archive.org/details/mclintok_widescreen",
     "@type": "Movie",
     "datedPerspectives": true,
+    "datedNote": "Specifically: women are spanked for laughs as the comic climax, and the dispossession of the Comanche is played as background colour for a land-rush comedy.",
     "sameAs": "https://en.wikipedia.org/wiki/McLintock!"
   },
 
@@ -96,7 +100,8 @@ const WATCH_BUDDY_GRAPH = [
   {
     "@id": "https://archive.org/details/BettyBoopCartoons",
     "@type": "Movie",
-    "datedPerspectives": true
+    "datedPerspectives": true,
+    "datedNote": "Specifically: 1930s Fleischer compilations like this often include racial caricatures and minstrel-derived gags that were stock animation material of the period."
   },
 
   /* ── Tube Classics ── */
@@ -104,6 +109,7 @@ const WATCH_BUDDY_GRAPH = [
     "@id": "https://archive.org/details/theloneranger_201705",
     "@type": "TVSeries",
     "datedPerspectives": true,
+    "datedNote": "Specifically: Tonto's broken-English \"faithful Indian companion\" role is the textbook 1950s TV stereotype of Native Americans.",
     "sameAs": "https://en.wikipedia.org/wiki/The_Lone_Ranger_(TV_series)"
   },
 
@@ -112,6 +118,7 @@ const WATCH_BUDDY_GRAPH = [
     "@id": "https://archive.org/details/TheMartyrsoftheAlamo",
     "@type": "Movie",
     "datedPerspectives": true,
+    "datedNote": "Specifically: Mexicans are portrayed as leering villains en masse, and the Alamo story is staged as racial melodrama — this 1915 film is a standard citation for early Hollywood racism.",
     "factCheck": [
       {
         "@type": "ClaimReview",
@@ -146,6 +153,7 @@ const WATCH_BUDDY_GRAPH = [
     "@id": "https://archive.org/details/AboutBan1935",
     "@type": "Movie",
     "datedPerspectives": true,
+    "datedNote": "Specifically: a cheerful corporate portrait of plantation life that omits the labour conditions and land politics of the banana trade it advertises.",
     "factCheck": [
       {
         "@type": "ClaimReview",
@@ -158,12 +166,14 @@ const WATCH_BUDDY_GRAPH = [
   {
     "@id": "https://archive.org/details/HomeEcon1951",
     "@type": "Movie",
-    "datedPerspectives": true
+    "datedPerspectives": true,
+    "datedNote": "Specifically: young women's futures are presented as a choice of home-management careers, with marriage-and-homemaking as the assumed destination."
   },
   {
     "@id": "https://archive.org/details/babies_and_breadwinners_2",
     "@type": "Movie",
-    "datedPerspectives": true
+    "datedPerspectives": true,
+    "datedNote": "Specifically: the title is the thesis — men earn, women rear, and the film presents this division as natural fact."
   },
 
   /* ── Newsreel Nine ── */
@@ -185,6 +195,7 @@ const WATCH_BUDDY_GRAPH = [
     "@type": "NewsArticle",
     "contentWarning": { "warningEmoji": "😨", "text": "Aftermath footage from Hiroshima. The period title uses a slur that was routine in 1946 newsreels." },
     "datedPerspectives": true,
+    "datedNote": "Specifically: the period title uses an ethnic slur that was routine in 1946 newsreels, and the devastation of a civilian city is narrated in the victors' matter-of-fact tone.",
     "factCheck": [
       {
         "@type": "ClaimReview",
