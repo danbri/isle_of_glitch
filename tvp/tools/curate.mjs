@@ -121,7 +121,7 @@ const DIAL = [
     titleFilter: /(planet|space|outer|rocket|saucer|mars|moon|robot|atomic|future|invasion|astro|cosmic|satellite|ufo|venus|brain|teenagers from)/i
   },
   {
-    num: 6, id: "noir-alley", name: "Noir Alley",
+    num: 6, id: "shadow-street", name: "Shadow Street",
     category: "Drama", tagline: "Shadows, cigarettes and bad decisions",
     art: "Film_Noir",
     hand: [],
@@ -179,7 +179,7 @@ const DIAL = [
     want: 1000, minDur: 2400, maxDur: 10000, maxYear: 1930, requireYear: true
   },
   {
-    num: 115, id: "nickelodeon", name: "The Nickelodeon",
+    num: 115, id: "five-cent-cinema", name: "Five-Cent Cinema",
     category: "Film", tagline: "Shorts from the dawn of cinema",
     art: "silent_films",
     hand: [],
