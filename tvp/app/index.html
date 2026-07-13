@@ -50,6 +50,9 @@
     Video is Blender Foundation CC-BY, public domain, or other free/open film streamed from archive.org.</div>
   </div>
 
+  <!-- SVG subtitle layer -->
+  <div id="cue-layer" class="hidden"></div>
+
   <!-- pinned widgets float here, over the picture -->
   <div id="pinned-layer"></div>
 
@@ -226,6 +229,15 @@
     <div class="w-body">
       <div id="chat-log"></div>
       <form id="chat-form"><input id="chat-input" placeholder="say something&hellip;" maxlength="120" autocomplete="off"><button>&#9658;</button></form>
+    </div>
+  </section>
+
+  <section class="widget" id="w-subs" data-widget="subs">
+    <h3>subtitles</h3>
+    <div class="w-body">
+      <div id="cc-swatches"></div>
+      <div class="w-hint">base colour; letterforms are outlined in the
+      complementary colour for contrast. CC toggle lives in the info panel.</div>
     </div>
   </section>
 
