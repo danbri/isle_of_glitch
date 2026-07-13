@@ -126,10 +126,15 @@
   <header class="guide-bar">
     <div class="guide-title">what&rsquo;s on</div>
     <nav id="guide-cats"></nav>
+    <button id="guide-view" class="drawer-close" title="Toggle carousel / grid">
+      <svg id="gv-grid" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" fill="currentColor"/></svg>
+      <svg id="gv-swoosh" class="hidden" viewBox="0 0 24 24"><rect x="7" y="5" width="10" height="14" rx="2" fill="currentColor"/><rect x="1" y="8" width="4" height="8" rx="1.5" fill="currentColor" opacity=".6"/><rect x="19" y="8" width="4" height="8" rx="1.5" fill="currentColor" opacity=".6"/></svg>
+    </button>
     <button class="drawer-close" data-close="guide">&times;</button>
   </header>
   <div id="guide-rail" aria-label="Channels"></div>
   <div id="guide-list"></div>
+  <div id="guide-grid" class="hidden"></div>
 </div>
 
 <!-- ══════════════ WIDGET DOCK (right drawer) ══════════════ -->
