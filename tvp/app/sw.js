@@ -29,6 +29,115 @@ const MAX_ENTRIES = 40;
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
 
+/* ── storage backend ───────────────────────────────────────────────
+ * Prefixes live in the Origin Private File System when the browser can
+ * write it from a service worker (Chrome/Edge/Firefox) — OPFS is "site
+ * data", which tends to outlive "clear cached data" flows and reboots,
+ * especially once navigator.storage.persist() is granted (the page
+ * requests that at power-on). Safari can't write OPFS from a SW, so it
+ * falls back to the Cache API transparently. Reads check both, so a
+ * browser upgrade migrates gracefully.
+ */
+
+let opfsDir = null;   // dir handle, or false when unusable
+async function opfs() {
+  if (opfsDir !== null) return opfsDir;
+  try {
+    const root = await navigator.storage.getDirectory();
+    const dir = await root.getDirectoryHandle("tvp-prefix", { create: true });
+    const probe = await dir.getFileHandle(".probe", { create: true });
+    const w = await probe.createWritable();   // throws on Safari
+    await w.close();
+    opfsDir = dir;
+  } catch { opfsDir = false; }
+  return opfsDir;
+}
+
+async function keyHash(key) {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
+}
+
+const storeBackend = {
+  async put(key, buf, meta) {
+    const dir = await opfs();
+    if (dir) {
+      const h = await keyHash(key);
+      const bw = await (await dir.getFileHandle(h + ".bin", { create: true })).createWritable();
+      await bw.write(buf); await bw.close();
+      const mw = await (await dir.getFileHandle(h + ".json", { create: true })).createWritable();
+      await mw.write(JSON.stringify({ key, ...meta })); await mw.close();
+      return;
+    }
+    const cache = await caches.open(CACHE);
+    await cache.put(key, new Response(buf, {
+      headers: {
+        "content-type": meta.type || "video/mp4",
+        "x-tvp-total": String(meta.total),
+        "x-tvp-at": String(meta.at)
+      }
+    }));
+  },
+
+  async match(key) {
+    const dir = await opfs();
+    if (dir) {
+      try {
+        const h = await keyHash(key);
+        const mf = await (await dir.getFileHandle(h + ".json")).getFile();
+        const meta = JSON.parse(await mf.text());
+        const bf = await (await dir.getFileHandle(h + ".bin")).getFile();
+        return { buf: await bf.arrayBuffer(), total: meta.total, type: meta.type };
+      } catch {}
+    }
+    const hit = await (await caches.open(CACHE)).match(key);
+    if (!hit) return null;
+    const buf = await hit.arrayBuffer();
+    return {
+      buf,
+      total: parseInt(hit.headers.get("x-tvp-total") || String(buf.byteLength), 10),
+      type: hit.headers.get("content-type")
+    };
+  },
+
+  async has(key) {
+    const dir = await opfs();
+    if (dir) {
+      try { await dir.getFileHandle((await keyHash(key)) + ".json"); return true; } catch {}
+    }
+    return !!(await (await caches.open(CACHE)).match(key));
+  },
+
+  async prune() {
+    const dir = await opfs();
+    if (dir) {
+      const metas = [];
+      for await (const [name, handle] of dir.entries()) {
+        if (!name.endsWith(".json") || name === ".probe") continue;
+        try { metas.push([name, JSON.parse(await (await handle.getFile()).text())]); } catch {}
+      }
+      if (metas.length <= MAX_ENTRIES) return;
+      metas.sort((a, b) => (a[1].at || 0) - (b[1].at || 0));
+      for (const [name] of metas.slice(0, metas.length - MAX_ENTRIES)) {
+        const h = name.replace(/\.json$/, "");
+        try { await dir.removeEntry(h + ".json"); } catch {}
+        try { await dir.removeEntry(h + ".bin"); } catch {}
+      }
+      return;
+    }
+    const cache = await caches.open(CACHE);
+    const keys = await cache.keys();
+    if (keys.length <= MAX_ENTRIES) return;
+    const dated = [];
+    for (const k of keys) {
+      const r = await cache.match(k);
+      dated.push([parseInt(r?.headers.get("x-tvp-at") || "0", 10), k]);
+    }
+    dated.sort((a, b) => a[0] - b[0]);
+    for (const [, k] of dated.slice(0, keys.length - MAX_ENTRIES)) await cache.delete(k);
+  }
+};
+
 /* ── prefetch protocol: page posts {type:'prefetch', urls:[{key,via}|string]} ── */
 
 self.addEventListener("message", (e) => {
@@ -38,13 +147,12 @@ self.addEventListener("message", (e) => {
 });
 
 async function prefetchAll(entries) {
-  const cache = await caches.open(CACHE);
   for (const entry of entries.slice(0, 8)) {
     const key = typeof entry === "string" ? entry : entry.key;
     const via = typeof entry === "string" ? entry : (entry.via || entry.key);
     const cap = (typeof entry === "object" && entry.cap) ? entry.cap : PREFIX_BYTES;
     try {
-      if (await cache.match(key)) continue;
+      if (await storeBackend.has(key)) continue;
       const r = await fetch(via, {
         headers: { Range: `bytes=0-${cap - 1}` },
         signal: AbortSignal.timeout(45000)
@@ -83,28 +191,14 @@ async function prefetchAll(entries) {
       }
       if (!buf.byteLength) continue;
 
-      await cache.put(key, new Response(buf, {
-        headers: {
-          "content-type": r.headers.get("content-type") || "video/mp4",
-          "x-tvp-total": String(total),
-          "x-tvp-at": String(Date.now())
-        }
-      }));
-      await pruneLRU(cache);
+      await storeBackend.put(key, buf, {
+        type: r.headers.get("content-type") || "video/mp4",
+        total,
+        at: Date.now()
+      });
+      await storeBackend.prune();
     } catch {}
   }
-}
-
-async function pruneLRU(cache) {
-  const keys = await cache.keys();
-  if (keys.length <= MAX_ENTRIES) return;
-  const dated = [];
-  for (const k of keys) {
-    const r = await cache.match(k);
-    dated.push([parseInt(r?.headers.get("x-tvp-at") || "0", 10), k]);
-  }
-  dated.sort((a, b) => a[0] - b[0]);
-  for (const [, k] of dated.slice(0, keys.length - MAX_ENTRIES)) await cache.delete(k);
 }
 
 /* ── serve cached prefixes for in-range requests ── */
@@ -120,11 +214,9 @@ self.addEventListener("fetch", (e) => {
 
 async function serveRange(req, start, endWanted) {
   try {
-    const cache = await caches.open(CACHE);
-    const hit = await cache.match(req.url);
+    const hit = await storeBackend.match(req.url);
     if (hit) {
-      const buf = await hit.arrayBuffer();
-      const total = parseInt(hit.headers.get("x-tvp-total") || String(buf.byteLength), 10);
+      const { buf, total } = hit;
       const cachedEnd = buf.byteLength - 1;
       if (start <= cachedEnd) {
         const end = Math.min(endWanted ?? cachedEnd, cachedEnd);
@@ -132,8 +224,8 @@ async function serveRange(req, start, endWanted) {
           return new Response(buf.slice(start, end + 1), {
             status: 206,
             headers: {
-              "content-type": hit.headers.get("content-type") || "video/mp4",
-              "content-range": `bytes ${start}-${end}/${total}`,
+              "content-type": hit.type || "video/mp4",
+              "content-range": `bytes ${start}-${end}/${total || buf.byteLength}`,
               "content-length": String(end - start + 1),
               "accept-ranges": "bytes"
             }
