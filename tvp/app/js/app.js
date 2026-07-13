@@ -267,7 +267,7 @@ function tune(chIndex, opts = {}) {
   if (state.on && video.readyState >= 2 && !video.paused && !video.ended) {
     state.hotTune = { token, src, offset, prog, started: Date.now() };
     $("tunebar-text").innerHTML = `tuning · <b>${ch.num}</b> ${esc(ch.name)} — ${esc(prog.title)}`;
-    $("tunebar-fill").style.width = "4%";
+    $("tunebar-fill").style.transform = "scaleX(0.04)";
     $("tunebar").classList.remove("hidden");
     backstage.dataset.src = src;
     backstage.muted = true;
@@ -280,7 +280,7 @@ function tune(chIndex, opts = {}) {
     backstage.addEventListener("canplay", function hotArrive() {
       if (state.hotTune?.token !== token || token !== state.tuneToken) return;
       state.hotTune = null;
-      $("tunebar-fill").style.width = "100%";
+      $("tunebar-fill").style.transform = "scaleX(1)";
       setTimeout(() => $("tunebar").classList.add("hidden"), 350);
       swapStage();
       // correct live drift accumulated while tuning
@@ -361,7 +361,7 @@ function showZapCard(ch, prog, token) {
     const frame = artUrl(prog.frame || prog.art || ch.art);
     $("interstitial").style.backgroundImage = frame
       ? `linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.75)), url("${frame}")` : "";
-    $("interstitial-progress").firstElementChild.style.width = "3%";
+    $("interstitial-progress").firstElementChild.style.transform = "scaleX(0.03)";
     $("interstitial").classList.remove("hidden");
   }, 250);
 }
@@ -372,7 +372,7 @@ function tuneProgress(el, startedMs, readyState) {
   const t = (Date.now() - startedMs) / 1000;
   const eased = 0.9 * (1 - Math.exp(-t / 5));          // →90% over ~15s
   const mile = [0.06, 0.35, 0.6, 0.8, 0.92][Math.min(readyState, 4)];
-  el.style.width = Math.round(Math.max(eased, mile) * 95) + "%";
+  el.style.transform = `scaleX(${(Math.max(eased, mile) * 0.95).toFixed(3)})`;
 }
 setInterval(() => {
   if (state.hotTune) tuneProgress($("tunebar-fill"), state.hotTune.started, backstage.readyState);
@@ -600,7 +600,7 @@ setInterval(() => {
   const t = video.currentTime || 0;
   $("time-now").textContent = fmt(t);
   const pct = Math.min(100, (t / dur) * 100);
-  $("progress-fill").style.width = pct + "%";
+  $("progress-fill").style.transform = `scaleX(${pct / 100})`;
   $("progress-handle").style.left = pct + "%";
 
   const remaining = dur - t;
@@ -694,7 +694,7 @@ function showOSDChannel() {
 let volTimer;
 function showOSDVolume() {
   const bar = $("osd-volume-bar").firstElementChild;
-  bar.style.width = (userMuted ? 0 : userVolume * 100) + "%";
+  bar.style.transform = `scaleX(${userMuted ? 0 : userVolume})`;
   $("osd-volume").classList.remove("hidden");
   clearTimeout(volTimer);
   volTimer = setTimeout(() => $("osd-volume").classList.add("hidden"), 1400);
@@ -1520,6 +1520,7 @@ function buddyFor(prog) {
   return has ? {
     warning: node.contentWarning || null,
     dated: !!node.datedPerspectives,
+    datedNote: node.datedNote || null,
     facts,
     wiki: node.sameAs || null
   } : null;
@@ -1579,7 +1580,8 @@ function openBuddy() {
     sec(b.warning.warningEmoji || "😳", "heads up", esc(b.warning.text));
   }
   if (b.dated) {
-    sec("⏳", "of its time", esc(DATED_TEXT));
+    sec("⏳", "of its time", esc(DATED_TEXT) +
+      (b.datedNote ? `<p class="b-more">${esc(b.datedNote)}</p>` : ""));
   }
   if (b.facts.length) {
     sec("📚", "fact checkable", b.facts.map((f) =>
