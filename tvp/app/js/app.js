@@ -661,6 +661,25 @@ function powerOn() {
   startClock();
   startTicker();
   restorePins();
+  requestDurableStorage();   // user gesture: best moment to ask
+}
+
+/* ask the browser to mark this origin's storage (the first-seconds
+   stash, settings, everything) as persistent, so it survives reboots
+   and storage pressure instead of being best-effort evictable */
+async function requestDurableStorage() {
+  const el = $("storage-status");
+  try {
+    const persisted = navigator.storage?.persist
+      ? await navigator.storage.persist() : false;
+    const est = navigator.storage?.estimate ? await navigator.storage.estimate() : null;
+    const mb = est ? Math.round((est.usage || 0) / 1048576) : null;
+    el.textContent = "storage: " +
+      (persisted ? "persistent ✓ (survives reboots)" : "best-effort (browser may reclaim)") +
+      (mb !== null ? ` · ${mb} MB stashed` : "");
+  } catch {
+    el.textContent = "";
+  }
 }
 
 function powerOff() {
