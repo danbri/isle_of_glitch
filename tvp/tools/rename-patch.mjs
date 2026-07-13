@@ -8,5 +8,8 @@ s = s.replace(/id: "nickelodeon"/g, 'id: "five-cent-cinema"')
      .replace(/name: "The Nickelodeon"/g, 'name: "Five-Cent Cinema"')
      .replace(/id: "noir-alley"/g, 'id: "shadow-street"')
      .replace(/name: "Noir Alley"/g, 'name: "Shadow Street"');
+// bitrate sanity for the hand-picked Blender set (light encodes on air)
+s = s.replace(/src: "https:\/\/archive\.org\/download\/CosmosLaundromatFirstCycle[^"]*"/g,
+  'src: "https://archive.org/download/cosmos-laundromat/Cosmos%20Laundromat.mp4"');
 writeFileSync(p, s);
 console.log("renames applied to generated lineup");
