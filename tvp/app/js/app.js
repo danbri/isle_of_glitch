@@ -312,6 +312,15 @@ function updateInfo() {
     sched.appendChild(row);
   });
   $("info-fav").classList.toggle("lit", state.favs.has(ch.id));
+
+  // source attribution: link the program's own archive.org details page
+  const item = (p.src || "").match(/archive\.org\/download\/([^/]+)\//);
+  if (item) {
+    $("info-source").href = "https://archive.org/details/" + item[1];
+    $("info-source").classList.remove("hidden");
+  } else {
+    $("info-source").classList.add("hidden");
+  }
 }
 
 function overlaysVisible() { return !$("controller").classList.contains("hidden"); }

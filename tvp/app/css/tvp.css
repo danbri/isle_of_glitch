@@ -221,7 +221,9 @@ button { font-family: var(--font); cursor: pointer; }
   background: rgba(0,0,0,.5); color: #fff;
   border: 2px solid rgba(255,255,255,.8); border-radius: 999px;
   padding: 8px 12px; font-size: 12px; font-weight: bold;
+  text-decoration: none; display: inline-block;
 }
+#notice a { color: var(--accent); }
 .pill-btn:active { background: var(--accent); }
 .pill-btn.lit { border-color: var(--accent); color: var(--accent); }
 
