@@ -132,7 +132,7 @@ cd tvp/tools && node curate.mjs        # or --dry to preview
   pause · `m` mute · `f` fullscreen · `g` guide · `w` widgets · `i` info
   panel · `/` search · `p` power off.
 
-## Legal & takedowns
+## Legal
 
 - The `.dmg` is preserved unmodified as a historical artifact of a
   discontinued service; its **extracted contents are proprietary**
@@ -140,18 +140,17 @@ cd tvp/tools && node curate.mjs        # or --dry to preview
   from version control (`.gitignore`).
 - `app/` is **original code** — a UX homage; no Joost code, artwork or
   trademarks reproduced. Not affiliated with or endorsed by Joost N.V.
-- **Video is hosted by the Internet Archive, not here.** This player
-  stores no media; it streams directly from archive.org. Blender
-  Foundation open movies are CC-BY. The theatrical-era channels
-  (Picture Palace, The Nickelodeon) are restricted to films first
-  published through 1930 — public domain in the US — and the other
-  harvested channels draw on archive.org's public-domain-era collections
-  (Prelinger, Universal Newsreels, Film Noir, etc.).
-- **Rights holders / takedown requests:** every program's source page is
-  linked from the player's info panel (⌄ chevron → "⚭ archive.org").
-  Because the hosted copies live at the Internet Archive, takedown
-  requests are best directed there — see the
+- **This player is a neutral interface over the Internet Archive's
+  public collections.** Like a web browser, it hosts no media and
+  operates no takedown system of its own; it simply plays streams from
+  where they live, at archive.org. Blender Foundation open movies are
+  CC-BY. The theatrical-era channels (Picture Palace, The Nickelodeon)
+  are restricted to films first published through 1930 — public domain
+  in the US — and the other harvested channels draw on archive.org's
+  public-domain-era collections (Prelinger, Universal Newsreels,
+  Film Noir, etc.).
+- **Rights concerns** about any film belong with its host, the Internet
+  Archive — see the
   [Internet Archive rights policy](https://help.archive.org/help/rights/).
-  To remove something from this player's dial as well, delete it from
-  `tools/curate.mjs` (or add a term to its exclusion list) and re-run the
-  harvester — or open an issue on this repository and it'll be pulled.
+  Every program's own archive.org source page is linked from the
+  player's info panel (⌄ chevron → "⚭ archive.org").
