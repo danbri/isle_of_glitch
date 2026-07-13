@@ -23,11 +23,18 @@
   <!-- CRT white-dot power effect -->
   <div id="crt"><div id="crt-dot"></div></div>
 
-  <!-- Interstitial: "fetching your channel" -->
+  <!-- Interstitial: "fetching your channel" (only when nothing is playing) -->
   <div id="interstitial" class="hidden">
     <div class="rings"><span></span><span></span><span></span></div>
     <div id="interstitial-text">Fetching your channel&hellip;</div>
     <div id="interstitial-channel"></div>
+    <div id="interstitial-progress"><div></div></div>
+  </div>
+
+  <!-- hot-tune pill: the old channel keeps playing while the new one loads -->
+  <div id="tunebar" class="hidden">
+    <div id="tunebar-text"></div>
+    <div id="tunebar-track"><div id="tunebar-fill"></div></div>
   </div>
 
   <!-- Splash / power-on screen -->

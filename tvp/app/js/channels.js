@@ -24,7 +24,8 @@ const CHANNELS = [
     desc: "A giant rabbit takes gentle revenge on three bullying rodents.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/BigBuckBunny_124",
-    frame: "https://archive.org/download/BigBuckBunny_124/BigBuckBunny_124.thumbs/Content/big_buck_bunny_720p_surround_000255.jpg"
+    frame: "https://archive.org/download/BigBuckBunny_124/BigBuckBunny_124.thumbs/Content/big_buck_bunny_720p_surround_000255.jpg",
+    bytes: 61878609
    },
    {
     title: "Caminandes: Gran Dillama",
@@ -34,7 +35,8 @@ const CHANNELS = [
     desc: "The grass really is greener on the other side of the road.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/Caminandes2GranDillama",
-    frame: "https://archive.org/download/Caminandes2GranDillama/Caminandes2GranDillama.thumbs/02_gran_dillama_1080p_000057.jpg"
+    frame: "https://archive.org/download/Caminandes2GranDillama/Caminandes2GranDillama.thumbs/02_gran_dillama_1080p_000057.jpg",
+    bytes: 125974946
    },
    {
     title: "Caminandes: Llama Drama",
@@ -44,7 +46,8 @@ const CHANNELS = [
     desc: "Koro the llama versus a very inconvenient fence.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/Caminandes1LlamaDrama",
-    frame: "https://archive.org/download/Caminandes1LlamaDrama/Caminandes1LlamaDrama.thumbs/01_llama_drama_1080p_000039.jpg"
+    frame: "https://archive.org/download/Caminandes1LlamaDrama/Caminandes1LlamaDrama.thumbs/01_llama_drama_1080p_000039.jpg",
+    bytes: 35103580
    },
    {
     title: "Glass Half",
@@ -54,7 +57,8 @@ const CHANNELS = [
     desc: "Two art snobs argue wordlessly about taste in a gallery.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/GlassHalf1080p",
-    frame: "https://archive.org/download/GlassHalf1080p/GlassHalf1080p.thumbs/Glass%20Half-1080p_000087.jpg"
+    frame: "https://archive.org/download/GlassHalf1080p/GlassHalf1080p.thumbs/Glass%20Half-1080p_000087.jpg",
+    bytes: 65761189
    },
    {
     title: "Caminandes: Llamigos",
@@ -64,7 +68,8 @@ const CHANNELS = [
     desc: "Koro and Oti compete for the last winter berries in the snow.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/CaminandesLlamigos",
-    frame: "https://archive.org/download/CaminandesLlamigos/CaminandesLlamigos.thumbs/Caminandes_%20Llamigos-1080p_000087.jpg"
+    frame: "https://archive.org/download/CaminandesLlamigos/CaminandesLlamigos.thumbs/Caminandes_%20Llamigos-1080p_000087.jpg",
+    bytes: 138945811
    },
    {
     title: "Coffee Run",
@@ -74,7 +79,8 @@ const CHANNELS = [
     desc: "A caffeinated sprint through the memories of a life.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/coffee-run",
-    frame: "https://archive.org/download/coffee-run/coffee-run.thumbs/Coffee%20Run_000090.jpg"
+    frame: "https://archive.org/download/coffee-run/coffee-run.thumbs/Coffee%20Run_000090.jpg",
+    bytes: 17475695
    },
    {
     title: "Wing It!",
@@ -84,7 +90,8 @@ const CHANNELS = [
     desc: "A cat and a dog build a flying machine, against their better judgment.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/wing-it",
-    frame: "https://archive.org/download/wing-it/wing-it.thumbs/Wing%20It_000118.jpg"
+    frame: "https://archive.org/download/wing-it/wing-it.thumbs/Wing%20It_000118.jpg",
+    bytes: 16348270
    }
   ]
  },
@@ -104,7 +111,8 @@ const CHANNELS = [
     desc: "Two strange characters explore an infinite machine.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/ElephantsDream",
-    frame: "https://archive.org/download/ElephantsDream/ElephantsDream.thumbs/ed_1024_000510.jpg"
+    frame: "https://archive.org/download/ElephantsDream/ElephantsDream.thumbs/ed_1024_000510.jpg",
+    bytes: 47065346
    },
    {
     title: "Sintel",
@@ -114,7 +122,8 @@ const CHANNELS = [
     desc: "A lone girl searches for the dragon she once rescued.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/Sintel",
-    frame: "https://archive.org/download/Sintel/Sintel.thumbs/sintel-2048-stereo_000720.jpg"
+    frame: "https://archive.org/download/Sintel/Sintel.thumbs/sintel-2048-stereo_000720.jpg",
+    bytes: 77410288
    },
    {
     title: "Tears of Steel",
@@ -124,7 +133,8 @@ const CHANNELS = [
     desc: "Scientists restage an old heartbreak to save Amsterdam from robots.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/Tears-of-Steel",
-    frame: "https://archive.org/download/Tears-of-Steel/Tears-of-Steel.thumbs/tears_of_steel_1080p_000589.jpg"
+    frame: "https://archive.org/download/Tears-of-Steel/Tears-of-Steel.thumbs/tears_of_steel_1080p_000589.jpg",
+    bytes: 76435802
    },
    {
     title: "Cosmos Laundromat: First Cycle",
@@ -135,7 +145,8 @@ const CHANNELS = [
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/CosmosLaundromatFirstCycle",
     frame: "https://archive.org/download/CosmosLaundromatFirstCycle/CosmosLaundromatFirstCycle.thumbs/Cosmos%20Laundromat%20-%20First%20Cycle%20(1080p)_000285.jpg",
-    subs: "CosmosLaundromat-FirstCycle1080p.en.srt"
+    subs: "CosmosLaundromat-FirstCycle1080p.en.srt",
+    bytes: 220087570
    },
    {
     title: "Agent 327: Operation Barbershop",
@@ -146,7 +157,8 @@ const CHANNELS = [
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/agent-327-operation-barbershop",
     frame: "https://archive.org/download/agent-327-operation-barbershop/agent-327-operation-barbershop.thumbs/Agent%20327%20Operation%20Barbershop_000119.jpg",
-    subs: "Agent 327 Operation Barbershop.srt"
+    subs: "Agent 327 Operation Barbershop.srt",
+    bytes: 47545128
    },
    {
     title: "Hero",
@@ -156,7 +168,8 @@ const CHANNELS = [
     desc: "A hand-drawn Grease Pencil duel between a hero and his shadow.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/hero_20260106",
-    frame: "https://archive.org/download/hero_20260106/hero_20260106.thumbs/hero_000117.jpg"
+    frame: "https://archive.org/download/hero_20260106/hero_20260106.thumbs/hero_000117.jpg",
+    bytes: 53008532
    },
    {
     title: "Spring",
@@ -166,7 +179,8 @@ const CHANNELS = [
     desc: "A shepherd girl and her dog face ancient spirits.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/springopenmovie",
-    frame: "https://archive.org/download/springopenmovie/springopenmovie.thumbs/springopenmovie_000178.jpg"
+    frame: "https://archive.org/download/springopenmovie/springopenmovie.thumbs/springopenmovie_000178.jpg",
+    bytes: 90190341
    },
    {
     title: "Sprite Fright",
@@ -176,7 +190,8 @@ const CHANNELS = [
     desc: "Mushroom-picking students meet murderously cheerful forest sprites.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/sprite-fright-2021",
-    frame: "https://archive.org/download/sprite-fright-2021/sprite-fright-2021.thumbs/Sprite%20Fright%20(2021)_000237.jpg"
+    frame: "https://archive.org/download/sprite-fright-2021/sprite-fright-2021.thumbs/Sprite%20Fright%20(2021)_000237.jpg",
+    bytes: 60602625
    },
    {
     title: "Charge",
@@ -186,7 +201,8 @@ const CHANNELS = [
     desc: "A destitute drifter gambles everything in a power-starved future.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/charge_202601",
-    frame: "https://archive.org/download/charge_202601/charge_202601.thumbs/Charge_000118.jpg"
+    frame: "https://archive.org/download/charge_202601/charge_202601.thumbs/Charge_000118.jpg",
+    bytes: 18811777
    }
   ]
  },
@@ -206,7 +222,8 @@ const CHANNELS = [
     desc: "Winsor McCay's pioneering hand-tinted animation.",
     license: "Public domain",
     art: "https://archive.org/services/img/LittleNemo_548",
-    frame: "https://archive.org/download/LittleNemo_548/LittleNemo_548.thumbs/LittleNemo_000240.jpg"
+    frame: "https://archive.org/download/LittleNemo_548/LittleNemo_548.thumbs/LittleNemo_000240.jpg",
+    bytes: 51131619
    },
    {
     title: "Gertie the Dinosaur",
@@ -215,7 +232,9 @@ const CHANNELS = [
     src: "https://archive.org/download/Gertie/GertietheDinosaur.mp4",
     desc: "The first cartoon star ever.",
     license: "Public domain",
-    art: "https://archive.org/services/img/Gertie"
+    art: "https://archive.org/services/img/Gertie",
+    frame: "https://archive.org/download/Gertie/Gertie.thumbs/GertietheDinosaur_000300.jpg",
+    bytes: 39234070
    },
    {
     title: "Steamboat Willie",
@@ -225,7 +244,8 @@ const CHANNELS = [
     desc: "The synchronized-sound sensation that launched a mouse.",
     license: "Public domain",
     art: "https://archive.org/services/img/SteamboatWillie",
-    frame: "https://archive.org/download/SteamboatWillie/SteamboatWillie.thumbs/Steamboat%20Willie_000195.jpg"
+    frame: "https://archive.org/download/SteamboatWillie/SteamboatWillie.thumbs/Steamboat%20Willie_000195.jpg",
+    bytes: 33335230
    },
    {
     title: "Flip The Frog - Fiddlesticks",
@@ -235,7 +255,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/FLIP_FROG-FIDDLESTICKS",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/FLIP_FROG-FIDDLESTICKS/FLIP_FROG-FIDDLESTICKS.thumbs/FLIP_FROG-FIDDLESTICKS_64k_000210.jpg"
+    frame: "https://archive.org/download/FLIP_FROG-FIDDLESTICKS/FLIP_FROG-FIDDLESTICKS.thumbs/FLIP_FROG-FIDDLESTICKS_64k_000210.jpg",
+    bytes: 26232394
    },
    {
     title: "Betty Boop: Snow White",
@@ -245,7 +266,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/bb_snow_white",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/bb_snow_white/bb_snow_white.thumbs/bb_snow_white_000180.jpg"
+    frame: "https://archive.org/download/bb_snow_white/bb_snow_white.thumbs/bb_snow_white_000180.jpg",
+    bytes: 30831193
    },
    {
     title: "Superman: The Mechanical Monsters",
@@ -255,7 +277,8 @@ const CHANNELS = [
     desc: "Fleischer's art-deco Superman battles robot bank-robbers.",
     license: "Public domain",
     art: "https://archive.org/services/img/SupermanTheMechanicalMonsters1941",
-    frame: "https://archive.org/download/SupermanTheMechanicalMonsters1941/SupermanTheMechanicalMonsters1941.thumbs/Superman%20-%20The%20Mechanical%20Monsters%20(1941)_000267.jpg"
+    frame: "https://archive.org/download/SupermanTheMechanicalMonsters1941/SupermanTheMechanicalMonsters1941.thumbs/Superman%20-%20The%20Mechanical%20Monsters%20(1941)_000267.jpg",
+    bytes: 63838741
    },
    {
     title: "Woody Woodpecker in Pantry Panic",
@@ -265,7 +288,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/woody_woodpecker_pantry_panic",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/woody_woodpecker_pantry_panic/woody_woodpecker_pantry_panic.thumbs/woody_woodpecker_pantry_panic_000150.jpg"
+    frame: "https://archive.org/download/woody_woodpecker_pantry_panic/woody_woodpecker_pantry_panic.thumbs/woody_woodpecker_pantry_panic_000150.jpg",
+    bytes: 29904006
    },
    {
     title: "Shuteye Popeye",
@@ -275,7 +299,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/popeye_shuteye_popeye",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/popeye_shuteye_popeye/popeye_shuteye_popeye.thumbs/popeye_shuteye_popeye_000150.jpg"
+    frame: "https://archive.org/download/popeye_shuteye_popeye/popeye_shuteye_popeye.thumbs/popeye_shuteye_popeye_000150.jpg",
+    bytes: 27954244
    },
    {
     title: "Popeye: Taxi-Turvy",
@@ -285,7 +310,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/popeye_taxi-turvey",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/popeye_taxi-turvey/popeye_taxi-turvey.thumbs/popeye_taxi-turvey_000150.jpg"
+    frame: "https://archive.org/download/popeye_taxi-turvey/popeye_taxi-turvey.thumbs/popeye_taxi-turvey_000150.jpg",
+    bytes: 26696485
    },
    {
     title: "Private Eye Popeye",
@@ -295,7 +321,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/popeye_private_eye_popeye",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/popeye_private_eye_popeye/popeye_private_eye_popeye.thumbs/popeye_private_eye_popeye_000150.jpg"
+    frame: "https://archive.org/download/popeye_private_eye_popeye/popeye_private_eye_popeye.thumbs/popeye_private_eye_popeye_000150.jpg",
+    bytes: 28580960
    },
    {
     title: "Popeye: I Don't Scare",
@@ -305,7 +332,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/popeye_i_dont_scare",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/popeye_i_dont_scare/popeye_i_dont_scare.thumbs/popeye_i_dont_scare_000150.jpg"
+    frame: "https://archive.org/download/popeye_i_dont_scare/popeye_i_dont_scare.thumbs/popeye_i_dont_scare_000150.jpg",
+    bytes: 26668022
    },
    {
     title: "Patriotic Popeye",
@@ -315,7 +343,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/popeye_patriotic_popeye",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/popeye_patriotic_popeye/popeye_patriotic_popeye.thumbs/popeye_patriotic_popeye_000150.jpg"
+    frame: "https://archive.org/download/popeye_patriotic_popeye/popeye_patriotic_popeye.thumbs/popeye_patriotic_popeye_000150.jpg",
+    bytes: 26402792
    },
    {
     title: "Betty Boop Cartoons",
@@ -324,7 +353,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/BettyBoopCartoons",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/BettyBoopCartoons/BettyBoopCartoons.thumbs/Betty_Boop_Is_My_Palm_Read_1932_000360.jpg"
+    frame: "https://archive.org/download/BettyBoopCartoons/BettyBoopCartoons.thumbs/Betty_Boop_Is_My_Palm_Read_1932_000360.jpg",
+    bytes: 24004105
    },
    {
     title: "The Big Bad Wolf",
@@ -333,7 +363,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/the_big_bad_wolf",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/the_big_bad_wolf/the_big_bad_wolf.thumbs/the_big_bad_wolf_000180.jpg"
+    frame: "https://archive.org/download/the_big_bad_wolf/the_big_bad_wolf.thumbs/the_big_bad_wolf_000180.jpg",
+    bytes: 36142895
    }
   ]
  },
@@ -353,7 +384,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/Nosferatu_most_complete_version_93_mins.",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/Nosferatu_most_complete_version_93_mins./Nosferatu_most_complete_version_93_mins..thumbs/Nosferatu_1922_Symphony_of_Horror_002220.jpg"
+    frame: "https://archive.org/download/Nosferatu_most_complete_version_93_mins./Nosferatu_most_complete_version_93_mins..thumbs/Nosferatu_1922_Symphony_of_Horror_002220.jpg",
+    bytes: 395416378
    },
    {
     title: "White Zombie",
@@ -365,7 +397,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/white_zombie/white_zombie.thumbs/white_zombie_001560.jpg",
-    subs: "white_zombie.asr.srt"
+    subs: "white_zombie.asr.srt",
+    bytes: 285317204
    },
    {
     title: "The Ghost Train",
@@ -376,7 +409,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/TheGhostTrain",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/TheGhostTrain/TheGhostTrain.thumbs/TheGhostTrain_001920.jpg"
+    frame: "https://archive.org/download/TheGhostTrain/TheGhostTrain.thumbs/TheGhostTrain_001920.jpg",
+    bytes: 354213679
    },
    {
     title: "House on Haunted Hill",
@@ -387,7 +421,8 @@ const CHANNELS = [
     license: "Public domain",
     art: "https://archive.org/services/img/house_on_haunted_hill_ipod",
     frame: "https://archive.org/download/house_on_haunted_hill_ipod/house_on_haunted_hill_ipod.thumbs/house_on_haunted_hill_001800.jpg",
-    subs: "house_on_haunted_hill.asr.srt"
+    subs: "house_on_haunted_hill.asr.srt",
+    bytes: 317341899
    },
    {
     title: "City of the Dead/Horror Hotel",
@@ -399,7 +434,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Horror_Hotel/Horror_Hotel.thumbs/Horror_Hotel_001800.jpg",
-    subs: "Horror_Hotel.asr.srt"
+    subs: "Horror_Hotel.asr.srt",
+    bytes: 330655290
    },
    {
     title: "Carnival of Souls",
@@ -411,7 +447,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CarnivalofSouls/CarnivalofSouls.thumbs/CarnivalOfSouls_001980.jpg",
-    subs: "CarnivalOfSouls.asr.srt"
+    subs: "CarnivalOfSouls.asr.srt",
+    bytes: 361757810
    },
    {
     title: "Bloody Pit of Horror",
@@ -422,7 +459,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/BloodyPitOfHorror/BloodyPitOfHorror.thumbs/BloodyPitOfHorror_001980.jpg",
-    subs: "BloodyPitOfHorror.asr.srt"
+    subs: "BloodyPitOfHorror.asr.srt",
+    bytes: 515381078
    },
    {
     title: "Night of the Living Dead",
@@ -433,7 +471,8 @@ const CHANNELS = [
     license: "Public domain",
     art: "https://archive.org/services/img/Night.Of.The.Living.Dead_1080p",
     frame: "https://archive.org/download/Night.Of.The.Living.Dead_1080p/Night.Of.The.Living.Dead_1080p.thumbs/NightOfTheLivingDead_DVD5_004500.jpg",
-    subs: "NightOfTheLivingDead_DVD5.asr.srt"
+    subs: "NightOfTheLivingDead_DVD5.asr.srt",
+    bytes: 406935466
    },
    {
     title: "Grave of the Vampire",
@@ -445,7 +484,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Grave_of_the_Vampire_movie/Grave_of_the_Vampire_movie.thumbs/Grave-of-the-Vampire_002216.jpg",
-    subs: "Grave-of-the-Vampire.asr.srt"
+    subs: "Grave-of-the-Vampire.asr.srt",
+    bytes: 390849989
    },
    {
     title: "A Bucket of Blood",
@@ -456,7 +496,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ABucketofBlood/ABucketofBlood.thumbs/Bucket_1959_001560.jpg",
-    subs: "Bucket_1959.asr.srt"
+    subs: "Bucket_1959.asr.srt",
+    bytes: 284931181
    }
   ]
  },
@@ -476,7 +517,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/devil-girl-from-mars-1954",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/devil-girl-from-mars-1954/devil-girl-from-mars-1954.thumbs/Devil%20Girl%20From%20Mars%20(1954)_001799.jpg"
+    frame: "https://archive.org/download/devil-girl-from-mars-1954/devil-girl-from-mars-1954.thumbs/Devil%20Girl%20From%20Mars%20(1954)_001799.jpg",
+    bytes: 860017977
    },
    {
     title: "Killers from Space",
@@ -487,7 +529,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Killers_from_Space_1954/Killers_from_Space_1954.thumbs/Killers_from_Space_1954_001732.jpg",
-    subs: "Killers_from_Space_1954.asr.srt"
+    subs: "Killers_from_Space_1954.asr.srt",
+    bytes: 433571132
    },
    {
     title: "Space Master X-7",
@@ -497,7 +540,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/SpacemasterX7_201602",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/SpacemasterX7_201602/SpacemasterX7_201602.thumbs/'SpacemasterX-7-1958_001734.jpg"
+    frame: "https://archive.org/download/SpacemasterX7_201602/SpacemasterX7_201602.thumbs/'SpacemasterX-7-1958_001734.jpg",
+    bytes: 205673278
    },
    {
     title: "The Strange World of Planet X",
@@ -507,7 +551,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/TheStrangeWorldOfPlanetX1958",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/TheStrangeWorldOfPlanetX1958/TheStrangeWorldOfPlanetX1958.thumbs/TheStrangeWorldOfPlanetX1958_001710.jpg"
+    frame: "https://archive.org/download/TheStrangeWorldOfPlanetX1958/TheStrangeWorldOfPlanetX1958.thumbs/TheStrangeWorldOfPlanetX1958_001710.jpg",
+    bytes: 238606945
    },
    {
     title: "The Atomic Brain",
@@ -519,7 +564,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheAtomicBrain/TheAtomicBrain.thumbs/TheAtomicBrain_001560.jpg",
-    subs: "TheAtomicBrain.asr.srt"
+    subs: "TheAtomicBrain.asr.srt",
+    bytes: 282920926
    },
    {
     title: "The Wizard of Mars",
@@ -529,7 +575,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/WizardOfMars",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/WizardOfMars/WizardOfMars.thumbs/TheWizardOfMars1965_001830.jpg"
+    frame: "https://archive.org/download/WizardOfMars/WizardOfMars.thumbs/TheWizardOfMars1965_001830.jpg",
+    bytes: 258546331
    },
    {
     title: "The X From Outer Space",
@@ -539,7 +586,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/the-x-from-outer-space",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/the-x-from-outer-space/the-x-from-outer-space.thumbs/The%20X%20from%20Outer%20Space_002094.jpg"
+    frame: "https://archive.org/download/the-x-from-outer-space/the-x-from-outer-space.thumbs/The%20X%20from%20Outer%20Space_002094.jpg",
+    bytes: 510361126
    },
    {
     title: "Moon of the Wolf",
@@ -550,7 +598,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/MoonoftheWolf_",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/MoonoftheWolf_/MoonoftheWolf_.thumbs/MoonoftheWolf_001740.jpg"
+    frame: "https://archive.org/download/MoonoftheWolf_/MoonoftheWolf_.thumbs/MoonoftheWolf_001740.jpg",
+    bytes: 322924768
    },
    {
     title: "First Spaceship on Venus",
@@ -559,7 +608,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/FirstSpaceshipOnVenus_586",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/FirstSpaceshipOnVenus_586/FirstSpaceshipOnVenus_586.thumbs/FirstSpaceshipOnVenuskurtMaetzig1960_001854.jpg"
+    frame: "https://archive.org/download/FirstSpaceshipOnVenus_586/FirstSpaceshipOnVenus_586.thumbs/FirstSpaceshipOnVenuskurtMaetzig1960_001854.jpg",
+    bytes: 485742630
    },
    {
     title: "Purple Death From Outer Space",
@@ -570,7 +620,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/PurpleDeathFromOuterSpace/PurpleDeathFromOuterSpace.thumbs/Purpledeathfromouterspace.mpeg_002100.jpg",
-    subs: "Purpledeathfromouterspace.mpeg.asr.srt"
+    subs: "Purpledeathfromouterspace.mpeg.asr.srt",
+    bytes: 383008481
    }
   ]
  },
@@ -592,7 +643,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Detour/Detour.thumbs/Detour_001620.jpg",
-    subs: "Detour.asr.srt"
+    subs: "Detour.asr.srt",
+    bytes: 294622587
    },
    {
     title: "Scarlet Street",
@@ -604,7 +656,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ScarletStreet/ScarletStreet.thumbs/Scarlet_Street_002400.jpg",
-    subs: "Scarlet_Street.asr.srt"
+    subs: "Scarlet_Street.asr.srt",
+    bytes: 441562845
    },
    {
     title: "Strange Love of Martha Ivers",
@@ -616,7 +669,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Martha_Ivers_movie/Martha_Ivers_movie.thumbs/Strange_Love_Martha_Ivers_002760.jpg",
-    subs: "Strange_Love_Martha_Ivers.asr.srt"
+    subs: "Strange_Love_Martha_Ivers.asr.srt",
+    bytes: 504827797
    },
    {
     title: "The Stranger",
@@ -628,7 +682,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheStranger_0/TheStranger_0.thumbs/The_Stranger_002160.jpg",
-    subs: "The_Stranger.asr.srt"
+    subs: "The_Stranger.asr.srt",
+    bytes: 397241981
    },
    {
     title: "Inner Sanctum",
@@ -640,7 +695,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Inner_Sanctum_movie/Inner_Sanctum_movie.thumbs/Inner_Sanctum_001494.jpg",
-    subs: "Inner_Sanctum.asr.srt"
+    subs: "Inner_Sanctum.asr.srt",
+    bytes: 270310008
    },
    {
     title: "Impact",
@@ -652,7 +708,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/impact/impact.thumbs/impact_002640.jpg",
-    subs: "impact.asr.srt"
+    subs: "impact.asr.srt",
+    bytes: 478584403
    },
    {
     title: "Quicksand",
@@ -663,7 +720,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Quicksand_clear/Quicksand_clear.thumbs/Quicksand_001914.jpg",
-    subs: "Quicksand.asr.srt"
+    subs: "Quicksand.asr.srt",
+    bytes: 494184092
    },
    {
     title: "Jail Bait",
@@ -675,7 +733,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/JailBait/JailBait.thumbs/JailBait_001680.jpg",
-    subs: "JailBait.asr.srt"
+    subs: "JailBait.asr.srt",
+    bytes: 308112314
    },
    {
     title: "Suddenly",
@@ -687,7 +746,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/suddenly/suddenly.thumbs/suddenly_001800.jpg",
-    subs: "suddenly.asr.srt"
+    subs: "suddenly.asr.srt",
+    bytes: 330518704
    },
    {
     title: "Please Murder Me",
@@ -699,7 +759,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Please_Murder_Me_movie/Please_Murder_Me_movie.thumbs/Please_Murder_Me_003653.jpg",
-    subs: "Please_Murder_Me.asr.srt"
+    subs: "Please_Murder_Me.asr.srt",
+    bytes: 317813951
    }
   ]
  },
@@ -719,7 +780,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/AsYouLikeIt1936",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/AsYouLikeIt1936/AsYouLikeIt1936.thumbs/AsYouLikeIt_002280.jpg"
+    frame: "https://archive.org/download/AsYouLikeIt1936/AsYouLikeIt1936.thumbs/AsYouLikeIt_002280.jpg",
+    bytes: 440934838
    },
    {
     title: "Charlie Chaplin Festival",
@@ -731,7 +793,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/charlie_chaplin_film_fest/charlie_chaplin_film_fest.thumbs/charlie_chaplin_film_fest_001860.jpg",
-    subs: "charlie_chaplin_film_fest.asr.srt"
+    subs: "charlie_chaplin_film_fest.asr.srt",
+    bytes: 337713518
    },
    {
     title: "Tarzan and the Green Goddess",
@@ -743,7 +806,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/tarzan_and_the_green_goddess/tarzan_and_the_green_goddess.thumbs/tarzan_and_the_green_goddess_001620.jpg",
-    subs: "tarzan_and_the_green_goddess.asr.srt"
+    subs: "tarzan_and_the_green_goddess.asr.srt",
+    bytes: 294357399
    },
    {
     title: "The Flying Deuces",
@@ -755,7 +819,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheFlyingDeuces/TheFlyingDeuces.thumbs/The_Flying_Deuces_001620.jpg",
-    subs: "The_Flying_Deuces.asr.srt"
+    subs: "The_Flying_Deuces.asr.srt",
+    bytes: 296023543
    },
    {
     title: "His Girl Friday",
@@ -766,7 +831,8 @@ const CHANNELS = [
     license: "Public domain",
     art: "https://archive.org/services/img/his_girl_friday",
     frame: "https://archive.org/download/his_girl_friday/his_girl_friday.thumbs/his_girl_friday_002160.jpg",
-    subs: "his_girl_friday.asr.srt"
+    subs: "his_girl_friday.asr.srt",
+    bytes: 401207987
    },
    {
     title: "Meet John Doe",
@@ -778,7 +844,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/meet_john_doe/meet_john_doe.thumbs/meet_john_doe_002940.jpg",
-    subs: "meet_john_doe.asr.srt"
+    subs: "meet_john_doe.asr.srt",
+    bytes: 535442863
    },
    {
     title: "My Favorite Brunette",
@@ -790,7 +857,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/my_favorite_brunette/my_favorite_brunette.thumbs/my_favorite_brunette_002040.jpg",
-    subs: "my_favorite_brunette.asr.srt"
+    subs: "my_favorite_brunette.asr.srt",
+    bytes: 378700906
    },
    {
     title: "Royal Wedding",
@@ -802,7 +870,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/royal_wedding/royal_wedding.thumbs/royal_wedding_002160.jpg",
-    subs: "royal_wedding.asr.srt"
+    subs: "royal_wedding.asr.srt",
+    bytes: 396694942
    },
    {
     title: "McLintock!",
@@ -814,7 +883,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/mclintok_widescreen/mclintok_widescreen.thumbs/McLintock_003000.jpg",
-    subs: "McLintock.asr.srt"
+    subs: "McLintock.asr.srt",
+    bytes: 550863361
    },
    {
     title: "The Gun and the Pulpit",
@@ -825,7 +895,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/cco_thegunandthepulpit",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/cco_thegunandthepulpit/cco_thegunandthepulpit.thumbs/ccoPublicDomainThe_Gun_and_the_Pulpit_001740.jpg"
+    frame: "https://archive.org/download/cco_thegunandthepulpit/cco_thegunandthepulpit.thumbs/ccoPublicDomainThe_Gun_and_the_Pulpit_001740.jpg",
+    bytes: 321738044
    }
   ]
  },
@@ -847,7 +918,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/AboutBan1935/AboutBan1935.thumbs/AboutBan1935_000270.jpg",
-    subs: "AboutBan1935.asr.srt"
+    subs: "AboutBan1935.asr.srt",
+    bytes: 45941165
    },
    {
     title: "Doctor in Industry (Part I)",
@@ -859,7 +931,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Doctorin1946/Doctorin1946.thumbs/Doctorin1946_000420.jpg",
-    subs: "Doctorin1946.asr.srt"
+    subs: "Doctorin1946.asr.srt",
+    bytes: 79505515
    },
    {
     title: "Joan Avoids a Cold",
@@ -871,7 +944,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/JoanAvoi1947/JoanAvoi1947.thumbs/JoanAvoi1947_000240.jpg",
-    subs: "JoanAvoi1947.asr.srt"
+    subs: "JoanAvoi1947.asr.srt",
+    bytes: 44056499
    },
    {
     title: "Care of the Skin",
@@ -883,7 +957,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Careofth1949/Careofth1949.thumbs/Careofth1949_000240.jpg",
-    subs: "Careofth1949.asr.srt"
+    subs: "Careofth1949.asr.srt",
+    bytes: 44739135
    },
    {
     title: "Sleep for Health",
@@ -895,7 +970,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Sleepfor1950/Sleepfor1950.thumbs/Sleepfor1950_000240.jpg",
-    subs: "Sleepfor1950.asr.srt"
+    subs: "Sleepfor1950.asr.srt",
+    bytes: 45590108
    },
    {
     title: "Duck and Cover",
@@ -906,7 +982,8 @@ const CHANNELS = [
     license: "Public domain · Prelinger",
     art: "https://archive.org/services/img/DuckandC1951",
     frame: "https://archive.org/download/DuckandC1951/DuckandC1951.thumbs/DuckandC1951_000210.jpg",
-    subs: "DuckandC1951.asr.srt"
+    subs: "DuckandC1951.asr.srt",
+    bytes: 39240901
    },
    {
     title: "The Home Economics Story",
@@ -916,7 +993,8 @@ const CHANNELS = [
     desc: "A gloriously earnest recruiting film.",
     license: "Public domain · Prelinger",
     art: "https://archive.org/services/img/HomeEcon1951",
-    frame: "https://archive.org/download/HomeEcon1951/HomeEcon1951.thumbs/HomeEcon1951_000300.jpg"
+    frame: "https://archive.org/download/HomeEcon1951/HomeEcon1951.thumbs/HomeEcon1951_000300.jpg",
+    bytes: 52888735
    },
    {
     title: "Health: Your Posture",
@@ -928,7 +1006,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/HealthYo1953/HealthYo1953.thumbs/HealthYo1953_000240.jpg",
-    subs: "HealthYo1953.asr.srt"
+    subs: "HealthYo1953.asr.srt",
+    bytes: 45302373
    },
    {
     title: "Eat for Health",
@@ -940,7 +1019,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/EatforHe1954/EatforHe1954.thumbs/EatforHe1954_000240.jpg",
-    subs: "EatforHe1954.asr.srt"
+    subs: "EatforHe1954.asr.srt",
+    bytes: 44562696
    },
    {
     title: "From the Ground Up",
@@ -952,7 +1032,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/FromtheG1954/FromtheG1954.thumbs/FromtheG1954_000480.jpg",
-    subs: "FromtheG1954.asr.srt"
+    subs: "FromtheG1954.asr.srt",
+    bytes: 81080331
    },
    {
     title: "Sniffles and Sneezes",
@@ -964,7 +1045,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Sniffles1955/Sniffles1955.thumbs/Sniffles1955_000240.jpg",
-    subs: "Sniffles1955.asr.srt"
+    subs: "Sniffles1955.asr.srt",
+    bytes: 40955591
    },
    {
     title: "Babies and Breadwinners (Part II)",
@@ -975,7 +1057,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/babies_and_breadwinners_2/babies_and_breadwinners_2.thumbs/babies_and_breadwinners_2_000240.jpg",
-    subs: "babies_and_breadwinners_2.asr.srt"
+    subs: "babies_and_breadwinners_2.asr.srt",
+    bytes: 43368081
    },
    {
     title: "Breath-Takers, 2",
@@ -985,7 +1068,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/breath_takers_2",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/breath_takers_2/breath_takers_2.thumbs/breath_takers_2_000360.jpg"
+    frame: "https://archive.org/download/breath_takers_2/breath_takers_2.thumbs/breath_takers_2_000360.jpg",
+    bytes: 71614349
    },
    {
     title: "Right to Health, A (Part I)",
@@ -996,7 +1080,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/right_to_health_1/right_to_health_1.thumbs/right_to_health_1_000360.jpg",
-    subs: "right_to_health_1.asr.srt"
+    subs: "right_to_health_1.asr.srt",
+    bytes: 67927540
    }
   ]
  },
@@ -1016,7 +1101,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/1937-12-12_Bombing_of_USS_Panay",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/1937-12-12_Bombing_of_USS_Panay/1937-12-12_Bombing_of_USS_Panay.thumbs/1937-12-12_Bombing_of_USS_Panay_000480.jpg"
+    frame: "https://archive.org/download/1937-12-12_Bombing_of_USS_Panay/1937-12-12_Bombing_of_USS_Panay.thumbs/1937-12-12_Bombing_of_USS_Panay_000480.jpg",
+    bytes: 94801468
    },
    {
     title: "Eve of Battle, 1944/06/06",
@@ -1027,7 +1113,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/1944-06-06_Eve_of_Battle/1944-06-06_Eve_of_Battle.thumbs/1944-06-06_Eve_of_Battle_000480.jpg",
-    subs: "1944-06-06_Eve_of_Battle_512kb.autogenerated.vtt"
+    subs: "1944-06-06_Eve_of_Battle_512kb.autogenerated.vtt",
+    bytes: 84925533
    },
    {
     title: "RAF Sinks Tirpitz, 1944/11/22",
@@ -1038,7 +1125,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/1944-11-22_RAF_Sinks_Tirpitz/1944-11-22_RAF_Sinks_Tirpitz.thumbs/1944-11-22_RAF_Sinks_Tirpitz_000180.jpg",
-    subs: "1944-11-22_RAF_Sinks_Tirpitz_512kb.autogenerated.vtt"
+    subs: "1944-11-22_RAF_Sinks_Tirpitz_512kb.autogenerated.vtt",
+    bytes: 32270132
    },
    {
     title: "Nazi Murder Mills, 1945/04/26",
@@ -1049,7 +1137,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/1945-04-26_Nazi_Murder_Mills/1945-04-26_Nazi_Murder_Mills.thumbs/1945-04-26_Nazi_Murder_Mills_000180.jpg",
-    subs: "1945-04-26_Nazi_Murder_Mills_512kb.autogenerated.vtt"
+    subs: "1945-04-26_Nazi_Murder_Mills_512kb.autogenerated.vtt",
+    bytes: 35869505
    },
    {
     title: "Nazis Face War Crime Evidence, 1945/12/06",
@@ -1060,7 +1149,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/1945-12-06_Nazis_Face_War_Crime_Evidence/1945-12-06_Nazis_Face_War_Crime_Evidence.thumbs/1945-12-06_Nazis_Face_War_Crime_Evidence_000060.jpg",
-    subs: "1945-12-06_Nazis_Face_War_Crime_Evidence_512kb.autogenerated.vtt"
+    subs: "1945-12-06_Nazis_Face_War_Crime_Evidence_512kb.autogenerated.vtt",
+    bytes: 8999377
    },
    {
     title: "First Pictures Atomic Blast!, 1946/07/08",
@@ -1071,7 +1161,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/1946-07-08_First_Pictures_Atomic_Blast/1946-07-08_First_Pictures_Atomic_Blast.thumbs/1946-07-08_First_Pictures_Atomic_Blast_000180.jpg",
-    subs: "1946-07-08_First_Pictures_Atomic_Blast_512kb.autogenerated.vtt"
+    subs: "1946-07-08_First_Pictures_Atomic_Blast_512kb.autogenerated.vtt",
+    bytes: 32204948
    },
    {
     title: "Jap Films of Hiroshima, 1946/08/05",
@@ -1082,7 +1173,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/1946-08-05_Jap_Films_of_Hiroshima/1946-08-05_Jap_Films_of_Hiroshima.thumbs/1946-08-05_Jap_Films_of_Hiroshima_000180.jpg",
-    subs: "1946-08-05_Jap_Films_of_Hiroshima_512kb.autogenerated.vtt"
+    subs: "1946-08-05_Jap_Films_of_Hiroshima_512kb.autogenerated.vtt",
+    bytes: 31054172
    },
    {
     title: "Kansas, 1957/04/04",
@@ -1093,7 +1185,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/1957-04-04_Kansas/1957-04-04_Kansas.thumbs/1957-04-04_Kansas_000060.jpg",
-    subs: "1957-04-04_Kansas_512kb.autogenerated.vtt"
+    subs: "1957-04-04_Kansas_512kb.autogenerated.vtt",
+    bytes: 9700600
    },
    {
     title: "Space Triumph! Glenn Flight Thrills World, 1962/02/22",
@@ -1104,7 +1197,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/1962-02-22_Space_Triumph/1962-02-22_Space_Triumph.thumbs/1962-02-22_Space_Triumph_000150.jpg",
-    subs: "1962-02-22_Space_Triumph_512kb.autogenerated.vtt"
+    subs: "1962-02-22_Space_Triumph_512kb.autogenerated.vtt",
+    bytes: 27073119
    },
    {
     title: "The Red Threat. President Orders Cuban Blockade, 1962/10/22",
@@ -1115,7 +1209,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/1962-10-22_The_Red_Threat/1962-10-22_The_Red_Threat.thumbs/1962-10-22_The_Red_Threat_000060.jpg",
-    subs: "1962-10-22_The_Red_Threat_512kb.autogenerated.vtt"
+    subs: "1962-10-22_The_Red_Threat_512kb.autogenerated.vtt",
+    bytes: 13746401
    },
    {
     title: "Fashions, 1964/10/26",
@@ -1126,7 +1221,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/1964-10-26_Fashions/1964-10-26_Fashions.thumbs/1964-10-26_Fashions_000060.jpg",
-    subs: "1964-10-26_Fashions_512kb.autogenerated.vtt"
+    subs: "1964-10-26_Fashions_512kb.autogenerated.vtt",
+    bytes: 9264036
    },
    {
     title: "Peace March. Thousands Oppose Vietnam War, 1967/04/18",
@@ -1136,7 +1232,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/1967-04-18_Peace_March",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/1967-04-18_Peace_March/1967-04-18_Peace_March.thumbs/1967-04-18_Peace_March_000060.jpg"
+    frame: "https://archive.org/download/1967-04-18_Peace_March/1967-04-18_Peace_March.thumbs/1967-04-18_Peace_March_000060.jpg",
+    bytes: 12391559
    }
   ]
  },
@@ -1157,7 +1254,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/theloneranger_201705",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/theloneranger_201705/theloneranger_201705.thumbs/s01e07_PeteandPedro_000572.jpg"
+    frame: "https://archive.org/download/theloneranger_201705/theloneranger_201705.thumbs/s01e07_PeteandPedro_000572.jpg",
+    bytes: 73708499
    },
    {
     title: "Dragnet",
@@ -1169,7 +1267,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Dragnet1951/Dragnet1951.thumbs/Dragnet/Season%202/Dragnet%20(1951)%20-%20S02E33%20-%20The%20Big%20Dance_000908.jpg",
-    subs: "Dragnet/Season 1/Dragnet (1951) - S01E01 - The Human Bomb.autogenerated.vtt"
+    subs: "Dragnet/Season 1/Dragnet (1951) - S01E01 - The Human Bomb.autogenerated.vtt",
+    bytes: 147599019
    },
    {
     title: "Beverly Hillbillies Ep01 The Clampetts Strike Oil",
@@ -1179,7 +1278,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Beverly_Hillbillies_Ep01_The_Clampetts_Strike_Oil/Beverly_Hillbillies_Ep01_The_Clampetts_Strike_Oil.thumbs/BH01_The_Clampetts_Strike_Oil_000600.jpg",
-    subs: "BH01_The_Clampetts_Strike_Oil.autogenerated.vtt"
+    subs: "BH01_The_Clampetts_Strike_Oil.autogenerated.vtt",
+    bytes: 108342026
    },
    {
     title: "Bonanza - Bitter Water",
@@ -1189,7 +1289,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza-BitterWater/Bonanza-BitterWater.thumbs/Bonanza_Bitter_Water_S01-E29_001140.jpg",
-    subs: "Bonanza_Bitter_Water_S01-E29.autogenerated.vtt"
+    subs: "Bonanza_Bitter_Water_S01-E29.autogenerated.vtt",
+    bytes: 215138305
    },
    {
     title: "Bonanza - Day Of Reckoning",
@@ -1199,7 +1300,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza_-_Day_Of_Reckoning/Bonanza_-_Day_Of_Reckoning.thumbs/Bonanza_-_Day_Of_Reckoning_001200.jpg",
-    subs: "Bonanza_-_Day_Of_Reckoning.autogenerated.vtt"
+    subs: "Bonanza_-_Day_Of_Reckoning.autogenerated.vtt",
+    bytes: 215470457
    },
    {
     title: "Bonanza - Silent Thunder",
@@ -1209,7 +1311,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza_-_Silent_Thunder/Bonanza_-_Silent_Thunder.thumbs/Bonanza_-_Silent_Thunder_001200.jpg",
-    subs: "Bonanza_-_Silent_Thunder.autogenerated.vtt"
+    subs: "Bonanza_-_Silent_Thunder.autogenerated.vtt",
+    bytes: 215031913
    },
    {
     title: "Bonanza - The Spitfire",
@@ -1219,7 +1322,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza_-_The_Spitfire/Bonanza_-_The_Spitfire.thumbs/Bonanza_-_The_Spitfire_001200.jpg",
-    subs: "Bonanza_-_The_Spitfire.autogenerated.vtt"
+    subs: "Bonanza_-_The_Spitfire.autogenerated.vtt",
+    bytes: 215030711
    },
    {
     title: "Bonanza - The Stranger",
@@ -1229,7 +1333,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza-TheStranger/Bonanza-TheStranger.thumbs/Bonanza_-_The_Stranger_S01-E24_001140.jpg",
-    subs: "Bonanza_-_The_Stranger_S01-E24.autogenerated.vtt"
+    subs: "Bonanza_-_The_Stranger_S01-E24.autogenerated.vtt",
+    bytes: 215372749
    },
    {
     title: "Bonanza - The Trail Gang",
@@ -1239,7 +1344,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza_-_The_Trail_Gang/Bonanza_-_The_Trail_Gang.thumbs/Bonanza_-_The_Trail_Gang_001200.jpg",
-    subs: "Bonanza_-_The_Trail_Gang.autogenerated.vtt"
+    subs: "Bonanza_-_The_Trail_Gang.autogenerated.vtt",
+    bytes: 214833972
    },
    {
     title: "Bonanza public domain episodes",
@@ -1250,7 +1356,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza_pd/Bonanza_pd.thumbs/Bonanza%20s01e31_000001.jpg",
-    subs: "Bonanza s01e19.autogenerated.vtt"
+    subs: "Bonanza s01e19.autogenerated.vtt",
+    bytes: 154439148
    },
    {
     title: "Lucy meets John Wayne",
@@ -1260,7 +1367,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_Meets_John_Wayne/TLS_Lucy_Meets_John_Wayne.thumbs/TLS_Lucy_Meets_John_Wayne_000600.jpg",
-    subs: "TLS_Lucy_Meets_John_Wayne.autogenerated.vtt"
+    subs: "TLS_Lucy_Meets_John_Wayne.autogenerated.vtt",
+    bytes: 110529922
    },
    {
     title: "The Adventures of Sherlock Holmes",
@@ -1271,7 +1379,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/SherlockHolmes1954/SherlockHolmes1954.thumbs/Sherlock%20Holmes%2016%20The%20Case%20Of%20The%20Greystone%20Insription_001123.jpg",
-    subs: "Sherlock Holmes 01 The Case of the Cunningham Heritage.autogenerated.vtt"
+    subs: "Sherlock Holmes 01 The Case of the Cunningham Heritage.autogenerated.vtt",
+    bytes: 73264814
    }
   ]
  },
@@ -1292,7 +1401,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Cleopatra_1912/Cleopatra_1912.thumbs/Cleopatra_002094.jpg",
-    subs: "Cleopatra.asr.srt"
+    subs: "Cleopatra.asr.srt",
+    bytes: 701450752
    },
    {
     title: "Charlie Chaplin's \"Tillies Punctured Romance\"",
@@ -1302,7 +1412,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1914_11_14_TilliesPuncturedRomance",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1914_11_14_TilliesPuncturedRomance/CC_1914_11_14_TilliesPuncturedRomance.thumbs/CC_1914_11_14_TilliesPuncturedRomance_001680.jpg"
+    frame: "https://archive.org/download/CC_1914_11_14_TilliesPuncturedRomance/CC_1914_11_14_TilliesPuncturedRomance.thumbs/CC_1914_11_14_TilliesPuncturedRomance_001680.jpg",
+    bytes: 311583364
    },
    {
     title: "Home, Sweet Home",
@@ -1312,7 +1423,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/Home.Sweet.Home",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/Home.Sweet.Home/Home.Sweet.Home.thumbs/HomeSweetHome_001314.jpg"
+    frame: "https://archive.org/download/Home.Sweet.Home/Home.Sweet.Home.thumbs/HomeSweetHome_001314.jpg",
+    bytes: 288882449
    },
    {
     title: "Alice In Wonderland",
@@ -1322,7 +1434,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/AliceInWonderland1915_503",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/AliceInWonderland1915_503/AliceInWonderland1915_503.thumbs/AliceInWonderland-Silent_002040.jpg"
+    frame: "https://archive.org/download/AliceInWonderland1915_503/AliceInWonderland1915_503.thumbs/AliceInWonderland-Silent_002040.jpg",
+    bytes: 162380148
    },
    {
     title: "Carmen",
@@ -1333,7 +1446,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CarmenCBD/CarmenCBD.thumbs/Carmen_001350.jpg",
-    subs: "Carmen.asr.srt"
+    subs: "Carmen.asr.srt",
+    bytes: 300274118
    },
    {
     title: "Charlie Chaplin's \"A Burlesque On Carmen\"",
@@ -1343,7 +1457,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1915_12_18_ABurlesqueOnCarmen",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1915_12_18_ABurlesqueOnCarmen/CC_1915_12_18_ABurlesqueOnCarmen.thumbs/CC_1915_12_18_ABurlesqueOnCarmen_001020.jpg"
+    frame: "https://archive.org/download/CC_1915_12_18_ABurlesqueOnCarmen/CC_1915_12_18_ABurlesqueOnCarmen.thumbs/CC_1915_12_18_ABurlesqueOnCarmen_001020.jpg",
+    bytes: 190254989
    },
    {
     title: "The Martyrs of the Alamo",
@@ -1354,7 +1469,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/TheMartyrsoftheAlamo",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/TheMartyrsoftheAlamo/TheMartyrsoftheAlamo.thumbs/TheMartyrsoftheAlamo/TheMartyrsoftheAlamo_001740.jpg"
+    frame: "https://archive.org/download/TheMartyrsoftheAlamo/TheMartyrsoftheAlamo.thumbs/TheMartyrsoftheAlamo/TheMartyrsoftheAlamo_001740.jpg",
+    bytes: 310455512
    },
    {
     title: "20,000 Leagues Under the Sea",
@@ -1364,7 +1480,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/20000LeaguesUndertheSea",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/20000LeaguesUndertheSea/20000LeaguesUndertheSea.thumbs/20000_Leagues_Under_the_Sea_002340.jpg"
+    frame: "https://archive.org/download/20000LeaguesUndertheSea/20000LeaguesUndertheSea.thumbs/20000_Leagues_Under_the_Sea_002340.jpg",
+    bytes: 429700405
    },
    {
     title: "American Aristocracy",
@@ -1374,7 +1491,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/AmericanAristocracy",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/AmericanAristocracy/AmericanAristocracy.thumbs/AmericanAristocracy_001194.jpg"
+    frame: "https://archive.org/download/AmericanAristocracy/AmericanAristocracy.thumbs/AmericanAristocracy_001194.jpg",
+    bytes: 272075068
    },
    {
     title: "A Romance of the Redwoods",
@@ -1384,7 +1502,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/ARomanceOfTheRedwoods",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/ARomanceOfTheRedwoods/ARomanceOfTheRedwoods.thumbs/ARomanceOfTheRedwoods_002160.jpg"
+    frame: "https://archive.org/download/ARomanceOfTheRedwoods/ARomanceOfTheRedwoods.thumbs/ARomanceOfTheRedwoods_002160.jpg",
+    bytes: 350080841
    },
    {
     title: "The Poor Little Rich Girl",
@@ -1394,7 +1513,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/ThePoorLittleRichGirl",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/ThePoorLittleRichGirl/ThePoorLittleRichGirl.thumbs/PoorLittleRichGirl1917_001560.jpg"
+    frame: "https://archive.org/download/ThePoorLittleRichGirl/ThePoorLittleRichGirl.thumbs/PoorLittleRichGirl1917_001560.jpg",
+    bytes: 309009871
    },
    {
     title: "Tarzan of the Apes",
@@ -1405,7 +1525,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/TarzanoftheApes1918AndyDivx",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/TarzanoftheApes1918AndyDivx/TarzanoftheApes1918AndyDivx.thumbs/TarzanoftheApes1918AndyDivx_001440.jpg"
+    frame: "https://archive.org/download/TarzanoftheApes1918AndyDivx/TarzanoftheApes1918AndyDivx.thumbs/TarzanoftheApes1918AndyDivx_001440.jpg",
+    bytes: 263494660
    },
    {
     title: "Das Kabinett des Doktor Caligari ( The Cabinet of Dr. Caligari )",
@@ -1415,7 +1536,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/DasKabinettdesDoktorCaligariTheCabinetofDrCaligari",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/DasKabinettdesDoktorCaligariTheCabinetofDrCaligari/DasKabinettdesDoktorCaligariTheCabinetofDrCaligari.thumbs/The_Cabinet_of_Dr._Caligari_001200.jpg"
+    frame: "https://archive.org/download/DasKabinettdesDoktorCaligariTheCabinetofDrCaligari/DasKabinettdesDoktorCaligariTheCabinetofDrCaligari.thumbs/The_Cabinet_of_Dr._Caligari_001200.jpg",
+    bytes: 222148532
    },
    {
     title: "\"The Flapper\" (1920) starring Olive Thomas",
@@ -1425,7 +1547,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/TheFlapper1920",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/TheFlapper1920/TheFlapper1920.thumbs/The-Flapper-1920_002070.jpg"
+    frame: "https://archive.org/download/TheFlapper1920/TheFlapper1920.thumbs/The-Flapper-1920_002070.jpg",
+    bytes: 451619392
    },
    {
     title: "Dr. Jekyll and Mr. Hyde",
@@ -1435,7 +1558,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/DrJekyllandMrHyde",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/DrJekyllandMrHyde/DrJekyllandMrHyde.thumbs/DrJekyllandMrHyde_001980.jpg"
+    frame: "https://archive.org/download/DrJekyllandMrHyde/DrJekyllandMrHyde.thumbs/DrJekyllandMrHyde_001980.jpg",
+    bytes: 357362051
    },
    {
     title: "Last of the Mohicans",
@@ -1447,7 +1571,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/last_of_the_mohicans_1920/last_of_the_mohicans_1920.thumbs/last_of_the_mohicans_silent_001680.jpg",
-    subs: "last_of_the_mohicans_silent.asr.srt"
+    subs: "last_of_the_mohicans_silent.asr.srt",
+    bytes: 301441286
    },
    {
     title: "Mark of Zorro",
@@ -1459,7 +1584,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/markofzorro-1920/markofzorro-1920.thumbs/markofzorro_001800.jpg",
-    subs: "markofzorro.asr.srt"
+    subs: "markofzorro.asr.srt",
+    bytes: 324093088
    },
    {
     title: "Terror Island",
@@ -1470,7 +1596,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TerrorIsland/TerrorIsland.thumbs/TerrorIsland_001290.jpg",
-    subs: "TerrorIsland.asr.srt"
+    subs: "TerrorIsland.asr.srt",
+    bytes: 287023215
    },
    {
     title: "The County Fair",
@@ -1480,7 +1607,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CountyFair_",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CountyFair_/CountyFair_.thumbs/CountyFair_001194.jpg"
+    frame: "https://archive.org/download/CountyFair_/CountyFair_.thumbs/CountyFair_001194.jpg",
+    bytes: 194514703
    },
    {
     title: "The Golem",
@@ -1490,7 +1618,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/TheGolem_893",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/TheGolem_893/TheGolem_893.thumbs/TheGolem_002400.jpg"
+    frame: "https://archive.org/download/TheGolem_893/TheGolem_893.thumbs/TheGolem_002400.jpg",
+    bytes: 441886671
    },
    {
     title: "Sands of Sacrifice",
@@ -1500,7 +1629,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/SandsofSacrifice",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/SandsofSacrifice/SandsofSacrifice.thumbs/SandsofSacrifice_001314.jpg"
+    frame: "https://archive.org/download/SandsofSacrifice/SandsofSacrifice.thumbs/SandsofSacrifice_001314.jpg",
+    bytes: 289049994
    },
    {
     title: "The Ace of Hearts",
@@ -1511,7 +1641,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/Ace_of_Hearts_1921",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/Ace_of_Hearts_1921/Ace_of_Hearts_1921.thumbs/Ace_of_Hearts_001800.jpg"
+    frame: "https://archive.org/download/Ace_of_Hearts_1921/Ace_of_Hearts_1921.thumbs/Ace_of_Hearts_001800.jpg",
+    bytes: 286478066
    },
    {
     title: "The Conquering Power",
@@ -1521,7 +1652,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/TheConqueringPower",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/TheConqueringPower/TheConqueringPower.thumbs/TheConqueringPowerrexIngram1921RudolphValentinoAliceTerry_002154.jpg"
+    frame: "https://archive.org/download/TheConqueringPower/TheConqueringPower.thumbs/TheConqueringPowerrexIngram1921RudolphValentinoAliceTerry_002154.jpg",
+    bytes: 536637911
    },
    {
     title: "The Four Horsemen of the Apocalypse",
@@ -1531,7 +1663,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/FourHorsemenOfTheApocalypse",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/FourHorsemenOfTheApocalypse/FourHorsemenOfTheApocalypse.thumbs/FourHorsemenOfTheApocalypse_003120.jpg"
+    frame: "https://archive.org/download/FourHorsemenOfTheApocalypse/FourHorsemenOfTheApocalypse.thumbs/FourHorsemenOfTheApocalypse_003120.jpg",
+    bytes: 599616208
    },
    {
     title: "The Nut",
@@ -1542,7 +1675,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/The_Nut",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/The_Nut/The_Nut.thumbs/The_Nut_001800.jpg"
+    frame: "https://archive.org/download/The_Nut/The_Nut.thumbs/The_Nut_001800.jpg",
+    bytes: 286638296
    },
    {
     title: "The Sheik",
@@ -1553,7 +1687,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/TheSheik",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/TheSheik/TheSheik.thumbs/TheSheik_002040.jpg"
+    frame: "https://archive.org/download/TheSheik/TheSheik.thumbs/TheSheik_002040.jpg",
+    bytes: 366805332
    },
    {
     title: "The Three Musketeers",
@@ -1563,7 +1698,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/The_Three_Musketeers",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/The_Three_Musketeers/The_Three_Musketeers.thumbs/TheThreeMusketeers_003060.jpg"
+    frame: "https://archive.org/download/The_Three_Musketeers/The_Three_Musketeers.thumbs/TheThreeMusketeers_003060.jpg",
+    bytes: 491978674
    },
    {
     title: "Manslaughter",
@@ -1574,7 +1710,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/Manslaughter_1922",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/Manslaughter_1922/Manslaughter_1922.thumbs/Manslaughter_002400.jpg"
+    frame: "https://archive.org/download/Manslaughter_1922/Manslaughter_1922.thumbs/Manslaughter_002400.jpg",
+    bytes: 384183906
    },
    {
     title: "Robin Hood",
@@ -1584,7 +1721,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/FairbanksRobinHood1922",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/FairbanksRobinHood1922/FairbanksRobinHood1922.thumbs/FairbanksRobinHood1922/FairbanksRobinHood1922_003187.jpg"
+    frame: "https://archive.org/download/FairbanksRobinHood1922/FairbanksRobinHood1922.thumbs/FairbanksRobinHood1922/FairbanksRobinHood1922_003187.jpg",
+    bytes: 578762091
    },
    {
     title: "The Hunchback of Notre Dame",
@@ -1594,7 +1732,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/The_Hunchback_of_Notre_Dame",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/The_Hunchback_of_Notre_Dame/The_Hunchback_of_Notre_Dame.thumbs/The_Hunchback_of_Notre_Dame_002400.jpg"
+    frame: "https://archive.org/download/The_Hunchback_of_Notre_Dame/The_Hunchback_of_Notre_Dame.thumbs/The_Hunchback_of_Notre_Dame_002400.jpg",
+    bytes: 439361029
    },
    {
     title: "Three Ages",
@@ -1604,7 +1743,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/Silent_ThreeAges_1923",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/Silent_ThreeAges_1923/Silent_ThreeAges_1923.thumbs/Silent_ThreeAges_1923_ClaCinOnl_001500.jpg"
+    frame: "https://archive.org/download/Silent_ThreeAges_1923/Silent_ThreeAges_1923.thumbs/Silent_ThreeAges_1923_ClaCinOnl_001500.jpg",
+    bytes: 276395485
    },
    {
     title: "Thief of Bagdad",
@@ -1614,7 +1754,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/ThiefOfBagdad1924",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/ThiefOfBagdad1924/ThiefOfBagdad1924.thumbs/ThiefofBagdad1924_003360.jpg"
+    frame: "https://archive.org/download/ThiefOfBagdad1924/ThiefOfBagdad1924.thumbs/ThiefofBagdad1924_003360.jpg",
+    bytes: 606745642
    },
    {
     title: "Bronenosets Potyomkin (Battleship Potemkin)",
@@ -1624,7 +1765,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/BattleshipPotemkin",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/BattleshipPotemkin/BattleshipPotemkin.thumbs/Battleship_Potemkin_001740.jpg"
+    frame: "https://archive.org/download/BattleshipPotemkin/BattleshipPotemkin.thumbs/Battleship_Potemkin_001740.jpg",
+    bytes: 317355846
    },
    {
     title: "Lady Windermere's Fan",
@@ -1634,7 +1776,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/LadyWindermeresFan",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/LadyWindermeresFan/LadyWindermeresFan.thumbs/LadyWindermeresFan_002040.jpg"
+    frame: "https://archive.org/download/LadyWindermeresFan/LadyWindermeresFan.thumbs/LadyWindermeresFan_002040.jpg",
+    bytes: 332564279
    },
    {
     title: "Little Annie Rooney",
@@ -1644,7 +1787,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/LittleAnnieRooney_",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/LittleAnnieRooney_/LittleAnnieRooney_.thumbs/LittleAnnieRooney_002280.jpg"
+    frame: "https://archive.org/download/LittleAnnieRooney_/LittleAnnieRooney_.thumbs/LittleAnnieRooney_002280.jpg",
+    bytes: 364387284
    },
    {
     title: "The Eagle",
@@ -1656,7 +1800,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the_eagle/the_eagle.thumbs/M4V10006_004440.jpg",
-    subs: "M4V10006.asr.srt"
+    subs: "M4V10006.asr.srt",
+    bytes: 394353193
    },
    {
     title: "The Lost World",
@@ -1668,7 +1813,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/lost_world/lost_world.thumbs/lost_world_001620.jpg",
-    subs: "lost_world.asr.srt"
+    subs: "lost_world.asr.srt",
+    bytes: 296892995
    },
    {
     title: "The Phantom of the Opera",
@@ -1678,7 +1824,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/ThePhantomoftheOpera",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/ThePhantomoftheOpera/ThePhantomoftheOpera.thumbs/Phantom_of_the_Opera_002520.jpg"
+    frame: "https://archive.org/download/ThePhantomoftheOpera/ThePhantomoftheOpera.thumbs/Phantom_of_the_Opera_002520.jpg",
+    bytes: 463554725
    },
    {
     title: "The Black Pirate",
@@ -1689,7 +1836,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/TheBlackPirate1926DouglasFairbanksSRAndy",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/TheBlackPirate1926DouglasFairbanksSRAndy/TheBlackPirate1926DouglasFairbanksSRAndy.thumbs/TheBlackPirate1926DouglasFairbanksSRAndy_001980.jpg"
+    frame: "https://archive.org/download/TheBlackPirate1926DouglasFairbanksSRAndy/TheBlackPirate1926DouglasFairbanksSRAndy.thumbs/TheBlackPirate1926DouglasFairbanksSRAndy_001980.jpg",
+    bytes: 360737491
    },
    {
     title: "The General (complete & clearer)",
@@ -1699,7 +1847,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/The_General_Buster_Keaton",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/The_General_Buster_Keaton/The_General_Buster_Keaton.thumbs/The_General_001914.jpg"
+    frame: "https://archive.org/download/The_General_Buster_Keaton/The_General_Buster_Keaton.thumbs/The_General_001914.jpg",
+    bytes: 302790246
    },
    {
     title: "\"The Beloved Rogue\" (1927) starring John Barrymore and Marceline Day",
@@ -1709,7 +1858,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/TheBelovedRogue_201312",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/TheBelovedRogue_201312/TheBelovedRogue_201312.thumbs/The%20Beloved%20Rogue_002370.jpg"
+    frame: "https://archive.org/download/TheBelovedRogue_201312/TheBelovedRogue_201312.thumbs/The%20Beloved%20Rogue_002370.jpg",
+    bytes: 1354857419
    },
    {
     title: "College",
@@ -1719,7 +1869,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/college",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/college/college.thumbs/College_001560.jpg"
+    frame: "https://archive.org/download/college/college.thumbs/College_001560.jpg",
+    bytes: 279821079
    },
    {
     title: "His First Flame",
@@ -1729,7 +1880,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/his_first_flame",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/his_first_flame/his_first_flame.thumbs/his_first_flame_001080.jpg"
+    frame: "https://archive.org/download/his_first_flame/his_first_flame.thumbs/his_first_flame_001080.jpg",
+    bytes: 196886192
    },
    {
     title: "The General",
@@ -1739,7 +1891,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/TheGeneral",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/TheGeneral/TheGeneral.thumbs/The_General_001620.jpg"
+    frame: "https://archive.org/download/TheGeneral/TheGeneral.thumbs/The_General_001620.jpg",
+    bytes: 293030923
    },
    {
     title: "Arizona Days",
@@ -1749,7 +1902,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/ArizonaDays",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/ArizonaDays/ArizonaDays.thumbs/arizonadays_001020.jpg"
+    frame: "https://archive.org/download/ArizonaDays/ArizonaDays.thumbs/arizonadays_001020.jpg",
+    bytes: 191613391
    },
    {
     title: "Steamboat Bill Jr.",
@@ -1760,7 +1914,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/steamboat_bill_ipod",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/steamboat_bill_ipod/steamboat_bill_ipod.thumbs/steamboat_bill_001680.jpg"
+    frame: "https://archive.org/download/steamboat_bill_ipod/steamboat_bill_ipod.thumbs/steamboat_bill_001680.jpg",
+    bytes: 292744785
    },
    {
     title: "Won In The Clouds",
@@ -1772,7 +1927,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/WonInTheClouds/WonInTheClouds.thumbs/WonInTheClouds_002520.jpg",
-    subs: "WonInTheClouds.asr.srt"
+    subs: "WonInTheClouds.asr.srt",
+    bytes: 227019032
    },
    {
     title: "Big News",
@@ -1782,7 +1938,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/BigNews",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/BigNews/BigNews.thumbs/BigNews_001560.jpg"
+    frame: "https://archive.org/download/BigNews/BigNews.thumbs/BigNews_001560.jpg",
+    bytes: 303334542
    },
    {
     title: "Chelovek s kinoapparatom (Man With A Movie Camera)",
@@ -1792,7 +1949,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/ChelovekskinoapparatomManWithAMovieCamera",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/ChelovekskinoapparatomManWithAMovieCamera/ChelovekskinoapparatomManWithAMovieCamera.thumbs/Chelovek_s_kino-apparatom_001560.jpg"
+    frame: "https://archive.org/download/ChelovekskinoapparatomManWithAMovieCamera/ChelovekskinoapparatomManWithAMovieCamera.thumbs/Chelovek_s_kino-apparatom_001560.jpg",
+    bytes: 257515942
    },
    {
     title: "Glorifying the American Girl",
@@ -1803,7 +1961,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/GlorifyingTheAmericanGirl_119",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/GlorifyingTheAmericanGirl_119/GlorifyingTheAmericanGirl_119.thumbs/GlorifyingTheAmericanGirl1929FsDvdripDivx5_002280.jpg"
+    frame: "https://archive.org/download/GlorifyingTheAmericanGirl_119/GlorifyingTheAmericanGirl_119.thumbs/GlorifyingTheAmericanGirl1929FsDvdripDivx5_002280.jpg",
+    bytes: 407492091
    },
    {
     title: "Great Gabbo",
@@ -1815,7 +1974,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/great_gabbo/great_gabbo.thumbs/great_gabbo_001620.jpg",
-    subs: "great_gabbo.asr.srt"
+    subs: "great_gabbo.asr.srt",
+    bytes: 298117194
    },
    {
     title: "High Voltage",
@@ -1826,7 +1986,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/High_Voltage_",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/High_Voltage_/High_Voltage_.thumbs/High_Voltage_001500.jpg"
+    frame: "https://archive.org/download/High_Voltage_/High_Voltage_.thumbs/High_Voltage_001500.jpg",
+    bytes: 275164878
    },
    {
     title: "The Iron Mask",
@@ -1838,7 +1999,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/iron_mask/iron_mask.thumbs/iron_mask_001740.jpg",
-    subs: "iron_mask.asr.srt"
+    subs: "iron_mask.asr.srt",
+    bytes: 315106088
    },
    {
     title: "Thundering Thompson",
@@ -1848,7 +2010,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/ThunderingThompson",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/ThunderingThompson/ThunderingThompson.thumbs/ThunderingThompson_001080.jpg"
+    frame: "https://archive.org/download/ThunderingThompson/ThunderingThompson.thumbs/ThunderingThompson_001080.jpg",
+    bytes: 202787081
    },
    {
     title: "Abraham Lincoln",
@@ -1860,7 +2023,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/abraham_lincoln/abraham_lincoln.thumbs/abraham_lincoln_002040.jpg",
-    subs: "abraham_lincoln.asr.srt"
+    subs: "abraham_lincoln.asr.srt",
+    bytes: 369303629
    },
    {
     title: "Africa Speaks",
@@ -1872,7 +2036,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/africa_speaks/africa_speaks.thumbs/africa_speaks_001200.jpg",
-    subs: "africa_speaks.asr.srt"
+    subs: "africa_speaks.asr.srt",
+    bytes: 218443482
    },
    {
     title: "Danger Lights",
@@ -1884,7 +2049,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/danger_lights/danger_lights.thumbs/danger_lights_001320.jpg",
-    subs: "danger_lights.asr.srt"
+    subs: "danger_lights.asr.srt",
+    bytes: 238694485
    },
    {
     title: "Half Shot at Sunrse",
@@ -1896,7 +2062,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/half_shot_at_sunrise/half_shot_at_sunrise.thumbs/half_shot_at_sunrise_001860.jpg",
-    subs: "half_shot_at_sunrise.asr.srt"
+    subs: "half_shot_at_sunrise.asr.srt",
+    bytes: 326955409
    },
    {
     title: "Hook Line and Sinker",
@@ -1908,7 +2075,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/hook_line_and_sinker/hook_line_and_sinker.thumbs/hook_line_and_sinker_000012.jpg",
-    subs: "hook_line_and_sinker.asr.srt"
+    subs: "hook_line_and_sinker.asr.srt",
+    bytes: 325531111
    },
    {
     title: "Reaching for the Moon",
@@ -1918,7 +2086,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/ReachingForTheMoondecember291930",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/ReachingForTheMoondecember291930/ReachingForTheMoondecember291930.thumbs/ReachingForTheMoon-1930-douglasFairbanksBebeDanielsEdwardEverettHortonBingCrosby_001554.jpg"
+    frame: "https://archive.org/download/ReachingForTheMoondecember291930/ReachingForTheMoondecember291930.thumbs/ReachingForTheMoon-1930-douglasFairbanksBebeDanielsEdwardEverettHortonBingCrosby_001554.jpg",
+    bytes: 392777066
    }
   ]
  },
@@ -1940,7 +2109,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheGreatTrainRobbery_555/TheGreatTrainRobbery_555.thumbs/TheGreatTrainRobbery_000300.jpg",
-    subs: "TheGreatTrainRobbery.asr.srt"
+    subs: "TheGreatTrainRobbery.asr.srt",
+    bytes: 51961362
    },
    {
     title: "Baden verboten AKA Bathing Forbidden",
@@ -1950,7 +2120,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/silent-baden-verboten-aka-bathing-forbidden",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/silent-baden-verboten-aka-bathing-forbidden/silent-baden-verboten-aka-bathing-forbidden.thumbs/Baden%20verboten%20AKA%20Bathing%20Forbidden_000003.jpg"
+    frame: "https://archive.org/download/silent-baden-verboten-aka-bathing-forbidden/silent-baden-verboten-aka-bathing-forbidden.thumbs/Baden%20verboten%20AKA%20Bathing%20Forbidden_000003.jpg",
+    bytes: 6238054
    },
    {
     title: "Jugendspiele AKA Games of Youth",
@@ -1960,7 +2131,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/silent-jugendspiele-aka-games-of-youth",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/silent-jugendspiele-aka-games-of-youth/silent-jugendspiele-aka-games-of-youth.thumbs/Jugendspiele%20AKA%20Games%20of%20Youth_000003.jpg"
+    frame: "https://archive.org/download/silent-jugendspiele-aka-games-of-youth/silent-jugendspiele-aka-games-of-youth.thumbs/Jugendspiele%20AKA%20Games%20of%20Youth_000003.jpg",
+    bytes: 7438653
    },
    {
     title: "Frankenstein",
@@ -1970,7 +2142,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/FrankensteinfullMovie",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/FrankensteinfullMovie/FrankensteinfullMovie.thumbs/Frankenstein1910_000300.jpg"
+    frame: "https://archive.org/download/FrankensteinfullMovie/FrankensteinfullMovie.thumbs/Frankenstein1910_000300.jpg",
+    bytes: 53550842
    },
    {
     title: "The Wonderful Wizard of Oz",
@@ -1982,7 +2155,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/The_Wonderful_Wizard_of_Oz/The_Wonderful_Wizard_of_Oz.thumbs/WizardOfOz1910_000630.jpg",
-    subs: "WonderfulWizardofOz1910.asr.srt"
+    subs: "WonderfulWizardofOz1910.asr.srt",
+    bytes: 51550933
    },
    {
     title: "Charlie Chaplin's \"A Fair Exchange\"",
@@ -1992,7 +2166,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1914_12_05_AFairExchange",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1914_12_05_AFairExchange/CC_1914_12_05_AFairExchange.thumbs/CC_1914_12_05_AFairExchange_000300.jpg"
+    frame: "https://archive.org/download/CC_1914_12_05_AFairExchange/CC_1914_12_05_AFairExchange.thumbs/CC_1914_12_05_AFairExchange_000300.jpg",
+    bytes: 56141166
    },
    {
     title: "Charlie Chaplin's \"Charlie's Recreation\"",
@@ -2002,7 +2177,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1914_08_13_CharliesRecreation",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1914_08_13_CharliesRecreation/CC_1914_08_13_CharliesRecreation.thumbs/CC_1914_08_13_CharliesRecreation_000300.jpg"
+    frame: "https://archive.org/download/CC_1914_08_13_CharliesRecreation/CC_1914_08_13_CharliesRecreation.thumbs/CC_1914_08_13_CharliesRecreation_000300.jpg",
+    bytes: 53881753
    },
    {
     title: "Charlie Chaplin's \"Kids Auto Race At Venice\"",
@@ -2012,7 +2188,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1914_02_07_KidsAutoRaceAtVenice",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1914_02_07_KidsAutoRaceAtVenice/CC_1914_02_07_KidsAutoRaceAtVenice.thumbs/CC_1914_02_07_KidsAutoRaceAtVenice_000150.jpg"
+    frame: "https://archive.org/download/CC_1914_02_07_KidsAutoRaceAtVenice/CC_1914_02_07_KidsAutoRaceAtVenice.thumbs/CC_1914_02_07_KidsAutoRaceAtVenice_000150.jpg",
+    bytes: 26012537
    },
    {
     title: "Charlie Chaplin's \"Mabels Strange Predicament\"",
@@ -2022,7 +2199,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1914_02_09_MabelsStrangePredicament",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1914_02_09_MabelsStrangePredicament/CC_1914_02_09_MabelsStrangePredicament.thumbs/CC_1914_02_09_MabelsStrangePredicament_000240.jpg"
+    frame: "https://archive.org/download/CC_1914_02_09_MabelsStrangePredicament/CC_1914_02_09_MabelsStrangePredicament.thumbs/CC_1914_02_09_MabelsStrangePredicament_000240.jpg",
+    bytes: 45170179
    },
    {
     title: "Charlie Chaplin's \"Making A Living\"",
@@ -2032,7 +2210,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1914_02_02_MakingALiving",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1914_02_02_MakingALiving/CC_1914_02_02_MakingALiving.thumbs/CC_1914_02_02_MakingALiving_000210.jpg"
+    frame: "https://archive.org/download/CC_1914_02_02_MakingALiving/CC_1914_02_02_MakingALiving.thumbs/CC_1914_02_02_MakingALiving_000210.jpg",
+    bytes: 38587621
    },
    {
     title: "Charlie Chaplin's \"The Good For Nothing\"",
@@ -2042,7 +2221,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1914_08_31_TheGoodforNothing",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1914_08_31_TheGoodforNothing/CC_1914_08_31_TheGoodforNothing.thumbs/CC_1914_08_31_TheGoodforNothing_000330.jpg"
+    frame: "https://archive.org/download/CC_1914_08_31_TheGoodforNothing/CC_1914_08_31_TheGoodforNothing.thumbs/CC_1914_08_31_TheGoodforNothing_000330.jpg",
+    bytes: 58801927
    },
    {
     title: "Charlie Chaplin's \"The Knockout\"",
@@ -2052,7 +2232,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1914_06_11_TheKnockout",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1914_06_11_TheKnockout/CC_1914_06_11_TheKnockout.thumbs/CC_1914_06_11_TheKnockout_000600.jpg"
+    frame: "https://archive.org/download/CC_1914_06_11_TheKnockout/CC_1914_06_11_TheKnockout.thumbs/CC_1914_06_11_TheKnockout_000600.jpg",
+    bytes: 104368301
    },
    {
     title: "A Night in the Show",
@@ -2062,7 +2243,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/ANightintheShow",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/ANightintheShow/ANightintheShow.thumbs/A_Night_in_the_Show_000420.jpg"
+    frame: "https://archive.org/download/ANightintheShow/ANightintheShow.thumbs/A_Night_in_the_Show_000420.jpg",
+    bytes: 69574384
    },
    {
     title: "Charlie Chaplin's \"Charlie Shanghaied\"",
@@ -2072,7 +2254,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1915_10_04_CharlieShanghaied",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1915_10_04_CharlieShanghaied/CC_1915_10_04_CharlieShanghaied.thumbs/CC_1915_10_04_CharlieShanghaied_000540.jpg"
+    frame: "https://archive.org/download/CC_1915_10_04_CharlieShanghaied/CC_1915_10_04_CharlieShanghaied.thumbs/CC_1915_10_04_CharlieShanghaied_000540.jpg",
+    bytes: 100857004
    },
    {
     title: "Charlie Chaplin's \"One A.M.\"",
@@ -2082,7 +2265,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1916_08_07_One_A_M",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1916_08_07_One_A_M/CC_1916_08_07_One_A_M.thumbs/CC_1916_08_07_One_A_M_000360.jpg"
+    frame: "https://archive.org/download/CC_1916_08_07_One_A_M/CC_1916_08_07_One_A_M.thumbs/CC_1916_08_07_One_A_M_000360.jpg",
+    bytes: 73198157
    },
    {
     title: "Charlie Chaplin's \"Police\"",
@@ -2092,7 +2276,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1916_05_27_Police",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1916_05_27_Police/CC_1916_05_27_Police.thumbs/CC_1916_05_27_Police_000360.jpg"
+    frame: "https://archive.org/download/CC_1916_05_27_Police/CC_1916_05_27_Police.thumbs/CC_1916_05_27_Police_000360.jpg",
+    bytes: 63839107
    },
    {
     title: "Charlie Chaplin's \"The Count\"",
@@ -2102,7 +2287,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1916_09_04_TheCount",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1916_09_04_TheCount/CC_1916_09_04_TheCount.thumbs/CC_1916_09_04_TheCount_000480.jpg"
+    frame: "https://archive.org/download/CC_1916_09_04_TheCount/CC_1916_09_04_TheCount.thumbs/CC_1916_09_04_TheCount_000480.jpg",
+    bytes: 87932292
    },
    {
     title: "Charlie Chaplin's \"The Floorwalker\"",
@@ -2112,7 +2298,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1916_05_15_TheFloorwalker",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1916_05_15_TheFloorwalker/CC_1916_05_15_TheFloorwalker.thumbs/CC_1916_05_15_TheFloorwalker_000480.jpg"
+    frame: "https://archive.org/download/CC_1916_05_15_TheFloorwalker/CC_1916_05_15_TheFloorwalker.thumbs/CC_1916_05_15_TheFloorwalker_000480.jpg",
+    bytes: 84881060
    },
    {
     title: "Charlie Chaplin's \"The Rink\"",
@@ -2122,7 +2309,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1916_12_04_TheRink",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1916_12_04_TheRink/CC_1916_12_04_TheRink.thumbs/CC_1916_12_04_TheRink_000480.jpg"
+    frame: "https://archive.org/download/CC_1916_12_04_TheRink/CC_1916_12_04_TheRink.thumbs/CC_1916_12_04_TheRink_000480.jpg",
+    bytes: 84950811
    },
    {
     title: "Charlie Chaplin's \"The Adventurer\"",
@@ -2132,7 +2320,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1917_10_22_TheAdventurer",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1917_10_22_TheAdventurer/CC_1917_10_22_TheAdventurer.thumbs/CC_1917_10_22_TheAdventurer_000480.jpg"
+    frame: "https://archive.org/download/CC_1917_10_22_TheAdventurer/CC_1917_10_22_TheAdventurer.thumbs/CC_1917_10_22_TheAdventurer_000480.jpg",
+    bytes: 82589530
    },
    {
     title: "Charlie Chaplin's \"The Immigrant\"",
@@ -2142,7 +2331,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1917_06_17_TheImmigrant",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1917_06_17_TheImmigrant/CC_1917_06_17_TheImmigrant.thumbs/CC_1917_06_17_TheImmigrant_000480.jpg"
+    frame: "https://archive.org/download/CC_1917_06_17_TheImmigrant/CC_1917_06_17_TheImmigrant.thumbs/CC_1917_06_17_TheImmigrant_000480.jpg",
+    bytes: 87117322
    },
    {
     title: "Charlie Chaplin's Triple Trouble",
@@ -2152,7 +2342,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CC_1918_xx_xx_TripleTrouble",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/CC_1918_xx_xx_TripleTrouble/CC_1918_xx_xx_TripleTrouble.thumbs/CC_1918_xx_xx_TripleTrouble_000660.jpg"
+    frame: "https://archive.org/download/CC_1918_xx_xx_TripleTrouble/CC_1918_xx_xx_TripleTrouble.thumbs/CC_1918_xx_xx_TripleTrouble_000660.jpg",
+    bytes: 119345465
    },
    {
     title: "The Goat",
@@ -2162,7 +2353,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/TheGoat",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/TheGoat/TheGoat.thumbs/The_Goat_000540.jpg"
+    frame: "https://archive.org/download/TheGoat/TheGoat.thumbs/The_Goat_000540.jpg",
+    bytes: 99771857
    },
    {
     title: "Buster Keaton's \"Cops\"",
@@ -2172,7 +2364,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/Cops1922",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/Cops1922/Cops1922.thumbs/Cops-v2_000474.jpg"
+    frame: "https://archive.org/download/Cops1922/Cops1922.thumbs/Cops-v2_000474.jpg",
+    bytes: 164088517
    },
    {
     title: "Nosferatu_DVD_quality",
@@ -2183,7 +2376,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/Nosferatu_DVD_quality",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/Nosferatu_DVD_quality/Nosferatu_DVD_quality.thumbs/nosferatu-2of5_000960.jpg"
+    frame: "https://archive.org/download/Nosferatu_DVD_quality/Nosferatu_DVD_quality.thumbs/nosferatu-2of5_000960.jpg",
+    bytes: 21756414
    },
    {
     title: "West of Hot Dog",
@@ -2194,7 +2388,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/westofhotdog",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/westofhotdog/westofhotdog.thumbs/WestOfHotDog_000720.jpg"
+    frame: "https://archive.org/download/westofhotdog/westofhotdog.thumbs/WestOfHotDog_000720.jpg",
+    bytes: 133300350
    },
    {
     title: "Cockeyed: Gems from the Memory of a Nutty Cameraman",
@@ -2204,7 +2399,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/silent-cockeyed-gems-from-the-memory-of-a-nutty-cameraman",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/silent-cockeyed-gems-from-the-memory-of-a-nutty-cameraman/silent-cockeyed-gems-from-the-memory-of-a-nutty-cameraman.thumbs/Cockeyed%3A%20Gems%20from%20the%20Memory%20of%20a%20Nutty%20Cameraman_000058.jpg"
+    frame: "https://archive.org/download/silent-cockeyed-gems-from-the-memory-of-a-nutty-cameraman/silent-cockeyed-gems-from-the-memory-of-a-nutty-cameraman.thumbs/Cockeyed%3A%20Gems%20from%20the%20Memory%20of%20a%20Nutty%20Cameraman_000058.jpg",
+    bytes: 15275441
    },
    {
     title: "Episodes in the Life of a Gin Bottle",
@@ -2214,7 +2410,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/silent-episodes-in-the-life-of-a-gin-bottle",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/silent-episodes-in-the-life-of-a-gin-bottle/silent-episodes-in-the-life-of-a-gin-bottle.thumbs/Episodes%20in%20the%20Life%20of%20a%20Gin%20Bottle_000273.jpg"
+    frame: "https://archive.org/download/silent-episodes-in-the-life-of-a-gin-bottle/silent-episodes-in-the-life-of-a-gin-bottle.thumbs/Episodes%20in%20the%20Life%20of%20a%20Gin%20Bottle_000273.jpg",
+    bytes: 58932965
    },
    {
     title: "Santa Claus",
@@ -2224,7 +2421,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/silent-santa-claus",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/silent-santa-claus/silent-santa-claus.thumbs/Santa%20Claus_000659.jpg"
+    frame: "https://archive.org/download/silent-santa-claus/silent-santa-claus.thumbs/Santa%20Claus_000659.jpg",
+    bytes: 150090555
    },
    {
     title: "Arthur Conan Doyle",
@@ -2236,7 +2434,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/SirArthurConanDoyleSpeaks_272/SirArthurConanDoyleSpeaks_272.thumbs/SirArthurConanDoyle_000240.jpg",
-    subs: "SirArthurConanDoyle.asr.srt"
+    subs: "SirArthurConanDoyle.asr.srt",
+    bytes: 43831244
    }
   ]
  },
@@ -2257,7 +2456,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/Thin_Man_trailer",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/Thin_Man_trailer/Thin_Man_trailer.thumbs/The_Thin_Man_trailer_000060.jpg"
+    frame: "https://archive.org/download/Thin_Man_trailer/Thin_Man_trailer.thumbs/The_Thin_Man_trailer_000060.jpg",
+    bytes: 14149423
    },
    {
     title: "After the Thin Man trailer",
@@ -2268,7 +2468,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/After_The_Thin_Man_trailer",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/After_The_Thin_Man_trailer/After_The_Thin_Man_trailer.thumbs/After_the_Thin_Man_trailer_000060.jpg"
+    frame: "https://archive.org/download/After_The_Thin_Man_trailer/After_The_Thin_Man_trailer.thumbs/After_the_Thin_Man_trailer_000060.jpg",
+    bytes: 12465809
    },
    {
     title: "Hold that Ghost trailer",
@@ -2279,7 +2480,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/Hold_that_Ghost_trailer",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/Hold_that_Ghost_trailer/Hold_that_Ghost_trailer.thumbs/Hold_that_Ghost_trailer_000040.jpg"
+    frame: "https://archive.org/download/Hold_that_Ghost_trailer/Hold_that_Ghost_trailer.thumbs/Hold_that_Ghost_trailer_000040.jpg",
+    bytes: 8484266
    },
    {
     title: "The Big Sleep trailer",
@@ -2290,7 +2492,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/The_Big_Sleep_trailer",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/The_Big_Sleep_trailer/The_Big_Sleep_trailer.thumbs/The_Big_Sleep_trailer_000040.jpg"
+    frame: "https://archive.org/download/The_Big_Sleep_trailer/The_Big_Sleep_trailer.thumbs/The_Big_Sleep_trailer_000040.jpg",
+    bytes: 8471114
    },
    {
     title: "Abbott and Costello Meet Frankenstein trailer",
@@ -2301,7 +2504,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/Abbott_and_Costello_Meet_Frankenstein_trailer",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/Abbott_and_Costello_Meet_Frankenstein_trailer/Abbott_and_Costello_Meet_Frankenstein_trailer.thumbs/Abbott_and_Costello_Meet_Frankenstein_trailer_000040.jpg"
+    frame: "https://archive.org/download/Abbott_and_Costello_Meet_Frankenstein_trailer/Abbott_and_Costello_Meet_Frankenstein_trailer.thumbs/Abbott_and_Costello_Meet_Frankenstein_trailer_000040.jpg",
+    bytes: 8331615
    },
    {
     title: "Abbott and Costello Meet the Invisible Man trailer",
@@ -2312,7 +2516,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/Abbott_and_Costello_Meet_the_Invisible_Man_trailer",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/Abbott_and_Costello_Meet_the_Invisible_Man_trailer/Abbott_and_Costello_Meet_the_Invisible_Man_trailer.thumbs/Abbott_and_Costello_Meet_the_Invisible_Man_trailer_000045.jpg"
+    frame: "https://archive.org/download/Abbott_and_Costello_Meet_the_Invisible_Man_trailer/Abbott_and_Costello_Meet_the_Invisible_Man_trailer.thumbs/Abbott_and_Costello_Meet_the_Invisible_Man_trailer_000045.jpg",
+    bytes: 9177847
    },
    {
     title: "The Blob trailer",
@@ -2323,7 +2528,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/TheBlobTrailer",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/TheBlobTrailer/TheBlobTrailer.thumbs/The_Blob_trailer_000045.jpg"
+    frame: "https://archive.org/download/TheBlobTrailer/TheBlobTrailer.thumbs/The_Blob_trailer_000045.jpg",
+    bytes: 8798814
    },
    {
     title: "Vertigo theatrical trailer",
@@ -2333,7 +2539,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/VertigoTheatricalTrailer",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/VertigoTheatricalTrailer/VertigoTheatricalTrailer.thumbs/vertigo1958trailer_000057.jpg"
+    frame: "https://archive.org/download/VertigoTheatricalTrailer/VertigoTheatricalTrailer.thumbs/vertigo1958trailer_000057.jpg",
+    bytes: 29846207
    },
    {
     title: "La Collectionneuse (1967) SUBS DEU Trailer",
@@ -2344,7 +2551,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/la.collectionneuse.1967.subs.trailer/la.collectionneuse.1967.subs.trailer.thumbs/La.Collectionneuse.1967.SUBS.Trailer_000087.jpg",
-    subs: "La.Collectionneuse.1967.SUBS.Trailer.deu.srt"
+    subs: "La.Collectionneuse.1967.SUBS.Trailer.deu.srt",
+    bytes: 13202406
    },
    {
     title: "Ginger (1971) Trailer HD 1080p",
@@ -2355,7 +2563,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/ginger-1971-hd-1080p",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/ginger-1971-hd-1080p/ginger-1971-hd-1080p.thumbs/Ginger%201971%20HD%201080p_000087.jpg"
+    frame: "https://archive.org/download/ginger-1971-hd-1080p/ginger-1971-hd-1080p.thumbs/Ginger%201971%20HD%201080p_000087.jpg",
+    bytes: 19922407
    },
    {
     title: "La Comtesse Aux Seins Nus (1973) Trailer",
@@ -2365,7 +2574,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/dans-la-comtesse-aux-seins-nus",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/dans-la-comtesse-aux-seins-nus/dans-la-comtesse-aux-seins-nus.thumbs/Dans%20La%20Comtesse%20Aux%20Seins%20Nus_000031.jpg"
+    frame: "https://archive.org/download/dans-la-comtesse-aux-seins-nus/dans-la-comtesse-aux-seins-nus.thumbs/Dans%20La%20Comtesse%20Aux%20Seins%20Nus_000031.jpg",
+    bytes: 38293130
    },
    {
     title: "BANANAS trailer",
@@ -2374,7 +2584,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/BananasTrailer_733",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/BananasTrailer_733/BananasTrailer_733.thumbs/BananasTrailer_000075.jpg"
+    frame: "https://archive.org/download/BananasTrailer_733/BananasTrailer_733.thumbs/BananasTrailer_000075.jpg",
+    bytes: 27797148
    },
    {
     title: "FANTASTIC PLANET trailer",
@@ -2383,7 +2594,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/FantasticPlanetTrailer",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/FantasticPlanetTrailer/FantasticPlanetTrailer.thumbs/FantasticPlanetTrailer_000045.jpg"
+    frame: "https://archive.org/download/FantasticPlanetTrailer/FantasticPlanetTrailer.thumbs/FantasticPlanetTrailer_000045.jpg",
+    bytes: 23411175
    },
    {
     title: "Night of the living dead Trailer",
@@ -2393,7 +2605,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/NightOfTheLivingDeadTrailer",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/NightOfTheLivingDeadTrailer/NightOfTheLivingDeadTrailer.thumbs/NightLivingDeadTrailer_000040.jpg"
+    frame: "https://archive.org/download/NightOfTheLivingDeadTrailer/NightOfTheLivingDeadTrailer.thumbs/NightLivingDeadTrailer_000040.jpg",
+    bytes: 6886984
    },
    {
     title: "REVENGE OF THE CREATURE trailer",
@@ -2402,7 +2615,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/RevengeOfTheCreatureTrailer",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/RevengeOfTheCreatureTrailer/RevengeOfTheCreatureTrailer.thumbs/RevengeOfTheCreatureTrailer_000075.jpg"
+    frame: "https://archive.org/download/RevengeOfTheCreatureTrailer/RevengeOfTheCreatureTrailer.thumbs/RevengeOfTheCreatureTrailer_000075.jpg",
+    bytes: 18975874
    },
    {
     title: "Sita Sings the Blues Trailer 2008 - 640x360",
@@ -2411,7 +2625,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/SitaSingsTheBluesTrailer2008-640x360",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/SitaSingsTheBluesTrailer2008-640x360/SitaSingsTheBluesTrailer2008-640x360.thumbs/SitaTrailer2008H264_000040.jpg"
+    frame: "https://archive.org/download/SitaSingsTheBluesTrailer2008-640x360/SitaSingsTheBluesTrailer2008-640x360.thumbs/SitaTrailer2008H264_000040.jpg",
+    bytes: 7277707
    }
   ]
  },
@@ -2431,7 +2646,8 @@ const CHANNELS = [
     desc: "NASA's restored original EVA television.",
     license: "Public domain · NASA",
     art: "https://archive.org/services/img/youtube-S9HdPi9Ikhk",
-    frame: "https://archive.org/download/youtube-S9HdPi9Ikhk/youtube-S9HdPi9Ikhk.thumbs/S9HdPi9Ikhk_004374.jpg"
+    frame: "https://archive.org/download/youtube-S9HdPi9Ikhk/youtube-S9HdPi9Ikhk.thumbs/S9HdPi9Ikhk_004374.jpg",
+    bytes: 1549916126
    },
    {
     title: "NASA SCI Files - Reproduction, Migration and Basic Needs",
@@ -2442,7 +2658,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/NasaSciFiles-ReproductionMigrationAndBasicNeeds",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/NasaSciFiles-ReproductionMigrationAndBasicNeeds/NasaSciFiles-ReproductionMigrationAndBasicNeeds.thumbs/NASASF-ReproductionMigrationAndBasicNeeds_000300.jpg"
+    frame: "https://archive.org/download/NasaSciFiles-ReproductionMigrationAndBasicNeeds/NasaSciFiles-ReproductionMigrationAndBasicNeeds.thumbs/NASASF-ReproductionMigrationAndBasicNeeds_000300.jpg",
+    bytes: 57877336
    },
    {
     title: "NASA 360 Episode 1",
@@ -2452,7 +2669,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/NASA_360_program1_HD",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/NASA_360_program1_HD/NASA_360_program1_HD.thumbs/NASA_360_program1_HD_000600.jpg"
+    frame: "https://archive.org/download/NASA_360_program1_HD/NASA_360_program1_HD.thumbs/NASA_360_program1_HD_000600.jpg",
+    bytes: 106753590
    },
    {
     title: "Nasa eClips Video",
@@ -2463,7 +2681,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/nasa_eclips_022709",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/nasa_eclips_022709/nasa_eclips_022709.thumbs/OW_Orion_oc_000090.jpg"
+    frame: "https://archive.org/download/nasa_eclips_022709/nasa_eclips_022709.thumbs/OW_Orion_oc_000090.jpg",
+    bytes: 19902428
    },
    {
     title: "Nasa eClips Video Series",
@@ -2474,7 +2693,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/nasa_eclips_022309",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/nasa_eclips_022309/nasa_eclips_022309.thumbs/OW_ARES_oc_000237.jpg"
+    frame: "https://archive.org/download/nasa_eclips_022309/nasa_eclips_022309.thumbs/OW_ARES_oc_000237.jpg",
+    bytes: 21124641
    },
    {
     title: "Our World: Arecibo - The Largest Radio Telescope on Earth",
@@ -2486,7 +2706,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/nasa_eclips_081009/nasa_eclips_081009.thumbs/OW42_Subrip_000270.jpg",
-    subs: "OW42_Subrip.srt"
+    subs: "OW42_Subrip.srt",
+    bytes: 19946842
    },
    {
     title: "Ourworld: Fluid Shift and Our World: Investigating Mars with the Phoen",
@@ -2498,7 +2719,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/nasa_eclips_052609/nasa_eclips_052609.thumbs/LP22HOW_Overview_000210.jpg",
-    subs: "LP20Observatories.srt"
+    subs: "LP20Observatories.srt",
+    bytes: 22571906
    },
    {
     title: "Space Operations",
@@ -2510,7 +2732,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/nasa_eclips_110209/nasa_eclips_110209.thumbs/NASA_Launchpad_Methane_on_Mars_000180.jpg",
-    subs: "LP37_Finding_ET.srt"
+    subs: "LP37_Finding_ET.srt",
+    bytes: 26666627
    },
    {
     title: "NASA eClips",
@@ -2520,7 +2743,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/nasa_eclips_01162009",
     desc: "",
     license: "via archive.org",
-    frame: "https://archive.org/download/nasa_eclips_01162009/nasa_eclips_01162009.thumbs/NASA_360_6_001314.jpg"
+    frame: "https://archive.org/download/nasa_eclips_01162009/nasa_eclips_01162009.thumbs/NASA_360_6_001314.jpg",
+    bytes: 25801439
    }
   ]
  }

@@ -131,6 +131,36 @@ button { font-family: var(--font); cursor: pointer; }
 @keyframes spin { to { transform: rotate(360deg); } }
 #interstitial-text { font-size: 17px; opacity: .9; }
 #interstitial-channel { font-size: 13px; opacity: .55; letter-spacing: .12em; text-transform: uppercase; }
+#interstitial-progress {
+  width: min(300px, 64vw); height: 8px;
+  border: 1.5px solid rgba(255,255,255,.55); border-radius: 5px;
+  background: rgba(0,0,0,.55); overflow: hidden;
+}
+#interstitial-progress div { height: 100%; width: 0%; background: var(--accent); transition: width .4s ease; }
+/* the wait screen never traps input: gestures and buttons keep working */
+#interstitial { pointer-events: none; }
+
+/* hot-tune pill: ambient, above the controller, nothing is locked */
+#tunebar {
+  position: absolute; z-index: 33;
+  left: 50%; transform: translateX(-50%);
+  bottom: calc(14px + var(--sab));
+  width: min(340px, 78vw);
+  background: rgba(0,0,0,.55);
+  border: 1.5px solid rgba(255,255,255,.6); border-radius: 12px;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  padding: 8px 12px 10px;
+  animation: fadein .25s ease-out;
+  pointer-events: none;
+}
+body.overlays-on #tunebar { bottom: calc(168px + var(--sab)); }
+#tunebar-text {
+  font-size: 12px; letter-spacing: .06em; margin-bottom: 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#tunebar-text b { color: var(--accent); }
+#tunebar-track { height: 6px; border-radius: 4px; background: rgba(255,255,255,.2); overflow: hidden; }
+#tunebar-fill { height: 100%; width: 0%; background: var(--accent); transition: width .4s ease; }
 
 /* ── OSD ───────────────────────────────────────────── */
 
