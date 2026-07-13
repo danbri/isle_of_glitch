@@ -217,10 +217,29 @@ function tune(chIndex, opts = {}) {
   const arrive = () => {
     if (token !== state.tuneToken) return;
     state.errStreak = 0;               // we made it on air: recovery resets
+    clearTimeout(state.slowJoinTimer);
     $("interstitial").classList.add("hidden");
     updateInfo();
     if (state.zapQuiet) { state.zapQuiet = false; showOSDChannel(); }
     else showOverlays();
+  };
+
+  /* quick-start fallback: joining a broadcast mid-film means a deep range
+     request into a big file, which archive.org sometimes serves very
+     slowly. If the live join hasn't produced a picture in 10s, play the
+     program from the start instead — byte zero is the fastest part of
+     the file (and often already in the first-seconds stash). */
+  const armSlowJoin = () => {
+    if (offset < 30) return;                  // near-start joins are already cheap
+    clearTimeout(state.slowJoinTimer);
+    state.slowJoinTimer = setTimeout(() => {
+      if (token !== state.tuneToken || !state.on) return;
+      const arrived = !state.hotTune && video.readyState >= 3 && !video.paused;
+      if (arrived) return;
+      state.zapQuiet = true;
+      chatPush(null, "live join was slow — starting this show from the top", "sys");
+      tune(state.chIndex, { fromStartProg: progIndex });
+    }, 10000);
   };
 
   /* warm path: the backstage element already buffered this stream */
@@ -271,6 +290,7 @@ function tune(chIndex, opts = {}) {
       arrive();
     }, { once: true });
     backstage.load();
+    armSlowJoin();
     updateInfo();
     updateAncillary(ch, prog);
     return;
@@ -296,6 +316,7 @@ function tune(chIndex, opts = {}) {
     const p = video.play();
     if (p) p.catch(() => {});
     showZapCard(ch, prog, token);
+    armSlowJoin();
     updateInfo();
     updateAncillary(ch, prog);
     return;
@@ -317,6 +338,7 @@ function tune(chIndex, opts = {}) {
   if (p) p.catch(() => {});
 
   showZapCard(ch, prog, token);
+  armSlowJoin();
   updateInfo();
   updateAncillary(ch, prog);
 }
