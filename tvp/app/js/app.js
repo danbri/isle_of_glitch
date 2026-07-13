@@ -221,6 +221,7 @@ function tune(chIndex, opts = {}) {
   const arrive = () => {
     if (token !== state.tuneToken) return;
     state.errStreak = 0;               // we made it on air: recovery resets
+    state.coldStarted = null;          // cancels any pending zap-card show
     clearTimeout(state.slowJoinTimer);
     $("interstitial").classList.add("hidden");
     updateInfo();
@@ -353,6 +354,7 @@ function showZapCard(ch, prog, token) {
   state.coldStarted = Date.now();
   setTimeout(() => {
     if (token !== state.tuneToken || !state.on) return;
+    if (state.coldStarted === null) return;                 // arrive() beat us to it
     if (video.readyState >= 3 && !video.paused) return;    // already on the air
     $("interstitial-text").textContent = "Fetching your channel…";
     $("interstitial-channel").textContent = ch.num + " · " + ch.name;
@@ -500,6 +502,19 @@ function updateInfo() {
     $("info-wiki").classList.add("hidden");
   }
 
+  // quiet sideways paths from this program
+  const sched2 = $("info-sched");
+  const info2 = currentProgramInfo();
+  const threads = threadsFor(state.chIndex, info2.index, 2);
+  threads.forEach((t) => {
+    const row = document.createElement("div");
+    row.className = "sched-row im-threadrow";
+    row.innerHTML = `<span class="t">⤳</span><span class="n">${esc(t.label)}</span>`;
+    row.style.cursor = "pointer";
+    row.addEventListener("click", () => { crtBlink(); tune(t.ci, { fromStartProg: t.pi }); });
+    sched2.appendChild(row);
+  });
+
   // Watch Buddy notes, right in the full metadata view
   const chips = buddyChips(p);
   if (chips.length && store.get("buddy", true)) {
@@ -589,6 +604,18 @@ setInterval(() => {
   $("progress-handle").style.left = pct + "%";
 
   const remaining = dur - t;
+
+  // a wait card must never sit over healthy playback
+  if (!$("interstitial").classList.contains("hidden") &&
+      !video.paused && video.readyState >= 3 && !state.hotTune) {
+    $("interstitial").classList.add("hidden");
+  }
+
+  // a settled pause earns an intermission
+  if (video.paused && state.pausedSince && Date.now() - state.pausedSince > 6000 &&
+      $("intermission").classList.contains("hidden")) {
+    tryShowIntermission();
+  }
 
   /* backstage priorities, most urgent first:
      1. the junction — stage the next program ~45s out
@@ -863,9 +890,51 @@ $("guide-view").addEventListener("click", () => {
 });
 
 /* every program of every channel in the category, with its next air time */
+/* tonight's thread: one small daily trail through the dial, the same
+   for everyone all day (seeded by the date) — programming, not a feed */
+function tonightsThread() {
+  const all = [];
+  CHANNELS.forEach((ch, ci) => ch.programs.forEach((p, pi) => all.push({ ci, pi })));
+  if (!all.length) return null;
+  const d = new Date();
+  let seed = d.getFullYear() * 372 + (d.getMonth() + 1) * 31 + d.getDate();
+  const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const start = all[Math.floor(rnd() * all.length)];
+  const trail = [start];
+  const used = new Set([start.ci + ":" + start.pi]);
+  let cur = start;
+  for (let hop = 0; hop < 3; hop++) {
+    const next = threadsFor(cur.ci, cur.pi, 6).find((t) => !used.has(t.ci + ":" + t.pi));
+    if (!next) break;
+    used.add(next.ci + ":" + next.pi);
+    trail.push(next);
+    cur = next;
+  }
+  return trail.length >= 3 ? trail : null;
+}
+
+function renderTonightsThread(box) {
+  const trail = tonightsThread();
+  if (!trail) return;
+  const sec = document.createElement("div");
+  sec.className = "tonight";
+  sec.innerHTML = '<div class="tonight-label">tonight\u2019s thread</div>';
+  trail.forEach((t, i) => {
+    const p = CHANNELS[t.ci].programs[t.pi];
+    const row = document.createElement("button");
+    row.className = "im-thread";
+    row.textContent = (i ? "⤳ " : "▷ ") +
+      (t.label || `${p.title}${p.year ? " (" + p.year + ")" : ""} · ch ${CHANNELS[t.ci].num}`);
+    row.addEventListener("click", () => { closePanels(); crtBlink(); tune(t.ci, { fromStartProg: t.pi }); });
+    sec.appendChild(row);
+  });
+  box.appendChild(sec);
+}
+
 function renderGuideGrid() {
   const box = $("guide-grid");
   box.innerHTML = "";
+  renderTonightsThread(box);
   const chans = channelsInCategory();
   if (!chans.length) {
     box.innerHTML = '<div class="search-empty">No channels here yet — tap ★ on a channel to add it to My Channels.</div>';
@@ -1054,16 +1123,26 @@ function renderSearch(q) {
   q = (q || "").trim().toLowerCase();
   box.innerHTML = "";
   if (!q) {
-    box.innerHTML = '<div class="search-empty">Try “bunny”, “zombie”, “noir”, “moon”…</div>';
+    box.innerHTML = '<div class="search-empty">Try “bunny”, “zombie”, a year (“1951”), a decade (“1920s”), or a label (“😨”)…</div>';
     return;
   }
   let hits = 0;
+  const yearQ = /^(18|19|20)\d\d$/.test(q) ? parseInt(q, 10) : null;
+  const decadeQ = /^(18|19|20)\d0s$/.test(q) ? parseInt(q, 10) : null;
+  const emojiQ = /\p{Extended_Pictographic}/u.test(q) ? q.trim() : null;
   CHANNELS.forEach((ch) => {
     ch.programs.forEach((p, pi) => {
       if (hits >= 40) return;
-      const hay = (ch.name + " " + p.title + " " + (p.desc || "") + " " + ch.category + " " +
-        (p.dir || []).join(" ") + " " + (p.cast || []).join(" ") + " " + (p.kw || []).join(" ")).toLowerCase();
-      if (!hay.includes(q)) return;
+      let match;
+      if (yearQ) match = p.year === yearQ;
+      else if (decadeQ) match = p.year && Math.floor(p.year / 10) * 10 === decadeQ;
+      else if (emojiQ) match = buddyChips(p).includes(emojiQ);
+      else {
+        const hay = (ch.name + " " + p.title + " " + (p.desc || "") + " " + ch.category + " " +
+          (p.dir || []).join(" ") + " " + (p.cast || []).join(" ") + " " + (p.kw || []).join(" ")).toLowerCase();
+        match = hay.includes(q);
+      }
+      if (!match) return;
       hits++;
       const live = scheduleFor(ch).index === pi;
       const el = document.createElement("div");
@@ -1784,6 +1863,119 @@ document.addEventListener("keydown", (e) => {
         }, 900);
       }
   }
+});
+
+/* ── threads: quiet sideways paths between programs ─
+ * Connections computed from what the lineup actually knows — shared
+ * directors and casts, shared dialogue keywords, the same year, the
+ * same Watch Buddy label, the same decade. At most three, text-first,
+ * never auto-playing anything. */
+
+function threadsFor(ci, pi, max = 3) {
+  const me = CHANNELS[ci].programs[pi];
+  const out = [];
+  const seen = new Set([ci + ":" + pi]);
+  const add = (tci, tpi, label) => {
+    const k = tci + ":" + tpi;
+    if (seen.has(k) || out.length >= max) return;
+    seen.add(k);
+    out.push({ ci: tci, pi: tpi, label });
+  };
+  const each = (fn) => {
+    for (let tci = 0; tci < CHANNELS.length && out.length < max; tci++) {
+      const ps = CHANNELS[tci].programs;
+      for (let tpi = 0; tpi < ps.length && out.length < max; tpi++) {
+        if (tci === ci && tpi === pi) continue;
+        fn(ps[tpi], tci, tpi);
+      }
+    }
+  };
+  const title = (p, tci) => `${p.title}${p.year ? " (" + p.year + ")" : ""} · ch ${CHANNELS[tci].num}`;
+
+  if (me.dir?.length) each((p, tci, tpi) => {
+    const d = me.dir.find((x) => p.dir?.includes(x));
+    if (d) add(tci, tpi, `also directed by ${d}: ${title(p, tci)}`);
+  });
+  if (me.cast?.length && out.length < max) each((p, tci, tpi) => {
+    const a = me.cast.find((x) => p.cast?.includes(x));
+    if (a) add(tci, tpi, `also with ${a}: ${title(p, tci)}`);
+  });
+  if (me.kw?.length && out.length < max) each((p, tci, tpi) => {
+    if (!p.kw) return;
+    const common = me.kw.filter((w) => p.kw.includes(w));
+    if (common.length >= 2) add(tci, tpi, `both keep saying “${common[0]}”: ${title(p, tci)}`);
+  });
+  if (me.year && out.length < max) each((p, tci, tpi) => {
+    if (p.year === me.year && tci !== ci) add(tci, tpi, `also from ${me.year}: ${title(p, tci)}`);
+  });
+  const myChips = buddyChips(me);
+  if (myChips.length && out.length < max) each((p, tci, tpi) => {
+    const c = myChips.find((x) => buddyChips(p).includes(x));
+    if (c) add(tci, tpi, `also marked ${c}: ${title(p, tci)}`);
+  });
+  if (me.year && out.length < max) each((p, tci, tpi) => {
+    if (p.year && tci !== ci && Math.floor(p.year / 10) === Math.floor(me.year / 10)) {
+      add(tci, tpi, `elsewhere in the ${Math.floor(me.year / 10) * 10}s: ${title(p, tci)}`);
+    }
+  });
+  return out;
+}
+
+/* ── intermission: the considered pause screen ──────
+ * Only after you have genuinely settled into a pause (6s), never over
+ * other UI. Context first, then at most three threads. Nothing counts
+ * down, nothing auto-plays. */
+
+function tryShowIntermission() {
+    if (!state.on || !video.paused || state.hotTune) return;
+    if (!$("interstitial").classList.contains("hidden")) return;
+    if ($("guide").classList.contains("open") || $("dock").classList.contains("open")) return;
+    if (!$("buddy-overlay").classList.contains("hidden")) return;
+    const info = currentProgramInfo();
+    const p = info.program;
+    const ch = currentChannel();
+    $("im-title").textContent = p.title + (p.year ? " (" + p.year + ")" : "");
+    $("im-desc").textContent = p.wpx || p.desc || ch.tagline || "";
+    $("im-credits").textContent = [
+      p.dir?.length ? "directed by " + p.dir.join(", ") : null,
+      p.cast?.length ? "with " + p.cast.join(", ") : null,
+      p.wpx ? "— Wikipedia, CC BY-SA" : null
+    ].filter(Boolean).join(" · ");
+    const box = $("im-threads");
+    box.innerHTML = "";
+    threadsFor(state.chIndex, info.index).forEach((t) => {
+      const row = document.createElement("button");
+      row.className = "im-thread";
+      row.textContent = "⤳ " + t.label;
+      row.addEventListener("click", () => {
+        hideIntermission();
+        crtBlink();
+        tune(t.ci, { fromStartProg: t.pi });
+      });
+      box.appendChild(row);
+    });
+    const live = scheduleFor(ch);
+    if (info.live && live.index !== info.index) {
+      $("im-live").textContent = "meanwhile, live on " + ch.name + ": " + live.program.title;
+      $("im-live").classList.remove("hidden");
+    } else {
+      $("im-live").classList.add("hidden");
+    }
+    $("intermission").classList.remove("hidden");
+}
+
+function hideIntermission() {
+  $("intermission").classList.add("hidden");
+}
+
+/* stateless arming: the heartbeat shows the card once a pause has truly
+   settled (>6s), so no event-ordering race can eat it */
+[$("tv-a"), $("tv-b")].forEach((el) => {
+  el.addEventListener("pause", (e) => { if (e.target === video && state.on) state.pausedSince = Date.now(); });
+  el.addEventListener("play", (e) => { if (e.target === video) { state.pausedSince = null; hideIntermission(); } });
+});
+$("intermission").addEventListener("click", (e) => {
+  if (e.target === $("intermission")) hideIntermission();
 });
 
 /* ── deep links: bookmarkable SPA URIs ──────────────
