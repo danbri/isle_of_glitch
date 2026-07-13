@@ -129,6 +129,7 @@ function swapStage() {
 
 /* preload a stream into the backstage element (muted, hidden) */
 function preloadBackstage(src, offset = 0) {
+  if (state.hotTune) return;               // backstage is busy tuning
   if (backstage.dataset.src === src) return;
   backstage.dataset.src = src;
   backstage.dataset.offset = String(offset);
@@ -215,6 +216,8 @@ function tune(chIndex, opts = {}) {
 
   /* warm path: the backstage element already buffered this stream */
   if (backstageReadyFor(src) && opts.fromStartProg === undefined) {
+    state.hotTune = null;
+    $("tunebar").classList.add("hidden");
     swapStage();
     const drift = Math.abs((video.currentTime || 0) - offset);
     if (drift > 4 && offset < prog.dur - 2) { try { video.currentTime = offset; } catch {} }
@@ -225,13 +228,56 @@ function tune(chIndex, opts = {}) {
     return;
   }
 
-  /* cold path: zap card — an indicative frame of what's on, instantly,
-     while the stream loads behind it */
+  /* hot path: something is already playing — keep it on the air (picture
+     and sound) and load the new channel backstage; swap when it's ready.
+     Nothing locks; only a small progress pill reports the tuning. */
+  if (state.on && video.readyState >= 2 && !video.paused && !video.ended) {
+    state.hotTune = { token, src, offset, prog, started: Date.now() };
+    $("tunebar-text").innerHTML = `tuning · <b>${ch.num}</b> ${esc(ch.name)} — ${esc(prog.title)}`;
+    $("tunebar-fill").style.width = "4%";
+    $("tunebar").classList.remove("hidden");
+    backstage.dataset.src = src;
+    backstage.muted = true;
+    backstage.src = src;
+    if (offset > 1 && offset < prog.dur - 2) {
+      backstage.addEventListener("loadedmetadata", function seekOnce() {
+        if (state.hotTune?.token === token) { try { backstage.currentTime = offset; } catch {} }
+      }, { once: true });
+    }
+    backstage.addEventListener("canplay", function hotArrive() {
+      if (state.hotTune?.token !== token || token !== state.tuneToken) return;
+      state.hotTune = null;
+      $("tunebar-fill").style.width = "100%";
+      setTimeout(() => $("tunebar").classList.add("hidden"), 350);
+      swapStage();
+      // correct live drift accumulated while tuning
+      if (opts.fromStartProg === undefined) {
+        const fresh = scheduleFor(ch);
+        if (fresh.index === progIndex && Math.abs((video.currentTime || 0) - fresh.offset) > 4) {
+          try { video.currentTime = fresh.offset; } catch {}
+        }
+      }
+      const p = video.play();
+      if (p) p.catch(() => {});
+      arrive();
+    }, { once: true });
+    backstage.load();
+    updateInfo();
+    updateAncillary(ch, prog);
+    return;
+  }
+
+  /* cold path (nothing on the air): full zap card — an indicative frame,
+     a progress bar, and no input lock at all */
+  state.hotTune = null;
+  $("tunebar").classList.add("hidden");
   $("interstitial-text").textContent = "Fetching your channel…";
   $("interstitial-channel").textContent = ch.num + " · " + ch.name;
   const frame = prog.frame || prog.art || ch.art;
   $("interstitial").style.backgroundImage = frame
     ? `linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.75)), url("${frame}")` : "";
+  $("interstitial-progress").firstElementChild.style.width = "3%";
+  state.coldStarted = Date.now();
   $("interstitial").classList.remove("hidden");
 
   video.dataset.src = src;
@@ -250,6 +296,21 @@ function tune(chIndex, opts = {}) {
   updateInfo();
   updateAncillary(ch, prog);
 }
+
+/* the tuning progress bars: real readiness milestones blended with a
+   gently fictionalized time easing, so the bar always moves */
+function tuneProgress(el, startedMs, readyState) {
+  const t = (Date.now() - startedMs) / 1000;
+  const eased = 0.9 * (1 - Math.exp(-t / 5));          // →90% over ~15s
+  const mile = [0.06, 0.35, 0.6, 0.8, 0.92][Math.min(readyState, 4)];
+  el.style.width = Math.round(Math.max(eased, mile) * 95) + "%";
+}
+setInterval(() => {
+  if (state.hotTune) tuneProgress($("tunebar-fill"), state.hotTune.started, backstage.readyState);
+  else if (!$("interstitial").classList.contains("hidden") && state.coldStarted) {
+    tuneProgress($("interstitial-progress").firstElementChild, state.coldStarted, video.readyState);
+  }
+}, 400);
 
 function updateAncillary(ch, prog) {
   renderGuideList();
@@ -395,7 +456,9 @@ setInterval(() => {
      1. the junction — stage the next program ~45s out
      2. the quality upgrade — swap fast → best a few seconds in
      3. idle warmth — buffer the next channel up the dial for instant zaps */
-  if (remaining < 45 && remaining > 2 && !video.paused) {
+  if (state.hotTune) {
+    // tuning in progress — leave the backstage element alone
+  } else if (remaining < 45 && remaining > 2 && !video.paused) {
     state.upgrade = null;   // too late to bother upgrading this one
     const next = listingFor(currentChannel(), 2)[1];
     if (next) preloadBackstage(fastSrc(next.program), 0);
@@ -538,6 +601,8 @@ function powerOn() {
 
 function powerOff() {
   state.on = false;
+  state.hotTune = null;
+  $("tunebar").classList.add("hidden");
   hideOverlays();
   closePanels();
   crt("off", () => {
@@ -1073,6 +1138,65 @@ function prefetchFirstSeconds() {
     urls: [...keys].slice(0, 6).map((key) => ({ key, via: corsVia(key) }))
   });
 }
+
+/* ── trickle prefetch: fill the first-seconds cache in the background,
+      but only when device conditions permit (turbo mode only) ── */
+
+const PREFETCH_SECONDS = 15;
+const trickled = new Set();
+
+function prefixCap(p) {
+  // right-size each prefix from the stream's real bitrate when known
+  if (p.bytes && p.dur) {
+    return Math.min(2 * 1024 * 1024, Math.ceil((p.bytes / p.dur) * PREFETCH_SECONDS) + 128 * 1024);
+  }
+  return 1.5 * 1024 * 1024;
+}
+
+function trickleTargets() {
+  const out = [];
+  const push = (prog) => {
+    const key = fastSrc(prog);
+    if (!trickled.has(key)) out.push({ key, via: corsVia(key), cap: prefixCap(prog) });
+  };
+  CHANNELS.filter((ch) => state.favs.has(ch.id)).forEach((ch) => push(scheduleFor(ch).program));
+  listingFor(currentChannel(), 3).slice(1).forEach((slot) => push(slot.program));
+  [-1, 1].forEach((d) => {
+    const ch = CHANNELS[((state.chIndex + d) % CHANNELS.length + CHANNELS.length) % CHANNELS.length];
+    push(scheduleFor(ch).program);
+  });
+  channelsInCategory().forEach((ch) => push(scheduleFor(ch).program));
+  return out;
+}
+
+async function conditionsPermit() {
+  const c = navigator.connection;
+  if (c && (c.saveData || /(^|\b)(slow-)?2g\b/.test(c.effectiveType || ""))) return false;
+  if (navigator.getBattery) {
+    try {
+      const b = await navigator.getBattery();
+      if (!b.charging && b.level < 0.35) return false;
+    } catch {}
+  }
+  return true;
+}
+
+async function trickleTick() {
+  if (!state.on || state.preload !== "turbo" || document.hidden) return;
+  if (!navigator.serviceWorker?.controller) return;
+  if (state.hotTune || video.readyState < 3) return;   // never compete with playback
+  if (!(await conditionsPermit())) return;
+  const next = trickleTargets()[0];
+  if (!next) return;
+  trickled.add(next.key);
+  navigator.serviceWorker.controller.postMessage({ type: "prefetch", urls: [next] });
+}
+
+/* one small fetch at a time, on idle, well spaced out */
+setInterval(() => {
+  if ("requestIdleCallback" in window) requestIdleCallback(() => trickleTick(), { timeout: 8000 });
+  else trickleTick();
+}, 40000);
 
 /* ── subtitles (archive.org .srt/.vtt, incl. auto-generated ASR) ── */
 
