@@ -903,7 +903,8 @@ function renderSearch(q) {
   CHANNELS.forEach((ch) => {
     ch.programs.forEach((p, pi) => {
       if (hits >= 40) return;
-      const hay = (ch.name + " " + p.title + " " + (p.desc || "") + " " + ch.category).toLowerCase();
+      const hay = (ch.name + " " + p.title + " " + (p.desc || "") + " " + ch.category + " " +
+        (p.dir || []).join(" ") + " " + (p.cast || []).join(" ") + " " + (p.kw || []).join(" ")).toLowerCase();
       if (!hay.includes(q)) return;
       hits++;
       const live = scheduleFor(ch).index === pi;

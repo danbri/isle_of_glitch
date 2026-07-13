@@ -125,7 +125,7 @@ const DIAL = [
     category: "Drama", tagline: "Shadows, cigarettes and bad decisions",
     art: "Film_Noir",
     hand: [],
-    collection: "Film_Noir", want: 60, minDur: 2800, maxDur: 7800
+    collection: "Film_Noir", want: 70, minDur: 2800, maxDur: 7800
   },
   {
     num: 7, id: "screwball-screen", name: "Screwball Screen",
@@ -135,7 +135,7 @@ const DIAL = [
       HAND("His Girl Friday", 1940, 5504.5, "his_girl_friday/his_girl_friday_512kb.mp4",
         "The fastest dialogue ever filmed.", "Public domain")
     ],
-    collection: "Comedy_Films", want: 50, minDur: 2400, maxDur: 7800
+    collection: "Comedy_Films", want: 60, minDur: 2400, maxDur: 7800
   },
   {
     num: 8, id: "retro-vault", name: "Retro Vault",
@@ -147,21 +147,21 @@ const DIAL = [
       HAND("The Home Economics Story", 1951, 748.4, "HomeEcon1951/HomeEcon1951_512kb.mp4",
         "A gloriously earnest recruiting film.", "Public domain · Prelinger")
     ],
-    collection: "prelinger", want: 50, minDur: 240, maxDur: 2400
+    collection: "prelinger", want: 24, minDur: 240, maxDur: 2400
   },
   {
     num: 9, id: "newsreel-nine", name: "Newsreel Nine",
     category: "News", tagline: "History as it happened, twice a week",
     art: "universal_newsreels",
     hand: [],
-    collection: "universal_newsreels", want: 60, minDur: 120, maxDur: 1500
+    collection: "universal_newsreels", want: 24, minDur: 120, maxDur: 1500
   },
   {
     num: 10, id: "tube-classics", name: "Tube Classics",
     category: "Entertainment", tagline: "The golden age of the small screen",
     art: "classic_tv",
     hand: [],
-    collection: "classic_tv", want: 80, minDur: 1200, maxDur: 3900,
+    collection: "classic_tv", want: 90, minDur: 1200, maxDur: 3900,
     /* classic_tv is full of infringing uploads — allow only well-known
        public-domain-era shows */
     titleFilter: /(bonanza|lone ranger|beverly hillbillies|dick van dyke|petticoat junction|dragnet|sherlock holmes|one step beyond|racket squad|ozzie and harriet|jack benny|burns and allen|lucy|milton berle|texaco|your show of shows|studio one|suspense|lights out|robin hood|flash gordon|front page detective|four star|public defender|district attorney|gang busters|annie oakley|cisco kid|colonel march|ramar of the jungle|telephone time|schlitz playhouse|ford the(atre|ater)|my little margie|the goldbergs|life of riley|martin kane|danger(?!ous)|crusader)/i
@@ -192,7 +192,7 @@ const DIAL = [
     art: "feature_films",
     hand: [],
     query: "collection:feature_films AND mediatype:movies AND subject:western",
-    want: 70, minDur: 2400, maxDur: 8400, maxYear: 1963
+    want: 80, minDur: 2400, maxDur: 8400, maxYear: 1963
   },
   {
     num: 117, id: "mystery-playhouse", name: "Mystery Playhouse",
@@ -200,7 +200,7 @@ const DIAL = [
     art: "Film_Noir",
     hand: [],
     query: "collection:feature_films AND mediatype:movies AND subject:mystery",
-    want: 60, minDur: 2400, maxDur: 8400, maxYear: 1963
+    want: 70, minDur: 2400, maxDur: 8400, maxYear: 1963
   },
   {
     num: 118, id: "drama-matinee", name: "Drama Matinee",
@@ -208,7 +208,7 @@ const DIAL = [
     art: "feature_films",
     hand: [],
     query: "collection:feature_films AND mediatype:movies AND subject:drama",
-    want: 80, minDur: 2700, maxDur: 9600, maxYear: 1963
+    want: 90, minDur: 2700, maxDur: 9600, maxYear: 1963
   },
   {
     num: 119, id: "toon-vault", name: "Toon Vault",
@@ -240,7 +240,7 @@ const DIAL = [
       HAND("Apollo 11 Moonwalk (Restored)", 1969, 10950, "youtube-S9HdPi9Ikhk/S9HdPi9Ikhk.mp4",
         "NASA's restored original EVA television.", "Public domain · NASA")
     ],
-    collection: "nasa", want: 24, minDur: 240, maxDur: 4000
+    collection: "nasa", want: 10, minDur: 240, maxDur: 4000
   }
 ];
 
@@ -267,7 +267,7 @@ async function getJSON(url, tries = 3) {
 
 async function search(query, rows) {
   const url = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}` +
-    `&fl[]=identifier&fl[]=title&fl[]=year&fl[]=downloads` +
+    `&fl[]=identifier&fl[]=title&fl[]=year&fl[]=downloads&fl[]=avg_rating&fl[]=num_reviews` +
     `&sort[]=downloads+desc&rows=${rows}&output=json`;
   const j = await getJSON(url);
   return j?.response?.docs ?? [];
@@ -317,9 +317,18 @@ function cleanTitle(t) {
 async function harvestChannel(ch, taken, seenTitles) {
   if (!ch.want || (!ch.collection && !ch.ids && !ch.query)) return [];
   const q = ch.query || (ch.collection && `collection:${ch.collection} AND mediatype:movies`);
+  const found = q ? await search(q, ch.want * 6) : [];
+  /* priority: popularity, audience rating, and recency within the era —
+     proxies for colour, print quality and famous casts — without ever
+     moving the free/open year gates */
+  const prio = (d) =>
+    Math.log10((+d.downloads || 0) + 1) +
+    (+d.avg_rating || 0) * 0.5 +
+    (parseInt(d.year) ? Math.max(0, Math.min(1, (parseInt(d.year) - 1900) / 60)) * 1.5 : 0);
+  found.sort((a, b) => prio(b) - prio(a));
   const docs = [
     ...(ch.ids || []).map((identifier) => ({ identifier })),
-    ...(q ? await search(q, ch.want * 6) : [])
+    ...found
   ];
   const out = [];
   const rejects = {};
