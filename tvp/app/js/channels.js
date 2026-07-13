@@ -658,6 +658,17 @@ const CHANNELS = [
      "Bela Lugosi",
      "Madge Bellamy",
      "Robert Frazer"
+    ],
+    kw: [
+     "people",
+     "thought",
+     "might",
+     "will",
+     "work",
+     "blame",
+     "read",
+     "body",
+     "better"
     ]
    },
    {
@@ -671,7 +682,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the_ghost_walks/the_ghost_walks.thumbs/the_ghost_walks_001500.jpg",
     subs: "the_ghost_walks.asr.srt",
-    bytes: 277004647
+    bytes: 277004647,
+    kw: [
+     "play",
+     "house",
+     "find",
+     "still",
+     "mean",
+     "room",
+     "give",
+     "will",
+     "getting",
+     "idea",
+     "part",
+     "call"
+    ]
    },
    {
     title: "The Human Monster",
@@ -694,6 +719,20 @@ const CHANNELS = [
      "Bela Lugosi",
      "Hugh Williams",
      "Greta Gynt"
+    ],
+    kw: [
+     "will",
+     "hope",
+     "police",
+     "mean",
+     "life",
+     "find",
+     "still",
+     "first",
+     "thought",
+     "help",
+     "inspector",
+     "case"
     ]
    },
    {
@@ -721,6 +760,20 @@ const CHANNELS = [
     ],
     co: [
      "Producers Releasing Corporation"
+    ],
+    kw: [
+     "devil",
+     "johnny",
+     "might",
+     "will",
+     "picture",
+     "thought",
+     "help",
+     "lotion",
+     "give",
+     "mary",
+     "tonight",
+     "around"
     ]
    },
    {
@@ -748,6 +801,20 @@ const CHANNELS = [
     ],
     co: [
      "Monogram Pictures"
+    ],
+    kw: [
+     "bill",
+     "around",
+     "will",
+     "find",
+     "island",
+     "mean",
+     "last",
+     "dead",
+     "must",
+     "trying",
+     "jeff",
+     "matter"
     ]
    },
    {
@@ -782,7 +849,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/mad_monster/mad_monster.thumbs/mad_monster_001800.jpg",
     subs: "mad_monster.asr.srt",
-    bytes: 334367694
+    bytes: 334367694,
+    kw: [
+     "will",
+     "give",
+     "work",
+     "must",
+     "mean",
+     "thought",
+     "much",
+     "animal",
+     "fitzgerald",
+     "even",
+     "around",
+     "morning"
+    ]
    },
    {
     title: "The Corpse Vanishes",
@@ -806,6 +887,20 @@ const CHANNELS = [
      "Bela Lugosi",
      "Luana Walters",
      "Tris Coffin"
+    ],
+    kw: [
+     "will",
+     "dead",
+     "mean",
+     "maybe",
+     "must",
+     "bride",
+     "find",
+     "story",
+     "people",
+     "kind",
+     "talking",
+     "another"
     ]
    },
    {
@@ -829,6 +924,20 @@ const CHANNELS = [
      "Dwight Frye",
      "George Zucco",
      "Mary Carlisle"
+    ],
+    kw: [
+     "life",
+     "believe",
+     "will",
+     "around",
+     "murder",
+     "away",
+     "talk",
+     "trying",
+     "place",
+     "even",
+     "power",
+     "help"
     ]
    },
    {
@@ -877,6 +986,20 @@ const CHANNELS = [
     ],
     cast: [
      "Paul Langton"
+    ],
+    kw: [
+     "creature",
+     "will",
+     "sure",
+     "getting",
+     "give",
+     "first",
+     "check",
+     "even",
+     "mean",
+     "frank",
+     "find",
+     "world"
     ]
    },
    {
@@ -901,6 +1024,20 @@ const CHANNELS = [
      "Angelo Rossitto",
      "Bruno VeSota",
      "Shorty Rogers"
+    ],
+    kw: [
+     "drip",
+     "zero",
+     "poor",
+     "girl",
+     "guilty",
+     "rarely",
+     "first",
+     "show",
+     "board",
+     "face",
+     "mind",
+     "will"
     ]
    },
    {
@@ -924,6 +1061,20 @@ const CHANNELS = [
     cast: [
      "Ken Clark",
      "Bruno VeSota"
+    ],
+    kw: [
+     "killed",
+     "around",
+     "people",
+     "every",
+     "better",
+     "mean",
+     "might",
+     "love",
+     "last",
+     "maybe",
+     "keep",
+     "water"
     ]
    },
    {
@@ -947,6 +1098,20 @@ const CHANNELS = [
      "Vincent Price",
      "Alan Marshal",
      "Elisha Cook Jr."
+    ],
+    kw: [
+     "house",
+     "party",
+     "will",
+     "thousand",
+     "wife",
+     "stay",
+     "dollars",
+     "ghosts",
+     "mean",
+     "room",
+     "killed",
+     "must"
     ]
    },
    {
@@ -971,6 +1136,20 @@ const CHANNELS = [
      "Alberto Lupo",
      "Sergio Fantoni",
      "Rina Franchetti"
+    ],
+    kw: [
+     "will",
+     "must",
+     "give",
+     "woman",
+     "mean",
+     "twenty",
+     "professor",
+     "without",
+     "away",
+     "already",
+     "another",
+     "believe"
     ]
    },
    {
@@ -984,7 +1163,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Horror_Hotel/Horror_Hotel.thumbs/Horror_Hotel_001800.jpg",
     subs: "Horror_Hotel.asr.srt",
-    bytes: 330655290
+    bytes: 330655290,
+    kw: [
+     "white",
+     "will",
+     "find",
+     "people",
+     "room",
+     "quite",
+     "witchcraft",
+     "might",
+     "thought",
+     "road",
+     "must",
+     "first"
+    ]
    },
    {
     title: "The Little Shop of Horrors",
@@ -1035,6 +1228,20 @@ const CHANNELS = [
      "Robert Reed",
      "June Kenney",
      "Gene Persson"
+    ],
+    kw: [
+     "find",
+     "will",
+     "chance",
+     "mean",
+     "sure",
+     "jungle",
+     "tony",
+     "kind",
+     "room",
+     "must",
+     "boat",
+     "give"
     ]
    },
    {
@@ -1059,6 +1266,20 @@ const CHANNELS = [
      "Antony Carbone",
      "Betsy Jones-Moreland",
      "Robert Towne"
+    ],
+    kw: [
+     "will",
+     "mary",
+     "renzo",
+     "rather",
+     "around",
+     "away",
+     "jack",
+     "live",
+     "give",
+     "whoa",
+     "cuban",
+     "first"
     ]
    },
    {
@@ -1152,6 +1373,20 @@ const CHANNELS = [
     ],
     co: [
      "The Filmgroup"
+    ],
+    kw: [
+     "baron",
+     "girl",
+     "will",
+     "find",
+     "leave",
+     "left",
+     "years",
+     "live",
+     "woman",
+     "mind",
+     "must",
+     "twenty"
     ]
    },
    {
@@ -1175,6 +1410,20 @@ const CHANNELS = [
      "Mickey Hargitay",
      "Alfredo Rizzo",
      "Femi Benussi"
+    ],
+    kw: [
+     "boom",
+     "will",
+     "crimson",
+     "castle",
+     "executioner",
+     "work",
+     "must",
+     "around",
+     "girls",
+     "break",
+     "place",
+     "kind"
     ]
    },
    {
@@ -1222,6 +1471,20 @@ const CHANNELS = [
     ],
     co: [
      "Image Ten"
+    ],
+    kw: [
+     "live",
+     "will",
+     "place",
+     "people",
+     "radio",
+     "johnny",
+     "stay",
+     "kind",
+     "first",
+     "murder",
+     "victims",
+     "even"
     ]
    },
    {
@@ -1282,6 +1545,20 @@ const CHANNELS = [
      "Christopher Lee",
      "Peter Cushing",
      "Alberto de Mendoza"
+    ],
+    kw: [
+     "train",
+     "saxton",
+     "will",
+     "countess",
+     "earth",
+     "professor",
+     "baggage",
+     "dead",
+     "must",
+     "wells",
+     "inspector",
+     "eyes"
     ]
    },
    {
@@ -1307,6 +1584,20 @@ const CHANNELS = [
      "Marianna Hill",
      "Anitra Ford",
      "Royal Dano"
+    ],
+    kw: [
+     "ring",
+     "zero",
+     "town",
+     "point",
+     "father",
+     "people",
+     "live",
+     "coming",
+     "body",
+     "around",
+     "looking",
+     "hundred"
     ]
    },
    {
@@ -1331,6 +1622,20 @@ const CHANNELS = [
      "Christopher Lee",
      "Peter Cushing",
      "Alberto de Mendoza"
+    ],
+    kw: [
+     "will",
+     "still",
+     "even",
+     "another",
+     "mean",
+     "believe",
+     "eight",
+     "train",
+     "creature",
+     "must",
+     "years",
+     "next"
     ]
    },
    {
@@ -1400,6 +1705,20 @@ const CHANNELS = [
      "Michael Pataki",
      "William Smith",
      "Carmen Argenziano"
+    ],
+    kw: [
+     "will",
+     "room",
+     "found",
+     "talk",
+     "every",
+     "body",
+     "blood",
+     "people",
+     "help",
+     "leave",
+     "wife",
+     "vampire"
     ]
    },
    {
@@ -1413,7 +1732,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SilentNightBloodyNight/SilentNightBloodyNight.thumbs/SilentNightBloodyNight_003840.jpg",
     subs: "SilentNightBloodyNight.asr.srt",
-    bytes: 370682301
+    bytes: 370682301,
+    kw: [
+     "house",
+     "will",
+     "knew",
+     "still",
+     "place",
+     "eight",
+     "christmas",
+     "child",
+     "inmates",
+     "last",
+     "believe",
+     "thousand"
+    ]
    },
    {
     title: "My Bloody Valentine(1981)DC REMASTERED",
@@ -1471,7 +1804,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ABucketofBlood/ABucketofBlood.thumbs/Bucket_1959_001560.jpg",
     subs: "Bucket_1959.asr.srt",
-    bytes: 284931181
+    bytes: 284931181,
+    kw: [
+     "will",
+     "work",
+     "show",
+     "walter",
+     "dollars",
+     "nice",
+     "people",
+     "water",
+     "statues",
+     "much",
+     "mean",
+     "statue"
+    ]
    },
    {
     title: "War Of The Monsters",
@@ -1514,6 +1861,20 @@ const CHANNELS = [
      "Ted Cooper",
      "Harry Landers",
      "Rudolph Anders"
+    ],
+    kw: [
+     "mobile",
+     "barbara",
+     "lieutenant",
+     "will",
+     "hazen",
+     "doctor",
+     "must",
+     "sure",
+     "venus",
+     "center",
+     "better",
+     "helmet"
     ]
    },
    {
@@ -1559,6 +1920,20 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
+    ],
+    kw: [
+     "will",
+     "martin",
+     "seven",
+     "doctor",
+     "must",
+     "information",
+     "power",
+     "believe",
+     "people",
+     "bomb",
+     "mind",
+     "next"
     ]
    },
    {
@@ -1665,6 +2040,20 @@ const CHANNELS = [
      "Marjorie Eaton",
      "Frank Gerstle",
      "Bradford Dillman"
+    ],
+    kw: [
+     "body",
+     "will",
+     "brain",
+     "march",
+     "need",
+     "life",
+     "human",
+     "even",
+     "bodies",
+     "girl",
+     "frank",
+     "live"
     ]
    },
    {
@@ -1763,7 +2152,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/PurpleDeathFromOuterSpace/PurpleDeathFromOuterSpace.thumbs/Purpledeathfromouterspace.mpeg_002100.jpg",
     subs: "Purpledeathfromouterspace.mpeg.asr.srt",
-    bytes: 383008481
+    bytes: 383008481,
+    kw: [
+     "will",
+     "ship",
+     "flash",
+     "must",
+     "radio",
+     "much",
+     "life",
+     "doctors",
+     "find",
+     "destroy",
+     "gordon",
+     "friend"
+    ]
    }
   ]
  },
@@ -1836,6 +2239,20 @@ const CHANNELS = [
      "John Garfield",
      "Claude Rains",
      "Ann Sheridan"
+    ],
+    kw: [
+     "sure",
+     "money",
+     "jack",
+     "around",
+     "maybe",
+     "much",
+     "mean",
+     "will",
+     "johnny",
+     "fight",
+     "enough",
+     "trying"
     ]
    },
    {
@@ -1862,6 +2279,20 @@ const CHANNELS = [
     ],
     co: [
      "20th Century Studios"
+    ],
+    kw: [
+     "ain't",
+     "sure",
+     "work",
+     "maybe",
+     "folks",
+     "around",
+     "done",
+     "grandpa",
+     "tommy",
+     "seen",
+     "place",
+     "give"
     ]
    },
    {
@@ -1933,6 +2364,20 @@ const CHANNELS = [
      "Tom Neal",
      "Ann Savage",
      "Esther Howard"
+    ],
+    kw: [
+     "maybe",
+     "around",
+     "people",
+     "away",
+     "will",
+     "even",
+     "haskell",
+     "much",
+     "hundred",
+     "keep",
+     "believe",
+     "sure"
     ]
    },
    {
@@ -1957,6 +2402,20 @@ const CHANNELS = [
      "Edward G. Robinson",
      "Joan Bennett",
      "Dan Duryea"
+    ],
+    kw: [
+     "money",
+     "around",
+     "johnny",
+     "chris",
+     "work",
+     "thought",
+     "name",
+     "much",
+     "talk",
+     "even",
+     "talking",
+     "girl"
     ]
    },
    {
@@ -1992,6 +2451,20 @@ const CHANNELS = [
      "Mary Beth Hughes",
      "Hugh Beaumont",
      "Claudia Drake"
+    ],
+    kw: [
+     "craig",
+     "club",
+     "captain",
+     "home",
+     "wife",
+     "talk",
+     "couple",
+     "sure",
+     "must",
+     "murder",
+     "larry",
+     "seven"
     ]
    },
    {
@@ -2018,6 +2491,20 @@ const CHANNELS = [
     ],
     co: [
      "20th Century Studios"
+    ],
+    kw: [
+     "bradley",
+     "body",
+     "will",
+     "sure",
+     "apartment",
+     "police",
+     "around",
+     "found",
+     "johnny",
+     "much",
+     "shot",
+     "john"
     ]
    },
    {
@@ -2046,6 +2533,20 @@ const CHANNELS = [
     co: [
      "Paramount Pictures",
      "Hal Wallis Productions"
+    ],
+    kw: [
+     "will",
+     "father",
+     "much",
+     "wanted",
+     "room",
+     "name",
+     "sure",
+     "people",
+     "o'neill",
+     "even",
+     "maybe",
+     "hotel"
     ]
    },
    {
@@ -2059,7 +2560,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the_stranger_film/the_stranger_film.thumbs/the_stranger_002160.jpg",
     subs: "the_stranger.asr.srt",
-    bytes: 386260469
+    bytes: 386260469,
+    kw: [
+     "much",
+     "might",
+     "will",
+     "mean",
+     "sure",
+     "church",
+     "mary",
+     "still",
+     "must",
+     "even",
+     "need",
+     "leave"
+    ]
    },
    {
     title: "The Chase",
@@ -2120,6 +2635,20 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
+    ],
+    kw: [
+     "will",
+     "much",
+     "must",
+     "mean",
+     "even",
+     "leave",
+     "might",
+     "church",
+     "need",
+     "sure",
+     "friends",
+     "every"
     ]
    },
    {
@@ -2178,6 +2707,20 @@ const CHANNELS = [
      "Edward G. Robinson",
      "Lon McCallister",
      "Judith Anderson"
+    ],
+    kw: [
+     "around",
+     "much",
+     "house",
+     "read",
+     "maybe",
+     "last",
+     "sure",
+     "every",
+     "next",
+     "help",
+     "enough",
+     "talk"
     ]
    },
    {
@@ -2191,7 +2734,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/amazing_mr_x/amazing_mr_x.thumbs/amazing_mr_x_001860.jpg",
     subs: "amazing_mr_x.asr.srt",
-    bytes: 340210079
+    bytes: 340210079,
+    kw: [
+     "might",
+     "people",
+     "find",
+     "understand",
+     "will",
+     "first",
+     "thought",
+     "martin",
+     "better",
+     "talk",
+     "house",
+     "alexis"
+    ]
    },
    {
     title: "He Walked By Night",
@@ -2265,6 +2822,20 @@ const CHANNELS = [
      "Mary Beth Hughes",
      "Billy House",
      "Charles Russell"
+    ],
+    kw: [
+     "train",
+     "will",
+     "girl",
+     "stay",
+     "find",
+     "river",
+     "happened",
+     "maybe",
+     "much",
+     "station",
+     "around",
+     "room"
     ]
    },
    {
@@ -2299,7 +2870,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/parole_inc/parole_inc.thumbs/parole_inc_001680.jpg",
     subs: "parole_inc.asr.srt",
-    bytes: 310091666
+    bytes: 310091666,
+    kw: [
+     "money",
+     "parole",
+     "around",
+     "cooper",
+     "name",
+     "carson",
+     "board",
+     "find",
+     "much",
+     "farm",
+     "must",
+     "sure"
+    ]
    },
    {
     title: "Raw Deal (1948) Directed by Anthony Mann, Featuring Dennis O'Keefe, Cl",
@@ -2368,7 +2953,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/impact/impact.thumbs/impact_002640.jpg",
     subs: "impact.asr.srt",
-    bytes: 478584403
+    bytes: 478584403,
+    kw: [
+     "williams",
+     "need",
+     "will",
+     "found",
+     "must",
+     "give",
+     "better",
+     "sure",
+     "maybe",
+     "mean",
+     "much",
+     "still"
+    ]
    },
    {
     title: "Jigsaw",
@@ -2404,7 +3003,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/quicksand./quicksand..thumbs/QUICKSAND_001920.jpg",
     subs: "QUICKSAND.asr.srt",
-    bytes: 344160492
+    bytes: 344160492,
+    kw: [
+     "away",
+     "sure",
+     "dollars",
+     "maybe",
+     "money",
+     "hundred",
+     "call",
+     "watch",
+     "twenty",
+     "will",
+     "around",
+     "thousand"
+    ]
    },
    {
     title: "The File On Thelma Jordan",
@@ -2435,6 +3048,20 @@ const CHANNELS = [
     wpx: "The Sun Sets at Dawn is a 1950 American film noir crime film directed by Paul Sloane and starring Sally Parr and Patrick Waltz.",
     dir: [
      "Paul Sloane"
+    ],
+    kw: [
+     "will",
+     "story",
+     "chair",
+     "girl",
+     "first",
+     "five",
+     "ever",
+     "even",
+     "another",
+     "wanted",
+     "years",
+     "work"
     ]
    },
    {
@@ -2459,6 +3086,20 @@ const CHANNELS = [
      "Ann Sheridan",
      "Dennis O'Keefe",
      "Robert Keith"
+    ],
+    kw: [
+     "frank",
+     "johnson",
+     "find",
+     "husband",
+     "around",
+     "sure",
+     "mean",
+     "people",
+     "police",
+     "maybe",
+     "thought",
+     "give"
     ]
    },
    {
@@ -2497,6 +3138,20 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
+    ],
+    kw: [
+     "letter",
+     "much",
+     "george",
+     "will",
+     "jones",
+     "husband",
+     "call",
+     "sure",
+     "doctor",
+     "mean",
+     "remember",
+     "even"
     ]
    },
    {
@@ -2531,6 +3186,20 @@ const CHANNELS = [
     cast: [
      "Lawrence Tierney",
      "Allene Roberts"
+    ],
+    kw: [
+     "money",
+     "johnny",
+     "keep",
+     "away",
+     "five",
+     "station",
+     "will",
+     "must",
+     "even",
+     "years",
+     "enough",
+     "much"
     ]
    },
    {
@@ -2592,6 +3261,20 @@ const CHANNELS = [
     ],
     co: [
      "United Artists"
+    ],
+    kw: [
+     "money",
+     "will",
+     "give",
+     "even",
+     "around",
+     "wrong",
+     "bring",
+     "chance",
+     "still",
+     "maybe",
+     "twenty",
+     "enough"
     ]
    },
    {
@@ -2616,6 +3299,20 @@ const CHANNELS = [
      "Glenn Ford",
      "Geraldine Brooks",
      "Cedric Hardwicke"
+    ],
+    kw: [
+     "will",
+     "village",
+     "glove",
+     "even",
+     "might",
+     "believe",
+     "michael",
+     "nobody",
+     "still",
+     "money",
+     "maybe",
+     "first"
     ]
    },
    {
@@ -2677,6 +3374,20 @@ const CHANNELS = [
     co: [
      "RKO Pictures",
      "The Filmakers, Inc."
+    ],
+    kw: [
+     "guys",
+     "keep",
+     "world",
+     "last",
+     "will",
+     "turn",
+     "guess",
+     "maybe",
+     "place",
+     "nice",
+     "talk",
+     "vast"
     ]
    },
    {
@@ -2724,6 +3435,20 @@ const CHANNELS = [
      "Timothy Farrell",
      "Dolores Fuller",
      "Herbert Rawlinson"
+    ],
+    kw: [
+     "will",
+     "done",
+     "maybe",
+     "life",
+     "sure",
+     "inspector",
+     "father",
+     "last",
+     "first",
+     "gone",
+     "much",
+     "face"
     ]
    },
    {
@@ -2773,6 +3498,20 @@ const CHANNELS = [
     ],
     co: [
      "United Artists"
+    ],
+    kw: [
+     "president",
+     "sure",
+     "will",
+     "five",
+     "town",
+     "check",
+     "benson",
+     "kill",
+     "johnny",
+     "might",
+     "mean",
+     "away"
     ]
    },
    {
@@ -2797,6 +3536,20 @@ const CHANNELS = [
      "John Bromfield",
      "Martha Vickers",
      "Robert Hutton"
+    ],
+    kw: [
+     "will",
+     "much",
+     "mean",
+     "marcia",
+     "peter",
+     "around",
+     "better",
+     "even",
+     "doctor",
+     "morning",
+     "money",
+     "course"
     ]
    },
    {
@@ -2892,6 +3645,20 @@ const CHANNELS = [
     ],
     co: [
      "Warner Bros. Entertainment"
+    ],
+    kw: [
+     "love",
+     "husband",
+     "first",
+     "will",
+     "talk",
+     "wanted",
+     "life",
+     "myra",
+     "woman",
+     "much",
+     "kill",
+     "understand"
     ]
    },
    {
@@ -2983,7 +3750,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Saint_Louis_Bank_Robbery/Saint_Louis_Bank_Robbery.thumbs/Saint_Louis_Bank_Robbery_002194.jpg",
     subs: "Saint_Louis_Bank_Robbery.asr.srt",
-    bytes: 384284457
+    bytes: 384284457,
+    kw: [
+     "money",
+     "much",
+     "george",
+     "sure",
+     "away",
+     "will",
+     "mean",
+     "five",
+     "watch",
+     "twenty",
+     "around",
+     "love"
+    ]
    },
    {
     title: "Breathless",
@@ -3007,7 +3788,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/five_minutes_to_live/five_minutes_to_live.thumbs/Five_Minutes_to_Live_001800.jpg",
     subs: "Five_Minutes_to_Live.asr.srt",
-    bytes: 314167244
+    bytes: 314167244,
+    kw: [
+     "talk",
+     "call",
+     "johnny",
+     "morning",
+     "mean",
+     "bank",
+     "wait",
+     "five",
+     "every",
+     "home",
+     "better",
+     "probably"
+    ]
    },
    {
     title: "Nightmare Castle",
@@ -3031,6 +3826,20 @@ const CHANNELS = [
      "Barbara Steele",
      "Paul Müller",
      "Helga Liné"
+    ],
+    kw: [
+     "will",
+     "jenny",
+     "must",
+     "leave",
+     "help",
+     "mind",
+     "stephen",
+     "room",
+     "thought",
+     "sure",
+     "remember",
+     "laboratory"
     ]
    },
    {
@@ -3045,7 +3854,21 @@ const CHANNELS = [
     frame: "https://archive.org/download/ChiaroscuroBaby/ChiaroscuroBaby.thumbs/ChiaroscuroBaby-1280x720_003060.jpg",
     subs: "ChiaroscuroBaby-1280x720.asr.srt",
     bytes: 616893047,
-    wd: "Q130320964"
+    wd: "Q130320964",
+    kw: [
+     "live",
+     "last",
+     "will",
+     "mean",
+     "sure",
+     "girl",
+     "feel",
+     "actually",
+     "still",
+     "show",
+     "love",
+     "work"
+    ]
    }
   ]
  },
@@ -3113,6 +3936,20 @@ const CHANNELS = [
      "Cary Grant",
      "Mary Brian",
      "John Turnbull"
+    ],
+    kw: [
+     "money",
+     "thousand",
+     "will",
+     "pounds",
+     "place",
+     "around",
+     "much",
+     "give",
+     "might",
+     "best",
+     "enough",
+     "matter"
     ]
    },
    {
@@ -3126,7 +3963,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Milky_Way_movie/Milky_Way_movie.thumbs/Milky_Way_002094.jpg",
     subs: "Milky_Way.asr.srt",
-    bytes: 377823154
+    bytes: 377823154,
+    kw: [
+     "give",
+     "fight",
+     "find",
+     "much",
+     "will",
+     "talk",
+     "zero",
+     "talking",
+     "tiger",
+     "wait",
+     "mean",
+     "love"
+    ]
    },
    {
     title: "Nothing Sacred",
@@ -3241,6 +4092,20 @@ const CHANNELS = [
     dir: [
      "Edward A. Kull",
      "Wilbur McGaugh"
+    ],
+    kw: [
+     "much",
+     "will",
+     "goddess",
+     "hundred",
+     "natives",
+     "jungle",
+     "mean",
+     "trail",
+     "ship",
+     "many",
+     "away",
+     "might"
     ]
    },
    {
@@ -3269,6 +4134,20 @@ const CHANNELS = [
     co: [
      "Boris Morros",
      "RKO Pictures"
+    ],
+    kw: [
+     "keep",
+     "will",
+     "thought",
+     "mean",
+     "love",
+     "sure",
+     "stand",
+     "last",
+     "much",
+     "forget",
+     "work",
+     "another"
     ]
    },
    {
@@ -3318,6 +4197,20 @@ const CHANNELS = [
     ],
     co: [
      "Columbia Pictures"
+    ],
+    kw: [
+     "mean",
+     "will",
+     "bruce",
+     "williams",
+     "story",
+     "give",
+     "around",
+     "mind",
+     "write",
+     "minute",
+     "years",
+     "away"
     ]
    },
    {
@@ -3355,6 +4248,20 @@ const CHANNELS = [
      "Gary Cooper",
      "Barbara Stanwyck",
      "Edward Arnold"
+    ],
+    kw: [
+     "john",
+     "people",
+     "read",
+     "will",
+     "around",
+     "world",
+     "give",
+     "mean",
+     "much",
+     "money",
+     "already",
+     "talk"
     ]
    },
    {
@@ -3382,6 +4289,20 @@ const CHANNELS = [
     ],
     co: [
      "Columbia Pictures"
+    ],
+    kw: [
+     "child",
+     "baby",
+     "sure",
+     "mean",
+     "will",
+     "around",
+     "wanted",
+     "feel",
+     "roger",
+     "might",
+     "julie",
+     "thought"
     ]
    },
    {
@@ -3409,6 +4330,20 @@ const CHANNELS = [
     ],
     co: [
      "Hal Roach Studios"
+    ],
+    kw: [
+     "room",
+     "will",
+     "mind",
+     "find",
+     "getting",
+     "mean",
+     "body",
+     "stop",
+     "kind",
+     "father",
+     "young",
+     "girl"
     ]
    },
    {
@@ -3436,6 +4371,20 @@ const CHANNELS = [
     co: [
      "Lime Grove Studios",
      "Gaumont-British Picture Corporation"
+    ],
+    kw: [
+     "will",
+     "must",
+     "mean",
+     "nice",
+     "even",
+     "first",
+     "says",
+     "love",
+     "call",
+     "mind",
+     "money",
+     "blah"
     ]
    },
    {
@@ -3460,6 +4409,20 @@ const CHANNELS = [
      "Franklin Pangborn",
      "Irving Bacon",
      "Herbert Rawlinson"
+    ],
+    kw: [
+     "dollars",
+     "five",
+     "will",
+     "ever",
+     "every",
+     "mean",
+     "hundred",
+     "name",
+     "peabody",
+     "better",
+     "wait",
+     "trying"
     ]
    },
    {
@@ -3479,6 +4442,20 @@ const CHANNELS = [
     wpx: "Midnight Manhunt is a 1945 film noir crime film mystery directed by William C. Thomas and written by David Lang. The film premiered on July 24, 1945 and is in the public domain.",
     dir: [
      "William C. Thomas"
+    ],
+    kw: [
+     "body",
+     "around",
+     "thought",
+     "place",
+     "will",
+     "away",
+     "give",
+     "might",
+     "find",
+     "story",
+     "cops",
+     "maybe"
     ]
    },
    {
@@ -3492,7 +4469,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the_stork_club/the_stork_club.thumbs/the_stork_club_002340.jpg",
     subs: "the_stork_club.asr.srt",
-    bytes: 428552330
+    bytes: 428552330,
+    kw: [
+     "life",
+     "much",
+     "will",
+     "kind",
+     "work",
+     "peabody",
+     "judy",
+     "sure",
+     "maybe",
+     "love",
+     "ever",
+     "band"
+    ]
    },
    {
     title: "Love Laughs at Andy Hardy",
@@ -3517,6 +4508,20 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
+    ],
+    kw: [
+     "girl",
+     "andrew",
+     "will",
+     "thought",
+     "home",
+     "college",
+     "away",
+     "kind",
+     "sure",
+     "dance",
+     "years",
+     "mean"
     ]
    },
    {
@@ -3539,6 +4544,20 @@ const CHANNELS = [
     ],
     cast: [
      "Cab Calloway"
+    ],
+    kw: [
+     "many",
+     "business",
+     "mason",
+     "will",
+     "give",
+     "read",
+     "better",
+     "around",
+     "done",
+     "love",
+     "manager",
+     "next"
     ]
    },
    {
@@ -3588,6 +4607,20 @@ const CHANNELS = [
     co: [
      "Paramount Pictures",
      "Hope Enterprises"
+    ],
+    kw: [
+     "mean",
+     "last",
+     "will",
+     "jackson",
+     "much",
+     "sure",
+     "kind",
+     "give",
+     "maybe",
+     "still",
+     "uncle",
+     "show"
     ]
    },
    {
@@ -3686,6 +4719,20 @@ const CHANNELS = [
      "Bud Abbott",
      "Lou Costello",
      "Clyde Beatty"
+    ],
+    kw: [
+     "stanley",
+     "minute",
+     "mean",
+     "book",
+     "will",
+     "five",
+     "lines",
+     "dollars",
+     "find",
+     "twenty",
+     "thousand",
+     "give"
     ]
    },
    {
@@ -3713,6 +4760,20 @@ const CHANNELS = [
     ],
     co: [
      "Warner Bros. Entertainment"
+    ],
+    kw: [
+     "will",
+     "general",
+     "inspector",
+     "people",
+     "read",
+     "love",
+     "must",
+     "money",
+     "much",
+     "give",
+     "life",
+     "even"
     ]
    },
    {
@@ -3765,6 +4826,20 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
+    ],
+    kw: [
+     "show",
+     "money",
+     "sure",
+     "home",
+     "mother",
+     "wife",
+     "will",
+     "much",
+     "mean",
+     "five",
+     "even",
+     "watch"
     ]
    },
    {
@@ -3792,6 +4867,20 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
+    ],
+    kw: [
+     "thought",
+     "love",
+     "will",
+     "much",
+     "wedding",
+     "wrong",
+     "world",
+     "call",
+     "show",
+     "around",
+     "mean",
+     "maybe"
     ]
    },
    {
@@ -3824,6 +4913,20 @@ const CHANNELS = [
     dir: [
      "Leonard Reed",
      "Joseph Kohn"
+    ],
+    kw: [
+     "give",
+     "show",
+     "many",
+     "mean",
+     "people",
+     "remember",
+     "dollars",
+     "much",
+     "believe",
+     "present",
+     "play",
+     "baseball"
     ]
    },
    {
@@ -3844,6 +4947,20 @@ const CHANNELS = [
     cast: [
      "Bettie Page",
      "Tempest Storm"
+    ],
+    kw: [
+     "money",
+     "mean",
+     "bomb",
+     "elite",
+     "world",
+     "give",
+     "walk",
+     "feel",
+     "brother",
+     "call",
+     "show",
+     "days"
     ]
    },
    {
@@ -3881,7 +4998,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/HouseOnBareMountain/HouseOnBareMountain.thumbs/House%20on%20Bare%20Mountain_001494.jpg",
     subs: "House on Bare Mountain.asr.srt",
-    bytes: 552895530
+    bytes: 552895530,
+    kw: [
+     "girl",
+     "poor",
+     "school",
+     "girls",
+     "eight",
+     "world",
+     "granny",
+     "game",
+     "nice",
+     "name",
+     "honey",
+     "prudence"
+    ]
    },
    {
     title: "McLintock!",
@@ -3908,6 +5039,20 @@ const CHANNELS = [
     ],
     co: [
      "Batjac Productions"
+    ],
+    kw: [
+     "will",
+     "mcclintock",
+     "talk",
+     "give",
+     "first",
+     "home",
+     "sure",
+     "morning",
+     "mean",
+     "last",
+     "young",
+     "douglas"
     ]
    },
    {
@@ -3931,7 +5076,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheNastyRabbit1964.mp4/TheNastyRabbit1964.mp4.thumbs/TheNastyRabbit1964_002154.jpg",
     subs: "TheNastyRabbit1964.asr.srt",
-    bytes: 1038725584
+    bytes: 1038725584,
+    kw: [
+     "will",
+     "must",
+     "eleven",
+     "last",
+     "rabbit",
+     "room",
+     "world",
+     "agent",
+     "love",
+     "first",
+     "special",
+     "number"
+    ]
    },
    {
     title: "The Over-the-Hill Gang",
@@ -4233,7 +5392,21 @@ const CHANNELS = [
     frame: "https://archive.org/download/DeadManDrinking/DeadManDrinking.thumbs/DeadManDrinking-720p_004662.jpg",
     subs: "DeadManDrinking-720p.asr.srt",
     bytes: 378149925,
-    wd: "Q127599802"
+    wd: "Q127599802",
+    kw: [
+     "fuck",
+     "fucking",
+     "mean",
+     "guys",
+     "kill",
+     "much",
+     "point",
+     "first",
+     "actually",
+     "still",
+     "chris",
+     "trying"
+    ]
    },
    {
     title: "01 East Side Kids",
@@ -4245,7 +5418,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/01EastSideKids/01EastSideKids.thumbs/01-East%20Side%20Kids_001470.jpg",
     subs: "01-East Side Kids.autogenerated.vtt",
-    bytes: 385372673
+    bytes: 385372673,
+    kw: [
+     "danny",
+     "knuckles",
+     "ain't",
+     "give",
+     "captain",
+     "will",
+     "kids",
+     "copper",
+     "dutch",
+     "molly",
+     "club",
+     "miloway"
+    ]
    },
    {
     title: "07 Spooks Run Wild",
@@ -4257,7 +5444,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/07SpooksRunWild/07SpooksRunWild.thumbs/07-Spooks%20Run%20Wild_001530.jpg",
     subs: "07-Spooks Run Wild.autogenerated.vtt",
-    bytes: 399789713
+    bytes: 399789713,
+    kw: [
+     "ain't",
+     "will",
+     "sure",
+     "open",
+     "wait",
+     "find",
+     "around",
+     "maybe",
+     "camp",
+     "peewee",
+     "place",
+     "away"
+    ]
    },
    {
     title: "10 Smart Alecks",
@@ -4269,7 +5470,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/10SmartAlecks/10SmartAlecks.thumbs/10-Smart%20Alecks_001590.jpg",
     subs: "10-Smart Alecks.autogenerated.vtt",
-    bytes: 410543603
+    bytes: 410543603,
+    kw: [
+     "danny",
+     "sure",
+     "ain't",
+     "hank",
+     "guys",
+     "money",
+     "fellas",
+     "better",
+     "maybe",
+     "boys",
+     "give",
+     "nice"
+    ]
    },
    {
     title: "12 Kid Dynamite",
@@ -4281,7 +5496,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/12KidDynamite/12KidDynamite.thumbs/12-Kid%20Dynamite_001590.jpg",
     subs: "12-Kid Dynamite.autogenerated.vtt",
-    bytes: 412743630
+    bytes: 412743630,
+    kw: [
+     "danny",
+     "mugs",
+     "give",
+     "will",
+     "fight",
+     "around",
+     "sure",
+     "boys",
+     "ain't",
+     "fellas",
+     "tonight",
+     "muggs"
+    ]
    }
   ]
  },
@@ -4321,7 +5550,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CaseofSp1940/CaseofSp1940.thumbs/CaseofSp1940_000180.jpg",
     subs: "CaseofSp1940.asr.srt",
-    bytes: 35121606
+    bytes: 35121606,
+    kw: [
+     "springs",
+     "spring",
+     "another",
+     "even",
+     "shock",
+     "play",
+     "realize",
+     "action",
+     "cushion"
+    ]
    },
    {
     title: "Doctor in Industry (Part I)",
@@ -4351,6 +5591,20 @@ const CHANNELS = [
     wd: "Q33104490",
     co: [
      "Coronet Films"
+    ],
+    kw: [
+     "keep",
+     "joan",
+     "mother",
+     "must",
+     "cold",
+     "jones",
+     "health",
+     "home",
+     "ready",
+     "school",
+     "george",
+     "children"
     ]
    },
    {
@@ -4377,7 +5631,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Usingthe1947/Usingthe1947.thumbs/Usingthe1947_000240.jpg",
     subs: "Usingthe1947.asr.srt",
-    bytes: 44069496
+    bytes: 44069496,
+    kw: [
+     "bank",
+     "check",
+     "adams",
+     "dollars",
+     "fifty",
+     "money",
+     "account",
+     "deposit",
+     "savings",
+     "hundred",
+     "banks",
+     "checks"
+    ]
    },
    {
     title: "Care of the Skin",
@@ -4391,7 +5659,21 @@ const CHANNELS = [
     frame: "https://archive.org/download/Careofth1949/Careofth1949.thumbs/Careofth1949_000240.jpg",
     subs: "Careofth1949.asr.srt",
     bytes: 44739135,
-    wd: "Q124409761"
+    wd: "Q124409761",
+    kw: [
+     "skin",
+     "soap",
+     "sweat",
+     "dirt",
+     "washes",
+     "water",
+     "glands",
+     "every",
+     "special",
+     "helps",
+     "keep",
+     "germs"
+    ]
    },
    {
     title: "Personal Hygiene (Part I)",
@@ -4417,7 +5699,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Sleepfor1950/Sleepfor1950.thumbs/Sleepfor1950_000240.jpg",
     subs: "Sleepfor1950.asr.srt",
-    bytes: 45590108
+    bytes: 45590108,
+    kw: [
+     "sleep",
+     "habits",
+     "david",
+     "sleeping",
+     "regular",
+     "often",
+     "important",
+     "habit",
+     "usually",
+     "george",
+     "hard",
+     "without"
+    ]
    },
    {
     title: "Duck and Cover",
@@ -4435,6 +5731,20 @@ const CHANNELS = [
     wpx: "Duck and Cover is a 1952 American civil defense animated and live action social guidance film that is often characterized as propaganda. It has similar themes to the more adult-oriented civil defense training films. It was widely distributed to United States schoolchildren in the 1950s, and teaches students what to do in the event of a nuclear explosion.",
     dir: [
      "Anthony Rizzo"
+    ],
+    kw: [
+     "cover",
+     "bomb",
+     "duck",
+     "ready",
+     "atomic",
+     "must",
+     "will",
+     "explodes",
+     "flash",
+     "covered",
+     "danger",
+     "school"
     ]
    },
    {
@@ -4448,7 +5758,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/GoodEati1951/GoodEati1951.thumbs/GoodEati1951_000240.jpg",
     subs: "GoodEati1951.asr.srt",
-    bytes: 41461144
+    bytes: 41461144,
+    kw: [
+     "bill",
+     "stomach",
+     "food",
+     "hungry",
+     "ache",
+     "supper",
+     "breakfast",
+     "eating",
+     "feel",
+     "mother",
+     "play",
+     "morning"
+    ]
    },
    {
     title: "The Home Economics Story",
@@ -4472,7 +5796,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/isforAto1953/isforAto1953.thumbs/isforAto1953_000360.jpg",
     subs: "isforAto1953.asr.srt",
-    bytes: 62713369
+    bytes: 62713369,
+    kw: [
+     "thirty",
+     "atom",
+     "atoms",
+     "five",
+     "atomic",
+     "science",
+     "uranium",
+     "protons",
+     "energy",
+     "reactor",
+     "many",
+     "neutrons"
+    ]
    },
    {
     title: "Health: Your Posture",
@@ -4485,7 +5823,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/HealthYo1953/HealthYo1953.thumbs/HealthYo1953_000240.jpg",
     subs: "HealthYo1953.asr.srt",
-    bytes: 45302373
+    bytes: 45302373,
+    kw: [
+     "posture",
+     "will",
+     "important",
+     "enough",
+     "health",
+     "muscles",
+     "body",
+     "rest",
+     "mirror",
+     "straight",
+     "better",
+     "help"
+    ]
    },
    {
     title: "Eat for Health",
@@ -4498,7 +5850,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/EatforHe1954/EatforHe1954.thumbs/EatforHe1954_000240.jpg",
     subs: "EatforHe1954.asr.srt",
-    bytes: 44562696
+    bytes: 44562696,
+    kw: [
+     "food",
+     "vegetables",
+     "ralph",
+     "health",
+     "kinds",
+     "milk",
+     "vitamin",
+     "class",
+     "bread",
+     "butter",
+     "energy",
+     "many"
+    ]
    },
    {
     title: "From the Ground Up",
@@ -4511,7 +5877,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/FromtheG1954/FromtheG1954.thumbs/FromtheG1954_000480.jpg",
     subs: "FromtheG1954.asr.srt",
-    bytes: 81080331
+    bytes: 81080331,
+    kw: [
+     "neutral",
+     "alfalfa",
+     "light",
+     "neutralize",
+     "food",
+     "control",
+     "compost",
+     "machine",
+     "ready",
+     "ensure",
+     "quality",
+     "supplement"
+    ]
    },
    {
     title: "How to Go Places",
@@ -4524,7 +5904,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/HowtoGoP1954/HowtoGoP1954.thumbs/HowtoGoP1954_000240.jpg",
     subs: "HowtoGoP1954.asr.srt",
-    bytes: 45280790
+    bytes: 45280790,
+    kw: [
+     "family",
+     "expert",
+     "ready",
+     "last",
+     "vacation",
+     "left",
+     "places",
+     "experts",
+     "knowing",
+     "easy",
+     "road",
+     "hour"
+    ]
    },
    {
     title: "Achievement USA",
@@ -4537,7 +5931,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Achievem1955/Achievem1955.thumbs/Achievem1955_000240.jpg",
     subs: "Achievem1955.asr.srt",
-    bytes: 43797201
+    bytes: 43797201,
+    kw: [
+     "general",
+     "motors",
+     "hundred",
+     "million",
+     "people",
+     "fifty",
+     "progress",
+     "millions",
+     "chevrolet",
+     "history",
+     "nine",
+     "parade"
+    ]
    },
    {
     title: "Sniffles and Sneezes",
@@ -4550,7 +5958,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Sniffles1955/Sniffles1955.thumbs/Sniffles1955_000240.jpg",
     subs: "Sniffles1955.asr.srt",
-    bytes: 40955591
+    bytes: 40955591,
+    kw: [
+     "cold",
+     "common",
+     "nose",
+     "many",
+     "viruses",
+     "mucus",
+     "germs",
+     "colds",
+     "even",
+     "others",
+     "stay",
+     "symptoms"
+    ]
    },
    {
     title: "Design for Dreaming",
@@ -4588,7 +6010,21 @@ const CHANNELS = [
     frame: "https://archive.org/download/AsBoysGr1957/AsBoysGr1957.thumbs/AsBoysGr1957_000360.jpg",
     subs: "AsBoysGr1957.asr.srt",
     bytes: 68543789,
-    wd: "Q42000345"
+    wd: "Q42000345",
+    kw: [
+     "maybe",
+     "start",
+     "sperm",
+     "penis",
+     "baby",
+     "different",
+     "guys",
+     "kids",
+     "part",
+     "pretty",
+     "around",
+     "puberty"
+    ]
    },
    {
     title: "Have I Told You Lately That I Love You?",
@@ -4614,7 +6050,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/GoldenYe1960/GoldenYe1960.thumbs/GoldenYe1960_000360.jpg",
     subs: "GoldenYe1960.asr.srt",
-    bytes: 61954119
+    bytes: 61954119,
+    kw: [
+     "brunswick",
+     "ball",
+     "bowling",
+     "custom",
+     "line",
+     "color",
+     "colors",
+     "exclusive",
+     "recreation",
+     "quality",
+     "brunswick's",
+     "features"
+    ]
    },
    {
     title: "Your Name Here",
@@ -4627,7 +6077,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/YourName1960/YourName1960.thumbs/YourName1960_000240.jpg",
     subs: "YourName1960.asr.srt",
-    bytes: 43093689
+    bytes: 43093689,
+    kw: [
+     "better",
+     "life",
+     "name",
+     "dream",
+     "still",
+     "product",
+     "film",
+     "years",
+     "impossible",
+     "keep",
+     "done",
+     "nation"
+    ]
    },
    {
     title: "Boys Beware",
@@ -4649,6 +6113,20 @@ const CHANNELS = [
     ],
     cast: [
      "Sid Davis"
+    ],
+    kw: [
+     "jimmy",
+     "stranger",
+     "ralph",
+     "home",
+     "friendly",
+     "mike",
+     "afternoon",
+     "decided",
+     "alone",
+     "denny",
+     "jerry",
+     "boys"
     ]
    },
    {
@@ -4662,7 +6140,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/OneGotFa1963/OneGotFa1963.thumbs/OneGotFa1963_000360.jpg",
     subs: "OneGotFa1963.autogenerated.vtt",
-    bytes: 62690918
+    bytes: 62690918,
+    kw: [
+     "bike",
+     "care",
+     "signals",
+     "knows",
+     "slim",
+     "hand",
+     "auto",
+     "license",
+     "rode",
+     "stanislaw",
+     "trouble",
+     "signal"
+    ]
    }
   ]
  },
@@ -4684,7 +6176,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1933-03-05_Extra_Special_Roosevelt_Inaugurated/1933-03-05_Extra_Special_Roosevelt_Inaugurated.thumbs/1933-03-05_Extra_Special_Roosevelt_Inaugurated_000180.jpg",
     subs: "1933-03-05_Extra_Special_Roosevelt_Inaugurated_512kb.autogenerated.vtt",
-    bytes: 33300705
+    bytes: 33300705,
+    kw: [
+     "president",
+     "roosevelt",
+     "will",
+     "united",
+     "states",
+     "guide",
+     "days",
+     "national",
+     "still",
+     "office",
+     "protect",
+     "shall"
+    ]
    },
    {
     title: "Extra!! Scoop! - First Actual Pictures - Assassination, 1934/10/17",
@@ -4696,7 +6202,17 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1934-10-17_King_Alexander_Assassination/1934-10-17_King_Alexander_Assassination.thumbs/1934-10-17_King_Alexander_Assassination_000060.jpg",
     subs: "1934-10-17_King_Alexander_Assassination_512kb.autogenerated.vtt",
-    bytes: 13744590
+    bytes: 13744590,
+    kw: [
+     "king",
+     "france",
+     "french",
+     "barthold",
+     "europe",
+     "police",
+     "dying",
+     "crowd"
+    ]
    },
    {
     title: "Norman Alley's Bombing of USS Panay Special Issue, 1937/12/12",
@@ -4719,7 +6235,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1941-12-24_Big_News_of_1941/1941-12-24_Big_News_of_1941.thumbs/1941-12-24_Big_News_of_1941_000180.jpg",
     subs: "1941-12-24_Big_News_of_1941_512kb.autogenerated.vtt",
-    bytes: 34231686
+    bytes: 34231686,
+    kw: [
+     "american",
+     "united",
+     "axis",
+     "british",
+     "defense",
+     "planes",
+     "america",
+     "states",
+     "nation",
+     "victory",
+     "peace",
+     "president"
+    ]
    },
    {
     title: "Eve of Battle, 1944/06/06",
@@ -4731,7 +6261,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1944-06-06_Eve_of_Battle/1944-06-06_Eve_of_Battle.thumbs/1944-06-06_Eve_of_Battle_000480.jpg",
     subs: "1944-06-06_Eve_of_Battle_512kb.autogenerated.vtt",
-    bytes: 84925533
+    bytes: 84925533,
+    kw: [
+     "army",
+     "german",
+     "britain",
+     "europe",
+     "allied",
+     "invasion",
+     "force",
+     "many",
+     "aircraft",
+     "coast",
+     "british",
+     "factories"
+    ]
    },
    {
     title: "Allies Seize German Loot and Criminals,1945/06/04",
@@ -4743,7 +6287,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1945-06-04_Allies_Sieze_German_Loot_and_Criminals/1945-06-04_Allies_Sieze_German_Loot_and_Criminals.thumbs/1945-06-04_Allies_Sieze_German_Loot_and_Criminals_000150.jpg",
     subs: "1945-06-04_Allies_Sieze_German_Loot_and_Criminals_512kb.autogenerated.vtt",
-    bytes: 26946732
+    bytes: 26946732,
+    kw: [
+     "hitler's",
+     "allied",
+     "much",
+     "pipe",
+     "hitler",
+     "nazi",
+     "officers",
+     "prize",
+     "nazis",
+     "hermann",
+     "ring",
+     "captured"
+    ]
    },
    {
     title: "Cruiser Bow Ripped Off By Typhoon, 1945/07/23",
@@ -4766,7 +6324,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1945-01-11_German_Drive_Rolled_Back_By_Allies/1945-01-11_German_Drive_Rolled_Back_By_Allies.thumbs/1945-01-11_German_Drive_Rolled_Back_By_Allies_000090.jpg",
     subs: "1945-01-11_German_Drive_Rolled_Back_By_Allies_512kb.autogenerated.vtt",
-    bytes: 18709118
+    bytes: 18709118,
+    kw: [
+     "troops",
+     "equipment",
+     "allied",
+     "supplies",
+     "rundstedt's",
+     "german",
+     "american",
+     "nazi",
+     "lines",
+     "nazis",
+     "dropped",
+     "positions"
+    ]
    },
    {
     title: "Victorious Generals Welcomed, 1945/06/11",
@@ -4778,7 +6350,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1945-06-11_Victorious_Generals_Welcomed/1945-06-11_Victorious_Generals_Welcomed.thumbs/1945-06-11_Victorious_Generals_Welcomed_000180.jpg",
     subs: "1945-06-11_Victorious_Generals_Welcomed_512kb.autogenerated.vtt",
-    bytes: 31893109
+    bytes: 31893109,
+    kw: [
+     "will",
+     "team",
+     "general",
+     "doolittle",
+     "supplies",
+     "enemy",
+     "business",
+     "four",
+     "military",
+     "production",
+     "year",
+     "parade"
+    ]
    },
    {
     title: "First Pictures Atomic Blast!, 1946/07/08",
@@ -4790,7 +6376,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1946-07-08_First_Pictures_Atomic_Blast/1946-07-08_First_Pictures_Atomic_Blast.thumbs/1946-07-08_First_Pictures_Atomic_Blast_000180.jpg",
     subs: "1946-07-08_First_Pictures_Atomic_Blast_512kb.autogenerated.vtt",
-    bytes: 32204948
+    bytes: 32204948,
+    kw: [
+     "bomb",
+     "bikini",
+     "blast",
+     "fleet",
+     "aboard",
+     "test",
+     "atom",
+     "will",
+     "atomic",
+     "final",
+     "ships",
+     "data"
+    ]
    },
    {
     title: "Jap Films of Hiroshima, 1946/08/05",
@@ -4802,7 +6402,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1946-08-05_Jap_Films_of_Hiroshima/1946-08-05_Jap_Films_of_Hiroshima.thumbs/1946-08-05_Jap_Films_of_Hiroshima_000180.jpg",
     subs: "1946-08-05_Jap_Films_of_Hiroshima_512kb.autogenerated.vtt",
-    bytes: 31054172
+    bytes: 31054172,
+    kw: [
+     "bomb",
+     "blast",
+     "hiroshima",
+     "atom",
+     "ships",
+     "admiral",
+     "fleet",
+     "many",
+     "bikini",
+     "will",
+     "water",
+     "force"
+    ]
    },
    {
     title: "94 Die Airplane Crashes, 1947/06/02",
@@ -4814,7 +6428,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1947-06-02_94_Die_Airplane_Crashes/1947-06-02_94_Die_Airplane_Crashes.thumbs/1947-06-02_94_Die_Airplane_Crashes_000180.jpg",
     subs: "1947-06-02_94_Die_Airplane_Crashes_512kb.autogenerated.vtt",
-    bytes: 32244533
+    bytes: 32244533,
+    kw: [
+     "race",
+     "takes",
+     "memorial",
+     "first",
+     "miles",
+     "will",
+     "baylangs",
+     "last",
+     "speed",
+     "death",
+     "hour",
+     "mile"
+    ]
    },
    {
     title: "1949 In Review, 1949/12/26",
@@ -4837,7 +6465,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1956-05-24_H-Bomb_Blast_Exploded/1956-05-24_H-Bomb_Blast_Exploded.thumbs/1956-05-24_H-Bomb_Blast_Exploded_000150.jpg",
     subs: "1956-05-24_H-Bomb_Blast_Exploded_512kb.autogenerated.vtt",
-    bytes: 28816785
+    bytes: 28816785,
+    kw: [
+     "will",
+     "large",
+     "target",
+     "blast",
+     "area",
+     "junior",
+     "baby",
+     "fish",
+     "kids"
+    ]
    },
    {
     title: "War in Egypt. British and French Bomb Its Key Cities, 1956/11/01",
@@ -4861,7 +6500,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1957-06-03_British_H-Bomb/1957-06-03_British_H-Bomb.thumbs/1957-06-03_British_H-Bomb_000060.jpg",
     subs: "1957-06-03_British_H-Bomb_512kb.autogenerated.vtt",
-    bytes: 14456250
+    bytes: 14456250,
+    kw: [
+     "atomic",
+     "world",
+     "arab",
+     "will"
+    ]
    },
    {
     title: "First U.S. Satellite Launched! 1958/02/03",
@@ -4885,7 +6530,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1960-09-22_25_years_ago/1960-09-22_25_years_ago.thumbs/1960-09-22_25_years_ago_000060.jpg",
     subs: "1960-09-22_25_years_ago_512kb.autogenerated.vtt",
-    bytes: 9929685
+    bytes: 9929685,
+    kw: [
+     "league",
+     "nations",
+     "mussolini",
+     "threat"
+    ]
    },
    {
     title: "News Highlights of 1960, 1960/12/31",
@@ -4897,7 +6548,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1960-12-31_News_Highlights_of_1960/1960-12-31_News_Highlights_of_1960.thumbs/1960-12-31_News_Highlights_of_1960_000120.jpg",
     subs: "1960-12-31_News_Highlights_of_1960_512kb.autogenerated.vtt",
-    bytes: 22671192
+    bytes: 22671192,
+    kw: [
+     "york",
+     "prince",
+     "continued",
+     "states",
+     "united",
+     "treaty",
+     "america",
+     "session",
+     "powers",
+     "greatest",
+     "year",
+     "ever"
+    ]
    },
    {
     title: "A Day in History. Telstar Brings World Closer, 1962/07/12",
@@ -4920,7 +6585,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1964-03-02_New_York_Worlds_Fair/1964-03-02_New_York_Worlds_Fair.thumbs/1964-03-02_New_York_Worlds_Fair_000060.jpg",
     subs: "1964-03-02_New_York_Worlds_Fair_512kb.autogenerated.vtt",
-    bytes: 11033181
+    bytes: 11033181,
+    kw: [
+     "will",
+     "fair",
+     "counting",
+     "world's"
+    ]
    },
    {
     title: "Olympics End. U.S. Teams Win Medal Honors, 1964/10/26",
@@ -4932,7 +6603,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1964-10-26_Olympics_End/1964-10-26_Olympics_End.thumbs/1964-10-26_Olympics_End_000060.jpg",
     subs: "1964-10-26_Olympics_End_512kb.autogenerated.vtt",
-    bytes: 14826730
+    bytes: 14826730,
+    kw: [
+     "olympic",
+     "stadium",
+     "bekela",
+     "track",
+     "start",
+     "running",
+     "second",
+     "hayes",
+     "four"
+    ]
    },
    {
     title: "Showdown in Vietnam, 1965/02/08",
@@ -4944,7 +6626,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1965-02-08_Showdown_in_Vietnam/1965-02-08_Showdown_in_Vietnam.thumbs/1965-02-08_Showdown_in_Vietnam_000120.jpg",
     subs: "1965-02-08_Showdown_in_Vietnam_512kb.autogenerated.vtt",
-    bytes: 25456328
+    bytes: 25456328,
+    kw: [
+     "vietnam",
+     "vietnamese",
+     "south",
+     "attack",
+     "security",
+     "north",
+     "raid",
+     "attacks",
+     "viet",
+     "cong",
+     "president",
+     "bundy"
+    ]
    },
    {
     title: "Peace March. Thousands Oppose Vietnam War, 1967/04/18",
@@ -4977,7 +6673,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/OldJoeSister/OldJoeSister.thumbs/OldJoeSister1949_000534.jpg",
     subs: "OldJoeSister1949.autogenerated.vtt",
-    bytes: 138485411
+    bytes: 138485411,
+    kw: [
+     "mite",
+     "sure",
+     "sheriff",
+     "cabin",
+     "wagon",
+     "mean",
+     "peters",
+     "abby",
+     "baker",
+     "silver",
+     "mind",
+     "horses"
+    ]
    },
    {
     title: "The Lone Ranger TV Show",
@@ -5002,7 +6712,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Dragnet1951/Dragnet1951.thumbs/Dragnet/Season%202/Dragnet%20(1951)%20-%20S02E33%20-%20The%20Big%20Dance_000908.jpg",
     subs: "Dragnet/Season 1/Dragnet (1951) - S01E01 - The Human Bomb.autogenerated.vtt",
-    bytes: 147599019
+    bytes: 147599019,
+    kw: [
+     "minutes",
+     "building",
+     "sure",
+     "brother",
+     "carney",
+     "connie",
+     "phone",
+     "bomb",
+     "pull",
+     "friday",
+     "nine",
+     "will"
+    ]
    },
    {
     title: "Sherlock Holmes - The Man Who Disappeared (Failed Pilot)",
@@ -5015,7 +6739,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SherlockHolmes-TheManWhoDisappearedfailedPilot/SherlockHolmes-TheManWhoDisappearedfailedPilot.thumbs/SherlockHolmes-TheManWhoDisappeared_000600.jpg",
     subs: "SherlockHolmes-TheManWhoDisappeared.asr.srt",
-    bytes: 112158765
+    bytes: 112158765,
+    kw: [
+     "sinclair",
+     "husband",
+     "inspector",
+     "matter",
+     "name",
+     "quite",
+     "moment",
+     "office",
+     "holmes",
+     "window",
+     "will",
+     "madam"
+    ]
    },
    {
     title: "Dragnet - Episode # 18 The Big Seventeen w/commercials",
@@ -5027,7 +6765,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/DragnetEpisode18TheBigSeventeenwcommercials/DragnetEpisode18TheBigSeventeenwcommercials.thumbs/dragnet_bigseventeen_000720.jpg",
     subs: "dragnet_bigseventeen.autogenerated.vtt",
-    bytes: 133486489
+    bytes: 133486489,
+    kw: [
+     "johnny",
+     "kids",
+     "stuff",
+     "harry",
+     "narcotics",
+     "demering",
+     "neighborhood",
+     "today",
+     "trouble",
+     "theater",
+     "everson",
+     "school"
+    ]
    },
    {
     title: "Studio One : The Nativity",
@@ -5039,7 +6791,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/StudioOne-TheNativity/StudioOne-TheNativity.thumbs/StudioOne-TheNativity_001440.jpg",
     subs: "StudioOne-TheNativity.autogenerated.vtt",
-    bytes: 258565859
+    bytes: 258565859,
+    kw: [
+     "shall",
+     "lord",
+     "thee",
+     "will",
+     "westinghouse",
+     "thou",
+     "hail",
+     "child",
+     "king",
+     "light",
+     "born",
+     "place"
+    ]
    },
    {
     title: "Sherlock Holmes - The Case of Lady Beryl",
@@ -5051,7 +6817,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SherlockHolmes-TheCaseofLadyBeryl/SherlockHolmes-TheCaseofLadyBeryl.thumbs/TheCaseofLadyBeryl_000660.jpg",
     subs: "TheCaseofLadyBeryl.autogenerated.vtt",
-    bytes: 117543804
+    bytes: 117543804,
+    kw: [
+     "holmes",
+     "beryl",
+     "course",
+     "lord",
+     "bell",
+     "ross",
+     "lestrade",
+     "glasses",
+     "believe",
+     "body",
+     "watson",
+     "will"
+    ]
    },
    {
     title: "Sherlock Holmes - The Case of the Belligerent Ghost",
@@ -5063,7 +6843,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SherlockHolmes-TheCaseoftheBelligerentGhost/SherlockHolmes-TheCaseoftheBelligerentGhost.thumbs/TheCaseoftheBelligerentGhost_000600.jpg",
     subs: "TheCaseoftheBelligerentGhost.autogenerated.vtt",
-    bytes: 116696840
+    bytes: 116696840,
+    kw: [
+     "holmes",
+     "watson",
+     "higgins",
+     "albert",
+     "nine",
+     "inspector",
+     "punched",
+     "ghost",
+     "street",
+     "dear",
+     "museum",
+     "mean"
+    ]
    },
    {
     title: "Sherlock Holmes - The Case of the Cunningham Heritage",
@@ -5075,7 +6869,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SherlockHolmes-TheCaseoftheCunninghamHeritage/SherlockHolmes-TheCaseoftheCunninghamHeritage.thumbs/TheCaseoftheCunninghamHeritage_000660.jpg",
     subs: "TheCaseoftheCunninghamHeritage.autogenerated.vtt",
-    bytes: 118336193
+    bytes: 118336193,
+    kw: [
+     "holmes",
+     "watson",
+     "course",
+     "inspector",
+     "sherlock",
+     "case",
+     "looking",
+     "peter",
+     "married",
+     "afghanistan",
+     "mind",
+     "body"
+    ]
    },
    {
     title: "Sherlock Holmes - The Case of the Pennsylvania Gun",
@@ -5087,7 +6895,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SherlockHolmes-TheCaseofthePennsylvaniaGun/SherlockHolmes-TheCaseofthePennsylvaniaGun.thumbs/TheCaseofthePennsylvaniaGun_000600.jpg",
     subs: "TheCaseofthePennsylvaniaGun.autogenerated.vtt",
-    bytes: 116058557
+    bytes: 116058557,
+    kw: [
+     "holmes",
+     "watson",
+     "douglas",
+     "course",
+     "case",
+     "moat",
+     "dumbbell",
+     "fishing",
+     "measure",
+     "murder",
+     "john",
+     "mean"
+    ]
    },
    {
     title: "Sherlock Holmes - The Case of the Shy Ballerina",
@@ -5099,7 +6921,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SherlockHolmes-TheCaseoftheShyBallerina/SherlockHolmes-TheCaseoftheShyBallerina.thumbs/TheCaseoftheShyBallerina_000600.jpg",
     subs: "TheCaseoftheShyBallerina.autogenerated.vtt",
-    bytes: 113676623
+    bytes: 113676623,
+    kw: [
+     "holmes",
+     "watson",
+     "will",
+     "madam",
+     "kelton",
+     "must",
+     "smirnov",
+     "husband",
+     "lestrade",
+     "murder",
+     "ballet",
+     "petersburg"
+    ]
    },
    {
     title: "Sherlock Holmes - The Case of the Texas Cowgirl",
@@ -5135,7 +6971,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheAdventuresOfFlashGordon/TheAdventuresOfFlashGordon.thumbs/TheAdventuresOfFlashGordon7-15-1955_000600.jpg",
     subs: "TheAdventuresOfFlashGordon7-15-1955.autogenerated.vtt",
-    bytes: 112057802
+    bytes: 112057802,
+    kw: [
+     "surface",
+     "will",
+     "fire",
+     "ready",
+     "order",
+     "blast",
+     "earth's",
+     "flash",
+     "dale",
+     "chamber",
+     "blasting",
+     "tremors"
+    ]
    },
    {
     title: "''Ozzie and Harriet'' - David's Almost In-Laws (Aired 23 November 1960",
@@ -5147,7 +6997,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/OzzieNelsonInLaws/OzzieNelsonInLaws.thumbs/AlmostInLawsDavidNelson_000660.jpg",
     subs: "AlmostInLawsDavidNelson.autogenerated.vtt",
-    bytes: 126016922
+    bytes: 126016922,
+    kw: [
+     "harry",
+     "dave",
+     "nice",
+     "will",
+     "harriet",
+     "june",
+     "thought",
+     "dear",
+     "sure",
+     "guess",
+     "coke",
+     "play"
+    ]
    },
    {
     title: "One Step Beyond : Earthquake ( Season 2, Episode 17)",
@@ -5159,7 +7023,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/OneStepBeyondEarthquake/OneStepBeyondEarthquake.thumbs/OneStepBeyondEarthquake_000600.jpg",
     subs: "OneStepBeyondEarthquake.autogenerated.vtt",
-    bytes: 103978836
+    bytes: 103978836,
+    kw: [
+     "earthquake",
+     "harry",
+     "will",
+     "people",
+     "believe",
+     "perkins",
+     "years",
+     "tomorrow",
+     "drunk",
+     "call",
+     "hotel",
+     "save"
+    ]
    },
    {
     title: "The Dick Van Dyke Show TV-Show",
@@ -5171,7 +7049,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The_Dick_van_Dyke_Show/The_Dick_van_Dyke_Show.thumbs/GIVE_ME_YOUR_WALLS_000300.jpg",
     subs: "A_MANS_TEETH_ARE_NOT_HIS_OWN.autogenerated.vtt",
-    bytes: 108600911
+    bytes: 108600911,
+    kw: [
+     "jerry",
+     "dentist",
+     "teeth",
+     "work",
+     "mean",
+     "tooth",
+     "fine",
+     "wait",
+     "listen",
+     "itch",
+     "minute",
+     "away"
+    ]
    },
    {
     title: "Jack Benny March, 4th 1962",
@@ -5184,7 +7076,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/jack_benny_03_04_62/jack_benny_03_04_62.thumbs/jackbenny_000540.jpg",
     subs: "jackbenny.autogenerated.vtt",
-    bytes: 98983694
+    bytes: 98983694,
+    kw: [
+     "play",
+     "show",
+     "violin",
+     "tony",
+     "will",
+     "daddy",
+     "ladies",
+     "give",
+     "autograph",
+     "wait",
+     "mean",
+     "number"
+    ]
    },
    {
     title: "The Beverly Hillbillies TV Show",
@@ -5209,7 +7115,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheDickVanDykeShow/TheDickVanDykeShow.thumbs/The-Dick_Van_Dyke-Show-10-24-62_000600.jpg",
     subs: "The-Dick_Van_Dyke-Show-10-24-62.autogenerated.vtt",
-    bytes: 110394020
+    bytes: 110394020,
+    kw: [
+     "buddy",
+     "blackie",
+     "pool",
+     "play",
+     "brother",
+     "dollars",
+     "hundred",
+     "money",
+     "mean",
+     "sure",
+     "soda",
+     "crackers"
+    ]
    },
    {
     title: "The Dick Van Dyke Show #31: Never Name a Duck",
@@ -5221,7 +7141,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/dick_van_dyke_show_31_never_name_a_duck/dick_van_dyke_show_31_never_name_a_duck.thumbs/dick_van_dyke_show_31_never_name_a_duck_000600.jpg",
     subs: "dick_van_dyke_show_31_never_name_a_duck.autogenerated.vtt",
-    bytes: 109100561
+    bytes: 109100561,
+    kw: [
+     "rich",
+     "stanley",
+     "duck",
+     "love",
+     "richie",
+     "honey",
+     "ducks",
+     "daddy",
+     "give",
+     "oliver",
+     "baby",
+     "much"
+    ]
    },
    {
     title: "The Dick Van Dyke Show #34: Bank Book 6565696",
@@ -5246,7 +7180,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/dick_van_dyke_show_39_the_night_the_roof_fell_in/dick_van_dyke_show_39_the_night_the_roof_fell_in.thumbs/dick_van_dyke_show_39_the_night_the_roof_fell_in_000600.jpg",
     subs: "dick_van_dyke_show_39_the_night_the_roof_fell_in.autogenerated.vtt",
-    bytes: 110503585
+    bytes: 110503585,
+    kw: [
+     "home",
+     "call",
+     "richie",
+     "honey",
+     "darling",
+     "millie",
+     "rich",
+     "mommy",
+     "dinner",
+     "ottoman",
+     "daddy",
+     "fight"
+    ]
    },
    {
     title: "The Lucy Show ▲ 54 Hours + / 152 Episodes - Incomplete TV Series",
@@ -5271,7 +7219,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/PetticoatJunction/PetticoatJunction.thumbs/Petticoat-Junction-1-7-64_000600.jpg",
     subs: "Petticoat-Junction-1-7-64.autogenerated.vtt",
-    bytes: 111576656
+    bytes: 111576656,
+    kw: [
+     "bobby",
+     "alan",
+     "landman",
+     "uncle",
+     "woof",
+     "listen",
+     "poetry",
+     "kate",
+     "mean",
+     "talk",
+     "stanley",
+     "food"
+    ]
    },
    {
     title: "Jack Benny Hour",
@@ -5283,7 +7245,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/JackBennyHour1965/JackBennyHour1965.thumbs/TheJackBennyHour_001410.jpg",
     subs: "TheJackBennyHour.autogenerated.vtt",
-    bytes: 363401279
+    bytes: 363401279,
+    kw: [
+     "show",
+     "clown",
+     "away",
+     "stay",
+     "mozzarella",
+     "provolone",
+     "parmesan",
+     "ricotta",
+     "jack",
+     "eastern",
+     "walt",
+     "nice"
+    ]
    },
    {
     title: "\"The Lucy Show\" - Main Street U.S.A.",
@@ -5295,7 +7271,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Lucy_Show_Main_Street/Lucy_Show_Main_Street.thumbs/Lucy_MelTorme_000600.jpg",
     subs: "Lucy_MelTorme.autogenerated.vtt",
-    bytes: 110165792
+    bytes: 110165792,
+    kw: [
+     "dararum",
+     "town",
+     "commission",
+     "street",
+     "highway",
+     "main",
+     "carmichael",
+     "meeting",
+     "mooney",
+     "freeway",
+     "weber",
+     "around"
+    ]
    },
    {
     title: "Episode of the Classic TV series \"The Lucy Show\" with Lucille Ball",
@@ -5307,7 +7297,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/lucyshow/lucyshow.thumbs/lucyshow_000600.jpg",
     subs: "lucyshow.autogenerated.vtt",
-    bytes: 108242931
+    bytes: 108242931,
+    kw: [
+     "mooney",
+     "work",
+     "carmichael",
+     "sick",
+     "will",
+     "paper",
+     "home",
+     "picture",
+     "give",
+     "refrigerator",
+     "newspaper",
+     "sale"
+    ]
    },
    {
     title: "\"The Adventures of Ozzie and Harriet\" 1956 Christmas episode",
@@ -5318,7 +7322,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Ozzie_and_Harriet_Christmas/Ozzie_and_Harriet_Christmas.thumbs/Ozzie_and_Harriet_000720.jpg",
     subs: "Ozzie_and_Harriet.autogenerated.vtt",
-    bytes: 126554352
+    bytes: 126554352,
+    kw: [
+     "christmas",
+     "irving",
+     "lights",
+     "merry",
+     "harriet",
+     "family",
+     "nelson",
+     "part",
+     "lala",
+     "house",
+     "year",
+     "sure"
+    ]
    },
    {
     title: "Beverly Hillbillies : Home For Christmas",
@@ -5329,7 +7347,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Beverly_Hillbillies_Ep13_Home_For_Christmas/Beverly_Hillbillies_Ep13_Home_For_Christmas.thumbs/BH13_Home_For_Christmas_000600.jpg",
     subs: "BH13_Home_For_Christmas.autogenerated.vtt",
-    bytes: 109610316
+    bytes: 109610316,
+    kw: [
+     "christmas",
+     "give",
+     "home",
+     "sure",
+     "ain't",
+     "woman",
+     "will",
+     "reckon",
+     "keep",
+     "horse",
+     "bodine",
+     "ever"
+    ]
    },
    {
     title: "Beverly Hillbillies Ep01 The Clampetts Strike Oil",
@@ -5340,7 +7372,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Beverly_Hillbillies_Ep01_The_Clampetts_Strike_Oil/Beverly_Hillbillies_Ep01_The_Clampetts_Strike_Oil.thumbs/BH01_The_Clampetts_Strike_Oil_000600.jpg",
     subs: "BH01_The_Clampetts_Strike_Oil.autogenerated.vtt",
-    bytes: 108342026
+    bytes: 108342026,
+    kw: [
+     "ain't",
+     "granny",
+     "hills",
+     "beverly",
+     "clampett",
+     "california",
+     "house",
+     "says",
+     "kind",
+     "place",
+     "brewster",
+     "jethro"
+    ]
    },
    {
     title: "Beverly Hillbillies Ep02 Getting Settled",
@@ -5352,7 +7398,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Beverly_Hillbillies_Ep02_Getting_Settled/Beverly_Hillbillies_Ep02_Getting_Settled.thumbs/BH02_Getting_Settled_000600.jpg",
     subs: "BH02_Getting_Settled.autogenerated.vtt",
-    bytes: 108518364
+    bytes: 108518364,
+    kw: [
+     "ain't",
+     "jethro",
+     "granny",
+     "chicken",
+     "oxford",
+     "ellie",
+     "school",
+     "stove",
+     "uncle",
+     "sure",
+     "girl",
+     "cook"
+    ]
    },
    {
     title: "Bonanza - Badge Without Honor",
@@ -5363,7 +7423,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza_-_Badge_Without_Honor/Bonanza_-_Badge_Without_Honor.thumbs/Bonanza_-_Badge_Without_Honor_001200.jpg",
     subs: "Bonanza_-_Badge_Without_Honor.autogenerated.vtt",
-    bytes: 215279959
+    bytes: 215279959,
+    kw: [
+     "jason",
+     "adam",
+     "esketh",
+     "will",
+     "mariette",
+     "clevenger",
+     "dear",
+     "friend",
+     "much",
+     "long",
+     "eskett",
+     "sacramento"
+    ]
    },
    {
     title: "Bonanza - Bitter Water",
@@ -5386,7 +7460,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza-BloodOnTheLand/Bonanza-BloodOnTheLand.thumbs/Bonanza_-_Blood_On_The_Land_S01-E22_001140.jpg",
     subs: "Bonanza_-_Blood_On_The_Land_S01-E22.autogenerated.vtt",
-    bytes: 215219074
+    bytes: 215219074,
+    kw: [
+     "ain't",
+     "billy",
+     "sheep",
+     "land",
+     "drummond",
+     "cartwright",
+     "mean",
+     "kill",
+     "adam",
+     "give",
+     "done",
+     "maybe"
+    ]
    },
    {
     title: "Bonanza - Dark Star",
@@ -5397,7 +7485,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza-DarkStar/Bonanza-DarkStar.thumbs/Bonanza_-_Dark_Star_S01-E31_001140.jpg",
     subs: "Bonanza_-_Dark_Star_S01-E31.autogenerated.vtt",
-    bytes: 215173214
+    bytes: 215173214,
+    kw: [
+     "will",
+     "girl",
+     "howl",
+     "people",
+     "much",
+     "devil",
+     "maybe",
+     "away",
+     "barusan",
+     "gypsy",
+     "mean",
+     "stay"
+    ]
    },
    {
     title: "Bonanza - Day Of Reckoning",
@@ -5408,7 +7510,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza_-_Day_Of_Reckoning/Bonanza_-_Day_Of_Reckoning.thumbs/Bonanza_-_Day_Of_Reckoning_001200.jpg",
     subs: "Bonanza_-_Day_Of_Reckoning.autogenerated.vtt",
-    bytes: 215470457
+    bytes: 215470457,
+    kw: [
+     "will",
+     "land",
+     "white",
+     "give",
+     "help",
+     "brother",
+     "kill",
+     "people",
+     "stay",
+     "better",
+     "home",
+     "father"
+    ]
    },
    {
     title: "Bonanza - Death At Dawn",
@@ -5419,7 +7535,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza-DeathAtDawn/Bonanza-DeathAtDawn.thumbs/Bonanza_-_Death_At_Dawn_S01-E32_001140.jpg",
     subs: "Bonanza_-_Death_At_Dawn_S01-E32.autogenerated.vtt",
-    bytes: 216317611
+    bytes: 216317611,
+    kw: [
+     "perkins",
+     "farmer",
+     "sheriff",
+     "hang",
+     "town",
+     "will",
+     "cameron",
+     "bryant",
+     "sure",
+     "boys",
+     "adam",
+     "judge"
+    ]
    },
    {
     title: "Bonanza - Denver McKee",
@@ -5430,7 +7560,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza_-_Denver_McKee/Bonanza_-_Denver_McKee.thumbs/Bonanza_-_Denver_McKee_001200.jpg",
     subs: "Bonanza_-_Denver_McKee.autogenerated.vtt",
-    bytes: 216383108
+    bytes: 216383108,
+    kw: [
+     "pete",
+     "connie",
+     "denver",
+     "sure",
+     "party",
+     "four",
+     "mean",
+     "long",
+     "around",
+     "girl",
+     "mckee",
+     "talk"
+    ]
    },
    {
     title: "Bonanza - Desert Justice",
@@ -5442,7 +7586,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza-DesertJustice/Bonanza-DesertJustice.thumbs/Bonanza_-_Desert_Justice_S01-E23_001140.jpg",
     subs: "Bonanza_-_Desert_Justice_S01-E23.autogenerated.vtt",
-    bytes: 215593397
+    bytes: 215593397,
+    kw: [
+     "marshal",
+     "dave",
+     "angeles",
+     "adam",
+     "cartwright",
+     "better",
+     "stage",
+     "will",
+     "father",
+     "david",
+     "morning",
+     "ain't"
+    ]
    },
    {
     title: "Bonanza - Feet Of Clay",
@@ -5453,7 +7611,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza-FeetOfClay/Bonanza-FeetOfClay.thumbs/Bonanza_-_Feet_Of_Clay_S01-E30_001140.jpg",
     subs: "Bonanza_-_Feet_Of_Clay_S01-E30.autogenerated.vtt",
-    bytes: 215342285
+    bytes: 215342285,
+    kw: [
+     "billy",
+     "hoss",
+     "ain't",
+     "vance",
+     "sure",
+     "knife",
+     "better",
+     "help",
+     "cartwright",
+     "killed",
+     "mountains",
+     "knew"
+    ]
    },
    {
     title: "Bonanza - San Francisco",
@@ -5464,7 +7636,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza-SanFrancisco/Bonanza-SanFrancisco.thumbs/Bonanza_-_San_Francisco_S01-E28_001140.jpg",
     subs: "Bonanza_-_San_Francisco_S01-E28.autogenerated.vtt",
-    bytes: 215481663
+    bytes: 215481663,
+    kw: [
+     "cartwright",
+     "find",
+     "boys",
+     "johnny",
+     "ain't",
+     "trouble",
+     "paul",
+     "silk",
+     "shanghai",
+     "ship",
+     "wait",
+     "better"
+    ]
    },
    {
     title: "Bonanza - Showdown",
@@ -5475,7 +7661,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza-Showdown/Bonanza-Showdown.thumbs/Bonanza_-_Showdown_S02-E01_001140.jpg",
     subs: "Bonanza_-_Showdown_S02-E01.autogenerated.vtt",
-    bytes: 215344843
+    bytes: 215344843,
+    kw: [
+     "sheriff",
+     "kirby",
+     "sure",
+     "cartwright",
+     "horse",
+     "mean",
+     "ain't",
+     "break",
+     "adam",
+     "ellie",
+     "better",
+     "find"
+    ]
    },
    {
     title: "Bonanza - Silent Thunder",
@@ -5486,7 +7686,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza_-_Silent_Thunder/Bonanza_-_Silent_Thunder.thumbs/Bonanza_-_Silent_Thunder_001200.jpg",
     subs: "Bonanza_-_Silent_Thunder.autogenerated.vtt",
-    bytes: 215031913
+    bytes: 215031913,
+    kw: [
+     "ain't",
+     "annie",
+     "talk",
+     "albie",
+     "girl",
+     "understand",
+     "father",
+     "will",
+     "talking",
+     "love",
+     "hurt",
+     "leave"
+    ]
    },
    {
     title: "Bonanza - The Ape",
@@ -5498,7 +7712,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza_-_The_Ape/Bonanza_-_The_Ape.thumbs/Bonanza_-_The_Ape_001200.jpg",
     subs: "Bonanza_-_The_Ape.autogenerated.vtt",
-    bytes: 215381248
+    bytes: 215381248,
+    kw: [
+     "arnie",
+     "hoss",
+     "ain't",
+     "farm",
+     "sure",
+     "ernie",
+     "paul",
+     "bell",
+     "money",
+     "mean",
+     "pretty",
+     "friend"
+    ]
    },
    {
     title: "Bonanza - The Blood Line",
@@ -5509,7 +7737,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza_-_The_Blood_Line/Bonanza_-_The_Blood_Line.thumbs/Bonanza_-_The_Blood_Line_001200.jpg",
     subs: "Bonanza_-_The_Blood_Line.autogenerated.vtt",
-    bytes: 216297704
+    bytes: 216297704,
+    kw: [
+     "luke",
+     "todd",
+     "cartwright",
+     "father",
+     "paul",
+     "kill",
+     "diane",
+     "sure",
+     "maybe",
+     "sheriff",
+     "grayson",
+     "even"
+    ]
    },
    {
     title: "Bonanza - The Courtship",
@@ -5520,7 +7762,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza_-_The_Courtship/Bonanza_-_The_Courtship.thumbs/Bonanza_-_The_Courtship_001200.jpg",
     subs: "Bonanza_-_The_Courtship.autogenerated.vtt",
-    bytes: 215116672
+    bytes: 215116672,
+    kw: [
+     "ma'am",
+     "cartwright",
+     "adam",
+     "ain't",
+     "layton",
+     "hoss",
+     "josh",
+     "mean",
+     "much",
+     "matter",
+     "helen",
+     "sure"
+    ]
    },
    {
     title: "Bonanza - The Fear Merchants",
@@ -5531,7 +7787,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza-TheFearMerchants/Bonanza-TheFearMerchants.thumbs/Bonanza_-_The_Fear_Merchants_S01-E20_001140.jpg",
     subs: "Bonanza_-_The_Fear_Merchants_S01-E20.autogenerated.vtt",
-    bytes: 212299465
+    bytes: 212299465,
+    kw: [
+     "jimmy",
+     "chang",
+     "father",
+     "ridley",
+     "andy",
+     "sure",
+     "adam",
+     "will",
+     "truth",
+     "amanda",
+     "ain't",
+     "town"
+    ]
    },
    {
     title: "Bonanza - The Hopefuls",
@@ -5553,7 +7823,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza_The_Mill/Bonanza_The_Mill.thumbs/Bonanza_The_Mill_001200.jpg",
     subs: "Bonanza_The_Mill.autogenerated.vtt",
-    bytes: 215217313
+    bytes: 215217313,
+    kw: [
+     "edwards",
+     "adam",
+     "mill",
+     "joyce",
+     "wife",
+     "ezekiel",
+     "cartwright",
+     "will",
+     "money",
+     "mean",
+     "wonderful",
+     "around"
+    ]
    },
    {
     title: "Bonanza - The Mission",
@@ -5564,7 +7848,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza-TheMission/Bonanza-TheMission.thumbs/Bonanza_-_The_Mission_S02-E02_001140.jpg",
     subs: "Bonanza_-_The_Mission_S02-E02.autogenerated.vtt",
-    bytes: 215119788
+    bytes: 215119788,
+    kw: [
+     "charlie",
+     "captain",
+     "ain't",
+     "water",
+     "scout",
+     "find",
+     "around",
+     "detail",
+     "forward",
+     "drink",
+     "desert",
+     "sure"
+    ]
    },
    {
     title: "Bonanza - The Spitfire",
@@ -5575,7 +7873,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza_-_The_Spitfire/Bonanza_-_The_Spitfire.thumbs/Bonanza_-_The_Spitfire_001200.jpg",
     subs: "Bonanza_-_The_Spitfire.autogenerated.vtt",
-    bytes: 215030711
+    bytes: 215030711,
+    kw: [
+     "kill",
+     "killed",
+     "ain't",
+     "dead",
+     "will",
+     "done",
+     "maybe",
+     "dodie",
+     "land",
+     "hear",
+     "real",
+     "killing"
+    ]
    },
    {
     title: "Bonanza - The Stranger",
@@ -5586,7 +7898,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bonanza-TheStranger/Bonanza-TheStranger.thumbs/Bonanza_-_The_Stranger_S01-E24_001140.jpg",
     subs: "Bonanza_-_The_Stranger_S01-E24.autogenerated.vtt",
-    bytes: 215372749
+    bytes: 215372749,
+    kw: [
+     "orleans",
+     "cartwright",
+     "leduc",
+     "mother",
+     "name",
+     "away",
+     "governor",
+     "will",
+     "nevada",
+     "story",
+     "years",
+     "happened"
+    ]
    },
    {
     title: "Dragnet : The Big Oskar",
@@ -5597,7 +7923,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Dragnet_The_Big_Oskar/Dragnet_The_Big_Oskar.thumbs/S08E04_The_Big_Oskar_000600.jpg",
     subs: "S08E04_The_Big_Oskar.autogenerated.vtt",
-    bytes: 112593199
+    bytes: 112593199,
+    kw: [
+     "afraid",
+     "hovick",
+     "stuff",
+     "stolen",
+     "done",
+     "face",
+     "name",
+     "give",
+     "find",
+     "property",
+     "police",
+     "found"
+    ]
    },
    {
     title: "Dragnet: The Big Will",
@@ -5608,7 +7948,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/DragnetTheBigWill/DragnetTheBigWill.thumbs/Dragnet-theBigWill_000594.jpg",
     subs: "Dragnet-theBigWill.autogenerated.vtt",
-    bytes: 156830495
+    bytes: 156830495,
+    kw: [
+     "charlie",
+     "stone",
+     "went",
+     "talk",
+     "found",
+     "becker",
+     "house",
+     "ma'am",
+     "will",
+     "killed",
+     "paul",
+     "west"
+    ]
    },
    {
     title: "Dragnet: The Human Bomb",
@@ -5640,7 +7994,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_And_Carol_In_Palm_Springs/TLS_Lucy_And_Carol_In_Palm_Springs.thumbs/TLS_LucyAndCarolInPalmSprings_000600.jpg",
     subs: "TLS_LucyAndCarolInPalmSprings.autogenerated.vtt",
-    bytes: 109967892
+    bytes: 109967892,
+    kw: [
+     "lucy",
+     "hooky",
+     "river",
+     "life",
+     "grant",
+     "carol",
+     "lazy",
+     "colin",
+     "work",
+     "morning",
+     "girl",
+     "nice"
+    ]
    },
    {
     title: "Lucy and George Burns",
@@ -5651,7 +8019,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_And_George_Burns/TLS_Lucy_And_George_Burns.thumbs/TLS_Lucy_And_George_Burns_000600.jpg",
     subs: "TLS_Lucy_And_George_Burns.autogenerated.vtt",
-    bytes: 110938972
+    bytes: 110938972,
+    kw: [
+     "burns",
+     "away",
+     "stage",
+     "mooney",
+     "money",
+     "days",
+     "find",
+     "lucy",
+     "will",
+     "carmichael",
+     "agent",
+     "brother"
+    ]
    },
    {
     title: "Lucy and the Efficiency Expert",
@@ -5662,7 +8044,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_And_The_Efficiency_Expert/TLS_Lucy_And_The_Efficiency_Expert.thumbs/TLS_Lucy_And_The_Efficiency_Expert_000600.jpg",
     subs: "TLS_Lucy_And_The_Efficiency_Expert.autogenerated.vtt",
-    bytes: 110399108
+    bytes: 110399108,
+    kw: [
+     "work",
+     "caston",
+     "bank",
+     "mooney",
+     "efficiency",
+     "move",
+     "morning",
+     "will",
+     "grantland",
+     "glad",
+     "office",
+     "around"
+    ]
    },
    {
     title: "Lucy And The French Movie Star",
@@ -5673,7 +8069,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_And_The_French_Movie_Star/TLS_Lucy_And_The_French_Movie_Star.thumbs/TLS_Lucy_And_The_French_Movie_Star_000600.jpg",
     subs: "TLS_Lucy_And_The_French_Movie_Star.autogenerated.vtt",
-    bytes: 110787929
+    bytes: 110787929,
+    kw: [
+     "letter",
+     "dupre",
+     "mooney",
+     "carmichael",
+     "better",
+     "lion",
+     "lunch",
+     "will",
+     "fine",
+     "work",
+     "cheever",
+     "course"
+    ]
    },
    {
     title: "Lucy and the RingaDing Ring",
@@ -5684,7 +8094,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_And_The_RingaDing_Ring/TLS_Lucy_And_The_RingaDing_Ring.thumbs/TLS_Lucy_And_The_RingaDing_Ring_000600.jpg",
     subs: "TLS_Lucy_And_The_RingaDing_Ring.autogenerated.vtt",
-    bytes: 109733044
+    bytes: 109733044,
+    kw: [
+     "ring",
+     "mooney",
+     "pull",
+     "carmichael",
+     "give",
+     "wife",
+     "will",
+     "stuck",
+     "fingers",
+     "lucy",
+     "much",
+     "turn"
+    ]
    },
    {
     title: "Lucy and the Submarine",
@@ -5706,7 +8130,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_And_The_Substitute_Secretary/TLS_Lucy_And_The_Substitute_Secretary.thumbs/TLS_Lucy_And_The_Substitute_Secretary_000600.jpg",
     subs: "TLS_Lucy_And_The_Substitute_Secretary.autogenerated.vtt",
-    bytes: 110814673
+    bytes: 110814673,
+    kw: [
+     "mooney",
+     "carmichael",
+     "office",
+     "vacation",
+     "secretary",
+     "lucy",
+     "winkler",
+     "work",
+     "fine",
+     "arrowhead",
+     "mooney's",
+     "account"
+    ]
    },
    {
     title: "Lucy And Viv Put In A Shower",
@@ -5717,7 +8155,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_And_Viv_Put_In_A_Shower/TLS_Lucy_And_Viv_Put_In_A_Shower.thumbs/TLS_Lucy_And_Viv_Put_In_A_Shower_000600.jpg",
     subs: "TLS_Lucy_And_Viv_Put_In_A_Shower.autogenerated.vtt",
-    bytes: 110905436
+    bytes: 110905436,
+    kw: [
+     "lucy",
+     "shower",
+     "water",
+     "plumber",
+     "friend",
+     "harry",
+     "dear",
+     "turn",
+     "much",
+     "door",
+     "minute",
+     "doctor"
+    ]
    },
    {
     title: "Lucy Flies To London",
@@ -5749,7 +8201,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_Gets_Caught_In_The_Draft/TLS_Lucy_Gets_Caught_In_The_Draft.thumbs/TLS_Lucy_Gets_Caught_In_The_Draft_000600.jpg",
     subs: "TLS_Lucy_Gets_Caught_In_The_Draft.autogenerated.vtt",
-    bytes: 111066770
+    bytes: 111066770,
+    kw: [
+     "carmichael",
+     "lucy",
+     "mistake",
+     "work",
+     "army",
+     "shoulder",
+     "rifle",
+     "march",
+     "course",
+     "orders",
+     "mooney",
+     "letter"
+    ]
    },
    {
     title: "Lucy Gets Jack Bennys Account",
@@ -5760,7 +8226,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_Gets_Jack_Bennys_Account/TLS_Lucy_Gets_Jack_Bennys_Account.thumbs/TLS_Lucy_Gets_Jack_Bennys_Account_000480.jpg",
     subs: "TLS_Lucy_Gets_Jack_Bennys_Account.autogenerated.vtt",
-    bytes: 93935812
+    bytes: 93935812,
+    kw: [
+     "benny",
+     "bank",
+     "money",
+     "vault",
+     "will",
+     "show",
+     "account",
+     "jack",
+     "deep",
+     "violin",
+     "teacher",
+     "business"
+    ]
    },
    {
     title: "Lucy Gets Trapped",
@@ -5771,7 +8251,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_Gets_Trapped/TLS_Lucy_Gets_Trapped.thumbs/TLS_Lucy_Gets_Trapped_000600.jpg",
     subs: "TLS_Lucy_Gets_Trapped.autogenerated.vtt",
-    bytes: 108948803
+    bytes: 108948803,
+    kw: [
+     "mooney",
+     "work",
+     "carmichael",
+     "will",
+     "sick",
+     "paper",
+     "home",
+     "give",
+     "refrigerator",
+     "picture",
+     "lucy",
+     "newspaper"
+    ]
    },
    {
     title: "Lucy meets John Wayne",
@@ -5782,7 +8276,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_Meets_John_Wayne/TLS_Lucy_Meets_John_Wayne.thumbs/TLS_Lucy_Meets_John_Wayne_000600.jpg",
     subs: "TLS_Lucy_Meets_John_Wayne.autogenerated.vtt",
-    bytes: 110529922
+    bytes: 110529922,
+    kw: [
+     "wayne",
+     "scene",
+     "john",
+     "carmichael",
+     "lucy",
+     "picture",
+     "better",
+     "bother",
+     "give",
+     "ready",
+     "leave",
+     "mary"
+    ]
    },
    {
     title: "Lucy Meets Pat Collins",
@@ -5793,7 +8301,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_Meets_Pat_Collins/TLS_Lucy_Meets_Pat_Collins.thumbs/TLS_Lucy_Meets_Pat_Collins_000600.jpg",
     subs: "TLS_Lucy_Meets_Pat_Collins.autogenerated.vtt",
-    bytes: 110886811
+    bytes: 110886811,
+    kw: [
+     "count",
+     "sleep",
+     "stage",
+     "lucy",
+     "people",
+     "mooney",
+     "madam",
+     "coat",
+     "movie",
+     "show",
+     "relax",
+     "left"
+    ]
    },
    {
     title: "Lucy Meets Robert Goulet",
@@ -5804,7 +8326,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_Meets_Robert_Goulet/TLS_Lucy_Meets_Robert_Goulet.thumbs/TLS_Lucy_Meets_Robert_Goulet_000600.jpg",
     subs: "TLS_Lucy_Meets_Robert_Goulet.autogenerated.vtt",
-    bytes: 110969762
+    bytes: 110969762,
+    kw: [
+     "goulet",
+     "chuck",
+     "contest",
+     "picture",
+     "robert",
+     "willis",
+     "goulets",
+     "will",
+     "mooney",
+     "truck",
+     "sure",
+     "alike"
+    ]
    },
    {
     title: "Lucy Meets Sheldon Leonard",
@@ -5815,7 +8351,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_Meets_Sheldon_Leonard/TLS_Lucy_Meets_Sheldon_Leonard.thumbs/TLS_Lucy_Meets_Sheldon_Leonard_000600.jpg",
     subs: "TLS_Lucy_Meets_Sheldon_Leonard.autogenerated.vtt",
-    bytes: 110258559
+    bytes: 110258559,
+    kw: [
+     "bank",
+     "mooney",
+     "raise",
+     "leonard",
+     "work",
+     "lucy",
+     "late",
+     "jane",
+     "give",
+     "gangster",
+     "name",
+     "television"
+    ]
    },
    {
     title: "Lucy Meets Tennessee Ernie Ford",
@@ -5826,7 +8376,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_Meets_Tennessee_Ernie_Ford/TLS_Lucy_Meets_Tennessee_Ernie_Ford.thumbs/TLS_Lucy_Meets_Tennessee_Ernie_Ford_000600.jpg",
     subs: "TLS_Lucy_Meets_Tennessee_Ernie_Ford.autogenerated.vtt",
-    bytes: 111028335
+    bytes: 111028335,
+    kw: [
+     "effie",
+     "mooney",
+     "higgins",
+     "folks",
+     "ma'am",
+     "will",
+     "sure",
+     "lucy",
+     "work",
+     "bank",
+     "dancing",
+     "howdy"
+    ]
    },
    {
     title: "Lucy meets the Berles",
@@ -5837,7 +8401,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_Meets_The_Burles/TLS_Lucy_Meets_The_Burles.thumbs/TLS_Lucy_Meets_The_Burles_000600.jpg",
     subs: "TLS_Lucy_Meets_The_Burles.autogenerated.vtt",
-    bytes: 111037932
+    bytes: 111037932,
+    kw: [
+     "love",
+     "funny",
+     "carmichael",
+     "wonderful",
+     "ruth",
+     "wife",
+     "milton",
+     "berle",
+     "dear",
+     "work",
+     "will",
+     "lunch"
+    ]
    },
    {
     title: "Lucy Meets The Law",
@@ -5848,7 +8426,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_Meets_The_Law/TLS_Lucy_Meets_The_Law.thumbs/TLS_Lucy_Meets_The_Law_000600.jpg",
     subs: "TLS_Lucy_Meets_The_Law.autogenerated.vtt",
-    bytes: 110812754
+    bytes: 110812754,
+    kw: [
+     "carmichael",
+     "call",
+     "sure",
+     "explain",
+     "years",
+     "knuck",
+     "knock",
+     "lucy",
+     "mean",
+     "name",
+     "tough",
+     "remember"
+    ]
    },
    {
     title: "Lucy The Babysitter",
@@ -5859,7 +8451,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_The_Babysitter/TLS_Lucy_The_Babysitter.thumbs/TLS_Lucy_The_Babysitter_000600.jpg",
     subs: "TLS_Lucy_The_Babysitter.autogenerated.vtt",
-    bytes: 109832894
+    bytes: 109832894,
+    kw: [
+     "charlie",
+     "baby",
+     "danny",
+     "darling",
+     "bobby",
+     "will",
+     "typewriter",
+     "sleep",
+     "mind",
+     "minute",
+     "play",
+     "street"
+    ]
    },
    {
     title: "Lucy The Bean Queen",
@@ -5870,7 +8476,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_The_Bean_Queen/TLS_Lucy_The_Bean_Queen.thumbs/TLS_Lucy_The_Bean_Queen_000600.jpg",
     subs: "TLS_Lucy_The_Bean_Queen.autogenerated.vtt",
-    bytes: 111608426
+    bytes: 111608426,
+    kw: [
+     "beans",
+     "furniture",
+     "bailey's",
+     "ever",
+     "money",
+     "colonel",
+     "bean",
+     "best",
+     "mooney",
+     "bailey",
+     "cans",
+     "lucy"
+    ]
    },
    {
     title: "Lucy The Starmaker",
@@ -5881,7 +8501,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_The_Starmaker/TLS_Lucy_The_Starmaker.thumbs/TLS_Lucy_The_Starmaker_000600.jpg",
     subs: "TLS_Lucy_The_Starmaker.autogenerated.vtt",
-    bytes: 110738617
+    bytes: 110738617,
+    kw: [
+     "feeling",
+     "tommy",
+     "penrose",
+     "bank",
+     "will",
+     "carmichael",
+     "walk",
+     "business",
+     "show",
+     "young",
+     "mooney",
+     "cheever"
+    ]
    },
    {
     title: "Lucys Barbershop Quartet",
@@ -5892,7 +8526,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucys_Barbershop_Quartet/TLS_Lucys_Barbershop_Quartet.thumbs/TLS_Lucys_Barbershop_Quartet_000600.jpg",
     subs: "TLS_Lucys_Barbershop_Quartet.autogenerated.vtt",
-    bytes: 111549912
+    bytes: 111549912,
+    kw: [
+     "ooga",
+     "moon",
+     "sing",
+     "silvery",
+     "buzz",
+     "light",
+     "lucy",
+     "around",
+     "breath",
+     "fire",
+     "four",
+     "hear"
+    ]
    },
    {
     title: "Sherlock Holmes - The Case of Harry Crocker",
@@ -5903,7 +8551,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SherlockHolmes-TheCaseOfHarryCrocker/SherlockHolmes-TheCaseOfHarryCrocker.thumbs/SherlockHolmes-TheCaseOfHarryCrocker_000594.jpg",
     subs: "SherlockHolmes-TheCaseOfHarryCrocker.autogenerated.vtt",
-    bytes: 125216076
+    bytes: 125216076,
+    kw: [
+     "holmes",
+     "crocker",
+     "harry",
+     "watson",
+     "wait",
+     "inspector",
+     "king",
+     "manchester",
+     "understand",
+     "police",
+     "girl",
+     "last"
+    ]
    },
    {
     title: "The Adventures Of Ozzie And Harriet Season One",
@@ -5926,7 +8588,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SherlockHolmes1954/SherlockHolmes1954.thumbs/Sherlock%20Holmes%2016%20The%20Case%20Of%20The%20Greystone%20Insription_001123.jpg",
     subs: "Sherlock Holmes 01 The Case of the Cunningham Heritage.autogenerated.vtt",
-    bytes: 73264814
+    bytes: 73264814,
+    kw: [
+     "holmes",
+     "watson",
+     "inspector",
+     "course",
+     "peter",
+     "sherlock",
+     "case",
+     "married",
+     "looking",
+     "death",
+     "mean",
+     "afghanistan"
+    ]
    },
    {
     title: "The Beverly Hillbillies : The Servants",
@@ -5938,7 +8614,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Beverly_Hillbillies_Ep07_The_Servants/Beverly_Hillbillies_Ep07_The_Servants.thumbs/BH07_The_Servants_000600.jpg",
     subs: "BH07_The_Servants.autogenerated.vtt",
-    bytes: 108910913
+    bytes: 108910913,
+    kw: [
+     "granny",
+     "butler",
+     "ellie",
+     "will",
+     "girl",
+     "reckon",
+     "city",
+     "marie",
+     "jeff",
+     "drysdale",
+     "kind",
+     "says"
+    ]
    },
    {
     title: "The Beverly Hillbillies : Trick Or Treat",
@@ -5949,7 +8639,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Beverly_Hillbillies_Ep06_Trick_Or_Treat/Beverly_Hillbillies_Ep06_Trick_Or_Treat.thumbs/BH06_Trick_Or_Treat_000600.jpg",
     subs: "BH06_Trick_Or_Treat.autogenerated.vtt",
-    bytes: 109902646
+    bytes: 109902646,
+    kw: [
+     "ain't",
+     "granny",
+     "home",
+     "hills",
+     "beverly",
+     "call",
+     "whole",
+     "place",
+     "pearl",
+     "ever",
+     "young",
+     "sure"
+    ]
    },
    {
     title: "The Coming Of Robin Hood",
@@ -5960,7 +8664,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Robin_Hood_01_The_Coming_Of_Robin_Hood/Robin_Hood_01_The_Coming_Of_Robin_Hood.thumbs/Robin_Hood_01_The_Coming_Of_Robin_Hood_000600.jpg",
     subs: "Robin_Hood_01_The_Coming_Of_Robin_Hood.autogenerated.vtt",
-    bytes: 114253879
+    bytes: 114253879,
+    kw: [
+     "robin",
+     "faster",
+     "land",
+     "master",
+     "roger",
+     "sheriff",
+     "home",
+     "king",
+     "leave",
+     "will",
+     "kill",
+     "estate"
+    ]
    },
    {
     title: "The Dick Van Dyke Show - Season 1 of 5 - MKV",
@@ -5981,7 +8699,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Jack_Benny_11_04_1951/Jack_Benny_11_04_1951.thumbs/JackBennyProgram-2x01.DorothyShay_000540.jpg",
     subs: "JackBennyProgram-2x01.DorothyShay.autogenerated.vtt",
-    bytes: 102729676
+    bytes: 102729676,
+    kw: [
+     "show",
+     "mean",
+     "jack",
+     "wonderful",
+     "boys",
+     "benny",
+     "much",
+     "television",
+     "hillbilly",
+     "actor",
+     "called",
+     "zeke"
+    ]
    },
    {
     title: "Viv Visits Lucy",
@@ -5992,7 +8724,14 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Viv_Visits_Lucy/TLS_Viv_Visits_Lucy.thumbs/TLS_Viv_Visits_Lucy_000600.jpg",
     subs: "TLS_Viv_Visits_Lucy.autogenerated.vtt",
-    bytes: 109883012
+    bytes: 109883012,
+    kw: [
+     "starring",
+     "mary",
+     "poppins",
+     "vivian",
+     "bagley"
+    ]
    }
   ]
  },
@@ -6888,6 +9627,13 @@ const CHANNELS = [
      "Ossi Oswalda",
      "Curt Goetz",
      "Ferry Sikla"
+    ],
+    kw: [
+     "bathtub",
+     "first",
+     "young",
+     "pretty",
+     "away"
     ]
    },
    {
@@ -7371,6 +10117,16 @@ const CHANNELS = [
     ],
     co: [
      "United Artists"
+    ],
+    kw: [
+     "will",
+     "lose",
+     "lists",
+     "live",
+     "girl",
+     "lawyer",
+     "long",
+     "early"
     ]
    },
    {
@@ -7584,6 +10340,14 @@ const CHANNELS = [
     ],
     co: [
      "20th Century Studios"
+    ],
+    kw: [
+     "live",
+     "lose",
+     "lucky",
+     "elin",
+     "elite",
+     "least"
     ]
    },
    {
@@ -7906,6 +10670,20 @@ const CHANNELS = [
      "Hobart Bosworth",
      "Emory Johnson",
      "Bessie Love"
+    ],
+    kw: [
+     "room",
+     "bomb",
+     "gone",
+     "poor",
+     "world",
+     "whoa",
+     "hour",
+     "forward",
+     "moon",
+     "wrong",
+     "boss",
+     "heard"
     ]
    },
    {
@@ -8456,7 +11234,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ptp_rosita_ernst-lubitsch_raoul-walsh_unknown_xvid_avi_640x480_201241/ptp_rosita_ernst-lubitsch_raoul-walsh_unknown_xvid_avi_640x480_201241.thumbs/Rosita%20%5B1923%5D%20Russian%20Print/Rosita_001974.jpg",
     subs: "Rosita [1923] Russian Print/Rosita.srt",
-    bytes: 515133855
+    bytes: 515133855,
+    kw: [
+     "rosita",
+     "king",
+     "majesty",
+     "seville",
+     "will",
+     "last",
+     "shall",
+     "carnival",
+     "title",
+     "poor",
+     "husband",
+     "castle"
+    ]
    },
    {
     title: "Salome",
@@ -9528,7 +12320,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheEagleRudolphValentinoAppleTV2ndGen..mp4/TheEagleRudolphValentinoAppleTV2ndGen..mp4.thumbs/The%20Eagle%20Rudolph%20Valentino%20-%20Apple%20TV%20(2nd%20Gen.).mp4_002190.jpg",
     subs: "The Eagle Rudolph Valentino - Apple TV (2nd Gen.).mp4.asr.srt",
-    bytes: 1885455603
+    bytes: 1885455603,
+    kw: [
+     "move",
+     "lose",
+     "live",
+     "layer"
+    ]
    },
    {
     title: "The Freshman",
@@ -9603,6 +12401,20 @@ const CHANNELS = [
     ],
     co: [
      "First National Pictures"
+    ],
+    kw: [
+     "thousand",
+     "lose",
+     "hundred",
+     "blue",
+     "lula",
+     "battle",
+     "louis",
+     "owner",
+     "clue",
+     "oath",
+     "womb",
+     "nine"
     ]
    },
    {
@@ -11158,6 +13970,20 @@ const CHANNELS = [
      "Erich von Stroheim",
      "Betty Compson",
      "Don Douglas"
+    ],
+    kw: [
+     "will",
+     "feel",
+     "talk",
+     "keep",
+     "better",
+     "might",
+     "much",
+     "care",
+     "mean",
+     "love",
+     "ever",
+     "even"
     ]
    },
    {
@@ -11274,7 +14100,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/pandoras.-box.-1929/pandoras.-box.-1929.thumbs/Pandoras.Box.1929/Pandoras.Box.1929_003235.jpg",
     subs: "Pandoras.Box.1929/Pandoras.Box.1929.English.srt",
-    bytes: 2385742741
+    bytes: 2385742741,
+    kw: [
+     "must",
+     "money",
+     "wants",
+     "alwa",
+     "woman",
+     "police",
+     "father",
+     "give",
+     "prints",
+     "lulu",
+     "print",
+     "whole"
+    ]
    },
    {
     title: "Paris Bound 1929 Ann Harding, Fredric March, Carmelita Geraghty, Lesli",
@@ -11517,6 +14357,20 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
+    ],
+    kw: [
+     "will",
+     "show",
+     "maybe",
+     "mean",
+     "give",
+     "done",
+     "read",
+     "last",
+     "find",
+     "away",
+     "guess",
+     "people"
     ]
    },
    {
@@ -11688,6 +14542,20 @@ const CHANNELS = [
     ],
     co: [
      "Pathé"
+    ],
+    kw: [
+     "give",
+     "tony",
+     "money",
+     "help",
+     "five",
+     "mean",
+     "many",
+     "already",
+     "talk",
+     "send",
+     "away",
+     "will"
     ]
    },
    {
@@ -11700,7 +14568,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Racketeer/Racketeer.thumbs/Racketeer_001590.jpg",
     subs: "Racketeer.asr.srt",
-    bytes: 802677899
+    bytes: 802677899,
+    kw: [
+     "give",
+     "tony",
+     "money",
+     "help",
+     "five",
+     "mean",
+     "many",
+     "already",
+     "talk",
+     "send",
+     "away",
+     "will"
+    ]
    },
    {
     title: "The Talk Of Hollywood 1929 Nat Carr, Fay Marbe, Hope Sutherland, Mark ",
@@ -11723,7 +14605,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheThreePassions1929/TheThreePassions1929.thumbs/The%20Three%20Passions_001590.jpg",
     subs: "TheThreePassions.srt",
-    bytes: 342142298
+    bytes: 342142298,
+    kw: [
+     "will",
+     "philipp",
+     "lord",
+     "father",
+     "wrexham",
+     "bellamont",
+     "work",
+     "life",
+     "still",
+     "shipyard",
+     "oxford",
+     "vicky"
+    ]
    },
    {
     title: "The Unholy Night",
@@ -12019,7 +14915,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/womantowoman_204/womantowoman_204.thumbs/Woman-to-Woman-1929_001854.jpg",
     subs: "Woman-to-Woman-1929.asr.srt",
-    bytes: 398867799
+    bytes: 398867799,
+    kw: [
+     "will",
+     "give",
+     "home",
+     "thought",
+     "might",
+     "need",
+     "must",
+     "life",
+     "talk",
+     "mean",
+     "feel",
+     "days"
+    ]
    },
    {
     title: "Woman Trap",
@@ -12054,7 +14964,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/abraham_lincoln/abraham_lincoln.thumbs/abraham_lincoln_002040.jpg",
     subs: "abraham_lincoln.asr.srt",
-    bytes: 369303629
+    bytes: 369303629,
+    kw: [
+     "will",
+     "president",
+     "keep",
+     "lincoln",
+     "general",
+     "much",
+     "need",
+     "must",
+     "even",
+     "talk",
+     "country",
+     "many"
+    ]
    },
    {
     title: "Abraham Lincoln ( 1930) Walter Huston RESTORED",
@@ -12096,6 +15020,20 @@ const CHANNELS = [
     wpx: "Africa Speaks! is a 1930 American documentary film directed by Walter Futter and narrated by Lowell Thomas. It is an exploitation film.",
     dir: [
      "Walter Futter"
+    ],
+    kw: [
+     "lions",
+     "will",
+     "miles",
+     "hundred",
+     "every",
+     "kill",
+     "lion",
+     "much",
+     "feet",
+     "food",
+     "messiah",
+     "place"
     ]
    },
    {
@@ -12108,7 +15046,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/africa_speaks_ipod/africa_speaks_ipod.thumbs/africa_speaks_001200.jpg",
     subs: "africa_speaks.asr.srt",
-    bytes: 211753630
+    bytes: 211753630,
+    kw: [
+     "will",
+     "lions",
+     "miles",
+     "hundred",
+     "feet",
+     "even",
+     "every",
+     "lion",
+     "africa",
+     "much",
+     "kill",
+     "food"
+    ]
    },
    {
     title: "Alias French Gertie",
@@ -12160,6 +15112,20 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
+    ],
+    kw: [
+     "paul",
+     "must",
+     "left",
+     "give",
+     "franz",
+     "home",
+     "will",
+     "mother",
+     "behn",
+     "forward",
+     "much",
+     "leave"
     ]
    },
    {
@@ -12255,6 +15221,20 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
+    ],
+    kw: [
+     "keep",
+     "coming",
+     "will",
+     "work",
+     "hard",
+     "couple",
+     "better",
+     "away",
+     "live",
+     "done",
+     "maybe",
+     "chicago"
     ]
    },
    {
@@ -12299,6 +15279,20 @@ const CHANNELS = [
     wpx: "Extravagance is a 1930 pre-Code film directed by Phil Rosen and released by Tiffany Pictures.",
     dir: [
      "Phil Rosen"
+    ],
+    kw: [
+     "money",
+     "mean",
+     "life",
+     "will",
+     "sable",
+     "mind",
+     "much",
+     "morning",
+     "love",
+     "bank",
+     "sure",
+     "ever"
     ]
    },
    {
@@ -12311,7 +15305,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/FightingThru/FightingThru.thumbs/Fighting%20Thru_001410.jpg",
     subs: "Fighting Thru.asr.srt",
-    bytes: 575808378
+    bytes: 575808378,
+    kw: [
+     "zero",
+     "will",
+     "thought",
+     "mind",
+     "mine",
+     "give",
+     "much",
+     "care",
+     "tennessee",
+     "better",
+     "mean",
+     "write"
+    ]
    },
    {
     title: "Fighting Thru; or, California in 1878",
@@ -12335,7 +15343,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/half_shot_at_sunrise/half_shot_at_sunrise.thumbs/half_shot_at_sunrise_001860.jpg",
     subs: "half_shot_at_sunrise.asr.srt",
-    bytes: 326955409
+    bytes: 326955409,
+    kw: [
+     "bang",
+     "general",
+     "mean",
+     "will",
+     "might",
+     "wait",
+     "zero",
+     "around",
+     "girl",
+     "love",
+     "thought",
+     "world"
+    ]
    },
    {
     title: "Hell's Angels",
@@ -12396,7 +15418,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/hook_line_and_sinker/hook_line_and_sinker.thumbs/hook_line_and_sinker_000012.jpg",
     subs: "hook_line_and_sinker.asr.srt",
-    bytes: 325531111
+    bytes: 325531111,
+    kw: [
+     "will",
+     "around",
+     "mary",
+     "love",
+     "thought",
+     "mother",
+     "must",
+     "hotel",
+     "mean",
+     "give",
+     "life",
+     "wait"
+    ]
    },
    {
     title: "Hot Curves",
@@ -12466,6 +15502,20 @@ const CHANNELS = [
     ],
     co: [
      "20th Century Studios"
+    ],
+    kw: [
+     "will",
+     "mars",
+     "girl",
+     "must",
+     "boys",
+     "years",
+     "love",
+     "plane",
+     "even",
+     "days",
+     "maybe",
+     "hope"
     ]
    },
    {
@@ -12525,6 +15575,20 @@ const CHANNELS = [
     ],
     cast: [
      "Alice Day"
+    ],
+    kw: [
+     "love",
+     "will",
+     "much",
+     "mean",
+     "number",
+     "talk",
+     "marry",
+     "hope",
+     "talking",
+     "sing",
+     "give",
+     "around"
     ]
    },
    {
@@ -12606,7 +15670,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ParadiseIsland1930/ParadiseIsland1930.thumbs/Paradise-Island-1930_001650.jpg",
     subs: "Paradise-Island-1930.asr.srt",
-    bytes: 424350638
+    bytes: 424350638,
+    kw: [
+     "will",
+     "mean",
+     "thought",
+     "girl",
+     "around",
+     "even",
+     "armstrong",
+     "mike",
+     "plantation",
+     "much",
+     "drink",
+     "maybe"
+    ]
    },
    {
     title: "Pardon My Gun",
@@ -12652,7 +15730,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/PeacockAlley1930MaeMurrayGeorgeBarraudGeorgeBarraudRichardTucker/PeacockAlley1930MaeMurrayGeorgeBarraudGeorgeBarraudRichardTucker.thumbs/PeacockAlley1930_001290.jpg",
     subs: "PeacockAlley1930.asr.srt",
-    bytes: 777082903
+    bytes: 777082903,
+    kw: [
+     "room",
+     "mean",
+     "will",
+     "hotel",
+     "still",
+     "give",
+     "people",
+     "thought",
+     "happened",
+     "name",
+     "kind",
+     "love"
+    ]
    },
    {
     title: "Playing Around",
@@ -12737,6 +15829,20 @@ const CHANNELS = [
     ],
     co: [
      "Pathé"
+    ],
+    kw: [
+     "will",
+     "love",
+     "married",
+     "live",
+     "mean",
+     "marry",
+     "thought",
+     "sylvia",
+     "another",
+     "better",
+     "much",
+     "husband"
     ]
    },
    {
@@ -12857,6 +15963,20 @@ const CHANNELS = [
     wpx: "The Land of Missing Men is a 1930 American pre-Code Western film written and directed by John P. McCarthy – with a script from Bob Quigley – and produced by Trem Carr for his studio Trem Carr Productions. Starring Bob Steele, Al St. John, Eddie Dunn, Caryl Lincoln, Al Jennings and Fern Emmett.",
     dir: [
      "John P. McCarthy"
+    ],
+    kw: [
+     "maybe",
+     "bring",
+     "father",
+     "call",
+     "alone",
+     "need",
+     "thought",
+     "away",
+     "folks",
+     "done",
+     "found",
+     "talk"
     ]
    },
    {
@@ -13034,6 +16154,20 @@ const CHANNELS = [
      "Fritz Kampers",
      "Gustav Diessl",
      "Hans Joachim Moebis"
+    ],
+    kw: [
+     "student",
+     "karl",
+     "home",
+     "mother",
+     "front",
+     "stop",
+     "coffee",
+     "will",
+     "left",
+     "play",
+     "lieutenant",
+     "wrong"
     ]
    },
    {
@@ -14714,6 +17848,20 @@ const CHANNELS = [
     co: [
      "Paramount Pictures",
      "Famous Players-Lasky Corporation"
+    ],
+    kw: [
+     "zero",
+     "poor",
+     "home",
+     "common",
+     "lose",
+     "blood",
+     "sand",
+     "carmen",
+     "valentino",
+     "played",
+     "years",
+     "done"
     ]
    },
    {
@@ -15071,6 +18219,20 @@ const CHANNELS = [
     ],
     co: [
      "Fox Film Corporation"
+    ],
+    kw: [
+     "people",
+     "psychic",
+     "detective",
+     "much",
+     "matter",
+     "subject",
+     "talking",
+     "rather",
+     "scientific",
+     "often",
+     "began",
+     "work"
     ]
    },
    {
@@ -15162,6 +18324,20 @@ const CHANNELS = [
     cast: [
      "Edward Everett Horton",
      "Winston Miller"
+    ],
+    kw: [
+     "wilson",
+     "college",
+     "nice",
+     "call",
+     "five",
+     "thought",
+     "life",
+     "love",
+     "long",
+     "will",
+     "every",
+     "woman"
     ]
    },
    {
@@ -15175,7 +18351,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/bees_buzz/bees_buzz.thumbs/bees_buzz_000480.jpg",
     subs: "bees_buzz.asr.srt",
-    bytes: 85517383
+    bytes: 85517383,
+    kw: [
+     "home",
+     "feel",
+     "homer",
+     "will",
+     "zero",
+     "need",
+     "school"
+    ]
    },
    {
     title: "Old Barn, The",
@@ -15188,7 +18373,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/old_barn/old_barn.thumbs/old_barn_000480.jpg",
     subs: "old_barn.asr.srt",
-    bytes: 85988327
+    bytes: 85988327,
+    kw: [
+     "sheriff",
+     "sure",
+     "jack",
+     "black",
+     "show",
+     "officer",
+     "week",
+     "hear",
+     "last",
+     "life",
+     "around",
+     "door"
+    ]
    },
    {
     title: "The Skeleton Dance",
@@ -15476,6 +18675,20 @@ const CHANNELS = [
     ],
     co: [
      "Lone Star Productions"
+    ],
+    kw: [
+     "will",
+     "morning",
+     "gentry",
+     "brother",
+     "around",
+     "sure",
+     "money",
+     "cattle",
+     "remember",
+     "years",
+     "care",
+     "ranch"
     ]
    },
    {
@@ -15572,6 +18785,20 @@ const CHANNELS = [
     wpx: "Border Caballero is a 1936 American Western film starring Tim McCoy. It was directed by Sam Newfield.",
     dir: [
      "Sam Newfield"
+    ],
+    kw: [
+     "bank",
+     "money",
+     "will",
+     "friend",
+     "five",
+     "sure",
+     "morning",
+     "border",
+     "minute",
+     "might",
+     "better",
+     "home"
     ]
    },
    {
@@ -15591,6 +18818,20 @@ const CHANNELS = [
     wpx: "The Border Patrolman is a 1936 American Western film directed by David Howard and starring George O'Brien.",
     dir: [
      "David Howard"
+    ],
+    kw: [
+     "thought",
+     "talk",
+     "better",
+     "five",
+     "work",
+     "idea",
+     "give",
+     "away",
+     "maybe",
+     "line",
+     "getting",
+     "enough"
     ]
    },
    {
@@ -15613,6 +18854,20 @@ const CHANNELS = [
     ],
     cast: [
      "Hoot Gibson"
+    ],
+    kw: [
+     "might",
+     "pony",
+     "express",
+     "will",
+     "better",
+     "thought",
+     "give",
+     "mother",
+     "maybe",
+     "mean",
+     "part",
+     "even"
     ]
    },
    {
@@ -15638,6 +18893,20 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
+    ],
+    kw: [
+     "money",
+     "will",
+     "town",
+     "mean",
+     "bank",
+     "fight",
+     "check",
+     "prospect",
+     "keep",
+     "much",
+     "morning",
+     "thought"
     ]
    },
    {
@@ -15666,6 +18935,20 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
+    ],
+    kw: [
+     "sure",
+     "will",
+     "bomb",
+     "gene",
+     "work",
+     "morning",
+     "autry",
+     "first",
+     "sheriff",
+     "call",
+     "wait",
+     "much"
     ]
    },
    {
@@ -15795,7 +19078,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the_silver_trail/the_silver_trail.thumbs/the_silver_trail_001320.jpg",
     subs: "the_silver_trail.asr.srt",
-    bytes: 237895215
+    bytes: 237895215,
+    kw: [
+     "mine",
+     "record",
+     "much",
+     "around",
+     "larry",
+     "will",
+     "name",
+     "book",
+     "better",
+     "might",
+     "care",
+     "help"
+    ]
    },
    {
     title: "Yodelin' Kid from Pine Ridge",
@@ -15850,6 +19147,20 @@ const CHANNELS = [
     wpx: "The Mysterious Rider is a 1938 American Western film directed by Lesley Selander and starring Douglass Dumbrille, Sidney Toler, and Russell Hayden. Written by Maurice Geraghty based on the 1921 novel The Mysterious Rider by Zane Grey, the film is about a notorious outlaw who returns to the ranch he once owned and takes a job disguised as a ranch hand. Unrecognized by the ranch's current owner, he waits patiently for an opportunity to…",
     dir: [
      "Lesley Selander"
+    ],
+    kw: [
+     "around",
+     "ranch",
+     "will",
+     "might",
+     "seen",
+     "sheriff",
+     "enough",
+     "keep",
+     "mean",
+     "last",
+     "heard",
+     "wait"
     ]
    },
    {
@@ -15910,7 +19221,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/arizona_kid/arizona_kid.thumbs/arizona_kid_001260.jpg",
     subs: "arizona_kid.asr.srt",
-    bytes: 231589005
+    bytes: 231589005,
+    kw: [
+     "mcbride",
+     "will",
+     "home",
+     "find",
+     "hear",
+     "mean",
+     "even",
+     "sure",
+     "fight",
+     "give",
+     "better",
+     "wrong"
+    ]
    },
    {
     title: "Frontier Horizon",
@@ -15963,6 +19288,20 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
+    ],
+    kw: [
+     "will",
+     "border",
+     "still",
+     "girl",
+     "patrol",
+     "jack",
+     "across",
+     "last",
+     "away",
+     "done",
+     "around",
+     "duty"
     ]
    },
    {
@@ -15982,6 +19321,20 @@ const CHANNELS = [
     wpx: "Six-Gun Rhythm is a 1939 American Western film directed by Sam Newfield.",
     dir: [
      "Sam Newfield"
+    ],
+    kw: [
+     "will",
+     "around",
+     "sure",
+     "show",
+     "give",
+     "boys",
+     "might",
+     "wrong",
+     "thought",
+     "sheriff",
+     "believe",
+     "trouble"
     ]
    },
    {
@@ -16032,6 +19385,20 @@ const CHANNELS = [
     ],
     co: [
      "Warner Bros. Entertainment"
+    ],
+    kw: [
+     "will",
+     "brown",
+     "john",
+     "first",
+     "much",
+     "life",
+     "kansas",
+     "around",
+     "mean",
+     "army",
+     "long",
+     "might"
     ]
    },
    {
@@ -16080,6 +19447,20 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
+    ],
+    kw: [
+     "mean",
+     "will",
+     "gold",
+     "better",
+     "much",
+     "need",
+     "money",
+     "give",
+     "california",
+     "away",
+     "pretty",
+     "army"
     ]
    },
    {
@@ -16187,6 +19568,20 @@ const CHANNELS = [
     ],
     cast: [
      "Glenn Strange"
+    ],
+    kw: [
+     "sure",
+     "will",
+     "much",
+     "maybe",
+     "mean",
+     "better",
+     "place",
+     "keep",
+     "stage",
+     "wrong",
+     "seems",
+     "looks"
     ]
    },
    {
@@ -16237,6 +19632,20 @@ const CHANNELS = [
      "Richard Dix",
      "Preston Foster",
      "Cliff Edwards"
+    ],
+    kw: [
+     "will",
+     "sure",
+     "cattle",
+     "money",
+     "much",
+     "kind",
+     "around",
+     "keep",
+     "every",
+     "away",
+     "might",
+     "river"
     ]
    },
    {
@@ -16261,6 +19670,20 @@ const CHANNELS = [
      "Jean Brooks",
      "Glenn Strange",
      "Richard Cramer"
+    ],
+    kw: [
+     "brand",
+     "dead",
+     "thought",
+     "last",
+     "care",
+     "sure",
+     "show",
+     "boys",
+     "will",
+     "name",
+     "morning",
+     "reckon"
     ]
    },
    {
@@ -16280,6 +19703,20 @@ const CHANNELS = [
     wpx: "Outlaws of Boulder Pass is a 1942 American Western film directed by Sam Newfield. The film stars George Houston as the \"Lone Rider\" and Al St. John as his sidekick \"Fuzzy\" Jones, and Dennis Moore as Sheriff Smoky Hammer, with Marjorie Manners, I. Stanford Jolley and Karl Hackett. The film was released on 12 June 1942, by Producers Releasing Corporation.",
     dir: [
      "Sam Newfield"
+    ],
+    kw: [
+     "zero",
+     "money",
+     "thought",
+     "father",
+     "smokey",
+     "smoking",
+     "mean",
+     "sheriff",
+     "cameron",
+     "better",
+     "keep",
+     "sure"
     ]
    },
    {
@@ -16328,6 +19765,20 @@ const CHANNELS = [
     ],
     cast: [
      "Al Ferguson"
+    ],
+    kw: [
+     "will",
+     "zero",
+     "sure",
+     "better",
+     "richard",
+     "find",
+     "maybe",
+     "alibi",
+     "trouble",
+     "boys",
+     "work",
+     "army"
     ]
    },
    {
@@ -16359,6 +19810,20 @@ const CHANNELS = [
     wpx: "Gangsters of the Frontier is a 1944 American Western film written and directed by Elmer Clifton. The film stars Dave O'Brien, Tex Ritter and Guy Wilkerson, with Patti McCarty, Harry Harvey and Betty Miles. The film was released on 22 September 1944, by Producers Releasing Corporation.",
     dir: [
      "Elmer Clifton"
+    ],
+    kw: [
+     "will",
+     "around",
+     "work",
+     "call",
+     "rock",
+     "guns",
+     "might",
+     "telegraph",
+     "working",
+     "fine",
+     "last",
+     "every"
     ]
    },
    {
@@ -16473,6 +19938,20 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
+    ],
+    kw: [
+     "mean",
+     "dollars",
+     "hundred",
+     "horse",
+     "will",
+     "world",
+     "around",
+     "golden",
+     "sure",
+     "trigger",
+     "kendrick",
+     "work"
     ]
    },
    {
@@ -16534,7 +20013,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/angel_and_the_bad_man_ipod/angel_and_the_bad_man_ipod.thumbs/angel_and_the_badman_004800.jpg",
     subs: "angel_and_the_badman.asr.srt",
-    bytes: 421638277
+    bytes: 421638277,
+    kw: [
+     "around",
+     "people",
+     "talk",
+     "quite",
+     "mean",
+     "much",
+     "water",
+     "poor",
+     "point",
+     "mind",
+     "work",
+     "feel"
+    ]
    },
    {
     title: "Angel and the Badman",
@@ -16561,6 +20054,20 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
+    ],
+    kw: [
+     "around",
+     "mean",
+     "talk",
+     "quite",
+     "people",
+     "mind",
+     "water",
+     "thought",
+     "life",
+     "point",
+     "feel",
+     "zero"
     ]
    },
    {
@@ -16603,6 +20110,20 @@ const CHANNELS = [
      "Gene Autry",
      "Barbara Britton",
      "Chill Wills"
+    ],
+    kw: [
+     "larry",
+     "mary",
+     "enough",
+     "sure",
+     "around",
+     "hard",
+     "thirty",
+     "move",
+     "coming",
+     "kind",
+     "find",
+     "home"
     ]
    },
    {
@@ -16630,6 +20151,20 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
+    ],
+    kw: [
+     "trigger",
+     "money",
+     "sure",
+     "will",
+     "rogers",
+     "horse",
+     "first",
+     "around",
+     "help",
+     "give",
+     "another",
+     "away"
     ]
    },
    {
@@ -16654,6 +20189,20 @@ const CHANNELS = [
      "Bill Edwards",
      "Forrest Taylor",
      "Don C. Harvey"
+    ],
+    kw: [
+     "horse",
+     "sure",
+     "feel",
+     "starlight",
+     "live",
+     "maybe",
+     "find",
+     "will",
+     "even",
+     "ever",
+     "kind",
+     "need"
     ]
    },
    {
@@ -17050,6 +20599,20 @@ const CHANNELS = [
      "Ginger Rogers",
      "Lyle Talbot",
      "Eddie Phillips"
+    ],
+    kw: [
+     "morgan",
+     "call",
+     "murder",
+     "feel",
+     "thirteen",
+     "around",
+     "killed",
+     "kill",
+     "will",
+     "girl",
+     "give",
+     "family"
     ]
    },
    {
@@ -17085,6 +20648,20 @@ const CHANNELS = [
      "Bela Lugosi",
      "Wallace Ford",
      "Arline Judge"
+    ],
+    kw: [
+     "maybe",
+     "mind",
+     "around",
+     "name",
+     "mean",
+     "getting",
+     "nice",
+     "along",
+     "ever",
+     "find",
+     "mushroom",
+     "knows"
     ]
    },
    {
@@ -17124,7 +20701,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/phantom_ship/phantom_ship.thumbs/phantom_ship_001440.jpg",
     subs: "phantom_ship.asr.srt",
-    bytes: 267466288
+    bytes: 267466288,
+    kw: [
+     "will",
+     "maybe",
+     "thought",
+     "break",
+     "love",
+     "mother",
+     "done",
+     "zero",
+     "whole",
+     "bring",
+     "even",
+     "went"
+    ]
    },
    {
     title: "Sabotage",
@@ -17137,7 +20728,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Sabotage_1936/Sabotage_1936.thumbs/Sabotage_001800.jpg",
     subs: "Sabotage.asr.srt",
-    bytes: 383246299
+    bytes: 383246299,
+    kw: [
+     "will",
+     "money",
+     "mean",
+     "need",
+     "give",
+     "people",
+     "long",
+     "call",
+     "idea",
+     "trying",
+     "many",
+     "coming"
+    ]
    },
    {
     title: "Seven Sinners",
@@ -17159,6 +20764,20 @@ const CHANNELS = [
     ],
     cast: [
      "Edmund Lowe"
+    ],
+    kw: [
+     "body",
+     "will",
+     "zero",
+     "call",
+     "first",
+     "people",
+     "years",
+     "found",
+     "much",
+     "feel",
+     "must",
+     "train"
     ]
    },
    {
@@ -17178,6 +20797,20 @@ const CHANNELS = [
     wpx: "The Dark Hour is a 1936 American film directed by Charles Lamont.",
     dir: [
      "Charles Lamont"
+    ],
+    kw: [
+     "last",
+     "henry",
+     "might",
+     "found",
+     "carson",
+     "house",
+     "thought",
+     "must",
+     "help",
+     "much",
+     "window",
+     "else"
     ]
    },
    {
@@ -17227,6 +20860,20 @@ const CHANNELS = [
     cast: [
      "John Barrymore",
      "John Howard"
+    ],
+    kw: [
+     "mean",
+     "will",
+     "next",
+     "kind",
+     "compartment",
+     "thought",
+     "find",
+     "train",
+     "much",
+     "getting",
+     "need",
+     "still"
     ]
    },
    {
@@ -17271,6 +20918,20 @@ const CHANNELS = [
     ],
     co: [
      "Monogram Pictures"
+    ],
+    kw: [
+     "wrong",
+     "morning",
+     "will",
+     "office",
+     "long",
+     "sure",
+     "letter",
+     "glass",
+     "much",
+     "home",
+     "talk",
+     "find"
     ]
    },
    {
@@ -17295,6 +20956,20 @@ const CHANNELS = [
      "Marjorie Reynolds",
      "James Flavin",
      "George Lynn"
+    ],
+    kw: [
+     "princess",
+     "captain",
+     "much",
+     "james",
+     "check",
+     "money",
+     "jackson",
+     "left",
+     "give",
+     "will",
+     "hope",
+     "call"
     ]
    },
    {
@@ -17317,6 +20992,20 @@ const CHANNELS = [
     ],
     cast: [
      "Bonita Granville"
+    ],
+    kw: [
+     "sure",
+     "story",
+     "will",
+     "maybe",
+     "find",
+     "still",
+     "around",
+     "place",
+     "much",
+     "case",
+     "idea",
+     "money"
     ]
    },
    {
@@ -17365,6 +21054,20 @@ const CHANNELS = [
      "Albert Ritz",
      "Jimmy Ritz",
      "Anita Louise"
+    ],
+    kw: [
+     "find",
+     "girl",
+     "will",
+     "around",
+     "house",
+     "give",
+     "trying",
+     "minute",
+     "talk",
+     "gorilla",
+     "keep",
+     "believe"
     ]
    },
    {
@@ -17392,6 +21095,20 @@ const CHANNELS = [
     ],
     co: [
      "Monogram Pictures"
+    ],
+    kw: [
+     "edwards",
+     "letter",
+     "house",
+     "will",
+     "first",
+     "last",
+     "mean",
+     "find",
+     "much",
+     "wrong",
+     "course",
+     "sure"
     ]
    },
    {
@@ -17418,6 +21135,20 @@ const CHANNELS = [
     ],
     co: [
      "Warner Bros. Entertainment"
+    ],
+    kw: [
+     "will",
+     "must",
+     "german",
+     "bennett",
+     "people",
+     "understand",
+     "thought",
+     "still",
+     "thompson",
+     "might",
+     "mean",
+     "along"
     ]
    },
    {
@@ -17440,6 +21171,20 @@ const CHANNELS = [
     ],
     cast: [
      "Marius Goring"
+    ],
+    kw: [
+     "mean",
+     "mother",
+     "morning",
+     "will",
+     "room",
+     "quite",
+     "much",
+     "find",
+     "sure",
+     "thought",
+     "people",
+     "coming"
     ]
    },
    {
@@ -17467,6 +21212,20 @@ const CHANNELS = [
     ],
     co: [
      "Monogram Pictures"
+    ],
+    kw: [
+     "might",
+     "will",
+     "mean",
+     "wentworth",
+     "father",
+     "fleming",
+     "shot",
+     "case",
+     "away",
+     "done",
+     "name",
+     "paper"
     ]
    },
    {
@@ -17494,6 +21253,20 @@ const CHANNELS = [
     ],
     co: [
      "Monogram Pictures"
+    ],
+    kw: [
+     "last",
+     "radio",
+     "sure",
+     "idea",
+     "street",
+     "talk",
+     "much",
+     "give",
+     "grady",
+     "young",
+     "went",
+     "around"
     ]
    },
    {
@@ -17516,6 +21289,20 @@ const CHANNELS = [
     ],
     cast: [
      "Keye Luke"
+    ],
+    kw: [
+     "chinese",
+     "sure",
+     "lecture",
+     "much",
+     "fire",
+     "place",
+     "phone",
+     "find",
+     "will",
+     "expedition",
+     "must",
+     "found"
     ]
    },
    {
@@ -17586,6 +21373,20 @@ const CHANNELS = [
     ],
     co: [
      "Monogram Pictures"
+    ],
+    kw: [
+     "will",
+     "money",
+     "around",
+     "murder",
+     "mean",
+     "keep",
+     "sure",
+     "give",
+     "maybe",
+     "sheriff",
+     "still",
+     "library"
     ]
    },
    {
@@ -17620,6 +21421,20 @@ const CHANNELS = [
      "Bela Lugosi",
      "John Archer",
      "Dave O'Brien"
+    ],
+    kw: [
+     "place",
+     "thought",
+     "will",
+     "find",
+     "talk",
+     "professor",
+     "mean",
+     "away",
+     "might",
+     "mission",
+     "give",
+     "much"
     ]
    },
    {
@@ -17647,6 +21462,20 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
+    ],
+    kw: [
+     "will",
+     "even",
+     "mind",
+     "five",
+     "home",
+     "talk",
+     "trying",
+     "gabriel",
+     "around",
+     "mean",
+     "blind",
+     "away"
     ]
    },
    {
@@ -17669,6 +21498,20 @@ const CHANNELS = [
     ],
     cast: [
      "Damian O'Flynn"
+    ],
+    kw: [
+     "talk",
+     "case",
+     "maybe",
+     "kind",
+     "police",
+     "around",
+     "town",
+     "call",
+     "wait",
+     "underwood",
+     "sure",
+     "boys"
     ]
    },
    {
@@ -17722,6 +21565,20 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
+    ],
+    kw: [
+     "holmes",
+     "must",
+     "will",
+     "home",
+     "watson",
+     "professor",
+     "doctor",
+     "mean",
+     "much",
+     "live",
+     "toby",
+     "site"
     ]
    },
    {
@@ -17757,6 +21614,20 @@ const CHANNELS = [
      "Jack Haley",
      "Jean Parker",
      "Maxine Fife"
+    ],
+    kw: [
+     "will",
+     "body",
+     "mean",
+     "thought",
+     "poor",
+     "last",
+     "life",
+     "might",
+     "find",
+     "room",
+     "even",
+     "sure"
     ]
    },
    {
@@ -17798,6 +21669,20 @@ const CHANNELS = [
     wpx: "Fog Island is a 1945 American mystery-suspense film directed by Terry O. Morse. The film stars B movie horror film regulars George Zucco and Lionel Atwill. It was based on the 1937 play Angel Island by Bernadine \"Bernie\" Angus.",
     dir: [
      "Terry O. Morse"
+    ],
+    kw: [
+     "will",
+     "might",
+     "rare",
+     "thought",
+     "mean",
+     "rather",
+     "read",
+     "mind",
+     "away",
+     "find",
+     "even",
+     "much"
     ]
    },
    {
@@ -17820,6 +21705,20 @@ const CHANNELS = [
     ],
     cast: [
      "Dave O'Brien"
+    ],
+    kw: [
+     "tony",
+     "will",
+     "talk",
+     "much",
+     "play",
+     "better",
+     "moore",
+     "police",
+     "might",
+     "killer",
+     "murder",
+     "company"
     ]
    },
    {
@@ -17853,6 +21752,20 @@ const CHANNELS = [
     ],
     co: [
      "Monogram Pictures"
+    ],
+    kw: [
+     "will",
+     "brett",
+     "people",
+     "office",
+     "radio",
+     "must",
+     "murder",
+     "read",
+     "program",
+     "much",
+     "already",
+     "talking"
     ]
    },
    {
@@ -17879,6 +21792,20 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
+    ],
+    kw: [
+     "holmes",
+     "will",
+     "george",
+     "watson",
+     "must",
+     "believe",
+     "help",
+     "quite",
+     "open",
+     "might",
+     "woman",
+     "house"
     ]
    },
    {
@@ -17906,6 +21833,20 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
+    ],
+    kw: [
+     "musical",
+     "pounds",
+     "will",
+     "holmes",
+     "pound",
+     "five",
+     "find",
+     "still",
+     "boxes",
+     "first",
+     "quite",
+     "must"
     ]
    },
    {
@@ -17944,6 +21885,20 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
+    ],
+    kw: [
+     "will",
+     "compartment",
+     "start",
+     "first",
+     "sure",
+     "train",
+     "scotland",
+     "stop",
+     "police",
+     "much",
+     "trying",
+     "professor"
     ]
    },
    {
@@ -18239,7 +22194,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The_Bat_Vincent_Price/The_Bat_Vincent_Price.thumbs/The_Bat_003900.jpg",
     subs: "The_Bat.asr.srt",
-    bytes: 355242515
+    bytes: 355242515,
+    kw: [
+     "house",
+     "find",
+     "room",
+     "will",
+     "fleming",
+     "bank",
+     "million",
+     "heard",
+     "must",
+     "believe",
+     "police",
+     "call"
+    ]
    },
    {
     title: "Pit and the Pendulum",
@@ -18286,6 +22255,20 @@ const CHANNELS = [
     ],
     cast: [
      "Jock Mahoney"
+    ],
+    kw: [
+     "money",
+     "charlie",
+     "knew",
+     "around",
+     "find",
+     "home",
+     "husband",
+     "call",
+     "case",
+     "last",
+     "will",
+     "work"
     ]
    }
   ]
@@ -18319,7 +22302,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bird_of_Paradise_1932/Bird_of_Paradise_1932.thumbs/BirdofParadise_001920.jpg",
     subs: "BirdofParadise.asr.srt",
-    bytes: 350827199
+    bytes: 350827199,
+    kw: [
+     "kind",
+     "will",
+     "iran",
+     "mean",
+     "love",
+     "girl",
+     "happened",
+     "remember",
+     "money",
+     "find",
+     "rare",
+     "afraid"
+    ]
    },
    {
     title: "Farewell to Arms",
@@ -18432,6 +22429,20 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
+    ],
+    kw: [
+     "mean",
+     "will",
+     "love",
+     "louis",
+     "better",
+     "nice",
+     "much",
+     "thought",
+     "hear",
+     "feel",
+     "long",
+     "give"
     ]
    },
    {
@@ -18490,6 +22501,20 @@ const CHANNELS = [
      "Richard Dix",
      "Leslie Banks",
      "Madge Evans"
+    ],
+    kw: [
+     "will",
+     "money",
+     "tunnel",
+     "much",
+     "world",
+     "people",
+     "love",
+     "find",
+     "thought",
+     "years",
+     "give",
+     "believe"
     ]
    },
    {
@@ -18509,6 +22534,20 @@ const CHANNELS = [
     wpx: "Waterfront Lady is a 1935 American film directed by Joseph Santley and starring Ann Rutherford, in her feature film debut, and Frank Albertson.",
     dir: [
      "Joseph Santley"
+    ],
+    kw: [
+     "thought",
+     "better",
+     "sure",
+     "around",
+     "talk",
+     "feel",
+     "help",
+     "will",
+     "place",
+     "nice",
+     "next",
+     "enough"
     ]
    },
    {
@@ -18536,6 +22575,20 @@ const CHANNELS = [
     ],
     co: [
      "Industrie Cinematografiche Italiane"
+    ],
+    kw: [
+     "will",
+     "must",
+     "wagon",
+     "country",
+     "find",
+     "captain",
+     "attack",
+     "yankee",
+     "telegraph",
+     "indians",
+     "coming",
+     "mean"
     ]
    },
    {
@@ -18563,6 +22616,20 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
+    ],
+    kw: [
+     "will",
+     "ship",
+     "monitor",
+     "work",
+     "captain",
+     "duty",
+     "navy",
+     "commodore",
+     "john",
+     "must",
+     "moment",
+     "raymond"
     ]
    },
    {
@@ -18589,6 +22656,20 @@ const CHANNELS = [
     ],
     co: [
      "United Artists"
+    ],
+    kw: [
+     "will",
+     "much",
+     "mean",
+     "even",
+     "live",
+     "money",
+     "must",
+     "better",
+     "write",
+     "enough",
+     "give",
+     "might"
     ]
    },
    {
@@ -18614,7 +22695,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Rembrandt/Rembrandt.thumbs/Rembrandt_002040.jpg",
     subs: "Rembrandt.asr.srt",
-    bytes: 366113673
+    bytes: 366113673,
+    kw: [
+     "will",
+     "money",
+     "must",
+     "picture",
+     "much",
+     "house",
+     "remember",
+     "thought",
+     "king",
+     "need",
+     "call",
+     "room"
+    ]
    },
    {
     title: "Winterset",
@@ -18740,6 +22835,20 @@ const CHANNELS = [
     ],
     co: [
      "Gaumont-British Picture Corporation"
+    ],
+    kw: [
+     "will",
+     "general",
+     "much",
+     "world",
+     "still",
+     "talking",
+     "mean",
+     "people",
+     "thought",
+     "five",
+     "away",
+     "name"
     ]
    },
    {
@@ -18759,6 +22868,20 @@ const CHANNELS = [
     wpx: "Paradise Isle is a 1937 American film directed by Arthur Greville Collins with sequences shot in American Samoa. The film was produced by Dorothy Davenport under the name \"Dorothy Reid\" and was released by Monogram Pictures. The film stars Mexican actress Movita Castaneda continuing her persona of a South Seas Island girl that began with Mutiny on the Bounty (1935).",
     dir: [
      "Arthur Greville Collins"
+    ],
+    kw: [
+     "away",
+     "white",
+     "help",
+     "people",
+     "will",
+     "mean",
+     "stay",
+     "maybe",
+     "mind",
+     "love",
+     "money",
+     "around"
     ]
    },
    {
@@ -18808,6 +22931,20 @@ const CHANNELS = [
     ],
     co: [
      "Mingxing Film Company"
+    ],
+    kw: [
+     "kind",
+     "home",
+     "talk",
+     "mean",
+     "call",
+     "find",
+     "whole",
+     "sure",
+     "guys",
+     "woman",
+     "done",
+     "need"
     ]
    },
    {
@@ -18835,6 +22972,20 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
+    ],
+    kw: [
+     "mean",
+     "much",
+     "kind",
+     "talk",
+     "will",
+     "thought",
+     "already",
+     "people",
+     "might",
+     "enough",
+     "maybe",
+     "feel"
     ]
    },
    {
@@ -18880,6 +23031,20 @@ const CHANNELS = [
     co: [
      "Gaumont",
      "Gaumont-British Picture Corporation"
+    ],
+    kw: [
+     "much",
+     "will",
+     "talk",
+     "actually",
+     "course",
+     "mean",
+     "might",
+     "name",
+     "find",
+     "must",
+     "last",
+     "need"
     ]
    },
    {
@@ -18907,6 +23072,20 @@ const CHANNELS = [
     ],
     co: [
      "Astor Pictures"
+    ],
+    kw: [
+     "world",
+     "love",
+     "will",
+     "thought",
+     "word",
+     "give",
+     "jenny",
+     "saying",
+     "people",
+     "child",
+     "must",
+     "alright"
     ]
    },
    {
@@ -18920,7 +23099,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheBeachcomber/TheBeachcomber.thumbs/The_Beachcomber_002100.jpg",
     subs: "The_Beachcomber.asr.srt",
-    bytes: 381248477
+    bytes: 381248477,
+    kw: [
+     "blah",
+     "will",
+     "much",
+     "stuff",
+     "must",
+     "people",
+     "feel",
+     "better",
+     "last",
+     "enough",
+     "help",
+     "side"
+    ]
    },
    {
     title: "Abe Lincoln of the Ninth Avenue",
@@ -18933,7 +23126,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/abe_lincoln_of_the_4th_ave/abe_lincoln_of_the_4th_ave.thumbs/abe_lincoln_of_the_4th_ave_001560.jpg",
     subs: "abe_lincoln_of_the_4th_ave.asr.srt",
-    bytes: 281136847
+    bytes: 281136847,
+    kw: [
+     "will",
+     "sure",
+     "christmas",
+     "much",
+     "brother",
+     "remember",
+     "mean",
+     "jimmy",
+     "people",
+     "give",
+     "looking",
+     "thought"
+    ]
    },
    {
     title: "Long Shot, The",
@@ -18946,7 +23153,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/long_shot/long_shot.thumbs/long_shot_001620.jpg",
     subs: "long_shot.asr.srt",
-    bytes: 294627341
+    bytes: 294627341,
+    kw: [
+     "horse",
+     "will",
+     "money",
+     "horses",
+     "keep",
+     "check",
+     "much",
+     "sure",
+     "even",
+     "sharon",
+     "race",
+     "mean"
+    ]
    },
    {
     title: "Love Affair",
@@ -18996,6 +23217,20 @@ const CHANNELS = [
      "Carole Lombard",
      "James Stewart",
      "Charles Coburn"
+    ],
+    kw: [
+     "wrong",
+     "mother",
+     "baby",
+     "judge",
+     "much",
+     "will",
+     "sure",
+     "place",
+     "feel",
+     "around",
+     "thought",
+     "johnny"
     ]
    },
    {
@@ -19024,6 +23259,20 @@ const CHANNELS = [
     ],
     co: [
      "20th Century Studios"
+    ],
+    kw: [
+     "will",
+     "father",
+     "much",
+     "give",
+     "captain",
+     "sure",
+     "mean",
+     "room",
+     "better",
+     "away",
+     "feel",
+     "morning"
     ]
    },
    {
@@ -19069,6 +23318,20 @@ const CHANNELS = [
     wpx: "The Last Alarm is a 1940 American crime film directed by former Chaplin imitator Billy West, under the pseudonym \"William West\". Featured were veteran character actor J. Farrell MacDonald and juvenile leads Warren Hull and Polly Ann Young.",
     dir: [
      "Billy West"
+    ],
+    kw: [
+     "fire",
+     "will",
+     "hadley",
+     "home",
+     "mind",
+     "maybe",
+     "pretty",
+     "work",
+     "thought",
+     "sure",
+     "past",
+     "might"
     ]
    },
    {
@@ -19082,7 +23345,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ole_swimmin_hole/ole_swimmin_hole.thumbs/ole_swimmin_hole_001920.jpg",
     subs: "ole_swimmin_hole.asr.srt",
-    bytes: 344997568
+    bytes: 344997568,
+    kw: [
+     "chris",
+     "doctor",
+     "mean",
+     "will",
+     "better",
+     "still",
+     "give",
+     "baker",
+     "maybe",
+     "mother",
+     "wait",
+     "young"
+    ]
    },
    {
     title: "Son of the Navy",
@@ -19107,6 +23384,20 @@ const CHANNELS = [
     ],
     co: [
      "Monogram Pictures"
+    ],
+    kw: [
+     "father",
+     "navy",
+     "christmas",
+     "mean",
+     "will",
+     "trouble",
+     "kids",
+     "much",
+     "talk",
+     "thought",
+     "away",
+     "maybe"
     ]
    },
    {
@@ -19131,6 +23422,20 @@ const CHANNELS = [
      "Martha Scott",
      "William Gargan",
      "Edmund Gwenn"
+    ],
+    kw: [
+     "will",
+     "mean",
+     "much",
+     "first",
+     "people",
+     "president",
+     "sure",
+     "give",
+     "many",
+     "love",
+     "remember",
+     "thought"
     ]
    },
    {
@@ -19158,6 +23463,20 @@ const CHANNELS = [
     ],
     co: [
      "Two Cities Films"
+    ],
+    kw: [
+     "will",
+     "ship",
+     "much",
+     "coming",
+     "live",
+     "last",
+     "even",
+     "give",
+     "next",
+     "talk",
+     "mother",
+     "another"
     ]
    },
    {
@@ -19180,6 +23499,20 @@ const CHANNELS = [
     ],
     cast: [
      "Lyle Talbot"
+    ],
+    kw: [
+     "general",
+     "will",
+     "hayden",
+     "must",
+     "already",
+     "best",
+     "mean",
+     "call",
+     "doctor",
+     "people",
+     "trying",
+     "important"
     ]
    },
    {
@@ -19365,7 +23698,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/heartbeat/heartbeat.thumbs/heartbeat_002400.jpg",
     subs: "heartbeat.asr.srt",
-    bytes: 436365801
+    bytes: 436365801,
+    kw: [
+     "will",
+     "first",
+     "much",
+     "enough",
+     "course",
+     "give",
+     "thought",
+     "school",
+     "mean",
+     "need",
+     "swear",
+     "live"
+    ]
    },
    {
     title: "Smash-Up: The Story of a Woman",
@@ -19532,6 +23879,20 @@ const CHANNELS = [
     ],
     co: [
      "20th Century Studios"
+    ],
+    kw: [
+     "will",
+     "people",
+     "seven",
+     "give",
+     "five",
+     "place",
+     "hundred",
+     "find",
+     "twenty",
+     "love",
+     "maybe",
+     "much"
     ]
    },
    {
@@ -19545,7 +23906,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/go_for_broke_ACM/go_for_broke_ACM.thumbs/Go_for_Broke_002160.jpg",
     subs: "Go_for_Broke.asr.srt",
-    bytes: 383972354
+    bytes: 383972354,
+    kw: [
+     "zero",
+     "whoa",
+     "will",
+     "tick",
+     "thirty",
+     "sure",
+     "kind",
+     "japanese",
+     "four",
+     "first",
+     "find",
+     "still"
+    ]
    },
    {
     title: "Hill Number One",
@@ -19608,7 +23983,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/big_trees/big_trees.thumbs/big_trees_002160.jpg",
     subs: "big_trees.asr.srt",
-    bytes: 389066326
+    bytes: 389066326,
+    kw: [
+     "money",
+     "live",
+     "much",
+     "keep",
+     "land",
+     "couple",
+     "work",
+     "feel",
+     "kind",
+     "dollars",
+     "boys",
+     "bank"
+    ]
    },
    {
     title: "The Snows of Kilimanjaro",
@@ -19658,6 +24047,20 @@ const CHANNELS = [
      "Joan Fontaine",
      "Edmond O'Brien",
      "Edmund Gwenn"
+    ],
+    kw: [
+     "will",
+     "home",
+     "away",
+     "much",
+     "graham",
+     "must",
+     "maybe",
+     "love",
+     "better",
+     "work",
+     "last",
+     "life"
     ]
    },
    {
@@ -19767,7 +24170,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/last_time_i_saw_paris/last_time_i_saw_paris.thumbs/last_time_i_saw_paris_002760.jpg",
     subs: "last_time_i_saw_paris.asr.srt",
-    bytes: 504664880
+    bytes: 504664880,
+    kw: [
+     "much",
+     "will",
+     "home",
+     "love",
+     "money",
+     "world",
+     "maybe",
+     "fine",
+     "help",
+     "last",
+     "talk",
+     "getting"
+    ]
    },
    {
     title: "Panther Panchali ( Apu Trilogy Pt. 1)",
@@ -19805,6 +24222,20 @@ const CHANNELS = [
     ],
     co: [
      "American International Pictures"
+    ],
+    kw: [
+     "sure",
+     "much",
+     "guess",
+     "around",
+     "couple",
+     "find",
+     "maybe",
+     "will",
+     "give",
+     "shot",
+     "grand",
+     "kill"
     ]
    },
    {
@@ -19846,6 +24277,20 @@ const CHANNELS = [
     cast: [
      "Lori Nelson",
      "Chuck Connors"
+    ],
+    kw: [
+     "give",
+     "will",
+     "kids",
+     "around",
+     "jeff",
+     "stop",
+     "place",
+     "strip",
+     "much",
+     "trying",
+     "chicken",
+     "sure"
     ]
    },
    {
@@ -19915,7 +24360,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/wild_women_of_wongo_ipod/wild_women_of_wongo_ipod.thumbs/The_Wild_Women_of_Wongo_001740.jpg",
     subs: "The_Wild_Women_of_Wongo.asr.srt",
-    bytes: 301609670
+    bytes: 301609670,
+    kw: [
+     "will",
+     "women",
+     "father",
+     "king",
+     "must",
+     "even",
+     "young",
+     "away",
+     "people",
+     "dragon",
+     "temple",
+     "without"
+    ]
    },
    {
     title: "Battle of Blood Island",
@@ -19960,6 +24419,20 @@ const CHANNELS = [
      "Angie Dickinson",
      "Ivan Triesault",
      "Mimi Gibson"
+    ],
+    kw: [
+     "work",
+     "life",
+     "will",
+     "sure",
+     "ever",
+     "world",
+     "must",
+     "morning",
+     "people",
+     "first",
+     "away",
+     "alice"
     ]
    },
    {
@@ -20124,6 +24597,20 @@ const CHANNELS = [
     ],
     co: [
      "United Artists"
+    ],
+    kw: [
+     "helen",
+     "will",
+     "child",
+     "captain",
+     "annie",
+     "give",
+     "sullivan",
+     "keller",
+     "half",
+     "teach",
+     "talk",
+     "must"
     ]
    },
    {
@@ -20819,7 +25306,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/nasa_eclips_081009/nasa_eclips_081009.thumbs/OW42_Subrip_000270.jpg",
     subs: "OW42_Subrip.srt",
-    bytes: 19946842
+    bytes: 19946842,
+    kw: [
+     "telescope",
+     "radio",
+     "earth",
+     "arecibo",
+     "space",
+     "light",
+     "galileo",
+     "astronomers",
+     "waves",
+     "planets",
+     "telescopes",
+     "wave"
+    ]
    },
    {
     title: "Ourworld: Fluid Shift and Our World: Investigating Mars with the Phoen",
@@ -20832,7 +25333,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/nasa_eclips_052609/nasa_eclips_052609.thumbs/LP22HOW_Overview_000210.jpg",
     subs: "LP20Observatories.srt",
-    bytes: 22571906
+    bytes: 22571906,
+    kw: [
+     "mauna",
+     "mountain",
+     "observatories",
+     "telescopes",
+     "stars",
+     "snow",
+     "world",
+     "island",
+     "atmosphere",
+     "light",
+     "pollution",
+     "much"
+    ]
    },
    {
     title: "Real World: Lessons in Heavy Metal",
@@ -20845,7 +25360,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/nasa_eclips_091109/nasa_eclips_091109.thumbs/RW49_ARES_WELDING_000300.jpg",
     subs: "RW49_ARES_WELDING.srt",
-    bytes: 27846376
+    bytes: 27846376,
+    kw: [
+     "friction",
+     "welding",
+     "weld",
+     "metal",
+     "robert",
+     "stir",
+     "josh",
+     "tool",
+     "together",
+     "ares",
+     "pieces",
+     "process"
+    ]
    },
    {
     title: "Space Operations",
@@ -20858,7 +25387,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/nasa_eclips_110209/nasa_eclips_110209.thumbs/NASA_Launchpad_Methane_on_Mars_000180.jpg",
     subs: "LP37_Finding_ET.srt",
-    bytes: 26666627
+    bytes: 26666627,
+    kw: [
+     "methane",
+     "earth",
+     "life",
+     "mars",
+     "scientists",
+     "atmosphere",
+     "planet",
+     "nasa",
+     "also",
+     "biological",
+     "processes",
+     "cows"
+    ]
    }
   ]
  }

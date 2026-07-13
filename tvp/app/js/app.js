@@ -758,6 +758,7 @@ function powerOn() {
   state.on = true;
   $("splash").classList.add("hidden");
   crt("on");
+  if (!pendingDeepLink) pendingDeepLink = parseHash();   // same-document arrivals
   if (pendingDeepLink?.kind === "ia") {
     tune(pendingDeepLink.ci, { fromStartProg: pendingDeepLink.pi, startAt: pendingDeepLink.t || 0 });
     pendingDeepLink = null;
@@ -1720,7 +1721,7 @@ function openBuddy() {
     sec("⏱", "scenes", b.scenes.map((sc, i) =>
       `<button class="buddy-scene" data-t="${sc.t}"><span class="t">${fmt(sc.t)}</span>${esc(sc.label || "scene " + (i + 1))}</button>`
     ).join("") + (item
-      ? `<div class="w-hint" style="margin-top:6px">deep-linkable: #ia:${esc(item)};t=${b.scenes[0].t}</div>` : ""));
+      ? `<div class="w-hint" style="margin-top:6px">deep-linkable: #ia${hashOf(p)};t=${b.scenes[0].t}</div>` : ""));
     box.querySelectorAll(".buddy-scene").forEach((btn) =>
       btn.addEventListener("click", () => {
         closeBuddy(); crtBlink();
@@ -1737,7 +1738,7 @@ function openBuddy() {
       btn.style.marginTop = "12px";
       btn.textContent = "🔗 link this moment (" + fmt(t) + ")";
       btn.addEventListener("click", async () => {
-        const url = location.origin + location.pathname + "#ia:" + item + ";t=" + t;
+        const url = location.origin + location.pathname + "#ia" + hashOf(p) + ";t=" + t;
         try {
           if (navigator.share) await navigator.share({ url });
           else { await navigator.clipboard.writeText(url); btn.textContent = "copied ✓"; }
@@ -2142,6 +2143,35 @@ $("intermission").addEventListener("click", (e) => {
 
 const itemOf = (prog) => (prog.src || "").match(/archive\.org\/download\/([^/]+)\//)?.[1] || null;
 
+/* content IDs are an alphanumeric hash of the canonical IA URL
+   (FNV-1a → base36, ~7 chars): short, uniform, and they don't leak
+   titles into the address bar. #ia<hash>, e.g. #ia1x9k2f */
+function fnv36(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = (h * 0x01000193) >>> 0;
+  }
+  return h.toString(36);
+}
+const canonicalOf = (prog) => {
+  const id = itemOf(prog);
+  return id ? "https://archive.org/details/" + id : null;
+};
+const hashOf = (prog) => {
+  const c = canonicalOf(prog);
+  return c ? fnv36(c) : null;
+};
+const HASH_INDEX = new Map();
+CHANNELS.forEach((ch, ci) => ch.programs.forEach((p, pi) => {
+  const h = hashOf(p);
+  if (!h) return;
+  if (HASH_INDEX.has(h) && itemOf(CHANNELS[HASH_INDEX.get(h).ci].programs[HASH_INDEX.get(h).pi]) !== itemOf(p)) {
+    console.warn("[tvp] content-hash collision:", h);
+  }
+  HASH_INDEX.set(h, { ci, pi });
+}));
+
 function findByItem(id) {
   for (let ci = 0; ci < CHANNELS.length; ci++) {
     const pi = CHANNELS[ci].programs.findIndex((p) => itemOf(p) === id);
@@ -2155,14 +2185,18 @@ function reflectHash() {
     const info = currentProgramInfo();
     const h = info.live
       ? "#ch:" + currentChannel().id
-      : "#ia:" + (itemOf(info.program) || "");
+      : "#ia" + (hashOf(info.program) || "");
     history.replaceState(null, "", h);
   } catch {}
 }
 
 function parseHash() {
   const h = decodeURIComponent(location.hash || "");
-  let m = h.match(/^#ia:([^;]+)(?:;t=(\d+))?$/);
+  let m = h.match(/^#ia([0-9a-z]{4,10})(?:;t=(\d+))?$/);
+  if (m && HASH_INDEX.has(m[1])) {
+    return { kind: "ia", ...HASH_INDEX.get(m[1]), t: m[2] ? parseInt(m[2], 10) : 0 };
+  }
+  m = h.match(/^#ia:([^;]+)(?:;t=(\d+))?$/);   // legacy identifier links
   if (m) { const hit = findByItem(m[1]); if (hit) return { kind: "ia", ...hit, t: m[2] ? parseInt(m[2], 10) : 0 }; }
   m = h.match(/^#ch:(.+)$/);
   if (m) {
