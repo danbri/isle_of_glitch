@@ -72,6 +72,11 @@
     </div>
     <div id="info-more">
       <p id="info-desc"></p>
+      <blockquote id="info-wiki" class="hidden">
+        <span id="info-wiki-text"></span>
+        <cite>&mdash; <a id="info-wiki-link" target="_blank" rel="noopener">Wikipedia</a>, CC BY-SA</cite>
+      </blockquote>
+      <div id="info-buddy-chips" class="hidden"></div>
       <div id="info-facts"></div>
       <div id="info-sched"></div>
       <div id="info-actions">
@@ -181,7 +186,10 @@
   <section class="widget" id="w-buddy" data-widget="buddy">
     <h3>👀 watch buddy</h3>
     <div class="w-body">
-      <button class="pill-btn" id="buddy-toggle"></button>
+      <div id="buddy-controls">
+        <button class="pill-btn" id="buddy-toggle"></button>
+        <button class="pill-btn" id="buddy-config" title="Watch Buddy settings & explorer">⚙️</button>
+      </div>
       <div id="buddy-now" class="w-hint"></div>
       <div class="w-hint">A friendly heads-up layer: content warnings
       (😳😱🤯😲😨👻🙀🎷🎻), a ⏳ flag on material with outdated attitudes,

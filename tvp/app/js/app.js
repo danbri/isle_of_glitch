@@ -384,6 +384,26 @@ function updateInfo() {
 
   // expanded panel
   $("info-desc").textContent = p.desc || ch.tagline || "";
+
+  // Wikipedia lead extract (CC BY-SA — shown with attribution + link)
+  if (p.wpx && p.wp) {
+    $("info-wiki-text").textContent = p.wpx;
+    $("info-wiki-link").href = p.wp;
+    $("info-wiki").classList.remove("hidden");
+  } else {
+    $("info-wiki").classList.add("hidden");
+  }
+
+  // Watch Buddy notes, right in the full metadata view
+  const chips = buddyChips(p);
+  if (chips.length && store.get("buddy", true)) {
+    $("info-buddy-chips").innerHTML =
+      `<span class="ibc-label">👀 watch buddy:</span> ${chips.map((c) => `<span>${c}</span>`).join(" ")} <u>view notes</u>`;
+    $("info-buddy-chips").classList.remove("hidden");
+    $("info-buddy-chips").onclick = openBuddy;
+  } else {
+    $("info-buddy-chips").classList.add("hidden");
+  }
   $("info-facts").textContent = [
     (p.year ? "first shown " + p.year : null),
     fmt(p.dur),
@@ -760,7 +780,7 @@ function renderGuideGrid() {
         <div class="g-card-label">
           <div class="g-card-title">${p.title}</div>
           <div class="g-card-sub">${live ? '<span class="live-tag">LIVE</span>' : clock12(new Date(starts[pi]))}
-            ${p.year ? "<span>· " + p.year + "</span>" : ""}</div>
+            ${p.year ? "<span>· " + p.year + "</span>" : ""}${buddyBadge(p)}</div>
         </div>`;
       card.addEventListener("click", () => {
         closePanels(); crtBlink();
@@ -877,7 +897,7 @@ function renderGuideList() {
     const row = document.createElement("div");
     row.className = "gl-row" + (slot.live ? " now" : "");
     row.innerHTML = `<span class="t">${clock12(new Date(slot.startMs))}</span>
-      <span class="n">${slot.program.title}${slot.program.year ? " <small>(" + slot.program.year + ")</small>" : ""}</span>
+      <span class="n">${slot.program.title}${slot.program.year ? " <small>(" + slot.program.year + ")</small>" : ""}${buddyBadge(slot.program)}</span>
       ${slot.live ? '<span class="live-tag">LIVE</span>' : ""}`;
     row.addEventListener("click", () => {
       closePanels(); crtBlink();
@@ -911,7 +931,7 @@ function renderSearch(q) {
       const el = document.createElement("div");
       el.className = "sr";
       el.innerHTML = `<img src="${p.art || ch.art}" alt="" loading="lazy">
-        <div><div class="sr-title">${p.title}${p.year ? " (" + p.year + ")" : ""}</div>
+        <div><div class="sr-title">${p.title}${p.year ? " (" + p.year + ")" : ""}${buddyBadge(p)}</div>
         <div class="sr-sub">${ch.num} · ${ch.name}${live ? ' · <span class="onair">ON AIR</span>' : " · plays from start"}</div></div>`;
       el.addEventListener("click", () => {
         closePanels(); crtBlink();
@@ -1288,23 +1308,35 @@ function buddyFor(prog) {
   } : null;
 }
 
+/* the chips for a program's notes — used on the strip, in the info panel,
+   on explore cards, in listings and search results */
+function buddyChips(prog) {
+  const b = buddyFor(prog);
+  if (!b) return [];
+  const chips = [];
+  if (b.warning) chips.push(b.warning.warningEmoji || "😳");
+  if (b.dated) chips.push("⏳");
+  if (b.facts.length) chips.push("📚");
+  return chips;
+}
+const buddyBadge = (prog) => {
+  const c = buddyChips(prog);
+  return c.length ? `<span class="buddy-mini" title="Watch Buddy notes">${c.join("")}</span>` : "";
+};
+
 let buddyWasPlaying = false;
 
 function renderBuddy() {
   const enabled = store.get("buddy", true);
   const info = currentProgramInfo();
-  const b = enabled ? buddyFor(info.program) : null;
+  const chips = enabled ? buddyChips(info.program) : [];
   const strip = $("buddy-strip");
-  if (!b || !state.on) { strip.classList.add("hidden"); }
+  if (!chips.length || !state.on) { strip.classList.add("hidden"); }
   else {
-    const chips = [];
-    if (b.warning) chips.push(b.warning.warningEmoji || "😳");
-    if (b.dated) chips.push("⏳");
-    if (b.facts.length) chips.push("📚");
     strip.innerHTML = chips.map((c) => `<span>${c}</span>`).join("");
     strip.classList.remove("hidden");
   }
-  $("buddy-now").textContent = b
+  $("buddy-now").textContent = chips.length
     ? "notes available for what's on now — tap the chips on screen"
     : "no notes for what's on right now";
 }
@@ -1367,6 +1399,69 @@ $("buddy-toggle").addEventListener("click", () => {
   renderBuddyToggle();
   renderBuddy();
 });
+
+/* ⚙️ the explorer: an easter-egg index of the dial, navigated by the
+   warning labels themselves — pick an emoji, see everything it marks */
+function openBuddyExplorer() {
+  buddyWasPlaying = false;                 // browsing, not warning-reading: keep playing
+  $("buddy-program").textContent = "the label index";
+  const box = $("buddy-sections");
+  box.innerHTML = "";
+
+  const byChip = new Map();                // emoji -> [{ch, pi, prog, note}]
+  CHANNELS.forEach((ch) => ch.programs.forEach((prog, pi) => {
+    const b = buddyFor(prog);
+    if (!b) return;
+    const add = (chip, note) => {
+      if (!byChip.has(chip)) byChip.set(chip, []);
+      byChip.get(chip).push({ ch, pi, prog, note });
+    };
+    if (b.warning) add(b.warning.warningEmoji || "😳", b.warning.text);
+    if (b.dated) add("⏳", "of its time");
+    if (b.facts.length) add("📚", b.facts[0].claimReviewed || "fact checkable");
+  }));
+
+  const cloud = document.createElement("div");
+  cloud.id = "buddy-cloud";
+  [...byChip.entries()].sort((a, b) => b[1].length - a[1].length).forEach(([chip, list]) => {
+    const btn = document.createElement("button");
+    btn.className = "buddy-cloud-chip";
+    btn.innerHTML = `${chip}<small>${list.length}</small>`;
+    btn.addEventListener("click", () => {
+      box.querySelectorAll(".buddy-chip-list").forEach((el) => el.remove());
+      cloud.querySelectorAll(".buddy-cloud-chip").forEach((el) => el.classList.remove("lit"));
+      btn.classList.add("lit");
+      const wrap = document.createElement("div");
+      wrap.className = "buddy-chip-list";
+      list.forEach(({ ch, pi, prog, note }) => {
+        const live = scheduleFor(ch).index === pi;
+        const row = document.createElement("div");
+        row.className = "buddy-x-row";
+        row.innerHTML = `<span class="x-title">${esc(prog.title)}${prog.year ? " <small>(" + prog.year + ")</small>" : ""}</span>
+          <span class="x-sub">${ch.num} · ${esc(ch.name)}${live ? ' · <b>ON AIR</b>' : ""}<br><i>${esc(note)}</i></span>`;
+        row.addEventListener("click", () => {
+          closeBuddy(); closePanels(); crtBlink();
+          const chIdx = CHANNELS.indexOf(ch);
+          live ? tune(chIdx) : tune(chIdx, { fromStartProg: pi });
+        });
+        wrap.appendChild(row);
+      });
+      box.appendChild(wrap);
+    });
+    cloud.appendChild(btn);
+  });
+
+  const sec = document.createElement("div");
+  sec.className = "buddy-sec";
+  sec.innerHTML = `<div class="b-emoji">🗺️</div>
+    <div class="b-text"><div class="b-label">navigate by label</div>
+    Tap an emoji to see everything on the dial it marks. Yes, this is a
+    legitimate way to choose an evening's viewing.</div>`;
+  box.appendChild(sec);
+  box.appendChild(cloud);
+  $("buddy-overlay").classList.remove("hidden");
+}
+$("buddy-config").addEventListener("click", openBuddyExplorer);
 
 /* ── widgets: preloading policy ────────────────────── */
 

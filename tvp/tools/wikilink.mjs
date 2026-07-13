@@ -92,7 +92,22 @@ for (const p of progs) {
       p.wd = id;
       matched++;
       const title = e.sitelinks?.enwiki?.title;
-      if (title) { p.wp = "https://en.wikipedia.org/wiki/" + encodeURIComponent(title.replace(/ /g, "_")); withWp++; }
+      if (title) {
+        p.wp = "https://en.wikipedia.org/wiki/" + encodeURIComponent(title.replace(/ /g, "_"));
+        withWp++;
+        // pull the lead extract — Wikipedia text is CC BY-SA, so the player
+        // must (and does) display it with attribution and a link back
+        try {
+          const sr = await fetch(
+            "https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(title),
+            { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(20000) });
+          if (sr.ok) {
+            const sj = await sr.json();
+            const x = String(sj.extract || "").trim();
+            if (x.length > 60) p.wpx = x.length > 460 ? x.slice(0, 440).replace(/\s+\S*$/, "") + "…" : x;
+          }
+        } catch {}
+      }
       p._dirIds = claimIds(e, "P57", 2);
       p._castIds = claimIds(e, "P161", 3);
       p._coIds = claimIds(e, "P272", 2);
