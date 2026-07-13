@@ -112,7 +112,19 @@ const CHANNELS = [
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/Tears-of-Steel",
     frame: "https://archive.org/download/Tears-of-Steel/Tears-of-Steel.thumbs/tears_of_steel_1080p_000589.jpg",
-    bytes: 76435802
+    bytes: 76435802,
+    wd: "Q1173161",
+    wp: "https://en.wikipedia.org/wiki/Tears_of_Steel",
+    wpx: "Tears of Steel is a short science fiction film by producer Ton Roosendaal and director/writer Ian Hubert. The film is both live-action and CGI; it was made using new enhancements to the visual effects capabilities of Blender, a free and open-source 3D computer graphics app. Set in a dystopian future, the short film features a group of warriors and scientists who gather at the Oude Kerk in Amsterdam in a desperate attempt to save the…",
+    dir: [
+     "Ian Hubert"
+    ],
+    cast: [
+     "Derek de Lint"
+    ],
+    co: [
+     "Blender Foundation"
+    ]
    },
    {
     title: "Cosmos Laundromat: First Cycle",
@@ -199,7 +211,22 @@ const CHANNELS = [
     license: "Public domain",
     art: "https://archive.org/services/img/LittleNemo_548",
     frame: "https://archive.org/download/LittleNemo_548/LittleNemo_548.thumbs/LittleNemo_000240.jpg",
-    bytes: 51131619
+    bytes: 51131619,
+    wd: "Q4020439",
+    wp: "https://en.wikipedia.org/wiki/Little_Nemo_(1911_film)",
+    wpx: "Winsor McCay: The Famous Cartoonist of the N.Y. Herald and His Moving Comics, more commonly known as Little Nemo, is a 1911 silent animated short film by American cartoonist Winsor McCay. One of the earliest animated films and McCay's first, it featured characters from McCay's comic strip Little Nemo in Slumberland. Its expressive character animation distinguished the film from the experiments of earlier animators.",
+    dir: [
+     "J. Stuart Blackton",
+     "Winsor McCay"
+    ],
+    cast: [
+     "John Bunny",
+     "Winsor McCay",
+     "George McManus"
+    ],
+    co: [
+     "Vitagraph Studios"
+    ]
    },
    {
     title: "Gertie the Dinosaur",
@@ -210,7 +237,18 @@ const CHANNELS = [
     license: "Public domain",
     art: "https://archive.org/services/img/Gertie",
     frame: "https://archive.org/download/Gertie/Gertie.thumbs/GertietheDinosaur_000300.jpg",
-    bytes: 39234070
+    bytes: 39234070,
+    wd: "Q556464",
+    wp: "https://en.wikipedia.org/wiki/Gertie_the_Dinosaur",
+    wpx: "Gertie the Dinosaur is an animated short film released in 1914 by American cartoonist and animator Winsor McCay. It is the first animated film to feature a dinosaur. McCay initially presented the film before live audiences as an interactive part of his vaudeville act; the frisky, childlike Gertie performed tricks at her master's command. McCay's employer William Randolph Hearst curtailed his vaudeville activities, prompting McCay to…",
+    dir: [
+     "Winsor McCay"
+    ],
+    cast: [
+     "Winsor McCay",
+     "George McManus",
+     "Tad Dorgan"
+    ]
    },
    {
     title: "Steamboat Willie",
@@ -582,7 +620,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Nosferatu_most_complete_version_93_mins./Nosferatu_most_complete_version_93_mins..thumbs/Nosferatu_1922_Symphony_of_Horror_002220.jpg",
-    bytes: 395416378
+    bytes: 395416378,
+    wd: "Q151895",
+    wp: "https://en.wikipedia.org/wiki/Nosferatu",
+    wpx: "Nosferatu: A Symphony of Horror is a 1922 silent German Expressionist vampire film directed by F. W. Murnau from a screenplay by Henrik Galeen. It stars Max Schreck as Count Orlok, a vampire who preys on the wife of his estate agent and brings the plague to their town.",
+    dir: [
+     "F. W. Murnau"
+    ],
+    cast: [
+     "Max Schreck",
+     "Wolfgang Heinz",
+     "Gustav von Wangenheim"
+    ],
+    co: [
+     "Prana Film"
+    ]
    },
    {
     title: "White Zombie",
@@ -595,7 +647,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/white_zombie/white_zombie.thumbs/white_zombie_001560.jpg",
     subs: "white_zombie.asr.srt",
-    bytes: 285317204
+    bytes: 285317204,
+    wd: "Q1751461",
+    wp: "https://en.wikipedia.org/wiki/White_Zombie_(film)",
+    wpx: "White Zombie is a 1932 pre-Code horror movie produced independently by Edward Halperin and directed by Victor Halperin. The screenplay by Garnett Weston, based on The Magic Island, a non-fiction travel book by William Seabrook, is about a young woman's transformation into a zombie by a voodoo master. Bela Lugosi features as the zombie master Legendre, with Madge Bellamy appearing as one of his victims. Other cast members include Joseph…",
+    dir: [
+     "Victor Hugo Halperin"
+    ],
+    cast: [
+     "Bela Lugosi",
+     "Madge Bellamy",
+     "Robert Frazer"
+    ]
    },
    {
     title: "Ghost Walks, The",
@@ -620,7 +683,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheHumanMonster720p1939/TheHumanMonster720p1939.thumbs/HumanMonster720p_001794.jpg",
     subs: "HumanMonster720p.asr.srt",
-    bytes: 498083109
+    bytes: 498083109,
+    wd: "Q7728934",
+    wp: "https://en.wikipedia.org/wiki/The_Dark_Eyes_of_London_(film)",
+    wpx: "The Dark Eyes of London is a 1939 British horror film produced by John Argyle and directed by Walter Summers, and starring Béla Lugosi, Hugh Williams, and Greta Gynt. The film is an adaptation of the 1924 novel of the same name by Edgar Wallace. The film is about a scientist named Dr Orloff who commits a series of murders for insurance money, while periodically disguising himself as the blind manager of a charity to further his scheme.",
+    dir: [
+     "Walter Summers"
+    ],
+    cast: [
+     "Bela Lugosi",
+     "Hugh Williams",
+     "Greta Gynt"
+    ]
    },
    {
     title: "The Devil Bat",
@@ -633,7 +707,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Devil_Bat_movie/Devil_Bat_movie.thumbs/Devil_Bat_004085.jpg",
     subs: "Devil_Bat.asr.srt",
-    bytes: 297157181
+    bytes: 297157181,
+    wd: "Q3520610",
+    wp: "https://en.wikipedia.org/wiki/The_Devil_Bat",
+    wpx: "The Devil Bat is a 1940 black-and-white American horror film produced by Producers Releasing Corporation (PRC) and directed by Jean Yarborough. The film stars Bela Lugosi along with Suzanne Kaaren, Guy Usher, Yolande Mallott and the comic team of Dave O'Brien and Donald Kerr as the protagonists. It was the first horror film from PRC.",
+    dir: [
+     "Jean Yarbrough"
+    ],
+    cast: [
+     "Arthur Q. Bryan",
+     "Bela Lugosi",
+     "Dave O'Brien"
+    ],
+    co: [
+     "Producers Releasing Corporation"
+    ]
    },
    {
     title: "King of the Zombies",
@@ -646,7 +734,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/King_of_the_Zombies/King_of_the_Zombies.thumbs/King_of_the_Zombies_001620.jpg",
     subs: "King_of_the_Zombies.asr.srt",
-    bytes: 340992947
+    bytes: 340992947,
+    wd: "Q1857464",
+    wp: "https://en.wikipedia.org/wiki/King_of_the_Zombies",
+    wpx: "King of the Zombies is a 1941 American zombie comedy film directed by Jean Yarbrough and starring Dick Purcell, Joan Woodbury, and Mantan Moreland. The film was produced by Monogram Pictures, and was typical of its B films produced by the Pine-Thomas team. Along with flying scenes, the use of zany characters and slapstick efforts were juxtaposed with a spy and zombie story.",
+    dir: [
+     "Jean Yarbrough"
+    ],
+    cast: [
+     "Dick Purcell",
+     "Joan Woodbury",
+     "Mantan Moreland"
+    ],
+    co: [
+     "Monogram Pictures"
+    ]
    },
    {
     title: "The Ghost Train",
@@ -658,7 +760,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheGhostTrain/TheGhostTrain.thumbs/TheGhostTrain_001920.jpg",
-    bytes: 354213679
+    bytes: 354213679,
+    wd: "Q7736298",
+    wp: "https://en.wikipedia.org/wiki/The_Ghost_Train_(1941_film)",
+    wpx: "The Ghost Train is a 1941 British thriller mystery film directed by Walter Forde and starring Arthur Askey and Richard Murdoch. It is based on the 1923 play The Ghost Train by Arnold Ridley.",
+    dir: [
+     "Walter Forde"
+    ],
+    cast: [
+     "Arthur Askey"
+    ]
    },
    {
     title: "Mad Monster, The",
@@ -684,7 +795,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheCorpseVanishes/TheCorpseVanishes.thumbs/TheCorpseVanishes_001500.jpg",
     subs: "TheCorpseVanishes.asr.srt",
-    bytes: 275640773
+    bytes: 275640773,
+    wd: "Q2064579",
+    wp: "https://en.wikipedia.org/wiki/The_Corpse_Vanishes",
+    wpx: "The Corpse Vanishes is a 1942 American mystery horror film starring Bela Lugosi, directed by Wallace Fox, and written by Harvey Gates. Lugosi portrays a mad scientist who injects his aging wife with fluids from virginal young brides in order to preserve her beauty. Luana Walters as a journalist and Tristram Coffin as a small-town doctor investigate and solve the disappearances of the brides. The film was produced and distributed by…",
+    dir: [
+     "Wallace Fox"
+    ],
+    cast: [
+     "Bela Lugosi",
+     "Luana Walters",
+     "Tris Coffin"
+    ]
    },
    {
     title: "Dead Men Walk",
@@ -696,7 +818,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/DeadMenWalk/DeadMenWalk.thumbs/DeadMenWalk_001500.jpg",
     subs: "DeadMenWalk.asr.srt",
-    bytes: 393987029
+    bytes: 393987029,
+    wd: "Q5245329",
+    wp: "https://en.wikipedia.org/wiki/Dead_Men_Walk",
+    wpx: "Dead Men Walk is a 1943 American horror film produced by Sigmund Neufeld for Producers Releasing Corporation (PRC). It is an original story and screenplay by Fred Myton, starring George Zucco, Mary Carlisle, Nedrick Young, and Dwight Frye, directed by Sam Newfield. It was originally distributed by PRC and reissued in the US in 1948 by Madison Pictures, Inc.",
+    dir: [
+     "Sam Newfield"
+    ],
+    cast: [
+     "Dwight Frye",
+     "George Zucco",
+     "Mary Carlisle"
+    ]
    },
    {
     title: "Ghosts on the Loose",
@@ -708,7 +841,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/GhostsontheLoose/GhostsontheLoose.thumbs/GhostsontheLoose_001560.jpg",
-    bytes: 280216493
+    bytes: 280216493,
+    wd: "Q3104973",
+    wp: "https://en.wikipedia.org/wiki/Ghosts_on_the_Loose",
+    wpx: "Ghosts on the Loose is a 1943 American comedy horror film and the fourteenth film in the East Side Kids series, directed by William Beaudine. The picture co-stars horror film icon Bela Lugosi as well as Ava Gardner in one of her earliest roles.",
+    dir: [
+     "William Beaudine"
+    ],
+    cast: [
+     "Ava Gardner",
+     "Bela Lugosi",
+     "Huntz Hall"
+    ],
+    co: [
+     "Monogram Pictures"
+    ]
    },
    {
     title: "The Snow Creature",
@@ -721,7 +868,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheSnowCreature/TheSnowCreature.thumbs/TheSnowCreature_001680.jpg",
     subs: "TheSnowCreature.asr.srt",
-    bytes: 308586642
+    bytes: 308586642,
+    wd: "Q7765018",
+    wp: "https://en.wikipedia.org/wiki/The_Snow_Creature",
+    wpx: "The Snow Creature is a 1954 American science fiction-horror film produced and directed by W. Lee Wilder, for Planet Filmplays Inc., written by Myles Wilder, and starring Paul Langton.",
+    dir: [
+     "W. Lee Wilder"
+    ],
+    cast: [
+     "Paul Langton"
+    ]
    },
    {
     title: "Daughter of Horror",
@@ -734,7 +890,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/daughter_of_horror/daughter_of_horror.thumbs/daughter_of_horror_001320.jpg",
     subs: "daughter_of_horror.asr.srt",
-    bytes: 231245102
+    bytes: 231245102,
+    wd: "Q499678",
+    wp: "https://en.wikipedia.org/wiki/Dementia_(1955_film)",
+    wpx: "Dementia is a 1955 American black-and-white experimental horror film produced, written, and directed by John Parker, and starring Adrienne Barrett and Bruno Ve Sota. The film, which contains no dialogue, follows a young woman's nightmarish experiences during a single night in Los Angeles's skid row. Stylistically, it incorporates elements of horror, film noir, and expressionist film.",
+    dir: [
+     "John Parker"
+    ],
+    cast: [
+     "Angelo Rossitto",
+     "Bruno VeSota",
+     "Shorty Rogers"
+    ]
    },
    {
     title: "Attack of the Giant Leeches",
@@ -747,7 +914,17 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/AttackOfTheGiantLeeches/AttackOfTheGiantLeeches.thumbs/AttackOfTheGiantLeeches_001500.jpg",
     subs: "AttackOfTheGiantLeeches.asr.srt",
-    bytes: 271808623
+    bytes: 271808623,
+    wd: "Q4817961",
+    wp: "https://en.wikipedia.org/wiki/Attack_of_the_Giant_Leeches",
+    wpx: "Attack of the Giant Leeches is an independently made 1959 black-and-white science fiction-horror film produced by Gene Corman and directed by Bernard L. Kowalski. It stars Ken Clark, Yvette Vickers, Bruno VeSota, and Jan Shepard. The screenplay was written by Leo Gordon. The film was released on October 1, 1959 by American International Pictures on a double bill with A Bucket of Blood. In some areas Leeches played on a double bill with…",
+    dir: [
+     "Bernard L. Kowalski"
+    ],
+    cast: [
+     "Ken Clark",
+     "Bruno VeSota"
+    ]
    },
    {
     title: "House on Haunted Hill",
@@ -759,7 +936,18 @@ const CHANNELS = [
     art: "https://archive.org/services/img/house_on_haunted_hill_ipod",
     frame: "https://archive.org/download/house_on_haunted_hill_ipod/house_on_haunted_hill_ipod.thumbs/house_on_haunted_hill_001800.jpg",
     subs: "house_on_haunted_hill.asr.srt",
-    bytes: 317341899
+    bytes: 317341899,
+    wd: "Q263583",
+    wp: "https://en.wikipedia.org/wiki/House_on_Haunted_Hill",
+    wpx: "House on Haunted Hill is a 1958 American horror film produced and directed by William Castle, written by Robb White and starring Vincent Price, Carol Ohmart, Richard Long, Alan Marshal, Carolyn Craig, Julie Mitchum, and Elisha Cook Jr. Price plays an eccentric millionaire, Frederick Loren, who, along with his wife Annabelle, has invited five people to the house for a \"haunted house\" party. Whoever stays in the house for one night will…",
+    dir: [
+     "William Castle"
+    ],
+    cast: [
+     "Vincent Price",
+     "Alan Marshal",
+     "Elisha Cook Jr."
+    ]
    },
    {
     title: "Atom Age Vampire",
@@ -772,7 +960,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/AtomAgeVampire/AtomAgeVampire.thumbs/AtomAgeVampire_002040.jpg",
     subs: "AtomAgeVampire.asr.srt",
-    bytes: 375793274
+    bytes: 375793274,
+    wd: "Q4817209",
+    wp: "https://en.wikipedia.org/wiki/Atom_Age_Vampire",
+    wpx: "Atom Age Vampire is a 1960 Italian horror film directed by Anton Giulio Majano. Shot in black-and-white, the film was produced by Elio Ippolito Mellino and stars Alberto Lupo, Susanne Loret, and Sergio Fantoni set in France. Despite there being no vampires in the film, it was released in the US as Atom Age Vampire in 1963 in an 87-minute version. It was further shortened for English language DVD release.",
+    dir: [
+     "Anton Giulio Majano"
+    ],
+    cast: [
+     "Alberto Lupo",
+     "Sergio Fantoni",
+     "Rina Franchetti"
+    ]
    },
    {
     title: "City of the Dead/Horror Hotel",
@@ -798,7 +997,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The_Little_Shop_of_Horrors.mpeg/The_Little_Shop_of_Horrors.mpeg.thumbs/The_Little_Shop_of_Horrors_001740.jpg",
     subs: "The_Little_Shop_of_Horrors.asr.srt",
-    bytes: 315995563
+    bytes: 315995563,
+    wd: "Q500296",
+    wp: "https://en.wikipedia.org/wiki/The_Little_Shop_of_Horrors",
+    wpx: "The Little Shop of Horrors is a 1960 American horror comedy film directed and produced by Roger Corman, from a screenplay by Charles B. Griffith. The film is a farce about a florist's assistant who cultivates a plant that feeds on human blood. It stars Jonathan Haze, Jackie Joseph, Mel Welles, and Dick Miller, who had all worked for Corman on previous films. Produced under the title The Passionate People Eater, the film employs an…",
+    dir: [
+     "Roger Corman"
+    ],
+    cast: [
+     "Jonathan Haze",
+     "Jackie Joseph",
+     "Mel Welles"
+    ],
+    co: [
+     "The Filmgroup"
+    ]
    },
    {
     title: "Bloodlust!",
@@ -811,7 +1024,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bloodlust.mpeg/Bloodlust.mpeg.thumbs/Bloodlust_001620.jpg",
     subs: "Bloodlust.asr.srt",
-    bytes: 297002029
+    bytes: 297002029,
+    wd: "Q2957968",
+    wp: "https://en.wikipedia.org/wiki/Bloodlust!",
+    wpx: "Bloodlust! is a 1961 American horror thriller film written, directed and produced by Ralph Brooke and starring Wilton Graff, June Kenney, Joan Lora, Eugene Persson, and Robert Reed. It is based without attribution on Richard Connell's 1924 short story \"The Most Dangerous Game.\" It was produced by Robert H. Bagley. Its plot follows four young adults who visit a tropical island only to become prey for a sadistic hunter. It was filmed in…",
+    dir: [
+     "Ralph Brooke"
+    ],
+    cast: [
+     "Robert Reed",
+     "June Kenney",
+     "Gene Persson"
+    ]
    },
    {
     title: "Creature from the Haunted Sea",
@@ -824,7 +1048,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CreatureFromTheHauntedSea/CreatureFromTheHauntedSea.thumbs/CreatureFromTheHauntedSea_001800.jpg",
     subs: "CreatureFromTheHauntedSea.asr.srt",
-    bytes: 325070434
+    bytes: 325070434,
+    wd: "Q2133893",
+    wp: "https://en.wikipedia.org/wiki/Creature_from_the_Haunted_Sea",
+    wpx: "Creature from the Haunted Sea is a 1961 horror comedy movie directed by Roger Corman. Written by Charles B. Griffith, the movie is a parody of spy, gangster, and monster movies, concerning a secret agent, XK150, who uses the name \"Sparks Moran\" in order to infiltrate a criminal gang commanded by Renzo Capetto, who is trying to transport an exiled Cuban general with an entourage and a large portion of the Cuban treasury out of Cuba.…",
+    dir: [
+     "Roger Corman"
+    ],
+    cast: [
+     "Antony Carbone",
+     "Betsy Jones-Moreland",
+     "Robert Towne"
+    ]
    },
    {
     title: "The Devil´s Messenger",
@@ -836,7 +1071,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/The_Devils_Messenger/The_Devils_Messenger.thumbs/The_Devils_Messenger_001680.jpg",
-    bytes: 306931855
+    bytes: 306931855,
+    wd: "Q3520603",
+    wp: "https://en.wikipedia.org/wiki/The_Devil's_Messenger",
+    wpx: "The Devil's Messenger is a 1961 anthology horror film combining 3 episodes of the 1959 B&W Swedish television series 13 Demon Street with some new scenes featuring Lon Chaney Jr., Karen Kadler and John Crawford. This \"feature version\" of the series is the closest the U.S. came to seeing the TV series.",
+    dir: [
+     "Herbert L. Strock"
+    ],
+    cast: [
+     "Lon Chaney Jr.",
+     "John Crawford",
+     "Ralph Brown"
+    ]
    },
    {
     title: "Carnival of Souls",
@@ -849,7 +1095,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CarnivalofSouls/CarnivalofSouls.thumbs/CarnivalOfSouls_001980.jpg",
     subs: "CarnivalOfSouls.asr.srt",
-    bytes: 361757810
+    bytes: 361757810,
+    wd: "Q1852671",
+    wp: "https://en.wikipedia.org/wiki/Carnival_of_Souls",
+    wpx: "Carnival of Souls is a 1962 American neo-noir psychological horror film produced and directed by Herk Harvey and written by John Clifford from a story by Clifford and Harvey, and starring Candace Hilligoss. Its plot follows Mary Henry, a young woman whose life is disturbed after a car accident. She relocates to a new city, where she finds herself unable to assimilate with the locals, and becomes drawn to the pavilion of an abandoned…",
+    dir: [
+     "Herk Harvey"
+    ],
+    cast: [
+     "Candace Hilligoss",
+     "Art Ellison",
+     "Herk Harvey"
+    ]
    },
    {
     title: "Ring of Terror",
@@ -861,7 +1118,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/RingofTerror/RingofTerror.thumbs/RingofTerror_001500.jpg",
-    bytes: 276888527
+    bytes: 276888527,
+    wd: "Q5167187",
+    wp: "https://en.wikipedia.org/wiki/Ring_of_Terror",
+    wpx: "Ring of Terror is a black-and-white 1962 horror film, which centers around a young medical student named Lewis Moffitt who must open a crypt and steal the ring of a deceased man in order to join a fraternity. Directed by Clark L. Paylow from a screenplay by Lewis Simeon and Jerrold I. Zinnamon, the film stars George Mather as Lewis, with Austin Green and Esther Furst in supporting roles.",
+    dir: [
+     "Clark L. Paylow"
+    ]
    },
    {
     title: "The Terror",
@@ -874,7 +1137,22 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheTerror/TheTerror.thumbs/TheTerror_001920.jpg",
     subs: "TheTerror.asr.srt",
-    bytes: 344659157
+    bytes: 344659157,
+    wd: "Q1968139",
+    wp: "https://en.wikipedia.org/wiki/The_Terror_(1963_film)",
+    wpx: "The Terror is a 1963 American horror film produced and directed by Roger Corman. It stars Boris Karloff, Jack Nicholson, and Sandra Knight. It is about Napoleonic French officer (Nicholson) who stumbles upon a castle occupied by a reclusive baron (Karloff), and is seduced by a woman who is also a shapeshifting demon.",
+    dir: [
+     "Roger Corman",
+     "Francis Ford Coppola"
+    ],
+    cast: [
+     "Boris Karloff",
+     "Jack Nicholson",
+     "Dick Miller"
+    ],
+    co: [
+     "The Filmgroup"
+    ]
    },
    {
     title: "Bloody Pit of Horror",
@@ -886,7 +1164,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/BloodyPitOfHorror/BloodyPitOfHorror.thumbs/BloodyPitOfHorror_001980.jpg",
     subs: "BloodyPitOfHorror.asr.srt",
-    bytes: 515381078
+    bytes: 515381078,
+    wd: "Q3793127",
+    wp: "https://en.wikipedia.org/wiki/Bloody_Pit_of_Horror",
+    wpx: "Bloody Pit of Horror is a 1965 Gothic horror film. The film, set in Italy, was directed by Domenico Massimo Pupillo and stars Mickey Hargitay, Walter Brandi, Luisa Baratto and Rita Klein. It tells the story of a group of women modeling for a photo shoot at a castle, whose owner takes on the identity of the Crimson Executioner, bent on their deaths.",
+    dir: [
+     "Massimo Pupillo"
+    ],
+    cast: [
+     "Mickey Hargitay",
+     "Alfredo Rizzo",
+     "Femi Benussi"
+    ]
    },
    {
     title: "The Beach Girls and the Monster",
@@ -898,7 +1187,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheBeachGirlsAndTheMonster/TheBeachGirlsAndTheMonster.thumbs/TheBeachGirlsAndTheMonster_001560.jpg",
-    bytes: 285468907
+    bytes: 285468907,
+    wd: "Q7715961",
+    wp: "https://en.wikipedia.org/wiki/The_Beach_Girls_and_the_Monster",
+    wpx: "The Beach Girls and the Monster is a horror beach party film, released in 1965, directed by and starring Jon Hall. It is notable for its surf music instrumental soundtrack, bad acting, and unconvincing rubber monster suit.",
+    dir: [
+     "Jon Hall"
+    ],
+    cast: [
+     "Jon Hall"
+    ]
    },
    {
     title: "Night of the Living Dead",
@@ -910,7 +1208,21 @@ const CHANNELS = [
     art: "https://archive.org/services/img/Night.Of.The.Living.Dead_1080p",
     frame: "https://archive.org/download/Night.Of.The.Living.Dead_1080p/Night.Of.The.Living.Dead_1080p.thumbs/NightOfTheLivingDead_DVD5_004500.jpg",
     subs: "NightOfTheLivingDead_DVD5.asr.srt",
-    bytes: 406935466
+    bytes: 406935466,
+    wd: "Q623051",
+    wp: "https://en.wikipedia.org/wiki/Night_of_the_Living_Dead",
+    wpx: "Night of the Living Dead is a 1968 American independent zombie horror film directed, photographed, and edited by George A. Romero, written by Romero and John Russo, and produced by Russell W. Streiner and Karl Hardman. The film's ensemble cast—which includes Duane Jones, Judith O'Dea, Marilyn Eastman, Karl Hardman, Judith Ridley, and Keith Wayne—star as a group of people trapped in a farmhouse in rural Pennsylvania, under assault by…",
+    dir: [
+     "George A. Romero"
+    ],
+    cast: [
+     "Duane Jones",
+     "Judith O'Dea",
+     "Karl Hardman"
+    ],
+    co: [
+     "Image Ten"
+    ]
    },
    {
     title: "Destroy All Monsters (AIP version - HD reconstruction)",
@@ -921,7 +1233,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/DestroyAllMonstersRedMenace/DestroyAllMonstersRedMenace.thumbs/Destroy%20All%20Monsters%20(AIP%20Version)%20-%20Red%20Menace%20Reconstruction%20v2.0_002214.jpg",
-    bytes: 13732771137
+    bytes: 13732771137,
+    wd: "Q1444720",
+    wp: "https://en.wikipedia.org/wiki/Destroy_All_Monsters",
+    wpx: "Destroy All Monsters  is a 1968 Japanese epic kaiju film directed by Ishirō Honda, with special effects directed by Sadamasa Arikawa and supervised by Eiji Tsuburaya. Produced and distributed by Toho Co., Ltd, it is the ninth film in the Godzilla franchise, and stars Akira Kubo, Jun Tazaki, Yukiko Kobayashi and Yoshio Tsuchiya. In the film, a race of malevolent aliens called the \"Kilaaks\" release giant monsters across the world,…",
+    dir: [
+     "Ishirō Honda"
+    ],
+    cast: [
+     "Haruo Nakajima",
+     "Jun Tazaki",
+     "Andrew Hughes"
+    ],
+    co: [
+     "Toho"
+    ]
    },
    {
     title: "BLOOD THIRST",
@@ -945,7 +1271,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Horror_Express_WebM/Horror_Express_WebM.thumbs/horror_express_002100.jpg",
     subs: "horror_express.srt",
-    bytes: 364835127
+    bytes: 364835127,
+    wd: "Q649850",
+    wp: "https://en.wikipedia.org/wiki/Horror_Express",
+    wpx: "Horror Express is a 1972 science-fiction horror film directed by Eugenio Martín, and starring Christopher Lee, Peter Cushing, and Telly Savalas; with Alberto de Mendoza, Silvia Tortosa, Julio Peña, George Rigaud, Ángel del Pozo, Helga Liné, and Alice Reinheart in supporting roles.",
+    dir: [
+     "Eugenio Martín"
+    ],
+    cast: [
+     "Christopher Lee",
+     "Peter Cushing",
+     "Alberto de Mendoza"
+    ]
    },
    {
     title: "Dead People",
@@ -958,7 +1295,19 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/dead_people_ipod/dead_people_ipod.thumbs/dead_people_002160.jpg",
     subs: "dead_people.asr.srt",
-    bytes: 380016346
+    bytes: 380016346,
+    wd: "Q6821972",
+    wp: "https://en.wikipedia.org/wiki/Messiah_of_Evil",
+    wpx: "Messiah of Evil is a 1974 American supernatural horror film written, produced, and directed by Gloria Katz and Willard Huyck. It stars Michael Greer, Marianna Hill, Joy Bang, Anitra Ford, Royal Dano, and Elisha Cook Jr. Its plot follows Arletty Lang, a woman who travels to a remote coastal town in California to find her missing artist father Joseph; upon arrival, she finds herself in the midst of a series of bizarre incidents.",
+    dir: [
+     "Willard Huyck",
+     "Gloria Katz"
+    ],
+    cast: [
+     "Marianna Hill",
+     "Anitra Ford",
+     "Royal Dano"
+    ]
    },
    {
     title: "Horror Express (with spanish subtitles)",
@@ -971,7 +1320,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/HorrorExpresswithSpanishSubtitles/HorrorExpresswithSpanishSubtitles.thumbs/horror_express_subs_002100.jpg",
     subs: "horror_express_subs.asr.srt",
-    bytes: 421917201
+    bytes: 421917201,
+    wd: "Q649850",
+    wp: "https://en.wikipedia.org/wiki/Horror_Express",
+    wpx: "Horror Express is a 1972 science-fiction horror film directed by Eugenio Martín, and starring Christopher Lee, Peter Cushing, and Telly Savalas; with Alberto de Mendoza, Silvia Tortosa, Julio Peña, George Rigaud, Ángel del Pozo, Helga Liné, and Alice Reinheart in supporting roles.",
+    dir: [
+     "Eugenio Martín"
+    ],
+    cast: [
+     "Christopher Lee",
+     "Peter Cushing",
+     "Alberto de Mendoza"
+    ]
    },
    {
     title: "Scream Bloody Murder",
@@ -983,7 +1343,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ScreamBloodyMurder/ScreamBloodyMurder.thumbs/ScreamBloodyMurder_002040.jpg",
-    bytes: 374049604
+    bytes: 374049604,
+    wd: "Q886473",
+    wp: "https://en.wikipedia.org/wiki/Scream_Bloody_Murder",
+    wpx: "Scream Bloody Murder is a 1973 American slasher film written, directed, and produced by Marc B. Ray, and co-written by Larry Alexander.",
+    dir: [
+     "Marc B. Ray"
+    ],
+    cast: [
+     "Angus Scrimm"
+    ]
    },
    {
     title: "Devil Times Five",
@@ -995,7 +1364,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/DevilTimesFive_977/DevilTimesFive_977.thumbs/MoviePowderPresentsDevilTimesFive_002100.jpg",
-    bytes: 382720504
+    bytes: 382720504,
+    wd: "Q7166091",
+    wp: "https://en.wikipedia.org/wiki/People_Toys",
+    wpx: "People Toys is a 1974 American slasher film directed by Sean MacGregor and an uncredited David Sheldon and starring Sorrell Booke, Gene Evans, Shelley Morrison, and Leif Garrett, along with Garrett's real-life sister, Dawn Lyn and their mother, Carolyn Stellar. The film follows a group of four sociopathic, homicidal children who, accompanied by a mysterious nun, seek refuge with a number of snobbish vacationers at a lakeside chalet,…",
+    dir: [
+     "David Sheldon",
+     "Sean MacGregor"
+    ],
+    cast: [
+     "Sorrell Booke",
+     "Gene Evans",
+     "Shelley Morrison"
+    ]
    },
    {
     title: "Grave of the Vampire",
@@ -1008,7 +1389,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Grave_of_the_Vampire_movie/Grave_of_the_Vampire_movie.thumbs/Grave-of-the-Vampire_002216.jpg",
     subs: "Grave-of-the-Vampire.asr.srt",
-    bytes: 390849989
+    bytes: 390849989,
+    wd: "Q3232308",
+    wp: "https://en.wikipedia.org/wiki/Grave_of_the_Vampire",
+    wpx: "Grave of the Vampire is a 1972 American vampire film directed by John Hayes, and starring William Smith, Michael Pataki, and Lyn Peters. Its plot follows a vampire who rapes a living woman, resulting in the birth of a child who feeds only on blood. It is based on the novel The Still Life by David Chase.",
+    dir: [
+     "John Hayes"
+    ],
+    cast: [
+     "Michael Pataki",
+     "William Smith",
+     "Carmen Argenziano"
+    ]
    },
    {
     title: "Silent Night, Bloody Night",
@@ -1111,7 +1503,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/phantom.-from.-space.-1953/phantom.-from.-space.-1953.thumbs/Phantom%20From%20Space%20(1953)/mp4/Phantom.From.Space.1953_001854.jpg",
     subs: "Phantom From Space (1953)/srt/Phantom.From.Space.1953.Eng.srt",
-    bytes: 1339019649
+    bytes: 1339019649,
+    wd: "Q3793910",
+    wp: "https://en.wikipedia.org/wiki/Phantom_from_Space",
+    wpx: "Phantom from Space is a 1953 independently made American science fiction horror film produced and directed by W. Lee Wilder and starring Ted Cooper, Noreen Nash, Dick Sands, and Burt Wenland. The screenplay was by William Raynor and Myles Wilder. Working with most of the same crew, this was one of several early 1950s films made by Wilder and son Myles on a financing-for-distribution basis with United Artists and, on occasion, RKO Radio Pictures.",
+    dir: [
+     "W. Lee Wilder"
+    ],
+    cast: [
+     "Ted Cooper",
+     "Harry Landers",
+     "Rudolph Anders"
+    ]
    },
    {
     title: "Devil Girl From Mars",
@@ -1122,7 +1525,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/devil-girl-from-mars-1954/devil-girl-from-mars-1954.thumbs/Devil%20Girl%20From%20Mars%20(1954)_001799.jpg",
-    bytes: 860017977
+    bytes: 860017977,
+    wd: "Q5267299",
+    wp: "https://en.wikipedia.org/wiki/Devil_Girl_from_Mars",
+    wpx: "Devil Girl from Mars is a 1954 British second feature black-and-white science fiction film directed by David MacDonald and starring Patricia Laffan, Hugh McDermott, Hazel Court, Peter Reynolds, and Adrienne Corri. The screenplay was by James Eastwood-based on a play by John C. Mather and Eastwood, and was produced by the Danziger Brothers. It was released by British Lion and released in the United States the following year.",
+    dir: [
+     "David MacDonald"
+    ],
+    cast: [
+     "Patricia Laffan"
+    ]
    },
    {
     title: "Killers from Space",
@@ -1134,7 +1546,20 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Killers_from_Space_1954/Killers_from_Space_1954.thumbs/Killers_from_Space_1954_001732.jpg",
     subs: "Killers_from_Space_1954.asr.srt",
-    bytes: 433571132
+    bytes: 433571132,
+    wd: "Q1875134",
+    wp: "https://en.wikipedia.org/wiki/Killers_from_Space",
+    wpx: "Killers from Space is a 1954 American independent science fiction film produced and directed by W. Lee Wilder, and starring Peter Graves, Barbara Bestar, Frank Gerstle, James Seay, and Steve Pendleton. Shot in black-and-white, the film originated as a commissioned screenplay from Wilder's son Myles Wilder and their regular collaborator William Raynor.",
+    dir: [
+     "W. Lee Wilder"
+    ],
+    cast: [
+     "Peter Graves",
+     "John Frederick"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "Plan 9 from Outer Space",
@@ -1145,7 +1570,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/plan.-9.-from.-outer.-space.-1957/plan.-9.-from.-outer.-space.-1957.thumbs/Plan%209%20From%20Outer%20Space%20(1957)/mp4/Plan.9.From.Outer.Space.1957_001915.jpg",
-    bytes: 1400011829
+    bytes: 1400011829,
+    wd: "Q257515",
+    wp: "https://en.wikipedia.org/wiki/Plan_9_from_Outer_Space",
+    wpx: "Plan 9 from Outer Space is a 1957 American independent science fiction-horror film produced, written, directed, and edited by Ed Wood. The film was shot in black-and-white in November 1956 and had a preview screening on March 15, 1957, at the Carlton Theatre in Los Angeles under the title Grave Robbers from Outer Space. Retitled Plan 9 from Outer Space, it played in 1957 as a double feature with the British thriller Time Lock, and went…",
+    dir: [
+     "Ed Wood"
+    ],
+    cast: [
+     "Tom Keene",
+     "Tor Johnson",
+     "Bunny Breckinridge"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "Space Master X-7",
@@ -1156,7 +1595,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/SpacemasterX7_201602/SpacemasterX7_201602.thumbs/'SpacemasterX-7-1958_001734.jpg",
-    bytes: 205673278
+    bytes: 205673278,
+    wd: "Q7572426",
+    wp: "https://en.wikipedia.org/wiki/Space_Master_X-7",
+    wpx: "Space Master X-7 is a 1958 American horror science fiction film in Black and White Regalscope from Regal Films, produced by Bernard Glasser, directed by Edward Bernds, that stars Bill Williams, Lyn Thomas, and Robert Ellis. Paul Frees, Judd Holdren, and Moe Howard have supporting roles. The screenplay was written by George Worthing Yates and Daniel Mainwaring. The film was released on July 11, 1958 by 20th Century-Fox as a double feature with The Fly.",
+    dir: [
+     "Edward Bernds"
+    ],
+    cast: [
+     "Bill Williams",
+     "Lyn Thomas",
+     "Moe Howard"
+    ],
+    co: [
+     "Regal Entertainment"
+    ]
    },
    {
     title: "The Strange World of Planet X",
@@ -1167,7 +1620,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheStrangeWorldOfPlanetX1958/TheStrangeWorldOfPlanetX1958.thumbs/TheStrangeWorldOfPlanetX1958_001710.jpg",
-    bytes: 238606945
+    bytes: 238606945,
+    wd: "Q7766923",
+    wp: "https://en.wikipedia.org/wiki/The_Strange_World_of_Planet_X_(film)",
+    wpx: "The Strange World of Planet X is an independently made 1958 British second feature ('B') science fiction horror film directed by Gilbert Gunn and starring Forrest Tucker and Gaby André. It was adapted by Paul Ryder and Joe Ambor from the 1957 Rene Ray The Strange World of Planet X, produced by George Maynard and John Bash.",
+    dir: [
+     "Gilbert Gunn"
+    ],
+    cast: [
+     "Alec Mango"
+    ]
    },
    {
     title: "Th Angry Red Planet",
@@ -1191,7 +1653,19 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheAtomicBrain/TheAtomicBrain.thumbs/TheAtomicBrain_001560.jpg",
     subs: "TheAtomicBrain.asr.srt",
-    bytes: 282920926
+    bytes: 282920926,
+    wd: "Q2233966",
+    wp: "https://en.wikipedia.org/wiki/Monstrosity_(film)",
+    wpx: "Monstrosity is a 1963 American science fiction horror film produced by Jack Pollexfen and Dean Dillman Jr. and directed by Joseph V. Mascelli. The film stars Marjorie Eaton, Frank Gerstle, Erika Peters, and Xerxes the cat. It tells the story of a wealthy elderly woman who wants to have her brain transplanted into the head of a young woman. Actor Bradford Dillman, the younger brother of co-writer and producer Dean Dillman, Jr., narrated the film.",
+    dir: [
+     "Jack Pollexfen",
+     "Joseph V. Mascelli"
+    ],
+    cast: [
+     "Marjorie Eaton",
+     "Frank Gerstle",
+     "Bradford Dillman"
+    ]
    },
    {
     title: "The Wizard of Mars",
@@ -1202,7 +1676,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/WizardOfMars/WizardOfMars.thumbs/TheWizardOfMars1965_001830.jpg",
-    bytes: 258546331
+    bytes: 258546331,
+    wd: "Q4124375",
+    wp: "https://en.wikipedia.org/wiki/The_Wizard_of_Mars",
+    wpx: "The Wizard of Mars is a 1965 American science fiction film directed and co-written by David L. Hewitt. It is loosely based on L. Frank Baum's 1900 novel The Wonderful Wizard of Oz. The title character is portrayed by John Carradine, who gives a lengthy monologue as a projection near the end of the film. The film contrasts with Baum's novel by depicting the constraints of human aspirations.",
+    dir: [
+     "David L. Hewitt"
+    ],
+    cast: [
+     "John Carradine"
+    ]
    },
    {
     title: "The X From Outer Space",
@@ -1213,7 +1696,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-x-from-outer-space/the-x-from-outer-space.thumbs/The%20X%20from%20Outer%20Space_002094.jpg",
-    bytes: 510361126
+    bytes: 510361126,
+    wd: "Q955372",
+    wp: "https://en.wikipedia.org/wiki/The_X_from_Outer_Space",
+    wpx: "The X from Outer Space  is a 1967 Japanese science fiction kaiju film directed by Kazui Nihonmatsu, and stars Eiji Okada and Toshiya Wazaki.",
+    dir: [
+     "Kazui Nihonmatsu"
+    ],
+    cast: [
+     "Eiji Okada",
+     "Shun'ya Wazaki",
+     "Itoko Harada"
+    ]
    },
    {
     title: "Moon of the Wolf",
@@ -1225,7 +1719,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/MoonoftheWolf_/MoonoftheWolf_.thumbs/MoonoftheWolf_001740.jpg",
-    bytes: 322924768
+    bytes: 322924768,
+    wd: "Q6907619",
+    wp: "https://en.wikipedia.org/wiki/Moon_of_the_Wolf",
+    wpx: "Moon of the Wolf is an American TV movie broadcast on September 26, 1972 on ABC Movie of the Week. It stars David Janssen, Barbara Rush, Geoffrey Lewis and Bradford Dillman, with a script by Alvin Sapinsley. The film was directed by Daniel Petrie and filmed on location in Burnside, Louisiana. All of the downtown footage was from Clinton, Louisiana.",
+    dir: [
+     "Daniel Petrie"
+    ],
+    cast: [
+     "David Janssen",
+     "Barbara Rush",
+     "Bradford Dillman"
+    ]
    },
    {
     title: "Bad Moon 1996",
@@ -1292,7 +1797,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Algiers_/Algiers_.thumbs/Algiers_002400.jpg",
-    bytes: 431698134
+    bytes: 431698134,
+    wd: "Q1414527",
+    wp: "https://en.wikipedia.org/wiki/Algiers_(1938_film)",
+    wpx: "Algiers is a 1938 American crime drama film directed by John Cromwell, written by John Howard Lawson and starring Charles Boyer, Sigrid Gurie and Hedy Lamarr. The plot concerns a French jewel thief hiding in Algiers who meets a beautiful French tourist. The Walter Wanger production was a remake of the successful 1937 French film Pépé le Moko, which derived its plot from the Henri La Barthe novel of the same name.",
+    dir: [
+     "John Cromwell",
+     "Walter Wanger"
+    ],
+    cast: [
+     "Charles Boyer",
+     "Sigrid Gurie",
+     "Hedy Lamarr"
+    ],
+    co: [
+     "United Artists"
+    ]
    },
    {
     title: "They Made Me a Criminal",
@@ -1305,7 +1825,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/They_Made_Me_A_Criminal_1939/They_Made_Me_A_Criminal_1939.thumbs/they_made_me_a_criminal_1939_002160.jpg",
     subs: "they_made_me_a_criminal_1939.asr.srt",
-    bytes: 397644352
+    bytes: 397644352,
+    wd: "Q3163547",
+    wp: "https://en.wikipedia.org/wiki/They_Made_Me_a_Criminal",
+    wpx: "They Made Me a Criminal is a 1939 American crime-drama film directed by Busby Berkeley and starring John Garfield, Claude Rains, and The Dead End Kids. It is a remake of the film The Life of Jimmy Dolan (1933). The film later was featured in an episode of Cinema Insomnia. Portions of the film were shot in the Coachella Valley, California.",
+    dir: [
+     "Busby Berkeley"
+    ],
+    cast: [
+     "John Garfield",
+     "Claude Rains",
+     "Ann Sheridan"
+    ]
    },
    {
     title: "The Grapes Of Wrath",
@@ -1317,7 +1848,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the-grapes-of-wrath-1940/the-grapes-of-wrath-1940.thumbs/The%20Grapes%20Of%20Wrath%20(1940)_003115.jpg",
     subs: "The.Grapes.Of.Wrath.1940.1080p.BluRay.x264-[YTS.AM]-English.srt",
-    bytes: 2190569811
+    bytes: 2190569811,
+    wd: "Q676039",
+    wp: "https://en.wikipedia.org/wiki/The_Grapes_of_Wrath_(film)",
+    wpx: "The Grapes of Wrath is a 1940 American drama film directed by John Ford. It was based on John Steinbeck's 1939 Pulitzer Prize-winning novel of the same name. The screenplay was written by Nunnally Johnson and the executive producer was Darryl F. Zanuck.",
+    dir: [
+     "John Ford"
+    ],
+    cast: [
+     "Henry Fonda",
+     "Jane Darwell",
+     "John Carradine"
+    ],
+    co: [
+     "20th Century Studios"
+    ]
    },
    {
     title: "Shadow of a Doubt (1943) Dir:Alfred Hitchcock, Starring Teresa Wright,",
@@ -1339,7 +1884,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Gaslight_628/Gaslight_628.thumbs/Fanny_by_Gaslight_1945_002490.jpg",
-    bytes: 288560149
+    bytes: 288560149,
+    wd: "Q841781",
+    wp: "https://en.wikipedia.org/wiki/Gaslight_(1944_film)",
+    wpx: "Gaslight is a 1944 American psychological thriller film directed by George Cukor, and starring Charles Boyer, Ingrid Bergman, Joseph Cotten and Angela Lansbury in her film debut. Adapted by John Van Druten, Walter Reisch, and John L. Balderston from Patrick Hamilton's play Gas Light (1938), it follows a young woman whose husband slowly manipulates her into believing that she is descending into insanity.",
+    dir: [
+     "George Cukor"
+    ],
+    cast: [
+     "Charles Boyer",
+     "Ingrid Bergman",
+     "Joseph Cotten"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Laura (1944) Dir: Otto Preminger, Starring Gene Tierney, Dana Andrews,",
@@ -1363,7 +1922,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Detour/Detour.thumbs/Detour_001620.jpg",
     subs: "Detour.asr.srt",
-    bytes: 294622587
+    bytes: 294622587,
+    wd: "Q2062566",
+    wp: "https://en.wikipedia.org/wiki/Detour_(1945_film)",
+    wpx: "Detour is a 1945 American independent film noir directed by Edgar G. Ulmer and starring Tom Neal and Ann Savage. The screenplay was adapted by Martin Goldsmith and an uncredited Martin Mooney from Goldsmith's 1939 novel of the same title, and released by the Producers Releasing Corporation, one of the so-called Poverty Row film studios in mid-20th-century Hollywood.",
+    dir: [
+     "Edgar G. Ulmer"
+    ],
+    cast: [
+     "Tom Neal",
+     "Ann Savage",
+     "Esther Howard"
+    ]
    },
    {
     title: "Scarlet Street",
@@ -1376,7 +1946,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ScarletStreet/ScarletStreet.thumbs/Scarlet_Street_002400.jpg",
     subs: "Scarlet_Street.asr.srt",
-    bytes: 441562845
+    bytes: 441562845,
+    wd: "Q128930",
+    wp: "https://en.wikipedia.org/wiki/Scarlet_Street",
+    wpx: "Scarlet Street is a 1945 American film noir directed by Fritz Lang. The screenplay concerns two criminals who take advantage of a middle-aged painter in order to steal his artwork. The film is based on the French novel La Chienne by Georges de La Fouchardière, which had been previously dramatized on stage by André Mouëzy-Éon, and cinematically as La Chienne (1931) by director Jean Renoir.",
+    dir: [
+     "Fritz Lang"
+    ],
+    cast: [
+     "Edward G. Robinson",
+     "Joan Bennett",
+     "Dan Duryea"
+    ]
    },
    {
     title: "The Blue Dahlia [1946] Dir. George Marshall, Starring Alan Ladd, Veron",
@@ -1400,7 +1981,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Lady_Confesses/Lady_Confesses.thumbs/Lady_Confesses_001554.jpg",
     subs: "Lady_Confesses.asr.srt",
-    bytes: 278854802
+    bytes: 278854802,
+    wd: "Q7745118",
+    wp: "https://en.wikipedia.org/wiki/The_Lady_Confesses",
+    wpx: "The Lady Confesses is a 1945 American film noir directed by Sam Newfield and released by Poverty Row studio Producers Releasing Corporation. It stars Mary Beth Hughes, Hugh Beaumont, and Edmund MacDonald.",
+    dir: [
+     "Sam Newfield"
+    ],
+    cast: [
+     "Mary Beth Hughes",
+     "Hugh Beaumont",
+     "Claudia Drake"
+    ]
    },
    {
     title: "Behind Green Lights",
@@ -1412,7 +2004,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/BehindGreenLights_high_Q_mp4/BehindGreenLights_high_Q_mp4.thumbs/Behind_Green_Lights_002994.jpg",
     subs: "Behind_Green_Lights.asr.srt",
-    bytes: 383695000
+    bytes: 383695000,
+    wd: "Q4880802",
+    wp: "https://en.wikipedia.org/wiki/Behind_Green_Lights",
+    wpx: "Behind Green Lights is a 1946 American crime film directed by Otto Brower and starring Carole Landis, William Gargan and Mary Anderson. It was produced and distributed by Twentieth Century Fox.",
+    dir: [
+     "Otto Brower"
+    ],
+    cast: [
+     "Carole Landis",
+     "William Gargan",
+     "Mary Anderson"
+    ],
+    co: [
+     "20th Century Studios"
+    ]
    },
    {
     title: "Strange Love of Martha Ivers",
@@ -1425,7 +2031,22 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Martha_Ivers_movie/Martha_Ivers_movie.thumbs/Strange_Love_Martha_Ivers_002760.jpg",
     subs: "Strange_Love_Martha_Ivers.asr.srt",
-    bytes: 504827797
+    bytes: 504827797,
+    wd: "Q971265",
+    wp: "https://en.wikipedia.org/wiki/The_Strange_Love_of_Martha_Ivers",
+    wpx: "The Strange Love of Martha Ivers is a 1946 American noir tragedy film starring Barbara Stanwyck, Van Heflin, and Lizabeth Scott, with Kirk Douglas appearing in his film debut. It was directed by Lewis Milestone based on a screenplay by Robert Rossen, adapted from the short story \"Love Lies Bleeding\" by playwright John Patrick.",
+    dir: [
+     "Lewis Milestone"
+    ],
+    cast: [
+     "Barbara Stanwyck",
+     "Van Heflin",
+     "Lizabeth Scott"
+    ],
+    co: [
+     "Paramount Pictures",
+     "Hal Wallis Productions"
+    ]
    },
    {
     title: "Stranger, The",
@@ -1450,7 +2071,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheChase_/TheChase_.thumbs/TheChase_002040.jpg",
-    bytes: 368712722
+    bytes: 368712722,
+    wd: "Q3205604",
+    wp: "https://en.wikipedia.org/wiki/The_Chase_(1946_film)",
+    wpx: "The Chase is a 1946 American film noir directed by Arthur Ripley. The screenplay by Philip Yordan is based on Cornell Woolrich's 1944 novel The Black Path of Fear. It stars Robert Cummings as Chuck Scott, a veteran who has hallucinations. When he returns a lost wallet to violent mobster Eddie Roman, Eddie offers to hire him as a chauffeur. Chuck becomes mixed up in a plot to help Eddie's wife Lorna run off to Havana to escape her cruel husband.",
+    dir: [
+     "Arthur Ripley"
+    ],
+    cast: [
+     "Robert Cummings",
+     "Michèle Morgan",
+     "Steve Cochran"
+    ]
    },
    {
     title: "The Killers (1946) Burt Lancaster, Ava Gardner, Edmond O' Brien - Film",
@@ -1474,7 +2106,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheStranger_0/TheStranger_0.thumbs/The_Stranger_002160.jpg",
     subs: "The_Stranger.asr.srt",
-    bytes: 397241981
+    bytes: 397241981,
+    wd: "Q978770",
+    wp: "https://en.wikipedia.org/wiki/The_Stranger_(1946_film)",
+    wpx: "The Stranger is a 1946 American thriller film noir directed and co-written by Orson Welles, starring himself along with Edward G. Robinson and Loretta Young. Welles's third completed feature film as director and his first film noir, it centers on war crimes investigator Wilson tracking high-ranking Nazi fugitive Franz Kindler to a Connecticut town. It was the first Hollywood film to incorporate actual documentary footage of the Holocaust.",
+    dir: [
+     "Orson Welles"
+    ],
+    cast: [
+     "Loretta Young",
+     "Edward G. Robinson",
+     "Orson Welles"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "Fear in the Night",
@@ -1486,7 +2132,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Fear_in_the_Night/Fear_in_the_Night.thumbs/Fear_in_the_Night_001680.jpg",
-    bytes: 296075657
+    bytes: 296075657,
+    wd: "Q5227887",
+    wp: "https://en.wikipedia.org/wiki/Fear_in_the_Night_(1947_film)",
+    wpx: "Fear in the Night is a 1947 American horror film directed by Maxwell Shane, starring Paul Kelly and DeForest Kelley. It is based on the Cornell Woolrich story \"And So to Death\". Woolrich is credited under pen name William Irish. The film was remade by the same director in 1956 with the title Nightmare this time starring Edward G. Robinson playing the cop and Kevin McCarthy.",
+    dir: [
+     "Maxwell Shane"
+    ],
+    cast: [
+     "Paul Kelly",
+     "DeForest Kelley",
+     "Ann Doran"
+    ]
    },
    {
     title: "The Lady from Shanghai (1947) Orson Welles, Rita Hayworth, Everett Slo",
@@ -1510,7 +2167,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheRedHouse/TheRedHouse.thumbs/The_Red_House_002400.jpg",
     subs: "The_Red_House.asr.srt",
-    bytes: 435894603
+    bytes: 435894603,
+    wd: "Q3210438",
+    wp: "https://en.wikipedia.org/wiki/The_Red_House_(film)",
+    wpx: "The Red House is a 1947 American psychological horror film directed by Delmer Daves and starring Edward G. Robinson, Lon McCallister, Judith Anderson, Rory Calhoun, Allene Roberts, and Julie London. Its plot follows a young woman raised by a brother and sister who are concealing a secret involving an abandoned farmhouse located deep in the woods on their sprawling property. It is based on the 1945 novel of the same name by George Agnew…",
+    dir: [
+     "Delmer Daves"
+    ],
+    cast: [
+     "Edward G. Robinson",
+     "Lon McCallister",
+     "Judith Anderson"
+    ]
    },
    {
     title: "Amazing Mr. X , The",
@@ -1535,7 +2203,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/He_Walked_By_Night.avi/He_Walked_By_Night.avi.thumbs/He_Walked_By_Night_001860.jpg",
-    bytes: 342876743
+    bytes: 342876743,
+    wd: "Q2780022",
+    wp: "https://en.wikipedia.org/wiki/He_Walked_by_Night",
+    wpx: "He Walked by Night is a 1948 American police procedural film noir directed by Alfred L. Werker and an uncredited Anthony Mann. The film, shot in a semidocumentary tone, is loosely based on the real-life actions of Erwin \"Machine-Gun\" Walker, a former Glendale, California police department employee and World War II veteran who unleashed a crime spree of burglaries, robberies and shootouts in the Los Angeles area between 1945 and 1946.",
+    dir: [
+     "Alfred L. Werker",
+     "Anthony Mann"
+    ],
+    cast: [
+     "Richard Basehart",
+     "Scott Brady",
+     "Roy Roberts"
+    ]
    },
    {
     title: "I Love Trouble",
@@ -1547,7 +2227,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/I_Love_Trouble_movie/I_Love_Trouble_movie.thumbs/I_Love_Trouble_002280.jpg",
-    bytes: 407080291
+    bytes: 407080291,
+    wd: "Q3233535",
+    wp: "https://en.wikipedia.org/wiki/I_Love_Trouble_(1948_film)",
+    wpx: "I Love Trouble is a 1948 American film noir crime film written by Roy Huggins from his first novel The Double Take, directed by S. Sylvan Simon, and starring Franchot Tone as Stuart Bailey. The character of Stuart Bailey was later portrayed by Efrem Zimbalist, Jr. in the television series 77 Sunset Strip.",
+    dir: [
+     "S. Sylvan Simon"
+    ],
+    cast: [
+     "Franchot Tone",
+     "Janet Blair",
+     "Janis Carter"
+    ],
+    co: [
+     "Columbia Pictures"
+    ]
    },
    {
     title: "Inner Sanctum",
@@ -1560,7 +2254,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Inner_Sanctum_movie/Inner_Sanctum_movie.thumbs/Inner_Sanctum_001494.jpg",
     subs: "Inner_Sanctum.asr.srt",
-    bytes: 270310008
+    bytes: 270310008,
+    wd: "Q6035554",
+    wp: "https://en.wikipedia.org/wiki/Inner_Sanctum_(1948_film)",
+    wpx: "Inner Sanctum is a 1948 American horror mystery film directed by Lew Landers and starring Charles Russell and Mary Beth Hughes. based on the Simon & Schuster book series of the same name and the Inner Sanctum Mystery radio series. A previous film series of the show had been produced by Universal Pictures until 1945. It is the first and only film of M.R.S. productions, the initials of Richard B. Morros, Samuel Rheiner and Walter Shenson.",
+    dir: [
+     "Lew Landers"
+    ],
+    cast: [
+     "Mary Beth Hughes",
+     "Billy House",
+     "Charles Russell"
+    ]
    },
    {
     title: "Open Secret",
@@ -1571,7 +2276,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/OpenSecret/OpenSecret.thumbs/Open%20Secret%20(1948)_002334.jpg",
-    bytes: 262169995
+    bytes: 262169995,
+    wd: "Q11892619",
+    wp: "https://en.wikipedia.org/wiki/Open_Secret",
+    wpx: "Open Secret is a 1948 American film noir directed by John Reinhardt, starring John Ireland and Jane Randolph.",
+    dir: [
+     "John Reinhardt"
+    ],
+    cast: [
+     "John Ireland",
+     "Arthur O'Connell"
+    ]
    },
    {
     title: "Parole Inc",
@@ -1607,7 +2322,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheAmazingMr.X1948Avi/TheAmazingMr.X1948Avi.thumbs/The_Amazing_Mr_X_001860.jpg",
-    bytes: 338881118
+    bytes: 338881118,
+    wd: "Q2177681",
+    wp: "https://en.wikipedia.org/wiki/The_Amazing_Mr._X",
+    wpx: "The Amazing Mr. X, also known as The Spiritualist, is a 1948 American horror thriller film noir directed by Bernard Vorhaus with cinematography by John Alton. The film tells the story of a phony spiritualist racket. The film is prominently featured in Alton's book on cinematography Painting with Light (1949).",
+    dir: [
+     "Bernard Vorhaus"
+    ],
+    cast: [
+     "Turhan Bey",
+     "Lynn Bari",
+     "Cathy O'Donnell"
+    ]
    },
    {
     title: "The Naked City (1948) Dir: Jules Dassin, Starring Barry Fitzgerald, Ho",
@@ -1703,7 +2429,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Sun_Sets_at_Dawn_movie/Sun_Sets_at_Dawn_movie.thumbs/Sun_Sets_at_Dawn_1950_000035.jpg",
     subs: "Sun_Sets_at_Dawn_1950.asr.srt",
-    bytes: 310200006
+    bytes: 310200006,
+    wd: "Q7767356",
+    wp: "https://en.wikipedia.org/wiki/The_Sun_Sets_at_Dawn",
+    wpx: "The Sun Sets at Dawn is a 1950 American film noir crime film directed by Paul Sloane and starring Sally Parr and Patrick Waltz.",
+    dir: [
+     "Paul Sloane"
+    ]
    },
    {
     title: "Woman on the Run",
@@ -1716,7 +2448,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Woman_on_the_Run/Woman_on_the_Run.thumbs/Woman_on_the_Run_001800.jpg",
     subs: "Woman_on_the_Run.asr.srt",
-    bytes: 328311494
+    bytes: 328311494,
+    wd: "Q1307071",
+    wp: "https://en.wikipedia.org/wiki/Woman_on_the_Run",
+    wpx: "Woman on the Run is a 1950 American crime film noir directed by Norman Foster and starring Ann Sheridan and Dennis O'Keefe. The film was based on the April 1948 short story \"Man on the Run\" by Sylvia Tate.",
+    dir: [
+     "Norman Foster"
+    ],
+    cast: [
+     "Ann Sheridan",
+     "Dennis O'Keefe",
+     "Robert Keith"
+    ]
    },
    {
     title: "Ace in the Hole (1951) Director: Billy Wilder, Featuring Kirk Douglas,",
@@ -1740,7 +2483,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/cause_for_alarm_1951/cause_for_alarm_1951.thumbs/cause_for_alarm_1951_001740.jpg",
     subs: "cause_for_alarm_1951.asr.srt",
-    bytes: 322075808
+    bytes: 322075808,
+    wd: "Q3031451",
+    wp: "https://en.wikipedia.org/wiki/Cause_for_Alarm!_(film)",
+    wpx: "Cause for Alarm! is a 1951 melodrama suspense film directed by Tay Garnett, starring Loretta Young and Barry Sullivan and written by Mel Dinelli and Tom Lewis based on a story by Larry Marcus. The film is in the public domain.",
+    dir: [
+     "Tay Garnett"
+    ],
+    cast: [
+     "Loretta Young",
+     "Barry Sullivan",
+     "Bruce Cowling"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Detective Story (1951) Kirk Douglas, Eleanor Parker, William Bendix, C",
@@ -1764,7 +2521,17 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The_Hoodlum/The_Hoodlum.thumbs/The_Hoodlum_001440.jpg",
     subs: "The_Hoodlum.asr.srt",
-    bytes: 265750431
+    bytes: 265750431,
+    wd: "Q1835330",
+    wp: "https://en.wikipedia.org/wiki/The_Hoodlum_(1951_film)",
+    wpx: "The Hoodlum is a 1951 American crime film noir directed by Max Nosseck and starring Lawrence Tierney, Allene Roberts, Marjorie Riordan and Edward Tierney.",
+    dir: [
+     "Max Nosseck"
+    ],
+    cast: [
+     "Lawrence Tierney",
+     "Allene Roberts"
+    ]
    },
    {
     title: "The Prowler (1951) |Joseph Losey| Van Heflin, Evelyn Keyes - Film Noir",
@@ -1787,7 +2554,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/The_Second_Woman_/The_Second_Woman_.thumbs/The_Second_Woman__002160.jpg",
-    bytes: 388066896
+    bytes: 388066896,
+    wd: "Q3824104",
+    wp: "https://en.wikipedia.org/wiki/The_Second_Woman_(1950_film)",
+    wpx: "The Second Woman is a 1950 American film noir mystery-suspense film featuring Robert Young, Betsy Drake, John Sutton and Florence Bates It was produced and written by Mort Briskin and Robert Smith, directed by James V. Kern, and released by United Artists. Sequences of the film were shot on the coastal areas of Monterey, California.",
+    dir: [
+     "James V. Kern"
+    ],
+    cast: [
+     "Robert Young",
+     "Betsy Drake",
+     "Florence Bates"
+    ]
    },
    {
     title: "Kansas City Confidential",
@@ -1800,7 +2578,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/kansascityconfidencial/kansascityconfidencial.thumbs/kansascityconfidencial_002400.jpg",
     subs: "kansascityconfidencial.asr.srt",
-    bytes: 429074409
+    bytes: 429074409,
+    wd: "Q1056727",
+    wp: "https://en.wikipedia.org/wiki/Kansas_City_Confidential",
+    wpx: "Kansas City Confidential is a 1952 American crime film noir directed by Phil Karlson and starring John Payne and Coleen Gray.",
+    dir: [
+     "Phil Karlson"
+    ],
+    cast: [
+     "John Payne",
+     "Coleen Gray",
+     "Preston Foster"
+    ],
+    co: [
+     "United Artists"
+    ]
    },
    {
     title: "The Green Glove",
@@ -1813,7 +2605,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the_green_glove/the_green_glove.thumbs/greenglove_004260.jpg",
     subs: "greenglove.asr.srt",
-    bytes: 386245247
+    bytes: 386245247,
+    wd: "Q1198532",
+    wp: "https://en.wikipedia.org/wiki/The_Green_Glove",
+    wpx: "The Green Glove is a 1952 French-American international co-production film noir directed by Rudolph Maté and starring Glenn Ford, Geraldine Brooks, Sir Cedric Hardwicke and George Macready.",
+    dir: [
+     "Rudolph Maté"
+    ],
+    cast: [
+     "Glenn Ford",
+     "Geraldine Brooks",
+     "Cedric Hardwicke"
+    ]
    },
    {
     title: "1953 - Niagara - Henry Hathaway",
@@ -1859,7 +2662,22 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Hitch_Hiker/Hitch_Hiker.thumbs/Hitch-Hiker_001680.jpg",
     subs: "Hitch-Hiker.asr.srt",
-    bytes: 306247334
+    bytes: 306247334,
+    wd: "Q2625053",
+    wp: "https://en.wikipedia.org/wiki/The_Hitch-Hiker",
+    wpx: "The Hitch-Hiker is a 1953 American thriller film noir directed by Ida Lupino, who co-wrote it with her former husband Collier Young, and starring Edmond O'Brien, William Talman and Frank Lovejoy. Based on the 1950 killing spree of Billy Cook, the film follows two friends who are taken hostage by a serial-murdering hitchhiker during an automobile trip to Mexico.",
+    dir: [
+     "Ida Lupino"
+    ],
+    cast: [
+     "Edmond O'Brien",
+     "Frank Lovejoy",
+     "William Talman"
+    ],
+    co: [
+     "RKO Pictures",
+     "The Filmakers, Inc."
+    ]
    },
    {
     title: "The Limping Man",
@@ -1871,7 +2689,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheLimpingMan/TheLimpingMan.thumbs/TheLimpingMan_001800.jpg",
-    bytes: 329452588
+    bytes: 329452588,
+    wd: "Q4104532",
+    wp: "https://en.wikipedia.org/wiki/The_Limping_Man_(1953_film)",
+    wpx: "The Limping Man is a 1953 British second feature ('B') film noir directed by Cy Endfield and starring Lloyd Bridges, Moira Lister and Leslie Phillips. The film was made at Merton Park Studios and was written by Ian Stuart Black and Reginald Long based on Anthony Verney's novel Death on the Tideway. Endfield directed it under the pseudonym Charles de Lautour due to his blacklisting in Hollywood. Location shooting took place around…",
+    dir: [
+     "Cy Endfield"
+    ],
+    cast: [
+     "Lloyd Bridges",
+     "Moira Lister",
+     "Leslie Phillips"
+    ]
    },
    {
     title: "Jail Bait",
@@ -1884,7 +2713,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/JailBait/JailBait.thumbs/JailBait_001680.jpg",
     subs: "JailBait.asr.srt",
-    bytes: 308112314
+    bytes: 308112314,
+    wd: "Q366975",
+    wp: "https://en.wikipedia.org/wiki/Jail_Bait_(1954_film)",
+    wpx: "Jail Bait is a 1954 American film noir directed by Ed Wood, with a screenplay by Wood and Alex Gordon. The film stars Clancy Malone as the delinquent son of a famous doctor, and his involvement with a dangerous criminal. Famed bodybuilder Steve Reeves made his first major screen appearance in the film, and it was one of the few films he made using his own voice. The film belongs to the film noir genre, and contains themes typical of it…",
+    dir: [
+     "Ed Wood"
+    ],
+    cast: [
+     "Timothy Farrell",
+     "Dolores Fuller",
+     "Herbert Rawlinson"
+    ]
    },
    {
     title: "Private Hell 36 (1954) Ida Lupino, Steve Cochran, Howard Duff Film Noi",
@@ -1919,7 +2759,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/suddenly/suddenly.thumbs/suddenly_001800.jpg",
     subs: "suddenly.asr.srt",
-    bytes: 330518704
+    bytes: 330518704,
+    wd: "Q1041834",
+    wp: "https://en.wikipedia.org/wiki/Suddenly_(1954_film)",
+    wpx: "Suddenly is a 1954 black and white American noir crime film directed by Lewis Allen with a screenplay written by Richard Sale. The drama stars Frank Sinatra and Sterling Hayden, and features James Gleason and Nancy Gates.",
+    dir: [
+     "Lewis Allen"
+    ],
+    cast: [
+     "Frank Sinatra",
+     "Sterling Hayden",
+     "James Gleason"
+    ],
+    co: [
+     "United Artists"
+    ]
    },
    {
     title: "Big Bluff",
@@ -1932,7 +2786,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/big_bluff/big_bluff.thumbs/big_bluff_001680.jpg",
     subs: "big_bluff.asr.srt",
-    bytes: 310528787
+    bytes: 310528787,
+    wd: "Q7717524",
+    wp: "https://en.wikipedia.org/wiki/The_Big_Bluff_(1955_film)",
+    wpx: "The Big Bluff is a 1955 American film noir directed by W. Lee Wilder and starring John Bromfield, Martha Vickers and Robert Hutton.",
+    dir: [
+     "W. Lee Wilder"
+    ],
+    cast: [
+     "John Bromfield",
+     "Martha Vickers",
+     "Robert Hutton"
+    ]
    },
    {
     title: "D.O.A.",
@@ -1954,7 +2819,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/killerskiss1955_201908/killerskiss1955_201908.thumbs/Killer's%20Kiss%20(1955)_001555.jpg",
-    bytes: 344795183
+    bytes: 344795183,
+    wd: "Q936477",
+    wp: "https://en.wikipedia.org/wiki/Killer's_Kiss",
+    wpx: "Killer's Kiss is a 1955 American independent film noir directed by Stanley Kubrick and written by Kubrick and Howard Sackler. It is the second feature film directed by Kubrick, following his 1953 debut feature, Fear and Desire. The film stars Jamie Smith, Irene Kane, and Frank Silvera.",
+    dir: [
+     "Stanley Kubrick"
+    ],
+    cast: [
+     "Frank Silvera",
+     "Chris Chase",
+     "Barbara Brand"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Kiss Me Deadly (1955, ) Dir: Robert Aldrich Featuring Ralph Meeker - F",
@@ -1976,7 +2855,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/The_Big_Combo_1955/The_Big_Combo_1955.thumbs/Big_Combo_1955_002070.jpg",
-    bytes: 544653368
+    bytes: 544653368,
+    wd: "Q1498484",
+    wp: "https://en.wikipedia.org/wiki/The_Big_Combo",
+    wpx: "The Big Combo is a 1955 American film noir directed by Joseph H. Lewis, written by Philip Yordan and photographed by cinematographer John Alton, with music by David Raksin. The film stars Cornel Wilde, Richard Conte and Brian Donlevy, as well as Jean Wallace, who was Wilde's wife at the time. The supporting cast features Lee Van Cleef, Earl Holliman and the final screen appearance of actress Helen Walker. The Big Combo received…",
+    dir: [
+     "Joseph H. Lewis"
+    ],
+    cast: [
+     "Cornel Wilde",
+     "Richard Conte",
+     "Brian Donlevy"
+    ]
    },
    {
     title: "Please Murder Me",
@@ -1989,7 +2879,20 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Please_Murder_Me_movie/Please_Murder_Me_movie.thumbs/Please_Murder_Me_003653.jpg",
     subs: "Please_Murder_Me.asr.srt",
-    bytes: 317813951
+    bytes: 317813951,
+    wd: "Q3855930",
+    wp: "https://en.wikipedia.org/wiki/Please_Murder_Me!",
+    wpx: "Please Murder Me! is a 1956 American film noir directed by Peter Godfrey and starring Angela Lansbury, Raymond Burr and Dick Foran. The film contains an incomplete copyright notice omitting mention of its claimant and has fallen into the public domain. It was Godfrey's final film before his death in 1970.",
+    dir: [
+     "Peter Godfrey"
+    ],
+    cast: [
+     "Angela Lansbury",
+     "Raymond Burr"
+    ],
+    co: [
+     "Warner Bros. Entertainment"
+    ]
    },
    {
     title: "The Killing",
@@ -2000,7 +2903,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/thekilling1956/thekilling1956.thumbs/The%20Killing%20(1956)_002034.jpg",
-    bytes: 471079049
+    bytes: 471079049,
+    wd: "Q592072",
+    wp: "https://en.wikipedia.org/wiki/The_Killing_(film)",
+    wpx: "The Killing is a 1956 American film noir directed by Stanley Kubrick and produced by James B. Harris. It was written by Kubrick and Jim Thompson and based on Lionel White's novel Clean Break. It stars Sterling Hayden, Coleen Gray, and Vince Edwards, and features Marie Windsor, Elisha Cook Jr., Jay C. Flippen and Timothy Carey.",
+    dir: [
+     "Stanley Kubrick"
+    ],
+    cast: [
+     "Sterling Hayden",
+     "Jay C. Flippen",
+     "Marie Windsor"
+    ]
    },
    {
     title: "Timetable (aka Time Table)",
@@ -2023,7 +2937,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/elevator-to-the-gallows-58/elevator-to-the-gallows-58.thumbs/Elevator%20to%20the%20Gallows1958_002215.jpg",
     subs: "Elevator to the Gallows (1958).en.srt",
-    bytes: 1619119733
+    bytes: 1619119733,
+    wd: "Q950893",
+    wp: "https://en.wikipedia.org/wiki/Elevator_to_the_Gallows",
+    wpx: "Elevator to the Gallows is a 1958 French crime thriller tragedy film directed by Louis Malle in his directional debut. The film stars Jeanne Moreau and Maurice Ronet as lovers whose murder plot starts to unravel after one of them becomes trapped in an elevator. The screenplay by Roger Nimier and Malle is based on the 1956 novel of the same name by Noël Calef.",
+    dir: [
+     "Louis Malle"
+    ],
+    cast: [
+     "Jeanne Moreau",
+     "Lino Ventura",
+     "Charles Denner"
+    ]
    },
    {
     title: "The Desperate Hours (1956) Humphrey Bogart, Fredric March",
@@ -2095,7 +3020,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/nightmare_castle/nightmare_castle.thumbs/M4V10002_003840.jpg",
     subs: "M4V10002.asr.srt",
-    bytes: 345674344
+    bytes: 345674344,
+    wd: "Q3613624",
+    wp: "https://en.wikipedia.org/wiki/Nightmare_Castle",
+    wpx: "Nightmare Castle, also known as The Faceless Monster, is a 1965 Italian horror film directed by Mario Caiano. The film stars Paul Muller, Helga Liné and Barbara Steele in a dual role.",
+    dir: [
+     "Mario Caiano"
+    ],
+    cast: [
+     "Barbara Steele",
+     "Paul Müller",
+     "Helga Liné"
+    ]
    },
    {
     title: "Chiaroscuro, Baby",
@@ -2108,7 +3044,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ChiaroscuroBaby/ChiaroscuroBaby.thumbs/ChiaroscuroBaby-1280x720_003060.jpg",
     subs: "ChiaroscuroBaby-1280x720.asr.srt",
-    bytes: 616893047
+    bytes: 616893047,
+    wd: "Q130320964"
    }
   ]
  },
@@ -2129,7 +3066,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/The_General_Buster_Keaton/The_General_Buster_Keaton.thumbs/The_General_001914.jpg",
-    bytes: 302790246
+    bytes: 302790246,
+    wd: "Q850159",
+    wp: "https://en.wikipedia.org/wiki/The_General_(1926_film)",
+    wpx: "The General is a 1926 American silent comedy film released by United Artists. It was inspired by the Great Locomotive Chase, a true story of an event that occurred during the American Civil War. The story was adapted from the 1889 memoir The Great Locomotive Chase by William Pittenger. The film stars Buster Keaton, who also co-directed it along with Clyde Bruckman.",
+    dir: [
+     "Buster Keaton",
+     "Clyde Bruckman"
+    ],
+    cast: [
+     "Buster Keaton",
+     "Marion Mack",
+     "Charles Henry Smith"
+    ]
    },
    {
     title: "As You Like It",
@@ -2153,7 +3102,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/amazing_adventure/amazing_adventure.thumbs/amazing_adventuarchive_001440.jpg",
     subs: "amazing_adventuarchive.asr.srt",
-    bytes: 269937607
+    bytes: 269937607,
+    wd: "Q3285286",
+    wp: "https://en.wikipedia.org/wiki/The_Amazing_Quest_of_Ernest_Bliss",
+    wpx: "The Amazing Quest of Ernest Bliss is a 1936 British romantic comedy film directed by Alfred Zeisler and starring Cary Grant. It is a remake of the 1920 film The Amazing Quest of Mr. Ernest Bliss, based on The Curious Quest, a 1919 novel by E. Phillips Oppenheim.",
+    dir: [
+     "Alfred Zeisler"
+    ],
+    cast: [
+     "Cary Grant",
+     "Mary Brian",
+     "John Turnbull"
+    ]
    },
    {
     title: "The Milky Way",
@@ -2177,7 +3137,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/NothingSacred/NothingSacred.thumbs/NothingSacred_001783.jpg",
-    bytes: 442440689
+    bytes: 442440689,
+    wd: "Q964771",
+    wp: "https://en.wikipedia.org/wiki/Nothing_Sacred_(film)",
+    wpx: "Nothing Sacred is a 1937 American Technicolor screwball comedy film directed by William A. Wellman, produced by David O. Selznick, and starring Carole Lombard and Fredric March with a supporting cast featuring Charles Winninger and Walter Connolly. Ben Hecht was credited with the screenplay based on the 1937 story \"Letter to the Editor\" by James H. Street, and an array of additional writers, including Ring Lardner Jr., Budd Schulberg,…",
+    dir: [
+     "William A. Wellman"
+    ],
+    cast: [
+     "Carole Lombard",
+     "Fredric March",
+     "Walter Connolly"
+    ],
+    co: [
+     "Selznick International Pictures"
+    ]
    },
    {
     title: "Oh, Mr. Porter!",
@@ -2189,7 +3163,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Oh_Mr.Porter_1937/Oh_Mr.Porter_1937.thumbs/Oh_Mr.Porter_1937_001974.jpg",
-    bytes: 348977938
+    bytes: 348977938,
+    wd: "Q3349851",
+    wp: "https://en.wikipedia.org/wiki/Oh%2C_Mr_Porter!",
+    wpx: "Oh, Mr Porter! is a 1937 British comedy film starring Will Hay with Moore Marriott and Graham Moffatt and directed by Marcel Varnel. While not Hay's commercially most successful, it is his best-known film to modern audiences. It is widely acclaimed as the best of Hay's work, and a classic of its genre. The film had its first public showing in November 1937 and went on general release on 3 January 1938.\nThe plot of Oh, Mr Porter was…",
+    dir: [
+     "Marcel Varnel"
+    ],
+    cast: [
+     "Will Hay",
+     "Graham Moffatt",
+     "Moore Marriott"
+    ]
    },
    {
     title: "Billy the Kid Returns",
@@ -2226,7 +3211,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Pygmalion/Pygmalion.thumbs/Pygmalion_002280.jpg",
-    bytes: 412037550
+    bytes: 412037550,
+    wd: "Q1196539",
+    wp: "https://en.wikipedia.org/wiki/Pygmalion_(1938_film)",
+    wpx: "Pygmalion is a 1938 British film based on George Bernard Shaw's 1913 play, and adapted by him for the screen. It stars Leslie Howard as Professor Henry Higgins and Wendy Hiller as Eliza Doolittle.",
+    dir: [
+     "Anthony Asquith",
+     "Leslie Howard"
+    ],
+    cast: [
+     "Wendy Hiller",
+     "Wilfrid Lawson",
+     "Leueen MacGrath"
+    ]
    },
    {
     title: "Tarzan and the Green Goddess",
@@ -2239,7 +3236,12 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/tarzan_and_the_green_goddess/tarzan_and_the_green_goddess.thumbs/tarzan_and_the_green_goddess_001620.jpg",
     subs: "tarzan_and_the_green_goddess.asr.srt",
-    bytes: 294357399
+    bytes: 294357399,
+    wd: "Q9355781",
+    dir: [
+     "Edward A. Kull",
+     "Wilbur McGaugh"
+    ]
    },
    {
     title: "The Flying Deuces",
@@ -2252,7 +3254,22 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheFlyingDeuces/TheFlyingDeuces.thumbs/The_Flying_Deuces_001620.jpg",
     subs: "The_Flying_Deuces.asr.srt",
-    bytes: 296023543
+    bytes: 296023543,
+    wd: "Q1167731",
+    wp: "https://en.wikipedia.org/wiki/The_Flying_Deuces",
+    wpx: "The Flying Deuces, also known as Flying Aces, is a 1939 buddy comedy film starring Laurel and Hardy, in which the duo join the French Foreign Legion. It is a partial remake of their short film Beau Hunks (1931).",
+    dir: [
+     "A. Edward Sutherland"
+    ],
+    cast: [
+     "Stan Laurel",
+     "Oliver Hardy",
+     "Jean Parker"
+    ],
+    co: [
+     "Boris Morros",
+     "RKO Pictures"
+    ]
    },
    {
     title: "Boys of the City",
@@ -2265,7 +3282,17 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/boys_of_the_city/boys_of_the_city.thumbs/boys_of_the_city_001500.jpg",
     subs: "boys_of_the_city.asr.srt",
-    bytes: 270749590
+    bytes: 270749590,
+    wd: "Q4952731",
+    wp: "https://en.wikipedia.org/wiki/Boys_of_the_City",
+    wpx: "Boys of the City is a 1940 black-and-white comedy/thriller film directed by Joseph H. Lewis. It is the second East Side Kids film and the first to star Bobby Jordan, Leo Gorcey, and Ernest Morrison.",
+    dir: [
+     "Joseph H. Lewis"
+    ],
+    cast: [
+     "Bobby Jordan",
+     "Leo Gorcey"
+    ]
    },
    {
     title: "His Girl Friday",
@@ -2277,7 +3304,21 @@ const CHANNELS = [
     art: "https://archive.org/services/img/his_girl_friday",
     frame: "https://archive.org/download/his_girl_friday/his_girl_friday.thumbs/his_girl_friday_002160.jpg",
     subs: "his_girl_friday.asr.srt",
-    bytes: 401207987
+    bytes: 401207987,
+    wd: "Q1066714",
+    wp: "https://en.wikipedia.org/wiki/His_Girl_Friday",
+    wpx: "His Girl Friday is a 1940 American screwball comedy film directed by Howard Hawks, starring Cary Grant and Rosalind Russell and featuring Ralph Bellamy and Gene Lockhart. It was released by Columbia Pictures. The plot centers on a newspaper editor named Walter Burns who is about to lose his ace reporter and ex-wife, Hildy Johnson, newly engaged to another man. Burns suggests they cover one more story together, getting themselves…",
+    dir: [
+     "Howard Hawks"
+    ],
+    cast: [
+     "Cary Grant",
+     "Rosalind Russell",
+     "Ralph Bellamy"
+    ],
+    co: [
+     "Columbia Pictures"
+    ]
    },
    {
     title: "Lil' Abner",
@@ -2303,7 +3344,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/meet_john_doe/meet_john_doe.thumbs/meet_john_doe_002940.jpg",
     subs: "meet_john_doe.asr.srt",
-    bytes: 535442863
+    bytes: 535442863,
+    wd: "Q1520732",
+    wp: "https://en.wikipedia.org/wiki/Meet_John_Doe",
+    wpx: "Meet John Doe is a 1941 American comedy-drama film directed and produced by Frank Capra, written by Robert Riskin, and starring Gary Cooper, Barbara Stanwyck, Edward Arnold, Walter Brennan, Spring Byington, James Gleason, and Gene Lockhart. The film is about a \"grassroots\" political campaign created unwittingly by a newspaper columnist with the involvement of a hired homeless man and pursued by the paper's wealthy owner.",
+    dir: [
+     "Frank Capra"
+    ],
+    cast: [
+     "Gary Cooper",
+     "Barbara Stanwyck",
+     "Edward Arnold"
+    ]
    },
    {
     title: "Penny Serenade",
@@ -2316,7 +3368,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/penny_serenade/penny_serenade.thumbs/penny_serenade_002880.jpg",
     subs: "penny_serenade.asr.srt",
-    bytes: 519186887
+    bytes: 519186887,
+    wd: "Q419838",
+    wp: "https://en.wikipedia.org/wiki/Penny_Serenade",
+    wpx: "Penny Serenade is a 1941 American melodrama film directed by George Stevens starring Irene Dunne and Cary Grant as a loving couple who must overcome adversity to keep their marriage and raise a child. It was produced and distributed by Columbia Pictures. Grant was nominated for the Academy Award for Best Actor for his performance.",
+    dir: [
+     "George Stevens"
+    ],
+    cast: [
+     "Irene Dunne",
+     "Cary Grant",
+     "Beulah Bondi"
+    ],
+    co: [
+     "Columbia Pictures"
+    ]
    },
    {
     title: "Topper Returns",
@@ -2329,7 +3395,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Topper_Returns_41/Topper_Returns_41.thumbs/Topper_Returns_41_002100.jpg",
     subs: "Topper_Returns_41.asr.srt",
-    bytes: 448593516
+    bytes: 448593516,
+    wd: "Q1332634",
+    wp: "https://en.wikipedia.org/wiki/Topper_Returns",
+    wpx: "Topper Returns is a 1941 American supernatural comedy thriller film directed by Roy Del Ruth and starring Joan Blondell, Roland Young, Carole Landis and Billie Burke. The third and final installment in the initial series of supernatural comedy films inspired by the novels of Thorne Smith, it succeeds Topper (1937) and Topper Takes a Trip (1938).",
+    dir: [
+     "Roy Del Ruth"
+    ],
+    cast: [
+     "Joan Blondell",
+     "Roland Young",
+     "Carole Landis"
+    ],
+    co: [
+     "Hal Roach Studios"
+    ]
    },
    {
     title: "Miss London Ltd.",
@@ -2341,7 +3421,22 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/miss_london_ltd_1943/miss_london_ltd_1943.thumbs/miss_london_ltd_002274.jpg",
     subs: "miss_london_ltd.asr.srt",
-    bytes: 1054750952
+    bytes: 1054750952,
+    wd: "Q6876979",
+    wp: "https://en.wikipedia.org/wiki/Miss_London_Ltd.",
+    wpx: "Miss London Ltd. is a 1943 British black-and-white comedy musical directed by Val Guest and starring Arthur Askey and Evelyn Dall. It was written by Guest and Marriott Edgar and produced by Edward Black for Gainsborough Pictures. It was Guest's directorial debut.",
+    dir: [
+     "Val Guest"
+    ],
+    cast: [
+     "Arthur Askey",
+     "Evelyn Dall",
+     "Patricia Owens"
+    ],
+    co: [
+     "Lime Grove Studios",
+     "Gaumont-British Picture Corporation"
+    ]
    },
    {
     title: "Two Weeks to Live",
@@ -2354,7 +3449,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/2_weeks_to_live/2_weeks_to_live.thumbs/2_weeks_002659.jpg",
     subs: "2_week_to_live.asr.srt",
-    bytes: 312742067
+    bytes: 312742067,
+    wd: "Q7859328",
+    wp: "https://en.wikipedia.org/wiki/Two_Weeks_to_Live",
+    wpx: "Two Weeks to Live is a 1943 American Lum and Abner film directed by Malcolm St. Clair.",
+    dir: [
+     "Malcolm St. Clair"
+    ],
+    cast: [
+     "Franklin Pangborn",
+     "Irving Bacon",
+     "Herbert Rawlinson"
+    ]
    },
    {
     title: "Midnight Manhunt",
@@ -2367,7 +3473,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Midnight.Manhunt/Midnight.Manhunt.thumbs/Midnight_Manhunt_001500.jpg",
     subs: "Midnight_Manhunt.asr.srt",
-    bytes: 301742928
+    bytes: 301742928,
+    wd: "Q6842722",
+    wp: "https://en.wikipedia.org/wiki/Midnight_Manhunt",
+    wpx: "Midnight Manhunt is a 1945 film noir crime film mystery directed by William C. Thomas and written by David Lang. The film premiered on July 24, 1945 and is in the public domain.",
+    dir: [
+     "William C. Thomas"
+    ]
    },
    {
     title: "Stork Club, The",
@@ -2393,7 +3505,19 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/loveLaughsatAndyHardy/loveLaughsatAndyHardy.thumbs/love_laughs_at_andy_hardy_002220.jpg",
     subs: "love_laughs_at_andy_hardy.asr.srt",
-    bytes: 391103585
+    bytes: 391103585,
+    wd: "Q6690920",
+    wp: "https://en.wikipedia.org/wiki/Love_Laughs_at_Andy_Hardy",
+    wpx: "Love Laughs at Andy Hardy is a 1946 American comedy film directed by Willis Goldbeck and starring Mickey Rooney, Lewis Stone and Bonita Granville. It was produced by Metro-Goldwyn-Mayer. The film is also known under its American promotional title Uncle Andy Hardy. This was the fifteenth and penultimate film in the Andy Hardy series, and the final film featuring Stone as Judge Hardy. The final installment, Andy Hardy Comes Home (1958),…",
+    dir: [
+     "Willis Goldbeck"
+    ],
+    cast: [
+     "Mickey Rooney"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Hi De Ho",
@@ -2406,7 +3530,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/hi_de_ho/hi_de_ho.thumbs/Hi-De-Ho_001500.jpg",
     subs: "Hi-De-Ho.asr.srt",
-    bytes: 272318014
+    bytes: 272318014,
+    wd: "Q5750157",
+    wp: "https://en.wikipedia.org/wiki/Hi-De-Ho_(1947_film)",
+    wpx: "Hi De Ho is a 1947 American musical race film directed by Josh Binney. Distributed by All American Entertainment, the film stars an all African American cast, led by Cab Calloway. It first showed at the Squire Theatre in New York, and would be shown in the more than 500 African-American theaters in the US.",
+    dir: [
+     "Josh Binney"
+    ],
+    cast: [
+     "Cab Calloway"
+    ]
    },
    {
     title: "Lost Honeymoon",
@@ -2418,7 +3551,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/LostHoneymoon/LostHoneymoon.thumbs/LostHoneymoon_001680.jpg",
-    bytes: 302153497
+    bytes: 302153497,
+    wd: "Q6684059",
+    wp: "https://en.wikipedia.org/wiki/Lost_Honeymoon",
+    wpx: "Lost Honeymoon is a 1947 American screwball comedy film directed by Leigh Jason and starring Franchot Tone, Ann Richards and Tom Conway. The working title of the film was Amy Comes Across.",
+    dir: [
+     "Leigh Jason"
+    ],
+    cast: [
+     "Franchot Tone"
+    ]
    },
    {
     title: "My Favorite Brunette",
@@ -2431,7 +3573,22 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/my_favorite_brunette/my_favorite_brunette.thumbs/my_favorite_brunette_002040.jpg",
     subs: "my_favorite_brunette.asr.srt",
-    bytes: 378700906
+    bytes: 378700906,
+    wd: "Q152011",
+    wp: "https://en.wikipedia.org/wiki/My_Favorite_Brunette",
+    wpx: "My Favorite Brunette is a 1947 American romantic comedy film and film noir parody, directed by Elliott Nugent and starring Bob Hope and Dorothy Lamour. Written by Edmund Beloin and Jack Rose, the film is about a baby photographer on death row in San Quentin State Prison who tells reporters his history. While taking care of his private-eye neighbor's office, he is asked by an irresistible baroness to find a missing baron, which…",
+    dir: [
+     "Elliott Nugent"
+    ],
+    cast: [
+     "Bob Hope",
+     "Dorothy Lamour",
+     "Peter Lorre"
+    ],
+    co: [
+     "Paramount Pictures",
+     "Hope Enterprises"
+    ]
    },
    {
     title: "The Road to Hollywood",
@@ -2443,7 +3600,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/RoadtoHollywood/RoadtoHollywood.thumbs/RoadtoHollywood_001260.jpg",
-    bytes: 231334408
+    bytes: 231334408,
+    wd: "Q3824490",
+    wp: "https://en.wikipedia.org/wiki/The_Road_to_Hollywood",
+    wpx: "The Road to Hollywood is a 1947 American film released by Astor Pictures that is a combination of several of Bing Crosby's Educational Pictures short subjects. The title was designed to draft off Paramount Pictures' \"Road to...\" film series starring Crosby, Bob Hope, and Dorothy Lamour; Hope and Lamour do not appear in the film.",
+    dir: [
+     "Del Lord",
+     "Leslie Pearce"
+    ],
+    cast: [
+     "Bing Crosby",
+     "Lincoln Stedman",
+     "Ann Christy"
+    ]
    },
    {
     title: "The Sin of Harold Diddlebock",
@@ -2454,7 +3623,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/harolddiddlebock/harolddiddlebock.thumbs/harolddiddlebock_002160.jpg",
-    bytes: 385039414
+    bytes: 385039414,
+    wd: "Q2364840",
+    wp: "https://en.wikipedia.org/wiki/The_Sin_of_Harold_Diddlebock",
+    wpx: "The Sin of Harold Diddlebock is a 1947 American comedy film written and directed by Preston Sturges, starring the silent film comic icon Harold Lloyd, and featuring a supporting cast including female protagonist Frances Ramsden, Jimmy Conlin, Raymond Walburn, Rudy Vallee, Arline Judge, Edgar Kennedy, Franklin Pangborn, J. Farrell MacDonald, Robert Dudley, Robert Greig, Lionel Stander and Jackie the Lion. The film's story is a…",
+    dir: [
+     "Preston Sturges"
+    ],
+    cast: [
+     "Harold Lloyd",
+     "Rudy Vallée",
+     "Jimmy Conlin"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "Abbott And Costello Meet Frankenstein",
@@ -2465,7 +3648,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/abbott-and-costello-meet-frankenstein/abbott-and-costello-meet-frankenstein.thumbs/Abbott%20and%20Costello%20Meet%20Frankenstein_001974.jpg",
-    bytes: 478122752
+    bytes: 478122752,
+    wd: "Q306791",
+    wp: "https://en.wikipedia.org/wiki/Abbott_and_Costello_Meet_Frankenstein",
+    wpx: "Abbott and Costello Meet Frankenstein is a 1948 American horror comedy film directed by Charles Barton. Tangentally linked to the Universal Monsters film series, the film features Count Dracula, who has partnered with Dr. Sandra Mornay in order to find a brain to reactivate Frankenstein's monster, and they find Wilbur Grey, the ideal candidate.",
+    dir: [
+     "Charles Barton"
+    ],
+    cast: [
+     "Lou Costello",
+     "Bud Abbott",
+     "Lon Chaney Jr."
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "Africa Screams",
@@ -2478,7 +3675,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/AfricaScreams/AfricaScreams.thumbs/Africa_Screams_001920.jpg",
     subs: "Africa_Screams.asr.srt",
-    bytes: 344070525
+    bytes: 344070525,
+    wd: "Q23892",
+    wp: "https://en.wikipedia.org/wiki/Africa_Screams",
+    wpx: "Africa Screams is a 1949 American adventure comedy film starring Abbott and Costello and directed by Charles Barton that parodies the safari genre. The title is a play on the title of the 1930 documentary Africa Speaks! The supporting cast features Clyde Beatty, Frank Buck, Hillary Brooke, Max Baer, Buddy Baer, Shemp Howard and Joe Besser. The film entered the public domain in 1977.",
+    dir: [
+     "Charles Barton"
+    ],
+    cast: [
+     "Bud Abbott",
+     "Lou Costello",
+     "Clyde Beatty"
+    ]
    },
    {
     title: "The Inspector General",
@@ -2491,7 +3699,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the_inspector_general/the_inspector_general.thumbs/the_inspector_general_002400.jpg",
     subs: "the_inspector_general.asr.srt",
-    bytes: 443627627
+    bytes: 443627627,
+    wd: "Q1089010",
+    wp: "https://en.wikipedia.org/wiki/The_Inspector_General_(1949_film)",
+    wpx: "The Inspector General is a 1949 American Technicolor musical comedy film directed by Henry Koster and starring Danny Kaye, Walter Slezak, Barbara Bates, and Elsa Lanchester. Original music and lyrics are by the associate producer Sylvia Fine, who was married to Danny Kaye, with Johnny Green credited for musical direction and incidental score. The film is loosely based on Nikolai Gogol's play The Inspector General. The plot is…",
+    dir: [
+     "Henry Koster"
+    ],
+    cast: [
+     "Danny Kaye",
+     "Walter Slezak",
+     "Gene Lockhart"
+    ],
+    co: [
+     "Warner Bros. Entertainment"
+    ]
    },
    {
     title: "At War with the Army",
@@ -2503,7 +3725,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/AtWarWithTheArmy/AtWarWithTheArmy.thumbs/AtWarWithTheArmy_002160.jpg",
-    bytes: 393993615
+    bytes: 393993615,
+    wd: "Q679105",
+    wp: "https://en.wikipedia.org/wiki/At_War_with_the_Army",
+    wpx: "At War with the Army is a 1950 American musical comedy film directed by Hal Walker and released by Paramount Pictures. It stars the comedy team of Martin and Lewis and introduces Polly Bergen. Filmed from July through August 1949, the film premiered in San Francisco on New Year's Eve 1950 before opening nationwide on January 17, 1951. It was rereleased in 1958 by OMAT Pictures.",
+    dir: [
+     "Hal Walker"
+    ],
+    cast: [
+     "Dean Martin",
+     "Jerry Lewis",
+     "Mike Kellin"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "Behave Yourself",
@@ -2516,7 +3752,20 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/behave_yourself_ipod/behave_yourself_ipod.thumbs/behave_yourself_001920.jpg",
     subs: "behave_yourself.asr.srt",
-    bytes: 338884413
+    bytes: 338884413,
+    wd: "Q4880680",
+    wp: "https://en.wikipedia.org/wiki/Behave_Yourself!",
+    wpx: "Behave Yourself! is a 1951 American comedy film directed and cowritten by George Beck, starring Farley Granger and Shelley Winters and released by RKO Radio Pictures.",
+    dir: [
+     "George Beck"
+    ],
+    cast: [
+     "Farley Granger",
+     "Shelley Winters"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "Royal Wedding",
@@ -2529,7 +3778,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/royal_wedding/royal_wedding.thumbs/royal_wedding_002160.jpg",
     subs: "royal_wedding.asr.srt",
-    bytes: 396694942
+    bytes: 396694942,
+    wd: "Q538600",
+    wp: "https://en.wikipedia.org/wiki/Royal_Wedding",
+    wpx: "Royal Wedding is a 1951 American musical comedy film directed by Stanley Donen and starring Fred Astaire and Jane Powell, with music by Burton Lane and lyrics by Alan Jay Lerner. Set in 1947 London at the time of the wedding of Princess Elizabeth and Philip Mountbatten, the film follows an American brother-sister song-and-dance duo, each of whom falls in love—the brother with a female dancer and the sister with an impoverished but…",
+    dir: [
+     "Stanley Donen"
+    ],
+    cast: [
+     "Fred Astaire",
+     "Jane Powell",
+     "Sarah Churchill"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Jack and the Beanstalk",
@@ -2554,7 +3817,14 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/rhythm_blues_review/rhythm_blues_review.thumbs/rhythm_blues_review_001680.jpg",
     subs: "rhythm_blues_review.asr.srt",
-    bytes: 311345676
+    bytes: 311345676,
+    wd: "Q7321932",
+    wp: "https://en.wikipedia.org/wiki/Rhythm_and_Blues_Revue",
+    wpx: "Rhythm and Blues Revue is a 1955 American concert film directed by Joseph Kohn and Leonard Reed.",
+    dir: [
+     "Leonard Reed",
+     "Joseph Kohn"
+    ]
    },
    {
     title: "Teaserama",
@@ -2567,7 +3837,14 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Teaserama/Teaserama.thumbs/Teaserama_001620.jpg",
     subs: "Teaserama.asr.srt",
-    bytes: 323661323
+    bytes: 323661323,
+    wd: "Q3981862",
+    wp: "https://en.wikipedia.org/wiki/Teaserama",
+    wpx: "Teaserama is a 1955 American low-budget sexploitation film directed by Irving Klaw. It follows the performance of a burlesque show. The film stars Bettie Page, Tempest Storm, Chris La Chris, Twinnie Wallen, Trudy Wayne, Vicki Lynn, and Cherry Knight.",
+    cast: [
+     "Bettie Page",
+     "Tempest Storm"
+    ]
    },
    {
     title: "Sanjuro",
@@ -2578,7 +3855,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/sanjuro_202012/sanjuro_202012.thumbs/Sanjuro_002274.jpg",
-    bytes: 557003451
+    bytes: 557003451,
+    wd: "Q575014",
+    wp: "https://en.wikipedia.org/wiki/Sanjuro",
+    wpx: "Sanjuro  is a 1962 Japanese jidaigeki film directed, co-written and edited by Akira Kurosawa, starring Toshiro Mifune. It is a sequel to Kurosawa's 1961 Yojimbo.",
+    dir: [
+     "Akira Kurosawa"
+    ],
+    cast: [
+     "Toshirō Mifune",
+     "Tatsuya Nakadai",
+     "Reiko Dan"
+    ],
+    co: [
+     "Toho"
+    ]
    },
    {
     title: "The House On Bare Mountain",
@@ -2603,7 +3894,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/mclintok_widescreen/mclintok_widescreen.thumbs/McLintock_003000.jpg",
     subs: "McLintock.asr.srt",
-    bytes: 550863361
+    bytes: 550863361,
+    wd: "Q530507",
+    wp: "https://en.wikipedia.org/wiki/McLintock!",
+    wpx: "McLintock! is a 1963 American Western comedy film, starring John Wayne and Maureen O'Hara, directed by Andrew V. McLaglen. The film co-stars Wayne's son Patrick Wayne, Stefanie Powers, Jack Kruschen, Chill Wills, and Yvonne De Carlo. Loosely based on William Shakespeare's The Taming of the Shrew, the project was filmed in Technicolor and Panavision, and produced by Wayne's company, Batjac Productions.",
+    dir: [
+     "Andrew V. McLaglen"
+    ],
+    cast: [
+     "John Wayne",
+     "Maureen O'Hara",
+     "Patrick Wayne"
+    ],
+    co: [
+     "Batjac Productions"
+    ]
    },
    {
     title: "Dr Strangelove, or: How I Learned to Stop Worrying and Love the Bomb",
@@ -2638,7 +3943,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheOvertheHillGang/TheOvertheHillGang.thumbs/TheOvertheHillGang_001680.jpg",
-    bytes: 305391378
+    bytes: 305391378,
+    wd: "Q7755730",
+    wp: "https://en.wikipedia.org/wiki/The_Over-the-Hill_Gang",
+    wpx: "The Over-the-Hill Gang is a 1969 American made-for-television Western comedy film about a group of aging Texas Rangers, starring Walter Brennan and Pat O'Brien. Chill Wills, Edgar Buchanan, Andy Devine, and Jack Elam play supporting roles. The film was written by Richard Carr and directed by Jean Yarbrough. The film premiered on ABC on October 7, 1969.",
+    dir: [
+     "Jean Yarbrough"
+    ],
+    cast: [
+     "Walter Brennan"
+    ]
    },
    {
     title: "Wake Me Up When the War Is Over",
@@ -2672,7 +3986,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CCandCompany/CCandCompany.thumbs/CCandCompany_002214.jpg",
-    bytes: 563943576
+    bytes: 563943576,
+    wd: "Q5006014",
+    wp: "https://en.wikipedia.org/wiki/C.C._and_Company",
+    wpx: "C.C. and Company is a 1970 American biker film directed by Seymour Robbie. It starred Joe Namath as biker C.C. Ryder, Ann-Margret as fashion journalist Ann, and William Smith as Moon, the leader of the fictitious outlaw biker club the \"Heads Company\". The film also features singer Wayne Cochran and his band The C.C. Riders.",
+    dir: [
+     "Seymour Robbie"
+    ],
+    cast: [
+     "Joe Namath"
+    ]
    },
    {
     title: "Santa and the Three Bears",
@@ -2696,7 +4019,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheOver-the-HillGangRidesAgain/TheOver-the-HillGangRidesAgain.thumbs/TheOver-the-HillGangRidesAgain_001740.jpg",
-    bytes: 317782428
+    bytes: 317782428,
+    wd: "Q7755732",
+    wp: "https://en.wikipedia.org/wiki/The_Over-the-Hill_Gang_Rides_Again",
+    wpx: "The Over-the-Hill Gang Rides Again starring Walter Brennan and Fred Astaire is a 1970 ABC Movie of the Week sequel to the Western comedy The Over-the-Hill Gang. The supporting cast includes Edgar Buchanan, Andy Devine, Chill Wills, Lana Wood, and Burt Mustin. Like the 1969 original, the sequel involves a group of aging Texas Rangers and was written by Richard Carr and directed by George McCowan.",
+    dir: [
+     "George McCowan"
+    ],
+    cast: [
+     "Walter Brennan"
+    ]
    },
    {
     title: "Born to Win",
@@ -2708,7 +4040,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/BorntoWin/BorntoWin.thumbs/BorntoWin_001980.jpg",
-    bytes: 364821267
+    bytes: 364821267,
+    wd: "Q1546966",
+    wp: "https://en.wikipedia.org/wiki/Born_to_Win",
+    wpx: "Born to Win is a 1971 crime thriller directed by Ivan Passer and starring George Segal, Karen Black, Paula Prentiss, Hector Elizondo, Jay Fletcher and Robert De Niro. Filming locations were in Manhattan, specifically Times Square.",
+    dir: [
+     "Ivan Passer"
+    ],
+    cast: [
+     "George Segal",
+     "Héctor Elizondo",
+     "Robert De Niro"
+    ],
+    co: [
+     "United Artists"
+    ]
    },
    {
     title: "Big Bad Mama",
@@ -2719,7 +4065,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/y-2-mate.is-big-bad-mama-1974-6z-na-1z-6-ta-94-720p-1629087198052/y-2-mate.is-big-bad-mama-1974-6z-na-1z-6-ta-94-720p-1629087198052.thumbs/Y2Mate.is%20-%20Big%20Bad%20Mama%20(1974)-6zNA1z6Ta94-720p-1629087198052_002034.jpg",
-    bytes: 1227864489
+    bytes: 1227864489,
+    wd: "Q4904980",
+    wp: "https://en.wikipedia.org/wiki/Big_Bad_Mama",
+    wpx: "Big Bad Mama is a 1974 American action-crime-sexploitation comedy film produced by Roger Corman, starring Angie Dickinson, William Shatner, and Tom Skerritt, with Susan Sennett and Robbie Lee. The film is about a mother, Wilma, and her two daughters, Polly and Billie Jean, who go on a crime spree. After the mother unexpectedly falls in love with a bank robber it all ends, with tragic consequences. Big Bad Mama became a cult hit and was…",
+    dir: [
+     "Steve Carver"
+    ],
+    cast: [
+     "Angie Dickinson",
+     "William Shatner",
+     "Tom Skerritt"
+    ]
    },
    {
     title: "The Gun and the Pulpit",
@@ -2731,7 +4088,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/cco_thegunandthepulpit/cco_thegunandthepulpit.thumbs/ccoPublicDomainThe_Gun_and_the_Pulpit_001740.jpg",
-    bytes: 321738044
+    bytes: 321738044,
+    wd: "Q1860307",
+    wp: "https://en.wikipedia.org/wiki/The_Gun_and_the_Pulpit",
+    wpx: "The Gun and the Pulpit is a 1974 American Western television film starring Marjoe Gortner and Slim Pickens, directed by Daniel Petrie. It was based on Jack Ehrlich's 1972 novel The Fastest Gun in the Pulpit. Filmed at Old Tucson, it was a television pilot for a series to star Gortner, a former evangelist.",
+    dir: [
+     "Daniel Petrie"
+    ],
+    cast: [
+     "Marjoe Gortner",
+     "Robert Phillips"
+    ]
    },
    {
     title: "Satan's Cheerleaders",
@@ -2742,7 +4109,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/y-2-mate.is-satans-cheerleaders-1977-stwnpjg-io-pq-1080p-1637125171901/y-2-mate.is-satans-cheerleaders-1977-stwnpjg-io-pq-1080p-1637125171901.thumbs/Y2Mate.is%20-%20Satans%20Cheerleaders%20(1977)-STWNPjgIoPQ-1080p-1637125171901_002215.jpg",
-    bytes: 2071104891
+    bytes: 2071104891,
+    wd: "Q7425877",
+    wp: "https://en.wikipedia.org/wiki/Satan's_Cheerleaders",
+    wpx: "Satan's Cheerleaders is a 1977 American comedy horror film directed by Greydon Clark and starring John Ireland, Yvonne De Carlo, and John Carradine.",
+    dir: [
+     "Greydon Clark"
+    ],
+    cast: [
+     "John Ireland",
+     "Yvonne De Carlo",
+     "John Carradine"
+    ]
    },
    {
     title: "How To Lose A Wife And Find A Lover",
@@ -2753,7 +4131,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/y-2-mate.is-how-to-lose-your-wife-and-find-a-lover-1978-starring-barbara-bouchet/y-2-mate.is-how-to-lose-your-wife-and-find-a-lover-1978-starring-barbara-bouchet.thumbs/Y2Mate.is%20-%20How%20To%20Lose%20Your%20Wife%20And%20Find%20A%20Lover%20(1978)%20Starring%20Barbara%20Bouchet-7qEVovU55YQ-1080p-1629700054824_002336.jpg",
-    bytes: 1678800942
+    bytes: 1678800942,
+    wd: "Q3684145",
+    wp: "https://en.wikipedia.org/wiki/How_to_Lose_a_Wife_and_Find_a_Lover",
+    wpx: "How to Lose a Wife and Find a Lover is a 1978 Italian comedy film directed by Pasquale Festa Campanile.",
+    dir: [
+     "Pasquale Festa Campanile"
+    ],
+    cast: [
+     "Stefania Casini",
+     "Barbara Bouchet",
+     "Johnny Dorelli"
+    ]
    },
    {
     title: "The Beach Girls",
@@ -2764,7 +4153,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/y-2-mate.is-the-beach-girls-1982-9b-hq-sq-rq-ne-e-1080p-1628903809315/y-2-mate.is-the-beach-girls-1982-9b-hq-sq-rq-ne-e-1080p-1628903809315.thumbs/Y2Mate.is%20-%20The%20Beach%20Girls%201982-9bHqSqRqNeE-1080p-1628903809315_002157.jpg",
-    bytes: 2064717762
+    bytes: 2064717762,
+    wd: "Q7715960",
+    wp: "https://en.wikipedia.org/wiki/The_Beach_Girls",
+    wpx: "The Beach Girls is a 1982 American sex comedy film directed by Pat Townsend. It stars Jeana Tomasino, Val Kline and Debra Blee.",
+    dir: [
+     "Bud Townsend"
+    ],
+    cast: [
+     "Jeana Keough",
+     "James Daughton",
+     "Adam Roarke"
+    ]
    },
    {
     title: "The Meaning of Life",
@@ -2775,7 +4175,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/monty-python__the-meaning-of-life__1983/monty-python__the-meaning-of-life__1983.thumbs/Monty%20Python%20-%20The%20Meaning%20of%20Life_002638.jpg",
-    bytes: 3225229736
+    bytes: 3225229736,
+    wd: "Q24980",
+    wp: "https://en.wikipedia.org/wiki/Monty_Python's_The_Meaning_of_Life",
+    wpx: "Monty Python's The Meaning of Life, also known simply as The Meaning of Life, is a 1983 British musical sketch comedy film written and performed by the Monty Python troupe, directed by Terry Jones. The Meaning of Life was the last feature film to star all six Python members before the death of Graham Chapman in 1989.",
+    dir: [
+     "Terry Jones"
+    ],
+    cast: [
+     "Graham Chapman",
+     "John Cleese",
+     "Terry Gilliam"
+    ]
    },
    {
     title: "Felix The Cat The Movie ( 1988) 1080p UPSCALE",
@@ -2797,7 +4208,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/spider-babe.-2003_202509/spider-babe.-2003_202509.thumbs/SpiderBabe.2003_002158.jpg",
-    bytes: 845266751
+    bytes: 845266751,
+    wd: "Q3493456",
+    wp: "https://en.wikipedia.org/wiki/SpiderBabe",
+    wpx: "SpiderBabe is a 2003 American erotic superhero film. It is loosely based on the character Spider-Man created by Stan Lee and published by Marvel Comics. The film was written by John Fedele and Terry West, and directed by Johnny Crash. Erin Brown, better known within the genre as Misty Mundae, stars as the title character.",
+    dir: [
+     "Johnny Crash"
+    ],
+    cast: [
+     "Erin Brown",
+     "Darian Caine",
+     "Emily Booth"
+    ]
    },
    {
     title: "Dead Man Drinking",
@@ -2810,7 +4232,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/DeadManDrinking/DeadManDrinking.thumbs/DeadManDrinking-720p_004662.jpg",
     subs: "DeadManDrinking-720p.asr.srt",
-    bytes: 378149925
+    bytes: 378149925,
+    wd: "Q127599802"
    },
    {
     title: "01 East Side Kids",
@@ -2881,7 +4304,11 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/AboutBan1935/AboutBan1935.thumbs/AboutBan1935_000270.jpg",
     subs: "AboutBan1935.asr.srt",
-    bytes: 45941165
+    bytes: 45941165,
+    wd: "Q130487657",
+    co: [
+     "Castle Films"
+    ]
    },
    {
     title: "Case of Spring Fever, A",
@@ -2920,7 +4347,11 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/JoanAvoi1947/JoanAvoi1947.thumbs/JoanAvoi1947_000240.jpg",
     subs: "JoanAvoi1947.asr.srt",
-    bytes: 44056499
+    bytes: 44056499,
+    wd: "Q33104490",
+    co: [
+     "Coronet Films"
+    ]
    },
    {
     title: "Private Life of a Cat",
@@ -2959,7 +4390,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Careofth1949/Careofth1949.thumbs/Careofth1949_000240.jpg",
     subs: "Careofth1949.asr.srt",
-    bytes: 44739135
+    bytes: 44739135,
+    wd: "Q124409761"
    },
    {
     title: "Personal Hygiene (Part I)",
@@ -2997,7 +4429,13 @@ const CHANNELS = [
     art: "https://archive.org/services/img/DuckandC1951",
     frame: "https://archive.org/download/DuckandC1951/DuckandC1951.thumbs/DuckandC1951_000210.jpg",
     subs: "DuckandC1951.asr.srt",
-    bytes: 39240901
+    bytes: 39240901,
+    wd: "Q499144",
+    wp: "https://en.wikipedia.org/wiki/Duck_and_Cover_(film)",
+    wpx: "Duck and Cover is a 1952 American civil defense animated and live action social guidance film that is often characterized as propaganda. It has similar themes to the more adult-oriented civil defense training films. It was widely distributed to United States schoolchildren in the 1950s, and teaches students what to do in the event of a nuclear explosion.",
+    dir: [
+     "Anthony Rizzo"
+    ]
    },
    {
     title: "Good Eating Habits",
@@ -3125,7 +4563,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Designfo1956/Designfo1956.thumbs/Designfo1956_000210.jpg",
     subs: "Designfo1956.asr.srt",
-    bytes: 39499240
+    bytes: 39499240,
+    wd: "Q5264335",
+    wp: "https://en.wikipedia.org/wiki/Design_for_Dreaming",
+    wpx: "Design for Dreaming is a 1956 industrial short or sponsored film produced to accompany the General Motors Motorama show that year. A ballet with voiceover dialogue, it features a woman who dreams about a masked man taking her to the Motorama at the Waldorf-Astoria Hotel and to Frigidaire's \"Kitchen of the Future\".",
+    dir: [
+     "William Beaudine"
+    ],
+    cast: [
+     "Tad Tadlock",
+     "Marc Breaux",
+     "Thurl Ravenscroft"
+    ]
    },
    {
     title: "As Boys Grow",
@@ -3138,7 +4587,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/AsBoysGr1957/AsBoysGr1957.thumbs/AsBoysGr1957_000360.jpg",
     subs: "AsBoysGr1957.asr.srt",
-    bytes: 68543789
+    bytes: 68543789,
+    wd: "Q42000345"
    },
    {
     title: "Have I Told You Lately That I Love You?",
@@ -3190,7 +4640,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/boys_beware/boys_beware.thumbs/boys_beware_000240.jpg",
     subs: "boys_beware.autogenerated.vtt",
-    bytes: 44497727
+    bytes: 44497727,
+    wd: "Q2472283",
+    wp: "https://en.wikipedia.org/wiki/Boys_Beware",
+    wpx: "Boys Beware is a 1961 short social guidance film released through Sid Davis Productions. It portrays several predatory male homosexuals and equates homosexuality with hebephilia and describes it as a social contagion.",
+    dir: [
+     "Sid Davis"
+    ],
+    cast: [
+     "Sid Davis"
+    ]
    },
    {
     title: "One Got Fat: Bicycle Safety",
@@ -4566,7 +6025,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/JesusOfNazareth1912/JesusOfNazareth1912.thumbs/JesusOfNazareth1912_002190.jpg",
-    bytes: 427147713
+    bytes: 427147713,
+    wd: "Q1758092",
+    wp: "https://en.wikipedia.org/wiki/From_the_Manger_to_the_Cross",
+    wpx: "From the Manger to the Cross or Jesus of Nazareth is a 1912 American drama film directed by Sidney Olcott, written by Gene Gauntier, and starring Robert Henderson-Bland as Jesus of Nazareth. Filmed on location in Jerusalem, it tells the story of Jesus's life, interspersed with verses from The Bible.",
+    dir: [
+     "Sidney Olcott"
+    ],
+    cast: [
+     "Gene Gauntier",
+     "Alice Hollister",
+     "Sidney Olcott"
+    ],
+    co: [
+     "Kalem Company"
+    ]
    },
    {
     title: "\"Ingeborg Holm\" (1913) director Victor Sjöström (Seastrom)",
@@ -4610,7 +6083,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Cabiria/Cabiria.thumbs/CabiriagiovanniPastrone1914_002934.jpg",
-    bytes: 645853272
+    bytes: 645853272,
+    wd: "Q1024861",
+    wp: "https://en.wikipedia.org/wiki/Cabiria",
+    wpx: "Cabiria is a 1914 Italian epic silent film, directed by Giovanni Pastrone and shot in Turin. The film is set in ancient Sicily, Carthage, and Cirta during the period of the Second Punic War. It follows the story of an abducted little girl, Cabiria, and features an eruption of Mount Etna, religious rituals in Carthage, the alpine trek of Hannibal, Archimedes' defeat of the Roman fleet at the Siege of Syracuse and Scipio maneuvering in…",
+    dir: [
+     "Giovanni Pastrone"
+    ],
+    cast: [
+     "Bartolomeo Pagano",
+     "Lidia Quaranta",
+     "Teresa Marangoni"
+    ],
+    co: [
+     "Itala Film"
+    ]
    },
    {
     title: "Charlie Chaplin's \"Tillies Punctured Romance\"",
@@ -4643,7 +6130,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Home.Sweet.Home/Home.Sweet.Home.thumbs/HomeSweetHome_001314.jpg",
-    bytes: 288882449
+    bytes: 288882449,
+    wd: "Q3139596",
+    wp: "https://en.wikipedia.org/wiki/Home%2C_Sweet_Home_(1914_film)",
+    wpx: "Home, Sweet Home is a 1914 American silent biographical drama directed by D. W. Griffith. It stars Earle Foxe, Henry Walthall, and Dorothy Gish.",
+    dir: [
+     "D. W. Griffith"
+    ],
+    cast: [
+     "Henry B. Walthall",
+     "Lillian Gish",
+     "Dorothy Gish"
+    ]
    },
    {
     title: "The Magic Cloak of Oz",
@@ -4654,7 +6152,20 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Magic_Cloak_of_Oz_1914/Magic_Cloak_of_Oz_1914.thumbs/MagicCloakOfOZ_000960.jpg",
-    bytes: 158729552
+    bytes: 158729552,
+    wd: "Q3521721",
+    wp: "https://en.wikipedia.org/wiki/The_Magic_Cloak_of_Oz",
+    wpx: "The Magic Cloak of Oz is a 1914 film directed by J. Farrell MacDonald. It was written by L. Frank Baum and produced by Baum and composer Louis F. Gottschalk. The film is an adaptation of Baum's 1905 novel, Queen Zixi of Ix.",
+    dir: [
+     "J. Farrell MacDonald"
+    ],
+    cast: [
+     "Violet MacMillan",
+     "Mildred Harris"
+    ],
+    co: [
+     "The Oz Film Manufacturing Company"
+    ]
    },
    {
     title: "The Patchwork Girl of Oz",
@@ -4665,7 +6176,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/PatchworkOZ/PatchworkOZ.thumbs/PatchworkGirlOfOz_001140.jpg",
-    bytes: 185810665
+    bytes: 185810665,
+    wd: "Q3988652",
+    wp: "https://en.wikipedia.org/wiki/The_Patchwork_Girl_of_Oz_(film)",
+    wpx: "The Patchwork Girl of Oz (1914) is a silent film made by L. Frank Baum's The Oz Film Manufacturing Company. It was based on the 1913 book The Patchwork Girl of Oz.",
+    dir: [
+     "J. Farrell MacDonald"
+    ],
+    cast: [
+     "Richard Rosson",
+     "Bert Glennon",
+     "Hal Roach"
+    ],
+    co: [
+     "The Oz Film Manufacturing Company"
+    ]
    },
    {
     title: "The Patchwork Girl Of Oz (1914 Silent Film, Film Noir, Drama)",
@@ -4676,7 +6201,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-patchwork-girl-of-oz-1914-silent.-film-noir-drama/the-patchwork-girl-of-oz-1914-silent.-film-noir-drama.thumbs/The%20Patchwork%20Girl%20of%20Oz%20(1914%20Silent.%20Film%20Noir%2C%20Drama)_001134.jpg",
-    bytes: 261923556
+    bytes: 261923556,
+    wd: "Q3988652",
+    wp: "https://en.wikipedia.org/wiki/The_Patchwork_Girl_of_Oz_(film)",
+    wpx: "The Patchwork Girl of Oz (1914) is a silent film made by L. Frank Baum's The Oz Film Manufacturing Company. It was based on the 1913 book The Patchwork Girl of Oz.",
+    dir: [
+     "J. Farrell MacDonald"
+    ],
+    cast: [
+     "Richard Rosson",
+     "Bert Glennon",
+     "Hal Roach"
+    ],
+    co: [
+     "The Oz Film Manufacturing Company"
+    ]
    },
    {
     title: "The Sign of the Cross",
@@ -4687,7 +6226,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-the-sign-of-the-cross/silent-the-sign-of-the-cross.thumbs/The%20Sign%20of%20the%20Cross_001614.jpg",
-    bytes: 354543153
+    bytes: 354543153,
+    wd: "Q18709128",
+    wp: "https://en.wikipedia.org/wiki/The_Sign_of_the_Cross_(1914_film)",
+    wpx: "The Sign of the Cross is a 1914 American drama silent film directed by Frederick A. Thomson based on the 1895 play by Wilson Barrett. The film stars William Farnum, Rosina Henley, Sheridan Block, Morgan Thorpe, Ethel Grey Terry, Lila Barclay and George Majeroni. The film was released on December 21, 1914, by Paramount Pictures.",
+    dir: [
+     "Frederick A. Thomson"
+    ],
+    cast: [
+     "William Farnum"
+    ]
    },
    {
     title: "The Squaw Man",
@@ -4699,7 +6247,22 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SquawMan/SquawMan.thumbs/Squaw%20Man_001770.jpg",
     subs: "Squaw Man.asr.srt",
-    bytes: 386716345
+    bytes: 386716345,
+    wd: "Q2613688",
+    wp: "https://en.wikipedia.org/wiki/The_Squaw_Man_(1914_film)",
+    wpx: "The Squaw Man is a 1914 American silent Western film directed by Cecil B. DeMille and Oscar C. Apfel, and starring Dustin Farnum. It was DeMille's directorial debut and the first feature-length film to be shot in what is now Hollywood.",
+    dir: [
+     "Oscar Apfel",
+     "Cecil B. DeMille"
+    ],
+    cast: [
+     "Dustin Farnum",
+     "Red Wing",
+     "Cecil B. DeMille"
+    ],
+    co: [
+     "Famous Players-Lasky Corporation"
+    ]
    },
    {
     title: "The Virginian",
@@ -4711,7 +6274,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheVirginian/TheVirginian.thumbs/The%20Virginian_001350.jpg",
     subs: "The Virginian.asr.srt",
-    bytes: 290554332
+    bytes: 290554332,
+    wd: "Q3523234",
+    wp: "https://en.wikipedia.org/wiki/The_Virginian_(1914_film)",
+    wpx: "The Virginian is a 1914 American silent Western film based on the 1902 novel The Virginian by Owen Wister. The film was adapted from the successful 1903–04 theatre play The Virginian, on which Wister had collaborated with playwright Kirke La Shelle. The Virginian starred Dustin Farnum in the title role, a role he reprised from the original play. It was directed by Cecil B. DeMille.",
+    dir: [
+     "Cecil B. DeMille"
+    ],
+    cast: [
+     "Dustin Farnum",
+     "Russell Simpson",
+     "Dick La Reno"
+    ]
    },
    {
     title: "\"The Birth of a Nation\" (1915) part I, director D. W. Griffith, cinema",
@@ -4734,7 +6308,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/A_Fool_There_Was/A_Fool_There_Was.thumbs/A_Fool_There_Was_001560.jpg",
-    bytes: 255923883
+    bytes: 255923883,
+    wd: "Q933724",
+    wp: "https://en.wikipedia.org/wiki/A_Fool_There_Was_(1915_film)",
+    wpx: "A Fool There Was is a 1915 American silent drama film produced by William Fox, directed by Frank Powell, and starring Theda Bara. Upon release, the film was long considered controversial for such risqué intertitle cards as \"Kiss me, my fool!\"",
+    dir: [
+     "Frank Powell"
+    ],
+    cast: [
+     "Edward José",
+     "May Allison",
+     "Theda Bara"
+    ]
    },
    {
     title: "Alice in Wonderland",
@@ -4768,7 +6353,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1915_12_18_ABurlesqueOnCarmen/CC_1915_12_18_ABurlesqueOnCarmen.thumbs/CC_1915_12_18_ABurlesqueOnCarmen_001020.jpg",
-    bytes: 190254989
+    bytes: 190254989,
+    wd: "Q268879",
+    wp: "https://en.wikipedia.org/wiki/A_Burlesque_on_Carmen",
+    wpx: "A Burlesque on Carmen is a 1915 film and Charlie Chaplin's thirteenth for Essanay Studios, originally released as Carmen on December 18, 1915. Chaplin played the leading man and Edna Purviance played Carmen. The film is a parody of Cecil B. DeMille's Carmen 1915, which was itself an interpretation of the popular novella Carmen by Prosper Mérimée.",
+    dir: [
+     "Charlie Chaplin",
+     "Leo White"
+    ],
+    cast: [
+     "Charlie Chaplin",
+     "Leo White"
+    ],
+    co: [
+     "Essanay Studios"
+    ]
    },
    {
     title: "Children of Eve",
@@ -4779,7 +6378,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-children-of-eve/silent-children-of-eve.thumbs/Children%20of%20Eve_001739.jpg",
-    bytes: 386178611
+    bytes: 386178611,
+    wd: "Q21184863",
+    wp: "https://en.wikipedia.org/wiki/Children_of_Eve",
+    wpx: "Children of Eve is a 1915 silent film directed by John H. Collins and starring Viola Dana. It was produced by the Edison Manufacturing Company, distributed by an arrangement between Edison and George Kleine.",
+    dir: [
+     "John H. Collins"
+    ],
+    cast: [
+     "Viola Dana"
+    ],
+    co: [
+     "Edison Studios"
+    ]
    },
    {
     title: "Fanchon, The Cricket",
@@ -4790,7 +6401,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/fanchon/fanchon.thumbs/Fanchon%2C%20the%20Cricket%20(1915)_001794.jpg",
-    bytes: 356602047
+    bytes: 356602047,
+    wd: "Q3739197",
+    wp: "https://en.wikipedia.org/wiki/Fanchon_the_Cricket",
+    wpx: "Fanchon the Cricket is a 1915 American silent drama film produced by Famous Players Film Company and distributed by Paramount Pictures. It is based on a novel, La Petite Fadette by George Sand. It was directed by James Kirkwood and stars Mary Pickford, at the time working for Adolph Zukor and Daniel Frohman. A previous film version of the story was released in 1912 by IMP and directed by Herbert Brenon.",
+    dir: [
+     "James Kirkwood"
+    ],
+    cast: [
+     "Mary Pickford",
+     "Lottie Pickford",
+     "Jack Pickford"
+    ]
    },
    {
     title: "Filibus",
@@ -4801,7 +6423,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/filibus-1915/filibus-1915.thumbs/Filibus%20(1915)_001741.jpg",
-    bytes: 429756160
+    bytes: 429756160,
+    wd: "Q21000922",
+    wp: "https://en.wikipedia.org/wiki/Filibus",
+    wpx: "Filibus is a 1915 Italian silent adventure film directed by Mario Roncoroni and written by the future science fiction author Giovanni Bertinetti. It features Valeria Creti as the title character, a mysterious sky pirate who makes daring heists with her technologically advanced airship. When an esteemed detective sets out on her trail, she begins an elaborate game of cat and mouse with him, slipping between various male and female…",
+    dir: [
+     "Mario Roncoroni"
+    ]
    },
    {
     title: "Hearts in Exile",
@@ -4813,7 +6441,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/publicdomainHeartsinExile/publicdomainHeartsinExile.thumbs/HeartsInExile1915_001380.jpg",
-    bytes: 228226256
+    bytes: 228226256,
+    wd: "Q5693013",
+    wp: "https://en.wikipedia.org/wiki/Hearts_in_Exile_(1915_film)",
+    wpx: "Hearts in Exile is a 1915 American silent drama film directed by James Young, based on the story of the same name by John Oxenham. The film was both produced and distributed by World Film Company. The film is also known as Hearts Afire.",
+    dir: [
+     "James Young"
+    ]
    },
    {
     title: "The Birth of a Nation",
@@ -4824,7 +6458,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheBirthofaNation1080p/TheBirthofaNation1080p.thumbs/BirthOfNation_000019.jpg",
-    bytes: 278434905
+    bytes: 278434905,
+    wd: "Q220394",
+    wp: "https://en.wikipedia.org/wiki/The_Birth_of_a_Nation",
+    wpx: "The Birth of a Nation is a 1915 American silent epic drama film directed by D. W. Griffith and starring Lillian Gish. The screenplay is adapted from Thomas Dixon Jr.'s 1905 novel and play The Clansman: A Historical Romance of the Ku Klux Klan. Griffith co-wrote the screenplay with Frank E. Woods and produced the film with Harry Aitken.",
+    dir: [
+     "D. W. Griffith"
+    ],
+    cast: [
+     "Lillian Gish",
+     "Mae Marsh",
+     "Miriam Cooper"
+    ],
+    co: [
+     "David W. Griffith Corp."
+    ]
    },
    {
     title: "The Cheat",
@@ -4836,7 +6484,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheCheat/TheCheat.thumbs/The%20Cheat_001410.jpg",
     subs: "The Cheat.asr.srt",
-    bytes: 311956397
+    bytes: 311956397,
+    wd: "Q1246289",
+    wp: "https://en.wikipedia.org/wiki/The_Cheat_(1915_film)",
+    wpx: "The Cheat is a 1915 American silent drama film directed by Cecil B. DeMille, starring Fannie Ward, Sessue Hayakawa, and Jack Dean, Ward's real-life husband.",
+    dir: [
+     "Cecil B. DeMille"
+    ],
+    cast: [
+     "Sessue Hayakawa",
+     "Fannie Ward",
+     "Raymond Hatton"
+    ]
    },
    {
     title: "The Martyrs of the Alamo",
@@ -4859,7 +6518,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/20000LeaguesUndertheSea/20000LeaguesUndertheSea.thumbs/20000_Leagues_Under_the_Sea_002340.jpg",
-    bytes: 429700405
+    bytes: 429700405,
+    wd: "Q111655",
+    wp: "https://en.wikipedia.org/wiki/20%2C000_Leagues_Under_the_Sea_(1916_film)",
+    wpx: "20,000 Leagues Under the Sea is a 1916 American silent film directed by Stuart Paton. The film's storyline is based on the 1870 novel Twenty Thousand Leagues Under the Seas by Jules Verne. It also incorporates elements from Verne's 1875 novel The Mysterious Island.",
+    dir: [
+     "Stuart Paton"
+    ],
+    cast: [
+     "Allen Holubar",
+     "Jane Gail",
+     "Noble Johnson"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "American Aristocracy",
@@ -4870,7 +6543,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/AmericanAristocracy/AmericanAristocracy.thumbs/AmericanAristocracy_001194.jpg",
-    bytes: 272075068
+    bytes: 272075068,
+    wd: "Q4743001",
+    wp: "https://en.wikipedia.org/wiki/American_Aristocracy",
+    wpx: "American Aristocracy is a 1916 American silent adventure/comedy-drama film directed by Lloyd Ingraham and starring Douglas Fairbanks. A 35mm print of the film is preserved at the George Eastman House and is currently in the public domain.",
+    dir: [
+     "Lloyd Ingraham"
+    ],
+    cast: [
+     "Douglas Fairbanks",
+     "Jewel Carmen"
+    ]
    },
    {
     title: "Flirting with Fate",
@@ -4882,7 +6565,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Flirting_with_Fate/Flirting_with_Fate.thumbs/Flirting_with_Fate_001380.jpg",
-    bytes: 219600317
+    bytes: 219600317,
+    wd: "Q5459744",
+    wp: "https://en.wikipedia.org/wiki/Flirting_with_Fate_(1916_film)",
+    wpx: "Flirting with Fate is a 1916 American film directed by Christy Cabanne and starring Douglas Fairbanks. It was produced by the Fine Arts Film Company and distributed by Triangle Film Corporation.",
+    dir: [
+     "Christy Cabanne"
+    ]
    },
    {
     title: "His Picture in the Papers",
@@ -4894,7 +6583,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/His_Picture_in_the_Papers/His_Picture_in_the_Papers.thumbs/His_Picture_in_the_Papers_001440.jpg",
-    bytes: 238458670
+    bytes: 238458670,
+    wd: "Q3785824",
+    wp: "https://en.wikipedia.org/wiki/His_Picture_in_the_Papers",
+    wpx: "His Picture in the Papers is a 1916 American silent comedy film written and directed by John Emerson. Anita Loos also wrote the film's scenario. The film stars Douglas Fairbanks and Loretta Blake and features Erich von Stroheim in a minor role.",
+    dir: [
+     "John Emerson",
+     "Emmett J. Flynn"
+    ],
+    cast: [
+     "Douglas Fairbanks",
+     "Terry McGovern",
+     "Erich von Stroheim"
+    ],
+    co: [
+     "Triangle Film Corporation"
+    ]
    },
    {
     title: "Snow White",
@@ -4905,7 +6609,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-snow-white/silent-snow-white.thumbs/Snow%20White_001560.jpg",
-    bytes: 327971573
+    bytes: 327971573,
+    wd: "Q152429",
+    wp: "https://en.wikipedia.org/wiki/Snow_White_(1916_film)",
+    wpx: "Snow White is a 1916 American silent romantic fantasy film directed by J. Searle Dawley. Winthrop Ames adapted it from his own 1912 Broadway play Snow White and the Seven Dwarfs, which was in turn adapted from the 1812 fairy tale. The film stars Marguerite Clark and Creighton Hale, Clark reprising her stage role.",
+    dir: [
+     "J. Searle Dawley"
+    ],
+    cast: [
+     "Marguerite Clark",
+     "Creighton Hale",
+     "Dorothy Cumming"
+    ],
+    co: [
+     "Famous Players Film Company"
+    ]
    },
    {
     title: "The End of the World",
@@ -4927,7 +6645,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheReturnofDrawEgan/TheReturnofDrawEgan.thumbs/TheReturnofDrawEgan_001194.jpg",
-    bytes: 317037237
+    bytes: 317037237,
+    wd: "Q3988992",
+    wp: "https://en.wikipedia.org/wiki/The_Return_of_Draw_Egan",
+    wpx: "The Return of Draw Egan is a 1916 American silent Western film starring William S. Hart, Louise Glaum, Margery Wilson, Robert McKim, and J.P. Lockney.",
+    dir: [
+     "William S. Hart",
+     "Clifford Smith"
+    ],
+    cast: [
+     "William S. Hart",
+     "Louise Glaum",
+     "Margery Wilson"
+    ]
    },
    {
     title: "\"A Man There Was\" (1917) director Victor Sjöström (Seastrom)",
@@ -4960,7 +6690,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ARomanceOfTheRedwoods/ARomanceOfTheRedwoods.thumbs/ARomanceOfTheRedwoods_002160.jpg",
-    bytes: 350080841
+    bytes: 350080841,
+    wd: "Q403176",
+    wp: "https://en.wikipedia.org/wiki/A_Romance_of_the_Redwoods",
+    wpx: "A Romance of the Redwoods is a 1917 American silent drama film directed by Cecil B. DeMille and starring Mary Pickford.",
+    dir: [
+     "Cecil B. DeMille"
+    ],
+    cast: [
+     "Mary Pickford",
+     "Charles Stanton Ogle",
+     "Elliott Dexter"
+    ],
+    co: [
+     "Famous Players-Lasky Corporation"
+    ]
    },
    {
     title: "Romance Of The Redwoods",
@@ -4972,7 +6716,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/RomanceOfTheRedwoods/RomanceOfTheRedwoods.thumbs/Romance%20of%20The%20Redwoods_002190.jpg",
     subs: "Romance of The Redwoods.asr.srt",
-    bytes: 484703761
+    bytes: 484703761,
+    wd: "Q403176",
+    wp: "https://en.wikipedia.org/wiki/A_Romance_of_the_Redwoods",
+    wpx: "A Romance of the Redwoods is a 1917 American silent drama film directed by Cecil B. DeMille and starring Mary Pickford.",
+    dir: [
+     "Cecil B. DeMille"
+    ],
+    cast: [
+     "Mary Pickford",
+     "Charles Stanton Ogle",
+     "Elliott Dexter"
+    ],
+    co: [
+     "Famous Players-Lasky Corporation"
+    ]
    },
    {
     title: "Seven Keys To Baldpate",
@@ -4983,7 +6741,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/SevenKeysToBaldpate/SevenKeysToBaldpate.thumbs/GeorgeMCohenSevenKeysToBaldpatesilent1917_003114.jpg",
-    bytes: 345936384
+    bytes: 345936384,
+    wd: "Q7457301",
+    wp: "https://en.wikipedia.org/wiki/Seven_Keys_to_Baldpate_(1917_film)",
+    wpx: "Seven Keys to Baldpate is a 1917 American silent mystery/thriller film produced by George M. Cohan and distributed by Artcraft Pictures, an affiliate of Paramount. The film is based on Cohan's 1913 play of the 1913 novel by Earl Derr Biggers. Cohan himself stars in this silent version along with Anna Q. Nilsson and Hedda Hopper, billed under her real name Elda Furry. One version of the play preceded this movie in 1916 and numerous…",
+    dir: [
+     "Hugh Ford"
+    ],
+    cast: [
+     "Anna Q. Nilsson"
+    ]
    },
    {
     title: "The Little American",
@@ -4995,7 +6762,19 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheLittleAmerican/TheLittleAmerican.thumbs/The%20Little%20American_001470.jpg",
     subs: "The Little American.asr.srt",
-    bytes: 330507212
+    bytes: 330507212,
+    wd: "Q1990830",
+    wp: "https://en.wikipedia.org/wiki/The_Little_American",
+    wpx: "The Little American is a 1917 American silent romantic war drama film directed by Cecil B. DeMille. The film stars Mary Pickford as an American woman who is in love with both a German soldier and a French soldier during World War I. Art direction for the film was done by Wilfred Buckland. John Hay Beith was technical advisor on the film, credited under his pen name, Ian Hay.",
+    dir: [
+     "Cecil B. DeMille",
+     "Joseph Levering"
+    ],
+    cast: [
+     "Mary Pickford",
+     "Jack Holt",
+     "Raymond Hatton"
+    ]
    },
    {
     title: "The Poor Little Rich Girl",
@@ -5006,7 +6785,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ThePoorLittleRichGirl/ThePoorLittleRichGirl.thumbs/PoorLittleRichGirl1917_001560.jpg",
-    bytes: 309009871
+    bytes: 309009871,
+    wd: "Q940606",
+    wp: "https://en.wikipedia.org/wiki/The_Poor_Little_Rich_Girl",
+    wpx: "The Poor Little Rich Girl is a 1917 American comedy-drama film directed by Maurice Tourneur. Adapted by Frances Marion from the 1913 play by Eleanor Gates. The Broadway play actually starred future screen actress Viola Dana. The film stars Mary Pickford, Madlaine Traverse, Charles Wellesley, Gladys Fairbanks and Frank McGlynn Sr.",
+    dir: [
+     "Maurice Tourneur"
+    ],
+    cast: [
+     "Mary Pickford",
+     "Charles Craig",
+     "Madlaine Traverse"
+    ]
    },
    {
     title: "\"Blue Blazes Rawden\"",
@@ -5061,7 +6851,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/LhereuDeCanPrunaDe/LhereuDeCanPrunaDe.thumbs/1918AllNight_001374.jpg",
-    bytes: 358881287
+    bytes: 358881287,
+    wd: "Q3612132",
+    wp: "https://en.wikipedia.org/wiki/All_Night_(film)",
+    wpx: "All Night is a 1918 American silent comedy-drama film directed by Paul Powell and starring Carmel Myers and Rudolph Valentino. It was released by Universal Pictures under the name Bluebird Photoplays.",
+    dir: [
+     "Paul Powell"
+    ],
+    cast: [
+     "Rudolph Valentino",
+     "Carmel Myers",
+     "Lydia Yeamans Titus"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "I Don't Want To Be A Man",
@@ -5073,7 +6877,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/i.-don-t.-want.-to.-be.-a.-man.-1918-ctb-550-br-vl-8.mp-4/i.-don-t.-want.-to.-be.-a.-man.-1918-ctb-550-br-vl-8.mp-4.thumbs/I.Don_t.Want.To.Be.A.Man.1918-CTb550BrVl8_001076.jpg",
     subs: "i.dont.want.to.be.a.man.1918.1080p.bluray.x264-ghouls.eng.srt",
-    bytes: 553637658
+    bytes: 553637658,
+    wd: "Q329561",
+    wp: "https://en.wikipedia.org/wiki/I_Don't_Want_to_Be_a_Man",
+    wpx: "I Don't Want to Be a Man is a 1918 German film directed by Ernst Lubitsch. The film stars Ossi Oswalda, Curt Goetz, Ferry Sikla, Margarete Kupfer and Victor Janson.",
+    dir: [
+     "Ernst Lubitsch"
+    ],
+    cast: [
+     "Ossi Oswalda",
+     "Curt Goetz",
+     "Ferry Sikla"
+    ]
    },
    {
     title: "Stella Maris",
@@ -5096,7 +6911,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TarzanoftheApes1918AndyDivx/TarzanoftheApes1918AndyDivx.thumbs/TarzanoftheApes1918AndyDivx_001440.jpg",
-    bytes: 263494660
+    bytes: 263494660,
+    wd: "Q171415",
+    wp: "https://en.wikipedia.org/wiki/Tarzan_of_the_Apes_(1918_film)",
+    wpx: "Tarzan of the Apes is a 1918 American action/adventure silent film directed by Scott Sidney starring Elmo Lincoln, Enid Markey, George B. French and Gordon Griffith.",
+    dir: [
+     "Scott Sidney"
+    ],
+    cast: [
+     "Elmo Lincoln",
+     "Enid Markey",
+     "George B. French"
+    ],
+    co: [
+     "Centaur Film Company"
+    ]
    },
    {
     title: "\"Back to God's Country\" (1919) starring Nell Shipman",
@@ -5173,7 +7002,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-anders-als-die-andern-aka-different-from-the-others/silent-anders-als-die-andern-aka-different-from-the-others.thumbs/Anders%20als%20die%20Andern%20AKA%20Different%20from%20the%20Others_001195.jpg",
-    bytes: 257109559
+    bytes: 257109559,
+    wd: "Q491335",
+    wp: "https://en.wikipedia.org/wiki/Different_from_the_Others",
+    wpx: "Different from the Others is a silent German melodramatic film produced during the Weimar Republic. It was first released in 1919 and stars Conrad Veidt and Reinhold Schünzel. It was directed by Richard Oswald, and the story co-written by Oswald and Magnus Hirschfeld, who also had a small part in the film and partially funded the production through his Institute for Sexual Science. The film was intended as a polemic against the…",
+    dir: [
+     "Richard Oswald"
+    ],
+    cast: [
+     "Conrad Veidt",
+     "Reinhold Schünzel",
+     "Magnus Hirschfeld"
+    ]
    },
    {
     title: "Broken Blossoms",
@@ -5184,7 +7024,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Broken.Blossoms/Broken.Blossoms.thumbs/Broken_Blossoms_002100.jpg",
-    bytes: 342178181
+    bytes: 342178181,
+    wd: "Q905932",
+    wp: "https://en.wikipedia.org/wiki/Broken_Blossoms",
+    wpx: "Broken Blossoms or The Yellow Man and the Girl, often referred to simply as Broken Blossoms, is a 1919 American silent melodrama film directed by D. W. Griffith. It was distributed by United Artists and premiered on May 13, 1919. It stars Lillian Gish, Richard Barthelmess, and Donald Crisp, and tells the story of a young girl, Lucy Burrows, who is abused by her alcoholic prizefighting father, Battling Burrows, and meets Cheng Huan, a…",
+    dir: [
+     "D. W. Griffith"
+    ],
+    cast: [
+     "Lillian Gish",
+     "Richard Barthelmess",
+     "Donald Crisp"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "Das Kabinett des Doktor Caligari ( The Cabinet of Dr. Caligari )",
@@ -5195,7 +7049,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/DasKabinettdesDoktorCaligariTheCabinetofDrCaligari/DasKabinettdesDoktorCaligariTheCabinetofDrCaligari.thumbs/The_Cabinet_of_Dr._Caligari_001200.jpg",
-    bytes: 222148532
+    bytes: 222148532,
+    wd: "Q153886",
+    wp: "https://en.wikipedia.org/wiki/The_Cabinet_of_Dr._Caligari",
+    wpx: "The Cabinet of Dr. Caligari is a 1920 German silent horror film directed by Robert Wiene and written by Hans Janowitz and Carl Mayer. The quintessential work of early German Expressionist cinema, it tells the story of a hypnotist who uses a somnambulist Cesare to commit murders. The film features a dark, twisted visual style, with sharp-pointed forms; oblique, curving lines; structures and landscapes that lean and twist in unusual…",
+    dir: [
+     "Robert Wiene"
+    ],
+    cast: [
+     "Werner Krauss",
+     "Conrad Veidt",
+     "Lil Dagover"
+    ],
+    co: [
+     "Babelsberg Studio"
+    ]
    },
    {
     title: "Eyes of Youth",
@@ -5206,7 +7074,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/EyesOfYouth/EyesOfYouth.thumbs/1919EyesOfYouth_002034.jpg",
-    bytes: 395090024
+    bytes: 395090024,
+    wd: "Q3736288",
+    wp: "https://en.wikipedia.org/wiki/Eyes_of_Youth",
+    wpx: "Eyes of Youth is a 1919 American silent drama film directed by Albert Parker and starring Clara Kimball Young. The film was based on the stage play Eyes of Youth, performed on Broadway in 1917-18 and starred Marjorie Rambeau. This film also features Rudolph Valentino in a role as a thief/con artist.",
+    dir: [
+     "Albert Parker"
+    ],
+    cast: [
+     "Clara Kimball Young",
+     "Pauline Starke",
+     "Ralph Lewis"
+    ]
    },
    {
     title: "Pollyanna",
@@ -5217,7 +7096,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Pollyanna/Pollyanna.thumbs/Pollyanna_001380.jpg",
-    bytes: 221347960
+    bytes: 221347960,
+    wd: "Q2582920",
+    wp: "https://en.wikipedia.org/wiki/Pollyanna_(1920_film)",
+    wpx: "Pollyanna is a 1920 American silent melodrama/comedy film starring Mary Pickford, directed by Paul Powell, and based on Eleanor H. Porter's 1913 novel of the same name. It was Pickford's first motion picture for United Artists. It became a major success and was regarded as one of Pickford's most defining pictures. The film grossed $1.1 million.",
+    dir: [
+     "Paul Powell"
+    ],
+    cast: [
+     "Mary Pickford",
+     "Wharton James",
+     "Katherine Griffith"
+    ]
    },
    {
     title: "The Greatest Question",
@@ -5228,7 +7118,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheGreatestQuestiondecember281919/TheGreatestQuestiondecember281919.thumbs/TheGreatestQuestion1919D.w.GriffithLillianGishRobertHarron_001914.jpg",
-    bytes: 369496912
+    bytes: 369496912,
+    wd: "Q3987399",
+    wp: "https://en.wikipedia.org/wiki/The_Greatest_Question",
+    wpx: "The Greatest Question is a 1919 American drama film directed by D. W. Griffith. Based upon a novel by William Hale, the film has a plot involving spiritualism.",
+    dir: [
+     "D. W. Griffith",
+     "Stanner E.V. Taylor"
+    ],
+    cast: [
+     "Lillian Gish",
+     "Robert Harron",
+     "Ralph Graves"
+    ],
+    co: [
+     "First National Pictures"
+    ]
    },
    {
     title: "The Roaring Road",
@@ -5239,7 +7144,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheRoaringRoad/TheRoaringRoad.thumbs/TheRoaringRoad_001314.jpg",
-    bytes: 297223097
+    bytes: 297223097,
+    wd: "Q3989058",
+    wp: "https://en.wikipedia.org/wiki/The_Roaring_Road_(1919_film)",
+    wpx: "The Roaring Road is a 1919 American silent action romance film produced by Famous Players–Lasky and distributed by Paramount Pictures. It is taken from the short stories by Byron Morgan; Junkpile Sweepstakes, Undertaker's Handicap, and Roaring Road.",
+    dir: [
+     "James Cruze",
+     "Frank Urson"
+    ],
+    cast: [
+     "Wallace Reid",
+     "Ann Little",
+     "Theodore Roberts"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "The Sentimental Bloke",
@@ -5251,7 +7171,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Sentimental_bloke/Sentimental_bloke.thumbs/Sentimental_Bloke_001320.jpg",
-    bytes: 242195629
+    bytes: 242195629,
+    wd: "Q3989208",
+    wp: "https://en.wikipedia.org/wiki/The_Sentimental_Bloke",
+    wpx: "The Sentimental Bloke is a 1918 Australian silent film based on the 1915 verse novel The Songs of a Sentimental Bloke by C. J. Dennis. Produced and directed by Raymond Longford, the film stars Arthur Tauchert, Gilbert Emery, and Lottie Lyell, who also co-wrote the film with Longford.",
+    dir: [
+     "Raymond Longford"
+    ],
+    cast: [
+     "Arthur Tauchert",
+     "Lottie Lyell",
+     "Gilbert Emery"
+    ],
+    co: [
+     "Southern Cross Feature Film Company"
+    ]
    },
    {
     title: "\"Dr. Jekyll and Mr. Hyde\" (1920) director John S. Robertson",
@@ -5361,7 +7295,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/DrJekyllandMrHyde/DrJekyllandMrHyde.thumbs/DrJekyllandMrHyde_001980.jpg",
-    bytes: 357362051
+    bytes: 357362051,
+    wd: "Q1253932",
+    wp: "https://en.wikipedia.org/wiki/Dr._Jekyll_and_Mr._Hyde_(1920_Paramount_film)",
+    wpx: "Dr. Jekyll and Mr. Hyde is a 1920 American silent horror film produced by Famous Players–Lasky and released through Paramount/Artcraft. The film, which stars John Barrymore, is an adaptation of the 1886 novella Strange Case of Dr Jekyll and Mr Hyde by Robert Louis Stevenson. John S. Robertson directed the production, and Clara Beranger wrote the screenplay, based on the 1887 stage play by Thomas Russell Sullivan that in turn was based on the novel.",
+    dir: [
+     "John S. Robertson"
+    ],
+    cast: [
+     "John Barrymore",
+     "Martha Mansfield",
+     "Nita Naldi"
+    ],
+    co: [
+     "Famous Players-Lasky Corporation"
+    ]
    },
    {
     title: "Headin Home",
@@ -5385,7 +7333,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-lhomme-du-large/silent-lhomme-du-large.thumbs/L'homme%20du%20large_002041.jpg",
-    bytes: 443873993
+    bytes: 443873993,
+    wd: "Q3203681",
+    wp: "https://en.wikipedia.org/wiki/L'Homme_du_large",
+    wpx: "L' Homme du large is a 1920 French silent film directed by Marcel L'Herbier and based on a short story by Honoré de Balzac. It was filmed on the rugged southern coast of Brittany creating atmosphere in a film about the forces of good and evil that motivate human behaviour.",
+    dir: [
+     "Marcel L'Herbier"
+    ],
+    cast: [
+     "Jaque Catelain",
+     "Marcelle Pradot",
+     "André Daven"
+    ]
    },
    {
     title: "Mark of Zorro",
@@ -5398,7 +7357,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/markofzorro-1920/markofzorro-1920.thumbs/markofzorro_001800.jpg",
     subs: "markofzorro.asr.srt",
-    bytes: 324093088
+    bytes: 324093088,
+    wd: "Q1170907",
+    wp: "https://en.wikipedia.org/wiki/The_Mark_of_Zorro_(1920_film)",
+    wpx: "The Mark of Zorro is a 1920 American silent Western romance film starring Douglas Fairbanks and Noah Beery. This genre-defining swashbuckler adventure was the first movie version of The Mark of Zorro. Based on the 1919 story The Curse of Capistrano by Johnston McCulley, which introduced the masked hero, Zorro, the screenplay was adapted by Fairbanks and Eugene Miller. Zorro is a character reminiscent of Baroness Orczy's masked hero The Scarlet Pimpernel.",
+    dir: [
+     "Fred Niblo"
+    ],
+    cast: [
+     "Douglas Fairbanks",
+     "Marguerite De La Motte",
+     "Noah Beery, Sr."
+    ],
+    co: [
+     "United Artists"
+    ]
    },
    {
     title: "Outside The Law",
@@ -5410,7 +7383,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/OutsideTheLaw/OutsideTheLaw.thumbs/OutsideTheLaw_001800.jpg",
-    bytes: 324144248
+    bytes: 324144248,
+    wd: "Q4006146",
+    wp: "https://en.wikipedia.org/wiki/Outside_the_Law_(1920_film)",
+    wpx: "Outside the Law is a 1920 American pre-Code crime film produced, directed and co-written by Tod Browning and starring Priscilla Dean, Lon Chaney and Wheeler Oakman.",
+    dir: [
+     "Tod Browning"
+    ],
+    cast: [
+     "Priscilla Dean",
+     "Wheeler Vivian Oakman",
+     "Lon Chaney"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "Outsidethelaw",
@@ -5433,7 +7420,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Robbery_Under_Arms/Robbery_Under_Arms.thumbs/Robbery_Under_Arms_001260.jpg",
-    bytes: 228832319
+    bytes: 228832319,
+    wd: "Q7340828",
+    wp: "https://en.wikipedia.org/wiki/Robbery_Under_Arms_(1920_film)",
+    wpx: "Robbery Under Arms is a 1920 Australian film directed by Kenneth Brampton and financed by mining magnate Pearson Tewksbury. It is an early example of an \"Australian Western\".",
+    dir: [
+     "Kenneth Brampton"
+    ],
+    co: [
+     "The Courier-Mail"
+    ]
    },
    {
     title: "Suds",
@@ -5445,7 +7441,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Suds_1920/Suds_1920.thumbs/Suds_001560.jpg",
-    bytes: 252435876
+    bytes: 252435876,
+    wd: "Q1121002",
+    wp: "https://en.wikipedia.org/wiki/Suds_(film)",
+    wpx: "Suds is a 1920 American silent comedy film directed by John Francis Dillon and starring Mary Pickford. The film is based on the 1904 English stage play 'Op o' Me Thumb, a one-act work first produced in London and presented the following year in New York with Maude Adams, a curtain raiser for her appearance in Peter Pan.",
+    dir: [
+     "John Francis Dillon"
+    ],
+    cast: [
+     "Mary Pickford",
+     "Albert Austin",
+     "Harold Goodwin"
+    ],
+    co: [
+     "Mary Pickford Film Corporation"
+    ]
    },
    {
     title: "Terror Island",
@@ -5457,7 +7467,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TerrorIsland/TerrorIsland.thumbs/TerrorIsland_001290.jpg",
     subs: "TerrorIsland.asr.srt",
-    bytes: 287023215
+    bytes: 287023215,
+    wd: "Q3984781",
+    wp: "https://en.wikipedia.org/wiki/Terror_Island",
+    wpx: "Terror Island is a 1920 American silent adventure film produced by Jesse Lasky and directed by James Cruze. It is a starring vehicle for illusionist Harry Houdini here costarring with Lila Lee. The film had the working title of Salvage.",
+    dir: [
+     "James Cruze"
+    ],
+    cast: [
+     "Harry Houdini",
+     "Lila Lee",
+     "Eugene Pallette"
+    ],
+    co: [
+     "Famous Players-Lasky Corporation"
+    ]
    },
    {
     title: "The County Fair",
@@ -5468,7 +7492,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CountyFair_/CountyFair_.thumbs/CountyFair_001194.jpg",
-    bytes: 194514703
+    bytes: 194514703,
+    wd: "Q7727816",
+    wp: "https://en.wikipedia.org/wiki/The_County_Fair_(1920_film)",
+    wpx: "The County Fair is a 1920 American silent drama film directed by Edmund Mortimer and Maurice Tourneur. It is based on a 1889 play with the same title by Charles Barnard.",
+    dir: [
+     "Edmund Mortimer",
+     "Maurice Tourneur"
+    ],
+    cast: [
+     "Helen Jerome Eddy",
+     "David Butler",
+     "Edythe Chapman"
+    ]
    },
    {
     title: "The Flapper",
@@ -5480,7 +7516,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/The_Flapper/The_Flapper.thumbs/The_Flapper_002040.jpg",
-    bytes: 329352439
+    bytes: 329352439,
+    wd: "Q1752022",
+    wp: "https://en.wikipedia.org/wiki/The_Flapper",
+    wpx: "The Flapper is a 1920 American silent comedy film starring Olive Thomas. Directed by Alan Crosland, the film was the first in the United States to portray the \"flapper\" lifestyle, which became a cultural craze or fad in the 1920s.",
+    dir: [
+     "Alan Crosland"
+    ],
+    cast: [
+     "Olive Thomas",
+     "Warren Cook",
+     "Arthur Housman"
+    ],
+    co: [
+     "Selznick Pictures"
+    ]
    },
    {
     title: "The Golem",
@@ -5491,7 +7541,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheGolem_893/TheGolem_893.thumbs/TheGolem_002400.jpg",
-    bytes: 441886671
+    bytes: 441886671,
+    wd: "Q522754",
+    wp: "https://en.wikipedia.org/wiki/The_Golem%3A_How_He_Came_into_the_World",
+    wpx: "The Golem: How He Came into the World is a 1920 German silent horror film and a leading example of early German Expressionism. Director Paul Wegener, who co-directed the film with Carl Boese and co-wrote the script with Henrik Galeen based on Gustav Meyrink's 1915 novel, stars as the titular creature, a being in Jewish folklore created from clay. Cinematographer Karl Freund went on to work on the 1930s Universal Pictures horror films…",
+    dir: [
+     "Paul Wegener",
+     "Carl Boese"
+    ],
+    cast: [
+     "Paul Wegener",
+     "Ernst Deutsch",
+     "Albert Steinrück"
+    ],
+    co: [
+     "PAGU"
+    ]
    },
    {
     title: "The Last of the Mohicans",
@@ -5504,7 +7569,22 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/PublicdomainTheLastoftheMohicans/PublicdomainTheLastoftheMohicans.thumbs/Last_of_the_Mohicans_001680.jpg",
     subs: "Last_of_the_Mohicans.asr.srt",
-    bytes: 309961776
+    bytes: 309961776,
+    wd: "Q444242",
+    wp: "https://en.wikipedia.org/wiki/The_Last_of_the_Mohicans_(1920_American_film)",
+    wpx: "The Last of the Mohicans is a 1920 American silent adventure drama film written by Robert A. Dillon, adapted from James Fenimore Cooper's 1826 novel of the same name. Clarence Brown and Maurice Tourneur co-directed the film. It is a story of two English sisters meeting danger on the frontier of the American colonies, in and around the fort commanded by their father. The adventure film stars Wallace Beery, Barbara Bedford, Lillian Hall,…",
+    dir: [
+     "Maurice Tourneur",
+     "Clarence Brown"
+    ],
+    cast: [
+     "Wallace Beery",
+     "Barbara Bedford",
+     "Alan Roscoe"
+    ],
+    co: [
+     "20th Century Studios"
+    ]
    },
    {
     title: "The Penalty",
@@ -5516,7 +7596,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ThePenalty/ThePenalty.thumbs/The_Penalty_002160.jpg",
-    bytes: 351321044
+    bytes: 351321044,
+    wd: "Q1922615",
+    wp: "https://en.wikipedia.org/wiki/The_Penalty_(1920_film)",
+    wpx: "The Penalty is an American psychological thriller crime film starring Lon Chaney and originally released in 1920 by Goldwyn Pictures. The movie was directed by Wallace Worsley, and written by Philip Lonergan and Charles Kenyon, based upon the pulp novel by Gouverneur Morris. The supporting cast includes Charles Clary, Doris Pawn, Jim Mason, and Claire Adams. The copyright for the film was owned by Gouverneur Morris, who wrote the novel…",
+    dir: [
+     "Wallace Worsley"
+    ],
+    cast: [
+     "Lon Chaney",
+     "Charles Clary",
+     "Ethel Grey Terry"
+    ]
    },
    {
     title: "Why Change Your Wife?",
@@ -5528,7 +7619,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Why_Change_Your_Wife/Why_Change_Your_Wife.thumbs/Why_Change_Your_Wife_002160.jpg",
-    bytes: 350997009
+    bytes: 350997009,
+    wd: "Q1673228",
+    wp: "https://en.wikipedia.org/wiki/Why_Change_Your_Wife%3F",
+    wpx: "Why Change Your Wife? is a 1920 American silent comedy film directed by Cecil B. DeMille and starring Gloria Swanson.",
+    dir: [
+     "Cecil B. DeMille"
+    ],
+    cast: [
+     "Gloria Swanson",
+     "Thomas Meighan",
+     "Bebe Daniels"
+    ],
+    co: [
+     "Famous Players-Lasky Corporation"
+    ]
    },
    {
     title: "\"Little Lord Fauntleroy\" (1921) starring Mary Pickford",
@@ -5585,7 +7690,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Miss_Lulu_Bett/Miss_Lulu_Bett.thumbs/Miss_Lulu_Bett_001680.jpg",
-    bytes: 273144201
+    bytes: 273144201,
+    wd: "Q16253256",
+    wp: "https://en.wikipedia.org/wiki/Miss_Lulu_Bett_(film)",
+    wpx: "Miss Lulu Bett is a 1921 American silent comedy drama film based on a 1920 play and bestselling novel of the same name by Zona Gale. The screenplay was written by Clara Beranger, and the film was directed by William C. deMille. The play won the 1921 Pulitzer Prize for Drama.",
+    dir: [
+     "William Churchill deMille"
+    ],
+    cast: [
+     "Lois Wilson",
+     "Milton Sills",
+     "Theodore Roberts"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "Orphans of the Storm",
@@ -5596,7 +7715,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/OrphansoftheStorm/OrphansoftheStorm.thumbs/OrphansoftheStorm_003480.jpg",
-    bytes: 554532055
+    bytes: 554532055,
+    wd: "Q232133",
+    wp: "https://en.wikipedia.org/wiki/Orphans_of_the_Storm",
+    wpx: "Orphans of the Storm is a 1921 American silent melodrama film directed by D. W. Griffith and set in late-18th-century France, before and during the French Revolution.",
+    dir: [
+     "D. W. Griffith"
+    ],
+    cast: [
+     "Lillian Gish",
+     "Dorothy Gish",
+     "Joseph Schildkraut"
+    ],
+    co: [
+     "United Artists"
+    ]
    },
    {
     title: "Sands of Sacrifice",
@@ -5619,7 +7752,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Silks_And_Saddles/Silks_And_Saddles.thumbs/SilksAndSaddles_001794.jpg",
     subs: "SilksAndSaddles.asr.srt",
-    bytes: 390711455
+    bytes: 390711455,
+    wd: "Q7515270",
+    wp: "https://en.wikipedia.org/wiki/Silks_and_Saddles_(1921_film)",
+    wpx: "Silks and Saddles is a 1921 Australian silent film set in the world of horse racing that was directed by John K. Wells.",
+    dir: [
+     "John K. Wells"
+    ]
    },
    {
     title: "Tangled Trails",
@@ -5630,7 +7769,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/SandsOfSacrifice1921/SandsOfSacrifice1921.thumbs/SandsofSacrifice_001350.jpg",
-    bytes: 289049994
+    bytes: 289049994,
+    wd: "Q7683015",
+    wp: "https://en.wikipedia.org/wiki/Tangled_Trails",
+    wpx: "Tangled Trails is a 1921 American silent Western film directed by Charles Bartlett and starring Neal Hart and Violet Palmer. The film is also known as Sands of Sacrifice.",
+    dir: [
+     "Charles Bartlett"
+    ]
    },
    {
     title: "The Ace of Hearts",
@@ -5642,7 +7787,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Ace_of_Hearts_1921/Ace_of_Hearts_1921.thumbs/Ace_of_Hearts_001800.jpg",
-    bytes: 286478066
+    bytes: 286478066,
+    wd: "Q2611205",
+    wp: "https://en.wikipedia.org/wiki/The_Ace_of_Hearts_(1921_film)",
+    wpx: "The Ace of Hearts is a 1921 American crime drama film produced and directed by Wallace Worsley. The screenplay by Ruth Wightman is based on Gouverneur Morris's story The Purple Flask, which was serialized in two parts in Cosmopolitan magazine in 1917. The film stars Leatrice Joy, John Bowers, Raymond Hatton and Lon Chaney. One unique feature of this film is that the main title of the movie isn't written on the screen; rather an Ace of…",
+    dir: [
+     "Wallace Worsley"
+    ],
+    cast: [
+     "Lon Chaney",
+     "Leatrice Joy",
+     "John Bowers"
+    ]
    },
    {
     title: "The Conquering Power",
@@ -5653,7 +7809,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheConqueringPower/TheConqueringPower.thumbs/TheConqueringPowerrexIngram1921RudolphValentinoAliceTerry_002154.jpg",
-    bytes: 536637911
+    bytes: 536637911,
+    wd: "Q3060270",
+    wp: "https://en.wikipedia.org/wiki/The_Conquering_Power",
+    wpx: "The Conquering Power is a 1921 American silent romantic drama directed by Rex Ingram and starring Rudolph Valentino, Alice Terry, and Ralph Lewis. The film was based on the 1833 novel Eugénie Grandet by Honoré de Balzac. Its sets were designed by Ralph Barton.",
+    dir: [
+     "Rex Ingram"
+    ],
+    cast: [
+     "Rudolph Valentino",
+     "Alice Terry",
+     "Ralph Lewis"
+    ]
    },
    {
     title: "The Four Horsemen of the Apocalypse",
@@ -5664,7 +7831,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/FourHorsemenOfTheApocalypse/FourHorsemenOfTheApocalypse.thumbs/FourHorsemenOfTheApocalypse_003120.jpg",
-    bytes: 599616208
+    bytes: 599616208,
+    wd: "Q1219825",
+    wp: "https://en.wikipedia.org/wiki/The_Four_Horsemen_of_the_Apocalypse_(1921_film)",
+    wpx: "The Four Horsemen of the Apocalypse is a 1921 American silent epic war film produced by Metro Pictures Corporation and directed by Rex Ingram. Based on the 1916 Spanish novel The Four Horsemen of the Apocalypse, by Vicente Blasco Ibáñez, it was adapted for the screen by June Mathis. The film stars Pomeroy Cannon, Josef Swickard, Bridgetta Clark, Rudolph Valentino, Wallace Beery, and Alice Terry.",
+    dir: [
+     "Rex Ingram"
+    ],
+    cast: [
+     "Josef Swickard",
+     "Bridgetta Clark",
+     "Rudolph Valentino"
+    ]
    },
    {
     title: "The Haunted Castle",
@@ -5675,7 +7853,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-the-haunted-castle/silent-the-haunted-castle.thumbs/The%20Haunted%20Castle_001923.jpg",
-    bytes: 425179193
+    bytes: 425179193,
+    wd: "Q320814",
+    wp: "https://en.wikipedia.org/wiki/The_Haunted_Castle_(1921_film)",
+    wpx: "The Haunted Castle is a 1921 silent mystery film directed by F. W. Murnau.",
+    dir: [
+     "F. W. Murnau"
+    ],
+    cast: [
+     "Paul Hartmann",
+     "Olga Chekhova",
+     "Arnold Korff"
+    ]
    },
    {
     title: "The Nut",
@@ -5687,7 +7876,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/The_Nut/The_Nut.thumbs/The_Nut_001800.jpg",
-    bytes: 286638296
+    bytes: 286638296,
+    wd: "Q2024236",
+    wp: "https://en.wikipedia.org/wiki/The_Nut_(film)",
+    wpx: "The Nut is a 1921 American silent film directed by Ted Reed for Douglas Fairbanks Pictures Corporation. It is structured as an action comedy vehicle for its producer, writer and star Douglas Fairbanks.",
+    dir: [
+     "Theodore Reed"
+    ]
    },
    {
     title: "The Sea Lion",
@@ -5700,7 +7895,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheSeaLion/TheSeaLion.thumbs/TheSeaLion_001500.jpg",
     subs: "TheSeaLion.asr.srt",
-    bytes: 270662031
+    bytes: 270662031,
+    wd: "Q7762766",
+    wp: "https://en.wikipedia.org/wiki/The_Sea_Lion",
+    wpx: "The Sea Lion is a 1921 American silent adventure film directed by Rowland V. Lee, and starring Hobart Bosworth, Bessie Love, and Emory Johnson. It was produced and distributed by Associated Producers Incorporated. The team who worked on this film had previously made Lee's Blind Hearts (1921).",
+    dir: [
+     "Rowland V. Lee"
+    ],
+    cast: [
+     "Hobart Bosworth",
+     "Emory Johnson",
+     "Bessie Love"
+    ]
    },
    {
     title: "The Sheik",
@@ -5712,7 +7918,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheSheik/TheSheik.thumbs/TheSheik_002040.jpg",
-    bytes: 366805332
+    bytes: 366805332,
+    wd: "Q1196670",
+    wp: "https://en.wikipedia.org/wiki/The_Sheik_(film)",
+    wpx: "The Sheik is a 1921 American silent romantic drama film produced by Famous Players–Lasky, directed by George Melford, starring Rudolph Valentino and Agnes Ayres, and featuring Adolphe Menjou. It was based on the bestselling 1919 romance novel of the same name by Edith Maude Hull and was adapted for the screen by Monte M. Katterjohn. The film was a box-office hit and helped propel Valentino to stardom.",
+    dir: [
+     "George Melford"
+    ],
+    cast: [
+     "Rudolph Valentino",
+     "Agnes Ayres",
+     "Adolphe Menjou"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "The Three Musketeers",
@@ -5734,7 +7954,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TolableDavid/TolableDavid.thumbs/TolableDavidhenryKing1921NoMusic_002214.jpg",
-    bytes: 489303345
+    bytes: 489303345,
+    wd: "Q3019070",
+    wp: "https://en.wikipedia.org/wiki/Tol'able_David",
+    wpx: "Tol'able David is a 1921 American silent film based on the 1917 Joseph Hergesheimer short story of the same name. It was adapted to the screen by Edmund Goulding and directed by Henry King for Inspiration Pictures. A rustic tale of violence set in the Allegheny Mountains of eastern West Virginia, it was filmed in Blue Grass, Virginia, with some locals featured in minor roles.",
+    dir: [
+     "Henry King"
+    ],
+    cast: [
+     "Richard Barthelmess",
+     "Gladys Hulette",
+     "Walter P. Lewis"
+    ]
    },
    {
     title: "\"Beauty's Worth\" (1922) starring Marion Davies",
@@ -5800,7 +8031,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ArcThePrimitiveLover/ArcThePrimitiveLover.thumbs/arc%20The%20Primitive%20Lover_001674.jpg",
-    bytes: 628204339
+    bytes: 628204339,
+    wd: "Q7758223",
+    wp: "https://en.wikipedia.org/wiki/The_Primitive_Lover",
+    wpx: "The Primitive Lover is a 1922 American silent drama film produced by and starring Constance Talmadge and distributed by Associated First National. Sidney A. Franklin served as the director of the movie and Frances Marion wrote the scenario based on a play, The Divorcee, by Edgar Selwyn. This film survives and has been released on DVD.",
+    dir: [
+     "Sidney Franklin"
+    ],
+    cast: [
+     "Harrison Ford"
+    ]
    },
    {
     title: "\"The Prisoner of Zenda\"",
@@ -5811,7 +8051,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ThePrisonerOfZenda/ThePrisonerOfZenda.thumbs/The%20Prisoner%20Of%20Zenda_002730.jpg",
-    bytes: 774565744
+    bytes: 774565744,
+    wd: "Q179554",
+    wp: "https://en.wikipedia.org/wiki/The_Prisoner_of_Zenda_(1922_film)",
+    wpx: "The Prisoner of Zenda is a 1922 American silent adventure film directed by Rex Ingram, one of the many adaptations of Anthony Hope's popular 1894 novel The Prisoner of Zenda and the subsequent 1896 play by Hope and Edward Rose.",
+    dir: [
+     "Rex Ingram"
+    ],
+    cast: [
+     "Lewis Stone",
+     "Alice Terry",
+     "Robert Edeson"
+    ]
    },
    {
     title: "Dr. Mabuse, der Spieler - Ein Bild der Zeit AKA Dr. Mabuse, The Gamble",
@@ -5822,7 +8073,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-dr-mabuse-der-spieler--ein-bild-der-zeit-aka-dr-mabuse-the-gambler/silent-dr-mabuse-der-spieler--ein-bild-der-zeit-aka-dr-mabuse-the-gambler.thumbs/Dr.%20Mabuse%2C%20der%20Spieler%20-%20Ein%20Bild%20der%20Zeit%20AKA%20Dr.%20Mabuse%2C%20The%20Gambler_003715.jpg",
-    bytes: 811879961
+    bytes: 811879961,
+    wd: "Q65295621",
+    wp: "https://en.wikipedia.org/wiki/Dr._Mabuse_the_Gambler",
+    wpx: "Dr. Mabuse the Gambler is the first film in the Dr. Mabuse series about the character Doctor Mabuse who featured in the novels of Norbert Jacques. It was directed by Fritz Lang and released in 1922. The film is silent and would be followed by the sound sequels The Testament of Dr. Mabuse (1933) and The Thousand Eyes of Dr. Mabuse (1960).",
+    dir: [
+     "Fritz Lang"
+    ],
+    cast: [
+     "Rudolf Klein-Rogge",
+     "Aud Egede-Nissen",
+     "Gertrude Welcker"
+    ]
    },
    {
     title: "Dr. Mabuse: The Gambler",
@@ -5844,7 +8106,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Grandmas_Boy_563/Grandmas_Boy_563.thumbs/Grandmas_Boy_1922_001470.jpg",
-    bytes: 158743796
+    bytes: 158743796,
+    wd: "Q2279168",
+    wp: "https://en.wikipedia.org/wiki/Grandma's_Boy_(1922_film)",
+    wpx: "Grandma's Boy is a 1922 family comedy film starring Harold Lloyd. The film was highly influential, helping to pioneer feature-length comedies which combined gags with character development. This film was an immensely popular, commercially successful film in its time.",
+    dir: [
+     "Fred C. Newmeyer"
+    ],
+    cast: [
+     "Harold Lloyd",
+     "Mildred B. Davis",
+     "James T. Kelley"
+    ],
+    co: [
+     "Hal Roach Studios"
+    ]
    },
    {
     title: "Haxan",
@@ -5855,7 +8131,20 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Haxan_tinted_and_subtitled/Haxan_tinted_and_subtitled.thumbs/Haxan_002520.jpg",
-    bytes: 457147486
+    bytes: 457147486,
+    wd: "Q1438966",
+    wp: "https://en.wikipedia.org/wiki/H%C3%A4xan",
+    wpx: "Häxan is a 1922 Swedish-Danish silent horror essay film written and directed by Benjamin Christensen. Consisting partly of documentary-style storytelling as well as dramatized narrative sequences, the film purports to chart the historical roots and superstitions surrounding witchcraft, beginning in the Middle Ages through the 20th century. Based partly on Christensen's own study of the Malleus Maleficarum, a 15th-century German guide…",
+    dir: [
+     "Benjamin Christensen"
+    ],
+    cast: [
+     "Oscar Stribolt",
+     "Benjamin Christensen"
+    ],
+    co: [
+     "SF Studios"
+    ]
    },
    {
     title: "Häxan",
@@ -5866,7 +8155,20 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/haxan-1922_202312/haxan-1922_202312.thumbs/H%C3%A4xan%20(1922)_002575.jpg",
-    bytes: 645051270
+    bytes: 645051270,
+    wd: "Q1438966",
+    wp: "https://en.wikipedia.org/wiki/H%C3%A4xan",
+    wpx: "Häxan is a 1922 Swedish-Danish silent horror essay film written and directed by Benjamin Christensen. Consisting partly of documentary-style storytelling as well as dramatized narrative sequences, the film purports to chart the historical roots and superstitions surrounding witchcraft, beginning in the Middle Ages through the 20th century. Based partly on Christensen's own study of the Malleus Maleficarum, a 15th-century German guide…",
+    dir: [
+     "Benjamin Christensen"
+    ],
+    cast: [
+     "Oscar Stribolt",
+     "Benjamin Christensen"
+    ],
+    co: [
+     "SF Studios"
+    ]
    },
    {
     title: "Manslaughter",
@@ -5878,7 +8180,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Manslaughter_1922/Manslaughter_1922.thumbs/Manslaughter_002400.jpg",
-    bytes: 384183906
+    bytes: 384183906,
+    wd: "Q1751536",
+    wp: "https://en.wikipedia.org/wiki/Manslaughter_(1922_film)",
+    wpx: "Manslaughter is a 1922 American silent drama film directed by Cecil B. DeMille and starring Thomas Meighan, Leatrice Joy, and Lois Wilson. It was scripted by Jeanie MacPherson adapted from the novel of the same name by Alice Duer Miller. Art direction and costumes for the film were done by Paul Iribe.",
+    dir: [
+     "Cecil B. DeMille"
+    ],
+    cast: [
+     "Leatrice Joy",
+     "Thomas Meighan",
+     "Lois Wilson"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "Nosferatu",
@@ -5889,7 +8205,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/nosferatu-1922_202504/nosferatu-1922_202504.thumbs/Nosferatu%20(1922)_001974.jpg",
-    bytes: 493091534
+    bytes: 493091534,
+    wd: "Q151895",
+    wp: "https://en.wikipedia.org/wiki/Nosferatu",
+    wpx: "Nosferatu: A Symphony of Horror is a 1922 silent German Expressionist vampire film directed by F. W. Murnau from a screenplay by Henrik Galeen. It stars Max Schreck as Count Orlok, a vampire who preys on the wife of his estate agent and brings the plague to their town.",
+    dir: [
+     "F. W. Murnau"
+    ],
+    cast: [
+     "Max Schreck",
+     "Wolfgang Heinz",
+     "Gustav von Wangenheim"
+    ],
+    co: [
+     "Prana Film"
+    ]
    },
    {
     title: "Phantom",
@@ -5933,7 +8263,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheTollOfTheSeanovember261922/TheTollOfTheSeanovember261922.thumbs/TheTollOfTheSeachesterM.Franklin1922_001314.jpg",
-    bytes: 249679234
+    bytes: 249679234,
+    wd: "Q2411291",
+    wp: "https://en.wikipedia.org/wiki/The_Toll_of_the_Sea",
+    wpx: "The Toll of the Sea is a 1922 American silent drama film directed by Chester M. Franklin, produced by the Technicolor Motion Picture Corporation, released by Metro Pictures, and featuring Anna May Wong in her first leading role. The film was written by Frances Marion and directed by Chester M. Franklin, with the lead roles played by Wong and Kenneth Harlan. The plot was a variation of the Madama Butterfly story, set in China instead of Japan.",
+    dir: [
+     "Chester M. Franklin"
+    ],
+    cast: [
+     "Anna May Wong",
+     "Kenneth Harlan"
+    ]
    },
    {
     title: "The Trap",
@@ -5945,7 +8285,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheTrap_861/TheTrap_861.thumbs/Trap_001080.jpg",
-    bytes: 176422355
+    bytes: 176422355,
+    wd: "Q3989683",
+    wp: "https://en.wikipedia.org/wiki/The_Trap_(1922_film)",
+    wpx: "The Trap is a 1922 American silent Western film directed by Robert Thornby and starring Lon Chaney and Alan Hale. It was released by Universal Pictures. The film was released in the United Kingdom under the title Heart of a Wolf. One working title for the film was Wolfbreed. The film was re-released in the U.S. in 1926.",
+    dir: [
+     "Robert Thornby"
+    ],
+    cast: [
+     "Lon Chaney",
+     "Alan Hale",
+     "Irene Rich"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "\"Our Hospitality\" (1923) starring Buster Keaton and Joe Roberts",
@@ -6056,7 +8410,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/HaldaneOfTheSecretService/HaldaneOfTheSecretService.thumbs/HaldaneOfTheSecretService_002010.jpg",
     subs: "HaldaneOfTheSecretService.asr.srt",
-    bytes: 442163347
+    bytes: 442163347,
+    wd: "Q3782536",
+    wp: "https://en.wikipedia.org/wiki/Haldane_of_the_Secret_Service",
+    wpx: "Haldane of the Secret Service is a 1923 American silent adventure film directed by Harry Houdini. The film stars Harry Houdini, Gladys Leslie, William J. Humphrey, Richard Carlyle, Edward Boulden, Jane Jennings, and Charles Fang. The film was released on September 30, 1923, by Film Booking Offices of America.",
+    dir: [
+     "Harry Houdini"
+    ],
+    cast: [
+     "Harry Houdini",
+     "William Humphrey",
+     "Gladys Leslie"
+    ]
    },
    {
     title: "Nathan der Weise / DVD / XviD / AVI / 688x528",
@@ -6125,7 +8490,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheShock/TheShock.thumbs/The_Shock_001500.jpg",
-    bytes: 245033805
+    bytes: 245033805,
+    wd: "Q3010071",
+    wp: "https://en.wikipedia.org/wiki/The_Shock_(film)",
+    wpx: "The Shock is a 1923 American silent drama film directed by Lambert Hillyer and starring Lon Chaney as a disabled man named Wilse Dilling. The film was written by Arthur Statter and Charles Kenyon, based on a magazine story by William Dudley Pelley. This is one of the rare Lon Chaney films in which his character ends up with the female \"love interest.\" The film is readily available on DVD.",
+    dir: [
+     "Lambert Hillyer"
+    ],
+    cast: [
+     "Lon Chaney",
+     "Virginia Valli",
+     "William Welsh"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "This Ancient Law",
@@ -6147,7 +8526,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Silent_ThreeAges_1923/Silent_ThreeAges_1923.thumbs/Silent_ThreeAges_1923_ClaCinOnl_001500.jpg",
-    bytes: 276395485
+    bytes: 276395485,
+    wd: "Q1257198",
+    wp: "https://en.wikipedia.org/wiki/Three_Ages",
+    wpx: "Three Ages is a 1923 black-and-white American feature-length silent comedy film starring comedian Buster Keaton and Wallace Beery. The first feature Keaton wrote, directed, produced, and starred in, Keaton structured the film like three inter-cut short films. While Keaton was a proven success in the short film medium, he had yet to prove himself as a feature-length star. It has been alleged that, had the project flopped, the film would…",
+    dir: [
+     "Buster Keaton",
+     "Edward F. Cline"
+    ],
+    cast: [
+     "Buster Keaton",
+     "Margaret Leahy",
+     "Wallace Beery"
+    ]
    },
    {
     title: "Three Ages (1923) HD with Score",
@@ -6169,7 +8560,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-why-worry/silent-why-worry.thumbs/Why%20Worry%3F_001502.jpg",
-    bytes: 331802098
+    bytes: 331802098,
+    wd: "Q2528654",
+    wp: "https://en.wikipedia.org/wiki/Why_Worry%3F",
+    wpx: "Why Worry? is a 1923 American silent comedy film directed by Fred C. Newmeyer and Sam Taylor and starring Harold Lloyd.",
+    dir: [
+     "Sam Taylor"
+    ],
+    cast: [
+     "Harold Lloyd",
+     "John Aasen",
+     "Jobyna Ralston"
+    ]
    },
    {
     title: "Zaza",
@@ -6246,7 +8648,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/my-movie_202006/my-movie_202006.thumbs/My%20Movie_002934.jpg",
-    bytes: 1152526316
+    bytes: 1152526316,
+    wd: "Q3201642",
+    wp: "https://en.wikipedia.org/wiki/The_Sea_Hawk_(1924_film)",
+    wpx: "The Sea Hawk is a 1924 American silent adventure film about an English noble sold into slavery who escapes and turns himself into a pirate king. Directed by Frank Lloyd, the screen adaptation was written by J. G. Hawks based upon the 1915 Rafael Sabatini novel of the same name. It premiered on June 2, 1924, in New York City, twelve days before its theatrical debut.",
+    dir: [
+     "Frank Lloyd"
+    ],
+    cast: [
+     "Milton Sills",
+     "Enid Bennett",
+     "Lloyd Hughes"
+    ],
+    co: [
+     "Frank Lloyd"
+    ]
    },
    {
     title: "\"The Thief of Bagdad\" (1924) starring Douglas Fairbanks",
@@ -6280,7 +8696,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-black-oxen/silent-black-oxen.thumbs/Black%20Oxen_001383.jpg",
-    bytes: 307696926
+    bytes: 307696926,
+    wd: "Q3640746",
+    wp: "https://en.wikipedia.org/wiki/Black_Oxen",
+    wpx: "Black Oxen is a 1923 American silent fantasy / romantic drama film starring Corinne Griffith, Conway Tearle, and Clara Bow. Directed by Frank Lloyd, the film is based on the controversial best-selling 1923 novel of the same name by Gertrude Atherton.",
+    dir: [
+     "Frank Lloyd"
+    ],
+    cast: [
+     "Corinne Griffith",
+     "Conway Tearle",
+     "Clara Bow"
+    ]
    },
    {
     title: "Die Nibelungen: Kriemhild's Revenge",
@@ -6291,7 +8718,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-die-nibelungen-kriemhilds-revenge/silent-die-nibelungen-kriemhilds-revenge.thumbs/Die%20Nibelungen%3A%20Kriemhild's%20Revenge_003122.jpg",
-    bytes: 680263702
+    bytes: 680263702,
+    wd: "Q18051442",
+    dir: [
+     "Fritz Lang"
+    ],
+    cast: [
+     "Margarete Schön",
+     "Hans Adalbert Schlettow",
+     "Rudolf Klein-Rogge"
+    ]
    },
    {
     title: "Dorothy Vernon of Haddon Hall",
@@ -6302,7 +8738,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-dorothy-vernon-of-haddon-hall/silent-dorothy-vernon-of-haddon-hall.thumbs/Dorothy%20Vernon%20of%20Haddon%20Hall_003296.jpg",
-    bytes: 715768419
+    bytes: 715768419,
+    wd: "Q2054754",
+    wp: "https://en.wikipedia.org/wiki/Dorothy_Vernon_of_Haddon_Hall_(film)",
+    wpx: "Dorothy Vernon of Haddon Hall is a 1924 American silent historical drama film directed by Marshall Neilan and starring Mary Pickford. The script by Waldemar Young was based upon the 1902 novel of the same name by Charles Major.",
+    dir: [
+     "Marshall Neilan",
+     "Mary Pickford"
+    ],
+    cast: [
+     "Mary Pickford",
+     "Anders Randolf",
+     "Lottie Pickford"
+    ]
    },
    {
     title: "Forbidden Paradise",
@@ -6313,7 +8761,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-forbidden-paradise/silent-forbidden-paradise.thumbs/Forbidden%20Paradise_001202.jpg",
-    bytes: 264371324
+    bytes: 264371324,
+    wd: "Q1996136",
+    wp: "https://en.wikipedia.org/wiki/Forbidden_Paradise",
+    wpx: "Forbidden Paradise is a 1924 American silent drama film, directed by Ernst Lubitsch, produced by Famous Players–Lasky, and distributed by Paramount Pictures. The film is based on a 1922 Broadway play, The Czarina, by Edward Sheldon, who adapted the Hungarian-language book by Melchior Lengyel and Lajos Bíró. The play starred Doris Keane, in one of her last stage roles, as Catherine the Great. Basil Rathbone costarred with Keane. The…",
+    dir: [
+     "Ernst Lubitsch"
+    ],
+    cast: [
+     "Pola Negri",
+     "Rod La Rocque",
+     "Adolphe Menjou"
+    ],
+    co: [
+     "Famous Players-Lasky Corporation"
+    ]
    },
    {
     title: "Girl Shy",
@@ -6324,7 +8786,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-girl-shy/silent-girl-shy.thumbs/Girl%20Shy_001796.jpg",
-    bytes: 403002691
+    bytes: 403002691,
+    wd: "Q4000773",
+    wp: "https://en.wikipedia.org/wiki/Girl_Shy",
+    wpx: "Girl Shy is a 1924 romantic comedy silent film starring Harold Lloyd and Jobyna Ralston. The movie was written by Sam Taylor, Tim Whelan and Ted Wilde and was directed by Fred C. Newmeyer and Taylor. In 2020, the film entered the public domain.",
+    dir: [
+     "Fred C. Newmeyer",
+     "Sam Taylor"
+    ],
+    cast: [
+     "Harold Lloyd",
+     "Jobyna Ralston",
+     "Earl Mohan"
+    ]
    },
    {
     title: "He Who Gets Slapped",
@@ -6336,7 +8810,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/he-who-gets-slapped_202101/he-who-gets-slapped_202101.thumbs/He%20Who%20Gets%20Slapped_001674.jpg",
-    bytes: 379893369
+    bytes: 379893369,
+    wd: "Q2046050",
+    wp: "https://en.wikipedia.org/wiki/He_Who_Gets_Slapped_(film)",
+    wpx: "He Who Gets Slapped is a 1924 American silent psychological thriller tragedy film starring Lon Chaney, Norma Shearer, and John Gilbert, and directed by Victor Sjöström. The film was written by Victor Seastrom and Carey Wilson, based on the Russian play He Who Gets Slapped by playwright Leonid Andreyev, which was completed by Andreyev in August 1915, two months before its world premiere at the Moscow Art Theatre on October 27, 1915. A…",
+    dir: [
+     "Victor Sjöström"
+    ],
+    cast: [
+     "Lon Chaney",
+     "Norma Shearer",
+     "John Gilbert"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Hot Water",
@@ -6391,7 +8879,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-the-city-without-jews/silent-the-city-without-jews.thumbs/The%20City%20Without%20Jews_001914.jpg",
-    bytes: 414712122
+    bytes: 414712122,
+    wd: "Q876124",
+    wp: "https://en.wikipedia.org/wiki/The_City_Without_Jews",
+    wpx: "The City Without Jews is a 1924 Austrian Expressionist film by Hans Karl Breslauer, based on the novel of the same title by Hugo Bettauer. The film is one of the few surviving Expressionist films from Austria and has therefore been well researched. The film was first shown on 25 July 1924 in Vienna.",
+    dir: [
+     "Hans Karl Breslauer"
+    ],
+    cast: [
+     "Johannes Riemann",
+     "Eugen Neufeld",
+     "Hans Moser"
+    ]
    },
    {
     title: "The Navigator (1924) HD with Score",
@@ -6413,7 +8912,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-the-signal-tower/silent-the-signal-tower.thumbs/The%20Signal%20Tower_001974.jpg",
-    bytes: 420027360
+    bytes: 420027360,
+    wd: "Q20814754",
+    wp: "https://en.wikipedia.org/wiki/The_Signal_Tower",
+    wpx: "The Signal Tower is a 1924 American silent drama film directed by Clarence Brown and produced and distributed by Universal Pictures. It stars Virginia Valli, Rockliffe Fellowes and Wallace Beery.",
+    dir: [
+     "Clarence Brown"
+    ],
+    cast: [
+     "Virginia Valli"
+    ]
    },
    {
     title: "Thief of Bagdad",
@@ -6424,7 +8932,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ThiefOfBagdad1924/ThiefOfBagdad1924.thumbs/ThiefofBagdad1924_003360.jpg",
-    bytes: 606745642
+    bytes: 606745642,
+    wd: "Q1192927",
+    wp: "https://en.wikipedia.org/wiki/The_Thief_of_Bagdad_(1924_film)",
+    wpx: "The Thief of Bagdad is a 1924 American silent fantasy adventure film directed by Raoul Walsh and starring Douglas Fairbanks, and written by Achmed Abdullah and Lotta Woods. Adapted from One Thousand and One Nights, the film tells the story of a thief who falls in love with the daughter of the Caliph of Baghdad. In 1996, the film was selected for preservation in the United States National Film Registry by the Library of Congress as…",
+    dir: [
+     "Raoul Walsh"
+    ],
+    cast: [
+     "Douglas Fairbanks",
+     "Snitz Edwards",
+     "Charles Belcher"
+    ],
+    co: [
+     "United Artists"
+    ]
    },
    {
     title: "Wild Oranges",
@@ -6435,7 +8957,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-wild-oranges/silent-wild-oranges.thumbs/Wild%20Oranges_002098.jpg",
-    bytes: 465051944
+    bytes: 465051944,
+    wd: "Q2937575",
+    wp: "https://en.wikipedia.org/wiki/Wild_Oranges",
+    wpx: "Wild Oranges is a 1924 American silent drama film directed by King Vidor, adapted from a story by Joseph Hergesheimer. On January 12, 2010, the film had its first home video release, on the Warner Archive DVD series.",
+    dir: [
+     "King Vidor"
+    ],
+    cast: [
+     "Virginia Valli",
+     "Ford Sterling",
+     "Frank Mayo"
+    ]
    },
    {
     title: "\"Go West\" (1925) starring Buster Keaton",
@@ -6501,7 +9034,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-a-kiss-for-cinderella/silent-a-kiss-for-cinderella.thumbs/A%20Kiss%20for%20Cinderella_002458.jpg",
-    bytes: 541601537
+    bytes: 541601537,
+    wd: "Q3602529",
+    wp: "https://en.wikipedia.org/wiki/A_Kiss_for_Cinderella_(film)",
+    wpx: "A Kiss for Cinderella is a 1925 American silent fantasy film adapted from the 1916 stage play by James M. Barrie. The film stars Betty Bronson and Tom Moore and was made at Paramount's Astoria Studios in Astoria, Queens. The play had starred the stage actresses Hilda Trevelyan and Maude Adams in, respectively, London and New York as leading lady.",
+    dir: [
+     "Herbert Brenon"
+    ],
+    cast: [
+     "Betty Bronson",
+     "Tom Moore",
+     "Esther Ralston"
+    ],
+    co: [
+     "Famous Players-Lasky Corporation"
+    ]
    },
    {
     title: "A Woman of the World",
@@ -6512,7 +9059,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-a-woman-of-the-world/silent-a-woman-of-the-world.thumbs/A%20Woman%20of%20the%20World_001616.jpg",
-    bytes: 361874204
+    bytes: 361874204,
+    wd: "Q300621",
+    wp: "https://en.wikipedia.org/wiki/A_Woman_of_the_World",
+    wpx: "A Woman of the World is a 1925 American silent comedy-drama film starring Pola Negri, directed by Mal St. Clair, produced by Famous Players–Lasky, and distributed by Paramount Pictures.",
+    dir: [
+     "Malcolm St. Clair"
+    ],
+    cast: [
+     "Pola Negri",
+     "Holmes Herbert",
+     "Charles Emmett Mack"
+    ],
+    co: [
+     "Paramount Pictures",
+     "Famous Players-Lasky Corporation"
+    ]
    },
    {
     title: "Ben Hur, A Tale Of The Christ",
@@ -6545,7 +9107,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/BattleshipPotemkin/BattleshipPotemkin.thumbs/Battleship_Potemkin_001740.jpg",
-    bytes: 317355846
+    bytes: 317355846,
+    wd: "Q152350",
+    wp: "https://en.wikipedia.org/wiki/Battleship_Potemkin",
+    wpx: "Battleship Potemkin is a 1925 Soviet silent epic film produced by Mosfilm. Directed and co-written by Sergei Eisenstein, it presents a dramatization of the mutiny that occurred in 1905 when the crew of the Russian battleship Potemkin rebelled against their officers.",
+    dir: [
+     "Sergei Eisenstein"
+    ],
+    cast: [
+     "Aleksandr Pavlovich Antonov",
+     "Grigori Aleksandrov",
+     "Alexander Stepanovich Antonov"
+    ],
+    co: [
+     "Mosfilm",
+     "State Committee for Cinematography"
+    ]
    },
    {
     title: "California Straight Ahead",
@@ -6556,7 +9133,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-california-straight-ahead/silent-california-straight-ahead.thumbs/California%20Straight%20Ahead_002154.jpg",
-    bytes: 477891755
+    bytes: 477891755,
+    wd: "Q87490361",
+    wp: "https://en.wikipedia.org/wiki/California_Straight_Ahead_(1925_film)",
+    wpx: "California Straight Ahead is a 1925 American silent comedy film directed by Harry A. Pollard and starring Reginald Denny, Gertrude Olmstead, and Tom Wilson.",
+    dir: [
+     "Harry A. Pollard"
+    ]
    },
    {
     title: "Clash of the Wolves",
@@ -6567,7 +9150,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-clash-of-the-wolves/silent-clash-of-the-wolves.thumbs/Clash%20of%20the%20Wolves_001804.jpg",
-    bytes: 388828729
+    bytes: 388828729,
+    wd: "Q2423566",
+    wp: "https://en.wikipedia.org/wiki/The_Clash_of_the_Wolves",
+    wpx: "The Clash of the Wolves is a 1925 American silent Western film produced and distributed by Warner Bros. Directed by Noel M. Smith, the film stars canine actor Rin Tin Tin, Charles Farrell and June Marlowe. It was filmed on location in Chatsworth, California, and at what would later become the Joshua Tree National Park. It was transferred onto 16mm film by Associated Artists Productions in the 1950s and shown on television. A 35mm print…",
+    dir: [
+     "Noel M. Smith"
+    ],
+    cast: [
+     "Rin Tin Tin",
+     "Charles Farrell",
+     "June Marlowe"
+    ],
+    co: [
+     "Warner Bros. Entertainment"
+    ]
    },
    {
     title: "Cobra",
@@ -6589,7 +9186,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-daddys-gone-a-hunting/silent-daddys-gone-a-hunting.thumbs/Daddy's%20Gone%20A-Hunting_001436.jpg",
-    bytes: 322826752
+    bytes: 322826752,
+    wd: "Q3011755",
+    wp: "https://en.wikipedia.org/wiki/Daddy's_Gone_A-Hunting_(1925_film)",
+    wpx: "Daddy's Gone A-Hunting is a 1925 American silent drama film directed by Frank Borzage based upon a play by Zoë Akins, with adaptation by Kenneth B. Clarke. The film brought together Vitagraph leading lady Alice Joyce and English actor Percy Marmont after his success with If Winter Comes. This is the only film either of the main stars made for MGM. The film was remade in 1931 as Women Love Once. A print survives in the Národní filmový archiv.",
+    dir: [
+     "Frank Borzage"
+    ],
+    cast: [
+     "Alice Joyce",
+     "Percy Marmont",
+     "Ford Sterling"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Dick Turpin",
@@ -6600,7 +9211,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-dick-turpin/silent-dick-turpin.thumbs/Dick%20Turpin_001855.jpg",
-    bytes: 413591163
+    bytes: 413591163,
+    wd: "Q18636514",
+    wp: "https://en.wikipedia.org/wiki/Dick_Turpin_(1925_film)",
+    wpx: "Dick Turpin is a 1925 American silent historical adventure film directed by John G. Blystone produced and distributed by Fox Film Corporation and starring western hero Tom Mix. Mix departs from his usual western roles to play a British historical figure, the highwayman Dick Turpin (1705–1739). A young Carole Lombard was filmed in several scenes which mostly ended up on the cutting room floor.",
+    dir: [
+     "John G. Blystone"
+    ],
+    cast: [
+     "Tom Mix"
+    ]
    },
    {
     title: "Don Q Son of Zorro",
@@ -6611,7 +9231,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-don-q-son-of-zorro/silent-don-q-son-of-zorro.thumbs/Don%20Q%20Son%20of%20Zorro_002636.jpg",
-    bytes: 581874225
+    bytes: 581874225,
+    wd: "Q607786",
+    wp: "https://en.wikipedia.org/wiki/Don_Q%2C_Son_of_Zorro",
+    wpx: "Don Q, Son of Zorro is a 1925 American silent swashbuckler romance film and a sequel to the 1920 silent film The Mark of Zorro. It was loosely based upon the 1909 novel Don Q.'s Love Story, written by the mother-and-son duo Kate and Hesketh Hesketh-Prichard. The story was reworked in 1925 into a vehicle for the Johnston McCulley character Zorro. The film adaptation was made by screenwriters Jack Cunningham and Lotta Woods for United…",
+    dir: [
+     "Donald Crisp"
+    ],
+    cast: [
+     "Douglas Fairbanks",
+     "Mary Astor",
+     "Donald Crisp"
+    ]
    },
    {
     title: "El Fantasma De La Ópera 1925 (sub Español)",
@@ -6655,7 +9286,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-her-sister-from-paris/silent-her-sister-from-paris.thumbs/Her%20Sister%20from%20Paris_002337.jpg",
-    bytes: 518732906
+    bytes: 518732906,
+    wd: "Q18059429",
+    wp: "https://en.wikipedia.org/wiki/Her_Sister_from_Paris",
+    wpx: "Her Sister from Paris is a 1925 American silent comedy film based upon the play The Twin Sister by Ludwig Fulda. It was directed by Sidney Franklin and stars Constance Talmadge, Ronald Colman, and George K. Arthur.",
+    dir: [
+     "Sidney Franklin"
+    ],
+    cast: [
+     "Constance Talmadge"
+    ]
    },
    {
     title: "Joyless Street",
@@ -6666,7 +9306,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/JoylessStreet/JoylessStreet.thumbs/JoylessStreet_001440.jpg",
-    bytes: 233046970
+    bytes: 233046970,
+    wd: "Q645611",
+    wp: "https://en.wikipedia.org/wiki/Joyless_Street",
+    wpx: "Joyless Street, also titled The Street of Sorrow or The Joyless Street, is a 1925 German silent film directed by Georg Wilhelm Pabst starring Greta Garbo, Asta Nielsen and Werner Krauss. It is based on a novel by Hugo Bettauer and widely considered an expression of New Objectivity in film.",
+    dir: [
+     "Georg Wilhelm Pabst"
+    ],
+    cast: [
+     "Werner Krauss",
+     "Jaro Fürth",
+     "Greta Garbo"
+    ]
    },
    {
     title: "Lady Windermere's Fan",
@@ -6677,7 +9328,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/LadyWindermeresFan/LadyWindermeresFan.thumbs/LadyWindermeresFan_002040.jpg",
-    bytes: 332564279
+    bytes: 332564279,
+    wd: "Q126135",
+    wp: "https://en.wikipedia.org/wiki/Lady_Windermere's_Fan_(1925_film)",
+    wpx: "Lady Windermere's Fan is a 1925 American silent drama film directed by Ernst Lubitsch. It is based on Oscar Wilde's 1892 play Lady Windermere's Fan, which was first played in America by Julia Arthur as Lady Windermere and Maurice Barrymore as Lord Darlington. The film is preserved in multiple archives. It was transferred to 16mm film by Associated Artists Productions in the 1950s for television. In 2002, it was selected for…",
+    dir: [
+     "Ernst Lubitsch"
+    ],
+    cast: [
+     "Ronald Colman",
+     "May McAvoy",
+     "Irene Rich"
+    ],
+    co: [
+     "Warner Bros. Entertainment"
+    ]
    },
    {
     title: "Lazybones",
@@ -6688,7 +9353,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-lazybones/silent-lazybones.thumbs/Lazybones_002034.jpg",
-    bytes: 448896262
+    bytes: 448896262,
+    wd: "Q3344761",
+    wp: "https://en.wikipedia.org/wiki/Lazybones_(1925_film)",
+    wpx: "Lazybones is a 1925 American silent romantic drama film produced and directed by Frank Borzage and starring Madge Bellamy, Buck Jones, and ZaSu Pitts. It opened in New York City on September 22, 1924, and received wider distribution by Fox Film Corporation during 1925.",
+    dir: [
+     "Frank Borzage"
+    ],
+    cast: [
+     "Chuck Jones",
+     "Buck Jones",
+     "Edythe Chapman"
+    ]
    },
    {
     title: "Little Annie Rooney",
@@ -6699,7 +9375,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/LittleAnnieRooney_/LittleAnnieRooney_.thumbs/LittleAnnieRooney_002280.jpg",
-    bytes: 364387284
+    bytes: 364387284,
+    wd: "Q134008",
+    wp: "https://en.wikipedia.org/wiki/Little_Annie_Rooney_(1925_film)",
+    wpx: "Little Annie Rooney is a 1925 American silent comedy-drama film starring Mary Pickford and directed by William Beaudine. Pickford, one of the most successful actresses of the silent era, was best known throughout her career for her iconic portrayals of penniless young girls. After generating only modest box office revenue playing adults in her previous two films, Pickford wrote and produced Little Annie Rooney to cater to silent film…",
+    dir: [
+     "William Beaudine"
+    ],
+    cast: [
+     "Mary Pickford",
+     "William Haines",
+     "Eugene Jackson"
+    ]
    },
    {
     title: "Parisian Love",
@@ -6710,7 +9397,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-parisian-love/silent-parisian-love.thumbs/Parisian%20Love_001494.jpg",
-    bytes: 324037290
+    bytes: 324037290,
+    wd: "Q4345133",
+    wp: "https://en.wikipedia.org/wiki/Parisian_Love",
+    wpx: "Parisian Love is a black and white 1925 American silent romantic crime drama film directed by Louis J. Gasnier and starring Clara Bow. The film was produced by B.P. Schulberg Productions. A copy of this film still survives.",
+    dir: [
+     "Louis J. Gasnier"
+    ],
+    cast: [
+     "Clara Bow"
+    ]
    },
    {
     title: "Riders of the Purple Sage",
@@ -6721,7 +9417,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-riders-of-the-purple-sage/silent-riders-of-the-purple-sage.thumbs/Riders%20of%20the%20Purple%20Sage_001316.jpg",
-    bytes: 294979082
+    bytes: 294979082,
+    wd: "Q7332639",
+    wp: "https://en.wikipedia.org/wiki/Riders_of_the_Purple_Sage_(1925_film)",
+    wpx: "Riders of the Purple Sage is a 1925 American silent Western film directed by Lynn Reynolds and starring Tom Mix, Mabel Ballin, and Warner Oland. Based on the 1912 novel Riders of the Purple Sage by Zane Grey, the film is about a former Texas Ranger who pursues a corrupt lawyer who abducted his married sister and niece. His search leads him to a remote Arizona ranch and the love of a good woman.",
+    dir: [
+     "Lynn Reynolds"
+    ],
+    cast: [
+     "Tom Mix",
+     "Mabel Ballin",
+     "Warner Oland"
+    ],
+    co: [
+     "Fox Film Corporation"
+    ]
    },
    {
     title: "Sally of the Sawdust",
@@ -6732,7 +9442,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/SallyOfTheSawdust/SallyOfTheSawdust.thumbs/Sally_of_the_Sawdust_002730.jpg",
-    bytes: 376849679
+    bytes: 376849679,
+    wd: "Q728618",
+    wp: "https://en.wikipedia.org/wiki/Sally_of_the_Sawdust",
+    wpx: "Sally of the Sawdust is a 1925 American silent comedy film directed by D. W. Griffith and starring Carol Dempster and W. C. Fields. It was based on the 1923 stage musical Poppy. Fields would later star in a second film version, Poppy (1936).",
+    dir: [
+     "D. W. Griffith",
+     "Erville Alderson"
+    ],
+    cast: [
+     "Carol Dempster",
+     "W. C. Fields",
+     "Alfred Lunt"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "Seven Chances (1925) HD with Score",
@@ -6765,7 +9490,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-the-big-parade/silent-the-big-parade.thumbs/The%20Big%20Parade_003748.jpg",
-    bytes: 791022032
+    bytes: 791022032,
+    wd: "Q1218520",
+    wp: "https://en.wikipedia.org/wiki/The_Big_Parade",
+    wpx: "The Big Parade is a 1925 American silent war drama film directed by King Vidor, starring John Gilbert, Renée Adorée, Hobart Bosworth, Tom O'Brien, and Karl Dane. Written by World War I veteran Laurence Stallings, the film is about an idle rich boy who joins the U.S. Army's Rainbow Division, is sent to France to fight in World War I, becomes a friend of two working-class men, experiences the horrors of trench warfare, and finds love…",
+    dir: [
+     "King Vidor",
+     "George W. Hill"
+    ],
+    cast: [
+     "John Gilbert",
+     "Renée Adorée",
+     "Hobart Bosworth"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "The Eagle",
@@ -6799,7 +9539,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-the-freshman/silent-the-freshman.thumbs/The%20Freshman_001854.jpg",
-    bytes: 397742312
+    bytes: 397742312,
+    wd: "Q2482628",
+    wp: "https://en.wikipedia.org/wiki/The_Freshman_(1925_film)",
+    wpx: "The Freshman is a 1925 American silent comedy film that tells the story of a college freshman trying to become popular by joining the school football team. It stars Harold Lloyd, Jobyna Ralston, Brooks Benedict, and James Anderson. It remains one of Lloyd's most successful and enduring films. When the film opened on September 20 at the B.S. Moss Colony Theater on Broadway, Broderick & Felsen's production of Campus Capers was the…",
+    dir: [
+     "Fred C. Newmeyer",
+     "Sam Taylor"
+    ],
+    cast: [
+     "Harold Lloyd",
+     "Jobyna Ralston",
+     "James Anderson"
+    ],
+    co: [
+     "Pathé"
+    ]
    },
    {
     title: "The Lady",
@@ -6810,7 +9565,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-the-lady/silent-the-lady.thumbs/The%20Lady_001554.jpg",
-    bytes: 352273988
+    bytes: 352273988,
+    wd: "Q1123076",
+    wp: "https://en.wikipedia.org/wiki/The_Lady_(1925_film)",
+    wpx: "The Lady is a 1925 American silent drama film starring Norma Talmadge and directed by Frank Borzage. Talmadge's own production company produced the film with distribution by First National Pictures.",
+    dir: [
+     "Frank Borzage"
+    ],
+    cast: [
+     "Wallace MacDonald",
+     "Norma Talmadge",
+     "Emily Fitzroy"
+    ]
    },
    {
     title: "The Lost World",
@@ -6823,7 +9589,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/lost_world/lost_world.thumbs/lost_world_001620.jpg",
     subs: "lost_world.asr.srt",
-    bytes: 296892995
+    bytes: 296892995,
+    wd: "Q1219785",
+    wp: "https://en.wikipedia.org/wiki/The_Lost_World_(1925_film)",
+    wpx: "The Lost World is a 1925 American silent fantasy giant monster adventure film, directed by Harry O. Hoyt and written by Marion Fairfax, adapted from Arthur Conan Doyle's 1912 novel of the same name.",
+    dir: [
+     "Harry O. Hoyt"
+    ],
+    cast: [
+     "Bessie Love",
+     "Lewis Stone",
+     "Wallace Beery"
+    ],
+    co: [
+     "First National Pictures"
+    ]
    },
    {
     title: "The Midnight Girl",
@@ -6834,7 +9614,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheMidnightGirl/TheMidnightGirl.thumbs/TheMidnightGirl_001432.jpg",
-    bytes: 296108713
+    bytes: 296108713,
+    wd: "Q3521867",
+    wp: "https://en.wikipedia.org/wiki/The_Midnight_Girl",
+    wpx: "The Midnight Girl is a 1925 American drama film directed by Wilfred Noy and starring Lila Lee and featuring Bela Lugosi.",
+    dir: [
+     "Wilfred Noy"
+    ],
+    cast: [
+     "Lila Lee",
+     "Gareth Hughes",
+     "Bela Lugosi"
+    ],
+    co: [
+     "Chadwick Pictures Corporation"
+    ]
    },
    {
     title: "The Monster",
@@ -6857,7 +9651,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-the-night-club/silent-the-night-club.thumbs/The%20Night%20Club_001497.jpg",
-    bytes: 333510954
+    bytes: 333510954,
+    wd: "Q19363699",
+    wp: "https://en.wikipedia.org/wiki/The_Night_Club_(film)",
+    wpx: "The Night Club is a 1925 American silent comedy film directed by Paul Iribe and Frank Urson and written by Cecil B. DeMille, Keene Thompson, Walter Woods, and William C. deMille. The film stars Raymond Griffith, Vera Reynolds, Wallace Beery, Louise Fazenda, and William Austin. The film was released on April 27, 1925, by Paramount Pictures.",
+    dir: [
+     "Paul Iribe",
+     "Frank Urson"
+    ],
+    cast: [
+     "Raymond Griffith"
+    ]
    },
    {
     title: "The Phantom of the Opera",
@@ -6879,7 +9683,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-the-plastic-age/silent-the-plastic-age.thumbs/The%20Plastic%20Age_001736.jpg",
-    bytes: 384661194
+    bytes: 384661194,
+    wd: "Q1547717",
+    wp: "https://en.wikipedia.org/wiki/The_Plastic_Age_(film)",
+    wpx: "The Plastic Age is a 1925 American black-and-white silent romantic comedy film directed by Wesley Ruggles and starring Clara Bow, Donald Keith, and Gilbert Roland. The film was based on a best-selling novel from 1924 of the same name, written by Percy Marks, a Brown University English instructor who chronicled the life of the fast-set of that university and used the fictitious Sanford College as a backdrop. The Plastic Age is known to…",
+    dir: [
+     "Wesley Ruggles"
+    ],
+    cast: [
+     "Clara Bow",
+     "Donald Keith",
+     "Gilbert Roland"
+    ]
    },
    {
     title: "The Pleasure Garden",
@@ -6890,7 +9705,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-the-pleasure-garden/silent-the-pleasure-garden.thumbs/The%20Pleasure%20Garden_001016.jpg",
-    bytes: 213905237
+    bytes: 213905237,
+    wd: "Q39005",
+    wp: "https://en.wikipedia.org/wiki/The_Pleasure_Garden_(1925_film)",
+    wpx: "The Pleasure Garden is a 1926 silent drama film directed by Alfred Hitchcock in his feature film directorial debut. Based on the 1923 novel by Oliver Sandys, The Pleasure Garden is about two chorus girls, played by Virginia Valli and Carmelita Geraghty, at the Pleasure Garden Theatre in London and their troubled relationships. An international co-production of the United Kingdom and Germany, the film premiered in Berlin on 8 January 1926.",
+    dir: [
+     "Alfred Hitchcock"
+    ],
+    cast: [
+     "Virginia Valli",
+     "Carmelita Geraghty",
+     "Miles Mander"
+    ],
+    co: [
+     "Bavaria Film",
+     "Gainsborough Pictures"
+    ]
    },
    {
     title: "The Red Kimona",
@@ -6901,7 +9731,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-the-red-kimona/silent-the-red-kimona.thumbs/The%20Red%20Kimona_001855.jpg",
-    bytes: 404840467
+    bytes: 404840467,
+    wd: "Q7759883",
+    wp: "https://en.wikipedia.org/wiki/The_Red_Kimono",
+    wpx: "The Red Kimono is a 1925 American silent drama film about prostitution produced by Dorothy Davenport and starring Priscilla Bonner. It is the debut film of director Walter Lang.",
+    dir: [
+     "Walter Lang",
+     "Dorothy Davenport"
+    ],
+    cast: [
+     "Priscilla Bonner",
+     "Carl Miller",
+     "Virginia Pearson"
+    ],
+    co: [
+     "Dorothy Davenport Reid Productions"
+    ]
    },
    {
     title: "The Unchastened Woman",
@@ -6912,7 +9757,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-the-unchastened-woman/silent-the-unchastened-woman.thumbs/The%20Unchastened%20Woman_001315.jpg",
-    bytes: 284982227
+    bytes: 284982227,
+    wd: "Q3523148",
+    wp: "https://en.wikipedia.org/wiki/The_Unchastened_Woman",
+    wpx: "The Unchastened Woman is a 1925 American silent drama film starring vamp Theda Bara, directed by James Young, the former husband of Clara Kimball Young, and released by start-up studio Chadwick Pictures. The film is based on a 1915 Broadway play, The Unchastened Woman, which starred Emily Stevens.",
+    dir: [
+     "James Young"
+    ],
+    cast: [
+     "Theda Bara",
+     "Wyndham Standing",
+     "Dale Fuller"
+    ]
    },
    {
     title: "The Unholy Three",
@@ -6923,7 +9779,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the.unholy.three.1925/the.unholy.three.1925.thumbs/The.Unholy.Three.(1925)_002101.jpg",
-    bytes: 533428423
+    bytes: 533428423,
+    wd: "Q1989317",
+    wp: "https://en.wikipedia.org/wiki/The_Unholy_Three_(1925_film)",
+    wpx: "The Unholy Three is a 1925 American silent crime melodrama film involving a trio of circus conmen, directed by Tod Browning and starring Lon Chaney. The supporting cast features Mae Busch, Matt Moore, Victor McLaglen, and Harry Earles. The Unholy Three marks the establishment of the notable artistic alliance between director Browning and actor Chaney that would deliver eight films to M-G-M studios during the late silent film era.",
+    dir: [
+     "Tod Browning"
+    ],
+    cast: [
+     "Lon Chaney",
+     "Mae Busch",
+     "Matt Moore"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "The Unholy Three 1925 Colorized",
@@ -6956,7 +9826,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-whirlpool-of-fate/silent-whirlpool-of-fate.thumbs/Whirlpool%20of%20Fate_001615.jpg",
-    bytes: 351841654
+    bytes: 351841654,
+    wd: "Q1419386",
+    wp: "https://en.wikipedia.org/wiki/The_Whirlpool_of_Fate",
+    wpx: "The Whirlpool of Fate or The Girl of the Water is a 1925 French silent drama film directed by Jean Renoir and starring Catherine Hessling as its heroine.",
+    dir: [
+     "Jean Renoir"
+    ],
+    cast: [
+     "Catherine Hessling",
+     "Pierre Lestringuez",
+     "Pierre Champagne"
+    ]
    },
    {
     title: "\"Battling Butler\" (1926) starring Buster Keaton",
@@ -6978,7 +9859,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/MadeForLove/MadeForLove.thumbs/MadeForLove1926A_001734.jpg",
-    bytes: 579677341
+    bytes: 579677341,
+    wd: "Q19572776",
+    wp: "https://en.wikipedia.org/wiki/Made_for_Love_(film)",
+    wpx: "Made for Love is a 1926 American silent drama film directed by Paul Sloane, produced by Cecil B. DeMille, and starring Leatrice Joy.",
+    dir: [
+     "Paul Sloane"
+    ],
+    cast: [
+     "Leatrice Joy"
+    ]
    },
    {
     title: "\"The General\" (1926) starring Buster Keaton",
@@ -7034,7 +9924,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheBlackPirate1926DouglasFairbanksSRAndy/TheBlackPirate1926DouglasFairbanksSRAndy.thumbs/TheBlackPirate1926DouglasFairbanksSRAndy_001980.jpg",
-    bytes: 360737491
+    bytes: 360737491,
+    wd: "Q2377258",
+    wp: "https://en.wikipedia.org/wiki/The_Black_Pirate",
+    wpx: "The Black Pirate is a 1926 American silent color adventure film directed by Albert Parker, starring Douglas Fairbanks, Billie Dove, Donald Crisp, Sam De Grasse, and Anders Randolf.",
+    dir: [
+     "Albert Parker"
+    ],
+    cast: [
+     "Douglas Fairbanks",
+     "Billie Dove",
+     "Tempe Pigott"
+    ]
    },
    {
     title: "The General (1926) HD with Score",
@@ -7079,7 +9980,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/benhur-a-tale-of-the-christ_1927/benhur-a-tale-of-the-christ_1927.thumbs/benhur-a-tale-of-the-christ_1927_003414.jpg",
-    bytes: 2041405120
+    bytes: 2041405120,
+    wd: "Q383795",
+    wp: "https://en.wikipedia.org/wiki/Ben-Hur%3A_A_Tale_of_the_Christ_(1925_film)",
+    wpx: "Ben-Hur: A Tale of the Christ is a 1925 American silent epic adventure-drama film directed by Fred Niblo and written by June Mathis based on the 1880 novel of the same name by General Lew Wallace. Starring Ramon Novarro as the title character, the film is the first feature-length adaptation of the novel and second overall, following the 1907 silent short film. In 1997, Ben-Hur: A Tale of the Christ was selected for preservation in the…",
+    dir: [
+     "Fred Niblo"
+    ],
+    cast: [
+     "Ramón Novarro",
+     "Francis X. Bushman",
+     "May McAvoy"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Buster Keaton's \"College\"",
@@ -7101,7 +10016,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/chang-a-drama-of-the-wilderness_1927/chang-a-drama-of-the-wilderness_1927.thumbs/chang-a-drama-of-the-wilderness_1927_001734.jpg",
-    bytes: 2457866804
+    bytes: 2457866804,
+    wd: "Q1061895",
+    wp: "https://en.wikipedia.org/wiki/Chang%3A_A_Drama_of_the_Wilderness",
+    wpx: "Chang: A Drama of the Wilderness, also known simply as Chang is a 1927 American silent documentary film about a poor farmer in northern Nan Province and his daily struggle for survival in the jungle. The film was directed by Merian C. Cooper and Ernest B. Schoedsack. It was released by Famous Players–Lasky, a division of Paramount Pictures.",
+    dir: [
+     "Merian C. Cooper",
+     "Ernest B. Schoedsack"
+    ],
+    co: [
+     "Famous Players-Lasky Corporation"
+    ]
    },
    {
     title: "Chicago",
@@ -7157,7 +10082,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ForTheTermOfHisNaturalLife/ForTheTermOfHisNaturalLife.thumbs/ForTheTermOfHisNaturalLife_002280.jpg",
-    bytes: 410696373
+    bytes: 410696373,
+    wd: "Q5467144",
+    wp: "https://en.wikipedia.org/wiki/For_the_Term_of_His_Natural_Life_(1927_film)",
+    wpx: "For the Term of His Natural Life is a 1927 Australian film based on the 1874 novel by Marcus Clarke, directed, produced and co-written by Norman Dawn. It was the most expensive Australian silent film made and remains one of the most famous Australian films of the silent era.",
+    dir: [
+     "Norman Dawn"
+    ],
+    cast: [
+     "George Fisher"
+    ],
+    co: [
+     "Australasian Films"
+    ]
    },
    {
     title: "Get Your Man 1927 Colorized",
@@ -7179,7 +10116,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/his_first_flame/his_first_flame.thumbs/his_first_flame_001080.jpg",
-    bytes: 196886192
+    bytes: 196886192,
+    wd: "Q8183956",
+    wp: "https://en.wikipedia.org/wiki/His_First_Flame",
+    wpx: "His First Flame is a 1927 American silent comedy film starring Harry Langdon and directed by Harry Edwards. Additional cast members include Natalie Kingston, Ruth Hiatt, Vernon Dent, and others.",
+    dir: [
+     "Harry Edwards"
+    ],
+    cast: [
+     "Harry Langdon",
+     "Natalie Kingston",
+     "Ruth Hiatt"
+    ]
    },
    {
     title: "It",
@@ -7212,7 +10160,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/london-after-midnight_1927/london-after-midnight_1927.thumbs/london-after-midnight_1927_001134.jpg",
-    bytes: 402710818
+    bytes: 402710818,
+    wd: "Q253397",
+    wp: "https://en.wikipedia.org/wiki/London_After_Midnight_(film)",
+    wpx: "London After Midnight is a lost 1927 American silent mystery horror film directed and co-produced by Tod Browning and starring Lon Chaney, with Marceline Day, Conrad Nagel, Henry B. Walthall, and Polly Moran. The film was distributed by Metro-Goldwyn-Mayer, and was written by Waldemar Young, based on the story \"The Hypnotist\" which was written by Browning. Merritt B. Gerstad was the cinematographer, and the sets were designed by Cedric…",
+    dir: [
+     "Tod Browning"
+    ],
+    cast: [
+     "Lon Chaney",
+     "Marceline Day",
+     "Conrad Nagel"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Metropolis",
@@ -7234,7 +10196,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/no-mans-law_1927/no-mans-law_1927.thumbs/no-mans-law_1927_001314.jpg",
-    bytes: 1258474619
+    bytes: 1258474619,
+    wd: "Q3342431",
+    wp: "https://en.wikipedia.org/wiki/No_Man's_Law",
+    wpx: "No Man's Law is a 1927 American silent Western film directed by Fred Jackman, starring Rex the King of Wild Horses, and featuring Oliver Hardy as a lustful villain.",
+    dir: [
+     "Fred Jackman"
+    ],
+    cast: [
+     "Oliver Hardy",
+     "Barbara Kent",
+     "Jimmy Finlayson"
+    ]
    },
    {
     title: "Robinson Kruse - svensk text",
@@ -7256,7 +10229,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/spring-fever_1927/spring-fever_1927.thumbs/spring-fever_1927_001918.jpg",
-    bytes: 1629722992
+    bytes: 1629722992,
+    wd: "Q2116224",
+    wp: "https://en.wikipedia.org/wiki/Spring_Fever_(1927_film)",
+    wpx: "Spring Fever is a 1927 American silent comedy film starring William Haines, Joan Crawford, and George K. Arthur, and directed by Edward Sedgwick. Based on the 1925 play of the same name by Vincent Lawrence, this was the second film starring Haines and Crawford, and their first onscreen romantic teaming.",
+    dir: [
+     "Edward Sedgwick"
+    ],
+    cast: [
+     "William Haines",
+     "Joan Crawford",
+     "George Fawcett"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Sunrise",
@@ -7279,7 +10266,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/tell-it-to-the-marines_1927/tell-it-to-the-marines_1927.thumbs/tell-it-to-the-marines_1927_002577.jpg",
-    bytes: 1144479541
+    bytes: 1144479541,
+    wd: "Q2397961",
+    wp: "https://en.wikipedia.org/wiki/Tell_It_to_the_Marines_(1926_film)",
+    wpx: "Tell It to the Marines is a 1926 American silent romantic drama film directed by George W. Hill and starring Lon Chaney, William Haines, and Eleanor Boardman. The film follows a Marine recruit and the sergeant who trains him. It was the biggest box office success of Chaney's career and the second biggest moneymaker of 1926/1927.",
+    dir: [
+     "George W. Hill"
+    ],
+    cast: [
+     "Lon Chaney",
+     "Lori Bara"
+    ]
    },
    {
     title: "The Beloved Rogue",
@@ -7290,7 +10287,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheBelovedRogue/TheBelovedRogue.thumbs/TheBelovedRogue_002340.jpg",
-    bytes: 379223820
+    bytes: 379223820,
+    wd: "Q1192504",
+    wp: "https://en.wikipedia.org/wiki/The_Beloved_Rogue",
+    wpx: "The Beloved Rogue is a 1927 American silent romantic adventure film, loosely based on the life of the 15th century French poet, François Villon. The film was directed by Alan Crosland for United Artists.",
+    dir: [
+     "Alan Crosland"
+    ],
+    cast: [
+     "John Barrymore",
+     "Angelo Rossitto",
+     "Conrad Veidt"
+    ]
    },
    {
     title: "The Cat and the Canary",
@@ -7302,7 +10310,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/The_Cat_and_the_Canary/The_Cat_and_the_Canary.thumbs/The_Cat_and_the_Canary_002040.jpg",
-    bytes: 162230219
+    bytes: 162230219,
+    wd: "Q2336169",
+    wp: "https://en.wikipedia.org/wiki/The_Cat_and_the_Canary_(1927_film)",
+    wpx: "The Cat and the Canary is a 1927 American silent comedy horror film directed by Paul Leni. An adaptation of John Willard's 1922 black-comedy play of the same name, the film stars Laura La Plante as Annabelle West, Forrest Stanley as Charlie Wilder, and Creighton Hale as Paul Jones. The plot revolves around the death of Cyrus West, who is Annabelle, Charlie, and Paul's uncle, and the reading of his will twenty years later. Annabelle is…",
+    dir: [
+     "Paul Leni"
+    ],
+    cast: [
+     "Laura La Plante",
+     "Forrest Stanley",
+     "Creighton Hale"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "The General",
@@ -7314,7 +10336,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the_general_ipod/the_general_ipod.thumbs/the_general_002520.jpg",
-    bytes: 405810097
+    bytes: 405810097,
+    wd: "Q850159",
+    wp: "https://en.wikipedia.org/wiki/The_General_(1926_film)",
+    wpx: "The General is a 1926 American silent comedy film released by United Artists. It was inspired by the Great Locomotive Chase, a true story of an event that occurred during the American Civil War. The story was adapted from the 1889 memoir The Great Locomotive Chase by William Pittenger. The film stars Buster Keaton, who also co-directed it along with Clyde Bruckman.",
+    dir: [
+     "Buster Keaton",
+     "Clyde Bruckman"
+    ],
+    cast: [
+     "Buster Keaton",
+     "Marion Mack",
+     "Charles Henry Smith"
+    ]
    },
    {
     title: "The Kid Stakes",
@@ -7326,7 +10360,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheKidStakes/TheKidStakes.thumbs/Kid_Stakes1927_001620.jpg",
-    bytes: 297902467
+    bytes: 297902467,
+    wd: "Q7744230",
+    wp: "https://en.wikipedia.org/wiki/The_Kid_Stakes",
+    wpx: "The Kid Stakes is a 1927 Australian silent comedy film written and directed by Tal Ordell.",
+    dir: [
+     "Tal Ordell"
+    ],
+    cast: [
+     "Syd Nicholls"
+    ]
    },
    {
     title: "The King of Kings",
@@ -7337,7 +10380,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-king-of-kings_1927/the-king-of-kings_1927.thumbs/the-king-of-kings_1927_003835.jpg",
-    bytes: 11307115086
+    bytes: 11307115086,
+    wd: "Q1795989",
+    wp: "https://en.wikipedia.org/wiki/The_King_of_Kings_(1927_film)",
+    wpx: "The King of Kings is a 1927 American silent epic film produced and directed by Cecil B. DeMille. Starring H. B. Warner in the lead role, it depicts events in the life of Jesus, from the exorcism of Mary Magdalene to the crucifixion and resurrection. The screenplay was written by Jeanie MacPherson and includes verses from the Gospels of Matthew, Mark, Luke, and John.",
+    dir: [
+     "Cecil B. DeMille",
+     "Arthur Rosson"
+    ],
+    cast: [
+     "H. B. Warner",
+     "Ernest Torrence",
+     "Joseph Schildkraut"
+    ]
    },
    {
     title: "The Red Mill 1927 Colorized",
@@ -7359,7 +10414,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-scarlet-letter_1927/the-scarlet-letter_1927.thumbs/the-scarlet-letter_1927_002396.jpg",
-    bytes: 986263811
+    bytes: 986263811,
+    wd: "Q384408",
+    wp: "https://en.wikipedia.org/wiki/The_Scarlet_Letter_(1926_film)",
+    wpx: "The Scarlet Letter is a 1926 American silent drama film based on the 1850 novel of the same name by Nathaniel Hawthorne and directed by Swedish filmmaker Victor Sjöström. Prints of the film survive in the MGM/United Artists film archives and the UCLA Film and Television Archive. The film is now considered the best film adaptation of Hawthorne's novel.",
+    dir: [
+     "Victor Sjöström"
+    ],
+    cast: [
+     "Lillian Gish",
+     "Lars Hanson",
+     "Henry B. Walthall"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "The Sensation Seekers",
@@ -7382,7 +10451,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-unknown_1927/the-unknown_1927.thumbs/the-unknown_1927_001260.jpg",
-    bytes: 1004494463
+    bytes: 1004494463,
+    wd: "Q1197672",
+    wp: "https://en.wikipedia.org/wiki/The_Unknown_(1927_film)",
+    wpx: "The Unknown is a 1927 American silent horror film directed by Tod Browning, and starring Lon Chaney as carnival knife thrower \"Alonzo the Armless\" and Joan Crawford as his beloved carnival girl Nanon. Originally titled Alonzo the Armless, filming took place from February 7 to March 18, 1927 on a $217,000 budget.",
+    dir: [
+     "Tod Browning"
+    ],
+    cast: [
+     "Lon Chaney",
+     "Joan Crawford",
+     "Norman Kerry"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "The Unknown 1927 colorized",
@@ -7415,7 +10498,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/when-a-man-loves_1927/when-a-man-loves_1927.thumbs/when-a-man-loves_1927_002754.jpg",
-    bytes: 2921861889
+    bytes: 2921861889,
+    wd: "Q7992915",
+    wp: "https://en.wikipedia.org/wiki/When_a_Man_Loves",
+    wpx: "When a Man Loves is a 1927 American synchronized sound historical drama film directed by Alan Crosland and produced and distributed by Warner Bros. While the film has no audible dialog, it was released with a synchronized musical score with sound effects using the Vitaphone sound-on-disc process. The picture stars John Barrymore and features Dolores Costello in the frequently filmed story of Abbé Prévost's 1731 novel Manon Lescaut. The…",
+    dir: [
+     "Alan Crosland"
+    ],
+    cast: [
+     "John Barrymore",
+     "Dolores Costello",
+     "Holmes Herbert"
+    ],
+    co: [
+     "Warner Bros. Entertainment"
+    ]
    },
    {
     title: "\"Steamboat Bill, Jr.\" (1928) starring Buster Keaton",
@@ -7449,7 +10546,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/a-woman-of-affairs_1928/a-woman-of-affairs_1928.thumbs/a-woman-of-affairs_1928_002218.jpg",
-    bytes: 1857605661
+    bytes: 1857605661,
+    wd: "Q1306853",
+    wp: "https://en.wikipedia.org/wiki/A_Woman_of_Affairs",
+    wpx: "A Woman of Affairs is a 1928 Metro-Goldwyn-Mayer synchronized sound drama film directed by Clarence Brown and starring Greta Garbo, John Gilbert, Douglas Fairbanks Jr. and Lewis Stone. While the film has no audible dialog, it was released with a synchronized musical score with sound effects using both the sound-on-disc and sound-on-film process. The film was based on a 1924 best-selling novel by Michael Arlen, The Green Hat, which he…",
+    dir: [
+     "Clarence Brown"
+    ],
+    cast: [
+     "Greta Garbo",
+     "John Gilbert",
+     "Lewis Stone"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Arizona Days",
@@ -7460,7 +10571,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ArizonaDays/ArizonaDays.thumbs/arizonadays_001020.jpg",
-    bytes: 191613391
+    bytes: 191613391,
+    wd: "Q4791287",
+    wp: "https://en.wikipedia.org/wiki/Arizona_Days_(1928_film)",
+    wpx: "Arizona Days is a 1928 American silent Western film directed by J. P. McGowan, who also portrayed the main villain of the film.",
+    dir: [
+     "J. P. McGowan"
+    ],
+    cast: [
+     "Bob Custer",
+     "Peggy Montgomery",
+     "J. P. McGowan"
+    ]
    },
    {
     title: "Berlin: Symphony of a Great City",
@@ -7504,7 +10626,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/HangmansNoose/HangmansNoose.thumbs/Hangmans_House_1928_001710.jpg",
-    bytes: 292502534
+    bytes: 292502534,
+    wd: "Q2352876",
+    wp: "https://en.wikipedia.org/wiki/Hangman's_House",
+    wpx: "Hangman's House is a 1928 American romantic drama genre silent film set in County Wicklow, Ireland, directed by John Ford (uncredited) with inter-titles written by Malcolm Stuart Boylan. It is based on a novel by Brian Oswald Donn-Byrne. It was adapted by Philip Klein with scenarios by Marion Orth. The film is also notable for containing the first confirmed appearance by John Wayne in a John Ford film.",
+    dir: [
+     "John Ford"
+    ],
+    cast: [
+     "Victor McLaglen",
+     "June Collyer",
+     "Larry Kent"
+    ],
+    co: [
+     "Fox Film Corporation"
+    ]
    },
    {
     title: "Lights Of New York 1928 Colorized",
@@ -7526,7 +10662,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/lonesome-1928/lonesome-1928.thumbs/Lonesome%20-%20(1928)_001734.jpg",
-    bytes: 1032909760
+    bytes: 1032909760,
+    wd: "Q939497",
+    wp: "https://en.wikipedia.org/wiki/Lonesome_(1928_film)",
+    wpx: "Lonesome is a 1928 American sound part-talkie comedy drama film directed by Paul Fejös, and starring Barbara Kent and Glenn Tryon. Although containing a few sequences with audible dialog, the majority of the film had a synchronized musical score with sound effects with English intertitles. The film was released in both sound-on-disc and sound-on-film formats. Its plot follows two working-class residents of New York City over a…",
+    dir: [
+     "Paul Fejos"
+    ],
+    cast: [
+     "Barbara Kent",
+     "Glenn Tryon",
+     "Fay Holderness"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "Lucrezia Borgia",
@@ -7570,7 +10720,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/speedy_1928/speedy_1928.thumbs/speedy_1928_002100.jpg",
-    bytes: 2464739582
+    bytes: 2464739582,
+    wd: "Q1246225",
+    wp: "https://en.wikipedia.org/wiki/Speedy_(film)",
+    wpx: "Speedy is a 1928 American silent comedy film starring comedian Harold Lloyd in the eponymous leading role. It was Lloyd's last silent film before he converted to sound production. Due to the general public's apathy towards silent films, a sound version was prepared and released in the latter half of 1928.",
+    dir: [
+     "Ted Wilde"
+    ],
+    cast: [
+     "Harold Lloyd",
+     "Ann Christy",
+     "Bert Woodruff"
+    ]
    },
    {
     title: "Steamboat Bill, Jr.",
@@ -7581,7 +10742,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/SteamboatBillJr/SteamboatBillJr.thumbs/Steamboat_Bill.Jr_001680.jpg",
-    bytes: 301128137
+    bytes: 301128137,
+    wd: "Q1365572",
+    wp: "https://en.wikipedia.org/wiki/Steamboat_Bill%2C_Jr.",
+    wpx: "Steamboat Bill, Jr. is a 1928 American silent comedy film starring Buster Keaton. Released by United Artists, the film is the final product of Keaton's independent production team and set of gag writers.",
+    dir: [
+     "Charles Reisner"
+    ],
+    cast: [
+     "Buster Keaton",
+     "Ernest Torrence",
+     "Joe Keaton"
+    ]
    },
    {
     title: "Submarine",
@@ -7603,7 +10775,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-cameraman_1928/the-cameraman_1928.thumbs/the-cameraman_1928_002035.jpg",
-    bytes: 3014568430
+    bytes: 3014568430,
+    wd: "Q2138984",
+    wp: "https://en.wikipedia.org/wiki/The_Cameraman",
+    wpx: "The Cameraman is a 1928 American silent romantic comedy film directed by Edward Sedgwick and an uncredited Buster Keaton. The picture stars Keaton and Marceline Day.",
+    dir: [
+     "Edward Sedgwick",
+     "Buster Keaton"
+    ],
+    cast: [
+     "Buster Keaton",
+     "Marceline Day",
+     "Harold Goodwin"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "The Cameraman (1928) HD with Score",
@@ -7625,7 +10812,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-docks-of-new-york/the-docks-of-new-york.thumbs/The%20Docks%20of%20New%20York_001794.jpg",
-    bytes: 457794359
+    bytes: 457794359,
+    wd: "Q1586983",
+    wp: "https://en.wikipedia.org/wiki/The_Docks_of_New_York",
+    wpx: "The Docks of New York is a 1928 American silent drama film directed by Josef von Sternberg and starring George Bancroft, Betty Compson, and Olga Baclanova. The movie was adapted by Jules Furthman from the John Monk Saunders story The Dock Walloper.",
+    dir: [
+     "Josef von Sternberg"
+    ],
+    cast: [
+     "George Bancroft",
+     "Betty Compson",
+     "Olga Baclanova"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "The Last Command",
@@ -7636,7 +10837,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-last-command/the-last-command.thumbs/The%20Last%20Command_002094.jpg",
-    bytes: 537978628
+    bytes: 537978628,
+    wd: "Q466816",
+    wp: "https://en.wikipedia.org/wiki/The_Last_Command_(1928_film)",
+    wpx: "The Last Command is a 1928 American silent romantic drama film directed by Josef von Sternberg, and written by John F. Goodrich and Herman J. Mankiewicz from a story by Lajos Bíró. The film stars Emil Jannings, who won the first Academy Award for Best Actor in a Leading Role at the 1929 ceremony for his performances in this film and The Way of All Flesh, the only year multiple roles were considered. Evelyn Brent and William Powell co-star.",
+    dir: [
+     "Josef von Sternberg"
+    ],
+    cast: [
+     "Emil Jannings",
+     "Evelyn Brent",
+     "William Powell"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "The Man Who Laughs",
@@ -7647,7 +10862,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-man-who-laughs-1928-1080p-blu-ray-x-265-ghost/the-man-who-laughs-1928-1080p-blu-ray-x-265-ghost.thumbs/The%20Man%20Who%20Laughs%20(1928)%20(1080p%20BluRay%20x265%20Ghost)_002695.jpg",
-    bytes: 680708780
+    bytes: 680708780,
+    wd: "Q1809883",
+    wp: "https://en.wikipedia.org/wiki/The_Man_Who_Laughs_(1928_film)",
+    wpx: "The Man Who Laughs is a 1928 American synchronized sound romantic drama film directed by the German Expressionist filmmaker Paul Leni. While the film has no audible dialog, it was released with a synchronized musical score with sound effects using both sound-on-disc and sound-on-film processes. The film is an adaptation of Victor Hugo's 1869 novel of the same name, and it stars Mary Philbin as the blind Dea and Conrad Veidt as…",
+    dir: [
+     "Paul Leni"
+    ],
+    cast: [
+     "Conrad Veidt",
+     "Mary Philbin",
+     "Brandon Hurst"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "The Spieler (1928) Alan Hale, Renée Adorée, Fred Kohler and Clyde Cook",
@@ -7669,7 +10898,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-wind_1928/the-wind_1928.thumbs/the-wind_1928_001860.jpg",
-    bytes: 2274508666
+    bytes: 2274508666,
+    wd: "Q2426434",
+    wp: "https://en.wikipedia.org/wiki/The_Wind_(1928_film)",
+    wpx: "The Wind is a 1928 American synchronized sound romantic drama film directed by Victor Sjöström. While the film has no audible dialog, it was released with a synchronized musical score with sound effects using both the sound-on-disc and sound-on-film process. The movie was adapted by Frances Marion from the 1925 novel of the same name written by Dorothy Scarborough. Featuring Lillian Gish, Lars Hanson and Montagu Love, it is one of the…",
+    dir: [
+     "Victor Sjöström"
+    ],
+    cast: [
+     "Lillian Gish",
+     "Lars Hanson",
+     "Montagu Love"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "West Of Zanzibar (Original Soundtrack)",
@@ -7680,7 +10923,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/WestOfZanzibar/WestOfZanzibar.thumbs/West%20of%20Zanzibar%20vers%202%20-%20Apple%20TV%20(2nd%20Gen.)_001590.jpg",
-    bytes: 1292407865
+    bytes: 1292407865,
+    wd: "Q1988100",
+    wp: "https://en.wikipedia.org/wiki/West_of_Zanzibar_(1928_film)",
+    wpx: "West of Zanzibar is a 1928 American synchronized sound film directed by Tod Browning. While the film has no audible dialog, it was released with a synchronized musical score with sound effects using both the sound-on-disc and sound-on-film process. The screenplay concerns a vengeful stage magician named Phroso who becomes paralyzed in a brawl with a rival. The supporting cast includes Mary Nolan and Warner Baxter. The screenplay was…",
+    dir: [
+     "Tod Browning"
+    ],
+    cast: [
+     "Lon Chaney",
+     "Lionel Barrymore",
+     "Mary Nolan"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Won In The Clouds",
@@ -7693,7 +10950,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/WonInTheClouds/WonInTheClouds.thumbs/WonInTheClouds_002520.jpg",
     subs: "WonInTheClouds.asr.srt",
-    bytes: 227019032
+    bytes: 227019032,
+    wd: "Q8031695",
+    wp: "https://en.wikipedia.org/wiki/Won_in_the_Clouds",
+    wpx: "Won in the Clouds is a 1928 American silent film directed by Bruce M. Mitchell and starring Al Wilson.",
+    dir: [
+     "Bruce M. Mitchell"
+    ],
+    cast: [
+     "Al Wilson"
+    ]
    },
    {
     title: "An Orphan - 雪中孤雏",
@@ -7715,7 +10981,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/BigNews/BigNews.thumbs/BigNews_001560.jpg",
-    bytes: 303334542
+    bytes: 303334542,
+    wd: "Q2902313",
+    wp: "https://en.wikipedia.org/wiki/Big_News_(film)",
+    wpx: "Big News is a 1929 American pre-Code film directed by Gregory La Cava, released by Pathé Exchange, and starring Robert Armstrong and Carole Lombard, billed as \"Carol Lombard\".",
+    dir: [
+     "Gregory La Cava"
+    ],
+    cast: [
+     "Robert Armstrong",
+     "Carole Lombard",
+     "Charles Sellon"
+    ]
    },
    {
     title: "Blackmail",
@@ -7726,7 +11003,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/blackmail_1929/blackmail_1929.thumbs/Blackmail%20-%20(1929)_002096.jpg",
-    bytes: 1515625882
+    bytes: 1515625882,
+    wd: "Q916078",
+    wp: "https://en.wikipedia.org/wiki/Blackmail_(1929_film)",
+    wpx: "Blackmail is a 1929 British crime thriller film directed by Alfred Hitchcock and starring Anny Ondra, John Longden, and Cyril Ritchard. Based on the 1928 play of the same name by Charles Bennett, the film is about a London woman who is blackmailed after killing a man who tries to rape her.",
+    dir: [
+     "Alfred Hitchcock"
+    ],
+    cast: [
+     "Anny Ondra",
+     "John Longden",
+     "Cyril Ritchard"
+    ],
+    co: [
+     "Associated British Picture Corporation"
+    ]
    },
    {
     title: "Broadway",
@@ -7759,7 +11050,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ChelovekskinoapparatomManWithAMovieCamera/ChelovekskinoapparatomManWithAMovieCamera.thumbs/Chelovek_s_kino-apparatom_001560.jpg",
-    bytes: 257515942
+    bytes: 257515942,
+    wd: "Q829250",
+    wp: "https://en.wikipedia.org/wiki/Man_with_a_Movie_Camera",
+    wpx: "Man with a Movie Camera is a 1929 Soviet experimental silent documentary film, written and directed by Dziga Vertov. It was filmed by his brother Mikhail Kaufman, and edited by Vertov's wife Yelizaveta Svilova.",
+    dir: [
+     "Dziga Vertov"
+    ],
+    cast: [
+     "Mikhail Kaufman"
+    ],
+    co: [
+     "All-Ukrainian Photo-Cinema Administration"
+    ]
    },
    {
     title: "Chinatown Nights",
@@ -7770,7 +11073,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ChinatownNights/ChinatownNights.thumbs/Chinatown%20Nights%20(1929)_001914.jpg",
-    bytes: 265124523
+    bytes: 265124523,
+    wd: "Q5100171",
+    wp: "https://en.wikipedia.org/wiki/Chinatown_Nights_(1929_film)",
+    wpx: "Chinatown Nights, also known as Tong War, is a 1929 film starring Wallace Beery and begun as a silent film then finished as an all-talking sound one via dubbing. Directed by William A. Wellman and released by Paramount Pictures, Chinatown Nights also stars Florence Vidor, former wife of director King Vidor, who did not dub her own voice and quit the movie business immediately afterward, preferring not to work in sound films; her voice…",
+    dir: [
+     "William A. Wellman"
+    ],
+    cast: [
+     "Wallace Beery",
+     "Florence Vidor",
+     "Warner Oland"
+    ]
    },
    {
     title: "Dance Hall",
@@ -7804,7 +11118,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/GlorifyingTheAmericanGirl_119/GlorifyingTheAmericanGirl_119.thumbs/GlorifyingTheAmericanGirl1929FsDvdripDivx5_002280.jpg",
-    bytes: 407492091
+    bytes: 407492091,
+    wd: "Q3772447",
+    wp: "https://en.wikipedia.org/wiki/Glorifying_the_American_Girl",
+    wpx: "Glorifying the American Girl is a 1929 American pre-Code musical comedy film produced by Florenz Ziegfeld that highlights Ziegfeld Follies performers. The last third of the film, which was filmed in early Technicolor, is basically a Follies production, with appearances by Rudy Vallee, Helen Morgan, and Eddie Cantor.",
+    dir: [
+     "Millard Webb",
+     "John W. Harkrider"
+    ],
+    cast: [
+     "Mary Eaton",
+     "Eddie Cantor",
+     "Helen Morgan"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "Great Gabbo",
@@ -7817,7 +11146,19 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/great_gabbo/great_gabbo.thumbs/great_gabbo_001620.jpg",
     subs: "great_gabbo.asr.srt",
-    bytes: 298117194
+    bytes: 298117194,
+    wd: "Q3794287",
+    wp: "https://en.wikipedia.org/wiki/The_Great_Gabbo",
+    wpx: "The Great Gabbo is a 1929 American Pre-Code early sound musical drama film directed by James Cruze, based on Ben Hecht's 1928 short story \"The Rival Dummy\", and starring Erich von Stroheim and Betty Compson. The film features songs by Lynn Cowan, Paul Titsworth, Donald McNamee, and King Zany.",
+    dir: [
+     "James Cruze",
+     "Erich von Stroheim"
+    ],
+    cast: [
+     "Erich von Stroheim",
+     "Betty Compson",
+     "Don Douglas"
+    ]
    },
    {
     title: "Her Private Affair (1929) Ann Harding, Harry Bannister, John Loder, Ka",
@@ -7839,7 +11180,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/high-treason_1929/high-treason_1929.thumbs/high-treason_1929_001677.jpg",
-    bytes: 3016180384
+    bytes: 3016180384,
+    wd: "Q14949880",
+    wp: "https://en.wikipedia.org/wiki/High_Treason_(1929_German_film)",
+    wpx: "High Treason is a 1929 German silent drama film directed by Johannes Meyer and starring Gerda Maurus, Gustav Fröhlich and Harry Hardt. The film is set in pre-Revolution Russia. Maurus' performance was contrasted favourably with her appearance in Fritz Lang's Woman in the Moon by the magazine Film und Volk. The film's art direction was by Willi Herrmann.",
+    dir: [
+     "Johannes Meyer"
+    ],
+    cast: [
+     "Gerda Maurus",
+     "Gustav Fröhlich",
+     "Harry Hardt"
+    ],
+    co: [
+     "UFA"
+    ]
    },
    {
     title: "High Voltage",
@@ -7862,7 +11217,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/lucky-boy-1929/lucky-boy-1929.thumbs/Lucky%20Boy%20-%20(1929)_001916.jpg",
-    bytes: 458561636
+    bytes: 458561636,
+    wd: "Q18151978",
+    wp: "https://en.wikipedia.org/wiki/Lucky_Boy_(1929_film)",
+    wpx: "Lucky Boy is a 1929 American sound part-talkie musical comedy-drama film directed by Norman Taurog and Charles C. Wilson, most notable for starring George Jessel in his first known surviving feature picture. In addition to sequences with audible dialogue or talking sequences, the film features a synchronized musical score, singing and sound effects along with English intertitles. The sound was recorded using the Tiffany-Tone system…",
+    dir: [
+     "Norman Taurog",
+     "Charles C. Wilson"
+    ],
+    cast: [
+     "George Jessel",
+     "Gwen Lee",
+     "Mary Doran"
+    ]
    },
    {
     title: "Mister Antonio 1929 Leo Carrillo, Virginia Valli, Gareth Hughes, Frank",
@@ -7973,7 +11340,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/show-boat_1929/show-boat_1929.thumbs/show-boat_1929_002877.jpg",
-    bytes: 1652175122
+    bytes: 1652175122,
+    wd: "Q2066803",
+    wp: "https://en.wikipedia.org/wiki/Show_Boat_(1929_film)",
+    wpx: "Show Boat is a 1929 American pre-Code sound part-talkie romantic drama film based on the 1926 novel Show Boat by Edna Ferber. The film initially did not use the 1927 stage musical of the same name as a source, but scenes were later added into the film incorporating two of the songs from the musical as well as other songs. Many of these songs from the stage show were featured in a special prologue that was added to the picture before it…",
+    dir: [
+     "Harry A. Pollard",
+     "Robbie Baldwin Ross"
+    ],
+    cast: [
+     "Laura La Plante",
+     "Joseph Schildkraut",
+     "Emily Fitzroy"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "So Long Letty 1929 Colorized",
@@ -7995,7 +11377,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/spite-marriage_1929/spite-marriage_1929.thumbs/spite-marriage_1929_002035.jpg",
-    bytes: 3014568446
+    bytes: 3014568446,
+    wd: "Q3222771",
+    wp: "https://en.wikipedia.org/wiki/Spite_Marriage",
+    wpx: "Spite Marriage is a 1929 American silent comedy film co-directed by Buster Keaton and Edward Sedgwick and starring Keaton and Dorothy Sebastian. It is the second film Keaton made for MGM and his last silent film, although he had wanted it to be a \"talkie\" or full sound film. While the production has no recorded dialogue, it does feature an accompanying synchronized score and recorded laughter, applause, and other sound effects. Keaton…",
+    dir: [
+     "Edward Sedgwick",
+     "Buster Keaton"
+    ],
+    cast: [
+     "Dorothy Sebastian",
+     "Edward Earle",
+     "Buster Keaton"
+    ]
    },
    {
     title: "Sunnyside Up",
@@ -8029,7 +11423,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-black-watch_1929/the-black-watch_1929.thumbs/the-black-watch_1929_002221.jpg",
-    bytes: 527268958
+    bytes: 527268958,
+    wd: "Q2576462",
+    wp: "https://en.wikipedia.org/wiki/The_Black_Watch_(film)",
+    wpx: "The Black Watch is a 1929 American sound (All-Talking) pre-Code adventure epic film directed by John Ford and starring Victor McLaglen, Myrna Loy, and David Torrence. It was written by John Stone, based on the 1916 novel King of the Khyber Rifles by Talbot Mundy, with dialogue by James Kevin McGuinness. The film features an uncredited 21-year-old John Wayne working as an extra; he also worked in the arts and costume department for the…",
+    dir: [
+     "John Ford"
+    ],
+    cast: [
+     "Victor McLaglen",
+     "Myrna Loy",
+     "David Torrence"
+    ],
+    co: [
+     "Fox Film Corporation"
+    ]
    },
    {
     title: "The Canary Murder Case",
@@ -8040,7 +11448,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CanaryMurderCase/CanaryMurderCase.thumbs/The_Canary_Murder_Case_1929_001830.jpg",
-    bytes: 215767658
+    bytes: 215767658,
+    wd: "Q3520192",
+    wp: "https://en.wikipedia.org/wiki/The_Canary_Murder_Case_(film)",
+    wpx: "The Canary Murder Case is a 1929 American pre-Code crime-mystery film based on the 1927 novel of the same name by S.S. Van Dine. The film was directed by Malcolm St. Clair, with a screenplay by Wright, Albert Shelby LeVino, and Florence Ryerson. William Powell starred in the role of detective Philo Vance, with Louise Brooks co-starring as \"The Canary\"; Jean Arthur, James Hall, and Charles Lane also co-starred in other principal roles.",
+    dir: [
+     "Malcolm St. Clair",
+     "Frank Tuttle"
+    ],
+    cast: [
+     "William Powell",
+     "Louise Brooks",
+     "Jean Arthur"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "The Cocoanuts",
@@ -8051,7 +11474,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-cocoanuts_1929/the-cocoanuts_1929.thumbs/the-cocoanuts_1929_002277.jpg",
-    bytes: 4777768053
+    bytes: 4777768053,
+    wd: "Q581117",
+    wp: "https://en.wikipedia.org/wiki/The_Cocoanuts",
+    wpx: "The Cocoanuts is a 1929 pre-Code musical comedy film starring the Marx Brothers. Produced for Paramount Pictures by Walter Wanger, who is not credited, the film also stars Mary Eaton, Oscar Shaw, Margaret Dumont and Kay Francis. The first sound film to credit more than one director, it was adapted to the screen by Morrie Ryskind from the musical play by George S. Kaufman. Five of the film's tunes were composed by Irving Berlin,…",
+    dir: [
+     "Robert Florey",
+     "Joseph Santley"
+    ],
+    cast: [
+     "Groucho Marx",
+     "Harpo Marx",
+     "Chico Marx"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "The Dance of Life",
@@ -8064,7 +11502,22 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheDanceOfLifeaugust161929/TheDanceOfLifeaugust161929.thumbs/TheDanceOfLife1929Cromwell-sutherlandHalSkellyNancyCarrollVhs_002634.jpg",
     subs: "TheDanceOfLife1929Cromwell-sutherlandHalSkellyNancyCarrollVhs.asr.srt",
-    bytes: 539167514
+    bytes: 539167514,
+    wd: "Q7728820",
+    wp: "https://en.wikipedia.org/wiki/The_Dance_of_Life_(film)",
+    wpx: "The Dance of Life is a 1929 American pre-Code musical film. It is the first of three film adaptations of the popular 1927 Broadway play Burlesque, with the others being Swing High, Swing Low (1937) and When My Baby Smiles at Me (1948). The film was directed by John Cromwell and A. Edward Sutherland. Hal Skelly appeared in the lead role as Ralph “Skid” Johnson after playing the same role in the Broadway version at the Plymouth Theater.…",
+    dir: [
+     "John Cromwell",
+     "A. Edward Sutherland"
+    ],
+    cast: [
+     "Hal Skelly",
+     "Nancy Carroll",
+     "Dorothy Revier"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "The Dance Of Life 1929 Colorized",
@@ -8087,7 +11540,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Eisenstein-TheGeneralLine/Eisenstein-TheGeneralLine.thumbs/Eisenstein-TheGeneralLine_002880.jpg",
     subs: "Eisenstein-TheGeneralLine.srt",
-    bytes: 523003749
+    bytes: 523003749,
+    wd: "Q2581338",
+    wp: "https://en.wikipedia.org/wiki/The_General_Line",
+    wpx: "The General Line, also known as Old and New, is a 1929 Soviet propaganda film directed by Sergei Eisenstein and Grigori Aleksandrov.",
+    dir: [
+     "Sergei Eisenstein",
+     "Grigori Aleksandrov"
+    ],
+    cast: [
+     "Marfa Lapkina",
+     "Maxim Strauch"
+    ],
+    co: [
+     "Sovkino"
+    ]
    },
    {
     title: "The Hollywood Revue of 1929",
@@ -8098,7 +11565,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-hollywood-revue-of-1929_1929/the-hollywood-revue-of-1929_1929.thumbs/the-hollywood-revue-of-1929_1929_002877.jpg",
-    bytes: 4184849673
+    bytes: 4184849673,
+    wd: "Q981032",
+    wp: "https://en.wikipedia.org/wiki/The_Hollywood_Revue",
+    wpx: "The Hollywood Revue of 1929, or simply The Hollywood Revue, is a 1929 American pre-Code musical comedy film released by Metro-Goldwyn-Mayer. It was the studio's second feature-length musical, and one of their earliest sound films. Produced by Harry Rapf and Irving Thalberg and directed by Charles Reisner, it features nearly all of MGM's stars in a two-hour revue that includes three segments in Technicolor. The masters of ceremonies are…",
+    dir: [
+     "Charles Reisner"
+    ],
+    cast: [
+     "Joan Crawford",
+     "Buster Keaton",
+     "Jack Benny"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "The Iron Mask",
@@ -8111,7 +11592,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/iron_mask/iron_mask.thumbs/iron_mask_001740.jpg",
     subs: "iron_mask.asr.srt",
-    bytes: 315106088
+    bytes: 315106088,
+    wd: "Q738056",
+    wp: "https://en.wikipedia.org/wiki/The_Iron_Mask",
+    wpx: "The Iron Mask is a 1929 American part-talkie adventure film directed by Allan Dwan. In addition to some sequences with dialogue, the film featured a synchronized musical score with sound effects and a theme song.",
+    dir: [
+     "Allan Dwan"
+    ],
+    cast: [
+     "Belle Bennett",
+     "Douglas Fairbanks",
+     "Marguerite De La Motte"
+    ]
    },
    {
     title: "The Locked Door",
@@ -8122,7 +11614,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheLockedDoor1929/TheLockedDoor1929.thumbs/TheLockedDoor1929_001770.jpg",
-    bytes: 351205605
+    bytes: 351205605,
+    wd: "Q3227176",
+    wp: "https://en.wikipedia.org/wiki/The_Locked_Door",
+    wpx: "The Locked Door is a 1929 American pre-Code drama film directed by George Fitzmaurice, and starring Rod LaRocque, Barbara Stanwyck, William \"Stage\" Boyd, and Betty Bronson. It is based on the 1919 play The Sign on the Door by Channing Pollock. The play was first adapted for the screen in 1921 as The Sign on the Door, starring Norma Talmadge. It was Stanwyck's first starring role and first talking film.",
+    dir: [
+     "George Fitzmaurice"
+    ],
+    cast: [
+     "Barbara Stanwyck",
+     "Betty Bronson",
+     "Mack Swain"
+    ]
    },
    {
     title: "The Lost Zeppelin 1929 Conway Tearle, Virginia Valli, Ricardo Cortez, ",
@@ -8144,7 +11647,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/love-parade-1929/love-parade-1929.thumbs/The%20Love%20Parade%20-%20(1929)_002694.jpg",
-    bytes: 1747495576
+    bytes: 1747495576,
+    wd: "Q1581723",
+    wp: "https://en.wikipedia.org/wiki/The_Love_Parade",
+    wpx: "The Love Parade is a 1929 American pre-Code musical comedy film, directed by Ernst Lubitsch and starring Maurice Chevalier and Jeanette MacDonald, involving the marital difficulties of Queen Louise of Sylvania (MacDonald) and her consort, Count Alfred Renard (Chevalier). Despite his love for Louise and his promise to be an obedient husband, Count Alfred finds his role as a figurehead unbearable. The supporting cast features Lupino…",
+    dir: [
+     "Ernst Lubitsch"
+    ],
+    cast: [
+     "Maurice Chevalier",
+     "Jeanette MacDonald",
+     "Lillian Roth"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "The Racketeer",
@@ -8157,7 +11674,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The.Racketeer/The.Racketeer.thumbs/The.Racketeer_001560.jpg",
     subs: "The.Racketeer.asr.srt",
-    bytes: 316905441
+    bytes: 316905441,
+    wd: "Q2740725",
+    wp: "https://en.wikipedia.org/wiki/The_Racketeer",
+    wpx: "The Racketeer is a 1929 American Pre-Code drama film. Directed by Howard Higgin, the film is also known as Love's Conquest in the United Kingdom. It tells the tale of some members of the criminal class in 1920s America, and in particular one man and one woman's attempts to help him. Gossip columnist Hedda Hopper appears in a minor role. The film is one of the early talkies, and as a result, dialogue is very sparse.",
+    dir: [
+     "Howard Higgin"
+    ],
+    cast: [
+     "Hedda Hopper",
+     "Carole Lombard",
+     "Robert Armstrong"
+    ],
+    co: [
+     "Pathé"
+    ]
    },
    {
     title: "The Racketeer Carole Lombard Jeanette Loff",
@@ -8203,7 +11734,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the.unholy.night.1929/the.unholy.night.1929.thumbs/The%20Unholy%20Night%20(1929)/mp4/the.unholy.night.1929_002277.jpg",
-    bytes: 1390654380
+    bytes: 1390654380,
+    wd: "Q3835884",
+    wp: "https://en.wikipedia.org/wiki/The_Unholy_Night",
+    wpx: "The Unholy Night is a 1929 American pre-Code mystery film directed by Lionel Barrymore and starring Ernest Torrence.",
+    dir: [
+     "Lionel Barrymore"
+    ],
+    cast: [
+     "Ernest Torrence",
+     "Roland Young",
+     "Dorothy Sebastian"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "The Wild Party",
@@ -8214,7 +11759,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-wild-party_1929/the-wild-party_1929.thumbs/the-wild-party_1929_001856.jpg",
-    bytes: 2092329414
+    bytes: 2092329414,
+    wd: "Q195449",
+    wp: "https://en.wikipedia.org/wiki/The_Wild_Party_(1929_film)",
+    wpx: "The Wild Party is a 1929 American pre-Code film directed by Dorothy Arzner and starring Clara Bow and Fredric March. Released by Paramount Pictures, it is known as Bow's first talkie. It is the fifth film directed by Arzner and the earliest surviving film in her work as a director.",
+    dir: [
+     "Dorothy Arzner"
+    ],
+    cast: [
+     "Clara Bow",
+     "Fredric March",
+     "Marceline Day"
+    ]
    },
    {
     title: "The Wild Party 1929 Colorized",
@@ -8247,7 +11803,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ThunderingThompson/ThunderingThompson.thumbs/ThunderingThompson_001080.jpg",
-    bytes: 202787081
+    bytes: 202787081,
+    wd: "Q7799161",
+    wp: "https://en.wikipedia.org/wiki/Thundering_Thompson",
+    wpx: "Thundering Thompson is a 1929 American silent Western film directed by Ben F. Wilson.",
+    dir: [
+     "Ben F. Wilson"
+    ]
    },
    {
     title: "Turksib",
@@ -8259,7 +11821,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/turksib_1929/turksib_1929.thumbs/turksib_1929_001916.jpg",
-    bytes: 461885442
+    bytes: 461885442,
+    wd: "Q4466186",
+    wp: "https://en.wikipedia.org/wiki/Turksib_(film)",
+    wpx: "Turksib is a 1929 Soviet documentary film directed by Viktor Alexandrovitsh Turin documenting the building of the Turkestan–Siberia Railway. The rail line stretched northeast from Tashkent to Almaty and on to Novosibirsk. The film contrasts the open desert and sand, with the order of rails and the movement of machines. The Turkic people ride horses and camels and rear sheep. This drama is set against the dry steppe as it is converted…",
+    dir: [
+     "Victor A. Turin"
+    ],
+    co: [
+     "Vostokkino"
+    ]
    },
    {
     title: "Untamed",
@@ -8270,7 +11841,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/untamed_1929/untamed_1929.thumbs/untamed_1929_002102.jpg",
-    bytes: 3565901607
+    bytes: 3565901607,
+    wd: "Q1251713",
+    wp: "https://en.wikipedia.org/wiki/Untamed_(1929_film)",
+    wpx: "Untamed is a 1929 American pre-Code Metro-Goldwyn-Mayer romantic drama film directed by Jack Conway and starring Joan Crawford, Robert Montgomery, Ernest Torrence, Holmes Herbert, Gwen Lee, and Lloyd Ingraham. The script was adapted by Sylvia Thalberg and Frank Butler, with dialogue by Willard Mack, from a story by Charles E. Scoggins.",
+    dir: [
+     "Jack Conway"
+    ],
+    cast: [
+     "Joan Crawford",
+     "Robert Montgomery",
+     "Ernest Torrence"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Waterloo",
@@ -8303,7 +11888,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/weary-river_1929/weary-river_1929.thumbs/weary-river_1929_002218.jpg",
-    bytes: 2176697042
+    bytes: 2176697042,
+    wd: "Q1142877",
+    wp: "https://en.wikipedia.org/wiki/Weary_River",
+    wpx: "Weary River is a 1929 American sound part-talkie romantic drama film directed by Frank Lloyd and starring Richard Barthelmess, Betty Compson, and William Holden. The film was produced and distributed by First National Pictures. In addition to sequences with audible dialogue or talking sequences, the film features a synchronized musical score, singing and sound effects along with English intertitles. The soundtrack was recorded using…",
+    dir: [
+     "Frank Lloyd"
+    ],
+    cast: [
+     "Richard Barthelmess",
+     "Betty Compson",
+     "William Holden"
+    ],
+    co: [
+     "First National Pictures"
+    ]
    },
    {
     title: "Welcome Danger",
@@ -8314,7 +11913,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/welcome-danger_1929/welcome-danger_1929.thumbs/welcome-danger_1929_002760.jpg",
-    bytes: 2861082175
+    bytes: 2861082175,
+    wd: "Q3735747",
+    wp: "https://en.wikipedia.org/wiki/Welcome_Danger",
+    wpx: "Welcome Danger is a 1929 American pre-Code comedy film directed by Clyde Bruckman and starring Harold Lloyd. A sound version and silent version were filmed. Ted Wilde began work on the silent version, but became ill and was replaced by Bruckman. Wilde died from stroke two months after this film's premiere.",
+    dir: [
+     "Clyde Bruckman"
+    ],
+    cast: [
+     "Harold Lloyd",
+     "Barbara Kent",
+     "Charles Middleton"
+    ]
    },
    {
     title: "Where East Is East",
@@ -8325,7 +11935,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/where-east-is-east_1929/where-east-is-east_1929.thumbs/where-east-is-east_1929_001616.jpg",
-    bytes: 1653096912
+    bytes: 1653096912,
+    wd: "Q3258661",
+    wp: "https://en.wikipedia.org/wiki/Where_East_Is_East",
+    wpx: "Where East Is East is a 1929 American synchronized sound drama film starring Lon Chaney as an animal trapper in Laos. While the film has no audible dialog, it was released with a synchronized musical score with sound effects using both the sound-on-disc and sound-on-film process. The motion picture is Chaney's penultimate film without dialogue and the last of his collaborations with director Tod Browning. Metro-Goldwyn-Mayer used the…",
+    dir: [
+     "Tod Browning"
+    ],
+    cast: [
+     "Lon Chaney",
+     "Lupe Vélez",
+     "Estelle Taylor"
+    ]
    },
    {
     title: "Wild Orchids",
@@ -8336,7 +11957,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/wild-orchids_1929/wild-orchids_1929.thumbs/wild-orchids_1929_002460.jpg",
-    bytes: 2364522109
+    bytes: 2364522109,
+    wd: "Q728555",
+    wp: "https://en.wikipedia.org/wiki/Wild_Orchids_(film)",
+    wpx: "Wild Orchids is a 1929 American synchronized sound drama film from Metro-Goldwyn-Mayer directed by Sidney Franklin and starring Greta Garbo, Lewis Stone and Nils Asther. Only these three stars received cast credit. While the film has no audible dialog, it was released with a synchronized musical score with sound effects using both the sound-on-disc and sound-on-film process. The plot is very similar to Garbo's later sound film, The Painted Veil (1934).",
+    dir: [
+     "Sidney Franklin"
+    ],
+    cast: [
+     "Greta Garbo",
+     "Lewis Stone",
+     "Nils Asther"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Wings",
@@ -8358,7 +11993,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/wise-girls_1929/wise-girls_1929.thumbs/wise-girls_1929_002398.jpg",
-    bytes: 3073600292
+    bytes: 3073600292,
+    wd: "Q4020494",
+    wp: "https://en.wikipedia.org/wiki/Wise_Girls_(film)",
+    wpx: "Wise Girls is a 1929 American pre-Code comedy film directed by E. Mason Hopper and written by Margaret Booth, Elliott Nugent and J. C. Nugent. The film stars Elliott Nugent, Norma Lee, Roland Young, J. C. Nugent and Clara Blandick in her first talkie film. The film was released on September 21, 1929, by Metro-Goldwyn-Mayer.",
+    dir: [
+     "E. Mason Hopper"
+    ],
+    cast: [
+     "Elliott Nugent",
+     "Roland Young",
+     "Clara Blandick"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "woman to woman",
@@ -8381,7 +12030,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/woman-trap_1929/woman-trap_1929.thumbs/woman-trap_1929_001618.jpg",
-    bytes: 1448649697
+    bytes: 1448649697,
+    wd: "Q3569755",
+    wp: "https://en.wikipedia.org/wiki/Woman_Trap_(1929_film)",
+    wpx: "Woman Trap is a 1929 American drama film directed by William A. Wellman and starring Evelyn Brent. The film is focused in a four cornered love between captain Dan Malone, Kitty Evans and his good for nothing brother Ray Malone. It was adapted from the play, \"Brothers,\" by Edwin J. Burke.",
+    dir: [
+     "William A. Wellman"
+    ],
+    cast: [
+     "Evelyn Brent",
+     "Charles Giblyn",
+     "Chester Morris"
+    ]
    },
    {
     title: "Abraham Lincoln",
@@ -8430,7 +12090,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/africa_speaks/africa_speaks.thumbs/africa_speaks_001200.jpg",
     subs: "africa_speaks.asr.srt",
-    bytes: 218443482
+    bytes: 218443482,
+    wd: "Q2098523",
+    wp: "https://en.wikipedia.org/wiki/Africa_Speaks!",
+    wpx: "Africa Speaks! is a 1930 American documentary film directed by Walter Futter and narrated by Lowell Thomas. It is an exploitation film.",
+    dir: [
+     "Walter Futter"
+    ]
    },
    {
     title: "Africa Speaks iPod version",
@@ -8453,7 +12119,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/AliasFrenchGertie1930/AliasFrenchGertie1930.thumbs/AliasFrenchGertie1930_001650.jpg",
-    bytes: 170973159
+    bytes: 170973159,
+    wd: "Q17511045",
+    wp: "https://en.wikipedia.org/wiki/Alias_French_Gertie",
+    wpx: "Alias French Gertie is a 1930 American pre-Code crime film directed by George Archainbaud from a screenplay by Wallace Smith, based upon the unproduced play The Chatterbox by Bayard Veiller. The film stars Bebe Daniels and Ben Lyon, who were making their first on-screen appearance together. A copy of this film survives in the Library of Congress.",
+    dir: [
+     "George Archainbaud"
+    ],
+    cast: [
+     "Bebe Daniels",
+     "Ben Lyon",
+     "Robert Emmett O'Connor"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "All Quiet on the Western Front",
@@ -8465,7 +12145,22 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/all.-quiet.-on.-the.-western.-front.-1930/all.-quiet.-on.-the.-western.-front.-1930.thumbs/All%20Quiet%20On%20The%20Western%20Front%20(1930)/All.Quiet.On.The.Western.Front.1930_003235.jpg",
     subs: "All Quiet On The Western Front (1930)/All.Quiet.on.the.Western.Front.1930.srt",
-    bytes: 1284785313
+    bytes: 1284785313,
+    wd: "Q272599",
+    wp: "https://en.wikipedia.org/wiki/All_Quiet_on_the_Western_Front_(1930_film)",
+    wpx: "All Quiet on the Western Front is a 1930 American pre-Code epic anti-war film based on the 1929 novel of the same name by German novelist Erich Maria Remarque. Directed by Lewis Milestone, it stars Lew Ayres, Louis Wolheim, John Wray, Slim Summerville, and William Bakewell.",
+    dir: [
+     "Lewis Milestone",
+     "Nate Watt"
+    ],
+    cast: [
+     "Louis Wolheim",
+     "Lew Ayres",
+     "John Wray"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "Animal Crackers",
@@ -8476,7 +12171,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/animal-crackers_1930/animal-crackers_1930.thumbs/animal-crackers_1930_002280.jpg",
-    bytes: 3390173551
+    bytes: 3390173551,
+    wd: "Q547279",
+    wp: "https://en.wikipedia.org/wiki/Animal_Crackers_(1930_film)",
+    wpx: "Animal Crackers is a 1930 American pre-Code comedy film starring the Marx Brothers and directed by Victor Heerman. It is based on the brothers' 1928 musical Animal Crackers by George S. Kaufman and Morrie Ryskind, with songs by Bert Kalmar and Harry Ruby. The screenplay was adapted by Morrie Ryskind. The film features Groucho, Harpo, Chico, and Zeppo Marx alongside Margaret Dumont and Lillian Roth. Set at a Long Island society party…",
+    dir: [
+     "Victor Heerman"
+    ],
+    cast: [
+     "Groucho Marx",
+     "Zeppo Marx",
+     "Margaret Dumont"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "Birds Of Prey",
@@ -8510,7 +12219,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Borrowed_Wives_1930/Borrowed_Wives_1930.thumbs/Borrowed_Wives_1930_001434.jpg",
     subs: "Borrowed_Wives_1930.asr.srt",
-    bytes: 380988947
+    bytes: 380988947,
+    wd: "Q4946632",
+    wp: "https://en.wikipedia.org/wiki/Borrowed_Wives",
+    wpx: "Borrowed Wives is a 1930 American pre-Code comedy film directed by Frank R. Strayer. It stars silent performers Vera Reynolds, Rex Lease, and Sam Hardy. It was distributed by Tiffany Pictures.",
+    dir: [
+     "Frank R. Strayer"
+    ],
+    cast: [
+     "Rex Lease"
+    ]
    },
    {
     title: "Danger Lights",
@@ -8523,7 +12241,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/danger_lights/danger_lights.thumbs/danger_lights_001320.jpg",
     subs: "danger_lights.asr.srt",
-    bytes: 238694485
+    bytes: 238694485,
+    wd: "Q4331128",
+    wp: "https://en.wikipedia.org/wiki/Danger_Lights",
+    wpx: "Danger Lights is a 1930 American pre-Code drama film, directed by George B. Seitz, from a screenplay by James Ashmore Creelman. It stars Louis Wolheim, Robert Armstrong, and Jean Arthur.",
+    dir: [
+     "George B. Seitz"
+    ],
+    cast: [
+     "Louis Wolheim",
+     "Robert Armstrong",
+     "Jean Arthur"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "Dixiana",
@@ -8535,7 +12267,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Dixiana/Dixiana.thumbs/Dixiana_002099.jpg",
-    bytes: 96064602
+    bytes: 96064602,
+    wd: "Q5284777",
+    wp: "https://en.wikipedia.org/wiki/Dixiana_(film)",
+    wpx: "Dixiana is a 1930 American pre-Code musical film directed by Luther Reed and produced and distributed by RKO Radio Pictures. The final twenty minutes of the picture were photographed in Technicolor. The film stars Bebe Daniels, Everett Marshall, Bert Wheeler, Robert Woolsey, Joseph Cawthorn, Jobyna Howland, Ralf Harolde, Bill \"Bojangles\" Robinson and Dorothy Lee. The script was adapted by Luther Reed from a story by Anne Caldwell.",
+    dir: [
+     "Luther Reed"
+    ],
+    cast: [
+     "Bebe Daniels",
+     "Everett Marshall",
+     "Wheeler & Woolsey"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "Extravagance",
@@ -8547,7 +12293,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Extravagance1930bwPre-codeFilm/Extravagance1930bwPre-codeFilm.thumbs/1930Extravagance_001470.jpg",
     subs: "1930Extravagance.asr.srt",
-    bytes: 215497375
+    bytes: 215497375,
+    wd: "Q5422270",
+    wp: "https://en.wikipedia.org/wiki/Extravagance_(1930_film)",
+    wpx: "Extravagance is a 1930 pre-Code film directed by Phil Rosen and released by Tiffany Pictures.",
+    dir: [
+     "Phil Rosen"
+    ]
    },
    {
     title: "Fighting Thru Jeanette Loff Ken Maynard",
@@ -8594,7 +12346,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/hells-angels_1930/hells-angels_1930.thumbs/hells-angels_1930_003178.jpg",
-    bytes: 6552496938
+    bytes: 6552496938,
+    wd: "Q1068328",
+    wp: "https://en.wikipedia.org/wiki/Hell's_Angels_(film)",
+    wpx: "Hell's Angels is a 1930 American pre-Code independent epic war film directed and produced by Howard Hughes, with dialogue directed by James Whale. Written by Harry Behn and Howard Estabrook and starring Ben Lyon, James Hall and Jean Harlow, it was released through United Artists. It follows two dissimilar brothers, both members of the British Royal Flying Corps during the First World War.",
+    dir: [
+     "Howard Hughes",
+     "James Whale"
+    ],
+    cast: [
+     "Jean Harlow",
+     "Ben Lyon",
+     "James Hall"
+    ],
+    co: [
+     "United Artists"
+    ]
    },
    {
     title: "Her Man 1930 Helen Twelvetrees, Marjorie Rambeau, Ricardo Cortez, Phil",
@@ -8640,7 +12407,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Hot_Curves_3054/Hot_Curves_3054.thumbs/Hot_Curves_1930_001530.jpg",
-    bytes: 251892044
+    bytes: 251892044,
+    wd: "Q18150785",
+    wp: "https://en.wikipedia.org/wiki/Hot_Curves",
+    wpx: "Hot Curves is a 1930 American pre-Code comedy-drama film produced and distributed by Tiffany Pictures and directed by Norman Taurog. A print is held by the Library of Congress.",
+    dir: [
+     "Norman Taurog"
+    ],
+    cast: [
+     "Rex Lease",
+     "Pert Kelton",
+     "Natalie Moorhead"
+    ]
    },
    {
     title: "Inside The Lines 1930 Betty Compson, Ralph Forbes, Montagu Love, Regin",
@@ -8674,7 +12452,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/just-imagine_1930/just-imagine_1930.thumbs/JUST%20IMAGINE%20-%20(1930)_002696.jpg",
     subs: "JUST IMAGINE (English_ASR).srt",
-    bytes: 1208140263
+    bytes: 1208140263,
+    wd: "Q1523560",
+    wp: "https://en.wikipedia.org/wiki/Just_Imagine_(film)",
+    wpx: "Just Imagine is a 1930 American pre-Code science fiction musical-comedy film, directed by David Butler. The film is known for its art direction and special effects in its portrayal of New York City in an imagined 1980. Just Imagine stars El Brendel, Maureen O'Sullivan, John Garrick and Marjorie White. The \"man from 1930\" was played by El Brendel.",
+    dir: [
+     "David Butler"
+    ],
+    cast: [
+     "El Brendel",
+     "Maureen O'Sullivan",
+     "John Garrick"
+    ],
+    co: [
+     "20th Century Studios"
+    ]
    },
    {
     title: "Just Like Heaven 1930 Anita Louise, David Newell, Yola d'Avril, Gaston",
@@ -8696,7 +12488,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/KingofJazz1930/KingofJazz1930.thumbs/KingofJazz1930_002190.jpg",
-    bytes: 322880533
+    bytes: 322880533,
+    wd: "Q1194608",
+    wp: "https://en.wikipedia.org/wiki/King_of_Jazz",
+    wpx: "King of Jazz is a 1930 American pre-Code color musical film starring Paul Whiteman and his orchestra. In the 1920s Whiteman signed and featured jazz musicians including Joe Venuti and Eddie Lang, Bix Beiderbecke, Frank Trumbauer, and others.",
+    dir: [
+     "John Murray Anderson",
+     "Paul Fejos"
+    ],
+    cast: [
+     "Paul Whiteman",
+     "John Boles",
+     "Laura La Plante"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "Ladies in Love",
@@ -8708,7 +12515,17 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/LadiesInLove1930/LadiesInLove1930.thumbs/1930LadiesInLove_001590.jpg",
     subs: "1930LadiesInLove.asr.srt",
-    bytes: 185430764
+    bytes: 185430764,
+    wd: "Q20002081",
+    wp: "https://en.wikipedia.org/wiki/Ladies_in_Love_(1930_film)",
+    wpx: "Ladies in Love is a 1930 talking film romance drama directed by Edgar Lewis and starring Alice Day and Johnnie Walker. A B-movie, it was produced independently by Hollywood Pictures and distributed by Chesterfield Motion Pictures Corporation.",
+    dir: [
+     "Melville Shyer",
+     "Edgar Lewis"
+    ],
+    cast: [
+     "Alice Day"
+    ]
    },
    {
     title: "Le Sang d'un Poète ☆ Jean Cocteau ☆ 1930",
@@ -8741,7 +12558,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/morocco-30-1538596735589/morocco-30-1538596735589.thumbs/Morocco_30-1538596735589_002216.jpg",
-    bytes: 1706583950
+    bytes: 1706583950,
+    wd: "Q577754",
+    wp: "https://en.wikipedia.org/wiki/Morocco_(film)",
+    wpx: "Morocco  is a 1930 American pre-Code romantic drama film directed by Josef von Sternberg and starring Gary Cooper, Marlene Dietrich, and Adolphe Menjou. Based on the 1927 novel Amy Jolly by Benno Vigny and adapted by Jules Furthman, the film is about a cabaret singer and a Legionnaire who fall in love during the Rif War, and whose relationship is complicated by his womanizing and the appearance of a rich man who is also in love with…",
+    dir: [
+     "Josef von Sternberg"
+    ],
+    cast: [
+     "Gary Cooper",
+     "Marlene Dietrich",
+     "Adolphe Menjou"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "Night Work 1930 Eddie Quillan, Sally Starr, Frances Upton",
@@ -8786,7 +12617,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/PardonMyGun/PardonMyGun.thumbs/PardonMyGun_001494.jpg",
-    bytes: 387852609
+    bytes: 387852609,
+    wd: "Q7136588",
+    wp: "https://en.wikipedia.org/wiki/Pardon_My_Gun_(1930_film)",
+    wpx: "Pardon My Gun is a 1930 American pre-Code romantic comedy Western film directed by Robert De Lacey, starring Sally Starr, and Tom Keene. This was the last time Keene worked under his real name, George Duryea.",
+    dir: [
+     "Robert De Lacey"
+    ],
+    cast: [
+     "Sally Starr"
+    ],
+    co: [
+     "Pathé Exchange"
+    ]
    },
    {
     title: "Party Girl",
@@ -8820,7 +12663,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/playing-around_1930/playing-around_1930.thumbs/playing-around_1930_001616.jpg",
-    bytes: 1598731522
+    bytes: 1598731522,
+    wd: "Q12126922",
+    wp: "https://en.wikipedia.org/wiki/Playing_Around",
+    wpx: "Playing Around is a 1930 American pre-Code drama film with songs, starring Alice White, Chester Morris, and William Bakewell. It was adapted from the story \"Sheba\", written by Viña Delmar. The film was produced and distributed by First National Pictures, a subsidiary of Warner Bros. Pictures.",
+    dir: [
+     "Mervyn LeRoy"
+    ],
+    cast: [
+     "Alice White",
+     "Chester Morris",
+     "William Bakewell"
+    ],
+    co: [
+     "First National Pictures",
+     "Warner Bros. Entertainment"
+    ]
    },
    {
     title: "Raffles 1930 colorized (Ronald Coleman)",
@@ -8842,7 +12700,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ReachingForTheMoondecember291930/ReachingForTheMoondecember291930.thumbs/ReachingForTheMoon-1930-douglasFairbanksBebeDanielsEdwardEverettHortonBingCrosby_001554.jpg",
-    bytes: 392777066
+    bytes: 392777066,
+    wd: "Q7300225",
+    wp: "https://en.wikipedia.org/wiki/Reaching_for_the_Moon_(1930_film)",
+    wpx: "Reaching for the Moon is a 1930 American pre-Code black and white musical film. Originally released at 91 minutes; surviving versions are usually cut to 62 minutes. A 74-minute version aired in 1998 on AMC. The DVD version runs just under 72 minutes. The film's working title was Lucky Break and is known as Para alcanzar la Luna in Spain. It is not to be confused with the 1917 Fairbanks silent film Reaching for the Moon.",
+    dir: [
+     "Edmund Goulding"
+    ],
+    cast: [
+     "Douglas Fairbanks",
+     "Bebe Daniels",
+     "Edward Everett Horton"
+    ]
    },
    {
     title: "Sin Takes A Holiday",
@@ -8854,7 +12723,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SinTakesAHoliday/SinTakesAHoliday.thumbs/SinTakesAHoliday_001914.jpg",
     subs: "SinTakesAHoliday.asr.srt",
-    bytes: 1569520003
+    bytes: 1569520003,
+    wd: "Q3961347",
+    wp: "https://en.wikipedia.org/wiki/Sin_Takes_a_Holiday",
+    wpx: "Sin Takes a Holiday is a 1930 American pre-Code romantic comedy film, directed by Paul L. Stein, from a screenplay by Horace Jackson, based on a story by Robert Milton and Dorothy Cairns. It starred Constance Bennett, Kenneth MacKenna, and Basil Rathbone. Originally produced by Pathé Exchange and released in 1930, it was part of the takeover package when RKO Pictures acquired Pathé that year; it was re-released by RKO in 1931.",
+    dir: [
+     "Paul L. Stein"
+    ],
+    cast: [
+     "Constance Bennett",
+     "Basil Rathbone",
+     "ZaSu Pitts"
+    ],
+    co: [
+     "Pathé"
+    ]
    },
    {
     title: "Sunny Skies 1930 Rex Lease, Marceline Day, Benny Rubin, Marjorie Kane",
@@ -8876,7 +12759,20 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/that-nights-wife/that-nights-wife.thumbs/That%20Night's%20Wife_001554.jpg",
-    bytes: 393707186
+    bytes: 393707186,
+    wd: "Q3205375",
+    wp: "https://en.wikipedia.org/wiki/That_Night's_Wife",
+    wpx: "That Night's Wife  is a 1930 Japanese crime and drama film directed by Yasujirō Ozu. The film stars Tokihiko Okada, Tatsuo Saitō, Chishū Ryū, Emiko Yagumo and Tōgō Yamamoto in the lead roles.",
+    dir: [
+     "Yasujirō Ozu"
+    ],
+    cast: [
+     "Togo Yamamoto",
+     "Tokihiko Okada"
+    ],
+    co: [
+     "Shochiku"
+    ]
    },
    {
     title: "The Bat Whispers",
@@ -8887,7 +12783,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/bw5558885/bw5558885.thumbs/bw5558885_002034.jpg",
-    bytes: 245726475
+    bytes: 245726475,
+    wd: "Q3985804",
+    wp: "https://en.wikipedia.org/wiki/The_Bat_Whispers",
+    wpx: "The Bat Whispers is a 1930 American pre-Code mystery film directed by Roland West, produced by Joseph M. Schenck, and released by United Artists. The film is based on the 1920 mystery play The Bat, written by Mary Roberts Rinehart and Avery Hopwood, and is the second film version by the same director, previously adapted in 1926. An early talkie and one of the first widescreen films, West financed the cinematography, which required two…",
+    dir: [
+     "Roland West"
+    ],
+    cast: [
+     "Chester Morris",
+     "Una Merkel"
+    ]
    },
    {
     title: "The Benson Murder Case",
@@ -8898,7 +12804,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/tbmc45454578/tbmc45454578.thumbs/tbmc45454578_001554.jpg",
-    bytes: 393813068
+    bytes: 393813068,
+    wd: "Q19363552",
+    wp: "https://en.wikipedia.org/wiki/The_Benson_Murder_Case_(film)",
+    wpx: "The Benson Murder Case is a 1930 American pre-Code crime film directed by Frank Tuttle and written for the screen by S. S. Van Dine and Bartlett Cormack. The film stars William Powell, William \"Stage\" Boyd, Eugene Pallette, Paul Lukas, Natalie Moorhead, Richard Tucker and May Beatty. The film was released on April 13, 1930, by Paramount Pictures, and was based on the 1926 novel of the same name by S. S. Van Dine. The film had initial…",
+    dir: [
+     "Frank Tuttle"
+    ],
+    cast: [
+     "William Powell"
+    ]
    },
    {
     title: "The Big Trail",
@@ -8910,7 +12825,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-big-trail_1930/the-big-trail_1930.thumbs/the-big-trail_1930_002820.jpg",
-    bytes: 680915700
+    bytes: 680915700,
+    wd: "Q1198850",
+    wp: "https://en.wikipedia.org/wiki/The_Big_Trail",
+    wpx: "The Big Trail is a 1930 American epic pre-Code Western early widescreen film shot on location across the American West starring 23-year-old John Wayne in his first leading role and directed by Raoul Walsh. It is the final completed film to feature Tyrone Power Sr. before his death in 1931, as well as his only sound role.",
+    dir: [
+     "Raoul Walsh"
+    ],
+    cast: [
+     "John Wayne",
+     "Marguerite Churchill",
+     "Tyrone Power Sr."
+    ],
+    co: [
+     "20th Century Studios"
+    ]
    },
    {
     title: "The Land of Missing Men",
@@ -8922,7 +12851,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/LandOfMissingMen/LandOfMissingMen.thumbs/Land_of_Missing_Men_1930_001350.jpg",
     subs: "Land_of_Missing_Men_1930.asr.srt",
-    bytes: 176842140
+    bytes: 176842140,
+    wd: "Q107354770",
+    wp: "https://en.wikipedia.org/wiki/The_Land_of_Missing_Men",
+    wpx: "The Land of Missing Men is a 1930 American pre-Code Western film written and directed by John P. McCarthy – with a script from Bob Quigley – and produced by Trem Carr for his studio Trem Carr Productions. Starring Bob Steele, Al St. John, Eddie Dunn, Caryl Lincoln, Al Jennings and Fern Emmett.",
+    dir: [
+     "John P. McCarthy"
+    ]
    },
    {
     title: "The Medicine Man",
@@ -8933,7 +12868,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheMedicineMan720p1930/TheMedicineMan720p1930.thumbs/TheMedicineMan720p_001554.jpg",
-    bytes: 419863763
+    bytes: 419863763,
+    wd: "Q7750874",
+    wp: "https://en.wikipedia.org/wiki/The_Medicine_Man_(1930_film)",
+    wpx: "The Medicine Man is a 1930 American pre-Code comedy drama film directed by Scott Pembroke, released by Tiffany Pictures, and starring Jack Benny, Betty Bronson, and Eva Novak.",
+    dir: [
+     "Scott Pembroke"
+    ]
    },
    {
     title: "The Oklahoma Cyclone",
@@ -8956,7 +12897,20 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ThePay-Off/ThePay-Off.thumbs/ThePay-Off_001674.jpg",
-    bytes: 322303666
+    bytes: 322303666,
+    wd: "Q7756403",
+    wp: "https://en.wikipedia.org/wiki/The_Pay-Off_(1930_film)",
+    wpx: "The Pay-Off is a 1930 American pre-Code crime drama film directed by Lowell Sherman, who also starred in the film along with Marian Nixon and Hugh Trevor. The screenplay was adapted by Jane Murfin, along with Samuel Shipman and John B. Hymer, based on Shipman and Hymer's 1927 play, Crime.",
+    dir: [
+     "Lowell Sherman"
+    ],
+    cast: [
+     "Lowell Sherman",
+     "George F. Marion"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "The Royal Family of Broadway",
@@ -8967,7 +12921,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/rfob77589/rfob77589.thumbs/rfob77589_001974.jpg",
-    bytes: 312874668
+    bytes: 312874668,
+    wd: "Q1790093",
+    wp: "https://en.wikipedia.org/wiki/The_Royal_Family_of_Broadway",
+    wpx: "The Royal Family of Broadway is a 1930 American pre-Code comedy film directed by George Cukor and Cyril Gardner and released by Paramount Pictures. The screenplay was adapted by Herman J. Mankiewicz and Gertrude Purcell from the 1927 play The Royal Family by Edna Ferber and George S. Kaufman. It stars Ina Claire, Fredric March, Mary Brian, Henrietta Crosman, Arnold Korff, and Frank Conroy. It was shot at the Astoria Studios in New…",
+    dir: [
+     "George Cukor",
+     "Cyril Gardner"
+    ],
+    cast: [
+     "Ina Claire",
+     "Fredric March",
+     "Mary Brian"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "The Silver Horde",
@@ -8978,7 +12947,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/SilverHorde1930/SilverHorde1930.thumbs/The_Silver_Horde_1930_001830.jpg",
-    bytes: 236204755
+    bytes: 236204755,
+    wd: "Q7764285",
+    wp: "https://en.wikipedia.org/wiki/The_Silver_Horde_(1930_film)",
+    wpx: "The Silver Horde is a 1930 American pre-Code romantic drama film starring Joel McCrea as a fisherman torn between two women, played by top-billed Evelyn Brent and Jean Arthur.",
+    dir: [
+     "George Archainbaud"
+    ],
+    cast: [
+     "Evelyn Brent",
+     "Louis Wolheim",
+     "Joel McCrea"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "Under Montana Skies 1930 Kenneth Harlan, Slim Summerville, Dorothy Gul",
@@ -9000,7 +12983,12 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/UnderTexasSkies/UnderTexasSkies.thumbs/UnderTexasSkies_001194.jpg",
-    bytes: 307501621
+    bytes: 307501621,
+    wd: "Q7883188",
+    wp: "https://en.wikipedia.org/wiki/Under_Texas_Skies_(1930_film)",
+    dir: [
+     "J. P. McGowan"
+    ]
    },
    {
     title: "Walk Cheerfully",
@@ -9011,7 +12999,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/walk-cheerfully/walk-cheerfully.thumbs/Walk%20Cheerfully_002274.jpg",
-    bytes: 576891343
+    bytes: 576891343,
+    wd: "Q3897247",
+    dir: [
+     "Yasujirō Ozu"
+    ],
+    cast: [
+     "Minoru Takada",
+     "Hiroko Kawasaki",
+     "Satoko Date"
+    ],
+    co: [
+     "Shochiku"
+    ]
    },
    {
     title: "Westfront 1918 (1930) (ENG sub)",
@@ -9023,7 +13023,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/westfront.-1918.1930.720p.-blu-/westfront.-1918.1930.720p.-blu-.thumbs/Westfront.1918.1930.720p.BluRay.x264.AAC-%5BYTS.MX%5D_002281.jpg",
     subs: "Westfront.1918.1930.720p.BluRay.x264.AAC-[YTS.MX].srt",
-    bytes: 925100748
+    bytes: 925100748,
+    wd: "Q562096",
+    wp: "https://en.wikipedia.org/wiki/Westfront_1918",
+    wpx: "Westfront 1918 is a German war film, set mostly in the trenches of the Western Front during World War I. It was directed in 1930 by G. W. Pabst, from a screenplay by Ladislaus Vajda based on the novel Four Infantrymen on the Western Front 1918 by Ernst Johannsen. The film shows the effect of the war on a group of infantrymen portrayed by an ensemble cast led by screen veterans Fritz Kampers and Gustav Diessl.",
+    dir: [
+     "Georg Wilhelm Pabst"
+    ],
+    cast: [
+     "Fritz Kampers",
+     "Gustav Diessl",
+     "Hans Joachim Moebis"
+    ]
    },
    {
     title: "Wings Of Adventure 1930 Rex Lease, Armida, Clyde Cook, Fred Malatesta",
@@ -9045,7 +13056,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/WinningtheWest/WinningtheWest.thumbs/WinningtheWest_001674.jpg",
-    bytes: 428198880
+    bytes: 428198880,
+    wd: "Q18151701",
+    wp: "https://en.wikipedia.org/wiki/The_Light_of_Western_Stars_(1930_film)",
+    wpx: "The Light of Western Stars is a 1930 American pre-Code Western produced and distributed by Paramount Pictures. It had two directors, Otto Brower and Edwin H. Knopf. This film is the third filming of Zane Grey's 1914 novel, The Light of Western Stars. Richard Arlen and Mary Brian starred. Previously filmed by Paramount as a silent in 1925.",
+    dir: [
+     "Otto Brower"
+    ],
+    cast: [
+     "Richard Arlen"
+    ]
    }
   ]
  },
@@ -9090,7 +13110,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheGreatTrainRobbery_555/TheGreatTrainRobbery_555.thumbs/TheGreatTrainRobbery_000300.jpg",
     subs: "TheGreatTrainRobbery.asr.srt",
-    bytes: 51961362
+    bytes: 51961362,
+    wd: "Q470329",
+    wp: "https://en.wikipedia.org/wiki/The_Great_Train_Robbery_(1903_film)",
+    wpx: "The Great Train Robbery is a 1903 American silent Western action film made by Edwin S. Porter for the Edison Manufacturing Company. It follows a gang of outlaws who hold up and rob a steam train at a station in the American West, flee across mountainous terrain, and are finally defeated by a posse of locals. The short film draws on many sources, including a robust existing tradition of Western films, recent European innovations in film…",
+    dir: [
+     "Edwin Stanton Porter"
+    ],
+    cast: [
+     "Alfred C. Abadie",
+     "Broncho Billy Anderson",
+     "Justus D. Barnes"
+    ],
+    co: [
+     "Edison Studios"
+    ]
    },
    {
     title: "\"Children in the Surf, Coney Island\" (1904) cinematographer Billy Bitz",
@@ -9124,7 +13158,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/The_Impossible_Voyage/The_Impossible_Voyage.thumbs/The_Impossible_Voyage_000480.jpg",
-    bytes: 76955210
+    bytes: 76955210,
+    wd: "Q2563734",
+    wp: "https://en.wikipedia.org/wiki/The_Impossible_Voyage",
+    wpx: "The Impossible Voyage, also known as An Impossible Voyage and Whirling the Worlds, is a 1904 French silent trick film directed by Georges Méliès. Inspired by Jules Verne's and Adolphe d'Ennery's 1882 play Journey Through the Impossible, and modeled in style and format on Méliès's highly successful 1902 film A Trip to the Moon, the film is a satire of scientific exploration in which a group of geographically minded tourists attempt a…",
+    dir: [
+     "Georges Méliès"
+    ],
+    cast: [
+     "Georges Méliès"
+    ],
+    co: [
+     "Star Film Company"
+    ]
    },
    {
     title: "Le Dirigeable Fantastique ou le Cauchemar d'un Inventeur",
@@ -9135,7 +13181,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/LeDirigeableFantastiqueOuLeCauchemarDunInventeur/LeDirigeableFantastiqueOuLeCauchemarDunInventeur.thumbs/1905GeorgesMlisLeDirigeableFantastiqueOuLeCauchemarDunInventeur_000057.jpg",
-    bytes: 14460579
+    bytes: 14460579,
+    wd: "Q3222336",
+    wp: "https://en.wikipedia.org/wiki/The_Inventor_Crazybrains_and_His_Wonderful_Airship",
+    wpx: "Le Dirigeable fantastique ou le Cauchemar d'un inventeur, released in the US as The Inventor Crazybrains and His Wonderful Airship and in the UK as  Fantastical Air Ship, is a 1905 French short silent film directed by Georges Méliès. The film was released by Méliès's Star Film Company and is numbered 786–788 in its catalogues.",
+    dir: [
+     "Georges Méliès"
+    ],
+    cast: [
+     "Georges Méliès"
+    ],
+    co: [
+     "Star Film Company"
+    ]
    },
    {
     title: "The Wandering Jew",
@@ -9158,7 +13216,11 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-baden-verboten-aka-bathing-forbidden/silent-baden-verboten-aka-bathing-forbidden.thumbs/Baden%20verboten%20AKA%20Bathing%20Forbidden_000003.jpg",
-    bytes: 6238054
+    bytes: 6238054,
+    wd: "Q59734689",
+    dir: [
+     "Johann Schwarzer"
+    ]
    },
    {
     title: "Jugendspiele AKA Games of Youth",
@@ -9180,7 +13242,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/LalchimisteParafaragaramusOuLaCornueInfernaletinted/LalchimisteParafaragaramusOuLaCornueInfernaletinted.thumbs/1906GeorgesMlisLalchimisteParafaragaramusOuLaCornueInfernaletintedTheMysteriousRetort_000057.jpg",
-    bytes: 11889933
+    bytes: 11889933,
+    wd: "Q2832142",
+    wp: "https://en.wikipedia.org/wiki/The_Mysterious_Retort",
+    wpx: "L'Alchimiste Parafaragaramus ou la Cornue infernale, released in the United States as The Mysterious Retort and in Britain as The Alchemist and the Demon, is a 1906 French silent trick film directed by Georges Méliès. It was released by Méliès's Star Film Company and is numbered 874–876 in its catalogues.",
+    dir: [
+     "Georges Méliès"
+    ],
+    co: [
+     "Star Film Company"
+    ]
    },
    {
     title: "L'écrin du Raja",
@@ -9225,7 +13296,17 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheStoryOfTheKellyGang-FragmentsFromTheFinalReel/TheStoryOfTheKellyGang-FragmentsFromTheFinalReel.thumbs/StoryOfTheKellyGang_000090.jpg",
     subs: "StoryOfTheKellyGang.asr.srt",
-    bytes: 18471697
+    bytes: 18471697,
+    wd: "Q1212945",
+    wp: "https://en.wikipedia.org/wiki/The_Story_of_the_Kelly_Gang",
+    wpx: "The Story of the Kelly Gang is a 1906 Australian silent bushranger film directed by Charles Tait. It traces the exploits of the 19th-century Kelly gang of bushrangers and outlaws, led by Ned Kelly. The film was shot in and around Melbourne and originally ran for more than an hour with a reel length of about 1,200 metres (4,000 ft), making it the longest narrative film ever made at the time.",
+    dir: [
+     "Charles Tait",
+     "Millard Johnson"
+    ],
+    cast: [
+     "John Tait"
+    ]
    },
    {
     title: "Les Kiriki Acrobates Japonais",
@@ -9247,7 +13328,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/LesOeufsDePaques/LesOeufsDePaques.thumbs/SegundoDeChomon-LesOeufsDePaques1907_000087.jpg",
-    bytes: 13626741
+    bytes: 13626741,
+    wd: "Q16655531",
+    dir: [
+     "Segundo de Chomón"
+    ],
+    cast: [
+     "Julienne Mathieu"
+    ],
+    co: [
+     "Pathé"
+    ]
    },
    {
     title: "Satan in Prison",
@@ -9259,7 +13350,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Satan_in_Prison/Satan_in_Prison.thumbs/Satan_in_Prison_000120.jpg",
-    bytes: 19356310
+    bytes: 19356310,
+    wd: "Q16028911",
+    wp: "https://en.wikipedia.org/wiki/Satan_in_Prison",
+    wpx: "Satan in Prison is a 1907 French silent trick film by Georges Méliès. The film tells the story of an imprisoned man who turns out to be the Devil in disguise.",
+    dir: [
+     "Georges Méliès"
+    ],
+    co: [
+     "Star Film Company"
+    ]
    },
    {
     title: "Das eitle Stubenmdchen AKA The Vain Housemaid",
@@ -9281,7 +13381,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ElHotelElectrico/ElHotelElectrico.thumbs/SegundoDeChomn-ElHotelElectrico1905_000237.jpg",
-    bytes: 45620697
+    bytes: 45620697,
+    wd: "Q1248410",
+    wp: "https://en.wikipedia.org/wiki/H%C3%B4tel_%C3%A9lectrique",
+    wpx: "Hôtel électrique is a 1908 silent French comedy-fantasy trick film directed by Segundo de Chomón and produced by Pathé Frères. The short appears to be inspired by the 1907 American short film The Haunted Hotel.",
+    dir: [
+     "Segundo de Chomón"
+    ],
+    cast: [
+     "Julienne Mathieu",
+     "Segundo de Chomón"
+    ]
    },
    {
     title: "Les Lunatiques",
@@ -9292,7 +13402,11 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/LesLunatiques/LesLunatiques.thumbs/SegundoDeChomnLesLunatiques1908_000087.jpg",
-    bytes: 13759907
+    bytes: 13759907,
+    wd: "Q124468312",
+    dir: [
+     "Segundo de Chomón"
+    ]
    },
    {
     title: "Les Papillons Japonais",
@@ -9303,7 +13417,11 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/LesPapillonsJaponais/LesPapillonsJaponais.thumbs/SegundoDeChomnLesPapillonsJaponais1908_000087.jpg",
-    bytes: 16091068
+    bytes: 16091068,
+    wd: "Q16655192",
+    dir: [
+     "Segundo de Chomón"
+    ]
    },
    {
     title: "Le Papillon Fantastique",
@@ -9314,7 +13432,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/LePapillonFantastique/LePapillonFantastique.thumbs/1909GeorgesMlisLePapillonFantastiquetheSpiderAndTheButterfly_000040.jpg",
-    bytes: 9540219
+    bytes: 9540219,
+    wd: "Q3225189",
+    wp: "https://en.wikipedia.org/wiki/The_Spider_and_the_Butterfly",
+    wpx: "The Spider and the Butterfly is a 1909 French silent trick film directed by Georges Méliès.",
+    dir: [
+     "Georges Méliès"
+    ],
+    cast: [
+     "Georges Méliès"
+    ],
+    co: [
+     "Star Film Company"
+    ]
    },
    {
     title: "Le Voleur Invisible",
@@ -9325,7 +13455,11 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/LeVoleurInvisible/LeVoleurInvisible.thumbs/1909SegundoDeChomnLeVoleurInvisibletheInvisiibleThief_000177.jpg",
-    bytes: 39513771
+    bytes: 39513771,
+    wd: "Q3228216",
+    dir: [
+     "Segundo de Chomón"
+    ]
    },
    {
     title: "The Spider and the Butterfly",
@@ -9337,7 +13471,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/The_Spider_and_the_Butterfly/The_Spider_and_the_Butterfly.thumbs/The_Spider_and_the_Butterfly_000040.jpg",
-    bytes: 6885063
+    bytes: 6885063,
+    wd: "Q3225189",
+    wp: "https://en.wikipedia.org/wiki/The_Spider_and_the_Butterfly",
+    wpx: "The Spider and the Butterfly is a 1909 French silent trick film directed by Georges Méliès.",
+    dir: [
+     "Georges Méliès"
+    ],
+    cast: [
+     "Georges Méliès"
+    ],
+    co: [
+     "Star Film Company"
+    ]
    },
    {
     title: "A Christmas Carol",
@@ -9374,7 +13520,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/MarvellousMelbourne/MarvellousMelbourne.thumbs/MarvellousMelbourne_000330.jpg",
     subs: "MarvellousMelbourne.asr.srt",
-    bytes: 62234209
+    bytes: 62234209,
+    wd: "Q15039599",
+    wp: "https://en.wikipedia.org/wiki/Marvellous_Melbourne",
+    wpx: "Marvellous Melbourne: Queen City of the South is a 1910 documentary of Melbourne that takes the audience through the hotspots of its central business district and surrounding features. Published in 1910, the film stands as the oldest surviving documentary of the city. It is currently housed at the National Film & Sound Archive in Pyrmont, Sydney. At the time of filming, Melbourne was the federal capital of Australia, until the…",
+    dir: [
+     "Charles Cozens Spencer"
+    ]
    },
    {
     title: "The Wonderful Wizard of Oz",
@@ -9387,7 +13539,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The_Wonderful_Wizard_of_Oz/The_Wonderful_Wizard_of_Oz.thumbs/WizardOfOz1910_000630.jpg",
     subs: "WonderfulWizardofOz1910.asr.srt",
-    bytes: 51550933
+    bytes: 51550933,
+    wd: "Q3794530",
+    wp: "https://en.wikipedia.org/wiki/The_Wonderful_Wizard_of_Oz_(1910_film)",
+    wpx: "The Wonderful Wizard of Oz, also known as The Wizard of Oz, is a 1910 American silent fantasy film and the earliest surviving film version of L. Frank Baum's 1900 novel The Wonderful Wizard of Oz. The film was made by the Selig Polyscope Company without Baum's direct input. It was created to fulfill a contractual obligation associated with Baum's personal bankruptcy caused by the failure of his theatrical production The Fairylogue and…",
+    dir: [
+     "Otis Turner"
+    ],
+    cast: [
+     "Bebe Daniels",
+     "Hobart Bosworth",
+     "Robert Z. Leonard"
+    ],
+    co: [
+     "Selig Polyscope Company"
+    ]
    },
    {
     title: "Animated Putty",
@@ -9409,7 +13575,23 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-dantes-inferno/silent-dantes-inferno.thumbs/Dante's%20Inferno_000594.jpg",
-    bytes: 121513620
+    bytes: 121513620,
+    wd: "Q1755660",
+    wp: "https://en.wikipedia.org/wiki/L'Inferno",
+    wpx: "L'Inferno is a 1911 Italian silent film, loosely adapted from Inferno, the first canticle of Dante Alighieri's Divine Comedy. L'Inferno took over three years to make, and was the first full-length Italian feature film. It is also one of the first films to be shown in its entirety in the United States.",
+    dir: [
+     "Giuseppe de Liguoro",
+     "Adolfo Padovan"
+    ],
+    cast: [
+     "Salvatore Papa",
+     "Arturo Pirovano",
+     "Giuseppe de Liguoro"
+    ],
+    co: [
+     "Milano Films",
+     "SAFFI-Comerio"
+    ]
    },
    {
     title: "\"Children Who Labor\"",
@@ -9420,7 +13602,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ChildrenWhoLabor1912/ChildrenWhoLabor1912.thumbs/Children%20Who%20Labor%20(1912)_000315.jpg",
-    bytes: 392924074
+    bytes: 392924074,
+    wd: "Q3674620",
+    dir: [
+     "Ashley Miller"
+    ],
+    cast: [
+     "Herbert Yost",
+     "Mary Fuller"
+    ],
+    co: [
+     "Edison Studios"
+    ]
    },
    {
     title: "L'antique Tolède",
@@ -9442,7 +13635,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-saved-from-the-titanic/silent-saved-from-the-titanic.thumbs/Saved%20from%20the%20Titanic_000238.jpg",
-    bytes: 51017242
+    bytes: 51017242,
+    wd: "Q2456767",
+    wp: "https://en.wikipedia.org/wiki/Saved_from_the_Titanic",
+    wpx: "Saved from the Titanic is a 1912 American silent short film starring Dorothy Gibson, an American film actress who survived the sinking of the RMS Titanic on April 15, 1912. Premiering in the United States just 31 days after the event, it was the earliest dramatization of the tragedy.",
+    dir: [
+     "Étienne Arnaud"
+    ],
+    cast: [
+     "Dorothy Gibson",
+     "Alec B. Francis",
+     "John G. Adolfi"
+    ],
+    co: [
+     "Eclair"
+    ]
    },
    {
     title: "The Adventures of Sherlock Holmes - The Copper Beeches",
@@ -9466,7 +13673,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_02_28_BetweenShowers/CC_1914_02_28_BetweenShowers.thumbs/CC_1914_02_28_BetweenShowers_000210.jpg",
-    bytes: 39122498
+    bytes: 39122498,
+    wd: "Q2446402",
+    wp: "https://en.wikipedia.org/wiki/Between_Showers",
+    wpx: "Between Showers is a 1914 silent comedy short film made by Keystone Studios and directed by Henry Lehrman. It starred Charlie Chaplin, Ford Sterling, Emma Clifton, and Chester Conklin.",
+    dir: [
+     "Henry Lehrman"
+    ],
+    cast: [
+     "Charlie Chaplin",
+     "Ford Sterling",
+     "Chester Conklin"
+    ],
+    co: [
+     "Keystone Studios"
+    ]
    },
    {
     title: "Charlie Chaplin's \"Charlie's Recreation\"",
@@ -9477,7 +13698,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_08_13_CharliesRecreation/CC_1914_08_13_CharliesRecreation.thumbs/CC_1914_08_13_CharliesRecreation_000300.jpg",
-    bytes: 53881753
+    bytes: 53881753,
+    wd: "Q2445490",
+    wp: "https://en.wikipedia.org/wiki/Tango_Tangles",
+    wpx: "Tango Tangles is a 1914 American silent comedy short film starring Charles Chaplin and Roscoe Arbuckle. The action takes place in a dance hall, with a drunken Chaplin, Ford Sterling, and the huge, menacing, and acrobatic Arbuckle fighting over a girl. The supporting cast also features Chester Conklin and Minta Durfee. The picture was written, directed and produced by Mack Sennett for Keystone Studios and distributed by Mutual Film Corporation.",
+    dir: [
+     "Mack Sennett"
+    ],
+    cast: [
+     "Charlie Chaplin",
+     "Ford Sterling",
+     "Chester Conklin"
+    ],
+    co: [
+     "Keystone Studios"
+    ]
    },
    {
     title: "Charlie Chaplin's \"Charolot Gargon De Theater\" ( The Property Man)",
@@ -9499,7 +13734,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_03_26_CruelCruelLove/CC_1914_03_26_CruelCruelLove.thumbs/CC_1914_03_26_CruelCruelLove_000210.jpg",
-    bytes: 39108718
+    bytes: 39108718,
+    wd: "Q762380",
+    wp: "https://en.wikipedia.org/wiki/Cruel%2C_Cruel_Love",
+    wpx: "Cruel, Cruel Love is a 1914 American comedy short silent film made at the Keystone Studios and starring Charlie Chaplin.",
+    dir: [
+     "George Nichols",
+     "Mack Sennett"
+    ],
+    cast: [
+     "Charlie Chaplin",
+     "Minta Durfee",
+     "Alice Davenport"
+    ],
+    co: [
+     "Keystone Studios"
+    ]
    },
    {
     title: "Charlie Chaplin's \"His Favorite Pasttime\"",
@@ -9532,7 +13782,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_07_09_LaffingGas/CC_1914_07_09_LaffingGas.thumbs/CC_1914_07_09_LaffingGas_000330.jpg",
-    bytes: 58766040
+    bytes: 58766040,
+    wd: "Q1551630",
+    wp: "https://en.wikipedia.org/wiki/Laughing_Gas_(1914_film)",
+    wpx: "Laughing Gas is a 1914 film starring Charlie Chaplin. The film is also known as Busy Little Dentist, Down and Out, Laffing Gas, The Dentist, and Tuning His Ivories. It is inspired by the 1907 film with the same name.",
+    dir: [
+     "Charlie Chaplin"
+    ],
+    cast: [
+     "Charlie Chaplin",
+     "Fritz Schade",
+     "Mack Swain"
+    ],
+    co: [
+     "Keystone Studios"
+    ]
    },
    {
     title: "Charlie Chaplin's \"Making A Living\"",
@@ -9543,7 +13807,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_02_02_MakingALiving/CC_1914_02_02_MakingALiving.thumbs/CC_1914_02_02_MakingALiving_000210.jpg",
-    bytes: 38587621
+    bytes: 38587621,
+    wd: "Q1141431",
+    wp: "https://en.wikipedia.org/wiki/Making_a_Living",
+    wpx: "Making a Living is the first film starring Charlie Chaplin. A one-reel comedy short, it was completed in three days at Keystone Studios in Los Angeles, California and was released for distribution on February 2, 1914. In it Chaplin portrays a charming swindler who runs afoul of a news reporter and a Keystone Cop. In addition to co-writing the \"scenario\" and directing the production, Henry Lehrman performs as the principal supporting character.",
+    dir: [
+     "Henry Lehrman"
+    ],
+    cast: [
+     "Charlie Chaplin",
+     "Chester Conklin",
+     "Minta Durfee"
+    ],
+    co: [
+     "Keystone Studios"
+    ]
    },
    {
     title: "Charlie Chaplin's \"The Good For Nothing\"",
@@ -9554,7 +13832,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_08_31_TheGoodforNothing/CC_1914_08_31_TheGoodforNothing.thumbs/CC_1914_08_31_TheGoodforNothing_000330.jpg",
-    bytes: 58801927
+    bytes: 58801927,
+    wd: "Q15103533",
+    dir: [
+     "Broncho Billy Anderson"
+    ],
+    cast: [
+     "Broncho Billy Anderson",
+     "Carl Stockdale",
+     "Victor Potel"
+    ],
+    co: [
+     "Essanay Studios"
+    ]
    },
    {
     title: "Charlie Chaplins \"A Film Johnnie\"",
@@ -9565,7 +13855,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_03_02_FilmJohnny/CC_1914_03_02_FilmJohnny.thumbs/CC_1914_03_02_FilmJohnny_000180.jpg",
-    bytes: 31196561
+    bytes: 31196561,
+    wd: "Q302537",
+    wp: "https://en.wikipedia.org/wiki/A_Film_Johnnie",
+    wpx: "A Film Johnnie is a 1914 American short silent film starring Charlie Chaplin, Roscoe Arbuckle, and Mabel Normand, and directed by George Nichols. Chaplin made the film during his time at Keystone Studios, working with producer Mack Sennett, who also appears in the film. The title comes from British slang for a \"young fellow.\"",
+    dir: [
+     "George Nichols"
+    ],
+    cast: [
+     "Charlie Chaplin",
+     "Roscoe Arbuckle",
+     "Mabel Normand"
+    ],
+    co: [
+     "Keystone Studios"
+    ]
    },
    {
     title: "Fatty's Magic Pants",
@@ -9576,7 +13880,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Fatty_s_Magic_Pants_1914/Fatty_s_Magic_Pants_1914.thumbs/Fattys_Magic_Pants_1914_00000011.jpg",
-    bytes: 53531234
+    bytes: 53531234,
+    wd: "Q3208025",
+    wp: "https://en.wikipedia.org/wiki/Fatty's_Magic_Pants",
+    wpx: "Fatty's Magic Pants is a 1914 American short comedy film directed by and starring Fatty Arbuckle. The film is also known as Fatty's Suitless Day.",
+    dir: [
+     "Roscoe Arbuckle"
+    ],
+    cast: [
+     "Roscoe Arbuckle",
+     "Al St. John",
+     "Bert Roach"
+    ],
+    co: [
+     "Keystone Studios"
+    ]
    },
    {
     title: "His New Profession",
@@ -9587,7 +13905,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/HisNewProfession/HisNewProfession.thumbs/The_good_for_nothing_000330.jpg",
-    bytes: 59801306
+    bytes: 59801306,
+    wd: "Q2367759",
+    wp: "https://en.wikipedia.org/wiki/His_New_Profession",
+    wpx: "His New Profession is a 1914 American silent comedy short film made at the Keystone Studios and starring Charlie Chaplin. The film involves Chaplin taking care of a man in a wheelchair. It is also known as \"The Good for Nothing\".",
+    dir: [
+     "Charlie Chaplin"
+    ],
+    cast: [
+     "Charlie Chaplin",
+     "Fritz Schade",
+     "Charley Chase"
+    ],
+    co: [
+     "Keystone Studios"
+    ]
    },
    {
     title: "The Kid Auto Race in Venice",
@@ -9598,7 +13930,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheKidAutoRaceinVenice/TheKidAutoRaceinVenice.thumbs/The_Kid_Auto_Race_In_Venice_000150.jpg",
-    bytes: 27802574
+    bytes: 27802574,
+    wd: "Q1151392",
+    wp: "https://en.wikipedia.org/wiki/Kid_Auto_Races_at_Venice",
+    wpx: "Kid Auto Races at Venice is a 1914 American film starring Charles Chaplin. It is the first film in which his \"Little Tramp\" character makes an appearance before the public. The first film to be produced that featured the character was actually Mabel's Strange Predicament; it was shot a few days before Kid Auto Races but released two days after it; this film, meanwhile, was released only five days after the first film in which Chaplin…",
+    dir: [
+     "Henry Lehrman"
+    ],
+    cast: [
+     "Charlie Chaplin",
+     "Henry Lehrman",
+     "Frank D. Williams"
+    ],
+    co: [
+     "Keystone Studios"
+    ]
    },
    {
     title: "A Night in the Show",
@@ -9609,7 +13955,20 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ANightintheShow/ANightintheShow.thumbs/A_Night_in_the_Show_000420.jpg",
-    bytes: 69574384
+    bytes: 69574384,
+    wd: "Q976849",
+    wp: "https://en.wikipedia.org/wiki/A_Night_in_the_Show",
+    wpx: "A Night in the Show is a 1915 film and Charlie Chaplin's 12th for Essanay. It was made at Majestic Studio in Los Angeles. Chaplin played two roles: one as Mr. Pest and one as Mr. Rowdy. The film was created from Chaplin's stage work from a play called Mumming Birds with the Karno Company from London. Chaplin performed this play during his U.S. tours with Fred Karno's company and decided to bring one of the classic music hall sketches…",
+    dir: [
+     "Charlie Chaplin"
+    ],
+    cast: [
+     "Charlie Chaplin",
+     "Leo White"
+    ],
+    co: [
+     "Essanay Studios"
+    ]
    },
    {
     title: "Charlie Chaplin's \"Charlie Shanghaied\"",
@@ -9631,7 +13990,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1915_02_01_HisNewJob/CC_1915_02_01_HisNewJob.thumbs/CC_1915_02_01_HisNewJob_000480.jpg",
-    bytes: 89517451
+    bytes: 89517451,
+    wd: "Q2294264",
+    wp: "https://en.wikipedia.org/wiki/His_New_Job",
+    wpx: "His New Job is a 1915 American short silent comedy film written by, directed by, and starring Charlie Chaplin. Gloria Swanson appears as an uncredited extra. The title is an inside reference to this being Chaplin's first film after leaving Keystone Studios for Essanay Studios. It was also the only film Chaplin shot at Essanay's Chicago studio. He found the facilities and climate not to his liking, and Chaplin soon relocated back to California.",
+    dir: [
+     "Charlie Chaplin"
+    ],
+    cast: [
+     "Charlie Chaplin",
+     "Ben Turpin",
+     "Charlotte Mineau"
+    ],
+    co: [
+     "Essanay Studios"
+    ]
    },
    {
     title: "Mabel and Fatty Viewing the World's Fair",
@@ -9642,7 +14015,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/MabelAndFattyViewingTheWorldsFair/MabelAndFattyViewingTheWorldsFair.thumbs/mabel_fatty_worlds_fair_000360.jpg",
-    bytes: 66830834
+    bytes: 66830834,
+    wd: "Q6721551",
+    wp: "https://en.wikipedia.org/wiki/Mabel_and_Fatty_Viewing_the_World's_Fair_at_San_Francisco",
+    wpx: "Mabel and Fatty Viewing the World's Fair at San Francisco is a 1915 American short comedy-documentary film both starring and directed by Roscoe Arbuckle and Mabel Normand.",
+    dir: [
+     "Roscoe Arbuckle",
+     "Mabel Normand"
+    ],
+    co: [
+     "Keystone Studios"
+    ]
    },
    {
     title: "Pool Sharks",
@@ -9655,7 +14038,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/pool_sharks/pool_sharks.thumbs/pool_sharks_000240.jpg",
     subs: "pool_sharks.asr.srt",
-    bytes: 41873620
+    bytes: 41873620,
+    wd: "Q5879376",
+    wp: "https://en.wikipedia.org/wiki/Pool_Sharks",
+    wpx: "Pool Sharks is a 1915 American silent short film. The film is notable for being the film acting and writing debut of W. C. Fields and also features early instances of stop-motion animation during a game of pool.",
+    dir: [
+     "Edwin Middleton"
+    ],
+    cast: [
+     "W. C. Fields"
+    ]
    },
    {
     title: "A Natural Born Gambler",
@@ -9666,7 +14058,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/natural_born_gambler/natural_born_gambler.thumbs/natural_born_gambler_000018.jpg",
-    bytes: 84147571
+    bytes: 84147571,
+    wd: "Q3602620",
+    wp: "https://en.wikipedia.org/wiki/A_Natural_Born_Gambler",
+    wpx: "A Natural Born Gambler is a 1916 silent film short, the first of only two films starring Broadway comic and singer Bert Williams. The film was Williams' first two-reel comedy, and was a film that was expected not to disappoint audiences and was highly anticipated. It was produced by the Biograph Company and released by The General Film Company. Williams directed and G. W. Bitzer, also known as Billy Bitzer, who was usually D. W.…",
+    dir: [
+     "Bert Williams"
+    ],
+    cast: [
+     "Bert Williams"
+    ],
+    co: [
+     "Biograph Company"
+    ]
    },
    {
     title: "Charlie Chaplin's \" The Pawnshop\"",
@@ -9677,7 +14081,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1916_10_02_ThePawnshop/CC_1916_10_02_ThePawnshop.thumbs/CC_1916_10_02_ThePawnshop_000480.jpg",
-    bytes: 88687079
+    bytes: 88687079,
+    wd: "Q1140172",
+    wp: "https://en.wikipedia.org/wiki/The_Pawnshop",
+    wpx: "The Pawnshop is Charlie Chaplin's sixth film for Mutual Film Corporation. Released on October 2, 1916, it stars Chaplin in the role of assistant to the pawnshop owner, played by Henry Bergman. Edna Purviance plays the owner's daughter, while Albert Austin appears as an alarm clock owner who watches Chaplin in dismay as he dismantles the clock; the massive Eric Campbell's character attempts to rob the shop.",
+    dir: [
+     "Charlie Chaplin"
+    ],
+    cast: [
+     "Henry Bergman",
+     "Charlie Chaplin"
+    ]
    },
    {
     title: "Charlie Chaplin's \"Behind The Screen\"",
@@ -9688,7 +14102,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1916_11_13_BehindtheScreen/CC_1916_11_13_BehindtheScreen.thumbs/CC_1916_11_13_BehindtheScreen_000480.jpg",
-    bytes: 86656564
+    bytes: 86656564,
+    wd: "Q2345856",
+    wp: "https://en.wikipedia.org/wiki/Behind_the_Screen",
+    wpx: "Behind the Screen is a 1916 American silent short comedy film written by, directed by, and starring Charlie Chaplin, and also starring Eric Campbell and Edna Purviance. Much of the film is slapstick comedy involving Chaplin manhandling large props, mishandling the control to a trap door, and engaging in a raucous pie-throwing fight which spills over into another studio where a period drama is being shot. In one scene Chaplin deftly…",
+    dir: [
+     "Charlie Chaplin"
+    ],
+    cast: [
+     "Eric Campbell",
+     "Charlie Chaplin"
+    ]
    },
    {
     title: "Charlie Chaplin's \"One A.M.\"",
@@ -9699,7 +14123,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1916_08_07_One_A_M/CC_1916_08_07_One_A_M.thumbs/CC_1916_08_07_One_A_M_000360.jpg",
-    bytes: 73198157
+    bytes: 73198157,
+    wd: "Q1152833",
+    wp: "https://en.wikipedia.org/wiki/One_A.M._(1916_film)",
+    wpx: "One A.M. is a unique Charlie Chaplin silent film created for Mutual Film in 1916. It was the first film he starred in alone, and also one of the very few films in which he did not play the Tramp character.",
+    dir: [
+     "Charlie Chaplin"
+    ],
+    cast: [
+     "Charlie Chaplin",
+     "Albert Austin"
+    ]
    },
    {
     title: "Charlie Chaplin's \"Police\"",
@@ -9732,7 +14166,20 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1916_06_12_TheFireman/CC_1916_06_12_TheFireman.thumbs/CC_1916_06_12_TheFireman_000360.jpg",
-    bytes: 68651742
+    bytes: 68651742,
+    wd: "Q2294948",
+    wp: "https://en.wikipedia.org/wiki/The_Fireman_(1916_film)",
+    wpx: "The Fireman is a 1916 film and the second one Charlie Chaplin distributed by the Mutual Film Corporation. Released on June 12, it starred Chaplin as the fireman and Edna Purviance as the daughter to Lloyd Bacon. The film is viewable free of charge on YouTube.",
+    dir: [
+     "Charlie Chaplin"
+    ],
+    cast: [
+     "Lloyd Bacon",
+     "Eric Campbell"
+    ],
+    co: [
+     "Mutual Film Corporation"
+    ]
    },
    {
     title: "Charlie Chaplin's \"The Floorwalker\"",
@@ -9743,7 +14190,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1916_05_15_TheFloorwalker/CC_1916_05_15_TheFloorwalker.thumbs/CC_1916_05_15_TheFloorwalker_000480.jpg",
-    bytes: 84881060
+    bytes: 84881060,
+    wd: "Q166739",
+    wp: "https://en.wikipedia.org/wiki/The_Floorwalker",
+    wpx: "The Floorwalker is a 1916 American silent comedy film, Charlie Chaplin's first Mutual Film Corporation film. The film stars Chaplin, in his traditional Tramp persona, as a customer who creates chaos in a department store and becomes inadvertently entangled in the nefarious scheme of the store manager, played by Eric Campbell, and the store's floorwalker, played by Lloyd Bacon, to embezzle money from the establishment. The film is…",
+    dir: [
+     "Charlie Chaplin"
+    ],
+    cast: [
+     "Eric Campbell",
+     "Charlie Chaplin"
+    ]
    },
    {
     title: "Charlie Chaplin's \"The Rink\"",
@@ -9754,7 +14211,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1916_12_04_TheRink/CC_1916_12_04_TheRink.thumbs/CC_1916_12_04_TheRink_000480.jpg",
-    bytes: 84950811
+    bytes: 84950811,
+    wd: "Q1195688",
+    wp: "https://en.wikipedia.org/wiki/The_Rink_(film)",
+    wpx: "The Rink, a silent film from 1916, is Charlie Chaplin's eighth film for Mutual Films. The film co-starred Edna Purviance, Eric Campbell, Henry Bergman, and Albert Austin, and is best known for showcasing Chaplin's roller skating skills. Chaplin's obvious skill on roller skates surprised many of his fans, but Charlie was an experienced performer. As a touring vaudevillian with Fred Karno's pantomime troupe, Chaplin appeared in a…",
+    dir: [
+     "Charlie Chaplin"
+    ],
+    cast: [
+     "Eric Campbell",
+     "Henry Bergman"
+    ]
    },
    {
     title: "Charlie Chaplin's \"The Vagabond\"",
@@ -9765,7 +14232,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheVagabond1916/TheVagabond1916.thumbs/The-Vagabond-v2_000654.jpg",
-    bytes: 232369067
+    bytes: 232369067,
+    wd: "Q1197772",
+    wp: "https://en.wikipedia.org/wiki/The_Vagabond_(1916_film)",
+    wpx: "The Vagabond is a 1916 American silent romantic comedy film by Charlie Chaplin and his third film with Mutual Films. Released to theaters on July 10, 1916, it co-starred Edna Purviance, Eric Campbell, Leo White and Lloyd Bacon. This film echoed Chaplin's work on The Tramp, with more drama and pathos mixed in with the comedy.",
+    dir: [
+     "Charlie Chaplin"
+    ],
+    cast: [
+     "Charlie Chaplin",
+     "Eric Campbell"
+    ]
    },
    {
     title: "Charlie Chaplin's \"The Adventurer\"",
@@ -9776,7 +14253,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1917_10_22_TheAdventurer/CC_1917_10_22_TheAdventurer.thumbs/CC_1917_10_22_TheAdventurer_000480.jpg",
-    bytes: 82589530
+    bytes: 82589530,
+    wd: "Q1192082",
+    wp: "https://en.wikipedia.org/wiki/The_Adventurer_(1917_film)",
+    wpx: "The Adventurer is an American silent short comedy film made in 1917 written and directed by Charlie Chaplin, and is the last of the twelve films made under contract for the Mutual Film Corporation. The film is viewable free of charge on YouTube.",
+    dir: [
+     "Charlie Chaplin"
+    ],
+    cast: [
+     "Eric Campbell",
+     "Charlie Chaplin"
+    ]
    },
    {
     title: "Charlie Chaplin's \"The Immigrant\"",
@@ -9787,7 +14274,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1917_06_17_TheImmigrant/CC_1917_06_17_TheImmigrant.thumbs/CC_1917_06_17_TheImmigrant_000480.jpg",
-    bytes: 87117322
+    bytes: 87117322,
+    wd: "Q1070468",
+    wp: "https://en.wikipedia.org/wiki/The_Immigrant_(1917_film)",
+    wpx: "The Immigrant is a 1917 American silent romantic comedy short written and directed by Charlie Chaplin. The film stars Chaplin's Tramp character as an immigrant coming to the United States who is accused of theft on the voyage across the Atlantic Ocean and falls in love with a beautiful young woman along the way. It also stars Edna Purviance and Eric Campbell.",
+    dir: [
+     "Charlie Chaplin"
+    ],
+    cast: [
+     "Eric Campbell",
+     "Charlie Chaplin"
+    ]
    },
    {
     title: "The Butcher Boy",
@@ -9798,7 +14295,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/busterkeatonthebutcherboy/busterkeatonthebutcherboy.thumbs/Buster.Keaton.The.Butcher.Boy.1917_000600.jpg",
-    bytes: 104416431
+    bytes: 104416431,
+    wd: "Q8907251",
+    wp: "https://en.wikipedia.org/wiki/The_Butcher_Boy_(1917_film)",
+    wpx: "The Butcher Boy is a 1917 American two-reel silent comedy film written by, directed by, and starring Roscoe \"Fatty\" Arbuckle and featuring Al St. John, Buster Keaton and Alice Lake. This was the first in Arbuckle's series of films with the Comique Film Corporation, and Keaton's film debut.",
+    dir: [
+     "Roscoe Arbuckle"
+    ],
+    cast: [
+     "Roscoe Arbuckle",
+     "Al St. John",
+     "Buster Keaton"
+    ]
    },
    {
     title: "The Rough House",
@@ -9809,7 +14317,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Silent_TheRoughHouse_1917/Silent_TheRoughHouse_1917.thumbs/Silent_TheRoughHouse_1917_ClaCinOnl_000480.jpg",
-    bytes: 82866080
+    bytes: 82866080,
+    wd: "Q3067282",
+    wp: "https://en.wikipedia.org/wiki/The_Rough_House",
+    wpx: "The Rough House is a 1917 American two-reel silent comedy film written by, directed by, and starring both Roscoe \"Fatty\" Arbuckle and Buster Keaton. The Rough House was Keaton's first film as a director.",
+    dir: [
+     "Roscoe Arbuckle",
+     "Buster Keaton"
+    ],
+    cast: [
+     "Roscoe Arbuckle",
+     "Al St. John",
+     "Alice Lake"
+    ]
    },
    {
     title: "WW1-ChateauThierry",
@@ -9832,7 +14352,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Are_Crooks_Dishonest/Are_Crooks_Dishonest.thumbs/Are_Crooks_Dishonest_000330.jpg",
-    bytes: 53201281
+    bytes: 53201281,
+    wd: "Q3621927",
+    wp: "https://en.wikipedia.org/wiki/Are_Crooks_Dishonest%3F",
+    wpx: "Are Crooks Dishonest? is a 1918 American short comedy film featuring Harold Lloyd. Prints of the film survive in the film archives of The Museum of Modern Art and Filmoteca Española.",
+    dir: [
+     "Gilbert Pratt"
+    ],
+    cast: [
+     "Harold Lloyd",
+     "Bebe Daniels",
+     "Snub Pollard"
+    ]
    },
    {
     title: "Charlie Chaplin's \"The Bond\"",
@@ -9843,7 +14374,20 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1918_09_29_TheBond/CC_1918_09_29_TheBond.thumbs/CC_1918_09_29_TheBond_000240.jpg",
-    bytes: 47356065
+    bytes: 47356065,
+    wd: "Q1211063",
+    wp: "https://en.wikipedia.org/wiki/The_Bond_(1918_film)",
+    wpx: "The Bond is a 1918 two-reel propaganda film created by Charlie Chaplin at his own expense for the Liberty Loan Committee for theatrical release to help sell U.S. Liberty Bonds during World War I.",
+    dir: [
+     "Charlie Chaplin"
+    ],
+    cast: [
+     "Albert Austin",
+     "Sydney Chaplin"
+    ],
+    co: [
+     "First National Pictures"
+    ]
    },
    {
     title: "Charlie Chaplin's Triple Trouble",
@@ -9854,7 +14398,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1918_xx_xx_TripleTrouble/CC_1918_xx_xx_TripleTrouble.thumbs/CC_1918_xx_xx_TripleTrouble_000660.jpg",
-    bytes: 119345465
+    bytes: 119345465,
+    wd: "Q971940",
+    wp: "https://en.wikipedia.org/wiki/Triple_Trouble_(1918_film)",
+    wpx: "Triple Trouble is a 1918 two-reel American silent comedy film. It stars Charlie Chaplin, Edna Purviance, and Leo White. This film was not an official Chaplin film, even though it has many Chaplin-directed scenes; after he left the studio, Essanay edited it together using outtakes and newly shot footage directed by White. It had already been established in court that Chaplin had no legal control over the films made during his time with…",
+    dir: [
+     "Charlie Chaplin",
+     "Leo White"
+    ],
+    cast: [
+     "Charlie Chaplin",
+     "Leo White"
+    ],
+    co: [
+     "Essanay Studios"
+    ]
    },
    {
     title: "The Sinking of the Lusitania",
@@ -9876,7 +14434,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/A_Jazzed_Honeymoon_1919/A_Jazzed_Honeymoon_1919.thumbs/A_Jazzed_Honeymoon_1919_000180.jpg",
-    bytes: 31359988
+    bytes: 31359988,
+    wd: "Q941055",
+    wp: "https://en.wikipedia.org/wiki/A_Jazzed_Honeymoon",
+    wpx: "A Jazzed Honeymoon is a 1919 American short comedy film featuring Harold Lloyd. In this eight-minute short, a newly married couple have adventures on a steamship.",
+    dir: [
+     "Hal Roach"
+    ],
+    cast: [
+     "Harold Lloyd",
+     "Bebe Daniels",
+     "Sammy Brooks"
+    ]
    },
    {
     title: "Buster Keaton's \"Convict 13\"",
@@ -9920,7 +14489,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Convict13/Convict13.thumbs/Convict_13_000480.jpg",
-    bytes: 88528614
+    bytes: 88528614,
+    wd: "Q874613",
+    wp: "https://en.wikipedia.org/wiki/Convict_13",
+    wpx: "Convict 13 is a 1920 two-reel silent comedy film starring Buster Keaton. It was written and directed by Keaton and Edward F. Cline.",
+    dir: [
+     "Edward F. Cline",
+     "Buster Keaton"
+    ],
+    cast: [
+     "Buster Keaton",
+     "Sybil Seely",
+     "Joe Roberts"
+    ]
    },
    {
     title: "One Week",
@@ -9931,7 +14512,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/OneWeek/OneWeek.thumbs/One_Week_000540.jpg",
-    bytes: 96986137
+    bytes: 96986137,
+    wd: "Q966597",
+    wp: "https://en.wikipedia.org/wiki/One_Week_(1920_film)",
+    wpx: "One Week is a 1920 American two-reel silent comedy film starring Buster Keaton, the first independent film production he released on his own. The film was written and directed by Keaton and Edward F. Cline, and runs for 19 minutes. Sybil Seely co-stars. The film contains a large number of innovative visual gags largely pertaining to either the house or to ladders.",
+    dir: [
+     "Edward F. Cline",
+     "Buster Keaton"
+    ],
+    cast: [
+     "Buster Keaton",
+     "Sybil Seely",
+     "Joe Roberts"
+    ]
    },
    {
     title: "Scarecrow",
@@ -9986,7 +14579,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Never_Weaken_1921/Never_Weaken_1921.thumbs/Never_Weaken_1921_000660.jpg",
-    bytes: 110683047
+    bytes: 110683047,
+    wd: "Q2068752",
+    wp: "https://en.wikipedia.org/wiki/Never_Weaken",
+    wpx: "Never Weaken is a 1921 American silent short comedy film starring Harold Lloyd and directed by Fred C. Newmeyer.",
+    dir: [
+     "Fred C. Newmeyer"
+    ],
+    cast: [
+     "Harold Lloyd",
+     "Mildred Davis",
+     "Robert Emmett O'Connor"
+    ]
    },
    {
     title: "The Adventures of Sherlock Holmes - The Devil's Foot",
@@ -10009,7 +14613,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheBoat/TheBoat.thumbs/The_Boat_000600.jpg",
-    bytes: 103352552
+    bytes: 103352552,
+    wd: "Q1052767",
+    wp: "https://en.wikipedia.org/wiki/The_Boat_(1921_film)",
+    wpx: "The Boat is a 1921 American two-reel silent comedy film written and directed by, and starring Buster Keaton. Contemporary reviews consider it one of his best shorts, along with One Week (1920), The Playhouse (1921) and Cops (1922). It is presently in the public domain. The International Buster Keaton Society takes its name, The Damfinos, from the name of the film's boat.",
+    dir: [
+     "Buster Keaton",
+     "Edward F. Cline"
+    ],
+    cast: [
+     "Sybil Seely",
+     "Buster Keaton",
+     "Edward F. Cline"
+    ],
+    co: [
+     "First National Pictures"
+    ]
    },
    {
     title: "The Goat",
@@ -10020,7 +14639,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheGoat/TheGoat.thumbs/The_Goat_000540.jpg",
-    bytes: 99771857
+    bytes: 99771857,
+    wd: "Q246324",
+    wp: "https://en.wikipedia.org/wiki/The_Goat_(1921_film)",
+    wpx: "The Goat is a 1921 American two-reel silent comedy film written, and co-directed by Malcolm St. Clair and Buster Keaton and starring Keaton.",
+    dir: [
+     "Buster Keaton",
+     "Malcolm St. Clair"
+    ],
+    cast: [
+     "Buster Keaton",
+     "Virginia Fox",
+     "Joe Roberts"
+    ]
    },
    {
     title: "The Play House",
@@ -10031,7 +14662,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Silent_ThePlayHouse_1921/Silent_ThePlayHouse_1921.thumbs/Silent_ThePlayHouse_1921_ClaCinOnl_000480.jpg",
-    bytes: 77767086
+    bytes: 77767086,
+    wd: "Q3087847",
+    wp: "https://en.wikipedia.org/wiki/The_Play_House",
+    wpx: "The Play House is a 1921 American two-reel silent comic trick film written by, directed by, and starring Buster Keaton. It runs for 22 minutes, and is most famous for an opening sequence in which Keaton plays every role.",
+    dir: [
+     "Buster Keaton",
+     "Edward F. Cline"
+    ],
+    cast: [
+     "Buster Keaton",
+     "Virginia Fox",
+     "Joe Roberts"
+    ]
    },
    {
     title: "The Playhouse",
@@ -10055,7 +14698,23 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/blood_and_sand_digest/blood_and_sand_digest.thumbs/blood_and_sand_digest_000600.jpg",
     subs: "blood_and_sand_digest.asr.srt",
-    bytes: 113764760
+    bytes: 113764760,
+    wd: "Q2452327",
+    wp: "https://en.wikipedia.org/wiki/Blood_and_Sand_(1922_film)",
+    wpx: "Blood and Sand is a 1922 American silent drama film produced by Paramount Pictures, directed by Fred Niblo and starring Rudolph Valentino, Lila Lee, and Nita Naldi. It was based on the 1908 Spanish novel Blood and Sand by Vicente Blasco Ibáñez and the play Blood and Sand by Thomas Cushing which was adapted from Ibáñez's novel.",
+    dir: [
+     "Fred Niblo",
+     "Dorothy Arzner"
+    ],
+    cast: [
+     "Rudolph Valentino",
+     "Lila Lee",
+     "Nita Naldi"
+    ],
+    co: [
+     "Paramount Pictures",
+     "Famous Players-Lasky Corporation"
+    ]
    },
    {
     title: "Buster Keaton's \"Cops\"",
@@ -10077,7 +14736,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Cops/Cops.thumbs/cops_000420.jpg",
-    bytes: 70557897
+    bytes: 70557897,
+    wd: "Q653917",
+    wp: "https://en.wikipedia.org/wiki/Cops_(film)",
+    wpx: "Cops is a 1922 American two-reel silent comedy film about a young man who accidentally runs afoul of the entire Los Angeles Police Department during a parade and is chased all over town. It was written and directed by Edward F. Cline and Keaton. This very Kafka-esque film was filmed during the rape-and-murder trial of his former collaborator Roscoe \"Fatty\" Arbuckle, a circumstance that may have influenced the short's tone of hopeless ensnarement.",
+    dir: [
+     "Edward F. Cline",
+     "Buster Keaton"
+    ],
+    cast: [
+     "Buster Keaton",
+     "Virginia Fox",
+     "Joe Roberts"
+    ]
    },
    {
     title: "Daydreams",
@@ -10088,7 +14759,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Daydreams/Daydreams.thumbs/Daydreams_000420.jpg",
-    bytes: 69995681
+    bytes: 69995681,
+    wd: "Q3115182",
+    wp: "https://en.wikipedia.org/wiki/Day_Dreams_(1922_film)",
+    wpx: "Day Dreams is a 1922 American short comedy film directed by and featuring Buster Keaton. It is most famous for a scene where Keaton finds himself on the inside of a ferry boat paddle wheel. It is a partially lost film and available from public domain sources.",
+    dir: [
+     "Buster Keaton",
+     "Edward F. Cline"
+    ],
+    cast: [
+     "Buster Keaton",
+     "Renée Adorée",
+     "Edward F. Cline"
+    ]
    },
    {
     title: "Mud and Sand",
@@ -10099,7 +14782,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/MudandSand/MudandSand.thumbs/MudandSand_000960.jpg",
-    bytes: 172364609
+    bytes: 172364609,
+    wd: "Q2283359",
+    wp: "https://en.wikipedia.org/wiki/Mud_and_Sand",
+    wpx: "Mud and Sand is a 1922 silent film starring Stan Laurel. The title spoofs the Rudolph Valentino film Blood and Sand from that same year, and many scenes directly parody the film: Dona Sol is replaced by Filet de Sole, and Carmen is replaced by Caramel.",
+    dir: [
+     "Gilbert Pratt"
+    ],
+    cast: [
+     "Stan Laurel",
+     "Leona Anderson",
+     "Wheeler Dryden"
+    ]
    },
    {
     title: "My Wifes Relations",
@@ -10144,7 +14838,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheElectricHouse/TheElectricHouse.thumbs/The_Electric_House_000480.jpg",
-    bytes: 79336628
+    bytes: 79336628,
+    wd: "Q1748689",
+    wp: "https://en.wikipedia.org/wiki/The_Electric_House",
+    wpx: "The Electric House is a 1922 American short comedy film co-directed by and starring Buster Keaton.",
+    dir: [
+     "Buster Keaton",
+     "Edward F. Cline"
+    ],
+    cast: [
+     "Buster Keaton",
+     "Joe Roberts",
+     "Virginia Fox"
+    ]
    },
    {
     title: "The Frozen North",
@@ -10155,7 +14861,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/The_Frozen_North/The_Frozen_North.thumbs/The_Frozen_North_000420.jpg",
-    bytes: 66283053
+    bytes: 66283053,
+    wd: "Q3087849",
+    wp: "https://en.wikipedia.org/wiki/The_Frozen_North",
+    wpx: "The Frozen North is a 1922 American short comedy film directed by and starring Buster Keaton. The film is a parody of early western films, especially those of William S. Hart. The film was written by Keaton and Edward F. Cline. The film runs for around 17 minutes. Marion Harlan and Bonnie Hill co-star in the film.",
+    dir: [
+     "Buster Keaton",
+     "Edward F. Cline"
+    ],
+    cast: [
+     "Sybil Seely",
+     "Buster Keaton",
+     "Joe Roberts"
+    ],
+    co: [
+     "First National Pictures"
+    ]
    },
    {
     title: "The Paleface",
@@ -10166,7 +14887,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ThePaleface/ThePaleface.thumbs/The_Paleface_000480.jpg",
-    bytes: 81346661
+    bytes: 81346661,
+    wd: "Q3281807",
+    wp: "https://en.wikipedia.org/wiki/The_Paleface_(1922_film)",
+    wpx: "The Paleface is a 1922 American silent comedy Western two-reeler film starring Buster Keaton.",
+    dir: [
+     "Buster Keaton",
+     "Edward F. Cline"
+    ],
+    cast: [
+     "Buster Keaton",
+     "Virginia Fox",
+     "Joe Roberts"
+    ]
    },
    {
     title: "The Sawmill",
@@ -10177,7 +14910,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheSawMill/TheSawMill.thumbs/TheSawMill_000474.jpg",
-    bytes: 79644166
+    bytes: 79644166,
+    wd: "Q3522608",
+    wp: "https://en.wikipedia.org/wiki/The_Sawmill",
+    wpx: "The Sawmill is a 1922 American silent comedy short film directed by Larry Semon and featuring Oliver Hardy. The Sawmill was shot at Hume Lake.",
+    dir: [
+     "Larry Semon",
+     "Norman Taurog"
+    ],
+    cast: [
+     "Oliver Hardy",
+     "Larry Semon",
+     "Dorothy Dwan"
+    ],
+    co: [
+     "Vitagraph Studios"
+    ]
    },
    {
     title: "Buster Keaton's \"The Balloonatic\"",
@@ -10200,7 +14948,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/westofhotdog/westofhotdog.thumbs/WestOfHotDog_000720.jpg",
-    bytes: 133300350
+    bytes: 133300350,
+    wd: "Q3548668",
+    wp: "https://en.wikipedia.org/wiki/West_of_Hot_Dog",
+    wpx: "West of Hot Dog is a 1924 American comedy film starring Stan Laurel.",
+    dir: [
+     "Scott Pembroke",
+     "Joe Rock"
+    ],
+    cast: [
+     "Stan Laurel"
+    ]
    },
    {
     title: "Cockeyed: Gems from the Memory of a Nutty Cameraman",
@@ -10222,7 +14980,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Dr_Pyckle_and_Mr_Pride.avi/Dr_Pyckle_and_Mr_Pride.avi.thumbs/Dr_Pyckle_and_Mr_pride_000480.jpg",
-    bytes: 85779240
+    bytes: 85779240,
+    wd: "Q1643439",
+    wp: "https://en.wikipedia.org/wiki/Dr._Pyckle_and_Mr._Pryde",
+    wpx: "Dr. Pyckle and Mr. Pryde is a 1925 American silent, black-and-white comedy horror film, directed by Scott Pembroke and Joe Rock.",
+    dir: [
+     "Scott Pembroke",
+     "Joe Rock"
+    ],
+    cast: [
+     "Stan Laurel",
+     "Dot Farley"
+    ]
    },
    {
     title: "Episodes in the Life of a Gin Bottle",
@@ -10244,7 +15013,20 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/silent-lady-of-the-night/silent-lady-of-the-night.thumbs/Lady%20of%20the%20Night_000474.jpg",
-    bytes: 99586195
+    bytes: 99586195,
+    wd: "Q2213949",
+    wp: "https://en.wikipedia.org/wiki/Lady_of_the_Night_(1925_film)",
+    wpx: "Lady of the Night is a 1925 American silent romantic drama film directed by Monta Bell. The film stars Norma Shearer in a dual role. A print of Lady of the Night exists in the film holdings of the Mary Pickford Institute for Film Education.",
+    dir: [
+     "Monta Bell"
+    ],
+    cast: [
+     "Norma Shearer",
+     "Dale Fuller"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Santa Claus",
@@ -10268,7 +15050,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SlickSleuths/SlickSleuths.thumbs/SlickSleuths_000180.jpg",
     subs: "SlickSleuths.asr.srt",
-    bytes: 31897386
+    bytes: 31897386,
+    wd: "Q131539757"
    },
    {
     title: "Arthur Conan Doyle",
@@ -10281,7 +15064,14 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SirArthurConanDoyleSpeaks_272/SirArthurConanDoyleSpeaks_272.thumbs/SirArthurConanDoyle_000240.jpg",
     subs: "SirArthurConanDoyle.asr.srt",
-    bytes: 43831244
+    bytes: 43831244,
+    wd: "Q13471093",
+    cast: [
+     "Arthur Conan Doyle"
+    ],
+    co: [
+     "Fox Film Corporation"
+    ]
    },
    {
     title: "\"The Cameraman\" (1928) starring Buster Keaton and Marceline Day",
@@ -10338,7 +15128,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Fall_of_the_House_of_Usher_1928_Watson/Fall_of_the_House_of_Usher_1928_Watson.thumbs/Fall_of_the_House_of_Usher_000300.jpg",
     subs: "Fall_of_the_House_of_Usher.asr.srt",
-    bytes: 55548647
+    bytes: 55548647,
+    wd: "Q1747223",
+    wp: "https://en.wikipedia.org/wiki/The_Fall_of_the_House_of_Usher_(1928_French_film)",
+    wpx: "The Fall of the House of Usher is a 1928 French horror film directed by Jean Epstein, one of several films based on the 1839 Gothic short story The Fall of the House of Usher by Edgar Allan Poe.",
+    dir: [
+     "Jean Epstein"
+    ],
+    cast: [
+     "Charles Lamy",
+     "Jean Debucourt",
+     "Abel Gance"
+    ]
    },
    {
     title: "Ask Dad",
@@ -10351,7 +15152,17 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ask_dad/ask_dad.thumbs/ask_dad_000540.jpg",
     subs: "ask_dad.asr.srt",
-    bytes: 97316598
+    bytes: 97316598,
+    wd: "Q4807063",
+    wp: "https://en.wikipedia.org/wiki/Ask_Dad",
+    wpx: "Ask Dad is a 1929 American Pre-Code film directed by Hugh Faulcon and starring Edward Everett Horton and Winston Miller.",
+    dir: [
+     "Hugh Faulcon"
+    ],
+    cast: [
+     "Edward Everett Horton",
+     "Winston Miller"
+    ]
    },
    {
     title: "Bee's Buzz",
@@ -10401,7 +15212,20 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Golf_Specialist_1930/Golf_Specialist_1930.thumbs/Golf_Specialist_000480.jpg",
-    bytes: 87036228
+    bytes: 87036228,
+    wd: "Q7737145",
+    wp: "https://en.wikipedia.org/wiki/The_Golf_Specialist",
+    wpx: "The Golf Specialist is a 1930 pre-Code comedy short subject released by RKO Radio Pictures, and starring W. C. Fields. It was his first talkie. The film was produced at the Ideal studio in Hudson Heights, New Jersey. Many pioneer film studios in America were based in New Jersey, and a few of these production facilities were still being used in 1930.",
+    dir: [
+     "Monte Brice"
+    ],
+    cast: [
+     "W. C. Fields",
+     "Shirley Grey"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "The Limejuice Mystery or Who Spat in Grandfather's Porridge?",
@@ -10414,7 +15238,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheLimejuiceMysteryOrWhoSpatInGrandfathersPorridge/TheLimejuiceMysteryOrWhoSpatInGrandfathersPorridge.thumbs/LimeJuiceMystery_000210.jpg",
     subs: "LimeJuiceMystery.asr.srt",
-    bytes: 38077699
+    bytes: 38077699,
+    wd: "Q7747365",
+    wp: "https://en.wikipedia.org/wiki/The_Limejuice_Mystery_or_Who_Spat_in_Grandfather's_Porridge%3F",
+    wpx: "The Limejuice Mystery or Who Spat in Grandfather's Porridge? is a 1930 British marionette short film directed by Jack Harrison.",
+    dir: [
+     "Jack Harrison"
+    ]
    }
   ]
  },
@@ -10448,7 +15278,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/RidersofDestiny_/RidersofDestiny_.thumbs/RidersofDestiny_001200.jpg",
-    bytes: 229929689
+    bytes: 229929689,
+    wd: "Q3231328",
+    wp: "https://en.wikipedia.org/wiki/Riders_of_Destiny",
+    wpx: "Riders of Destiny is a 1933 pre-Code Western musical film starring 26-year-old John Wayne as Singin' Sandy Saunders, and is one of the earliest examples of the singing cowboy movie. It was the first of a series of sixteen Lone Star Westerns made for Monogram Pictures between 1933 and 1935 by writer and director Robert N. Bradbury, and the first pairing of Wayne with George \"Gabby\" Hayes.",
+    dir: [
+     "Robert N. Bradbury"
+    ],
+    cast: [
+     "John Wayne",
+     "George \"Gabby\" Hayes",
+     "Al St. John"
+    ],
+    co: [
+     "Lone Star Productions"
+    ]
    },
    {
     title: "Sagebrush Trail",
@@ -10460,7 +15304,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/SagebrushTrail/SagebrushTrail.thumbs/SagebrushTrail_001260.jpg",
-    bytes: 232711903
+    bytes: 232711903,
+    wd: "Q3190371",
+    wp: "https://en.wikipedia.org/wiki/Sagebrush_Trail",
+    wpx: "Sagebrush Trail is a 1933 American Pre-Code Western film with locations filmed at Bronson Canyon starring John Wayne and featuring Lane Chandler and Yakima Canutt. It was the second Lone Star Productions film released by Monogram Pictures. It was shown as An Innocent Man in the UK, and this version was later released in a colorized version on home video.",
+    dir: [
+     "Armand Schaefer"
+    ],
+    cast: [
+     "John Wayne",
+     "Lane Chandler",
+     "Yakima Canutt"
+    ],
+    co: [
+     "Lone Star Productions"
+    ]
    },
    {
     title: "Randy Rides Alone",
@@ -10472,7 +15330,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/RandyRidesAlone/RandyRidesAlone.thumbs/RandyRideAlone_001254.jpg",
-    bytes: 227897037
+    bytes: 227897037,
+    wd: "Q3448634",
+    wp: "https://en.wikipedia.org/wiki/Randy_Rides_Alone",
+    wpx: "Randy Rides Alone is a 1934 American Pre-Code Western film starring John Wayne, Yakima Canutt, and George Hayes. The 53-minute black-and-white film was directed by Harry L. Fraser, produced by Paul Malvern for Lone Star Productions, and released by Monogram Pictures. Wayne plays a cowboy falsely accused of massacring all the occupants of a saloon, except for a beautiful young woman who hid out of sight.",
+    dir: [
+     "Harry L. Fraser"
+    ],
+    cast: [
+     "John Wayne",
+     "George \"Gabby\" Hayes",
+     "Yakima Canutt"
+    ],
+    co: [
+     "Monogram Pictures",
+     "Lone Star Productions"
+    ]
    },
    {
     title: "The Lucky Texan",
@@ -10484,7 +15357,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheLuckyTexan/TheLuckyTexan.thumbs/TheLuckyTexan_001320.jpg",
-    bytes: 237013759
+    bytes: 237013759,
+    wd: "Q3283394",
+    wp: "https://en.wikipedia.org/wiki/The_Lucky_Texan",
+    wpx: "The Lucky Texan is a 1934 American Lonestar Films B-movie Western film featuring John Wayne, Barbara Sheldon, Gabby Hayes, and the legendary stuntman and actor Yakima Canutt. It was written and directed by Robert N. Bradbury. It also contains a rare appearance by \"Gabby\" Hayes without a beard and in drag.",
+    dir: [
+     "Robert N. Bradbury"
+    ],
+    cast: [
+     "John Wayne",
+     "George \"Gabby\" Hayes",
+     "Eddie Parker"
+    ],
+    co: [
+     "Lone Star Productions"
+    ]
    },
    {
     title: "The Man from Utah",
@@ -10496,7 +15383,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheManFromUtah/TheManFromUtah.thumbs/TheManFromUtah_001200.jpg",
-    bytes: 222923967
+    bytes: 222923967,
+    wd: "Q1624979",
+    wp: "https://en.wikipedia.org/wiki/The_Man_from_Utah",
+    wpx: "The Man from Utah is a 1934 pre-Code Monogram Western film starring John Wayne, Polly Ann Young and the stuntman/actor Yakima Canutt. It was written by Lindsley Parsons and directed by Robert N. Bradbury. Wayne has a \"singing cowboy scene\" in the film, wherein his voice is dubbed.",
+    dir: [
+     "Robert N. Bradbury"
+    ],
+    cast: [
+     "John Wayne",
+     "Polly Ann Young",
+     "George \"Gabby\" Hayes"
+    ],
+    co: [
+     "Lone Star Productions"
+    ]
    },
    {
     title: "The Star Packer",
@@ -10508,7 +15409,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/The_Star_Packer/The_Star_Packer.thumbs/The_Star_Packer_001320.jpg",
-    bytes: 237771964
+    bytes: 237771964,
+    wd: "Q1335267",
+    wp: "https://en.wikipedia.org/wiki/The_Star_Packer",
+    wpx: "The Star Packer is a 1934 Western film directed by Robert N. Bradbury and starring John Wayne, George \"Gabby\" Hayes, Yakima Canutt, and Verna Hillie.",
+    dir: [
+     "Robert N. Bradbury"
+    ],
+    cast: [
+     "John Wayne",
+     "George \"Gabby\" Hayes",
+     "Glenn Strange"
+    ],
+    co: [
+     "Lone Star Productions"
+    ]
    },
    {
     title: "The Trail Beyond",
@@ -10520,7 +15435,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheTrailBeyond/TheTrailBeyond.thumbs/TheTrailBeyond_001320.jpg",
-    bytes: 236753819
+    bytes: 236753819,
+    wd: "Q1661631",
+    wp: "https://en.wikipedia.org/wiki/The_Trail_Beyond",
+    wpx: "The Trail Beyond is a 1934 Western film directed by Robert N. Bradbury and starring John Wayne, Noah Beery Sr., and Noah Beery Jr. The motion picture was based on the novel The Wolf Hunters by James Oliver Curwood, which was also adapted as a silent film (1926) and a later sound film (1949), both called The Wolf Hunters.",
+    dir: [
+     "Robert N. Bradbury"
+    ],
+    cast: [
+     "John Wayne",
+     "Noah Beery, Sr.",
+     "Noah Beery Jr."
+    ],
+    co: [
+     "Lone Star Productions"
+    ]
    },
    {
     title: "West of the Divide",
@@ -10533,7 +15462,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/west_of_the_divide/west_of_the_divide.thumbs/west_of_the_divide_001260.jpg",
     subs: "west_of_the_divide.asr.srt",
-    bytes: 233149544
+    bytes: 233149544,
+    wd: "Q742931",
+    wp: "https://en.wikipedia.org/wiki/West_of_the_Divide",
+    wpx: "West of the Divide is a 1934 American Western film directed by Robert N. Bradbury for Monogram, and starring John Wayne, Yakima Canutt and Gabby Hayes. The film had a copyright notice upon release, but it was not renewed.",
+    dir: [
+     "Robert N. Bradbury"
+    ],
+    cast: [
+     "John Wayne",
+     "George \"Gabby\" Hayes",
+     "Virginia Brown Faire"
+    ],
+    co: [
+     "Lone Star Productions"
+    ]
    },
    {
     title: "Paradise Canyon",
@@ -10545,7 +15488,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ParadiseCanyon/ParadiseCanyon.thumbs/ParadiseCanyon_001260.jpg",
-    bytes: 231216951
+    bytes: 231216951,
+    wd: "Q3553351",
+    wp: "https://en.wikipedia.org/wiki/Paradise_Canyon",
+    wpx: "Paradise Canyon is a 1935 Western film starring John Wayne, directed by Carl L. Pierson. The film was Wayne's final Monogram Pictures/Lone Star Production Western. The film was released years later in a colorized version on home video/dvd under the title Guns Along the Trail.",
+    dir: [
+     "Carl Pierson"
+    ],
+    cast: [
+     "John Wayne",
+     "Marion Burns",
+     "Gino Corrado"
+    ],
+    co: [
+     "Lone Star Productions"
+    ]
    },
    {
     title: "Rocky Mountain Mystery",
@@ -10556,7 +15513,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Rocky_Mountain_Mystery_1935/Rocky_Mountain_Mystery_1935.thumbs/Rocky_Mountain_Mystery_1935_001553.jpg",
-    bytes: 407927456
+    bytes: 407927456,
+    wd: "Q7355919",
+    wp: "https://en.wikipedia.org/wiki/Rocky_Mountain_Mystery",
+    wpx: "Rocky Mountain Mystery is a 1935 American Western film directed by Charles Barton and starring Randolph Scott, Mrs. Leslie Carter, and Ann Sheridan. Based on an unpublished novel Golden Dreams by Zane Grey, the film is about a mining engineer who teams up with a crusty deputy sheriff to solve a series of mystery killings at an old radium mine where the owner's family waits for his death for their inheritance. The film was re-released…",
+    dir: [
+     "Charles Barton"
+    ],
+    cast: [
+     "Randolph Scott",
+     "Mrs. Leslie Carter",
+     "Ann Sheridan"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "The Dawn Rider",
@@ -10568,7 +15539,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheDawnRider/TheDawnRider.thumbs/TheDawnRider_001320.jpg",
-    bytes: 237844593
+    bytes: 237844593,
+    wd: "Q3514483",
+    wp: "https://en.wikipedia.org/wiki/The_Dawn_Rider",
+    wpx: "The Dawn Rider is a 1935 American Western film starring John Wayne and directed by Robert N. Bradbury.",
+    dir: [
+     "Robert N. Bradbury"
+    ],
+    cast: [
+     "John Wayne",
+     "Marion Burns",
+     "Dennis Moore"
+    ],
+    co: [
+     "Lone Star Productions"
+    ]
    },
    {
     title: "Border Caballero",
@@ -10581,7 +15566,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/border_cabellero/border_cabellero.thumbs/border_cabellero_001260.jpg",
     subs: "border_cabellero.asr.srt",
-    bytes: 233325385
+    bytes: 233325385,
+    wd: "Q4944528",
+    wp: "https://en.wikipedia.org/wiki/Border_Caballero",
+    wpx: "Border Caballero is a 1936 American Western film starring Tim McCoy. It was directed by Sam Newfield.",
+    dir: [
+     "Sam Newfield"
+    ]
    },
    {
     title: "Border Patrolman",
@@ -10594,7 +15585,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/border_patrolman/border_patrolman.thumbs/border_patrolman_001440.jpg",
     subs: "border_patrolman.asr.srt",
-    bytes: 257144649
+    bytes: 257144649,
+    wd: "Q7719398",
+    wp: "https://en.wikipedia.org/wiki/The_Border_Patrolman",
+    wpx: "The Border Patrolman is a 1936 American Western film directed by David Howard and starring George O'Brien.",
+    dir: [
+     "David Howard"
+    ]
    },
    {
     title: "Cavalcade of the West",
@@ -10607,7 +15604,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/cavalcade_of_the_west/cavalcade_of_the_west.thumbs/cavalcade_of_the_west_001440.jpg",
     subs: "cavalcade_of_the_west.asr.srt",
-    bytes: 258449287
+    bytes: 258449287,
+    wd: "Q5054750",
+    wp: "https://en.wikipedia.org/wiki/Cavalcade_of_the_West",
+    wpx: "Cavalcade of the West is a 1936 American Western film directed by Harry L. Fraser.",
+    dir: [
+     "Harry L. Fraser"
+    ],
+    cast: [
+     "Hoot Gibson"
+    ]
    },
    {
     title: "Ghost-Town Gold",
@@ -10620,7 +15626,19 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/three_mesquiteers/three_mesquiteers.thumbs/three_mesquiteers_001260.jpg",
     subs: "three_mesquiteers.asr.srt",
-    bytes: 231376665
+    bytes: 231376665,
+    wd: "Q5557007",
+    wp: "https://en.wikipedia.org/wiki/Ghost-Town_Gold",
+    wpx: "Ghost-Town Gold is a 1936 American Western film directed by Joseph Kane and was the second entry of the 51-film series of Western \"Three Mesquiteers\" B-movies. It was based on the 1935 novel of the same name by William Colt MacDonald.",
+    dir: [
+     "Joseph Kane"
+    ],
+    cast: [
+     "I. Stanford Jolley"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Oh, Susanna!",
@@ -10633,7 +15651,22 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/oh_susanna/oh_susanna.thumbs/oh_susanna_001260.jpg",
     subs: "oh_susanna.asr.srt",
-    bytes: 232383048
+    bytes: 232383048,
+    wd: "Q3349854",
+    wp: "https://en.wikipedia.org/wiki/Oh%2C_Susanna!_(1936_film)",
+    wpx: "Oh, Susanna! is a 1936 American Western film directed by Joseph Kane and starring Gene Autry, Smiley Burnette, and Frances Grant. Written by Oliver Drake, the film is about a cowboy who is robbed and then thrown from a train by an escaped murderer who then takes on the cowboy's identity.",
+    dir: [
+     "Joseph Kane",
+     "Nat Levine"
+    ],
+    cast: [
+     "Gene Autry",
+     "Smiley Burnette",
+     "Carl Stockdale"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "The Arizona Raiders",
@@ -10644,7 +15677,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheArizonaRaiders/TheArizonaRaiders.thumbs/TheArizonaRaiders_001374.jpg",
-    bytes: 346474224
+    bytes: 346474224,
+    wd: "Q7714244",
+    wp: "https://en.wikipedia.org/wiki/The_Arizona_Raiders",
+    wpx: "The Arizona Raiders is a 1936 American Western film directed by James P. Hogan and starring Buster Crabbe and Marsha Hunt. It was based on the 1938 Zane Grey novel Raiders of Spanish Peaks and released by Paramount Pictures. The film is also known as Bad Men of Arizona.",
+    dir: [
+     "James P. Hogan"
+    ]
    },
    {
     title: "Winds of the Wasteland",
@@ -10656,7 +15695,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Winds_of_the_Wasteland/Winds_of_the_Wasteland.thumbs/Winds_of_the_Wasteland_001320.jpg",
-    bytes: 242658176
+    bytes: 242658176,
+    wd: "Q3555597",
+    wp: "https://en.wikipedia.org/wiki/Winds_of_the_Wasteland",
+    wpx: "Winds of the Wasteland is a 1936 Western film directed by Mack V. Wright and starring John Wayne and Phyllis Fraser. The film was released by Republic Pictures. The film was later released in a colorized version on Home video/DVD under the title Stagecoach Run. It features an early appearance from Jon Hall.",
+    dir: [
+     "Mack V. Wright",
+     "John Wayne"
+    ],
+    cast: [
+     "John Wayne",
+     "Phyllis Fraser",
+     "Jon Hall"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Arizona Gunfighter, The",
@@ -10678,7 +15732,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Bar-ZBadMen/Bar-ZBadMen.thumbs/Bar-ZBadMen_001194.jpg",
-    bytes: 244903567
+    bytes: 244903567,
+    wd: "Q4857844",
+    wp: "https://en.wikipedia.org/wiki/Bar-Z_Bad_Men",
+    wpx: "Bar-Z Bad Men is a 1937 American Western film directed by Sam Newfield and starring Johnny Mack Brown.",
+    dir: [
+     "Sam Newfield"
+    ]
    },
    {
     title: "Come on, Cowboys",
@@ -10690,7 +15750,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ComeOnCowboys/ComeOnCowboys.thumbs/ComeOnCowboys_001260.jpg",
-    bytes: 230118252
+    bytes: 230118252,
+    wd: "Q5151333",
+    wp: "https://en.wikipedia.org/wiki/Come_On%2C_Cowboys",
+    wpx: "Come On, Cowboys is a 1937 American Western \"Three Mesquiteers\" B-movie directed by Joseph Kane.",
+    dir: [
+     "Joseph Kane"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Hell Town",
@@ -10702,7 +15771,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Hell_Town/Hell_Town.thumbs/Hell_Town_001320.jpg",
-    bytes: 241387240
+    bytes: 241387240,
+    wd: "Q1056792",
+    wp: "https://en.wikipedia.org/wiki/Born_to_the_West",
+    wpx: "Born to the West is a 1937 American Western film, starring John Wayne, Marsha Hunt and John Mack Brown. Filmed in black and white and based upon a Zane Grey novel, the movie incorporates footage from an earlier and higher budgeted silent version, a common practice of the era. The picture features: fast chases, gun-fights, unusual poker gambling and peppy light dialogue for the love interest.",
+    dir: [
+     "Charles Barton"
+    ],
+    cast: [
+     "John Wayne",
+     "Marsha Hunt",
+     "Johnny Mack Brown"
+    ]
    },
    {
     title: "Silver Trail, The",
@@ -10726,7 +15806,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/YodelinKidofPineRidge/YodelinKidofPineRidge.thumbs/YodelinKidofPineRidge_001434.jpg",
-    bytes: 366849970
+    bytes: 366849970,
+    wd: "Q8054271",
+    wp: "https://en.wikipedia.org/wiki/Yodelin'_Kid_from_Pine_Ridge",
+    wpx: "Yodelin' Kid from Pine Ridge is a 1937 American Western film directed by Joseph Kane and starring Gene Autry, Smiley Burnette, and Betty Bronson. Based on a story by Jack Natteford, the film is about the son of a Southeastern cattleman who becomes entangled in a war between the cattlemen and \"turpentiners\" who make their living harvesting pine tree sap.",
+    dir: [
+     "Joseph Kane"
+    ],
+    cast: [
+     "Gene Autry",
+     "Smiley Burnette",
+     "Betty Bronson"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Rawhide",
@@ -10750,7 +15844,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/mark_of_the_avenger_1938/mark_of_the_avenger_1938.thumbs/mark_of_the_avenger_001620.jpg",
     subs: "mark_of_the_avenger.asr.srt",
-    bytes: 276899428
+    bytes: 276899428,
+    wd: "Q7752859",
+    wp: "https://en.wikipedia.org/wiki/The_Mysterious_Rider_(1938_film)",
+    wpx: "The Mysterious Rider is a 1938 American Western film directed by Lesley Selander and starring Douglass Dumbrille, Sidney Toler, and Russell Hayden. Written by Maurice Geraghty based on the 1921 novel The Mysterious Rider by Zane Grey, the film is about a notorious outlaw who returns to the ranch he once owned and takes a job disguised as a ranch hand. Unrecognized by the ranch's current owner, he waits patiently for an opportunity to…",
+    dir: [
+     "Lesley Selander"
+    ]
    },
    {
     title: "The Terror of Tiny Town",
@@ -10762,7 +15862,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheTerrorOfTinyTown1938_802/TheTerrorOfTinyTown1938_802.thumbs/terroroftinytown_001440.jpg",
-    bytes: 266671080
+    bytes: 266671080,
+    wd: "Q7768532",
+    wp: "https://en.wikipedia.org/wiki/The_Terror_of_Tiny_Town",
+    wpx: "The Terror of Tiny Town is a 1938 American musical Western film produced by Jed Buell, directed by Sam Newfield and starring Billy Curtis. The film was shot at a sound studio in Hollywood and partly at Placeritos Ranch in Placerita Canyon, California. The inspiration came when Buell overheard an employee jokingly say \"If this economic dive keeps going, we'll be using midgets as actors\".",
+    dir: [
+     "Sam Newfield"
+    ],
+    cast: [
+     "Billy Curtis",
+     "Charlie Becker"
+    ]
    },
    {
     title: "Under Western Stars",
@@ -10773,7 +15883,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/UnderWesternStars/UnderWesternStars.thumbs/UnderWesternStars_001554.jpg",
-    bytes: 311614781
+    bytes: 311614781,
+    wd: "Q1230963",
+    wp: "https://en.wikipedia.org/wiki/Under_Western_Stars",
+    wpx: "Under Western Stars is a 1938 American Western film directed by Joseph Kane and starring Roy Rogers, Smiley Burnette, Carol Hughes, and the Maple City Four. Written by Dorrell McGowan, Stuart E. McGowan, and Betty Burbridge, the film is about a populist singing cowboy who decides to run for Congress in order to seek federal assistance to help small ranchers regain their water rights during the Dust Bowl of the 1930s. His campaign comes…",
+    dir: [
+     "Joseph Kane"
+    ],
+    cast: [
+     "Roy Rogers",
+     "Smiley Burnette",
+     "George Montgomery"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Arizona Kid, The",
@@ -10798,7 +15922,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/FrontierHorizon/FrontierHorizon.thumbs/FrontierHorizon_001320.jpg",
-    bytes: 238825271
+    bytes: 238825271,
+    wd: "Q3338946",
+    wp: "https://en.wikipedia.org/wiki/New_Frontier_(film)",
+    wpx: "New Frontier is a 1939 American Western film starring John Wayne, Ray \"Crash\" Corrigan, Raymond Hatton, and Jennifer Jones. This was the last of eight Three Mesquiteers Western B-movies with Wayne. A restored 35 mm copy of the film exists, and was screened at the Museum of Modern Art in New York City as part of a 2007 John Wayne centennial retrospective, which included The Big Trail, The Searchers, and True Grit. The leading lady is…",
+    dir: [
+     "George Sherman"
+    ],
+    cast: [
+     "John Wayne",
+     "Raymond Hatton",
+     "Jennifer Jones"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Rough Riders' Round-up",
@@ -10811,7 +15949,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/rough_riders_roundup/rough_riders_roundup.thumbs/M4V10004_002580.jpg",
     subs: "M4V10004.asr.srt",
-    bytes: 231118488
+    bytes: 231118488,
+    wd: "Q7370849",
+    wp: "https://en.wikipedia.org/wiki/Rough_Riders'_Round-up",
+    wpx: "Rough Riders' Round-up is a 1939 American Western film directed by Joseph Kane and starring Roy Rogers.",
+    dir: [
+     "Joseph Kane"
+    ],
+    cast: [
+     "Roy Rogers",
+     "Raymond Hatton",
+     "Dorothy Sebastian"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Six-Gun Rhythm",
@@ -10824,7 +15976,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/six-gun_rhythm/six-gun_rhythm.thumbs/six-gun_rhythm_001320.jpg",
     subs: "six-gun_rhythm.asr.srt",
-    bytes: 245494932
+    bytes: 245494932,
+    wd: "Q7532580",
+    wp: "https://en.wikipedia.org/wiki/Six-Gun_Rhythm",
+    wpx: "Six-Gun Rhythm is a 1939 American Western film directed by Sam Newfield.",
+    dir: [
+     "Sam Newfield"
+    ]
    },
    {
     title: "Southward, Ho!",
@@ -10860,7 +16018,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Santa_Fe_Trail_movie/Santa_Fe_Trail_movie.thumbs/Santa_Fe_Trail_005359.jpg",
     subs: "Santa_Fe_Trail.asr.srt",
-    bytes: 477912777
+    bytes: 477912777,
+    wd: "Q1598010",
+    wp: "https://en.wikipedia.org/wiki/Santa_Fe_Trail_(film)",
+    wpx: "Santa Fe Trail is a 1940 American historical drama film directed by Michael Curtiz and starring Errol Flynn, Olivia de Havilland, Raymond Massey, Ronald Reagan and Alan Hale. Written by Robert Buckner, the film focuses largely on the abolitionist John Brown and his controversial campaign against slavery before the American Civil War. In a subplot, Jeb Stuart and George Armstrong Custer—who are depicted fictionally as friends from the…",
+    dir: [
+     "Michael Curtiz"
+    ],
+    cast: [
+     "Errol Flynn",
+     "Olivia de Havilland",
+     "Raymond Massey"
+    ],
+    co: [
+     "Warner Bros. Entertainment"
+    ]
    },
    {
     title: "The Light of Western Stars",
@@ -10872,7 +16044,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheLightofWesternStars_/TheLightofWesternStars_.thumbs/TheLightofWesternStars_001560.jpg",
-    bytes: 279851459
+    bytes: 279851459,
+    wd: "Q7747291",
+    wp: "https://en.wikipedia.org/wiki/The_Light_of_Western_Stars_(1940_film)",
+    wpx: "The Light of Western Stars is a 1940 American Western film directed by Lesley Selander, starring Victor Jory as Gene Stewart, and based upon a 1914 novel by Zane Grey. The film is also known as Border Renegade. The supporting cast features Jo Ann Sayers, Russell Hayden, Morris Ankrum, Noah Beery Jr., Tom Tyler, and Alan Ladd.",
+    dir: [
+     "Lesley Selander"
+    ],
+    cast: [
+     "Victor Jory"
+    ]
    },
    {
     title: "Young Bill Hickok",
@@ -10885,7 +16066,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/young_bill_hickok/young_bill_hickok.thumbs/young_bill_hickok_001260.jpg",
     subs: "young_bill_hickok.asr.srt",
-    bytes: 230880247
+    bytes: 230880247,
+    wd: "Q8057965",
+    wp: "https://en.wikipedia.org/wiki/Young_Bill_Hickok",
+    wpx: "Young Bill Hickok is a 1940 American Western film directed by Joseph Kane and starring Roy Rogers.",
+    dir: [
+     "Joseph Kane"
+    ],
+    cast: [
+     "Roy Rogers",
+     "George \"Gabby\" Hayes",
+     "Monte Blue"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Young Buffalo Bill",
@@ -10897,7 +16092,20 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/YoungBuffaloBill/YoungBuffaloBill.thumbs/YoungBuffaloBill_001260.jpg",
-    bytes: 231174615
+    bytes: 231174615,
+    wd: "Q8058000",
+    wp: "https://en.wikipedia.org/wiki/Young_Buffalo_Bill",
+    wpx: "Young Buffalo Bill is a 1940 American Western film directed by Joseph Kane and starring Roy Rogers and George \"Gabby\" Hayes.",
+    dir: [
+     "Joseph Kane"
+    ],
+    cast: [
+     "Roy Rogers",
+     "George \"Gabby\" Hayes"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Bad Man of Deadwood",
@@ -10909,7 +16117,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/BadManOfDeadwood/BadManOfDeadwood.thumbs/BadManOfDeadwood_001260.jpg",
-    bytes: 229649652
+    bytes: 229649652,
+    wd: "Q4840371",
+    wp: "https://en.wikipedia.org/wiki/Bad_Man_of_Deadwood",
+    wpx: "Bad Man of Deadwood is a 1941 American Western film directed by Joseph Kane and starring Roy Rogers.",
+    dir: [
+     "Joseph Kane"
+    ],
+    cast: [
+     "Roy Rogers",
+     "George \"Gabby\" Hayes",
+     "Monte Blue"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Billy the Kid in Santa Fe",
@@ -10920,7 +16142,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Billy_the_Kid_in_Santa_Fe_1941/Billy_the_Kid_in_Santa_Fe_1941.thumbs/Billy_the_Kid_in_Santa_Fe_1941_001494.jpg",
-    bytes: 389515920
+    bytes: 389515920,
+    wd: "Q4913538",
+    wp: "https://en.wikipedia.org/wiki/Billy_the_Kid_in_Santa_Fe",
+    wpx: "Billy the Kid in Santa Fe is a 1941 American Western film directed by Sam Newfield. This film is the sixth in the \"Billy the Kid\" film series, produced by PRC from 1940 to 1946, and the last to star Bob Steele. In the next film, Billy the Kid Wanted, Steele was replaced by Buster Crabbe.",
+    dir: [
+     "Sam Newfield"
+    ]
    },
    {
     title: "Billy the Kid Wanted",
@@ -10931,7 +16159,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Billy_the_Kid_Wanted_1941/Billy_the_Kid_Wanted_1941.thumbs/Billy_the_Kid_Wanted_1941_001418.jpg",
-    bytes: 375065195
+    bytes: 375065195,
+    wd: "Q12102448",
+    wp: "https://en.wikipedia.org/wiki/Billy_the_Kid_Wanted",
+    wpx: "Billy the Kid Wanted is a 1941 American Western film directed by Sam Newfield. This film is the seventh in the \"Billy the Kid\" film series produced by PRC from 1940 to 1946, and the first starring Buster Crabbe as Billy the Kid, replacing Bob Steele. The film also features Sam Newfield's son Joel.",
+    dir: [
+     "Sam Newfield"
+    ]
    },
    {
     title: "Fugitive Valley",
@@ -10944,7 +16178,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/fugitive_valley/fugitive_valley.thumbs/fugitive_valley_001440.jpg",
     subs: "fugitive_valley.asr.srt",
-    bytes: 255242271
+    bytes: 255242271,
+    wd: "Q5507277",
+    wp: "https://en.wikipedia.org/wiki/Fugitive_Valley",
+    wpx: "Fugitive Valley is a 1941 American Western film directed by S. Roy Luby. The film is the eighth in Monogram Pictures' \"Range Busters\" series, and it stars Ray \"Crash\" Corrigan as Crash, John \"Dusty\" King as Dusty and Max \"Alibi\" Terhune as Alibi, with Julie Duncan, Glenn Strange and Bob Kortman.",
+    dir: [
+     "S. Roy Luby"
+    ],
+    cast: [
+     "Glenn Strange"
+    ]
    },
    {
     title: "Sheriff of Tombstone",
@@ -10956,7 +16199,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/SheriffofTombstone/SheriffofTombstone.thumbs/SheriffofTombstone_001260.jpg",
-    bytes: 231420312
+    bytes: 231420312,
+    wd: "Q7494995",
+    wp: "https://en.wikipedia.org/wiki/Sheriff_of_Tombstone",
+    wpx: "Sheriff of Tombstone  is a 1941 American Western film directed by Joseph Kane and starring Roy Rogers, George \"Gabby\" Hayes and Elyse Knox. It was produced and distributed by Republic Pictures.",
+    dir: [
+     "Joseph Kane"
+    ],
+    cast: [
+     "Roy Rogers",
+     "George \"Gabby\" Hayes",
+     "Roy Barcroft"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "American Empire",
@@ -10969,7 +16226,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/american_empire/american_empire.thumbs/american_empire_001920.jpg",
     subs: "american_empire.asr.srt",
-    bytes: 351913367
+    bytes: 351913367,
+    wd: "Q3066746",
+    wp: "https://en.wikipedia.org/wiki/American_Empire_(film)",
+    wpx: "American Empire is a 1942 American Western film directed by William C. McGann. The film was released in the United Kingdom as My Son Alone.",
+    dir: [
+     "William C. McGann"
+    ],
+    cast: [
+     "Richard Dix",
+     "Preston Foster",
+     "Cliff Edwards"
+    ]
    },
    {
     title: "Boot Hill Bandits",
@@ -10982,7 +16250,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/boot_hill_bandits/boot_hill_bandits.thumbs/boot_hill_bandits_001320.jpg",
     subs: "boot_hill_bandits.asr.srt",
-    bytes: 237694978
+    bytes: 237694978,
+    wd: "Q4943816",
+    wp: "https://en.wikipedia.org/wiki/Boot_Hill_Bandits",
+    wpx: "Boot Hill Bandits is a 1942 American Western film directed by S. Roy Luby. The film is the fourteenth in the Monogram Pictures produced \"Range Busters\" series. It stars Ray \"Crash\" Corrigan as Crash, John \"Dusty\" King as Dusty and Max Terhune as Alibi, with Jean Brooks, John Merton and Glenn Strange.",
+    dir: [
+     "S. Roy Luby"
+    ],
+    cast: [
+     "Jean Brooks",
+     "Glenn Strange",
+     "Richard Cramer"
+    ]
    },
    {
     title: "Outlaws of Boulder Pass",
@@ -10995,7 +16274,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/outlaws_of_boulder_pass/outlaws_of_boulder_pass.thumbs/outlaws_of_boulder_pass_001440.jpg",
     subs: "outlaws_of_boulder_pass.asr.srt",
-    bytes: 262133707
+    bytes: 262133707,
+    wd: "Q7112145",
+    wp: "https://en.wikipedia.org/wiki/Outlaws_of_Boulder_Pass",
+    wpx: "Outlaws of Boulder Pass is a 1942 American Western film directed by Sam Newfield. The film stars George Houston as the \"Lone Rider\" and Al St. John as his sidekick \"Fuzzy\" Jones, and Dennis Moore as Sheriff Smoky Hammer, with Marjorie Manners, I. Stanford Jolley and Karl Hackett. The film was released on 12 June 1942, by Producers Releasing Corporation.",
+    dir: [
+     "Sam Newfield"
+    ]
    },
    {
     title: "Sunset Serenade",
@@ -11007,7 +16292,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/SunsetSerenade/SunsetSerenade.thumbs/SunsetSerenade_001380.jpg",
-    bytes: 252737285
+    bytes: 252737285,
+    wd: "Q7641351",
+    wp: "https://en.wikipedia.org/wiki/Sunset_Serenade",
+    wpx: "Sunset Serenade is a 1942 American Western film directed by Joseph Kane and starring Roy Rogers, and George \"Gabby\" Hayes.",
+    dir: [
+     "Joseph Kane"
+    ],
+    cast: [
+     "Roy Rogers",
+     "George \"Gabby\" Hayes",
+     "Sons of the Pioneers"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Texas to Bataan",
@@ -11020,7 +16319,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/texas_to_bataan_ipod/texas_to_bataan_ipod.thumbs/texas_to_bataan_001320.jpg",
     subs: "texas_to_bataan.asr.srt",
-    bytes: 229235858
+    bytes: 229235858,
+    wd: "Q8842597",
+    wp: "https://en.wikipedia.org/wiki/Texas_to_Bataan",
+    wpx: "Texas to Bataan is a 1942 American Western film directed by Robert Emmett Tansey. The film is the seventeenth in Monogram Pictures' \"Range Busters\" series, and it stars John \"Dusty\" King as Dusty, \"Davy\" Sharpe and Max \"Alibi\" Terhune, with Marjorie Manners, Steve Clark and Budd Buster.",
+    dir: [
+     "Robert Emmett Tansey"
+    ],
+    cast: [
+     "Al Ferguson"
+    ]
    },
    {
     title: "War of the Wildcats - John Wayne",
@@ -11045,7 +16353,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/gangsters_of_the_frontier_1944/gangsters_of_the_frontier_1944.thumbs/gangsters_of_the_frontier_001320.jpg",
     subs: "gangsters_of_the_frontier.asr.srt",
-    bytes: 223275298
+    bytes: 223275298,
+    wd: "Q5521257",
+    wp: "https://en.wikipedia.org/wiki/Gangsters_of_the_Frontier",
+    wpx: "Gangsters of the Frontier is a 1944 American Western film written and directed by Elmer Clifton. The film stars Dave O'Brien, Tex Ritter and Guy Wilkerson, with Patti McCarty, Harry Harvey and Betty Miles. The film was released on 22 September 1944, by Producers Releasing Corporation.",
+    dir: [
+     "Elmer Clifton"
+    ]
    },
    {
     title: "Salome Where She Danced",
@@ -11057,7 +16371,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/SalomeWhereSheDanced/SalomeWhereSheDanced.thumbs/SalomeWhereSheDanced_002160.jpg",
-    bytes: 390971922
+    bytes: 390971922,
+    wd: "Q3230520",
+    wp: "https://en.wikipedia.org/wiki/Salome%2C_Where_She_Danced",
+    wpx: "Salome, Where She Danced is a 1945 American Technicolor Western drama film, directed by Charles Lamont and starring: Yvonne De Carlo, Rod Cameron and Walter Slezak. The film follows the adventures of a dancer in 19th-century Europe and the United States. It is loosely based on the story of Lola Montez. Choreography was by Lester Horton.",
+    dir: [
+     "Charles Lamont",
+     "B. Reeves Eason"
+    ],
+    cast: [
+     "Yvonne De Carlo",
+     "Rod Cameron",
+     "David Bruce"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "Utah",
@@ -11081,7 +16410,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/AbileneTown/AbileneTown.thumbs/AbileneTown_002100.jpg",
-    bytes: 389463045
+    bytes: 389463045,
+    wd: "Q3454266",
+    wp: "https://en.wikipedia.org/wiki/Abilene_Town",
+    wpx: "Abilene Town is a 1946 American Western film directed by Edwin L. Marin and starring Randolph Scott, Ann Dvorak, Edgar Buchanan, Rhonda Fleming and Lloyd Bridges. Adapted from Ernest Haycox's 1941 novel Trail Town, the production's plot is set in the Old West, in the cattle town of Abilene, Kansas in 1870.",
+    dir: [
+     "Edwin L. Marin"
+    ],
+    cast: [
+     "Randolph Scott",
+     "Ann Dvorak",
+     "Edgar Buchanan"
+    ]
    },
    {
     title: "Heldorado",
@@ -11092,7 +16432,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Heldorado/Heldorado.thumbs/Heldorado_001674.jpg",
-    bytes: 432061704
+    bytes: 432061704,
+    wd: "Q5701685",
+    wp: "https://en.wikipedia.org/wiki/Heldorado",
+    wpx: "Heldorado  is a 1946 American Western film starring Roy Rogers set during the annual Helldorado Days celebrations in Las Vegas. It was the last teaming of Roy and comedy relief sidekick Gabby Hayes. Hayes shares a scene with Pat Brady who later became Rogers' comedy relief sidekick.",
+    dir: [
+     "William Witney"
+    ],
+    cast: [
+     "Roy Rogers",
+     "Dale Evans",
+     "Brad Dexter"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "My Pal Trigger",
@@ -11105,7 +16459,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/my_pal_trigger/my_pal_trigger.thumbs/my_pal_trigger_001860.jpg",
     subs: "my_pal_trigger.asr.srt",
-    bytes: 343105138
+    bytes: 343105138,
+    wd: "Q6946249",
+    wp: "https://en.wikipedia.org/wiki/My_Pal_Trigger",
+    wpx: "My Pal Trigger is a 1946 American Western musical film directed by Frank McDonald. The screenplay by Jack Townley and John K. Butler was based upon a story by Paul Gangelin. The film stars Roy Rogers, Dale Evans, George \"Gabby\" Hayes, Jack Holt, and Trigger in a story about the origin of Rogers' mount, and their deep and faithful bond. The film features several musical numbers for Rogers, Evans, and Bob Nolan and the Sons of the Pioneers.",
+    dir: [
+     "Frank McDonald"
+    ],
+    cast: [
+     "Roy Rogers",
+     "Dale Evans",
+     "Jack Holt"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Song of Arizona",
@@ -11117,7 +16485,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/SongOfArizona/SongOfArizona.thumbs/SongOfArizona_001260.jpg",
-    bytes: 230022519
+    bytes: 230022519,
+    wd: "Q7561117",
+    wp: "https://en.wikipedia.org/wiki/Song_of_Arizona",
+    wpx: "Song of Arizona is a 1946 American Western film directed by Frank McDonald and starring Roy Rogers, Dale Evans and George \"Gabby\" Hayes. It was produced and distributed by Republic Pictures.",
+    dir: [
+     "Frank McDonald"
+    ],
+    cast: [
+     "Roy Rogers",
+     "George \"Gabby\" Hayes",
+     "Sons of the Pioneers"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Stagecoach to Denver",
@@ -11128,7 +16510,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/StageCoachtoDenver/StageCoachtoDenver.thumbs/StagecoachtoDenver_001254.jpg",
-    bytes: 257272755
+    bytes: 257272755,
+    wd: "Q7596889",
+    wp: "https://en.wikipedia.org/wiki/Stagecoach_to_Denver",
+    wpx: "Stagecoach to Denver is a 1946 American Western film and one of the Republic Pictures Red Ryder film series directed by R. G. Springsteen.",
+    dir: [
+     "R. G. Springsteen"
+    ],
+    cast: [
+     "Allan Lane",
+     "Robert Blake",
+     "Martha Wentworth"
+    ]
    },
    {
     title: "Angel and the Bad Man, The",
@@ -11154,7 +16547,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/angel_and_the_badman/angel_and_the_badman.thumbs/angel_and_the_badman_002400.jpg",
     subs: "angel_and_the_badman.asr.srt",
-    bytes: 435329521
+    bytes: 435329521,
+    wd: "Q645771",
+    wp: "https://en.wikipedia.org/wiki/Angel_and_the_Badman",
+    wpx: "Angel and the Badman is a 1947 American Western film written and directed by James Edward Grant and starring John Wayne, Gail Russell, Harry Carey, and Bruce Cabot. The film is about an injured gunfighter, who is nursed back to health by a young Quaker woman and her family, whose way of life influences him and his violent ways. Angel and the Badman was the first film Wayne produced and in which he starred, and was a departure for this…",
+    dir: [
+     "James Edward Grant"
+    ],
+    cast: [
+     "John Wayne",
+     "Gail Russell",
+     "Harry Carey"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Law of the Lash",
@@ -11166,7 +16573,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Law_of_the_Lash_film/Law_of_the_Lash_film.thumbs/Law_of_the_Lash_1947_001260.jpg",
-    bytes: 228510693
+    bytes: 228510693,
+    wd: "Q6503481",
+    wp: "https://en.wikipedia.org/wiki/Law_of_the_Lash",
+    wpx: "Law of the Lash is a 1947 American Western film directed by Ray Taylor. It was the first lead role of Lash LaRue who had previously appeared in three of PRC's Eddie Dean Cinecolor Westerns, and the first pairing of Lash with sidekick Al \"Fuzzy\" St. John.",
+    dir: [
+     "Ray Taylor"
+    ]
    },
    {
     title: "Loaded Pistols",
@@ -11178,7 +16591,19 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/loaded_pistols/loaded_pistols.thumbs/loaded_pistols_001552.jpg",
     subs: "loaded_pistols.asr.srt",
-    bytes: 407954224
+    bytes: 407954224,
+    wd: "Q6663345",
+    wp: "https://en.wikipedia.org/wiki/Loaded_Pistols",
+    wpx: "Loaded Pistols is a 1948 American Western film directed by John English and starring Gene Autry, Barbara Britton, and Chill Wills. Written by Dwight Cummins and Dorothy Yost, the film is about a cowboy who protects a young man wrongly accused of murder, while trying to find the real badguys.",
+    dir: [
+     "John English",
+     "Armand Schaefer"
+    ],
+    cast: [
+     "Gene Autry",
+     "Barbara Britton",
+     "Chill Wills"
+    ]
    },
    {
     title: "Under California Stars",
@@ -11191,7 +16616,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/under_california_stars/under_california_stars.thumbs/under_california_stars_001740.jpg",
     subs: "under_california_stars.asr.srt",
-    bytes: 315343253
+    bytes: 315343253,
+    wd: "Q7484853",
+    wp: "https://en.wikipedia.org/wiki/Under_California_Stars",
+    wpx: "Under California Stars  is a 1948 American Trucolor Western film directed by William Witney and starring Roy Rogers, Jane Frazee and Andy Devine. The film was shot in Trucolor. After returning from Hollywood after his tenth anniversary in films to his ranch, Rogers tackles a gang who kidnap his horse Trigger and hold it to ransom.",
+    dir: [
+     "William Witney"
+    ],
+    cast: [
+     "Roy Rogers",
+     "Jane Frazee",
+     "Andy Devine"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Fighting Stallion",
@@ -11204,7 +16643,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/fighting_stallion/fighting_stallion.thumbs/fighting_stallion_001440.jpg",
     subs: "fighting_stallion.asr.srt",
-    bytes: 267523354
+    bytes: 267523354,
+    wd: "Q7733843",
+    wp: "https://en.wikipedia.org/wiki/The_Fighting_Stallion",
+    wpx: "The Fighting Stallion is a 1950 American Western film directed by Robert Emmett Tansey.",
+    dir: [
+     "Robert Emmett Tansey"
+    ],
+    cast: [
+     "Bill Edwards",
+     "Forrest Taylor",
+     "Don C. Harvey"
+    ]
    },
    {
     title: "High Lonesome",
@@ -11216,7 +16666,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/HighLonesome/HighLonesome.thumbs/HighLonesome_001920.jpg",
-    bytes: 346686259
+    bytes: 346686259,
+    wd: "Q5755883",
+    wp: "https://en.wikipedia.org/wiki/High_Lonesome_(film)",
+    wpx: "High Lonesome is a 1950 American Technicolor Western film written and directed by Alan Le May, who also wrote the classic Western novels The Searchers, The Unforgiven and numerous screenplays. High Lonesome is Le May's only directorial credit. The film stars John Drew Barrymore and features Chill Wills and Jack Elam.",
+    dir: [
+     "Alan Le May"
+    ],
+    cast: [
+     "John Drew Barrymore"
+    ]
    },
    {
     title: "The Gunfighter 1950 colorized (Gregory Peck)",
@@ -11239,7 +16698,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/MyOutlawBrother/MyOutlawBrother.thumbs/MyOutlawBrother_001920.jpg",
-    bytes: 357667294
+    bytes: 357667294,
+    wd: "Q3331250",
+    wp: "https://en.wikipedia.org/wiki/My_Outlaw_Brother",
+    wpx: "My Outlaw Brother is a 1951 American Western film directed by Elliott Nugent, produced by Benedict Bogeaus and starring Mickey Rooney, Wanda Hendrix, Robert Preston and Robert Stack. Filmed in Mexico and released through Eagle-Lion Classics, the film is based on the book South of the Rio Grande by Max Brand and is also known as My Brother, the Outlaw.",
+    dir: [
+     "Elliott Nugent"
+    ],
+    cast: [
+     "Mickey Rooney",
+     "Wanda Hendrix"
+    ]
    },
    {
     title: "Only the Valiant",
@@ -11251,7 +16720,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/OnlytheValaint/OnlytheValaint.thumbs/OnlytheValaint_002520.jpg",
-    bytes: 456437916
+    bytes: 456437916,
+    wd: "Q3077894",
+    wp: "https://en.wikipedia.org/wiki/Only_the_Valiant",
+    wpx: "Only the Valiant, also known as Fort Invincible, is a 1951 American Western film produced by William Cagney, directed by Gordon Douglas and starring Gregory Peck, Barbara Payton and Ward Bond. The screenplay was written by Edmund H. North and Harry Brown based on the 1943 novel of the same title by Charles Marquis Warren.",
+    dir: [
+     "Gordon Douglas"
+    ],
+    cast: [
+     "Gregory Peck",
+     "Barbara Payton",
+     "Ward Bond"
+    ]
    },
    {
     title: "The Painted Hills",
@@ -11263,7 +16743,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ThePaintedHills/ThePaintedHills.thumbs/ThePaintedHills_001620.jpg",
-    bytes: 295814831
+    bytes: 295814831,
+    wd: "Q1129813",
+    wp: "https://en.wikipedia.org/wiki/The_Painted_Hills",
+    wpx: "The Painted Hills, also known as Lassie's Adventures in the Goldrush, is a 1951 Western drama film produced by Metro-Goldwyn-Mayer and directed by Harold F. Kress. The Painted Hills is the seventh and final MGM Lassie film.",
+    dir: [
+     "Harold F. Kress"
+    ],
+    cast: [
+     "Paul Kelly",
+     "Bruce Cowling",
+     "Ann Doran"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "Vengeance Valley",
@@ -11275,7 +16769,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/VengeanceValley/VengeanceValley.thumbs/VengeanceValley_001920.jpg",
-    bytes: 354388014
+    bytes: 354388014,
+    wd: "Q542215",
+    wp: "https://en.wikipedia.org/wiki/Vengeance_Valley",
+    wpx: "Vengeance Valley is a 1951 American Technicolor Western film directed by Richard Thorpe and starring Burt Lancaster, Robert Walker, Joanne Dru, Sally Forrest, John Ireland and Ray Collins. It is based on a novel by Luke Short.",
+    dir: [
+     "Richard Thorpe"
+    ],
+    cast: [
+     "Burt Lancaster",
+     "Robert Walker",
+     "John Ireland"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "The Big Trees",
@@ -11286,7 +16794,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheBigTrees720p1952/TheBigTrees720p1952.thumbs/TheBigTrees720p_002154.jpg",
-    bytes: 629849361
+    bytes: 629849361,
+    wd: "Q1232623",
+    wp: "https://en.wikipedia.org/wiki/The_Big_Trees",
+    wpx: "The Big Trees is a 1952 American lumberjack Western film starring Kirk Douglas and directed by Felix E. Feist. It is Douglas's final film for Warner Bros. Pictures, and he performed without pay in exchange for releasing him from his long-term contract.",
+    dir: [
+     "Felix E. Feist"
+    ],
+    cast: [
+     "Kirk Douglas",
+     "Edgar Buchanan",
+     "John Archer"
+    ],
+    co: [
+     "Warner Bros. Entertainment"
+    ]
    },
    {
     title: "The Bushwhackers",
@@ -11298,7 +16820,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheBushwhackers/TheBushwhackers.thumbs/TheBushwhackers_001560.jpg",
-    bytes: 290915155
+    bytes: 290915155,
+    wd: "Q7720731",
+    wp: "https://en.wikipedia.org/wiki/The_Bushwhackers_(1952_film)",
+    wpx: "The Bushwhackers is a 1952 American Western film directed by Rod Amateau and starring John Ireland, Wayne Morris, Lawrence Tierney, Dorothy Malone, Lon Chaney Jr. and Myrna Dell.",
+    dir: [
+     "Rod Amateau"
+    ],
+    cast: [
+     "John Ireland",
+     "Wayne Morris",
+     "Lawrence Tierney"
+    ]
    },
    {
     title: "Kansas Pacific",
@@ -11309,7 +16842,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/KansasPacific/KansasPacific.thumbs/KansasPacific_001734.jpg",
-    bytes: 350529389
+    bytes: 350529389,
+    wd: "Q6365031",
+    wp: "https://en.wikipedia.org/wiki/Kansas_Pacific_(film)",
+    wpx: "Kansas Pacific is a 1953 American Cinecolor Western film released by Allied Artists Pictures and directed by Ray Nazarro. It stars Sterling Hayden and Eve Miller. While the film was released in 1953, the title screen clearly states \"Copyright MCMLII\" (1952). The film offers a fictionalized account of the struggle to build the Kansas Pacific Railway in the early 1860s just prior to the American Civil War. In the film the building of the…",
+    dir: [
+     "Ray Nazarro"
+    ],
+    cast: [
+     "Sterling Hayden",
+     "Eve Miller",
+     "Barton MacLane"
+    ]
    },
    {
     title: "The Gambler from Natchez",
@@ -11320,7 +16864,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/tgfn5547811/tgfn5547811.thumbs/tgfn5547811_002034.jpg",
-    bytes: 246943118
+    bytes: 246943118,
+    wd: "Q20004221",
+    wp: "https://en.wikipedia.org/wiki/The_Gambler_from_Natchez",
+    wpx: "The Gambler from Natchez is a 1954 American Western film directed by Henry Levin and starring Dale Robertson and Debra Paget. It was Robertson's favorite among his own films.",
+    dir: [
+     "Henry Levin"
+    ],
+    cast: [
+     "Dale Robertson",
+     "Debra Paget",
+     "Thomas Gomez"
+    ]
    },
    {
     title: "Rage at Dawn",
@@ -11332,7 +16887,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/RageatDawn/RageatDawn.thumbs/RageatDawn_002040.jpg",
-    bytes: 377851412
+    bytes: 377851412,
+    wd: "Q392045",
+    wp: "https://en.wikipedia.org/wiki/Rage_at_Dawn",
+    wpx: "Rage at Dawn is a 1955 American Technicolor Western film directed by Tim Whelan, and starring Randolph Scott, Forrest Tucker, Mala Powers, and J. Carrol Naish. It purports to tell the true story of the Reno Brothers, an outlaw gang which terrorized the American Midwest, particularly Southern Indiana, in the period immediately following the American Civil War.",
+    dir: [
+     "Tim Whelan"
+    ],
+    cast: [
+     "Randolph Scott",
+     "Forrest Tucker",
+     "Mala Powers"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "Daniel Boone, Trail Blazer",
@@ -11344,7 +16913,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Daniel_Boone_-_Trail_Blazer/Daniel_Boone_-_Trail_Blazer.thumbs/Daniel_Boone_-_Trail_Blazer_001800.jpg",
-    bytes: 324866404
+    bytes: 324866404,
+    wd: "Q5216604",
+    wp: "https://en.wikipedia.org/wiki/Daniel_Boone%2C_Trail_Blazer",
+    wpx: "Daniel Boone, Trail Blazer is a 1956 American historical western adventure film co-produced and directed by Albert C. Gannaway and Ismael Rodríguez and starring Bruce Bennett, Lon Chaney Jr. and Faron Young. The film was shot in Trucolor in Mexico. It was released by Republic Pictures at the height of the Davy Crockett, King of the Wild Frontier craze.",
+    dir: [
+     "Ismael Rodríguez"
+    ],
+    cast: [
+     "Bruce Bennett"
+    ]
    },
    {
     title: "I Killed Wild Bill Hickok ipod",
@@ -11367,7 +16945,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheNakedHills/TheNakedHills.thumbs/TheNakedHills_001800.jpg",
-    bytes: 324089978
+    bytes: 324089978,
+    wd: "Q7753024",
+    wp: "https://en.wikipedia.org/wiki/The_Naked_Hills",
+    wpx: "The Naked Hills is a 1956 American Western film directed by Josef Shaftel, starring David Wayne, Keenan Wynn, and James Barton.",
+    dir: [
+     "Josef Shaftel"
+    ],
+    cast: [
+     "Keenan Wynn",
+     "Myrna Dell",
+     "Frank Fenton"
+    ]
    },
    {
     title: "Raiders of Old California",
@@ -11378,7 +16967,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/raiders_of_old_california_ipod/raiders_of_old_california_ipod.thumbs/raiders_of_old_california_001680.jpg",
-    bytes: 305586557
+    bytes: 305586557,
+    wd: "Q7283787",
+    wp: "https://en.wikipedia.org/wiki/Raiders_of_Old_California",
+    wpx: "Raiders of Old California is a 1957 American black-and-white Western film produced and directed by Albert C. Gannaway and starring Jim Davis, Arleen Whelan, and Faron Young. It was the final film appearance of Arleen Whelan, who retired from acting in 1957; she died on April 7, 1993.",
+    dir: [
+     "Albert C. Gannaway"
+    ],
+    cast: [
+     "Jim Davis",
+     "Lee Van Cleef",
+     "Lawrence Dobkin"
+    ]
    },
    {
     title: "\"Bonanza\" The Abduction",
@@ -11411,7 +17011,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheMostDangerousGame/TheMostDangerousGame.thumbs/TheMostDangerousGame_001500.jpg",
-    bytes: 272506820
+    bytes: 272506820,
+    wd: "Q1541422",
+    wp: "https://en.wikipedia.org/wiki/The_Most_Dangerous_Game_(1932_film)",
+    wpx: "The Most Dangerous Game is a 1932 American pre-Code horror film directed by Ernest B. Schoedsack and Irving Pichel, and starring Joel McCrea, Fay Wray and Leslie Banks. The movie is an adaptation of the 1924 short story of the same name by Richard Connell; it is the first film version of the story. In the United Kingdom, the film was released as The Hounds of Zaroff.",
+    dir: [
+     "Irving Pichel",
+     "Ernest B. Schoedsack"
+    ],
+    cast: [
+     "Joel McCrea",
+     "Fay Wray",
+     "Leslie Banks"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "The Thirteenth Guest",
@@ -11424,7 +17039,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The_Thirteenth_Guest/The_Thirteenth_Guest.thumbs/The_Thirteenth_Guest_001620.jpg",
     subs: "The_Thirteenth_Guest.asr.srt",
-    bytes: 329084017
+    bytes: 329084017,
+    wd: "Q3227800",
+    wp: "https://en.wikipedia.org/wiki/The_Thirteenth_Guest",
+    wpx: "The Thirteenth Guest is a 1932 American pre-Code mystery comedy thriller film, released on August 9, 1932. The film is also known as Lady Beware in the United Kingdom. It is based on the 1929 novel The Thirteenth Guest written by crime fiction author Armitage Trail, best known for the novel Scarface on which the 1932 movie of the same name was based. The novel was filmed again in 1943 as Mystery of the 13th Guest.",
+    dir: [
+     "Albert Ray"
+    ],
+    cast: [
+     "Ginger Rogers",
+     "Lyle Talbot",
+     "Eddie Phillips"
+    ]
    },
    {
     title: "Philo Vance - The Kennel Murder Case",
@@ -11448,7 +17074,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/MysteriousMr.Wong720p1934/MysteriousMr.Wong720p1934.thumbs/MysteriousMrWong720p_001494.jpg",
     subs: "MysteriousMrWong720p.asr.srt",
-    bytes: 397730836
+    bytes: 397730836,
+    wd: "Q7752851",
+    wp: "https://en.wikipedia.org/wiki/The_Mysterious_Mr._Wong",
+    wpx: "The Mysterious Mr. Wong is a tongue-in-cheek 1934 mystery film starring Bela Lugosi as a powerful Fu Manchu type criminal mastermind of the Chinatown underworld, and Wallace Ford as a wisecracking reporter. The film is based on Harry Stephen Keeler's 1928 short story \"The Strange Adventure of the Twelve Coins of Confucius\" one of three stories in Keeler's book Sing Sing Nights. Despite the name of the title character and being directed…",
+    dir: [
+     "William Nigh"
+    ],
+    cast: [
+     "Bela Lugosi",
+     "Wallace Ford",
+     "Arline Judge"
+    ]
    },
    {
     title: "Great Guy",
@@ -11460,7 +17097,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Great_Guy.avi/Great_Guy.avi.thumbs/Great_Guy_001560.jpg",
-    bytes: 288228711
+    bytes: 288228711,
+    wd: "Q2709852",
+    wp: "https://en.wikipedia.org/wiki/Great_Guy",
+    wpx: "Great Guy is a 1936 American crime film noir directed by John G. Blystone and starring James Cagney. In the film, an honest inspector for the New York Department of Weights and Measures takes on corrupt merchants and politicians.",
+    dir: [
+     "John G. Blystone"
+    ],
+    cast: [
+     "James Cagney",
+     "Mae Clarke",
+     "Edward Brophy"
+    ],
+    co: [
+     "Zion Meyers Productions"
+    ]
    },
    {
     title: "Phantom Ship , The",
@@ -11499,7 +17150,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Seven_Sinners_1936/Seven_Sinners_1936.thumbs/Seven_Sinners_1936_001680.jpg",
     subs: "Seven_Sinners_1936.asr.srt",
-    bytes: 300804936
+    bytes: 300804936,
+    wd: "Q7457416",
+    wp: "https://en.wikipedia.org/wiki/Seven_Sinners_(1936_film)",
+    wpx: "Seven Sinners is a 1936 British thriller film directed by Albert de Courville and starring Edmund Lowe, Constance Cummings and Felix Aylmer. In the U.S. it was known under this title and also as Doomed Cargo. The screenplay concerns an American detective and his sidekick, who travel from France to England to take on a gang of international criminals.",
+    dir: [
+     "Albert de Courville"
+    ],
+    cast: [
+     "Edmund Lowe"
+    ]
    },
    {
     title: "The Dark Hour",
@@ -11512,7 +17172,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The.Dark.Hour/The.Dark.Hour.thumbs/The_Dark_Hour_001620.jpg",
     subs: "The_Dark_Hour.asr.srt",
-    bytes: 348270804
+    bytes: 348270804,
+    wd: "Q7728953",
+    wp: "https://en.wikipedia.org/wiki/The_Dark_Hour_(1936_film)",
+    wpx: "The Dark Hour is a 1936 American film directed by Charles Lamont.",
+    dir: [
+     "Charles Lamont"
+    ]
    },
    {
     title: "Bulldog Drummond Escapes",
@@ -11524,7 +17190,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/BulldogDrummondEscapesRayMilland1937Andy/BulldogDrummondEscapesRayMilland1937Andy.thumbs/BulldogDrummondEscapesRayMilland1937Andy_001560.jpg",
-    bytes: 288651640
+    bytes: 288651640,
+    wd: "Q3282785",
+    wp: "https://en.wikipedia.org/wiki/Bulldog_Drummond_Escapes",
+    wpx: "Bulldog Drummond Escapes is a 1937 American mystery thriller film directed by James P. Hogan and starring Ray Milland as Captain Hugh \"Bulldog\" Drummond alongside Heather Angel and Reginald Denny. Paramount continued with the Bulldog Drummond series, producing seven more films over the next two years. They replaced Milland with John Howard.",
+    dir: [
+     "James P. Hogan"
+    ],
+    cast: [
+     "Ray Milland",
+     "Heather Angel",
+     "Reginald Denny"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "Bulldog Drummond's Revenge",
@@ -11537,7 +17217,17 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/BulldogDrummondsRevenge_38/BulldogDrummondsRevenge_38.thumbs/Bulldog_Drummonds_Revenge_001320.jpg",
     subs: "Bulldog_Drummonds_Revenge.asr.srt",
-    bytes: 279058965
+    bytes: 279058965,
+    wd: "Q4996715",
+    wp: "https://en.wikipedia.org/wiki/Bulldog_Drummond's_Revenge",
+    wpx: "Bulldog Drummond's Revenge is a 1937 American adventure mystery film directed by Louis King, produced by Stuart Walker, written by Edward T. Lowe Jr. and Herman C. McNeile (novel), and featuring John Barrymore. The picture stars John Howard in his second appearance as Bulldog Drummond. Top-billed John Barrymore portrays his friend Colonel Nielsen of Scotland Yard.",
+    dir: [
+     "Louis King"
+    ],
+    cast: [
+     "John Barrymore",
+     "John Howard"
+    ]
    },
    {
     title: "Bulldog Drummond's Peril",
@@ -11549,7 +17239,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/BulldogDrummondsPerilJPHogan1938/BulldogDrummondsPerilJPHogan1938.thumbs/BulldogDrummondsPerilJPHogan1938_001560.jpg",
-    bytes: 286919839
+    bytes: 286919839,
+    wd: "Q4996712",
+    wp: "https://en.wikipedia.org/wiki/Bulldog_Drummond's_Peril",
+    wpx: "Bulldog Drummond's Peril is a 1938 American adventure crime mystery film directed by James P. Hogan and starring John Barrymore and John Howard. The film is based on Herman C. McNeile's novel The Third Round.",
+    dir: [
+     "James P. Hogan"
+    ]
    },
    {
     title: "Mr. Wong, Detective",
@@ -11562,7 +17258,20 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Mr._Wong_Detective/Mr._Wong_Detective.thumbs/Mr._Wong_Detective_001620.jpg",
     subs: "Mr._Wong_Detective.asr.srt",
-    bytes: 289531050
+    bytes: 289531050,
+    wd: "Q12126324",
+    wp: "https://en.wikipedia.org/wiki/Mr._Wong%2C_Detective",
+    wpx: "Mr. Wong, Detective is a 1938 American crime film directed by William Nigh and starring Boris Karloff in his first appearance as Mr. Wong.",
+    dir: [
+     "William Nigh"
+    ],
+    cast: [
+     "Boris Karloff",
+     "Grant Withers"
+    ],
+    co: [
+     "Monogram Pictures"
+    ]
    },
    {
     title: "Mr. Wong in Chinatown",
@@ -11575,7 +17284,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Mr_Wong_in_Chinatown/Mr_Wong_in_Chinatown.thumbs/Mr._Wong_in_Chinatown_001680.jpg",
     subs: "Mr._Wong_in_Chinatown.asr.srt",
-    bytes: 297365947
+    bytes: 297365947,
+    wd: "Q10332948",
+    wp: "https://en.wikipedia.org/wiki/Mr._Wong_in_Chinatown",
+    wpx: "Mr. Wong in Chinatown is a 1939 American mystery film directed by William Nigh and starring Boris Karloff as Mr. Wong.",
+    dir: [
+     "William Nigh"
+    ],
+    cast: [
+     "Marjorie Reynolds",
+     "James Flavin",
+     "George Lynn"
+    ]
    },
    {
     title: "Nancy Drew... Reporter",
@@ -11588,7 +17308,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/nancy_drew_reporter/nancy_drew_reporter.thumbs/nancy_drew_reporter_001620.jpg",
     subs: "nancy_drew_reporter.asr.srt",
-    bytes: 293404334
+    bytes: 293404334,
+    wd: "Q6962645",
+    wp: "https://en.wikipedia.org/wiki/Nancy_Drew..._Reporter",
+    wpx: "Nancy Drew... Reporter is a 1939 American comedy-mystery film directed by William Clemens and written by Kenneth Gamet. The film stars Bonita Granville as Nancy Drew, John Litel, Frankie Thomas, Mary Lee, Dickie Jones and Larry Williams. The film was released by Warner Bros. Pictures on February 18, 1939. It is a sequel to Nancy Drew... Detective (1938) and was followed by Nancy Drew... Trouble Shooter (1939).",
+    dir: [
+     "William Clemens"
+    ],
+    cast: [
+     "Bonita Granville"
+    ]
    },
    {
     title: "Q Planes",
@@ -11600,7 +17329,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Q-Planes/Q-Planes.thumbs/Q-Planes_001860.jpg",
-    bytes: 341787844
+    bytes: 341787844,
+    wd: "Q2406465",
+    wp: "https://en.wikipedia.org/wiki/Q_Planes",
+    wpx: "Q Planes is a 1939 British comedy spy film starring Ralph Richardson, Laurence Olivier and Valerie Hobson. Olivier and Richardson were a decade into their fifty-year friendship and were in the process of staging a theatrical version of Othello, with Richardson in the title role and Olivier as Iago, when this film was made.",
+    dir: [
+     "Tim Whelan",
+     "Arthur B. Woods"
+    ],
+    cast: [
+     "Ralph Richardson",
+     "Laurence Olivier",
+     "Valerie Hobson"
+    ]
    },
    {
     title: "The Gorilla",
@@ -11613,7 +17354,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The_Gorilla_1939/The_Gorilla_1939.thumbs/The_Gorilla_1939_001560.jpg",
     subs: "The_Gorilla_1939.asr.srt",
-    bytes: 336826894
+    bytes: 336826894,
+    wd: "Q209854",
+    wp: "https://en.wikipedia.org/wiki/The_Gorilla_(1939_film)",
+    wpx: "The Gorilla is a 1939 American comedy horror film starring the Ritz Brothers, Anita Louise, Art Miles, Lionel Atwill, Bela Lugosi, and Patsy Kelly. It was based on the 1925 play of the same name by Ralph Spence.",
+    dir: [
+     "Allan Dwan"
+    ],
+    cast: [
+     "Albert Ritz",
+     "Jimmy Ritz",
+     "Anita Louise"
+    ]
    },
    {
     title: "The Mystery of Mr. Wong",
@@ -11626,7 +17378,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The_Mystery_of_Mr._Wong/The_Mystery_of_Mr._Wong.thumbs/The_Mystery_of_Mr._Wong_001680.jpg",
     subs: "The_Mystery_of_Mr._Wong.asr.srt",
-    bytes: 297198099
+    bytes: 297198099,
+    wd: "Q4009491",
+    wp: "https://en.wikipedia.org/wiki/The_Mystery_of_Mr._Wong",
+    wpx: "The Mystery of Mr. Wong is a 1939 American mystery film directed by William Nigh and starring Boris Karloff.",
+    dir: [
+     "William Nigh"
+    ],
+    cast: [
+     "Boris Karloff",
+     "Grant Withers",
+     "Dorothy Tree"
+    ],
+    co: [
+     "Monogram Pictures"
+    ]
    },
    {
     title: "British Intelligence",
@@ -11639,7 +17405,20 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/british_intelligence/british_intelligence.thumbs/british_intelligence_001440.jpg",
     subs: "british_intelligence.asr.srt",
-    bytes: 263340625
+    bytes: 263340625,
+    wd: "Q4970130",
+    wp: "https://en.wikipedia.org/wiki/British_Intelligence_(film)",
+    wpx: "British Intelligence is a 1940 spy film set in World War I. It was directed by Terry O. Morse and stars Boris Karloff and Margaret Lindsay. The film, also known as Enemy Agent, was released in the United States in January 1940. The Warner Bros. B picture was based on a 1918 play Three Faces East written by Anthony Paul Kelly and produced on the stage by George M. Cohan. Two film adaptations of Three Faces East in 1926 and 1930 preceded…",
+    dir: [
+     "Terry O. Morse"
+    ],
+    cast: [
+     "Boris Karloff",
+     "Margaret Lindsay"
+    ],
+    co: [
+     "Warner Bros. Entertainment"
+    ]
    },
    {
     title: "Case of the Frightened Lady",
@@ -11652,7 +17431,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Case_of_the_Frightened_Lady_1940/Case_of_the_Frightened_Lady_1940.thumbs/Case_of_the_Frightened_Lady_1940_003971.jpg",
     subs: "Case_of_the_Frightened_Lady_1940.asr.srt",
-    bytes: 347346690
+    bytes: 347346690,
+    wd: "Q7721517",
+    wp: "https://en.wikipedia.org/wiki/The_Case_of_the_Frightened_Lady_(film)",
+    wpx: "The Case of the Frightened Lady is a 1940 British, black-and-white, crime, drama, mystery thriller, directed by George King and starring Marius Goring as Lord Lebanon, Helen Haye as Lady Lebanon, Penelope Dudley Ward as Isla Crane, George Merritt as Detective Inspector Tanner, Ronald Shiner as Detective Sergeant Totty and Felix Aylmer as Dr Amersham. It was produced by Pennant Picture Productions and presented by British Lion Film…",
+    dir: [
+     "George King"
+    ],
+    cast: [
+     "Marius Goring"
+    ]
    },
    {
     title: "Doomed to Die",
@@ -11665,7 +17453,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Doomed_to_Die_1940/Doomed_to_Die_1940.thumbs/Doomed_to_Die_001620.jpg",
     subs: "Doomed_to_Die.asr.srt",
-    bytes: 283556572
+    bytes: 283556572,
+    wd: "Q5297090",
+    wp: "https://en.wikipedia.org/wiki/Doomed_to_Die_(film)",
+    wpx: "Doomed to Die is a 1940 American mystery film directed by William Nigh and starring Boris Karloff as Mr. Wong with Marjorie Reynolds and Grant Withers. It is a sequel to the 1940 film The Fatal Hour, which also features Withers and Reynolds.",
+    dir: [
+     "William Nigh"
+    ],
+    cast: [
+     "Boris Karloff",
+     "Marjorie Reynolds",
+     "Grant Withers"
+    ],
+    co: [
+     "Monogram Pictures"
+    ]
    },
    {
     title: "Fatal Hour",
@@ -11678,7 +17480,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/fatal_hour/fatal_hour.thumbs/fatal_hour_001440.jpg",
     subs: "fatal_hour.asr.srt",
-    bytes: 266591887
+    bytes: 266591887,
+    wd: "Q7733525",
+    wp: "https://en.wikipedia.org/wiki/The_Fatal_Hour_(1940_film)",
+    wpx: "The Fatal Hour is a 1940 American thriller crime drama film directed by William Nigh and starring Boris Karloff, Grant Withers, and Marjorie Reynolds.",
+    dir: [
+     "William Nigh"
+    ],
+    cast: [
+     "Boris Karloff",
+     "Grant Withers",
+     "Marjorie Reynolds"
+    ],
+    co: [
+     "Monogram Pictures"
+    ]
    },
    {
     title: "Phantom of Chinatown",
@@ -11691,7 +17507,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Phantom_of_Chinatown_1940/Phantom_of_Chinatown_1940.thumbs/Phantom_of_Chinatown_001440.jpg",
     subs: "Phantom_of_Chinatown.asr.srt",
-    bytes: 258175203
+    bytes: 258175203,
+    wd: "Q7180611",
+    wp: "https://en.wikipedia.org/wiki/Phantom_of_Chinatown",
+    wpx: "Phantom of Chinatown is a 1940 American mystery film directed by Phil Rosen starring Keye Luke. This is the last of the Mr. Wong films and the only one to star Luke in the role originated by Boris Karloff. This was the first film with a Chinese actor playing the lead role as a Chinese detective.",
+    dir: [
+     "Phil Rosen"
+    ],
+    cast: [
+     "Keye Luke"
+    ]
    },
    {
     title: "Rebecca",
@@ -11725,7 +17550,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CottageToLet/CottageToLet.thumbs/CottageToLet_002040.jpg",
-    bytes: 372408911
+    bytes: 372408911,
+    wd: "Q5175550",
+    wp: "https://en.wikipedia.org/wiki/Cottage_to_Let",
+    wpx: "Cottage to Let is a 1941 British spy thriller film directed by Anthony Asquith starring Leslie Banks, Alastair Sim and John Mills. It was written by J. O. C. Orton and Anatole de Grunwald based on the play of the same title by Geoffrey Kerr. Filmed during the Second World War and set in Scotland during the war, its plot concerns Nazi spies trying to kidnap an inventor.",
+    dir: [
+     "Anthony Asquith"
+    ],
+    cast: [
+     "Leslie Banks",
+     "Alastair Sim",
+     "John Mills"
+    ],
+    co: [
+     "Gainsborough Pictures"
+    ]
    },
    {
     title: "Murder by Invitation",
@@ -11738,7 +17577,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Murder_by_Invitation_1941/Murder_by_Invitation_1941.thumbs/Murder_by_Invitation_1941_003060.jpg",
     subs: "Murder_by_Invitation_1941.asr.srt",
-    bytes: 290064058
+    bytes: 290064058,
+    wd: "Q6937729",
+    wp: "https://en.wikipedia.org/wiki/Murder_by_Invitation",
+    wpx: "Murder by Invitation is a 1941 American mystery film directed by Phil Rosen and starring Wallace Ford, Marian Marsh and Sarah Padden. It was distributed by Monogram Pictures.",
+    dir: [
+     "Phil Rosen"
+    ],
+    co: [
+     "Monogram Pictures"
+    ]
    },
    {
     title: "The Wolf Man - 1941",
@@ -11761,7 +17609,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Bowery_at_Midnight/Bowery_at_Midnight.thumbs/Bowery_at_Midnight_1942_001434.jpg",
     subs: "Bowery_at_Midnight_1942.asr.srt",
-    bytes: 383059761
+    bytes: 383059761,
+    wd: "Q3224750",
+    wp: "https://en.wikipedia.org/wiki/Bowery_at_Midnight",
+    wpx: "Bowery at Midnight is a 1942 American Monogram Pictures horror film directed by Wallace Fox and starring Bela Lugosi and John Archer. The film was re-released by Astor Pictures in 1949.",
+    dir: [
+     "Wallace Fox"
+    ],
+    cast: [
+     "Bela Lugosi",
+     "John Archer",
+     "Dave O'Brien"
+    ]
    },
    {
     title: "Eyes in the Night",
@@ -11774,7 +17633,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/EYES.IN.THE.NIGHT/EYES.IN.THE.NIGHT.thumbs/EYES_IN_THE_NIGHT_001920.jpg",
     subs: "EYES_IN_THE_NIGHT.asr.srt",
-    bytes: 340727650
+    bytes: 340727650,
+    wd: "Q153613",
+    wp: "https://en.wikipedia.org/wiki/Eyes_in_the_Night",
+    wpx: "Eyes in the Night is a 1942 American crime mystery starring Edward Arnold, Ann Harding, and Donna Reed. Directed by Fred Zinnemann, it is based on Baynard Kendrick's 1941 novel The Odor of Violets.",
+    dir: [
+     "Fred Zinnemann"
+    ],
+    cast: [
+     "Ann Harding",
+     "Edward Arnold",
+     "Reginald Denny"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "X Marks the Spot",
@@ -11787,7 +17660,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/x_marks_the_spot/x_marks_the_spot.thumbs/x_marks_the_spot_001260.jpg",
     subs: "x_marks_the_spot.asr.srt",
-    bytes: 229615744
+    bytes: 229615744,
+    wd: "Q8042757",
+    wp: "https://en.wikipedia.org/wiki/X_Marks_the_Spot_(1942_film)",
+    wpx: "X Marks the Spot is a 1942 American film noir crime film directed by George Sherman and Damian O'Flynn, Helen Parrish, and Dick Purcell. It is a remake of the 1931 film of the same name.",
+    dir: [
+     "George Sherman"
+    ],
+    cast: [
+     "Damian O'Flynn"
+    ]
    },
    {
     title: "Lady of Burlesque",
@@ -11799,7 +17681,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/LadyofBurlesque/LadyofBurlesque.thumbs/LadyofBurlesque_002160.jpg",
-    bytes: 393046993
+    bytes: 393046993,
+    wd: "Q3100955",
+    wp: "https://en.wikipedia.org/wiki/Lady_of_Burlesque",
+    wpx: "Lady of Burlesque is a 1943 American musical comedy mystery film directed by William A. Wellman, produced by Hunt Stromberg, and starring Barbara Stanwyck and Michael O'Shea. It is a faithful, if sanitized, adaptation of the 1941 novel The G-String Murders by burlesque performer and stripper Gypsy Rose Lee.",
+    dir: [
+     "William A. Wellman"
+    ],
+    cast: [
+     "Barbara Stanwyck",
+     "Michael O'Shea",
+     "Iris Adrian"
+    ],
+    co: [
+     "United Artists"
+    ]
    },
    {
     title: "Sherlock Holmes and the Secret Weapon",
@@ -11812,7 +17708,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/secret_weapon/secret_weapon.thumbs/secret_weapon_ipod_003240.jpg",
     subs: "secret_weapon_ipod.asr.srt",
-    bytes: 290875932
+    bytes: 290875932,
+    wd: "Q255314",
+    wp: "https://en.wikipedia.org/wiki/Sherlock_Holmes_and_the_Secret_Weapon",
+    wpx: "Sherlock Holmes and the Secret Weapon (1942) is the fourth in the Basil Rathbone/Nigel Bruce series of 14 Sherlock Holmes films, which updated the characters created by Sir Arthur Conan Doyle to the then-present day. The film is credited as an adaptation of Conan Doyle's 1903 short story \"The Adventure of the Dancing Men\", though the only element from the source material is the dancing men code. Rather, it is a spy film taking place on…",
+    dir: [
+     "Roy William Neill"
+    ],
+    cast: [
+     "Basil Rathbone",
+     "Nigel Bruce",
+     "Lionel Atwill"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "Laura ( 1944) HD Gene Tierney, Dana Andrews, Clifton Webb, Vincent Pri",
@@ -11836,7 +17746,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/one_body_too_many_ipod/one_body_too_many_ipod.thumbs/One_Body_Too_Many_001800.jpg",
     subs: "One_Body_Too_Many.asr.srt",
-    bytes: 315986905
+    bytes: 315986905,
+    wd: "Q7092493",
+    wp: "https://en.wikipedia.org/wiki/One_Body_Too_Many",
+    wpx: "One Body Too Many is a 1944 American comedy-mystery film directed by Frank McDonald, starring Bela Lugosi, Jack Haley and Lyle Talbot. The film was the second comedy featuring Haley to be produced by Pine-Thomas Productions, part of the studio's new direction towards comedy films. The original intention was to hire Boris Karloff for the film's key horror role, but Lugosi was hired instead.",
+    dir: [
+     "Frank McDonald"
+    ],
+    cast: [
+     "Jack Haley",
+     "Jean Parker",
+     "Maxine Fife"
+    ]
    },
    {
     title: "And Then There Were None",
@@ -11847,7 +17768,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/attwn994545112/attwn994545112.thumbs/attwn994545112_002334.jpg",
-    bytes: 880711171
+    bytes: 880711171,
+    wd: "Q2517672",
+    wp: "https://en.wikipedia.org/wiki/And_Then_There_Were_None_(1945_film)",
+    wpx: "And Then There Were None is a 1945 film adaptation of Agatha Christie's 1939 mystery novel of the same name, directed by René Clair. It was released in the United Kingdom as Ten Little Indians, in keeping with the third United Kingdom title of Christie's novel. The film was released by 20th Century Fox and due to the lapsed copyright, it is now in the public domain. The film has been remastered multiple times and is freely available online.",
+    dir: [
+     "René Clair"
+    ],
+    cast: [
+     "Barry Fitzgerald",
+     "Walter Huston",
+     "Louis Hayward"
+    ]
    },
    {
     title: "Fog Island",
@@ -11860,7 +17792,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Fog_island_1945/Fog_island_1945.thumbs/Fog_Island_1945_001620.jpg",
     subs: "Fog_Island_1945.asr.srt",
-    bytes: 296484154
+    bytes: 296484154,
+    wd: "Q5464050",
+    wp: "https://en.wikipedia.org/wiki/Fog_Island",
+    wpx: "Fog Island is a 1945 American mystery-suspense film directed by Terry O. Morse. The film stars B movie horror film regulars George Zucco and Lionel Atwill. It was based on the 1937 play Angel Island by Bernadine \"Bernie\" Angus.",
+    dir: [
+     "Terry O. Morse"
+    ]
    },
    {
     title: "Phantom of 42nd St",
@@ -11873,7 +17811,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/phantom_of_42nd_st/phantom_of_42nd_st.thumbs/phantom_of_42nd_st_001380.jpg",
     subs: "phantom_of_42nd_st.asr.srt",
-    bytes: 251067273
+    bytes: 251067273,
+    wd: "Q7756852",
+    wp: "https://en.wikipedia.org/wiki/The_Phantom_of_42nd_Street",
+    wpx: "The Phantom of 42nd Street is a 1945 American mystery film directed by Albert Herman and starring Dave O'Brien, Kay Aldridge and Alan Mowbray. It was produced by the low-budget Poverty Row studio Producers Releasing Corporation. The film's sets were designed by the art director Paul Palmentola.",
+    dir: [
+     "Albert Herman"
+    ],
+    cast: [
+     "Dave O'Brien"
+    ]
    },
    {
     title: "Spellbound (1945) Director: Alfred Hitchcock Starring Ingrid Bergman, ",
@@ -11897,7 +17844,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The_Scarlet_Clue/The_Scarlet_Clue.thumbs/The_Scarlet_Clue_001560.jpg",
     subs: "The_Scarlet_Clue.asr.srt",
-    bytes: 310505374
+    bytes: 310505374,
+    wd: "Q7762417",
+    wp: "https://en.wikipedia.org/wiki/The_Scarlet_Clue",
+    wpx: "The Scarlet Clue is a 1945 American mystery film directed by Phil Rosen and starring Sidney Toler, Mantan Moreland, and Ben Carter. It was produced and released by Monogram Pictures.",
+    dir: [
+     "Phil Rosen"
+    ],
+    co: [
+     "Monogram Pictures"
+    ]
    },
    {
     title: "The Woman In Green",
@@ -11909,7 +17865,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheWomanInGreen1945/TheWomanInGreen1945.thumbs/TheWomanInGreen_001530.jpg",
     subs: "TheWomanInGreen.asr.srt",
-    bytes: 548925974
+    bytes: 548925974,
+    wd: "Q1212662",
+    wp: "https://en.wikipedia.org/wiki/The_Woman_in_Green",
+    wpx: "The Woman in Green is a 1945 American horror mystery film, the eleventh of the fourteen Basil Rathbone-Nigel Bruce Sherlock Holmes films based on the characters created by Arthur Conan Doyle. Produced and directed by Roy William Neill, it stars Rathbone as Sherlock Holmes and Bruce as Dr. Watson, with Hillary Brooke as the woman of the title and Henry Daniell as Professor Moriarty. The film follows an original premise with material…",
+    dir: [
+     "Roy William Neill"
+    ],
+    cast: [
+     "Basil Rathbone",
+     "Nigel Bruce",
+     "Henry Daniell"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "Dressed To Kill",
@@ -11922,7 +17892,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/dressed_to_kill/dressed_to_kill.thumbs/dressed_to_kill_001680.jpg",
     subs: "dressed_to_kill.asr.srt",
-    bytes: 311813650
+    bytes: 311813650,
+    wd: "Q151994",
+    wp: "https://en.wikipedia.org/wiki/Dressed_to_Kill_(1946_film)",
+    wpx: "Dressed to Kill is a 1946 American mystery film directed by Roy William Neill. Released by Universal Pictures, it is the last of fourteen films starring Basil Rathbone as Sherlock Holmes and Nigel Bruce as Doctor Watson. It is also known by the alternative titles Prelude to Murder and Sherlock Holmes and the Secret Code in the United Kingdom.",
+    dir: [
+     "Roy William Neill"
+    ],
+    cast: [
+     "Basil Rathbone",
+     "Nigel Bruce",
+     "Patricia Morison"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "Shock (1946) Vincent Price, Lynn Bari, Frank Latimore",
@@ -11946,7 +17930,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Terror_By_Night/Terror_By_Night.thumbs/Terror_By_Night_001380.jpg",
     subs: "Terror_By_Night.asr.srt",
-    bytes: 254101934
+    bytes: 254101934,
+    wd: "Q2651105",
+    wp: "https://en.wikipedia.org/wiki/Terror_by_Night",
+    wpx: "Terror by Night is a 1946 British Sherlock Holmes crime drama film directed by Roy William Neill and starring Basil Rathbone and Nigel Bruce. It was written by Frank Gruber.",
+    dir: [
+     "Roy William Neill"
+    ],
+    cast: [
+     "Basil Rathbone",
+     "Nigel Bruce",
+     "Alan Mowbray"
+    ],
+    co: [
+     "Universal Pictures"
+    ]
    },
    {
     title: "Whistle Stop (1946) George Raft, Ava Gardner, Tom Conway - Film Noir",
@@ -12002,7 +18000,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Devils_Cargo_1948/Devils_Cargo_1948.thumbs/Devils_Cargo_1948_001500.jpg",
-    bytes: 269427443
+    bytes: 269427443,
+    wd: "Q5267085",
+    wp: "https://en.wikipedia.org/wiki/Devil's_Cargo",
+    wpx: "Devil's Cargo is a 1948 American mystery film directed by John F. Link Sr.",
+    dir: [
+     "John F. Link Sr."
+    ]
    },
    {
     title: "Money Madness",
@@ -12014,7 +18018,17 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/MoneyMadness/MoneyMadness.thumbs/MoneyMadness_001740.jpg",
-    bytes: 317664406
+    bytes: 317664406,
+    wd: "Q6899160",
+    wp: "https://en.wikipedia.org/wiki/Money_Madness_(1948_film)",
+    wpx: "Money Madness is a 1948 film noir mystery film directed by Sam Newfield starring Hugh Beaumont and Frances Rafferty.",
+    dir: [
+     "Sam Newfield"
+    ],
+    cast: [
+     "Hugh Beaumont",
+     "Frances Rafferty"
+    ]
    },
    {
     title: "Sorry, Wrong Number (1948) Director: Michael Curtiz, Featuring Barbara",
@@ -12146,7 +18160,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/AnInspectorCalls1954_201508/AnInspectorCalls1954_201508.thumbs/AnInspectorCalls1954_001590.jpg",
-    bytes: 202582291
+    bytes: 202582291,
+    wd: "Q4750078",
+    wp: "https://en.wikipedia.org/wiki/An_Inspector_Calls_(1954_film)",
+    wpx: "An Inspector Calls is a 1954 British drama film directed by Guy Hamilton and starring Alastair Sim, Jane Wenham and Eileen Moore. It is based upon the 1945 play An Inspector Calls by J.B. Priestley and was adapted for the screen by Desmond Davis. It was shot at Shepperton Studios with sets designed by the art director Joseph Bato.",
+    dir: [
+     "Guy Hamilton"
+    ],
+    cast: [
+     "Alastair Sim",
+     "Jane Wenham",
+     "Brian Worth"
+    ]
    },
    {
     title: "Black Widow (1954) Ginger Rogers, George Raft, Van Heflin, Gene Tierne",
@@ -12225,7 +18250,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/pit-and-the-pendulum/pit-and-the-pendulum.thumbs/Pit%20and%20the%20Pendulum_001914.jpg",
-    bytes: 467005228
+    bytes: 467005228,
+    wd: "Q1170048",
+    wp: "https://en.wikipedia.org/wiki/The_Pit_and_the_Pendulum_(1961_film)",
+    wpx: "The Pit and the Pendulum is a 1961 American horror film directed by Roger Corman, starring Vincent Price, Barbara Steele, John Kerr, and Luana Anders. The screenplay by Richard Matheson was loosely inspired by Edgar Allan Poe's 1842 short story of the same name. Set in sixteenth-century Spain, the story is about a young Englishman who visits a foreboding castle to investigate his sister's mysterious death. After a series of horrific…",
+    dir: [
+     "Roger Corman"
+    ],
+    cast: [
+     "Vincent Price",
+     "Barbara Steele",
+     "John Kerr"
+    ],
+    co: [
+     "American International Pictures"
+    ]
    },
    {
     title: "Three Blondes in His Life",
@@ -12238,7 +18277,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Three_Blondes_in_His_Life_movie/Three_Blondes_in_His_Life_movie.thumbs/Three_Blondes_in_His_Life_001860.jpg",
     subs: "Three_Blondes_in_His_Life.asr.srt",
-    bytes: 347981608
+    bytes: 347981608,
+    wd: "Q7797344",
+    wp: "https://en.wikipedia.org/wiki/Three_Blondes_in_His_Life",
+    wpx: "Three Blondes in His Life is a 1961 American neo noir directed by Leon Chooluck and starring Jock Mahoney.",
+    dir: [
+     "Leon Chooluck"
+    ],
+    cast: [
+     "Jock Mahoney"
+    ]
    }
   ]
  },
@@ -12282,7 +18330,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/farewell_to_arms_ipod/farewell_to_arms_ipod.thumbs/farewell_to_arms_001860.jpg",
-    bytes: 332126688
+    bytes: 332126688,
+    wd: "Q1575490",
+    wp: "https://en.wikipedia.org/wiki/A_Farewell_to_Arms_(1932_film)",
+    wpx: "A Farewell to Arms is a 1932 American pre-Code melodrama film directed by Frank Borzage and starring Helen Hayes, Gary Cooper and Adolphe Menjou. Based on the 1929 semi-autobiographical novel A Farewell to Arms by Ernest Hemingway, with a screenplay by Oliver H. P. Garrett and Benjamin Glazer, the film is about a tragic romantic love affair between an American ambulance driver and an English nurse in Italy during World War I. The film…",
+    dir: [
+     "Frank Borzage"
+    ],
+    cast: [
+     "Helen Hayes",
+     "Gary Cooper",
+     "Adolphe Menjou"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "Rain",
@@ -12306,7 +18368,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheLastMile/TheLastMile.thumbs/TheLastMile_001680.jpg",
-    bytes: 302596530
+    bytes: 302596530,
+    wd: "Q7745888",
+    wp: "https://en.wikipedia.org/wiki/The_Last_Mile_(1932_film)",
+    wpx: "The Last Mile is a 1932 American pre-Code crime drama film directed by Samuel Bischoff and starring Preston Foster.\nThe picture is based on John Wexley's 1930 Broadway play, The Last Mile. Actor Howard Phillips appeared in both the play and the film but in different roles. In 1959, the play was adapted a second time into a film of the same name starring Mickey Rooney.",
+    dir: [
+     "Samuel Bischoff"
+    ],
+    cast: [
+     "Alan Roscoe",
+     "Preston Foster",
+     "George E. Stone"
+    ]
    },
    {
     title: "Judge Priest",
@@ -12318,7 +18391,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Judge_Priest/Judge_Priest.thumbs/Judge_Priest_001920.jpg",
-    bytes: 350678726
+    bytes: 350678726,
+    wd: "Q1858871",
+    wp: "https://en.wikipedia.org/wiki/Judge_Priest",
+    wpx: "Judge Priest is a 1934 American comedy film starring Will Rogers. The film was directed by John Ford, produced by Sol M. Wurtzel in association with Fox Film Corporation, and based on humorist Irvin S. Cobb's character Judge Priest. The picture is set in post-reconstruction Kentucky, with Tom Brown, Anita Louise, Henry Walthall, David Landau, and Stepin Fetchit in support. It was remade by Ford in 1953 as The Sun Shines Bright.",
+    dir: [
+     "John Ford"
+    ],
+    cast: [
+     "Will Rogers",
+     "Tom Brown",
+     "Anita Louise"
+    ],
+    co: [
+     "20th Century Studios"
+    ]
    },
    {
     title: "Of Human Bondage",
@@ -12331,7 +18418,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/humanbondage/humanbondage.thumbs/HUMANBONDAGE_001980.jpg",
     subs: "HUMANBONDAGE.asr.srt",
-    bytes: 356741791
+    bytes: 356741791,
+    wd: "Q1164789",
+    wp: "https://en.wikipedia.org/wiki/Of_Human_Bondage_(1934_film)",
+    wpx: "Of Human Bondage is a 1934 American drama film directed by John Cromwell and regarded by critics as the film that made Bette Davis a star. The screenplay by Lester Cohen is based on the 1915 novel Of Human Bondage by W. Somerset Maugham.",
+    dir: [
+     "John Cromwell"
+    ],
+    cast: [
+     "Leslie Howard",
+     "Bette Davis",
+     "Frances Dee"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "Our Daily Bread",
@@ -12343,7 +18444,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ODailyBread/ODailyBread.thumbs/our_daily_bread_001740.jpg",
-    bytes: 321355804
+    bytes: 321355804,
+    wd: "Q762789",
+    wp: "https://en.wikipedia.org/wiki/Our_Daily_Bread_(1934_film)",
+    wpx: "Our Daily Bread is a 1934 American drama film directed by King Vidor and starring Karen Morley, Tom Keene, and John Qualen. The film is a sequel to Vidor's silent classic The Crowd (1928), using the same characters although with different actors.",
+    dir: [
+     "King Vidor"
+    ],
+    cast: [
+     "Karen Morley",
+     "Tom Keene",
+     "Barbara Pepper"
+    ]
    },
    {
     title: "The Evil Mind",
@@ -12367,7 +18479,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/transatlantic_tunnel/transatlantic_tunnel.thumbs/trans_atlantic_tunnel_002214.jpg",
     subs: "trans_atlantic_tunnel.asr.srt",
-    bytes: 381105180
+    bytes: 381105180,
+    wd: "Q7833578",
+    wp: "https://en.wikipedia.org/wiki/The_Tunnel_(1935_film)",
+    wpx: "The Tunnel is a 1935 British science fiction film directed by Maurice Elvey and starring Richard Dix, Leslie Banks, Madge Evans, Helen Vinson, C. Aubrey Smith and Basil Sydney. It is based on the 1913 novel The Tunnel by Bernhard Kellermann, about the building of a transatlantic tunnel between New York and London. The script was written by Curt Siodmak, L. du Garde Peach and Clemence Dane. The film, produced at a time when the threat…",
+    dir: [
+     "Maurice Elvey"
+    ],
+    cast: [
+     "Richard Dix",
+     "Leslie Banks",
+     "Madge Evans"
+    ]
    },
    {
     title: "Waterfront Lady",
@@ -12380,7 +18503,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/waterfront_lady_1935/waterfront_lady_1935.thumbs/waterfront_lady_001620.jpg",
     subs: "waterfront_lady.asr.srt",
-    bytes: 280449385
+    bytes: 280449385,
+    wd: "Q7974084",
+    wp: "https://en.wikipedia.org/wiki/Waterfront_Lady",
+    wpx: "Waterfront Lady is a 1935 American film directed by Joseph Santley and starring Ann Rutherford, in her feature film debut, and Frank Albertson.",
+    dir: [
+     "Joseph Santley"
+    ]
    },
    {
     title: "Cavalry",
@@ -12393,7 +18522,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/calvary/calvary.thumbs/calvary_001500.jpg",
     subs: "calvary.asr.srt",
-    bytes: 275148573
+    bytes: 275148573,
+    wd: "Q3663909",
+    wp: "https://en.wikipedia.org/wiki/Cavalry_(1936_Italian_film)",
+    wpx: "Cavalry is a 1936 Italian drama film directed by Goffredo Alessandrini and starring Amedeo Nazzari, Elisa Cegani and Luigi Carini. The film marked Nazzari's first role as a lead actor, after making his film debut the previous year. It was a box office success and established some of his personal traits that would be brought out even more clearly in his breakthrough role Luciano Serra, Pilot (1938).",
+    dir: [
+     "Goffredo Alessandrini"
+    ],
+    cast: [
+     "Amedeo Nazzari",
+     "Elisa Cegani",
+     "Silvana Jachino"
+    ],
+    co: [
+     "Industrie Cinematografiche Italiane"
+    ]
    },
    {
     title: "Hearts In Bondage",
@@ -12406,7 +18549,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/hearts_in_bondage/hearts_in_bondage.thumbs/hearts_in_bondage_001260.jpg",
     subs: "hearts_in_bondage.asr.srt",
-    bytes: 229723177
+    bytes: 229723177,
+    wd: "Q3783971",
+    wp: "https://en.wikipedia.org/wiki/Hearts_in_Bondage",
+    wpx: "Hearts in Bondage is a 1936 American black-and-white war drama film directed by Lew Ayres for Republic Pictures. Set during the American Civil War, the film depicts the Union Navy's deliberate sinking of USS Merrimack, the Confederate States Navy's salvage and refitting of the ship as the ironclad CSS Virginia, the Union Navy's development of the ironclad USS Monitor to counter Virginia, and the subsequent engagement of the two vessels…",
+    dir: [
+     "Lew Ayres"
+    ],
+    cast: [
+     "James Dunn",
+     "Mae Clarke",
+     "David Manners"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Little Lord Fauntleroy",
@@ -12418,7 +18575,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/LittleLordFauntleroyh264/LittleLordFauntleroyh264.thumbs/little_lord_fauntleroy.4_002394.jpg",
     subs: "little_lord_fauntleroy.4.asr.srt",
-    bytes: 1006848206
+    bytes: 1006848206,
+    wd: "Q1199248",
+    wp: "https://en.wikipedia.org/wiki/Little_Lord_Fauntleroy_(1936_film)",
+    wpx: "Little Lord Fauntleroy is a 1936 American drama film based on the 1886 novel of the same name by Frances Hodgson Burnett. The film stars Freddie Bartholomew, Dolores Costello, and C. Aubrey Smith. The first film produced by David O. Selznick's Selznick International Pictures, it was the studio's most profitable film until Gone with the Wind. The film is directed by John Cromwell.",
+    dir: [
+     "John Cromwell"
+    ],
+    cast: [
+     "Freddie Bartholomew",
+     "Dolores Costello",
+     "C. Aubrey Smith"
+    ],
+    co: [
+     "United Artists"
+    ]
    },
    {
     title: "Marihuana",
@@ -12455,7 +18626,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Winterset/Winterset.thumbs/Winterset_001860.jpg",
-    bytes: 334620967
+    bytes: 334620967,
+    wd: "Q369083",
+    wp: "https://en.wikipedia.org/wiki/Winterset_(film)",
+    wpx: "Winterset is a 1936 American crime film directed by Alfred Santell, based on the 1935 play of the same name by Maxwell Anderson, in a loose dramatization of the Sacco and Vanzetti trial and execution in 1928. The script retains elements of the blank verse poetic meter on which Anderson based his 1935 Winterset Broadway theater production.",
+    dir: [
+     "Alfred Santell"
+    ],
+    cast: [
+     "Burgess Meredith",
+     "Margo",
+     "Eduardo Ciannelli"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "A Star Is Born",
@@ -12467,7 +18652,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/AStarIsBorn/AStarIsBorn.thumbs/AStarIsBorn_002640.jpg",
-    bytes: 482911378
+    bytes: 482911378,
+    wd: "Q873186",
+    wp: "https://en.wikipedia.org/wiki/A_Star_Is_Born_(1937_film)",
+    wpx: "A Star Is Born is a 1937 American Technicolor drama film produced by David O. Selznick, directed by William A. Wellman from a script by Wellman, Robert Carson, Dorothy Parker, and Alan Campbell, and starring Janet Gaynor as an aspiring Hollywood actress, and Fredric March as a fading movie star who helps launch her career. The supporting cast features Adolphe Menjou, May Robson, Andy Devine, Lionel Stander, and Owen Moore. At the 10th…",
+    dir: [
+     "William A. Wellman",
+     "Jack Conway"
+    ],
+    cast: [
+     "Janet Gaynor",
+     "Fredric March",
+     "Adolphe Menjou"
+    ],
+    co: [
+     "Selznick International Pictures"
+    ]
    },
    {
     title: "Atlantic Flight",
@@ -12479,7 +18679,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/AtlanticFlight/AtlanticFlight.thumbs/AtlanticFlight_001440.jpg",
-    bytes: 256865512
+    bytes: 256865512,
+    wd: "Q4816431",
+    wp: "https://en.wikipedia.org/wiki/Atlantic_Flight_(1937_film)",
+    wpx: "Atlantic Flight is a 1937 American film made by Monogram Pictures chiefs Trem Carr and W. Ray Johnston who had just reformed the studio after having had a troubled merger for two years with Herbert J. Yates and Republic Pictures. This film was conceived as a low-budget feature meant to capitalize on Dick Merrill's and Jack Lambie's historic \"Coronation Flight\", which made them world-famous. Recreating the flight that made him famous,…",
+    dir: [
+     "William Nigh"
+    ],
+    cast: [
+     "Dick Merrill"
+    ]
    },
    {
     title: "Elephant Boy",
@@ -12491,7 +18700,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ElephantBoy/ElephantBoy.thumbs/ElephantBoy_001860.jpg",
-    bytes: 340982184
+    bytes: 340982184,
+    wd: "Q1080674",
+    wp: "https://en.wikipedia.org/wiki/Elephant_Boy_(film)",
+    wpx: "Elephant Boy is a 1937 British adventure film starring Indian-born actor Sabu in his film debut. Documentary filmmaker Robert Flaherty, who produced some of the Indian footage, and supervising director Zoltan Korda, who completed the film, won the Best Director Award at the Venice Film Festival. The film was made at the London Films studios at Denham, and in Mysore, India, and is based on the story \"Toomai of the Elephants\" from…",
+    dir: [
+     "Robert J. Flaherty",
+     "Zoltan Korda"
+    ],
+    cast: [
+     "Sabu Dastagir",
+     "D. J. Williams",
+     "Wilfrid Hyde-White"
+    ],
+    co: [
+     "London Films"
+    ]
    },
    {
     title: "Non-Stop New York",
@@ -12504,7 +18728,19 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/non_stop_new_york/non_stop_new_york.thumbs/non_stop_new_york_001740.jpg",
     subs: "non_stop_new_york.asr.srt",
-    bytes: 295563342
+    bytes: 295563342,
+    wd: "Q14949835",
+    wp: "https://en.wikipedia.org/wiki/Non-Stop_New_York",
+    wpx: "Non-Stop New York is a 1937 British science fiction crime film directed by Robert Stevenson and starring John Loder, Anna Lee and Francis L. Sullivan. It was written by J.O.C. Orton, Roland Pertwee, Curt Siodmak and E.V.H. Emmett based on the 1936 novel Sky Steward by Ken Attiwill. A woman who can clear an innocent man of the charge of murder is pursued by gangsters onto a luxurious transatlantic flying boat.",
+    dir: [
+     "Robert Stevenson"
+    ],
+    cast: [
+     "John Loder"
+    ],
+    co: [
+     "Gaumont-British Picture Corporation"
+    ]
    },
    {
     title: "Paradise Isle",
@@ -12517,7 +18753,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/paradise_isle_ipod/paradise_isle_ipod.thumbs/paradise_isle_001680.jpg",
     subs: "paradise_isle.asr.srt",
-    bytes: 298880486
+    bytes: 298880486,
+    wd: "Q12126874",
+    wp: "https://en.wikipedia.org/wiki/Paradise_Isle",
+    wpx: "Paradise Isle is a 1937 American film directed by Arthur Greville Collins with sequences shot in American Samoa. The film was produced by Dorothy Davenport under the name \"Dorothy Reid\" and was released by Monogram Pictures. The film stars Mexican actress Movita Castaneda continuing her persona of a South Seas Island girl that began with Mutiny on the Bounty (1935).",
+    dir: [
+     "Arthur Greville Collins"
+    ]
    },
    {
     title: "Return of the Scarlet Pimpernel",
@@ -12529,7 +18771,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ReturnoftheScarletPimpernel/ReturnoftheScarletPimpernel.thumbs/ReturnoftheScarletPimpernel_001800.jpg",
-    bytes: 333001976
+    bytes: 333001976,
+    wd: "Q7317253",
+    wp: "https://en.wikipedia.org/wiki/The_Return_of_the_Scarlet_Pimpernel",
+    wpx: "The Return of the Scarlet Pimpernel is a 1937 British film directed by Hanns Schwarz and starring Barry K. Barnes, Sophie Stewart, Margaretta Scott and James Mason. It is a sequel to the 1934 film The Scarlet Pimpernel based on the stories by Baroness Emmuska Orczy.",
+    dir: [
+     "Hanns Schwarz"
+    ],
+    cast: [
+     "James Mason",
+     "Barry K. Barnes",
+     "Margaretta Scott"
+    ]
    },
    {
     title: "Street Angel (馬路天使)",
@@ -12542,7 +18795,20 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/street_angel/street_angel.thumbs/street_angel_002160.jpg",
     subs: "street_angel.asr.srt",
-    bytes: 394608216
+    bytes: 394608216,
+    wd: "Q5238699",
+    wp: "https://en.wikipedia.org/wiki/Street_Angel_(1937_film)",
+    wpx: "Street Angel, also known as Street Angels, is a 1937 left-wing Chinese film directed by Yuan Muzhi (袁牧之) and released by Mingxing Film Company. Starring popular Chinese actor Zhao Dan (赵丹) and iconic Chinese singer Zhou Xuan (周璇), the story is set in the slums of Shanghai, chronicling the lives of a band of downtrodden underclass outcasts: a tea house singer, a trumpet player, a newspaper hawker, and a prostitute. By blending elements…",
+    dir: [
+     "Yuan Muzhi"
+    ],
+    cast: [
+     "Zhou Xuan",
+     "Zhao Dan"
+    ],
+    co: [
+     "Mingxing Film Company"
+    ]
    },
    {
     title: "Swing High, Swing Low",
@@ -12555,7 +18821,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/swinghi_swinglo/swinghi_swinglo.thumbs/swinghi_swinglo_001980.jpg",
     subs: "swinghi_swinglo.asr.srt",
-    bytes: 359422423
+    bytes: 359422423,
+    wd: "Q2043516",
+    wp: "https://en.wikipedia.org/wiki/Swing_High%2C_Swing_Low_(film)",
+    wpx: "Swing High, Swing Low is a 1937 American romantic comedy drama film directed by Mitchell Leisen and starring Carole Lombard and Fred MacMurray.",
+    dir: [
+     "Mitchell Leisen"
+    ],
+    cast: [
+     "Carole Lombard",
+     "Fred MacMurray",
+     "Dorothy Lamour"
+    ],
+    co: [
+     "Paramount Pictures"
+    ]
    },
    {
     title: "Thunder in the City",
@@ -12566,7 +18846,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ThunderintheCity/ThunderintheCity.thumbs/ThunderintheCity_002094.jpg",
-    bytes: 528878223
+    bytes: 528878223,
+    wd: "Q7799053",
+    wp: "https://en.wikipedia.org/wiki/Thunder_in_the_City",
+    wpx: "Thunder in the City is a 1937 British drama film directed by Marion Gering and starring Edward G. Robinson, Luli Deste, Nigel Bruce and Ralph Richardson.",
+    dir: [
+     "Marion Gering"
+    ]
    },
    {
     title: "Young and Innocent (The Girl Was Young)",
@@ -12579,7 +18865,22 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/YoungandInnocentTheGirlWasYoung/YoungandInnocentTheGirlWasYoung.thumbs/Young_and_Innocent_001980.jpg",
     subs: "Young_and_Innocent.asr.srt",
-    bytes: 357574635
+    bytes: 357574635,
+    wd: "Q498983",
+    wp: "https://en.wikipedia.org/wiki/Young_and_Innocent",
+    wpx: "Young and Innocent, released in the US as The Girl Was Young, is a 1937 British crime thriller film directed by Alfred Hitchcock and starring Nova Pilbeam and Derrick De Marney. Based on the 1936 novel A Shilling for Candles by Josephine Tey, the film is about a young man on the run from a murder charge who enlists the help of a woman who must put herself at risk for his cause. An elaborately staged crane shot Hitchcock devised, which…",
+    dir: [
+     "Alfred Hitchcock"
+    ],
+    cast: [
+     "Nova Pilbeam",
+     "Derrick De Marney",
+     "Basil Radford"
+    ],
+    co: [
+     "Gaumont",
+     "Gaumont-British Picture Corporation"
+    ]
    },
    {
     title: "Child Bride",
@@ -12592,7 +18893,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ChildBride/ChildBride.thumbs/Child_Bride_001500.jpg",
     subs: "Child_Bride.asr.srt",
-    bytes: 270070466
+    bytes: 270070466,
+    wd: "Q5097709",
+    wp: "https://en.wikipedia.org/wiki/Child_Bride",
+    wpx: "Child Bride, also known as Child Brides, Child Bride of the Ozarks and Dust to Dust, is a 1938 American drama film written and directed by Harry Revier, and produced by Raymond L. Friedgen. It was promoted as educational in an attempt to draw attention to the lack of laws banning child marriage in many states.",
+    dir: [
+     "Harry Revier"
+    ],
+    cast: [
+     "Shirley Mills",
+     "Angelo Rossitto",
+     "Warner Richmond"
+    ],
+    co: [
+     "Astor Pictures"
+    ]
    },
    {
     title: "The Beachcomber",
@@ -12643,7 +18958,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/LoveAffair/LoveAffair.thumbs/LoveAffair_002040.jpg",
-    bytes: 378203824
+    bytes: 378203824,
+    wd: "Q1620069",
+    wp: "https://en.wikipedia.org/wiki/Love_Affair_(1939_film)",
+    wpx: "Love Affair is a 1939 American romance film, co-starring Charles Boyer, Irene Dunne, and Maria Ouspenskaya. It was directed by Leo McCarey and written by Delmer Daves and Donald Ogden Stewart, based on a story by McCarey and Mildred Cram. The film follows a French playboy and an American former nightclub singer who fall in love aboard an ocean liner. Controversial on concept, the official screenplay was re-tooled and rewritten to…",
+    dir: [
+     "Leo McCarey"
+    ],
+    cast: [
+     "Charles Boyer",
+     "Irene Dunne",
+     "Maria Ouspenskaya"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "Made for Each Other",
@@ -12656,7 +18985,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/made_for_each_other_film/made_for_each_other_film.thumbs/made_for_each_other_002160.jpg",
     subs: "made_for_each_other.asr.srt",
-    bytes: 394473820
+    bytes: 394473820,
+    wd: "Q1305557",
+    wp: "https://en.wikipedia.org/wiki/Made_for_Each_Other_(1939_film)",
+    wpx: "Made for Each Other is a 1939 American romantic comedy drama film directed by John Cromwell, produced by David O. Selznick, and starring Carole Lombard, James Stewart, and Charles Coburn. The film follows a couple who marry after only knowing each other for just one day and documents their tempestuous marriage amid the Great Depression.",
+    dir: [
+     "John Cromwell"
+    ],
+    cast: [
+     "Carole Lombard",
+     "James Stewart",
+     "Charles Coburn"
+    ]
    },
    {
     title: "The Little Princess",
@@ -12669,7 +19009,22 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheLittlePrincess1939/TheLittlePrincess1939.thumbs/TheLittlePrincess1939_004447.jpg",
     subs: "TheLittlePrincess1939.asr.srt",
-    bytes: 579767886
+    bytes: 579767886,
+    wd: "Q151923",
+    wp: "https://en.wikipedia.org/wiki/The_Little_Princess_(1939_film)",
+    wpx: "The Little Princess is a 1939 American drama film directed by Walter Lang. The screenplay by Ethel Hill and Walter Ferris is loosely based on the 1905 novel A Little Princess by Frances Hodgson Burnett. It was the first Shirley Temple movie to be filmed completely in Technicolor. It was also her last major success as a child star. This film was the third of three in which Shirley Temple and Cesar Romero appeared together, following Wee…",
+    dir: [
+     "Walter Lang",
+     "William A. Seiter"
+    ],
+    cast: [
+     "Shirley Temple",
+     "Richard Greene",
+     "Anita Louise"
+    ],
+    co: [
+     "20th Century Studios"
+    ]
    },
    {
     title: "Beyond Tomorrow",
@@ -12681,7 +19036,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Beyond_Tomorrow/Beyond_Tomorrow.thumbs/Beyond_Tomorrow_002040.jpg",
-    bytes: 365487589
+    bytes: 365487589,
+    wd: "Q3607574",
+    wp: "https://en.wikipedia.org/wiki/Beyond_Tomorrow_(film)",
+    wpx: "Beyond Tomorrow is a 1940 American fantasy film directed by A. Edward Sutherland and produced by noted cinematographer Lee Garmes; Garmes was one of a handful of cinematographers who became film producers.",
+    dir: [
+     "A. Edward Sutherland"
+    ],
+    cast: [
+     "Harry Carey",
+     "C. Aubrey Smith",
+     "Charles Winninger"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "Last Alarm",
@@ -12694,7 +19063,13 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/last_alarm/last_alarm.thumbs/last_alarm_001260.jpg",
     subs: "last_alarm.asr.srt",
-    bytes: 233151546
+    bytes: 233151546,
+    wd: "Q7745560",
+    wp: "https://en.wikipedia.org/wiki/The_Last_Alarm_(1940_film)",
+    wpx: "The Last Alarm is a 1940 American crime film directed by former Chaplin imitator Billy West, under the pseudonym \"William West\". Featured were veteran character actor J. Farrell MacDonald and juvenile leads Warren Hull and Polly Ann Young.",
+    dir: [
+     "Billy West"
+    ]
    },
    {
     title: "Old Swimmin' Hole, The",
@@ -12720,7 +19095,19 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/son_of_the_navy/son_of_the_navy.thumbs/son_of_the_navy_001680.jpg",
     subs: "son_of_the_navy.asr.srt",
-    bytes: 310015269
+    bytes: 310015269,
+    wd: "Q7560704",
+    wp: "https://en.wikipedia.org/wiki/Son_of_the_Navy",
+    wpx: "Son of the Navy, also known as The Young Recruit in the United States, is a 1940 American comedy-drama film directed by William Nigh and starring Jean Parker, James Dunn, and Martin Spellman.",
+    dir: [
+     "William Nigh"
+    ],
+    cast: [
+     "Jean Parker"
+    ],
+    co: [
+     "Monogram Pictures"
+    ]
    },
    {
     title: "Cheers for Miss Bishop",
@@ -12733,7 +19120,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/cheers_for_miss_bishop/cheers_for_miss_bishop.thumbs/cheers_for_miss_bishop_000034.jpg",
     subs: "cheers_for_miss_bishop.asr.srt",
-    bytes: 355835127
+    bytes: 355835127,
+    wd: "Q2961961",
+    wp: "https://en.wikipedia.org/wiki/Cheers_for_Miss_Bishop",
+    wpx: "Cheers for Miss Bishop is a 1941 American drama film based on the novel Miss Bishop by Bess Streeter Aldrich. It was directed by Tay Garnett, produced by Richard A. Rowland and released through United Artists. Martha Scott stars in the title role, and the other cast members include William Gargan, Edmund Gwenn, Sterling Holloway, Dorothy Peterson, Marsha Hunt, Don Douglas and Sidney Blackmer.",
+    dir: [
+     "Tay Garnett"
+    ],
+    cast: [
+     "Martha Scott",
+     "William Gargan",
+     "Edmund Gwenn"
+    ]
    },
    {
     title: "In Which We Serve",
@@ -12745,7 +19143,22 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/In_Which_We_Serve/In_Which_We_Serve.thumbs/In_Which_We_Serve_002640.jpg",
     subs: "In_Which_We_Serve.asr.srt",
-    bytes: 529321411
+    bytes: 529321411,
+    wd: "Q1089543",
+    wp: "https://en.wikipedia.org/wiki/In_Which_We_Serve",
+    wpx: "In Which We Serve is a 1942 British propaganda war film directed by Noël Coward and David Lean, who made his debut as a director. It was made during the Second World War with the assistance of the Ministry of Information.",
+    dir: [
+     "Noël Coward",
+     "David Lean"
+    ],
+    cast: [
+     "John Mills",
+     "Bernard Miles",
+     "Celia Johnson"
+    ],
+    co: [
+     "Two Cities Films"
+    ]
    },
    {
     title: "They Raid By Night",
@@ -12758,7 +19171,16 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/they_raid_by_night/they_raid_by_night.thumbs/they_raid_by_night_001680.jpg",
     subs: "they_raid_by_night.asr.srt",
-    bytes: 302402813
+    bytes: 302402813,
+    wd: "Q7783751",
+    wp: "https://en.wikipedia.org/wiki/They_Raid_by_Night",
+    wpx: "They Raid by Night is a 1942 American low-budget World War II film directed by Spencer Gordon Bennet and starring Lyle Talbot and June Duprez. It was from Producers Releasing Corporation.",
+    dir: [
+     "Spencer Gordon Bennet"
+    ],
+    cast: [
+     "Lyle Talbot"
+    ]
    },
    {
     title: "Alaska Highway",
@@ -12770,7 +19192,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/AlaskaHighway/AlaskaHighway.thumbs/AlaskaHighway_001620.jpg",
-    bytes: 290585150
+    bytes: 290585150,
+    wd: "Q4708552",
+    wp: "https://en.wikipedia.org/wiki/Alaska_Highway_(film)",
+    wpx: "Alaska Highway is a 1943 American drama film directed by Frank McDonald and starring Richard Arlen, Jean Parker, and Ralph Sanford.",
+    dir: [
+     "Frank McDonald"
+    ],
+    cast: [
+     "Richard Arlen"
+    ]
    },
    {
     title: "Gung Ho!",
@@ -12782,7 +19213,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Gung_Ho/Gung_Ho.thumbs/Gung_Ho_002040.jpg",
-    bytes: 373760979
+    bytes: 373760979,
+    wd: "Q2498193",
+    wp: "https://en.wikipedia.org/wiki/Gung_Ho!",
+    wpx: "Gung Ho! is a 1943 American war film directed by Ray Enright and starring Randolph Scott. The story is based somewhat on the real-life World War II Makin Island raid led by Lieutenant Colonel Evans Carlson's 2nd Marine Raider Battalion.",
+    dir: [
+     "Ray Enright"
+    ],
+    cast: [
+     "Randolph Scott",
+     "Alan Curtis",
+     "J. Carrol Naish"
+    ]
    },
    {
     title: "Blood on the Sun",
@@ -12794,7 +19236,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/BloodontheSun/BloodontheSun.thumbs/BloodontheSun_002220.jpg",
-    bytes: 407518004
+    bytes: 407518004,
+    wd: "Q3040419",
+    wp: "https://en.wikipedia.org/wiki/Blood_on_the_Sun",
+    wpx: "Blood on the Sun is a 1945 American spy thriller film directed by Frank Lloyd and starring James Cagney, Sylvia Sidney and Porter Hall. The film is based on a fictional history behind the Tanaka Memorial document.",
+    dir: [
+     "Frank Lloyd"
+    ],
+    cast: [
+     "James Cagney",
+     "Sylvia Sidney",
+     "Porter Hall"
+    ]
    },
    {
     title: "Captain Kidd",
@@ -12806,7 +19259,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/CaptainKidd_/CaptainKidd_.thumbs/CaptainKidd_002100.jpg",
-    bytes: 386143247
+    bytes: 386143247,
+    wd: "Q839419",
+    wp: "https://en.wikipedia.org/wiki/Captain_Kidd_(film)",
+    wpx: "Captain Kidd is a 1945 American adventure film starring Charles Laughton, Randolph Scott and Barbara Britton. It was directed by Rowland V. Lee, his last before he retired, and produced by Benedict Bogeaus and James Nasser. The music was conducted by Werner Janssen. The film was released by United Artists. It has entered the public domain because the producers neglected to renew the copyright in 1972. In his memoirs, Nikita Khrushchev…",
+    dir: [
+     "Rowland V. Lee"
+    ],
+    cast: [
+     "Charles Laughton",
+     "Randolph Scott",
+     "Barbara Britton"
+    ]
    },
    {
     title: "Dead of Night",
@@ -12817,7 +19281,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/dead-of-night_20210519/dead-of-night_20210519.thumbs/Dead%20of%20Night_002394.jpg",
-    bytes: 575899020
+    bytes: 575899020,
+    wd: "Q2298679",
+    wp: "https://en.wikipedia.org/wiki/Dead_of_Night",
+    wpx: "Dead of Night is a 1945 British supernatural horror anthology film directed by Alberto Cavalcanti, Charles Crichton, Basil Dearden, and Robert Hamer. It stars Mervyn Johns, Googie Withers, Sally Ann Howes, and Michael Redgrave. Produced by Ealing Studios, the film features five segments within a frame narrative in which a group of guests assembled at a country manor recount stories of their own encounters with the supernatural. It is…",
+    dir: [
+     "Alberto Cavalcanti",
+     "Charles Crichton"
+    ],
+    cast: [
+     "Michael Redgrave",
+     "Mervyn Johns",
+     "Frederick Valk"
+    ],
+    co: [
+     "Ealing Studios"
+    ]
    },
    {
     title: "The Last Chance",
@@ -12828,7 +19307,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheLastChance_/TheLastChance_.thumbs/TheLastChance_002214.jpg",
-    bytes: 451805367
+    bytes: 451805367,
+    wd: "Q671940",
+    wp: "https://en.wikipedia.org/wiki/The_Last_Chance_(1945_film)",
+    wpx: "The Last Chance is a 1945 Swiss war film directed by Leopold Lindtberg. It was entered into the 1946 Cannes Film Festival and won the Grand Prize of the Festival. The film was selected for screening as part of the Cannes Classics section at the 2016 Cannes Film Festival.",
+    dir: [
+     "Leopold Lindtberg"
+    ],
+    cast: [
+     "Luisa Rossi",
+     "Romano Calò",
+     "Tino Erler"
+    ]
    },
    {
     title: "The Southerner",
@@ -12840,7 +19330,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheSoutherner/TheSoutherner.thumbs/TheSoutherner_002160.jpg",
-    bytes: 399788553
+    bytes: 399788553,
+    wd: "Q1195531",
+    wp: "https://en.wikipedia.org/wiki/The_Southerner_(film)",
+    wpx: "The Southerner is a 1945 American drama film directed by Jean Renoir and based on the 1941 novel Hold Autumn in Your Hand by George Sessions Perry. The film received Oscar nominations for Best Director, Original Music Score, and Sound. Renoir was named Best Director by the National Board of Review, which also named the film the third best of 1945. The film portrays the hardships of a poor family struggling to establish a cotton farm in…",
+    dir: [
+     "Jean Renoir"
+    ],
+    cast: [
+     "Zachary Scott",
+     "Betty Field",
+     "J. Carrol Naish"
+    ]
    },
    {
     title: "Gilda 1946 colorized (Rita Hayworth, Glenn Ford)",
@@ -12876,7 +19377,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Smash-Up/Smash-Up.thumbs/Smash-Up_002460.jpg",
-    bytes: 448395589
+    bytes: 448395589,
+    wd: "Q1439941",
+    wp: "https://en.wikipedia.org/wiki/Smash-Up%2C_the_Story_of_a_Woman",
+    wpx: "Smash-Up, the Story of a Woman, also called A Woman Destroyed, is a 1947 American drama film with elements of film noir that tells the story of a rising nightclub singer who marries another singer and becomes an alcoholic after sacrificing her career for him.",
+    dir: [
+     "Stuart Heisler"
+    ],
+    cast: [
+     "Susan Hayward",
+     "Eddie Albert",
+     "Lee Bowman"
+    ],
+    co: [
+     "Walter Wanger Production"
+    ]
    },
    {
     title: "The Time of Your Life",
@@ -12887,7 +19402,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheTimeofyourLife/TheTimeofyourLife.thumbs/TheTimeofyourLife_002394.jpg",
-    bytes: 484251476
+    bytes: 484251476,
+    wd: "Q3790875",
+    wp: "https://en.wikipedia.org/wiki/The_Time_of_Your_Life_(film)",
+    wpx: "The Time of Your Life is a 1948 American comedy drama film directed by H. C. Potter and starring James Cagney, William Bendix, Wayne Morris and Jeanne Cagney. A Cagney Production, The Time of Your Life was produced by Cagney's brother William and adapted by Nathaniel Curtis from the 1939 William Saroyan play of the same name. Cinematography was by James Wong Howe.",
+    dir: [
+     "H. C. Potter"
+    ],
+    cast: [
+     "James Cagney",
+     "William Bendix",
+     "Wayne Morris"
+    ]
    },
    {
     title: "Stray Dog",
@@ -12898,7 +19424,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/stray-dog/stray-dog.thumbs/Stray%20Dog_002937.jpg",
-    bytes: 1216963366
+    bytes: 1216963366,
+    wd: "Q678972",
+    wp: "https://en.wikipedia.org/wiki/Stray_Dog_(film)",
+    wpx: "Stray Dog  is a 1949 Japanese crime drama noir film directed and co-written by Akira Kurosawa, starring Toshiro Mifune and Takashi Shimura. It was Kurosawa's second film of 1949 produced by the Film Art Association and released by Shintoho. It is also considered a detective movie that explores the mood of Japan during its painful postwar recovery, as well as a precursor to the contemporary police procedural and buddy cop film genres,…",
+    dir: [
+     "Akira Kurosawa"
+    ],
+    cast: [
+     "Toshirō Mifune",
+     "Takashi Shimura",
+     "Keiko Awaji"
+    ],
+    co: [
+     "Toho"
+    ]
    },
    {
     title: "The Green Promise",
@@ -12910,7 +19450,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/The_Green_Promise/The_Green_Promise.thumbs/The_Green_Promise_002280.jpg",
-    bytes: 400642502
+    bytes: 400642502,
+    wd: "Q7738195",
+    wp: "https://en.wikipedia.org/wiki/The_Green_Promise",
+    wpx: "The Green Promise is a 1948 American drama film directed by William D. Russell. The film was co-produced by Houston oilman Glenn McCarthy and leading man Robert Paige to display the concept and meaning of the 4-H Club and highlight farming issues such as soil erosion, government programs, and individual enterprise. The title refers to a scene where the local preacher gives a sermon on a story from the Book of Exodus of God's \"green…",
+    dir: [
+     "William D. Russell"
+    ],
+    co: [
+     "RKO Pictures"
+    ]
    },
    {
     title: "Trapped",
@@ -12934,7 +19483,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheTorch/TheTorch.thumbs/TheTorch_001800.jpg",
-    bytes: 322383296
+    bytes: 322383296,
+    wd: "Q7769615",
+    wp: "https://en.wikipedia.org/wiki/The_Torch_(film)",
+    wpx: "The Torch is a 1950 Mexican/American film directed by Emilio Fernández. The film is a remake of Enamorada (1946) and is also known as Bandit General in the United Kingdom.",
+    dir: [
+     "Emilio Fernández"
+    ],
+    cast: [
+     "Paulette Goddard",
+     "Pedro Armendáriz",
+     "Gilbert Roland"
+    ]
    },
    {
     title: "Harvey 1950 colorized (James Stewart)",
@@ -12958,7 +19518,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The_Big_Lift/The_Big_Lift.thumbs/THE_BIG_LIFT_002460.jpg",
     subs: "THE_BIG_LIFT.asr.srt",
-    bytes: 444463892
+    bytes: 444463892,
+    wd: "Q495924",
+    wp: "https://en.wikipedia.org/wiki/The_Big_Lift",
+    wpx: "The Big Lift is a 1950 American drama war film on location in the city of Berlin, Germany, that tells the story of \"Operation Vittles\", the 1948–49 Berlin Airlift, through the experiences of two U.S. Air Force sergeants played by Montgomery Clift and Paul Douglas.",
+    dir: [
+     "George Seaton"
+    ],
+    cast: [
+     "Montgomery Clift",
+     "Paul Douglas",
+     "Cornell Borchers"
+    ],
+    co: [
+     "20th Century Studios"
+    ]
    },
    {
     title: "Go for Broke",
@@ -12983,7 +19557,8 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/HillNumberOne/HillNumberOne.thumbs/HillNumberOne_001320.jpg",
-    bytes: 244771665
+    bytes: 244771665,
+    wd: "Q124616213"
    },
    {
     title: "Mr. Imperium",
@@ -12995,7 +19570,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Mr.Imperium/Mr.Imperium.thumbs/Mr.Imperium_002040.jpg",
-    bytes: 376973647
+    bytes: 376973647,
+    wd: "Q2157567",
+    wp: "https://en.wikipedia.org/wiki/Mr._Imperium",
+    wpx: "Mr. Imperium is a 1951 romantic musical drama film produced by Metro-Goldwyn-Mayer and starring Lana Turner and singer Ezio Pinza. Filmed in Technicolor, it was directed by Don Hartman, who cowrote the screenplay with Edwin H. Knopf based on a play written by Knopf. The musical score was composed by Bronisław Kaper. Turner's singing voice was dubbed by Trudy Erwin.",
+    dir: [
+     "Don Hartman"
+    ],
+    cast: [
+     "Lana Turner",
+     "Ezio Pinza",
+     "Barry Sullivan"
+    ],
+    co: [
+     "Metro-Goldwyn-Mayer"
+    ]
    },
    {
     title: "The Day the Earth Stood Still -1951",
@@ -13031,7 +19620,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Kilimanjaro/Kilimanjaro.thumbs/The_Snows_of_Kilimanjaro_002700.jpg",
-    bytes: 489332822
+    bytes: 489332822,
+    wd: "Q683957",
+    wp: "https://en.wikipedia.org/wiki/The_Snows_of_Kilimanjaro_(1952_film)",
+    wpx: "The Snows of Kilimanjaro is a 1952 American romantic adventure film directed by Henry King from a screenplay by Casey Robinson, based on Ernest Hemingway's 1936 short story of the same name first published in Esquire magazine in 1936 and then republished in The Fifth Column and the First Forty-Nine Stories (1938). It stars Gregory Peck as Harry Street, Susan Hayward as Helen, and Ava Gardner as Cynthia Green. The film's ending does not…",
+    dir: [
+     "Henry King"
+    ],
+    cast: [
+     "Gregory Peck",
+     "Ava Gardner",
+     "Susan Hayward"
+    ],
+    co: [
+     "20th Century Studios"
+    ]
    },
    {
     title: "The Bigamist",
@@ -13044,7 +19647,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/bigamist_the/bigamist_the.thumbs/the_bigamist_001920.jpg",
     subs: "the_bigamist.asr.srt",
-    bytes: 346056289
+    bytes: 346056289,
+    wd: "Q594498",
+    wp: "https://en.wikipedia.org/wiki/The_Bigamist_(1953_film)",
+    wpx: "The Bigamist is a 1953 American drama film noir directed by Ida Lupino starring herself, Joan Fontaine, Edmond O'Brien, and Edmund Gwenn. Producer/Screenwriter Collier Young was married to Fontaine at the time and had previously been married to Lupino. The Bigamist has been cited as the first American feature film made in the sound era in which the female star of a film directed herself.",
+    dir: [
+     "Ida Lupino"
+    ],
+    cast: [
+     "Joan Fontaine",
+     "Edmond O'Brien",
+     "Edmund Gwenn"
+    ]
    },
    {
     title: "The Joe Louis Story",
@@ -13056,7 +19670,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheJoeLouisStory/TheJoeLouisStory.thumbs/TheJoeLouisStory_002040.jpg",
-    bytes: 381067508
+    bytes: 381067508,
+    wd: "Q7743335",
+    wp: "https://en.wikipedia.org/wiki/The_Joe_Louis_Story",
+    wpx: "The Joe Louis Story is a 1953 American film noir drama sport film directed by Robert Gordon and starring Coley Wallace, Hilda Simms and Paul Stewart.",
+    dir: [
+     "Robert Gordon"
+    ],
+    cast: [
+     "Coley Wallace"
+    ]
    },
    {
     title: "The Wages of Fear",
@@ -13067,7 +19690,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-wages-of-fear/the-wages-of-fear.thumbs/The%20Wages%20of%20Fear_003534.jpg",
-    bytes: 849578881
+    bytes: 849578881,
+    wd: "Q465773",
+    wp: "https://en.wikipedia.org/wiki/The_Wages_of_Fear",
+    wpx: "The Wages of Fear is a 1953 thriller film directed, co-written, and co-produced by Henri-Georges Clouzot, adapted from Georges Arnaud's 1950 novel of the same name, and starring Yves Montand, Charles Vanel, Peter van Eyck and Véra Clouzot. The film centres on a group of four down-on-their-luck European men who are hired by an American oil company to drive two trucks, loaded with nitroglycerin needed to extinguish an oil well fire, over mountain dirt roads.",
+    dir: [
+     "Henri-Georges Clouzot"
+    ],
+    cast: [
+     "Yves Montand",
+     "Charles Vanel",
+     "Peter van Eyck"
+    ],
+    co: [
+     "Vera Films"
+    ]
    },
    {
     title: "Tokyo Story",
@@ -13078,7 +19715,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/tokyo-story/tokyo-story.thumbs/Tokyo%20Story_000058.jpg",
-    bytes: 789211292
+    bytes: 789211292,
+    wd: "Q26060",
+    wp: "https://en.wikipedia.org/wiki/Tokyo_Story",
+    wpx: "Tokyo Story  is a 1953 Japanese drama film directed by Yasujirō Ozu and starring Chishū Ryū and Chieko Higashiyama, about an aging couple who travel to Tokyo to visit their grown children.",
+    dir: [
+     "Yasujirō Ozu"
+    ],
+    cast: [
+     "Chishū Ryū",
+     "Setsuko Hara",
+     "Chieko Higashiyama"
+    ],
+    co: [
+     "Shochiku"
+    ]
    },
    {
     title: "Ugetsu",
@@ -13089,7 +19740,21 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Ugetsu/Ugetsu.thumbs/Ugetsu_002334.jpg",
-    bytes: 562099112
+    bytes: 562099112,
+    wd: "Q1076605",
+    wp: "https://en.wikipedia.org/wiki/Ugetsu",
+    wpx: "Ugetsu is a 1953 Japanese period fantasy film directed by Kenji Mizoguchi starring Masayuki Mori and Machiko Kyō. It is based on the stories \"The House in the Thicket\" and \"The Lust of the White Serpent\" from Ueda Akinari's 1776 book Ugetsu Monogatari, combining elements of the jidaigeki genre with a ghost story.",
+    dir: [
+     "Kenji Mizoguchi"
+    ],
+    cast: [
+     "Masayuki Mori",
+     "Machiko Kyō",
+     "Kinuyo Tanaka"
+    ],
+    co: [
+     "Kadokawa Pictures"
+    ]
    },
    {
     title: "Last Time I Saw Paris, The",
@@ -13126,7 +19791,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/RC_SwampWomen/RC_SwampWomen.thumbs/RC_SwampWomen_001620.jpg",
     subs: "RC_SwampWomen.asr.srt",
-    bytes: 298601948
+    bytes: 298601948,
+    wd: "Q2020244",
+    wp: "https://en.wikipedia.org/wiki/Swamp_Women",
+    wpx: "Swamp Women is a 1956 American adventure film noir crime film directed by Roger Corman. It stars Carole Mathews, Beverly Garland, and Marie Windsor, with Mike Connors and Ed Nelson in small roles.",
+    dir: [
+     "Roger Corman"
+    ],
+    cast: [
+     "Marie Windsor",
+     "Mike Connors",
+     "Beverly Garland"
+    ],
+    co: [
+     "American International Pictures"
+    ]
    },
    {
     title: "Teenage Devil Dolls",
@@ -13138,7 +19817,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TeenageDevilDolls/TeenageDevilDolls.thumbs/TeenageDevilDolls_001380.jpg",
-    bytes: 254345404
+    bytes: 254345404,
+    wd: "Q7694378",
+    wp: "https://en.wikipedia.org/wiki/Teenage_Devil_Dolls",
+    wpx: "Teenage Devil Dolls is a 1955 American black and white teen crime drama film produced, written and directed by Bamlet L. Price, Jr. The film was made in a quasi-documentary style that has no dialogue, just sound effects and music by Robert Drasnin. The movie is narrated by Kurt Martell, as Police Lieutenant David Jason, but the part of the Lieutenant is portrayed by actor Robert A. Sherry in the film. Price borrowed $4000 from his…",
+    dir: [
+     "Bamlet Lawrence Price Jr."
+    ]
    },
    {
     title: "Hot Rod Girl",
@@ -13151,7 +19836,17 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/hot_rod_girl_1956/hot_rod_girl_1956.thumbs/hot_rod_girl_001920.jpg",
     subs: "hot_rod_girl.asr.srt",
-    bytes: 401044211
+    bytes: 401044211,
+    wd: "Q12060548",
+    wp: "https://en.wikipedia.org/wiki/Hot_Rod_Girl",
+    wpx: "Hot Rod Girl is an independent, black-and-white 1956 teen-oriented action film produced by Norman T. Herman, directed by Leslie H. Martinson and released by American International Pictures as a double feature with Girls in Prison. Hot Rod Girl stars Lori Nelson, Chuck Connors and John Smith. The film centers on efforts to keep hot-rodding teenagers from dangerous drag racing on city streets and having them move to the safety of a…",
+    dir: [
+     "Leslie H. Martinson"
+    ],
+    cast: [
+     "Lori Nelson",
+     "Chuck Connors"
+    ]
    },
    {
     title: "The Violent Years",
@@ -13163,7 +19858,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheViolentYears/TheViolentYears.thumbs/TheViolentYears_001320.jpg",
-    bytes: 247706387
+    bytes: 247706387,
+    wd: "Q2029017",
+    wp: "https://en.wikipedia.org/wiki/The_Violent_Years",
+    wpx: "The Violent Years is a 1956 American exploitation film directed by William Morgan and starring Playboy Playmate Jean Moorhead as Paula Parkins, the leader of a gang of juvenile delinquent high school girls. The film is notable for having an uncredited Ed Wood as the author of its screenplay. It was released in 1956 on a double bill with the reissued 1954 German import Conchita and the Engineer.",
+    dir: [
+     "William Morgan"
+    ],
+    cast: [
+     "Jean Moorhead"
+    ]
    },
    {
     title: "Carnival Story",
@@ -13186,7 +19890,19 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/InvisibleAvenger/InvisibleAvenger.thumbs/InvisibleAvenger_001314.jpg",
-    bytes: 337513653
+    bytes: 337513653,
+    wd: "Q7742442",
+    wp: "https://en.wikipedia.org/wiki/Invisible_Avenger",
+    wpx: "Invisible Avenger is a 1958 American crime film noir directed by James Wong Howe, Ben Parker and John Sledge. The film combines two television pilot episodes of a failed 1957 Republic Pictures show titled The Shadow. The episodes were shot on location in New Orleans.",
+    dir: [
+     "James Wong Howe"
+    ],
+    cast: [
+     "Richard Derr"
+    ],
+    co: [
+     "Republic Pictures"
+    ]
    },
    {
     title: "Wild Women of Wongo, The",
@@ -13211,7 +19927,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/BattleofBloodIsland/BattleofBloodIsland.thumbs/BattleofBloodIsland_001680.jpg",
-    bytes: 308435758
+    bytes: 308435758,
+    wd: "Q3636862",
+    wp: "https://en.wikipedia.org/wiki/Battle_of_Blood_Island",
+    wpx: "Battle of Blood Island is a 1960 American World War II war film filmed in Puerto Rico and directed by Joel Rapp. It was based on the 1958 short story Expect the Vandals by Philip Roth. Filmgroup released the film, as a double feature with Ski Troop Attack.",
+    dir: [
+     "Joel Rapp"
+    ],
+    cast: [
+     "Roger Corman"
+    ]
    },
    {
     title: "I'll Give My Life",
@@ -13224,7 +19949,18 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ill_give_my_life/ill_give_my_life.thumbs/illgivemylife_001680.jpg",
     subs: "illgivemylife.asr.srt",
-    bytes: 343616404
+    bytes: 343616404,
+    wd: "Q12124978",
+    wp: "https://en.wikipedia.org/wiki/I'll_Give_My_Life",
+    wpx: "I'll Give My Life is a 1960 American film directed by William F. Claxton. The film is also known as The Unfinished Task in the United States. It is the final film role of Ray Collins before his death in 1965.",
+    dir: [
+     "William F. Claxton"
+    ],
+    cast: [
+     "Angie Dickinson",
+     "Ivan Triesault",
+     "Mimi Gibson"
+    ]
    },
    {
     title: "Ma Barker's Killer Brood",
@@ -13236,7 +19972,14 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/Ma_Barkers_Killer_Brood/Ma_Barkers_Killer_Brood.thumbs/Ma_Barkers_Killer_Brood_002160.jpg",
-    bytes: 383131116
+    bytes: 383131116,
+    wd: "Q4069245",
+    wp: "https://en.wikipedia.org/wiki/Ma_Barker's_Killer_Brood",
+    wpx: "Ma Barker's Killer Brood is a 1960 American neo noir crime film, released in 1960. The low-budget film was directed by Bill Karn and starred Lurene Tuttle as the title character, Ma Barker.",
+    cast: [
+     "Lurene Tuttle",
+     "Myrna Dell"
+    ]
    },
    {
     title: "The Choppers",
@@ -13248,7 +19991,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheChoppers/TheChoppers.thumbs/TheChoppers_001560.jpg",
-    bytes: 287298661
+    bytes: 287298661,
+    wd: "Q7722649",
+    wp: "https://en.wikipedia.org/wiki/The_Choppers",
+    wpx: "The Choppers is a 1961 American crime film directed by Leigh Jason and starring Arch Hall Jr.",
+    dir: [
+     "Leigh Jason"
+    ]
    },
    {
     title: "The Day the Earth Caught Fire",
@@ -13259,7 +20008,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheDayTheEarthCaughtFire1961/TheDayTheEarthCaughtFire1961.thumbs/TheDayTheEarthCaughtFire1961_002430.jpg",
-    bytes: 347185553
+    bytes: 347185553,
+    wd: "Q1197267",
+    wp: "https://en.wikipedia.org/wiki/The_Day_the_Earth_Caught_Fire",
+    wpx: "The Day the Earth Caught Fire is a 1961 British science-fiction disaster film directed by Val Guest and starring Edward Judd, Leo McKern, and Janet Munro. It is one of the classic apocalyptic films of its era. The film opened at the Odeon Marble Arch in London on 23 November 1961. In August 2014, a restored version was screened at the British Museum's summer open-air cinema.",
+    dir: [
+     "Val Guest"
+    ],
+    cast: [
+     "Janet Munro",
+     "Leo McKern",
+     "Edward Judd"
+    ]
    },
    {
     title: "Viridiana",
@@ -13270,7 +20030,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/viridiana_202108/viridiana_202108.thumbs/Viridiana_002154.jpg",
-    bytes: 527336761
+    bytes: 527336761,
+    wd: "Q852841",
+    wp: "https://en.wikipedia.org/wiki/Viridiana",
+    wpx: "Viridiana is a 1961 Spanish-Mexican surrealist comedy-drama film directed by Luis Buñuel and produced by Gustavo Alatriste. It is loosely based on the 1895 novel Halma by Benito Pérez Galdós.",
+    dir: [
+     "Luis Buñuel"
+    ],
+    cast: [
+     "Silvia Pinal",
+     "Francisco Rabal",
+     "Fernando Rey"
+    ]
    },
    {
     title: "Shame",
@@ -13294,7 +20065,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/TheMagicSword/TheMagicSword.thumbs/TheMagicSword_001920.jpg",
-    bytes: 349356916
+    bytes: 349356916,
+    wd: "Q2576178",
+    wp: "https://en.wikipedia.org/wiki/The_Magic_Sword_(1962_film)",
+    wpx: "The Magic Sword is a 1962 American adventure fantasy film directed by Bert I. Gordon and starring Basil Rathbone, Estelle Winwood, Gary Lockwood and Anne Helm. It was written by Bernard Schoenfeld, loosely based on the medieval legend of Saint George and the Dragon.",
+    dir: [
+     "Bert Ira Gordon"
+    ],
+    cast: [
+     "Basil Rathbone",
+     "Estelle Winwood",
+     "Anne Helm"
+    ]
    },
    {
     title: "The Manchurian Candidate",
@@ -13305,7 +20087,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/the-manchurian-candidate/the-manchurian-candidate.thumbs/The%20Manchurian%20Candidate_003054.jpg",
-    bytes: 740675955
+    bytes: 740675955,
+    wd: "Q521387",
+    wp: "https://en.wikipedia.org/wiki/The_Manchurian_Candidate_(1962_film)",
+    wpx: "The Manchurian Candidate is a 1962 American neo-noir political thriller film directed and produced by John Frankenheimer. The screenplay is by George Axelrod, based on the 1959 Richard Condon novel The Manchurian Candidate. The film's leading actors are Frank Sinatra, Laurence Harvey, and Janet Leigh, with co-stars Angela Lansbury, Henry Silva, and James Gregory.",
+    dir: [
+     "John Frankenheimer"
+    ],
+    cast: [
+     "Frank Sinatra",
+     "Janet Leigh",
+     "Angela Lansbury"
+    ]
    },
    {
     title: "The Miracle Worker",
@@ -13317,7 +20110,21 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the-miracle-worker-1962/the-miracle-worker-1962.thumbs/The.Miracle.Worker.1962.1080p.BluRay.x264-%5BYTS.AG%5D_002522.jpg",
     subs: "The.Miracle.Worker.1962.1080p.BluRay.x264-english.srt",
-    bytes: 1716463611
+    bytes: 1716463611,
+    wd: "Q287536",
+    wp: "https://en.wikipedia.org/wiki/The_Miracle_Worker_(1962_film)",
+    wpx: "The Miracle Worker is a 1962 American biographical film about Anne Sullivan, blind tutor to Helen Keller, directed by Arthur Penn. The screenplay by William Gibson is based on his 1959 play of the same title, which originated as a 1957 broadcast of the television anthology series Playhouse 90. Gibson's secondary source material was The Story of My Life, the 1903 autobiography of Helen Keller.",
+    dir: [
+     "Arthur Penn"
+    ],
+    cast: [
+     "Anne Bancroft",
+     "Patty Duke",
+     "Victor Jory"
+    ],
+    co: [
+     "United Artists"
+    ]
    },
    {
     title: "This Is Not a Test",
@@ -13328,7 +20135,16 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ThisisNotaTest/ThisisNotaTest.thumbs/ThisisNotaTest_001727.jpg",
-    bytes: 446462026
+    bytes: 446462026,
+    wd: "Q7785923",
+    wp: "https://en.wikipedia.org/wiki/This_Is_Not_a_Test_(1962_film)",
+    wpx: "This Is Not a Test is a 1962 American low-budget science fiction film directed by Fredric Gadette. Produced at the height of the Cold War, the film was one of a number of productions of the late 1950s and early 1960s based upon the premise of the outbreak of nuclear war.",
+    dir: [
+     "Fredric Gadette"
+    ],
+    cast: [
+     "Seamon Glass"
+    ]
    },
    {
     title: "High And Low",
@@ -13339,7 +20155,18 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/high-and-low/high-and-low.thumbs/High%20and%20Low_003414.jpg",
-    bytes: 846835795
+    bytes: 846835795,
+    wd: "Q244878",
+    wp: "https://en.wikipedia.org/wiki/High_and_Low_(1963_film)",
+    wpx: "High and Low  is a 1963 Japanese police procedural film directed by Akira Kurosawa. It was written by Kurosawa, Hideo Oguni, Eijirō Hisaita, and Ryūzō Kikushima as a loose adaptation of the 1959 novel King's Ransom by Evan Hunter. Starring Toshirō Mifune, Tatsuya Nakadai, Kyōko Kagawa and Tatsuya Mihashi, it tells the story of Japanese businessman Kingo Gondō (Mifune) struggling for control of the major shoe company of which he is a…",
+    dir: [
+     "Akira Kurosawa"
+    ],
+    cast: [
+     "Toshirō Mifune",
+     "Tatsuya Nakadai",
+     "Isao Kimura"
+    ]
    }
   ]
  },
@@ -13415,7 +20242,13 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/BalloonLand_450/BalloonLand_450.thumbs/BalloonLand_000147.jpg",
-    bytes: 40105771
+    bytes: 40105771,
+    wd: "Q4851856",
+    wp: "https://en.wikipedia.org/wiki/Balloon_Land",
+    wpx: "Balloon Land, also known as The Pincushion Man, is a 1935 animated short film produced by Ub Iwerks as part of the ComiColor Cartoons series. The cartoon is about a place called Balloon Land, whose residents are made entirely out of balloons. The villain in the cartoon is the Pincushion Man, a character who walks around Balloon Land popping the inhabitants with pins.",
+    dir: [
+     "Ub Iwerks"
+    ]
    },
    {
     title: "1949",
@@ -13450,7 +20283,22 @@ const CHANNELS = [
     desc: "",
     license: "via archive.org",
     frame: "https://archive.org/download/ThePinkPanther-cartoons/ThePinkPanther-cartoons.thumbs/The%20Pink%20Panther%20in%20-Pink%20Plasma_000001.jpg",
-    bytes: 36730908
+    bytes: 36730908,
+    wd: "Q1131556",
+    wp: "https://en.wikipedia.org/wiki/The_Pink_Panther_(1963_film)",
+    wpx: "The Pink Panther is a 1963 American comedy film directed by Blake Edwards, who co-wrote the script with Maurice Richlin. Produced by The Mirisch Company and distributed by United Artists, it is the first installment in The Pink Panther franchise and stars an ensemble cast led by David Niven, Peter Sellers, Robert Wagner, Capucine and Claudia Cardinale. Its story follows Inspector Jacques Clouseau (Sellers) as he travels from Paris to…",
+    dir: [
+     "Blake Edwards"
+    ],
+    cast: [
+     "David Niven",
+     "Peter Sellers",
+     "Robert Wagner"
+    ],
+    co: [
+     "The Mirisch Company",
+     "United Artists"
+    ]
    },
    {
     title: "Eek! The Cat",

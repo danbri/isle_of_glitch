@@ -194,7 +194,7 @@ function tune(chIndex, opts = {}) {
   if (opts.fromStartProg !== undefined) {
     state.onDemand = { chIndex: state.chIndex, progIndex: opts.fromStartProg };
     progIndex = opts.fromStartProg;
-    offset = 0;
+    offset = Math.max(0, opts.startAt || 0);   // scene deep-links land here
   } else {
     state.onDemand = null;
     const s = scheduleFor(ch);
@@ -759,7 +759,7 @@ function powerOn() {
   $("splash").classList.add("hidden");
   crt("on");
   if (pendingDeepLink?.kind === "ia") {
-    tune(pendingDeepLink.ci, { fromStartProg: pendingDeepLink.pi });
+    tune(pendingDeepLink.ci, { fromStartProg: pendingDeepLink.pi, startAt: pendingDeepLink.t || 0 });
     pendingDeepLink = null;
   } else {
     pendingDeepLink = null;
@@ -1621,8 +1621,11 @@ const DATED_TEXT = "This material expresses or represents perspectives that " +
 
 /* index the annotation graph by archive.org details URI */
 const BUDDY_BY_ID = {};
-(typeof WATCH_BUDDY_GRAPH !== "undefined" ? WATCH_BUDDY_GRAPH : []).forEach((node) => {
+(typeof WATCH_BUDDY_GENERATED !== "undefined" ? WATCH_BUDDY_GENERATED : []).forEach((node) => {
   if (node["@id"]) BUDDY_BY_ID[node["@id"]] = node;
+});
+(typeof WATCH_BUDDY_GRAPH !== "undefined" ? WATCH_BUDDY_GRAPH : []).forEach((node) => {
+  if (node["@id"]) BUDDY_BY_ID[node["@id"]] = node;   // hand-written overrides
 });
 
 function buddyFor(prog) {
@@ -1632,12 +1635,14 @@ function buddyFor(prog) {
   if (!node) return null;
   const facts = node.factCheck
     ? (Array.isArray(node.factCheck) ? node.factCheck : [node.factCheck]) : [];
-  const has = node.contentWarning || node.datedPerspectives || facts.length;
+  const has = node.contentWarning || node.datedPerspectives || facts.length ||
+    (Array.isArray(node.scenes) && node.scenes.length);
   return has ? {
     warning: node.contentWarning || null,
     dated: !!node.datedPerspectives,
     datedNote: node.datedNote || null,
     facts,
+    scenes: Array.isArray(node.scenes) ? node.scenes : [],
     wiki: node.sameAs || null
   } : null;
 }
@@ -1677,7 +1682,8 @@ function renderBuddy() {
 
 function openBuddy() {
   const info = currentProgramInfo();
-  const b = buddyFor(info.program);
+  const p = info.program;
+  const b = buddyFor(p);
   if (!b) return;
   buddyWasPlaying = !video.paused;
   video.pause();
@@ -1709,6 +1715,37 @@ function openBuddy() {
   if (b.wiki) {
     sec("🌐", "background", `<a href="${b.wiki}" target="_blank" rel="noopener">${esc(decodeURIComponent(b.wiki.split("/wiki/").pop() || "Wikipedia").replace(/_/g, " "))} on Wikipedia</a>`);
   }
+  if (b.scenes.length) {
+    const item = itemOf(p);
+    sec("⏱", "scenes", b.scenes.map((sc, i) =>
+      `<button class="buddy-scene" data-t="${sc.t}"><span class="t">${fmt(sc.t)}</span>${esc(sc.label || "scene " + (i + 1))}</button>`
+    ).join("") + (item
+      ? `<div class="w-hint" style="margin-top:6px">deep-linkable: #ia:${esc(item)};t=${b.scenes[0].t}</div>` : ""));
+    box.querySelectorAll(".buddy-scene").forEach((btn) =>
+      btn.addEventListener("click", () => {
+        closeBuddy(); crtBlink();
+        tune(state.chIndex, { fromStartProg: info.index, startAt: parseFloat(btn.dataset.t) });
+      }));
+  }
+  // link this exact moment (t= deep link)
+  {
+    const item = itemOf(p);
+    if (item) {
+      const t = Math.floor(video.currentTime || 0);
+      const btn = document.createElement("button");
+      btn.className = "pill-btn";
+      btn.style.marginTop = "12px";
+      btn.textContent = "🔗 link this moment (" + fmt(t) + ")";
+      btn.addEventListener("click", async () => {
+        const url = location.origin + location.pathname + "#ia:" + item + ";t=" + t;
+        try {
+          if (navigator.share) await navigator.share({ url });
+          else { await navigator.clipboard.writeText(url); btn.textContent = "copied ✓"; }
+        } catch {}
+      });
+      box.appendChild(btn);
+    }
+  }
   $("buddy-overlay").classList.remove("hidden");
 }
 
@@ -1723,6 +1760,7 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
 
 $("buddy-strip").addEventListener("click", openBuddy);
 $("buddy-resume").addEventListener("click", closeBuddy);
+$("buddy-close").addEventListener("click", closeBuddy);
 $("buddy-overlay").addEventListener("click", (e) => { if (e.target === $("buddy-overlay")) closeBuddy(); });
 
 function renderBuddyToggle() {
@@ -2124,8 +2162,8 @@ function reflectHash() {
 
 function parseHash() {
   const h = decodeURIComponent(location.hash || "");
-  let m = h.match(/^#ia:(.+)$/);
-  if (m) { const hit = findByItem(m[1]); if (hit) return { kind: "ia", ...hit }; }
+  let m = h.match(/^#ia:([^;]+)(?:;t=(\d+))?$/);
+  if (m) { const hit = findByItem(m[1]); if (hit) return { kind: "ia", ...hit, t: m[2] ? parseInt(m[2], 10) : 0 }; }
   m = h.match(/^#ch:(.+)$/);
   if (m) {
     const ci = CHANNELS.findIndex((c) => c.id === m[1] || String(c.num) === m[1]);
@@ -2149,7 +2187,7 @@ window.addEventListener("hashchange", () => {
   const t = parseHash();
   if (!t) return;
   crtBlink();
-  if (t.kind === "ia") tune(t.ci, { fromStartProg: t.pi });
+  if (t.kind === "ia") tune(t.ci, { fromStartProg: t.pi, startAt: t.t || 0 });
   else tune(t.ci);
 });
 
