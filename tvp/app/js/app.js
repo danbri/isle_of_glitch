@@ -28,6 +28,10 @@ const clock12 = (d) => {
   return `${h}:${m}${ap}`;
 };
 
+/* archive imagery via /cors/ (CORS headers) so the service worker can
+   cache icons/frames as real, unpadded responses */
+const artUrl = (u) => u ? u.replace("https://archive.org/download/", "https://archive.org/cors/") : u;
+
 const store = {
   get(k, fallback) {
     try { const v = localStorage.getItem("tvp." + k); return v === null ? fallback : JSON.parse(v); }
@@ -352,7 +356,7 @@ function showZapCard(ch, prog, token) {
     if (video.readyState >= 3 && !video.paused) return;    // already on the air
     $("interstitial-text").textContent = "Fetching your channel…";
     $("interstitial-channel").textContent = ch.num + " · " + ch.name;
-    const frame = prog.frame || prog.art || ch.art;
+    const frame = artUrl(prog.frame || prog.art || ch.art);
     $("interstitial").style.backgroundImage = frame
       ? `linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.75)), url("${frame}")` : "";
     $("interstitial-progress").firstElementChild.style.width = "3%";
@@ -382,6 +386,7 @@ function updateAncillary(ch, prog) {
   loadSubtitles(prog);
   warmZapFrames();
   renderBuddy();
+  reflectHash();
 }
 
 /* pre-warm the neighbours' zap-card frames — a few KB each, so this is
@@ -390,7 +395,7 @@ function warmZapFrames() {
   [-1, 1].forEach((d) => {
     const ch = CHANNELS[((state.chIndex + d) % CHANNELS.length + CHANNELS.length) % CHANNELS.length];
     const s = scheduleFor(ch);
-    const f = s.program.frame || s.program.art || ch.art;
+    const f = artUrl(s.program.frame || s.program.art || ch.art);
     if (f) { const img = new Image(); img.src = f; }
   });
 }
@@ -480,7 +485,7 @@ function updateInfo() {
     ? "LIVE · ends " + clock12(new Date(Date.now() + (info.remaining || 0) * 1000))
     : "on demand · from the start";
   $("info-meta").textContent = liveTxt + " · " + (p.license || "");
-  $("info-art").src = p.art || ch.art;
+  $("info-art").src = artUrl(p.frame || p.art || ch.art);
   $("time-total").textContent = fmt(p.dur);
 
   // expanded panel
@@ -726,7 +731,13 @@ function powerOn() {
   state.on = true;
   $("splash").classList.add("hidden");
   crt("on");
-  tune(state.chIndex);
+  if (pendingDeepLink?.kind === "ia") {
+    tune(pendingDeepLink.ci, { fromStartProg: pendingDeepLink.pi });
+    pendingDeepLink = null;
+  } else {
+    pendingDeepLink = null;
+    tune(state.chIndex);
+  }
   startClock();
   startTicker();
   restorePins();
@@ -754,7 +765,14 @@ async function requestDurableStorage() {
 function powerOff() {
   state.on = false;
   state.hotTune = null;
+  clearTimeout(state.slowJoinTimer);
+  state.errStreak = 0;
   $("tunebar").classList.add("hidden");
+  $("buddy-overlay").classList.add("hidden");
+  $("comingup").classList.add("hidden");
+  $("osd-channel").classList.add("hidden");
+  $("osd-digits").classList.add("hidden");
+  history.replaceState(null, "", location.pathname);   // clean URL at the front door
   hideOverlays();
   closePanels();
   crt("off", () => {
@@ -896,7 +914,7 @@ function renderGuideGrid() {
       const card = document.createElement("div");
       card.className = "g-card" + (live ? " now" : "");
       card.innerHTML = `
-        <img src="${p.frame || p.art || ch.art}" alt="" loading="lazy">
+        <img src="${artUrl(p.frame || p.art || ch.art)}" alt="" loading="lazy">
         <div class="g-card-label">
           <div class="g-card-title">${p.title}</div>
           <div class="g-card-sub">${live ? '<span class="live-tag">LIVE</span>' : clock12(new Date(starts[pi]))}
@@ -930,7 +948,7 @@ function renderGuideRail() {
     tile.style.setProperty("--i", i);
     tile.dataset.ch = String(CHANNELS.indexOf(ch));
     tile.innerHTML = `
-      <img src="${s.program.art || ch.art}" alt="" loading="lazy">
+      <img src="${artUrl(s.program.frame || s.program.art || ch.art)}" alt="" loading="lazy">
       <div class="tile-label">
         <div class="tile-name"><span class="chnum">${ch.num}</span><span>${ch.name}</span></div>
         <div class="tile-now">Now: ${s.program.title}</div>
@@ -1050,7 +1068,7 @@ function renderSearch(q) {
       const live = scheduleFor(ch).index === pi;
       const el = document.createElement("div");
       el.className = "sr";
-      el.innerHTML = `<img src="${p.art || ch.art}" alt="" loading="lazy">
+      el.innerHTML = `<img src="${artUrl(p.frame || p.art || ch.art)}" alt="" loading="lazy">
         <div><div class="sr-title">${p.title}${p.year ? " (" + p.year + ")" : ""}${buddyBadge(p)}</div>
         <div class="sr-sub">${ch.num} · ${ch.name}${live ? ' · <span class="onair">ON AIR</span>' : " · plays from start"}</div></div>`;
       el.addEventListener("click", () => {
@@ -1766,6 +1784,87 @@ document.addEventListener("keydown", (e) => {
         }, 900);
       }
   }
+});
+
+/* ── deep links: bookmarkable SPA URIs ──────────────
+ *   #ia:<archive-identifier>  → that program, from the start
+ *   #ch:<channel-id>          → that channel, live
+ * The address bar tracks what you're watching (replaceState, so no
+ * history spam), which makes every program shareable. */
+
+const itemOf = (prog) => (prog.src || "").match(/archive\.org\/download\/([^/]+)\//)?.[1] || null;
+
+function findByItem(id) {
+  for (let ci = 0; ci < CHANNELS.length; ci++) {
+    const pi = CHANNELS[ci].programs.findIndex((p) => itemOf(p) === id);
+    if (pi >= 0) return { ci, pi };
+  }
+  return null;
+}
+
+function reflectHash() {
+  try {
+    const info = currentProgramInfo();
+    const h = info.live
+      ? "#ch:" + currentChannel().id
+      : "#ia:" + (itemOf(info.program) || "");
+    history.replaceState(null, "", h);
+  } catch {}
+}
+
+function parseHash() {
+  const h = decodeURIComponent(location.hash || "");
+  let m = h.match(/^#ia:(.+)$/);
+  if (m) { const hit = findByItem(m[1]); if (hit) return { kind: "ia", ...hit }; }
+  m = h.match(/^#ch:(.+)$/);
+  if (m) {
+    const ci = CHANNELS.findIndex((c) => c.id === m[1] || String(c.num) === m[1]);
+    if (ci >= 0) return { kind: "ch", ci };
+  }
+  return null;
+}
+
+let pendingDeepLink = parseHash();
+if (pendingDeepLink) {
+  state.chIndex = pendingDeepLink.ci;
+  if (pendingDeepLink.kind === "ia") {
+    const p = CHANNELS[pendingDeepLink.ci].programs[pendingDeepLink.pi];
+    document.querySelector(".splash-hint").textContent =
+      "tap to play: " + p.title + (p.year ? " (" + p.year + ")" : "");
+  }
+}
+
+window.addEventListener("hashchange", () => {
+  if (!state.on) return;
+  const t = parseHash();
+  if (!t) return;
+  crtBlink();
+  if (t.kind === "ia") tune(t.ci, { fromStartProg: t.pi });
+  else tune(t.ci);
+});
+
+$("info-share").addEventListener("click", async () => {
+  reflectHash();
+  const url = location.href;
+  const info = currentProgramInfo();
+  const title = info.program.title + " — TVP/2007";
+  try {
+    if (navigator.share) { await navigator.share({ title, url }); return; }
+    await navigator.clipboard.writeText(url);
+    chatPush(null, "link copied: " + url, "sys");
+  } catch {}
+});
+
+/* ── full reset: for when the set feels clagged up ── */
+
+$("splash-reset").addEventListener("click", async () => {
+  try {
+    Object.keys(localStorage).filter((k) => k.startsWith("tvp.")).forEach((k) => localStorage.removeItem(k));
+    navigator.serviceWorker?.controller?.postMessage({ type: "nuke" });
+    const regs = await (navigator.serviceWorker?.getRegistrations?.() || []);
+    for (const r of regs) await r.unregister();
+  } catch {}
+  setTimeout(() => location.replace(location.pathname), 300);   // drop hash, reload clean
 });
 
 /* ── art fallback: our own test card when archive art is unreachable ── */

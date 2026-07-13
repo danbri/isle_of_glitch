@@ -157,7 +157,42 @@ self.addEventListener("message", (e) => {
   if (e.data && e.data.type === "evict" && e.data.key) {
     e.waitUntil(storeBackend.remove(e.data.key));
   }
+  if (e.data && e.data.type === "nuke") {
+    e.waitUntil((async () => {
+      try { await caches.delete(CACHE); } catch {}
+      try { await caches.delete(ART_CACHE); } catch {}
+      try {
+        const root = await navigator.storage.getDirectory();
+        await root.removeEntry("tvp-prefix", { recursive: true });
+      } catch {}
+    })());
+  }
 });
+
+/* ── icon/art cache: cache-first for archive.org imagery ──
+ * Only CORS-capable responses are stored (the /cors/ endpoints), so
+ * entries carry their real few-KB size — never opaque-response quota
+ * padding. Anything else passes through untouched. */
+
+const ART_CACHE = "tvp-art-v1";
+const ART_MAX = 250;
+
+async function serveArt(req) {
+  const cache = await caches.open(ART_CACHE);
+  const hit = await cache.match(req.url);
+  if (hit) return hit;
+  try {
+    const r = await fetch(req.url, { mode: "cors", signal: AbortSignal.timeout(20000) });
+    if (r.ok && r.type !== "opaque") {
+      await cache.put(req.url, r.clone());
+      cache.keys().then(async (keys) => {          // fire-and-forget LRU-ish trim
+        if (keys.length > ART_MAX) for (const k of keys.slice(0, keys.length - ART_MAX)) await cache.delete(k);
+      });
+      return r;
+    }
+  } catch {}
+  return fetch(req);
+}
 
 async function prefetchAll(entries) {
   for (const entry of entries.slice(0, 8)) {
@@ -219,6 +254,10 @@ async function prefetchAll(entries) {
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
+  if (req.destination === "image" && /archive\.org\/cors\//.test(req.url)) {
+    e.respondWith(serveArt(req));
+    return;
+  }
   const range = req.headers.get("range");
   const m = range && range.match(/^bytes=(\d+)-(\d*)$/);
   if (!m) return;                       // no/odd Range → let the network handle it
