@@ -502,6 +502,47 @@ body.overlays-on #buddy-strip { bottom: calc(168px + var(--sab)); }
 .buddy-claim .c-claim { font-style: italic; opacity: .85; }
 #buddy-actions { margin-top: 16px; display: flex; justify-content: flex-end; }
 
+/* mini chip badges on cards, listings, search results */
+.buddy-mini { margin-left: 6px; font-size: .95em; letter-spacing: .04em; }
+
+/* info-panel wiki extract, with its CC BY-SA attribution */
+#info-wiki {
+  border-left: 3px solid rgba(255,255,255,.35);
+  padding: 6px 10px; margin: 2px 0;
+  font-size: 12.5px; line-height: 1.5; opacity: .88;
+}
+#info-wiki cite { display: block; margin-top: 5px; font-size: 10.5px; opacity: .65; font-style: normal; }
+#info-wiki a { color: #9adfee; }
+
+#info-buddy-chips { font-size: 13px; cursor: pointer; }
+#info-buddy-chips .ibc-label {
+  font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--accent); font-weight: bold;
+}
+#info-buddy-chips u { opacity: .65; margin-left: 6px; font-size: 11px; }
+
+#buddy-controls { display: flex; gap: 8px; }
+
+/* the ⚙️ explorer: emoji cloud + label-indexed listings */
+#buddy-cloud { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.buddy-cloud-chip {
+  font-size: 27px; line-height: 1;
+  background: rgba(0,0,0,.45); color: #fff;
+  border: 1.5px solid rgba(255,255,255,.45); border-radius: 14px;
+  padding: 9px 12px; display: flex; align-items: center; gap: 6px;
+}
+.buddy-cloud-chip small { font-size: 12px; opacity: .65; font-family: var(--font); }
+.buddy-cloud-chip.lit { border-color: var(--accent); box-shadow: 0 0 14px rgba(198,96,12,.4); }
+.buddy-chip-list { display: grid; gap: 4px; margin-top: 10px; }
+.buddy-x-row {
+  display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px;
+  border: 1.5px solid transparent; cursor: pointer;
+}
+.buddy-x-row:hover, .buddy-x-row:active { border-color: var(--select); background: rgba(98,163,176,.16); }
+.buddy-x-row .x-title { font-size: 14px; font-weight: bold; }
+.buddy-x-row .x-sub { font-size: 11.5px; opacity: .75; line-height: 1.45; }
+.buddy-x-row .x-sub b { color: var(--accent); }
+
 /* ── the guide's grid view: a set of sets ──────────── */
 
 #guide-view svg { width: 17px; height: 17px; }
