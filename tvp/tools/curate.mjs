@@ -186,7 +186,7 @@ const DIAL = [
 /* ── plumbing ─────────────────────────────────────────────────────── */
 
 /* keep the default dial family-friendly and clear of obvious rip uploads */
-const GLOBAL_EXCLUDE = /(sex|porn|milf|erot|nude|xxx|kama sutra|\bdesire\b|psycho cat|ramrodder|women are bad|snuff|hbo|netflix|complete series|complete docuseries|ken.?\s*burns|world at war|blu.?ray|1080p rip|x26[45])/i;
+const GLOBAL_EXCLUDE = /(sex|porn|milf|erot|nude|xxx|kama sutra|\bdesire\b|psycho cat|ramrodder|women are bad|snuff|terrifying girls|girl boss|\bteasers\b|delinquent|exploitation|hbo|netflix|complete series|complete docuseries|ken.?\s*burns|world at war|blu.?ray|1080p rip|x26[45])/i;
 
 const normTitle = (t) => String(t || "").toLowerCase()
   .replace(/[^a-z0-9 ]+/g, "").replace(/^the /, "").replace(/\s+/g, " ").trim();
