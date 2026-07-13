@@ -42,6 +42,42 @@ const CHANNELS = [
     desc: "Koro the llama versus a very inconvenient fence.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/Caminandes1LlamaDrama"
+   },
+   {
+    title: "Glass Half",
+    year: 2015,
+    dur: 193.3,
+    src: "https://archive.org/download/GlassHalf1080p/Glass%20Half-1080p.mp4",
+    desc: "Two art snobs argue wordlessly about taste in a gallery.",
+    license: "CC-BY · Blender Foundation",
+    art: "https://archive.org/services/img/GlassHalf1080p"
+   },
+   {
+    title: "Caminandes: Llamigos",
+    year: 2016,
+    dur: 150.2,
+    src: "https://archive.org/download/CaminandesLlamigos/Caminandes_%20Llamigos-1080p.mp4",
+    desc: "Koro and Oti compete for the last winter berries in the snow.",
+    license: "CC-BY · Blender Foundation",
+    art: "https://archive.org/services/img/CaminandesLlamigos"
+   },
+   {
+    title: "Coffee Run",
+    year: 2020,
+    dur: 184.7,
+    src: "https://archive.org/download/coffee-run/Coffee%20Run.mp4",
+    desc: "A caffeinated sprint through the memories of a life.",
+    license: "CC-BY · Blender Foundation",
+    art: "https://archive.org/services/img/coffee-run"
+   },
+   {
+    title: "Wing It!",
+    year: 2023,
+    dur: 238,
+    src: "https://archive.org/download/wing-it/Wing%20It.mp4",
+    desc: "A cat and a dog build a flying machine, against their better judgment.",
+    license: "CC-BY · Blender Foundation",
+    art: "https://archive.org/services/img/wing-it"
    }
   ]
  },
@@ -90,6 +126,24 @@ const CHANNELS = [
     art: "https://archive.org/services/img/CosmosLaundromatFirstCycle"
    },
    {
+    title: "Agent 327: Operation Barbershop",
+    year: 2017,
+    dur: 231.5,
+    src: "https://archive.org/download/agent-327-operation-barbershop/Agent%20327%20Operation%20Barbershop.mp4",
+    desc: "The Dutch secret agent walks into a very suspicious barbershop.",
+    license: "CC-BY · Blender Foundation",
+    art: "https://archive.org/services/img/agent-327-operation-barbershop"
+   },
+   {
+    title: "Hero",
+    year: 2018,
+    dur: 236.7,
+    src: "https://archive.org/download/hero_20260106/hero.mp4",
+    desc: "A hand-drawn Grease Pencil duel between a hero and his shadow.",
+    license: "CC-BY · Blender Foundation",
+    art: "https://archive.org/services/img/hero_20260106"
+   },
+   {
     title: "Spring",
     year: 2019,
     dur: 464.2,
@@ -97,6 +151,24 @@ const CHANNELS = [
     desc: "A shepherd girl and her dog face ancient spirits.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/springopenmovie"
+   },
+   {
+    title: "Sprite Fright",
+    year: 2021,
+    dur: 629.9,
+    src: "https://archive.org/download/sprite-fright-2021/Sprite%20Fright%20%282021%29.mp4",
+    desc: "Mushroom-picking students meet murderously cheerful forest sprites.",
+    license: "CC-BY · Blender Foundation",
+    art: "https://archive.org/services/img/sprite-fright-2021"
+   },
+   {
+    title: "Charge",
+    year: 2022,
+    dur: 262.8,
+    src: "https://archive.org/download/charge_202601/Charge.mp4",
+    desc: "A destitute drifter gambles everything in a power-starved future.",
+    license: "CC-BY · Blender Foundation",
+    art: "https://archive.org/services/img/charge_202601"
    }
   ]
  },

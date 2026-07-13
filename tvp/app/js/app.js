@@ -96,9 +96,18 @@ let video = $("tv-a");            // on the air
 let backstage = $("tv-b");        // preloading what's next
 let userVolume = 1, userMuted = false;
 
-function chooseSrc(p) {
-  return (state.quality === "best" && p.srcHi) ? p.srcHi : p.src;
-}
+/* Optional CDN mirror of archive.org/download/ (e.g. a Cloudflare Worker
+ * or R2 bucket). Set once from the console and reload:
+ *   localStorage.setItem('tvp.mirror', JSON.stringify('https://tv.example.com/ia/'))
+ */
+const MIRROR = store.get("mirror", "");
+const mirror = (u) => (MIRROR && u) ? u.replace("https://archive.org/download/", MIRROR) : u;
+
+/* Everything tunes on the light ~512kbps derivative so channels start
+ * fast; when quality is "best" we quietly upgrade a few seconds in via
+ * the backstage element (the "start low, finish high" trick). */
+function fastSrc(p) { return mirror(p.src); }
+function bestSrc(p) { return p.srcHi ? mirror(p.srcHi) : null; }
 
 function applySound(el) { el.volume = userVolume; el.muted = userMuted; }
 
@@ -116,9 +125,8 @@ function swapStage() {
   }, 1000);
 }
 
-/* preload a program into the backstage element (muted, hidden) */
-function preloadBackstage(prog, offset = 0) {
-  const src = chooseSrc(prog);
+/* preload a stream into the backstage element (muted, hidden) */
+function preloadBackstage(src, offset = 0) {
   if (backstage.dataset.src === src) return;
   backstage.dataset.src = src;
   backstage.dataset.offset = String(offset);
@@ -187,10 +195,13 @@ function tune(chIndex, opts = {}) {
     offset = s.offset;
   }
   const prog = ch.programs[progIndex];
-  const src = chooseSrc(prog);
+  const src = fastSrc(prog);
 
   state.comingUpShown = false;
   $("comingup").classList.add("hidden");
+  // arm the quality upgrade for this tune, if wanted and available
+  state.upgrade = (state.quality === "best" && bestSrc(prog))
+    ? { url: bestSrc(prog), token } : null;
 
   const arrive = () => {
     if (token !== state.tuneToken) return;
@@ -201,7 +212,7 @@ function tune(chIndex, opts = {}) {
   };
 
   /* warm path: the backstage element already buffered this stream */
-  if (backstageReadyFor(src) && !opts.fromStartProg) {
+  if (backstageReadyFor(src) && opts.fromStartProg === undefined) {
     swapStage();
     const drift = Math.abs((video.currentTime || 0) - offset);
     if (drift > 4 && offset < prog.dur - 2) { try { video.currentTime = offset; } catch {} }
@@ -251,13 +262,10 @@ function onProgramEnded(e) {
   if (e.target !== video || !state.on) return;
   state.onDemand = null;
   const s = scheduleFor(currentChannel());
-  const src = chooseSrc(s.program);
-  if (backstageReadyFor(src)) {
+  if (backstageReadyFor(fastSrc(s.program))) {
     state.zapQuiet = true;          // no interstitial, just roll on
-    tune(state.chIndex);
-  } else {
-    tune(state.chIndex);
   }
+  tune(state.chIndex);
 }
 
 function onVideoError(e) {
@@ -349,15 +357,30 @@ setInterval(() => {
 
   const remaining = dur - t;
 
-  // quietly stage the next program ~45s out
+  /* backstage priorities, most urgent first:
+     1. the junction — stage the next program ~45s out
+     2. the quality upgrade — swap fast → best a few seconds in
+     3. idle warmth — buffer the next channel up the dial for instant zaps */
   if (remaining < 45 && remaining > 2 && !video.paused) {
+    state.upgrade = null;   // too late to bother upgrading this one
     const next = listingFor(currentChannel(), 2)[1];
-    if (next) preloadBackstage(next.program, 0);
-  }
-
-  // near-end fallback: some derivatives are shorter than their metadata says
-  if (info.live && remaining <= 0.5 && !video.paused && video.readyState >= 2) {
-    // let 'ended' handle it; but if currentTime stalls past the end, advance
+    if (next) preloadBackstage(fastSrc(next.program), 0);
+  } else if (state.upgrade && state.upgrade.token === state.tuneToken &&
+             t > 8 && remaining > 90 && !video.paused && video.readyState >= 3) {
+    if (backstage.dataset.src !== state.upgrade.url) {
+      preloadBackstage(state.upgrade.url, t + 10);
+    } else if (backstageReadyFor(state.upgrade.url)) {
+      const at = video.currentTime;
+      swapStage();
+      try { video.currentTime = at + 0.2; } catch {}
+      const pl = video.play();
+      if (pl) pl.catch(() => {});
+      state.upgrade = null;
+    }
+  } else if (!state.upgrade && t > 15 && remaining > 60 && !video.paused && CHANNELS.length > 1) {
+    const nx = CHANNELS[(state.chIndex + 1) % CHANNELS.length];
+    const s = scheduleFor(nx);
+    preloadBackstage(fastSrc(s.program), s.offset);
   }
 
   // "coming up" ~25s before the end of the current program
@@ -616,7 +639,7 @@ function updateRailFocus() {
       railSettle = setTimeout(() => {
         if (state.guideIndex === idx && idx !== state.chIndex) {
           const s = scheduleFor(CHANNELS[idx]);
-          preloadBackstage(s.program, s.offset);
+          preloadBackstage(fastSrc(s.program), s.offset);
         }
       }, 450);
     }
@@ -884,7 +907,14 @@ $("quality-toggle").addEventListener("click", () => {
   state.quality = state.quality === "best" ? "fast" : "best";
   store.set("quality", state.quality);
   renderQuality();
-  if (state.on) { crtBlink(); tune(state.chIndex); }
+  // no re-tune needed: "best" arms a seamless mid-play upgrade
+  if (state.on && state.quality === "best") {
+    const info = currentProgramInfo();
+    const hi = bestSrc(info.program);
+    if (hi) state.upgrade = { url: hi, token: state.tuneToken };
+  } else {
+    state.upgrade = null;
+  }
 });
 
 /* ── widgets: channel chat (a friendly séance) ─────── */
@@ -1080,3 +1110,12 @@ document.addEventListener("error", (e) => {
 applySound(video);
 renderQuality();
 renderTickerToggle();
+
+/* While the splash breathes, quietly buffer what's on the saved channel
+ * right now — power-on then swaps to an already-warm stream. */
+(function warmTheValves() {
+  try {
+    const s = scheduleFor(CHANNELS[state.chIndex]);
+    preloadBackstage(fastSrc(s.program), s.offset);
+  } catch {}
+})();
