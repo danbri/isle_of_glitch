@@ -166,12 +166,25 @@ const DIAL = [
        public-domain-era shows */
     titleFilter: /(bonanza|lone ranger|beverly hillbillies|dick van dyke|petticoat junction|dragnet|sherlock holmes|one step beyond|racket squad|ozzie and harriet|jack benny|burns and allen|lucy|milton berle|texaco|your show of shows|studio one|suspense|lights out)/i
   },
+  /* Everything published through 1930 is US public domain (as of 2026),
+     so these two channels sweep the silent/early-sound theatrical era
+     comprehensively: features on one dial position, one/two-reelers on
+     another. requireYear keeps the bright line honest. */
   {
-    num: 11, id: "silent-palace", name: "Silent Palace",
-    category: "Film", tagline: "No talking. Piano optional.",
+    num: 11, id: "picture-palace", name: "Picture Palace",
+    category: "Film", tagline: "Theatrical features from before 1931",
     art: "silent_films",
     hand: [],
-    collection: "silent_films", want: 10, minDur: 600, maxDur: 7800
+    query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1891-01-01 TO 1930-12-31]",
+    want: 60, minDur: 2400, maxDur: 10000, maxYear: 1930, requireYear: true
+  },
+  {
+    num: 115, id: "nickelodeon", name: "The Nickelodeon",
+    category: "Film", tagline: "Shorts from the dawn of cinema",
+    art: "silent_films",
+    hand: [],
+    query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1891-01-01 TO 1930-12-31]",
+    want: 30, minDur: 60, maxDur: 2400, maxYear: 1930, requireYear: true
   },
   {
     num: 12, id: "trailer-park", name: "Trailer Park",
@@ -300,6 +313,7 @@ async function harvestChannel(ch, taken, seenTitles) {
     if (!dur || dur < ch.minDur || dur > ch.maxDur) { reject("duration"); continue; }
     const year = parseInt(d.year) || parseInt(meta.metadata?.year) ||
                  parseInt(String(meta.metadata?.date || "").slice(0, 4)) || undefined;
+    if (ch.requireYear && !year) { reject("no-year"); continue; }
     if (ch.maxYear && year && year > ch.maxYear) { reject("too-new"); continue; }
     const enc = (n) => n.split("/").map(encodeURIComponent).join("/");
     const src = `${ARCHIVE}${d.identifier}/${enc(picked.lo.name)}`;

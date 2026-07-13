@@ -71,6 +71,8 @@
         <button id="info-restart" class="pill-btn">&#8676; from start</button>
         <button id="info-fav" class="pill-btn">★ my channels</button>
         <button id="info-live" class="pill-btn">&#9679; back to live</button>
+        <button id="info-cc" class="pill-btn hidden">CC</button>
+        <a id="info-source" class="pill-btn" target="_blank" rel="noopener">&#9741; archive.org</a>
       </div>
     </div>
   </div>
@@ -171,6 +173,16 @@
     </div>
   </section>
 
+  <section class="widget" id="w-preload" data-widget="preload">
+    <h3>preloading</h3>
+    <div class="w-body">
+      <button class="pill-btn" id="preload-toggle"></button>
+      <div class="w-hint">eco = only what you're watching (kind to data plans);
+      turbo = also quietly warm nearby channels and cache the first seconds
+      of likely next picks for instant flipping</div>
+    </div>
+  </section>
+
   <section class="widget" id="w-ticker" data-widget="ticker">
     <h3>news ticker</h3>
     <div class="w-body"><button class="pill-btn" id="ticker-toggle"></button></div>
@@ -184,7 +196,17 @@
       broadcast clock &mdash; you join whatever is on <i>now</i>.</p>
       <p>Pin any widget (&#8865;) to keep it floating over the picture, then
       drag it wherever you like.</p>
-      <p>All streams are free &amp; open, from the Internet Archive.</p>
+      <p>All video streams directly from the
+      <a href="https://archive.org" target="_blank" rel="noopener">Internet Archive</a>:
+      Blender Foundation open movies (CC-BY) and public-domain-era film.
+      Every program links its archive.org source page from the info panel
+      (the &#9662; chevron on the top bar).</p>
+      <p><b>Rights holders:</b> this site only points at streams hosted by
+      archive.org and removes anything on request &mdash; but the hosted copy
+      itself is theirs, so takedown requests are best directed to the
+      Internet Archive via its
+      <a href="https://help.archive.org/help/rights/" target="_blank" rel="noopener">rights
+      policy</a>, from the item's own archive.org page.</p>
     </div>
   </section>
 </aside>

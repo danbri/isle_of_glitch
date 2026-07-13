@@ -79,6 +79,8 @@ const state = {
   favs: new Set(store.get("favs", [])),
   ratings: store.get("ratings", {}),
   quality: store.get("quality", "fast"),
+  preload: store.get("preload", "eco"),   // eco: only the chosen channel; turbo: speculative warmth
+  cc: store.get("cc", false),
   category: "explore",
   overlayTimer: null,
   comingUpShown: false,
@@ -223,9 +225,13 @@ function tune(chIndex, opts = {}) {
     return;
   }
 
-  /* cold path: interstitial while the active element loads */
+  /* cold path: zap card — an indicative frame of what's on, instantly,
+     while the stream loads behind it */
   $("interstitial-text").textContent = "Fetching your channel…";
   $("interstitial-channel").textContent = ch.num + " · " + ch.name;
+  const frame = prog.frame || prog.art || ch.art;
+  $("interstitial").style.backgroundImage = frame
+    ? `linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.75)), url("${frame}")` : "";
   $("interstitial").classList.remove("hidden");
 
   video.dataset.src = src;
@@ -249,6 +255,19 @@ function updateAncillary(ch, prog) {
   renderGuideList();
   renderJewels();
   chatOnZap(ch, prog);
+  loadSubtitles(prog);
+  warmZapFrames();
+}
+
+/* pre-warm the neighbours' zap-card frames — a few KB each, so this is
+   cheap enough to do even in eco mode; makes skim-flipping feel solid */
+function warmZapFrames() {
+  [-1, 1].forEach((d) => {
+    const ch = CHANNELS[((state.chIndex + d) % CHANNELS.length + CHANNELS.length) % CHANNELS.length];
+    const s = scheduleFor(ch);
+    const f = s.program.frame || s.program.art || ch.art;
+    if (f) { const img = new Image(); img.src = f; }
+  });
 }
 
 function zap(delta) {
@@ -261,6 +280,9 @@ function zap(delta) {
 function onProgramEnded(e) {
   if (e.target !== video || !state.on) return;
   state.onDemand = null;
+  // they watched one to the end — in turbo, bank the first seconds of
+  // likely next destinations for instant flips later
+  prefetchFirstSeconds();
   const s = scheduleFor(currentChannel());
   if (backstageReadyFor(fastSrc(s.program))) {
     state.zapQuiet = true;          // no interstitial, just roll on
@@ -312,6 +334,15 @@ function updateInfo() {
     sched.appendChild(row);
   });
   $("info-fav").classList.toggle("lit", state.favs.has(ch.id));
+
+  // source attribution: link the program's own archive.org details page
+  const item = (p.src || "").match(/archive\.org\/download\/([^/]+)\//);
+  if (item) {
+    $("info-source").href = "https://archive.org/details/" + item[1];
+    $("info-source").classList.remove("hidden");
+  } else {
+    $("info-source").classList.add("hidden");
+  }
 }
 
 function overlaysVisible() { return !$("controller").classList.contains("hidden"); }
@@ -377,7 +408,8 @@ setInterval(() => {
       if (pl) pl.catch(() => {});
       state.upgrade = null;
     }
-  } else if (!state.upgrade && t > 15 && remaining > 60 && !video.paused && CHANNELS.length > 1) {
+  } else if (state.preload === "turbo" && !state.upgrade &&
+             t > 15 && remaining > 60 && !video.paused && CHANNELS.length > 1) {
     const nx = CHANNELS[(state.chIndex + 1) % CHANNELS.length];
     const s = scheduleFor(nx);
     preloadBackstage(fastSrc(s.program), s.offset);
@@ -637,7 +669,7 @@ function updateRailFocus() {
       // warm-preload the focused channel's live stream for instant zap
       clearTimeout(railSettle);
       railSettle = setTimeout(() => {
-        if (state.guideIndex === idx && idx !== state.chIndex) {
+        if (state.preload === "turbo" && state.guideIndex === idx && idx !== state.chIndex) {
           const s = scheduleFor(CHANNELS[idx]);
           preloadBackstage(fastSrc(s.program), s.offset);
         }
@@ -917,6 +949,99 @@ $("quality-toggle").addEventListener("click", () => {
   }
 });
 
+/* ── first-seconds cache (service worker) ──────────── */
+
+function registerSW() {
+  if (!("serviceWorker" in navigator)) return;
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
+/* After a full watch, bank the opening ~1.5MB of likely destinations
+   (turbo only): the chosen channel's next program, the neighbours'
+   live streams, and My Channels. One small ranged GET each, via the SW. */
+/* archive.org media nodes lack CORS headers; /cors/ has them — the SW
+   fetches via /cors/ but caches under the /download/ URL videos request */
+function corsVia(url) {
+  return MIRROR ? url : url.replace("https://archive.org/download/", "https://archive.org/cors/");
+}
+
+function prefetchFirstSeconds() {
+  if (state.preload !== "turbo" || !navigator.serviceWorker?.controller) return;
+  const keys = new Set();
+  const next = listingFor(currentChannel(), 2)[1];
+  if (next) keys.add(fastSrc(next.program));
+  [-1, 1].forEach((d) => {
+    const ch = CHANNELS[((state.chIndex + d) % CHANNELS.length + CHANNELS.length) % CHANNELS.length];
+    keys.add(fastSrc(scheduleFor(ch).program));
+  });
+  CHANNELS.filter((ch) => state.favs.has(ch.id)).slice(0, 3)
+    .forEach((ch) => keys.add(fastSrc(scheduleFor(ch).program)));
+  navigator.serviceWorker.controller.postMessage({
+    type: "prefetch",
+    urls: [...keys].slice(0, 6).map((key) => ({ key, via: corsVia(key) }))
+  });
+}
+
+/* ── subtitles (archive.org .srt/.vtt, incl. auto-generated ASR) ── */
+
+let subsToken = 0;
+
+function srtToVtt(text) {
+  return "WEBVTT\n\n" + text.replace(/\r/g, "")
+    .replace(/(\d{2}:\d{2}:\d{2}),(\d{1,3})/g,
+      (_, hms, ms) => `${hms}.${ms.padEnd(3, "0")}`);
+}
+
+function clearSubtitles() {
+  [video, backstage].forEach((el) => el.querySelectorAll("track").forEach((t) => t.remove()));
+  $("info-cc").classList.add("hidden");
+}
+
+async function loadSubtitles(prog) {
+  const token = ++subsToken;
+  clearSubtitles();
+  const item = (prog.src || "").match(/archive\.org\/download\/([^/]+)\//);
+  if (!item || !prog.subs) return;
+  try {
+    const url = `https://archive.org/cors/${item[1]}/${prog.subs.split("/").map(encodeURIComponent).join("/")}`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
+    if (!r.ok || token !== subsToken) return;
+    let text = await r.text();
+    if (token !== subsToken) return;
+    if (!/^WEBVTT/.test(text)) text = srtToVtt(text);
+    const blob = URL.createObjectURL(new Blob([text], { type: "text/vtt" }));
+    const track = document.createElement("track");
+    track.kind = "captions";
+    track.label = /\.asr\./i.test(prog.subs) ? "Auto captions" : "Captions";
+    track.src = blob;
+    track.default = false;
+    video.appendChild(track);
+    track.track.mode = state.cc ? "showing" : "hidden";
+    $("info-cc").classList.remove("hidden");
+    $("info-cc").classList.toggle("lit", state.cc);
+  } catch {}
+}
+
+$("info-cc").addEventListener("click", () => {
+  state.cc = !state.cc;
+  store.set("cc", state.cc);
+  const t = video.querySelector("track");
+  if (t) t.track.mode = state.cc ? "showing" : "hidden";
+  $("info-cc").classList.toggle("lit", state.cc);
+});
+
+/* ── widgets: preloading policy ────────────────────── */
+
+function renderPreload() {
+  $("preload-toggle").textContent =
+    state.preload === "turbo" ? "preloading: turbo — tap for eco" : "preloading: eco — tap for turbo";
+}
+$("preload-toggle").addEventListener("click", () => {
+  state.preload = state.preload === "turbo" ? "eco" : "turbo";
+  store.set("preload", state.preload);
+  renderPreload();
+});
+
 /* ── widgets: channel chat (a friendly séance) ─────── */
 
 const CHAT_BOTS = ["venice_fan", "p2p_pete", "beta_tester07", "couch_potato", "sleepy_llama", "dialup_dora"];
@@ -1109,7 +1234,9 @@ document.addEventListener("error", (e) => {
 
 applySound(video);
 renderQuality();
+renderPreload();
 renderTickerToggle();
+registerSW();
 
 /* While the splash breathes, quietly buffer what's on the saved channel
  * right now — power-on then swaps to an already-warm stream. */
