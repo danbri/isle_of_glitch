@@ -7,13 +7,15 @@ This directory holds a small act of software necromancy:
 2. **`app/`** — a brand-new, mobile-first web app that resurrects the Joost
    *user experience* using only free and open video streamed from the
    Internet Archive.
+3. **`tools/curate.mjs`** — the content harvester that builds the channel
+   dial from archive.org collections.
 
 **[▶ Open the player](app/index.html)** — serve `app/` with any static file
 server (`python3 -m http.server`, GitHub Pages, etc.) and tap the power button.
 
 | splash | live + controller | channel guide | widgets |
 |---|---|---|---|
-| ![splash](docs/screens/splash.png) | ![controller](docs/screens/controller.png) | ![epg](docs/screens/epg.png) | ![widgets](docs/screens/widgets.png) |
+| ![splash](docs/screens/splash.png) | ![controller](docs/screens/controller.png) | ![guide](docs/screens/epg.png) | ![widgets](docs/screens/widgets.png) |
 
 ---
 
@@ -36,34 +38,34 @@ Joost.app/Contents/Resources/
     └── tvprdf.jar, tvpzelos…  data layer, services
 ```
 
-Things learned from `tvp.xul` and friends, all faithfully echoed in the
-recreation:
+Things learned from `tvp.xul` and friends, all echoed in the recreation:
 
 - **A `<compositor>` full of `<sprite>`s** — controller, EPG, menu, OSD,
   interstitial, "coming up" overlay, error panels — all floating over
-  full-bleed video. The web app mirrors this as absolutely-positioned
-  overlays over a fullscreen `<video>`.
+  full-bleed video. Recreated as absolutely-positioned overlays over a
+  fullscreen `<video>`.
+- **The full-screen channel menu** with large content tiles you sweep
+  through — recreated as the "swoosh" guide: a snap-scrolled carousel of
+  big program-art tiles over the still-playing picture, category rail on
+  top, listings below.
 - **Theme constants** (from the locale DTD): font `Trebuchet MS`, frame
-  stroke `white`, focus color `rgb(198,96,12)` — that burnt orange — plus
-  translucent black panels (`rgba(0,0,0,.5)` + 2px white borders) and a
-  teal selection color `rgba(98,163,176,.8)`. All reused verbatim as CSS
-  custom properties.
-- **Hot edges** (`hotedges.xml`): mousing to screen edges summoned the
-  channel menu, widget menu and search. Mobile translation: swipe in from
-  the left edge → channel guide, right edge → widgets, tap → controller.
-- **The widget ecosystem** (`widget-manager.js`, `menu_plugin_*.png`):
-  channel chat, clock (`canvasclock.js`), news ticker, ratings, blog-this,
-  invites, trivia. The recreation ships a canvas clock, a (gently haunted)
-  channel chat, a news ticker and jewel ratings.
-- **EPG categories** (`epg.csv`): *Explore, My Channels, What's New,
-  What's Popular, Cartoons & Animation, Comedy, Documentary, Drama,
-  Entertainment, Film, Lifestyle, Music, News, Sports & Games* — the
-  guide's category rail keeps the same vocabulary.
-- **The little theatrics**: interstitials while the P2P engine fetched
-  ("Fetching your channel…"), a white-dot CRT power-off animation, big
-  on-screen channel numbers for 1–9 zapping, a "coming up" toast before
-  the next show, five-jewel ratings, `search.noResults1=Your search for
-  "%S" did not match any programs.` All back.
+  stroke `white`, focus color `rgb(198,96,12)`, translucent black panels
+  with 2px white borders, teal selection `rgba(98,163,176,.8)`.
+- **Hot edges** (`hotedges.xml`): mousing to screen edges summoned menus.
+  Mobile translation: swipe from the left edge → guide, right edge →
+  widgets, tap → controller, swipe up/down → zap.
+- **The widget/plugin ecosystem** (`widget-manager.js`): channel chat,
+  clock (`canvasclock.js`), news ticker, ratings, trivia — plugins that
+  could stay **pinned over the picture**. Recreated: every widget has a
+  pin (⊡) that floats it over the video, translucent and draggable, with
+  positions remembered. A "time machine" widget seeks ±30s/±5m, scrubs to
+  any offset, and jumps back to the live broadcast clock.
+- **The top info bar** that slides down into a larger panel — recreated:
+  the chevron expands it into program details, schedule and actions.
+- **The little theatrics**: "Fetching your channel…" interstitials, the
+  white-dot CRT power-off, big OSD channel digits, the "coming up" toast,
+  five-jewel ratings, `search.noResults1=Your search for "%S" did not
+  match any programs.` All back.
 
 ## Part 2 — the séance (`app/`)
 
@@ -71,35 +73,46 @@ Zero dependencies, zero build step: one HTML file, one stylesheet, two JS
 files. Works as a static page anywhere.
 
 **Broadcast simulation** — the defining Joost feeling was *television*:
-you tuned in, something was already on. Every channel here runs on a wall
+you tune in and something is already on. Every channel runs on a wall
 clock anchored to `2007-01-16T00:00Z` (the day The Venice Project became
-Joost). Tuning computes `(now − epoch) mod playlist-length` and seeks the
-current program to the right offset, so everyone watching "channel 4" sees
-the same moment of *Night of the Living Dead*. The guide shows real
-start times, LIVE tags, and a "coming up" overlay near the end of a show.
-A modern concession: **⊢ from start** on the info bar drops out of the
-broadcast into on-demand, and the schedule reclaims you at the next show.
+Joost). Tuning computes `(now − epoch) mod playlist-length` and joins the
+current program at the right offset. The guide shows real start times and
+LIVE tags. **⊢ from start** drops out of the broadcast into on-demand;
+**● back to live** rejoins the schedule.
 
-**The dial** (all free/open, all verified range-streamable from archive.org):
+**Making archive.org feel fast** — three tricks:
 
-| # | Channel | Category | On the air |
-|---|---------|----------|------------|
-| 1 | Animation Station | Cartoons & Animation | Big Buck Bunny, Caminandes 1 & 2 *(CC-BY, Blender)* |
-| 2 | Open Cinema | Film | Elephants Dream, Sintel, Tears of Steel, Cosmos Laundromat, Spring *(CC-BY, Blender)* |
-| 3 | Cartoon Classics | Kids | Little Nemo (1911), Gertie the Dinosaur (1914), Steamboat Willie (1928), Fleischer Superman (1941) *(PD)* |
-| 4 | Creature Feature | Cult | Night of the Living Dead (1968), House on Haunted Hill (1959) *(PD)* |
-| 5 | Screwball Screen | Comedy | His Girl Friday (1940) *(PD)* |
-| 6 | Retro Vault | Documentary | Duck and Cover (1951), The Home Economics Story (1951) *(PD, Prelinger)* |
-| 7 | Moon TV | Science & Tech | Apollo 11 moonwalk, restored NASA EVA broadcast (1969) *(PD)* |
+1. **Light derivatives first.** The harvester prefers the ~512kbps H.264
+   derivative of every film — they start in a fraction of the time of the
+   1080p originals. A widget toggles *fast* ↔ *best* quality.
+2. **Double-buffered video.** Two `<video>` elements: one is on the air
+   while the other quietly preloads whatever the schedule says is next
+   (~45s before the junction), so program changes are seamless — no
+   interstitial, no spinner. The same backstage element warm-preloads the
+   channel you're hovering in the guide, so tuning from the guide is
+   near-instant.
+3. **`preconnect`** to archive.org so the first byte arrives sooner.
+
+**The dial** is generated by [`tools/curate.mjs`](tools/curate.mjs), which
+harvests archive.org collections (Prelinger, Film_Noir, SciFi_Horror,
+Comedy_Films, classic_tv, universal_newsreels, classic_cartoons,
+silent_films, NASA…), keeps family-friendly titles with verified
+range-streamable MP4 derivatives and plausible durations, de-duplicates,
+and writes `app/js/channels.js` — currently **a dozen+ channels and
+100+ programs (~70 hours of airtime)**. Re-run it any time:
+
+```
+cd tvp/tools && node curate.mjs        # or --dry to preview
+```
 
 **Controls**
 
-- *Touch*: tap = controller · swipe ↑/↓ = zap channels · swipe from left
-  edge = channel guide · swipe from right edge = widgets · ★ = My Channels
-  (persisted).
-- *Keyboard*: `1–7` channel numbers (with big OSD digits) · `↑/↓` zap ·
-  `←/→` seek · `space` pause · `m` mute · `f` fullscreen · `g` guide ·
-  `w` widgets · `/` search · `p` power off (CRT dot included).
+- *Touch*: tap = controller · swipe ↑/↓ = zap · swipe from left edge =
+  guide · right edge = widgets · pin (⊡) a widget to float it, drag by
+  its title · chevron on the top bar = big info panel.
+- *Keyboard*: `0–9` channel digits · `↑/↓` zap · `←/→` seek · `space`
+  pause · `m` mute · `f` fullscreen · `g` guide · `w` widgets · `i` info
+  panel · `/` search · `p` power off.
 
 ## Legal
 
@@ -107,7 +120,10 @@ broadcast into on-demand, and the schedule reclaims you at the next show.
   discontinued service; its **extracted contents are proprietary**
   (© Joost N.V. / Joost Technologies B.V.) and are deliberately excluded
   from version control (`.gitignore`).
-- `app/` is **original code** — a UX homage, no Joost code, artwork or
+- `app/` is **original code** — a UX homage; no Joost code, artwork or
   trademarks reproduced. Not affiliated with or endorsed by Joost N.V.
-- Video: Blender Foundation open movies under CC-BY; everything else is
-  public domain, streamed from the [Internet Archive](https://archive.org).
+- Video: Blender Foundation open movies are CC-BY. Harvested items come
+  from the Internet Archive's public collections (Prelinger and other
+  public-domain-era material); each program links its archive.org source.
+  If something shouldn't be on the dial, remove it from `tools/curate.mjs`
+  and re-run.
