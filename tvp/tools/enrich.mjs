@@ -25,7 +25,13 @@ writeFileSync(tmp, src + "\nexport {CHANNELS, EPG_CATEGORIES};");
 const { CHANNELS, EPG_CATEGORIES } = await import(pathToFileURL(tmp).href);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const CACHE = join(dirname(fileURLToPath(import.meta.url)), ".cache", "meta");
 async function meta(id, tries = 3) {
+  // reuse the harvester's on-disk metadata cache when present
+  try {
+    const f = join(CACHE, encodeURIComponent(id) + ".json");
+    return JSON.parse(readFileSync(f, "utf8"));
+  } catch {}
   for (let i = 0; i < tries; i++) {
     try {
       const r = await fetch(`https://archive.org/metadata/${id}`, { signal: AbortSignal.timeout(30000) });

@@ -267,19 +267,33 @@ function tune(chIndex, opts = {}) {
     return;
   }
 
-  /* cold path (nothing on the air): full zap card — an indicative frame,
-     a progress bar, and no input lock at all */
   state.hotTune = null;
   $("tunebar").classList.add("hidden");
-  $("interstitial-text").textContent = "Fetching your channel…";
-  $("interstitial-channel").textContent = ch.num + " · " + ch.name;
-  const frame = prog.frame || prog.art || ch.art;
-  $("interstitial").style.backgroundImage = frame
-    ? `linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.75)), url("${frame}")` : "";
-  $("interstitial-progress").firstElementChild.style.width = "3%";
-  state.coldStarted = Date.now();
-  $("interstitial").classList.remove("hidden");
 
+  /* cold-adopt: the splash (or an earlier warm-up) already started loading
+     exactly this stream backstage — put that element on the air and let it
+     finish there, rather than restarting the download from scratch */
+  if (backstage.dataset.src === src && opts.fromStartProg === undefined) {
+    swapStage();
+    video.addEventListener("playing", () => {
+      if (token !== state.tuneToken) return;
+      const fresh = scheduleFor(ch);
+      if (!state.onDemand && fresh.index === progIndex &&
+          Math.abs((video.currentTime || 0) - fresh.offset) > 4) {
+        try { video.currentTime = fresh.offset; } catch {}   // drift while splash sat
+      }
+      arrive();
+    }, { once: true });
+    const p = video.play();
+    if (p) p.catch(() => {});
+    showZapCard(ch, prog, token);
+    updateInfo();
+    updateAncillary(ch, prog);
+    return;
+  }
+
+  /* cold path (nothing on the air): full zap card — an indicative frame,
+     a progress bar, and no input lock at all */
   video.dataset.src = src;
   video.src = src;
   video.addEventListener("loadedmetadata", () => {
@@ -293,8 +307,26 @@ function tune(chIndex, opts = {}) {
   const p = video.play();          // keep the user gesture
   if (p) p.catch(() => {});
 
+  showZapCard(ch, prog, token);
   updateInfo();
   updateAncillary(ch, prog);
+}
+
+/* the zap card appears only if arrival takes noticeable time — fast starts
+   never flash it */
+function showZapCard(ch, prog, token) {
+  state.coldStarted = Date.now();
+  setTimeout(() => {
+    if (token !== state.tuneToken || !state.on) return;
+    if (video.readyState >= 3 && !video.paused) return;    // already on the air
+    $("interstitial-text").textContent = "Fetching your channel…";
+    $("interstitial-channel").textContent = ch.num + " · " + ch.name;
+    const frame = prog.frame || prog.art || ch.art;
+    $("interstitial").style.backgroundImage = frame
+      ? `linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.75)), url("${frame}")` : "";
+    $("interstitial-progress").firstElementChild.style.width = "3%";
+    $("interstitial").classList.remove("hidden");
+  }, 250);
 }
 
 /* the tuning progress bars: real readiness milestones blended with a
