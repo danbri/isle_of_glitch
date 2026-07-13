@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>TVP/2007 — a Joost-era web TV revival</title>
+<link rel="preconnect" href="https://archive.org" crossorigin>
+<link rel="dns-prefetch" href="https://archive.org">
 <link rel="stylesheet" href="css/tvp.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='black' stroke='white' stroke-width='2'/%3E%3Ctext x='16' y='22' font-family='Trebuchet MS' font-size='13' font-weight='bold' fill='rgb(198,96,12)' text-anchor='middle'%3Etv%3C/text%3E%3C/svg%3E">
 </head>
@@ -14,7 +16,9 @@
 
 <!-- ══════════════ THE STAGE ══════════════ -->
 <div id="stage">
-  <video id="tv" playsinline preload="auto"></video>
+  <!-- double-buffered video pair: one on air, one preloading what's next -->
+  <video id="tv-a" class="tv" playsinline preload="auto"></video>
+  <video id="tv-b" class="tv hidden" playsinline preload="auto" muted></video>
 
   <!-- CRT white-dot power effect -->
   <div id="crt"><div id="crt-dot"></div></div>
@@ -35,8 +39,11 @@
     </button>
     <div class="splash-hint">tap to switch on</div>
     <div class="splash-legal">An homage to the Joost&trade; UX (2006&ndash;08). Not affiliated with Joost N.V.
-    All video is Blender Foundation CC-BY or public domain, streamed from archive.org.</div>
+    Video is Blender Foundation CC-BY, public domain, or other free/open film streamed from archive.org.</div>
   </div>
+
+  <!-- pinned widgets float here, over the picture -->
+  <div id="pinned-layer"></div>
 
   <!-- OSD: channel zap display -->
   <div id="osd-channel" class="osd hidden"><span id="osd-num"></span><span id="osd-name"></span></div>
@@ -45,15 +52,27 @@
   <!-- OSD: digit entry -->
   <div id="osd-digits" class="osd hidden"></div>
 
-  <!-- Program info (top overlay) -->
+  <!-- Program info (top overlay; chevron slides it down into the big panel) -->
   <div id="infobar" class="overlay hidden">
-    <img id="info-art" alt="">
-    <div id="info-text">
-      <div id="info-channel"></div>
-      <div id="info-title"></div>
-      <div id="info-meta"></div>
+    <div id="info-row">
+      <img id="info-art" alt="">
+      <div id="info-text">
+        <div id="info-channel"></div>
+        <div id="info-title"></div>
+        <div id="info-meta"></div>
+      </div>
+      <button id="info-expand" class="round-mini" title="More info"><svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
-    <button id="info-restart" class="pill-btn" title="Watch from start">&#8676; from start</button>
+    <div id="info-more">
+      <p id="info-desc"></p>
+      <div id="info-facts"></div>
+      <div id="info-sched"></div>
+      <div id="info-actions">
+        <button id="info-restart" class="pill-btn">&#8676; from start</button>
+        <button id="info-fav" class="pill-btn">★ my channels</button>
+        <button id="info-live" class="pill-btn">&#9679; back to live</button>
+      </div>
+    </div>
   </div>
 
   <!-- Coming up next -->
@@ -70,7 +89,7 @@
       <span id="time-total">0:00</span>
     </div>
     <div id="controller-buttons">
-      <button class="ctl" id="btn-menu" title="Channel menu (M)"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg></button>
+      <button class="ctl" id="btn-menu" title="Channel guide (g)"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg></button>
       <button class="ctl" id="btn-prev" title="Previous channel (↓)"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
       <button class="ctl big" id="btn-play" title="Play / pause (space)"><svg id="glyph-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><svg id="glyph-play" class="hidden" viewBox="0 0 24 24"><path d="M7 4.5l13 7.5-13 7.5z" fill="currentColor"/></svg></button>
       <button class="ctl" id="btn-next" title="Next channel (↑)"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
@@ -85,15 +104,16 @@
   </div>
 </div>
 
-<!-- ══════════════ CHANNEL MENU / EPG (left drawer) ══════════════ -->
-<aside id="epg" class="drawer left">
-  <header>
-    <div class="drawer-title">what&rsquo;s on</div>
-    <button class="drawer-close" data-close="epg">&times;</button>
+<!-- ══════════════ CHANNEL GUIDE — the full-screen swoosh ══════════════ -->
+<div id="guide">
+  <header class="guide-bar">
+    <div class="guide-title">what&rsquo;s on</div>
+    <nav id="guide-cats"></nav>
+    <button class="drawer-close" data-close="guide">&times;</button>
   </header>
-  <nav id="epg-cats"></nav>
-  <div id="epg-channels"></div>
-</aside>
+  <div id="guide-rail" aria-label="Channels"></div>
+  <div id="guide-list"></div>
+</div>
 
 <!-- ══════════════ WIDGET DOCK (right drawer) ══════════════ -->
 <aside id="dock" class="drawer right">
@@ -102,32 +122,69 @@
     <button class="drawer-close" data-close="dock">&times;</button>
   </header>
 
-  <section class="widget" id="w-clock">
+  <section class="widget" id="w-clock" data-widget="clock">
     <h3>clock</h3>
-    <canvas id="clock-canvas" width="120" height="120"></canvas>
-    <div id="clock-digital"></div>
+    <div class="w-body">
+      <canvas id="clock-canvas" width="120" height="120"></canvas>
+      <div id="clock-digital"></div>
+    </div>
   </section>
 
-  <section class="widget" id="w-ratings">
+  <section class="widget" id="w-jump" data-widget="jump">
+    <h3>time machine</h3>
+    <div class="w-body">
+      <div id="jump-buttons">
+        <button class="pill-btn" data-jump="-300">&#8676;5m</button>
+        <button class="pill-btn" data-jump="-30">&#8676;30s</button>
+        <button class="pill-btn" data-jump="30">30s&#8677;</button>
+        <button class="pill-btn" data-jump="300">5m&#8677;</button>
+      </div>
+      <input type="range" id="jump-frac" min="0" max="1000" value="0" aria-label="Jump to position">
+      <div id="jump-row2">
+        <span id="jump-readout">0:00</span>
+        <button class="pill-btn" id="jump-live">&#9679; back to live</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="widget" id="w-ratings" data-widget="ratings">
     <h3>rate this show</h3>
-    <div id="jewels"></div>
-    <div id="jewel-caption">tap a jewel</div>
+    <div class="w-body">
+      <div id="jewels"></div>
+      <div id="jewel-caption">tap a jewel</div>
+    </div>
   </section>
 
-  <section class="widget" id="w-chat">
+  <section class="widget" id="w-chat" data-widget="chat">
     <h3>channel chat</h3>
-    <div id="chat-log"></div>
-    <form id="chat-form"><input id="chat-input" placeholder="say something&hellip;" maxlength="120" autocomplete="off"><button>&#9658;</button></form>
+    <div class="w-body">
+      <div id="chat-log"></div>
+      <form id="chat-form"><input id="chat-input" placeholder="say something&hellip;" maxlength="120" autocomplete="off"><button>&#9658;</button></form>
+    </div>
   </section>
 
-  <section class="widget" id="w-notice">
+  <section class="widget" id="w-quality" data-widget="quality">
+    <h3>picture quality</h3>
+    <div class="w-body">
+      <button class="pill-btn" id="quality-toggle"></button>
+      <div class="w-hint">fast = light streams that start quickly; best = bigger files where available</div>
+    </div>
+  </section>
+
+  <section class="widget" id="w-ticker" data-widget="ticker">
+    <h3>news ticker</h3>
+    <div class="w-body"><button class="pill-btn" id="ticker-toggle"></button></div>
+  </section>
+
+  <section class="widget" id="w-notice" data-widget="notice">
     <h3>notice board</h3>
-    <div id="notice">
+    <div class="w-body" id="notice">
       <p><b>Welcome back to 2007.</b> This is a loving UX reconstruction of the
       Joost&trade; P2P TV client, rebuilt as a web app. Channels run on a real
       broadcast clock &mdash; you join whatever is on <i>now</i>.</p>
-      <p>All streams are free &amp; open: Blender open movies (CC-BY) and
-      public-domain film from the Internet Archive.</p>
+      <p>Pin any widget (&#8865;) to keep it floating over the picture, then
+      drag it wherever you like.</p>
+      <p>All streams are free &amp; open, from the Internet Archive.</p>
     </div>
   </section>
 </aside>
