@@ -13,11 +13,21 @@
  * candidate, a single 1-byte ranged GET to verify the chosen file streams.
  */
 
-import { writeFileSync } from "node:fs";
+import { writeFileSync, readFileSync, mkdirSync, existsSync, appendFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "app", "js", "channels.js");
+
+/* resumability: metadata responses and verified URLs are cached on disk,
+   so an interrupted run (or an archive.org rate-limit stall) can simply
+   be re-launched and fast-forwards through everything already fetched */
+const CACHE = join(dirname(fileURLToPath(import.meta.url)), ".cache");
+mkdirSync(join(CACHE, "meta"), { recursive: true });
+const VERIFIED_FILE = join(CACHE, "verified.txt");
+const VERIFIED = new Set(existsSync(VERIFIED_FILE)
+  ? readFileSync(VERIFIED_FILE, "utf8").split("\n").filter(Boolean) : []);
+let failStreak = 0;
 const DRY = process.argv.includes("--dry");
 const ARCHIVE = "https://archive.org/download/";
 
@@ -258,11 +268,25 @@ async function getJSON(url, tries = 3) {
   for (let i = 0; i < tries; i++) {
     try {
       const r = await fetch(url, { signal: AbortSignal.timeout(30000) });
-      if (r.ok) return await r.json();
+      if (r.ok) { failStreak = 0; return await r.json(); }
     } catch {}
-    await sleep(1000 * (i + 1));
+    await sleep(1500 * (i + 1));
+  }
+  // repeated failures usually mean archive.org is throttling us: back off hard
+  if (++failStreak >= 4) {
+    console.log(`  (upstream unhappy — cooling off 90s, streak ${failStreak})`);
+    await sleep(90000);
   }
   return null;
+}
+
+async function getMeta(id) {
+  const f = join(CACHE, "meta", encodeURIComponent(id) + ".json");
+  if (existsSync(f)) { try { return JSON.parse(readFileSync(f, "utf8")); } catch {} }
+  const j = await getJSON(`https://archive.org/metadata/${id}`);
+  if (j?.files) { try { writeFileSync(f, JSON.stringify(j)); } catch {} }
+  await sleep(400);          // polite pacing on cache misses only
+  return j;
 }
 
 async function search(query, rows) {
@@ -300,12 +324,16 @@ function pickFiles(files) {
 }
 
 async function verify(url) {
+  if (VERIFIED.has(url)) return true;
   try {
     const r = await fetch(url, {
       headers: { Range: "bytes=0-0" },
       signal: AbortSignal.timeout(25000), redirect: "follow"
     });
-    return r.status === 206 || r.status === 200;
+    const ok = r.status === 206 || r.status === 200;
+    if (ok) { VERIFIED.add(url); try { appendFileSync(VERIFIED_FILE, url + "\n"); } catch {} }
+    await sleep(250);
+    return ok;
   } catch { return false; }
 }
 
@@ -341,7 +369,7 @@ async function harvestChannel(ch, taken, seenTitles) {
       if (GLOBAL_EXCLUDE.test(searchTitle)) { reject("excluded"); continue; }
       if (ch.titleFilter && !ch.titleFilter.test(searchTitle)) { reject("filter"); continue; }
     }
-    const meta = await getJSON(`https://archive.org/metadata/${d.identifier}`);
+    const meta = await getMeta(d.identifier);
     if (!meta?.files) { reject("no-meta"); continue; }
     const title = cleanTitle(d.title || meta.metadata?.title) || d.identifier;
     if (GLOBAL_EXCLUDE.test(title)) { reject("excluded"); continue; }
