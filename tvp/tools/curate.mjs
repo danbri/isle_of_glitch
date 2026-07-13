@@ -176,7 +176,7 @@ const DIAL = [
     art: "silent_films",
     hand: [],
     query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1891-01-01 TO 1930-12-31]",
-    want: 240, minDur: 2400, maxDur: 10000, maxYear: 1930, requireYear: true
+    want: 1000, minDur: 2400, maxDur: 10000, maxYear: 1930, requireYear: true
   },
   {
     num: 115, id: "nickelodeon", name: "The Nickelodeon",
@@ -184,7 +184,7 @@ const DIAL = [
     art: "silent_films",
     hand: [],
     query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1891-01-01 TO 1930-12-31]",
-    want: 90, minDur: 60, maxDur: 2400, maxYear: 1930, requireYear: true
+    want: 200, minDur: 60, maxDur: 2400, maxYear: 1930, requireYear: true
   },
   {
     num: 116, id: "western-roundup", name: "Western Roundup",

@@ -384,8 +384,14 @@ function updateInfo() {
 
   // expanded panel
   $("info-desc").textContent = p.desc || ch.tagline || "";
-  $("info-facts").textContent =
-    [(p.year ? "first shown " + p.year : null), fmt(p.dur), p.license].filter(Boolean).join(" · ");
+  $("info-facts").textContent = [
+    (p.year ? "first shown " + p.year : null),
+    fmt(p.dur),
+    (p.dir?.length ? "dir. " + p.dir.join(", ") : null),
+    (p.cast?.length ? "with " + p.cast.join(", ") : null),
+    (p.co?.length ? p.co.join(", ") : null),
+    p.license
+  ].filter(Boolean).join(" · ");
   const sched = $("info-sched");
   sched.innerHTML = "";
   listingFor(ch, 4).forEach((slot) => {
@@ -405,6 +411,12 @@ function updateInfo() {
   } else {
     $("info-source").classList.add("hidden");
   }
+
+  // provenance you can check: Wikipedia article + Wikidata identity
+  if (p.wp) { $("info-wp").href = p.wp; $("info-wp").classList.remove("hidden"); }
+  else $("info-wp").classList.add("hidden");
+  if (p.wd) { $("info-wd").href = "https://www.wikidata.org/wiki/" + p.wd; $("info-wd").classList.remove("hidden"); }
+  else $("info-wd").classList.add("hidden");
 }
 
 function overlaysVisible() { return !$("controller").classList.contains("hidden"); }
@@ -1142,7 +1154,8 @@ function prefetchFirstSeconds() {
 /* ── trickle prefetch: fill the first-seconds cache in the background,
       but only when device conditions permit (turbo mode only) ── */
 
-const PREFETCH_SECONDS = 15;
+/* stash 5s of each likely next pick on phones, 10s on desktops */
+const PREFETCH_SECONDS = matchMedia("(pointer: coarse)").matches ? 5 : 10;
 const trickled = new Set();
 
 function prefixCap(p) {
