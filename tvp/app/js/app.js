@@ -954,7 +954,6 @@ $("chat-form").addEventListener("submit", (e) => {
 
 const TICKER_ITEMS = [
   "<b>ON THIS NETWORK:</b> " + CHANNELS.length + " channels of free &amp; open video from archive.org",
-  "<b>2007:</b> The Venice Project relaunches as “Joost” after buying the domain for a reported $75,000",
   "<b>2007:</b> a phone with no keyboard is announced in January; pundits unconvinced",
   "<b>BLENDER:</b> the open movies on channels 1 &amp; 2 are CC-BY — remix them!",
   "<b>TIP:</b> press 1–" + Math.min(9, CHANNELS.length) + " on a keyboard to zap straight to a channel",
@@ -964,17 +963,17 @@ const TICKER_ITEMS = [
 ];
 
 function startTicker() {
-  const on = store.get("ticker", true);
+  const on = store.get("ticker", false);
   $("ticker").classList.toggle("hidden", !on);
   $("ticker-track").innerHTML = TICKER_ITEMS.map((t) => `<span>${t}</span>`).join("");
   renderTickerToggle();
 }
 function renderTickerToggle() {
   $("ticker-toggle").textContent =
-    store.get("ticker", true) ? "ticker: on — tap to hide" : "ticker: off — tap to show";
+    store.get("ticker", false) ? "ticker: on — tap to hide" : "ticker: off — tap to show";
 }
 $("ticker-toggle").addEventListener("click", () => {
-  store.set("ticker", !store.get("ticker", true));
+  store.set("ticker", !store.get("ticker", false));
   startTicker();
 });
 
