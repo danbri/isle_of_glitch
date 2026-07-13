@@ -8,7 +8,7 @@
 :root {
   --accent: rgb(198, 96, 12);        /* the original uiFocusColor */
   --select: rgba(98, 163, 176, .85); /* the original selected-row teal */
-  --panel: rgba(10, 10, 10, .44);
+  --panel: rgba(14, 14, 14, .28);
   --stroke: rgba(255, 255, 255, .55);
   --font: "Trebuchet MS", "Segoe UI", Verdana, sans-serif;
   --sat: env(safe-area-inset-top, 0px);
@@ -155,7 +155,7 @@ button { font-family: var(--font); cursor: pointer; }
   left: 50%; transform: translateX(-50%);
   bottom: calc(14px + var(--sab));
   width: min(340px, 78vw);
-  background: rgba(0,0,0,.55);
+  background: rgba(0,0,0,.34);
   border: 1.5px solid rgba(255,255,255,.6); border-radius: 12px;
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   padding: 8px 12px 10px;
@@ -206,8 +206,8 @@ body.overlays-on #tunebar { bottom: calc(168px + var(--sab)); }
   background: var(--panel);
   border: 1.5px solid var(--stroke);
   border-radius: 14px;
-  backdrop-filter: blur(7px);
-  -webkit-backdrop-filter: blur(7px);
+  backdrop-filter: blur(14px) saturate(1.25);
+  -webkit-backdrop-filter: blur(14px) saturate(1.25);
   animation: fadein .22s ease-out;
 }
 @keyframes fadein { from { opacity: 0; } }
@@ -350,8 +350,10 @@ body.overlays-on #tunebar { bottom: calc(168px + var(--sab)); }
   display: flex; flex-direction: column;
   background:
     linear-gradient(to bottom,
-      rgba(0,0,0,.86) 0%, rgba(0,0,0,.55) 18%,
-      rgba(0,0,0,.38) 45%, rgba(0,0,0,.55) 75%, rgba(0,0,0,.88) 100%);
+      rgba(0,0,0,.74) 0%, rgba(0,0,0,.42) 18%,
+      rgba(0,0,0,.28) 45%, rgba(0,0,0,.42) 75%, rgba(0,0,0,.78) 100%);
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
   opacity: 0; pointer-events: none;
   transition: opacity .3s ease;
 }
@@ -542,8 +544,9 @@ body.overlays-on #buddy-strip { bottom: calc(168px + var(--sab)); }
 #buddy-panel {
   contain: layout paint;
   width: min(560px, 94vw); max-height: 84vh; overflow-y: auto;
-  background: rgba(0, 0, 0, .42);
+  background: rgba(0, 0, 0, .32);
   border: 1.5px solid var(--stroke); border-radius: 16px;
+  backdrop-filter: blur(16px) saturate(1.25); -webkit-backdrop-filter: blur(16px) saturate(1.25);
   padding: 18px 20px;
 }
 #buddy-title { font-size: 13px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); font-weight: bold; }
@@ -672,8 +675,8 @@ body.drawer-open #scrim { opacity: 1; pointer-events: auto; }
   contain: layout paint;
   will-change: transform;
   width: min(340px, 88vw);
-  background: rgba(8, 8, 8, .55);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  background: rgba(10, 10, 10, .38);
+  backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3);
   display: flex; flex-direction: column;
   transition: transform .28s cubic-bezier(.2, .8, .25, 1);
   overflow: hidden;
@@ -732,9 +735,9 @@ body.drawer-open #scrim { opacity: 1; pointer-events: auto; }
   position: absolute; z-index: 34;
   margin: 0;
   width: min(280px, 76vw);
-  background: rgba(0, 0, 0, .34);
+  background: rgba(0, 0, 0, .24);
   border-color: rgba(255, 255, 255, .35);
-  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(14px) saturate(1.25); -webkit-backdrop-filter: blur(14px) saturate(1.25);
   box-shadow: 0 4px 30px rgba(0,0,0,.45);
 }
 .widget.pinned h3 { cursor: grab; touch-action: none; }
@@ -794,8 +797,8 @@ body.drawer-open #scrim { opacity: 1; pointer-events: auto; }
   position: fixed; left: 0; right: 0; top: 0; z-index: 47;
   contain: layout paint;
   will-change: transform;
-  background: rgba(8,8,8,.58);
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  background: rgba(10,10,10,.4);
+  backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3);
   border-bottom: 2px solid var(--stroke); border-radius: 0 0 16px 16px;
   transform: translateY(-104%);
   transition: transform .28s cubic-bezier(.2, .8, .25, 1);

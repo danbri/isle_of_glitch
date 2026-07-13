@@ -402,6 +402,16 @@ async function harvestChannel(ch, taken, seenTitles) {
 
 /* ── main ─────────────────────────────────────────────────────────── */
 
+/* INTERIM=1: moderated caps for a mid-harvest release cut from the disk
+   cache — the full-fat run keeps its own numbers */
+if (process.env.INTERIM) {
+  for (const ch of DIAL) {
+    if (ch.id === "picture-palace") ch.want = 400;
+    if (ch.id === "five-cent-cinema") ch.want = 120;
+  }
+  console.log("(interim caps: picture-palace 400, five-cent-cinema 120)");
+}
+
 const taken = new Set();
 const seenTitles = new Set();
 const channels = [];
