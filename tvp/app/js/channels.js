@@ -28,26 +28,15 @@ const CHANNELS = [
     bytes: 61878609
    },
    {
-    title: "Caminandes: Gran Dillama",
+    title: "Caminandes: The Llama Trilogy",
     year: 2013,
-    dur: 146,
-    src: "https://archive.org/download/Caminandes2GranDillama/02_gran_dillama_1080p.mp4",
-    desc: "The grass really is greener on the other side of the road.",
+    dur: 386,
+    src: "https://archive.org/download/Caminandesep13BlenderAnimatedShort2013/Caminandes%20%28ep%201-3%29%20Blender%20Animated%20Short%2C%202013.mp4",
+    srcHi: "https://archive.org/download/Caminandes2GranDillama/02_gran_dillama_1080p.mp4",
+    art: "https://archive.org/services/img/Caminandesep13BlenderAnimatedShort2013",
+    desc: "Koro the llama versus fences, roads and winter: all three shorts back to back.",
     license: "CC-BY · Blender Foundation",
-    art: "https://archive.org/services/img/Caminandes2GranDillama",
-    frame: "https://archive.org/download/Caminandes2GranDillama/Caminandes2GranDillama.thumbs/02_gran_dillama_1080p_000057.jpg",
-    bytes: 125974946
-   },
-   {
-    title: "Caminandes: Llama Drama",
-    year: 2013,
-    dur: 90,
-    src: "https://archive.org/download/Caminandes1LlamaDrama/01_llama_drama_1080p.mp4",
-    desc: "Koro the llama versus a very inconvenient fence.",
-    license: "CC-BY · Blender Foundation",
-    art: "https://archive.org/services/img/Caminandes1LlamaDrama",
-    frame: "https://archive.org/download/Caminandes1LlamaDrama/Caminandes1LlamaDrama.thumbs/01_llama_drama_1080p_000039.jpg",
-    bytes: 35103580
+    bytes: 40034625
    },
    {
     title: "Glass Half",
@@ -59,17 +48,6 @@ const CHANNELS = [
     art: "https://archive.org/services/img/GlassHalf1080p",
     frame: "https://archive.org/download/GlassHalf1080p/GlassHalf1080p.thumbs/Glass%20Half-1080p_000087.jpg",
     bytes: 65761189
-   },
-   {
-    title: "Caminandes: Llamigos",
-    year: 2016,
-    dur: 150.2,
-    src: "https://archive.org/download/CaminandesLlamigos/Caminandes_%20Llamigos-1080p.mp4",
-    desc: "Koro and Oti compete for the last winter berries in the snow.",
-    license: "CC-BY · Blender Foundation",
-    art: "https://archive.org/services/img/CaminandesLlamigos",
-    frame: "https://archive.org/download/CaminandesLlamigos/CaminandesLlamigos.thumbs/Caminandes_%20Llamigos-1080p_000087.jpg",
-    bytes: 138945811
    },
    {
     title: "Coffee Run",
@@ -140,13 +118,14 @@ const CHANNELS = [
     title: "Cosmos Laundromat: First Cycle",
     year: 2015,
     dur: 730.6,
-    src: "https://archive.org/download/CosmosLaundromatFirstCycle/Cosmos%20Laundromat%20-%20First%20Cycle%20%281080p%29.mp4",
+    src: "https://archive.org/download/cosmos-laundromat/Cosmos%20Laundromat.mp4",
     desc: "A suicidal sheep is offered any life he wants.",
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/CosmosLaundromatFirstCycle",
     frame: "https://archive.org/download/CosmosLaundromatFirstCycle/CosmosLaundromatFirstCycle.thumbs/Cosmos%20Laundromat%20-%20First%20Cycle%20(1080p)_000285.jpg",
     subs: "CosmosLaundromat-FirstCycle1080p.en.srt",
-    bytes: 220087570
+    bytes: 47770492,
+    srcHi: "https://archive.org/download/CosmosLaundromatFirstCycle/Cosmos%20Laundromat%20-%20First%20Cycle%20%281080p%29.mp4"
    },
    {
     title: "Agent 327: Operation Barbershop",
