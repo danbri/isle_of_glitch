@@ -561,9 +561,7 @@ function openPanel(which) {
     state.guideIndex = state.chIndex;
     $("guide").classList.add("open");
     renderGuideCats();
-    renderGuideRail();
-    renderGuideList();
-    requestAnimationFrame(() => centerGuideTile(state.chIndex, "instant"));
+    renderGuideView();
   } else if (which === "search") {
     $("search").classList.add("open");
     renderSearch($("search-input").value);
@@ -579,7 +577,7 @@ function closePanels() {
   document.body.classList.remove("drawer-open");
 }
 $("scrim").addEventListener("click", closePanels);
-document.querySelectorAll(".drawer-close").forEach((b) =>
+document.querySelectorAll(".drawer-close[data-close]").forEach((b) =>
   b.addEventListener("click", () => closePanels()));
 
 /* ── THE GUIDE: swoosh rail ────────────────────────── */
@@ -602,9 +600,100 @@ function renderGuideCats() {
     b.addEventListener("click", () => {
       state.category = c.id;
       renderGuideCats();
-      renderGuideRail();
+      renderGuideView();
     });
     nav.appendChild(b);
+  });
+}
+
+/* two ways to browse: the swoosh carousel, or the everything-grid */
+function renderGuideView() {
+  const grid = store.get("guideView", "swoosh") === "grid";
+  $("gv-grid").classList.toggle("hidden", grid);       // button shows the *other* mode
+  $("gv-swoosh").classList.toggle("hidden", !grid);
+  $("guide-rail").classList.toggle("hidden", grid);
+  $("guide-list").classList.toggle("hidden", grid);
+  $("guide-grid").classList.toggle("hidden", !grid);
+  if (grid) {
+    renderGuideGrid();
+  } else {
+    renderGuideRail();
+    renderGuideList();
+    requestAnimationFrame(() => centerGuideTile(state.chIndex, "instant"));
+  }
+}
+$("guide-view").addEventListener("click", () => {
+  store.set("guideView", store.get("guideView", "swoosh") === "grid" ? "swoosh" : "grid");
+  renderGuideView();
+});
+
+/* every program of every channel in the category, with its next air time */
+function renderGuideGrid() {
+  const box = $("guide-grid");
+  box.innerHTML = "";
+  const chans = channelsInCategory();
+  if (!chans.length) {
+    box.innerHTML = '<div class="search-empty">No channels here yet — tap ★ on a channel to add it to My Channels.</div>';
+    return;
+  }
+  chans.forEach((ch) => {
+    const sched = scheduleFor(ch);
+    const sec = document.createElement("div");
+    sec.className = "g-section";
+
+    const head = document.createElement("div");
+    head.className = "g-head";
+    head.innerHTML = `
+      <img src="${ch.art}" alt="" loading="lazy">
+      <div class="g-head-text">
+        <div class="g-head-name"><span class="chnum">${ch.num}</span>${ch.name}</div>
+        <div class="g-head-tag">${ch.tagline || ch.category} · ${ch.programs.length} programs</div>
+      </div>`;
+    const fav = document.createElement("button");
+    fav.className = "fav-btn" + (state.favs.has(ch.id) ? " on" : "");
+    fav.textContent = "★";
+    fav.addEventListener("click", (e) => {
+      e.stopPropagation();
+      state.favs.has(ch.id) ? state.favs.delete(ch.id) : state.favs.add(ch.id);
+      store.set("favs", [...state.favs]);
+      fav.classList.toggle("on");
+      if (state.category === "my") renderGuideGrid();
+    });
+    head.appendChild(fav);
+    head.addEventListener("click", () => { closePanels(); crtBlink(); tune(CHANNELS.indexOf(ch)); });
+    sec.appendChild(head);
+
+    // next air time for every program: walk one broadcast cycle from now
+    const starts = new Array(ch.programs.length);
+    let t = Date.now() - sched.offset * 1000;
+    for (let k = 0; k < ch.programs.length; k++) {
+      const idx = (sched.index + k) % ch.programs.length;
+      starts[idx] = t;
+      t += ch.programs[idx].dur * 1000;
+    }
+
+    const grid = document.createElement("div");
+    grid.className = "g-grid";
+    ch.programs.forEach((p, pi) => {
+      const live = pi === sched.index;
+      const card = document.createElement("div");
+      card.className = "g-card" + (live ? " now" : "");
+      card.innerHTML = `
+        <img src="${p.frame || p.art || ch.art}" alt="" loading="lazy">
+        <div class="g-card-label">
+          <div class="g-card-title">${p.title}</div>
+          <div class="g-card-sub">${live ? '<span class="live-tag">LIVE</span>' : clock12(new Date(starts[pi]))}
+            ${p.year ? "<span>· " + p.year + "</span>" : ""}</div>
+        </div>`;
+      card.addEventListener("click", () => {
+        closePanels(); crtBlink();
+        const chIdx = CHANNELS.indexOf(ch);
+        live ? tune(chIdx) : tune(chIdx, { fromStartProg: pi });
+      });
+      grid.appendChild(card);
+    });
+    sec.appendChild(grid);
+    box.appendChild(sec);
   });
 }
 
