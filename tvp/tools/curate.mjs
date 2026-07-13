@@ -43,7 +43,15 @@ const DIAL = [
       HAND("Caminandes: Llama Drama", 2013, 90, "Caminandes1LlamaDrama/01_llama_drama_1080p.mp4",
         "Koro the llama versus a very inconvenient fence.", BLENDER),
       HAND("Caminandes: Gran Dillama", 2013, 146, "Caminandes2GranDillama/02_gran_dillama_1080p.mp4",
-        "The grass really is greener on the other side of the road.", BLENDER)
+        "The grass really is greener on the other side of the road.", BLENDER),
+      HAND("Glass Half", 2015, 193.3, "GlassHalf1080p/Glass%20Half-1080p.mp4",
+        "Two art snobs argue wordlessly about taste in a gallery.", BLENDER),
+      HAND("Caminandes: Llamigos", 2016, 150.2, "CaminandesLlamigos/Caminandes_%20Llamigos-1080p.mp4",
+        "Koro and Oti compete for the last winter berries in the snow.", BLENDER),
+      HAND("Coffee Run", 2020, 184.7, "coffee-run/Coffee%20Run.mp4",
+        "A caffeinated sprint through the memories of a life.", BLENDER),
+      HAND("Wing It!", 2023, 238, "wing-it/Wing%20It.mp4",
+        "A cat and a dog build a flying machine, against their better judgment.", BLENDER)
     ]
   },
   {
@@ -60,7 +68,16 @@ const DIAL = [
         "CosmosLaundromatFirstCycle/Cosmos%20Laundromat%20-%20First%20Cycle%20%281080p%29.mp4",
         "A suicidal sheep is offered any life he wants.", BLENDER),
       HAND("Spring", 2019, 464.2, "springopenmovie/springopenmovie.mp4",
-        "A shepherd girl and her dog face ancient spirits.", BLENDER)
+        "A shepherd girl and her dog face ancient spirits.", BLENDER),
+      HAND("Agent 327: Operation Barbershop", 2017, 231.5,
+        "agent-327-operation-barbershop/Agent%20327%20Operation%20Barbershop.mp4",
+        "The Dutch secret agent walks into a very suspicious barbershop.", BLENDER),
+      HAND("Hero", 2018, 236.7, "hero_20260106/hero.mp4",
+        "A hand-drawn Grease Pencil duel between a hero and his shadow.", BLENDER),
+      HAND("Sprite Fright", 2021, 629.9, "sprite-fright-2021/Sprite%20Fright%20%282021%29.mp4",
+        "Mushroom-picking students meet murderously cheerful forest sprites.", BLENDER),
+      HAND("Charge", 2022, 262.8, "charge_202601/Charge.mp4",
+        "A destitute drifter gambles everything in a power-starved future.", BLENDER)
     ]
   },
   {
