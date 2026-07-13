@@ -257,6 +257,7 @@ function updateAncillary(ch, prog) {
   chatOnZap(ch, prog);
   loadSubtitles(prog);
   warmZapFrames();
+  renderBuddy();
 }
 
 /* pre-warm the neighbours' zap-card frames — a few KB each, so this is
@@ -352,6 +353,7 @@ function showOverlays() {
   $("controller").classList.remove("hidden");
   $("infobar").classList.remove("hidden");
   if (matchMedia("(hover:hover)").matches) $("volume").classList.remove("hidden");
+  document.body.classList.add("overlays-on");   // lifts the buddy strip clear of the controller
   armOverlayTimer();
 }
 function hideOverlays() {
@@ -359,6 +361,7 @@ function hideOverlays() {
   $("infobar").classList.add("hidden");
   $("infobar").classList.remove("expanded");
   $("volume").classList.add("hidden");
+  document.body.classList.remove("overlays-on");
 }
 function armOverlayTimer() {
   clearTimeout(state.overlayTimer);
@@ -1030,6 +1033,114 @@ $("info-cc").addEventListener("click", () => {
   $("info-cc").classList.toggle("lit", state.cc);
 });
 
+/* ── 👀 Watch Buddy ────────────────────────────────── */
+
+const DATED_TEXT = "This material expresses or represents perspectives that " +
+  "some viewers might consider outdated, disrespectful, misleading or just " +
+  "plain bad. Watch carefully, or choose something easier.";
+
+/* index the annotation graph by archive.org details URI */
+const BUDDY_BY_ID = {};
+(typeof WATCH_BUDDY_GRAPH !== "undefined" ? WATCH_BUDDY_GRAPH : []).forEach((node) => {
+  if (node["@id"]) BUDDY_BY_ID[node["@id"]] = node;
+});
+
+function buddyFor(prog) {
+  const m = (prog.src || "").match(/archive\.org\/download\/([^/]+)\//);
+  if (!m) return null;
+  const node = BUDDY_BY_ID["https://archive.org/details/" + m[1]];
+  if (!node) return null;
+  const facts = node.factCheck
+    ? (Array.isArray(node.factCheck) ? node.factCheck : [node.factCheck]) : [];
+  const has = node.contentWarning || node.datedPerspectives || facts.length;
+  return has ? {
+    warning: node.contentWarning || null,
+    dated: !!node.datedPerspectives,
+    facts,
+    wiki: node.sameAs || null
+  } : null;
+}
+
+let buddyWasPlaying = false;
+
+function renderBuddy() {
+  const enabled = store.get("buddy", true);
+  const info = currentProgramInfo();
+  const b = enabled ? buddyFor(info.program) : null;
+  const strip = $("buddy-strip");
+  if (!b || !state.on) { strip.classList.add("hidden"); }
+  else {
+    const chips = [];
+    if (b.warning) chips.push(b.warning.warningEmoji || "😳");
+    if (b.dated) chips.push("⏳");
+    if (b.facts.length) chips.push("📚");
+    strip.innerHTML = chips.map((c) => `<span>${c}</span>`).join("");
+    strip.classList.remove("hidden");
+  }
+  $("buddy-now").textContent = b
+    ? "notes available for what's on now — tap the chips on screen"
+    : "no notes for what's on right now";
+}
+
+function openBuddy() {
+  const info = currentProgramInfo();
+  const b = buddyFor(info.program);
+  if (!b) return;
+  buddyWasPlaying = !video.paused;
+  video.pause();
+  $("buddy-program").textContent =
+    info.program.title + (info.program.year ? " (" + info.program.year + ")" : "");
+  const box = $("buddy-sections");
+  box.innerHTML = "";
+  const sec = (emoji, label, html) => {
+    const el = document.createElement("div");
+    el.className = "buddy-sec";
+    el.innerHTML = `<div class="b-emoji">${emoji}</div>
+      <div class="b-text"><div class="b-label">${label}</div>${html}</div>`;
+    box.appendChild(el);
+  };
+  if (b.warning) {
+    sec(b.warning.warningEmoji || "😳", "heads up", esc(b.warning.text));
+  }
+  if (b.dated) {
+    sec("⏳", "of its time", esc(DATED_TEXT));
+  }
+  if (b.facts.length) {
+    sec("📚", "fact checkable", b.facts.map((f) =>
+      `<div class="buddy-claim">
+         ${f.claimReviewed ? `<div class="c-claim">${esc(f.claimReviewed)}</div>` : ""}
+         <a href="${f.url}" target="_blank" rel="noopener">${esc(f.name || f.url)}</a>
+       </div>`).join(""));
+  }
+  if (b.wiki) {
+    sec("🌐", "background", `<a href="${b.wiki}" target="_blank" rel="noopener">${esc(decodeURIComponent(b.wiki.split("/wiki/").pop() || "Wikipedia").replace(/_/g, " "))} on Wikipedia</a>`);
+  }
+  $("buddy-overlay").classList.remove("hidden");
+}
+
+function closeBuddy() {
+  $("buddy-overlay").classList.add("hidden");
+  if (buddyWasPlaying) { const p = video.play(); if (p) p.catch(() => {}); }
+  buddyWasPlaying = false;
+}
+
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+$("buddy-strip").addEventListener("click", openBuddy);
+$("buddy-resume").addEventListener("click", closeBuddy);
+$("buddy-overlay").addEventListener("click", (e) => { if (e.target === $("buddy-overlay")) closeBuddy(); });
+
+function renderBuddyToggle() {
+  $("buddy-toggle").textContent =
+    store.get("buddy", true) ? "watch buddy: on — tap to hide" : "watch buddy: off — tap to show";
+}
+$("buddy-toggle").addEventListener("click", () => {
+  store.set("buddy", !store.get("buddy", true));
+  renderBuddyToggle();
+  renderBuddy();
+});
+
 /* ── widgets: preloading policy ────────────────────── */
 
 function renderPreload() {
@@ -1139,7 +1250,7 @@ $("ticker-toggle").addEventListener("click", () => {
   let t0 = null;
 
   stage.addEventListener("touchstart", (e) => {
-    if (e.target.closest(".overlay, .osd, .widget, button, input, #interstitial, #splash")) { t0 = null; return; }
+    if (e.target.closest(".overlay, .osd, .widget, button, input, #interstitial, #splash, #buddy-strip, #buddy-overlay")) { t0 = null; return; }
     const t = e.changedTouches[0];
     t0 = { x: t.clientX, y: t.clientY, ms: Date.now(), edgeL: t.clientX < 24, edgeR: t.clientX > innerWidth - 24 };
   }, { passive: true });
@@ -1162,7 +1273,7 @@ $("ticker-toggle").addEventListener("click", () => {
 
   stage.addEventListener("click", (e) => {
     if (!state.on) return;
-    if (e.target.closest(".overlay, .osd, .widget, button, input, #interstitial, #splash")) return;
+    if (e.target.closest(".overlay, .osd, .widget, button, input, #interstitial, #splash, #buddy-strip, #buddy-overlay")) return;
     if (matchMedia("(hover:hover)").matches || e.pointerType === "mouse") toggleOverlays();
   });
   stage.addEventListener("mousemove", () => {
@@ -1236,6 +1347,7 @@ applySound(video);
 renderQuality();
 renderPreload();
 renderTickerToggle();
+renderBuddyToggle();
 registerSW();
 
 /* While the splash breathes, quietly buffer what's on the saved channel
