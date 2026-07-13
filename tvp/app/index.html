@@ -83,6 +83,21 @@
     <div id="comingup-title"></div>
   </div>
 
+  <!-- 👀 Watch Buddy: ambient chips at the bottom of the picture -->
+  <div id="buddy-strip" class="hidden" role="button" aria-label="Watch Buddy notes"></div>
+
+  <!-- 👀 Watch Buddy: frosted overlay over the paused picture -->
+  <div id="buddy-overlay" class="hidden">
+    <div id="buddy-panel">
+      <div id="buddy-title">👀 watch buddy</div>
+      <div id="buddy-program"></div>
+      <div id="buddy-sections"></div>
+      <div id="buddy-actions">
+        <button id="buddy-resume" class="pill-btn">&#9658; resume watching</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Controller (bottom overlay) -->
   <div id="controller" class="overlay hidden">
     <div id="progress-row">
@@ -146,6 +161,18 @@
         <span id="jump-readout">0:00</span>
         <button class="pill-btn" id="jump-live">&#9679; back to live</button>
       </div>
+    </div>
+  </section>
+
+  <section class="widget" id="w-buddy" data-widget="buddy">
+    <h3>👀 watch buddy</h3>
+    <div class="w-body">
+      <button class="pill-btn" id="buddy-toggle"></button>
+      <div id="buddy-now" class="w-hint"></div>
+      <div class="w-hint">A friendly heads-up layer: content warnings
+      (😳😱🤯😲😨👻🙀🎷🎻), a ⏳ flag on material with outdated attitudes,
+      and 📚 links to fact-checks and quality discussion. Notes live in a
+      shared annotation file keyed by archive.org URIs.</div>
     </div>
   </section>
 
@@ -226,6 +253,7 @@
 <div id="scrim"></div>
 
 <script src="js/channels.js"></script>
+<script src="js/annotations.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

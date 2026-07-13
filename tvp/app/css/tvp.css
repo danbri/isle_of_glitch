@@ -419,6 +419,59 @@ button { font-family: var(--font); cursor: pointer; }
   border-radius: 4px; padding: 1.5px 5px; font-weight: bold; align-self: center;
 }
 
+/* ── 👀 Watch Buddy ────────────────────────────────── */
+
+#buddy-strip {
+  position: absolute; z-index: 31;
+  left: calc(12px + var(--sal));
+  bottom: calc(14px + var(--sab));
+  transition: bottom .25s ease;
+  display: flex; gap: 2px; align-items: center;
+  background: rgba(0, 0, 0, .45);
+  border: 1.5px solid rgba(255, 255, 255, .55);
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 19px; line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  animation: fadein .3s ease-out;
+  user-select: none; -webkit-user-select: none;
+}
+#buddy-strip:active { border-color: var(--accent); }
+body.overlays-on #buddy-strip { bottom: calc(168px + var(--sab)); }
+#buddy-strip span { display: inline-block; }
+
+/* the frosted pane over the paused picture */
+#buddy-overlay {
+  position: fixed; inset: 0; z-index: 48;
+  background: rgba(24, 24, 24, .38);
+  backdrop-filter: blur(18px) saturate(.75);
+  -webkit-backdrop-filter: blur(18px) saturate(.75);
+  display: flex; align-items: center; justify-content: center;
+  padding: 18px;
+  animation: fadein .25s ease-out;
+}
+#buddy-panel {
+  width: min(560px, 94vw); max-height: 84vh; overflow-y: auto;
+  background: rgba(0, 0, 0, .55);
+  border: 2px solid var(--stroke); border-radius: 16px;
+  padding: 18px 20px;
+}
+#buddy-title { font-size: 13px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); font-weight: bold; }
+#buddy-program { font-size: 18px; font-weight: bold; margin: 6px 0 4px; }
+#buddy-sections { display: grid; gap: 14px; margin-top: 10px; }
+.buddy-sec { display: flex; gap: 12px; align-items: flex-start; }
+.buddy-sec .b-emoji { font-size: 30px; line-height: 1.15; flex: none; }
+.buddy-sec .b-text { font-size: 14.5px; line-height: 1.55; }
+.buddy-sec .b-label {
+  font-size: 10.5px; letter-spacing: .18em; text-transform: uppercase;
+  opacity: .6; font-weight: bold; margin-bottom: 3px;
+}
+.buddy-sec a { color: #9adfee; }
+.buddy-claim { margin-top: 6px; }
+.buddy-claim .c-claim { font-style: italic; opacity: .85; }
+#buddy-actions { margin-top: 16px; display: flex; justify-content: flex-end; }
+
 /* ── drawers (widgets right) ───────────────────────── */
 
 #scrim {
