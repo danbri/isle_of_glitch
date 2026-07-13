@@ -108,6 +108,16 @@ const storeBackend = {
     return !!(await (await caches.open(CACHE)).match(key));
   },
 
+  async remove(key) {
+    const dir = await opfs();
+    if (dir) {
+      const h = await keyHash(key);
+      try { await dir.removeEntry(h + ".json"); } catch {}
+      try { await dir.removeEntry(h + ".bin"); } catch {}
+    }
+    try { await (await caches.open(CACHE)).delete(key); } catch {}
+  },
+
   async prune() {
     const dir = await opfs();
     if (dir) {
@@ -143,6 +153,9 @@ const storeBackend = {
 self.addEventListener("message", (e) => {
   if (e.data && e.data.type === "prefetch" && Array.isArray(e.data.urls)) {
     e.waitUntil(prefetchAll(e.data.urls));
+  }
+  if (e.data && e.data.type === "evict" && e.data.key) {
+    e.waitUntil(storeBackend.remove(e.data.key));
   }
 });
 

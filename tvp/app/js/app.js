@@ -194,8 +194,16 @@ function tune(chIndex, opts = {}) {
   } else {
     state.onDemand = null;
     const s = scheduleFor(ch);
-    progIndex = s.index;
-    offset = s.offset;
+    if (s.remaining < 20) {
+      // the current show is in its final seconds — joining means a deep
+      // seek into a big file for almost nothing; start the next show a
+      // few seconds early instead
+      progIndex = (s.index + 1) % ch.programs.length;
+      offset = 0;
+    } else {
+      progIndex = s.index;
+      offset = s.offset;
+    }
   }
   const prog = ch.programs[progIndex];
   const src = fastSrc(prog);
@@ -208,6 +216,7 @@ function tune(chIndex, opts = {}) {
 
   const arrive = () => {
     if (token !== state.tuneToken) return;
+    state.errStreak = 0;               // we made it on air: recovery resets
     $("interstitial").classList.add("hidden");
     updateInfo();
     if (state.zapQuiet) { state.zapQuiet = false; showOSDChannel(); }
@@ -273,7 +282,7 @@ function tune(chIndex, opts = {}) {
   /* cold-adopt: the splash (or an earlier warm-up) already started loading
      exactly this stream backstage — put that element on the air and let it
      finish there, rather than restarting the download from scratch */
-  if (backstage.dataset.src === src && opts.fromStartProg === undefined) {
+  if (backstage.dataset.src === src && !backstage.error && opts.fromStartProg === undefined) {
     swapStage();
     video.addEventListener("playing", () => {
       if (token !== state.tuneToken) return;
@@ -385,16 +394,54 @@ function onProgramEnded(e) {
 }
 
 function onVideoError(e) {
-  if (e.target !== video || !state.on) return;
-  $("interstitial-text").textContent = "Channel hiccup — re-tuning…";
-  $("interstitial").classList.remove("hidden");
+  if (!state.on) return;
+  const bad = e.target?.dataset?.src;   // capture before releasing claims
+  if (e.target !== video) {
+    if (e.target !== backstage) return;
+    const wasHotTune = !!state.hotTune;
+    delete backstage.dataset.src;     // never adopt a corpse
+    if (!wasHotTune) return;          // a speculative preload died: shrug
+    // a hot tune died backstage: stop the spinner and enter the ladder
+    state.hotTune = null;
+    $("tunebar").classList.add("hidden");
+  }
+  // a stream that errored may have a poisoned cached prefix — drop it
+  if (bad && navigator.serviceWorker?.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: "evict", key: bad });
+  }
+
+  /* escalating recovery, never a tight loop:
+     1st failure  → retry the same tune after 4s
+     2nd failure  → skip to the channel's next program from the start
+     3rd failure  → declare the channel off-air and hop to the next one */
+  state.errStreak = (state.errStreak || 0) + 1;
+  const streak = state.errStreak;
   const tk = state.tuneToken;
-  setTimeout(() => { if (state.on && tk === state.tuneToken) tune(state.chIndex); }, 3500);
+  let msg, delay = Math.min(4000 * streak, 12000), action;
+  if (streak <= 1) {
+    msg = "Channel hiccup — re-tuning…";
+    action = () => tune(state.chIndex);
+  } else if (streak === 2) {
+    msg = "Stream trouble — skipping to the next program…";
+    action = () => {
+      const s = scheduleFor(currentChannel());
+      tune(state.chIndex, { fromStartProg: (s.index + 1) % currentChannel().programs.length });
+    };
+  } else {
+    msg = "This channel seems to be off the air — trying the next one…";
+    action = () => { state.errStreak = 0; state.zapQuiet = false; tune(state.chIndex + 1); };
+  }
+  $("interstitial-text").textContent = msg;
+  $("interstitial").classList.remove("hidden");
+  setTimeout(() => { if (state.on && tk === state.tuneToken) action(); }, delay);
 }
 
 [$("tv-a"), $("tv-b")].forEach((el) => {
   el.addEventListener("ended", onProgramEnded);
   el.addEventListener("error", onVideoError);
+  el.addEventListener("playing", (e) => {
+    if (e.target === video) state.errStreak = 0;   // on air = recovered
+  });
   el.addEventListener("play", (e) => { if (e.target === video) { $("glyph-play").classList.add("hidden"); $("glyph-pause").classList.remove("hidden"); } });
   el.addEventListener("pause", (e) => { if (e.target === video) { $("glyph-pause").classList.add("hidden"); $("glyph-play").classList.remove("hidden"); } });
 });
