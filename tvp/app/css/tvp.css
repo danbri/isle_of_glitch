@@ -371,7 +371,11 @@ body.overlays-on #tunebar { bottom: calc(168px + var(--sab)); }
 #guide-cats {
   display: flex; gap: 8px; overflow-x: auto; flex: 1; min-width: 0;
   scrollbar-width: none; padding: 4px 2px;
+  scroll-snap-type: x proximity;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 26px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 26px), transparent 100%);
 }
+#guide-cats .cat { scroll-snap-align: start; }
 #guide-cats::-webkit-scrollbar { display: none; }
 .cat {
   flex: none; padding: 7px 13px; border-radius: 999px;
@@ -542,8 +546,9 @@ body.overlays-on #buddy-strip { bottom: calc(168px + var(--sab)); }
   animation: fadein .25s ease-out;
 }
 #buddy-panel {
+  position: relative;
   contain: layout paint;
-  width: min(560px, 94vw); max-height: 84vh; overflow-y: auto;
+  width: min(560px, 94vw); max-height: 84vh; max-height: 84dvh; overflow-y: auto;
   background: rgba(0, 0, 0, .32);
   border: 1.5px solid var(--stroke); border-radius: 16px;
   backdrop-filter: blur(16px) saturate(1.25); -webkit-backdrop-filter: blur(16px) saturate(1.25);
@@ -802,7 +807,7 @@ body.drawer-open #scrim { opacity: 1; pointer-events: auto; }
   border-bottom: 2px solid var(--stroke); border-radius: 0 0 16px 16px;
   transform: translateY(-104%);
   transition: transform .28s cubic-bezier(.2, .8, .25, 1);
-  max-height: 72vh; display: flex; flex-direction: column;
+  max-height: 72vh; max-height: 72dvh; display: flex; flex-direction: column;
   padding-top: var(--sat);
 }
 .sheet.open { transform: translateY(0); }
@@ -915,3 +920,15 @@ body.overlays-on #cue-layer { bottom: calc(180px + var(--sab)); }
   border: 2px solid rgba(255,255,255,.4); cursor: pointer; padding: 0;
 }
 .cc-swatch.on { border-color: var(--accent); box-shadow: 0 0 8px rgba(198,96,12,.6); }
+
+#buddy-close { position: absolute; top: 10px; right: 10px; }
+
+/* scene links inside Watch Buddy */
+.buddy-scene {
+  display: block; width: 100%; text-align: left;
+  background: transparent; color: rgba(255,255,255,.85);
+  border: none; border-left: 2px solid rgba(255,255,255,.3);
+  padding: 5px 10px; margin-top: 4px; font-size: 13px; font-family: var(--font);
+}
+.buddy-scene:active, .buddy-scene:hover { border-left-color: var(--accent); color: #fff; }
+.buddy-scene .t { color: var(--accent); font-variant-numeric: tabular-nums; margin-right: 8px; }

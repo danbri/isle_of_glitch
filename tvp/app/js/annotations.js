@@ -21,7 +21,8 @@ const WATCH_BUDDY_CONTEXT = {
   "warningEmoji": "tvp:warningEmoji",
   "datedPerspectives": "tvp:datedPerspectives",
   "datedNote": "tvp:datedNote",
-  "factCheck": "https://schema.org/subjectOf"
+  "factCheck": "https://schema.org/subjectOf",
+  "scenes": "tvp:scene"
 };
 
 const WATCH_BUDDY_GRAPH = [
@@ -31,12 +32,19 @@ const WATCH_BUDDY_GRAPH = [
     "@id": "https://archive.org/details/house_on_haunted_hill_ipod",
     "@type": "Movie",
     "contentWarning": { "warningEmoji": "😱", "text": "Opens with realistic sound of a woman screaming. 😱" },
+    "scenes": [
+      { "t": 0, "label": "the screaming opening (skip to 2:00 to avoid it)" },
+      { "t": 120, "label": "safely past the screams — Vincent Price's invitation" }
+    ],
     "sameAs": "https://en.wikipedia.org/wiki/House_on_Haunted_Hill"
   },
   {
     "@id": "https://archive.org/details/Night.Of.The.Living.Dead_1080p",
     "@type": "Movie",
     "contentWarning": { "warningEmoji": "😨", "text": "Sustained siege horror, flesh-eating ghouls, and a bleak ending that genuinely shocked 1968 audiences." },
+    "scenes": [
+      { "t": 0, "label": "from the top — the cemetery drive" }
+    ],
     "sameAs": "https://en.wikipedia.org/wiki/Night_of_the_Living_Dead"
   },
   {
