@@ -63,6 +63,12 @@ for (const ch of CHANNELS) {
     const best = subFiles.find((f) => !/\.asr\./i.test(f)) || subFiles[0];
     if (best) { p.subs = best; subs++; }
 
+    // stream size: lets the player compute exact bytes-per-second for
+    // right-sized first-seconds prefetching
+    const srcName = decodeURIComponent((p.src.split(`/download/${id}/`)[1] || ""));
+    const f = j.files.find((f) => f.name === srcName);
+    if (f?.size) p.bytes = parseInt(f.size, 10);
+
     if (n % 25 === 0) console.log(`  ${n}/${total} … frames=${frames} subs=${subs}`);
   }
 }

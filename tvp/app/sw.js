@@ -42,10 +42,11 @@ async function prefetchAll(entries) {
   for (const entry of entries.slice(0, 8)) {
     const key = typeof entry === "string" ? entry : entry.key;
     const via = typeof entry === "string" ? entry : (entry.via || entry.key);
+    const cap = (typeof entry === "object" && entry.cap) ? entry.cap : PREFIX_BYTES;
     try {
       if (await cache.match(key)) continue;
       const r = await fetch(via, {
-        headers: { Range: `bytes=0-${PREFIX_BYTES - 1}` },
+        headers: { Range: `bytes=0-${cap - 1}` },
         signal: AbortSignal.timeout(45000)
       });
       if (r.status !== 206 && r.status !== 200) continue;
@@ -62,14 +63,14 @@ async function prefetchAll(entries) {
         const reader = r.body.getReader();
         const chunks = [];
         let got = 0;
-        while (got < PREFIX_BYTES) {
+        while (got < cap) {
           const { done, value } = await reader.read();
           if (done) break;
           chunks.push(value);
           got += value.byteLength;
         }
         try { await reader.cancel(); } catch {}
-        const joined = new Uint8Array(Math.min(got, PREFIX_BYTES));
+        const joined = new Uint8Array(Math.min(got, cap));
         let at = 0;
         for (const c of chunks) {
           const take = Math.min(c.byteLength, joined.length - at);
