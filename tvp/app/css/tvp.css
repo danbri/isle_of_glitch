@@ -8,8 +8,8 @@
 :root {
   --accent: rgb(198, 96, 12);        /* the original uiFocusColor */
   --select: rgba(98, 163, 176, .85); /* the original selected-row teal */
-  --panel: rgba(10, 10, 10, .62);
-  --stroke: rgba(255, 255, 255, .85);
+  --panel: rgba(10, 10, 10, .44);
+  --stroke: rgba(255, 255, 255, .55);
   --font: "Trebuchet MS", "Segoe UI", Verdana, sans-serif;
   --sat: env(safe-area-inset-top, 0px);
   --sab: env(safe-area-inset-bottom, 0px);
@@ -204,7 +204,7 @@ body.overlays-on #tunebar { bottom: calc(168px + var(--sab)); }
   position: absolute; z-index: 30;
   contain: layout paint;
   background: var(--panel);
-  border: 2px solid var(--stroke);
+  border: 1.5px solid var(--stroke);
   border-radius: 14px;
   backdrop-filter: blur(7px);
   -webkit-backdrop-filter: blur(7px);
@@ -542,8 +542,8 @@ body.overlays-on #buddy-strip { bottom: calc(168px + var(--sab)); }
 #buddy-panel {
   contain: layout paint;
   width: min(560px, 94vw); max-height: 84vh; overflow-y: auto;
-  background: rgba(0, 0, 0, .55);
-  border: 2px solid var(--stroke); border-radius: 16px;
+  background: rgba(0, 0, 0, .42);
+  border: 1.5px solid var(--stroke); border-radius: 16px;
   padding: 18px 20px;
 }
 #buddy-title { font-size: 13px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); font-weight: bold; }
@@ -672,7 +672,7 @@ body.drawer-open #scrim { opacity: 1; pointer-events: auto; }
   contain: layout paint;
   will-change: transform;
   width: min(340px, 88vw);
-  background: rgba(8, 8, 8, .78);
+  background: rgba(8, 8, 8, .55);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   display: flex; flex-direction: column;
   transition: transform .28s cubic-bezier(.2, .8, .25, 1);
@@ -794,7 +794,7 @@ body.drawer-open #scrim { opacity: 1; pointer-events: auto; }
   position: fixed; left: 0; right: 0; top: 0; z-index: 47;
   contain: layout paint;
   will-change: transform;
-  background: rgba(8,8,8,.82);
+  background: rgba(8,8,8,.58);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-bottom: 2px solid var(--stroke); border-radius: 0 0 16px 16px;
   transform: translateY(-104%);
@@ -857,3 +857,58 @@ body.drawer-open #scrim { opacity: 1; pointer-events: auto; }
   .drawer { width: 360px; }
   #guide-rail { --tile-w: 240px; gap: 18px; }
 }
+
+
+/* ── frost + unobtrusive glass ─────────────────────── */
+
+body.frosted .overlay,
+body.frosted .drawer,
+body.frosted .sheet,
+body.frosted #buddy-panel,
+body.frosted #tunebar,
+body.frosted #comingup,
+body.frosted .widget.pinned,
+body.frosted .tonight {
+  background-image: var(--frost-img);
+  background-size: 256px 256px;
+  background-blend-mode: overlay;
+}
+.overlay, .drawer, .sheet, #buddy-panel, #tunebar, #comingup, .widget.pinned {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .55);
+}
+.overlay .pill-btn, .drawer .pill-btn { text-shadow: none; }
+
+/* minimised widgets: just the title bar */
+.widget.min .w-body { display: none; }
+.widget.min { padding-bottom: 8px; }
+
+/* fling-away animation for pinned widgets */
+.widget.pinned.flung {
+  transition: transform .35s cubic-bezier(.3, .7, .4, 1), opacity .35s;
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+/* ── SVG subtitles: base colour + complementary outline ── */
+#cue-layer {
+  position: absolute; z-index: 27;
+  left: 4vw; right: 4vw;
+  bottom: calc(64px + var(--sab));
+  text-align: center; pointer-events: none;
+  contain: layout paint;
+}
+body.overlays-on #cue-layer { bottom: calc(180px + var(--sab)); }
+#cue-layer svg { width: min(92vw, 700px); height: auto; overflow: visible; }
+#cue-layer text {
+  font-family: var(--font); font-weight: bold;
+  paint-order: stroke fill;
+  stroke-linejoin: round;
+}
+
+/* subtitle colour swatches */
+#cc-swatches { display: flex; gap: 8px; }
+.cc-swatch {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.4); cursor: pointer; padding: 0;
+}
+.cc-swatch.on { border-color: var(--accent); box-shadow: 0 0 8px rgba(198,96,12,.6); }
