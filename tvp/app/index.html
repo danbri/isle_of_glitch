@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>TVP/2007 — a Joost-era web TV revival</title>
+<link rel="stylesheet" href="css/tvp.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='black' stroke='white' stroke-width='2'/%3E%3Ctext x='16' y='22' font-family='Trebuchet MS' font-size='13' font-weight='bold' fill='rgb(198,96,12)' text-anchor='middle'%3Etv%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<!-- ══════════════ THE STAGE ══════════════ -->
+<div id="stage">
+  <video id="tv" playsinline preload="auto"></video>
+
+  <!-- CRT white-dot power effect -->
+  <div id="crt"><div id="crt-dot"></div></div>
+
+  <!-- Interstitial: "fetching your channel" -->
+  <div id="interstitial" class="hidden">
+    <div class="rings"><span></span><span></span><span></span></div>
+    <div id="interstitial-text">Fetching your channel&hellip;</div>
+    <div id="interstitial-channel"></div>
+  </div>
+
+  <!-- Splash / power-on screen -->
+  <div id="splash">
+    <div class="splash-mark">tv<span>p</span></div>
+    <div class="splash-sub">a 2007 web-TV séance &middot; free &amp; open video</div>
+    <button id="power-on" aria-label="Switch on">
+      <svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="20" y1="8" x2="20" y2="20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="splash-hint">tap to switch on</div>
+    <div class="splash-legal">An homage to the Joost&trade; UX (2006&ndash;08). Not affiliated with Joost N.V.
+    All video is Blender Foundation CC-BY or public domain, streamed from archive.org.</div>
+  </div>
+
+  <!-- OSD: channel zap display -->
+  <div id="osd-channel" class="osd hidden"><span id="osd-num"></span><span id="osd-name"></span></div>
+  <!-- OSD: volume -->
+  <div id="osd-volume" class="osd hidden"><div id="osd-volume-bar"><div></div></div></div>
+  <!-- OSD: digit entry -->
+  <div id="osd-digits" class="osd hidden"></div>
+
+  <!-- Program info (top overlay) -->
+  <div id="infobar" class="overlay hidden">
+    <img id="info-art" alt="">
+    <div id="info-text">
+      <div id="info-channel"></div>
+      <div id="info-title"></div>
+      <div id="info-meta"></div>
+    </div>
+    <button id="info-restart" class="pill-btn" title="Watch from start">&#8676; from start</button>
+  </div>
+
+  <!-- Coming up next -->
+  <div id="comingup" class="hidden">
+    <div class="comingup-label">coming up</div>
+    <div id="comingup-title"></div>
+  </div>
+
+  <!-- Controller (bottom overlay) -->
+  <div id="controller" class="overlay hidden">
+    <div id="progress-row">
+      <span id="time-now">0:00</span>
+      <div id="progress"><div id="progress-fill"></div><div id="progress-handle"></div></div>
+      <span id="time-total">0:00</span>
+    </div>
+    <div id="controller-buttons">
+      <button class="ctl" id="btn-menu" title="Channel menu (M)"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg></button>
+      <button class="ctl" id="btn-prev" title="Previous channel (↓)"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
+      <button class="ctl big" id="btn-play" title="Play / pause (space)"><svg id="glyph-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><svg id="glyph-play" class="hidden" viewBox="0 0 24 24"><path d="M7 4.5l13 7.5-13 7.5z" fill="currentColor"/></svg></button>
+      <button class="ctl" id="btn-next" title="Next channel (↑)"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
+      <button class="ctl" id="btn-mute" title="Mute (m)"><svg viewBox="0 0 24 24"><path id="spk" d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path id="spk-wave" d="M16.5 8.5a5 5 0 010 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+      <button class="ctl" id="btn-search" title="Search (/)"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6" stroke="currentColor" stroke-width="2.4" fill="none"/><path d="M15 15l5.5 5.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+      <button class="ctl" id="btn-widgets" title="Widgets (w)"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6" stroke="currentColor" stroke-width="2" fill="none"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6" stroke="currentColor" stroke-width="2" fill="none"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6" stroke="currentColor" stroke-width="2" fill="none"/><rect x="13.5" y="13.5" width="7" height="7" rx="3.5" stroke="currentColor" stroke-width="2" fill="none"/></svg></button>
+      <button class="ctl" id="btn-fs" title="Fullscreen (f)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button class="ctl" id="btn-power" title="Power off"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" stroke-width="2.2"/><line x1="12" y1="3" x2="12" y2="12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+    </div>
+    <!-- desktop-only volume row -->
+    <input type="range" id="volume" class="hidden" min="0" max="1" step="0.05" value="1" aria-label="Volume">
+  </div>
+</div>
+
+<!-- ══════════════ CHANNEL MENU / EPG (left drawer) ══════════════ -->
+<aside id="epg" class="drawer left">
+  <header>
+    <div class="drawer-title">what&rsquo;s on</div>
+    <button class="drawer-close" data-close="epg">&times;</button>
+  </header>
+  <nav id="epg-cats"></nav>
+  <div id="epg-channels"></div>
+</aside>
+
+<!-- ══════════════ WIDGET DOCK (right drawer) ══════════════ -->
+<aside id="dock" class="drawer right">
+  <header>
+    <div class="drawer-title">my widgets</div>
+    <button class="drawer-close" data-close="dock">&times;</button>
+  </header>
+
+  <section class="widget" id="w-clock">
+    <h3>clock</h3>
+    <canvas id="clock-canvas" width="120" height="120"></canvas>
+    <div id="clock-digital"></div>
+  </section>
+
+  <section class="widget" id="w-ratings">
+    <h3>rate this show</h3>
+    <div id="jewels"></div>
+    <div id="jewel-caption">tap a jewel</div>
+  </section>
+
+  <section class="widget" id="w-chat">
+    <h3>channel chat</h3>
+    <div id="chat-log"></div>
+    <form id="chat-form"><input id="chat-input" placeholder="say something&hellip;" maxlength="120" autocomplete="off"><button>&#9658;</button></form>
+  </section>
+
+  <section class="widget" id="w-notice">
+    <h3>notice board</h3>
+    <div id="notice">
+      <p><b>Welcome back to 2007.</b> This is a loving UX reconstruction of the
+      Joost&trade; P2P TV client, rebuilt as a web app. Channels run on a real
+      broadcast clock &mdash; you join whatever is on <i>now</i>.</p>
+      <p>All streams are free &amp; open: Blender open movies (CC-BY) and
+      public-domain film from the Internet Archive.</p>
+    </div>
+  </section>
+</aside>
+
+<!-- ══════════════ SEARCH (top sheet) ══════════════ -->
+<div id="search" class="sheet">
+  <form id="search-form">
+    <input id="search-input" placeholder="Search programs and channels&hellip;" autocomplete="off">
+    <button type="button" class="drawer-close" data-close="search">&times;</button>
+  </form>
+  <div id="search-results"></div>
+</div>
+
+<!-- news ticker (bottom edge, toggleable widget) -->
+<div id="ticker" class="hidden"><div id="ticker-track"></div></div>
+
+<div id="scrim"></div>
+
+<script src="js/channels.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
