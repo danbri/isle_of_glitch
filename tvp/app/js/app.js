@@ -839,6 +839,31 @@ function closePanels() {
   document.body.classList.remove("drawer-open");
 }
 $("scrim").addEventListener("click", closePanels);
+
+/* brushable screens: swipe the dock right, or the search bar up, to dismiss */
+(function brushGestures() {
+  let t0 = null;
+  $("dock").addEventListener("touchstart", (e) => {
+    if (e.target.closest("input, button")) { t0 = null; return; }
+    const t = e.changedTouches[0]; t0 = { x: t.clientX, y: t.clientY, ms: Date.now() };
+  }, { passive: true });
+  $("dock").addEventListener("touchend", (e) => {
+    if (!t0) return;
+    const t = e.changedTouches[0];
+    if (Date.now() - t0.ms < 600 && t.clientX - t0.x > 70 && Math.abs(t.clientY - t0.y) < 60) closePanels();
+    t0 = null;
+  }, { passive: true });
+  let s0 = null;
+  $("search-form").addEventListener("touchstart", (e) => {
+    const t = e.changedTouches[0]; s0 = { y: t.clientY, ms: Date.now() };
+  }, { passive: true });
+  $("search-form").addEventListener("touchend", (e) => {
+    if (!s0) return;
+    const t = e.changedTouches[0];
+    if (Date.now() - s0.ms < 600 && s0.y - t.clientY > 50) closePanels();
+    s0 = null;
+  }, { passive: true });
+})();
 document.querySelectorAll(".drawer-close[data-close]").forEach((b) =>
   b.addEventListener("click", () => closePanels()));
 
@@ -1226,6 +1251,21 @@ document.querySelectorAll(".widget").forEach((sec) => {
   title.className = "w-title";
   while (h3.firstChild) title.appendChild(h3.firstChild);
   h3.appendChild(title);
+  const mini = document.createElement("button");
+  mini.className = "w-pin";
+  mini.textContent = "–";
+  mini.title = "Minimise";
+  mini.addEventListener("click", (e) => {
+    e.stopPropagation();
+    sec.classList.toggle("min");
+    mini.textContent = sec.classList.contains("min") ? "+" : "–";
+    const m = store.get("wmin", {});
+    m[sec.id] = sec.classList.contains("min");
+    store.set("wmin", m);
+  });
+  h3.appendChild(mini);
+  if (store.get("wmin", {})[sec.id]) { sec.classList.add("min"); mini.textContent = "+"; }
+
   const pin = document.createElement("button");
   pin.className = "w-pin";
   pin.innerHTML = "&#8865;";
@@ -1246,12 +1286,32 @@ document.querySelectorAll(".widget").forEach((sec) => {
   });
   h3.addEventListener("pointermove", (e) => {
     if (!drag) return;
+    const now = performance.now();
+    drag.vx = (e.clientX - (drag.lastX ?? e.clientX)) / Math.max(1, now - (drag.lastT ?? now));
+    drag.vy = (e.clientY - (drag.lastY ?? e.clientY)) / Math.max(1, now - (drag.lastT ?? now));
+    drag.lastX = e.clientX; drag.lastY = e.clientY; drag.lastT = now;
     const layer = $("pinned-layer").getBoundingClientRect();
     sec.style.left = Math.max(0, Math.min(e.clientX - drag.dx, layer.width - 60)) + "px";
     sec.style.top = Math.max(0, Math.min(e.clientY - drag.dy, layer.height - 40)) + "px";
   });
   h3.addEventListener("pointerup", () => {
-    if (drag) { drag = null; sec.classList.remove("dragging"); savePins(); }
+    if (!drag) return;
+    const speed = Math.hypot(drag.vx || 0, drag.vy || 0);
+    if (speed > 1.1) {
+      // brushed away: fling off in the throw direction, then return to dock
+      const fx = (drag.vx || 0) * 320, fy = (drag.vy || 0) * 320;
+      sec.classList.add("flung");
+      sec.style.transform = `translate(${fx}px, ${fy}px) rotate(${fx > 0 ? 12 : -12}deg)`;
+      setTimeout(() => {
+        sec.classList.remove("flung");
+        sec.style.transform = "";
+        unpinWidget(sec);
+      }, 340);
+    } else {
+      savePins();
+    }
+    drag = null;
+    sec.classList.remove("dragging");
   });
 });
 
@@ -1453,6 +1513,38 @@ setInterval(() => {
 
 let subsToken = 0;
 
+/* subtitle colourways: a base colour with its complementary hue as the
+   letterform outline — max contrast without a black box */
+const CC_COLOURS = [
+  { name: "classic", base: "#ffffff", edge: "#111111" },
+  { name: "amber",   base: "#ffd75e", edge: "#1e3fd8" },   // yellow ↔ blue
+  { name: "cyan",    base: "#7fe8ff", edge: "#c2410c" },   // cyan ↔ burnt orange
+  { name: "mint",    base: "#8ef7a1", edge: "#a4149c" }    // green ↔ magenta
+];
+
+function ccColour() { return CC_COLOURS[store.get("ccColour", 0)] || CC_COLOURS[0]; }
+
+/* render active cue text as SVG lettering: fill = base, stroke = complement */
+function renderCue(text) {
+  const layer = $("cue-layer");
+  if (!text) { layer.innerHTML = ""; return; }
+  const { base, edge } = ccColour();
+  const lines = String(text).replace(/<[^>]+>/g, "").split(/\n+/).filter(Boolean).slice(0, 3);
+  const fs = 30, lh = 38, pad = 8;
+  const h = lines.length * lh + pad;
+  layer.innerHTML = `<svg viewBox="0 0 700 ${h}" role="img" aria-label="subtitle">` +
+    lines.map((l, i) =>
+      `<text x="350" y="${(i + 1) * lh - 8}" text-anchor="middle" font-size="${fs}"
+         fill="${base}" stroke="${edge}" stroke-width="5">${esc(l)}</text>`).join("") +
+    "</svg>";
+}
+
+function onCueChange(e) {
+  const t = e.target.track || e.target;
+  const cues = t.activeCues;
+  renderCue(cues && cues.length ? [...cues].map((c) => c.text).join("\n") : "");
+}
+
 function srtToVtt(text) {
   return "WEBVTT\n\n" + text.replace(/\r/g, "")
     .replace(/(\d{2}:\d{2}:\d{2}),(\d{1,3})/g,
@@ -1461,6 +1553,7 @@ function srtToVtt(text) {
 
 function clearSubtitles() {
   [video, backstage].forEach((el) => el.querySelectorAll("track").forEach((t) => t.remove()));
+  renderCue("");
   $("info-cc").classList.add("hidden");
 }
 
@@ -1483,7 +1576,10 @@ async function loadSubtitles(prog) {
     track.src = blob;
     track.default = false;
     video.appendChild(track);
-    track.track.mode = state.cc ? "showing" : "hidden";
+    track.track.mode = "hidden";                      // we render cues ourselves
+    track.addEventListener("cuechange", onCueChange);
+    $("cue-layer").classList.toggle("hidden", !state.cc);
+    renderCue("");
     $("info-cc").classList.remove("hidden");
     $("info-cc").classList.toggle("lit", state.cc);
   } catch {}
@@ -1492,10 +1588,30 @@ async function loadSubtitles(prog) {
 $("info-cc").addEventListener("click", () => {
   state.cc = !state.cc;
   store.set("cc", state.cc);
-  const t = video.querySelector("track");
-  if (t) t.track.mode = state.cc ? "showing" : "hidden";
+  $("cue-layer").classList.toggle("hidden", !state.cc);
+  if (!state.cc) renderCue("");
   $("info-cc").classList.toggle("lit", state.cc);
 });
+
+/* colour swatches in the subtitles widget */
+(function renderSwatches() {
+  const box = $("cc-swatches");
+  CC_COLOURS.forEach((c, i) => {
+    const b = document.createElement("button");
+    b.className = "cc-swatch" + (store.get("ccColour", 0) === i ? " on" : "");
+    b.style.background = `linear-gradient(135deg, ${c.base} 55%, ${c.edge} 55%)`;
+    b.title = c.name;
+    b.addEventListener("click", () => {
+      store.set("ccColour", i);
+      box.querySelectorAll(".cc-swatch").forEach((el) => el.classList.remove("on"));
+      b.classList.add("on");
+      renderCue("Subtitle preview — " + c.name);
+      $("cue-layer").classList.remove("hidden");
+      setTimeout(() => { if (!state.cc) { renderCue(""); $("cue-layer").classList.add("hidden"); } }, 2200);
+    });
+    box.appendChild(b);
+  });
+})();
 
 /* ── 👀 Watch Buddy ────────────────────────────────── */
 
@@ -2060,6 +2176,51 @@ $("splash-reset").addEventListener("click", async () => {
   } catch {}
   setTimeout(() => location.replace(location.pathname), 300);   // drop hash, reload clean
 });
+
+/* ── frost: a WebGL-generated glass texture ─────────
+ * One tiny shader render at boot produces a soft noise texture that is
+ * layered (at low alpha) over every panel, on top of backdrop blur —
+ * frosted glass with grain, zero per-frame cost. No WebGL → plain blur. */
+
+function makeFrostTexture() {
+  try {
+    const size = 256;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = size;
+    const gl = cv.getContext("webgl", { preserveDrawingBuffer: true });
+    if (!gl) return;
+    const vs = "attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}";
+    const fs = `precision mediump float;
+      float h(vec2 x){return fract(sin(dot(x,vec2(127.1,311.7)))*43758.5453);}
+      float n(vec2 x){vec2 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);
+        return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+      void main(){vec2 u=gl_FragCoord.xy/256.0;
+        float v=n(u*7.)*.5+n(u*19.)*.3+n(u*53.)*.2;
+        float a=.05+.13*v;                       // faint, uneven frost
+        gl_FragColor=vec4(1.,1.,1.,a);}`;
+    const sh = (type, src) => {
+      const o = gl.createShader(type);
+      gl.shaderSource(o, src); gl.compileShader(o);
+      return o;
+    };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+    gl.useProgram(prog);
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, "p");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    document.documentElement.style.setProperty("--frost-img", `url(${cv.toDataURL("image/png")})`);
+    document.body.classList.add("frosted");
+  } catch {}
+}
+makeFrostTexture();
 
 /* ── art fallback: our own test card when archive art is unreachable ── */
 
