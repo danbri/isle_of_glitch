@@ -238,28 +238,38 @@ async function serveArt(req) {
   return fetch(req);
 }
 
+/* prefetch orders may route `via` through a prefix mirror (docs/cloudflare/);
+   if the mirror misses, fall back to archive.org/cors/ derived from the key */
+const corsOf = (k) => k.replace("https://archive.org/download/", "https://archive.org/cors/");
+
 async function prefetchAll(entries) {
   for (const entry of entries.slice(0, 8)) {
     const key = typeof entry === "string" ? entry : entry.key;
     const via = typeof entry === "string" ? entry : (entry.via || entry.key);
     const cap = (typeof entry === "object" && entry.cap) ? entry.cap : PREFIX_BYTES;
+    // the stream's true size, from the lineup: a mirror object is only the
+    // prefix, so its content-length must not become the Content-Range total
+    const declared = (typeof entry === "object" && entry.total) ? entry.total : 0;
     try {
       if (await storeBackend.has(key)) continue;
-      const r = await fetch(via, {
-        headers: { Range: `bytes=0-${cap - 1}` },
-        signal: AbortSignal.timeout(45000)
-      });
-      if (r.status !== 206 && r.status !== 200) continue;
+      const opts = { headers: { Range: `bytes=0-${cap - 1}` }, signal: AbortSignal.timeout(45000) };
+      let r = null;
+      try { r = await fetch(via, opts); } catch {}
+      if ((!r || (r.status !== 206 && r.status !== 200)) && via !== corsOf(key)) {
+        try { r = await fetch(corsOf(key), opts); } catch {}
+      }
+      if (!r || (r.status !== 206 && r.status !== 200)) continue;
 
       let buf, total;
       if (r.status === 206) {
         buf = await r.arrayBuffer();
         const cr = r.headers.get("content-range");
         const m = cr && cr.match(/\/(\d+)\s*$/);
-        total = m ? parseInt(m[1], 10) : buf.byteLength;
+        total = declared || (m ? parseInt(m[1], 10) : buf.byteLength);
       } else {
-        // 200: the server ignored Range — stream only the prefix, then hang up
-        total = parseInt(r.headers.get("content-length") || "0", 10);
+        // 200: the server ignored Range (or a mirror served the whole prefix
+        // object) — stream up to the cap, then hang up
+        total = declared || parseInt(r.headers.get("content-length") || "0", 10);
         const reader = r.body.getReader();
         const chunks = [];
         let got = 0;
