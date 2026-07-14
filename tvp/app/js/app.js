@@ -129,8 +129,14 @@ function nodeSrc(p, url) {
   if (!p.node || MIRROR || !url) return url;
   const m = url.match(/^https:\/\/archive\.org\/download\/[^/]+\/(.+)$/);
   if (!m) return url;
-  const direct = `https://${p.node}/${m[1]}`;
-  return staleNodeSrcs.has(direct) ? url : direct;
+  // replica ladder: primary node → second replica (when the item has one)
+  // → the /download/ front door; the error handler marks nodes stale
+  for (const n of [p.node, p.node2]) {
+    if (!n) continue;
+    const direct = `https://${n}/${m[1]}`;
+    if (!staleNodeSrcs.has(direct)) return direct;
+  }
+  return url;
 }
 /* datanode URL → its canonical /download/ form (cache keys, fallbacks) */
 const canonSrc = (u) => u ? u.replace(/^https:\/\/[a-z]+\d+\.us\.archive\.org\/\d+\/items\//, "https://archive.org/download/") : u;
@@ -1497,6 +1503,9 @@ function registerSW() {
   // the SW claims clients on activate; the moment it's in charge, bank the
   // dial neighbours so even a first-ever visit gets instant first flips
   navigator.serviceWorker.ready.then(() => {
+    // tell the SW about the prefix mirror straight away (it also rides
+    // along on every prefetch message, in case the SW restarts)
+    if (MIRROR_PREFIX) navigator.serviceWorker.controller?.postMessage({ mirrorPrefix: MIRROR_PREFIX });
     setTimeout(() => trickleTick(true), 4000);
   }).catch(() => {});
 }
@@ -1540,6 +1549,7 @@ function prefetchFirstSeconds() {
     .forEach((ch) => add(scheduleFor(ch).program));
   navigator.serviceWorker.controller.postMessage({
     type: "prefetch",
+    mirrorPrefix: MIRROR_PREFIX,
     urls: [...orders.values()].slice(0, 6)
   });
 }
@@ -1605,7 +1615,7 @@ async function trickleTick(neighboursOnly = false) {
   const next = trickleTargets(neighboursOnly)[0];
   if (!next) return;
   trickled.add(next.key);
-  navigator.serviceWorker.controller.postMessage({ type: "prefetch", urls: [next] });
+  navigator.serviceWorker.controller.postMessage({ type: "prefetch", mirrorPrefix: MIRROR_PREFIX, urls: [next] });
 }
 
 /* one small fetch at a time, on idle, well spaced out */
