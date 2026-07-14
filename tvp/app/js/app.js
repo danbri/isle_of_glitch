@@ -109,11 +109,29 @@ let userVolume = 1, userMuted = false;
 const MIRROR = store.get("mirror", "");
 const mirror = (u) => (MIRROR && u) ? u.replace("https://archive.org/download/", MIRROR) : u;
 
+/* Straight-to-datanode addressing. archive.org /download/ answers every
+ * request with a 302 to a datanode, and browsers don't cache 302s — so a
+ * cold tune AND every later mid-file range request re-pays ~1s of
+ * front-door latency (measured: ~0.4s TTFB direct vs ~3.6s redirected).
+ * The lineup carries each item's node from the metadata API; if a node
+ * has gone stale (items migrate occasionally) the error ladder marks it
+ * and the same tune falls back to the /download/ URL. */
+const staleNodeSrcs = new Set();
+function nodeSrc(p, url) {
+  if (!p.node || MIRROR || !url) return url;
+  const m = url.match(/^https:\/\/archive\.org\/download\/[^/]+\/(.+)$/);
+  if (!m) return url;
+  const direct = `https://${p.node}/${m[1]}`;
+  return staleNodeSrcs.has(direct) ? url : direct;
+}
+/* datanode URL → its canonical /download/ form (cache keys, fallbacks) */
+const canonSrc = (u) => u ? u.replace(/^https:\/\/[a-z]+\d+\.us\.archive\.org\/\d+\/items\//, "https://archive.org/download/") : u;
+
 /* Everything tunes on the light ~512kbps derivative so channels start
  * fast; when quality is "best" we quietly upgrade a few seconds in via
  * the backstage element (the "start low, finish high" trick). */
-function fastSrc(p) { return mirror(p.src); }
-function bestSrc(p) { return p.srcHi ? mirror(p.srcHi) : null; }
+function fastSrc(p) { return nodeSrc(p, mirror(p.src)); }
+function bestSrc(p) { return p.srcHi ? nodeSrc(p, mirror(p.srcHi)) : null; }
 
 function applySound(el) { el.volume = userVolume; el.muted = userMuted; }
 
@@ -132,12 +150,14 @@ function swapStage() {
 }
 
 /* preload a stream into the backstage element (muted, hidden) */
-function preloadBackstage(src, offset = 0) {
+function preloadBackstage(src, offset = 0, prog = null) {
   if (state.hotTune) return;               // backstage is busy tuning
   if (backstage.dataset.src === src) return;
   backstage.dataset.src = src;
   backstage.dataset.offset = String(offset);
   backstage.muted = true;
+  // never let a previous program's poster flash on a future swap
+  backstage.poster = prog ? (artUrl(prog.frame || prog.art) || "") : "";
   backstage.src = src;
   if (offset > 1) {
     backstage.addEventListener("loadedmetadata", function seekOnce() {
@@ -211,6 +231,9 @@ function tune(chIndex, opts = {}) {
   }
   const prog = ch.programs[progIndex];
   const src = fastSrc(prog);
+  /* the program's still frame as the element's poster: a crisp picture
+     the instant the tune starts, instead of black until first decode */
+  const poster = artUrl(prog.frame || prog.art || ch.art) || "";
 
   state.comingUpShown = false;
   $("comingup").classList.add("hidden");
@@ -227,11 +250,15 @@ function tune(chIndex, opts = {}) {
     updateInfo();
     if (state.zapQuiet) { state.zapQuiet = false; showOSDChannel(); }
     else showOverlays();
+    // once settled, stash the flip-adjacent channels' first seconds (both
+    // modes — it's a few hundred KB and makes the next zap instant)
+    setTimeout(() => { if (token === state.tuneToken) trickleTick(true); }, 3000);
+    setTimeout(() => { if (token === state.tuneToken) trickleTick(true); }, 6500);
   };
 
   /* quick-start fallback: joining a broadcast mid-film means a deep range
      request into a big file, which archive.org sometimes serves very
-     slowly. If the live join hasn't produced a picture in 10s, play the
+     slowly. If the live join hasn't produced a picture in 6s, play the
      program from the start instead — byte zero is the fastest part of
      the file (and often already in the first-seconds stash). */
   const armSlowJoin = () => {
@@ -244,7 +271,7 @@ function tune(chIndex, opts = {}) {
       state.zapQuiet = true;
       chatPush(null, "live join was slow — starting this show from the top", "sys");
       tune(state.chIndex, { fromStartProg: progIndex });
-    }, 10000);
+    }, 6000);
   };
 
   /* warm path: the backstage element already buffered this stream */
@@ -271,6 +298,7 @@ function tune(chIndex, opts = {}) {
     $("tunebar").classList.remove("hidden");
     backstage.dataset.src = src;
     backstage.muted = true;
+    backstage.poster = poster;
     backstage.src = src;
     if (offset > 1 && offset < prog.dur - 2) {
       backstage.addEventListener("loadedmetadata", function seekOnce() {
@@ -330,6 +358,7 @@ function tune(chIndex, opts = {}) {
   /* cold path (nothing on the air): full zap card — an indicative frame,
      a progress bar, and no input lock at all */
   video.dataset.src = src;
+  video.poster = poster;
   video.src = src;
   video.addEventListener("loadedmetadata", () => {
     if (token !== state.tuneToken) return;
@@ -349,7 +378,8 @@ function tune(chIndex, opts = {}) {
 }
 
 /* the zap card appears only if arrival takes noticeable time — fast starts
-   never flash it */
+   never flash it. 600ms: with the poster already painting the screen,
+   announcing the wait any sooner just makes the tune feel slower. */
 function showZapCard(ch, prog, token) {
   state.coldStarted = Date.now();
   setTimeout(() => {
@@ -363,7 +393,7 @@ function showZapCard(ch, prog, token) {
       ? `linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.75)), url("${frame}")` : "";
     $("interstitial-progress").firstElementChild.style.transform = "scaleX(0.03)";
     $("interstitial").classList.remove("hidden");
-  }, 250);
+  }, 600);
 }
 
 /* the tuning progress bars: real readiness milestones blended with a
@@ -381,24 +411,53 @@ setInterval(() => {
   }
 }, 400);
 
+let ancillaryIdle = 0;
 function updateAncillary(ch, prog) {
-  renderGuideList();
-  renderJewels();
-  chatOnZap(ch, prog);
-  loadSubtitles(prog);
-  warmZapFrames();
-  renderBuddy();
+  loadSubtitles(prog);   // captions must be ready with the picture
   reflectHash();
+  /* everything else is off-screen or non-urgent — keep the main thread
+     clear while the browser fetches and decodes the new channel's first
+     frame. (When the guide is open it re-renders immediately: the user
+     is looking at it.) */
+  const later = () => {
+    renderGuideList();
+    renderJewels();
+    chatOnZap(ch, prog);
+    warmZapFrames();
+    renderBuddy();
+  };
+  if ($("guide").classList.contains("open")) { later(); return; }
+  if ("requestIdleCallback" in window) {
+    cancelIdleCallback(ancillaryIdle);
+    ancillaryIdle = requestIdleCallback(later, { timeout: 1500 });
+  } else setTimeout(later, 350);
 }
 
 /* pre-warm the neighbours' zap-card frames — a few KB each, so this is
-   cheap enough to do even in eco mode; makes skim-flipping feel solid */
+   cheap enough to do even in eco mode; makes skim-flipping feel solid.
+   Also preconnects to the neighbours' datanodes: DNS+TLS to a cold
+   *.us.archive.org host costs ~1-3 RTT, paid invisibly here instead of
+   on the zap. (Injected just-in-time — browsers drop idle preconnects
+   after ~10s, so page-load hints wouldn't survive to the zap.) */
+function preconnectNode(prog) {
+  if (!prog?.node || MIRROR) return;
+  const origin = "https://" + prog.node.split("/")[0];
+  if (document.head.querySelector(`link[data-node="${origin}"]`)) return;
+  const l = document.createElement("link");
+  l.rel = "preconnect";
+  l.href = origin;
+  l.dataset.node = origin;
+  document.head.appendChild(l);
+  setTimeout(() => l.remove(), 15000);   // keep <head> tidy; hint's job is done
+}
+
 function warmZapFrames() {
   [-1, 1].forEach((d) => {
     const ch = CHANNELS[((state.chIndex + d) % CHANNELS.length + CHANNELS.length) % CHANNELS.length];
     const s = scheduleFor(ch);
     const f = artUrl(s.program.frame || s.program.art || ch.art);
     if (f) { const img = new Image(); img.src = f; }
+    preconnectNode(s.program);
   });
 }
 
@@ -434,9 +493,14 @@ function onVideoError(e) {
     state.hotTune = null;
     $("tunebar").classList.add("hidden");
   }
+  // a direct-datanode URL that errored probably means the item migrated
+  // nodes — mark it stale so the retry composes the /download/ URL instead
+  if (bad && bad !== canonSrc(bad)) staleNodeSrcs.add(bad);
+
   // a stream that errored may have a poisoned cached prefix — drop it
+  // (the cache is keyed by canonical /download/ URLs)
   if (bad && navigator.serviceWorker?.controller) {
-    navigator.serviceWorker.controller.postMessage({ type: "evict", key: bad });
+    navigator.serviceWorker.controller.postMessage({ type: "evict", key: canonSrc(bad) });
   }
 
   /* escalating recovery, never a tight loop:
@@ -626,7 +690,7 @@ setInterval(() => {
   } else if (remaining < 45 && remaining > 2 && !video.paused) {
     state.upgrade = null;   // too late to bother upgrading this one
     const next = listingFor(currentChannel(), 2)[1];
-    if (next) preloadBackstage(fastSrc(next.program), 0);
+    if (next) preloadBackstage(fastSrc(next.program), 0, next.program);
   } else if (state.upgrade && state.upgrade.token === state.tuneToken &&
              t > 8 && remaining > 90 && !video.paused && video.readyState >= 3) {
     if (backstage.dataset.src !== state.upgrade.url) {
@@ -643,7 +707,7 @@ setInterval(() => {
              t > 15 && remaining > 60 && !video.paused && CHANNELS.length > 1) {
     const nx = CHANNELS[(state.chIndex + 1) % CHANNELS.length];
     const s = scheduleFor(nx);
-    preloadBackstage(fastSrc(s.program), s.offset);
+    preloadBackstage(fastSrc(s.program), s.offset, s.program);
   }
 
   // "coming up" ~25s before the end of the current program
@@ -1093,7 +1157,7 @@ function updateRailFocus() {
       railSettle = setTimeout(() => {
         if (state.preload === "turbo" && state.guideIndex === idx && idx !== state.chIndex) {
           const s = scheduleFor(CHANNELS[idx]);
-          preloadBackstage(fastSrc(s.program), s.offset);
+          preloadBackstage(fastSrc(s.program), s.offset, s.program);
         }
       }, 450);
     }
@@ -1422,6 +1486,11 @@ $("quality-toggle").addEventListener("click", () => {
 function registerSW() {
   if (!("serviceWorker" in navigator)) return;
   navigator.serviceWorker.register("sw.js").catch(() => {});
+  // the SW claims clients on activate; the moment it's in charge, bank the
+  // dial neighbours so even a first-ever visit gets instant first flips
+  navigator.serviceWorker.ready.then(() => {
+    setTimeout(() => trickleTick(true), 4000);
+  }).catch(() => {});
 }
 
 /* After a full watch, bank the opening ~1.5MB of likely destinations
@@ -1433,17 +1502,21 @@ function corsVia(url) {
   return MIRROR ? url : url.replace("https://archive.org/download/", "https://archive.org/cors/");
 }
 
+/* prefix-cache keys are always the canonical /download/ URL — the SW
+   canonicalizes incoming datanode requests to match */
+function prefKey(p) { return mirror(p.src); }
+
 function prefetchFirstSeconds() {
   if (state.preload !== "turbo" || !navigator.serviceWorker?.controller) return;
   const keys = new Set();
   const next = listingFor(currentChannel(), 2)[1];
-  if (next) keys.add(fastSrc(next.program));
+  if (next) keys.add(prefKey(next.program));
   [-1, 1].forEach((d) => {
     const ch = CHANNELS[((state.chIndex + d) % CHANNELS.length + CHANNELS.length) % CHANNELS.length];
-    keys.add(fastSrc(scheduleFor(ch).program));
+    keys.add(prefKey(scheduleFor(ch).program));
   });
   CHANNELS.filter((ch) => state.favs.has(ch.id)).slice(0, 3)
-    .forEach((ch) => keys.add(fastSrc(scheduleFor(ch).program)));
+    .forEach((ch) => keys.add(prefKey(scheduleFor(ch).program)));
   navigator.serviceWorker.controller.postMessage({
     type: "prefetch",
     urls: [...keys].slice(0, 6).map((key) => ({ key, via: corsVia(key) }))
@@ -1465,12 +1538,21 @@ function prefixCap(p) {
   return 1.5 * 1024 * 1024;
 }
 
-function trickleTargets() {
+function trickleTargets(neighboursOnly = false) {
   const out = [];
   const push = (prog) => {
-    const key = fastSrc(prog);
+    const key = prefKey(prog);
     if (!trickled.has(key)) out.push({ key, via: corsVia(key), cap: prefixCap(prog) });
   };
+  if (neighboursOnly) {
+    // the eco allowance: just the flip-adjacent dial positions — a few
+    // hundred KB total, so up/down zaps start instantly even in eco
+    [-1, 1].forEach((d) => {
+      const ch = CHANNELS[((state.chIndex + d) % CHANNELS.length + CHANNELS.length) % CHANNELS.length];
+      push(scheduleFor(ch).program);
+    });
+    return out;
+  }
   CHANNELS.filter((ch) => state.favs.has(ch.id)).forEach((ch) => push(scheduleFor(ch).program));
   listingFor(currentChannel(), 3).slice(1).forEach((slot) => push(slot.program));
   [-1, 1].forEach((d) => {
@@ -1493,12 +1575,13 @@ async function conditionsPermit() {
   return true;
 }
 
-async function trickleTick() {
-  if (!state.on || state.preload !== "turbo" || document.hidden) return;
+async function trickleTick(neighboursOnly = false) {
+  if (!state.on || document.hidden) return;
+  if (state.preload !== "turbo" && !neighboursOnly) return;
   if (!navigator.serviceWorker?.controller) return;
   if (state.hotTune || video.readyState < 3) return;   // never compete with playback
   if (!(await conditionsPermit())) return;
-  const next = trickleTargets()[0];
+  const next = trickleTargets(neighboursOnly)[0];
   if (!next) return;
   trickled.add(next.key);
   navigator.serviceWorker.controller.postMessage({ type: "prefetch", urls: [next] });
@@ -2006,18 +2089,25 @@ document.addEventListener("keydown", (e) => {
     case "-": userVolume = Math.max(0, userVolume - .1); applySound(video); showOSDVolume(); break;
     default:
       if (/^[0-9]$/.test(e.key)) {
-        if (state.digitBuffer.length >= 2) state.digitBuffer = "";
+        if (state.digitBuffer.length >= 3) state.digitBuffer = "";
         state.digitBuffer += e.key;
         $("osd-digits").textContent = state.digitBuffer;
         $("osd-digits").classList.remove("hidden");
         clearTimeout(state.digitTimer);
-        state.digitTimer = setTimeout(() => {
+        const commit = () => {
           const n = parseInt(state.digitBuffer, 10);
           state.digitBuffer = "";
           $("osd-digits").classList.add("hidden");
           const ch = CHANNELS.findIndex((c) => c.num === n);
           if (ch >= 0) { state.zapQuiet = !overlaysVisible(); crtBlink(); tune(ch); }
-        }, 900);
+        };
+        // tune the moment the entry is unambiguous — waiting out a debounce
+        // that no further digit could change is pure dead air
+        const buf = state.digitBuffer;
+        const couldExtend = CHANNELS.some((c) => String(c.num) !== buf && String(c.num).startsWith(buf));
+        const exact = CHANNELS.some((c) => String(c.num) === buf);
+        if (exact && !couldExtend) commit();
+        else state.digitTimer = setTimeout(commit, 900);
       }
   }
 });
@@ -2323,6 +2413,6 @@ registerSW();
 (function warmTheValves() {
   try {
     const s = scheduleFor(CHANNELS[state.chIndex]);
-    preloadBackstage(fastSrc(s.program), s.offset);
+    preloadBackstage(fastSrc(s.program), s.offset, s.program);
   } catch {}
 })();
