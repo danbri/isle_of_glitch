@@ -109,6 +109,14 @@ let userVolume = 1, userMuted = false;
 const MIRROR = store.get("mirror", "");
 const mirror = (u) => (MIRROR && u) ? u.replace("https://archive.org/download/", MIRROR) : u;
 
+/* Optional prefix mirror: an R2/CDN bucket holding just the first ~10s of
+ * every stream (see docs/cloudflare/). Playback still comes from archive.org;
+ * only the SW's first-seconds cache fills from the mirror's edge instead of
+ * archive.org/cors/. Set once from the console and reload:
+ *   localStorage.setItem('tvp.mirrorPrefix', JSON.stringify('https://pub-….r2.dev/'))
+ */
+const MIRROR_PREFIX = store.get("mirrorPrefix", "");
+
 /* Straight-to-datanode addressing. archive.org /download/ answers every
  * request with a 302 to a datanode, and browsers don't cache 302s — so a
  * cold tune AND every later mid-file range request re-pays ~1s of
@@ -1497,29 +1505,42 @@ function registerSW() {
    (turbo only): the chosen channel's next program, the neighbours'
    live streams, and My Channels. One small ranged GET each, via the SW. */
 /* archive.org media nodes lack CORS headers; /cors/ has them — the SW
-   fetches via /cors/ but caches under the /download/ URL videos request */
+   fetches via /cors/ but caches under the /download/ URL videos request.
+   A configured prefix mirror (edge-cached first seconds, docs/cloudflare/)
+   takes precedence; the SW falls back to /cors/ if the mirror misses. */
 function corsVia(url) {
-  return MIRROR ? url : url.replace("https://archive.org/download/", "https://archive.org/cors/");
+  if (MIRROR) return url;
+  if (MIRROR_PREFIX) return url.replace("https://archive.org/download/", MIRROR_PREFIX);
+  return url.replace("https://archive.org/download/", "https://archive.org/cors/");
 }
 
 /* prefix-cache keys are always the canonical /download/ URL — the SW
    canonicalizes incoming datanode requests to match */
 function prefKey(p) { return mirror(p.src); }
 
+/* a prefetch order for the SW: fetch `via`, cache under `key`; `total` is
+   the stream's true size (mirror objects are only the prefix, so their
+   content-length can't be trusted for Content-Range synthesis) */
+function prefOrder(prog) {
+  const key = prefKey(prog);
+  return { key, via: corsVia(key), cap: prefixCap(prog), total: prog.bytes || 0 };
+}
+
 function prefetchFirstSeconds() {
   if (state.preload !== "turbo" || !navigator.serviceWorker?.controller) return;
-  const keys = new Set();
+  const orders = new Map();
+  const add = (prog) => { const o = prefOrder(prog); orders.set(o.key, o); };
   const next = listingFor(currentChannel(), 2)[1];
-  if (next) keys.add(prefKey(next.program));
+  if (next) add(next.program);
   [-1, 1].forEach((d) => {
     const ch = CHANNELS[((state.chIndex + d) % CHANNELS.length + CHANNELS.length) % CHANNELS.length];
-    keys.add(prefKey(scheduleFor(ch).program));
+    add(scheduleFor(ch).program);
   });
   CHANNELS.filter((ch) => state.favs.has(ch.id)).slice(0, 3)
-    .forEach((ch) => keys.add(prefKey(scheduleFor(ch).program)));
+    .forEach((ch) => add(scheduleFor(ch).program));
   navigator.serviceWorker.controller.postMessage({
     type: "prefetch",
-    urls: [...keys].slice(0, 6).map((key) => ({ key, via: corsVia(key) }))
+    urls: [...orders.values()].slice(0, 6)
   });
 }
 
@@ -1541,8 +1562,8 @@ function prefixCap(p) {
 function trickleTargets(neighboursOnly = false) {
   const out = [];
   const push = (prog) => {
-    const key = prefKey(prog);
-    if (!trickled.has(key)) out.push({ key, via: corsVia(key), cap: prefixCap(prog) });
+    const o = prefOrder(prog);
+    if (!trickled.has(o.key)) out.push(o);
   };
   if (neighboursOnly) {
     // the eco allowance: just the flip-adjacent dial positions — a few
