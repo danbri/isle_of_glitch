@@ -255,12 +255,16 @@ function tune(chIndex, opts = {}) {
   state.upgrade = (state.quality === "best" && bestSrc(prog))
     ? { url: bestSrc(prog), token } : null;
 
+  // a Cast session follows the dial
+  if (state.casting && castApi) castApi.tuned();
+
   const arrive = () => {
     if (token !== state.tuneToken) return;
     state.errStreak = 0;               // we made it on air: recovery resets
     state.coldStarted = null;          // cancels any pending zap-card show
     clearTimeout(state.slowJoinTimer);
     $("interstitial").classList.add("hidden");
+    if (state.casting) video.pause();  // the Cast device is the TV right now
     updateInfo();
     if (state.zapQuiet) { state.zapQuiet = false; showOSDChannel(); }
     else showOverlays();
@@ -781,6 +785,7 @@ function showOSDVolume() {
 /* ── controller buttons ────────────────────────────── */
 
 $("btn-play").addEventListener("click", () => {
+  if (state.casting && castApi) { castApi.playPause(); armOverlayTimer(); return; }
   if (video.paused) video.play(); else video.pause();
   armOverlayTimer();
 });
@@ -1495,6 +1500,80 @@ $("quality-toggle").addEventListener("click", () => {
   }
 });
 
+/* ── venues: watch inside a 3D scene (lazy module) ─── */
+
+let venueApi = null;
+async function toggleVenue() {
+  if (venueApi) { venueApi.exit(); return; }
+  $("btn-venue").classList.add("lit");
+  try {
+    const mod = await import("./scenes.js");
+    venueApi = mod.launchScenes({
+      getVideo: () => video,
+      getInfo: () => {
+        const i = currentProgramInfo(), ch = currentChannel();
+        return { title: i.program.title, year: i.program.year, channel: ch.name, num: ch.num };
+      },
+      onExit: () => { venueApi = null; $("btn-venue").classList.remove("lit"); }
+    }, store.get("venue", ""));
+  } catch {
+    venueApi = null;
+    $("btn-venue").classList.remove("lit");
+    chatPush(null, "venues need WebGL — this browser sat that one out", "sys");
+  }
+}
+$("btn-venue").addEventListener("click", toggleVenue);
+
+/* ── Chromecast (lazy module; Chrome/Edge only) ────── */
+
+let castApi = null;
+function initCastLater() {
+  if (!("chrome" in window)) return;
+  setTimeout(async () => {
+    try {
+      const mod = await import("./cast.js");
+      castApi = await mod.initCast({
+        getMedia: () => {
+          const i = currentProgramInfo(), ch = currentChannel();
+          return {
+            url: canonSrc(fastSrc(i.program)),
+            title: `${i.program.title}${i.program.year ? " (" + i.program.year + ")" : ""} — ${ch.name}`,
+            art: artUrl(i.program.frame || i.program.art || ch.art),
+            offset: i.live ? i.offset : (video.currentTime || 0)
+          };
+        },
+        onCastStart: (name) => {
+          state.casting = true;
+          video.pause();
+          document.body.classList.add("casting");
+          $("cast-badge-name").textContent = `Casting to ${name}`;
+          $("cast-badge").classList.remove("hidden");
+          $("btn-cast").classList.add("lit");
+        },
+        onCastEnd: (t) => {
+          state.casting = false;
+          document.body.classList.remove("casting");
+          $("cast-badge").classList.add("hidden");
+          $("btn-cast").classList.remove("lit");
+          if (!state.on) return;
+          if (state.onDemand) {
+            try { video.currentTime = t || video.currentTime; } catch {}
+            video.play().catch(() => {});
+          } else {
+            tune(state.chIndex);       // rejoin the broadcast clock
+          }
+        }
+      });
+      if (castApi) $("btn-cast").classList.remove("hidden");
+    } catch {}
+  }, 6000);   // well after boot: cast discovery is never on the critical path
+}
+
+$("btn-cast").addEventListener("click", () => {
+  // the framework owns session UI; requestSession via the context
+  try { window.cast?.framework?.CastContext?.getInstance()?.requestSession(); } catch {}
+});
+
 /* ── first-seconds cache (service worker) ──────────── */
 
 function registerSW() {
@@ -2110,6 +2189,7 @@ document.addEventListener("keydown", (e) => {
     case "ArrowLeft": video.currentTime -= 10; showOverlays(); break;
     case "m": $("btn-mute").click(); break;
     case "f": $("btn-fs").click(); break;
+    case "v": toggleVenue(); break;
     case "w": openPanel("dock"); break;
     case "g": case "e": openPanel("guide"); break;
     case "i": showOverlays(); $("infobar").classList.add("expanded"); updateInfo(); break;
@@ -2438,6 +2518,7 @@ renderPreload();
 renderTickerToggle();
 renderBuddyToggle();
 registerSW();
+initCastLater();
 
 /* While the splash breathes, quietly buffer what's on the saved channel
  * right now — power-on then swaps to an already-warm stream. */
