@@ -143,7 +143,8 @@ const CHANNELS = [
     license: "CC-BY · Blender Foundation",
     art: "https://archive.org/services/img/cosmos-laundromat",
     bytes: 47770492,
-    node: "ia600507.us.archive.org/3/items/cosmos-laundromat"
+    node: "ia600507.us.archive.org/3/items/cosmos-laundromat",
+    node2: "ia800507.us.archive.org/3/items/cosmos-laundromat"
    },
    {
     title: "Agent 327: Operation Barbershop",
@@ -156,7 +157,8 @@ const CHANNELS = [
     frame: "https://archive.org/download/agent-327-operation-barbershop/agent-327-operation-barbershop.thumbs/Agent%20327%20Operation%20Barbershop_000119.jpg",
     subs: "Agent 327 Operation Barbershop.srt",
     bytes: 47545128,
-    node: "ia801408.us.archive.org/14/items/agent-327-operation-barbershop"
+    node: "ia601408.us.archive.org/14/items/agent-327-operation-barbershop",
+    node2: "ia801408.us.archive.org/14/items/agent-327-operation-barbershop"
    },
    {
     title: "Hero",
@@ -168,7 +170,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/hero_20260106",
     frame: "https://archive.org/download/hero_20260106/hero_20260106.thumbs/hero_000117.jpg",
     bytes: 53008532,
-    node: "ia600403.us.archive.org/5/items/hero_20260106"
+    node: "ia600403.us.archive.org/5/items/hero_20260106",
+    node2: "ia800403.us.archive.org/5/items/hero_20260106"
    },
    {
     title: "Spring",
@@ -204,7 +207,7 @@ const CHANNELS = [
     art: "https://archive.org/services/img/charge_202601",
     frame: "https://archive.org/download/charge_202601/charge_202601.thumbs/Charge_000118.jpg",
     bytes: 18811777,
-    node: "ia601604.us.archive.org/20/items/charge_202601"
+    node: "ia801604.us.archive.org/20/items/charge_202601"
    }
   ]
  },
@@ -1908,7 +1911,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/desert-of-blood-dvdrip/desert-of-blood-dvdrip.thumbs/Desert%20Of%20Blood%20dvdrip_002097.jpg",
     bytes: 507301045,
-    node: "ia600700.us.archive.org/8/items/desert-of-blood-dvdrip"
+    node: "ia600700.us.archive.org/8/items/desert-of-blood-dvdrip",
+    node2: "ia800700.us.archive.org/8/items/desert-of-blood-dvdrip"
    },
    {
     title: "A Bucket of Blood",
@@ -1994,7 +1998,8 @@ const CHANNELS = [
      "center",
      "better",
      "helmet"
-    ]
+    ],
+    node2: "ia801706.us.archive.org/12/items/phantom.-from.-space.-1953"
    },
    {
     title: "Devil Girl From Mars",
@@ -2140,7 +2145,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the.angry.red.planet.1959/the.angry.red.planet.1959.thumbs/The%20Angry%20Red%20Planet%20(1959)/mp4/the.angry.red.planet.1959_002039.jpg",
     bytes: 1105040945,
-    node: "ia601704.us.archive.org/13/items/the.angry.red.planet.1959"
+    node: "ia601704.us.archive.org/13/items/the.angry.red.planet.1959",
+    node2: "ia801704.us.archive.org/13/items/the.angry.red.planet.1959"
    },
    {
     title: "The Atomic Brain",
@@ -5688,7 +5694,8 @@ const CHANNELS = [
      "still",
      "chris",
      "trying"
-    ]
+    ],
+    node2: "ia800109.us.archive.org/21/items/DeadManDrinking"
    },
    {
     title: "01 East Side Kids",
@@ -10260,7 +10267,8 @@ const CHANNELS = [
     wpx: "Filibus is a 1915 Italian silent adventure film directed by Mario Roncoroni and written by the future science fiction author Giovanni Bertinetti. It features Valeria Creti as the title character, a mysterious sky pirate who makes daring heists with her technologically advanced airship. When an esteemed detective sets out on her trail, she begins an elaborate game of cat and mouse with him, slipping between various male and female…",
     dir: [
      "Mario Roncoroni"
-    ]
+    ],
+    node2: "ia800902.us.archive.org/34/items/filibus-1915"
    },
    {
     title: "Hearts in Exile",
@@ -11932,7 +11940,8 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
-    ]
+    ],
+    node2: "ia803106.us.archive.org/11/items/blind-husbands-1919"
    },
    {
     title: "Broken Blossoms",
@@ -11958,7 +11967,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    node2: "ia803108.us.archive.org/12/items/Broken.Blossoms"
    },
    {
     title: "Das Kabinett des Doktor Caligari ( The Cabinet of Dr. Caligari )",
@@ -13845,7 +13855,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/hamlet-the-drama-of-vengeance-1921/hamlet-the-drama-of-vengeance-1921.thumbs/Hamlet%20The%20Drama%20of%20Vengeance%20(1921)_002694.jpg",
     bytes: 675296290,
-    node: "ia601400.us.archive.org/22/items/hamlet-the-drama-of-vengeance-1921"
+    node: "ia601400.us.archive.org/22/items/hamlet-the-drama-of-vengeance-1921",
+    node2: "ia801400.us.archive.org/22/items/hamlet-the-drama-of-vengeance-1921"
    },
    {
     title: "Leaves From Satan's Book",
@@ -17166,7 +17177,8 @@ const CHANNELS = [
      "dagger",
      "paul",
      "bring"
-    ]
+    ],
+    node2: "ia800503.us.archive.org/34/items/the.-hands.-of.-orlac.-1924"
    },
    {
     title: "The Jew of Mestri",
@@ -19454,7 +19466,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/faust.-1926/faust.-1926.thumbs/Faust.1926_002580.jpg",
     bytes: 1575553010,
-    node: "ia601009.us.archive.org/32/items/faust.-1926"
+    node: "ia601009.us.archive.org/32/items/faust.-1926",
+    node2: "ia801009.us.archive.org/32/items/faust.-1926"
    },
    {
     title: "The Bat (1926) with soundtrack",
@@ -19527,7 +19540,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the.-magician.-1926.-dvdrip.-600-mb.h-264.-mp-4-zoetrope/the.-magician.-1926.-dvdrip.-600-mb.h-264.-mp-4-zoetrope.thumbs/The%20Magician%20(1926)_003894.jpg",
     bytes: 628047891,
-    node: "ia600908.us.archive.org/30/items/the.-magician.-1926.-dvdrip.-600-mb.h-264.-mp-4-zoetrope"
+    node: "ia600908.us.archive.org/30/items/the.-magician.-1926.-dvdrip.-600-mb.h-264.-mp-4-zoetrope",
+    node2: "ia800908.us.archive.org/30/items/the.-magician.-1926.-dvdrip.-600-mb.h-264.-mp-4-zoetrope"
    },
    {
     title: "\"The Beloved Rogue\" (1927) starring John Barrymore and Marceline Day",
@@ -20898,7 +20912,8 @@ const CHANNELS = [
     ],
     co: [
      "Gainsborough Pictures"
-    ]
+    ],
+    node2: "ia800606.us.archive.org/34/items/the.-lodger.-a.-story.-of.-the.-london.-fog.-1927"
    },
    {
     title: "The Love of Sunya",
@@ -22101,7 +22116,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/noahs.-ark.-1928/noahs.-ark.-1928.thumbs/Noahs%20Ark%20(1928)/Noahs.Ark.1928_002454.jpg",
     bytes: 709353548,
-    node: "ia600409.us.archive.org/19/items/noahs.-ark.-1928"
+    node: "ia600409.us.archive.org/19/items/noahs.-ark.-1928",
+    node2: "ia800409.us.archive.org/19/items/noahs.-ark.-1928"
    },
    {
     title: "Nuori luotsi",
@@ -22449,7 +22465,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    node2: "ia802804.us.archive.org/11/items/the-cossacks_1928"
    },
    {
     title: "The Crowd",
@@ -22730,7 +22747,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    node2: "ia800700.us.archive.org/9/items/the-mysterious-lady-1928"
    },
    {
     title: "The Pace That Kills",
@@ -26933,7 +26951,8 @@ const CHANNELS = [
      "forward",
      "much",
      "leave"
-    ]
+    ],
+    node2: "ia800107.us.archive.org/1/items/all.-quiet.-on.-the.-western.-front.-1930"
    },
    {
     title: "Animal Crackers",
@@ -26959,7 +26978,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    node2: "ia801701.us.archive.org/35/items/animal-crackers_1930"
    },
    {
     title: "Anna Christie",
@@ -26985,7 +27005,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    node2: "ia801709.us.archive.org/9/items/anna-christie_1930"
    },
    {
     title: "Behind the Make-Up",
@@ -27008,7 +27029,8 @@ const CHANNELS = [
      "Hal Skelly",
      "William Powell",
      "Fay Wray"
-    ]
+    ],
+    node2: "ia801709.us.archive.org/19/items/behind-the-makeup_1930"
    },
    {
     title: "Billy the Kid",
@@ -27763,7 +27785,8 @@ const CHANNELS = [
     ],
     co: [
      "Columbia Pictures"
-    ]
+    ],
+    node2: "ia801506.us.archive.org/20/items/ladies-of-leisure_1930"
    },
    {
     title: "Le Sang d'un Poète ☆ Jean Cocteau ☆ 1930",
@@ -27918,7 +27941,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    node2: "ia801007.us.archive.org/13/items/min-and-bill_1930"
    },
    {
     title: "Montana Moon",
@@ -27945,7 +27969,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    node2: "ia801708.us.archive.org/26/items/montana-moon_1930"
    },
    {
     title: "Monte Carlo",
@@ -27995,7 +28020,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/murder-for-sale_1930/murder-for-sale_1930.thumbs/murder-for-sale_1930_002280.jpg",
     bytes: 3628569642,
-    node: "ia601707.us.archive.org/27/items/murder-for-sale_1930"
+    node: "ia601707.us.archive.org/27/items/murder-for-sale_1930",
+    node2: "ia801707.us.archive.org/27/items/murder-for-sale_1930"
    },
    {
     title: "Murder!",
@@ -28143,7 +28169,8 @@ const CHANNELS = [
     ],
     co: [
      "Sovkino"
-    ]
+    ],
+    node2: "ia801703.us.archive.org/19/items/old-and-new_1930"
    },
    {
     title: "One Romantic Night",
@@ -28338,7 +28365,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/passion-flower_1930/passion-flower_1930.thumbs/passion-flower_1930_001918.jpg",
     bytes: 1494674058,
-    node: "ia601009.us.archive.org/4/items/passion-flower_1930"
+    node: "ia601009.us.archive.org/4/items/passion-flower_1930",
+    node2: "ia801009.us.archive.org/4/items/passion-flower_1930"
    },
    {
     title: "Peacock Alley 1930 Mae Murray, George Barraud, George Barraud, Richard",
@@ -28414,7 +28442,8 @@ const CHANNELS = [
     ],
     cast: [
      "Maurice Chevalier"
-    ]
+    ],
+    node2: "ia802802.us.archive.org/8/items/playboy-of-paris_1930"
    },
    {
     title: "Playing Around",
@@ -28441,7 +28470,8 @@ const CHANNELS = [
     co: [
      "First National Pictures",
      "Warner Bros. Entertainment"
-    ]
+    ],
+    node2: "ia801707.us.archive.org/23/items/playing-around_1930"
    },
    {
     title: "Prividenie, kotoroe ne vozvrashchaetsya",
@@ -28572,7 +28602,8 @@ const CHANNELS = [
      "John Halliday",
      "Belle Bennett",
      "Dorothy Burgess"
-    ]
+    ],
+    node2: "ia801007.us.archive.org/22/items/recaptured-love_1930"
    },
    {
     title: "Redemption",
@@ -28634,7 +28665,8 @@ const CHANNELS = [
      "Charles Bickford",
      "Evalyn Knapp",
      "J. Farrell MacDonald"
-    ]
+    ],
+    node2: "ia801403.us.archive.org/1/items/rivers-end_1930"
    },
    {
     title: "Road to Dishonour",
@@ -28681,7 +28713,8 @@ const CHANNELS = [
      "Lilian Harvey",
      "Henri Garat",
      "René Lefèvre"
-    ]
+    ],
+    node2: "ia800406.us.archive.org/0/items/road-to-paradise_1930"
    },
    {
     title: "Roadhouse Nights",
@@ -28728,7 +28761,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/romance_1930/romance_1930.thumbs/romance_1930_001856.jpg",
     bytes: 1811747843,
-    node: "ia600609.us.archive.org/0/items/romance_1930"
+    node: "ia600609.us.archive.org/0/items/romance_1930",
+    node2: "ia800609.us.archive.org/0/items/romance_1930"
    },
    {
     title: "Sarah and Son",
@@ -28939,7 +28973,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    node2: "ia801700.us.archive.org/22/items/the.big.house.1930"
    },
    {
     title: "The Big Trail",
@@ -28966,7 +29001,8 @@ const CHANNELS = [
     ],
     co: [
      "20th Century Studios"
-    ]
+    ],
+    node2: "ia801706.us.archive.org/17/items/the-big-trail_1930"
    },
    {
     title: "The Black Hand Gang",
@@ -29063,7 +29099,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    node2: "ia801700.us.archive.org/23/items/the-divorcee_1930"
    },
    {
     title: "The Doorway to Hell",
@@ -29294,7 +29331,8 @@ const CHANNELS = [
     ],
     cast: [
      "Jack Oakie"
-    ]
+    ],
+    node2: "ia801003.us.archive.org/25/items/the-sap-from-syracuse_1930"
    },
    {
     title: "The Sea Bat",
@@ -29321,7 +29359,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    node2: "ia801707.us.archive.org/17/items/the-sea-bat_1930"
    },
    {
     title: "The Silver Horde",
@@ -29392,7 +29431,8 @@ const CHANNELS = [
     ],
     cast: [
      "Joe E. Brown"
-    ]
+    ],
+    node2: "ia801703.us.archive.org/1/items/top-speed_1930"
    },
    {
     title: "True to the Navy",
@@ -29416,7 +29456,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    node2: "ia800802.us.archive.org/28/items/true-to-the-navy_1930"
    },
    {
     title: "Under Montana Skies 1930 Kenneth Harlan, Slim Summerville, Dorothy Gul",
@@ -29493,7 +29534,8 @@ const CHANNELS = [
      "Spencer Tracy",
      "Claire Luce",
      "Warren Hymer"
-    ]
+    ],
+    node2: "ia801001.us.archive.org/12/items/up-the-river_1930"
    },
    {
     title: "Walk Cheerfully",
@@ -29543,7 +29585,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    node2: "ia800706.us.archive.org/26/items/way-out-west_1930"
    },
    {
     title: "Westfront 1918",
@@ -29566,7 +29609,8 @@ const CHANNELS = [
      "Fritz Kampers",
      "Gustav Diessl",
      "Hans Joachim Moebis"
-    ]
+    ],
+    node2: "ia800100.us.archive.org/18/items/westfront.-1918.1930.de.subs.-720p"
    },
    {
     title: "Westfront 1918 (1930) (ENG sub)",
@@ -29657,7 +29701,8 @@ const CHANNELS = [
     ],
     co: [
      "First National Pictures"
-    ]
+    ],
+    node2: "ia801405.us.archive.org/12/items/why-be-good_1930"
    },
    {
     title: "Wide Open",
@@ -29738,7 +29783,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    node2: "ia801706.us.archive.org/11/items/young-man-of-manhattan_1930"
    },
    {
     title: "Zwei Krawatten",
@@ -32632,7 +32678,8 @@ const CHANNELS = [
      "Harold Lloyd",
      "Mildred Davis",
      "Robert Emmett O'Connor"
-    ]
+    ],
+    node2: "ia801505.us.archive.org/33/items/Never_Weaken_1921"
    },
    {
     title: "The Adventures of Sherlock Holmes - The Devil's Foot",
@@ -37621,7 +37668,8 @@ const CHANNELS = [
      "Alan Roscoe",
      "Preston Foster",
      "George E. Stone"
-    ]
+    ],
+    node2: "ia800704.us.archive.org/32/items/TheLastMile"
    },
    {
     title: "Judge Priest",

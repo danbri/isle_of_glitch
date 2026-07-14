@@ -185,9 +185,17 @@ const storeBackend = {
   }
 };
 
-/* ── prefetch protocol: page posts {type:'prefetch', urls:[{key,via}|string]} ── */
+/* ── prefetch protocol: page posts {type:'prefetch', urls:[{key,via}|string]} ──
+ * Messages may also piggyback {mirrorPrefix} — the prefix-mirror base URL
+ * (docs/cloudflare/) — so a restarted SW re-learns it from the page's
+ * regular prefetch traffic without any persistent config store. */
+
+let MIRROR_PREFIX_BASE = "";
 
 self.addEventListener("message", (e) => {
+  if (e.data && typeof e.data.mirrorPrefix === "string") {
+    MIRROR_PREFIX_BASE = e.data.mirrorPrefix;
+  }
   if (e.data && e.data.type === "prefetch" && Array.isArray(e.data.urls)) {
     e.waitUntil(prefetchAll(e.data.urls));
   }
@@ -323,7 +331,14 @@ self.addEventListener("fetch", (e) => {
 async function serveRange(req, start, endWanted) {
   try {
     const key = canon(req.url);
-    if (!(await knownKeys()).has(key)) return fetch(req);   // cheap miss: no storage I/O
+    if (!(await knownKeys()).has(key)) {
+      // total cache miss on a stream's very first bytes: race the datanode
+      // against the prefix mirror's edge (when one is configured)
+      if (start === 0 && MIRROR_PREFIX_BASE && key.startsWith("https://archive.org/download/")) {
+        return raceColdStart(req, key);
+      }
+      return fetch(req);                    // cheap miss: no storage I/O
+    }
     let hit = bufMemo.get(key);
     if (!hit) {
       hit = await storeBackend.match(key);
@@ -349,4 +364,80 @@ async function serveRange(req, start, endWanted) {
     }
   } catch {}
   return fetch(req);
+}
+
+/* ── cold-start race ──
+ * The worst channel-flips are the unprefetched ones: the video element
+ * asks for bytes=0- and everything waits on one datanode's first byte
+ * (measured 0.4–3.6s, occasionally worse). When a prefix mirror is
+ * configured, race it: whichever of (datanode passthrough | mirror
+ * prefix) produces a usable response first is what plays. The mirror
+ * response streams straight through as a synthesized 206 — its
+ * x-amz-meta-total header supplies the full-file size for Content-Range,
+ * and without that header the mirror forfeits (a wrong total would
+ * corrupt the element's duration). Either way the loser is put to work:
+ * a winning mirror body is teed into the prefix cache for next time; a
+ * winning datanode just means the mirror fetch is dropped. */
+
+async function raceColdStart(req, key) {
+  const suffix = key.slice("https://archive.org/download/".length);
+  const netCtl = new AbortController();
+  const mirCtl = new AbortController();
+
+  const net = fetch(req, { signal: netCtl.signal }).then((r) => {
+    if (r.status !== 206 && r.status !== 200) throw new Error("net " + r.status);
+    return { kind: "net", r };
+  });
+
+  const mir = (async () => {
+    const r = await fetch(MIRROR_PREFIX_BASE + suffix, { signal: mirCtl.signal });
+    if (!r.ok || !r.body) throw new Error("mirror " + r.status);
+    const total = parseInt(r.headers.get("x-amz-meta-total") || "0", 10);
+    const len = parseInt(r.headers.get("content-length") || "0", 10);
+    if (!total || !len || total < len) throw new Error("mirror lacks total");
+    return { kind: "mirror", r, total, len };
+  })();
+
+  let winner;
+  try {
+    winner = await Promise.any([net, mir]);
+  } catch {
+    return fetch(req);           // both lanes failed — plain passthrough retry
+  }
+
+  if (winner.kind === "net") {
+    mirCtl.abort();
+    mir.catch(() => {});         // silence the aborted lane's rejection
+    return winner.r;
+  }
+
+  netCtl.abort();
+  net.catch(() => {});           // silence the aborted lane's rejection
+  const { r, total, len } = winner;
+  const [body, stash] = r.body.tee();
+  // bank the prefix for next time, without holding up the response
+  (async () => {
+    try {
+      const buf = await new Response(stash).arrayBuffer();
+      if (buf.byteLength) {
+        await storeBackend.put(key, buf, {
+          type: r.headers.get("content-type") || "video/mp4",
+          total,
+          at: Date.now()
+        });
+        (await knownKeys()).add(key);
+        await storeBackend.prune();
+        knownKeysPromise = null;
+      }
+    } catch {}
+  })();
+  return new Response(body, {
+    status: 206,
+    headers: {
+      "content-type": r.headers.get("content-type") || "video/mp4",
+      "content-range": `bytes 0-${len - 1}/${total}`,
+      "content-length": String(len),
+      "accept-ranges": "bytes"
+    }
+  });
 }
