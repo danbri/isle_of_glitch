@@ -58,6 +58,43 @@ async function keyHash(key) {
   return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
 }
 
+/* The player may request media straight from a datanode
+ * (https://dn123456.us.archive.org/0/items/{id}/{file}) to skip the
+ * /download/ 302; the cache is keyed by the canonical /download/ URL,
+ * so normalize before any lookup. */
+const canon = (u) => u.replace(/^https:\/\/[a-z]+\d+\.us\.archive\.org\/\d+\/items\//, "https://archive.org/download/");
+
+/* In-memory index of cached keys: lets the fetch handler answer misses
+ * (the overwhelmingly common case) without touching OPFS or the Cache
+ * API at all. Rebuilt lazily per SW lifetime; kept in sync by put/remove;
+ * dropped wholesale after prune/nuke. */
+let knownKeysPromise = null;
+function knownKeys() {
+  if (!knownKeysPromise) knownKeysPromise = (async () => {
+    const keys = new Set();
+    try {
+      const dir = await opfs();
+      if (dir) {
+        for await (const [name, handle] of dir.entries()) {
+          if (!name.endsWith(".json") || name === ".probe") continue;
+          try { keys.add(JSON.parse(await (await handle.getFile()).text()).key); } catch {}
+        }
+      }
+    } catch {}
+    try { for (const r of await (await caches.open(CACHE)).keys()) keys.add(r.url); } catch {}
+    return keys;
+  })();
+  return knownKeysPromise;
+}
+
+/* tiny hot-buffer memo so scrubbing a cached prefix doesn't re-read the
+ * whole ~1.5MB from OPFS on every seek */
+const bufMemo = new Map();
+function memoPut(key, hit) {
+  bufMemo.set(key, hit);
+  if (bufMemo.size > 4) bufMemo.delete(bufMemo.keys().next().value);
+}
+
 const storeBackend = {
   async put(key, buf, meta) {
     const dir = await opfs();
@@ -155,9 +192,16 @@ self.addEventListener("message", (e) => {
     e.waitUntil(prefetchAll(e.data.urls));
   }
   if (e.data && e.data.type === "evict" && e.data.key) {
-    e.waitUntil(storeBackend.remove(e.data.key));
+    const key = canon(e.data.key);
+    bufMemo.delete(key);
+    e.waitUntil((async () => {
+      await storeBackend.remove(key);
+      try { (await knownKeys()).delete(key); } catch {}
+    })());
   }
   if (e.data && e.data.type === "nuke") {
+    bufMemo.clear();
+    knownKeysPromise = null;
     e.waitUntil((async () => {
       try { await caches.delete(CACHE); } catch {}
       try { await caches.delete(ART_CACHE); } catch {}
@@ -244,7 +288,9 @@ async function prefetchAll(entries) {
         total,
         at: Date.now()
       });
+      (await knownKeys()).add(key);
       await storeBackend.prune();
+      knownKeysPromise = null;   // prune may have dropped entries — relist lazily
     } catch {}
   }
 }
@@ -266,7 +312,13 @@ self.addEventListener("fetch", (e) => {
 
 async function serveRange(req, start, endWanted) {
   try {
-    const hit = await storeBackend.match(req.url);
+    const key = canon(req.url);
+    if (!(await knownKeys()).has(key)) return fetch(req);   // cheap miss: no storage I/O
+    let hit = bufMemo.get(key);
+    if (!hit) {
+      hit = await storeBackend.match(key);
+      if (hit) memoPut(key, hit);
+    }
     if (hit) {
       const { buf, total } = hit;
       const cachedEnd = buf.byteLength - 1;
