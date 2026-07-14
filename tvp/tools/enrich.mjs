@@ -75,6 +75,13 @@ for (const ch of CHANNELS) {
     const f = j.files.find((f) => f.name === srcName);
     if (f?.size) p.bytes = parseInt(f.size, 10);
 
+    // datanode: archive.org /download/ 302-redirects every request to a
+    // datanode, and browsers don't cache 302s — so each cold tune and each
+    // mid-file range request re-pays ~1s of frontend latency. The metadata
+    // API names the node; the player composes a direct URL and falls back
+    // to /download/ if the item has since migrated.
+    if (j.server && j.dir) p.node = j.server + j.dir;
+
     if (n % 25 === 0) console.log(`  ${n}/${total} … frames=${frames} subs=${subs}`);
   }
 }
