@@ -81,6 +81,9 @@ for (const ch of CHANNELS) {
     // API names the node; the player composes a direct URL and falls back
     // to /download/ if the item has since migrated.
     if (j.server && j.dir) p.node = j.server + j.dir;
+    // second replica (~5% of items carry one): the player's error ladder
+    // falls back node → node2 → /download/ when a datanode goes stale
+    if (j.d2 && j.dir && j.d2 !== j.server) p.node2 = j.d2 + j.dir;
 
     if (n % 25 === 0) console.log(`  ${n}/${total} … frames=${frames} subs=${subs}`);
   }

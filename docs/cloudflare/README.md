@@ -58,13 +58,16 @@ playback.
        "AllowedOrigins": ["https://danbri.github.io"],
        "AllowedMethods": ["GET", "HEAD"],
        "AllowedHeaders": ["Range"],
+       "ExposeHeaders": ["x-amz-meta-total"],
        "MaxAgeSeconds": 86400
      }
    ]
    ```
 
    (Add `http://localhost:8471` etc. to `AllowedOrigins` if you test
-   locally.)
+   locally. `ExposeHeaders` matters: each object carries the stream's
+   full byte size as metadata, and the cold-start race below only trusts
+   a mirror response that can prove that size.)
 
 4. **Create an API token for the sync script.** R2 → *Manage R2 API
    tokens* → *Create API token* → permission **Object Read & Write**,
@@ -114,12 +117,29 @@ Verify it's working: DevTools → Network, flip a channel or two, and watch
 prefix warms hit your bucket's hostname (fast, small) while the `<video>`
 element itself streams from `*.us.archive.org`.
 
+## The cold-start race
+
+With a mirror configured the player does more than warm its cache from
+it. When a stream nobody prefetched starts playing — the worst case, one
+datanode's first byte away from picture — the service worker **races**
+the datanode against the mirror for the opening bytes and plays whichever
+answers first. A winning mirror response streams through immediately
+(and is banked for next time); a winning datanode means the mirror fetch
+is simply dropped. Losing lanes are aborted, so nothing is downloaded
+twice. This is why the sync script stamps `x-amz-meta-total` on every
+object: a synthesized partial response must state the file's true size,
+and a mirror object that can't prove it forfeits the race rather than
+risk corrupting the player's idea of a film's duration.
+
 ## Notes
 
-- **This never changes what plays** — only where the *cached opening
+- **This never changes what plays** — only where the *opening
   seconds* come from. Playback, seeking, and everything past ~10s always
   come from archive.org, and the player works exactly as before if the
   bucket is missing, empty, or stale.
+- Objects uploaded by an earlier version of the sync script (before
+  `x-amz-meta-total`) still warm the cache fine but sit out the race;
+  one `--force` re-sync upgrades them.
 - The prefix size formula in the script mirrors `prefixCap()` in
   `tvp/app/js/app.js` — if one changes, change the other.
 - Removed programs leave orphan objects behind (a few MB); add an R2

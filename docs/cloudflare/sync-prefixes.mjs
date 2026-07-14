@@ -86,27 +86,36 @@ const hmac = (k, s) => createHmac("sha256", k).update(s).digest();
 const encSeg = (s) => encodeURIComponent(s).replace(/[!'()*]/g, (c) => "%" + c.charCodeAt(0).toString(16).toUpperCase());
 const encKey = (key) => key.split("/").map(encSeg).join("/");
 
-function signedHeaders(method, key, extraHeaders = {}) {
+/* `amz` holds extra x-amz-* headers (they MUST be signed per SigV4 —
+ * e.g. x-amz-meta-total, the full-file size the player's service worker
+ * reads to synthesize Content-Range when racing the mirror against a
+ * datanode). `unsigned` holds ordinary headers (Content-Type etc.),
+ * which S3 permits outside the signature. */
+function signedHeaders(method, key, unsigned = {}, amz = {}) {
   const now = new Date();
   const amzDate = now.toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
   const date = amzDate.slice(0, 8);
   const uri = `/${BUCKET}/${encKey(key)}`;
   const payload = "UNSIGNED-PAYLOAD";
-  const canonicalHeaders =
-    `host:${HOST}\n` +
-    `x-amz-content-sha256:${payload}\n` +
-    `x-amz-date:${amzDate}\n`;
-  const signedList = "host;x-amz-content-sha256;x-amz-date";
+  const toSign = {
+    host: HOST,
+    "x-amz-content-sha256": payload,
+    "x-amz-date": amzDate,
+    ...Object.fromEntries(Object.entries(amz).map(([k, v]) => [k.toLowerCase(), String(v).trim()]))
+  };
+  const names = Object.keys(toSign).sort();
+  const canonicalHeaders = names.map((n) => `${n}:${toSign[n]}\n`).join("");
+  const signedList = names.join(";");
   const canonicalRequest = [method, uri, "", canonicalHeaders, signedList, payload].join("\n");
   const scope = `${date}/auto/s3/aws4_request`;
   const stringToSign = ["AWS4-HMAC-SHA256", amzDate, scope, sha256hex(canonicalRequest)].join("\n");
   let k = hmac("AWS4" + SECRET, date);
   k = hmac(k, "auto"); k = hmac(k, "s3"); k = hmac(k, "aws4_request");
   const signature = createHmac("sha256", k).update(stringToSign).digest("hex");
+  const { host, ...requestHeaders } = toSign;
   return {
-    ...extraHeaders,
-    "x-amz-date": amzDate,
-    "x-amz-content-sha256": payload,
+    ...unsigned,
+    ...requestHeaders,
     "Authorization": `AWS4-HMAC-SHA256 Credential=${KEY_ID}/${scope}, SignedHeaders=${signedList}, Signature=${signature}`
   };
 }
@@ -120,13 +129,14 @@ async function r2head(key) {
   return parseInt(r.headers.get("content-length") || "0", 10);
 }
 
-async function r2put(key, body) {
+async function r2put(key, body, totalBytes) {
+  const amz = totalBytes ? { "x-amz-meta-total": totalBytes } : {};
   const r = await fetch(r2url(key), {
     method: "PUT",
     headers: signedHeaders("PUT", key, {
       "Content-Type": "video/mp4",
       "Cache-Control": "public, max-age=604800"
-    }),
+    }, amz),
     body
   });
   if (!r.ok) throw new Error(`PUT ${key}: ${r.status} ${(await r.text()).slice(0, 200)}`);
@@ -189,7 +199,7 @@ async function worker() {
         else {
           const buf = await fetchPrefix(j.p, j.suffix, j.cap);
           if (!buf || !buf.length) throw new Error("no bytes from archive.org");
-          await r2put(j.key, buf);
+          await r2put(j.key, buf, j.p.bytes || 0);
           uploaded++; sentBytes += buf.length;
         }
       }
