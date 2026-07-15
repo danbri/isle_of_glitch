@@ -782,6 +782,14 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/tss32236",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/TheyMadeMeAKiller",
   "@type": "Movie",
   "contentWarning": {
@@ -1935,14 +1943,6 @@ const WATCH_BUDDY_GENERATED = [
  },
  {
   "@id": "https://archive.org/details/silent-the-epic-of-everest",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/the.-hands.-of.-orlac.-1924",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -6286,14 +6286,6 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
-  "@id": "https://archive.org/details/tss32236",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
   "@id": "https://archive.org/details/railroaded1947_202003",
   "@type": "Movie",
   "contentWarning": {
@@ -6543,6 +6535,14 @@ const WATCH_BUDDY_GENERATED = [
  },
  {
   "@id": "https://archive.org/details/WerewolfInAGirlsDormitory1962",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/y-2-mate.is-espiritismo-h-5yvs-usm-kj-8-1080p-1629307352975",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -6839,14 +6839,6 @@ const WATCH_BUDDY_GENERATED = [
  },
  {
   "@id": "https://archive.org/details/SpecialAgent",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/stray-dog",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",

@@ -1661,6 +1661,10 @@ function pinWidget(sec, pos) {
   setPinButtonState(sec);
   savePins();
   updateTray();
+  /* the treemap only builds when its box is visible — a widget pinned
+     before the dock was ever opened (incl. boot-time pin restore) would
+     otherwise stay empty forever */
+  if (sec.id === "w-subjects") requestAnimationFrame(buildSubjectsTree);
 }
 
 function unpinWidget(sec) {
@@ -1717,6 +1721,8 @@ function updateTray() {
     b.addEventListener("click", (e) => {
       e.stopPropagation();
       sec.classList.toggle("stowed");
+      if (sec.id === "w-subjects" && !sec.classList.contains("stowed"))
+        requestAnimationFrame(buildSubjectsTree);   // freshly unstowed box may never have built
       updateTray();
     });
     tray.appendChild(b);
