@@ -1953,19 +1953,21 @@ function initCastLater() {
           // Cast hardware can't decode MPEG-4 Part 2 (audio-over-black):
           // prefer the baked h.264 derivative; cast:0 = no compatible encode
           const url = (typeof p.castSrc === "string" && p.castSrc) || canonSrc(fastSrc(p));
-          if (p.castSrc === 0) toast("This program has no Cast-ready encode — the TV may play audio only");
+          if (p.castSrc === 0) toast("No TV-ready encode for this program — sound only on the TV. Zap to cast something else.");
           return {
             url,
-            title: `${p.title}${p.year ? " (" + p.year + ")" : ""} — ${ch.name}`,
+            title: `${p.title}${p.year ? " (" + p.year + ")" : ""} — ${ch.name}` +
+              (p.castSrc === 0 ? " · audio-only encode" : ""),
             art: artUrl(p.frame || p.art || ch.art),
             offset: i.live ? i.offset : (video.currentTime || 0)
           };
         },
         onCastStart: (name) => {
           state.casting = true;
+          state.castDevice = `Casting to ${name}`;
           video.pause();
           document.body.classList.add("casting");
-          $("cast-badge-name").textContent = `Casting to ${name}`;
+          $("cast-badge-name").textContent = state.castDevice;
           $("cast-badge").classList.remove("hidden");
           $("btn-cast").classList.add("lit");
           updateCastMini();
@@ -1995,7 +1997,16 @@ function initCastLater() {
   }, 6000);   // well after boot: cast discovery is never on the critical path
 }
 
-$("btn-cast").addEventListener("click", () => { castApi?.prompt(); });
+$("btn-cast").addEventListener("click", () => {
+  // the picker is Google's UI: with the Default Media Receiver every
+  // speaker on the network is listed too. Filtering to video devices
+  // needs a registered receiver app — explain once, not every time.
+  if (castApi?.kind === "chromecast" && !store.get("castNoteShown") && !localStorage.getItem("tvp.castAppId")) {
+    chatPush(null, "cast: speakers appear in the device list because the stock Google receiver supports them — docs/chromecast.md covers registering a video-only receiver id (tvp.castAppId)", "sys");
+    store.set("castNoteShown", 1);
+  }
+  castApi?.prompt();
+});
 
 /* the casting mini player: art + title of what's on the TV, remote
    controls, fading with inactivity like a well-behaved remote */
@@ -2004,7 +2015,14 @@ function updateCastMini() {
   const i = currentProgramInfo(), ch = currentChannel();
   $("cast-mini-art").src = artUrl(i.program.frame || i.program.art || ch.art) || "";
   $("cast-mini-title").textContent = i.program.title;
-  $("cast-mini-sub").textContent = `${String(ch.num).padStart(2, "0")} · ${ch.name}`;
+  // ~27% of the dial (mostly the older items) has no h.264 encode at all —
+  // the TV gets sound over black. Keep that state visible, not a one-shot
+  // toast: it reads as "Chromecast is broken" otherwise.
+  const audioOnly = i.program.castSrc === 0;
+  $("cast-mini-sub").textContent =
+    `${String(ch.num).padStart(2, "0")} · ${ch.name}` + (audioOnly ? " · 🔇 audio-only on TV" : "");
+  $("cast-badge-name").textContent =
+    (state.castDevice || "Casting") + (audioOnly ? " · audio-only encode" : "");
 }
 let castMiniTimer;
 function castMiniActivity() {
