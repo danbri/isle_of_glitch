@@ -1020,3 +1020,29 @@ body.casting #stage video { opacity: .25; }
   color: #0b0b10; background: rgba(255,255,255,.92); border: none;
 }
 #toast-undo:hover { background: var(--accent); color: #fff; }
+
+/* ── casting mini player: the remote in the corner ── */
+#cast-mini {
+  position: fixed; right: 12px; bottom: max(14px, env(safe-area-inset-bottom));
+  z-index: 39; display: flex; align-items: center; gap: 10px;
+  max-width: min(86vw, 360px);
+  padding: 10px 12px; border-radius: 14px;
+  background: rgba(10,10,14,.72); border: 1px solid rgba(255,255,255,.28);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  opacity: .25; transition: opacity .45s ease;
+  font-family: var(--font);
+}
+#cast-mini.active { opacity: 1; }
+#cast-mini.hidden { display: none; }
+#cast-mini img { width: 64px; height: 36px; object-fit: cover; border-radius: 6px; background: #111; flex: 0 0 auto; }
+#cast-mini-text { min-width: 0; }
+#cast-mini-title { font-size: 13px; font-weight: bold; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#cast-mini-sub { font-size: 11.5px; color: rgba(255,255,255,.65); }
+#cast-mini-ctl { display: flex; gap: 6px; flex: 0 0 auto; }
+#cast-mini-ctl button {
+  width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+  color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.3);
+  display: grid; place-items: center; padding: 0;
+}
+#cast-mini-ctl button svg { width: 18px; height: 18px; }
+#cast-mini-ctl button:hover { border-color: var(--accent); color: var(--accent); }
