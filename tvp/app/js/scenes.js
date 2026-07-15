@@ -231,17 +231,38 @@ export function launchScenes(bridge, startId) {
   ui.innerHTML = `
     <div id="venue-bug"></div>
     <button id="venue-exit" title="Back to 2D (x)">✕</button>
-    <div id="venue-chips"></div>
+    <div id="venue-pick" title="swipe to change venue">
+      <div id="vp-label"><span id="vp-emoji"></span><span id="vp-name"></span></div>
+      <div id="vp-dots"></div>
+    </div>
     <button id="venue-vr" class="hidden">Enter VR</button>`;
   mount.appendChild(ui);
-  const chips = ui.querySelector("#venue-chips");
+  const dots = ui.querySelector("#vp-dots");
   SCENE_DEFS.forEach((d) => {
     const b = document.createElement("button");
-    b.className = "venue-chip";
+    b.className = "vp-dot";
     b.dataset.id = d.id;
-    b.innerHTML = `<span>${d.emoji}</span>${d.name}`;
-    b.addEventListener("click", () => setScene(d.id));
-    chips.appendChild(b);
+    b.title = d.name;
+    dots.appendChild(b);
+  });
+  // swipe the pill like a carousel; tap a dot to jump; a plain tap nudges
+  // to the next venue. Pointer capture retargets pointerup, so every
+  // decision comes from what the POINTERDOWN landed on.
+  const pick = ui.querySelector("#venue-pick");
+  let swipeX = null, swipeT = null;
+  pick.addEventListener("pointerdown", (e) => {
+    swipeX = e.clientX;
+    swipeT = e.target;
+    pick.setPointerCapture(e.pointerId);
+  });
+  pick.addEventListener("pointerup", (e) => {
+    if (swipeX === null) return;
+    const dx = e.clientX - swipeX;
+    const t = swipeT;
+    swipeX = null; swipeT = null;
+    if (Math.abs(dx) > 36) stepScene(dx < 0 ? 1 : -1);
+    else if (t?.classList?.contains("vp-dot")) setScene(t.dataset.id);
+    else stepScene(1);
   });
   ui.querySelector("#venue-exit").addEventListener("click", exit);
 
@@ -253,11 +274,12 @@ export function launchScenes(bridge, startId) {
       try {
         if (renderer.xr.getSession()) { renderer.xr.getSession().end(); return; }
         const s = await navigator.xr.requestSession("immersive-vr", { optionalFeatures: ["local-floor"] });
-        s.addEventListener("end", () => { vb.textContent = "Enter VR"; dolly.position.y = 0; xrScreen(false); });
+        s.addEventListener("end", () => { vb.textContent = "Enter VR"; dolly.position.y = 0; xrScreen(false); applyExposure(); });
         await renderer.xr.setSession(s);
         dolly.position.y = Math.max(0, rigY - 1.6);
         vb.textContent = "Exit VR";
         xrScreen(true);
+        applyExposure();
       } catch {}
     });
   }).catch(() => {});
@@ -420,9 +442,14 @@ export function launchScenes(bridge, startId) {
   }
 
   /* ── venue lifecycle ── */
-  let world = null, scene = null, rigY = 1.6;
+  let world = null, scene = null, rigY = 1.6, currentDef = null;
+  function applyExposure() {
+    // headsets meter their own light; the flat screen gets each venue's ask
+    renderer.toneMappingExposure = renderer.xr.isPresenting ? 1.28 : (currentDef?.exposure ?? 1.28);
+  }
   function setScene(id) {
     const def = SCENE_DEFS.find((d) => d.id === id) || SCENE_DEFS[0];
+    currentDef = def;
     if (scene) scene.clear();
     scene = new THREE.Scene();
     world = def.build(ctx, scene);
@@ -442,9 +469,20 @@ export function launchScenes(bridge, startId) {
     yaw = world.rig.yaw || 0; pitch = world.rig.pitch || 0; dist = 0;
     if (world.screenLight) world.screenLight.userData.base = world.screenLight.intensity;
     if (renderer.xr.isPresenting) xrScreen(true);
-    chips.querySelectorAll(".venue-chip").forEach((c) =>
+    applyExposure();
+    ui.querySelectorAll(".vp-dot").forEach((c) =>
       c.classList.toggle("on", c.dataset.id === def.id));
+    const lbl = ui.querySelector("#vp-label");
+    ui.querySelector("#vp-emoji").textContent = def.emoji;
+    ui.querySelector("#vp-name").textContent = def.name;
+    lbl.classList.remove("vp-anim");
+    void lbl.offsetWidth;                        // restart the slide/fade
+    lbl.classList.add("vp-anim");
     try { localStorage.setItem("tvp.venue", JSON.stringify(def.id)); } catch {}
+  }
+  function stepScene(d) {
+    const i = SCENE_DEFS.findIndex((x) => x === currentDef);
+    setScene(SCENE_DEFS[((i + d) % SCENE_DEFS.length + SCENE_DEFS.length) % SCENE_DEFS.length].id);
   }
 
   const bug = ui.querySelector("#venue-bug");
@@ -483,6 +521,7 @@ export function launchScenes(bridge, startId) {
       camera.position.set(0, rigY, dist);
     }
     camera.updateMatrixWorld();
+    camera.matrixWorldInverse.copy(camera.matrixWorld).invert();   // no one-frame lag on the pinned video
     // frame-tone drives the world: screen glow light, air volumes, rim
     const c = tone.current, f = tone.flicker, energy = 0.45 + tone.lum * 0.9;
     if (world.screenLight) {
@@ -510,6 +549,7 @@ export function launchScenes(bridge, startId) {
       if (xrMat) { xrMat.map?.dispose?.(); xrMat.dispose?.(); xrMat = null; }
     }
     syncDomScreen();
+    ui.querySelector("#venue-pick").classList.toggle("min", performance.now() - lastActivity > 5000);
     refreshBug(performance.now());
     try {
       renderer.render(scene, camera);
@@ -586,7 +626,7 @@ export function launchScenes(bridge, startId) {
 
 /* 🚗 Starlite Drive-In */
 SCENE_DEFS.push({
-  id: "starlite", name: "Starlite Drive-In", emoji: "🚗", sky: 0x05060d,
+  id: "starlite", name: "Starlite Drive-In", emoji: "🚗", sky: 0x05060d, exposure: 1.62,
   build({ THREE, canvasTex, stars, screenAssembly, beamFrustum }, scene) {
     const g = new THREE.Group();
     scene.fog = new THREE.Fog(0x05060d, 30, 160);
@@ -828,7 +868,7 @@ SCENE_DEFS.push({
 
 /* 🎭 The Bijou */
 SCENE_DEFS.push({
-  id: "bijou", name: "The Bijou", emoji: "🎭", sky: 0x0c0705,
+  id: "bijou", name: "The Bijou", emoji: "🎭", sky: 0x0c0705, exposure: 1.55,
   build({ THREE, motes, screenAssembly, beamFrustum }, scene) {
     const g = new THREE.Group();
     scene.fog = new THREE.Fog(0x0c0705, 18, 60);
@@ -1153,17 +1193,26 @@ SCENE_DEFS.push({
     frame.position.set(-6.98, 3.4, -6);
     g.add(win, frame);
 
-    const poster = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.65),
+    const poster = new THREE.Mesh(new THREE.PlaneGeometry(1.65, 2.2),
       new THREE.MeshBasicMaterial({
-        map: canvasTex(256, 192, (x, w, h) => {
-          const bars = ["#c8c8c8", "#c8c832", "#32c8c8", "#32c832", "#c832c8", "#c83232", "#3232c8"];
-          bars.forEach((c, i) => { x.fillStyle = c; x.fillRect(i * w / 7, 0, w / 7 + 1, h * 0.75); });
-          x.fillStyle = "#111"; x.fillRect(0, h * 0.75, w, h * 0.25);
-          x.fillStyle = "#fff"; x.font = "bold 22px Trebuchet MS, sans-serif";
-          x.textAlign = "center"; x.fillText("TVP · 2007", w / 2, h * 0.92);
+        map: canvasTex(192, 256, (x, w, h) => {
+          x.fillStyle = "#1a1430"; x.fillRect(0, 0, w, h);
+          x.strokeStyle = "#c6600c"; x.lineWidth = 6; x.strokeRect(8, 8, w - 16, h - 16);
+          x.save(); x.translate(w / 2, h * 0.42);
+          for (let i = 0; i < 12; i++) {            // sunburst
+            x.fillStyle = i % 2 ? "#2c2350" : "#3a2d68";
+            x.beginPath(); x.moveTo(0, 0); x.arc(0, 0, 78, i * Math.PI / 6, (i + 1) * Math.PI / 6); x.fill();
+          }
+          x.restore();
+          x.fillStyle = "#ffd75e"; x.font = "bold 26px Trebuchet MS, sans-serif"; x.textAlign = "center";
+          x.fillText("MIDNIGHT", w / 2, h * 0.62);
+          x.fillText("MATINEE", w / 2, h * 0.74);
+          x.fillStyle = "#9fd8ff"; x.font = "13px Trebuchet MS, sans-serif";
+          x.fillText("every night · channel 1–18", w / 2, h * 0.86);
         })
       }));
-    poster.position.set(3.4, 3.6, -11.9);
+    poster.position.set(6.92, 3.4, -8.5);           // side wall, clear of the TV
+    poster.rotation.y = -Math.PI / 2;
     g.add(poster);
 
     const warm = new THREE.PointLight(0xffc98a, 12, 18, 1.8);

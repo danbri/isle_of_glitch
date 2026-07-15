@@ -1059,3 +1059,45 @@ body.casting #stage video { opacity: .25; }
 .skos-chip:hover { border-color: var(--accent); }
 .skos-chip a { color: rgba(255,255,255,.55); text-decoration: none; font-size: 11px; }
 .skos-chip a:hover { color: var(--accent); }
+
+/* ── venue picker: a discreet swipeable carousel pill ── */
+#venue-pick {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: max(12px, env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  padding: 9px 18px; border-radius: 999px; cursor: pointer; user-select: none;
+  color: rgba(255,255,255,.9); background: rgba(10,10,14,.5);
+  border: 1px solid rgba(255,255,255,.25);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  transition: opacity .5s ease, padding .35s ease;
+  touch-action: pan-y; font-family: var(--font);
+}
+#vp-label { display: flex; align-items: center; gap: 8px; font-size: 13.5px; white-space: nowrap; }
+#vp-emoji { font-size: 17px; }
+#vp-name { overflow: hidden; max-width: 220px; transition: max-width .35s ease, opacity .35s ease; }
+#vp-dots { display: flex; gap: 7px; transition: opacity .35s ease; }
+.vp-dot {
+  width: 7px; height: 7px; border-radius: 50%; padding: 0; cursor: pointer;
+  background: rgba(255,255,255,.3); border: none;
+}
+.vp-dot.on { background: var(--accent); transform: scale(1.35); }
+.vp-anim { animation: vp-slide .3s ease-out; }
+@keyframes vp-slide { from { opacity: 0; transform: translateX(14px); } }
+/* idle: recede to almost nothing */
+#venue-pick.min { opacity: .3; padding: 7px 12px; }
+#venue-pick.min #vp-name { max-width: 0; opacity: 0; }
+#venue-pick.min #vp-dots { opacity: 0; height: 0; }
+
+/* ── subjects widget: a treemap of the dial's SKOS concepts ── */
+#subjects-tree { position: relative; width: 100%; height: 220px; }
+.tm-tile {
+  position: absolute; overflow: hidden; cursor: pointer;
+  border-radius: 3px; border: 1px solid rgba(0,0,0,.5);
+  padding: 3px 5px; line-height: 1.15; color: #fff;
+  font-size: 11px; text-shadow: 0 1px 2px rgba(0,0,0,.8);
+}
+.tm-tile:hover { filter: brightness(1.35); z-index: 2; }
+.tm-tile small { display: block; opacity: .6; font-size: 9px; }
+.tm-lcgft { background: rgba(198, 96, 12, .38); }
+.tm-lcsh { background: rgba(98, 163, 176, .38); }
+.tm-aat { background: rgba(159, 123, 255, .32); }
