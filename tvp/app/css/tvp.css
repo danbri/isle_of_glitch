@@ -1089,7 +1089,7 @@ body.casting #stage video { opacity: .25; }
 #venue-pick.min #vp-dots { opacity: 0; height: 0; }
 
 /* ── subjects widget: a treemap of the dial's SKOS concepts ── */
-#subjects-tree { position: relative; width: 100%; height: 220px; }
+#subjects-tree { position: relative; width: 100%; height: 264px; }
 .tm-tile {
   position: absolute; overflow: hidden; cursor: pointer;
   border-radius: 3px; border: 1px solid rgba(0,0,0,.5);
