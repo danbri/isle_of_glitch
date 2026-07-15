@@ -19,7 +19,7 @@
  * Polite to Wikidata: sequential, ~7 req/s max, custom User-Agent.
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
@@ -31,6 +31,15 @@ writeFileSync(tmp, src + "\nexport {CHANNELS, EPG_CATEGORIES};");
 const { CHANNELS, EPG_CATEGORIES } = await import(pathToFileURL(tmp).href);
 
 const UA = "TVP2007-revival/1.0 (https://github.com/danbri/isle_of_glitch; contact via repo issues)";
+
+/* Persistent per-item cache: an approved run must never re-ask Wikimedia
+ * about an item any previous run already resolved (see /CLAUDE.md —
+ * Wikimedia API use is human-approved and load-minimised). Both matches
+ * and misses cache; delete a file under .cache/wiki/ to force re-lookup. */
+const WCACHE = join(dirname(fileURLToPath(import.meta.url)), ".cache", "wiki");
+mkdirSync(WCACHE, { recursive: true });
+const cachePath = (id) => join(WCACHE, encodeURIComponent(id) + ".json");
+const iaIdOf = (p) => (p.src || "").match(/archive\.org\/download\/([^/]+)\//)?.[1] || null;
 const WD = "https://www.wikidata.org/w/api.php";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -69,11 +78,27 @@ const labelWanted = new Set();
 let matched = 0, withWp = 0, n = 0;
 const progs = CHANNELS.flatMap((c) => c.programs);
 
+const freshly = new Map();   // id → program, resolved over the network this run
+let fromCache = 0;
 for (const p of progs) {
   n++;
   if (!p.year || p.wd) continue;
+  const iaid = iaIdOf(p);
+  if (iaid && existsSync(cachePath(iaid))) {
+    try {
+      const c = JSON.parse(readFileSync(cachePath(iaid), "utf8"));
+      fromCache++;
+      if (!c.miss) {
+        for (const k of ["wd", "wp", "wpx", "dir", "cast", "co"]) if (c[k]) p[k] = c[k];
+        matched++;
+        if (c.wp) withWp++;
+      }
+      continue;                       // zero Wikimedia traffic for known items
+    } catch {}
+  }
   const q = cleanForSearch(p.title);
   if (q.length < 3) continue;
+  if (iaid) freshly.set(iaid, p);
   const s = await api({ action: "wbsearchentities", search: q, language: "en", type: "item", limit: 7 });
   const ids = (s?.search || []).map((e) => e.id);
   if (!ids.length) { await sleep(120); continue; }
@@ -115,9 +140,10 @@ for (const p of progs) {
       break;
     }
   }
-  if (n % 50 === 0) console.log(`  ${n}/${progs.length} … matched=${matched} wp=${withWp}`);
+  if (n % 50 === 0) console.log(`  ${n}/${progs.length} … matched=${matched} wp=${withWp} cached=${fromCache}`);
   await sleep(140);
 }
+console.log(`  cache served ${fromCache} items without any Wikimedia traffic`);
 
 /* resolve people/company labels in batches of 50 */
 const labels = {};
@@ -138,6 +164,17 @@ for (const p of progs) {
   if (co.length) p.co = co;
   delete p._dirIds; delete p._castIds; delete p._coIds;
 }
+
+/* bank this run's fresh lookups — hits AND misses — so they never cost
+ * Wikimedia again */
+let banked = 0;
+for (const [iaid, p] of freshly) {
+  const entry = p.wd
+    ? { wd: p.wd, wp: p.wp, wpx: p.wpx, dir: p.dir, cast: p.cast, co: p.co }
+    : { miss: true };
+  try { writeFileSync(cachePath(iaid), JSON.stringify(entry)); banked++; } catch {}
+}
+console.log(`banked ${banked} fresh lookups into .cache/wiki/`);
 
 console.log(`wikilinked ${matched}/${progs.length} programs (${withWp} with Wikipedia articles, ${ids.length} people/companies labelled)`);
 

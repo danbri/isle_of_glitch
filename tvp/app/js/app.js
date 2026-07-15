@@ -1870,6 +1870,7 @@ async function toggleVenue() {
   $("btn-venue").classList.add("lit");
   try {
     const mod = await import("./scenes.js");
+    labelTitledButtons();
     venueApi = mod.launchScenes({
       getVideo: () => video,
       getInfo: () => {
@@ -2943,6 +2944,18 @@ renderQuality();
 renderPreload();
 renderTickerToggle();
 renderBuddyToggle();
+/* the toast and cast mini-player must survive venue mode, whose CSS
+   hides every non-video child of the stage — hoist them to body level
+   (markup keeps them near their kin; the DOM puts them where they work) */
+document.body.append($("toast"), $("cast-mini"));
+
+/* accessibility sweep: every icon-only titled button announces itself */
+function labelTitledButtons(root = document) {
+  root.querySelectorAll("button[title]:not([aria-label])").forEach((b) =>
+    b.setAttribute("aria-label", b.title));
+}
+labelTitledButtons();
+
 registerSW();
 initCastLater();
 
