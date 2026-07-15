@@ -1,5 +1,5 @@
 /*
- * TVP/2007 — a Joost-era web TV revival (original code).
+ * TVP/2007 — broadcast-style web TV from the open archives (original code).
  *
  * The conceit: channels run on a wall clock anchored to 16 Jan 2007.
  * You never "open a file" — you tune a channel and join whatever is

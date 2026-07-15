@@ -1,13 +1,12 @@
 /*
- * TVP/2007 — a Joost-era web TV revival.
- * Original stylesheet evoking the 2006-08 client's visual language:
- * black stage, translucent panels with white strokes, Trebuchet MS,
- * burnt-orange focus color. Mobile first.
+ * TVP/2007 — broadcast-style web TV from the open archives.
+ * The house look: black stage, translucent panels with white strokes,
+ * Trebuchet MS, burnt-orange focus color. Mobile first.
  */
 
 :root {
-  --accent: rgb(198, 96, 12);        /* the original uiFocusColor */
-  --select: rgba(98, 163, 176, .85); /* the original selected-row teal */
+  --accent: rgb(198, 96, 12);        /* the house focus colour */
+  --select: rgba(98, 163, 176, .85); /* selected-row teal */
   --panel: rgba(14, 14, 14, .28);
   --stroke: rgba(255, 255, 255, .55);
   --font: "Trebuchet MS", "Segoe UI", Verdana, sans-serif;
