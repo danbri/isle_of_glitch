@@ -177,9 +177,19 @@ const DIAL = [
       { id: "kansascityconfidencial", title: "Kansas City Confidential", year: 1952 },
       { id: "Kilimanjaro", title: "The Snows of Kilimanjaro", year: 1952 },
       { id: "JungleBook", title: "Jungle Book", year: 1942 },
-      { id: "TheSoutherner", title: "The Southerner", year: 1945 }
+      { id: "TheSoutherner", title: "The Southerner", year: 1945 },
+      /* second sweep: best-of-lists canon (Sight & Sound-era polls, AFI,
+         Film Registry) cross-checked against the documented-PD record */
+      { id: "SvengaliJohnBarrymoreBKCap1931", title: "Svengali", year: 1931 },
+      { id: "rain1932", title: "Rain", year: 1932 },
+      { id: "gullivers_travels1939", title: "Gulliver's Travels", year: 1939 },
+      { id: "Our_Town", title: "Our Town", year: 1940 },
+      { id: "angel_on_my_shoulder", title: "Angel on My Shoulder", year: 1946 },
+      { id: "Strange_Woman_movie", title: "The Strange Woman", year: 1946 },
+      { id: "TheMan_201607", title: "The Men", year: 1950 },
+      { id: "clacinonl_SaltOfTheEarth", title: "Salt of the Earth", year: 1954 }
     ],
-    want: 32, minDur: 2400, maxDur: 10000
+    want: 40, minDur: 2400, maxDur: 10000
   },
   {
     num: 6, id: "shadow-street", name: "Shadow Street",
@@ -236,8 +246,17 @@ const DIAL = [
     category: "Film", tagline: "Theatrical features from before 1931",
     art: "silent_films",
     hand: [],
+    /* silent canon the collection query misses (uncollected uploads) —
+       all pre-1931, so US-PD outright, URAA or no URAA */
+    ids: [
+      { id: "MyMovie_20190318", title: "Sherlock Jr.", year: 1924 },
+      { id: "the-gold-rush-film-1925", title: "The Gold Rush", year: 1925 },
+      { id: "Intolerance", title: "Intolerance", year: 1916 },
+      { id: "nanookOfTheNorth1922", title: "Nanook of the North", year: 1922 },
+      { id: "the-passion-of-joan-of-arc", title: "The Passion of Joan of Arc", year: 1928 }
+    ],
     query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1891-01-01 TO 1930-12-31]",
-    want: 2000, minDur: 2400, maxDur: 10000, maxYear: 1930, requireYear: true
+    want: 2000, minDur: 2400, maxDur: 11000, maxYear: 1930, requireYear: true
   },
   {
     num: 115, id: "five-cent-cinema", name: "Five-Cent Cinema",
@@ -356,7 +375,10 @@ const DENY_TITLES = [
   "wages of fear", "wild strawberries", "harakiri", "high and low",
   "drunken angel", "elevator to the gallows", "viridiana", "daisies",
   "panther panchali", "pather panchali", "aparajito", "apur sansay",
-  "apur sansar", "wicked as they come"
+  "apur sansar", "wicked as they come", "stray dog",
+  "men who tread on", "blonde in a white car",
+  // renewed by UA in 1983 — a standard "everyone assumes it's PD" trap
+  "night of the hunter"
 ];
 /* generically-titled or one-off strays: denied by identifier so the title
    stays available to legitimate uploads (Maniac 1934 is PD; Naruse's Wife
