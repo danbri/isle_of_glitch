@@ -50,7 +50,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/GlassHalf1080p",
     frame: "https://archive.org/download/GlassHalf1080p/GlassHalf1080p.thumbs/Glass%20Half-1080p_000087.jpg",
     bytes: 65761189,
-    node: "dn800307.us.archive.org/0/items/GlassHalf1080p"
+    node: "dn800307.us.archive.org/0/items/GlassHalf1080p",
+    castSrc: 0
    },
    {
     title: "Coffee Run",
@@ -62,7 +63,9 @@ const CHANNELS = [
     art: "https://archive.org/services/img/coffee-run",
     frame: "https://archive.org/download/coffee-run/coffee-run.thumbs/Coffee%20Run_000090.jpg",
     bytes: 17475695,
-    node: "ia800101.us.archive.org/26/items/coffee-run"
+    node: "ia600101.us.archive.org/26/items/coffee-run",
+    castSrc: "https://archive.org/download/coffee-run/Coffee%20Run.ia.mp4",
+    node2: "ia800101.us.archive.org/26/items/coffee-run"
    },
    {
     title: "Wing It!",
@@ -74,7 +77,9 @@ const CHANNELS = [
     art: "https://archive.org/services/img/wing-it",
     frame: "https://archive.org/download/wing-it/wing-it.thumbs/Wing%20It_000118.jpg",
     bytes: 16348270,
-    node: "ia800505.us.archive.org/8/items/wing-it"
+    node: "ia600505.us.archive.org/8/items/wing-it",
+    castSrc: "https://archive.org/download/wing-it/Wing%20It.ia.mp4",
+    node2: "ia800505.us.archive.org/8/items/wing-it"
    }
   ]
  },
@@ -96,7 +101,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/ElephantsDream",
     frame: "https://archive.org/download/ElephantsDream/ElephantsDream.thumbs/ed_1024_000510.jpg",
     bytes: 47065346,
-    node: "dn600306.us.archive.org/0/items/ElephantsDream"
+    node: "dn600306.us.archive.org/0/items/ElephantsDream",
+    castSrc: "https://archive.org/download/ElephantsDream/ed_1024.mp4"
    },
    {
     title: "Sintel",
@@ -108,7 +114,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/Sintel",
     frame: "https://archive.org/download/Sintel/Sintel.thumbs/sintel-2048-stereo_000720.jpg",
     bytes: 77410288,
-    node: "dn601208.us.archive.org/0/items/Sintel"
+    node: "dn601208.us.archive.org/0/items/Sintel",
+    castSrc: 0
    },
    {
     title: "Tears of Steel",
@@ -144,7 +151,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/cosmos-laundromat",
     bytes: 47770492,
     node: "ia600507.us.archive.org/3/items/cosmos-laundromat",
-    node2: "ia800507.us.archive.org/3/items/cosmos-laundromat"
+    node2: "ia800507.us.archive.org/3/items/cosmos-laundromat",
+    castSrc: 0
    },
    {
     title: "Agent 327: Operation Barbershop",
@@ -157,8 +165,9 @@ const CHANNELS = [
     frame: "https://archive.org/download/agent-327-operation-barbershop/agent-327-operation-barbershop.thumbs/Agent%20327%20Operation%20Barbershop_000119.jpg",
     subs: "Agent 327 Operation Barbershop.srt",
     bytes: 47545128,
-    node: "ia601408.us.archive.org/14/items/agent-327-operation-barbershop",
-    node2: "ia801408.us.archive.org/14/items/agent-327-operation-barbershop"
+    node: "ia801408.us.archive.org/14/items/agent-327-operation-barbershop",
+    node2: "ia801408.us.archive.org/14/items/agent-327-operation-barbershop",
+    castSrc: "https://archive.org/download/agent-327-operation-barbershop/Agent%20327%20Operation%20Barbershop.ia.mp4"
    },
    {
     title: "Hero",
@@ -170,8 +179,9 @@ const CHANNELS = [
     art: "https://archive.org/services/img/hero_20260106",
     frame: "https://archive.org/download/hero_20260106/hero_20260106.thumbs/hero_000117.jpg",
     bytes: 53008532,
-    node: "ia600403.us.archive.org/5/items/hero_20260106",
-    node2: "ia800403.us.archive.org/5/items/hero_20260106"
+    node: "ia800403.us.archive.org/5/items/hero_20260106",
+    node2: "ia800403.us.archive.org/5/items/hero_20260106",
+    castSrc: "https://archive.org/download/hero_20260106/hero.ia.mp4"
    },
    {
     title: "Spring",
@@ -183,7 +193,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/springopenmovie",
     frame: "https://archive.org/download/springopenmovie/springopenmovie.thumbs/springopenmovie_000178.jpg",
     bytes: 90190341,
-    node: "dn800303.us.archive.org/0/items/springopenmovie"
+    node: "dn800303.us.archive.org/0/items/springopenmovie",
+    castSrc: "https://archive.org/download/springopenmovie/springopenmovie.ia.mp4"
    },
    {
     title: "Sprite Fright",
@@ -207,7 +218,9 @@ const CHANNELS = [
     art: "https://archive.org/services/img/charge_202601",
     frame: "https://archive.org/download/charge_202601/charge_202601.thumbs/Charge_000118.jpg",
     bytes: 18811777,
-    node: "ia801604.us.archive.org/20/items/charge_202601"
+    node: "ia601604.us.archive.org/20/items/charge_202601",
+    castSrc: "https://archive.org/download/charge_202601/Charge.ia.mp4",
+    node2: "ia801604.us.archive.org/20/items/charge_202601"
    }
   ]
  },
@@ -244,7 +257,8 @@ const CHANNELS = [
     ],
     co: [
      "Vitagraph Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Gertie the Dinosaur",
@@ -267,7 +281,8 @@ const CHANNELS = [
      "Winsor McCay",
      "George McManus",
      "Tad Dorgan"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Steamboat Willie",
@@ -279,7 +294,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/SteamboatWillie",
     frame: "https://archive.org/download/SteamboatWillie/SteamboatWillie.thumbs/Steamboat%20Willie_000195.jpg",
     bytes: 33335230,
-    node: "dn600304.us.archive.org/0/items/SteamboatWillie"
+    node: "dn600304.us.archive.org/0/items/SteamboatWillie",
+    castSrc: 0
    },
    {
     title: "Flip The Frog - Fiddlesticks",
@@ -291,7 +307,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/FLIP_FROG-FIDDLESTICKS/FLIP_FROG-FIDDLESTICKS.thumbs/FLIP_FROG-FIDDLESTICKS_64k_000210.jpg",
     bytes: 26232394,
-    node: "dn600301.us.archive.org/0/items/FLIP_FROG-FIDDLESTICKS"
+    node: "dn600301.us.archive.org/0/items/FLIP_FROG-FIDDLESTICKS",
+    castSrc: 0
    },
    {
     title: "Betty Boop for President",
@@ -303,7 +320,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Betty_Boop_for_President_1932/Betty_Boop_for_President_1932.thumbs/Betty_Boop_for_President_1932_000150.jpg",
     bytes: 27979425,
-    node: "dn601206.us.archive.org/0/items/Betty_Boop_for_President_1932"
+    node: "dn601206.us.archive.org/0/items/Betty_Boop_for_President_1932",
+    castSrc: 0
    },
    {
     title: "Betty Boop: Minnie The Moocher",
@@ -315,7 +333,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/bb_minnie_the_moocher/bb_minnie_the_moocher.thumbs/bb_minnie_the_moocher_000180.jpg",
     bytes: 34262668,
-    node: "dn800302.us.archive.org/0/items/bb_minnie_the_moocher"
+    node: "dn800302.us.archive.org/0/items/bb_minnie_the_moocher",
+    castSrc: 0
    },
    {
     title: "Betty Boop: Snow White",
@@ -327,7 +346,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/bb_snow_white/bb_snow_white.thumbs/bb_snow_white_000180.jpg",
     bytes: 30831193,
-    node: "dn800205.us.archive.org/0/items/bb_snow_white"
+    node: "dn800205.us.archive.org/0/items/bb_snow_white",
+    castSrc: 0
    },
    {
     title: "Betty Boop: The Old Man Of The Mountain",
@@ -339,7 +359,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/bb_old_man_of_the_mountain/bb_old_man_of_the_mountain.thumbs/bb_old_man_of_the_mountain_000150.jpg",
     bytes: 29991350,
-    node: "dn600302.us.archive.org/0/items/bb_old_man_of_the_mountain"
+    node: "dn600302.us.archive.org/0/items/bb_old_man_of_the_mountain",
+    castSrc: 0
    },
    {
     title: "Betty Boop: Poor Cinderella",
@@ -351,7 +372,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Betty_Boop_Poor_Cinderella_1934/Betty_Boop_Poor_Cinderella_1934.thumbs/Betty_Boop_Poor_Cinderella_1934_000240.jpg",
     bytes: 46004311,
-    node: "dn600302.us.archive.org/0/items/Betty_Boop_Poor_Cinderella_1934"
+    node: "dn600302.us.archive.org/0/items/Betty_Boop_Poor_Cinderella_1934",
+    castSrc: 0
    },
    {
     title: "Jack Frost",
@@ -363,7 +385,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/JackFrost_/JackFrost_.thumbs/JackFrost_000210.jpg",
     bytes: 36894736,
-    node: "dn800303.us.archive.org/0/items/JackFrost_"
+    node: "dn800303.us.archive.org/0/items/JackFrost_",
+    castSrc: 0
    },
    {
     title: "Betty Boop And Grampy",
@@ -375,7 +398,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/bb_and_grampy/bb_and_grampy.thumbs/bb_and_grampy_000180.jpg",
     bytes: 30602722,
-    node: "dn800303.us.archive.org/0/items/bb_and_grampy"
+    node: "dn800303.us.archive.org/0/items/bb_and_grampy",
+    castSrc: 0
    },
    {
     title: "Betty Boop: Be Human",
@@ -387,7 +411,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/bb_be_human/bb_be_human.thumbs/bb_be_human_000150.jpg",
     bytes: 28374385,
-    node: "dn801206.us.archive.org/0/items/bb_be_human"
+    node: "dn801206.us.archive.org/0/items/bb_be_human",
+    castSrc: 0
    },
    {
     title: "Felix the Cat: The Goose That Laid the Golden Egg",
@@ -399,7 +424,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/felix_the_cat_the_goos_that_laid_the_golden_egg/felix_the_cat_the_goos_that_laid_the_golden_egg.thumbs/felix_the_cat_the_goos_that_laid_the_golden_egg_000180.jpg",
     bytes: 31195168,
-    node: "dn600308.us.archive.org/0/items/felix_the_cat_the_goos_that_laid_the_golden_egg"
+    node: "dn600308.us.archive.org/0/items/felix_the_cat_the_goos_that_laid_the_golden_egg",
+    castSrc: 0
    },
    {
     title: "The Cobweb Hotel",
@@ -411,7 +437,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the_cobweb_hotel/the_cobweb_hotel.thumbs/the_cobweb_hotel_000180.jpg",
     bytes: 35555268,
-    node: "dn800300.us.archive.org/0/items/the_cobweb_hotel"
+    node: "dn800300.us.archive.org/0/items/the_cobweb_hotel",
+    castSrc: 0
    },
    {
     title: "Gabby: All's Well",
@@ -423,7 +450,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/gabby_alls_well/gabby_alls_well.thumbs/gabby_alls_well_000150.jpg",
     bytes: 28834868,
-    node: "dn600204.us.archive.org/0/items/gabby_alls_well"
+    node: "dn600204.us.archive.org/0/items/gabby_alls_well",
+    castSrc: 0
    },
    {
     title: "Superman: The Mechanical Monsters",
@@ -447,7 +475,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/woody_woodpecker_pantry_panic/woody_woodpecker_pantry_panic.thumbs/woody_woodpecker_pantry_panic_000150.jpg",
     bytes: 29904006,
-    node: "dn800208.us.archive.org/0/items/woody_woodpecker_pantry_panic"
+    node: "dn800208.us.archive.org/0/items/woody_woodpecker_pantry_panic",
+    castSrc: 0
    },
    {
     title: "Superman: Electric Earthquake",
@@ -459,7 +488,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/superman_electric_earthquake/superman_electric_earthquake.thumbs/superman_electric_earthquake_000210.jpg",
     bytes: 38040664,
-    node: "dn800201.us.archive.org/0/items/superman_electric_earthquake"
+    node: "dn800201.us.archive.org/0/items/superman_electric_earthquake",
+    castSrc: 0
    },
    {
     title: "Superman: Eleventh Hour",
@@ -471,7 +501,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/superman_eleventh_hour/superman_eleventh_hour.thumbs/superman_eleventh_hour_000180.jpg",
     bytes: 34823272,
-    node: "dn601204.us.archive.org/0/items/superman_eleventh_hour"
+    node: "dn601204.us.archive.org/0/items/superman_eleventh_hour",
+    castSrc: 0
    },
    {
     title: "Noveltoon: The Stupidstitious Cat",
@@ -483,7 +514,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/noveltoon_the_stupidstitious_cat/noveltoon_the_stupidstitious_cat.thumbs/noveltoon_the_stupidstitious_cat_000150.jpg",
     bytes: 27607453,
-    node: "dn800202.us.archive.org/0/items/noveltoon_the_stupidstitious_cat"
+    node: "dn800202.us.archive.org/0/items/noveltoon_the_stupidstitious_cat",
+    castSrc: 0
    },
    {
     title: "The Talking Magpies",
@@ -495,7 +527,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the_talking_magpies/the_talking_magpies.thumbs/the_talking_magpies_000150.jpg",
     bytes: 28626587,
-    node: "dn601207.us.archive.org/0/items/the_talking_magpies"
+    node: "dn601207.us.archive.org/0/items/the_talking_magpies",
+    castSrc: 0
    },
    {
     title: "Noveltoon: Naughty But Mice",
@@ -507,7 +540,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/noveltoon_naughty_but_nice/noveltoon_naughty_but_nice.thumbs/noveltoon_naughty_but_nice_000150.jpg",
     bytes: 29362789,
-    node: "dn800302.us.archive.org/0/items/noveltoon_naughty_but_nice"
+    node: "dn800302.us.archive.org/0/items/noveltoon_naughty_but_nice",
+    castSrc: 0
    },
    {
     title: "Hector's Hectic Life",
@@ -519,7 +553,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/hectors_hectic_life/hectors_hectic_life.thumbs/hectors_hectic_life_000150.jpg",
     bytes: 28247973,
-    node: "dn601207.us.archive.org/0/items/hectors_hectic_life"
+    node: "dn601207.us.archive.org/0/items/hectors_hectic_life",
+    castSrc: 0
    },
    {
     title: "Noveltoon: Caspar The Friendly Ghost in There's Good Boos Tonight",
@@ -531,7 +566,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/noveltoon_casper_tfg_theres_good_boos_tonight/noveltoon_casper_tfg_theres_good_boos_tonight.thumbs/noveltoon_casper_tfg_theres_good_boos_tonight_000210.jpg",
     bytes: 38148356,
-    node: "dn800309.us.archive.org/0/items/noveltoon_casper_tfg_theres_good_boos_tonight"
+    node: "dn800309.us.archive.org/0/items/noveltoon_casper_tfg_theres_good_boos_tonight",
+    castSrc: 0
    },
    {
     title: "Little Audry: Goofy Goofy Gander",
@@ -543,7 +579,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/little_audry_goofy_goofy_gander/little_audry_goofy_goofy_gander.thumbs/little_audry_goofy_goofy_gander_000150.jpg",
     bytes: 29796173,
-    node: "dn600206.us.archive.org/0/items/little_audry_goofy_goofy_gander"
+    node: "dn600206.us.archive.org/0/items/little_audry_goofy_goofy_gander",
+    castSrc: 0
    },
    {
     title: "Popeye The Sailor Man: Ancient Fistory",
@@ -555,7 +592,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/popeye_the_sailor_ancient_fantasy/popeye_the_sailor_ancient_fantasy.thumbs/popeye_the_sailor_ancient_fantasy_000150.jpg",
     bytes: 29606345,
-    node: "dn600302.us.archive.org/0/items/popeye_the_sailor_ancient_fantasy"
+    node: "dn600302.us.archive.org/0/items/popeye_the_sailor_ancient_fantasy",
+    castSrc: 0
    },
    {
     title: "Popeye The Sailor: Big Bad Sinbad",
@@ -567,7 +605,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/popeye_big_bad_sinbad/popeye_big_bad_sinbad.thumbs/popeye_big_bad_sinbad_000120.jpg",
     bytes: 22049015,
-    node: "dn801206.us.archive.org/0/items/popeye_big_bad_sinbad"
+    node: "dn801206.us.archive.org/0/items/popeye_big_bad_sinbad",
+    castSrc: 0
    },
    {
     title: "Shuteye Popeye",
@@ -579,7 +618,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/popeye_shuteye_popeye/popeye_shuteye_popeye.thumbs/popeye_shuteye_popeye_000150.jpg",
     bytes: 27954244,
-    node: "dn601202.us.archive.org/0/items/popeye_shuteye_popeye"
+    node: "dn601202.us.archive.org/0/items/popeye_shuteye_popeye",
+    castSrc: 0
    },
    {
     title: "Popeye: Fright To The Finish",
@@ -591,7 +631,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/popeye_fright_to_the_finish/popeye_fright_to_the_finish.thumbs/popeye_fright_to_the_finish_000150.jpg",
     bytes: 27832388,
-    node: "dn800207.us.archive.org/0/items/popeye_fright_to_the_finish"
+    node: "dn800207.us.archive.org/0/items/popeye_fright_to_the_finish",
+    castSrc: 0
    },
    {
     title: "Popeye: Taxi-Turvy",
@@ -603,7 +644,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/popeye_taxi-turvey/popeye_taxi-turvey.thumbs/popeye_taxi-turvey_000150.jpg",
     bytes: 26696485,
-    node: "dn800201.us.archive.org/0/items/popeye_taxi-turvey"
+    node: "dn800201.us.archive.org/0/items/popeye_taxi-turvey",
+    castSrc: 0
    },
    {
     title: "Private Eye Popeye",
@@ -615,7 +657,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/popeye_private_eye_popeye/popeye_private_eye_popeye.thumbs/popeye_private_eye_popeye_000150.jpg",
     bytes: 28580960,
-    node: "dn800301.us.archive.org/0/items/popeye_private_eye_popeye"
+    node: "dn800301.us.archive.org/0/items/popeye_private_eye_popeye",
+    castSrc: 0
    },
    {
     title: "Popeye: I Don't Scare",
@@ -627,7 +670,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/popeye_i_dont_scare/popeye_i_dont_scare.thumbs/popeye_i_dont_scare_000150.jpg",
     bytes: 26668022,
-    node: "dn600300.us.archive.org/0/items/popeye_i_dont_scare"
+    node: "dn600300.us.archive.org/0/items/popeye_i_dont_scare",
+    castSrc: 0
    },
    {
     title: "Patriotic Popeye",
@@ -639,7 +683,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/popeye_patriotic_popeye/popeye_patriotic_popeye.thumbs/popeye_patriotic_popeye_000150.jpg",
     bytes: 26402792,
-    node: "dn600300.us.archive.org/0/items/popeye_patriotic_popeye"
+    node: "dn600300.us.archive.org/0/items/popeye_patriotic_popeye",
+    castSrc: 0
    },
    {
     title: "Betty Boop Cartoons",
@@ -650,7 +695,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/BettyBoopCartoons/BettyBoopCartoons.thumbs/Betty_Boop_Is_My_Palm_Read_1932_000360.jpg",
     bytes: 24004105,
-    node: "dn600203.us.archive.org/0/items/BettyBoopCartoons"
+    node: "dn600203.us.archive.org/0/items/BettyBoopCartoons",
+    castSrc: 0
    }
   ]
  },
@@ -686,7 +732,8 @@ const CHANNELS = [
     ],
     co: [
      "Prana Film"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "White Zombie",
@@ -722,7 +769,8 @@ const CHANNELS = [
      "read",
      "body",
      "better"
-    ]
+    ],
+    castSrc: "https://archive.org/download/white_zombie/white_zombie.mp4"
    },
    {
     title: "Ghost Walks, The",
@@ -750,7 +798,8 @@ const CHANNELS = [
      "idea",
      "part",
      "call"
-    ]
+    ],
+    castSrc: "https://archive.org/download/the_ghost_walks/the_ghost_walks.mp4"
    },
    {
     title: "The Human Monster",
@@ -788,7 +837,8 @@ const CHANNELS = [
      "help",
      "inspector",
      "case"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Devil Bat",
@@ -830,7 +880,8 @@ const CHANNELS = [
      "mary",
      "tonight",
      "around"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Devil_Bat_movie/Devil_Bat.mp4"
    },
    {
     title: "King of the Zombies",
@@ -872,7 +923,8 @@ const CHANNELS = [
      "trying",
      "jeff",
      "matter"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Ghost Train",
@@ -894,7 +946,8 @@ const CHANNELS = [
     ],
     cast: [
      "Arthur Askey"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheGhostTrain/TheGhostTrain.mp4"
    },
    {
     title: "Mad Monster, The",
@@ -922,7 +975,8 @@ const CHANNELS = [
      "even",
      "around",
      "morning"
-    ]
+    ],
+    castSrc: "https://archive.org/download/mad_monster/mad_monster.mp4"
    },
    {
     title: "The Corpse Vanishes",
@@ -961,7 +1015,8 @@ const CHANNELS = [
      "kind",
      "talking",
      "another"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheCorpseVanishes/TheCorpseVanishes.mp4"
    },
    {
     title: "Dead Men Walk",
@@ -1026,7 +1081,8 @@ const CHANNELS = [
     ],
     co: [
      "Monogram Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/GhostsontheLoose/GhostsontheLoose.mp4"
    },
    {
     title: "The Snow Creature",
@@ -1063,7 +1119,8 @@ const CHANNELS = [
      "frank",
      "find",
      "world"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheSnowCreature/TheSnowCreature.mp4"
    },
    {
     title: "Daughter of Horror",
@@ -1102,7 +1159,8 @@ const CHANNELS = [
      "face",
      "mind",
      "will"
-    ]
+    ],
+    castSrc: "https://archive.org/download/daughter_of_horror/daughter_of_horror.mp4"
    },
    {
     title: "Attack of the Giant Leeches",
@@ -1140,7 +1198,8 @@ const CHANNELS = [
      "maybe",
      "keep",
      "water"
-    ]
+    ],
+    castSrc: "https://archive.org/download/AttackOfTheGiantLeeches/AttackOfTheGiantLeeches.mp4"
    },
    {
     title: "House on Haunted Hill",
@@ -1178,7 +1237,8 @@ const CHANNELS = [
      "room",
      "killed",
      "must"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Atom Age Vampire",
@@ -1217,7 +1277,8 @@ const CHANNELS = [
      "already",
      "another",
      "believe"
-    ]
+    ],
+    castSrc: "https://archive.org/download/AtomAgeVampire/AtomAgeVampire.mp4"
    },
    {
     title: "City of the Dead/Horror Hotel",
@@ -1245,7 +1306,8 @@ const CHANNELS = [
      "road",
      "must",
      "first"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Horror_Hotel/Horror_Hotel.mp4"
    },
    {
     title: "The Little Shop of Horrors",
@@ -1287,7 +1349,8 @@ const CHANNELS = [
      "flowers",
      "mean",
      "people"
-    ]
+    ],
+    castSrc: "https://archive.org/download/The_Little_Shop_of_Horrors.mpeg/The_Little_Shop_of_Horrors.mp4"
    },
    {
     title: "Bloodlust!",
@@ -1326,7 +1389,8 @@ const CHANNELS = [
      "must",
      "boat",
      "give"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bloodlust.mpeg/Bloodlust.mp4"
    },
    {
     title: "Creature from the Haunted Sea",
@@ -1365,7 +1429,8 @@ const CHANNELS = [
      "whoa",
      "cuban",
      "first"
-    ]
+    ],
+    castSrc: "https://archive.org/download/CreatureFromTheHauntedSea/CreatureFromTheHauntedSea.mp4"
    },
    {
     title: "The Devil´s Messenger",
@@ -1389,7 +1454,8 @@ const CHANNELS = [
      "Lon Chaney Jr.",
      "John Crawford",
      "Ralph Brown"
-    ]
+    ],
+    castSrc: "https://archive.org/download/The_Devils_Messenger/The_Devils_Messenger.mp4"
    },
    {
     title: "Carnival of Souls",
@@ -1428,7 +1494,8 @@ const CHANNELS = [
      "might",
      "maybe",
      "much"
-    ]
+    ],
+    castSrc: "https://archive.org/download/CarnivalofSouls/CarnivalOfSouls.mp4"
    },
    {
     title: "Ring of Terror",
@@ -1447,7 +1514,8 @@ const CHANNELS = [
     wpx: "Ring of Terror is a black-and-white 1962 horror film, which centers around a young medical student named Lewis Moffitt who must open a crypt and steal the ring of a deceased man in order to join a fraternity. Directed by Clark L. Paylow from a screenplay by Lewis Simeon and Jerrold I. Zinnamon, the film stars George Mather as Lewis, with Austin Green and Esther Furst in supporting roles.",
     dir: [
      "Clark L. Paylow"
-    ]
+    ],
+    castSrc: "https://archive.org/download/RingofTerror/RingofTerror.mp4"
    },
    {
     title: "The Terror",
@@ -1490,7 +1558,8 @@ const CHANNELS = [
      "mind",
      "must",
      "twenty"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheTerror/TheTerror.mp4"
    },
    {
     title: "Bloody Pit of Horror",
@@ -1550,7 +1619,8 @@ const CHANNELS = [
     ],
     cast: [
      "Jon Hall"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheBeachGirlsAndTheMonster/TheBeachGirlsAndTheMonster.mp4"
    },
    {
     title: "Night of the Living Dead",
@@ -1591,7 +1661,8 @@ const CHANNELS = [
      "murder",
      "victims",
      "even"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Night.Of.The.Living.Dead_1080p/NightOfTheLivingDead.mp4"
    },
    {
     title: "Destroy All Monsters (AIP version - HD reconstruction)",
@@ -1617,7 +1688,8 @@ const CHANNELS = [
     ],
     co: [
      "Toho"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "BLOOD THIRST",
@@ -1630,7 +1702,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/BloodThirst1971/BloodThirst1971.thumbs/BloodThirst1971_001740.jpg",
     bytes: 319390584,
-    node: "dn801203.us.archive.org/0/items/BloodThirst1971"
+    node: "dn801203.us.archive.org/0/items/BloodThirst1971",
+    castSrc: "https://archive.org/download/BloodThirst1971/BloodThirst1971.mp4"
    },
    {
     title: "Horror Express",
@@ -1668,7 +1741,8 @@ const CHANNELS = [
      "wells",
      "inspector",
      "eyes"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Dead People",
@@ -1708,7 +1782,8 @@ const CHANNELS = [
      "around",
      "looking",
      "hundred"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Horror Express (with spanish subtitles)",
@@ -1747,7 +1822,8 @@ const CHANNELS = [
      "must",
      "years",
      "next"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Scream Bloody Murder",
@@ -1769,7 +1845,8 @@ const CHANNELS = [
     ],
     cast: [
      "Angus Scrimm"
-    ]
+    ],
+    castSrc: "https://archive.org/download/ScreamBloodyMurder/ScreamBloodyMurder.mp4"
    },
    {
     title: "Devil Times Five",
@@ -1794,7 +1871,8 @@ const CHANNELS = [
      "Sorrell Booke",
      "Gene Evans",
      "Shelley Morrison"
-    ]
+    ],
+    castSrc: "https://archive.org/download/DevilTimesFive_977/MoviePowderPresentsDevilTimesFive.mp4"
    },
    {
     title: "Grave of the Vampire",
@@ -1833,7 +1911,8 @@ const CHANNELS = [
      "leave",
      "wife",
      "vampire"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Grave_of_the_Vampire_movie/Grave-of-the-Vampire.mp4"
    },
    {
     title: "Silent Night, Bloody Night",
@@ -1861,7 +1940,8 @@ const CHANNELS = [
      "last",
      "believe",
      "thousand"
-    ]
+    ],
+    castSrc: "https://archive.org/download/SilentNightBloodyNight/Silent_Night_Bloody_Night.mp4"
    },
    {
     title: "My Bloody Valentine(1981)DC REMASTERED",
@@ -1899,7 +1979,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/BloodyWednesday/BloodyWednesday.thumbs/BloodyWednesday_002280.jpg",
     bytes: 418633869,
-    node: "dn801203.us.archive.org/0/items/BloodyWednesday"
+    node: "dn801203.us.archive.org/0/items/BloodyWednesday",
+    castSrc: "https://archive.org/download/BloodyWednesday/BloodyWednesday.mp4"
    },
    {
     title: "Desert Of Blood Dvdrip",
@@ -1939,7 +2020,8 @@ const CHANNELS = [
      "much",
      "mean",
      "statue"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "War Of The Monsters",
@@ -1999,7 +2081,8 @@ const CHANNELS = [
      "better",
      "helmet"
     ],
-    node2: "ia801706.us.archive.org/12/items/phantom.-from.-space.-1953"
+    node2: "ia801706.us.archive.org/12/items/phantom.-from.-space.-1953",
+    castSrc: 0
    },
    {
     title: "Devil Girl From Mars",
@@ -2020,7 +2103,8 @@ const CHANNELS = [
     ],
     cast: [
      "Patricia Laffan"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Killers from Space",
@@ -2086,7 +2170,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Space Master X-7",
@@ -2112,7 +2197,8 @@ const CHANNELS = [
     ],
     co: [
      "Regal Entertainment"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Strange World of Planet X",
@@ -2133,7 +2219,8 @@ const CHANNELS = [
     ],
     cast: [
      "Alec Mango"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Th Angry Red Planet",
@@ -2186,7 +2273,8 @@ const CHANNELS = [
      "girl",
      "frank",
      "live"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheAtomicBrain/TheAtomicBrain.mp4"
    },
    {
     title: "The Wizard of Mars",
@@ -2207,7 +2295,8 @@ const CHANNELS = [
     ],
     cast: [
      "John Carradine"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The X From Outer Space",
@@ -2254,7 +2343,8 @@ const CHANNELS = [
      "David Janssen",
      "Barbara Rush",
      "Bradford Dillman"
-    ]
+    ],
+    castSrc: "https://archive.org/download/MoonoftheWolf_/MoonoftheWolf.mp4"
    },
    {
     title: "Bad Moon 1996",
@@ -2304,7 +2394,8 @@ const CHANNELS = [
      "destroy",
      "gordon",
      "friend"
-    ]
+    ],
+    castSrc: "https://archive.org/download/PurpleDeathFromOuterSpace/Purpledeathfromouterspace.mpeg.mp4"
    }
   ]
  },
@@ -2342,7 +2433,8 @@ const CHANNELS = [
     ],
     co: [
      "United Artists"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Algiers_/Algiers.mp4"
    },
    {
     title: "They Made Me a Criminal",
@@ -2381,7 +2473,8 @@ const CHANNELS = [
      "fight",
      "enough",
      "trying"
-    ]
+    ],
+    castSrc: "https://archive.org/download/They_Made_Me_A_Criminal_1939/they_made_me_a_criminal_1939.mp4"
    },
    {
     title: "The Grapes Of Wrath",
@@ -2422,7 +2515,8 @@ const CHANNELS = [
      "seen",
      "place",
      "give"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Shadow of a Doubt (1943) Dir:Alfred Hitchcock, Starring Teresa Wright,",
@@ -2434,7 +2528,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/shadowofadoubt1943_202003/shadowofadoubt1943_202003.thumbs/Shadow%20of%20a%20Doubt%20(1943%2C%20USA)%20Directed%20by%20Alfred%20Hitchcock%2C%20Featuring%20Teresa%20Wright%2C%20Joseph%20Cotten_002577.jpg",
     bytes: 503412391,
-    node: "dn600307.us.archive.org/0/items/shadowofadoubt1943_202003"
+    node: "dn600307.us.archive.org/0/items/shadowofadoubt1943_202003",
+    castSrc: 0
    },
    {
     title: "Gaslight",
@@ -2460,7 +2555,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Laura (1944) Dir: Otto Preminger, Starring Gene Tierney, Dana Andrews,",
@@ -2472,7 +2568,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/laura_202003/laura_202003.thumbs/Laura_002095.jpg",
     bytes: 542407872,
-    node: "dn600209.us.archive.org/0/items/laura_202003"
+    node: "dn600209.us.archive.org/0/items/laura_202003",
+    castSrc: 0
    },
    {
     title: "Detour",
@@ -2511,7 +2608,8 @@ const CHANNELS = [
      "keep",
      "believe",
      "sure"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Detour/Detour.mp4"
    },
    {
     title: "Scarlet Street",
@@ -2550,7 +2648,8 @@ const CHANNELS = [
      "even",
      "talking",
      "girl"
-    ]
+    ],
+    castSrc: "https://archive.org/download/ScarletStreet/Scarlet_Street.mp4"
    },
    {
     title: "The Blue Dahlia [1946] Dir. George Marshall, Starring Alan Ladd, Veron",
@@ -2601,7 +2700,8 @@ const CHANNELS = [
      "murder",
      "larry",
      "seven"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Lady_Confesses/Lady_Confesses.mp4"
    },
    {
     title: "Behind Green Lights",
@@ -2685,7 +2785,8 @@ const CHANNELS = [
      "even",
      "maybe",
      "hotel"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Martha_Ivers_movie/Strange_Love_Martha_Ivers.mp4"
    },
    {
     title: "Stranger, The",
@@ -2713,7 +2814,8 @@ const CHANNELS = [
      "even",
      "need",
      "leave"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Chase",
@@ -2737,7 +2839,8 @@ const CHANNELS = [
      "Robert Cummings",
      "Michèle Morgan",
      "Steve Cochran"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheChase_/TheChase.mp4"
    },
    {
     title: "The Killers (1946) Burt Lancaster, Ava Gardner, Edmond O' Brien - Film",
@@ -2749,7 +2852,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/thekillers1946usafeaturingburtlancasteravagardneredmondobrienfilmnoirfullmovie_202001/thekillers1946usafeaturingburtlancasteravagardneredmondobrienfilmnoirfullmovie_202001.thumbs/The%20Killers%20(1946%2C%20USA)%20Featuring%20Burt%20Lancaster%2C%20Ava%20Gardner%2C%20Edmond%20O'Brien%20-%20Film%20Noir%20Full%20Movie_002457.jpg",
     bytes: 442089550,
-    node: "dn601205.us.archive.org/0/items/thekillers1946usafeaturingburtlancasteravagardneredmondobrienfilmnoirfullmovie_202001"
+    node: "dn601205.us.archive.org/0/items/thekillers1946usafeaturingburtlancasteravagardneredmondobrienfilmnoirfullmovie_202001",
+    castSrc: 0
    },
    {
     title: "The Stranger",
@@ -2777,7 +2881,8 @@ const CHANNELS = [
      "sure",
      "friends",
      "every"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheStranger_0/The_Stranger.mp4"
    },
    {
     title: "Fear in the Night",
@@ -2790,7 +2895,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Fear_in_the_Night/Fear_in_the_Night.thumbs/Fear_in_the_Night_001680.jpg",
     bytes: 296075657,
-    node: "dn801207.us.archive.org/0/items/Fear_in_the_Night"
+    node: "dn801207.us.archive.org/0/items/Fear_in_the_Night",
+    castSrc: "https://archive.org/download/Fear_in_the_Night/Fear_in_the_Night.mp4"
    },
    {
     title: "The Lady from Shanghai (1947) Orson Welles, Rita Hayworth, Everett Slo",
@@ -2830,7 +2936,8 @@ const CHANNELS = [
      "help",
      "enough",
      "talk"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheRedHouse/The_Red_House.mp4"
    },
    {
     title: "Amazing Mr. X , The",
@@ -2858,7 +2965,8 @@ const CHANNELS = [
      "talk",
      "house",
      "alexis"
-    ]
+    ],
+    castSrc: "https://archive.org/download/amazing_mr_x/amazing_mr_x.mp4"
    },
    {
     title: "He Walked By Night",
@@ -2883,7 +2991,8 @@ const CHANNELS = [
      "Richard Basehart",
      "Scott Brady",
      "Roy Roberts"
-    ]
+    ],
+    castSrc: "https://archive.org/download/He_Walked_By_Night.avi/He_Walked_By_Night.mp4"
    },
    {
     title: "I Love Trouble",
@@ -2910,7 +3019,8 @@ const CHANNELS = [
     ],
     co: [
      "Columbia Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/I_Love_Trouble_movie/I_Love_Trouble.mp4"
    },
    {
     title: "Inner Sanctum",
@@ -2949,7 +3059,8 @@ const CHANNELS = [
      "station",
      "around",
      "room"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Inner_Sanctum_movie/Inner_Sanctum.mp4"
    },
    {
     title: "Open Secret",
@@ -2971,7 +3082,8 @@ const CHANNELS = [
     cast: [
      "John Ireland",
      "Arthur O'Connell"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Parole Inc",
@@ -2999,7 +3111,8 @@ const CHANNELS = [
      "farm",
      "must",
      "sure"
-    ]
+    ],
+    castSrc: "https://archive.org/download/parole_inc/parole_inc.mp4"
    },
    {
     title: "Raw Deal (1948) Directed by Anthony Mann, Featuring Dennis O'Keefe, Cl",
@@ -3035,7 +3148,8 @@ const CHANNELS = [
      "Turhan Bey",
      "Lynn Bari",
      "Cathy O'Donnell"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheAmazingMr.X1948Avi/The_Amazing_Mr_X.mp4"
    },
    {
     title: "The Naked City (1948) Dir: Jules Dassin, Starring Barry Fitzgerald, Ho",
@@ -3047,7 +3161,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/thenakedcity1948_202003/thenakedcity1948_202003.thumbs/The%20Naked%20City%20(1948%2C%20USA)%20Director%20Jules%20Dassin%20Starring%20Barry%20Fitzgerald%2C%20Howard%20Duff%20-%20Film%20Noir_002274.jpg",
     bytes: 1059659335,
-    node: "dn801202.us.archive.org/0/items/thenakedcity1948_202003"
+    node: "dn801202.us.archive.org/0/items/thenakedcity1948_202003",
+    castSrc: 0
    },
    {
     title: "Criss Cross (1949) Burt Lancaster, Yvonne De Carlo, Dan Duryea",
@@ -3059,7 +3174,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/crisscross1949_202003/crisscross1949_202003.thumbs/Criss%20Cross%201949%20-%20Burt%20Lancaster%2C%20Dan%20Duryea%2C%20Yvonne%20De%20Carlo_x264_002096.jpg",
     bytes: 550393834,
-    node: "dn600302.us.archive.org/0/items/crisscross1949_202003"
+    node: "dn600302.us.archive.org/0/items/crisscross1949_202003",
+    castSrc: 0
    },
    {
     title: "Impact",
@@ -3087,7 +3203,8 @@ const CHANNELS = [
      "mean",
      "much",
      "still"
-    ]
+    ],
+    castSrc: "https://archive.org/download/impact/impact.mp4"
    },
    {
     title: "Jigsaw",
@@ -3100,7 +3217,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Jigsaw_/Jigsaw_.thumbs/Jigsaw_001680.jpg",
     bytes: 310305827,
-    node: "dn801207.us.archive.org/0/items/Jigsaw_"
+    node: "dn801207.us.archive.org/0/items/Jigsaw_",
+    castSrc: "https://archive.org/download/Jigsaw_/Jigsaw.mp4"
    },
    {
     title: "Borderline (1950, USA) Fred Mac Murray, Claire Trevor - Film Noir Full",
@@ -3112,7 +3230,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/borderline1950_202002/borderline1950_202002.thumbs/Borderline%20(1950%2C%20USA)%20Featuring%20Fred%20MacMurray%20and%20Claire%20Trevor%20-%20Film%20Noir%20Full%20Movie_002158.jpg",
     bytes: 419923276,
-    node: "dn600309.us.archive.org/0/items/borderline1950_202002"
+    node: "dn600309.us.archive.org/0/items/borderline1950_202002",
+    castSrc: 0
    },
    {
     title: "Quicksand",
@@ -3152,7 +3271,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheFileonThelmaJordanBarbaraStanwyck1950ripHJXvid2/TheFileonThelmaJordanBarbaraStanwyck1950ripHJXvid2.thumbs/TheFileonThelmaJordanBarbaraStanwyck1950ripHJXvid2_002400.jpg",
     bytes: 427301997,
-    node: "dn601206.us.archive.org/0/items/TheFileonThelmaJordanBarbaraStanwyck1950ripHJXvid2"
+    node: "dn601206.us.archive.org/0/items/TheFileonThelmaJordanBarbaraStanwyck1950ripHJXvid2",
+    castSrc: "https://archive.org/download/TheFileonThelmaJordanBarbaraStanwyck1950ripHJXvid2/TheFileonThelmaJordanBarbaraStanwyck1950ripHJXvid2.mp4"
    },
    {
     title: "The Sun Sets at Dawn",
@@ -3186,7 +3306,8 @@ const CHANNELS = [
      "wanted",
      "years",
      "work"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Sun_Sets_at_Dawn_movie/Sun_Sets_at_Dawn_1950.mp4"
    },
    {
     title: "Woman on the Run",
@@ -3225,7 +3346,8 @@ const CHANNELS = [
      "maybe",
      "thought",
      "give"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Ace in the Hole (1951) Director: Billy Wilder, Featuring Kirk Douglas,",
@@ -3237,7 +3359,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ace-in-the-hole1951/ace-in-the-hole1951.thumbs/Ace%20In%20The%20Hole_002640.jpg",
     bytes: 693139180,
-    node: "dn600209.us.archive.org/0/items/ace-in-the-hole1951"
+    node: "dn600209.us.archive.org/0/items/ace-in-the-hole1951",
+    castSrc: 0
    },
    {
     title: "Cause for Alarm!",
@@ -3279,7 +3402,8 @@ const CHANNELS = [
      "mean",
      "remember",
      "even"
-    ]
+    ],
+    castSrc: "https://archive.org/download/cause_for_alarm_1951/cause_for_alarm_1951.mp4"
    },
    {
     title: "Detective Story (1951) Kirk Douglas, Eleanor Parker, William Bendix, C",
@@ -3329,7 +3453,8 @@ const CHANNELS = [
      "years",
      "enough",
      "much"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Prowler (1951) |Joseph Losey| Van Heflin, Evelyn Keyes - Film Noir",
@@ -3341,7 +3466,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/theprowler1951usadirjosephloseyfeaturingvanheflinevelynkeyesfilmnoirfullmovie/theprowler1951usadirjosephloseyfeaturingvanheflinevelynkeyesfilmnoirfullmovie.thumbs/The%20Prowler%20(1951%2C%20USA)%20Dir%20Joseph%20Losey%20Featuring%20Van%20Heflin%2C%20Evelyn%20Keyes%20-%20Film%20Noir%20Full%20Movie_002215.jpg",
     bytes: 913423336,
-    node: "dn600200.us.archive.org/0/items/theprowler1951usadirjosephloseyfeaturingvanheflinevelynkeyesfilmnoirfullmovie"
+    node: "dn600200.us.archive.org/0/items/theprowler1951usadirjosephloseyfeaturingvanheflinevelynkeyesfilmnoirfullmovie",
+    castSrc: 0
    },
    {
     title: "The Second Woman",
@@ -3365,7 +3491,8 @@ const CHANNELS = [
      "Robert Young",
      "Betsy Drake",
      "Florence Bates"
-    ]
+    ],
+    castSrc: "https://archive.org/download/The_Second_Woman_/The_Second_Woman_.mp4"
    },
    {
     title: "Kansas City Confidential",
@@ -3407,7 +3534,8 @@ const CHANNELS = [
      "maybe",
      "twenty",
      "enough"
-    ]
+    ],
+    castSrc: "https://archive.org/download/kansascityconfidencial/kansascityconfidencial.mp4"
    },
    {
     title: "The Green Glove",
@@ -3446,7 +3574,8 @@ const CHANNELS = [
      "money",
      "maybe",
      "first"
-    ]
+    ],
+    castSrc: "https://archive.org/download/the_green_glove/the_green_glove.mp4"
    },
    {
     title: "1953 - Niagara - Henry Hathaway",
@@ -3525,7 +3654,8 @@ const CHANNELS = [
      "nice",
      "talk",
      "vast"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Hitch_Hiker/Hitch-Hiker.mp4"
    },
    {
     title: "The Limping Man",
@@ -3549,7 +3679,8 @@ const CHANNELS = [
      "Lloyd Bridges",
      "Moira Lister",
      "Leslie Phillips"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheLimpingMan/TheLimpingMan.mp4"
    },
    {
     title: "Jail Bait",
@@ -3588,7 +3719,8 @@ const CHANNELS = [
      "gone",
      "much",
      "face"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Private Hell 36 (1954) Ida Lupino, Steve Cochran, Howard Duff Film Noi",
@@ -3600,7 +3732,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/privatehell361954_202001/privatehell361954_202001.thumbs/Private%20Hell%2036%20(1954%2C%20USA)%20Featuring%20%20Ida%20Lupino%2C%20Steve%20Cochran%2C%20Howard%20Duff%20-%20Film%20Noir%20Full%20Movie_001916.jpg",
     bytes: 234856572,
-    node: "dn800300.us.archive.org/0/items/privatehell361954_202001"
+    node: "dn800300.us.archive.org/0/items/privatehell361954_202001",
+    castSrc: 0
    },
    {
     title: "Sabrina",
@@ -3654,7 +3787,8 @@ const CHANNELS = [
      "might",
      "mean",
      "away"
-    ]
+    ],
+    castSrc: "https://archive.org/download/suddenly/suddenly.mp4"
    },
    {
     title: "The Good Die Young ( 1954, UK) Richard Basehart, Joan Collins, Gloria ",
@@ -3666,7 +3800,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/thegooddieyoung1954/thegooddieyoung1954.thumbs/The%20Good%20Die%20Young%20(1954%2C%20UK)%20Featuring%20Richard%20Basehart%2C%20Joan%20Collins%2C%20John%20Ireland%20-%20Film%20Noir_002216.jpg",
     bytes: 524339358,
-    node: "dn600308.us.archive.org/0/items/thegooddieyoung1954"
+    node: "dn600308.us.archive.org/0/items/thegooddieyoung1954",
+    castSrc: 0
    },
    {
     title: "Big Bluff",
@@ -3705,7 +3840,8 @@ const CHANNELS = [
      "morning",
      "money",
      "course"
-    ]
+    ],
+    castSrc: "https://archive.org/download/big_bluff/big_bluff.mp4"
    },
    {
     title: "D.O.A.",
@@ -3717,7 +3853,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/doa_ipod/doa_ipod.thumbs/doa_001980.jpg",
     bytes: 352876949,
-    node: "dn601202.us.archive.org/0/items/doa_ipod"
+    node: "dn601202.us.archive.org/0/items/doa_ipod",
+    castSrc: 0
    },
    {
     title: "Killer's Kiss",
@@ -3743,7 +3880,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Kiss Me Deadly (1955, ) Dir: Robert Aldrich Featuring Ralph Meeker - F",
@@ -3755,7 +3893,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/kissmedeadly1955_202001/kissmedeadly1955_202001.thumbs/Kiss%20Me%20Deadly%20(1955%2C%20USA)%20Directed%20by%20Robert%20Aldrich%20Featuring%20Ralph%20Meeker%20-%20Film%20Noir%20Full%20Movie_002514.jpg",
     bytes: 808883925,
-    node: "dn801204.us.archive.org/0/items/kissmedeadly1955_202001"
+    node: "dn801204.us.archive.org/0/items/kissmedeadly1955_202001",
+    castSrc: 0
    },
    {
     title: "The Big Combo",
@@ -3819,7 +3958,8 @@ const CHANNELS = [
      "much",
      "kill",
      "understand"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Please_Murder_Me_movie/Please_Murder_Me.mp4"
    },
    {
     title: "The Killing",
@@ -3842,7 +3982,8 @@ const CHANNELS = [
      "Sterling Hayden",
      "Jay C. Flippen",
      "Marie Windsor"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Timetable (aka Time Table)",
@@ -3892,7 +4033,8 @@ const CHANNELS = [
      "still",
      "seen",
      "leave"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Desperate Hours (1956) Humphrey Bogart, Fredric March",
@@ -3944,7 +4086,8 @@ const CHANNELS = [
      "twenty",
      "around",
      "love"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Saint_Louis_Bank_Robbery/Saint_Louis_Bank_Robbery.mp4"
    },
    {
     title: "Breathless",
@@ -3956,7 +4099,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/breathless-1960/breathless-1960.thumbs/Breathless%20(1960)_002218.jpg",
     bytes: 1630672808,
-    node: "dn800308.us.archive.org/0/items/breathless-1960"
+    node: "dn800308.us.archive.org/0/items/breathless-1960",
+    castSrc: 0
    },
    {
     title: "Five Minutes to Live / AKA Door-to-Door Maniac",
@@ -3984,7 +4128,8 @@ const CHANNELS = [
      "home",
      "better",
      "probably"
-    ]
+    ],
+    castSrc: "https://archive.org/download/five_minutes_to_live/Five_Minutes_to_Live.mp4"
    },
    {
     title: "Nightmare Castle",
@@ -4023,7 +4168,8 @@ const CHANNELS = [
      "sure",
      "remember",
      "laboratory"
-    ]
+    ],
+    castSrc: "https://archive.org/download/nightmare_castle/M4V10002.mp4"
    },
    {
     title: "Chiaroscuro, Baby",
@@ -4052,7 +4198,8 @@ const CHANNELS = [
      "show",
      "love",
      "work"
-    ]
+    ],
+    castSrc: 0
    }
   ]
  },
@@ -4086,7 +4233,8 @@ const CHANNELS = [
      "Buster Keaton",
      "Marion Mack",
      "Charles Henry Smith"
-    ]
+    ],
+    castSrc: "https://archive.org/download/The_General_Buster_Keaton/The_General.mp4"
    },
    {
     title: "As You Like It",
@@ -4098,7 +4246,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/AsYouLikeIt1936/AsYouLikeIt1936.thumbs/AsYouLikeIt_002280.jpg",
     bytes: 440934838,
-    node: "dn801203.us.archive.org/0/items/AsYouLikeIt1936"
+    node: "dn801203.us.archive.org/0/items/AsYouLikeIt1936",
+    castSrc: "https://archive.org/download/AsYouLikeIt1936/AsYouLikeIt.mp4"
    },
    {
     title: "The Amazing Adventure",
@@ -4137,7 +4286,8 @@ const CHANNELS = [
      "best",
      "enough",
      "matter"
-    ]
+    ],
+    castSrc: "https://archive.org/download/amazing_adventure/amazing_adventuarchive.mp4"
    },
    {
     title: "The Milky Way",
@@ -4165,7 +4315,8 @@ const CHANNELS = [
      "wait",
      "mean",
      "love"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Milky_Way_movie/Milky_Way.mp4"
    },
    {
     title: "Nothing Sacred",
@@ -4215,7 +4366,8 @@ const CHANNELS = [
      "Will Hay",
      "Graham Moffatt",
      "Moore Marriott"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Oh_Mr.Porter_1937/Oh_Mr.Porter_1937.mp4"
    },
    {
     title: "Billy the Kid Returns",
@@ -4242,7 +4394,8 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/BillytheKidReturns/BillytheKidReturns.mp4"
    },
    {
     title: "Charlie Chaplin Festival",
@@ -4270,7 +4423,8 @@ const CHANNELS = [
      "eight",
      "work",
      "book"
-    ]
+    ],
+    castSrc: "https://archive.org/download/charlie_chaplin_film_fest/charlie_chaplin_film_fest.mp4"
    },
    {
     title: "Pygmalion",
@@ -4295,7 +4449,8 @@ const CHANNELS = [
      "Wendy Hiller",
      "Wilfrid Lawson",
      "Leueen MacGrath"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Pygmalion/Pygmalion.mp4"
    },
    {
     title: "Tarzan and the Green Goddess",
@@ -4328,7 +4483,8 @@ const CHANNELS = [
      "many",
      "away",
      "might"
-    ]
+    ],
+    castSrc: "https://archive.org/download/tarzan_and_the_green_goddess/tarzan_and_the_green_goddess.mp4"
    },
    {
     title: "The Flying Deuces",
@@ -4371,7 +4527,8 @@ const CHANNELS = [
      "forget",
      "work",
      "another"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheFlyingDeuces/The_Flying_Deuces.mp4"
    },
    {
     title: "Boys of the City",
@@ -4409,7 +4566,8 @@ const CHANNELS = [
      "find",
      "still",
      "stuff"
-    ]
+    ],
+    castSrc: "https://archive.org/download/boys_of_the_city/boys_of_the_city.mp4"
    },
    {
     title: "His Girl Friday",
@@ -4450,7 +4608,8 @@ const CHANNELS = [
      "minute",
      "years",
      "away"
-    ]
+    ],
+    castSrc: "https://archive.org/download/his_girl_friday/his_girl_friday.mp4"
    },
    {
     title: "Lil' Abner",
@@ -4478,7 +4637,8 @@ const CHANNELS = [
      "mean",
      "pretty",
      "call"
-    ]
+    ],
+    castSrc: "https://archive.org/download/lil_abner/lil_abner.mp4"
    },
    {
     title: "Meet John Doe",
@@ -4517,7 +4677,8 @@ const CHANNELS = [
      "money",
      "already",
      "talk"
-    ]
+    ],
+    castSrc: "https://archive.org/download/meet_john_doe/meet_john_doe.mp4"
    },
    {
     title: "Penny Serenade",
@@ -4559,7 +4720,8 @@ const CHANNELS = [
      "might",
      "julie",
      "thought"
-    ]
+    ],
+    castSrc: "https://archive.org/download/penny_serenade/penny_serenade.mp4"
    },
    {
     title: "Topper Returns",
@@ -4601,7 +4763,8 @@ const CHANNELS = [
      "father",
      "young",
      "girl"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Miss London Ltd.",
@@ -4643,7 +4806,8 @@ const CHANNELS = [
      "mind",
      "money",
      "blah"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Two Weeks to Live",
@@ -4682,7 +4846,8 @@ const CHANNELS = [
      "better",
      "wait",
      "trying"
-    ]
+    ],
+    castSrc: "https://archive.org/download/2_weeks_to_live/2_week_to_live.mp4"
    },
    {
     title: "Midnight Manhunt",
@@ -4716,7 +4881,8 @@ const CHANNELS = [
      "story",
      "cops",
      "maybe"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Stork Club, The",
@@ -4744,7 +4910,8 @@ const CHANNELS = [
      "love",
      "ever",
      "band"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Love Laughs at Andy Hardy",
@@ -4784,7 +4951,8 @@ const CHANNELS = [
      "dance",
      "years",
      "mean"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Hi De Ho",
@@ -4821,7 +4989,8 @@ const CHANNELS = [
      "love",
      "manager",
      "next"
-    ]
+    ],
+    castSrc: "https://archive.org/download/hi_de_ho/Hi-De-Ho.mp4"
    },
    {
     title: "Lost Honeymoon",
@@ -4843,7 +5012,8 @@ const CHANNELS = [
     ],
     cast: [
      "Franchot Tone"
-    ]
+    ],
+    castSrc: "https://archive.org/download/LostHoneymoon/LostHoneymoon.mp4"
    },
    {
     title: "My Favorite Brunette",
@@ -4886,7 +5056,8 @@ const CHANNELS = [
      "still",
      "uncle",
      "show"
-    ]
+    ],
+    castSrc: "https://archive.org/download/my_favorite_brunette/my_favorite_brunette.mp4"
    },
    {
     title: "The Road to Hollywood",
@@ -4911,7 +5082,8 @@ const CHANNELS = [
      "Bing Crosby",
      "Lincoln Stedman",
      "Ann Christy"
-    ]
+    ],
+    castSrc: "https://archive.org/download/RoadtoHollywood/RoadtoHollywood.mp4"
    },
    {
     title: "The Sin of Harold Diddlebock",
@@ -4937,7 +5109,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Abbott And Costello Meet Frankenstein",
@@ -5002,7 +5175,8 @@ const CHANNELS = [
      "twenty",
      "thousand",
      "give"
-    ]
+    ],
+    castSrc: "https://archive.org/download/AfricaScreams/Africa_Screams.mp4"
    },
    {
     title: "The Inspector General",
@@ -5044,7 +5218,8 @@ const CHANNELS = [
      "give",
      "life",
      "even"
-    ]
+    ],
+    castSrc: "https://archive.org/download/the_inspector_general/the_inspector_general.mp4"
    },
    {
     title: "At War with the Army",
@@ -5071,7 +5246,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/AtWarWithTheArmy/AtWarWithTheArmy.mp4"
    },
    {
     title: "Behave Yourself",
@@ -5112,7 +5288,8 @@ const CHANNELS = [
      "five",
      "even",
      "watch"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Royal Wedding",
@@ -5154,7 +5331,8 @@ const CHANNELS = [
      "around",
      "mean",
      "maybe"
-    ]
+    ],
+    castSrc: "https://archive.org/download/royal_wedding/royal_wedding.mp4"
    },
    {
     title: "Jack and the Beanstalk",
@@ -5167,7 +5345,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/cco_jackandthebeanstalk/cco_jackandthebeanstalk.thumbs/ccoPublicDomainJack_and_the_Beanstalk_001920.jpg",
     bytes: 355621626,
-    node: "dn601200.us.archive.org/0/items/cco_jackandthebeanstalk"
+    node: "dn601200.us.archive.org/0/items/cco_jackandthebeanstalk",
+    castSrc: "https://archive.org/download/cco_jackandthebeanstalk/ccoPublicDomainJack_and_the_Beanstalk.mp4"
    },
    {
     title: "Rhythm and Blues Revue",
@@ -5202,7 +5381,8 @@ const CHANNELS = [
      "present",
      "play",
      "baseball"
-    ]
+    ],
+    castSrc: "https://archive.org/download/rhythm_blues_review/rhythm_blues_review.mp4"
    },
    {
     title: "Teaserama",
@@ -5237,7 +5417,8 @@ const CHANNELS = [
      "call",
      "show",
      "days"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Sanjuro",
@@ -5290,7 +5471,8 @@ const CHANNELS = [
      "name",
      "honey",
      "prudence"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "McLintock!",
@@ -5332,7 +5514,8 @@ const CHANNELS = [
      "last",
      "young",
      "douglas"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Dr Strangelove, or: How I Learned to Stop Worrying and Love the Bomb",
@@ -5371,7 +5554,8 @@ const CHANNELS = [
      "first",
      "special",
      "number"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Over-the-Hill Gang",
@@ -5393,7 +5577,8 @@ const CHANNELS = [
     ],
     cast: [
      "Walter Brennan"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheOvertheHillGang/TheOvertheHillGang.mp4"
    },
    {
     title: "Wake Me Up When the War Is Over",
@@ -5406,7 +5591,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/WakeMeUpWhentheWarisOverKenBarryJimBackus1969goofyrip/WakeMeUpWhentheWarisOverKenBarryJimBackus1969goofyrip.thumbs/WakeMeUpWhentheWarisOverKenBarryJimBackus1969goofyrip_001800.jpg",
     bytes: 321925719,
-    node: "dn800203.us.archive.org/0/items/WakeMeUpWhentheWarisOverKenBarryJimBackus1969goofyrip"
+    node: "dn800203.us.archive.org/0/items/WakeMeUpWhentheWarisOverKenBarryJimBackus1969goofyrip",
+    castSrc: "https://archive.org/download/WakeMeUpWhentheWarisOverKenBarryJimBackus1969goofyrip/WakeMeUpWhentheWarisOverKenBarryJimBackus1969goofyrip.mp4"
    },
    {
     title: "Beyond The Valley Of The Dolls(1970) BD RIP",
@@ -5418,7 +5604,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/beyond.-the.-valley.-of.-the.-dolls.-1970.1080p.-blu-ray.x-264-yts.-ag/beyond.-the.-valley.-of.-the.-dolls.-1970.1080p.-blu-ray.x-264-yts.-ag.thumbs/Beyond.The.Valley.Of.The.Dolls.1970.1080p.BluRay.x264-%5BYTS.AG%5D_002636.jpg",
     bytes: 1762129026,
-    node: "dn800208.us.archive.org/0/items/beyond.-the.-valley.-of.-the.-dolls.-1970.1080p.-blu-ray.x-264-yts.-ag"
+    node: "dn800208.us.archive.org/0/items/beyond.-the.-valley.-of.-the.-dolls.-1970.1080p.-blu-ray.x-264-yts.-ag",
+    castSrc: 0
    },
    {
     title: "C.C. and Company",
@@ -5452,7 +5639,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SantaandtheThreeBears/SantaandtheThreeBears.thumbs/SantaandtheThreeBears_001080.jpg",
     bytes: 199047743,
-    node: "dn800302.us.archive.org/0/items/SantaandtheThreeBears"
+    node: "dn800302.us.archive.org/0/items/SantaandtheThreeBears",
+    castSrc: "https://archive.org/download/SantaandtheThreeBears/SantaandtheThreeBears.mp4"
    },
    {
     title: "The Over-the-Hill Gang Rides Again",
@@ -5465,7 +5653,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheOver-the-HillGangRidesAgain/TheOver-the-HillGangRidesAgain.thumbs/TheOver-the-HillGangRidesAgain_001740.jpg",
     bytes: 317782428,
-    node: "dn600203.us.archive.org/0/items/TheOver-the-HillGangRidesAgain"
+    node: "dn600203.us.archive.org/0/items/TheOver-the-HillGangRidesAgain",
+    castSrc: "https://archive.org/download/TheOver-the-HillGangRidesAgain/TheOver-the-HillGangRidesAgain.mp4"
    },
    {
     title: "Born to Win",
@@ -5492,7 +5681,8 @@ const CHANNELS = [
     ],
     co: [
      "United Artists"
-    ]
+    ],
+    castSrc: "https://archive.org/download/BorntoWin/BorntoWin.mp4"
    },
    {
     title: "Big Bad Mama",
@@ -5515,7 +5705,8 @@ const CHANNELS = [
      "Angie Dickinson",
      "William Shatner",
      "Tom Skerritt"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Gun and the Pulpit",
@@ -5538,7 +5729,8 @@ const CHANNELS = [
     cast: [
      "Marjoe Gortner",
      "Robert Phillips"
-    ]
+    ],
+    castSrc: "https://archive.org/download/cco_thegunandthepulpit/ccoPublicDomainThe_Gun_and_the_Pulpit.mp4"
    },
    {
     title: "Satan's Cheerleaders",
@@ -5630,7 +5822,8 @@ const CHANNELS = [
      "Graham Chapman",
      "John Cleese",
      "Terry Gilliam"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Felix The Cat The Movie ( 1988) 1080p UPSCALE",
@@ -5665,7 +5858,8 @@ const CHANNELS = [
      "Erin Brown",
      "Darian Caine",
      "Emily Booth"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Dead Man Drinking",
@@ -5695,7 +5889,8 @@ const CHANNELS = [
      "chris",
      "trying"
     ],
-    node2: "ia800109.us.archive.org/21/items/DeadManDrinking"
+    node2: "ia800109.us.archive.org/21/items/DeadManDrinking",
+    castSrc: "https://archive.org/download/DeadManDrinking/DeadManDrinking-720p.mp4"
    },
    {
     title: "01 East Side Kids",
@@ -5831,7 +6026,8 @@ const CHANNELS = [
     wd: "Q130487657",
     co: [
      "Castle Films"
-    ]
+    ],
+    castSrc: "https://archive.org/download/AboutBan1935/AboutBan1935.mp4"
    },
    {
     title: "Case of Spring Fever, A",
@@ -5856,7 +6052,8 @@ const CHANNELS = [
      "realize",
      "action",
      "cushion"
-    ]
+    ],
+    castSrc: "https://archive.org/download/CaseofSp1940/CaseofSp1940.mp4"
    },
    {
     title: "Doctor in Industry (Part I)",
@@ -5884,7 +6081,8 @@ const CHANNELS = [
      "thought",
      "even",
      "every"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Doctorin1946/Doctorin1946.mp4"
    },
    {
     title: "Joan Avoids a Cold",
@@ -5916,7 +6114,8 @@ const CHANNELS = [
      "school",
      "george",
      "children"
-    ]
+    ],
+    castSrc: "https://archive.org/download/JoanAvoi1947/JoanAvoi1947.mp4"
    },
    {
     title: "Private Life of a Cat",
@@ -5930,7 +6129,8 @@ const CHANNELS = [
     frame: "https://archive.org/download/PrivateL1947/PrivateL1947.thumbs/PrivateL1947_001080.jpg",
     subs: "PrivateL1947.asr.srt",
     bytes: 92036815,
-    node: "dn800302.us.archive.org/0/items/PrivateL1947"
+    node: "dn800302.us.archive.org/0/items/PrivateL1947",
+    castSrc: "https://archive.org/download/PrivateL1947/PrivateL1947.mp4"
    },
    {
     title: "Using the Bank",
@@ -5958,7 +6158,8 @@ const CHANNELS = [
      "hundred",
      "banks",
      "checks"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Usingthe1947/Usingthe1947.mp4"
    },
    {
     title: "Care of the Skin",
@@ -5987,7 +6188,8 @@ const CHANNELS = [
      "helps",
      "keep",
      "germs"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Careofth1949/Careofth1949.mp4"
    },
    {
     title: "Personal Hygiene (Part I)",
@@ -6015,7 +6217,8 @@ const CHANNELS = [
      "germs",
      "book",
      "personal"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Personal1950/Personal1950.mp4"
    },
    {
     title: "Sleep for Health",
@@ -6043,7 +6246,8 @@ const CHANNELS = [
      "george",
      "hard",
      "without"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Sleepfor1950/Sleepfor1950.mp4"
    },
    {
     title: "Duck and Cover",
@@ -6076,7 +6280,8 @@ const CHANNELS = [
      "covered",
      "danger",
      "school"
-    ]
+    ],
+    castSrc: "https://archive.org/download/DuckandC1951/DuckandC1951.ia.mp4"
    },
    {
     title: "Good Eating Habits",
@@ -6104,7 +6309,8 @@ const CHANNELS = [
      "mother",
      "play",
      "morning"
-    ]
+    ],
+    castSrc: "https://archive.org/download/GoodEati1951/GoodEati1951.mp4"
    },
    {
     title: "The Home Economics Story",
@@ -6116,7 +6322,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/HomeEcon1951",
     frame: "https://archive.org/download/HomeEcon1951/HomeEcon1951.thumbs/HomeEcon1951_000300.jpg",
     bytes: 52888735,
-    node: "dn801201.us.archive.org/0/items/HomeEcon1951"
+    node: "dn801201.us.archive.org/0/items/HomeEcon1951",
+    castSrc: "https://archive.org/download/HomeEcon1951/HomeEcon1951.mp4"
    },
    {
     title: "A is for Atom",
@@ -6144,7 +6351,8 @@ const CHANNELS = [
      "reactor",
      "many",
      "neutrons"
-    ]
+    ],
+    castSrc: "https://archive.org/download/isforAto1953/isforAto1953.mp4"
    },
    {
     title: "Health: Your Posture",
@@ -6172,7 +6380,8 @@ const CHANNELS = [
      "straight",
      "better",
      "help"
-    ]
+    ],
+    castSrc: "https://archive.org/download/HealthYo1953/HealthYo1953.mp4"
    },
    {
     title: "Eat for Health",
@@ -6200,7 +6409,8 @@ const CHANNELS = [
      "butter",
      "energy",
      "many"
-    ]
+    ],
+    castSrc: "https://archive.org/download/EatforHe1954/EatforHe1954.mp4"
    },
    {
     title: "From the Ground Up",
@@ -6228,7 +6438,8 @@ const CHANNELS = [
      "ensure",
      "quality",
      "supplement"
-    ]
+    ],
+    castSrc: "https://archive.org/download/FromtheG1954/FromtheG1954.mp4"
    },
    {
     title: "How to Go Places",
@@ -6256,7 +6467,8 @@ const CHANNELS = [
      "easy",
      "road",
      "hour"
-    ]
+    ],
+    castSrc: "https://archive.org/download/HowtoGoP1954/HowtoGoP1954.mp4"
    },
    {
     title: "Achievement USA",
@@ -6284,7 +6496,8 @@ const CHANNELS = [
      "history",
      "nine",
      "parade"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Achievem1955/Achievem1955.mp4"
    },
    {
     title: "Sniffles and Sneezes",
@@ -6312,7 +6525,8 @@ const CHANNELS = [
      "others",
      "stay",
      "symptoms"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Sniffles1955/Sniffles1955.mp4"
    },
    {
     title: "Design for Dreaming",
@@ -6337,7 +6551,8 @@ const CHANNELS = [
      "Tad Tadlock",
      "Marc Breaux",
      "Thurl Ravenscroft"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Designfo1956/Designfo1956.mp4"
    },
    {
     title: "As Boys Grow",
@@ -6366,7 +6581,8 @@ const CHANNELS = [
      "pretty",
      "around",
      "puberty"
-    ]
+    ],
+    castSrc: "https://archive.org/download/AsBoysGr1957/AsBoysGr1957.mp4"
    },
    {
     title: "Have I Told You Lately That I Love You?",
@@ -6380,7 +6596,8 @@ const CHANNELS = [
     frame: "https://archive.org/download/HaveITol1958/HaveITol1958.thumbs/HaveITol1958_000360.jpg",
     subs: "HaveITol1958.asr.srt",
     bytes: 63844381,
-    node: "dn801208.us.archive.org/0/items/HaveITol1958"
+    node: "dn801208.us.archive.org/0/items/HaveITol1958",
+    castSrc: "https://archive.org/download/HaveITol1958/HaveITol1958.mp4"
    },
    {
     title: "Golden Years, The",
@@ -6408,7 +6625,8 @@ const CHANNELS = [
      "quality",
      "brunswick's",
      "features"
-    ]
+    ],
+    castSrc: "https://archive.org/download/GoldenYe1960/GoldenYe1960.mp4"
    },
    {
     title: "Your Name Here",
@@ -6436,7 +6654,8 @@ const CHANNELS = [
      "keep",
      "done",
      "nation"
-    ]
+    ],
+    castSrc: "https://archive.org/download/YourName1960/YourName1960.mp4"
    },
    {
     title: "Boys Beware",
@@ -6473,7 +6692,8 @@ const CHANNELS = [
      "denny",
      "jerry",
      "boys"
-    ]
+    ],
+    castSrc: "https://archive.org/download/boys_beware/boys_beware.mp4"
    },
    {
     title: "One Got Fat: Bicycle Safety",
@@ -6501,7 +6721,8 @@ const CHANNELS = [
      "stanislaw",
      "trouble",
      "signal"
-    ]
+    ],
+    castSrc: "https://archive.org/download/OneGotFa1963/OneGotFa1963.mp4"
    }
   ]
  },
@@ -6538,7 +6759,8 @@ const CHANNELS = [
      "office",
      "protect",
      "shall"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1933-03-05_Extra_Special_Roosevelt_Inaugurated/1933-03-05_Extra_Special_Roosevelt_Inaugurated.mp4"
    },
    {
     title: "Extra!! Scoop! - First Actual Pictures - Assassination, 1934/10/17",
@@ -6561,7 +6783,8 @@ const CHANNELS = [
      "police",
      "dying",
      "crowd"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1934-10-17_King_Alexander_Assassination/1934-10-17_King_Alexander_Assassination.mp4"
    },
    {
     title: "Norman Alley's Bombing of USS Panay Special Issue, 1937/12/12",
@@ -6573,7 +6796,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1937-12-12_Bombing_of_USS_Panay/1937-12-12_Bombing_of_USS_Panay.thumbs/1937-12-12_Bombing_of_USS_Panay_000480.jpg",
     bytes: 94801468,
-    node: "dn801208.us.archive.org/0/items/1937-12-12_Bombing_of_USS_Panay"
+    node: "dn801208.us.archive.org/0/items/1937-12-12_Bombing_of_USS_Panay",
+    castSrc: 0
    },
    {
     title: "Big News of 1941 - The Editors of Universal Newsreel present dramatic ",
@@ -6600,7 +6824,8 @@ const CHANNELS = [
      "victory",
      "peace",
      "president"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1941-12-24_Big_News_of_1941/1941-12-24_Big_News_of_1941.mp4"
    },
    {
     title: "Eve of Battle, 1944/06/06",
@@ -6627,7 +6852,8 @@ const CHANNELS = [
      "coast",
      "british",
      "factories"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1944-06-06_Eve_of_Battle/1944-06-06_Eve_of_Battle.mp4"
    },
    {
     title: "Allies Seize German Loot and Criminals,1945/06/04",
@@ -6654,7 +6880,8 @@ const CHANNELS = [
      "hermann",
      "ring",
      "captured"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1945-06-04_Allies_Sieze_German_Loot_and_Criminals/1945-06-04_Allies_Sieze_German_Loot_and_Criminals.mp4"
    },
    {
     title: "Cruiser Bow Ripped Off By Typhoon, 1945/07/23",
@@ -6666,7 +6893,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1945-07-23_Cruiser_Bow_Ripped_Off_By_Typhoon/1945-07-23_Cruiser_Bow_Ripped_Off_By_Typhoon.thumbs/1945-07-23_Cruiser_Bow_Ripped_Off_By_Typhoon_000180.jpg",
     bytes: 31929658,
-    node: "dn600304.us.archive.org/0/items/1945-07-23_Cruiser_Bow_Ripped_Off_By_Typhoon"
+    node: "dn600304.us.archive.org/0/items/1945-07-23_Cruiser_Bow_Ripped_Off_By_Typhoon",
+    castSrc: 0
    },
    {
     title: "German Drive Rolled Back By Allies, 1945/01/11",
@@ -6693,7 +6921,8 @@ const CHANNELS = [
      "nazis",
      "dropped",
      "positions"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1945-01-11_German_Drive_Rolled_Back_By_Allies/1945-01-11_German_Drive_Rolled_Back_By_Allies.mp4"
    },
    {
     title: "Victorious Generals Welcomed, 1945/06/11",
@@ -6720,7 +6949,8 @@ const CHANNELS = [
      "production",
      "year",
      "parade"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1945-06-11_Victorious_Generals_Welcomed/1945-06-11_Victorious_Generals_Welcomed.mp4"
    },
    {
     title: "First Pictures Atomic Blast!, 1946/07/08",
@@ -6747,7 +6977,8 @@ const CHANNELS = [
      "final",
      "ships",
      "data"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1946-07-08_First_Pictures_Atomic_Blast/1946-07-08_First_Pictures_Atomic_Blast.mp4"
    },
    {
     title: "Jap Films of Hiroshima, 1946/08/05",
@@ -6774,7 +7005,8 @@ const CHANNELS = [
      "will",
      "water",
      "force"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1946-08-05_Jap_Films_of_Hiroshima/1946-08-05_Jap_Films_of_Hiroshima.mp4"
    },
    {
     title: "94 Die Airplane Crashes, 1947/06/02",
@@ -6801,7 +7033,8 @@ const CHANNELS = [
      "death",
      "hour",
      "mile"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1947-06-02_94_Die_Airplane_Crashes/1947-06-02_94_Die_Airplane_Crashes.mp4"
    },
    {
     title: "1949 In Review, 1949/12/26",
@@ -6813,7 +7046,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1949-12-26_1949_In_Review/1949-12-26_1949_In_Review.thumbs/1949-12-26_1949_In_Review_000180.jpg",
     bytes: 30872298,
-    node: "dn800306.us.archive.org/0/items/1949-12-26_1949_In_Review"
+    node: "dn800306.us.archive.org/0/items/1949-12-26_1949_In_Review",
+    castSrc: 0
    },
    {
     title: "H-Bomb Blast Exploded at 15,000 Feet Over Pacific, 1956/05/24",
@@ -6837,7 +7071,8 @@ const CHANNELS = [
      "baby",
      "fish",
      "kids"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1956-05-24_H-Bomb_Blast_Exploded/1956-05-24_H-Bomb_Blast_Exploded.mp4"
    },
    {
     title: "War in Egypt. British and French Bomb Its Key Cities, 1956/11/01",
@@ -6864,7 +7099,8 @@ const CHANNELS = [
      "military",
      "egypt",
      "will"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1956-11-01_War_in_Egypt/1956-11-01_War_in_Egypt.mp4"
    },
    {
     title: "British H-Bomb Fired As Debate On Atom Test Ban Rages, 1957/06/03",
@@ -6883,7 +7119,8 @@ const CHANNELS = [
      "world",
      "arab",
      "will"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1957-06-03_British_H-Bomb/1957-06-03_British_H-Bomb.mp4"
    },
    {
     title: "First U.S. Satellite Launched! 1958/02/03",
@@ -6896,7 +7133,8 @@ const CHANNELS = [
     frame: "https://archive.org/download/1958-02-03_First_US_Satellite_Launched/1958-02-03_First_US_Satellite_Launched.thumbs/1958-02-03_First_US_Satellite_Launched_000060.jpg",
     subs: "1958-02-03_First_US_Satellite_Launched_512kb.autogenerated.vtt",
     bytes: 12341800,
-    node: "dn600300.us.archive.org/0/items/1958-02-03_First_US_Satellite_Launched"
+    node: "dn600300.us.archive.org/0/items/1958-02-03_First_US_Satellite_Launched",
+    castSrc: "https://archive.org/download/1958-02-03_First_US_Satellite_Launched/1958-02-03_First_US_Satellite_Launched.mp4"
    },
    {
     title: "25 Years Ago, 1960/09/22",
@@ -6915,7 +7153,8 @@ const CHANNELS = [
      "nations",
      "mussolini",
      "threat"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1960-09-22_25_years_ago/1960-09-22_25_years_ago.mp4"
    },
    {
     title: "News Highlights of 1960, 1960/12/31",
@@ -6942,7 +7181,8 @@ const CHANNELS = [
      "greatest",
      "year",
      "ever"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1960-12-31_News_Highlights_of_1960/1960-12-31_News_Highlights_of_1960.mp4"
    },
    {
     title: "A Day in History. Telstar Brings World Closer, 1962/07/12",
@@ -6954,7 +7194,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1962-07-12_A_Day_in_History/1962-07-12_A_Day_in_History.thumbs/1962-07-12_A_Day_in_History_000060.jpg",
     bytes: 14394917,
-    node: "dn800309.us.archive.org/0/items/1962-07-12_A_Day_in_History"
+    node: "dn800309.us.archive.org/0/items/1962-07-12_A_Day_in_History",
+    castSrc: 0
    },
    {
     title: "New York World's Fair, 1964/03/02",
@@ -6973,7 +7214,8 @@ const CHANNELS = [
      "fair",
      "counting",
      "world's"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1964-03-02_New_York_Worlds_Fair/1964-03-02_New_York_Worlds_Fair.mp4"
    },
    {
     title: "Olympics End. U.S. Teams Win Medal Honors, 1964/10/26",
@@ -6997,7 +7239,8 @@ const CHANNELS = [
      "second",
      "hayes",
      "four"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1964-10-26_Olympics_End/1964-10-26_Olympics_End.mp4"
    },
    {
     title: "Showdown in Vietnam, 1965/02/08",
@@ -7024,7 +7267,8 @@ const CHANNELS = [
      "cong",
      "president",
      "bundy"
-    ]
+    ],
+    castSrc: "https://archive.org/download/1965-02-08_Showdown_in_Vietnam/1965-02-08_Showdown_in_Vietnam.mp4"
    },
    {
     title: "Peace March. Thousands Oppose Vietnam War, 1967/04/18",
@@ -7036,7 +7280,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1967-04-18_Peace_March/1967-04-18_Peace_March.thumbs/1967-04-18_Peace_March_000060.jpg",
     bytes: 12391559,
-    node: "dn600301.us.archive.org/0/items/1967-04-18_Peace_March"
+    node: "dn600301.us.archive.org/0/items/1967-04-18_Peace_March",
+    castSrc: 0
    }
   ]
  },
@@ -7113,7 +7358,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/theloneranger_201705/theloneranger_201705.thumbs/s01e07_PeteandPedro_000572.jpg",
     bytes: 73708499,
-    node: "dn601209.us.archive.org/0/items/theloneranger_201705"
+    node: "dn601209.us.archive.org/0/items/theloneranger_201705",
+    castSrc: 0
    },
    {
     title: "Dragnet",
@@ -7169,7 +7415,8 @@ const CHANNELS = [
      "window",
      "will",
      "madam"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Dragnet - Episode # 18 The Big Seventeen w/commercials",
@@ -7196,7 +7443,8 @@ const CHANNELS = [
      "theater",
      "everson",
      "school"
-    ]
+    ],
+    castSrc: "https://archive.org/download/DragnetEpisode18TheBigSeventeenwcommercials/dragnet_bigseventeen.mp4"
    },
    {
     title: "Studio One : The Nativity",
@@ -7223,7 +7471,8 @@ const CHANNELS = [
      "light",
      "born",
      "place"
-    ]
+    ],
+    castSrc: "https://archive.org/download/StudioOne-TheNativity/StudioOne-TheNativity.mp4"
    },
    {
     title: "Sherlock Holmes - The Case of Lady Beryl",
@@ -7250,7 +7499,8 @@ const CHANNELS = [
      "body",
      "watson",
      "will"
-    ]
+    ],
+    castSrc: "https://archive.org/download/SherlockHolmes-TheCaseofLadyBeryl/TheCaseofLadyBeryl.mp4"
    },
    {
     title: "Sherlock Holmes - The Case of the Belligerent Ghost",
@@ -7277,7 +7527,8 @@ const CHANNELS = [
      "dear",
      "museum",
      "mean"
-    ]
+    ],
+    castSrc: "https://archive.org/download/SherlockHolmes-TheCaseoftheBelligerentGhost/TheCaseoftheBelligerentGhost.mp4"
    },
    {
     title: "Sherlock Holmes - The Case of the Cunningham Heritage",
@@ -7304,7 +7555,8 @@ const CHANNELS = [
      "afghanistan",
      "mind",
      "body"
-    ]
+    ],
+    castSrc: "https://archive.org/download/SherlockHolmes-TheCaseoftheCunninghamHeritage/TheCaseoftheCunninghamHeritage.mp4"
    },
    {
     title: "Sherlock Holmes - The Case of the Pennsylvania Gun",
@@ -7331,7 +7583,8 @@ const CHANNELS = [
      "murder",
      "john",
      "mean"
-    ]
+    ],
+    castSrc: "https://archive.org/download/SherlockHolmes-TheCaseofthePennsylvaniaGun/TheCaseofthePennsylvaniaGun.mp4"
    },
    {
     title: "Sherlock Holmes - The Case of the Shy Ballerina",
@@ -7358,7 +7611,8 @@ const CHANNELS = [
      "murder",
      "ballet",
      "petersburg"
-    ]
+    ],
+    castSrc: "https://archive.org/download/SherlockHolmes-TheCaseoftheShyBallerina/TheCaseoftheShyBallerina.mp4"
    },
    {
     title: "Sherlock Holmes - The Case of the Texas Cowgirl",
@@ -7385,7 +7639,8 @@ const CHANNELS = [
      "water",
      "sure",
      "case"
-    ]
+    ],
+    castSrc: "https://archive.org/download/SherlockHolmes-TheCaseoftheTexasCowgirl/TheCaseoftheTexasCowgirl.mp4"
    },
    {
     title: "Sherlock Holmes: The Christmas Pudding",
@@ -7412,7 +7667,8 @@ const CHANNELS = [
      "every",
      "will",
      "mean"
-    ]
+    ],
+    castSrc: "https://archive.org/download/SherlockHolmesTheChristmasPudding/Sh-23TheChristmasPudding-1955.ia.mp4"
    },
    {
     title: "The Space Adventures of Flash Gordon",
@@ -7439,7 +7695,8 @@ const CHANNELS = [
      "chamber",
      "blasting",
      "tremors"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheAdventuresOfFlashGordon/TheAdventuresOfFlashGordon7-15-1955.mp4"
    },
    {
     title: "''Ozzie and Harriet'' - David's Almost In-Laws (Aired 23 November 1960",
@@ -7466,7 +7723,8 @@ const CHANNELS = [
      "guess",
      "coke",
      "play"
-    ]
+    ],
+    castSrc: "https://archive.org/download/OzzieNelsonInLaws/AlmostInLawsDavidNelson.ia.mp4"
    },
    {
     title: "One Step Beyond : Earthquake ( Season 2, Episode 17)",
@@ -7493,7 +7751,8 @@ const CHANNELS = [
      "call",
      "hotel",
      "save"
-    ]
+    ],
+    castSrc: "https://archive.org/download/OneStepBeyondEarthquake/OneStepBeyondEarthquake.ia.mp4"
    },
    {
     title: "The Dick Van Dyke Show TV-Show",
@@ -7520,7 +7779,8 @@ const CHANNELS = [
      "itch",
      "minute",
      "away"
-    ]
+    ],
+    castSrc: "https://archive.org/download/The_Dick_van_Dyke_Show/A_MANS_TEETH_ARE_NOT_HIS_OWN.mp4"
    },
    {
     title: "Jack Benny March, 4th 1962",
@@ -7548,7 +7808,8 @@ const CHANNELS = [
      "wait",
      "mean",
      "number"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Beverly Hillbillies TV Show",
@@ -7575,7 +7836,8 @@ const CHANNELS = [
      "start",
      "folks",
      "city"
-    ]
+    ],
+    castSrc: "https://archive.org/download/The_Beverly_Hillbillies/GRANNYS_GARDEN.mp4"
    },
    {
     title: "The Dick Van Dyke Show",
@@ -7603,7 +7865,8 @@ const CHANNELS = [
      "sure",
      "soda",
      "crackers"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheDickVanDykeShow/The-Dick_Van_Dyke-Show-10-24-62.ia.mp4"
    },
    {
     title: "The Dick Van Dyke Show #31: Never Name a Duck",
@@ -7630,7 +7893,8 @@ const CHANNELS = [
      "oliver",
      "baby",
      "much"
-    ]
+    ],
+    castSrc: "https://archive.org/download/dick_van_dyke_show_31_never_name_a_duck/dick_van_dyke_show_31_never_name_a_duck.mp4"
    },
    {
     title: "The Dick Van Dyke Show #34: Bank Book 6565696",
@@ -7657,7 +7921,8 @@ const CHANNELS = [
      "bank",
      "projector",
      "around"
-    ]
+    ],
+    castSrc: "https://archive.org/download/dick_van_dyke_show_34_bank_book_6565696/dick_van_dyke_show_34_bank_book_6565696.mp4"
    },
    {
     title: "The Dick Van Dyke Show #39: The Night the Roof Fell In",
@@ -7685,7 +7950,8 @@ const CHANNELS = [
      "ottoman",
      "daddy",
      "fight"
-    ]
+    ],
+    castSrc: "https://archive.org/download/dick_van_dyke_show_39_the_night_the_roof_fell_in/dick_van_dyke_show_39_the_night_the_roof_fell_in.mp4"
    },
    {
     title: "The Lucy Show ▲ 54 Hours + / 152 Episodes - Incomplete TV Series",
@@ -7726,7 +7992,8 @@ const CHANNELS = [
      "talk",
      "stanley",
      "food"
-    ]
+    ],
+    castSrc: "https://archive.org/download/PetticoatJunction/Petticoat-Junction-1-7-64.ia.mp4"
    },
    {
     title: "Jack Benny Hour",
@@ -7780,7 +8047,8 @@ const CHANNELS = [
      "freeway",
      "weber",
      "around"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Lucy_Show_Main_Street/Lucy_MelTorme.ia.mp4"
    },
    {
     title: "Episode of the Classic TV series \"The Lucy Show\" with Lucille Ball",
@@ -7807,7 +8075,8 @@ const CHANNELS = [
      "refrigerator",
      "newspaper",
      "sale"
-    ]
+    ],
+    castSrc: "https://archive.org/download/lucyshow/lucyshow.ia.mp4"
    },
    {
     title: "\"The Adventures of Ozzie and Harriet\" 1956 Christmas episode",
@@ -7833,7 +8102,8 @@ const CHANNELS = [
      "house",
      "year",
      "sure"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Ozzie_and_Harriet_Christmas/Ozzie_and_Harriet.ia.mp4"
    },
    {
     title: "Beverly Hillbillies : Home For Christmas",
@@ -7859,7 +8129,8 @@ const CHANNELS = [
      "horse",
      "bodine",
      "ever"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Beverly_Hillbillies_Ep13_Home_For_Christmas/BH13_Home_For_Christmas.mp4"
    },
    {
     title: "Beverly Hillbillies Ep01 The Clampetts Strike Oil",
@@ -7885,7 +8156,8 @@ const CHANNELS = [
      "place",
      "brewster",
      "jethro"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Beverly_Hillbillies_Ep01_The_Clampetts_Strike_Oil/BH01_The_Clampetts_Strike_Oil.mp4"
    },
    {
     title: "Beverly Hillbillies Ep02 Getting Settled",
@@ -7912,7 +8184,8 @@ const CHANNELS = [
      "sure",
      "girl",
      "cook"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Beverly_Hillbillies_Ep02_Getting_Settled/BH02_Getting_Settled.mp4"
    },
    {
     title: "Bonanza - Badge Without Honor",
@@ -7938,7 +8211,8 @@ const CHANNELS = [
      "long",
      "eskett",
      "sacramento"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza_-_Badge_Without_Honor/Bonanza_-_Badge_Without_Honor.mp4"
    },
    {
     title: "Bonanza - Bitter Water",
@@ -7964,7 +8238,8 @@ const CHANNELS = [
      "mccarron",
      "talk",
      "better"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza-BitterWater/Bonanza_Bitter_Water_S01-E29.mp4"
    },
    {
     title: "Bonanza - Blood On The Land",
@@ -7991,7 +8266,8 @@ const CHANNELS = [
      "give",
      "done",
      "maybe"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza-BloodOnTheLand/Bonanza_-_Blood_On_The_Land_S01-E22.mp4"
    },
    {
     title: "Bonanza - Dark Star",
@@ -8017,7 +8293,8 @@ const CHANNELS = [
      "gypsy",
      "mean",
      "stay"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza-DarkStar/Bonanza_-_Dark_Star_S01-E31.mp4"
    },
    {
     title: "Bonanza - Day Of Reckoning",
@@ -8043,7 +8320,8 @@ const CHANNELS = [
      "better",
      "home",
      "father"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza_-_Day_Of_Reckoning/Bonanza_-_Day_Of_Reckoning.mp4"
    },
    {
     title: "Bonanza - Death At Dawn",
@@ -8069,7 +8347,8 @@ const CHANNELS = [
      "boys",
      "adam",
      "judge"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza-DeathAtDawn/Bonanza_-_Death_At_Dawn_S01-E32.mp4"
    },
    {
     title: "Bonanza - Denver McKee",
@@ -8095,7 +8374,8 @@ const CHANNELS = [
      "girl",
      "mckee",
      "talk"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza_-_Denver_McKee/Bonanza_-_Denver_McKee.mp4"
    },
    {
     title: "Bonanza - Desert Justice",
@@ -8122,7 +8402,8 @@ const CHANNELS = [
      "david",
      "morning",
      "ain't"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza-DesertJustice/Bonanza_-_Desert_Justice_S01-E23.mp4"
    },
    {
     title: "Bonanza - Feet Of Clay",
@@ -8148,7 +8429,8 @@ const CHANNELS = [
      "killed",
      "mountains",
      "knew"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza-FeetOfClay/Bonanza_-_Feet_Of_Clay_S01-E30.mp4"
    },
    {
     title: "Bonanza - San Francisco",
@@ -8174,7 +8456,8 @@ const CHANNELS = [
      "ship",
      "wait",
      "better"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza-SanFrancisco/Bonanza_-_San_Francisco_S01-E28.mp4"
    },
    {
     title: "Bonanza - Showdown",
@@ -8200,7 +8483,8 @@ const CHANNELS = [
      "ellie",
      "better",
      "find"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza-Showdown/Bonanza_-_Showdown_S02-E01.mp4"
    },
    {
     title: "Bonanza - Silent Thunder",
@@ -8226,7 +8510,8 @@ const CHANNELS = [
      "love",
      "hurt",
      "leave"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza_-_Silent_Thunder/Bonanza_-_Silent_Thunder.mp4"
    },
    {
     title: "Bonanza - The Ape",
@@ -8253,7 +8538,8 @@ const CHANNELS = [
      "mean",
      "pretty",
      "friend"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza_-_The_Ape/Bonanza_-_The_Ape.mp4"
    },
    {
     title: "Bonanza - The Blood Line",
@@ -8279,7 +8565,8 @@ const CHANNELS = [
      "sheriff",
      "grayson",
      "even"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza_-_The_Blood_Line/Bonanza_-_The_Blood_Line.mp4"
    },
    {
     title: "Bonanza - The Courtship",
@@ -8305,7 +8592,8 @@ const CHANNELS = [
      "matter",
      "helen",
      "sure"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza_-_The_Courtship/Bonanza_-_The_Courtship.mp4"
    },
    {
     title: "Bonanza - The Fear Merchants",
@@ -8331,7 +8619,8 @@ const CHANNELS = [
      "amanda",
      "ain't",
      "town"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza-TheFearMerchants/Bonanza_-_The_Fear_Merchants_S01-E20.mp4"
    },
    {
     title: "Bonanza - The Hopefuls",
@@ -8357,7 +8646,8 @@ const CHANNELS = [
      "ain't",
      "friends",
      "father"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza_-_The_Hopefuls/Bonanza_-_The_Hopefuls.mp4"
    },
    {
     title: "Bonanza - The Mill",
@@ -8383,7 +8673,8 @@ const CHANNELS = [
      "mean",
      "wonderful",
      "around"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza_The_Mill/Bonanza_The_Mill.mp4"
    },
    {
     title: "Bonanza - The Mission",
@@ -8409,7 +8700,8 @@ const CHANNELS = [
      "drink",
      "desert",
      "sure"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza-TheMission/Bonanza_-_The_Mission_S02-E02.mp4"
    },
    {
     title: "Bonanza - The Spitfire",
@@ -8435,7 +8727,8 @@ const CHANNELS = [
      "hear",
      "real",
      "killing"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza_-_The_Spitfire/Bonanza_-_The_Spitfire.mp4"
    },
    {
     title: "Bonanza - The Stranger",
@@ -8461,7 +8754,8 @@ const CHANNELS = [
      "story",
      "years",
      "happened"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bonanza-TheStranger/Bonanza_-_The_Stranger_S01-E24.mp4"
    },
    {
     title: "Dragnet : The Big Oskar",
@@ -8487,7 +8781,8 @@ const CHANNELS = [
      "property",
      "police",
      "found"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Dragnet_The_Big_Oskar/S08E04_The_Big_Oskar.mp4"
    },
    {
     title: "Dragnet: The Human Bomb",
@@ -8513,7 +8808,8 @@ const CHANNELS = [
      "head",
      "nine",
      "still"
-    ]
+    ],
+    castSrc: "https://archive.org/download/DragnetTheHumanBomb/Dragnet-theHumanBomb.mp4"
    },
    {
     title: "Lone Ranger",
@@ -8550,7 +8846,8 @@ const CHANNELS = [
      "morning",
      "girl",
      "nice"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_And_Carol_In_Palm_Springs/TLS_LucyAndCarolInPalmSprings.mp4"
    },
    {
     title: "Lucy and George Burns",
@@ -8576,7 +8873,8 @@ const CHANNELS = [
      "carmichael",
      "agent",
      "brother"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_And_George_Burns/TLS_Lucy_And_George_Burns.mp4"
    },
    {
     title: "Lucy and the Efficiency Expert",
@@ -8602,7 +8900,8 @@ const CHANNELS = [
      "glad",
      "office",
      "around"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_And_The_Efficiency_Expert/TLS_Lucy_And_The_Efficiency_Expert.mp4"
    },
    {
     title: "Lucy And The French Movie Star",
@@ -8628,7 +8927,8 @@ const CHANNELS = [
      "work",
      "cheever",
      "course"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_And_The_French_Movie_Star/TLS_Lucy_And_The_French_Movie_Star.mp4"
    },
    {
     title: "Lucy and the RingaDing Ring",
@@ -8654,7 +8954,8 @@ const CHANNELS = [
      "lucy",
      "much",
      "turn"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_And_The_RingaDing_Ring/TLS_Lucy_And_The_RingaDing_Ring.mp4"
    },
    {
     title: "Lucy and the Submarine",
@@ -8680,7 +8981,8 @@ const CHANNELS = [
      "fighting",
      "mean",
      "submarine"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_and_The_Submarine/TLS_Lucy_and_The_Submarine.mp4"
    },
    {
     title: "Lucy And The Substitute Secretary",
@@ -8706,7 +9008,8 @@ const CHANNELS = [
      "arrowhead",
      "mooney's",
      "account"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_And_The_Substitute_Secretary/TLS_Lucy_And_The_Substitute_Secretary.mp4"
    },
    {
     title: "Lucy And Viv Put In A Shower",
@@ -8732,7 +9035,8 @@ const CHANNELS = [
      "door",
      "minute",
      "doctor"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_And_Viv_Put_In_A_Shower/TLS_Lucy_And_Viv_Put_In_A_Shower.mp4"
    },
    {
     title: "Lucy Flies To London",
@@ -8758,7 +9062,8 @@ const CHANNELS = [
      "tickets",
      "hope",
      "seat"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_Goes_To_London/TLS_Lucy_Goes_To_London.mp4"
    },
    {
     title: "Lucy Gets A Roommate",
@@ -8769,7 +9074,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TLS_Lucy_Gets_A_Roommate/TLS_Lucy_Gets_A_Roommate.thumbs/TLS_Lucy_Gets_A_Roommate_000600.jpg",
     bytes: 110719574,
-    node: "dn801208.us.archive.org/0/items/TLS_Lucy_Gets_A_Roommate"
+    node: "dn801208.us.archive.org/0/items/TLS_Lucy_Gets_A_Roommate",
+    castSrc: 0
    },
    {
     title: "Lucy Gets Caught In The Draft",
@@ -8795,7 +9101,8 @@ const CHANNELS = [
      "orders",
      "mooney",
      "letter"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_Gets_Caught_In_The_Draft/TLS_Lucy_Gets_Caught_In_The_Draft.mp4"
    },
    {
     title: "Lucy Gets Jack Bennys Account",
@@ -8821,7 +9128,8 @@ const CHANNELS = [
      "violin",
      "teacher",
      "business"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_Gets_Jack_Bennys_Account/TLS_Lucy_Gets_Jack_Bennys_Account.mp4"
    },
    {
     title: "Lucy Gets Trapped",
@@ -8847,7 +9155,8 @@ const CHANNELS = [
      "picture",
      "lucy",
      "newspaper"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_Gets_Trapped/TLS_Lucy_Gets_Trapped.mp4"
    },
    {
     title: "Lucy meets John Wayne",
@@ -8873,7 +9182,8 @@ const CHANNELS = [
      "ready",
      "leave",
      "mary"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_Meets_John_Wayne/TLS_Lucy_Meets_John_Wayne.mp4"
    },
    {
     title: "Lucy Meets Pat Collins",
@@ -8899,7 +9209,8 @@ const CHANNELS = [
      "show",
      "relax",
      "left"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_Meets_Pat_Collins/TLS_Lucy_Meets_Pat_Collins.mp4"
    },
    {
     title: "Lucy Meets Robert Goulet",
@@ -8925,7 +9236,8 @@ const CHANNELS = [
      "truck",
      "sure",
      "alike"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_Meets_Robert_Goulet/TLS_Lucy_Meets_Robert_Goulet.mp4"
    },
    {
     title: "Lucy Meets Sheldon Leonard",
@@ -8951,7 +9263,8 @@ const CHANNELS = [
      "gangster",
      "name",
      "television"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_Meets_Sheldon_Leonard/TLS_Lucy_Meets_Sheldon_Leonard.mp4"
    },
    {
     title: "Lucy Meets Tennessee Ernie Ford",
@@ -8977,7 +9290,8 @@ const CHANNELS = [
      "bank",
      "dancing",
      "howdy"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_Meets_Tennessee_Ernie_Ford/TLS_Lucy_Meets_Tennessee_Ernie_Ford.mp4"
    },
    {
     title: "Lucy meets the Berles",
@@ -9003,7 +9317,8 @@ const CHANNELS = [
      "work",
      "will",
      "lunch"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_Meets_The_Burles/TLS_Lucy_Meets_The_Burles.mp4"
    },
    {
     title: "Lucy Meets The Law",
@@ -9029,7 +9344,8 @@ const CHANNELS = [
      "name",
      "tough",
      "remember"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_Meets_The_Law/TLS_Lucy_Meets_The_Law.mp4"
    },
    {
     title: "Lucy The Babysitter",
@@ -9055,7 +9371,8 @@ const CHANNELS = [
      "minute",
      "play",
      "street"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_The_Babysitter/TLS_Lucy_The_Babysitter.mp4"
    },
    {
     title: "Lucy The Bean Queen",
@@ -9081,7 +9398,8 @@ const CHANNELS = [
      "bailey",
      "cans",
      "lucy"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_The_Bean_Queen/TLS_Lucy_The_Bean_Queen.mp4"
    },
    {
     title: "Lucy The Starmaker",
@@ -9107,7 +9425,8 @@ const CHANNELS = [
      "young",
      "mooney",
      "cheever"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucy_The_Starmaker/TLS_Lucy_The_Starmaker.mp4"
    },
    {
     title: "Lucys Barbershop Quartet",
@@ -9133,7 +9452,8 @@ const CHANNELS = [
      "fire",
      "four",
      "hear"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Lucys_Barbershop_Quartet/TLS_Lucys_Barbershop_Quartet.mp4"
    },
    {
     title: "Sherlock Holmes - The Case of Harry Crocker",
@@ -9159,7 +9479,8 @@ const CHANNELS = [
      "police",
      "girl",
      "last"
-    ]
+    ],
+    castSrc: "https://archive.org/download/SherlockHolmes-TheCaseOfHarryCrocker/SherlockHolmes-TheCaseOfHarryCrocker.mp4"
    },
    {
     title: "The Adventures Of Ozzie And Harriet Season One",
@@ -9198,7 +9519,8 @@ const CHANNELS = [
      "death",
      "mean",
      "afghanistan"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Beverly Hillbillies : The Servants",
@@ -9225,7 +9547,8 @@ const CHANNELS = [
      "drysdale",
      "kind",
      "says"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Beverly_Hillbillies_Ep07_The_Servants/BH07_The_Servants.mp4"
    },
    {
     title: "The Beverly Hillbillies : Trick Or Treat",
@@ -9251,7 +9574,8 @@ const CHANNELS = [
      "ever",
      "young",
      "sure"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Beverly_Hillbillies_Ep06_Trick_Or_Treat/BH06_Trick_Or_Treat.mp4"
    },
    {
     title: "The Coming Of Robin Hood",
@@ -9277,7 +9601,8 @@ const CHANNELS = [
      "will",
      "kill",
      "estate"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Robin_Hood_01_The_Coming_Of_Robin_Hood/Robin_Hood_01_The_Coming_Of_Robin_Hood.mp4"
    },
    {
     title: "The Dick Van Dyke Show - Season 1 of 5 - MKV",
@@ -9314,7 +9639,8 @@ const CHANNELS = [
      "actor",
      "called",
      "zeke"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Jack_Benny_11_04_1951/JackBennyProgram-2x01.DorothyShay.mp4"
    },
    {
     title: "Viv Visits Lucy",
@@ -9333,7 +9659,8 @@ const CHANNELS = [
      "poppins",
      "vivian",
      "bagley"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TLS_Viv_Visits_Lucy/TLS_Viv_Visits_Lucy.mp4"
    }
   ]
  },
@@ -9368,7 +9695,8 @@ const CHANNELS = [
     frame: "https://archive.org/download/Cleopatra_1912/Cleopatra_1912.thumbs/Cleopatra_002094.jpg",
     subs: "Cleopatra.asr.srt",
     bytes: 701450752,
-    node: "dn801204.us.archive.org/0/items/Cleopatra_1912"
+    node: "dn801204.us.archive.org/0/items/Cleopatra_1912",
+    castSrc: 0
    },
    {
     title: "From the Manger to the Cross; or, Jesus of Nazareth",
@@ -9394,7 +9722,8 @@ const CHANNELS = [
     ],
     co: [
      "Kalem Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Invaders",
@@ -9418,7 +9747,8 @@ const CHANNELS = [
      "Art Acord",
      "Francis Ford",
      "Ann Little"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "\"Ingeborg Holm\" (1913) director Victor Sjöström (Seastrom)",
@@ -9430,7 +9760,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/IngeborgHolmVictorSjostrom1913/IngeborgHolmVictorSjostrom1913.thumbs/Ingeborg%20Holm%20(Victor%20Sj%C3%B6str%C3%B6m%2C%201913)_001770.jpg",
     bytes: 673557062,
-    node: "dn800309.us.archive.org/0/items/IngeborgHolmVictorSjostrom1913"
+    node: "dn800309.us.archive.org/0/items/IngeborgHolmVictorSjostrom1913",
+    castSrc: 0
    },
    {
     title: "Antony and Cleopatra",
@@ -9504,7 +9835,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "L'enfant de Paris",
@@ -9631,7 +9963,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/HomeSweetHome1914/HomeSweetHome1914.thumbs/Home%2C%20Sweet%20Home%20(1914)_001350.jpg",
     bytes: 780481571,
-    node: "dn600307.us.archive.org/0/items/HomeSweetHome1914"
+    node: "dn600307.us.archive.org/0/items/HomeSweetHome1914",
+    castSrc: 0
    },
    {
     title: "\"Judith Of Bethulia\" (1914) director D. W. Griffith, cinematographer B",
@@ -9643,7 +9976,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/JudithOfBethulia/JudithOfBethulia.thumbs/Judith%20of%20Bethulia_001170.jpg",
     bytes: 506179918,
-    node: "dn600208.us.archive.org/0/items/JudithOfBethulia"
+    node: "dn600208.us.archive.org/0/items/JudithOfBethulia",
+    castSrc: 0
    },
    {
     title: "\"The Avenging Conscience\" (1914) director D. W. Griffith, cinematograp",
@@ -9655,7 +9989,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheAvengingConscience_201502/TheAvengingConscience_201502.thumbs/The%20Avenging%20Conscience_002010.jpg",
     bytes: 1128439169,
-    node: "dn601203.us.archive.org/0/items/TheAvengingConscience_201502"
+    node: "dn601203.us.archive.org/0/items/TheAvengingConscience_201502",
+    castSrc: 0
    },
    {
     title: "A Militant Suffragette",
@@ -9717,7 +10052,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_11_14_TilliesPuncturedRomance/CC_1914_11_14_TilliesPuncturedRomance.thumbs/CC_1914_11_14_TilliesPuncturedRomance_001680.jpg",
     bytes: 311583364,
-    node: "dn800300.us.archive.org/0/items/CC_1914_11_14_TilliesPuncturedRomance"
+    node: "dn800300.us.archive.org/0/items/CC_1914_11_14_TilliesPuncturedRomance",
+    castSrc: 0
    },
    {
     title: "Fantmas contre Fantmas AKA Fantomas Against Fantomas",
@@ -9791,7 +10127,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/His_Maj_Scarecrow_OZ/His_Maj_Scarecrow_OZ.thumbs/HisMajestyTheScarecrowOfOz_002700.jpg",
     bytes: 225979501,
-    node: "dn800307.us.archive.org/0/items/His_Maj_Scarecrow_OZ"
+    node: "dn800307.us.archive.org/0/items/His_Maj_Scarecrow_OZ",
+    castSrc: 0
    },
    {
     title: "Home, Sweet Home",
@@ -9839,7 +10176,8 @@ const CHANNELS = [
     ],
     co: [
      "The Oz Film Manufacturing Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Magic Cloak of Oz",
@@ -9864,7 +10202,8 @@ const CHANNELS = [
     ],
     co: [
      "The Oz Film Manufacturing Company"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Magic_Cloak_of_Oz_1914/MagicCloakOfOZ.mp4"
    },
    {
     title: "The Mysterious X",
@@ -9913,7 +10252,8 @@ const CHANNELS = [
     ],
     co: [
      "The Oz Film Manufacturing Company"
-    ]
+    ],
+    castSrc: "https://archive.org/download/PatchworkOZ/PatchworkGirlOfOz.mp4"
    },
    {
     title: "The Patchwork Girl Of Oz (1914 Silent Film, Film Noir, Drama)",
@@ -9939,7 +10279,8 @@ const CHANNELS = [
     ],
     co: [
      "The Oz Film Manufacturing Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Sign of the Cross",
@@ -10104,7 +10445,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheBirthOfANationP1/TheBirthOfANationP1.thumbs/The%20Birth%20of%20a%20Nation%20p%201_002214.jpg",
     bytes: 824347850,
-    node: "dn600305.us.archive.org/0/items/TheBirthOfANationP1"
+    node: "dn600305.us.archive.org/0/items/TheBirthOfANationP1",
+    castSrc: 0
    },
    {
     title: "A Fool There Was",
@@ -10128,7 +10470,8 @@ const CHANNELS = [
      "Edward José",
      "May Allison",
      "Theda Bara"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Alias Jimmy Valentine",
@@ -10163,7 +10506,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/AliceinWonderland1915/AliceinWonderland1915.thumbs/AliceinWonderland_001260.jpg",
     bytes: 200801038,
-    node: "dn800304.us.archive.org/0/items/AliceinWonderland1915"
+    node: "dn800304.us.archive.org/0/items/AliceinWonderland1915",
+    castSrc: 0
    },
    {
     title: "Carmen",
@@ -10202,7 +10546,8 @@ const CHANNELS = [
     ],
     co: [
      "Essanay Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Children of Eve",
@@ -10287,7 +10632,8 @@ const CHANNELS = [
     wpx: "Hearts in Exile is a 1915 American silent drama film directed by James Young, based on the story of the same name by John Oxenham. The film was both produced and distributed by World Film Company. The film is also known as Hearts Afire.",
     dir: [
      "James Young"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Hypocrites",
@@ -10395,7 +10741,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheMartyrsoftheAlamo/TheMartyrsoftheAlamo.thumbs/TheMartyrsoftheAlamo/TheMartyrsoftheAlamo_001740.jpg",
     bytes: 310455512,
-    node: "dn600307.us.archive.org/0/items/TheMartyrsoftheAlamo"
+    node: "dn600307.us.archive.org/0/items/TheMartyrsoftheAlamo",
+    castSrc: "https://archive.org/download/TheMartyrsoftheAlamo/TheMartyrsoftheAlamo/TheMartyrsoftheAlamo.mp4"
    },
    {
     title: "The Raven",
@@ -10445,7 +10792,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/HoodooAnn/HoodooAnn.thumbs/Hoodoo-Ann-v2_001554.jpg",
     bytes: 573817470,
-    node: "dn600209.us.archive.org/0/items/HoodooAnn"
+    node: "dn600209.us.archive.org/0/items/HoodooAnn",
+    castSrc: 0
    },
    {
     title: "20,000 Leagues Under the Sea",
@@ -10471,7 +10819,8 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "After Death",
@@ -10571,7 +10920,8 @@ const CHANNELS = [
     wpx: "Flirting with Fate is a 1916 American film directed by Christy Cabanne and starring Douglas Fairbanks. It was produced by the Fine Arts Film Company and distributed by Triangle Film Corporation.",
     dir: [
      "Christy Cabanne"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Going Straight (1916 Classic, Silent, Film Noir (tinted), Drama)",
@@ -10583,7 +10933,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/going-straight-1916-classic-silent-film-noir-drama/going-straight-1916-classic-silent-film-noir-drama.thumbs/Going%20Straight%20(1916%20Classic%2C%20Silent%2C%20Film%20noir%2C%20Drama)_001434.jpg",
     bytes: 222274612,
-    node: "dn600203.us.archive.org/0/items/going-straight-1916-classic-silent-film-noir-drama"
+    node: "dn600203.us.archive.org/0/items/going-straight-1916-classic-silent-film-noir-drama",
+    castSrc: 0
    },
    {
     title: "Hell's Hinges",
@@ -10638,7 +10989,8 @@ const CHANNELS = [
     ],
     co: [
      "Triangle Film Corporation"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Il fuoco (la favilla - la vampa - la cenere) AKA The Fire",
@@ -10838,7 +11190,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/AManThereWas1917/AManThereWas1917.thumbs/A-Man-There-Was-1917_001410.jpg",
     bytes: 472367641,
-    node: "dn600203.us.archive.org/0/items/AManThereWas1917"
+    node: "dn600203.us.archive.org/0/items/AManThereWas1917",
+    castSrc: 0
    },
    {
     title: "\"Down to Earth\" (1917) starring Douglas Fairbanks",
@@ -10938,7 +11291,8 @@ const CHANNELS = [
     ],
     co: [
      "Famous Players-Lasky Corporation"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Blind Justice",
@@ -11081,7 +11435,8 @@ const CHANNELS = [
     ],
     co: [
      "Mary Pickford Film Corporation"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Romance Of The Redwoods",
@@ -11274,7 +11629,8 @@ const CHANNELS = [
      "Mary Pickford",
      "Charles Craig",
      "Madlaine Traverse"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Silent Man",
@@ -11342,7 +11698,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/BlueBlazesRawden/BlueBlazesRawden.thumbs/Blue%20Blazes%20Rawden_001230.jpg",
     bytes: 579173043,
-    node: "dn600207.us.archive.org/0/items/BlueBlazesRawden"
+    node: "dn600207.us.archive.org/0/items/BlueBlazesRawden",
+    castSrc: 0
    },
    {
     title: "\"Hearts of the world\" (1918) director D. W. Griffith starring Lillian ",
@@ -11354,7 +11711,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/HeartsOfTheWorld/HeartsOfTheWorld.thumbs/Hearts%20of%20the%20world_002730.jpg",
     bytes: 1217753272,
-    node: "dn800201.us.archive.org/0/items/HeartsOfTheWorld"
+    node: "dn800201.us.archive.org/0/items/HeartsOfTheWorld",
+    castSrc: 0
    },
    {
     title: "\"Stella Maris\" (1918) starring Mary Pickford",
@@ -11366,7 +11724,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/StellaMaris_201312/StellaMaris_201312.thumbs/Stella%20Maris_002010.jpg",
     bytes: 1168791099,
-    node: "dn801201.us.archive.org/0/items/StellaMaris_201312"
+    node: "dn801201.us.archive.org/0/items/StellaMaris_201312",
+    castSrc: 0
    },
    {
     title: "\"The Outlaw and His Wife\" (1918) starring Victor Sjöström (Seastrom)",
@@ -11378,7 +11737,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheOutlawAndHisWife/TheOutlawAndHisWife.thumbs/MyMovie-tohw_003930.jpg",
     bytes: 737007440,
-    node: "dn800201.us.archive.org/0/items/TheOutlawAndHisWife"
+    node: "dn800201.us.archive.org/0/items/TheOutlawAndHisWife",
+    castSrc: 0
    },
    {
     title: "A Trip to Mars",
@@ -11627,7 +11987,8 @@ const CHANNELS = [
      "Mary Pickford",
      "Theodore Roberts",
      "Thomas Meighan"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Stella Maris",
@@ -11666,7 +12027,8 @@ const CHANNELS = [
     ],
     co: [
      "Centaur Film Company"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TarzanoftheApes1918AndyDivx/TarzanoftheApes1918AndyDivx.mp4"
    },
    {
     title: "The Forbidden City",
@@ -11788,7 +12150,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/BackToGodsCountry1919/BackToGodsCountry1919.thumbs/Back-to-Gods-Country-1919_001770.jpg",
     bytes: 1012283575,
-    node: "dn801207.us.archive.org/0/items/BackToGodsCountry1919"
+    node: "dn801207.us.archive.org/0/items/BackToGodsCountry1919",
+    castSrc: 0
    },
    {
     title: "\"Broken Blossoms\" (1919) director D. W. Griffith, cinematographer Bill",
@@ -11800,7 +12163,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/BrokenBlossoms_201312/BrokenBlossoms_201312.thumbs/Broken-Blossoms-v2_002154.jpg",
     bytes: 792285956,
-    node: "dn800307.us.archive.org/0/items/BrokenBlossoms_201312"
+    node: "dn800307.us.archive.org/0/items/BrokenBlossoms_201312",
+    castSrc: 0
    },
    {
     title: "\"Male and Female\" (1919) starring Thomas Meighan and Gloria Swanson",
@@ -11824,7 +12188,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/MyMovie_20180126/MyMovie_20180126.thumbs/My%20Movie_001434.jpg",
     bytes: 528147877,
-    node: "dn800306.us.archive.org/0/items/MyMovie_20180126"
+    node: "dn800306.us.archive.org/0/items/MyMovie_20180126",
+    castSrc: 0
    },
    {
     title: "\"True Heart Susie\" (1919) director D. W. Griffith starring Lillian Gis",
@@ -11836,7 +12201,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TrueHeartSusie/TrueHeartSusie.thumbs/True-Heart-Susie-v2_002094.jpg",
     bytes: 774663206,
-    node: "dn600305.us.archive.org/0/items/TrueHeartSusie"
+    node: "dn600305.us.archive.org/0/items/TrueHeartSusie",
+    castSrc: 0
    },
    {
     title: "\"Victory\" (1919) featuring Lon Chaney",
@@ -11968,7 +12334,8 @@ const CHANNELS = [
     co: [
      "Paramount Pictures"
     ],
-    node2: "ia803108.us.archive.org/12/items/Broken.Blossoms"
+    node2: "ia803108.us.archive.org/12/items/Broken.Blossoms",
+    castSrc: 0
    },
    {
     title: "Das Kabinett des Doktor Caligari ( The Cabinet of Dr. Caligari )",
@@ -11994,7 +12361,8 @@ const CHANNELS = [
     ],
     co: [
      "Babelsberg Studio"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Die Ahnfrau",
@@ -12091,7 +12459,8 @@ const CHANNELS = [
      "Clara Kimball Young",
      "Pauline Starke",
      "Ralph Lewis"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "For Better, for Worse",
@@ -12257,7 +12626,8 @@ const CHANNELS = [
      "Mary Pickford",
      "Wharton James",
      "Katherine Griffith"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Rose-France",
@@ -12351,7 +12721,8 @@ const CHANNELS = [
     ],
     co: [
      "First National Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheGreatestQuestiondecember281919/TheGreatestQuestion1919D.w.GriffithLillianGishRobertHarron.mp4"
    },
    {
     title: "The Oyster Princess",
@@ -12431,7 +12802,8 @@ const CHANNELS = [
     ],
     co: [
      "Southern Cross Feature Film Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "thegreatestquestion",
@@ -12458,7 +12830,8 @@ const CHANNELS = [
      "blair",
      "bank",
      "born"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "True Heart Susie",
@@ -12611,7 +12984,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Dr.JekyllAndMr.Hyde1920DirectorJohnS.Robertson/Dr.JekyllAndMr.Hyde1920DirectorJohnS.Robertson.thumbs/Dr-Jekyll-and-Mr-Hyde-v2_001974.jpg",
     bytes: 738788947,
-    node: "dn601204.us.archive.org/0/items/Dr.JekyllAndMr.Hyde1920DirectorJohnS.Robertson"
+    node: "dn601204.us.archive.org/0/items/Dr.JekyllAndMr.Hyde1920DirectorJohnS.Robertson",
+    castSrc: 0
    },
    {
     title: "\"Something New\" (1920) starring Nell Shipman",
@@ -12623,7 +12997,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SomethingNew_201312/SomethingNew_201312.thumbs/MyMovie-sn_002730.jpg",
     bytes: 509842305,
-    node: "dn801200.us.archive.org/0/items/SomethingNew_201312"
+    node: "dn801200.us.archive.org/0/items/SomethingNew_201312",
+    castSrc: 0
    },
    {
     title: "\"The Flapper\" (1920) starring Olive Thomas",
@@ -12647,7 +13022,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/THEIDOLDANCER/THEIDOLDANCER.thumbs/THE-IDOL-DANCER_002430.jpg",
     bytes: 911934593,
-    node: "dn600300.us.archive.org/0/items/THEIDOLDANCER"
+    node: "dn600300.us.archive.org/0/items/THEIDOLDANCER",
+    castSrc: 0
    },
    {
     title: "\"The Love Flower\" (1920) director D. W. Griffith",
@@ -12659,7 +13035,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheLoveFlower1920_201603/TheLoveFlower1920_201603.thumbs/The%20Love%20Flower%20(1920)_002514.jpg",
     bytes: 938626077,
-    node: "dn600305.us.archive.org/0/items/TheLoveFlower1920_201603"
+    node: "dn600305.us.archive.org/0/items/TheLoveFlower1920_201603",
+    castSrc: 0
    },
    {
     title: "\"The Mark of Zorro\" (1920) starring Douglas Fairbanks",
@@ -12671,7 +13048,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/vidzo/vidzo.thumbs/The-Mark-of-Zorro-v2_002574.jpg",
     bytes: 964602910,
-    node: "dn601206.us.archive.org/0/items/vidzo"
+    node: "dn601206.us.archive.org/0/items/vidzo",
+    castSrc: 0
    },
    {
     title: "\"The Penalty\" (1920) starring Lon Chaney",
@@ -12683,7 +13061,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ThePenalty_201312/ThePenalty_201312.thumbs/The%20Penalty_002190.jpg",
     bytes: 652000845,
-    node: "dn600301.us.archive.org/0/items/ThePenalty_201312"
+    node: "dn600301.us.archive.org/0/items/ThePenalty_201312",
+    castSrc: 0
    },
    {
     title: "\"The Saphead\" (1920) starring Buster Keaton",
@@ -12695,7 +13074,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/yorkmba99_hotmail_Vids/yorkmba99_hotmail_Vids.thumbs/vidsh_001794.jpg",
     bytes: 1343844233,
-    node: "dn601205.us.archive.org/0/items/yorkmba99_hotmail_Vids"
+    node: "dn601205.us.archive.org/0/items/yorkmba99_hotmail_Vids",
+    castSrc: 0
    },
    {
     title: "\"Way Down East\" (1920) director D. W. Griffith, cinematographer Billy ",
@@ -12707,7 +13087,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/WayDownEast_201312/WayDownEast_201312.thumbs/Way-Down-East-v2_003594.jpg",
     bytes: 1343297065,
-    node: "dn600300.us.archive.org/0/items/WayDownEast_201312"
+    node: "dn600300.us.archive.org/0/items/WayDownEast_201312",
+    castSrc: 0
    },
    {
     title: "A Lover in Pawn",
@@ -12838,7 +13219,8 @@ const CHANNELS = [
     ],
     co: [
      "Famous Players-Lasky Corporation"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Headin Home",
@@ -12852,7 +13234,8 @@ const CHANNELS = [
     frame: "https://archive.org/download/Heading_Home/Heading_Home.thumbs/HeadingHome-BabeRuth1920_001320.jpg",
     subs: "HeadingHome-BabeRuth1920.asr.srt",
     bytes: 241113219,
-    node: "dn800303.us.archive.org/0/items/Heading_Home"
+    node: "dn800303.us.archive.org/0/items/Heading_Home",
+    castSrc: "https://archive.org/download/Heading_Home/HeadingHome-BabeRuth1920.mp4"
    },
    {
     title: "Humoresque",
@@ -12988,7 +13371,8 @@ const CHANNELS = [
      "lawyer",
      "long",
      "early"
-    ]
+    ],
+    castSrc: "https://archive.org/download/markofzorro-1920/markofzorro.mp4"
    },
    {
     title: "Narayana",
@@ -13027,7 +13411,8 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/OutsideTheLaw/OutsideTheLaw.mp4"
    },
    {
     title: "Outsidethelaw",
@@ -13061,7 +13446,8 @@ const CHANNELS = [
     ],
     co: [
      "The Courier-Mail"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Romeo und Julia im Schnee",
@@ -13123,7 +13509,8 @@ const CHANNELS = [
     ],
     co: [
      "Mary Pickford Film Corporation"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Terror Island",
@@ -13174,7 +13561,8 @@ const CHANNELS = [
      "Helen Jerome Eddy",
      "David Butler",
      "Edythe Chapman"
-    ]
+    ],
+    castSrc: "https://archive.org/download/CountyFair_/CountyFair.mp4"
    },
    {
     title: "The Daughter of Dawn",
@@ -13245,7 +13633,8 @@ const CHANNELS = [
     ],
     co: [
      "Selznick Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Golem",
@@ -13272,7 +13661,8 @@ const CHANNELS = [
     ],
     co: [
      "PAGU"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Jack-Knife Man",
@@ -13332,7 +13722,8 @@ const CHANNELS = [
      "elin",
      "elite",
      "least"
-    ]
+    ],
+    castSrc: "https://archive.org/download/PublicdomainTheLastoftheMohicans/Last_of_the_Mohicans.mp4"
    },
    {
     title: "The Merry-Go-Round",
@@ -13402,7 +13793,8 @@ const CHANNELS = [
      "Lon Chaney",
      "Charles Clary",
      "Ethel Grey Terry"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The President",
@@ -13562,7 +13954,8 @@ const CHANNELS = [
     ],
     co: [
      "Famous Players-Lasky Corporation"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Within Our Gates",
@@ -13597,7 +13990,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Camille1921/Camille1921.thumbs/Camille%201921_001650.jpg",
     bytes: 528025104,
-    node: "dn800308.us.archive.org/0/items/Camille1921"
+    node: "dn800308.us.archive.org/0/items/Camille1921",
+    castSrc: 0
    },
    {
     title: "\"Little Lord Fauntleroy\" (1921) starring Mary Pickford",
@@ -13609,7 +14003,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/LittleLordFauntleroy_201402/LittleLordFauntleroy_201402.thumbs/Little%20Lord%20Fauntleroy_005310.jpg",
     bytes: 830789058,
-    node: "dn601203.us.archive.org/0/items/LittleLordFauntleroy_201402"
+    node: "dn601203.us.archive.org/0/items/LittleLordFauntleroy_201402",
+    castSrc: 0
    },
    {
     title: "\"Orphans of the Storm\" (1921) director D. W. Griffith, cinematographer",
@@ -13621,7 +14016,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/OrphansOfTheStorm_201312/OrphansOfTheStorm_201312.thumbs/Orphans-of-the-Storm-v2_003594.jpg",
     bytes: 1352589478,
-    node: "dn800300.us.archive.org/0/items/OrphansOfTheStorm_201312"
+    node: "dn800300.us.archive.org/0/items/OrphansOfTheStorm_201312",
+    castSrc: 0
    },
    {
     title: "\"The Phantom Carriage\" (1921) director Victor Sjöström (Seastrom)",
@@ -13633,7 +14029,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ThePhantomCarriage_201405/ThePhantomCarriage_201405.thumbs/ThePhantomCarriage1921_002550.jpg",
     bytes: 429720578,
-    node: "dn801205.us.archive.org/0/items/ThePhantomCarriage_201405"
+    node: "dn801205.us.archive.org/0/items/ThePhantomCarriage_201405",
+    castSrc: 0
    },
    {
     title: "\"Tol'able David\" (1921) starring Richard Barthelmess",
@@ -13645,7 +14042,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TolableDavid_201407/TolableDavid_201407.thumbs/Tolable-David-v2_002274.jpg",
     bytes: 843037509,
-    node: "dn801204.us.archive.org/0/items/TolableDavid_201407"
+    node: "dn801204.us.archive.org/0/items/TolableDavid_201407",
+    castSrc: 0
    },
    {
     title: "1921 Camille",
@@ -13927,7 +14325,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Mysteries of India, Part I: Truth",
@@ -13974,7 +14373,8 @@ const CHANNELS = [
     ],
     co: [
      "United Artists"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Sands of Sacrifice",
@@ -14069,7 +14469,8 @@ const CHANNELS = [
     wpx: "Tangled Trails is a 1921 American silent Western film directed by Charles Bartlett and starring Neal Hart and Violet Palmer. The film is also known as Sands of Sacrifice.",
     dir: [
      "Charles Bartlett"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Ace of Hearts",
@@ -14093,7 +14494,8 @@ const CHANNELS = [
      "Lon Chaney",
      "Leatrice Joy",
      "John Bowers"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Affairs of Anatol",
@@ -14200,7 +14602,8 @@ const CHANNELS = [
      "Josef Swickard",
      "Bridgetta Clark",
      "Rudolph Valentino"
-    ]
+    ],
+    castSrc: "https://archive.org/download/FourHorsemenOfTheApocalypse/FourHorsemenOfTheApocalypse.mp4"
    },
    {
     title: "The Haunted Castle",
@@ -14260,7 +14663,8 @@ const CHANNELS = [
     wpx: "The Nut is a 1921 American silent film directed by Ted Reed for Douglas Fairbanks Pictures Corporation. It is structured as an action comedy vehicle for its producer, writer and star Douglas Fairbanks.",
     dir: [
      "Theodore Reed"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Sea Lion",
@@ -14299,7 +14703,8 @@ const CHANNELS = [
      "wrong",
      "boss",
      "heard"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Sheik",
@@ -14326,7 +14731,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheSheik/TheSheik.mp4"
    },
    {
     title: "The Three Musketeers",
@@ -14338,7 +14744,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The_Three_Musketeers/The_Three_Musketeers.thumbs/TheThreeMusketeers_003060.jpg",
     bytes: 491978674,
-    node: "dn800308.us.archive.org/0/items/The_Three_Musketeers"
+    node: "dn800308.us.archive.org/0/items/The_Three_Musketeers",
+    castSrc: "https://archive.org/download/The_Three_Musketeers/TheThreeMusketeers.mp4"
    },
    {
     title: "Theodor Herzl, der Bannerträger des jüdischen Volkes",
@@ -14453,7 +14860,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/MyMovie_201807/MyMovie_201807.thumbs/My%20Movie_002574.jpg",
     bytes: 954349032,
-    node: "dn600302.us.archive.org/0/items/MyMovie_201807"
+    node: "dn600302.us.archive.org/0/items/MyMovie_201807",
+    castSrc: 0
    },
    {
     title: "\"One Exciting Night\" (1922) director D. W. Griffith",
@@ -14465,7 +14873,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/MyMovie_201901/MyMovie_201901.thumbs/My%20Movie_003415.jpg",
     bytes: 1297289333,
-    node: "dn601208.us.archive.org/0/items/MyMovie_201901"
+    node: "dn601208.us.archive.org/0/items/MyMovie_201901",
+    castSrc: 0
    },
    {
     title: "\"Riders of the Law\" (1922) starring Jack Hoxie",
@@ -14477,7 +14886,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/yorkmba99_hotmail_Rl/yorkmba99_hotmail_Rl.thumbs/rl_001254.jpg",
     bytes: 464237011,
-    node: "dn600308.us.archive.org/0/items/yorkmba99_hotmail_Rl"
+    node: "dn600308.us.archive.org/0/items/yorkmba99_hotmail_Rl",
+    castSrc: 0
    },
    {
     title: "\"Robin Hood\" (1922) starring Douglas Fairbanks",
@@ -14489,7 +14899,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/RobinHood1922_201406/RobinHood1922_201406.thumbs/Robin-Hood-v2_003174.jpg",
     bytes: 1191032143,
-    node: "dn800301.us.archive.org/0/items/RobinHood1922_201406"
+    node: "dn800301.us.archive.org/0/items/RobinHood1922_201406",
+    castSrc: 0
    },
    {
     title: "\"Tess of the Storm Country\" (1922) director John S. Robertson with Mar",
@@ -14501,7 +14912,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TessOfTheStormCountry/TessOfTheStormCountry.thumbs/MyMovie-tsc_005610.jpg",
     bytes: 1057792327,
-    node: "dn800207.us.archive.org/0/items/TessOfTheStormCountry"
+    node: "dn800207.us.archive.org/0/items/TessOfTheStormCountry",
+    castSrc: 0
    },
    {
     title: "\"The Primitive Lover\"",
@@ -14522,7 +14934,8 @@ const CHANNELS = [
     ],
     cast: [
      "Harrison Ford"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "\"The Prisoner of Zenda\"",
@@ -14545,7 +14958,8 @@ const CHANNELS = [
      "Lewis Stone",
      "Alice Terry",
      "Robert Edeson"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Back Fire",
@@ -14793,7 +15207,8 @@ const CHANNELS = [
      "head",
      "coconut",
      "group"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Grandma's Boy",
@@ -14819,7 +15234,8 @@ const CHANNELS = [
     ],
     co: [
      "Hal Roach Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Haxan",
@@ -14844,7 +15260,8 @@ const CHANNELS = [
     ],
     co: [
      "SF Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Häxan",
@@ -14869,7 +15286,8 @@ const CHANNELS = [
     ],
     co: [
      "SF Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Jocelyn",
@@ -14908,7 +15326,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Moran of the Lady Letty",
@@ -14957,7 +15376,8 @@ const CHANNELS = [
      "Stan Laurel",
      "Leona Anderson",
      "Wheeler Dryden"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Nosferatu",
@@ -14983,7 +15403,8 @@ const CHANNELS = [
     ],
     co: [
      "Prana Film"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "One Exciting Night",
@@ -15066,7 +15487,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/FairbanksRobinHood1922/FairbanksRobinHood1922.thumbs/FairbanksRobinHood1922/FairbanksRobinHood1922_003187.jpg",
     bytes: 578762091,
-    node: "dn801203.us.archive.org/0/items/FairbanksRobinHood1922"
+    node: "dn801203.us.archive.org/0/items/FairbanksRobinHood1922",
+    castSrc: 0
    },
    {
     title: "Salomé",
@@ -15261,7 +15683,8 @@ const CHANNELS = [
     cast: [
      "Anna May Wong",
      "Kenneth Harlan"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheTollOfTheSeanovember261922/TheTollOfTheSeachesterM.Franklin1922.mp4"
    },
    {
     title: "The Trap",
@@ -15288,7 +15711,8 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Woman from Nowhere",
@@ -15373,7 +15797,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/MyMovie_201801/MyMovie_201801.thumbs/My%20Movie_001794.jpg",
     bytes: 669557570,
-    node: "dn600309.us.archive.org/0/items/MyMovie_201801"
+    node: "dn600309.us.archive.org/0/items/MyMovie_201801",
+    castSrc: 0
    },
    {
     title: "\"Scaramouche\" (1923) director Rex Ingram starring Ramon Novarro",
@@ -15385,7 +15810,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/MyMovie_20180328/MyMovie_20180328.thumbs/My%20Movie_002934.jpg",
     bytes: 1068469383,
-    node: "dn801206.us.archive.org/0/items/MyMovie_20180328"
+    node: "dn801206.us.archive.org/0/items/MyMovie_20180328",
+    castSrc: 0
    },
    {
     title: "\"The Desert Rider\" (1923) starring Jack Hoxie",
@@ -15397,7 +15823,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheDesertRider/TheDesertRider.thumbs/The-Desert-Rider_001110.jpg",
     bytes: 409880034,
-    node: "dn600306.us.archive.org/0/items/TheDesertRider"
+    node: "dn600306.us.archive.org/0/items/TheDesertRider",
+    castSrc: 0
    },
    {
     title: "\"The Hunchback of Notre Dame\" (1923) starring Lon Chaney and Patsy Rut",
@@ -15409,7 +15836,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheHunchbackOfNotreDame1923_201312/TheHunchbackOfNotreDame1923_201312.thumbs/The-Hunchback-of-Notre-Dame-v2_002814.jpg",
     bytes: 1035524150,
-    node: "dn801209.us.archive.org/0/items/TheHunchbackOfNotreDame1923_201312"
+    node: "dn801209.us.archive.org/0/items/TheHunchbackOfNotreDame1923_201312",
+    castSrc: 0
    },
    {
     title: "\"The Silent Command\" (1923) featuring Martha Mansfield, Bela Lugosi",
@@ -15529,7 +15957,8 @@ const CHANNELS = [
      "Norma Talmadge",
      "Wallace Beery",
      "Conway Tearle"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Brass",
@@ -15893,7 +16322,8 @@ const CHANNELS = [
      "Gregori Chmara",
      "Alla Tarasova",
      "Mikhail Tarkhanov"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Rosita / Unknown / XviD / AVI / 640x480 / Russian Print",
@@ -15959,7 +16389,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Salomfebruary151923/Salomfebruary151923.thumbs/SalomcharlesBryant1923AllaNazimovaDtvrip_001734.jpg",
     bytes: 329437426,
-    node: "dn800303.us.archive.org/0/items/Salomfebruary151923"
+    node: "dn800303.us.archive.org/0/items/Salomfebruary151923",
+    castSrc: "https://archive.org/download/Salomfebruary151923/SalomcharlesBryant1923AllaNazimovaDtvrip.mp4"
    },
    {
     title: "Sodom und Gomorrha",
@@ -16090,7 +16521,8 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Pilgrim (1923) Directed By Charlie Chaplin",
@@ -16102,7 +16534,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the-pilgrim-1923-directed-by-charlie-chaplin/the-pilgrim-1923-directed-by-charlie-chaplin.thumbs/The%20Pilgrim%20(1923)%20Directed%20by%20Charlie%20Chaplin_001018.jpg",
     bytes: 667436126,
-    node: "dn600303.us.archive.org/0/items/the-pilgrim-1923-directed-by-charlie-chaplin"
+    node: "dn600303.us.archive.org/0/items/the-pilgrim-1923-directed-by-charlie-chaplin",
+    castSrc: 0
    },
    {
     title: "The Red Inn",
@@ -16151,7 +16584,8 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Smiling Madame Beudet",
@@ -16233,7 +16667,8 @@ const CHANNELS = [
      "Buster Keaton",
      "Margaret Leahy",
      "Wallace Beery"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Three Ages (1923) HD with Score",
@@ -16316,7 +16751,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/mymovie_20190804/mymovie_20190804.thumbs/My%20Movie_001915.jpg",
     bytes: 732459368,
-    node: "dn601204.us.archive.org/0/items/mymovie_20190804"
+    node: "dn601204.us.archive.org/0/items/mymovie_20190804",
+    castSrc: 0
    },
    {
     title: "\"He Who Gets Slapped\" (1924) starring Lon Chaney",
@@ -16328,7 +16764,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/mymovie_20190920/mymovie_20190920.thumbs/My%20Movie_001675.jpg",
     bytes: 677336365,
-    node: "dn601201.us.archive.org/0/items/mymovie_20190920"
+    node: "dn601201.us.archive.org/0/items/mymovie_20190920",
+    castSrc: 0
    },
    {
     title: "\"Sherlock Jr.\" (1924) starring Buster Keaton",
@@ -16340,7 +16777,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/MyMovie_20190318/MyMovie_20190318.thumbs/My%20Movie_001075.jpg",
     bytes: 627165683,
-    node: "dn600301.us.archive.org/0/items/MyMovie_20190318"
+    node: "dn600301.us.archive.org/0/items/MyMovie_20190318",
+    castSrc: 0
    },
    {
     title: "\"The Enchanted Cottage\" (1924) director John S. Robertson",
@@ -16352,7 +16790,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheEnchantedCottageRobertson1924RichardBarthelmessMayMcAvoy/TheEnchantedCottageRobertson1924RichardBarthelmessMayMcAvoy.thumbs/TheEnchantedCottageArch_001854.jpg",
     bytes: 640204865,
-    node: "dn800302.us.archive.org/0/items/TheEnchantedCottageRobertson1924RichardBarthelmessMayMcAvoy"
+    node: "dn800302.us.archive.org/0/items/TheEnchantedCottageRobertson1924RichardBarthelmessMayMcAvoy",
+    castSrc: 0
    },
    {
     title: "\"The Navigator\" (1924) starring Buster Keaton",
@@ -16415,7 +16854,8 @@ const CHANNELS = [
     frame: "https://archive.org/download/1924LesRapacesGreedDeErichVonStroheimFreeDownload/1924LesRapacesGreedDeErichVonStroheimFreeDownload.thumbs/1924%20-%20Les%20Rapaces%20(Greed)%20-%20de%20Erich%20Von%20Stroheim%20-%20Free%20Download_002514.jpg",
     subs: "1924 - Les Rapaces (Greed) - de Erich Von Stroheim - Free Download.autogenerated.vtt",
     bytes: 450981861,
-    node: "dn600307.us.archive.org/0/items/1924LesRapacesGreedDeErichVonStroheimFreeDownload"
+    node: "dn600307.us.archive.org/0/items/1924LesRapacesGreedDeErichVonStroheimFreeDownload",
+    castSrc: 0
    },
    {
     title: "Beau Brummel",
@@ -16962,7 +17402,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/sherlock.-jr..-1924.1080p.-blu-ray.x-264-yts.-am/sherlock.-jr..-1924.1080p.-blu-ray.x-264-yts.-am.thumbs/Sherlock.Jr..1924.1080p.BluRay.x264-%5BYTS.AM%5D_001081.jpg",
     bytes: 767196784,
-    node: "dn600301.us.archive.org/0/items/sherlock.-jr..-1924.1080p.-blu-ray.x-264-yts.-am"
+    node: "dn600301.us.archive.org/0/items/sherlock.-jr..-1924.1080p.-blu-ray.x-264-yts.-am",
+    castSrc: 0
    },
    {
     title: "Slow as Lightning",
@@ -17178,7 +17619,8 @@ const CHANNELS = [
      "paul",
      "bring"
     ],
-    node2: "ia800503.us.archive.org/34/items/the.-hands.-of.-orlac.-1924"
+    node2: "ia800503.us.archive.org/34/items/the.-hands.-of.-orlac.-1924",
+    castSrc: 0
    },
    {
     title: "The Jew of Mestri",
@@ -17382,7 +17824,8 @@ const CHANNELS = [
     ],
     co: [
      "United Artists"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Tkies khaf",
@@ -17488,7 +17931,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/HeadWinds/HeadWinds.thumbs/Head%20Winds_001254.jpg",
     bytes: 470199205,
-    node: "dn600304.us.archive.org/0/items/HeadWinds"
+    node: "dn600304.us.archive.org/0/items/HeadWinds",
+    castSrc: 0
    },
    {
     title: "\"Seven Chances\" (1925) starring Buster Keaton",
@@ -17524,7 +17968,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ThePhantomOfTheOpera_201612/ThePhantomOfTheOpera_201612.thumbs/The%20Phantom%20of%20the%20Opera_002574.jpg",
     bytes: 1093984342,
-    node: "dn600304.us.archive.org/0/items/ThePhantomOfTheOpera_201612"
+    node: "dn600304.us.archive.org/0/items/ThePhantomOfTheOpera_201612",
+    castSrc: 0
    },
    {
     title: "\"The White Outlaw\" (1925) starring Jack Hoxie and Marceline Day",
@@ -17536,7 +17981,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/video_201410/video_201410.thumbs/TheWhiteOutlaw19252_001314.jpg",
     bytes: 404619821,
-    node: "dn800305.us.archive.org/0/items/video_201410"
+    node: "dn800305.us.archive.org/0/items/video_201410",
+    castSrc: 0
    },
    {
     title: "A Kiss for Cinderella",
@@ -17731,7 +18177,8 @@ const CHANNELS = [
     co: [
      "Mosfilm",
      "State Committee for Cinematography"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "California Straight Ahead",
@@ -17808,7 +18255,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Cobra_784/Cobra_784.thumbs/ValentinoCobra_001800.jpg",
     bytes: 342336625,
-    node: "dn600304.us.archive.org/0/items/Cobra_784"
+    node: "dn600304.us.archive.org/0/items/Cobra_784",
+    castSrc: "https://archive.org/download/Cobra_784/ValentinoCobra.mp4"
    },
    {
     title: "Daddy's Gone A-Hunting",
@@ -17929,7 +18377,8 @@ const CHANNELS = [
     co: [
      "Mosfilm",
      "State Committee for Cinematography"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "El Fantasma De La Ópera 1925 (sub Español)",
@@ -17941,7 +18390,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/el-fantasma-de-la-opera-1925-sub-espanol/el-fantasma-de-la-opera-1925-sub-espanol.thumbs/El%20Fantasma%20de%20la%20%C3%93pera%20-%201925%20(sub%20Espa%C3%B1ol)_002515.jpg",
     bytes: 321187442,
-    node: "dn600307.us.archive.org/0/items/el-fantasma-de-la-opera-1925-sub-espanol"
+    node: "dn600307.us.archive.org/0/items/el-fantasma-de-la-opera-1925-sub-espanol",
+    castSrc: 0
    },
    {
     title: "Free to Love",
@@ -18140,7 +18590,8 @@ const CHANNELS = [
      "Werner Krauss",
      "Jaro Fürth",
      "Greta Garbo"
-    ]
+    ],
+    castSrc: "https://archive.org/download/JoylessStreet/JoylessStreet.mp4"
    },
    {
     title: "Lady Windermere's Fan",
@@ -18166,7 +18617,8 @@ const CHANNELS = [
     ],
     co: [
      "Warner Bros. Entertainment"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Lazybones",
@@ -18212,7 +18664,8 @@ const CHANNELS = [
      "Mary Pickford",
      "William Haines",
      "Eugene Jackson"
-    ]
+    ],
+    castSrc: "https://archive.org/download/LittleAnnieRooney_/LittleAnnieRooney.mp4"
    },
    {
     title: "Luch smerti",
@@ -18436,7 +18889,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Seven Chances",
@@ -18605,7 +19059,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheEagle720p1925/TheEagle720p1925.thumbs/TheEagle720p_002154.jpg",
     bytes: 499590177,
-    node: "dn600209.us.archive.org/0/items/TheEagle720p1925"
+    node: "dn600209.us.archive.org/0/items/TheEagle720p1925",
+    castSrc: 0
    },
    {
     title: "The Eagle (Rudolph Valentino)",
@@ -18624,7 +19079,8 @@ const CHANNELS = [
      "lose",
      "live",
      "layer"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Freshman",
@@ -18768,7 +19224,8 @@ const CHANNELS = [
      "oath",
      "womb",
      "nine"
-    ]
+    ],
+    castSrc: "https://archive.org/download/lost_world/lost_world.mp4"
    },
    {
     title: "The Lucky Devil",
@@ -18842,7 +19299,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Midnight Girl",
@@ -18868,7 +19326,8 @@ const CHANNELS = [
     ],
     co: [
      "Chadwick Pictures Corporation"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Monster",
@@ -18938,7 +19397,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ThePhantomoftheOpera/ThePhantomoftheOpera.thumbs/Phantom_of_the_Opera_002520.jpg",
     bytes: 463554725,
-    node: "dn600306.us.archive.org/0/items/ThePhantomoftheOpera"
+    node: "dn600306.us.archive.org/0/items/ThePhantomoftheOpera",
+    castSrc: 0
    },
    {
     title: "The Plastic Age",
@@ -19317,7 +19777,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CrossedSignals/CrossedSignals.thumbs/crossed%20signals_001230.jpg",
     bytes: 311793736,
-    node: "dn800202.us.archive.org/0/items/CrossedSignals"
+    node: "dn800202.us.archive.org/0/items/CrossedSignals",
+    castSrc: 0
    },
    {
     title: "\"Made for Love\"",
@@ -19338,7 +19799,8 @@ const CHANNELS = [
     ],
     cast: [
      "Leatrice Joy"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "\"The Cruise of the Jasper B\"",
@@ -19371,7 +19833,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheGeneral_201312/TheGeneral_201312.thumbs/The-General-v2_001914.jpg",
     bytes: 708672423,
-    node: "dn601202.us.archive.org/0/items/TheGeneral_201312"
+    node: "dn601202.us.archive.org/0/items/TheGeneral_201312",
+    castSrc: 0
    },
    {
     title: "3 Bad Men",
@@ -19418,7 +19881,8 @@ const CHANNELS = [
     ],
     cast: [
      "Masao Inoue"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Battling Butler (1926) HD with score",
@@ -19430,7 +19894,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/buster-keaton-battling-butler-1926-1/buster-keaton-battling-butler-1926-1.thumbs/Buster%20Keaton%20-%20Battling%20Butler%20(1926)%20(1)_001857.jpg",
     bytes: 830811694,
-    node: "dn800301.us.archive.org/0/items/buster-keaton-battling-butler-1926-1"
+    node: "dn800301.us.archive.org/0/items/buster-keaton-battling-butler-1926-1",
+    castSrc: 0
    },
    {
     title: "Buster Keatons Shorts 2",
@@ -19479,7 +19944,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheBat1926WithSoundtrack/TheBat1926WithSoundtrack.thumbs/TheBat1926WithSoundtrack_002034.jpg",
     bytes: 411980522,
-    node: "dn600202.us.archive.org/0/items/TheBat1926WithSoundtrack"
+    node: "dn600202.us.archive.org/0/items/TheBat1926WithSoundtrack",
+    castSrc: 0
    },
    {
     title: "The Better 'Ole (1926) DVD MKV",
@@ -19515,7 +19981,8 @@ const CHANNELS = [
      "Douglas Fairbanks",
      "Billie Dove",
      "Tempe Pigott"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheBlackPirate1926DouglasFairbanksSRAndy/TheBlackPirate1926DouglasFairbanksSRAndy.mp4"
    },
    {
     title: "The General (1926) HD with Score",
@@ -19541,7 +20008,8 @@ const CHANNELS = [
     frame: "https://archive.org/download/the.-magician.-1926.-dvdrip.-600-mb.h-264.-mp-4-zoetrope/the.-magician.-1926.-dvdrip.-600-mb.h-264.-mp-4-zoetrope.thumbs/The%20Magician%20(1926)_003894.jpg",
     bytes: 628047891,
     node: "ia600908.us.archive.org/30/items/the.-magician.-1926.-dvdrip.-600-mb.h-264.-mp-4-zoetrope",
-    node2: "ia800908.us.archive.org/30/items/the.-magician.-1926.-dvdrip.-600-mb.h-264.-mp-4-zoetrope"
+    node2: "ia800908.us.archive.org/30/items/the.-magician.-1926.-dvdrip.-600-mb.h-264.-mp-4-zoetrope",
+    castSrc: 0
    },
    {
     title: "\"The Beloved Rogue\" (1927) starring John Barrymore and Marceline Day",
@@ -19553,7 +20021,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheBelovedRogue_201312/TheBelovedRogue_201312.thumbs/The%20Beloved%20Rogue_002370.jpg",
     bytes: 1354857419,
-    node: "dn801205.us.archive.org/0/items/TheBelovedRogue_201312"
+    node: "dn801205.us.archive.org/0/items/TheBelovedRogue_201312",
+    castSrc: 0
    },
    {
     title: "1927 - Underworld - La ley del hampa - Josef von Sternberg - Intertítu",
@@ -19566,7 +20035,8 @@ const CHANNELS = [
     frame: "https://archive.org/download/1927-underworld-la-ley-del-hampa-josef-von-sternberg-intertitulos-en-ingles/1927-underworld-la-ley-del-hampa-josef-von-sternberg-intertitulos-en-ingles.thumbs/1927%20-%20Underworld%20-%20La%20ley%20del%20hampa%20-%20Josef%20von%20Sternberg%20-%20Intert%C3%ADtulos%20en%20ingl%C3%A9s_001916.jpg",
     subs: "1927 - Underworld - La ley del hampa - Josef von Sternberg - Intertítulos en inglés.autogenerated.vtt",
     bytes: 560880358,
-    node: "dn801206.us.archive.org/0/items/1927-underworld-la-ley-del-hampa-josef-von-sternberg-intertitulos-en-ingles"
+    node: "dn801206.us.archive.org/0/items/1927-underworld-la-ley-del-hampa-josef-von-sternberg-intertitulos-en-ingles",
+    castSrc: 0
    },
    {
     title: "7th Heaven",
@@ -19706,7 +20176,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/College_201405/College_201405.thumbs/College-v2_001554.jpg",
     bytes: 584562671,
-    node: "dn800207.us.archive.org/0/items/College_201405"
+    node: "dn800207.us.archive.org/0/items/College_201405",
+    castSrc: 0
    },
    {
     title: "Captain Salvation",
@@ -19778,7 +20249,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/college/college.thumbs/College_001560.jpg",
     bytes: 279821079,
-    node: "dn601202.us.archive.org/0/items/college"
+    node: "dn601202.us.archive.org/0/items/college",
+    castSrc: 0
    },
    {
     title: "College (1927) HD with Score",
@@ -19918,7 +20390,8 @@ const CHANNELS = [
     ],
     co: [
      "Australasian Films"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Get Your Man",
@@ -19953,7 +20426,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/get-your-man-1927-colorized/get-your-man-1927-colorized.thumbs/Get%20Your%20Man%201927%20Colorized_001496.jpg",
     bytes: 632972726,
-    node: "dn800209.us.archive.org/0/items/get-your-man-1927-colorized"
+    node: "dn800209.us.archive.org/0/items/get-your-man-1927-colorized",
+    castSrc: 0
    },
    {
     title: "His First Flame",
@@ -19976,7 +20450,8 @@ const CHANNELS = [
      "Harry Langdon",
      "Natalie Kingston",
      "Ruth Hiatt"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Hotel Imperial",
@@ -20023,7 +20498,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/it-1927-colorized/it-1927-colorized.thumbs/It%201927%20-%20Colorized_001858.jpg",
     bytes: 841715656,
-    node: "dn800305.us.archive.org/0/items/it-1927-colorized"
+    node: "dn800305.us.archive.org/0/items/it-1927-colorized",
+    castSrc: 0
    },
    {
     title: "London After Midnight",
@@ -20312,7 +20788,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/svenskRobinsonKruse/svenskRobinsonKruse.thumbs/robinson_001080.jpg",
     bytes: 175888449,
-    node: "dn600304.us.archive.org/0/items/svenskRobinsonKruse"
+    node: "dn600304.us.archive.org/0/items/svenskRobinsonKruse",
+    castSrc: 0
    },
    {
     title: "Rubber Tires",
@@ -20551,7 +21028,8 @@ const CHANNELS = [
      "John Barrymore",
      "Angelo Rossitto",
      "Conrad Veidt"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheBelovedRogue/TheBelovedRogue.mp4"
    },
    {
     title: "The Cat and the Canary",
@@ -20578,7 +21056,8 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Club Of The Big Deed",
@@ -20786,7 +21265,8 @@ const CHANNELS = [
      "Buster Keaton",
      "Marion Mack",
      "Charles Henry Smith"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Jazz Singer",
@@ -20862,7 +21342,8 @@ const CHANNELS = [
     ],
     cast: [
      "Syd Nicholls"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheKidStakes/Kid_Stakes1927.mp4"
    },
    {
     title: "The King of Kings",
@@ -20913,7 +21394,8 @@ const CHANNELS = [
     co: [
      "Gainsborough Pictures"
     ],
-    node2: "ia800606.us.archive.org/34/items/the.-lodger.-a.-story.-of.-the.-london.-fog.-1927"
+    node2: "ia800606.us.archive.org/34/items/the.-lodger.-a.-story.-of.-the.-london.-fog.-1927",
+    castSrc: 0
    },
    {
     title: "The Love of Sunya",
@@ -21246,7 +21728,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SteamboatBillJr_201411/SteamboatBillJr_201411.thumbs/Steamboat-Bill-Jr-v2_001614.jpg",
     bytes: 612789376,
-    node: "dn600302.us.archive.org/0/items/SteamboatBillJr_201411"
+    node: "dn600302.us.archive.org/0/items/SteamboatBillJr_201411",
+    castSrc: 0
    },
    {
     title: "1928 - The Dock of New York - Josef von Sternberg - Intertítulos en in",
@@ -21259,7 +21742,8 @@ const CHANNELS = [
     frame: "https://archive.org/download/1928-the-dock-of-new-york-josef-von-sternberg-intertitulos-en-ingles-y-espanol/1928-the-dock-of-new-york-josef-von-sternberg-intertitulos-en-ingles-y-espanol.thumbs/1928%20-%20The%20Dock%20of%20New%20York%20-%20Josef%20von%20Sternberg%20-%20Intert%C3%ADtulos%20en%20ingl%C3%A9s%20y%20espa%C3%B1ol_001795.jpg",
     subs: "1928 - The Dock of New York - Josef von Sternberg - Intertítulos en inglés y español.autogenerated.vtt",
     bytes: 522130128,
-    node: "dn800302.us.archive.org/0/items/1928-the-dock-of-new-york-josef-von-sternberg-intertitulos-en-ingles-y-espanol"
+    node: "dn800302.us.archive.org/0/items/1928-the-dock-of-new-york-josef-von-sternberg-intertitulos-en-ingles-y-espanol",
+    castSrc: 0
    },
    {
     title: "1928 - The Racket - La horda - Lewis Milestone - VOSE",
@@ -21271,7 +21755,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/1928-the-racket-la-horda-lewis-milestone-vose/1928-the-racket-la-horda-lewis-milestone-vose.thumbs/1928%20-%20The%20Racket%20-%20La%20horda%20-%20Lewis%20Milestone%20-%20VOSE_002034.jpg",
     bytes: 725685013,
-    node: "dn800304.us.archive.org/0/items/1928-the-racket-la-horda-lewis-milestone-vose"
+    node: "dn800304.us.archive.org/0/items/1928-the-racket-la-horda-lewis-milestone-vose",
+    castSrc: 0
    },
    {
     title: "A Girl in Every Port",
@@ -21444,7 +21929,8 @@ const CHANNELS = [
      "Bob Custer",
      "Peggy Montgomery",
      "J. P. McGowan"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Bare Knees",
@@ -21787,7 +22273,8 @@ const CHANNELS = [
     ],
     co: [
      "Fox Film Corporation"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Homecoming",
@@ -22056,7 +22543,8 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Love",
@@ -22297,7 +22785,8 @@ const CHANNELS = [
      "Buster Keaton",
      "Ernest Torrence",
      "Joe Keaton"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Street Angel",
@@ -22438,7 +22927,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the.-cameraman.-1928.1080p.-blu-ray.x-264.-aac-yts.-mx/the.-cameraman.-1928.1080p.-blu-ray.x-264.-aac-yts.-mx.thumbs/The.Cameraman.1928.1080p.BluRay.x264.AAC-%5BYTS.MX%5D_001678.jpg",
     bytes: 1260059541,
-    node: "dn800300.us.archive.org/0/items/the.-cameraman.-1928.1080p.-blu-ray.x-264.-aac-yts.-mx"
+    node: "dn800300.us.archive.org/0/items/the.-cameraman.-1928.1080p.-blu-ray.x-264.-aac-yts.-mx",
+    castSrc: 0
    },
    {
     title: "The Cossacks",
@@ -22643,7 +23133,8 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Love of Jeanne Ney",
@@ -23195,7 +23686,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "West Point",
@@ -23257,7 +23749,8 @@ const CHANNELS = [
     ],
     cast: [
      "Al Wilson"
-    ]
+    ],
+    castSrc: "https://archive.org/download/WonInTheClouds/WonInTheClouds.mp4"
    },
    {
     title: "Yacht of the Seven Sins",
@@ -23373,7 +23866,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/anorphan/anorphan.thumbs/anorphan_001800.jpg",
     bytes: 291541424,
-    node: "dn600307.us.archive.org/0/items/anorphan"
+    node: "dn600307.us.archive.org/0/items/anorphan",
+    castSrc: "https://archive.org/download/anorphan/anorphan.mp4"
    },
    {
     title: "Applause",
@@ -23467,7 +23961,8 @@ const CHANNELS = [
      "Robert Armstrong",
      "Carole Lombard",
      "Charles Sellon"
-    ]
+    ],
+    castSrc: "https://archive.org/download/BigNews/BigNews.mp4"
    },
    {
     title: "Blackmail",
@@ -23493,7 +23988,8 @@ const CHANNELS = [
     ],
     co: [
      "Associated British Picture Corporation"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Blackmail Hitchcock 1929",
@@ -23505,7 +24001,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/blackmail-hitchcock-1929/blackmail-hitchcock-1929.thumbs/Blackmail%20Hitchcock%201929_002094.jpg",
     bytes: 202916340,
-    node: "dn601200.us.archive.org/0/items/blackmail-hitchcock-1929"
+    node: "dn601200.us.archive.org/0/items/blackmail-hitchcock-1929",
+    castSrc: 0
    },
    {
     title: "Broadway",
@@ -23517,7 +24014,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/broadway-1929/broadway-1929.thumbs/Broadway%20-%20(1929)_002576.jpg",
     bytes: 858994477,
-    node: "dn600303.us.archive.org/0/items/broadway-1929"
+    node: "dn600303.us.archive.org/0/items/broadway-1929",
+    castSrc: 0
    },
    {
     title: "Bulldog Drummond",
@@ -23555,7 +24053,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/bulldog-drummond-1929/bulldog-drummond-1929.thumbs/Bulldog%20Drummond%201929_002214.jpg",
     bytes: 525788943,
-    node: "dn801204.us.archive.org/0/items/bulldog-drummond-1929"
+    node: "dn801204.us.archive.org/0/items/bulldog-drummond-1929",
+    castSrc: 0
    },
    {
     title: "Cagliostro - Liebe und Leben eines großen Abenteurers",
@@ -23654,7 +24153,8 @@ const CHANNELS = [
     ],
     co: [
      "All-Ukrainian Photo-Cinema Administration"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Chinatown Nights",
@@ -23677,7 +24177,8 @@ const CHANNELS = [
      "Wallace Beery",
      "Florence Vidor",
      "Warner Oland"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Coquette",
@@ -23713,7 +24214,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/dh435435887/dh435435887.thumbs/dh435435887_001494.jpg",
     bytes: 177696377,
-    node: "dn801201.us.archive.org/0/items/dh435435887"
+    node: "dn801201.us.archive.org/0/items/dh435435887",
+    castSrc: 0
    },
    {
     title: "Dangerous Curves",
@@ -23746,7 +24248,8 @@ const CHANNELS = [
     ],
     cast: [
      "Evelyn Brent"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Days of Youth",
@@ -23810,7 +24313,8 @@ const CHANNELS = [
      "stapleton",
      "film",
      "barrymore"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Desert Nights",
@@ -24008,7 +24512,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/GlorifyingTheAmericanGirl_119/GlorifyingTheAmericanGirl1929FsDvdripDivx5.mp4"
    },
    {
     title: "Great Gabbo",
@@ -24048,7 +24553,8 @@ const CHANNELS = [
      "love",
      "ever",
      "even"
-    ]
+    ],
+    castSrc: "https://archive.org/download/great_gabbo/great_gabbo.mp4"
    },
    {
     title: "Half Marriage",
@@ -24072,7 +24578,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Hallelujah",
@@ -24161,7 +24668,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/High_Voltage_/High_Voltage_.thumbs/High_Voltage_001500.jpg",
     bytes: 275164878,
-    node: "dn800307.us.archive.org/0/items/High_Voltage_"
+    node: "dn800307.us.archive.org/0/items/High_Voltage_",
+    castSrc: "https://archive.org/download/High_Voltage_/High_Voltage.mp4"
    },
    {
     title: "I Kiss Your Hand Madame",
@@ -24466,7 +24974,8 @@ const CHANNELS = [
     wpx: "Oh, Yeah! is a 1929 American pre-Code action film directed by Tay Garnett and starring Robert Armstrong, James Gleason and Zasu Pitts. The film's sets were designed by the art director Edward C. Jewell. An early sound film, it was made during the transition from the silent era. It is also known by the alternative title No Brakes after the original story it is based on that appeared in The Saturday Evening Post.",
     dir: [
      "Tay Garnett"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Our Modern Maidens",
@@ -24516,7 +25025,8 @@ const CHANNELS = [
      "lulu",
      "print",
      "whole"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Paris Bound 1929 Ann Harding, Fredric March, Carmelita Geraghty, Lesli",
@@ -24540,7 +25050,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/poordaddy/poordaddy.thumbs/PoorDaddy_001680.jpg",
     bytes: 310060253,
-    node: "dn800306.us.archive.org/0/items/poordaddy"
+    node: "dn800306.us.archive.org/0/items/poordaddy",
+    castSrc: 0
    },
    {
     title: "Redskin",
@@ -24886,7 +25397,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SunnysideUp_201512/SunnysideUp_201512.thumbs/SunnysideUp1929_002910.jpg",
     bytes: 333968096,
-    node: "dn601204.us.archive.org/0/items/SunnysideUp_201512"
+    node: "dn601204.us.archive.org/0/items/SunnysideUp_201512",
+    castSrc: 0
    },
    {
     title: "Sweetie",
@@ -25013,7 +25525,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Canary Murder Case 1929 ★★★ CC: pre-Code Mystery [1:19:45]",
@@ -25040,7 +25553,8 @@ const CHANNELS = [
      "charles",
      "will",
      "cleaver"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Cocoanuts",
@@ -25110,7 +25624,8 @@ const CHANNELS = [
      "away",
      "guess",
      "people"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Dance Of Life 1929 Colorized",
@@ -25262,7 +25777,8 @@ const CHANNELS = [
      "denaro",
      "macchina",
      "fattoria"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Girl in the Show",
@@ -25450,7 +25966,8 @@ const CHANNELS = [
      "last",
      "court",
      "world"
-    ]
+    ],
+    castSrc: "https://archive.org/download/iron_mask/iron_mask.mp4"
    },
    {
     title: "The Kiss",
@@ -25561,7 +26078,8 @@ const CHANNELS = [
      "Barbara Stanwyck",
      "Betty Bronson",
      "Mack Swain"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Lost Zeppelin",
@@ -25625,7 +26143,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Man and the Moment",
@@ -25855,7 +26374,8 @@ const CHANNELS = [
      "send",
      "away",
      "will"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Racketeer Carole Lombard Jeanette Loff",
@@ -25882,7 +26402,8 @@ const CHANNELS = [
      "send",
      "away",
      "will"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Return of the Rat",
@@ -26175,7 +26696,8 @@ const CHANNELS = [
      "Gloria Swanson",
      "Robert Ames",
      "Henry B. Walthall"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Unholy Night",
@@ -26401,7 +26923,8 @@ const CHANNELS = [
     wpx: "Thundering Thompson is a 1929 American silent Western film directed by Ben F. Wilson.",
     dir: [
      "Ben F. Wilson"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Tide of Empire",
@@ -26720,7 +27243,8 @@ const CHANNELS = [
      "mean",
      "feel",
      "days"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Woman Trap",
@@ -26797,7 +27321,8 @@ const CHANNELS = [
      "talk",
      "country",
      "many"
-    ]
+    ],
+    castSrc: "https://archive.org/download/abraham_lincoln/abraham_lincoln.mp4"
    },
    {
     title: "Abraham Lincoln ( 1930) Walter Huston RESTORED",
@@ -26856,7 +27381,8 @@ const CHANNELS = [
      "food",
      "messiah",
      "place"
-    ]
+    ],
+    castSrc: "https://archive.org/download/africa_speaks/africa_speaks.mp4"
    },
    {
     title: "Africa Speaks iPod version",
@@ -26883,7 +27409,8 @@ const CHANNELS = [
      "much",
      "kill",
      "food"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Alias French Gertie",
@@ -26909,7 +27436,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "All Quiet on the Western Front",
@@ -26952,7 +27480,8 @@ const CHANNELS = [
      "much",
      "leave"
     ],
-    node2: "ia800107.us.archive.org/1/items/all.-quiet.-on.-the.-western.-front.-1930"
+    node2: "ia800107.us.archive.org/1/items/all.-quiet.-on.-the.-western.-front.-1930",
+    castSrc: 0
    },
    {
     title: "Animal Crackers",
@@ -27106,7 +27635,8 @@ const CHANNELS = [
     wpx: "Clancy in Wall Street is a 1930 American pre-Code comedy film. It stars Charles Murray, who had made a number of films for Edward Small.",
     dir: [
      "Ted Wilde"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Conspiracy (1930) DVD MKV",
@@ -27160,7 +27690,8 @@ const CHANNELS = [
      "done",
      "maybe",
      "chicago"
-    ]
+    ],
+    castSrc: "https://archive.org/download/danger_lights/danger_lights.mp4"
    },
    {
     title: "Dangerous Paradise",
@@ -27233,7 +27764,8 @@ const CHANNELS = [
      "Anny Ondra",
      "Sig Arno",
      "Margarete Kupfer"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Dixiana",
@@ -27260,7 +27792,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Dixiana/Dixiana.mp4"
    },
    {
     title: "Escape!",
@@ -27305,7 +27838,8 @@ const CHANNELS = [
      "bank",
      "sure",
      "ever"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Fast and Loose",
@@ -27385,7 +27919,8 @@ const CHANNELS = [
      "better",
      "mean",
      "write"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Fighting Thru; or, California in 1878",
@@ -27397,7 +27932,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/FightinThru1930/FightinThru1930.thumbs/FightinThru1930_001410.jpg",
     bytes: 177214482,
-    node: "dn801207.us.archive.org/0/items/FightinThru1930"
+    node: "dn801207.us.archive.org/0/items/FightinThru1930",
+    castSrc: 0
    },
    {
     title: "Free and Easy",
@@ -27448,7 +27984,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Half Shot at Sunrse",
@@ -27476,7 +28013,8 @@ const CHANNELS = [
      "love",
      "thought",
      "world"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Hell-bound Train",
@@ -27571,7 +28109,8 @@ const CHANNELS = [
      "give",
      "life",
      "wait"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Hot Curves",
@@ -27594,7 +28133,8 @@ const CHANNELS = [
      "Rex Lease",
      "Pert Kelton",
      "Natalie Moorhead"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Inside The Lines 1930 Betty Compson, Ralph Forbes, Montagu Love, Regin",
@@ -27618,7 +28158,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/je4449004441124/je4449004441124.thumbs/je4449004441124_002755.jpg",
     bytes: 547689969,
-    node: "dn800305.us.archive.org/0/items/je4449004441124"
+    node: "dn800305.us.archive.org/0/items/je4449004441124",
+    castSrc: 0
    },
    {
     title: "Juno and the Paycock",
@@ -27682,7 +28223,8 @@ const CHANNELS = [
      "days",
      "maybe",
      "hope"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Just Like Heaven 1930 Anita Louise, David Newell, Yola d'Avril, Gaston",
@@ -27721,7 +28263,8 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Ladies in Love",
@@ -27758,7 +28301,8 @@ const CHANNELS = [
      "sing",
      "give",
      "around"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Ladies of Leisure",
@@ -28353,7 +28897,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/PartyGirl1930/PartyGirl1930.thumbs/Party_Girl_1930_001470.jpg",
     bytes: 249007303,
-    node: "dn800307.us.archive.org/0/items/PartyGirl1930"
+    node: "dn800307.us.archive.org/0/items/PartyGirl1930",
+    castSrc: 0
    },
    {
     title: "Passion Flower",
@@ -28393,7 +28938,8 @@ const CHANNELS = [
      "name",
      "kind",
      "love"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "People on Sunday",
@@ -28543,7 +29089,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/raffles-1930-colorized/raffles-1930-colorized.thumbs/Raffles%201930_001743.jpg",
     bytes: 448356098,
-    node: "dn600306.us.archive.org/0/items/raffles-1930-colorized"
+    node: "dn600306.us.archive.org/0/items/raffles-1930-colorized",
+    castSrc: 0
    },
    {
     title: "Rain or Shine",
@@ -28829,7 +29376,8 @@ const CHANNELS = [
      "better",
      "much",
      "husband"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Sinners' Holiday",
@@ -28914,7 +29462,8 @@ const CHANNELS = [
     cast: [
      "Chester Morris",
      "Una Merkel"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Bat Whispers 1930 Mystery: ★★★½ pre-Code Mystery [1:23:57] HD",
@@ -28926,7 +29475,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/the-bat-whispers-1930/the-bat-whispers-1930.thumbs/The%20Bat%20Whispers%20(1930)_002034.jpg",
     bytes: 1174849965,
-    node: "dn801208.us.archive.org/0/items/the-bat-whispers-1930"
+    node: "dn801208.us.archive.org/0/items/the-bat-whispers-1930",
+    castSrc: 0
    },
    {
     title: "The Benson Murder Case",
@@ -28947,7 +29497,8 @@ const CHANNELS = [
     ],
     cast: [
      "William Powell"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Big House",
@@ -29204,7 +29755,8 @@ const CHANNELS = [
      "done",
      "found",
      "talk"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Medicine Man",
@@ -29222,7 +29774,8 @@ const CHANNELS = [
     wpx: "The Medicine Man is a 1930 American pre-Code comedy drama film directed by Scott Pembroke, released by Tiffany Pictures, and starring Jack Benny, Betty Bronson, and Eva Novak.",
     dir: [
      "Scott Pembroke"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Mystery of the Yellow Room",
@@ -29258,7 +29811,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheOklahomaCyclone/TheOklahomaCyclone.thumbs/TheOklahomaCyclone_001500.jpg",
     bytes: 271920159,
-    node: "dn601201.us.archive.org/0/items/TheOklahomaCyclone"
+    node: "dn601201.us.archive.org/0/items/TheOklahomaCyclone",
+    castSrc: "https://archive.org/download/TheOklahomaCyclone/TheOklahomaCyclone.mp4"
    },
    {
     title: "The Pay-Off",
@@ -29283,7 +29837,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/ThePay-Off/ThePay-Off.mp4"
    },
    {
     title: "The Royal Family of Broadway",
@@ -29310,7 +29865,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Sap from Syracuse",
@@ -29386,7 +29942,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Thoroughbred 1930 Wesley Barry, Nancy Dover, Pauline Garon, Larry ",
@@ -29648,7 +30205,8 @@ const CHANNELS = [
      "play",
      "lieutenant",
      "wrong"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Whoopee!",
@@ -29859,7 +30417,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Off_to_Bloomingdale_Asylum/Off_to_Bloomingdale_Asylum.thumbs/Off_to_Bloomingdale_Asylum_1901_000025.jpg",
     bytes: 4035923,
-    node: "dn800307.us.archive.org/0/items/Off_to_Bloomingdale_Asylum"
+    node: "dn800307.us.archive.org/0/items/Off_to_Bloomingdale_Asylum",
+    castSrc: 0
    },
    {
     title: "Danse des Ouled-Naid",
@@ -29919,7 +30478,8 @@ const CHANNELS = [
     wpx: "Loie Fuller is a 1902 French short black-and-white silent film. The creator is listed as \"anonymous\" and is undated by the Jérôme Seydoux-Pathé Foundation. Some copies have been stencil-coloured with Pathécolor process in Julienne Mathieu and Segundo de Chomon's Barcelona workshop.",
     dir: [
      "Segundo de Chomón"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Electrocuting an Elephant",
@@ -29961,7 +30521,8 @@ const CHANNELS = [
     ],
     co: [
      "Star Film Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Le Monstre",
@@ -30001,7 +30562,8 @@ const CHANNELS = [
     ],
     co: [
      "Edison Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "\"Casting A Guide Box\" (1904) cinematographer Billy Bitzer",
@@ -30013,7 +30575,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CastingAGuideBox1904/CastingAGuideBox1904.thumbs/Casting-a-Guide-Box-1904_000135.jpg",
     bytes: 57938904,
-    node: "dn601205.us.archive.org/0/items/CastingAGuideBox1904"
+    node: "dn601205.us.archive.org/0/items/CastingAGuideBox1904",
+    castSrc: 0
    },
    {
     title: "\"Children in the Surf, Coney Island\" (1904) cinematographer Billy Bitz",
@@ -30025,7 +30588,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ChildrenInTheSurf/ChildrenInTheSurf.thumbs/Children%20in%20the%20surf_000165.jpg",
     bytes: 33322382,
-    node: "dn600309.us.archive.org/0/items/ChildrenInTheSurf"
+    node: "dn600309.us.archive.org/0/items/ChildrenInTheSurf",
+    castSrc: 0
    },
    {
     title: "\"Testing A Rotary\" (1904) cinematographer Billy Bitzer",
@@ -30037,7 +30601,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TestingARotary1904/TestingARotary1904.thumbs/Testing%20a%20Rotary%20(1904)_000087.jpg",
     bytes: 26520038,
-    node: "dn801200.us.archive.org/0/items/TestingARotary1904"
+    node: "dn801200.us.archive.org/0/items/TestingARotary1904",
+    castSrc: 0
    },
    {
     title: "A Nigger in the Woodpile",
@@ -30101,7 +30666,8 @@ const CHANNELS = [
     ],
     co: [
      "Star Film Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Impossible Voyage",
@@ -30126,7 +30692,8 @@ const CHANNELS = [
     ],
     co: [
      "Star Film Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "A Mesmerian Experiment",
@@ -30151,7 +30718,8 @@ const CHANNELS = [
     ],
     co: [
      "Star Film Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Ah! La Barbe",
@@ -30218,7 +30786,8 @@ const CHANNELS = [
     ],
     co: [
      "Star Film Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Wandering Jew",
@@ -30231,7 +30800,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The_Wandering_Jew/The_Wandering_Jew.thumbs/The_Wandering_Jew_000060.jpg",
     bytes: 11366194,
-    node: "dn600308.us.archive.org/0/items/The_Wandering_Jew"
+    node: "dn600308.us.archive.org/0/items/The_Wandering_Jew",
+    castSrc: 0
    },
    {
     title: "Baden verboten AKA Bathing Forbidden",
@@ -30320,7 +30890,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/LcrinDuRaja/LcrinDuRaja.thumbs/GastonVelleLecrinDuRaja1906TheKingsCasket-EffectsBySegundoDeChomon_000147.jpg",
     bytes: 31384928,
-    node: "dn800307.us.archive.org/0/items/LcrinDuRaja"
+    node: "dn800307.us.archive.org/0/items/LcrinDuRaja",
+    castSrc: 0
    },
    {
     title: "Les Roses Magique",
@@ -30332,7 +30903,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/LesRosesMagique/LesRosesMagique.thumbs/SegundoDeChomnLesRosesMagique1906_000029.jpg",
     bytes: 11660887,
-    node: "dn801204.us.archive.org/0/items/LesRosesMagique"
+    node: "dn801204.us.archive.org/0/items/LesRosesMagique",
+    castSrc: 0
    },
    {
     title: "Sklavenraub AKA The Abduction of the Slave Women",
@@ -30367,7 +30939,8 @@ const CHANNELS = [
     ],
     cast: [
      "John Tait"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheStoryOfTheKellyGang-FragmentsFromTheFinalReel/StoryOfTheKellyGang.mp4"
    },
    {
     title: "Deux Cent Milles Sous les Mers",
@@ -30401,7 +30974,8 @@ const CHANNELS = [
     ],
     co: [
      "Pathé"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "La Boite a Cigares",
@@ -30420,7 +30994,8 @@ const CHANNELS = [
     ],
     co: [
      "Pathé"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Le Bailleur",
@@ -30470,7 +31045,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/LesKirikiAcrobatesJaponais/LesKirikiAcrobatesJaponais.thumbs/SegundoDeChomnLesKirikiAcrobatesJaponais1907_000057.jpg",
     bytes: 11617886,
-    node: "dn800308.us.archive.org/0/items/LesKirikiAcrobatesJaponais"
+    node: "dn800308.us.archive.org/0/items/LesKirikiAcrobatesJaponais",
+    castSrc: 0
    },
    {
     title: "Les Oeufs de Paques",
@@ -30492,7 +31068,8 @@ const CHANNELS = [
     ],
     co: [
      "Pathé"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Satan in Prison",
@@ -30514,7 +31091,8 @@ const CHANNELS = [
     ],
     co: [
      "Star Film Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Satan s'amuse",
@@ -30562,7 +31140,8 @@ const CHANNELS = [
     ],
     co: [
      "Pathé"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Das eitle Stubenmdchen AKA The Vain Housemaid",
@@ -30628,7 +31207,8 @@ const CHANNELS = [
     cast: [
      "Julienne Mathieu",
      "Segundo de Chomón"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Excursion Dans La Lune",
@@ -30649,7 +31229,8 @@ const CHANNELS = [
     ],
     co: [
      "Pathé"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Excursion to the Moon",
@@ -30671,7 +31252,8 @@ const CHANNELS = [
     ],
     co: [
      "Pathé"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "L'aspirateur",
@@ -30727,7 +31309,8 @@ const CHANNELS = [
     ],
     cast: [
      "Julienne Mathieu"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Le Reve des Marmitons",
@@ -30759,7 +31342,8 @@ const CHANNELS = [
     wd: "Q124468312",
     dir: [
      "Segundo de Chomón"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Les Papillons Japonais",
@@ -30775,7 +31359,8 @@ const CHANNELS = [
     wd: "Q16655192",
     dir: [
      "Segundo de Chomón"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "\"At the Altar\" (1909) director D. W. Griffith",
@@ -30787,7 +31372,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/AtTheAltar/AtTheAltar.thumbs/At%20The%20Altar_000315.jpg",
     bytes: 323786719,
-    node: "dn800302.us.archive.org/0/items/AtTheAltar"
+    node: "dn800302.us.archive.org/0/items/AtTheAltar",
+    castSrc: 0
    },
    {
     title: "\"Corner in Wheat\" (1909) director D. W. Griffith, cinematographer Bill",
@@ -30799,7 +31385,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CornerInWheat/CornerInWheat.thumbs/09CornerInWheat_000345.jpg",
     bytes: 115557407,
-    node: "dn601204.us.archive.org/0/items/CornerInWheat"
+    node: "dn601204.us.archive.org/0/items/CornerInWheat",
+    castSrc: 0
    },
    {
     title: "\"Lonely Villa\" (1909) director D. W. Griffith",
@@ -30823,7 +31410,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Resurrection_201401/Resurrection_201401.thumbs/Resurrection_000285.jpg",
     bytes: 180639072,
-    node: "dn801201.us.archive.org/0/items/Resurrection_201401"
+    node: "dn801201.us.archive.org/0/items/Resurrection_201401",
+    castSrc: 0
    },
    {
     title: "\"The Sealed Room\" (1909) director D. W. Griffith, starring Arthur V. J",
@@ -30902,7 +31490,8 @@ const CHANNELS = [
     ],
     co: [
      "Biograph Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Spider and the Butterfly",
@@ -30927,7 +31516,8 @@ const CHANNELS = [
     ],
     co: [
      "Star Film Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "\"In The Border States\" (1910) director D. W. Griffith, cinematographer",
@@ -30939,7 +31529,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/10InTheBorderStates/10InTheBorderStates.thumbs/10%20In%20the%20Border%20States_000705.jpg",
     bytes: 130482523,
-    node: "dn800300.us.archive.org/0/items/10InTheBorderStates"
+    node: "dn800300.us.archive.org/0/items/10InTheBorderStates",
+    castSrc: 0
    },
    {
     title: "\"Ramona\" (1910) director D. W. Griffith, cinematographer Billy Bitzer",
@@ -30951,7 +31542,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Ramona_201408/Ramona_201408.thumbs/ramona_000390.jpg",
     bytes: 330901109,
-    node: "dn600308.us.archive.org/0/items/Ramona_201408"
+    node: "dn600308.us.archive.org/0/items/Ramona_201408",
+    castSrc: 0
    },
    {
     title: "\"Wilful Peggy\" (1910) director D. W. Griffith, cinematographer Billy B",
@@ -30963,7 +31555,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/WilfulPeggy/WilfulPeggy.thumbs/Wilful%20Peggy_000315.jpg",
     bytes: 176678858,
-    node: "dn800300.us.archive.org/0/items/WilfulPeggy"
+    node: "dn800300.us.archive.org/0/items/WilfulPeggy",
+    castSrc: 0
    },
    {
     title: "A Christmas Carol",
@@ -30977,7 +31570,8 @@ const CHANNELS = [
     frame: "https://archive.org/download/AChristmasCarol/AChristmasCarol.thumbs/AChristmasCarol_000240.jpg",
     subs: "AChristmasCarol.asr.srt",
     bytes: 47659702,
-    node: "dn601206.us.archive.org/0/items/AChristmasCarol"
+    node: "dn601206.us.archive.org/0/items/AChristmasCarol",
+    castSrc: 0
    },
    {
     title: "Afgrunden / The Abyss",
@@ -31002,7 +31596,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/FrankensteinfullMovie/FrankensteinfullMovie.thumbs/Frankenstein1910_000300.jpg",
     bytes: 53550842,
-    node: "dn600303.us.archive.org/0/items/FrankensteinfullMovie"
+    node: "dn600303.us.archive.org/0/items/FrankensteinfullMovie",
+    castSrc: 0
    },
    {
     title: "Marvellous Melbourne",
@@ -31022,7 +31617,8 @@ const CHANNELS = [
     wpx: "Marvellous Melbourne: Queen City of the South is a 1910 documentary of Melbourne that takes the audience through the hotspots of its central business district and surrounding features. Published in 1910, the film stands as the oldest surviving documentary of the city. It is currently housed at the National Film & Sound Archive in Pyrmont, Sydney. At the time of filming, Melbourne was the federal capital of Australia, until the…",
     dir: [
      "Charles Cozens Spencer"
-    ]
+    ],
+    castSrc: "https://archive.org/download/MarvellousMelbourne/MarvellousMelbourne.mp4"
    },
    {
     title: "The Wonderful Wizard of Oz",
@@ -31050,7 +31646,8 @@ const CHANNELS = [
     ],
     co: [
      "Selig Polyscope Company"
-    ]
+    ],
+    castSrc: "https://archive.org/download/The_Wonderful_Wizard_of_Oz/WizardOfOz1910.mp4"
    },
    {
     title: "Animated Putty",
@@ -31128,7 +31725,8 @@ const CHANNELS = [
     ],
     co: [
      "Biograph Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "\"Children Who Labor\"",
@@ -31151,7 +31749,8 @@ const CHANNELS = [
     ],
     co: [
      "Edison Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "\"The Burglar's Dilemma\" (1912) director D. W. Griffith cinematographer",
@@ -31163,7 +31762,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ArchiveTheBurglarsDilemma1912/ArchiveTheBurglarsDilemma1912.thumbs/archive%20The%20Burglar's%20Dilemma%201912_000414.jpg",
     bytes: 133518247,
-    node: "dn800304.us.archive.org/0/items/ArchiveTheBurglarsDilemma1912"
+    node: "dn800304.us.archive.org/0/items/ArchiveTheBurglarsDilemma1912",
+    castSrc: 0
    },
    {
     title: "L'antique Tolède",
@@ -31175,7 +31775,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/LantiqueTolde/LantiqueTolde.thumbs/SegundoDeChomnLantiqueTolede1912OldTolede_000057.jpg",
     bytes: 11811796,
-    node: "dn801208.us.archive.org/0/items/LantiqueTolde"
+    node: "dn801208.us.archive.org/0/items/LantiqueTolde",
+    castSrc: 0
    },
    {
     title: "Saved from the Titanic",
@@ -31215,7 +31816,8 @@ const CHANNELS = [
     frame: "https://archive.org/download/TheCopperBeeches/TheCopperBeeches.thumbs/CopperBeechesPart1_000570.jpg",
     subs: "CopperBeechesPart1.asr.srt",
     bytes: 50635025,
-    node: "dn800300.us.archive.org/0/items/TheCopperBeeches"
+    node: "dn800300.us.archive.org/0/items/TheCopperBeeches",
+    castSrc: 0
    },
    {
     title: "\"The Jazz Band Leader\" (1913) director Mack Sennett",
@@ -31227,7 +31829,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/JazzBandLeader/JazzBandLeader.thumbs/Jazz%20Band%20Leader_000285.jpg",
     bytes: 159790212,
-    node: "dn600205.us.archive.org/0/items/JazzBandLeader"
+    node: "dn600205.us.archive.org/0/items/JazzBandLeader",
+    castSrc: 0
    },
    {
     title: "Mabel's Dramatic Career",
@@ -31253,7 +31856,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Speed Kings",
@@ -31279,7 +31883,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "By the Sun's Rays",
@@ -31306,7 +31911,8 @@ const CHANNELS = [
     ],
     co: [
      "Nestor Film Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"A Busy Day\"",
@@ -31332,7 +31938,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"A Fair Exchange\"",
@@ -31358,7 +31965,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"Between Showers\"",
@@ -31384,7 +31992,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"Caught in a Caberet\"",
@@ -31396,7 +32005,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_04_27_CaughtinaCaberet/CC_1914_04_27_CaughtinaCaberet.thumbs/CC_1914_04_27_CaughtinaCaberet_000360.jpg",
     bytes: 68734737,
-    node: "dn601209.us.archive.org/0/items/CC_1914_04_27_CaughtinaCaberet"
+    node: "dn601209.us.archive.org/0/items/CC_1914_04_27_CaughtinaCaberet",
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"Charlie's Recreation\"",
@@ -31422,7 +32032,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"Charolot Gargon De Theater\" ( The Property Man)",
@@ -31434,7 +32045,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_08_01_CharolotGargonDeTheater/CC_1914_08_01_CharolotGargonDeTheater.thumbs/CC_1914_08_01_CharolotGargonDeTheater_000420.jpg",
     bytes: 80087877,
-    node: "dn801206.us.archive.org/0/items/CC_1914_08_01_CharolotGargonDeTheater"
+    node: "dn801206.us.archive.org/0/items/CC_1914_08_01_CharolotGargonDeTheater",
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"Cruel Cruel Love\"",
@@ -31461,7 +32073,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"Dough And Dynamite\"",
@@ -31487,7 +32100,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"Face On The Barroom Floor\"",
@@ -31499,7 +32113,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_08_10_FaceOnTheBarroomFloor/CC_1914_08_10_FaceOnTheBarroomFloor.thumbs/CC_1914_08_10_FaceOnTheBarroomFloor_000270.jpg",
     bytes: 50554177,
-    node: "dn600300.us.archive.org/0/items/CC_1914_08_10_FaceOnTheBarroomFloor"
+    node: "dn600300.us.archive.org/0/items/CC_1914_08_10_FaceOnTheBarroomFloor",
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"His Favorite Pasttime\"",
@@ -31511,7 +32126,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_03_16_HisFavoritePasttime/CC_1914_03_16_HisFavoritePasttime.thumbs/CC_1914_03_16_HisFavoritePasttime_000300.jpg",
     bytes: 58365169,
-    node: "dn800305.us.archive.org/0/items/CC_1914_03_16_HisFavoritePasttime"
+    node: "dn800305.us.archive.org/0/items/CC_1914_03_16_HisFavoritePasttime",
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"His Prehistoric Past\"",
@@ -31537,7 +32153,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"Kids Auto Race At Venice\"",
@@ -31549,7 +32166,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_02_07_KidsAutoRaceAtVenice/CC_1914_02_07_KidsAutoRaceAtVenice.thumbs/CC_1914_02_07_KidsAutoRaceAtVenice_000150.jpg",
     bytes: 26012537,
-    node: "dn800305.us.archive.org/0/items/CC_1914_02_07_KidsAutoRaceAtVenice"
+    node: "dn800305.us.archive.org/0/items/CC_1914_02_07_KidsAutoRaceAtVenice",
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"Laffing Gas\" aka Laughing Gas",
@@ -31575,7 +32193,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"Mabels Strange Predicament\"",
@@ -31587,7 +32206,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_02_09_MabelsStrangePredicament/CC_1914_02_09_MabelsStrangePredicament.thumbs/CC_1914_02_09_MabelsStrangePredicament_000240.jpg",
     bytes: 45170179,
-    node: "dn600308.us.archive.org/0/items/CC_1914_02_09_MabelsStrangePredicament"
+    node: "dn600308.us.archive.org/0/items/CC_1914_02_09_MabelsStrangePredicament",
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"Making A Living\"",
@@ -31613,7 +32233,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"The Good For Nothing\"",
@@ -31637,7 +32258,8 @@ const CHANNELS = [
     ],
     co: [
      "Essanay Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"The Knockout\"",
@@ -31664,7 +32286,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"The Landladys Pet\" aka The Star Boarder",
@@ -31676,7 +32299,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1914_04_04_TheLandladysPet/CC_1914_04_04_TheLandladysPet.thumbs/CC_1914_04_04_TheLandladysPet_000180.jpg",
     bytes: 33815129,
-    node: "dn801208.us.archive.org/0/items/CC_1914_04_04_TheLandladysPet"
+    node: "dn801208.us.archive.org/0/items/CC_1914_04_04_TheLandladysPet",
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"The Masquerader\"",
@@ -31702,7 +32326,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplins \"A Film Johnnie\"",
@@ -31728,7 +32353,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Fatty's Magic Pants",
@@ -31754,7 +32380,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "His New Profession",
@@ -31780,7 +32407,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Helpful Sisterhood",
@@ -31792,7 +32420,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/publicdomainTheHelpfulSisterhood/publicdomainTheHelpfulSisterhood.thumbs/HelpfulSisterhood914_000420.jpg",
     bytes: 72462324,
-    node: "dn800306.us.archive.org/0/items/publicdomainTheHelpfulSisterhood"
+    node: "dn800306.us.archive.org/0/items/publicdomainTheHelpfulSisterhood",
+    castSrc: 0
    },
    {
     title: "The Kid Auto Race in Venice",
@@ -31818,7 +32447,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "A Night in the Show",
@@ -31843,7 +32473,8 @@ const CHANNELS = [
     ],
     co: [
      "Essanay Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin . A Night In The Show (1915, Classic, Silent, Short, C",
@@ -31855,7 +32486,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/charlie-chaplin-.-a-night-in-the-show-1915-classic-short-colourized-bw-mix/charlie-chaplin-.-a-night-in-the-show-1915-classic-short-colourized-bw-mix.thumbs/Charlie%20Chaplin%20.%20A%20Night%20in%20the%20Show%20(1915%2C%20Classic%2C%20Short%2C%20Colourized%20BW%20mix)_000596.jpg",
     bytes: 135660511,
-    node: "dn600302.us.archive.org/0/items/charlie-chaplin-.-a-night-in-the-show-1915-classic-short-colourized-bw-mix"
+    node: "dn600302.us.archive.org/0/items/charlie-chaplin-.-a-night-in-the-show-1915-classic-short-colourized-bw-mix",
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"A Woman\"",
@@ -31880,7 +32512,8 @@ const CHANNELS = [
     ],
     co: [
      "Essanay Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"Charlie Shanghaied\"",
@@ -31892,7 +32525,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1915_10_04_CharlieShanghaied/CC_1915_10_04_CharlieShanghaied.thumbs/CC_1915_10_04_CharlieShanghaied_000540.jpg",
     bytes: 100857004,
-    node: "dn801205.us.archive.org/0/items/CC_1915_10_04_CharlieShanghaied"
+    node: "dn801205.us.archive.org/0/items/CC_1915_10_04_CharlieShanghaied",
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"His New Job\"",
@@ -31918,7 +32552,8 @@ const CHANNELS = [
     ],
     co: [
      "Essanay Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"The Champion\"",
@@ -31930,7 +32565,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheChampion/TheChampion.thumbs/The-Champion-v2_000774.jpg",
     bytes: 277701627,
-    node: "dn600208.us.archive.org/0/items/TheChampion"
+    node: "dn600208.us.archive.org/0/items/TheChampion",
+    castSrc: 0
    },
    {
     title: "Mabel and Fatty Viewing the World's Fair",
@@ -31952,7 +32588,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Mabel, Fatty and the Law",
@@ -31978,7 +32615,8 @@ const CHANNELS = [
     ],
     co: [
      "Keystone Studios"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Pool Sharks",
@@ -32001,7 +32639,8 @@ const CHANNELS = [
     ],
     cast: [
      "W. C. Fields"
-    ]
+    ],
+    castSrc: "https://archive.org/download/pool_sharks/pool_sharks.mp4"
    },
    {
     title: "A Natural Born Gambler",
@@ -32025,7 +32664,8 @@ const CHANNELS = [
     ],
     co: [
      "Biograph Company"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \" The Pawnshop\"",
@@ -32047,7 +32687,8 @@ const CHANNELS = [
     cast: [
      "Henry Bergman",
      "Charlie Chaplin"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"Behind The Screen\"",
@@ -32069,7 +32710,8 @@ const CHANNELS = [
     cast: [
      "Eric Campbell",
      "Charlie Chaplin"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"One A.M.\"",
@@ -32091,7 +32733,8 @@ const CHANNELS = [
     cast: [
      "Charlie Chaplin",
      "Albert Austin"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"Police\"",
@@ -32103,7 +32746,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1916_05_27_Police/CC_1916_05_27_Police.thumbs/CC_1916_05_27_Police_000360.jpg",
     bytes: 63839107,
-    node: "dn600304.us.archive.org/0/items/CC_1916_05_27_Police"
+    node: "dn600304.us.archive.org/0/items/CC_1916_05_27_Police",
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"The Count\"",
@@ -32115,7 +32759,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1916_09_04_TheCount/CC_1916_09_04_TheCount.thumbs/CC_1916_09_04_TheCount_000480.jpg",
     bytes: 87932292,
-    node: "dn800206.us.archive.org/0/items/CC_1916_09_04_TheCount"
+    node: "dn800206.us.archive.org/0/items/CC_1916_09_04_TheCount",
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"The Fireman\"",
@@ -32140,7 +32785,8 @@ const CHANNELS = [
     ],
     co: [
      "Mutual Film Corporation"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"The Floorwalker\"",
@@ -32162,7 +32808,8 @@ const CHANNELS = [
     cast: [
      "Eric Campbell",
      "Charlie Chaplin"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"The Rink\"",
@@ -32184,7 +32831,8 @@ const CHANNELS = [
     cast: [
      "Eric Campbell",
      "Henry Bergman"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"The Vagabond\"",
@@ -32206,7 +32854,8 @@ const CHANNELS = [
     cast: [
      "Charlie Chaplin",
      "Eric Campbell"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Mystery of the Leaping Fish",
@@ -32245,7 +32894,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/PreviewTheGirlFromStormyCroft/PreviewTheGirlFromStormyCroft.thumbs/preview%20-%20The%20Girl%20from%20Stormy%20Croft_000147.jpg",
     bytes: 33853532,
-    node: "dn800207.us.archive.org/0/items/PreviewTheGirlFromStormyCroft"
+    node: "dn800207.us.archive.org/0/items/PreviewTheGirlFromStormyCroft",
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"The Adventurer\"",
@@ -32267,7 +32917,8 @@ const CHANNELS = [
     cast: [
      "Eric Campbell",
      "Charlie Chaplin"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"The Immigrant\"",
@@ -32289,7 +32940,8 @@ const CHANNELS = [
     cast: [
      "Eric Campbell",
      "Charlie Chaplin"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Butcher Boy",
@@ -32312,7 +32964,8 @@ const CHANNELS = [
      "Roscoe Arbuckle",
      "Al St. John",
      "Buster Keaton"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Rough House",
@@ -32336,7 +32989,8 @@ const CHANNELS = [
      "Roscoe Arbuckle",
      "Al St. John",
      "Alice Lake"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "WW1-ChateauThierry",
@@ -32348,7 +33002,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/WW1-Footage-ChateauThierry/WW1-Footage-ChateauThierry.thumbs/WW1-Footage-ChateauThierry_000009.jpg",
     bytes: 38454702,
-    node: "dn801201.us.archive.org/0/items/WW1-Footage-ChateauThierry"
+    node: "dn801201.us.archive.org/0/items/WW1-Footage-ChateauThierry",
+    castSrc: 0
    },
    {
     title: "Are Crooks Dishonest?",
@@ -32372,7 +33027,8 @@ const CHANNELS = [
      "Harold Lloyd",
      "Bebe Daniels",
      "Snub Pollard"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's \"The Bond\"",
@@ -32397,7 +33053,8 @@ const CHANNELS = [
     ],
     co: [
      "First National Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Charlie Chaplin's Triple Trouble",
@@ -32409,7 +33066,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CC_1918_xx_xx_TripleTrouble/CC_1918_xx_xx_TripleTrouble.thumbs/CC_1918_xx_xx_TripleTrouble_000660.jpg",
     bytes: 119345465,
-    node: "dn801205.us.archive.org/0/items/CC_1918_xx_xx_TripleTrouble"
+    node: "dn801205.us.archive.org/0/items/CC_1918_xx_xx_TripleTrouble",
+    castSrc: 0
    },
    {
     title: "The Bell Boy",
@@ -32432,7 +33090,8 @@ const CHANNELS = [
      "Roscoe Arbuckle",
      "Buster Keaton",
      "Al St. John"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Sinking of the Lusitania",
@@ -32444,7 +33103,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Sinking_of_the_Lusitania/Sinking_of_the_Lusitania.thumbs/SinkingOfTheLusitania_000240.jpg",
     bytes: 43909288,
-    node: "dn600306.us.archive.org/0/items/Sinking_of_the_Lusitania"
+    node: "dn600306.us.archive.org/0/items/Sinking_of_the_Lusitania",
+    castSrc: 0
    },
    {
     title: "Tih-Minh",
@@ -32490,7 +33150,8 @@ const CHANNELS = [
      "Harold Lloyd",
      "Bebe Daniels",
      "Sammy Brooks"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Buster Keaton's \"Convict 13\"",
@@ -32502,7 +33163,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Convict13_201409/Convict13_201409.thumbs/Convict-13-v2_000474.jpg",
     bytes: 168353958,
-    node: "dn601202.us.archive.org/0/items/Convict13_201409"
+    node: "dn601202.us.archive.org/0/items/Convict13_201409",
+    castSrc: 0
    },
    {
     title: "Buster Keaton's \"One Week\"",
@@ -32514,7 +33176,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/OneWeek1920/OneWeek1920.thumbs/One-Week-v2_000594.jpg",
     bytes: 221258174,
-    node: "dn600203.us.archive.org/0/items/OneWeek1920"
+    node: "dn600203.us.archive.org/0/items/OneWeek1920",
+    castSrc: 0
    },
    {
     title: "Buster Keaton's \"The Scarecrow\"",
@@ -32526,7 +33189,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheScarecrow1920/TheScarecrow1920.thumbs/The-Scarecrow-v2_000474.jpg",
     bytes: 163824509,
-    node: "dn801203.us.archive.org/0/items/TheScarecrow1920"
+    node: "dn801203.us.archive.org/0/items/TheScarecrow1920",
+    castSrc: 0
    },
    {
     title: "Convict 13",
@@ -32550,7 +33214,8 @@ const CHANNELS = [
      "Buster Keaton",
      "Sybil Seely",
      "Joe Roberts"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "J-U-N-K",
@@ -32595,7 +33260,8 @@ const CHANNELS = [
      "Buster Keaton",
      "Sybil Seely",
      "Joe Roberts"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Scarecrow",
@@ -32607,7 +33273,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/BusterKeatonthescarecrow/BusterKeatonthescarecrow.thumbs/thescarecrow_000480.jpg",
     bytes: 87992252,
-    node: "dn801207.us.archive.org/0/items/BusterKeatonthescarecrow"
+    node: "dn801207.us.archive.org/0/items/BusterKeatonthescarecrow",
+    castSrc: 0
    },
    {
     title: "\"A Bear, a Boy and a Dog\"",
@@ -32619,7 +33286,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ABearABoyAndADog/ABearABoyAndADog.thumbs/A%20Bear%2C%20a%20Boy%20and%20a%20Dog_001110.jpg",
     bytes: 19301823,
-    node: "dn800304.us.archive.org/0/items/ABearABoyAndADog"
+    node: "dn800304.us.archive.org/0/items/ABearABoyAndADog",
+    castSrc: 0
    },
    {
     title: "Buster Keaton's \"The Goat\"",
@@ -32631,7 +33299,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CutTheGoat1921/CutTheGoat1921.thumbs/The-Goat-v2_000594.jpg",
     bytes: 207744075,
-    node: "dn800305.us.archive.org/0/items/CutTheGoat1921"
+    node: "dn800305.us.archive.org/0/items/CutTheGoat1921",
+    castSrc: 0
    },
    {
     title: "Buster Keaton's \"The High Sign\"",
@@ -32643,7 +33312,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheHighSign_201502/TheHighSign_201502.thumbs/The-High-Sign-v2_000474.jpg",
     bytes: 174249243,
-    node: "dn800300.us.archive.org/0/items/TheHighSign_201502"
+    node: "dn800300.us.archive.org/0/items/TheHighSign_201502",
+    castSrc: 0
    },
    {
     title: "Buster Keaton's \"The Play House\"",
@@ -32655,7 +33325,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ThePlayHouse1921/ThePlayHouse1921.thumbs/The-Play-House-v2_000534.jpg",
     bytes: 204017275,
-    node: "dn600203.us.archive.org/0/items/ThePlayHouse1921"
+    node: "dn600203.us.archive.org/0/items/ThePlayHouse1921",
+    castSrc: 0
    },
    {
     title: "Never Weaken",
@@ -32679,7 +33350,8 @@ const CHANNELS = [
      "Mildred Davis",
      "Robert Emmett O'Connor"
     ],
-    node2: "ia801505.us.archive.org/33/items/Never_Weaken_1921"
+    node2: "ia801505.us.archive.org/33/items/Never_Weaken_1921",
+    castSrc: 0
    },
    {
     title: "The Adventures of Sherlock Holmes - The Devil's Foot",
@@ -32692,7 +33364,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheAdventuresOfSherlockHolmes-TheDevilsFoot/TheAdventuresOfSherlockHolmes-TheDevilsFoot.thumbs/SherlockHolmes-TheDevilsFoot_000660.jpg",
     bytes: 105220080,
-    node: "dn800300.us.archive.org/0/items/TheAdventuresOfSherlockHolmes-TheDevilsFoot"
+    node: "dn800300.us.archive.org/0/items/TheAdventuresOfSherlockHolmes-TheDevilsFoot",
+    castSrc: 0
    },
    {
     title: "The Boat",
@@ -32719,7 +33392,8 @@ const CHANNELS = [
     ],
     co: [
      "First National Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Goat",
@@ -32743,7 +33417,8 @@ const CHANNELS = [
      "Buster Keaton",
      "Virginia Fox",
      "Joe Roberts"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Play House",
@@ -32767,7 +33442,8 @@ const CHANNELS = [
      "Buster Keaton",
      "Virginia Fox",
      "Joe Roberts"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Playhouse",
@@ -32779,7 +33455,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ThePlayhouse/ThePlayhouse.thumbs/The_Playhouse_000480.jpg",
     bytes: 77841674,
-    node: "dn600300.us.archive.org/0/items/ThePlayhouse"
+    node: "dn600300.us.archive.org/0/items/ThePlayhouse",
+    castSrc: 0
    },
    {
     title: "\"Cocaine\"",
@@ -32791,7 +33468,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/MyMovie_20181112/MyMovie_20181112.thumbs/My%20Movie_000147.jpg",
     bytes: 46248603,
-    node: "dn601200.us.archive.org/0/items/MyMovie_20181112"
+    node: "dn601200.us.archive.org/0/items/MyMovie_20181112",
+    castSrc: 0
    },
    {
     title: "Blood And Sand",
@@ -32835,7 +33513,8 @@ const CHANNELS = [
      "played",
      "years",
      "done"
-    ]
+    ],
+    castSrc: "https://archive.org/download/blood_and_sand_digest/blood_and_sand_digest.mp4"
    },
    {
     title: "Buster Keaton's \"Cops\"",
@@ -32847,7 +33526,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Cops1922/Cops1922.thumbs/Cops-v2_000474.jpg",
     bytes: 164088517,
-    node: "dn600302.us.archive.org/0/items/Cops1922"
+    node: "dn600302.us.archive.org/0/items/Cops1922",
+    castSrc: 0
    },
    {
     title: "Buster Keaton's \"My Wife's Relations\"",
@@ -32859,7 +33539,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/MyWifesRelations1922/MyWifesRelations1922.thumbs/My-Wifes-Relations-v2_000594.jpg",
     bytes: 217788690,
-    node: "dn800304.us.archive.org/0/items/MyWifesRelations1922"
+    node: "dn800304.us.archive.org/0/items/MyWifesRelations1922",
+    castSrc: 0
    },
    {
     title: "Cops",
@@ -32883,7 +33564,8 @@ const CHANNELS = [
      "Buster Keaton",
      "Virginia Fox",
      "Joe Roberts"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Daydreams",
@@ -32907,7 +33589,8 @@ const CHANNELS = [
      "Buster Keaton",
      "Renée Adorée",
      "Edward F. Cline"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "My Wifes Relations",
@@ -32919,7 +33602,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/MyWifesRelations/MyWifesRelations.thumbs/My_Wifes_Relations_000540.jpg",
     bytes: 85248007,
-    node: "dn800301.us.archive.org/0/items/MyWifesRelations"
+    node: "dn800301.us.archive.org/0/items/MyWifesRelations",
+    castSrc: 0
    },
    {
     title: "Nosferatu_DVD_quality",
@@ -32932,7 +33616,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Nosferatu_DVD_quality/Nosferatu_DVD_quality.thumbs/nosferatu-2of5_000960.jpg",
     bytes: 21756414,
-    node: "dn600209.us.archive.org/0/items/Nosferatu_DVD_quality"
+    node: "dn600209.us.archive.org/0/items/Nosferatu_DVD_quality",
+    castSrc: 0
    },
    {
     title: "The Blacksmith",
@@ -32944,7 +33629,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheBlacksmith/TheBlacksmith.thumbs/The_Blacksmith_000480.jpg",
     bytes: 74515429,
-    node: "dn600306.us.archive.org/0/items/TheBlacksmith"
+    node: "dn600306.us.archive.org/0/items/TheBlacksmith",
+    castSrc: 0
    },
    {
     title: "The Electric House",
@@ -32968,7 +33654,8 @@ const CHANNELS = [
      "Buster Keaton",
      "Joe Roberts",
      "Virginia Fox"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Frozen North",
@@ -32995,7 +33682,8 @@ const CHANNELS = [
     ],
     co: [
      "First National Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Light Of Faith",
@@ -33031,7 +33719,8 @@ const CHANNELS = [
      "Buster Keaton",
      "Virginia Fox",
      "Joe Roberts"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Sawmill",
@@ -33058,7 +33747,8 @@ const CHANNELS = [
     ],
     co: [
      "Vitagraph Studios"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheSawMill/TheSawMill.mp4"
    },
    {
     title: "Buster Keaton's \"The Balloonatic\"",
@@ -33070,7 +33760,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/vidtb_201705/vidtb_201705.thumbs/vidtb_000534.jpg",
     bytes: 896745637,
-    node: "dn800202.us.archive.org/0/items/vidtb_201705"
+    node: "dn800202.us.archive.org/0/items/vidtb_201705",
+    castSrc: 0
    },
    {
     title: "Love Nest",
@@ -33094,7 +33785,8 @@ const CHANNELS = [
      "Joe Roberts",
      "Virginia Fox",
      "Buster Keaton"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Balloonatic",
@@ -33118,7 +33810,8 @@ const CHANNELS = [
      "Buster Keaton",
      "Phyllis Haver",
      "Babe London"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Die Nibelungen: Siegfried",
@@ -33162,7 +33855,8 @@ const CHANNELS = [
     ],
     cast: [
      "Stan Laurel"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Cockeyed: Gems from the Memory of a Nutty Cameraman",
@@ -33197,7 +33891,8 @@ const CHANNELS = [
     cast: [
      "Stan Laurel",
      "Dot Farley"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Episodes in the Life of a Gin Bottle",
@@ -33261,7 +33956,8 @@ const CHANNELS = [
     subs: "SlickSleuths.asr.srt",
     bytes: 31897386,
     node: "dn601202.us.archive.org/0/items/SlickSleuths",
-    wd: "Q131539757"
+    wd: "Q131539757",
+    castSrc: 0
    },
    {
     title: "\"A Dozen Socks\" (1927) starring Alice Day",
@@ -33273,7 +33969,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ADOZENSOCKS_201411/ADOZENSOCKS_201411.thumbs/A%20DOZEN%20SOCKS_000345.jpg",
     bytes: 51464945,
-    node: "dn601202.us.archive.org/0/items/ADOZENSOCKS_201411"
+    node: "dn601202.us.archive.org/0/items/ADOZENSOCKS_201411",
+    castSrc: 0
    },
    {
     title: "Arthur Conan Doyle",
@@ -33308,7 +34005,8 @@ const CHANNELS = [
      "often",
      "began",
      "work"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Koko in 1999",
@@ -33356,7 +34054,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheCameraman/TheCameraman.thumbs/The-Cameraman-clip_000057.jpg",
     bytes: 22164095,
-    node: "dn601204.us.archive.org/0/items/TheCameraman"
+    node: "dn601204.us.archive.org/0/items/TheCameraman",
+    castSrc: 0
    },
    {
     title: "Betty's Bath",
@@ -33417,7 +34116,8 @@ const CHANNELS = [
      "Charles Lamy",
      "Jean Debucourt",
      "Abel Gance"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Fall_of_the_House_of_Usher_1928_Watson/Fall_of_the_House_of_Usher.mp4"
    },
    {
     title: "Ask Dad",
@@ -33455,7 +34155,8 @@ const CHANNELS = [
      "will",
      "every",
      "woman"
-    ]
+    ],
+    castSrc: "https://archive.org/download/ask_dad/ask_dad.mp4"
    },
    {
     title: "Bee's Buzz",
@@ -33478,7 +34179,8 @@ const CHANNELS = [
      "zero",
      "need",
      "school"
-    ]
+    ],
+    castSrc: "https://archive.org/download/bees_buzz/bees_buzz.mp4"
    },
    {
     title: "Old Barn, The",
@@ -33506,7 +34208,8 @@ const CHANNELS = [
      "life",
      "around",
      "door"
-    ]
+    ],
+    castSrc: "https://archive.org/download/old_barn/old_barn.mp4"
    },
    {
     title: "The Golfers (Andy Clyde Thelma Hill)",
@@ -33542,7 +34245,8 @@ const CHANNELS = [
      "around",
      "next",
      "trying"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Skeleton Dance",
@@ -33567,7 +34271,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/double-8-unknown-001/double-8-unknown-001.thumbs/double-8-unknown-01_000360.jpg",
     bytes: 62878576,
-    node: "dn800303.us.archive.org/0/items/double-8-unknown-001"
+    node: "dn800303.us.archive.org/0/items/double-8-unknown-001",
+    castSrc: "https://archive.org/download/double-8-unknown-001/double-8-unknown-01.mp4"
    },
    {
     title: "The Golf Specialist",
@@ -33593,7 +34298,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Golf_Specialist_1930/Golf_Specialist.mp4"
    },
    {
     title: "The Limejuice Mystery or Who Spat in Grandfather's Porridge?",
@@ -33613,7 +34319,8 @@ const CHANNELS = [
     wpx: "The Limejuice Mystery or Who Spat in Grandfather's Porridge? is a 1930 British marionette short film directed by Jack Harrison.",
     dir: [
      "Jack Harrison"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Two Plus Fours",
@@ -33657,7 +34364,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TwoFistedLawWithTimMccoyAndJohnWayne1932/TwoFistedLawWithTimMccoyAndJohnWayne1932.thumbs/TimMccoyAndJohnWayne-Two-fistedLaw-1932_001320.jpg",
     bytes: 247732942,
-    node: "dn800300.us.archive.org/0/items/TwoFistedLawWithTimMccoyAndJohnWayne1932"
+    node: "dn800300.us.archive.org/0/items/TwoFistedLawWithTimMccoyAndJohnWayne1932",
+    castSrc: "https://archive.org/download/TwoFistedLawWithTimMccoyAndJohnWayne1932/TimMccoyAndJohnWayne-Two-fistedLaw-1932.mp4"
    },
    {
     title: "Riders of Destiny",
@@ -33684,7 +34392,8 @@ const CHANNELS = [
     ],
     co: [
      "Lone Star Productions"
-    ]
+    ],
+    castSrc: "https://archive.org/download/RidersofDestiny_/RidersofDestiny.mp4"
    },
    {
     title: "Sagebrush Trail",
@@ -33711,7 +34420,8 @@ const CHANNELS = [
     ],
     co: [
      "Lone Star Productions"
-    ]
+    ],
+    castSrc: "https://archive.org/download/SagebrushTrail/SagebrushTrail.mp4"
    },
    {
     title: "Randy Rides Alone",
@@ -33739,7 +34449,8 @@ const CHANNELS = [
     co: [
      "Monogram Pictures",
      "Lone Star Productions"
-    ]
+    ],
+    castSrc: "https://archive.org/download/RandyRidesAlone/RandyRideAlone.mp4"
    },
    {
     title: "The Lucky Texan",
@@ -33766,7 +34477,8 @@ const CHANNELS = [
     ],
     co: [
      "Lone Star Productions"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheLuckyTexan/TheLuckyTexan.mp4"
    },
    {
     title: "The Man from Utah",
@@ -33793,7 +34505,8 @@ const CHANNELS = [
     ],
     co: [
      "Lone Star Productions"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheManFromUtah/TheManFromUtah.mp4"
    },
    {
     title: "The Star Packer",
@@ -33820,7 +34533,8 @@ const CHANNELS = [
     ],
     co: [
      "Lone Star Productions"
-    ]
+    ],
+    castSrc: "https://archive.org/download/The_Star_Packer/The_Star_Packer.mp4"
    },
    {
     title: "The Trail Beyond",
@@ -33847,7 +34561,8 @@ const CHANNELS = [
     ],
     co: [
      "Lone Star Productions"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheTrailBeyond/TheTrailBeyond.mp4"
    },
    {
     title: "West of the Divide",
@@ -33889,7 +34604,8 @@ const CHANNELS = [
      "years",
      "care",
      "ranch"
-    ]
+    ],
+    castSrc: "https://archive.org/download/west_of_the_divide/west_of_the_divide.mp4"
    },
    {
     title: "Paradise Canyon",
@@ -33916,7 +34632,8 @@ const CHANNELS = [
     ],
     co: [
      "Lone Star Productions"
-    ]
+    ],
+    castSrc: "https://archive.org/download/ParadiseCanyon/ParadiseCanyon.mp4"
    },
    {
     title: "Rocky Mountain Mystery",
@@ -33969,7 +34686,8 @@ const CHANNELS = [
     ],
     co: [
      "Lone Star Productions"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheDawnRider/TheDawnRider.mp4"
    },
    {
     title: "Border Caballero",
@@ -34003,7 +34721,8 @@ const CHANNELS = [
      "might",
      "better",
      "home"
-    ]
+    ],
+    castSrc: "https://archive.org/download/border_cabellero/border_cabellero.mp4"
    },
    {
     title: "Border Patrolman",
@@ -34037,7 +34756,8 @@ const CHANNELS = [
      "line",
      "getting",
      "enough"
-    ]
+    ],
+    castSrc: "https://archive.org/download/border_patrolman/border_patrolman.mp4"
    },
    {
     title: "Cavalcade of the West",
@@ -34074,7 +34794,8 @@ const CHANNELS = [
      "mean",
      "part",
      "even"
-    ]
+    ],
+    castSrc: "https://archive.org/download/cavalcade_of_the_west/cavalcade_of_the_west.mp4"
    },
    {
     title: "Ghost-Town Gold",
@@ -34114,7 +34835,8 @@ const CHANNELS = [
      "much",
      "morning",
      "thought"
-    ]
+    ],
+    castSrc: "https://archive.org/download/three_mesquiteers/three_mesquiteers.mp4"
    },
    {
     title: "Oh, Susanna!",
@@ -34157,7 +34879,8 @@ const CHANNELS = [
      "call",
      "wait",
      "much"
-    ]
+    ],
+    castSrc: "https://archive.org/download/oh_susanna/oh_susanna.mp4"
    },
    {
     title: "The Arizona Raiders",
@@ -34203,7 +34926,8 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Winds_of_the_Wasteland/Winds_of_the_Wasteland.mp4"
    },
    {
     title: "Arizona Gunfighter, The",
@@ -34215,7 +34939,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ArizonaGunfighter/ArizonaGunfighter.thumbs/ArizonaGunfighter_001314.jpg",
     bytes: 271425389,
-    node: "dn800300.us.archive.org/0/items/ArizonaGunfighter"
+    node: "dn800300.us.archive.org/0/items/ArizonaGunfighter",
+    castSrc: "https://archive.org/download/ArizonaGunfighter/ArizonaGunfighter.mp4"
    },
    {
     title: "Bar-Z Bad Men",
@@ -34233,7 +34958,8 @@ const CHANNELS = [
     wpx: "Bar-Z Bad Men is a 1937 American Western film directed by Sam Newfield and starring Johnny Mack Brown.",
     dir: [
      "Sam Newfield"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Bar-ZBadMen/Bar-ZBadMen.mp4"
    },
    {
     title: "Come on, Cowboys",
@@ -34255,7 +34981,8 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/ComeOnCowboys/ComeOnCowboys.mp4"
    },
    {
     title: "Hell Town",
@@ -34279,7 +35006,8 @@ const CHANNELS = [
      "John Wayne",
      "Marsha Hunt",
      "Johnny Mack Brown"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Hell_Town/Hell_Town.mp4"
    },
    {
     title: "Silver Trail, The",
@@ -34307,7 +35035,8 @@ const CHANNELS = [
      "might",
      "care",
      "help"
-    ]
+    ],
+    castSrc: "https://archive.org/download/the_silver_trail/the_silver_trail.mp4"
    },
    {
     title: "Yodelin' Kid from Pine Ridge",
@@ -34365,7 +35094,8 @@ const CHANNELS = [
      "last",
      "heard",
      "wait"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Terror of Tiny Town",
@@ -34388,7 +35118,8 @@ const CHANNELS = [
     cast: [
      "Billy Curtis",
      "Charlie Becker"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheTerrorOfTinyTown1938_802/terroroftinytown.mp4"
    },
    {
     title: "Under Western Stars",
@@ -34414,7 +35145,8 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/UnderWesternStars/UnderWesternStars.mp4"
    },
    {
     title: "Arizona Kid, The",
@@ -34442,7 +35174,8 @@ const CHANNELS = [
      "give",
      "better",
      "wrong"
-    ]
+    ],
+    castSrc: "https://archive.org/download/arizona_kid/arizona_kid.mp4"
    },
    {
     title: "Frontier Horizon",
@@ -34469,7 +35202,8 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/FrontierHorizon/FrontierHorizon.mp4"
    },
    {
     title: "Rough Riders' Round-up",
@@ -34511,7 +35245,8 @@ const CHANNELS = [
      "done",
      "around",
      "duty"
-    ]
+    ],
+    castSrc: "https://archive.org/download/rough_riders_roundup/M4V10004.mp4"
    },
    {
     title: "Six-Gun Rhythm",
@@ -34545,7 +35280,8 @@ const CHANNELS = [
      "sheriff",
      "believe",
      "trouble"
-    ]
+    ],
+    castSrc: "https://archive.org/download/six-gun_rhythm/six-gun_rhythm.mp4"
    },
    {
     title: "Southward, Ho!",
@@ -34558,7 +35294,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SouthwardHo/SouthwardHo.thumbs/SouthwardHo_001260.jpg",
     bytes: 231264173,
-    node: "dn600301.us.archive.org/0/items/SouthwardHo"
+    node: "dn600301.us.archive.org/0/items/SouthwardHo",
+    castSrc: "https://archive.org/download/SouthwardHo/SouthwardHo.mp4"
    },
    {
     title: "Stagecoach colorized 1939 (John Wayne, Claire Trevor, John Carradine)",
@@ -34570,7 +35307,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/stagecoach-colorized/stagecoach-colorized.thumbs/Stagecoach%201939_002221.jpg",
     bytes: 537901652,
-    node: "dn600309.us.archive.org/0/items/stagecoach-colorized"
+    node: "dn600309.us.archive.org/0/items/stagecoach-colorized",
+    castSrc: 0
    },
    {
     title: "Santa Fe Trail",
@@ -34612,7 +35350,8 @@ const CHANNELS = [
      "army",
      "long",
      "might"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Santa_Fe_Trail_movie/Santa_Fe_Trail.mp4"
    },
    {
     title: "The Light of Western Stars",
@@ -34634,7 +35373,8 @@ const CHANNELS = [
     ],
     cast: [
      "Victor Jory"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheLightofWesternStars_/TheLightofWesternStars.mp4"
    },
    {
     title: "Young Bill Hickok",
@@ -34676,7 +35416,8 @@ const CHANNELS = [
      "away",
      "pretty",
      "army"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Young Buffalo Bill",
@@ -34702,7 +35443,8 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/YoungBuffaloBill/YoungBuffaloBill.mp4"
    },
    {
     title: "Bad Man of Deadwood",
@@ -34729,7 +35471,8 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/BadManOfDeadwood/BadManOfDeadwood.mp4"
    },
    {
     title: "Billy the Kid in Santa Fe",
@@ -34802,7 +35545,8 @@ const CHANNELS = [
      "wrong",
      "seems",
      "looks"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Sheriff of Tombstone",
@@ -34829,7 +35573,8 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/SheriffofTombstone/SheriffofTombstone.mp4"
    },
    {
     title: "American Empire",
@@ -34868,7 +35613,8 @@ const CHANNELS = [
      "away",
      "might",
      "river"
-    ]
+    ],
+    castSrc: "https://archive.org/download/american_empire/american_empire.mp4"
    },
    {
     title: "Boot Hill Bandits",
@@ -34907,7 +35653,8 @@ const CHANNELS = [
      "name",
      "morning",
      "reckon"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Outlaws of Boulder Pass",
@@ -34941,7 +35688,8 @@ const CHANNELS = [
      "better",
      "keep",
      "sure"
-    ]
+    ],
+    castSrc: "https://archive.org/download/outlaws_of_boulder_pass/outlaws_of_boulder_pass.mp4"
    },
    {
     title: "Sunset Serenade",
@@ -34968,7 +35716,8 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/SunsetSerenade/SunsetSerenade.mp4"
    },
    {
     title: "Texas to Bataan",
@@ -35005,7 +35754,8 @@ const CHANNELS = [
      "boys",
      "work",
      "army"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "War of the Wildcats - John Wayne",
@@ -35018,7 +35768,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/WarOfTheWildcats-JohnWayne1943/WarOfTheWildcats-JohnWayne1943.thumbs/JohnWayne-WarOfTheWildcats1943_002340.jpg",
     bytes: 425671959,
-    node: "dn600206.us.archive.org/0/items/WarOfTheWildcats-JohnWayne1943"
+    node: "dn600206.us.archive.org/0/items/WarOfTheWildcats-JohnWayne1943",
+    castSrc: "https://archive.org/download/WarOfTheWildcats-JohnWayne1943/JohnWayne-WarOfTheWildcats1943.mp4"
    },
    {
     title: "Gangsters of the Frontier",
@@ -35052,7 +35803,8 @@ const CHANNELS = [
      "fine",
      "last",
      "every"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Salome Where She Danced",
@@ -35080,7 +35832,8 @@ const CHANNELS = [
     ],
     co: [
      "Universal Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/SalomeWhereSheDanced/SalomeWhereSheDanced.mp4"
    },
    {
     title: "Utah",
@@ -35093,7 +35846,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Utah_/Utah_.thumbs/Utah_001260.jpg",
     bytes: 231044334,
-    node: "dn600305.us.archive.org/0/items/Utah_"
+    node: "dn600305.us.archive.org/0/items/Utah_",
+    castSrc: "https://archive.org/download/Utah_/Utah.mp4"
    },
    {
     title: "Abilene Town",
@@ -35117,7 +35871,8 @@ const CHANNELS = [
      "Randolph Scott",
      "Ann Dvorak",
      "Edgar Buchanan"
-    ]
+    ],
+    castSrc: "https://archive.org/download/AbileneTown/AbileneTown.mp4"
    },
    {
     title: "Heldorado",
@@ -35185,7 +35940,8 @@ const CHANNELS = [
      "trigger",
      "kendrick",
      "work"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Song of Arizona",
@@ -35212,7 +35968,8 @@ const CHANNELS = [
     ],
     co: [
      "Republic Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/SongOfArizona/SongOfArizona.mp4"
    },
    {
     title: "Stagecoach to Denver",
@@ -35235,7 +35992,8 @@ const CHANNELS = [
      "Allan Lane",
      "Robert Blake",
      "Martha Wentworth"
-    ]
+    ],
+    castSrc: "https://archive.org/download/StageCoachtoDenver/StagecoachtoDenver.mp4"
    },
    {
     title: "Angel and the Bad Man, The",
@@ -35263,7 +36021,8 @@ const CHANNELS = [
      "mind",
      "work",
      "feel"
-    ]
+    ],
+    castSrc: "https://archive.org/download/angel_and_the_bad_man_ipod/video.mp4"
    },
    {
     title: "Angel and the Badman",
@@ -35305,7 +36064,8 @@ const CHANNELS = [
      "point",
      "feel",
      "zero"
-    ]
+    ],
+    castSrc: "https://archive.org/download/angel_and_the_badman/angel_and_the_badman.mp4"
    },
    {
     title: "Law of the Lash",
@@ -35324,7 +36084,8 @@ const CHANNELS = [
     wpx: "Law of the Lash is a 1947 American Western film directed by Ray Taylor. It was the first lead role of Lash LaRue who had previously appeared in three of PRC's Eddie Dean Cinecolor Westerns, and the first pairing of Lash with sidekick Al \"Fuzzy\" St. John.",
     dir: [
      "Ray Taylor"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Law_of_the_Lash_film/Law_of_the_Lash_1947.mp4"
    },
    {
     title: "Loaded Pistols",
@@ -35405,7 +36166,8 @@ const CHANNELS = [
      "give",
      "another",
      "away"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Fighting Stallion",
@@ -35444,7 +36206,8 @@ const CHANNELS = [
      "ever",
      "kind",
      "need"
-    ]
+    ],
+    castSrc: "https://archive.org/download/fighting_stallion/fighting_stallion.mp4"
    },
    {
     title: "High Lonesome",
@@ -35466,7 +36229,8 @@ const CHANNELS = [
     ],
     cast: [
      "John Drew Barrymore"
-    ]
+    ],
+    castSrc: "https://archive.org/download/HighLonesome/HighLonesome.mp4"
    },
    {
     title: "The Gunfighter 1950 colorized (Gregory Peck)",
@@ -35478,7 +36242,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/gunfighter-1950/gunfighter-1950.thumbs/Gunfighter%201950_002095.jpg",
     bytes: 686066792,
-    node: "dn600304.us.archive.org/0/items/gunfighter-1950"
+    node: "dn600304.us.archive.org/0/items/gunfighter-1950",
+    castSrc: 0
    },
    {
     title: "My Outlaw Brother",
@@ -35501,7 +36266,8 @@ const CHANNELS = [
     cast: [
      "Mickey Rooney",
      "Wanda Hendrix"
-    ]
+    ],
+    castSrc: "https://archive.org/download/MyOutlawBrother/MyOutlawBrother.mp4"
    },
    {
     title: "Only the Valiant",
@@ -35525,7 +36291,8 @@ const CHANNELS = [
      "Gregory Peck",
      "Barbara Payton",
      "Ward Bond"
-    ]
+    ],
+    castSrc: "https://archive.org/download/OnlytheValaint/OnlytheValaint.mp4"
    },
    {
     title: "The Painted Hills",
@@ -35552,7 +36319,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    castSrc: "https://archive.org/download/ThePaintedHills/ThePaintedHills.mp4"
    },
    {
     title: "Vengeance Valley",
@@ -35579,7 +36347,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    castSrc: "https://archive.org/download/VengeanceValley/VengeanceValley.mp4"
    },
    {
     title: "The Big Trees",
@@ -35605,7 +36374,8 @@ const CHANNELS = [
     ],
     co: [
      "Warner Bros. Entertainment"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Bushwhackers",
@@ -35629,7 +36399,8 @@ const CHANNELS = [
      "John Ireland",
      "Wayne Morris",
      "Lawrence Tierney"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheBushwhackers/TheBushwhackers.mp4"
    },
    {
     title: "Kansas Pacific",
@@ -35652,7 +36423,8 @@ const CHANNELS = [
      "Sterling Hayden",
      "Eve Miller",
      "Barton MacLane"
-    ]
+    ],
+    castSrc: "https://archive.org/download/KansasPacific/KansasPacific.mp4"
    },
    {
     title: "The Gambler from Natchez",
@@ -35675,7 +36447,8 @@ const CHANNELS = [
      "Dale Robertson",
      "Debra Paget",
      "Thomas Gomez"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Rage at Dawn",
@@ -35702,7 +36475,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/RageatDawn/RageatDawn.mp4"
    },
    {
     title: "Daniel Boone, Trail Blazer",
@@ -35724,7 +36498,8 @@ const CHANNELS = [
     ],
     cast: [
      "Bruce Bennett"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Daniel_Boone_-_Trail_Blazer/Daniel_Boone_-_Trail_Blazer.mp4"
    },
    {
     title: "I Killed Wild Bill Hickok ipod",
@@ -35736,7 +36511,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/i_killed_wild_bill_hickok_ipod/i_killed_wild_bill_hickok_ipod.thumbs/i_killed_wild_bill_hickok_001500.jpg",
     bytes: 268714918,
-    node: "dn601206.us.archive.org/0/items/i_killed_wild_bill_hickok_ipod"
+    node: "dn601206.us.archive.org/0/items/i_killed_wild_bill_hickok_ipod",
+    castSrc: 0
    },
    {
     title: "The Naked Hills",
@@ -35760,7 +36536,8 @@ const CHANNELS = [
      "Keenan Wynn",
      "Myrna Dell",
      "Frank Fenton"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheNakedHills/TheNakedHills.mp4"
    },
    {
     title: "Raiders of Old California",
@@ -35783,7 +36560,8 @@ const CHANNELS = [
      "Jim Davis",
      "Lee Van Cleef",
      "Lawrence Dobkin"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "\"Bonanza\" The Abduction",
@@ -35795,7 +36573,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/bta45465468813/bta45465468813.thumbs/bta45465468813_001194.jpg",
     bytes: 332630969,
-    node: "dn800307.us.archive.org/0/items/bta45465468813"
+    node: "dn800307.us.archive.org/0/items/bta45465468813",
+    castSrc: 0
    }
   ]
  },
@@ -35833,7 +36612,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheMostDangerousGame/TheMostDangerousGame.mp4"
    },
    {
     title: "The Sign Of Four",
@@ -35872,7 +36652,8 @@ const CHANNELS = [
      "already",
      "last",
      "might"
-    ]
+    ],
+    castSrc: "https://archive.org/download/The_Sign_OF_Four/The_Sign_Of_Four.mp4"
    },
    {
     title: "The Thirteenth Guest",
@@ -35911,7 +36692,8 @@ const CHANNELS = [
      "girl",
      "give",
      "family"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Philo Vance - The Kennel Murder Case",
@@ -35924,7 +36706,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/PhiloVanceTheKennelMurderCase1933/PhiloVanceTheKennelMurderCase1933.thumbs/PhiloVanceTheKennelMurderCase1933_001740.jpg",
     bytes: 318436822,
-    node: "dn600308.us.archive.org/0/items/PhiloVanceTheKennelMurderCase1933"
+    node: "dn600308.us.archive.org/0/items/PhiloVanceTheKennelMurderCase1933",
+    castSrc: "https://archive.org/download/PhiloVanceTheKennelMurderCase1933/PhiloVanceTheKennelMurderCase1933.mp4"
    },
    {
     title: "The Mysterious Mr. Wong",
@@ -35962,7 +36745,8 @@ const CHANNELS = [
      "find",
      "mushroom",
      "knows"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Great Guy",
@@ -35989,7 +36773,8 @@ const CHANNELS = [
     ],
     co: [
      "Zion Meyers Productions"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Great_Guy.avi/Great_Guy.mp4"
    },
    {
     title: "Phantom Ship , The",
@@ -36017,7 +36802,8 @@ const CHANNELS = [
      "bring",
      "even",
      "went"
-    ]
+    ],
+    castSrc: "https://archive.org/download/phantom_ship/phantom_ship.mp4"
    },
    {
     title: "Sabotage",
@@ -36045,7 +36831,8 @@ const CHANNELS = [
      "trying",
      "many",
      "coming"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Seven Sinners",
@@ -36082,7 +36869,8 @@ const CHANNELS = [
      "feel",
      "must",
      "train"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Seven_Sinners_1936/Seven_Sinners_1936.mp4"
    },
    {
     title: "The Dark Hour",
@@ -36116,7 +36904,8 @@ const CHANNELS = [
      "much",
      "window",
      "else"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Bulldog Drummond Escapes",
@@ -36143,7 +36932,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/BulldogDrummondEscapesRayMilland1937Andy/BulldogDrummondEscapesRayMilland1937Andy.mp4"
    },
    {
     title: "Bulldog Drummond's Revenge",
@@ -36181,7 +36971,8 @@ const CHANNELS = [
      "getting",
      "need",
      "still"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Bulldog Drummond's Peril",
@@ -36200,7 +36991,8 @@ const CHANNELS = [
     wpx: "Bulldog Drummond's Peril is a 1938 American adventure crime mystery film directed by James P. Hogan and starring John Barrymore and John Howard. The film is based on Herman C. McNeile's novel The Third Round.",
     dir: [
      "James P. Hogan"
-    ]
+    ],
+    castSrc: "https://archive.org/download/BulldogDrummondsPerilJPHogan1938/BulldogDrummondsPerilJPHogan1938.mp4"
    },
    {
     title: "Mr. Wong, Detective",
@@ -36241,7 +37033,8 @@ const CHANNELS = [
      "home",
      "talk",
      "find"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Irish Luck",
@@ -36275,7 +37068,8 @@ const CHANNELS = [
      "care",
      "around",
      "talk"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Mr. Wong in Chinatown",
@@ -36314,7 +37108,8 @@ const CHANNELS = [
      "will",
      "hope",
      "call"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Nancy Drew... Reporter",
@@ -36351,7 +37146,8 @@ const CHANNELS = [
      "case",
      "idea",
      "money"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Q Planes",
@@ -36376,7 +37172,8 @@ const CHANNELS = [
      "Ralph Richardson",
      "Laurence Olivier",
      "Valerie Hobson"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Q-Planes/Q-Planes.mp4"
    },
    {
     title: "The Gorilla",
@@ -36415,7 +37212,8 @@ const CHANNELS = [
      "gorilla",
      "keep",
      "believe"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Mystery of Mr. Wong",
@@ -36457,7 +37255,8 @@ const CHANNELS = [
      "wrong",
      "course",
      "sure"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "British Intelligence",
@@ -36485,7 +37284,8 @@ const CHANNELS = [
      "might",
      "mean",
      "along"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Case of the Frightened Lady",
@@ -36513,7 +37313,8 @@ const CHANNELS = [
      "thought",
      "people",
      "coming"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Case_of_the_Frightened_Lady_1940/Case_of_the_Frightened_Lady_1940.mp4"
    },
    {
     title: "Doomed to Die",
@@ -36541,7 +37342,8 @@ const CHANNELS = [
      "done",
      "name",
      "paper"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Fatal Hour",
@@ -36555,7 +37357,8 @@ const CHANNELS = [
     frame: "https://archive.org/download/fatal_hour/fatal_hour.thumbs/fatal_hour_001440.jpg",
     subs: "fatal_hour.asr.srt",
     bytes: 266591887,
-    node: "dn800304.us.archive.org/0/items/fatal_hour"
+    node: "dn800304.us.archive.org/0/items/fatal_hour",
+    castSrc: "https://archive.org/download/fatal_hour/fatal_hour.mp4"
    },
    {
     title: "Phantom of Chinatown",
@@ -36592,7 +37395,8 @@ const CHANNELS = [
      "expedition",
      "must",
      "found"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Rebecca",
@@ -36604,7 +37408,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/RebeccaClassic4050/RebeccaClassic4050.thumbs/Rebecca_1940_003030.jpg",
     bytes: 388087191,
-    node: "dn800308.us.archive.org/0/items/RebeccaClassic4050"
+    node: "dn800308.us.archive.org/0/items/RebeccaClassic4050",
+    castSrc: 0
    },
    {
     title: "Rebecca (1940 Film Noir, Thriller, Hitchcock)",
@@ -36616,7 +37421,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/rebecca-1940-film-noir-thirller-hitchcock/rebecca-1940-film-noir-thirller-hitchcock.thumbs/Rebecca%20(1940%20Film%20Noir%2C%20Thirller%2C%20Hitchcock)_003115.jpg",
     bytes: 428007849,
-    node: "dn800309.us.archive.org/0/items/rebecca-1940-film-noir-thirller-hitchcock"
+    node: "dn800309.us.archive.org/0/items/rebecca-1940-film-noir-thirller-hitchcock",
+    castSrc: 0
    },
    {
     title: "Cottage to Let",
@@ -36643,7 +37449,8 @@ const CHANNELS = [
     ],
     co: [
      "Gainsborough Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/CottageToLet/CottageToLet.mp4"
    },
    {
     title: "Murder by Invitation",
@@ -36680,7 +37487,8 @@ const CHANNELS = [
      "sheriff",
      "still",
      "library"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Murder_by_Invitation_1941/Murder_by_Invitation_576x432.mp4"
    },
    {
     title: "The Wolf Man - 1941",
@@ -36772,7 +37580,8 @@ const CHANNELS = [
      "mean",
      "blind",
      "away"
-    ]
+    ],
+    castSrc: "https://archive.org/download/EYES.IN.THE.NIGHT/EYES_IN_THE_NIGHT.mp4"
    },
    {
     title: "X Marks the Spot",
@@ -36809,7 +37618,8 @@ const CHANNELS = [
      "underwood",
      "sure",
      "boys"
-    ]
+    ],
+    castSrc: "https://archive.org/download/x_marks_the_spot/x_marks_the_spot.mp4"
    },
    {
     title: "Lady of Burlesque",
@@ -36836,7 +37646,8 @@ const CHANNELS = [
     ],
     co: [
      "United Artists"
-    ]
+    ],
+    castSrc: "https://archive.org/download/LadyofBurlesque/LadyofBurlesque.mp4"
    },
    {
     title: "Sherlock Holmes and the Secret Weapon",
@@ -36878,7 +37689,8 @@ const CHANNELS = [
      "live",
      "toby",
      "site"
-    ]
+    ],
+    castSrc: "https://archive.org/download/secret_weapon/sherlock_holmes_and_the_secret_weapon.mp4"
    },
    {
     title: "Laura ( 1944) HD Gene Tierney, Dana Andrews, Clifton Webb, Vincent Pri",
@@ -36890,7 +37702,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/laura-1944-hd-gene-tierney-dana-andrews-clifton-webb-vincent-price/laura-1944-hd-gene-tierney-dana-andrews-clifton-webb-vincent-price.thumbs/Laura%20(1944)%20%20%20_HD_%20%20Gene%20Tierney%2C%20Dana%20Andrews%2C%20Clifton%20Webb%2C%20Vincent%20Price_002094.jpg",
     bytes: 402906978,
-    node: "dn600204.us.archive.org/0/items/laura-1944-hd-gene-tierney-dana-andrews-clifton-webb-vincent-price"
+    node: "dn600204.us.archive.org/0/items/laura-1944-hd-gene-tierney-dana-andrews-clifton-webb-vincent-price",
+    castSrc: 0
    },
    {
     title: "One Body Too Many",
@@ -36929,7 +37742,8 @@ const CHANNELS = [
      "room",
      "even",
      "sure"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "And Then There Were None",
@@ -36952,7 +37766,8 @@ const CHANNELS = [
      "Barry Fitzgerald",
      "Walter Huston",
      "Louis Hayward"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Fog Island",
@@ -36986,7 +37801,8 @@ const CHANNELS = [
      "find",
      "even",
      "much"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Phantom of 42nd St",
@@ -37023,7 +37839,8 @@ const CHANNELS = [
      "killer",
      "murder",
      "company"
-    ]
+    ],
+    castSrc: "https://archive.org/download/phantom_of_42nd_st/phantom_of_42nd_st.mp4"
    },
    {
     title: "Spellbound (1945) Director: Alfred Hitchcock Starring Ingrid Bergman, ",
@@ -37035,7 +37852,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/spellbound1945_202001/spellbound1945_202001.thumbs/Spellbound%20(1945%2C%20USA)%20Director%20Alfred%20Hitchcock%20Starring%20Ingrid%20Bergman%2C%20Gregory%20Peck%20-%20Film%20Noir_002634.jpg",
     bytes: 449494872,
-    node: "dn800308.us.archive.org/0/items/spellbound1945_202001"
+    node: "dn800308.us.archive.org/0/items/spellbound1945_202001",
+    castSrc: 0
    },
    {
     title: "The Woman In Green",
@@ -37076,7 +37894,8 @@ const CHANNELS = [
      "might",
      "woman",
      "house"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Dressed To Kill",
@@ -37118,7 +37937,8 @@ const CHANNELS = [
      "first",
      "quite",
      "must"
-    ]
+    ],
+    castSrc: "https://archive.org/download/dressed_to_kill/dressed_to_kill.mp4"
    },
    {
     title: "Shock (1946) Vincent Price, Lynn Bari, Frank Latimore",
@@ -37172,7 +37992,8 @@ const CHANNELS = [
      "much",
      "trying",
      "professor"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Terror_By_Night/Terror_By_Night.mp4"
    },
    {
     title: "Whistle Stop (1946) George Raft, Ava Gardner, Tom Conway - Film Noir",
@@ -37184,7 +38005,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/whistlestop1946_202002/whistlestop1946_202002.thumbs/Whistle%20Stop%20(1946%2C%20USA)%20Featuring%20George%20Raft%2C%20Ava%20Gardner%2C%2C%20Tom%20Conway%20-%20Film%20Noir%20Full%20Movie_001977.jpg",
     bytes: 309385071,
-    node: "dn801200.us.archive.org/0/items/whistlestop1946_202002"
+    node: "dn801200.us.archive.org/0/items/whistlestop1946_202002",
+    castSrc: 0
    },
    {
     title: "Kiss Of Death (1947) Dir: Henry Hathaway, Starring Victor Mature, Rich",
@@ -37196,7 +38018,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/kissofdeath1947/kissofdeath1947.thumbs/Kiss%20of%20Death%20(1947%2C%20USA)%20Featuring%20Victor%20Mature%2C%20Richard%20Widmark%20-%20Film%20Noir%20Full%20Mo_002397.jpg",
     bytes: 303286291,
-    node: "dn600300.us.archive.org/0/items/kissofdeath1947"
+    node: "dn600300.us.archive.org/0/items/kissofdeath1947",
+    castSrc: 0
    },
    {
     title: "Brighton Rock (1948, UK) Directed by John Boulting, Starring Richard A",
@@ -37220,7 +38043,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/callnorthside777_1948/callnorthside777_1948.thumbs/Call%20Northside%20777%20(1948%2C%20USA)%20Featuring%20%20James%20Stewart%2C%20Richard%20Conte%20-%20Film%20Noir%20Full%20Movie_002515.jpg",
     bytes: 293830031,
-    node: "dn600309.us.archive.org/0/items/callnorthside777_1948"
+    node: "dn600309.us.archive.org/0/items/callnorthside777_1948",
+    castSrc: 0
    },
    {
     title: "Devil's Cargo",
@@ -37239,7 +38063,8 @@ const CHANNELS = [
     wpx: "Devil's Cargo is a 1948 American mystery film directed by John F. Link Sr.",
     dir: [
      "John F. Link Sr."
-    ]
+    ],
+    castSrc: "https://archive.org/download/Devils_Cargo_1948/Devils_Cargo_1948.mp4"
    },
    {
     title: "Money Madness",
@@ -37262,7 +38087,8 @@ const CHANNELS = [
     cast: [
      "Hugh Beaumont",
      "Frances Rafferty"
-    ]
+    ],
+    castSrc: "https://archive.org/download/MoneyMadness/MoneyMadness.mp4"
    },
    {
     title: "Sorry, Wrong Number (1948) Director: Michael Curtiz, Featuring Barbara",
@@ -37286,7 +38112,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/therecklessmoment1949/therecklessmoment1949.thumbs/The%20Reckless%20Moment%20(1949%2C%20USA)%20Featuring%20Joan%20Bennett%2C%20James%20Mason%20-%20Film%20Noir%20Full%20Movie_001915.jpg",
     bytes: 263843521,
-    node: "dn600207.us.archive.org/0/items/therecklessmoment1949"
+    node: "dn600207.us.archive.org/0/items/therecklessmoment1949",
+    castSrc: 0
    },
    {
     title: "Thieves' Highway (1949) Dir: Jules Dassin, Starring Richard Conte, Lee",
@@ -37298,7 +38125,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/thieveshighway1948/thieveshighway1948.thumbs/Thieves'%20Highway%20(1948%2C%20USA)%20Featuring%20Richard%20Carlson%2C%20Lucille%20Bremer%20-%20Film%20Noir%20Full%20Movie_002274.jpg",
     bytes: 356108574,
-    node: "dn601207.us.archive.org/0/items/thieveshighway1948"
+    node: "dn601207.us.archive.org/0/items/thieveshighway1948",
+    castSrc: 0
    },
    {
     title: "Night And The City (1950, UK) Richard Widmark, Gene Tierney- Film Noir",
@@ -37310,7 +38138,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/nightandthecity1950/nightandthecity1950.thumbs/Night%20and%20the%20City%20(1950%2C%20UK)%20Featuring%20Richard%20Widmark%2C%20Gene%20Tierney%20-%20Film%20Noir%20Full%20Movie_002394.jpg",
     bytes: 301137947,
-    node: "dn800200.us.archive.org/0/items/nightandthecity1950"
+    node: "dn800200.us.archive.org/0/items/nightandthecity1950",
+    castSrc: 0
    },
    {
     title: "The Killer That Stalked New York (1950, USA) Evelyn Keyes - Film Noir ",
@@ -37322,7 +38151,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/thekillerthatstalkednewyork1950/thekillerthatstalkednewyork1950.thumbs/The%20Killer%20That%20Stalked%20New%20York%20(1950%2C%20USA)%20Featuring%20Evelyn%20Keyes%20-%20Film%20Noir%20Full%20Movie_001795.jpg",
     bytes: 228684593,
-    node: "dn600305.us.archive.org/0/items/thekillerthatstalkednewyork1950"
+    node: "dn600305.us.archive.org/0/items/thekillerthatstalkednewyork1950",
+    castSrc: 0
    },
    {
     title: "The Scarf (1951) John Ireland, Mercedes McCambridge - Film Noir Full M",
@@ -37334,7 +38164,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/thescarf1953/thescarf1953.thumbs/The%20Scarf%20(1953%2C%20USA)%20John%20Ireland%2C%20Mercedes%20McCambridge%20-%20Film%20Noir%20Full%20Movie_x264_002097.jpg",
     bytes: 759726101,
-    node: "dn601206.us.archive.org/0/items/thescarf1953"
+    node: "dn601206.us.archive.org/0/items/thescarf1953",
+    castSrc: 0
    },
    {
     title: "Deadline – U. S. A. (1952) Humphrey Bogart, Ethel Barrymore - Film Noi",
@@ -37346,7 +38177,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/deadlineusa1952_202001/deadlineusa1952_202001.thumbs/Deadline%20%E2%80%93%20U.S.A.%20(1952%2C%20USA)%20Featuring%20Humphrey%20Bogart%2C%20Ethel%20Barrymore%20-%20Film%20Noir%20Full%20Movie_002098.jpg",
     bytes: 608972521,
-    node: "dn601204.us.archive.org/0/items/deadlineusa1952_202001"
+    node: "dn601204.us.archive.org/0/items/deadlineusa1952_202001",
+    castSrc: 0
    },
    {
     title: "Sudden Fear (1952) Joan Crawford, Jack Palance, Gloria Grahame - Film ",
@@ -37358,7 +38190,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/suddenfear1952usafeaturingjoancrawfordjackpalancegloriagrahamefilmnoir/suddenfear1952usafeaturingjoancrawfordjackpalancegloriagrahamefilmnoir.thumbs/Sudden%20Fear%20%20(1952%2C%20USA)%20Featuring%20Joan%20Crawford%2C%20Jack%20Palance%2C%20Gloria%20Grahame%20%20-%20Film%20Noir_002636.jpg",
     bytes: 329779257,
-    node: "dn601206.us.archive.org/0/items/suddenfear1952usafeaturingjoancrawfordjackpalancegloriagrahamefilmnoir"
+    node: "dn601206.us.archive.org/0/items/suddenfear1952usafeaturingjoancrawfordjackpalancegloriagrahamefilmnoir",
+    castSrc: 0
    },
    {
     title: "99 River Street (1953) John Payne, Evelyn Keyes, Brad Dexter - Film No",
@@ -37370,7 +38203,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/99riverstreet1953usajohnpayneevelynkeyesbraddexterfilmnoirfullmovie/99riverstreet1953usajohnpayneevelynkeyesbraddexterfilmnoirfullmovie.thumbs/99%20River%20Street%20(1953%2C%20USA)%20Featuring%20John%20Payne%2C%20Evelyn%20Keyes%2C%20Brad%20Dexter%20-%20Film%20Noir%20Full%20Movie_002034.jpg",
     bytes: 250417006,
-    node: "dn800302.us.archive.org/0/items/99riverstreet1953usajohnpayneevelynkeyesbraddexterfilmnoirfullmovie"
+    node: "dn800302.us.archive.org/0/items/99riverstreet1953usajohnpayneevelynkeyesbraddexterfilmnoirfullmovie",
+    castSrc: 0
    },
    {
     title: "City That Never Sleeps (1953) Gig Young, William Talman - Film Noir",
@@ -37382,7 +38216,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/citythatneversleeps1953usafeaturinggigyoungwilliamtalmanfilmnoirfullmovie/citythatneversleeps1953usafeaturinggigyoungwilliamtalmanfilmnoirfullmovie.thumbs/City%20That%20Never%20Sleeps%20%20(1953%2C%20USA)%20Featuring%20%20Gig%20Young%2C%20William%20Talman%20-%20Film%20Noir%20Full%20Movie_002155.jpg",
     bytes: 244245312,
-    node: "dn601204.us.archive.org/0/items/citythatneversleeps1953usafeaturinggigyoungwilliamtalmanfilmnoirfullmovie"
+    node: "dn601204.us.archive.org/0/items/citythatneversleeps1953usafeaturinggigyoungwilliamtalmanfilmnoirfullmovie",
+    castSrc: 0
    },
    {
     title: "Wicked Woman (1953) Beverly Michaels, Richard Egan, Percy Helton - Fil",
@@ -37394,7 +38229,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/wickedwoman1953_202001/wickedwoman1953_202001.thumbs/Wicked%20Woman%20(1953%2C%20USA)%20Stars%20Beverly%20Michaels%2C%20Richard%20Egan%2C%20Percy%20Helton%20-%20Film%20Noir%20Full%20Movie_001794.jpg",
     bytes: 289733662,
-    node: "dn800206.us.archive.org/0/items/wickedwoman1953_202001"
+    node: "dn800206.us.archive.org/0/items/wickedwoman1953_202001",
+    castSrc: 0
    },
    {
     title: "An Inspector Calls",
@@ -37417,7 +38253,8 @@ const CHANNELS = [
      "Alastair Sim",
      "Jane Wenham",
      "Brian Worth"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Black Widow (1954) Ginger Rogers, George Raft, Van Heflin, Gene Tierne",
@@ -37429,7 +38266,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/blackwidow1954usa/blackwidow1954usa.thumbs/Black%20Widow%20(1954%2C%20USA)%20Featuring%20Ginger%20Rogers%2C%20George%20Raft%2C%20Van%20Heflin%20-%20Film%20Noir%20Full%20Movie_002276.jpg",
     bytes: 270763552,
-    node: "dn801206.us.archive.org/0/items/blackwidow1954usa"
+    node: "dn801206.us.archive.org/0/items/blackwidow1954usa",
+    castSrc: 0
    },
    {
     title: "Father Brown The Detective (1954 Mys. Detec. Alec Guiness)",
@@ -37465,7 +38303,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/nightfall1957/nightfall1957.thumbs/Nightfall%20(1957%2C%20USA)%20Featuring%20Anne%20Bancroft%2C%20Aldo%20Ray%2C%20Brian%20Keith%20-%20Film%20Noir%20Full%20Movie_001914.jpg",
     bytes: 263373447,
-    node: "dn601203.us.archive.org/0/items/nightfall1957"
+    node: "dn601203.us.archive.org/0/items/nightfall1957",
+    castSrc: 0
    },
    {
     title: "The Bat",
@@ -37493,7 +38332,8 @@ const CHANNELS = [
      "believe",
      "police",
      "call"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Pit and the Pendulum",
@@ -37556,7 +38396,8 @@ const CHANNELS = [
      "last",
      "will",
      "work"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Three_Blondes_in_His_Life_movie/Three_Blondes_in_His_Life.mp4"
    }
   ]
  },
@@ -37605,7 +38446,8 @@ const CHANNELS = [
      "find",
      "rare",
      "afraid"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Farewell to Arms",
@@ -37631,7 +38473,8 @@ const CHANNELS = [
     ],
     co: [
      "Paramount Pictures"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Rain",
@@ -37644,7 +38487,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/rain1932/rain1932.thumbs/Rain_002220.jpg",
     bytes: 408161807,
-    node: "dn800308.us.archive.org/0/items/rain1932"
+    node: "dn800308.us.archive.org/0/items/rain1932",
+    castSrc: "https://archive.org/download/rain1932/Rain.mp4"
    },
    {
     title: "The Last Mile",
@@ -37669,7 +38513,8 @@ const CHANNELS = [
      "Preston Foster",
      "George E. Stone"
     ],
-    node2: "ia800704.us.archive.org/32/items/TheLastMile"
+    node2: "ia800704.us.archive.org/32/items/TheLastMile",
+    castSrc: "https://archive.org/download/TheLastMile/TheLastMile.mp4"
    },
    {
     title: "Judge Priest",
@@ -37696,7 +38541,8 @@ const CHANNELS = [
     ],
     co: [
      "20th Century Studios"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Judge_Priest/Judge_Priest.mp4"
    },
    {
     title: "Of Human Bondage",
@@ -37738,7 +38584,8 @@ const CHANNELS = [
      "feel",
      "long",
      "give"
-    ]
+    ],
+    castSrc: "https://archive.org/download/humanbondage/HUMANBONDAGE.mp4"
    },
    {
     title: "Our Daily Bread",
@@ -37762,7 +38609,8 @@ const CHANNELS = [
      "Karen Morley",
      "Tom Keene",
      "Barbara Pepper"
-    ]
+    ],
+    castSrc: "https://archive.org/download/ODailyBread/our_daily_bread.mp4"
    },
    {
     title: "The Evil Mind",
@@ -37813,7 +38661,8 @@ const CHANNELS = [
      "years",
      "give",
      "believe"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Waterfront Lady",
@@ -37847,7 +38696,8 @@ const CHANNELS = [
      "nice",
      "next",
      "enough"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Cavalry",
@@ -37889,7 +38739,8 @@ const CHANNELS = [
      "indians",
      "coming",
      "mean"
-    ]
+    ],
+    castSrc: "https://archive.org/download/calvary/calvary.mp4"
    },
    {
     title: "Little Lord Fauntleroy",
@@ -37930,7 +38781,8 @@ const CHANNELS = [
      "enough",
      "give",
      "might"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Marihuana",
@@ -37943,7 +38795,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Marihuana-the_Devils_Weed/Marihuana-the_Devils_Weed.thumbs/Marihuana_001320.jpg",
     bytes: 242071668,
-    node: "dn600304.us.archive.org/0/items/Marihuana-the_Devils_Weed"
+    node: "dn600304.us.archive.org/0/items/Marihuana-the_Devils_Weed",
+    castSrc: "https://archive.org/download/Marihuana-the_Devils_Weed/Marihuana.mp4"
    },
    {
     title: "Rembrandt",
@@ -37971,7 +38824,8 @@ const CHANNELS = [
      "need",
      "call",
      "room"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Winterset",
@@ -37998,7 +38852,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Winterset/Winterset.mp4"
    },
    {
     title: "A Star Is Born",
@@ -38026,7 +38881,8 @@ const CHANNELS = [
     ],
     co: [
      "Selznick International Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/AStarIsBorn/AStarIsBorn.mp4"
    },
    {
     title: "Atlantic Flight",
@@ -38048,7 +38904,8 @@ const CHANNELS = [
     ],
     cast: [
      "Dick Merrill"
-    ]
+    ],
+    castSrc: "https://archive.org/download/AtlanticFlight/AtlanticFlight.mp4"
    },
    {
     title: "Elephant Boy",
@@ -38076,7 +38933,8 @@ const CHANNELS = [
     ],
     co: [
      "London Films"
-    ]
+    ],
+    castSrc: "https://archive.org/download/ElephantBoy/ElephantBoy.mp4"
    },
    {
     title: "Non-Stop New York",
@@ -38116,7 +38974,8 @@ const CHANNELS = [
      "five",
      "away",
      "name"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Paradise Isle",
@@ -38150,7 +39009,8 @@ const CHANNELS = [
      "love",
      "money",
      "around"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Return of the Scarlet Pimpernel",
@@ -38174,7 +39034,8 @@ const CHANNELS = [
      "James Mason",
      "Barry K. Barnes",
      "Margaretta Scott"
-    ]
+    ],
+    castSrc: "https://archive.org/download/ReturnoftheScarletPimpernel/ReturnoftheScarletPimpernel.mp4"
    },
    {
     title: "Slaves in Bondage",
@@ -38213,7 +39074,8 @@ const CHANNELS = [
      "away",
      "tonight",
      "house"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Swing High, Swing Low",
@@ -38255,7 +39117,8 @@ const CHANNELS = [
      "enough",
      "maybe",
      "feel"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Thunder in the City",
@@ -38316,7 +39179,8 @@ const CHANNELS = [
      "must",
      "last",
      "need"
-    ]
+    ],
+    castSrc: "https://archive.org/download/YoungandInnocentTheGirlWasYoung/Young_and_Innocent.mp4"
    },
    {
     title: "Child Bride",
@@ -38358,7 +39222,8 @@ const CHANNELS = [
      "child",
      "must",
      "alright"
-    ]
+    ],
+    castSrc: "https://archive.org/download/ChildBride/Child_Bride.mp4"
    },
    {
     title: "The Beachcomber",
@@ -38386,7 +39251,8 @@ const CHANNELS = [
      "enough",
      "help",
      "side"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheBeachcomber/The_Beachcomber.mp4"
    },
    {
     title: "Abe Lincoln of the Ninth Avenue",
@@ -38414,7 +39280,8 @@ const CHANNELS = [
      "give",
      "looking",
      "thought"
-    ]
+    ],
+    castSrc: "https://archive.org/download/abe_lincoln_of_the_4th_ave/abe_lincoln_of_the_4th_ave.mp4"
    },
    {
     title: "Long Shot, The",
@@ -38442,7 +39309,8 @@ const CHANNELS = [
      "sharon",
      "race",
      "mean"
-    ]
+    ],
+    castSrc: "https://archive.org/download/long_shot/long_shot.mp4"
    },
    {
     title: "Love Affair",
@@ -38469,7 +39337,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/LoveAffair/LoveAffair.mp4"
    },
    {
     title: "Made for Each Other",
@@ -38508,7 +39377,8 @@ const CHANNELS = [
      "around",
      "thought",
      "johnny"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Beyond Tomorrow",
@@ -38535,7 +39405,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Beyond_Tomorrow/Beyond_Tomorrow.mp4"
    },
    {
     title: "Last Alarm",
@@ -38569,7 +39440,8 @@ const CHANNELS = [
      "sure",
      "past",
      "might"
-    ]
+    ],
+    castSrc: "https://archive.org/download/last_alarm/last_alarm.mp4"
    },
    {
     title: "Old Swimmin' Hole, The",
@@ -38597,7 +39469,8 @@ const CHANNELS = [
      "mother",
      "wait",
      "young"
-    ]
+    ],
+    castSrc: "https://archive.org/download/ole_swimmin_hole/ole_swimmin_hole.mp4"
    },
    {
     title: "Son of the Navy",
@@ -38637,7 +39510,8 @@ const CHANNELS = [
      "thought",
      "away",
      "maybe"
-    ]
+    ],
+    castSrc: "https://archive.org/download/son_of_the_navy/son_of_the_navy.mp4"
    },
    {
     title: "Cheers for Miss Bishop",
@@ -38676,7 +39550,8 @@ const CHANNELS = [
      "love",
      "remember",
      "thought"
-    ]
+    ],
+    castSrc: "https://archive.org/download/cheers_for_miss_bishop/cheers_for_miss_bishop.mp4"
    },
    {
     title: "In Which We Serve",
@@ -38718,7 +39593,8 @@ const CHANNELS = [
      "talk",
      "mother",
      "another"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "They Raid By Night",
@@ -38755,7 +39631,8 @@ const CHANNELS = [
      "people",
      "trying",
      "important"
-    ]
+    ],
+    castSrc: "https://archive.org/download/they_raid_by_night/they_raid_by_night.mp4"
    },
    {
     title: "Gung Ho!",
@@ -38779,7 +39656,8 @@ const CHANNELS = [
      "Randolph Scott",
      "Alan Curtis",
      "J. Carrol Naish"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Gung_Ho/Gung_Ho.mp4"
    },
    {
     title: "The North Star",
@@ -38807,7 +39685,8 @@ const CHANNELS = [
     co: [
      "Samuel Goldwyn Productions",
      "RKO Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheNorthStar/TheNorthStar.mp4"
    },
    {
     title: "Blood on the Sun",
@@ -38830,7 +39709,8 @@ const CHANNELS = [
      "James Cagney",
      "Sylvia Sidney",
      "Porter Hall"
-    ]
+    ],
+    castSrc: "https://archive.org/download/BloodontheSun/BloodontheSun.mp4"
    },
    {
     title: "Captain Kidd",
@@ -38843,7 +39723,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CaptainKidd_/CaptainKidd_.thumbs/CaptainKidd_002100.jpg",
     bytes: 386143247,
-    node: "dn801209.us.archive.org/0/items/CaptainKidd_"
+    node: "dn801209.us.archive.org/0/items/CaptainKidd_",
+    castSrc: "https://archive.org/download/CaptainKidd_/CaptainKidd.mp4"
    },
    {
     title: "Dead of Night",
@@ -38878,7 +39759,8 @@ const CHANNELS = [
      "Luisa Rossi",
      "Romano Calò",
      "Tino Erler"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheLastChance_/TheLastChance.mp4"
    },
    {
     title: "The Southerner",
@@ -38902,7 +39784,8 @@ const CHANNELS = [
      "Zachary Scott",
      "Betty Field",
      "J. Carrol Naish"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheSoutherner/TheSoutherner.mp4"
    },
    {
     title: "Gilda 1946 colorized (Rita Hayworth, Glenn Ford)",
@@ -38914,7 +39797,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/gilda-1946-colorized/gilda-1946-colorized.thumbs/Gilda%201946_002696.jpg",
     bytes: 767347684,
-    node: "dn800303.us.archive.org/0/items/gilda-1946-colorized"
+    node: "dn800303.us.archive.org/0/items/gilda-1946-colorized",
+    castSrc: 0
    },
    {
     title: "Heartbeat",
@@ -38942,7 +39826,8 @@ const CHANNELS = [
      "need",
      "swear",
      "live"
-    ]
+    ],
+    castSrc: "https://archive.org/download/heartbeat/heartbeat.mp4"
    },
    {
     title: "Smash-Up: The Story of a Woman",
@@ -38969,7 +39854,8 @@ const CHANNELS = [
     ],
     co: [
      "Walter Wanger Production"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Smash-Up/Smash-Up.mp4"
    },
    {
     title: "The Time of Your Life",
@@ -38992,7 +39878,8 @@ const CHANNELS = [
      "James Cagney",
      "William Bendix",
      "Wayne Morris"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheTimeofyourLife/TheTimeofyourLife.mp4"
    },
    {
     title: "Women in the Night",
@@ -39016,7 +39903,8 @@ const CHANNELS = [
      "Tala Birell",
      "William \"Bill\" Henry",
      "Richard Loo"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Stray Dog",
@@ -39064,7 +39952,8 @@ const CHANNELS = [
     ],
     co: [
      "RKO Pictures"
-    ]
+    ],
+    castSrc: "https://archive.org/download/The_Green_Promise/The_Green_Promise.mp4"
    },
    {
     title: "Cyrano De Bergerac",
@@ -39106,7 +39995,8 @@ const CHANNELS = [
      "even",
      "shall",
      "mean"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Cyrano_DeBergerac/Cyrano_De_Bergerac.mp4"
    },
    {
     title: "Del odio nace el amor (The Torch)",
@@ -39130,7 +40020,8 @@ const CHANNELS = [
      "Paulette Goddard",
      "Pedro Armendáriz",
      "Gilbert Roland"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheTorch/TheTorch.mp4"
    },
    {
     title: "Harvey 1950 colorized (James Stewart)",
@@ -39142,7 +40033,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/harvey-colorized/harvey-colorized.thumbs/Harvey%201950_002461.jpg",
     bytes: 714278218,
-    node: "dn800304.us.archive.org/0/items/harvey-colorized"
+    node: "dn800304.us.archive.org/0/items/harvey-colorized",
+    castSrc: 0
    },
    {
     title: "The Big Lift",
@@ -39184,7 +40076,8 @@ const CHANNELS = [
      "love",
      "maybe",
      "much"
-    ]
+    ],
+    castSrc: "https://archive.org/download/The_Big_Lift/THE_BIG_LIFT.mp4"
    },
    {
     title: "Go for Broke",
@@ -39212,7 +40105,8 @@ const CHANNELS = [
      "first",
      "find",
      "still"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Hill Number One",
@@ -39226,7 +40120,8 @@ const CHANNELS = [
     frame: "https://archive.org/download/HillNumberOne/HillNumberOne.thumbs/HillNumberOne_001320.jpg",
     bytes: 244771665,
     node: "dn600300.us.archive.org/0/items/HillNumberOne",
-    wd: "Q124616213"
+    wd: "Q124616213",
+    castSrc: "https://archive.org/download/HillNumberOne/HillNumberOne.mp4"
    },
    {
     title: "Mr. Imperium",
@@ -39253,7 +40148,8 @@ const CHANNELS = [
     ],
     co: [
      "Metro-Goldwyn-Mayer"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Mr.Imperium/Mr.Imperium.mp4"
    },
    {
     title: "The Day the Earth Stood Still -1951",
@@ -39293,7 +40189,8 @@ const CHANNELS = [
      "dollars",
      "boys",
      "bank"
-    ]
+    ],
+    castSrc: "https://archive.org/download/big_trees/big_trees.mp4"
    },
    {
     title: "The Snows of Kilimanjaro",
@@ -39320,7 +40217,8 @@ const CHANNELS = [
     ],
     co: [
      "20th Century Studios"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Kilimanjaro/The_Snows_of_Kilimanjaro.mp4"
    },
    {
     title: "The Bigamist",
@@ -39359,7 +40257,8 @@ const CHANNELS = [
      "work",
      "last",
      "life"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Joe Louis Story",
@@ -39381,7 +40280,8 @@ const CHANNELS = [
     ],
     cast: [
      "Coley Wallace"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheJoeLouisStory/TheJoeLouisStory.mp4"
    },
    {
     title: "The Wages of Fear",
@@ -39487,7 +40387,8 @@ const CHANNELS = [
      "last",
      "talk",
      "getting"
-    ]
+    ],
+    castSrc: "https://archive.org/download/last_time_i_saw_paris/last_time_i_saw_paris.mp4"
    },
    {
     title: "Panther Panchali ( Apu Trilogy Pt. 1)",
@@ -39541,7 +40442,8 @@ const CHANNELS = [
      "shot",
      "grand",
      "kill"
-    ]
+    ],
+    castSrc: "https://archive.org/download/RC_SwampWomen/RC_SwampWomen.mp4"
    },
    {
     title: "Teenage Devil Dolls",
@@ -39560,7 +40462,8 @@ const CHANNELS = [
     wpx: "Teenage Devil Dolls is a 1955 American black and white teen crime drama film produced, written and directed by Bamlet L. Price, Jr. The film was made in a quasi-documentary style that has no dialogue, just sound effects and music by Robert Drasnin. The movie is narrated by Kurt Martell, as Police Lieutenant David Jason, but the part of the Lieutenant is portrayed by actor Robert A. Sherry in the film. Price borrowed $4000 from his…",
     dir: [
      "Bamlet Lawrence Price Jr."
-    ]
+    ],
+    castSrc: "https://archive.org/download/TeenageDevilDolls/TeenageDevilDolls.mp4"
    },
    {
     title: "Hot Rod Girl",
@@ -39598,7 +40501,8 @@ const CHANNELS = [
      "trying",
      "chicken",
      "sure"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "The Violent Years",
@@ -39620,7 +40524,8 @@ const CHANNELS = [
     ],
     cast: [
      "Jean Moorhead"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheViolentYears/TheViolentYears.mp4"
    },
    {
     title: "Teenage Thunder",
@@ -39639,7 +40544,8 @@ const CHANNELS = [
     wpx: "Teenage Thunder is a 1957 American black-and-white teenaged drama film directed by Paul Helmick. The film stars Chuck Courtney, Melinda Byron, Robert Fuller, Tyler McVey, and Paul Bryar. The opening theme song, \"Teenage Kisses\", is performed by country music singer David Houston.",
     dir: [
      "Paul Helmick"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TeenageThunder/TeenageThunder.mp4"
    },
    {
     title: "Wild Strawberries",
@@ -39717,7 +40623,8 @@ const CHANNELS = [
      "dragon",
      "temple",
      "without"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Battle of Blood Island",
@@ -39739,7 +40646,8 @@ const CHANNELS = [
     ],
     cast: [
      "Roger Corman"
-    ]
+    ],
+    castSrc: "https://archive.org/download/BattleofBloodIsland/BattleofBloodIsland.mp4"
    },
    {
     title: "I'll Give My Life",
@@ -39778,7 +40686,8 @@ const CHANNELS = [
      "first",
      "away",
      "alice"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Ma Barker's Killer Brood",
@@ -39798,7 +40707,8 @@ const CHANNELS = [
     cast: [
      "Lurene Tuttle",
      "Myrna Dell"
-    ]
+    ],
+    castSrc: "https://archive.org/download/Ma_Barkers_Killer_Brood/Ma_Barkers_Killer_Brood.mp4"
    },
    {
     title: "The Choppers",
@@ -39817,7 +40727,8 @@ const CHANNELS = [
     wpx: "The Choppers is a 1961 American crime film directed by Leigh Jason and starring Arch Hall Jr.",
     dir: [
      "Leigh Jason"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheChoppers/TheChoppers.mp4"
    },
    {
     title: "The Day the Earth Caught Fire",
@@ -39840,7 +40751,8 @@ const CHANNELS = [
      "Janet Munro",
      "Leo McKern",
      "Edward Judd"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "Viridiana",
@@ -39876,7 +40788,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/shame_/shame_.thumbs/Shame_001980.jpg",
     bytes: 348490494,
-    node: "dn601202.us.archive.org/0/items/shame_"
+    node: "dn601202.us.archive.org/0/items/shame_",
+    castSrc: "https://archive.org/download/shame_/Shame.mp4"
    },
    {
     title: "The Magic Sword",
@@ -39900,7 +40813,8 @@ const CHANNELS = [
      "Basil Rathbone",
      "Estelle Winwood",
      "Anne Helm"
-    ]
+    ],
+    castSrc: "https://archive.org/download/TheMagicSword/TheMagicSword.mp4"
    },
    {
     title: "The Manchurian Candidate",
@@ -39964,7 +40878,8 @@ const CHANNELS = [
      "teach",
      "talk",
      "must"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "This Is Not a Test",
@@ -40030,7 +40945,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Fleischer_The_Tantalizing_Fly_1919/Fleischer_The_Tantalizing_Fly_1919.thumbs/Tantalizing_Fly_1919_000090.jpg",
     bytes: 15874830,
-    node: "dn601201.us.archive.org/0/items/Fleischer_The_Tantalizing_Fly_1919"
+    node: "dn601201.us.archive.org/0/items/Fleischer_The_Tantalizing_Fly_1919",
+    castSrc: 0
    },
    {
     title: "The Gallopin' Gaucho",
@@ -40042,7 +40958,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheGallopinGaucho/TheGallopinGaucho.thumbs/The%20Gallopin'%20Gaucho_000165.jpg",
     bytes: 19531618,
-    node: "dn601206.us.archive.org/0/items/TheGallopinGaucho"
+    node: "dn601206.us.archive.org/0/items/TheGallopinGaucho",
+    castSrc: 0
    },
    {
     title: "1929",
@@ -40067,7 +40984,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheBarnDance/TheBarnDance.thumbs/The%20Barn%20Dance_000165.jpg",
     bytes: 21124824,
-    node: "dn600203.us.archive.org/0/items/TheBarnDance"
+    node: "dn600203.us.archive.org/0/items/TheBarnDance",
+    castSrc: 0
    },
    {
     title: "Betty Boop in \"Poor Cinderella\" (HD)",
@@ -40079,7 +40997,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/BettyBoopPoorCinderella1934HD/BettyBoopPoorCinderella1934HD.thumbs/Betty%20Boop%20-%20Poor%20Cinderella%20(1934)%20-%20HD_000255.jpg",
     bytes: 278799382,
-    node: "dn600305.us.archive.org/0/items/BettyBoopPoorCinderella1934HD"
+    node: "dn600305.us.archive.org/0/items/BettyBoopPoorCinderella1934HD",
+    castSrc: 0
    },
    {
     title: "Merrie Melodies: Beauty And The Beast (4.14.34)",
@@ -40091,7 +41010,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/MerrieMelodiesBeautyAndTheBeast41434/MerrieMelodiesBeautyAndTheBeast41434.thumbs/S1934E06%20Beauty%20And%20The%20Beast_000195.jpg",
     bytes: 41029096,
-    node: "dn801208.us.archive.org/0/items/MerrieMelodiesBeautyAndTheBeast41434"
+    node: "dn801208.us.archive.org/0/items/MerrieMelodiesBeautyAndTheBeast41434",
+    castSrc: 0
    },
    {
     title: "Balloon Land",
@@ -40109,7 +41029,8 @@ const CHANNELS = [
     wpx: "Balloon Land, also known as The Pincushion Man, is a 1935 animated short film produced by Ub Iwerks as part of the ComiColor Cartoons series. The cartoon is about a place called Balloon Land, whose residents are made entirely out of balloons. The villain in the cartoon is the Pincushion Man, a character who walks around Balloon Land popping the inhabitants with pins.",
     dir: [
      "Ub Iwerks"
-    ]
+    ],
+    castSrc: 0
    },
    {
     title: "1949",
@@ -40134,7 +41055,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Popeye_Out_of_the_Punch_1956/Popeye_Out_of_the_Punch_1956.thumbs/Popeye_Out_To_Punch_1956_000150.jpg",
     bytes: 26698044,
-    node: "dn800307.us.archive.org/0/items/Popeye_Out_of_the_Punch_1956"
+    node: "dn800307.us.archive.org/0/items/Popeye_Out_of_the_Punch_1956",
+    castSrc: 0
    },
    {
     title: "The Pink Panther (cartoons)",
@@ -40186,7 +41108,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/StimpysCartoonShow/StimpysCartoonShow.thumbs/14014405039de7e-360_000534.jpg",
     bytes: 58621066,
-    node: "dn600302.us.archive.org/0/items/StimpysCartoonShow"
+    node: "dn600302.us.archive.org/0/items/StimpysCartoonShow",
+    castSrc: 0
    },
    {
     title: "Education for Death: The Making of the Nazi (1943) - WW2 Animated Prop",
@@ -40210,7 +41133,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/NOVELTOONCheeseBurglar194546/NOVELTOONCheeseBurglar194546.thumbs/NOVELTOON%20-%20Cheese%20Burglar%20(1945-46)_000165.jpg",
     bytes: 12155010,
-    node: "dn801205.us.archive.org/0/items/NOVELTOONCheeseBurglar194546"
+    node: "dn801205.us.archive.org/0/items/NOVELTOONCheeseBurglar194546",
+    castSrc: 0
    },
    {
     title: "Popeye in Color",
@@ -40223,7 +41147,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ColorPopeye/ColorPopeye.thumbs/55.%20Popeye%20the%20Sailor%20Meets%20Ali%20Baba's%20Forty%20Thieves%20(1937%2C%20alternative%20print%20%231)_000390.jpg",
     bytes: 76392735,
-    node: "dn801202.us.archive.org/0/items/ColorPopeye"
+    node: "dn801202.us.archive.org/0/items/ColorPopeye",
+    castSrc: 0
    },
    {
     title: "POPEYE Meets Sindbad The Sailor",
@@ -40235,7 +41160,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/POPEYEMeetsSindbadTheSailor1936/POPEYEMeetsSindbadTheSailor1936.thumbs/POPEYE%20meets%20Sindbad%20The%20Sailor%20(1936)_000390.jpg",
     bytes: 28155014,
-    node: "dn801202.us.archive.org/0/items/POPEYEMeetsSindbadTheSailor1936"
+    node: "dn801202.us.archive.org/0/items/POPEYEMeetsSindbadTheSailor1936",
+    castSrc: 0
    },
    {
     title: "Porky In Wackyland (1938; computer-colorized version)",
@@ -40247,7 +41173,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/PorkyInWackylandCCV/PorkyInWackylandCCV.thumbs/Porky%20in%20Wackyland%20(CCV)_000177.jpg",
     bytes: 151395723,
-    node: "dn600207.us.archive.org/0/items/PorkyInWackylandCCV"
+    node: "dn600207.us.archive.org/0/items/PorkyInWackylandCCV",
+    castSrc: 0
    },
    {
     title: "Wallace and Gromit - A Grand Day Out UK VHS",
@@ -40283,7 +41210,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ATaleOfTwoKitties1942/ATaleOfTwoKitties1942.thumbs/Fresh%20Hare%20(1942)_000447.jpg",
     bytes: 22475649,
-    node: "dn601209.us.archive.org/0/items/ATaleOfTwoKitties1942"
+    node: "dn601209.us.archive.org/0/items/ATaleOfTwoKitties1942",
+    castSrc: 0
    },
    {
     title: "After The Ball Went Over",
@@ -40295,7 +41223,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/AfterTheBallWentOver1960/AfterTheBallWentOver1960.thumbs/Jeep%20Tale%20(1960)_000291.jpg",
     bytes: 15410249,
-    node: "dn801206.us.archive.org/0/items/AfterTheBallWentOver1960"
+    node: "dn801206.us.archive.org/0/items/AfterTheBallWentOver1960",
+    castSrc: 0
    },
    {
     title: "Balloon Land (restored)",
@@ -40318,7 +41247,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/BaseballBugs_201708/BaseballBugs_201708.thumbs/bbms_000001.jpg",
     bytes: 70311256,
-    node: "dn801202.us.archive.org/0/items/BaseballBugs_201708"
+    node: "dn801202.us.archive.org/0/items/BaseballBugs_201708",
+    castSrc: 0
    },
    {
     title: "BUGS BUNNY ALL THIS AND RABBIT STEW Cg Nj Xe U 5 OTk",
@@ -40351,7 +41281,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/EatinOnTheCuffOrTheMothWhoCameToDinner1942/EatinOnTheCuffOrTheMothWhoCameToDinner1942.thumbs/Meet%20John%20Doughboy%20(1941)_000267.jpg",
     bytes: 62715291,
-    node: "dn800309.us.archive.org/0/items/EatinOnTheCuffOrTheMothWhoCameToDinner1942"
+    node: "dn800309.us.archive.org/0/items/EatinOnTheCuffOrTheMothWhoCameToDinner1942",
+    castSrc: 0
    },
    {
     title: "Eveready Harton In Buried Treasure",
@@ -40362,7 +41293,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/EvereadyHartonInBuriedTreasureSD/EvereadyHartonInBuriedTreasureSD.thumbs/Eveready%20Harton%20in%20Buried%20Treasure-SD_000165.jpg",
     bytes: 27086106,
-    node: "dn600203.us.archive.org/0/items/EvereadyHartonInBuriedTreasureSD"
+    node: "dn600203.us.archive.org/0/items/EvereadyHartonInBuriedTreasureSD",
+    castSrc: 0
    },
    {
     title: "Lone Ranger Cartoon Collection1966",
@@ -40374,7 +41306,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/LoneRangerCartoon1966CrackOfDoom/LoneRangerCartoon1966CrackOfDoom.thumbs/Lone%20Ranger%20Cartoon%201966%20-%20Day%20at%20Death%20Head%20Pass_000176.jpg",
     bytes: 35091761,
-    node: "dn801209.us.archive.org/0/items/LoneRangerCartoon1966CrackOfDoom"
+    node: "dn801209.us.archive.org/0/items/LoneRangerCartoon1966CrackOfDoom",
+    castSrc: 0
    },
    {
     title: "Popeye Public Domain Collection",
@@ -40386,7 +41319,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/popeye-pubdomain/popeye-pubdomain.thumbs/Gopher-Spinach_000087.jpg",
     bytes: 95866034,
-    node: "dn600305.us.archive.org/0/items/popeye-pubdomain"
+    node: "dn600305.us.archive.org/0/items/popeye-pubdomain",
+    castSrc: 0
    },
    {
     title: "The Barber of Seville",
@@ -40397,7 +41331,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheBarberOfSeville/TheBarberOfSeville.thumbs/TheBarberOfSeville1944_000177.jpg",
     bytes: 159320284,
-    node: "dn800308.us.archive.org/0/items/TheBarberOfSeville"
+    node: "dn800308.us.archive.org/0/items/TheBarberOfSeville",
+    castSrc: 0
    }
   ]
  },
@@ -40420,7 +41355,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/Abbott_and_Costello_Meet_the_Invisible_Man_trailer/Abbott_and_Costello_Meet_the_Invisible_Man_trailer.thumbs/Abbott_and_Costello_Meet_the_Invisible_Man_trailer_000045.jpg",
     bytes: 9177847,
-    node: "dn800200.us.archive.org/0/items/Abbott_and_Costello_Meet_the_Invisible_Man_trailer"
+    node: "dn800200.us.archive.org/0/items/Abbott_and_Costello_Meet_the_Invisible_Man_trailer",
+    castSrc: 0
    },
    {
     title: "The Thing from Another World trailer",
@@ -40433,7 +41369,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The_Thing_from_Another_World_trailer/The_Thing_from_Another_World_trailer.thumbs/The_Thing_from_Another_World_trailer_000035.jpg",
     bytes: 7571903,
-    node: "dn600303.us.archive.org/0/items/The_Thing_from_Another_World_trailer"
+    node: "dn600303.us.archive.org/0/items/The_Thing_from_Another_World_trailer",
+    castSrc: 0
    },
    {
     title: "Creature from the Black Lagoon trailer",
@@ -40446,7 +41383,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/CreatureFromTheBlackLagoonTrailer/CreatureFromTheBlackLagoonTrailer.thumbs/Creature_from_the_Black_Lagoon_trailer_000090.jpg",
     bytes: 18688842,
-    node: "dn800306.us.archive.org/0/items/CreatureFromTheBlackLagoonTrailer"
+    node: "dn800306.us.archive.org/0/items/CreatureFromTheBlackLagoonTrailer",
+    castSrc: 0
    },
    {
     title: "Forbidden Planet trailer",
@@ -40459,7 +41397,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/ForbiddenPlanetTrailer/ForbiddenPlanetTrailer.thumbs/FB_trailer_000060.jpg",
     bytes: 18572776,
-    node: "dn600303.us.archive.org/0/items/ForbiddenPlanetTrailer"
+    node: "dn600303.us.archive.org/0/items/ForbiddenPlanetTrailer",
+    castSrc: 0
    },
    {
     title: "Invasion of the Body Snatchers trailer",
@@ -40472,7 +41411,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/InvasionOfTheBodySnatchersTrailer/InvasionOfTheBodySnatchersTrailer.thumbs/Invasion_Of_The_Body_Snatchers_trailer_000030.jpg",
     bytes: 11821578,
-    node: "dn800309.us.archive.org/0/items/InvasionOfTheBodySnatchersTrailer"
+    node: "dn800309.us.archive.org/0/items/InvasionOfTheBodySnatchersTrailer",
+    castSrc: 0
    },
    {
     title: "The Mole People trailer",
@@ -40485,7 +41425,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/The_Mole_People_trailer/The_Mole_People_trailer.thumbs/The_Mole_People_trailer_000060.jpg",
     bytes: 10183852,
-    node: "dn600302.us.archive.org/0/items/The_Mole_People_trailer"
+    node: "dn600302.us.archive.org/0/items/The_Mole_People_trailer",
+    castSrc: 0
    },
    {
     title: "The Blob trailer",
@@ -40498,7 +41439,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheBlobTrailer/TheBlobTrailer.thumbs/The_Blob_trailer_000045.jpg",
     bytes: 8798814,
-    node: "dn601209.us.archive.org/0/items/TheBlobTrailer"
+    node: "dn601209.us.archive.org/0/items/TheBlobTrailer",
+    castSrc: 0
    },
    {
     title: "Attack of the Giant Leeches - trailer",
@@ -40510,7 +41452,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/attack_of_the_giant_leeches_trailer/attack_of_the_giant_leeches_trailer.thumbs/Attack_of_the_Giant_Leeches_Trailer_000030.jpg",
     bytes: 5823902,
-    node: "dn600307.us.archive.org/0/items/attack_of_the_giant_leeches_trailer"
+    node: "dn600307.us.archive.org/0/items/attack_of_the_giant_leeches_trailer",
+    castSrc: 0
    },
    {
     title: "The Fall of the House of Usher trailer",
@@ -40523,7 +41466,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/TheFallOfTheHouseOfUsherTrailer/TheFallOfTheHouseOfUsherTrailer.thumbs/The_Fall_of_the_House_of_Usher_trailer_000060.jpg",
     bytes: 12250375,
-    node: "dn600306.us.archive.org/0/items/TheFallOfTheHouseOfUsherTrailer"
+    node: "dn600306.us.archive.org/0/items/TheFallOfTheHouseOfUsherTrailer",
+    castSrc: 0
    },
    {
     title: "Last Tango in Paris (1972) Trailer HD 1080p",
@@ -40560,7 +41504,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/BananasTrailer_733/BananasTrailer_733.thumbs/BananasTrailer_000075.jpg",
     bytes: 27797148,
-    node: "dn801204.us.archive.org/0/items/BananasTrailer_733"
+    node: "dn801204.us.archive.org/0/items/BananasTrailer_733",
+    castSrc: 0
    },
    {
     title: "FANTASTIC PLANET trailer",
@@ -40571,7 +41516,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/FantasticPlanetTrailer/FantasticPlanetTrailer.thumbs/FantasticPlanetTrailer_000045.jpg",
     bytes: 23411175,
-    node: "dn800201.us.archive.org/0/items/FantasticPlanetTrailer"
+    node: "dn800201.us.archive.org/0/items/FantasticPlanetTrailer",
+    castSrc: 0
    },
    {
     title: "Night of the living dead Trailer",
@@ -40583,7 +41529,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/NightOfTheLivingDeadTrailer/NightOfTheLivingDeadTrailer.thumbs/NightLivingDeadTrailer_000040.jpg",
     bytes: 6886984,
-    node: "dn800208.us.archive.org/0/items/NightOfTheLivingDeadTrailer"
+    node: "dn800208.us.archive.org/0/items/NightOfTheLivingDeadTrailer",
+    castSrc: 0
    },
    {
     title: "REVENGE OF THE CREATURE trailer",
@@ -40594,7 +41541,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/RevengeOfTheCreatureTrailer/RevengeOfTheCreatureTrailer.thumbs/RevengeOfTheCreatureTrailer_000075.jpg",
     bytes: 18975874,
-    node: "dn800303.us.archive.org/0/items/RevengeOfTheCreatureTrailer"
+    node: "dn800303.us.archive.org/0/items/RevengeOfTheCreatureTrailer",
+    castSrc: 0
    },
    {
     title: "Sita Sings the Blues Trailer 2008 - 640x360",
@@ -40605,7 +41553,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/SitaSingsTheBluesTrailer2008-640x360/SitaSingsTheBluesTrailer2008-640x360.thumbs/SitaTrailer2008H264_000040.jpg",
     bytes: 7277707,
-    node: "dn801205.us.archive.org/0/items/SitaSingsTheBluesTrailer2008-640x360"
+    node: "dn801205.us.archive.org/0/items/SitaSingsTheBluesTrailer2008-640x360",
+    castSrc: 0
    }
   ]
  },
@@ -40627,7 +41576,8 @@ const CHANNELS = [
     art: "https://archive.org/services/img/youtube-S9HdPi9Ikhk",
     frame: "https://archive.org/download/youtube-S9HdPi9Ikhk/youtube-S9HdPi9Ikhk.thumbs/S9HdPi9Ikhk_004374.jpg",
     bytes: 1549916126,
-    node: "dn800304.us.archive.org/0/items/youtube-S9HdPi9Ikhk"
+    node: "dn800304.us.archive.org/0/items/youtube-S9HdPi9Ikhk",
+    castSrc: 0
    },
    {
     title: "NASA SCI Files - Reproduction, Migration and Basic Needs",
@@ -40640,7 +41590,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/NasaSciFiles-ReproductionMigrationAndBasicNeeds/NasaSciFiles-ReproductionMigrationAndBasicNeeds.thumbs/NASASF-ReproductionMigrationAndBasicNeeds_000300.jpg",
     bytes: 57877336,
-    node: "dn801200.us.archive.org/0/items/NasaSciFiles-ReproductionMigrationAndBasicNeeds"
+    node: "dn801200.us.archive.org/0/items/NasaSciFiles-ReproductionMigrationAndBasicNeeds",
+    castSrc: "https://archive.org/download/NasaSciFiles-ReproductionMigrationAndBasicNeeds/NASASF-ReproductionMigrationAndBasicNeeds.mp4"
    },
    {
     title: "NASA 360 Episode 1",
@@ -40652,7 +41603,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/NASA_360_program1_HD/NASA_360_program1_HD.thumbs/NASA_360_program1_HD_000600.jpg",
     bytes: 106753590,
-    node: "dn800300.us.archive.org/0/items/NASA_360_program1_HD"
+    node: "dn800300.us.archive.org/0/items/NASA_360_program1_HD",
+    castSrc: "https://archive.org/download/NASA_360_program1_HD/NASA_360_program1_HD.mp4"
    },
    {
     title: "NASA eClips Video Series 360",
@@ -40665,7 +41617,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/nasa_360/nasa_360.thumbs/NASA_360_program3_HD_512kb_000840.jpg",
     bytes: 23277083,
-    node: "dn800201.us.archive.org/0/items/nasa_360"
+    node: "dn800201.us.archive.org/0/items/nasa_360",
+    castSrc: "https://archive.org/download/nasa_360/NASA_360_program1_HD_512kb.mp4"
    },
    {
     title: "Nasa eClips Video",
@@ -40678,7 +41631,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/nasa_eclips_022709/nasa_eclips_022709.thumbs/OW_Orion_oc_000090.jpg",
     bytes: 19902428,
-    node: "dn800205.us.archive.org/0/items/nasa_eclips_022709"
+    node: "dn800205.us.archive.org/0/items/nasa_eclips_022709",
+    castSrc: "https://archive.org/download/nasa_eclips_022709/NASA_Launchpad_Flight_Test_Articles.mp4"
    },
    {
     title: "Nasa eClips Video Series",
@@ -40691,7 +41645,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/nasa_eclips_022309/nasa_eclips_022309.thumbs/OW_ARES_oc_000237.jpg",
     bytes: 21124641,
-    node: "dn800301.us.archive.org/0/items/nasa_eclips_022309"
+    node: "dn800301.us.archive.org/0/items/nasa_eclips_022309",
+    castSrc: "https://archive.org/download/nasa_eclips_022309/LP_Ares_1X_OC.ia.mp4"
    },
    {
     title: "Our World: Arecibo - The Largest Radio Telescope on Earth",
@@ -40719,7 +41674,8 @@ const CHANNELS = [
      "planets",
      "telescopes",
      "wave"
-    ]
+    ],
+    castSrc: "https://archive.org/download/nasa_eclips_081009/OW42_Subrip.ia.mp4"
    },
    {
     title: "Ourworld: Fluid Shift and Our World: Investigating Mars with the Phoen",
@@ -40747,7 +41703,8 @@ const CHANNELS = [
      "light",
      "pollution",
      "much"
-    ]
+    ],
+    castSrc: "https://archive.org/download/nasa_eclips_052609/OW31InvestigatingMars.ia.mp4"
    },
    {
     title: "Real World: Lessons in Heavy Metal",
@@ -40775,7 +41732,8 @@ const CHANNELS = [
      "ares",
      "pieces",
      "process"
-    ]
+    ],
+    castSrc: "https://archive.org/download/nasa_eclips_091109/RW49_ARES_WELDING.ia.mp4"
    },
    {
     title: "Space Operations",
@@ -40803,7 +41761,8 @@ const CHANNELS = [
      "biological",
      "processes",
      "cows"
-    ]
+    ],
+    castSrc: "https://archive.org/download/nasa_eclips_110209/LP37_Finding_ET.ia.mp4"
    },
    {
     title: "NASA 360 Episode 6",
@@ -40814,7 +41773,8 @@ const CHANNELS = [
     license: "via archive.org",
     frame: "https://archive.org/download/NASA_360_program6_HD/NASA_360_program6_HD.thumbs/NASA_360_program6_HD_000600.jpg",
     bytes: 106982605,
-    node: "dn800307.us.archive.org/0/items/NASA_360_program6_HD"
+    node: "dn800307.us.archive.org/0/items/NASA_360_program6_HD",
+    castSrc: "https://archive.org/download/NASA_360_program6_HD/NASA_360_program6_HD.mp4"
    }
   ]
  }

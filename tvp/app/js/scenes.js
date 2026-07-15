@@ -318,7 +318,7 @@ export function launchScenes(bridge, startId) {
       return true;
     } catch { return false; }
   }
-  function xrScreen(on) {
+  function xrScreen(on, washOnly = false) {
     const hole = world?.screen?.userData.hole;
     if (!hole) return;
     if (!on) {
@@ -327,7 +327,10 @@ export function launchScenes(bridge, startId) {
       return;
     }
     const v = bridge.getVideo();
-    if (v.videoWidth && videoIsClean(v)) {
+    // note: the clean-probe can pass on the SW-laundered opening seconds
+    // and the stream can still taint later — the render loop catches that
+    // and re-enters here with washOnly
+    if (!washOnly && v.videoWidth && videoIsClean(v)) {
       const tex = new THREE.VideoTexture(v);
       tex.colorSpace = THREE.SRGBColorSpace;
       xrMat = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
@@ -433,7 +436,15 @@ export function launchScenes(bridge, startId) {
     world.update?.(t, tone);
     syncDomScreen();
     refreshBug(performance.now());
-    renderer.render(scene, camera);
+    try {
+      renderer.render(scene, camera);
+    } catch (err) {
+      // a video texture whose stream tainted mid-play (opaque datanode
+      // bytes arriving after the clean SW-served prefix) throws here —
+      // drop the VR screen to the tone-wash and carry on
+      if (xrMat?.map) { try { xrMat.map.dispose(); } catch {} xrScreen(true, true); }
+      else throw err;
+    }
   });
 
   let exited = false;

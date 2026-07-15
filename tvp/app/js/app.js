@@ -1647,11 +1647,15 @@ function initCastLater() {
         getVideos: () => [$("tv-a"), $("tv-b")],
         note: (msg) => chatPush(null, msg, "sys"),
         getMedia: () => {
-          const i = currentProgramInfo(), ch = currentChannel();
+          const i = currentProgramInfo(), ch = currentChannel(), p = i.program;
+          // Cast hardware can't decode MPEG-4 Part 2 (audio-over-black):
+          // prefer the baked h.264 derivative; cast:0 = no compatible encode
+          const url = (typeof p.castSrc === "string" && p.castSrc) || canonSrc(fastSrc(p));
+          if (p.castSrc === 0) toast("This program has no Cast-ready encode — the TV may play audio only");
           return {
-            url: canonSrc(fastSrc(i.program)),
-            title: `${i.program.title}${i.program.year ? " (" + i.program.year + ")" : ""} — ${ch.name}`,
-            art: artUrl(i.program.frame || i.program.art || ch.art),
+            url,
+            title: `${p.title}${p.year ? " (" + p.year + ")" : ""} — ${ch.name}`,
+            art: artUrl(p.frame || p.art || ch.art),
             offset: i.live ? i.offset : (video.currentTime || 0)
           };
         },
