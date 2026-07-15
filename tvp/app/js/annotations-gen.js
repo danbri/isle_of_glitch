@@ -10,7 +10,7 @@ const WATCH_BUDDY_GENERATED = [
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
   }
  },
  {
@@ -18,7 +18,7 @@ const WATCH_BUDDY_GENERATED = [
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
   }
  },
  {
@@ -46,6 +46,14 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/monster_walks",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/white_zombie",
   "@type": "Movie",
   "contentWarning": {
@@ -62,6 +70,14 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/TheDevilsDaughter",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/TheHumanMonster720p1939",
   "@type": "Movie",
   "contentWarning": {
@@ -71,6 +87,14 @@ const WATCH_BUDDY_GENERATED = [
  },
  {
   "@id": "https://archive.org/details/Devil_Bat_movie",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheInvisibleGhost",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -126,6 +150,14 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/monster_maker_ipod",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/TheSnowCreature",
   "@type": "Movie",
   "contentWarning": {
@@ -151,6 +183,14 @@ const WATCH_BUDDY_GENERATED = [
  },
  {
   "@id": "https://archive.org/details/house_on_haunted_hill_ipod",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Teenage_Zombies",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -262,107 +302,67 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
-  "@id": "https://archive.org/details/BloodThirst1971",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/Horror_Express_WebM",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/dead_people_ipod",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/HorrorExpresswithSpanishSubtitles",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/ScreamBloodyMurder",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/DevilTimesFive_977",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/Grave_of_the_Vampire_movie",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/SilentNightBloodyNight",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/my.-bloody.-valentine.-1981.-dc.-remastered.-1080p.-blu-ray.x-265-rarbg",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/black.-devil.-doll.-from.-hell.-extended.-1984.-dvdrip.-bagger-inc",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/BloodyWednesday",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/desert-of-blood-dvdrip",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
   "@id": "https://archive.org/details/ABucketofBlood",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/CreatureOfDestruction",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/CurseOfTheSwampCreature1966_742",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/HorrorHotel1960",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/HouseOnHauntedHill_201605",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/LittleShopOfHorrors_201606",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/RogerCormansTheTerror720p",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheVampireBat1933",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
   }
  },
  {
@@ -370,7 +370,7 @@ const WATCH_BUDDY_GENERATED = [
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
   }
  },
  {
@@ -394,7 +394,7 @@ const WATCH_BUDDY_GENERATED = [
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
   }
  },
  {
@@ -446,6 +446,14 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/killer_dill",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/harolddiddlebock",
   "@type": "Movie",
   "contentWarning": {
@@ -455,22 +463,6 @@ const WATCH_BUDDY_GENERATED = [
  },
  {
   "@id": "https://archive.org/details/abbott-and-costello-meet-frankenstein",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/cco_thegunandthepulpit",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/DeadManDrinking",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -546,7 +538,7 @@ const WATCH_BUDDY_GENERATED = [
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
   }
  },
  {
@@ -554,7 +546,7 @@ const WATCH_BUDDY_GENERATED = [
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
   }
  },
  {
@@ -562,7 +554,7 @@ const WATCH_BUDDY_GENERATED = [
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
   }
  },
  {
@@ -1046,14 +1038,6 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
-  "@id": "https://archive.org/details/TheArizonaRaiders",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
   "@id": "https://archive.org/details/Winds_of_the_Wasteland",
   "@type": "Movie",
   "contentWarning": {
@@ -1079,6 +1063,14 @@ const WATCH_BUDDY_GENERATED = [
  },
  {
   "@id": "https://archive.org/details/ComeOnCowboys",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/gunsmoke_ranch",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -1878,6 +1870,14 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/The_Scarlet_Clue",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/TheWomanInGreen1945",
   "@type": "Movie",
   "contentWarning": {
@@ -2022,14 +2022,6 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
-  "@id": "https://archive.org/details/99riverstreet1953usajohnpayneevelynkeyesbraddexterfilmnoirfullmovie",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
   "@id": "https://archive.org/details/citythatneversleeps1953usafeaturinggigyoungwilliamtalmanfilmnoirfullmovie",
   "@type": "Movie",
   "contentWarning": {
@@ -2150,22 +2142,6 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
-  "@id": "https://archive.org/details/youtube-l14WDZCnz-w",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
-  "@id": "https://archive.org/details/dragon-ball-z-133-148-toonami",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
   "@id": "https://archive.org/details/CreatureFromTheBlackLagoonTrailer",
   "@type": "Movie",
   "contentWarning": {
@@ -2202,7 +2178,7 @@ const WATCH_BUDDY_GENERATED = [
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
   }
  },
  {
@@ -2210,7 +2186,7 @@ const WATCH_BUDDY_GENERATED = [
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
   }
  }
 ];

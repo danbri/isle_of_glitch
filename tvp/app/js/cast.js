@@ -55,8 +55,17 @@ export function initCast(bridge, reveal) {
 
 function wire(bridge) {
   const ctx = cast.framework.CastContext.getInstance();
+  // The device picker is Google's UI, filtered by the RECEIVER app's
+  // declared capabilities — and the Default Media Receiver declares
+  // audio-only-device support, so every speaker on the network shows up.
+  // Registering a Styled Media Receiver (Cast developer console) with
+  // "supports audio only devices" left unchecked filters the picker to
+  // video targets; drop its app id in:
+  //   localStorage.setItem('tvp.castAppId', JSON.stringify('XXXXXXXX'))
+  let appId = "";
+  try { appId = JSON.parse(localStorage.getItem("tvp.castAppId") || '""'); } catch {}
   ctx.setOptions({
-    receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+    receiverApplicationId: appId || chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
     autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
   });
 
@@ -80,7 +89,13 @@ function wire(bridge) {
     const S = cast.framework.SessionState;
     if (e.sessionState === S.SESSION_STARTED || e.sessionState === S.SESSION_RESUMED) {
       casting = true;
-      bridge.onCastStart(ctx.getCurrentSession()?.getCastDevice()?.friendlyName || "TV");
+      const dev = ctx.getCurrentSession()?.getCastDevice();
+      bridge.onCastStart(dev?.friendlyName || "TV");
+      // an audio-only pick (speaker, speaker group) deserves a heads-up
+      const caps = dev?.capabilities || [];
+      if (caps.length && !caps.some((c) => /video/i.test(String(c)))) {
+        bridge.warn?.(`${dev?.friendlyName || "That device"} is audio-only — sound without picture`);
+      }
       load();
     }
     if (e.sessionState === S.SESSION_ENDED) {
