@@ -7,12 +7,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>TVP/2007 — a Joost-era web TV revival</title>
+<meta name="description" content="A living revival of the 2007 Joost web-TV experience: 18 channels of free and openly licensed film and television, broadcast on a real schedule.">
 <link rel="preconnect" href="https://archive.org" crossorigin>
 <link rel="dns-prefetch" href="https://archive.org">
 <link rel="stylesheet" href="css/tvp.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='black' stroke='white' stroke-width='2'/%3E%3Ctext x='16' y='22' font-family='Trebuchet MS' font-size='13' font-weight='bold' fill='rgb(198,96,12)' text-anchor='middle'%3Etv%3C/text%3E%3C/svg%3E">
 </head>
 <body>
+<noscript><p style="padding:40px;text-align:center;font-family:sans-serif">TVP/2007 is a television set made of JavaScript — it can't switch on without it.</p></noscript>
 
 <!-- ══════════════ THE STAGE ══════════════ -->
 <div id="stage">
@@ -321,7 +323,7 @@
 <!-- ══════════════ SEARCH (top sheet) ══════════════ -->
 <div id="search" class="sheet">
   <form id="search-form">
-    <input id="search-input" placeholder="Search programs and channels&hellip;" autocomplete="off">
+    <input id="search-input" placeholder="Search programs and channels&hellip;" autocomplete="off" enterkeyhint="search" spellcheck="false" autocapitalize="off">
     <button type="button" class="drawer-close" data-close="search">&times;</button>
   </form>
   <div id="search-results"></div>
