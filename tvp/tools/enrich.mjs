@@ -81,6 +81,19 @@ for (const ch of CHANNELS) {
     // API names the node; the player composes a direct URL and falls back
     // to /download/ if the item has since migrated.
     if (j.server && j.dir) p.node = j.server + j.dir;
+
+    // Chromecast-safe encode: many archive derivatives are MPEG-4 Part 2
+    // (the DivX-era codec), which Cast hardware cannot decode — the TV
+    // plays audio over black. When the on-air file isn't h.264, bake the
+    // item's h.264 derivative for casting (castSrc: url), or an explicit
+    // "no compatible encode" marker (castSrc: 0) so the player can warn.
+    // (NB "cast" is taken — that's the actors list from wikilink.mjs.)
+    if (f && !/h\.?264/i.test(f.format || "")) {
+      const alt = j.files.find((x) => /h\.?264/i.test(x.format || "") && /\.mp4$/i.test(x.name));
+      p.castSrc = alt ? `https://archive.org/download/${id}/${enc(alt.name)}` : 0;
+    } else {
+      delete p.castSrc;
+    }
     // second replica (~5% of items carry one): the player's error ladder
     // falls back node → node2 → /download/ when a datanode goes stale
     if (j.d2 && j.dir && j.d2 !== j.server) p.node2 = j.d2 + j.dir;
