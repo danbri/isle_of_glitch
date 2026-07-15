@@ -625,6 +625,31 @@ function onVideoError(e) {
 
 /* ── overlays: info bar + controller ───────────────── */
 
+/* ── SKOS subjects (skos-gen.js, via skosdex) ─────────
+ * Each program's concept identities across the world's knowledge-
+ * organization schemes: LC Genre/Form for what KIND of film it is,
+ * LC Subjects + Getty AAT for what it's ABOUT. */
+function iaIdOf(p) {
+  if (p._iaid === undefined) {
+    p._iaid = (p.src || "").match(/archive\.org\/download\/([^/]+)\//)?.[1] || null;
+  }
+  return p._iaid;
+}
+function skosFor(p) {
+  if (typeof SKOS_SUBJECTS === "undefined") return [];
+  const id = iaIdOf(p);
+  return (id && SKOS_SUBJECTS[id]) || [];
+}
+/* chip taps run an about: search — one handler, delegated */
+document.addEventListener("click", (e) => {
+  const chip = e.target.closest?.(".skos-chip");
+  if (!chip || e.target.tagName === "A") return;
+  openPanel("search");
+  const q = "about:" + chip.dataset.label;
+  $("search-input").value = q;
+  renderSearch(q);
+});
+
 function updateInfo() {
   const ch = currentChannel();
   const info = currentProgramInfo();
@@ -672,6 +697,18 @@ function updateInfo() {
     $("info-buddy-chips").onclick = openBuddy;
   } else {
     $("info-buddy-chips").classList.add("hidden");
+  }
+  // SKOS subjects: tap a chip to find everything else on the dial about
+  // that concept; ↗ opens the authority's own page (LoC, Getty)
+  const subjects = skosFor(p);
+  if (subjects.length) {
+    $("info-subjects").innerHTML = `<span class="ibc-label">🗂 about:</span> ` +
+      subjects.map(([label, scheme, uri]) =>
+        `<span class="skos-chip" data-label="${label.replace(/"/g, "&quot;")}">${label}<a href="${uri}" target="_blank" rel="noopener" title="${(typeof SKOS_SCHEMES !== "undefined" && SKOS_SCHEMES[scheme]) || scheme}">↗</a></span>`
+      ).join(" ");
+    $("info-subjects").classList.remove("hidden");
+  } else {
+    $("info-subjects").classList.add("hidden");
   }
   $("info-facts").textContent = [
     (p.year ? "first shown " + p.year : null),
@@ -1337,18 +1374,20 @@ function renderSearch(q) {
   q = (q || "").trim().toLowerCase();
   box.innerHTML = "";
   if (!q) {
-    box.innerHTML = '<div class="search-empty">Try “bunny”, “zombie”, a year (“1951”), a decade (“1920s”), or a label (“😨”)…</div>';
+    box.innerHTML = '<div class="search-empty">Try “bunny”, “zombie”, a year (“1951”), a decade (“1920s”), a label (“😨”), or a subject (“about:Film noir”)…</div>';
     return;
   }
   let hits = 0;
   const yearQ = /^(18|19|20)\d\d$/.test(q) ? parseInt(q, 10) : null;
   const decadeQ = /^(18|19|20)\d0s$/.test(q) ? parseInt(q, 10) : null;
   const emojiQ = /\p{Extended_Pictographic}/u.test(q) ? q.trim() : null;
+  const aboutQ = q.startsWith("about:") ? q.slice(6).trim() : null;
   CHANNELS.forEach((ch) => {
     ch.programs.forEach((p, pi) => {
       if (hits >= 40) return;
       let match;
-      if (yearQ) match = p.year === yearQ;
+      if (aboutQ) match = skosFor(p).some(([label]) => label.toLowerCase() === aboutQ);
+      else if (yearQ) match = p.year === yearQ;
       else if (decadeQ) match = p.year && Math.floor(p.year / 10) * 10 === decadeQ;
       else if (emojiQ) match = buddyChips(p).includes(emojiQ);
       else {
@@ -2407,6 +2446,14 @@ function threadsFor(ci, pi, max = 3) {
     if (!p.kw) return;
     const common = me.kw.filter((w) => p.kw.includes(w));
     if (common.length >= 2) add(tci, tpi, `both keep saying “${common[0]}”: ${title(p, tci)}`);
+  });
+  // shared SKOS subject, ignoring same-channel siblings (they'd share the
+  // channel's own genre concepts — cross-dial finds are the interesting ones)
+  const mySubj = skosFor(me);
+  if (mySubj.length && out.length < max) each((p, tci, tpi) => {
+    if (tci === ci) return;
+    const s = mySubj.find(([label]) => skosFor(p).some(([l2]) => l2 === label));
+    if (s) add(tci, tpi, `more “${s[0].toLowerCase()}”: ${title(p, tci)}`);
   });
   if (me.year && out.length < max) each((p, tci, tpi) => {
     if (p.year === me.year && tci !== ci) add(tci, tpi, `also from ${me.year}: ${title(p, tci)}`);
