@@ -643,38 +643,125 @@ function skosFor(p) {
 /* the subjects widget: a squarified treemap of every concept on the dial,
    sized by how many programs carry it — only content-bearing tiles exist,
    because the map is built FROM the content. Tap a tile → about: search. */
-let subjectsTreeBuilt = false;
-function buildSubjectsTree() {
-  if (subjectsTreeBuilt || typeof SKOS_SUBJECTS === "undefined") return;
-  const box = $("subjects-tree");
-  if (!box || !box.offsetParent) return;      // build when actually visible
-  subjectsTreeBuilt = true;
-  const counts = new Map();                   // label → {n, scheme}
-  Object.values(SKOS_SUBJECTS).forEach((subs) =>
-    subs.forEach(([label, scheme]) => {
-      const e = counts.get(label) || { n: 0, scheme };
-      e.n++;
-      counts.set(label, e);
-    }));
-  const items = [...counts.entries()]
-    .map(([label, e]) => ({ label, n: e.n, scheme: e.scheme }))
-    .sort((a, b) => b.n - a.n)
-    .slice(0, 42);
-  const W = box.clientWidth || 260, H = box.clientHeight || 220;
-  const total = items.reduce((s, i) => s + i.n, 0);
-  items.forEach((i) => { i.area = (i.n / total) * W * H; });
+let subjectsTreeState = null;   // { level: node[], crumb: [], built }
+function subjectsEmoji(label) {
+  const l = label.toLowerCase();
+  const MAP = [
+    [/horror|monster|ghost|zombie/, "🧟"], [/comedy|screwball/, "😂"],
+    [/western/, "🤠"], [/newsreel|news/, "🗞️"], [/animat|cartoon/, "✏️"],
+    [/science fiction/, "🚀"], [/noir/, "🌃"], [/detective|mystery|crime/, "🕵️"],
+    [/silent/, "🎹"], [/television/, "📺"], [/documentary|nonfiction|educational|industrial|sponsored/, "📚"],
+    [/space|moon/, "🌙"], [/trailer/, "🎞️"], [/feature/, "🎬"], [/short/, "⏱️"],
+    [/melodrama/, "🎭"], [/fiction films/, "🍿"], [/motion pictures/, "🎥"],
+    [/ship|fleet|admiral/, "⚓"], [/police|officer|law/, "🚓"], [/topic/, "🧭"]
+  ];
+  for (const [re, e] of MAP) if (re.test(l)) return e;
+  return "🔖";
+}
 
-  /* squarify: lay rows along the shorter side, keeping tiles chunky */
+function buildSubjectsTree() {
+  if (typeof SKOS_SUBJECTS === "undefined") return;
+  const box = $("subjects-tree");
+  if (!box || !box.offsetParent) return;
+
+  if (!subjectsTreeState) {
+    /* assemble the concept tree once: nodes carry their own program sets;
+       a subtree\'s count is the UNION over descendants (no double counting) */
+    const nodes = new Map();  // uri → node
+    const node = (uri, label, scheme) => {
+      if (!nodes.has(uri)) nodes.set(uri, { uri, label, scheme, ids: new Set(), children: [] });
+      return nodes.get(uri);
+    };
+    Object.entries(SKOS_SUBJECTS).forEach(([id, subs]) =>
+      subs.forEach(([label, scheme, uri]) => node(uri, label, scheme).ids.add(id)));
+    if (typeof SKOS_FAMILIES !== "undefined")
+      Object.entries(SKOS_FAMILIES).forEach(([uri, label]) => node(uri, label, "fam"));
+    const roots = [];
+    nodes.forEach((n) => {
+      const p = (typeof SKOS_TREE !== "undefined") && SKOS_TREE[n.uri] && nodes.get(SKOS_TREE[n.uri]);
+      if (p && p !== n) { p.children.push(n); n.parent = p; }
+    });
+    nodes.forEach((n) => { if (!n.parent) roots.push(n); });
+    /* everything that isn\'t film genre gathers under Topics */
+    const genreish = (n) => n.scheme === "lcgft" ||
+      (n.scheme === "fam" && n.children.some((c) => c.scheme === "lcgft"));
+    const topics = { uri: "topics:", label: "Topics", scheme: "fam", ids: new Set(), children: [] };
+    const top = [];
+    roots.forEach((n) => {
+      (genreish(n) ? top : topics.children).push(n);
+      n.parent = genreish(n) ? null : topics;
+    });
+    if (topics.children.length) top.push(topics);
+    const setOf = (n) => {
+      if (n._set) return n._set;
+      const s2 = new Set(n.ids);
+      n.children.forEach((c) => setOf(c).forEach((x) => s2.add(x)));
+      return (n._set = s2);
+    };
+    nodes.forEach(setOf); setOf(topics);
+    /* per-family hue, stable */
+    const hue = (label) => { let h = 0; for (const ch of label) h = (h * 31 + ch.codePointAt(0)) % 997; return (h * 137) % 360; };
+    const paint = (n, h2, depth) => {
+      n.hue = h2; n.depth = depth;
+      n.children.sort((a, b) => setOf(b).size - setOf(a).size);
+      n.children.forEach((c, i) => paint(c, h2, depth + 1));
+    };
+    top.sort((a, b) => setOf(b).size - setOf(a).size);
+    top.forEach((n) => paint(n, hue(n.label), 0));
+    subjectsTreeState = { top, setOf, crumb: [] };
+    new ResizeObserver(() => renderSubjectsLevel()).observe(box);
+  }
+  renderSubjectsLevel();
+}
+
+function renderSubjectsLevel() {
+  const st = subjectsTreeState;
+  const box = $("subjects-tree");
+  if (!st || !box || !box.offsetParent) return;
+  const parent = st.crumb[st.crumb.length - 1] || null;
+  let items = (parent ? parent.children.slice() : st.top.slice());
+  /* zoomed in: the family\'s own directly-tagged programs get a tile too */
+  if (parent && parent.ids.size) {
+    items.unshift({ uri: parent.uri, label: "all " + parent.label, scheme: parent.scheme, ids: parent.ids, children: [], hue: parent.hue, self: true });
+  }
+  const setOf = (n) => n._set || n.ids;
+  items = items.filter((n) => setOf(n).size > 0);
+  /* crumb row */
+  let crumbEl = box.previousElementSibling;
+  if (!crumbEl || !crumbEl.classList.contains("tm-crumb")) {
+    crumbEl = document.createElement("div");
+    crumbEl.className = "tm-crumb";
+    box.parentElement.insertBefore(crumbEl, box);
+  }
+  crumbEl.innerHTML = parent
+    ? `<button class="tm-back">‹ back</button> ${subjectsEmoji(parent.label)} ${parent.label}`
+    : `🗂 the whole dial, by concept`;
+  crumbEl.querySelector(".tm-back")?.addEventListener("click", () => { st.crumb.pop(); renderSubjectsLevel(); });
+
+  /* overflow → a "…" tile holding the tail */
+  const MAXTILES = 15;
+  if (items.length > MAXTILES + 1) {
+    const tail = items.slice(MAXTILES);
+    const ids = new Set(); tail.forEach((n) => setOf(n).forEach((x) => ids.add(x)));
+    const holder = { uri: "tail:", label: "more…", scheme: "fam", ids, children: tail, hue: 0, _set: ids, isTail: true };
+    items = items.slice(0, MAXTILES).concat(holder);
+  }
+
+  const W = box.clientWidth || 260, H = box.clientHeight || 220;
+  const total = items.reduce((s, i) => s + setOf(i).size, 0) || 1;
+  items.forEach((i) => { i.area = (setOf(i).size / total) * W * H; });
+
+  /* squarify */
   const tiles = [];
   let x = 0, y = 0, w = W, h = H, row = [], rowArea = 0;
-  const worst = (r, s, len) => {
+  const worst = (r, s2, len) => {
     if (!r.length) return Infinity;
     const mx = Math.max(...r.map((i) => i.area)), mn = Math.min(...r.map((i) => i.area));
-    const ss = s * s, l2 = len * len;
+    const ss = s2 * s2, l2 = len * len;
     return Math.max((l2 * mx) / ss, ss / (l2 * mn));
   };
   const layoutRow = () => {
-    const vertical = w < h;                   // row runs along the shorter edge
+    const vertical = w < h;
     const len = vertical ? w : h;
     const thick = rowArea / len;
     let off = 0;
@@ -697,17 +784,28 @@ function buildSubjectsTree() {
 
   box.innerHTML = "";
   tiles.forEach(({ x, y, w, h, i }) => {
-    if (w < 3 || h < 3) return;
+    /* clamp hard to the container: nothing may fall off the right edge */
+    w = Math.min(w, W - x); h = Math.min(h, H - y);
+    if (w < 4 || h < 4) return;
     const el = document.createElement("div");
-    el.className = `tm-tile tm-${i.scheme}`;
-    el.style.cssText = `left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;width:${w.toFixed(1)}px;height:${h.toFixed(1)}px;`;
-    el.title = `${i.label} — ${i.n} program${i.n > 1 ? "s" : ""}`;
-    if (w > 34 && h > 15) el.innerHTML = `${i.label}${h > 30 ? `<small>${i.n}</small>` : ""}`;
+    const kids = i.children?.length && !i.self;
+    el.className = "tm-tile" + (kids ? " tm-branch" : "");
+    const light = 26 + (i.depth || 0) * 6;
+    el.style.cssText = `left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;width:${w.toFixed(1)}px;height:${h.toFixed(1)}px;` +
+      `background:hsla(${i.hue},46%,${light}%,.85);`;
+    const n = setOf(i).size;
+    const emoji = subjectsEmoji(i.label);
+    el.title = `${i.label} — ${n} program${n > 1 ? "s" : ""}${kids ? ` · ${i.children.length} narrower` : ""}`;
+    if (w >= 52 && h >= 17) el.innerHTML = `${emoji} ${i.label}${h >= 32 ? `<small>${n}${kids ? " ▸" : ""}</small>` : ""}`;
+    else if (w >= 16 && h >= 13) el.textContent = emoji;   // too small for words: emoji speaks
     el.addEventListener("click", () => {
-      openPanel("search");
-      const q = "about:" + i.label;
-      $("search-input").value = q;
-      renderSearch(q);
+      if (kids || i.isTail) { subjectsTreeState.crumb.push(i); renderSubjectsLevel(); }
+      else {
+        openPanel("search");
+        const q = "about:" + i.label.replace(/^all /, "");
+        $("search-input").value = q;
+        renderSearch(q);
+      }
     });
     box.appendChild(el);
   });
