@@ -713,7 +713,8 @@ body.drawer-open #scrim { opacity: 1; pointer-events: auto; }
 
 /* ── widgets ───────────────────────────────────────── */
 
-#dock { overflow-y: auto; }
+#dock {
+  scrollbar-gutter: stable; overflow-y: auto; }
 .widget {
   contain: layout paint;
   margin: 10px 12px 0; padding: 10px 12px 12px;
@@ -1122,3 +1123,12 @@ body.casting #stage video { opacity: .25; }
   border: 1px solid rgba(255,255,255,.3); cursor: pointer;
 }
 .tm-crumb .tm-even.on { color: var(--accent); border-color: var(--accent); }
+
+/* the actual coding, visible: scheme-qualified concept ids */
+.skos-codes {
+  margin-top: 7px; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 10.5px; line-height: 1.8; color: rgba(255,255,255,.55);
+  word-break: break-all;
+}
+.skos-codes a { color: rgba(160,200,255,.75); text-decoration: none; }
+.skos-codes a:hover { color: var(--accent); }
