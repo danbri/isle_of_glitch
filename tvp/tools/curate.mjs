@@ -127,6 +127,56 @@ const DIAL = [
     want: 80, minDur: 2400, maxDur: 7800, maxYear: 1969,
     titleFilter: /(planet|space|outer|rocket|saucer|mars|moon|robot|atomic|future|invasion|astro|cosmic|satellite|ufo|venus|brain|teenagers from)/i
   },
+  /* Hand-curated star vehicles whose US copyrights were never renewed
+     (or lapsed for want of notice) — the documented public-domain canon
+     of famous-name features: Bogart, Grant, Hepburn, Stanwyck, Sinatra,
+     Astaire, Garland, Welles, Brando, Wayne, Temple, Taylor, Peck…
+     Every title here has a well-attested non-renewal/no-notice record.
+     Deliberately absent: It's a Wonderful Life (film PD but underlying
+     story + music rights reasserted) and the British Hitchcocks (URAA
+     restored their US copyrights in 1996). Placed BEFORE the noir and
+     genre harvests so the global dedupe assigns these prints here. */
+  {
+    num: 51, id: "marquee", name: "Marquee",
+    category: "Film", tagline: "The big names, up in lights",
+    art: "royal_wedding",
+    hand: [],
+    ids: [
+      "turner_video_341",              // Charade (1963) Grant/Hepburn
+      "BeatTheDevil1953",              // Beat the Devil (1953) Bogart
+      "TheStranger_0",                 // The Stranger (1946) Welles/Robinson
+      "ScarletStreet",                 // Scarlet Street (1945) Robinson
+      "Detour",                        // Detour (1945)
+      "thoseguysontheradio_gmail_Doa", // D.O.A. (1949) O'Brien
+      "suddenly",                      // Suddenly (1954) Sinatra
+      "Hitch_Hiker",                   // The Hitch-Hiker (1953) dir. Lupino
+      "MyManGodfrey1936",              // My Man Godfrey (1936) Powell/Lombard
+      "NothingSacred",                 // Nothing Sacred (1937) Lombard
+      "AStarIsBorn",                   // A Star Is Born (1937) Gaynor/March
+      "meet_john_doe",                 // Meet John Doe (1941) Cooper/Stanwyck
+      "made_for_each_other_film",      // Made for Each Other (1939) Stewart/Lombard
+      "penny_serenade",                // Penny Serenade (1941) Grant/Dunne
+      "humanbondage",                  // Of Human Bondage (1934) Davis/Howard
+      "LoveAffair",                    // Love Affair (1939) Dunne/Boyer
+      "TheFrontPage1931AdolpheMenjouPatOBrienLewismiles", // The Front Page (1931)
+      "afarewelltoarms1932garycooper", // A Farewell to Arms (1932) Cooper
+      "LifeWithFather",                // Life with Father (1947) Powell/Dunne/Taylor
+      "till_the_clouds_roll_by",       // Till the Clouds Roll By (1946) Garland
+      "royal_wedding",                 // Royal Wedding (1951) Astaire
+      "second_chorus_1940",            // Second Chorus (1940) Astaire/Goddard
+      "TheLittlePrincess1939",         // The Little Princess (1939) Temple
+      "angel_and_the_badman",          // Angel and the Badman (1947) Wayne
+      "886-the-outlaw",                // The Outlaw (1943) Russell
+      "Cyrano_DeBergerac",             // Cyrano de Bergerac (1950) Ferrer
+      "fatherslittledividend",         // Father's Little Dividend (1951) Tracy/Taylor
+      "oneeyedjacks1961_202001",       // One-Eyed Jacks (1961) Brando
+      "kansascityconfidencial",        // Kansas City Confidential (1952)
+      "Kilimanjaro",                   // The Snows of Kilimanjaro (1952) Peck/Gardner
+      "JungleBook",                    // Jungle Book (1942) Sabu
+      "TheSoutherner"                  // The Southerner (1945) dir. Renoir
+    ],
+    want: 32, minDur: 2400, maxDur: 10000
+  },
   {
     num: 6, id: "shadow-street", name: "Shadow Street",
     category: "Drama", tagline: "Shadows, cigarettes and bad decisions",
