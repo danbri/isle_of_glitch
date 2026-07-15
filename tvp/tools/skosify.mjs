@@ -193,25 +193,61 @@ async function wdApi(params) {
   }
   return null;
 }
-console.log(`pass 2b: Wikidata P136/P921 for ${wdIds.length} uncached films…`);
-for (let i = 0; i < wdIds.length; i += 50) {
-  const batch = wdIds.slice(i, i + 50);
-  const j = await wdApi({ action: "wbgetentities", ids: batch.join("|"), props: "claims" });
-  for (const q of batch) {
-    const cl = j?.entities?.[q]?.claims || {};
-    const vals = [];
-    for (const prop of ["P136", "P921"]) {
-      (cl[prop] || []).forEach((c) => {
-        const id = c.mainsnak?.datavalue?.value?.id;
-        if (id) vals.push(id);
+/* QLever's Wikidata endpoint answers claims AND labels in one SPARQL
+ * round trip per 500 films — the right tool for bulk graph access
+ * (wbgetentities stays as the per-batch fallback). */
+const QLEVER = "https://qlever.dev/api/wikidata";
+async function qleverBatch(qids) {
+  const query = `PREFIX wd: <http://www.wikidata.org/entity/> PREFIX wdt: <http://www.wikidata.org/prop/direct/> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?film ?g ?gLabel WHERE { VALUES ?film { ${qids.map((q) => "wd:" + q).join(" ")} } ?film wdt:P136|wdt:P921 ?g . ?g rdfs:label ?gLabel . FILTER(LANG(?gLabel)="en") }`;
+  for (let i = 0; i < 2; i++) {
+    try {
+      const r = await fetch(QLEVER, {
+        method: "POST",
+        headers: { "Content-Type": "application/sparql-query", Accept: "application/sparql-results+json", "User-Agent": "tvp2007-enrich/1.0 (danbri)" },
+        body: query,
+        signal: AbortSignal.timeout(90000)
       });
-    }
-    wdCache[q] = vals;
+      if (r.ok) { await sleep(250); return (await r.json()).results?.bindings || []; }
+    } catch {}
+    await sleep(1500 * (i + 1));
   }
-  if (i % 250 === 0) console.log(`  ${Math.min(i + 50, wdIds.length)}/${wdIds.length}`);
+  return null;
 }
-/* labels for the claimed genre/subject entities */
-const genreQs = [...new Set(Object.values(wdCache).flat())].filter((q) => !(("L" + q) in wdCache));
+console.log(`pass 2b: Wikidata P136/P921 for ${wdIds.length} uncached films (QLever)…`);
+for (let i = 0; i < wdIds.length; i += 500) {
+  const batch = wdIds.slice(i, i + 500);
+  batch.forEach((q) => { if (!Array.isArray(wdCache[q])) wdCache[q] = []; });
+  const rows = await qleverBatch(batch);
+  if (rows) {
+    for (const b of rows) {
+      const film = b.film.value.split("/").pop();
+      const g = b.g.value.split("/").pop();
+      if (wdCache[film] && !wdCache[film].includes(g)) wdCache[film].push(g);
+      wdCache["L" + g] = b.gLabel.value;
+    }
+  } else {
+    console.log("  QLever unavailable — wbgetentities fallback for this batch");
+    for (let j2 = 0; j2 < batch.length; j2 += 50) {
+      const sub = batch.slice(j2, j2 + 50);
+      const j = await wdApi({ action: "wbgetentities", ids: sub.join("|"), props: "claims" });
+      for (const q of sub) {
+        const cl = j?.entities?.[q]?.claims || {};
+        for (const prop of ["P136", "P921"]) {
+          (cl[prop] || []).forEach((c) => {
+            const id = c.mainsnak?.datavalue?.value?.id;
+            if (id && !wdCache[q].includes(id)) wdCache[q].push(id);
+          });
+        }
+      }
+    }
+  }
+  console.log(`  ${Math.min(i + 500, wdIds.length)}/${wdIds.length}`);
+}
+/* labels for any claim entities still unlabeled (fallback path, old cache) */
+const genreQs = [...new Set(Object.entries(wdCache)
+  .filter(([k, v]) => !k.startsWith("L") && Array.isArray(v)).flatMap(([, v]) => v))]
+  .filter((q) => /^Q\d+$/.test(q) && !(("L" + q) in wdCache));
 for (let i = 0; i < genreQs.length; i += 50) {
   const batch = genreQs.slice(i, i + 50);
   const j = await wdApi({ action: "wbgetentities", ids: batch.join("|"), props: "labels", languages: "en" });
