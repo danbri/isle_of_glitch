@@ -998,3 +998,25 @@ body.in-venue #ticker, body.in-venue #pinned-layer, body.in-venue #cue-layer { d
 }
 #cast-badge.hidden { display: none; }
 body.casting #stage video { opacity: .25; }
+
+/* ── toast: why the picture just changed, with a road back ── */
+#toast {
+  position: fixed; left: 50%; bottom: max(86px, calc(env(safe-area-inset-bottom) + 74px));
+  transform: translateX(-50%);
+  z-index: 49; display: flex; align-items: center; gap: 10px;
+  max-width: min(92vw, 560px);
+  padding: 10px 16px; border-radius: 999px;
+  font-family: var(--font); font-size: 13.5px; color: rgba(255,255,255,.95);
+  background: rgba(10,10,14,.72); border: 1px solid rgba(255,255,255,.3);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 24px rgba(0,0,0,.45);
+  animation: toast-in .22s ease-out;
+}
+#toast.hidden { display: none; }
+@keyframes toast-in { from { opacity: 0; transform: translateX(-50%) translateY(10px); } }
+#toast-undo {
+  flex: 0 0 auto; padding: 6px 13px; border-radius: 999px; cursor: pointer;
+  font-family: var(--font); font-size: 13px; font-weight: bold;
+  color: #0b0b10; background: rgba(255,255,255,.92); border: none;
+}
+#toast-undo:hover { background: var(--accent); color: #fff; }
