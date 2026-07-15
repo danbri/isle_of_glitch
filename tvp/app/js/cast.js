@@ -1,32 +1,56 @@
 /*
- * TVP/2007 — Chromecast sender. 📺
+ * TVP/2007 — send the picture to the television. 📺
  *
- * Lazy ES module: loaded only in browsers that expose the Cast API
- * surface (Chrome/Edge on desktop and Android). Casts the current
- * program to the default media receiver — archive.org's MP4 derivatives
- * play natively on Cast devices — and keeps the session following the
- * dial: channel flips load the new program at its live offset.
+ * Two transports, one button:
  *
- * While a session is up, local playback pauses (the TV is the TV);
- * ending the session hands the stream back to the page at the remote
- * position. Exports initCast(bridge) → api or null.
+ *  Chromecast (Chrome/Edge on desktop + Android) — the Google Cast
+ *  sender SDK casts the current program to the default media receiver
+ *  (archive.org MP4s play natively). The session follows the dial.
+ *
+ *  AirPlay (Safari on iOS/macOS) — Safari has no Cast API at all, so on
+ *  WebKit the same button opens the system AirPlay picker for the active
+ *  <video> instead. No SDK involved.
+ *
+ * initCast(bridge, reveal): `reveal(api)` fires whenever a transport
+ * becomes usable — including a slow-loading Cast SDK arriving late — so
+ * the button can appear the moment there's something behind it. The api
+ * reports which transport via .kind.
  */
 
 /* global cast, chrome */
 
-export function initCast(bridge) {
-  return new Promise((resolve) => {
-    if (!("chrome" in window)) return resolve(null);
-    window.__onGCastApiAvailable = (ok) => {
-      if (!ok) return resolve(null);
-      try { resolve(wire(bridge)); } catch { resolve(null); }
+export function initCast(bridge, reveal) {
+  /* ── AirPlay lane (WebKit) ── */
+  if (window.WebKitPlaybackTargetAvailabilityEvent) {
+    let revealed = false;
+    const watch = (v) => {
+      if (!v?.addEventListener) return;
+      v.addEventListener("webkitplaybacktargetavailabilitychanged", (e) => {
+        if (e.availability === "available" && !revealed) {
+          revealed = true;
+          reveal({
+            kind: "airplay",
+            get casting() { return false; },   // WebKit routes; the page keeps playing
+            prompt() { try { bridge.getVideos().find((x) => !x.paused || x === bridge.getVideos()[0])?.webkitShowPlaybackTargetPicker(); } catch {} },
+            tuned() {}, playPause() { return false; }
+          });
+        }
+      });
     };
-    const s = document.createElement("script");
-    s.src = "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1";
-    s.onerror = () => resolve(null);
-    document.head.appendChild(s);
-    setTimeout(() => resolve(null), 12000);   // belt: never leave the app waiting
-  });
+    bridge.getVideos().forEach(watch);
+  }
+
+  /* ── Chromecast lane (Blink) ── */
+  if (!("chrome" in window)) return;
+  window.__onGCastApiAvailable = (ok) => {
+    if (!ok) { bridge.note?.("cast: sender API reported unavailable"); return; }
+    try { reveal(wire(bridge)); }
+    catch (e) { bridge.note?.("cast: sender wiring failed — " + String(e).slice(0, 80)); }
+  };
+  const s = document.createElement("script");
+  s.src = "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1";
+  s.onerror = () => bridge.note?.("cast: sender SDK blocked or unreachable (extension/adblock/network?)");
+  document.head.appendChild(s);
 }
 
 function wire(bridge) {
@@ -34,6 +58,18 @@ function wire(bridge) {
   ctx.setOptions({
     receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
     autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
+  });
+
+  // surface device discovery, once per transition — the button exists
+  // even with zero devices; this tells the user which world they're in
+  let lastState = "";
+  ctx.addEventListener(cast.framework.CastContextEventType.CAST_STATE_CHANGED, (e) => {
+    const st = e.castState;
+    if (st === lastState) return;
+    lastState = st;
+    const C = cast.framework.CastState;
+    if (st === C.NO_DEVICES_AVAILABLE) bridge.note?.("cast: no devices found on this network");
+    else if (st === C.NOT_CONNECTED) bridge.note?.("cast: device(s) available — tap the cast button");
   });
 
   const player = new cast.framework.RemotePlayer();
@@ -45,7 +81,7 @@ function wire(bridge) {
     if (e.sessionState === S.SESSION_STARTED || e.sessionState === S.SESSION_RESUMED) {
       casting = true;
       bridge.onCastStart(ctx.getCurrentSession()?.getCastDevice()?.friendlyName || "TV");
-      load();                                      // put the current program up
+      load();
     }
     if (e.sessionState === S.SESSION_ENDED) {
       casting = false;
@@ -68,16 +104,16 @@ function wire(bridge) {
   }
 
   return {
+    kind: "chromecast",
     get casting() { return casting; },
-    /* the dial moved: follow it on the big screen */
+    prompt() { ctx.requestSession().catch(() => {}); },
     tuned() { if (casting) load(); },
-    playPause() { if (casting) rc.playOrPause(); },
+    playPause() { if (casting) rc.playOrPause(); return casting; },
     seekBy(d) {
       if (!casting) return;
       player.currentTime = Math.max(0, (player.currentTime || 0) + d);
       rc.seek();
     },
-    remoteTime() { return player.currentTime || 0; },
-    paused() { return player.isPaused; }
+    remoteTime() { return player.currentTime || 0; }
   };
 }

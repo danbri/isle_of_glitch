@@ -1,25 +1,126 @@
 /*
  * TVP/2007 — venue mode. 🍿
  *
- * Five little worlds, each with the live channel playing on an in-world
- * screen: a 1950s drive-in, a synthwave space lounge, a gilded picture
- * palace, a crystal grotto, and a 2007 rec room. Everything is generated
- * — geometry, neon, star fields, test cards — no assets are downloaded.
+ * Five little worlds around the live channel: a 1950s drive-in, a
+ * synthwave space lounge, a gilded picture palace, a crystal grotto and
+ * a 2007 rec room. Everything is generated — no assets are downloaded
+ * (three.js itself is vendored and loaded on first use).
  *
- * Lazy-loaded ES module (three.js is vendored, ~680KB, fetched only when
- * the venue button is first pressed). WebGL2 everywhere; on WebXR-capable
- * browsers an "Enter VR" button drops you inside the venue. The active
- * <video> element keeps playing exactly as in 2D — this module just
- * borrows its pixels as a texture, so tuning, audio, subtitles state and
- * the broadcast clock are untouched. Channel flips (↑/↓, guide) work
- * while you're in the world.
+ * How the picture gets into the world — archive.org media carries no
+ * CORS headers, so the <video> is "tainted": WebGL is forbidden from
+ * sampling it. Instead of a texture, the actual video element is
+ * composited INTO the scene: a colour-silent, depth-writing quad punches
+ * a transparent hole in the WebGL canvas exactly where the screen is,
+ * and a per-frame homography (CSS matrix3d) pins the DOM video to that
+ * quad. Geometry in front still occludes the picture; nothing ever reads
+ * a pixel.
  *
- * Exports launchScenes(bridge) → { exit, setScene }.
+ * How the picture lights the world — the lineup's frame still for the
+ * program IS CORS-clean (served via archive.org/cors/), so its dominant
+ * tones are extracted and slowly crossfaded to drive each venue's screen
+ * glow: coloured point lights (specular highlights on glass, gold, bar
+ * tops, water) and volumetric air — projector beams and screen-glow
+ * frustums with animated wisps.
+ *
+ * In WebXR the DOM trick can't follow you inside the headset; the screen
+ * falls back to an ambient tone-wash unless the stream happens to be
+ * CORS-clean (then it becomes a real VideoTexture).
  */
 
 import * as THREE from "../vendor/three.module.min.js";
 
-const SCENE_DEFS = [];  // filled at bottom: {id, name, emoji, build}
+const SCENE_DEFS = [];
+
+/* ── homography: map a DOM rect onto 4 projected screen-space points ── */
+function adj3(m) {
+  return [
+    m[4] * m[8] - m[5] * m[7], m[2] * m[7] - m[1] * m[8], m[1] * m[5] - m[2] * m[4],
+    m[5] * m[6] - m[3] * m[8], m[0] * m[8] - m[2] * m[6], m[2] * m[3] - m[0] * m[5],
+    m[3] * m[7] - m[4] * m[6], m[1] * m[6] - m[0] * m[7], m[0] * m[4] - m[1] * m[3]
+  ];
+}
+function mul3(a, b) {
+  const r = [];
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++)
+    r[i * 3 + j] = a[i * 3] * b[j] + a[i * 3 + 1] * b[3 + j] + a[i * 3 + 2] * b[6 + j];
+  return r;
+}
+function basis(p) {
+  const m = [p[0][0], p[1][0], p[2][0], p[0][1], p[1][1], p[2][1], 1, 1, 1];
+  const a = adj3(m), q = p[3];
+  const v = [
+    a[0] * q[0] + a[1] * q[1] + a[2],
+    a[3] * q[0] + a[4] * q[1] + a[5],
+    a[6] * q[0] + a[7] * q[1] + a[8]
+  ];
+  return mul3(m, [v[0], 0, 0, 0, v[1], 0, 0, 0, v[2]]);
+}
+function homography(src, dst) {
+  const h = mul3(basis(dst), adj3(basis(src)));
+  return h.map((x) => x / h[8]);
+}
+
+/* ── dominant tones from the program's (CORS-clean) frame still ── */
+async function extractTones(url) {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  await new Promise((res, rej) => {
+    img.onload = res; img.onerror = rej;
+    img.src = url;
+    setTimeout(rej, 8000);
+  });
+  const c = document.createElement("canvas");
+  c.width = 48; c.height = 27;
+  const x = c.getContext("2d", { willReadFrequently: true });
+  x.drawImage(img, 0, 0, 48, 27);
+  const d = x.getImageData(0, 0, 48, 27).data;
+  const buckets = new Map();
+  let lum = 0, n = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+    lum += l; n++;
+    const s = mx === mn ? 0 : (mx - mn) / (1 - Math.abs(2 * l - 1));
+    if (s < 0.16 || l < 0.07 || l > 0.96) continue;
+    let h = mx === r ? (((g - b) / (mx - mn)) + 6) % 6 : mx === g ? (b - r) / (mx - mn) + 2 : (r - g) / (mx - mn) + 4;
+    h = Math.round(h * 2) % 12;
+    const e = buckets.get(h) || { w: 0, r: 0, g: 0, b: 0 };
+    const wgt = 0.3 + s;
+    e.w += wgt; e.r += r * wgt; e.g += g * wgt; e.b += b * wgt;
+    buckets.set(h, e);
+  }
+  const top = [...buckets.values()].sort((a, b) => b.w - a.w).slice(0, 3)
+    .map((e) => {
+      const col = new THREE.Color(e.r / e.w, e.g / e.w, e.b / e.w);
+      const hsl = {}; col.getHSL(hsl);
+      col.setHSL(hsl.h, Math.min(1, hsl.s * 1.25), Math.min(0.72, Math.max(0.38, hsl.l)));
+      return col;
+    });
+  while (top.length < 3) top.push(new THREE.Color(0x8fa8c8));   // cool tube-light default
+  return { tones: top, lum: n ? lum / n : 0.45 };
+}
+
+/* ── glow volume: soft additive light-in-the-air, tinted per frame ── */
+function glowVolume(rTop, rBottom, length, k) {
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { c: { value: new THREE.Color(0x8fa8c8) }, t: { value: 0 }, k: { value: k } },
+    transparent: true, depthWrite: false, side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+    fragmentShader: `
+      varying vec2 vUv; uniform vec3 c; uniform float t, k;
+      void main(){
+        float along = vUv.y;
+        float body = pow(smoothstep(0., .25, along) * smoothstep(1., .55, along), 1.2);
+        float wisp = .75 + .25*sin(vUv.x*28.+t*1.7)*sin(along*17.-t*2.3);
+        gl_FragColor = vec4(c, k * body * wisp);
+      }`
+  });
+  const geo = new THREE.CylinderGeometry(rTop, rBottom, length, 18, 10, true);
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.userData.k = k;
+  return { mesh, mat };
+}
 
 export function launchScenes(bridge, startId) {
   const mount = document.createElement("div");
@@ -27,43 +128,334 @@ export function launchScenes(bridge, startId) {
   document.body.appendChild(mount);
   document.body.classList.add("in-venue");
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.75));
   renderer.setSize(innerWidth, innerHeight);
+  renderer.setClearColor(0x000000, 0);         // transparent: the DOM video shows through the punched hole
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.28;
   renderer.xr.enabled = true;
   mount.appendChild(renderer.domElement);
 
-  /* ── the shared video screen ── */
-  let texVideo = null, videoTex = null;
-  const screenMats = [];
-  function videoMaterial() {
-    const m = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
-    screenMats.push(m);
+  /* the hole punch: writes depth, writes no colour */
+  function punchMaterial() {
+    const m = new THREE.MeshBasicMaterial();
+    m.colorWrite = false;
     return m;
   }
-  function syncVideoTexture() {
-    const v = bridge.getVideo();
-    if (v !== texVideo) {
-      texVideo = v;
-      if (videoTex) videoTex.dispose();
-      videoTex = new THREE.VideoTexture(v);
-      videoTex.colorSpace = THREE.SRGBColorSpace;
-      screenMats.forEach((m) => { m.map = videoTex; m.needsUpdate = true; });
-    }
-    // cover-crop the texture into the 16:9 screens (no stretched faces)
-    if (videoTex && texVideo.videoWidth) {
-      const va = texVideo.videoWidth / texVideo.videoHeight, sa = 16 / 9;
-      if (va > sa) {
-        videoTex.repeat.set(sa / va, 1);
-        videoTex.offset.set((1 - sa / va) / 2, 0);
-      } else {
-        videoTex.repeat.set(1, va / sa);
-        videoTex.offset.set(0, (1 - va / sa) / 2);
-      }
-    }
+  function screenAssembly(w, frameColor = 0x111111, frameDepth = 0.12) {
+    const h = w * 9 / 16;
+    const grp = new THREE.Group();
+    const frame = new THREE.Mesh(
+      new THREE.BoxGeometry(w + 0.26, h + 0.26, frameDepth),
+      new THREE.MeshStandardMaterial({ color: frameColor, roughness: 0.8 })
+    );
+    // a soft emissive rim so screens read as lit hardware, not cardboard
+    const rim = new THREE.Mesh(
+      new THREE.PlaneGeometry(w + 0.6, h + 0.6),
+      new THREE.MeshBasicMaterial({ color: 0x8fa8c8, transparent: true, opacity: 0.10, blending: THREE.AdditiveBlending, depthWrite: false })
+    );
+    rim.position.z = frameDepth / 2 - 0.01;
+    const hole = new THREE.Mesh(new THREE.PlaneGeometry(w, h), punchMaterial());
+    hole.position.z = frameDepth / 2 + 0.006;
+    hole.renderOrder = -10;                    // punch before anything transparent blends
+    grp.add(frame, rim, hole);
+    grp.userData.size = [w, h];
+    grp.userData.hole = hole;
+    grp.userData.rim = rim;
+    return grp;
   }
 
-  /* ── helpers shared by the venue builders ── */
+  const ctx = { THREE, canvasTex, stars, motes, screenAssembly, glowVolume };
+
+  /* ── camera rig ── */
+  const camera = new THREE.PerspectiveCamera(64, innerWidth / innerHeight, 0.05, 400);
+  const dolly = new THREE.Group();
+  dolly.add(camera);
+  let yaw = 0, pitch = 0, dist = 0;
+  const look = { drag: false, x: 0, y: 0, pinch: 0 };
+  const el = renderer.domElement;
+  el.addEventListener("pointerdown", (e) => { look.drag = true; look.x = e.clientX; look.y = e.clientY; el.setPointerCapture(e.pointerId); });
+  el.addEventListener("pointermove", (e) => {
+    if (!look.drag) return;
+    yaw -= (e.clientX - look.x) * 0.0042;
+    pitch = Math.max(-1.2, Math.min(1.2, pitch - (e.clientY - look.y) * 0.0042));
+    look.x = e.clientX; look.y = e.clientY;
+  });
+  el.addEventListener("pointerup", () => { look.drag = false; });
+  el.addEventListener("wheel", (e) => { dist = Math.max(-2, Math.min(6, dist + e.deltaY * 0.004)); e.preventDefault(); }, { passive: false });
+  el.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 2) {
+      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      if (look.pinch) dist = Math.max(-2, Math.min(6, dist + (look.pinch - d) * 0.01));
+      look.pinch = d;
+    }
+  }, { passive: true });
+  el.addEventListener("touchend", () => { look.pinch = 0; });
+
+  /* ── overlay UI ── */
+  const ui = document.createElement("div");
+  ui.id = "venue-ui";
+  ui.innerHTML = `
+    <div id="venue-bug"></div>
+    <button id="venue-exit" title="Back to 2D (x)">✕</button>
+    <div id="venue-chips"></div>
+    <button id="venue-vr" class="hidden">Enter VR</button>`;
+  mount.appendChild(ui);
+  const chips = ui.querySelector("#venue-chips");
+  SCENE_DEFS.forEach((d) => {
+    const b = document.createElement("button");
+    b.className = "venue-chip";
+    b.dataset.id = d.id;
+    b.innerHTML = `<span>${d.emoji}</span>${d.name}`;
+    b.addEventListener("click", () => setScene(d.id));
+    chips.appendChild(b);
+  });
+  ui.querySelector("#venue-exit").addEventListener("click", exit);
+
+  navigator.xr?.isSessionSupported?.("immersive-vr").then((ok) => {
+    if (!ok) return;
+    const vb = ui.querySelector("#venue-vr");
+    vb.classList.remove("hidden");
+    vb.addEventListener("click", async () => {
+      try {
+        if (renderer.xr.getSession()) { renderer.xr.getSession().end(); return; }
+        const s = await navigator.xr.requestSession("immersive-vr", { optionalFeatures: ["local-floor"] });
+        s.addEventListener("end", () => { vb.textContent = "Enter VR"; dolly.position.y = 0; xrScreen(false); });
+        await renderer.xr.setSession(s);
+        dolly.position.y = Math.max(0, rigY - 1.6);
+        vb.textContent = "Exit VR";
+        xrScreen(true);
+      } catch {}
+    });
+  }).catch(() => {});
+
+  /* ── the animated frame-tone ── */
+  const tone = {
+    current: new THREE.Color(0x8fa8c8),
+    target: new THREE.Color(0x8fa8c8),
+    tones: [new THREE.Color(0x8fa8c8), new THREE.Color(0xb08a5e), new THREE.Color(0x6e8fb0)],
+    lum: 0.45, k: 0, lastFlip: 0, flicker: 1, loadedFor: ""
+  };
+  async function refreshTones() {
+    const info = bridge.getInfo();
+    const key = info.frame || info.title;
+    if (!key || key === tone.loadedFor) return;
+    tone.loadedFor = key;
+    if (!info.frame) return;
+    try {
+      const got = await extractTones(info.frame);
+      if (key !== tone.loadedFor) return;      // a flip beat us to it
+      tone.tones = got.tones;
+      tone.lum = got.lum;
+      tone.k = 0;
+      tone.target.copy(got.tones[0]);
+    } catch {}
+  }
+  function tickTone(t, dt) {
+    if (t - tone.lastFlip > 5.5) {             // drift between the film's tones
+      tone.lastFlip = t;
+      tone.k = (tone.k + 1) % tone.tones.length;
+      tone.target.copy(tone.tones[tone.k]);
+    }
+    tone.current.lerp(tone.target, Math.min(1, dt * 0.7));
+    tone.flicker = 0.86 + 0.14 * (0.5 + 0.5 * Math.sin(t * 13.7) * Math.sin(t * 5.3));
+  }
+
+  /* ── DOM video → world screen, per frame ── */
+  let domVideo = null;
+  function clearDom(v) {
+    if (!v) return;
+    v.style.transform = "";
+    v.style.transformOrigin = "";
+    v.style.visibility = "";
+    v.style.objectFit = "";
+  }
+  function syncDomScreen() {
+    const v = bridge.getVideo();
+    if (domVideo && domVideo !== v) clearDom(domVideo);
+    domVideo = v;
+    if (renderer.xr.isPresenting || !world?.screen) { v.style.visibility = "hidden"; return; }
+    const hole = world.screen.userData.hole;
+    const [w, h] = world.screen.userData.size;
+    hole.updateWorldMatrix(true, false);
+    const corners = [[-w / 2, h / 2], [w / 2, h / 2], [-w / 2, -h / 2], [w / 2, -h / 2]];
+    const dst = [];
+    for (const [cx, cy] of corners) {
+      const p = new THREE.Vector4(cx, cy, 0, 1)
+        .applyMatrix4(hole.matrixWorld)
+        .applyMatrix4(camera.matrixWorldInverse)
+        .applyMatrix4(camera.projectionMatrix);
+      if (p.w <= 0.001) { v.style.visibility = "hidden"; return; }   // behind us
+      dst.push([(p.x / p.w * 0.5 + 0.5) * innerWidth, (-p.y / p.w * 0.5 + 0.5) * innerHeight]);
+    }
+    // source: the central 16:9 crop of the element (object-fit:fill inline),
+    // so the picture cover-fits the quad and spill hides under the canvas
+    const W = v.offsetWidth || innerWidth, H = v.offsetHeight || innerHeight;
+    let sx = 0, sy = 0, sw = W, sh = H;
+    if (v.videoWidth) {
+      const va = v.videoWidth / v.videoHeight, qa = 16 / 9;
+      if (va > qa) { sw = W * qa / va; sx = (W - sw) / 2; }
+      else if (va < qa) { sh = H * va / qa; sy = (H - sh) / 2; }
+    }
+    const m = homography([[sx, sy], [sx + sw, sy], [sx, sy + sh], [sx + sw, sy + sh]], dst);
+    v.style.transformOrigin = "0 0";
+    v.style.objectFit = "fill";
+    v.style.transform =
+      `matrix3d(${m[0]},${m[3]},0,${m[6]},${m[1]},${m[4]},0,${m[7]},0,0,1,0,${m[2]},${m[5]},0,1)`;
+    v.style.visibility = "visible";
+  }
+
+  /* XR: swap the punch for a tone-wash (or a real texture when CORS-clean) */
+  let xrMat = null;
+  function videoIsClean(v) {
+    try {
+      const c = document.createElement("canvas");
+      c.width = c.height = 2;
+      const x = c.getContext("2d");
+      x.drawImage(v, 0, 0, 2, 2);
+      x.getImageData(0, 0, 1, 1);
+      return true;
+    } catch { return false; }
+  }
+  function xrScreen(on) {
+    const hole = world?.screen?.userData.hole;
+    if (!hole) return;
+    if (!on) {
+      hole.material = punchMaterial();
+      if (xrMat) { xrMat.dispose?.(); xrMat = null; }
+      return;
+    }
+    const v = bridge.getVideo();
+    if (v.videoWidth && videoIsClean(v)) {
+      const tex = new THREE.VideoTexture(v);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      xrMat = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
+    } else {
+      xrMat = new THREE.ShaderMaterial({
+        uniforms: { c1: { value: tone.tones[0] }, c2: { value: tone.tones[1] }, t: { value: 0 } },
+        vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+        fragmentShader: `
+          varying vec2 vUv; uniform vec3 c1, c2; uniform float t;
+          void main(){
+            float g = vUv.y + .18*sin(vUv.x*3.1+t*.4);
+            vec3 col = mix(c1, c2, g) * (.55 + .1*sin(t*1.1));
+            float vig = smoothstep(1.05, .45, distance(vUv, vec2(.5)));
+            gl_FragColor = vec4(col * vig, 1.);
+          }`
+      });
+    }
+    hole.material = xrMat;
+  }
+
+  /* ── venue lifecycle ── */
+  let world = null, scene = null, rigY = 1.6;
+  function setScene(id) {
+    const def = SCENE_DEFS.find((d) => d.id === id) || SCENE_DEFS[0];
+    if (scene) scene.clear();
+    scene = new THREE.Scene();
+    world = def.build(ctx, scene);
+    // opaque sky dome: with an alpha canvas, ANY uncovered pixel would let
+    // the page bleed through — the punch hole must be the only transparency
+    const dome = new THREE.Mesh(
+      new THREE.SphereGeometry(190, 24, 16),
+      new THREE.MeshBasicMaterial({ color: def.sky ?? 0x05060d, side: THREE.BackSide, fog: false })
+    );
+    scene.add(dome);
+    scene.add(world.group);
+    scene.add(dolly);
+    const p = world.rig.pos;
+    dolly.position.set(p[0], 0, p[2]);
+    rigY = p[1];
+    camera.position.set(0, rigY, 0);
+    yaw = world.rig.yaw || 0; pitch = world.rig.pitch || 0; dist = 0;
+    if (world.screenLight) world.screenLight.userData.base = world.screenLight.intensity;
+    if (renderer.xr.isPresenting) xrScreen(true);
+    chips.querySelectorAll(".venue-chip").forEach((c) =>
+      c.classList.toggle("on", c.dataset.id === def.id));
+    try { localStorage.setItem("tvp.venue", JSON.stringify(def.id)); } catch {}
+  }
+
+  const bug = ui.querySelector("#venue-bug");
+  let bugAt = 0;
+  function refreshBug(now) {
+    if (now - bugAt < 1000) return;
+    bugAt = now;
+    const i = bridge.getInfo();
+    bug.textContent = `${String(i.num).padStart(2, "0")} ${i.channel} — ${i.title}${i.year ? " (" + i.year + ")" : ""}`;
+    refreshTones();
+  }
+
+  function onKey(e) {
+    if (e.key === "x" || (e.key === "Escape" && document.querySelector("#guide:not(.hidden), #search-sheet:not(.hidden)") === null)) {
+      exit();
+    }
+  }
+  document.addEventListener("keydown", onKey);
+  function onResize() {
+    camera.aspect = innerWidth / innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth, innerHeight);
+  }
+  addEventListener("resize", onResize);
+
+  /* ── frame loop ── */
+  const clock = new THREE.Clock();
+  renderer.setAnimationLoop(() => {
+    const dt = Math.min(0.1, clock.getDelta());
+    const t = clock.elapsedTime;
+    tickTone(t, dt);
+    if (!renderer.xr.isPresenting) {
+      const sway = Math.sin(t * 0.23) * 0.012;
+      camera.rotation.set(pitch + sway * 0.4, 0, 0);
+      dolly.rotation.y = yaw + sway;
+      camera.position.set(0, rigY, dist);
+    }
+    camera.updateMatrixWorld();
+    // frame-tone drives the world: screen glow light, air volumes, rim
+    const c = tone.current, f = tone.flicker, energy = 0.45 + tone.lum * 0.9;
+    if (world.screenLight) {
+      world.screenLight.color.copy(c);
+      world.screenLight.intensity = (world.screenLight.userData.base || 20) * energy * f;
+    }
+    world.volumes?.forEach(({ mat, mesh }) => {
+      mat.uniforms.c.value.copy(c);
+      mat.uniforms.t.value = t;
+      mat.uniforms.k.value = (mesh.userData.k ?? 0.08) * energy * f;
+    });
+    const rim = world.screen?.userData.rim;
+    if (rim) { rim.material.color.copy(c); rim.material.opacity = 0.06 + tone.lum * 0.08; }
+    if (xrMat?.uniforms) {
+      xrMat.uniforms.c1.value = tone.tones[0];
+      xrMat.uniforms.c2.value = tone.tones[1 % tone.tones.length];
+      xrMat.uniforms.t.value = t;
+    }
+    world.update?.(t, tone);
+    syncDomScreen();
+    refreshBug(performance.now());
+    renderer.render(scene, camera);
+  });
+
+  let exited = false;
+  function exit() {
+    if (exited) return;
+    exited = true;
+    renderer.xr.getSession()?.end().catch?.(() => {});
+    renderer.setAnimationLoop(null);
+    document.removeEventListener("keydown", onKey);
+    removeEventListener("resize", onResize);
+    clearDom(domVideo);
+    clearDom(bridge.getVideo());
+    renderer.dispose();
+    mount.remove();
+    document.body.classList.remove("in-venue");
+    bridge.onExit?.();
+  }
+
+  setScene(startId || "starlite");
+  return { exit, setScene };
+
+  /* ── texture helpers (canvas-drawn, always same-origin) ── */
   function canvasTex(w, h, draw) {
     const c = document.createElement("canvas");
     c.width = w; c.height = h;
@@ -102,177 +494,20 @@ export function launchScenes(bridge, startId) {
     p.userData.box = box;
     return p;
   }
-  function screenAssembly(w, frameColor = 0x111111, frameDepth = 0.12) {
-    // a 16:9 video plane in a slim frame; every venue places one of these
-    const h = w * 9 / 16;
-    const grp = new THREE.Group();
-    const frame = new THREE.Mesh(
-      new THREE.BoxGeometry(w + 0.24, h + 0.24, frameDepth),
-      new THREE.MeshStandardMaterial({ color: frameColor, roughness: 0.8 })
-    );
-    const face = new THREE.Mesh(new THREE.PlaneGeometry(w, h), videoMaterial());
-    face.position.z = frameDepth / 2 + 0.005;
-    grp.add(frame, face);
-    grp.userData.size = [w, h];
-    return grp;
-  }
-  const ctx = { THREE, canvasTex, stars, motes, screenAssembly, videoMaterial };
-
-  /* ── camera rig: drag to look, wheel/pinch to move ── */
-  const camera = new THREE.PerspectiveCamera(64, innerWidth / innerHeight, 0.05, 400);
-  const dolly = new THREE.Group();
-  dolly.add(camera);
-  let yaw = 0, pitch = 0, dist = 0;
-  const look = { drag: false, x: 0, y: 0, pinch: 0 };
-  const el = renderer.domElement;
-  el.addEventListener("pointerdown", (e) => { look.drag = true; look.x = e.clientX; look.y = e.clientY; el.setPointerCapture(e.pointerId); });
-  el.addEventListener("pointermove", (e) => {
-    if (!look.drag) return;
-    yaw -= (e.clientX - look.x) * 0.0042;
-    pitch = Math.max(-1.2, Math.min(1.2, pitch - (e.clientY - look.y) * 0.0042));
-    look.x = e.clientX; look.y = e.clientY;
-  });
-  el.addEventListener("pointerup", () => { look.drag = false; });
-  el.addEventListener("wheel", (e) => { dist = Math.max(-2, Math.min(6, dist + e.deltaY * 0.004)); e.preventDefault(); }, { passive: false });
-  el.addEventListener("touchmove", (e) => {
-    if (e.touches.length === 2) {
-      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      if (look.pinch) dist = Math.max(-2, Math.min(6, dist + (look.pinch - d) * 0.01));
-      look.pinch = d;
-    }
-  }, { passive: true });
-  el.addEventListener("touchend", () => { look.pinch = 0; });
-
-  /* ── DOM overlay: venue chips, channel bug, VR + exit ── */
-  const ui = document.createElement("div");
-  ui.id = "venue-ui";
-  ui.innerHTML = `
-    <div id="venue-bug"></div>
-    <button id="venue-exit" title="Back to 2D (x)">✕</button>
-    <div id="venue-chips"></div>
-    <button id="venue-vr" class="hidden">Enter VR</button>`;
-  mount.appendChild(ui);
-  const chips = ui.querySelector("#venue-chips");
-  SCENE_DEFS.forEach((d) => {
-    const b = document.createElement("button");
-    b.className = "venue-chip";
-    b.dataset.id = d.id;
-    b.innerHTML = `<span>${d.emoji}</span>${d.name}`;
-    b.addEventListener("click", () => setScene(d.id));
-    chips.appendChild(b);
-  });
-  ui.querySelector("#venue-exit").addEventListener("click", exit);
-
-  navigator.xr?.isSessionSupported?.("immersive-vr").then((ok) => {
-    if (!ok) return;
-    const vb = ui.querySelector("#venue-vr");
-    vb.classList.remove("hidden");
-    vb.addEventListener("click", async () => {
-      try {
-        if (renderer.xr.getSession()) { renderer.xr.getSession().end(); return; }
-        const s = await navigator.xr.requestSession("immersive-vr", { optionalFeatures: ["local-floor"] });
-        s.addEventListener("end", () => { vb.textContent = "Enter VR"; dolly.position.y = rigY; });
-        await renderer.xr.setSession(s);
-        dolly.position.y = Math.max(0, rigY - 1.6);   // headset supplies eye height
-        vb.textContent = "Exit VR";
-      } catch {}
-    });
-  }).catch(() => {});
-
-  /* ── venue lifecycle ── */
-  let world = null, scene = null, rigY = 1.6;
-  function setScene(id) {
-    const def = SCENE_DEFS.find((d) => d.id === id) || SCENE_DEFS[0];
-    if (world) { scene.clear(); }
-    screenMats.length = 0;
-    scene = new THREE.Scene();
-    world = def.build(ctx, scene);
-    scene.add(world.group);
-    scene.add(dolly);
-    const p = world.rig.pos;
-    dolly.position.set(p[0], 0, p[2]);
-    rigY = p[1];
-    camera.position.set(0, rigY, 0);
-    yaw = world.rig.yaw || 0; pitch = world.rig.pitch || 0; dist = 0;
-    texVideo = null;                       // force texture re-bind to new mats
-    if (videoTex) { videoTex.dispose(); videoTex = null; }
-    chips.querySelectorAll(".venue-chip").forEach((c) =>
-      c.classList.toggle("on", c.dataset.id === def.id));
-    try { localStorage.setItem("tvp.venue", JSON.stringify(def.id)); } catch {}
-  }
-
-  /* channel bug text, refreshed gently */
-  const bug = ui.querySelector("#venue-bug");
-  let bugAt = 0;
-  function refreshBug(t) {
-    if (t - bugAt < 1000) return;
-    bugAt = t;
-    const i = bridge.getInfo();
-    bug.textContent = `${String(i.num).padStart(2, "0")} ${i.channel} — ${i.title}${i.year ? " (" + i.year + ")" : ""}`;
-  }
-
-  /* keys: x always exits; Esc exits when no app overlay is using it */
-  function onKey(e) {
-    if (e.key === "x" || (e.key === "Escape" && document.querySelector("#guide:not(.hidden), #search-sheet:not(.hidden)") === null)) {
-      exit();
-    }
-  }
-  document.addEventListener("keydown", onKey);
-  function onResize() {
-    camera.aspect = innerWidth / innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth, innerHeight);
-  }
-  addEventListener("resize", onResize);
-
-  /* ── frame loop ── */
-  const clock = new THREE.Clock();
-  renderer.setAnimationLoop(() => {
-    const t = clock.getElapsedTime();
-    syncVideoTexture();
-    if (!renderer.xr.isPresenting) {
-      const sway = Math.sin(t * 0.23) * 0.012;
-      camera.rotation.set(pitch + sway * 0.4, 0, 0);
-      dolly.rotation.y = yaw + sway;
-      camera.position.set(0, rigY, dist);
-    }
-    world.update?.(t);
-    refreshBug(performance.now());
-    renderer.render(scene, camera);
-  });
-
-  let exited = false;
-  function exit() {
-    if (exited) return;
-    exited = true;
-    renderer.xr.getSession()?.end().catch?.(() => {});
-    renderer.setAnimationLoop(null);
-    document.removeEventListener("keydown", onKey);
-    removeEventListener("resize", onResize);
-    if (videoTex) videoTex.dispose();
-    renderer.dispose();
-    mount.remove();
-    document.body.classList.remove("in-venue");
-    bridge.onExit?.();
-  }
-
-  setScene(startId || "starlite");
-  return { exit, setScene };
 }
 
 /* ════════════════════ the five venues ════════════════════ */
 
-/* 🚗 Starlite Drive-In — asphalt, big white screen, a sky full of stars */
+/* 🚗 Starlite Drive-In */
 SCENE_DEFS.push({
-  id: "starlite", name: "Starlite Drive-In", emoji: "🚗",
-  build({ THREE, canvasTex, stars, screenAssembly }, scene) {
+  id: "starlite", name: "Starlite Drive-In", emoji: "🚗", sky: 0x05060d,
+  build({ THREE, canvasTex, stars, screenAssembly, glowVolume }, scene) {
     const g = new THREE.Group();
     scene.fog = new THREE.Fog(0x05060d, 30, 160);
-    scene.background = new THREE.Color(0x05060d);
 
     const ground = new THREE.Mesh(
       new THREE.CircleGeometry(120, 40),
-      new THREE.MeshStandardMaterial({ color: 0x14161a, roughness: 1 })
+      new THREE.MeshStandardMaterial({ color: 0x14161a, roughness: 0.85, metalness: 0.05 })
     );
     ground.rotation.x = -Math.PI / 2;
     g.add(ground);
@@ -289,11 +524,22 @@ SCENE_DEFS.push({
       g.add(pole);
     });
 
-    // rows of parked silhouette cars, tail-lights winking
+    // the projection hut, and its long beam through the night air
+    const hut = new THREE.Mesh(new THREE.BoxGeometry(3, 2.6, 3),
+      new THREE.MeshStandardMaterial({ color: 0x22262c, roughness: 0.9 }));
+    hut.position.set(0, 1.3, 10);
+    g.add(hut);
+    const beam = glowVolume(4.4, 0.35, 34, 0.10);
+    beam.mesh.rotation.x = Math.PI / 2 - 0.09;
+    beam.mesh.position.set(0, 5.2, -8);
+    g.add(beam.mesh);
+
+    // parked silhouettes — glass raked to bounce the screen light back at us
     const tails = [];
-    const carBody = new THREE.MeshStandardMaterial({ color: 0x1c2026, roughness: 0.6, metalness: 0.3 });
+    const carBody = new THREE.MeshStandardMaterial({ color: 0x1c2026, roughness: 0.35, metalness: 0.55 });
+    const glassMat = new THREE.MeshStandardMaterial({ color: 0x2a3340, roughness: 0.12, metalness: 0.9 });
     for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) {
-      if (r === 1 && c === 2) continue;              // our spot
+      if (r === 1 && c === 2) continue;
       const car = new THREE.Group();
       const body = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.7, 5), carBody);
       body.position.y = 0.55;
@@ -301,13 +547,16 @@ SCENE_DEFS.push({
       roof.rotation.z = Math.PI / 2;
       roof.rotation.y = Math.PI / 2;
       roof.position.y = 0.92;
+      const glass = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 0.85), glassMat);
+      glass.position.set(0, 1.25, -1.55);
+      glass.rotation.x = -0.42;
       const tail = new THREE.Mesh(
         new THREE.BoxGeometry(1.6, 0.12, 0.06),
         new THREE.MeshBasicMaterial({ color: 0xd42a1e })
       );
       tail.position.set(0, 0.62, 2.52);
       tails.push(tail.material);
-      car.add(body, roof, tail);
+      car.add(body, roof, glass, tail);
       car.position.set((c - 2) * 5.4 + (r % 2 ? 1.4 : 0), 0, -4 - r * 7 + (Math.sin(c * 9 + r) * 0.5));
       car.rotation.y = (Math.random() - 0.5) * 0.12;
       g.add(car);
@@ -315,12 +564,11 @@ SCENE_DEFS.push({
         new THREE.MeshStandardMaterial({ color: 0x555b63 }));
       post.position.set(car.position.x - 1.7, 0.55, car.position.z);
       const box = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.32, 0.2),
-        new THREE.MeshStandardMaterial({ color: 0x777f88 }));
+        new THREE.MeshStandardMaterial({ color: 0x777f88, roughness: 0.4, metalness: 0.6 }));
       box.position.set(post.position.x, 1.15, post.position.z);
       g.add(post, box);
     }
 
-    // neon marquee off to the side
     const marquee = new THREE.Mesh(
       new THREE.PlaneGeometry(7, 3.4),
       new THREE.MeshBasicMaterial({
@@ -343,7 +591,6 @@ SCENE_DEFS.push({
     marqueeGlow.position.set(20, 4.6, -11);
     g.add(marqueeGlow);
 
-    // moon
     const moon = new THREE.Mesh(new THREE.CircleGeometry(4, 24),
       new THREE.MeshBasicMaterial({
         map: canvasTex(128, 128, (x, w, h) => {
@@ -356,13 +603,14 @@ SCENE_DEFS.push({
     g.add(moon);
     g.add(stars(900, 150, 0.42));
 
-    g.add(new THREE.AmbientLight(0x33384a, 0.9));
-    const screenGlow = new THREE.PointLight(0xbfd4ff, 30, 45, 1.7);
-    screenGlow.position.set(0, 6, -20);
-    g.add(screenGlow);
+    g.add(new THREE.AmbientLight(0x3a4058, 1.25));
+    const screenLight = new THREE.PointLight(0xbfd4ff, 34, 55, 1.6);
+    screenLight.position.set(0, 6.5, -22);
+    g.add(screenLight);
 
     return {
-      group: g, rig: { pos: [0, 1.35, -11], yaw: 0 },
+      group: g, screen, screenLight, volumes: [beam],
+      rig: { pos: [0, 1.35, -11], yaw: 0 },
       update(t) {
         marqueeGlow.intensity = 12 + Math.sin(t * 17) * 1.6 + Math.sin(t * 3.1) * 1.2;
         tails.forEach((m, i) => { m.color.setScalar(0); m.color.r = 0.55 + 0.45 * (Math.sin(t * 0.7 + i * 2.4) > 0.92 ? 1 : 0.35); });
@@ -371,15 +619,13 @@ SCENE_DEFS.push({
   }
 });
 
-/* 🪐 Neon Orbit Lounge — synthwave grid, planet out the window */
+/* 🪐 Neon Orbit Lounge */
 SCENE_DEFS.push({
-  id: "neon", name: "Neon Orbit Lounge", emoji: "🪐",
-  build({ THREE, canvasTex, stars, screenAssembly }, scene) {
+  id: "neon", name: "Neon Orbit Lounge", emoji: "🪐", sky: 0x070312,
+  build({ THREE, canvasTex, stars, screenAssembly, glowVolume }, scene) {
     const g = new THREE.Group();
-    scene.background = new THREE.Color(0x070312);
     scene.fog = new THREE.Fog(0x070312, 26, 90);
 
-    // the lounge floor: an animated neon grid shader
     const gridMat = new THREE.ShaderMaterial({
       uniforms: { t: { value: 0 } },
       transparent: true,
@@ -401,7 +647,6 @@ SCENE_DEFS.push({
     grid.position.z = -40;
     g.add(grid);
 
-    // synth sun on the horizon
     const sun = new THREE.Mesh(new THREE.CircleGeometry(13, 48),
       new THREE.MeshBasicMaterial({
         map: canvasTex(256, 256, (x, w, h) => {
@@ -415,7 +660,6 @@ SCENE_DEFS.push({
     sun.position.set(0, 10, -95);
     g.add(sun);
 
-    // ringed planet, hanging in the black
     const planet = new THREE.Mesh(new THREE.SphereGeometry(6, 32, 24),
       new THREE.MeshStandardMaterial({
         map: canvasTex(256, 128, (x, w, h) => {
@@ -431,7 +675,6 @@ SCENE_DEFS.push({
     g.add(planet, ring);
     g.add(stars(1200, 140, 0.4, 0xcfe6ff));
 
-    // the floating hologram screen, framed in neon
     const screen = screenAssembly(10.5, 0x0b0618, 0.1);
     screen.position.set(0, 4.6, -14);
     screen.rotation.x = -0.04;
@@ -442,10 +685,14 @@ SCENE_DEFS.push({
       tube.position.set(x, 4.6, -13.9);
       g.add(tube);
     });
+    // the hologram sheds light into the room
+    const holoGlow = glowVolume(5.6, 2.2, 9, 0.09);
+    holoGlow.mesh.rotation.x = -Math.PI / 2 + 0.16;
+    holoGlow.mesh.position.set(0, 3.6, -9.6);
+    g.add(holoGlow.mesh);
 
-    // bar counter with underglow, a few stools
     const bar = new THREE.Mesh(new THREE.BoxGeometry(9, 1.15, 1.6),
-      new THREE.MeshStandardMaterial({ color: 0x140a26, roughness: 0.35, metalness: 0.5 }));
+      new THREE.MeshStandardMaterial({ color: 0x140a26, roughness: 0.18, metalness: 0.75 }));
     bar.position.set(0, 0.58, -5.5);
     const glowStrip = new THREE.Mesh(new THREE.BoxGeometry(9.06, 0.08, 1.66),
       new THREE.MeshBasicMaterial({ color: 0x22e6ff }));
@@ -464,7 +711,6 @@ SCENE_DEFS.push({
       g.add(stool);
     }
 
-    // ceiling neon rails
     const rails = [];
     for (let i = 0; i < 5; i++) {
       const rail = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 22, 8),
@@ -475,13 +721,16 @@ SCENE_DEFS.push({
       g.add(rail);
     }
 
-    g.add(new THREE.AmbientLight(0x2a1f4a, 1.1));
-    const pink = new THREE.PointLight(0xff2fa0, 25, 30, 1.8); pink.position.set(-6, 5, -8);
-    const cyan = new THREE.PointLight(0x22e6ff, 25, 30, 1.8); cyan.position.set(6, 5, -8);
-    g.add(pink, cyan);
+    g.add(new THREE.AmbientLight(0x32265a, 1.3));
+    const pink = new THREE.PointLight(0xff2fa0, 20, 30, 1.8); pink.position.set(-6, 5, -8);
+    const cyan = new THREE.PointLight(0x22e6ff, 20, 30, 1.8); cyan.position.set(6, 5, -8);
+    const screenLight = new THREE.PointLight(0x8fa8c8, 30, 30, 1.7);
+    screenLight.position.set(0, 4.4, -12.5);
+    g.add(pink, cyan, screenLight);
 
     return {
-      group: g, rig: { pos: [0, 1.5, -1.5], yaw: 0 },
+      group: g, screen, screenLight, volumes: [holoGlow],
+      rig: { pos: [0, 1.5, -1.5], yaw: 0 },
       update(t) {
         gridMat.uniforms.t.value = t;
         rails.forEach((m, i) => { m.opacity = 0.75 + 0.25 * Math.sin(t * 2.2 + i * 1.7); });
@@ -491,25 +740,22 @@ SCENE_DEFS.push({
   }
 });
 
-/* 🎭 The Bijou — gilt, velvet, and a projector beam full of dust */
+/* 🎭 The Bijou */
 SCENE_DEFS.push({
-  id: "bijou", name: "The Bijou", emoji: "🎭",
-  build({ THREE, canvasTex, motes, screenAssembly }, scene) {
+  id: "bijou", name: "The Bijou", emoji: "🎭", sky: 0x0c0705,
+  build({ THREE, motes, screenAssembly, glowVolume }, scene) {
     const g = new THREE.Group();
-    scene.background = new THREE.Color(0x0c0705);
     scene.fog = new THREE.Fog(0x0c0705, 18, 60);
 
-    const gold = new THREE.MeshStandardMaterial({ color: 0xb98a2e, roughness: 0.35, metalness: 0.75, emissive: 0x4a3410, emissiveIntensity: 0.35 });
+    const gold = new THREE.MeshStandardMaterial({ color: 0xb98a2e, roughness: 0.22, metalness: 0.85, emissive: 0x4a3410, emissiveIntensity: 0.3 });
     const velvet = new THREE.MeshStandardMaterial({ color: 0x7c1220, roughness: 0.95 });
 
-    // raked floor and carpet
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(26, 34),
-      new THREE.MeshStandardMaterial({ color: 0x2a0e12, roughness: 1 }));
+      new THREE.MeshStandardMaterial({ color: 0x2a0e12, roughness: 0.9 }));
     floor.rotation.x = -Math.PI / 2;
     floor.position.z = -8;
     g.add(floor);
 
-    // proscenium arch: columns, lintel, screen inside
     [[-8.2, 0], [8.2, 0]].forEach(([x]) => {
       const col = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.9, 11, 14), gold);
       col.position.set(x, 5.5, -20);
@@ -526,26 +772,26 @@ SCENE_DEFS.push({
     screen.position.set(0, 5.6, -19.4);
     g.add(screen);
 
-    // folded velvet curtains left and right
+    // curtains drawn OPEN: inner edges must clear the 13-wide screen
+    // (±6.5) or the velvet eats the edges of the picture
     [-1, 1].forEach((side) => {
-      const geo = new THREE.PlaneGeometry(4.6, 10.4, 46, 1);
+      const geo = new THREE.PlaneGeometry(3.4, 10.4, 34, 1);
       const pos = geo.attributes.position;
       for (let i = 0; i < pos.count; i++) {
         pos.setZ(i, Math.sin(pos.getX(i) * 4.2) * 0.32);
       }
       geo.computeVertexNormals();
       const cur = new THREE.Mesh(geo, velvet);
-      cur.position.set(side * 6.2, 5.6, -18.9);
+      cur.position.set(side * 8.6, 5.6, -18.9);
       g.add(cur);
-      const swag = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 4.8, 10, 1, false), velvet);
+      const swag = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 4.2, 10, 1, false), velvet);
       swag.rotation.z = Math.PI / 2 + side * 0.22;
-      swag.position.set(side * 6.2, 10.2, -18.8);
+      swag.position.set(side * 7.9, 10.4, -18.8);
       g.add(swag);
     });
 
-    // rows of seats (instanced)
     const seatGeo = new THREE.BoxGeometry(0.86, 0.9, 0.8);
-    const seatMat = new THREE.MeshStandardMaterial({ color: 0x4a0d16, roughness: 0.9 });
+    const seatMat = new THREE.MeshStandardMaterial({ color: 0x4a0d16, roughness: 0.7, metalness: 0.15 });
     const rows = 6, cols = 12;
     const seats = new THREE.InstancedMesh(seatGeo, seatMat, rows * cols);
     const m4 = new THREE.Matrix4();
@@ -557,7 +803,6 @@ SCENE_DEFS.push({
     }
     g.add(seats);
 
-    // wall sconces (fake glow) + two real warm lights
     for (let i = 0; i < 4; i++) {
       [-1, 1].forEach((side) => {
         const sconce = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8),
@@ -566,42 +811,41 @@ SCENE_DEFS.push({
         g.add(sconce);
       });
     }
-    const warmL = new THREE.PointLight(0xffb45e, 26, 30, 1.9); warmL.position.set(-9, 6, -10);
-    const warmR = new THREE.PointLight(0xffb45e, 26, 30, 1.9); warmR.position.set(9, 6, -10);
-    g.add(warmL, warmR, new THREE.AmbientLight(0x40281c, 1.0));
+    const warmL = new THREE.PointLight(0xffb45e, 18, 30, 1.9); warmL.position.set(-9, 6, -10);
+    const warmR = new THREE.PointLight(0xffb45e, 18, 30, 1.9); warmR.position.set(9, 6, -10);
+    g.add(warmL, warmR, new THREE.AmbientLight(0x4a3022, 1.2));
 
-    // projector beam + dust
-    const beam = new THREE.Mesh(
-      new THREE.ConeGeometry(3.4, 22, 20, 1, true),
-      new THREE.MeshBasicMaterial({ color: 0xcfd8ff, transparent: true, opacity: 0.05, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending })
-    );
-    beam.rotation.x = Math.PI / 2 - 0.12;
-    beam.position.set(0, 7.4, -9);
-    g.add(beam);
+    // the projector's beam, and the screen's own glow washing the gold
+    const beam = glowVolume(3.6, 0.3, 23, 0.12);
+    beam.mesh.rotation.x = Math.PI / 2 - 0.115;
+    beam.mesh.position.set(0, 7.3, -8.5);
+    g.add(beam.mesh);
+    const screenLight = new THREE.PointLight(0xbfd4ff, 36, 40, 1.6);
+    screenLight.position.set(0, 5.4, -16.5);
+    g.add(screenLight);
+
     const dust = motes(160, [7, 6, 20], 0.05, 0xcfd8ff);
     dust.position.set(0, 4.5, -10);
     g.add(dust);
 
     return {
-      group: g, rig: { pos: [0, 1.55, -4.5], yaw: 0 },
+      group: g, screen, screenLight, volumes: [beam],
+      rig: { pos: [0, 1.55, -4.5], yaw: 0 },
       update(t) {
         dust.position.y = 4.5 + Math.sin(t * 0.12) * 0.25;
         dust.rotation.y = t * 0.008;
-        beam.material.opacity = 0.045 + Math.sin(t * 9) * 0.006;
       }
     };
   }
 });
 
-/* 💎 Grotto Lumina — crystal water, glowing shards, screen in the rock */
+/* 💎 Grotto Lumina */
 SCENE_DEFS.push({
-  id: "grotto", name: "Grotto Lumina", emoji: "💎",
-  build({ THREE, motes, screenAssembly, videoMaterial }, scene) {
+  id: "grotto", name: "Grotto Lumina", emoji: "💎", sky: 0x02070a,
+  build({ THREE, motes, screenAssembly, glowVolume }, scene) {
     const g = new THREE.Group();
-    scene.background = new THREE.Color(0x02070a);
     scene.fog = new THREE.Fog(0x02070a, 12, 55);
 
-    // cave shell: displaced icosphere, inside-out
     const shellGeo = new THREE.IcosahedronGeometry(24, 3);
     const sp = shellGeo.attributes.position;
     for (let i = 0; i < sp.count; i++) {
@@ -613,24 +857,27 @@ SCENE_DEFS.push({
     }
     shellGeo.computeVertexNormals();
     const shell = new THREE.Mesh(shellGeo, new THREE.MeshStandardMaterial({
-      color: 0x1a2430, roughness: 1, side: THREE.BackSide, flatShading: true
+      color: 0x1a2430, roughness: 0.85, metalness: 0.08, side: THREE.BackSide, flatShading: true
     }));
     shell.position.y = 6;
     g.add(shell);
 
-    // crystal water
+    // crystal water — sparkle tinted by the frame tone
     const waterMat = new THREE.ShaderMaterial({
-      uniforms: { t: { value: 0 } },
+      uniforms: { t: { value: 0 }, tint: { value: new THREE.Color(0x59e8ff) } },
       transparent: true,
       vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
       fragmentShader: `
-        varying vec2 vUv; uniform float t;
+        varying vec2 vUv; uniform float t; uniform vec3 tint;
         void main(){
           vec2 p = vUv*22.;
           float w = sin(p.x+t*.8)*sin(p.y*1.3-t*.6) + sin((p.x+p.y)*.7+t*1.1)*.5;
-          float sparkle = smoothstep(.92,1.,sin(p.x*3.1+t*2.)*sin(p.y*2.7-t*1.7));
+          float sparkle = smoothstep(.9,1.,sin(p.x*3.1+t*2.)*sin(p.y*2.7-t*1.7));
           vec3 col = mix(vec3(.01,.09,.13), vec3(.05,.35,.42), .5+.5*w);
-          col += vec3(.5,.95,1.)*sparkle*.6;
+          col += tint*sparkle*.75;
+          // a soft lane of screen-light lying on the water
+          float lane = smoothstep(.35,.0,abs(vUv.x-.5)) * smoothstep(.1,.55,vUv.y);
+          col += tint * lane * .22 * (0.75+0.25*sin(t*1.3+vUv.y*14.));
           float edge = smoothstep(.5,.15,distance(vUv,vec2(.5)));
           gl_FragColor = vec4(col, .88*edge);
         }`
@@ -640,21 +887,17 @@ SCENE_DEFS.push({
     water.position.set(0, 0.02, -6);
     g.add(water);
 
-    // screen set into the far rock face, arch of crystals around it
     const screen = screenAssembly(9, 0x0c141c, 0.3);
     screen.position.set(0, 4.3, -16.5);
     g.add(screen);
-    // its shimmering reflection in the water
-    const refl = new THREE.Mesh(new THREE.PlaneGeometry(9, 9 * 9 / 16), videoMaterial());
-    refl.material.transparent = true;
-    refl.material.opacity = 0.22;
-    refl.position.set(0, -4.3 + 0.08, -16.5);
-    refl.scale.y = -1;
-    g.add(refl);
+    // screen-glow rolling across the water toward us
+    const wash = glowVolume(5.2, 1.8, 12, 0.07);
+    wash.mesh.rotation.x = -Math.PI / 2 + 0.22;
+    wash.mesh.position.set(0, 2.6, -10.5);
+    g.add(wash.mesh);
 
-    // crystal clusters
     const crysMat = (c) => new THREE.MeshStandardMaterial({
-      color: c, roughness: 0.15, metalness: 0.1, emissive: c, emissiveIntensity: 0.55,
+      color: c, roughness: 0.12, metalness: 0.15, emissive: c, emissiveIntensity: 0.5,
       transparent: true, opacity: 0.88, flatShading: true
     });
     const palette = [0x59e8ff, 0x9f7bff, 0x64ffd0];
@@ -674,34 +917,36 @@ SCENE_DEFS.push({
     glow.position.set(0, 1, -8);
     g.add(glow);
 
-    g.add(new THREE.AmbientLight(0x14303a, 1.2));
-    const cyan = new THREE.PointLight(0x59e8ff, 30, 26, 1.8); cyan.position.set(-8, 3.5, -10);
-    const violet = new THREE.PointLight(0x9f7bff, 26, 26, 1.8); violet.position.set(8, 3.5, -9);
-    g.add(cyan, violet);
+    g.add(new THREE.AmbientLight(0x1a3c48, 1.4));
+    const cyan = new THREE.PointLight(0x59e8ff, 24, 26, 1.8); cyan.position.set(-8, 3.5, -10);
+    const violet = new THREE.PointLight(0x9f7bff, 20, 26, 1.8); violet.position.set(8, 3.5, -9);
+    const screenLight = new THREE.PointLight(0x8fd8ff, 34, 32, 1.6);
+    screenLight.position.set(0, 4, -14.5);
+    g.add(cyan, violet, screenLight);
 
     return {
-      group: g, rig: { pos: [0, 1.5, 3.5], yaw: 0 },
-      update(t) {
+      group: g, screen, screenLight, volumes: [wash],
+      rig: { pos: [0, 1.5, 3.5], yaw: 0 },
+      update(t, tone) {
         waterMat.uniforms.t.value = t;
+        waterMat.uniforms.tint.value.copy(tone.current);
         glow.rotation.y = t * 0.02;
         glow.position.y = 1 + Math.sin(t * 0.3) * 0.3;
-        cyan.intensity = 28 + Math.sin(t * 1.3) * 5;
-        violet.intensity = 24 + Math.sin(t * 1.7 + 2) * 5;
+        cyan.intensity = 22 + Math.sin(t * 1.3) * 4;
+        violet.intensity = 18 + Math.sin(t * 1.7 + 2) * 4;
       }
     };
   }
 });
 
-/* 📼 Rec Room ’07 — CRT, couch, lava lamp; the year Joost shipped */
+/* 📼 Rec Room ’07 */
 SCENE_DEFS.push({
-  id: "rec07", name: "Rec Room ’07", emoji: "📼",
-  build({ THREE, canvasTex, screenAssembly }, scene) {
+  id: "rec07", name: "Rec Room ’07", emoji: "📼", sky: 0x0b0908,
+  build({ THREE, canvasTex, screenAssembly, glowVolume }, scene) {
     const g = new THREE.Group();
-    scene.background = new THREE.Color(0x0b0908);
     scene.fog = new THREE.Fog(0x0b0908, 12, 40);
 
-    // room shell
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x40372c, roughness: 1, side: THREE.BackSide });
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x40372c, roughness: 0.95, side: THREE.BackSide });
     const room = new THREE.Mesh(new THREE.BoxGeometry(14, 6.4, 16), wallMat);
     room.position.set(0, 3.2, -4);
     g.add(room);
@@ -711,33 +956,38 @@ SCENE_DEFS.push({
     rug.position.set(0, 0.012, -5);
     g.add(rug);
 
-    // the TV: fat CRT shell around the live screen, on a media stand
     const crt = new THREE.Group();
     const shell = new THREE.Mesh(new THREE.BoxGeometry(4.5, 3.15, 2.6),
-      new THREE.MeshStandardMaterial({ color: 0x2b2a28, roughness: 0.55 }));
+      new THREE.MeshStandardMaterial({ color: 0x2b2a28, roughness: 0.35, metalness: 0.2 }));
     const screen = screenAssembly(3.6, 0x191917, 0.06);
     screen.position.set(0, 0.06, 1.32);
-    // faint scanlines over the tube
     const scan = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 3.6 * 9 / 16),
       new THREE.MeshBasicMaterial({
         map: canvasTex(8, 256, (x, w, h) => {
           x.clearRect(0, 0, w, h);
           x.fillStyle = "rgba(0,0,0,.55)";
           for (let y = 0; y < h; y += 4) x.fillRect(0, y, w, 1.6);
-        }), transparent: true, opacity: 0.28, depthWrite: false
+        }), transparent: true, opacity: 0.22, depthWrite: false
       }));
     scan.position.set(0, 0.06, 1.42);
     crt.add(shell, screen, scan);
     crt.position.set(0, 2.15, -9.6);
     g.add(crt);
+    // note: `screen` sits inside crt — flag world-space parent for the punch
+    // (the shared code uses matrixWorld, so nesting is fine)
+
+    // the tube's glow spilling into the room
+    const tvGlow = glowVolume(3.4, 1.1, 6.5, 0.10);
+    tvGlow.mesh.rotation.x = -Math.PI / 2 + 0.12;
+    tvGlow.mesh.position.set(0, 1.9, -6.3);
+    g.add(tvGlow.mesh);
 
     const stand = new THREE.Mesh(new THREE.BoxGeometry(5.2, 1.1, 2.2),
-      new THREE.MeshStandardMaterial({ color: 0x241a12, roughness: 0.8 }));
+      new THREE.MeshStandardMaterial({ color: 0x241a12, roughness: 0.45, metalness: 0.1 }));
     stand.position.set(0, 0.55, -9.6);
     g.add(stand);
-    // VHS deck, forever blinking 12:00
     const vhs = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.34, 1.4),
-      new THREE.MeshStandardMaterial({ color: 0x171512, roughness: 0.5 }));
+      new THREE.MeshStandardMaterial({ color: 0x171512, roughness: 0.4, metalness: 0.3 }));
     vhs.position.set(-1.2, 1.3, -9.4);
     const clockTex = canvasTex(128, 32, (x, w, h) => {
       x.fillStyle = "#020403"; x.fillRect(0, 0, w, h);
@@ -748,7 +998,6 @@ SCENE_DEFS.push({
     vhsClock.position.set(-1.2, 1.32, -8.68);
     g.add(vhs, vhsClock);
 
-    // couch
     const couchMat = new THREE.MeshStandardMaterial({ color: 0x35452e, roughness: 0.95 });
     const couch = new THREE.Group();
     const base = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.85, 1.9), couchMat); base.position.y = 0.65;
@@ -762,12 +1011,12 @@ SCENE_DEFS.push({
     couch.position.set(0, 0, -1.6);
     couch.rotation.y = Math.PI;
     g.add(couch);
+    // glossy coffee table — it catches the tube light
     const table = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.5, 20),
-      new THREE.MeshStandardMaterial({ color: 0x241a12, roughness: 0.6 }));
+      new THREE.MeshStandardMaterial({ color: 0x241a12, roughness: 0.15, metalness: 0.25 }));
     table.position.set(0, 0.25, -5);
     g.add(table);
 
-    // lava lamp
     const lamp = new THREE.Group();
     const glass = new THREE.Mesh(new THREE.ConeGeometry(0.34, 1.15, 14, 1, true),
       new THREE.MeshStandardMaterial({ color: 0xff7b2d, transparent: true, opacity: 0.28, roughness: 0.2 }));
@@ -784,14 +1033,12 @@ SCENE_DEFS.push({
       lamp.add(b);
     }
     lamp.add(glass, lampBase);
-    lamp.position.set(2.6, 1.1 - 0.55, -9.2);
-    lamp.position.y = 1.1;
+    lamp.position.set(2.6, 1.1, -9.2);
     g.add(lamp);
-    const lavaGlow = new THREE.PointLight(0xff8b3d, 9, 8, 1.9);
+    const lavaGlow = new THREE.PointLight(0xff8b3d, 8, 8, 1.9);
     lavaGlow.position.set(2.6, 1.9, -9.2);
     g.add(lavaGlow);
 
-    // window with the 2007 night outside
     const win = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 2.7),
       new THREE.MeshBasicMaterial({
         map: canvasTex(512, 320, (x, w, h) => {
@@ -816,7 +1063,6 @@ SCENE_DEFS.push({
     frame.position.set(-6.98, 3.4, -6);
     g.add(win, frame);
 
-    // test-card poster on the back wall
     const poster = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.65),
       new THREE.MeshBasicMaterial({
         map: canvasTex(256, 192, (x, w, h) => {
@@ -830,20 +1076,23 @@ SCENE_DEFS.push({
     poster.position.set(3.4, 3.6, -11.9);
     g.add(poster);
 
-    const warm = new THREE.PointLight(0xffc98a, 16, 18, 1.8);
+    const warm = new THREE.PointLight(0xffc98a, 12, 18, 1.8);
     warm.position.set(-3, 4.4, -3);
-    g.add(warm, new THREE.AmbientLight(0x4a4038, 1.0));
+    const screenLight = new THREE.PointLight(0xbfd4ff, 16, 14, 1.7);
+    screenLight.position.set(0, 2.2, -8.2);
+    g.add(warm, screenLight, new THREE.AmbientLight(0x564a40, 1.2));
 
     return {
-      group: g, rig: { pos: [0, 1.35, -2.2], yaw: 0 },
+      group: g, screen, screenLight, volumes: [tvGlow],
+      rig: { pos: [0, 1.35, -2.2], yaw: 0 },
       update(t) {
         blobs.forEach((b, i) => {
           b.position.y = 0.55 + Math.sin(t * 0.5 + i * 2.1) * 0.28;
           const s = 0.8 + Math.sin(t * 0.7 + i * 1.4) * 0.25;
           b.scale.set(s, 1.2 - s * 0.25, s);
         });
-        lavaGlow.intensity = 8 + Math.sin(t * 0.9) * 1.5;
-        vhsClock.visible = Math.sin(t * 3.14) > -0.2;   // that blink
+        lavaGlow.intensity = 7 + Math.sin(t * 0.9) * 1.5;
+        vhsClock.visible = Math.sin(t * 3.14) > -0.2;
       }
     };
   }

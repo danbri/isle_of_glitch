@@ -1512,7 +1512,12 @@ async function toggleVenue() {
       getVideo: () => video,
       getInfo: () => {
         const i = currentProgramInfo(), ch = currentChannel();
-        return { title: i.program.title, year: i.program.year, channel: ch.name, num: ch.num };
+        return {
+          title: i.program.title, year: i.program.year, channel: ch.name, num: ch.num,
+          // CORS-clean still for dominant-tone lighting (WebGL may never
+          // sample the tainted video itself)
+          frame: artUrl(i.program.frame || i.program.art || ch.art) || ""
+        };
       },
       onExit: () => { venueApi = null; $("btn-venue").classList.remove("lit"); }
     }, store.get("venue", ""));
@@ -1528,11 +1533,14 @@ $("btn-venue").addEventListener("click", toggleVenue);
 
 let castApi = null;
 function initCastLater() {
-  if (!("chrome" in window)) return;
+  const supported = ("chrome" in window) || ("WebKitPlaybackTargetAvailabilityEvent" in window);
+  if (!supported) return;
   setTimeout(async () => {
     try {
       const mod = await import("./cast.js");
-      castApi = await mod.initCast({
+      mod.initCast({
+        getVideos: () => [$("tv-a"), $("tv-b")],
+        note: (msg) => chatPush(null, msg, "sys"),
         getMedia: () => {
           const i = currentProgramInfo(), ch = currentChannel();
           return {
@@ -1563,16 +1571,16 @@ function initCastLater() {
             tune(state.chIndex);       // rejoin the broadcast clock
           }
         }
+      }, (api) => {                    // reveal: a transport is usable (may fire late)
+        castApi = api;
+        $("btn-cast").classList.remove("hidden");
+        $("btn-cast").title = api.kind === "airplay" ? "AirPlay" : "Cast to TV";
       });
-      if (castApi) $("btn-cast").classList.remove("hidden");
     } catch {}
   }, 6000);   // well after boot: cast discovery is never on the critical path
 }
 
-$("btn-cast").addEventListener("click", () => {
-  // the framework owns session UI; requestSession via the context
-  try { window.cast?.framework?.CastContext?.getInstance()?.requestSession(); } catch {}
-});
+$("btn-cast").addEventListener("click", () => { castApi?.prompt(); });
 
 /* ── first-seconds cache (service worker) ──────────── */
 

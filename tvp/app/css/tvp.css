@@ -937,10 +937,16 @@ body.overlays-on #cue-layer { bottom: calc(180px + var(--sab)); }
 
 #venue {
   position: fixed; inset: 0; z-index: 38;   /* under controller/guide/search */
-  background: #000;
+  background: transparent;                  /* the punched hole reveals the DOM video below */
 }
-#venue canvas { display: block; width: 100%; height: 100%; touch-action: none; }
-body.in-venue #stage video, body.in-venue #crt { visibility: hidden; }
+#venue canvas { display: block; width: 100%; height: 100%; touch-action: none; background: transparent; }
+body.in-venue { background: #000; }
+/* in venue mode the stage contributes exactly one thing: the active
+   video, lifted by an inline homography transform onto the world screen.
+   Everything else on the stage (interstitial, tunebar, OSDs) must not
+   bleed through the canvas's transparent sky. */
+body.in-venue #stage > :not(video) { visibility: hidden !important; }
+body.in-venue #stage video { visibility: hidden; will-change: transform; }
 body.in-venue #infobar, body.in-venue #comingup, body.in-venue #buddy-strip,
 body.in-venue #ticker, body.in-venue #pinned-layer, body.in-venue #cue-layer { display: none !important; }
 
