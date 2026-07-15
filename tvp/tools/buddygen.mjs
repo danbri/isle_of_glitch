@@ -40,11 +40,20 @@ for (const ch of CHANNELS) {
     const x = SAX.test(hay);
     if (!v && !x) continue;
     const emoji = v && x ? "🎷🎻" : (v ? "🎻" : "🎷");
+    // "period … by the standards of its day" reads absurd on a 2008
+    // Blender short — the vintage framing is reserved for vintage years
+    const vintage = p.year && p.year < 1970;
     const text = v && x
-      ? "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+      ? (vintage
+        ? "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+        : "The orchestra is at full strength tonight: expect both the brass section (adult themes) and the strings (screen violence).")
       : v
-        ? "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-        : "Notable sax section: innuendo or adult themes, by the standards of its day.";
+        ? (vintage
+          ? "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+          : "Heavy on the violins: expect screen violence — action, menace or monster business.")
+        : (vintage
+          ? "Notable sax section: innuendo or adult themes, by the standards of its day."
+          : "Notable sax section: innuendo or adult themes.");
     if (v && x) both++; else if (v) violins++; else sax++;
     nodes.push({
       "@id": "https://archive.org/details/" + id,

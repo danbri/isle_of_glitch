@@ -1646,6 +1646,7 @@ function initCastLater() {
       mod.initCast({
         getVideos: () => [$("tv-a"), $("tv-b")],
         note: (msg) => chatPush(null, msg, "sys"),
+        warn: (msg) => toast(msg),
         getMedia: () => {
           const i = currentProgramInfo(), ch = currentChannel(), p = i.program;
           // Cast hardware can't decode MPEG-4 Part 2 (audio-over-black):
