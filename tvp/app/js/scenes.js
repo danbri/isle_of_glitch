@@ -100,9 +100,9 @@ async function extractTones(url) {
   return { tones: top, lum: n ? lum / n : 0.45 };
 }
 
-/* ── glow volume: soft additive light-in-the-air, tinted per frame ── */
-function glowVolume(rTop, rBottom, length, k) {
-  const mat = new THREE.ShaderMaterial({
+/* ── glow volumes: soft additive light-in-the-air, tinted per frame ── */
+function glowMaterial(k) {
+  return new THREE.ShaderMaterial({
     uniforms: { c: { value: new THREE.Color(0x8fa8c8) }, t: { value: 0 }, k: { value: k } },
     transparent: true, depthWrite: false, side: THREE.DoubleSide,
     blending: THREE.AdditiveBlending,
@@ -116,7 +116,38 @@ function glowVolume(rTop, rBottom, length, k) {
         gl_FragColor = vec4(c, k * body * wisp);
       }`
   });
+}
+
+/* A projector beam is a RECTANGULAR frustum: apex rect (w0×h0) at the
+ * lens, far rect (w1×h1) — the SCREEN'S OWN width and height — where the
+ * light lands. Local -Z is the throw axis: put the mesh at the lens and
+ * lookAt() the screen centre, and the beam's edges meet the screen's
+ * edges exactly. uv.y runs 1 at the lens → 0 at the screen. */
+function beamFrustum(w0, h0, w1, h1, len, k) {
+  const near = [[-w0 / 2, h0 / 2], [w0 / 2, h0 / 2], [w0 / 2, -h0 / 2], [-w0 / 2, -h0 / 2]];
+  const far = [[-w1 / 2, h1 / 2], [w1 / 2, h1 / 2], [w1 / 2, -h1 / 2], [-w1 / 2, -h1 / 2]];
+  const pos = [], uv = [], idx = [];
+  for (let s = 0; s < 4; s++) {
+    const a = near[s], b = near[(s + 1) % 4], A = far[s], B = far[(s + 1) % 4];
+    const base = pos.length / 3;
+    pos.push(a[0], a[1], 0, b[0], b[1], 0, B[0], B[1], -len, A[0], A[1], -len);
+    uv.push(0, 1, 1, 1, 1, 0, 0, 0);
+    idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  geo.setIndex(idx);
+  const mat = glowMaterial(k);
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.userData.k = k;
+  return { mesh, mat };
+}
+
+/* legacy soft cone, still right for shapeless spill (water shimmer etc.) */
+function glowVolume(rTop, rBottom, length, k) {
   const geo = new THREE.CylinderGeometry(rTop, rBottom, length, 18, 10, true);
+  const mat = glowMaterial(k);
   const mesh = new THREE.Mesh(geo, mat);
   mesh.userData.k = k;
   return { mesh, mat };
@@ -157,6 +188,7 @@ export function launchScenes(bridge, startId) {
     );
     rim.position.z = frameDepth / 2 - 0.01;
     const hole = new THREE.Mesh(new THREE.PlaneGeometry(w, h), punchMaterial());
+    hole.userData.punchMat = hole.material;
     hole.position.z = frameDepth / 2 + 0.006;
     hole.renderOrder = -10;                    // punch before anything transparent blends
     grp.add(frame, rim, hole);
@@ -166,7 +198,7 @@ export function launchScenes(bridge, startId) {
     return grp;
   }
 
-  const ctx = { THREE, canvasTex, stars, motes, screenAssembly, glowVolume };
+  const ctx = { THREE, canvasTex, stars, motes, screenAssembly, glowVolume, beamFrustum };
 
   /* ── camera rig ── */
   const camera = new THREE.PerspectiveCamera(64, innerWidth / innerHeight, 0.05, 400);
@@ -262,14 +294,55 @@ export function launchScenes(bridge, startId) {
     tone.flicker = 0.86 + 0.14 * (0.5 + 0.5 * Math.sin(t * 13.7) * Math.sin(t * 5.3));
   }
 
-  /* ── DOM video → world screen, per frame ── */
-  let domVideo = null;
+  /* ── DOM video → world screen, per frame ──
+   * When the world screen is behind you or out of frame, the SAME element
+   * re-pins as a flat mini-player in the corner (a second copy is
+   * impossible — reading the tainted video's pixels is forbidden — but
+   * re-aiming the one element is free). The mini fades with inactivity
+   * and returns to full presence on any interaction. */
+  let domVideo = null, docked = false, lastActivity = performance.now();
+  ["pointerdown", "pointermove", "wheel", "touchstart", "keydown"].forEach((ev) =>
+    document.addEventListener(ev, () => { lastActivity = performance.now(); }, { passive: true }));
   function clearDom(v) {
     if (!v) return;
     v.style.transform = "";
     v.style.transformOrigin = "";
     v.style.visibility = "";
     v.style.objectFit = "";
+    v.style.opacity = "";
+    v.style.borderRadius = "";
+    v.style.transition = "";
+  }
+  function sourceCrop(v) {
+    // central 16:9 crop of the element (object-fit:fill inline), so the
+    // picture cover-fits its target and spill hides under the canvas
+    const W = v.offsetWidth || innerWidth, H = v.offsetHeight || innerHeight;
+    let sx = 0, sy = 0, sw = W, sh = H;
+    if (v.videoWidth) {
+      const va = v.videoWidth / v.videoHeight, qa = 16 / 9;
+      if (va > qa) { sw = W * qa / va; sx = (W - sw) / 2; }
+      else if (va < qa) { sh = H * va / qa; sy = (H - sh) / 2; }
+    }
+    return [[sx, sy], [sx + sw, sy], [sx, sy + sh], [sx + sw, sy + sh]];
+  }
+  function pinTo(v, dst) {
+    const m = homography(sourceCrop(v), dst);
+    v.style.transformOrigin = "0 0";
+    v.style.objectFit = "fill";
+    v.style.transform =
+      `matrix3d(${m[0]},${m[3]},0,${m[6]},${m[1]},${m[4]},0,${m[7]},0,0,1,0,${m[2]},${m[5]},0,1)`;
+    v.style.visibility = "visible";
+  }
+  function dockMini(v) {
+    // corner mini-player: bottom-right, above the venue chips
+    const mw = Math.min(innerWidth * 0.32, 340), mh = mw * 9 / 16;
+    const x1 = innerWidth - mw - 14, y1 = innerHeight - mh - 92;
+    pinTo(v, [[x1, y1], [x1 + mw, y1], [x1, y1 + mh], [x1 + mw, y1 + mh]]);
+    const idle = performance.now() - lastActivity > 4000;
+    v.style.transition = "opacity .45s ease";
+    v.style.opacity = idle ? "0.25" : "0.95";
+    v.style.borderRadius = "10px";
+    docked = true;
   }
   function syncDomScreen() {
     const v = bridge.getVideo();
@@ -281,29 +354,24 @@ export function launchScenes(bridge, startId) {
     hole.updateWorldMatrix(true, false);
     const corners = [[-w / 2, h / 2], [w / 2, h / 2], [-w / 2, -h / 2], [w / 2, -h / 2]];
     const dst = [];
+    let offscreen = false;
     for (const [cx, cy] of corners) {
       const p = new THREE.Vector4(cx, cy, 0, 1)
         .applyMatrix4(hole.matrixWorld)
         .applyMatrix4(camera.matrixWorldInverse)
         .applyMatrix4(camera.projectionMatrix);
-      if (p.w <= 0.001) { v.style.visibility = "hidden"; return; }   // behind us
+      if (p.w <= 0.001) { offscreen = true; break; }   // behind us
       dst.push([(p.x / p.w * 0.5 + 0.5) * innerWidth, (-p.y / p.w * 0.5 + 0.5) * innerHeight]);
     }
-    // source: the central 16:9 crop of the element (object-fit:fill inline),
-    // so the picture cover-fits the quad and spill hides under the canvas
-    const W = v.offsetWidth || innerWidth, H = v.offsetHeight || innerHeight;
-    let sx = 0, sy = 0, sw = W, sh = H;
-    if (v.videoWidth) {
-      const va = v.videoWidth / v.videoHeight, qa = 16 / 9;
-      if (va > qa) { sw = W * qa / va; sx = (W - sw) / 2; }
-      else if (va < qa) { sh = H * va / qa; sy = (H - sh) / 2; }
+    if (!offscreen) {
+      // …or merely out of frame: no part of the quad's bbox in view
+      const xs = dst.map((d) => d[0]), ys = dst.map((d) => d[1]);
+      offscreen = Math.max(...xs) < 0 || Math.min(...xs) > innerWidth ||
+        Math.max(...ys) < 0 || Math.min(...ys) > innerHeight;
     }
-    const m = homography([[sx, sy], [sx + sw, sy], [sx, sy + sh], [sx + sw, sy + sh]], dst);
-    v.style.transformOrigin = "0 0";
-    v.style.objectFit = "fill";
-    v.style.transform =
-      `matrix3d(${m[0]},${m[3]},0,${m[6]},${m[1]},${m[4]},0,${m[7]},0,0,1,0,${m[2]},${m[5]},0,1)`;
-    v.style.visibility = "visible";
+    if (offscreen) { dockMini(v); return; }
+    if (docked) { docked = false; v.style.opacity = ""; v.style.borderRadius = ""; v.style.transition = ""; }
+    pinTo(v, dst);
   }
 
   /* XR: swap the punch for a tone-wash (or a real texture when CORS-clean) */
@@ -322,8 +390,8 @@ export function launchScenes(bridge, startId) {
     const hole = world?.screen?.userData.hole;
     if (!hole) return;
     if (!on) {
-      hole.material = punchMaterial();
-      if (xrMat) { xrMat.dispose?.(); xrMat = null; }
+      hole.material = hole.userData.punchMat || punchMaterial();
+      if (xrMat) { xrMat.map?.dispose?.(); xrMat.dispose?.(); xrMat = null; }
       return;
     }
     const v = bridge.getVideo();
@@ -434,6 +502,13 @@ export function launchScenes(bridge, startId) {
       xrMat.uniforms.t.value = t;
     }
     world.update?.(t, tone);
+    // outside a headset the hole must ALWAYS be the punch — if an XR
+    // session ended abnormally and left the tone-wash behind, heal it
+    const hole = world.screen?.userData.hole;
+    if (hole && !renderer.xr.isPresenting && hole.material !== hole.userData.punchMat) {
+      hole.material = hole.userData.punchMat;
+      if (xrMat) { xrMat.map?.dispose?.(); xrMat.dispose?.(); xrMat = null; }
+    }
     syncDomScreen();
     refreshBug(performance.now());
     try {
@@ -512,7 +587,7 @@ export function launchScenes(bridge, startId) {
 /* 🚗 Starlite Drive-In */
 SCENE_DEFS.push({
   id: "starlite", name: "Starlite Drive-In", emoji: "🚗", sky: 0x05060d,
-  build({ THREE, canvasTex, stars, screenAssembly, glowVolume }, scene) {
+  build({ THREE, canvasTex, stars, screenAssembly, beamFrustum }, scene) {
     const g = new THREE.Group();
     scene.fog = new THREE.Fog(0x05060d, 30, 160);
 
@@ -540,9 +615,9 @@ SCENE_DEFS.push({
       new THREE.MeshStandardMaterial({ color: 0x22262c, roughness: 0.9 }));
     hut.position.set(0, 1.3, 10);
     g.add(hut);
-    const beam = glowVolume(4.4, 0.35, 34, 0.10);
-    beam.mesh.rotation.x = Math.PI / 2 - 0.09;
-    beam.mesh.position.set(0, 5.2, -8);
+    const beam = beamFrustum(0.5, 0.32, 18, 18 * 9 / 16, 35.8, 0.10);
+    beam.mesh.position.set(0, 2.75, 9.5);          // the hut's lens port
+    beam.mesh.lookAt(0, 7.2, -25.7);               // …lands exactly on the screen
     g.add(beam.mesh);
 
     // parked silhouettes — glass raked to bounce the screen light back at us
@@ -633,7 +708,7 @@ SCENE_DEFS.push({
 /* 🪐 Neon Orbit Lounge */
 SCENE_DEFS.push({
   id: "neon", name: "Neon Orbit Lounge", emoji: "🪐", sky: 0x070312,
-  build({ THREE, canvasTex, stars, screenAssembly, glowVolume }, scene) {
+  build({ THREE, canvasTex, stars, screenAssembly, beamFrustum }, scene) {
     const g = new THREE.Group();
     scene.fog = new THREE.Fog(0x070312, 26, 90);
 
@@ -697,9 +772,9 @@ SCENE_DEFS.push({
       g.add(tube);
     });
     // the hologram sheds light into the room
-    const holoGlow = glowVolume(5.6, 2.2, 9, 0.09);
-    holoGlow.mesh.rotation.x = -Math.PI / 2 + 0.16;
-    holoGlow.mesh.position.set(0, 3.6, -9.6);
+    const holoGlow = beamFrustum(10.5, 10.5 * 9 / 16, 13.5, 8.5, 9.5, 0.08);
+    holoGlow.mesh.position.set(0, 4.55, -13.9);    // from the hologram's face…
+    holoGlow.mesh.lookAt(0, 1.6, -3.5);            // …spilling down toward the bar
     g.add(holoGlow.mesh);
 
     const bar = new THREE.Mesh(new THREE.BoxGeometry(9, 1.15, 1.6),
@@ -754,7 +829,7 @@ SCENE_DEFS.push({
 /* 🎭 The Bijou */
 SCENE_DEFS.push({
   id: "bijou", name: "The Bijou", emoji: "🎭", sky: 0x0c0705,
-  build({ THREE, motes, screenAssembly, glowVolume }, scene) {
+  build({ THREE, motes, screenAssembly, beamFrustum }, scene) {
     const g = new THREE.Group();
     scene.fog = new THREE.Fog(0x0c0705, 18, 60);
 
@@ -827,9 +902,13 @@ SCENE_DEFS.push({
     g.add(warmL, warmR, new THREE.AmbientLight(0x4a3022, 1.2));
 
     // the projector's beam, and the screen's own glow washing the gold
-    const beam = glowVolume(3.6, 0.3, 23, 0.12);
-    beam.mesh.rotation.x = Math.PI / 2 - 0.115;
-    beam.mesh.position.set(0, 7.3, -8.5);
+    const booth = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.1, 0.9),
+      new THREE.MeshStandardMaterial({ color: 0x1c120e, roughness: 0.9 }));
+    booth.position.set(0, 7.4, 3.2);
+    g.add(booth);
+    const beam = beamFrustum(0.42, 0.28, 13, 13 * 9 / 16, 22, 0.12);
+    beam.mesh.position.set(0, 7.35, 2.7);          // the booth's porthole
+    beam.mesh.lookAt(0, 5.6, -19.3);               // …edges land on the screen's
     g.add(beam.mesh);
     const screenLight = new THREE.PointLight(0xbfd4ff, 36, 40, 1.6);
     screenLight.position.set(0, 5.4, -16.5);
@@ -853,7 +932,7 @@ SCENE_DEFS.push({
 /* 💎 Grotto Lumina */
 SCENE_DEFS.push({
   id: "grotto", name: "Grotto Lumina", emoji: "💎", sky: 0x02070a,
-  build({ THREE, motes, screenAssembly, glowVolume }, scene) {
+  build({ THREE, motes, screenAssembly, beamFrustum }, scene) {
     const g = new THREE.Group();
     scene.fog = new THREE.Fog(0x02070a, 12, 55);
 
@@ -902,9 +981,9 @@ SCENE_DEFS.push({
     screen.position.set(0, 4.3, -16.5);
     g.add(screen);
     // screen-glow rolling across the water toward us
-    const wash = glowVolume(5.2, 1.8, 12, 0.07);
-    wash.mesh.rotation.x = -Math.PI / 2 + 0.22;
-    wash.mesh.position.set(0, 2.6, -10.5);
+    const wash = beamFrustum(9, 9 * 9 / 16, 11.5, 7, 13, 0.07);
+    wash.mesh.position.set(0, 4.2, -16.2);         // from the screen's face…
+    wash.mesh.lookAt(0, 0.6, -2.5);                // …laying light over the water
     g.add(wash.mesh);
 
     const crysMat = (c) => new THREE.MeshStandardMaterial({
@@ -953,7 +1032,7 @@ SCENE_DEFS.push({
 /* 📼 Rec Room ’07 */
 SCENE_DEFS.push({
   id: "rec07", name: "Rec Room ’07", emoji: "📼", sky: 0x0b0908,
-  build({ THREE, canvasTex, screenAssembly, glowVolume }, scene) {
+  build({ THREE, canvasTex, screenAssembly, beamFrustum }, scene) {
     const g = new THREE.Group();
     scene.fog = new THREE.Fog(0x0b0908, 12, 40);
 
@@ -988,9 +1067,9 @@ SCENE_DEFS.push({
     // (the shared code uses matrixWorld, so nesting is fine)
 
     // the tube's glow spilling into the room
-    const tvGlow = glowVolume(3.4, 1.1, 6.5, 0.10);
-    tvGlow.mesh.rotation.x = -Math.PI / 2 + 0.12;
-    tvGlow.mesh.position.set(0, 1.9, -6.3);
+    const tvGlow = beamFrustum(3.6, 3.6 * 9 / 16, 5.6, 3.6, 6.8, 0.10);
+    tvGlow.mesh.position.set(0, 2.21, -8.2);       // from the tube's face…
+    tvGlow.mesh.lookAt(0, 1.1, -1.4);              // …washing over couch and rug
     g.add(tvGlow.mesh);
 
     const stand = new THREE.Mesh(new THREE.BoxGeometry(5.2, 1.1, 2.2),

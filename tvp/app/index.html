@@ -137,6 +137,18 @@
        must stay visible over venues and every overlay) -->
   <div id="toast" class="hidden"><span id="toast-msg"></span><button id="toast-undo" class="hidden">↩ Back</button></div>
 
+  <!-- mini player while casting: what's on the TV, with remote controls;
+       fades with inactivity, returns on any interaction -->
+  <div id="cast-mini" class="hidden">
+    <img id="cast-mini-art" alt="">
+    <div id="cast-mini-text"><div id="cast-mini-title"></div><div id="cast-mini-sub"></div></div>
+    <div id="cast-mini-ctl">
+      <button id="cast-mini-back" title="Back 30s"><svg viewBox="0 0 24 24"><path d="M11 7L6 12l5 5M18 7l-5 5 5 5" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button id="cast-mini-play" title="Play / pause"><svg viewBox="0 0 24 24"><path d="M7 5v14M12 5l8 7-8 7z" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <button id="cast-mini-fwd" title="Forward 30s"><svg viewBox="0 0 24 24"><path d="M13 7l5 5-5 5M6 7l5 5-5 5" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+  </div>
+
   <div id="controller" class="overlay hidden">
     <div id="progress-row">
       <span id="time-now">0:00</span>
