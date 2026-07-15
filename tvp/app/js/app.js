@@ -219,6 +219,30 @@ function currentProgramInfo() {
 }
 
 function tune(chIndex, opts = {}) {
+  // remember where we were: every tune leaves a road back (Backspace, or
+  // the ↩ Back button on automatic-change toasts). Because this runs on
+  // every tune, pressing Back twice toggles between the two spots.
+  if (state.on && video && (video.currentTime || 0) > 1 && !video.error) {
+    try {
+      const prev = currentProgramInfo();
+      if (video.ended) {
+        // "back" after an ending means rewatching the ending, not
+        // rejoining the live clock (which is the same place, forward).
+        // The schedule may already have rolled over, so identify the
+        // ended program by the element's own stream URL.
+        const was = canonSrc(video.dataset?.src || video.currentSrc || "");
+        const progs = CHANNELS[state.chIndex].programs;
+        const idx = progs.findIndex((p) => p.src === was || p.srcHi === was);
+        state.lastStop = {
+          chIndex: state.chIndex, progIndex: idx >= 0 ? idx : prev.index,
+          t: Math.max(0, video.currentTime - 15), live: false
+        };
+      } else {
+        state.lastStop = { chIndex: state.chIndex, progIndex: prev.index, t: video.currentTime, live: prev.live };
+      }
+    } catch {}
+  }
+  state.tuneStartedAt = Date.now();   // 'seeking' events in this window are ours, not the user's
   state.chIndex = ((chIndex % CHANNELS.length) + CHANNELS.length) % CHANNELS.length;
   store.set("channel", state.chIndex);
   const ch = currentChannel();
@@ -284,11 +308,15 @@ function tune(chIndex, opts = {}) {
     clearTimeout(state.slowJoinTimer);
     state.slowJoinTimer = setTimeout(() => {
       if (token !== state.tuneToken || !state.on) return;
-      const arrived = !state.hotTune && video.readyState >= 3 && !video.paused;
+      // the user driving is never "stuck": scrubbing drops readyState while
+      // it rebuffers, and a pause with data is a choice — neither may
+      // trigger the fallback (it used to silently restart the show)
+      if (userIsDriving()) return;
+      const arrived = !state.hotTune && video.readyState >= 3;
       if (arrived) return;
       state.zapQuiet = true;
-      chatPush(null, "live join was slow — starting this show from the top", "sys");
       tune(state.chIndex, { fromStartProg: progIndex });
+      toast("Live join was slow — started this show from the top", { undo: true });
     }, 6000);
   };
 
@@ -488,6 +516,7 @@ function zap(delta) {
 /* program end → seamless advance via the preloaded backstage element */
 function onProgramEnded(e) {
   if (e.target !== video || !state.on) return;
+  const scrubbedIn = userIsDriving();
   state.onDemand = null;
   // they watched one to the end — in turbo, bank the first seconds of
   // likely next destinations for instant flips later
@@ -497,6 +526,9 @@ function onProgramEnded(e) {
     state.zapQuiet = true;          // no interstitial, just roll on
   }
   tune(state.chIndex);
+  // scrubbing off the end of the file is easy to do by accident — say
+  // what happened and hold the door open
+  if (scrubbedIn) toast("That was the end of the program — back to the broadcast", { undo: true });
 }
 
 function onVideoError(e) {
@@ -521,8 +553,25 @@ function onVideoError(e) {
     navigator.serviceWorker.controller.postMessage({ type: "evict", key: canonSrc(bad) });
   }
 
+  /* an error during (or just after) a user seek is almost always the seek
+     itself — a deep range request that failed or outran the buffer. That
+     must NEVER escalate into "next program" / "next channel": rejoin the
+     same program at the same spot, quietly, and say so. */
+  if (e.target === video && userIsDriving()) {
+    const info = currentProgramInfo();
+    const spot = Math.max(0, (video.currentTime || 0) - 2);
+    const tk = state.tuneToken;
+    state.errStreak = 0;
+    setTimeout(() => {
+      if (!state.on || tk !== state.tuneToken) return;
+      tune(state.chIndex, { fromStartProg: info.index, startAt: spot });
+      toast("That seek hit a pothole — rejoined at your spot");
+    }, 1500);
+    return;
+  }
+
   /* escalating recovery, never a tight loop:
-     1st failure  → retry the same tune after 4s
+     1st failure  → retry the same tune after 4s (keeping your spot)
      2nd failure  → skip to the channel's next program from the start
      3rd failure  → declare the channel off-air and hop to the next one */
   state.errStreak = (state.errStreak || 0) + 1;
@@ -531,16 +580,28 @@ function onVideoError(e) {
   let msg, delay = Math.min(4000 * streak, 12000), action;
   if (streak <= 1) {
     msg = "Channel hiccup — re-tuning…";
-    action = () => tune(state.chIndex);
+    const wasOnDemand = !!state.onDemand;
+    const info = currentProgramInfo();
+    const spot = Math.max(0, (video.currentTime || 0) - 2);
+    action = () => {
+      // an on-demand viewing keeps its place on retry; live rejoins live
+      if (wasOnDemand) tune(state.chIndex, { fromStartProg: info.index, startAt: spot });
+      else tune(state.chIndex);
+    };
   } else if (streak === 2) {
     msg = "Stream trouble — skipping to the next program…";
     action = () => {
       const s = scheduleFor(currentChannel());
       tune(state.chIndex, { fromStartProg: (s.index + 1) % currentChannel().programs.length });
+      toast("That stream failed twice — skipped to the next program", { undo: true });
     };
   } else {
     msg = "This channel seems to be off the air — trying the next one…";
-    action = () => { state.errStreak = 0; state.zapQuiet = false; tune(state.chIndex + 1); };
+    action = () => {
+      state.errStreak = 0; state.zapQuiet = false;
+      tune(state.chIndex + 1);
+      toast("Channel looked off the air — hopped to the next one", { undo: true });
+    };
   }
   $("interstitial-text").textContent = msg;
   $("interstitial").classList.remove("hidden");
@@ -552,6 +613,11 @@ function onVideoError(e) {
   el.addEventListener("error", onVideoError);
   el.addEventListener("playing", (e) => {
     if (e.target === video) state.errStreak = 0;   // on air = recovered
+  });
+  // seeks outside a tune's own settling window are the user's hand on the
+  // dial — the recovery machinery must stand down while they drive
+  el.addEventListener("seeking", (e) => {
+    if (e.target === video && Date.now() - (state.tuneStartedAt || 0) > 3000) noteUserSeek();
   });
   el.addEventListener("play", (e) => { if (e.target === video) { $("glyph-play").classList.add("hidden"); $("glyph-pause").classList.remove("hidden"); } });
   el.addEventListener("pause", (e) => { if (e.target === video) { $("glyph-pause").classList.add("hidden"); $("glyph-play").classList.remove("hidden"); } });
@@ -763,6 +829,45 @@ setInterval(() => {
 /* ── OSD ───────────────────────────────────────────── */
 
 let osdTimer;
+/* ── user-seek awareness + the road back ─────────────
+ * Automatic recovery (slow-join fallback, error ladder, end-of-file
+ * advance) must never mistake a person scrubbing for a broken stream,
+ * and any automatic change of programme must say why and offer a way
+ * back. */
+
+function noteUserSeek() { state.lastSeekAt = Date.now(); }
+
+function userIsDriving() {
+  if (video.seeking) return true;
+  if (Date.now() - (state.lastSeekAt || 0) < 8000) return true;
+  if (video.paused && (video.currentTime || 0) > 0) return true;   // pausing is a choice
+  return false;
+}
+
+/* Backspace, or ↩ Back on a toast: return to the previous stop. tune()
+   records the current spot first, so Back twice toggles between two. */
+function goBack() {
+  const b = state.lastStop;
+  if (!b) return;
+  crtBlink();
+  if (b.live) tune(b.chIndex);
+  else tune(b.chIndex, { fromStartProg: b.progIndex, startAt: b.t });
+}
+
+/* a small headline over the picture: what just happened, and why */
+let toastTimer;
+function toast(msg, { undo = false, ms = 9000 } = {}) {
+  $("toast-msg").textContent = msg;
+  $("toast-undo").classList.toggle("hidden", !undo || !state.lastStop);
+  $("toast").classList.remove("hidden");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $("toast").classList.add("hidden"), ms);
+}
+$("toast-undo").addEventListener("click", () => {
+  $("toast").classList.add("hidden");
+  goBack();
+});
+
 function showOSDChannel() {
   if (overlaysVisible()) return;   // the info bar already names the channel
   const ch = currentChannel();
@@ -2193,8 +2298,9 @@ document.addEventListener("keydown", (e) => {
     case " ": e.preventDefault(); $("btn-play").click(); break;
     case "ArrowUp": zap(+1); break;
     case "ArrowDown": zap(-1); break;
-    case "ArrowRight": video.currentTime += 10; showOverlays(); break;
-    case "ArrowLeft": video.currentTime -= 10; showOverlays(); break;
+    case "ArrowRight": noteUserSeek(); video.currentTime += 10; showOverlays(); break;
+    case "ArrowLeft": noteUserSeek(); video.currentTime -= 10; showOverlays(); break;
+    case "Backspace": e.preventDefault(); goBack(); break;
     case "m": $("btn-mute").click(); break;
     case "f": $("btn-fs").click(); break;
     case "v": toggleVenue(); break;
