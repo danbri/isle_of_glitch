@@ -172,6 +172,21 @@ const WATCH_BUDDY_GRAPH = [
     ]
   },
   {
+    "@id": "https://archive.org/details/boys_beware",
+    "@type": "Movie",
+    "datedPerspectives": true,
+    "datedNote": "Specifically: this 1961 police-sponsored classroom film equates being gay with child predation and calls homosexuality \"a sickness of the mind\" — taught to schoolchildren as public-safety fact. It is a textbook example of institutional anti-gay propaganda, and worth seeing only as evidence of it.",
+    "factCheck": [
+      {
+        "@type": "ClaimReview",
+        "claimReviewed": "What this film teaches about homosexuality",
+        "name": "False and harmful — its conflation of homosexuality with predation is thoroughly documented as propaganda.",
+        "url": "https://en.wikipedia.org/wiki/Boys_Beware"
+      }
+    ],
+    "sameAs": "https://en.wikipedia.org/wiki/Boys_Beware"
+  },
+  {
     "@id": "https://archive.org/details/HomeEcon1951",
     "@type": "Movie",
     "datedPerspectives": true,
