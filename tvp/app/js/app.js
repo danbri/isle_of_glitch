@@ -849,6 +849,7 @@ function renderSubjectsLevel(snap = false) {
 document.addEventListener("click", (e) => {
   const chip = e.target.closest?.(".skos-chip");
   if (!chip || e.target.tagName === "A") return;
+  if (chip.closest("#buddy-overlay")) closeBuddy();
   openPanel("search");
   const q = "about:" + chip.dataset.label;
   $("search-input").value = q;
@@ -2213,9 +2214,9 @@ const BUDDY_BY_ID = {};
 });
 
 function buddyFor(prog) {
-  const m = (prog.src || "").match(/archive\.org\/download\/([^/]+)\//);
-  if (!m) return null;
-  const node = BUDDY_BY_ID["https://archive.org/details/" + m[1]];
+  const id = iaIdOf(prog);        // the one identity resolver, cached
+  if (!id) return null;
+  const node = BUDDY_BY_ID["https://archive.org/details/" + id];
   if (!node) return null;
   const facts = node.factCheck
     ? (Array.isArray(node.factCheck) ? node.factCheck : [node.factCheck]) : [];
@@ -2298,6 +2299,14 @@ function openBuddy() {
   }
   if (b.wiki) {
     sec("🌐", "background", `<a href="${b.wiki}" target="_blank" rel="noopener">${esc(decodeURIComponent(b.wiki.split("/wiki/").pop() || "Wikipedia").replace(/_/g, " "))} on Wikipedia</a>`);
+  }
+  // SKOS subjects, right in the overlay (the delegated .skos-chip
+  // handler works everywhere): tap = everything about that concept
+  const subj = skosFor(p);
+  if (subj.length) {
+    sec("🗂", "about", subj.map(([label, scheme, uri]) =>
+      `<span class="skos-chip" data-label="${esc(label)}">${esc(label)}<a href="${uri}" target="_blank" rel="noopener" title="${(typeof SKOS_SCHEMES !== "undefined" && SKOS_SCHEMES[scheme]) || scheme}">↗</a></span>`
+    ).join(" "));
   }
   if (b.scenes.length) {
     const item = itemOf(p);
