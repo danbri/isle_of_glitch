@@ -316,7 +316,7 @@ function tune(chIndex, opts = {}) {
       if (arrived) return;
       state.zapQuiet = true;
       tune(state.chIndex, { fromStartProg: progIndex });
-      toast("Live join was slow — started this show from the top", { undo: true });
+      toast("Slow live join — started from the top", { undo: true });
     }, 6000);
   };
 
@@ -528,7 +528,7 @@ function onProgramEnded(e) {
   tune(state.chIndex);
   // scrubbing off the end of the file is easy to do by accident — say
   // what happened and hold the door open
-  if (scrubbedIn) toast("That was the end of the program — back to the broadcast", { undo: true });
+  if (scrubbedIn) toast("Program ended — rejoined the broadcast", { undo: true });
 }
 
 function onVideoError(e) {
@@ -565,7 +565,7 @@ function onVideoError(e) {
     setTimeout(() => {
       if (!state.on || tk !== state.tuneToken) return;
       tune(state.chIndex, { fromStartProg: info.index, startAt: spot });
-      toast("That seek hit a pothole — rejoined at your spot");
+      toast("Seek failed — resumed at your position");
     }, 1500);
     return;
   }
@@ -593,14 +593,14 @@ function onVideoError(e) {
     action = () => {
       const s = scheduleFor(currentChannel());
       tune(state.chIndex, { fromStartProg: (s.index + 1) % currentChannel().programs.length });
-      toast("That stream failed twice — skipped to the next program", { undo: true });
+      toast("Stream failed twice — skipped to the next program", { undo: true });
     };
   } else {
     msg = "This channel seems to be off the air — trying the next one…";
     action = () => {
       state.errStreak = 0; state.zapQuiet = false;
       tune(state.chIndex + 1);
-      toast("Channel looked off the air — hopped to the next one", { undo: true });
+      toast("Channel off the air — moved to the next", { undo: true });
     };
   }
   $("interstitial-text").textContent = msg;
@@ -762,8 +762,8 @@ function renderSubjectsLevel(snap = false) {
   }
   crumbEl.innerHTML = (parent
     ? `<button class="tm-back">‹ back</button> <span class="tm-here">${subjectsEmoji(parent.label)} ${parent.label}</span>`
-    : `<span class="tm-here">🗂 the whole dial, by concept</span>`) +
-    `<button class="tm-even${st.even ? " on" : ""}" title="equal tiles: surface the long tail of small subjects">⚖</button>`;
+    : `<span class="tm-here">All subjects</span>`) +
+    `<button class="tm-even${st.even ? " on" : ""}" title="Equal-size tiles">⚖</button>`;
   const pop = () => { st.crumb.pop(); renderSubjectsLevel(true); };
   crumbEl.querySelector(".tm-back")?.addEventListener("click", pop);
   if (parent) crumbEl.querySelector(".tm-here").addEventListener("click", pop);
@@ -1929,7 +1929,7 @@ async function toggleVenue() {
   } catch {
     venueApi = null;
     $("btn-venue").classList.remove("lit");
-    chatPush(null, "venues need WebGL — this browser sat that one out", "sys");
+    chatPush(null, "venues need WebGL — unavailable in this browser", "sys");
   }
 }
 $("btn-venue").addEventListener("click", toggleVenue);
@@ -1953,19 +1953,21 @@ function initCastLater() {
           // Cast hardware can't decode MPEG-4 Part 2 (audio-over-black):
           // prefer the baked h.264 derivative; cast:0 = no compatible encode
           const url = (typeof p.castSrc === "string" && p.castSrc) || canonSrc(fastSrc(p));
-          if (p.castSrc === 0) toast("This program has no Cast-ready encode — the TV may play audio only");
+          if (p.castSrc === 0) toast("No TV-ready encode — audio only on the TV");
           return {
             url,
-            title: `${p.title}${p.year ? " (" + p.year + ")" : ""} — ${ch.name}`,
+            title: `${p.title}${p.year ? " (" + p.year + ")" : ""} — ${ch.name}` +
+              (p.castSrc === 0 ? " · audio-only encode" : ""),
             art: artUrl(p.frame || p.art || ch.art),
             offset: i.live ? i.offset : (video.currentTime || 0)
           };
         },
         onCastStart: (name) => {
           state.casting = true;
+          state.castDevice = `Casting to ${name}`;
           video.pause();
           document.body.classList.add("casting");
-          $("cast-badge-name").textContent = `Casting to ${name}`;
+          $("cast-badge-name").textContent = state.castDevice;
           $("cast-badge").classList.remove("hidden");
           $("btn-cast").classList.add("lit");
           updateCastMini();
@@ -1995,7 +1997,16 @@ function initCastLater() {
   }, 6000);   // well after boot: cast discovery is never on the critical path
 }
 
-$("btn-cast").addEventListener("click", () => { castApi?.prompt(); });
+$("btn-cast").addEventListener("click", () => {
+  // the picker is Google's UI: with the Default Media Receiver every
+  // speaker on the network is listed too. Filtering to video devices
+  // needs a registered receiver app — explain once, not every time.
+  if (castApi?.kind === "chromecast" && !store.get("castNoteShown") && !localStorage.getItem("tvp.castAppId")) {
+    chatPush(null, "cast: speaker devices are listed by Google's default receiver — docs/chromecast.md covers a video-only receiver id", "sys");
+    store.set("castNoteShown", 1);
+  }
+  castApi?.prompt();
+});
 
 /* the casting mini player: art + title of what's on the TV, remote
    controls, fading with inactivity like a well-behaved remote */
@@ -2004,7 +2015,14 @@ function updateCastMini() {
   const i = currentProgramInfo(), ch = currentChannel();
   $("cast-mini-art").src = artUrl(i.program.frame || i.program.art || ch.art) || "";
   $("cast-mini-title").textContent = i.program.title;
-  $("cast-mini-sub").textContent = `${String(ch.num).padStart(2, "0")} · ${ch.name}`;
+  // ~27% of the dial (mostly the older items) has no h.264 encode at all —
+  // the TV gets sound over black. Keep that state visible, not a one-shot
+  // toast: it reads as "Chromecast is broken" otherwise.
+  const audioOnly = i.program.castSrc === 0;
+  $("cast-mini-sub").textContent =
+    `${String(ch.num).padStart(2, "0")} · ${ch.name}` + (audioOnly ? " · 🔇 audio-only on TV" : "");
+  $("cast-badge-name").textContent =
+    (state.castDevice || "Casting") + (audioOnly ? " · audio-only encode" : "");
 }
 let castMiniTimer;
 function castMiniActivity() {
@@ -2419,7 +2437,7 @@ $("buddy-overlay").addEventListener("click", (e) => { if (e.target === $("buddy-
 
 function renderBuddyToggle() {
   $("buddy-toggle").textContent =
-    store.get("buddy", true) ? "watch buddy: on — tap to hide" : "watch buddy: off — tap to show";
+    store.get("buddy", true) ? "Watch Buddy on" : "Watch Buddy off";
 }
 $("buddy-toggle").addEventListener("click", () => {
   store.set("buddy", !store.get("buddy", true));
@@ -2585,7 +2603,7 @@ function startTicker() {
 }
 function renderTickerToggle() {
   $("ticker-toggle").textContent =
-    store.get("ticker", false) ? "ticker: on — tap to hide" : "ticker: off — tap to show";
+    store.get("ticker", false) ? "Ticker on" : "Ticker off";
 }
 $("ticker-toggle").addEventListener("click", () => {
   store.set("ticker", !store.get("ticker", false));

@@ -43,6 +43,46 @@ async function meta(id, tries = 3) {
 }
 
 const enc = (n) => n.split("/").map(encodeURIComponent).join("/");
+
+/* ── codec sniffing ──
+ * archive.org's `format` field names the CONTAINER for original uploads
+ * ("MPEG4" = .mp4 file, codec unknown) and is only codec-truthful for
+ * derivatives ("h.264", "512Kb MPEG4"). Cast hardware cares about the
+ * codec, so for ambiguous files we range-fetch a slice and scan the mp4
+ * sample description for codec boxes: avcC/avc1 (h.264, castable),
+ * hvcC (HEVC, not safe on older Cast), mp4v/xvid/divx (Part 2, no).
+ * Results cache per URL — each file is ever probed once. */
+const CODEC_FILE = join(dirname(fileURLToPath(import.meta.url)), ".cache", "codec.json");
+let codecCache = {};
+try { codecCache = JSON.parse(readFileSync(CODEC_FILE, "utf8")); } catch {}
+let probes = 0;
+function scanCodec(buf) {
+  const s = buf.toString("latin1");
+  if (s.includes("avcC") || s.includes("avc1") || s.includes("avc3")) return "h264";
+  if (s.includes("hvcC") || s.includes("hev1") || s.includes("hvc1")) return "hevc";
+  if (s.includes("mp4v") || /xvid|divx|DX50/i.test(s)) return "mp4v";
+  return null;
+}
+async function sniffCodec(url, size) {
+  if (url in codecCache) return codecCache[url];
+  let out = "unknown";
+  try {
+    // head slice first (faststart files put moov up front)…
+    let r = await fetch(url, { headers: { Range: "bytes=0-65535" }, signal: AbortSignal.timeout(30000) });
+    let found = r.ok ? scanCodec(Buffer.from(await r.arrayBuffer())) : null;
+    // …originals usually keep moov at the tail
+    if (!found && size > 300000) {
+      r = await fetch(url, { headers: { Range: `bytes=${size - 262144}-${size - 1}` }, signal: AbortSignal.timeout(30000) });
+      if (r.ok) found = scanCodec(Buffer.from(await r.arrayBuffer()));
+    }
+    if (found) out = found;
+  } catch {}
+  codecCache[url] = out;
+  if (++probes % 20 === 0) writeFileSync(CODEC_FILE, JSON.stringify(codecCache));
+  await sleep(150);
+  return out;
+}
+
 let frames = 0, subs = 0, misses = 0, n = 0;
 const total = CHANNELS.reduce((s, c) => s + c.programs.length, 0);
 
@@ -87,10 +127,28 @@ for (const ch of CHANNELS) {
     // plays audio over black. When the on-air file isn't h.264, bake the
     // item's h.264 derivative for casting (castSrc: url), or an explicit
     // "no compatible encode" marker (castSrc: 0) so the player can warn.
+    // Ambiguous "MPEG4"-labelled files (originals: container name, codec
+    // unknown) get their codec sniffed — Blender-era originals are h.264
+    // inside and would otherwise be misfiled as uncastable.
     // (NB "cast" is taken — that's the actors list from wikilink.mjs.)
-    if (f && !/h\.?264/i.test(f.format || "")) {
-      const alt = j.files.find((x) => /h\.?264/i.test(x.format || "") && /\.mp4$/i.test(x.name));
-      p.castSrc = alt ? `https://archive.org/download/${id}/${enc(alt.name)}` : 0;
+    if (f) {
+      let onAirCastable = /h\.?264/i.test(f.format || "");
+      if (!onAirCastable && /\.mp4$/i.test(f.name)) {
+        onAirCastable = (await sniffCodec(p.src, parseInt(f.size, 10) || 0)) === "h264";
+      }
+      if (onAirCastable) {
+        delete p.castSrc;
+      } else {
+        let alt = j.files.find((x) => /h\.?264/i.test(x.format || "") && /\.mp4$/i.test(x.name));
+        if (!alt) {
+          // probe the other ambiguous mp4s before giving up on the item
+          for (const x of j.files.filter((x) => /\.mp4$/i.test(x.name) && x.name !== f.name && !/h\.?264/i.test(x.format || "")).slice(0, 2)) {
+            const u = `https://archive.org/download/${id}/${enc(x.name)}`;
+            if ((await sniffCodec(u, parseInt(x.size, 10) || 0)) === "h264") { alt = x; break; }
+          }
+        }
+        p.castSrc = alt ? `https://archive.org/download/${id}/${enc(alt.name)}` : 0;
+      }
     } else {
       delete p.castSrc;
     }
@@ -102,7 +160,8 @@ for (const ch of CHANNELS) {
   }
 }
 
-console.log(`enriched ${total} programs: ${frames} frames, ${subs} subtitle tracks, ${misses} metadata misses`);
+try { writeFileSync(CODEC_FILE, JSON.stringify(codecCache)); } catch {}
+console.log(`enriched ${total} programs: ${frames} frames, ${subs} subtitle tracks, ${misses} metadata misses, ${probes} codec probes`);
 
 const banner = src.slice(0, src.indexOf("const CHANNELS"));
 const body = banner +
