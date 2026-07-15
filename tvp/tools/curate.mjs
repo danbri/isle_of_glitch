@@ -370,7 +370,8 @@ const DENY_IDS = new Set([
   "larceny1948",                 // Larceny (1948, Universal — renewed)
   "Vengence_of_the_Zombies",     // Vengeance of the Zombies (1973)
   "my-movie_20210607",           // junk "My Movie" upload
-  "TheEmperorNortonBonanza1966"  // Bonanza 1966 (post-1963: auto-renewed era)
+  "TheEmperorNortonBonanza1966", // Bonanza 1966 (post-1963: auto-renewed era)
+  "HouseOnBareMountain"          // 1962 nudie-cutie — past the family line
 ]);
 const isDeniedTitle = (nt) =>
   DENY_TITLES.some((e) => nt === e || nt.startsWith(e + " "));
