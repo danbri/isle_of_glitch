@@ -1,0 +1,182 @@
+{
+ "item": "theveniceproject",
+ "purpose": "Source manifest for an archive.org item preserving 2007-era demo/walkthrough videos of The Venice Project (Joost), the Kazaa/Skype founders' P2P television service.",
+ "retrieved": "2026-07-15",
+ "excluded": [
+  {
+   "id": "D22aJk2IEmc",
+   "why": "CBS news segment \u2014 network copyright"
+  },
+  {
+   "id": "dwxFB_QrZ-g",
+   "why": "duplicate CBS upload"
+  }
+ ],
+ "videos": [
+  {
+   "id": "e3vYV6BQouw",
+   "title": "First test of the Venice Project",
+   "uploader": "prylfeber",
+   "uploader_url": "https://www.youtube.com/@prylfeber",
+   "upload_date": "20070102",
+   "duration_s": 300,
+   "native_resolution": "640x480",
+   "url": "https://youtu.be/e3vYV6BQouw",
+   "description": "Build 0.72"
+  },
+  {
+   "id": "fyP21X8v7JE",
+   "title": "The venice Project",
+   "uploader": "salshichonovski",
+   "uploader_url": "https://www.youtube.com/@salshichonovski",
+   "upload_date": "20070103",
+   "duration_s": 468,
+   "native_resolution": "320x240",
+   "url": "https://youtu.be/fyP21X8v7JE",
+   "description": "Un video del programa the venice project, para ver tv por internet, de los creadores de skype y kazaa"
+  },
+  {
+   "id": "YcvlPw0W8E4",
+   "title": "The Venice Project or Joost",
+   "uploader": "voygeur",
+   "uploader_url": "https://www.youtube.com/@voygeur",
+   "upload_date": "20070117",
+   "duration_s": 172,
+   "native_resolution": "960x720",
+   "url": "https://youtu.be/YcvlPw0W8E4",
+   "description": "short movie about the new project of Skype co-founders, called Joost"
+  },
+  {
+   "id": "KaXdb-3ShjQ",
+   "title": "Behind The Scenes at The Venice Project (Joost) - Sander",
+   "uploader": "milknosugar",
+   "uploader_url": "https://www.youtube.com/@milknosugar",
+   "upload_date": "20070119",
+   "duration_s": 195,
+   "native_resolution": "320x182",
+   "url": "https://youtu.be/KaXdb-3ShjQ",
+   "description": "Head of engineering at The Venice Project (now Joost), walking his dogs and talking a bit about why he chose to work on The Venice Project, what it will be like, peer-2-peer and beta-testing."
+  },
+  {
+   "id": "Tf2CcIjygC4",
+   "title": "Behind The Scenes at The Venice Project (Joost) - Dirk",
+   "uploader": "milknosugar",
+   "uploader_url": "https://www.youtube.com/@milknosugar",
+   "upload_date": "20070119",
+   "duration_s": 205,
+   "native_resolution": "320x182",
+   "url": "https://youtu.be/Tf2CcIjygC4",
+   "description": "The Venice Project's (now Joost) head of technology explaining some of the technology that powers their TV."
+  },
+  {
+   "id": "fjDsRvZMaXE",
+   "title": "Behind The Scenes at The Venice Project (Joost) - Henrik",
+   "uploader": "milknosugar",
+   "uploader_url": "https://www.youtube.com/@milknosugar",
+   "upload_date": "20070119",
+   "duration_s": 214,
+   "native_resolution": "320x182",
+   "url": "https://youtu.be/fjDsRvZMaXE",
+   "description": "One of the top guys at The Venice Project (now Joost) talking about some of the problems with TV at the moment and what the future holds."
+  },
+  {
+   "id": "tpiUDppHi7I",
+   "title": "Behind The Scenes at The Venice Project (Joost) - Janus",
+   "uploader": "milknosugar",
+   "uploader_url": "https://www.youtube.com/@milknosugar",
+   "upload_date": "20070119",
+   "duration_s": 193,
+   "native_resolution": "320x182",
+   "url": "https://youtu.be/tpiUDppHi7I",
+   "description": "Janus Friis in a phone interview talking about how and why he founded The Venice Project (now Joost)."
+  },
+  {
+   "id": "tia57gQ3_1k",
+   "title": "Joost Beta Video Review",
+   "uploader": "Javier Pastor",
+   "uploader_url": "https://www.youtube.com/@javipas",
+   "upload_date": "20070301",
+   "duration_s": 269,
+   "native_resolution": "640x480",
+   "url": "https://youtu.be/tia57gQ3_1k",
+   "description": "This covers the basics of Joost (formerly The Venice Project), a new IPTV/Video on Demand service from the creators of Skype and KaZaa."
+  },
+  {
+   "id": "1xd8q2ZM43k",
+   "title": "JOOST Beta Test (Test Drive)",
+   "uploader": "Ca\u00ea J\u00fanior",
+   "uploader_url": "https://www.youtube.com/@caejr",
+   "upload_date": "20070319",
+   "duration_s": 596,
+   "native_resolution": "640x480",
+   "url": "https://youtu.be/1xd8q2ZM43k",
+   "description": "O JOOST \u00e9 bem melhor do que mostrado nesse v\u00eddeo. Meu programa de captura de imagens n\u00e3o funcionou muito bem... Sorry!\r\n\r\n\"JOOST\" is much better! *The \"images capture's software\" don\u00b4t worked fine...\r\nJOOST = Amazing!!!\r\n\r\nCa\u00ea - http://caeportal.spaces.live.com"
+  },
+  {
+   "id": "Fj0jGyqTrdc",
+   "title": "Joost introduction",
+   "uploader": "MrGlo",
+   "uploader_url": "https://www.youtube.com/@MrGlo",
+   "upload_date": "20070412",
+   "duration_s": 61,
+   "native_resolution": "512x334",
+   "url": "https://youtu.be/Fj0jGyqTrdc",
+   "description": "Here the introduction movies to joost when you play it for the first time ."
+  },
+  {
+   "id": "5_gOHk7tjMo",
+   "title": "Joost",
+   "uploader": "Rui Peixeiro",
+   "uploader_url": "https://www.youtube.com/@RuiPeixeiro",
+   "upload_date": "20070413",
+   "duration_s": 112,
+   "native_resolution": "320x240",
+   "url": "https://youtu.be/5_gOHk7tjMo",
+   "description": "Aqui fica um pequeno video do Joost TV\r\n\r\nEu j\u00e1 sou beta tester!!! e at\u00e9 ver, estou a gostar!"
+  },
+  {
+   "id": "y3fJb1jaj6Q",
+   "title": "Joost hidden new UI",
+   "uploader": "Cy Burn",
+   "uploader_url": "https://www.youtube.com/@bmaltais",
+   "upload_date": "20070727",
+   "duration_s": 212,
+   "native_resolution": "512x320",
+   "url": "https://youtu.be/y3fJb1jaj6Q",
+   "description": "Joost is apparently working on a new User Interface for it's player.  Here is a short video of it as it is currently in client 0.11."
+  },
+  {
+   "id": "EazyN1lfr78",
+   "title": "VENICE Project 01 (Work)",
+   "uploader": "peter weinhofer",
+   "uploader_url": "https://www.youtube.com/@weinhofoto",
+   "upload_date": "20070922",
+   "duration_s": 404,
+   "native_resolution": "640x360",
+   "url": "https://youtu.be/EazyN1lfr78",
+   "description": "water, light, color"
+  },
+  {
+   "id": "3VwJw8n_ESI",
+   "title": "How To: Get Rid of Choppy Video in Joost",
+   "uploader": "Guiding Tech",
+   "uploader_url": "https://www.youtube.com/@GuidingTechCom",
+   "upload_date": "20071204",
+   "duration_s": 192,
+   "native_resolution": "640x480",
+   "url": "https://youtu.be/3VwJw8n_ESI",
+   "description": "How To: Get Rid of Choppy Video in Joost"
+  },
+  {
+   "id": "bTHjXR2K_NY",
+   "title": "Joost Media Player",
+   "uploader": "PaulYanezInteractive",
+   "uploader_url": "https://www.youtube.com/@PaulYanezInteractive",
+   "upload_date": "20091023",
+   "duration_s": 123,
+   "native_resolution": "1278x720",
+   "url": "https://youtu.be/bTHjXR2K_NY",
+   "description": "Joost Media Player is an Adobe Air application that is fully integrated with Joost.com. Working in collaboration with the Creative and Engineering teams from Joost, this is a must see. Constant video play while searching, Twitter integration and fullscreen remote control capable."
+  }
+ ]
+}
