@@ -41523,7 +41523,7 @@ const CHANNELS = [
  }
 ];
 
-/* EPG category rail — vocabulary from the 2007 client's catalog */
+/* EPG category rail — the dial's 2007-flavoured category vocabulary */
 const EPG_CATEGORIES = [
  {
   id: "explore",
@@ -41602,5 +41602,5 @@ const EPG_CATEGORIES = [
  }
 ];
 
-/* Broadcast epoch: 16 Jan 2007, the day The Venice Project became "Joost". */
+/* Broadcast epoch: 16 Jan 2007 — the moment this dial's clock started ticking. */
 const BROADCAST_EPOCH = Date.UTC(2007, 0, 16, 0, 0, 0);

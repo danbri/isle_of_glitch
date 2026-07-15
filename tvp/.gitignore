@@ -1,4 +1,0 @@
-# Extracted contents of the Joost installer are proprietary (Joost N.V.)
-# and are kept out of version control. Re-extract locally with:
-#   7z x -oextracted joost0.13.096614.dmg
-extracted/

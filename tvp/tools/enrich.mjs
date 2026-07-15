@@ -107,9 +107,9 @@ console.log(`enriched ${total} programs: ${frames} frames, ${subs} subtitle trac
 const banner = src.slice(0, src.indexOf("const CHANNELS"));
 const body = banner +
   "const CHANNELS = " + JSON.stringify(CHANNELS, null, 1).replace(/"([a-zA-Z_$][\w$]*)":/g, "$1:") + ";\n" +
-  "\n/* EPG category rail — vocabulary from the 2007 client's catalog */" +
+  "\n/* EPG category rail — the dial's 2007-flavoured category vocabulary */" +
   "\nconst EPG_CATEGORIES = " + JSON.stringify(EPG_CATEGORIES, null, 1).replace(/"([a-zA-Z_$][\w$]*)":/g, "$1:") + ";\n" +
-  "\n/* Broadcast epoch: 16 Jan 2007, the day The Venice Project became \"Joost\". */" +
+  "\n/* Broadcast epoch: 16 Jan 2007 — the moment this dial's clock started ticking. */" +
   "\nconst BROADCAST_EPOCH = Date.UTC(2007, 0, 16, 0, 0, 0);\n";
 writeFileSync(FILE, body);
 console.log("wrote " + FILE);

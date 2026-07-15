@@ -43,8 +43,6 @@ API consumers to the pipeline without flagging it to the human.
   `main` → deploy branch → verify live.
 - `tvp/app/js/channels.js`, `annotations-gen.js`, and `skos-gen.js` are
   GENERATED — edit the tools in `tvp/tools/`, not the outputs.
-- `tvp/extracted/` (proprietary Joost client internals) must never be
-  committed.
 - Run the regression suite (scratchpad `test-tvp2.js` harness) before
   shipping player changes; venue/SKOS/seek behaviours have their own
   test scripts alongside it.
