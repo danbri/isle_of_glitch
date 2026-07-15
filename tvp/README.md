@@ -1,156 +1,68 @@
-# tvp/ — raising the ghost of Joost (2006–2008)
+# TVP/2007 — broadcast-style web TV from the open archives
 
-This directory holds a small act of software necromancy:
+**Watch it: https://danbri.github.io/isle_of_glitch/tvp/app/**
 
-1. **`joost0.13.096614.dmg`** — an original Joost beta installer for Mac OS X
-   (version 0.13.0.96614, built 2007-09-21), kept as a historical artifact.
-2. **`app/`** — a brand-new, mobile-first web app that resurrects the Joost
-   *user experience* using only free and open video streamed from the
-   Internet Archive.
-3. **`tools/curate.mjs`** — the content harvester that builds the channel
-   dial from archive.org collections.
-
-**[▶ Open the player](app/index.html)** — serve `app/` with any static file
-server (`python3 -m http.server`, GitHub Pages, etc.) and tap the power button.
+TVP is television the mid-2000s web promised: eighteen channels of free
+and openly licensed film and TV, running on a **real broadcast clock**.
+You don't browse a catalogue — you switch on and join whatever is on
+*now*, flip channels, and let the schedule surprise you. Everything is
+streamed from the Internet Archive's public collections; TVP hosts no
+media.
 
 | splash | live + controller | channel guide | widgets |
 |---|---|---|---|
 | ![splash](docs/screens/splash.png) | ![controller](docs/screens/controller.png) | ![guide](docs/screens/epg.png) | ![widgets](docs/screens/widgets.png) |
 
----
+## The dial
 
-## Part 1 — the archaeology
+Blender Foundation open movies (CC-BY) share the dial with
+public-domain-era features, shorts, cartoons, newsreels, classic TV,
+trailers, and the Prelinger ephemera — nearly 2,000 programs and
+counting, every one verified streamable and rights-clean at harvest
+time. The broadcast clock is deterministic (epoch: 16 Jan 2007), so two
+people tuned to the same channel see the same thing.
 
-The `.dmg` is a UDIF/HFS+ image; `7z x joost0.13.096614.dmg` extracts it
-(the extracted tree is intentionally **not** committed — see *Legal*, below).
-Inside `Joost.app` there is no bespoke C++ UI at all. The whole client is a
-**XULRunner application** (Gecko 1.9a5pre) — essentially a single-purpose,
-chromeless Firefox rendering the UI as XUL + SVG + HTML sprites composited
-over the video plane:
+## What the player does
 
-```
-Joost.app/Contents/Resources/
-├── application.ini            Vendor=Joost N.V. (formerly Baaima N.V.)
-├── anthill_primed_channel.rdf the pre-seeded "Welcome" channel (RDF!)
-└── chrome/
-    ├── tvp-ui.jar             the entire UI: tvp.xul + ~100 JS/XBL files
-    ├── tvp-en-US.jar          locale: strings, EPG categories (CSV)
-    └── tvprdf.jar, tvpzelos…  data layer, services
-```
+- **TV-first UX**: channel zapping with double-buffered video, a
+  full-screen swooshy channel guide, digit tuning, a last-channel back
+  button, and picture-in-3D "venues" (drive-in, synthwave lounge,
+  picture palace, ice grotto, 2007 rec room) with WebXR entry.
+- **Fast starts**: direct datanode addressing, a service-worker
+  first-seconds cache (OPFS), background trickle prefetch under
+  battery/network guards, and an optional Cloudflare R2 prefix mirror
+  with cold-start racing (see `../docs/cloudflare/`).
+- **Deep metadata**: Wikidata identities, Wikipedia lead extracts
+  (CC BY-SA, attributed), dialogue keywords from subtitles, and SKOS
+  subject coding (LC Genre/Form, LC Subjects, Getty AAT — resolved via
+  [skosdex](https://skosdex.fly.dev)) surfaced as tappable chips, an
+  `about:` search operator, and a zoomable subjects treemap.
+- **👀 Watch Buddy**: discreet content notes — specific heads-ups,
+  an ⏳ flag with specifics where material reflects outdated
+  perspectives, 📚 fact-check links, and corpus-wide 🎷🎻 "sax &
+  violins" tags.
+- **Chromecast & AirPlay**, hashed `#ia…;t=` deep links to programs and
+  scenes, SVG subtitles, pinnable widgets with an edge tray, and a
+  quiet layer of intermissions and cross-channel threads.
 
-Things learned from `tvp.xul` and friends, all echoed in the recreation:
+Serve `app/` with any static file server (`python3 -m http.server`,
+GitHub Pages, etc.) and tap the power button.
 
-- **A `<compositor>` full of `<sprite>`s** — controller, EPG, menu, OSD,
-  interstitial, "coming up" overlay, error panels — all floating over
-  full-bleed video. Recreated as absolutely-positioned overlays over a
-  fullscreen `<video>`.
-- **The full-screen channel menu** with large content tiles you sweep
-  through — recreated as the "swoosh" guide: a snap-scrolled carousel of
-  big program-art tiles over the still-playing picture, category rail on
-  top, listings below.
-- **Theme constants** (from the locale DTD): font `Trebuchet MS`, frame
-  stroke `white`, focus color `rgb(198,96,12)`, translucent black panels
-  with 2px white borders, teal selection `rgba(98,163,176,.8)`.
-- **Hot edges** (`hotedges.xml`): mousing to screen edges summoned menus.
-  Mobile translation: swipe from the left edge → guide, right edge →
-  widgets, tap → controller, swipe up/down → zap.
-- **The widget/plugin ecosystem** (`widget-manager.js`): channel chat,
-  clock (`canvasclock.js`), news ticker, ratings, trivia — plugins that
-  could stay **pinned over the picture**. Recreated: every widget has a
-  pin (⊡) that floats it over the video, translucent and draggable, with
-  positions remembered. A "time machine" widget seeks ±30s/±5m, scrubs to
-  any offset, and jumps back to the live broadcast clock.
-- **The top info bar** that slides down into a larger panel — recreated:
-  the chevron expands it into program details, schedule and actions.
-- **The little theatrics**: "Fetching your channel…" interstitials, the
-  white-dot CRT power-off, big OSD channel digits, the "coming up" toast,
-  five-jewel ratings, `search.noResults1=Your search for "%S" did not
-  match any programs.` All back.
+## The pipeline (`tools/`)
 
-## Part 2 — the séance (`app/`)
-
-Zero dependencies, zero build step: one HTML file, one stylesheet, two JS
-files. Works as a static page anywhere.
-
-**Broadcast simulation** — the defining Joost feeling was *television*:
-you tune in and something is already on. Every channel runs on a wall
-clock anchored to `2007-01-16T00:00Z` (the day The Venice Project became
-Joost). Tuning computes `(now − epoch) mod playlist-length` and joins the
-current program at the right offset. The guide shows real start times and
-LIVE tags. **⊢ from start** drops out of the broadcast into on-demand;
-**● back to live** rejoins the schedule.
-
-**Making archive.org feel fast** — the tricks, in order of appearance:
-
-1. **Light derivatives always start the show.** Every tune begins on the
-   ~512kbps H.264 derivative, which starts in a fraction of the time of
-   the originals. With the quality widget on *best*, the player then
-   **upgrades mid-play**: the backstage element buffers the big encoding
-   a few seconds ahead and swaps over seamlessly (start low, finish high).
-2. **Double-buffered video.** Two `<video>` elements: one on the air, the
-   other quietly preloading. It stages, in priority order: the next
-   program ~45s before the junction (seamless transitions), the quality
-   upgrade, and — when idle — the **next channel up the dial** at its
-   live offset, so swipe-zapping is warm. Browsing the guide warm-preloads
-   whichever channel is centered.
-3. **The splash preloads.** While "tap to switch on" breathes, the saved
-   channel's live stream is already buffering — power-on typically swaps
-   straight onto a warm stream (~150ms to picture in tests).
-4. **`preconnect`** to archive.org so the first byte arrives sooner.
-5. **Bring-your-own CDN.** Archive.org's own servers are the remaining
-   bottleneck (single US origin, throttled ranges). The player has a
-   mirror hook: put a caching proxy in front of `archive.org/download/`
-   (e.g. a Cloudflare Worker with R2/cache, or any nginx `proxy_cache`)
-   and point the player at it once from the console:
-
-   ```js
-   localStorage.setItem('tvp.mirror', JSON.stringify('https://your-mirror.example/ia/'))
-   ```
-
-   Every stream URL swaps `https://archive.org/download/` for your prefix.
-   (Mind Cloudflare's ToS: video proxying belongs on R2/Stream rather than
-   the plain CDN free tier.)
-
-**The dial** is generated by [`tools/curate.mjs`](tools/curate.mjs), which
-harvests archive.org collections (Prelinger, Film_Noir, SciFi_Horror,
-Comedy_Films, classic_tv, universal_newsreels, classic_cartoons,
-silent_films, NASA…), keeps family-friendly titles with verified
-range-streamable MP4 derivatives and plausible durations, de-duplicates,
-and writes `app/js/channels.js` — currently **a dozen+ channels and
-100+ programs (~70 hours of airtime)**. Re-run it any time:
-
-```
-cd tvp/tools && node curate.mjs        # or --dry to preview
-```
-
-**Controls**
-
-- *Touch*: tap = controller · swipe ↑/↓ = zap · swipe from left edge =
-  guide · right edge = widgets · pin (⊡) a widget to float it, drag by
-  its title · chevron on the top bar = big info panel.
-- *Keyboard*: `0–9` channel digits · `↑/↓` zap · `←/→` seek · `space`
-  pause · `m` mute · `f` fullscreen · `g` guide · `w` widgets · `i` info
-  panel · `/` search · `p` power off.
+`curate → enrich → wikilink → subindex → buddygen → skosify`, all
+resumable via on-disk caches in `tools/.cache/`. Generated outputs
+(`app/js/channels.js`, `annotations-gen.js`, `skos-gen.js`) are never
+edited by hand. External services are treated politely: cached, paced,
+batched — Wikidata bulk goes through QLever, and Wikimedia API use
+requires explicit approval (see `/CLAUDE.md`).
 
 ## Legal
 
-- The `.dmg` is preserved unmodified as a historical artifact of a
-  discontinued service; its **extracted contents are proprietary**
-  (© Joost N.V. / Joost Technologies B.V.) and are deliberately excluded
-  from version control (`.gitignore`).
-- `app/` is **original code** — a UX homage; no Joost code, artwork or
-  trademarks reproduced. Not affiliated with or endorsed by Joost N.V.
-- **This player is a neutral interface over the Internet Archive's
-  public collections.** Like a web browser, it hosts no media and
-  operates no takedown system of its own; it simply plays streams from
-  where they live, at archive.org. Blender Foundation open movies are
-  CC-BY. The theatrical-era channels (Picture Palace, The Nickelodeon)
-  are restricted to films first published through 1930 — public domain
-  in the US — and the other harvested channels draw on archive.org's
-  public-domain-era collections (Prelinger, Universal Newsreels,
-  Film Noir, etc.).
-- **Rights concerns** about any film belong with its host, the Internet
-  Archive — see the
-  [Internet Archive rights policy](https://help.archive.org/help/rights/).
-  Every program's own archive.org source page is linked from the
-  player's info panel (⌄ chevron → "⚭ archive.org").
+TVP/2007 is a neutral interface over the Internet Archive's public
+collections, in the same way a web browser is: it hosts, copies, and
+transmits no media, and links only to files the Archive serves
+publicly. Wikipedia text appears under CC BY-SA with attribution and
+links back. Channel and program metadata carries provenance links
+(archive.org, Wikidata, Wikipedia, Library of Congress, Getty) so
+anything on the dial can be vetted at its source.
