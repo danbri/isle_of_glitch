@@ -280,7 +280,7 @@ function tune(chIndex, opts = {}) {
     ? { url: bestSrc(prog), token } : null;
 
   // a Cast session follows the dial
-  if (state.casting && castApi) castApi.tuned();
+  if (state.casting && castApi) { castApi.tuned(); updateCastMini(); }
 
   const arrive = () => {
     if (token !== state.tuneToken) return;
@@ -1667,11 +1667,15 @@ function initCastLater() {
           $("cast-badge-name").textContent = `Casting to ${name}`;
           $("cast-badge").classList.remove("hidden");
           $("btn-cast").classList.add("lit");
+          updateCastMini();
+          $("cast-mini").classList.remove("hidden");
+          castMiniActivity();
         },
         onCastEnd: (t) => {
           state.casting = false;
           document.body.classList.remove("casting");
           $("cast-badge").classList.add("hidden");
+          $("cast-mini").classList.add("hidden");
           $("btn-cast").classList.remove("lit");
           if (!state.on) return;
           if (state.onDemand) {
@@ -1691,6 +1695,28 @@ function initCastLater() {
 }
 
 $("btn-cast").addEventListener("click", () => { castApi?.prompt(); });
+
+/* the casting mini player: art + title of what's on the TV, remote
+   controls, fading with inactivity like a well-behaved remote */
+function updateCastMini() {
+  if (!state.casting) return;
+  const i = currentProgramInfo(), ch = currentChannel();
+  $("cast-mini-art").src = artUrl(i.program.frame || i.program.art || ch.art) || "";
+  $("cast-mini-title").textContent = i.program.title;
+  $("cast-mini-sub").textContent = `${String(ch.num).padStart(2, "0")} · ${ch.name}`;
+}
+let castMiniTimer;
+function castMiniActivity() {
+  if (!state.casting) return;
+  $("cast-mini").classList.add("active");
+  clearTimeout(castMiniTimer);
+  castMiniTimer = setTimeout(() => $("cast-mini").classList.remove("active"), 5000);
+}
+["pointermove", "pointerdown", "touchstart", "keydown"].forEach((ev) =>
+  document.addEventListener(ev, castMiniActivity, { passive: true }));
+$("cast-mini-play").addEventListener("click", () => castApi?.playPause());
+$("cast-mini-back").addEventListener("click", () => castApi?.seekBy?.(-30));
+$("cast-mini-fwd").addEventListener("click", () => castApi?.seekBy?.(30));
 
 /* ── first-seconds cache (service worker) ──────────── */
 
