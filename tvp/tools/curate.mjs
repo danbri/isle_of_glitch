@@ -43,10 +43,13 @@ const HAND = (title, year, dur, path, desc, license) =>
 const BLENDER = "CC-BY · Blender Foundation";
 
 const DIAL = [
+  /* One studio, one channel: the Blender open movies — shorts and
+     features together, fourteen CC-BY works on a single dial position.
+     (They spent the app's first era split across two channels for no
+     reason beyond the order they were added.) */
   {
-    num: 1, id: "animation-station", name: "Animation Station",
-    category: "Cartoons & Animation", tagline: "Round-the-clock open-source toons",
-    art: "BigBuckBunny_124",
+    num: 1, id: "open-cinema", name: "Open Cinema",
+    category: "Film", tagline: "The Blender open movie channel", art: "Sintel",
     hand: [
       HAND("Big Buck Bunny", 2008, 596.5, "BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4",
         "A giant rabbit takes gentle revenge on three bullying rodents.", BLENDER),
@@ -58,13 +61,7 @@ const DIAL = [
       HAND("Coffee Run", 2020, 184.7, "coffee-run/Coffee%20Run.mp4",
         "A caffeinated sprint through the memories of a life.", BLENDER),
       HAND("Wing It!", 2023, 238, "wing-it/Wing%20It.mp4",
-        "A cat and a dog build a flying machine, against their better judgment.", BLENDER)
-    ]
-  },
-  {
-    num: 2, id: "open-cinema", name: "Open Cinema",
-    category: "Film", tagline: "The Blender open movie channel", art: "Sintel",
-    hand: [
+        "A cat and a dog build a flying machine, against their better judgment.", BLENDER),
       HAND("Elephants Dream", 2006, 653.8, "ElephantsDream/ed_1024_512kb.mp4",
         "Two strange characters explore an infinite machine.", BLENDER),
       HAND("Sintel", 2010, 888, "Sintel/sintel-2048-stereo_512kb.mp4",
@@ -86,6 +83,22 @@ const DIAL = [
       HAND("Charge", 2022, 262.8, "charge_202601/Charge.mp4",
         "A destitute drifter gambles everything in a power-starved future.", BLENDER)
     ]
+  },
+  /* Chapter-a-slot cliffhangers: the documented-PD serial canon only —
+     Universal's Flash Gordons and Buck Rogers (never renewed), the four
+     Republic Dick Tracy serials + RKO Tracy features, the Mascot library
+     (Phantom Empire, Hurricane Express, Shadow of the Eagle, The Three
+     Musketeers, The Lost City), and Republic's non-renewed rocket cycle
+     (Radar Men from the Moon, Zombies of the Stratosphere, King of the
+     Rocket Men). Renewed Republic/Columbia serials stay off. */
+  {
+    num: 2, id: "saturday-serials", name: "Saturday Serials",
+    category: "Adventure", tagline: "Cliffhangers by the chapter",
+    art: "flash_gordon_ep1",
+    hand: [],
+    query: 'mediatype:movies AND date:[1932-01-01 TO 1955-12-31] AND title:("flash gordon" OR "buck rogers" OR "dick tracy" OR "phantom empire" OR "radar men" OR "zombies of the stratosphere" OR "king of the rocket men" OR "hurricane express" OR "shadow of the eagle" OR "three musketeers" OR "the lost city" OR "undersea kingdom")',
+    titleFilter: /(flash gordon|buck rogers|dick tracy|phantom empire|radar men|zombies of the stratosphere|king of the rocket men|hurricane express|shadow of the eagle|three musketeers|lost city|undersea kingdom)/i,
+    want: 64, minDur: 700, maxDur: 5400, maxYear: 1955
   },
   {
     num: 3, id: "cartoon-classics", name: "Cartoon Classics",
@@ -218,14 +231,14 @@ const DIAL = [
       HAND("The Home Economics Story", 1951, 748.4, "HomeEcon1951/HomeEcon1951_512kb.mp4",
         "A gloriously earnest recruiting film.", "Public domain · Prelinger")
     ],
-    collection: "prelinger", want: 48, minDur: 240, maxDur: 2400
+    collection: "prelinger", want: 96, minDur: 240, maxDur: 2400
   },
   {
     num: 9, id: "newsreel-nine", name: "Newsreel Nine",
     category: "News", tagline: "History as it happened, twice a week",
     art: "universal_newsreels",
     hand: [],
-    collection: "universal_newsreels", want: 48, minDur: 120, maxDur: 1500
+    collection: "universal_newsreels", want: 72, minDur: 120, maxDur: 1500
   },
   {
     num: 10, id: "tube-classics", name: "Tube Classics",

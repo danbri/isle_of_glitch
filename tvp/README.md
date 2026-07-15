@@ -2,8 +2,8 @@
 
 **Watch it: https://danbri.github.io/isle_of_glitch/tvp/app/**
 
-TVP is television the mid-2000s web promised: eighteen channels of free
-and openly licensed film and TV, running on a **real broadcast clock**.
+TVP is television the mid-2000s web promised: a dial of free and openly
+licensed film and TV, running on a **real broadcast clock**.
 You don't browse a catalogue — you switch on and join whatever is on
 *now*, flip channels, and let the schedule surprise you. Everything is
 streamed from the Internet Archive's public collections; TVP hosts no
@@ -17,8 +17,8 @@ media.
 
 Blender Foundation open movies (CC-BY) share the dial with
 public-domain-era features, shorts, cartoons, newsreels, classic TV,
-trailers, and the Prelinger ephemera — nearly 2,000 programs and
-counting, every one verified streamable and rights-clean at harvest
+serials, trailers, and the Prelinger ephemera — three thousand programs
+and counting, every one verified streamable and rights-clean at harvest
 time. The broadcast clock is deterministic (epoch: 16 Jan 2007), so two
 people tuned to the same channel see the same thing.
 
