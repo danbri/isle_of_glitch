@@ -640,6 +640,79 @@ function skosFor(p) {
   const id = iaIdOf(p);
   return (id && SKOS_SUBJECTS[id]) || [];
 }
+/* the subjects widget: a squarified treemap of every concept on the dial,
+   sized by how many programs carry it — only content-bearing tiles exist,
+   because the map is built FROM the content. Tap a tile → about: search. */
+let subjectsTreeBuilt = false;
+function buildSubjectsTree() {
+  if (subjectsTreeBuilt || typeof SKOS_SUBJECTS === "undefined") return;
+  const box = $("subjects-tree");
+  if (!box || !box.offsetParent) return;      // build when actually visible
+  subjectsTreeBuilt = true;
+  const counts = new Map();                   // label → {n, scheme}
+  Object.values(SKOS_SUBJECTS).forEach((subs) =>
+    subs.forEach(([label, scheme]) => {
+      const e = counts.get(label) || { n: 0, scheme };
+      e.n++;
+      counts.set(label, e);
+    }));
+  const items = [...counts.entries()]
+    .map(([label, e]) => ({ label, n: e.n, scheme: e.scheme }))
+    .sort((a, b) => b.n - a.n)
+    .slice(0, 42);
+  const W = box.clientWidth || 260, H = box.clientHeight || 220;
+  const total = items.reduce((s, i) => s + i.n, 0);
+  items.forEach((i) => { i.area = (i.n / total) * W * H; });
+
+  /* squarify: lay rows along the shorter side, keeping tiles chunky */
+  const tiles = [];
+  let x = 0, y = 0, w = W, h = H, row = [], rowArea = 0;
+  const worst = (r, s, len) => {
+    if (!r.length) return Infinity;
+    const mx = Math.max(...r.map((i) => i.area)), mn = Math.min(...r.map((i) => i.area));
+    const ss = s * s, l2 = len * len;
+    return Math.max((l2 * mx) / ss, ss / (l2 * mn));
+  };
+  const layoutRow = () => {
+    const vertical = w < h;                   // row runs along the shorter edge
+    const len = vertical ? w : h;
+    const thick = rowArea / len;
+    let off = 0;
+    row.forEach((i) => {
+      const t = i.area / thick;
+      tiles.push(vertical
+        ? { x: x + off, y, w: t, h: thick, i }
+        : { x, y: y + off, w: thick, h: t, i });
+      off += t;
+    });
+    if (vertical) { y += thick; h -= thick; } else { x += thick; w -= thick; }
+    row = []; rowArea = 0;
+  };
+  items.forEach((i) => {
+    const len = Math.min(w, h);
+    if (row.length && worst([...row, i], rowArea + i.area, len) > worst(row, rowArea, len)) layoutRow();
+    row.push(i); rowArea += i.area;
+  });
+  if (row.length) layoutRow();
+
+  box.innerHTML = "";
+  tiles.forEach(({ x, y, w, h, i }) => {
+    if (w < 3 || h < 3) return;
+    const el = document.createElement("div");
+    el.className = `tm-tile tm-${i.scheme}`;
+    el.style.cssText = `left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;width:${w.toFixed(1)}px;height:${h.toFixed(1)}px;`;
+    el.title = `${i.label} — ${i.n} program${i.n > 1 ? "s" : ""}`;
+    if (w > 34 && h > 15) el.innerHTML = `${i.label}${h > 30 ? `<small>${i.n}</small>` : ""}`;
+    el.addEventListener("click", () => {
+      openPanel("search");
+      const q = "about:" + i.label;
+      $("search-input").value = q;
+      renderSearch(q);
+    });
+    box.appendChild(el);
+  });
+}
+
 /* chip taps run an about: search — one handler, delegated */
 document.addEventListener("click", (e) => {
   const chip = e.target.closest?.(".skos-chip");
@@ -1058,6 +1131,7 @@ function openPanel(which) {
   } else {
     $(which).classList.add("open");
     document.body.classList.add("drawer-open");
+    if (which === "dock") requestAnimationFrame(buildSubjectsTree);
   }
 }
 function closePanels() {
