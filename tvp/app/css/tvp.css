@@ -299,9 +299,12 @@ body.overlays-on #tunebar { bottom: calc(168px + var(--sab)); }
 }
 
 #controller-buttons {
-  display: flex; justify-content: space-between; align-items: center;
+  display: flex; justify-content: center; align-items: center;
   margin-top: 6px; gap: 4px;
+  /* mobile first: the row WRAPS — buttons never squeeze below thumb size */
+  flex-wrap: wrap;
 }
+.ctl { flex: 0 0 auto; }
 
 .ctl {
   width: 44px; height: 44px; border-radius: 50%;
@@ -847,14 +850,11 @@ body.drawer-open #scrim { opacity: 1; pointer-events: auto; }
 #ticker-track span { margin-right: 48px; }
 @keyframes tick { to { transform: translateX(-100%); } }
 
-/* ── narrow phones: keep all nine controller buttons on one row ── */
+/* ── narrow phones: the controller row WRAPS (mobile first!) — buttons
+   never shrink below thumb size (44px), they take a second row ── */
 @media (max-width: 480px) {
   #controller { padding: 8px 10px 10px; }
-  #controller-buttons { gap: 2px; }
-  .ctl { width: 34px; height: 34px; border-width: 1.8px; }
-  .ctl svg { width: 17px; height: 17px; }
-  .ctl.big { width: 46px; height: 46px; }
-  .ctl.big svg { width: 22px; height: 22px; }
+  #controller-buttons { gap: 6px 4px; }
 }
 
 /* ── wider screens: the 2007 desktop feel ──────────── */
