@@ -127,6 +127,60 @@ const DIAL = [
     want: 80, minDur: 2400, maxDur: 7800, maxYear: 1969,
     titleFilter: /(planet|space|outer|rocket|saucer|mars|moon|robot|atomic|future|invasion|astro|cosmic|satellite|ufo|venus|brain|teenagers from)/i
   },
+  /* Hand-curated star vehicles whose US copyrights were never renewed
+     (or lapsed for want of notice) — the documented public-domain canon
+     of famous-name features: Bogart, Grant, Hepburn, Stanwyck, Sinatra,
+     Astaire, Garland, Welles, Brando, Wayne, Temple, Taylor, Peck…
+     Every title here has a well-attested non-renewal/no-notice record.
+     Deliberately absent: It's a Wonderful Life (film PD but underlying
+     story + music rights reasserted) and the British Hitchcocks (URAA
+     restored their US copyrights in 1996). Placed BEFORE the noir and
+     genre harvests so the global dedupe assigns these prints here. */
+  {
+    num: 51, id: "marquee", name: "Marquee",
+    category: "Film", tagline: "The big names, up in lights",
+    art: "royal_wedding",
+    hand: [],
+    /* {id, title, year} — several of these items lack year metadata on
+       archive.org, and uploader titles carry cast-list cruft, so the
+       roster states both. Grant/Hepburn, Bogart, Welles, Sinatra,
+       Astaire, Garland, Brando, Wayne, Temple, Stanwyck, Taylor, Peck. */
+    ids: [
+      { id: "charade-1963-cary-grant-audrey-hepburn-comedy-mystery-romance-thriller-full-movie", title: "Charade", year: 1963 },
+      { id: "BeatTheDevil1953", title: "Beat the Devil", year: 1953 },
+      { id: "TheStranger_0", title: "The Stranger", year: 1946 },
+      { id: "ScarletStreet", title: "Scarlet Street", year: 1945 },
+      { id: "Detour", title: "Detour", year: 1945 },
+      { id: "thoseguysontheradio_gmail_Doa", title: "D.O.A.", year: 1949 },
+      { id: "suddenly", title: "Suddenly", year: 1954 },
+      { id: "Hitch_Hiker", title: "The Hitch-Hiker", year: 1953 },
+      { id: "MyManGodfrey1936", title: "My Man Godfrey", year: 1936 },
+      { id: "NothingSacred", title: "Nothing Sacred", year: 1937 },
+      { id: "AStarIsBorn", title: "A Star Is Born", year: 1937 },
+      { id: "meet_john_doe", title: "Meet John Doe", year: 1941 },
+      { id: "made_for_each_other_film", title: "Made for Each Other", year: 1939 },
+      { id: "penny_serenade", title: "Penny Serenade", year: 1941 },
+      { id: "humanbondage", title: "Of Human Bondage", year: 1934 },
+      { id: "LoveAffair", title: "Love Affair", year: 1939 },
+      { id: "TheFrontPage1931AdolpheMenjouPatOBrienLewismiles", title: "The Front Page", year: 1931 },
+      { id: "afarewelltoarms1932garycooper", title: "A Farewell to Arms", year: 1932 },
+      { id: "LifeWithFather", title: "Life with Father", year: 1947 },
+      { id: "till_the_clouds_roll_by", title: "Till the Clouds Roll By", year: 1946 },
+      { id: "royal_wedding", title: "Royal Wedding", year: 1951 },
+      { id: "second_chorus_1940", title: "Second Chorus", year: 1940 },
+      { id: "TheLittlePrincess1939", title: "The Little Princess", year: 1939 },
+      { id: "angel_and_the_badman", title: "Angel and the Badman", year: 1947 },
+      { id: "886-the-outlaw", title: "The Outlaw", year: 1943 },
+      { id: "Cyrano_DeBergerac", title: "Cyrano de Bergerac", year: 1950 },
+      { id: "fatherslittledividend", title: "Father's Little Dividend", year: 1951 },
+      { id: "oneeyedjacks1961_202001", title: "One-Eyed Jacks", year: 1961 },
+      { id: "kansascityconfidencial", title: "Kansas City Confidential", year: 1952 },
+      { id: "Kilimanjaro", title: "The Snows of Kilimanjaro", year: 1952 },
+      { id: "JungleBook", title: "Jungle Book", year: 1942 },
+      { id: "TheSoutherner", title: "The Southerner", year: 1945 }
+    ],
+    want: 32, minDur: 2400, maxDur: 10000
+  },
   {
     num: 6, id: "shadow-street", name: "Shadow Street",
     category: "Drama", tagline: "Shadows, cigarettes and bad decisions",
@@ -254,10 +308,77 @@ const DIAL = [
 /* ── plumbing ─────────────────────────────────────────────────────── */
 
 /* keep the default dial family-friendly and clear of obvious rip uploads */
-const GLOBAL_EXCLUDE = /(sex|porn|milf|erot|nude|xxx|kama sutra|\bdesire\b|psycho cat|ramrodder|women are bad|snuff|terrifying girls|girl boss|\bteasers\b|delinquent|exploitation|hbo|netflix|complete series|complete docuseries|ken.?\s*burns|world at war|blu.?ray|1080p rip|x26[45])/i;
+const GLOBAL_EXCLUDE = /(sex|porn|milf|erot|nude|xxx|kama sutra|\bdesire\b|psycho cat|ramrodder|women are bad|snuff|terrifying girls|girl boss|\bteasers\b|delinquent|exploitation|hbo|netflix|complete series|complete docuseries|ken.?\s*burns|world at war|blu.?ray|1080p rip|x26[45]|colou?rized)/i;
+
+/* rip-smelling IDENTIFIERS (titles are often scrubbed clean while the
+   identifier still says BrRip): scene-release markers mean a modern
+   home-video master, not an archival print */
+const ID_EXCLUDE = /(x26[45]|blu.?ray|yts\.?\.?mx|hevc|brrip|dvdrip|web.?rip|webdl|handjob)/i;
+
+/* Rights denylist. The harvest queries rank by popularity, which favours
+   exactly the famous films that are still owned. These are features whose
+   US copyright is well documented as ALIVE — renewed by the studio, or a
+   post-1930 foreign film restored by URAA in 1996 (UK, Japanese, French,
+   Spanish, Czech, German productions). Matching is on normalised title
+   (exact, or first-word-boundary prefix) so every re-upload is caught.
+   Deliberately NOT here: the documented non-renewal canon (McLintock!,
+   Road to Bali, MGM lapses, Corman, Sudden Fear, The Big Lift…) and the
+   pre-1931 European silents, whose URAA status is a long-standing gray
+   zone that US distributors have treated as PD for decades. */
+const DENY_TITLES = [
+  // famous renewed US studio features
+  "dr strangelove", "from here to eternity", "sabrina", "niagara", "laura",
+  "double indemnity", "day the earth stood still", "manchurian candidate",
+  "killing", "killers kiss", "kiss me deadly", "big heat", "ace in the hole",
+  "dont bother to knock", "pickup on south street", "panic in the streets",
+  "house on telegraph hill", "diplomatic courier", "deadline usa", "deadline u s a",
+  "journey to the center of the earth", "harvey", "night and the city",
+  "abbott and costello meet the invisible man", "pit and the pendulum",
+  "haunted palace", "detective story", "desperate hours", "gunfighter",
+  "outcasts of poker flat", "gambler from natchez", "convicted",
+  "harriet craig", "fat man", "man in the dark", "young savages",
+  "file on thelma jordan", "file on thelma jordon", "space master x 7",
+  "creature walks among us", "deadly mantis", "monolith monsters",
+  "monster on campus", "boomerang", "house of strangers",
+  "murder by contract", "killer that stalked new york",
+  "dr goldfoot and the bikini machine",
+  // URAA-restored foreign features (post-1930)
+  "ladykillers", "carry on cruising", "carry on cabby", "tiger bay",
+  "room at the top", "browning version", "an inspector calls",
+  "never take candy from a stranger", "day the earth caught fire",
+  "father brown the detective", "golden salamander", "touch of larceny",
+  "two headed spy", "footsteps in the fog", "good die young",
+  "another mans poison", "mr denning drives north", "one that got away",
+  "hell in korea", "limping man", "black abbot", "night creatures",
+  "devil girl from mars", "strange world of planet x", "x from outer space",
+  "goke body snatcher from hell", "destroy all monsters", "back room boy",
+  "sanjuro", "good morning", "tokyo story", "ugetsu", "gate of hell",
+  "wages of fear", "wild strawberries", "harakiri", "high and low",
+  "drunken angel", "elevator to the gallows", "viridiana", "daisies",
+  "panther panchali", "pather panchali", "aparajito", "apur sansay",
+  "apur sansar", "wicked as they come"
+];
+/* generically-titled or one-off strays: denied by identifier so the title
+   stays available to legitimate uploads (Maniac 1934 is PD; Naruse's Wife
+   is not) */
+const DENY_IDS = new Set([
+  "scandal_202012",              // Scandal (1950, Kurosawa — URAA)
+  "wife_20201211",               // Wife (1953, Naruse — URAA)
+  "Intimidation",                // Intimidation (1960, Nikkatsu — URAA)
+  "maniac_202107",               // Maniac (1963, Hammer/Columbia)
+  "the-web-1947",                // The Web (1947, Universal — renewed)
+  "larceny1948",                 // Larceny (1948, Universal — renewed)
+  "Vengence_of_the_Zombies",     // Vengeance of the Zombies (1973)
+  "my-movie_20210607",           // junk "My Movie" upload
+  "TheEmperorNortonBonanza1966", // Bonanza 1966 (post-1963: auto-renewed era)
+  "HouseOnBareMountain"          // 1962 nudie-cutie — past the family line
+]);
+const isDeniedTitle = (nt) =>
+  DENY_TITLES.some((e) => nt === e || nt.startsWith(e + " "));
 
 const normTitle = (t) => String(t || "").toLowerCase()
-  .replace(/[^a-z0-9 ]+/g, "").replace(/^the /, "").replace(/\s+/g, " ").trim();
+  .replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim()
+  .replace(/^the /, "").replace(/ the$/, "");
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -335,8 +456,17 @@ async function verify(url) {
 }
 
 function cleanTitle(t) {
-  return String(t || "").replace(/\s+/g, " ")
-    .replace(/\s*[\(\[]\s*(19|20)\d\d\s*[\)\]]\s*$/, "").trim().slice(0, 70);
+  let s = String(t || "").replace(/\s+/g, " ").trim();
+  // "1951 - Detective Story - …" uploader year prefixes
+  s = s.replace(/^(19|20)\d\d\s*[-–—:]\s*/, "");
+  // "Title (1953) Richard Widmark, Jean …" — cut cast/blurb tails at the
+  // first bracketed year ("Airport 1975"-style unbracketed years survive)
+  const m = s.match(/^(.{8,}?)\s*[([]\s*(19|20)\d\d\b/);
+  if (m) s = m[1];
+  else s = s.replace(/\s*[([]\s*(19|20)\d\d\s*[)\]]\s*$/, "");
+  // trailing uploader markers
+  s = s.replace(/\s*[-–|]?\s*[([]?\s*(vose|widescreen|hd quality|full movie|ipod( and flash.*)?|hd)\s*[)\]]?\s*$/i, "");
+  return s.replace(/\s+/g, " ").trim().slice(0, 70);
 }
 
 async function harvestChannel(ch, taken, seenTitles) {
@@ -352,25 +482,42 @@ async function harvestChannel(ch, taken, seenTitles) {
     (parseInt(d.year) ? Math.max(0, Math.min(1, (parseInt(d.year) - 1900) / 60)) * 1.5 : 0);
   found.sort((a, b) => prio(b) - prio(a));
   const docs = [
-    ...(ch.ids || []).map((identifier) => ({ identifier })),
+    /* hand ids: plain string, or {id, title, year} when archive.org's own
+       metadata is missing/ugly — overrides flow through the normal gates */
+    ...(ch.ids || []).map((x) => typeof x === "string"
+      ? { identifier: x }
+      : { identifier: x.id, title: x.title, year: x.year }),
     ...found
   ];
   const out = [];
   const rejects = {};
   const reject = (why) => { rejects[why] = (rejects[why] || 0) + 1; };
+  /* title dedupe with a word-boundary prefix rule, so "Night of the Living
+     Dead (1968) English FULL HD" and the iPod re-encode collapse onto the
+     copy already on the dial */
+  const isDupTitle = (nt) => {
+    if (seenTitles.has(nt)) return true;
+    if (nt.length < 10) return false;
+    for (const s of seenTitles)
+      if (s.length >= 10 && (s.startsWith(nt + " ") || nt.startsWith(s + " "))) return true;
+    return false;
+  };
   for (const d of docs) {
     if (out.length >= ch.want) break;
     if (!d.identifier || taken.has(d.identifier)) { reject("dup-id"); continue; }
+    if (DENY_IDS.has(d.identifier) || ID_EXCLUDE.test(d.identifier)) { reject("denied"); continue; }
     const searchTitle = String(d.title || "");
     if (d.title !== undefined) {
       if (GLOBAL_EXCLUDE.test(searchTitle)) { reject("excluded"); continue; }
+      if (isDeniedTitle(normTitle(cleanTitle(searchTitle)))) { reject("denied"); continue; }
       if (ch.titleFilter && !ch.titleFilter.test(searchTitle)) { reject("filter"); continue; }
     }
     const meta = await getMeta(d.identifier);
     if (!meta?.files) { reject("no-meta"); continue; }
     const title = cleanTitle(d.title || meta.metadata?.title) || d.identifier;
     if (GLOBAL_EXCLUDE.test(title)) { reject("excluded"); continue; }
-    if (seenTitles.has(normTitle(title))) { reject("dup-title"); continue; }
+    if (isDeniedTitle(normTitle(title))) { reject("denied"); continue; }
+    if (isDupTitle(normTitle(title))) { reject("dup-title"); continue; }
     const picked = pickFiles(meta.files);
     if (!picked) { reject("no-mp4"); continue; }
     const dur = parseLen(picked.lo.length) ||
