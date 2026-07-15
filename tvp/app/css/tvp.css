@@ -1111,3 +1111,14 @@ body.casting #stage video { opacity: .25; }
 .tm-back:hover { border-color: var(--accent); color: var(--accent); }
 .tm-tile.tm-branch { border-style: dashed; border-color: rgba(255,255,255,.35); }
 .tm-tile small { font-variant-numeric: tabular-nums; }
+
+/* treemap snap-zoom feel + long-tail scale */
+#subjects-tree.tm-snap { animation: tm-snap .22s ease-out; }
+@keyframes tm-snap { from { opacity: .35; transform: scale(.94); } }
+.tm-here { cursor: pointer; }
+.tm-crumb .tm-even {
+  margin-left: auto; padding: 1px 9px; border-radius: 999px; font-size: 13px;
+  color: rgba(255,255,255,.6); background: transparent;
+  border: 1px solid rgba(255,255,255,.3); cursor: pointer;
+}
+.tm-crumb .tm-even.on { color: var(--accent); border-color: var(--accent); }
