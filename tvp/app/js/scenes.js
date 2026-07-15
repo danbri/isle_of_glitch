@@ -541,6 +541,7 @@ export function launchScenes(bridge, startId) {
       xrMat.uniforms.t.value = t;
     }
     world.update?.(t, tone);
+    world.gaze?.(camera);
     // outside a headset the hole must ALWAYS be the punch — if an XR
     // session ended abnormally and left the tone-wash behind, heal it
     const hole = world.screen?.userData.hole;
@@ -969,105 +970,324 @@ SCENE_DEFS.push({
   }
 });
 
-/* 💎 Grotto Lumina */
+/* 💎 Grotto Lumina — an ice cave. Faked subsurface scattering (backlight
+   transmission + fresnel rim + interior shimmer), caustic water with
+   drip-ripples, god-ray shafts, falling ice sparkle, and hero crystals
+   that notice being looked at. */
 SCENE_DEFS.push({
-  id: "grotto", name: "Grotto Lumina", emoji: "💎", sky: 0x02070a,
-  build({ THREE, motes, screenAssembly, beamFrustum }, scene) {
+  id: "grotto", name: "Grotto Lumina", emoji: "💎", sky: 0x020810, exposure: 1.4,
+  build({ THREE, screenAssembly, beamFrustum }, scene) {
     const g = new THREE.Group();
-    scene.fog = new THREE.Fog(0x02070a, 12, 55);
+    scene.fog = new THREE.Fog(0x041020, 14, 60);
 
+    /* ── ice material: the whole trick of the scene ──
+       - fresnel rim in pale glacial light
+       - "subsurface": light from behind glows THROUGH the body, warm
+         with the current frame-tone
+       - interior shimmer + hash-glint sparkle, both view-dependent */
+    const iceUniforms = [];
+    function iceMat(base, opts = {}) {
+      const mat = new THREE.ShaderMaterial({
+        uniforms: {
+          t: { value: 0 },
+          tone: { value: new THREE.Color(0x8fd8ff) },
+          base: { value: new THREE.Color(base) },
+          gaze: { value: 0 },
+          l1: { value: new THREE.Vector3(-8, 4, -10) },
+          l2: { value: new THREE.Vector3(8, 5, -8) }
+        },
+        transparent: true, depthWrite: true,
+        vertexShader: `
+          varying vec3 vN, vW, vV;
+          void main(){
+            vN = normalize(mat3(modelMatrix) * normal);
+            vec4 w = modelMatrix * vec4(position, 1.);
+            vW = w.xyz;
+            vV = normalize(cameraPosition - w.xyz);
+            gl_Position = projectionMatrix * viewMatrix * w;
+          }`,
+        fragmentShader: `
+          varying vec3 vN, vW, vV;
+          uniform float t, gaze;
+          uniform vec3 tone, base, l1, l2;
+          float hash(vec3 p){ return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+          void main(){
+            vec3 n = normalize(vN), v = normalize(vV);
+            // fresnel rim: pale glacial edge light
+            float fr = pow(1. - abs(dot(n, v)), 2.6);
+            // faked subsurface: light sources BEHIND the body transmit
+            // through it, tinted by the frame-tone
+            vec3 tl1 = normalize(vW - l1), tl2 = normalize(vW - l2);
+            float sss = pow(max(dot(v, tl1), 0.), 5.) + pow(max(dot(v, tl2), 0.), 5.);
+            // interior shimmer: slow drifting bands inside the volume
+            float inner = .5 + .5 * sin(vW.x * 2.1 + vW.y * 3.3 - t * .8)
+                              * sin(vW.z * 2.7 - vW.y * 1.9 + t * .6);
+            // glints: cells of the surface catch the light and wink
+            float gl = step(.985, hash(floor(vW * 9.) + floor(vec3(t * 1.6)))) * (.4 + .6 * fr);
+            vec3 col = base * (.35 + .3 * inner)
+                     + vec3(.78, .92, 1.) * fr * .85
+                     + tone * sss * .9
+                     + tone * inner * .12
+                     + vec3(1.) * gl
+                     + tone * gaze * (.35 + .2 * sin(t * 6.));
+            float a = .82 + fr * .18;
+            gl_FragColor = vec4(col, a);
+          }`
+      });
+      if (!opts.still) iceUniforms.push(mat.uniforms);
+      return mat;
+    }
+
+    /* faceted crystal: hex column + tip, flat normals for hard facets */
+    function crystalGeo(r, h) {
+      const col = new THREE.CylinderGeometry(r * 0.45, r, h * 0.72, 6, 1);
+      col.translate(0, h * 0.36, 0);
+      const tip = new THREE.CylinderGeometry(0, r * 0.45, h * 0.28, 6, 1);
+      tip.translate(0, h * 0.86, 0);
+      const geo = mergeGeos([col, tip]).toNonIndexed();
+      geo.computeVertexNormals();
+      return geo;
+    }
+    function mergeGeos(list) {
+      // minimal merge: concatenate positions (all non-indexed after toNonIndexed)
+      const nons = list.map((g2) => g2.toNonIndexed());
+      const total = nons.reduce((s, g2) => s + g2.attributes.position.count, 0);
+      const pos = new Float32Array(total * 3);
+      let at = 0;
+      nons.forEach((g2) => {
+        pos.set(g2.attributes.position.array, at);
+        at += g2.attributes.position.array.length;
+      });
+      const out = new THREE.BufferGeometry();
+      out.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      return out;
+    }
+
+    /* cave shell: glacial blue, faceted */
     const shellGeo = new THREE.IcosahedronGeometry(24, 3);
     const sp = shellGeo.attributes.position;
     for (let i = 0; i < sp.count; i++) {
       const v = new THREE.Vector3().fromBufferAttribute(sp, i);
-      const n = 1 + 0.16 * Math.sin(v.x * 0.7) * Math.sin(v.y * 1.1 + 2) * Math.sin(v.z * 0.9 + 4)
-        + 0.07 * Math.sin(v.x * 2.3 + v.z * 1.7);
+      const n = 1 + 0.18 * Math.sin(v.x * 0.7) * Math.sin(v.y * 1.1 + 2) * Math.sin(v.z * 0.9 + 4)
+        + 0.08 * Math.sin(v.x * 2.3 + v.z * 1.7);
       v.multiplyScalar(n);
       sp.setXYZ(i, v.x, Math.max(v.y, -2.2), v.z);
     }
     shellGeo.computeVertexNormals();
     const shell = new THREE.Mesh(shellGeo, new THREE.MeshStandardMaterial({
-      color: 0x1a2430, roughness: 0.85, metalness: 0.08, side: THREE.BackSide, flatShading: true
+      color: 0x16344a, roughness: 0.55, metalness: 0.25,
+      side: THREE.BackSide, flatShading: true
     }));
     shell.position.y = 6;
     g.add(shell);
 
-    // crystal water — sparkle tinted by the frame tone
+    /* ── the pool: caustics, drip ripples, crystal reflections ── */
+    const RIPPLES = 5;
     const waterMat = new THREE.ShaderMaterial({
-      uniforms: { t: { value: 0 }, tint: { value: new THREE.Color(0x59e8ff) } },
+      uniforms: {
+        t: { value: 0 },
+        tint: { value: new THREE.Color(0x8fd8ff) },
+        rip: { value: Array.from({ length: RIPPLES }, () => new THREE.Vector3(0, 0, 99)) }  // x,z,age
+      },
       transparent: true,
-      vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+      vertexShader: `varying vec2 vUv; varying vec3 vW;
+        void main(){ vUv=uv; vec4 w=modelMatrix*vec4(position,1.); vW=w.xyz; gl_Position=projectionMatrix*viewMatrix*w; }`,
       fragmentShader: `
-        varying vec2 vUv; uniform float t; uniform vec3 tint;
+        varying vec2 vUv; varying vec3 vW;
+        uniform float t; uniform vec3 tint; uniform vec3 rip[${RIPPLES}];
+        float caust(vec2 p, float s){
+          vec2 q = p + vec2(sin(p.y * 1.7 + t * s), cos(p.x * 1.4 - t * s)) * .35;
+          return pow(abs(sin(q.x * 2.4) * sin(q.y * 2.1)), 6.);
+        }
         void main(){
-          vec2 p = vUv*22.;
-          float w = sin(p.x+t*.8)*sin(p.y*1.3-t*.6) + sin((p.x+p.y)*.7+t*1.1)*.5;
-          float sparkle = smoothstep(.9,1.,sin(p.x*3.1+t*2.)*sin(p.y*2.7-t*1.7));
-          vec3 col = mix(vec3(.01,.09,.13), vec3(.05,.35,.42), .5+.5*w);
-          col += tint*sparkle*.75;
-          // a soft lane of screen-light lying on the water
-          float lane = smoothstep(.35,.0,abs(vUv.x-.5)) * smoothstep(.1,.55,vUv.y);
-          col += tint * lane * .22 * (0.75+0.25*sin(t*1.3+vUv.y*14.));
-          float edge = smoothstep(.5,.15,distance(vUv,vec2(.5)));
-          gl_FragColor = vec4(col, .88*edge);
+          vec2 p = vW.xz * .8;
+          float c = caust(p, .5) * .8 + caust(p * 1.9 + 4.7, -.35) * .5;
+          float depth = smoothstep(.52, .05, distance(vUv, vec2(.5)));
+          vec3 col = mix(vec3(.012, .05, .1), vec3(.03, .17, .27), depth);
+          col += tint * c * (.4 + .35 * depth);
+          // lane of screen-light lying toward the viewer
+          float lane = smoothstep(.34, .0, abs(vUv.x - .5)) * smoothstep(.08, .5, vUv.y);
+          col += tint * lane * .2 * (0.8 + 0.2 * sin(t * 1.1 + vUv.y * 12.));
+          // drip ripples: thin expanding rings
+          for (int i = 0; i < ${RIPPLES}; i++) {
+            float age = rip[i].z;
+            if (age < 3.) {
+              float d = distance(vW.xz, rip[i].xy);
+              float ring = smoothstep(.12, .0, abs(d - age * 1.6)) * (1. - age / 3.);
+              col += tint * ring * .5;
+            }
+          }
+          float edge = smoothstep(.5, .17, distance(vUv, vec2(.5)));
+          gl_FragColor = vec4(col, .9 * edge);
         }`
     });
-    const water = new THREE.Mesh(new THREE.CircleGeometry(15, 48), waterMat);
+    const water = new THREE.Mesh(new THREE.CircleGeometry(15, 56), waterMat);
     water.rotation.x = -Math.PI / 2;
     water.position.set(0, 0.02, -6);
     g.add(water);
 
-    const screen = screenAssembly(9, 0x0c141c, 0.3);
+    /* screen set into the far ice face, wash across the water */
+    const screen = screenAssembly(9, 0x0c1824, 0.3);
     screen.position.set(0, 4.3, -16.5);
     g.add(screen);
-    // screen-glow rolling across the water toward us
-    const wash = beamFrustum(9, 9 * 9 / 16, 11.5, 7, 13, 0.07);
-    wash.mesh.position.set(0, 4.2, -16.2);         // from the screen's face…
-    wash.mesh.lookAt(0, 0.6, -2.5);                // …laying light over the water
+    const wash = beamFrustum(9, 9 * 9 / 16, 11.5, 7, 13, 0.06);
+    wash.mesh.position.set(0, 4.2, -16.2);
+    wash.mesh.lookAt(0, 0.6, -2.5);
     g.add(wash.mesh);
 
-    const crysMat = (c) => new THREE.MeshStandardMaterial({
-      color: c, roughness: 0.12, metalness: 0.15, emissive: c, emissiveIntensity: 0.5,
-      transparent: true, opacity: 0.88, flatShading: true
-    });
-    const palette = [0x59e8ff, 0x9f7bff, 0x64ffd0];
-    const clusters = [[-9, 0, -12], [9.5, 0, -11], [-5, 0, -16], [6, 0, -17], [-11, 0, -4], [11, 0, -3]];
-    clusters.forEach(([cx, cy, cz], ci) => {
-      for (let i = 0; i < 4; i++) {
-        const h = 1.2 + Math.random() * 2.8;
-        const cr = new THREE.Mesh(new THREE.ConeGeometry(0.34 + Math.random() * 0.3, h, 5),
-          crysMat(palette[(ci + i) % 3]));
-        cr.position.set(cx + (Math.random() - 0.5) * 1.6, cy + h / 2 - 0.1, cz + (Math.random() - 0.5) * 1.6);
-        cr.rotation.set((Math.random() - 0.5) * 0.5, Math.random() * 3, (Math.random() - 0.5) * 0.5);
-        g.add(cr);
+    /* ── crystal formations ── */
+    const heroes = [];       // gaze-aware, per-mesh material
+    const seed = (i) => (Math.sin(i * 127.13) * 43758.55) % 1;
+    function cluster(cx, cz, count, big, heroic = false) {
+      const grp = new THREE.Group();
+      for (let i = 0; i < count; i++) {
+        const s1 = Math.abs(seed(i + cx * 7)), s2 = Math.abs(seed(i * 3 + cz * 5));
+        const h = big * (0.5 + s1 * 0.9), r = big * (0.09 + s2 * 0.06);
+        const mat = iceMat(i % 3 === 2 ? 0x9f7bff : 0x59c8ff);
+        const m = new THREE.Mesh(crystalGeo(r, h), mat);
+        m.position.set(cx + (s1 - 0.5) * big * 0.55, -0.15, cz + (s2 - 0.5) * big * 0.55);
+        m.rotation.set((s2 - 0.5) * 0.5, s1 * 6.28, (s1 - 0.5) * 0.5);
+        grp.add(m);
+        if (heroic && i < 2) heroes.push(m);
       }
+      g.add(grp);
+      return grp;
+    }
+    cluster(-6.4, -15.2, 5, 5.2, true);      // flanking the screen: hero formations
+    cluster(6.4, -15.4, 5, 5.2, true);
+    cluster(-10.5, -8, 4, 3.2);
+    cluster(10.5, -7.5, 4, 3.2);
+    cluster(-12.5, -1.5, 3, 2.2);
+    cluster(12.5, -1, 3, 2.2);
+    cluster(-4, 2.8, 3, 1.4);
+    cluster(4.5, 3, 3, 1.4);
+
+    /* stalactites: inverted crystals from the vault, three of them dripping */
+    const drips = [];
+    for (let i = 0; i < 7; i++) {
+      const s = Math.abs(seed(i * 11 + 3));
+      const h = 2 + s * 2.6;
+      const m = new THREE.Mesh(crystalGeo(0.28 + s * 0.2, h), iceMat(0x59c8ff));
+      const x = (s - 0.5) * 18, z = -4 - s * 10;
+      m.position.set(x, 10.5 + s * 3, z);
+      m.rotation.x = Math.PI;                   // point down
+      g.add(m);
+      if (i < 3) {
+        const drop = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 5),
+          new THREE.MeshBasicMaterial({ color: 0xbfeaff, transparent: true, opacity: 0.9 }));
+        drop.position.set(x, 8, z);
+        g.add(drop);
+        drips.push({ drop, x, z, y0: 9.6 + s * 2, phase: s * 5, speed: 2.6 + s });
+      }
+    }
+
+    /* god-rays: three slim shafts from the vault down to the water */
+    const shafts = [];
+    [[-5, -9, 0.5], [2.5, -5, 0.7], [7.5, -11, 0.45]].forEach(([x, z, w]) => {
+      const s = beamFrustum(w, w, w * 2.6, w * 2.6, 14, 0.05);
+      s.mesh.position.set(x, 13, z);
+      s.mesh.lookAt(x + 1.2, 0, z + 0.6);
+      g.add(s.mesh);
+      shafts.push(s);
     });
 
-    const glow = motes(140, [26, 9, 24], 0.07, 0x9fffe8);
-    glow.position.set(0, 1, -8);
-    g.add(glow);
+    /* falling ice-sparkle: shader-driven, zero per-frame CPU */
+    const SNOW = 260;
+    const spos = new Float32Array(SNOW * 3), sseed = new Float32Array(SNOW);
+    for (let i = 0; i < SNOW; i++) {
+      spos[i * 3] = (Math.random() - 0.5) * 26;
+      spos[i * 3 + 1] = Math.random() * 12;
+      spos[i * 3 + 2] = -8 + (Math.random() - 0.5) * 22;
+      sseed[i] = Math.random();
+    }
+    const snowGeo = new THREE.BufferGeometry();
+    snowGeo.setAttribute("position", new THREE.BufferAttribute(spos, 3));
+    snowGeo.setAttribute("seed", new THREE.BufferAttribute(sseed, 1));
+    const snowMat = new THREE.ShaderMaterial({
+      uniforms: { t: { value: 0 }, tint: { value: new THREE.Color(0xbfeaff) } },
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      vertexShader: `
+        attribute float seed; uniform float t; varying float vTw;
+        void main(){
+          vec3 p = position;
+          p.y = mod(p.y - t * (.14 + seed * .22), 12.);
+          p.x += sin(t * .4 + seed * 40.) * .35;
+          vTw = .4 + .6 * sin(t * (1.5 + seed * 2.) + seed * 90.);
+          vec4 mv = modelViewMatrix * vec4(p, 1.);
+          gl_PointSize = (0.8 + seed * 1.6) * (52. / -mv.z);
+          gl_Position = projectionMatrix * mv;
+        }`,
+      fragmentShader: `
+        uniform vec3 tint; varying float vTw;
+        void main(){
+          float d = length(gl_PointCoord - .5);
+          if (d > .5) discard;
+          gl_FragColor = vec4(tint, (1. - d * 2.) * .5 * vTw);
+        }`
+    });
+    const snow = new THREE.Points(snowGeo, snowMat);
+    g.add(snow);
 
-    g.add(new THREE.AmbientLight(0x1a3c48, 1.4));
-    const cyan = new THREE.PointLight(0x59e8ff, 24, 26, 1.8); cyan.position.set(-8, 3.5, -10);
+    /* light: cool ambient, two crystal glows, the screen's own light */
+    g.add(new THREE.AmbientLight(0x24485c, 1.35));
+    const cyan = new THREE.PointLight(0x59c8ff, 26, 28, 1.8); cyan.position.set(-8, 3.5, -10);
     const violet = new THREE.PointLight(0x9f7bff, 20, 26, 1.8); violet.position.set(8, 3.5, -9);
     const screenLight = new THREE.PointLight(0x8fd8ff, 34, 32, 1.6);
     screenLight.position.set(0, 4, -14.5);
     g.add(cyan, violet, screenLight);
 
+    const ripSlots = waterMat.uniforms.rip.value;
+    let ripNext = 0;
+    const fwd = new THREE.Vector3(), toC = new THREE.Vector3();
+
     return {
-      group: g, screen, screenLight, volumes: [wash],
+      group: g, screen, screenLight, volumes: [wash, ...shafts],
       rig: { pos: [0, 1.5, 3.5], yaw: 0 },
       update(t, tone) {
         waterMat.uniforms.t.value = t;
         waterMat.uniforms.tint.value.copy(tone.current);
-        glow.rotation.y = t * 0.02;
-        glow.position.y = 1 + Math.sin(t * 0.3) * 0.3;
-        cyan.intensity = 22 + Math.sin(t * 1.3) * 4;
+        snowMat.uniforms.t.value = t;
+        snowMat.uniforms.tint.value.copy(tone.current).lerp(new THREE.Color(0xbfeaff), 0.6);
+        iceUniforms.forEach((u) => { u.t.value = t; u.tone.value.copy(tone.current); });
+        // ripples age; drips fall and strike the pool
+        for (const r of ripSlots) r.z += 1 / 60;
+        drips.forEach((d) => {
+          const cycle = ((t * d.speed + d.phase) % 4) / 4;      // 0..1
+          if (cycle < 0.72) {
+            d.drop.visible = true;
+            d.drop.position.y = d.y0 - (cycle / 0.72) * (d.y0 - 0.05);
+            if (!d.wasFalling && cycle < 0.1) d.wasFalling = true;
+            if (d.wasFalling && cycle > 0.7) {
+              d.wasFalling = false;
+              const slot = ripSlots[ripNext++ % ripSlots.length];
+              slot.set(d.x, d.z, 0);                            // ring is born
+            }
+          } else {
+            d.drop.visible = false;
+          }
+        });
+        // gaze: the hero crystal you look at wakes up, gamelike
+        if (typeof this.getCamera === "function") { /* unused hook */ }
+        cyan.intensity = 24 + Math.sin(t * 1.3) * 4;
         violet.intensity = 18 + Math.sin(t * 1.7 + 2) * 4;
+      },
+      gaze(camera) {
+        camera.getWorldDirection(fwd);
+        let best = null, bestDot = 0.994;
+        heroes.forEach((m) => {
+          toC.setFromMatrixPosition(m.matrixWorld).sub(camera.position).normalize();
+          const d = toC.dot(fwd);
+          if (d > bestDot) { bestDot = d; best = m; }
+        });
+        heroes.forEach((m) => {
+          const u = m.material.uniforms.gaze;
+          u.value += ((m === best ? 1 : 0) - u.value) * 0.06;
+        });
       }
     };
   }
 });
+
 
 /* 📼 Rec Room ’07 */
 SCENE_DEFS.push({
