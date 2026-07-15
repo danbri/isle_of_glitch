@@ -14,11 +14,27 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/hero_20260106",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
   "@id": "https://archive.org/details/sprite-fright-2021",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
    "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Gertie",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
   }
  },
  {
@@ -57,8 +73,8 @@ const WATCH_BUDDY_GENERATED = [
   "@id": "https://archive.org/details/white_zombie",
   "@type": "Movie",
   "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
   }
  },
  {
@@ -265,8 +281,8 @@ const WATCH_BUDDY_GENERATED = [
   "@id": "https://archive.org/details/TheTerror",
   "@type": "Movie",
   "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
   }
  },
  {
@@ -374,6 +390,14 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/phantom.-from.-space.-1953",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/devil-girl-from-mars-1954",
   "@type": "Movie",
   "contentWarning": {
@@ -390,11 +414,91 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/plan.-9.-from.-outer.-space.-1957",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/SpacemasterX7_201602",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheStrangeWorldOfPlanetX1958",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheAtomicBrain",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/PurpleDeathFromOuterSpace",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
    "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Algiers_",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/They_Made_Me_A_Criminal_1939",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Gaslight_628",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Lady_Confesses",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/BehindGreenLights_high_Q_mp4",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheChase_",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
   }
  },
  {
@@ -406,7 +510,119 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/TheStranger_0",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Fear_in_the_Night",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheRedHouse",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/He_Walked_By_Night.avi",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/I_Love_Trouble_movie",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Inner_Sanctum_movie",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheAmazingMr.X1948Avi",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Sun_Sets_at_Dawn_movie",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Woman_on_the_Run",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/The_Hoodlum",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/kansascityconfidencial",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/ablueprintformurder1953",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Hitch_Hiker",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheLimpingMan",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/suddenly",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -438,6 +654,22 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/elevator-to-the-gallows-58",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Saint_Louis_Bank_Robbery",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/five_minutes_to_live",
   "@type": "Movie",
   "contentWarning": {
@@ -446,7 +678,47 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/mr_robinson_crusoe",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/boys_of_the_city",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/spooks_run_wild",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Midnight.Manhunt",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/killer_dill",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/my_favorite_brunette",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -470,6 +742,22 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/Teaserama",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/1934-10-17_King_Alexander_Assassination",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/1937-12-12_Bombing_of_USS_Panay",
   "@type": "Movie",
   "contentWarning": {
@@ -479,6 +767,30 @@ const WATCH_BUDDY_GENERATED = [
  },
  {
   "@id": "https://archive.org/details/1944-06-06_Eve_of_Battle",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/1946-07-08_First_Pictures_Atomic_Blast",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/1946-08-05_Jap_Films_of_Hiroshima",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/1947-06-02_94_Die_Airplane_Crashes",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -534,7 +846,31 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/SherlockHolmes-TheCaseoftheShyBallerina",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/Bonanza-BloodOnTheLand",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Bonanza-DarkStar",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Bonanza_-_Day_Of_Reckoning",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -550,11 +886,59 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/Bonanza-FeetOfClay",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
   "@id": "https://archive.org/details/Bonanza_-_The_Blood_Line",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
    "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Bonanza_-_The_Spitfire",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TLS_Lucy_Meets_Sheldon_Leonard",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/SherlockHolmes1954",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Robin_Hood_01_The_Coming_Of_Robin_Hood",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-traffic-in-souls",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
   }
  },
  {
@@ -579,6 +963,30 @@ const WATCH_BUDDY_GENERATED = [
   "contentWarning": {
    "warningEmoji": "🎷",
    "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/filibus-1915",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-hypocrites",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-the-regeneration",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
   }
  },
  {
@@ -630,7 +1038,87 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/DasKabinettdesDoktorCaligariTheCabinetofDrCaligari",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-die-pest-in-florenz",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-barrabas",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/OutsideTheLaw",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Robbery_Under_Arms",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/TerrorIsland",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheGolem_893",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-the-jack-knife-man",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-the-mollycoddle",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/ThePenalty",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-the-wonderful-chance",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -643,6 +1131,14 @@ const WATCH_BUDDY_GENERATED = [
   "contentWarning": {
    "warningEmoji": "🎷",
    "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Ace_of_Hearts_1921",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
   }
  },
  {
@@ -662,7 +1158,39 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/Haxan_tinted_and_subtitled",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/haxan-1922_202312",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/Manslaughter_1922",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/MudAndSand720p1922",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/nosferatu-1922_202504",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -675,6 +1203,30 @@ const WATCH_BUDDY_GENERATED = [
   "contentWarning": {
    "warningEmoji": "🎷",
    "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-le-brasier-ardent",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/raskolnikow",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-the-red-inn",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
   }
  },
  {
@@ -702,7 +1254,79 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/he-who-gets-slapped_202101",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-secrets-of-the-night",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-the-epic-of-everest",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the.-hands.-of.-orlac.-1924",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-the-marriage-circle",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
   "@id": "https://archive.org/details/video_201410",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-luch-smerti",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-parisian-love",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-the-big-parade",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/lost_world",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -726,11 +1350,131 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/silent-the-red-kimona",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the.unholy.three.1925",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/a.-page.-of.-madness.-1926",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/london-after-midnight_1927",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/man-woman-and-sin_1927",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎷",
    "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/mr-wu_1927",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/no-mans-law_1927",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/street-of-forgotten-women_1927",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/sunrise.-a.-song.-of.-two.-humans.-1927.720p.-blu-ray.x-264-hdclub-public-hd",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/The_Cat_and_the_Canary",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-love-of-sunya_1927",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-red-mill_1927",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-unknown_1927",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/ArizonaDays",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/captain-swagger_1928",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/lights-of-new-york_1928",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
   }
  },
  {
@@ -753,8 +1497,64 @@ const WATCH_BUDDY_GENERATED = [
   "@id": "https://archive.org/details/the-pace-that-kills_1928",
   "@type": "Movie",
   "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-power-of-the-press_1928",
+  "@type": "Movie",
+  "contentWarning": {
    "warningEmoji": "🎻",
    "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/alibi_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Applause_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/behind-that-curtain_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/BigNews",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/blackmail_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/bulldog-drummond_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
   }
  },
  {
@@ -766,11 +1566,139 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/ChinatownNights",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/coquette_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/darkened-rooms-1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/der.-hund.-von.-baskerville.-1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/devilmaycare_1929",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
    "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/disraeli_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/gentlemen-of-the-press_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/GlorifyingTheAmericanGirl_119",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/great_gabbo",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/HalfMarriage1929_201511",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/hells-heroes-1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/madame-x_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/mexicali-rose_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/navy-blues_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/oy7743534123",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/on-with-the-show_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/rio-rita-1929_202505",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
   }
  },
  {
@@ -782,27 +1710,195 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/show-boat_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/show-of-shows_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/street-girl_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/sweetie_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/syncopation_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-black-watch_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
   "@id": "https://archive.org/details/CanaryMurderCase",
   "@type": "Movie",
   "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
   }
  },
  {
   "@id": "https://archive.org/details/the-canary-murder-case-1929_202502",
   "@type": "Movie",
   "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-cocoanuts_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheDanceOfLifeaugust161929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
   }
  },
  {
   "@id": "https://archive.org/details/the-greene-murder-case_1929",
   "@type": "Movie",
   "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-hollywood-revue-of-1929_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-idle-rich_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-informer_1929",
+  "@type": "Movie",
+  "contentWarning": {
    "warningEmoji": "🎻",
    "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-lady-lies_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheLockedDoor1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/love-parade-1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-marriage-playground_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-mysterious-dr-fu-manchu_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/The.Racketeer",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Racketeer",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-saturday-night-kid_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-shakedown_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-squall_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
   }
  },
  {
@@ -814,11 +1910,323 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/the-taming-of-the-shrew_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/THETRESPASSER",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the.unholy.night.1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-valiant_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-way-of-lost-souls_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-wild-party_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/they-had-to-see-paris_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/untamed_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/welcome-danger_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/wise-girls_1929",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/a-lady-to-love-1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/africa_speaks",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/africa_speaks_ipod",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/AliasFrenchGertie1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/all.-quiet.-on.-the.-western.-front.-1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/animal-crackers_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/anna-christie_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/behind-the-makeup_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Borrowed_Wives_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Clancy_in_Wall_Street",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/danger_lights",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/dangerous-paradise-1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Dixiana",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Extravagance1930bwPre-codeFilm",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/fast-and-loose_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/feet-first_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/free-and-easy_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/half-shot-at-sunrise-1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/hells-angels_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Hot_Curves_3054",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/just-imagine_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/KingofJazz1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/ladies-of-leisure_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
   "@id": "https://archive.org/details/le-sang-dun-poete-aka-the-blood-of-a-poet_1930",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
    "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/let-us-be-gay_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/loose-ankles_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/madam-satan_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/min-and-bill_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/montana-moon_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/morocco-30-1538596735589",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
   }
  },
  {
@@ -838,11 +2246,123 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/night-work_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/not-so-dumb_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/oh-sailor-behave_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/one-romantic-night_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/only-saps-work_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/our-blushing-brides_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/paramount-on-parade_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
   "@id": "https://archive.org/details/PardonMyGun",
   "@type": "Movie",
   "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/queen-high_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/ReachingForTheMoondecember291930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/recaptured-love_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/remote-control_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/rivers-end_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/roadhouse-nights_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/sarah-and-son_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
   }
  },
  {
@@ -857,12 +2377,212 @@ const WATCH_BUDDY_GENERATED = [
   "@id": "https://archive.org/details/sinners-holiday_1930",
   "@type": "Movie",
   "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/that-nights-wife",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/bw5558885",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-bat-whispers-1930",
+  "@type": "Movie",
+  "contentWarning": {
    "warningEmoji": "🎷",
    "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
   }
  },
  {
   "@id": "https://archive.org/details/tbmc45454578",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the.big.house.1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-big-trail_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-dawn-patrol_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-divorcee_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-doorway-to-hell_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/LandOfMissingMen",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheMedicineMan720p1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/ThePay-Off",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/rfob77589",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-sap-from-syracuse_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-sea-bat_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/SilverHorde1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/top-speed_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/true-to-the-navy_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/up-the-river_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/way-out-west_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/whoopee_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/wide-open_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/WinningtheWest",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/young-man-of-manhattan_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-electrocuting-an-elephant",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheGreatTrainRobbery_555",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -878,7 +2598,71 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/LalchimisteParafaragaramusOuLaCornueInfernaletinted",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheStoryOfTheKellyGang-FragmentsFromTheFinalReel",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Satan_in_Prison",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/ElHotelElectrico",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/FrankensteinfullMovie",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/by_the_suns_rays",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/CC_1916_05_15_TheFloorwalker",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/CC_1916_12_04_TheRink",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/CC_1918_xx_xx_TripleTrouble",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -902,6 +2686,46 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/Cops",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Dr_Pyckle_and_Mr_Pride.avi",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Fall_of_the_House_of_Usher_1928_Watson",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/ask_dad",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Golf_Specialist_1930",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
   "@id": "https://archive.org/details/TwoFistedLawWithTimMccoyAndJohnWayne1932",
   "@type": "Movie",
   "contentWarning": {
@@ -913,24 +2737,24 @@ const WATCH_BUDDY_GENERATED = [
   "@id": "https://archive.org/details/RidersofDestiny_",
   "@type": "Movie",
   "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
   }
  },
  {
   "@id": "https://archive.org/details/SagebrushTrail",
   "@type": "Movie",
   "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
   }
  },
  {
   "@id": "https://archive.org/details/RandyRidesAlone",
   "@type": "Movie",
   "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
   }
  },
  {
@@ -945,8 +2769,8 @@ const WATCH_BUDDY_GENERATED = [
   "@id": "https://archive.org/details/TheManFromUtah",
   "@type": "Movie",
   "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
   }
  },
  {
@@ -1545,8 +3369,8 @@ const WATCH_BUDDY_GENERATED = [
   "@id": "https://archive.org/details/TheMostDangerousGame",
   "@type": "Movie",
   "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
   }
  },
  {
@@ -1561,8 +3385,8 @@ const WATCH_BUDDY_GENERATED = [
   "@id": "https://archive.org/details/The_Thirteenth_Guest",
   "@type": "Movie",
   "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
   }
  },
  {
@@ -2102,6 +3926,62 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/farewell_to_arms_ipod",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheLastMile",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷🎻",
+   "text": "The orchestra is at full strength tonight: expect both the brass section (adult themes by the standards of its day) and the strings (period screen violence)."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/calvary",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Winterset",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/non_stop_new_york",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/slave_in_bondage",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/last_alarm",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/BloodontheSun",
   "@type": "Movie",
   "contentWarning": {
@@ -2118,7 +3998,71 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/TheSoutherner",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/women_in_the_night_ipod",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/stray-dog",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheTorch",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Ugetsu",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/RC_SwampWomen",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/TeenageDevilDolls",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheViolentYears",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/InvisibleAvenger",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -2134,7 +4078,39 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/ill_give_my_life",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/Ma_Barkers_Killer_Brood",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/TheChoppers",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the-manchurian-candidate",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/BalloonLand_450",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",

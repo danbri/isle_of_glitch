@@ -22,10 +22,10 @@ const tmp = join(tmpdir(), "tvp-bg-" + process.pid + ".mjs");
 writeFileSync(tmp, src + "\nexport {CHANNELS};");
 const { CHANNELS } = await import(pathToFileURL(tmp).href);
 
-const VIOLINS = /(murder|kill|blood|terror|dead\b|death|corpse|vampire|zombie|monster|horror|haunt|ghost|ghoul|revenge|outlaw|gunfight|gun\b|shoot|bandit|crime|slaughter|strangl|poison|creature|devil|demon|maniac|psycho|torture|massacre|invasion|attack of|fiend|werewolf|frankenstein|dracula)/i;
+const VIOLINS = /(murder|kill|blood|terror|dead\b|death|corpse|vampire|zombie|monster|horror|haunt|ghost|ghoul|revenge|outlaw|gunfight|gun\b|shoot|bandit|crime|slaughter|strangl|poison|creature|devil|demon|maniac|psycho|torture|massacre|invasion|attack of|fiend|werewolf|frankenstein|dracula|gangster|racketeer|heist|robbery|kidnap|execution|gallows|lynch|stab|slain|assassin|duel\b|violent|villain|menace|mummy|wolf ?man|axe|knife|hostage|prison break|manhunt)/i;
 const VIOLIN_GENRES = new Set(["Cult", "Mystery", "Western"]);
 const WAR = /(war\b|battle|bomb|blitz|combat|d-day|invasion|front\b|tirpitz|panay)/i;
-const SAX = /(burlesque|scandal|vice\b|\bsin\b|sinner|temptation|forbidden|seduc|jealous|wicked|shameless|torrid|paradise for|good time girl|bad girl)/i;
+const SAX = /(burlesque|scandal|vice\b|\bsin\b|sinner|temptation|forbidden|seduc|jealous|wicked|shameless|torrid|paradise for|good time girl|bad girl|striptease|nudity|lingerie|adulter|mistress|brothel|prostitut|risqu[eé]|pre-?code|innuendo|affair with|infidelit|showgirl|harem)/i;
 
 const nodes = [];
 let sax = 0, violins = 0, both = 0;
@@ -34,7 +34,9 @@ for (const ch of CHANNELS) {
   for (const p of ch.programs) {
     const id = (p.src || "").match(/archive\.org\/download\/([^/]+)\//)?.[1];
     if (!id) continue;
-    const hay = p.title + " " + (p.desc || "");
+    // the full evidence pile: title, description, the Wikipedia lead
+    // extract (1,000+ programs carry one), and dialogue keywords
+    const hay = [p.title, p.desc, p.wpx, (p.kw || []).join(" ")].filter(Boolean).join(" ");
     const v = VIOLINS.test(hay) || VIOLIN_GENRES.has(ch.category) ||
       (ch.category === "News" && WAR.test(hay));
     const x = SAX.test(hay);

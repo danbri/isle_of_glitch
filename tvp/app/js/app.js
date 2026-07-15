@@ -1660,6 +1660,7 @@ function pinWidget(sec, pos) {
   sec.style.top = Math.max(0, Math.min(y, layer.height - 80)) + "px";
   setPinButtonState(sec);
   savePins();
+  updateTray();
 }
 
 function unpinWidget(sec) {
@@ -1670,8 +1671,10 @@ function unpinWidget(sec) {
   if (ph && ph.parentNode) { ph.parentNode.insertBefore(sec, ph); ph.remove(); }
   else $("dock").appendChild(sec);
   dockSlots.delete(sec.id);
+  sec.classList.remove("stowed");
   setPinButtonState(sec);
   savePins();
+  updateTray();
 }
 
 function savePins() {
@@ -1688,6 +1691,37 @@ function restorePins() {
     const sec = $(id);
     if (sec) pinWidget(sec, pos);
   });
+}
+
+/* ── widget tray: mini icons for every ACTIVE (pinned) widget ──
+   The tray sits at the screen edge; tapping an icon stows/restores its
+   widget, so floating widgets can be brushed away and re-summoned
+   without a trip through the dock. */
+const WIDGET_EMOJI = {
+  "w-clock": "🕰", "w-jump": "⏪", "w-buddy": "👀", "w-subjects": "🗂",
+  "w-subs": "💬", "w-ratings": "💎", "w-chat": "💭", "w-quality": "🎚",
+  "w-preload": "⚡", "w-ticker": "📰", "w-notice": "📌"
+};
+function updateTray() {
+  const tray = $("widget-tray");
+  if (!tray) return;
+  tray.innerHTML = "";
+  document.querySelectorAll(".widget.pinned").forEach((sec) => {
+    const name = sec.querySelector(".w-title")?.textContent || sec.id;
+    const stowed = sec.classList.contains("stowed");
+    const b = document.createElement("button");
+    b.className = "tray-ico" + (stowed ? " stowed" : "");
+    b.textContent = WIDGET_EMOJI[sec.id] || name.slice(0, 1);
+    b.title = (stowed ? "Show " : "Stow ") + name;
+    b.setAttribute("aria-label", b.title);
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      sec.classList.toggle("stowed");
+      updateTray();
+    });
+    tray.appendChild(b);
+  });
+  tray.classList.toggle("hidden", !tray.children.length);
 }
 
 /* dress every widget header with a pin toggle + drag behavior */
@@ -1744,14 +1778,16 @@ document.querySelectorAll(".widget").forEach((sec) => {
     if (!drag) return;
     const speed = Math.hypot(drag.vx || 0, drag.vy || 0);
     if (speed > 1.1) {
-      // brushed away: fling off in the throw direction, then return to dock
+      // brushed away: fling off in the throw direction, then wait in the
+      // tray as a mini icon (tap to re-summon; unpin via its own button)
       const fx = (drag.vx || 0) * 320, fy = (drag.vy || 0) * 320;
       sec.classList.add("flung");
       sec.style.transform = `translate(${fx}px, ${fy}px) rotate(${fx > 0 ? 12 : -12}deg)`;
       setTimeout(() => {
         sec.classList.remove("flung");
         sec.style.transform = "";
-        unpinWidget(sec);
+        sec.classList.add("stowed");
+        updateTray();
       }, 340);
     } else {
       savePins();
@@ -2947,7 +2983,7 @@ renderBuddyToggle();
 /* the toast and cast mini-player must survive venue mode, whose CSS
    hides every non-video child of the stage — hoist them to body level
    (markup keeps them near their kin; the DOM puts them where they work) */
-document.body.append($("toast"), $("cast-mini"));
+document.body.append($("toast"), $("cast-mini"), $("widget-tray"));
 
 /* accessibility sweep: every icon-only titled button announces itself */
 function labelTitledButtons(root = document) {
