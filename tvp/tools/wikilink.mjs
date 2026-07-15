@@ -17,6 +17,12 @@
  * and topics onward. Run after curate.mjs + enrich.mjs.
  *
  * Polite to Wikidata: sequential, ~7 req/s max, custom User-Agent.
+ *
+ * OFFLINE=1 — cache-only mode: restores every previously-resolved item
+ * from .cache/wiki/ and SKIPS uncached ones entirely, making zero
+ * Wikimedia requests. Use when the chain must re-run but a fresh
+ * Wikimedia pass hasn't been human-approved (see /CLAUDE.md); the
+ * skipped items are listed so an approved follow-up run can fill them.
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
@@ -79,6 +85,7 @@ let matched = 0, withWp = 0, n = 0;
 const progs = CHANNELS.flatMap((c) => c.programs);
 
 const freshly = new Map();   // id → program, resolved over the network this run
+const skipped = [];          // OFFLINE=1: uncached items left for an approved run
 let fromCache = 0;
 for (const p of progs) {
   n++;
@@ -96,6 +103,7 @@ for (const p of progs) {
       continue;                       // zero Wikimedia traffic for known items
     } catch {}
   }
+  if (process.env.OFFLINE) { skipped.push(iaid || p.title); continue; }
   const q = cleanForSearch(p.title);
   if (q.length < 3) continue;
   if (iaid) freshly.set(iaid, p);
@@ -144,6 +152,10 @@ for (const p of progs) {
   await sleep(140);
 }
 console.log(`  cache served ${fromCache} items without any Wikimedia traffic`);
+if (process.env.OFFLINE) {
+  console.log(`  OFFLINE: skipped ${skipped.length} uncached items (no Wikimedia calls made):`);
+  skipped.forEach((s) => console.log(`    - ${s}`));
+}
 
 /* resolve people/company labels in batches of 50 */
 const labels = {};
