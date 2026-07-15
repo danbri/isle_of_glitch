@@ -143,6 +143,21 @@ const WATCH_BUDDY_GRAPH = [
     ]
   },
 
+  /* ── Five-Cent Cinema ── */
+  {
+    "@id": "https://archive.org/details/un-chien-andalou__1929-film__luis_bunuel",
+    "@type": "Movie",
+    "contentWarning": {
+      "warningEmoji": "👁️",
+      "text": "The prologue is cinema's most notorious shock cut: a razor, an eye, no warning — Buñuel and Dalí meant it as an assault on the audience, and a century later it still lands. Surreal disquiet follows (a severed hand, ants, dead donkeys on pianos). 🎻"
+    },
+    "scenes": [
+      { "t": 0, "label": "\"Once upon a time…\" — the razor prologue starts immediately" },
+      { "t": 120, "label": "past the eye — the surrealism proper" }
+    ],
+    "sameAs": "https://en.wikipedia.org/wiki/Un_Chien_Andalou"
+  },
+
   /* ── Retro Vault ── */
   {
     "@id": "https://archive.org/details/DuckandC1951",
