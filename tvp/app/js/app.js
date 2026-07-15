@@ -708,13 +708,34 @@ function buildSubjectsTree() {
     };
     top.sort((a, b) => setOf(b).size - setOf(a).size);
     top.forEach((n) => paint(n, hue(n.label), 0));
-    subjectsTreeState = { top, setOf, crumb: [] };
+    subjectsTreeState = { top, setOf, crumb: [], even: false };
     new ResizeObserver(() => renderSubjectsLevel()).observe(box);
+    /* snap zoom: wheel-up / pinch-out / background-tap pop a level */
+    const popOut = () => {
+      if (subjectsTreeState.crumb.length) { subjectsTreeState.crumb.pop(); renderSubjectsLevel(true); }
+    };
+    box.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      if (e.deltaY > 0) popOut();
+      else {
+        const t = e.target.closest?.(".tm-tile");
+        if (t && t._zoomIn) t._zoomIn();
+      }
+    }, { passive: false });
+    box.addEventListener("click", (e) => { if (e.target === box) popOut(); });
+    let pinchD = 0;
+    box.addEventListener("touchmove", (e) => {
+      if (e.touches.length !== 2) return;
+      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      if (pinchD && d - pinchD > 44) { popOut(); pinchD = d; }
+      else if (!pinchD) pinchD = d;
+    }, { passive: true });
+    box.addEventListener("touchend", () => { pinchD = 0; });
   }
   renderSubjectsLevel();
 }
 
-function renderSubjectsLevel() {
+function renderSubjectsLevel(snap = false) {
   const st = subjectsTreeState;
   const box = $("subjects-tree");
   if (!st || !box || !box.offsetParent) return;
@@ -733,10 +754,14 @@ function renderSubjectsLevel() {
     crumbEl.className = "tm-crumb";
     box.parentElement.insertBefore(crumbEl, box);
   }
-  crumbEl.innerHTML = parent
-    ? `<button class="tm-back">‹ back</button> ${subjectsEmoji(parent.label)} ${parent.label}`
-    : `🗂 the whole dial, by concept`;
-  crumbEl.querySelector(".tm-back")?.addEventListener("click", () => { st.crumb.pop(); renderSubjectsLevel(); });
+  crumbEl.innerHTML = (parent
+    ? `<button class="tm-back">‹ back</button> <span class="tm-here">${subjectsEmoji(parent.label)} ${parent.label}</span>`
+    : `<span class="tm-here">🗂 the whole dial, by concept</span>`) +
+    `<button class="tm-even${st.even ? " on" : ""}" title="equal tiles: surface the long tail of small subjects">⚖</button>`;
+  const pop = () => { st.crumb.pop(); renderSubjectsLevel(true); };
+  crumbEl.querySelector(".tm-back")?.addEventListener("click", pop);
+  if (parent) crumbEl.querySelector(".tm-here").addEventListener("click", pop);
+  crumbEl.querySelector(".tm-even").addEventListener("click", () => { st.even = !st.even; renderSubjectsLevel(true); });
 
   /* overflow → a "…" tile holding the tail */
   const MAXTILES = 15;
@@ -749,7 +774,9 @@ function renderSubjectsLevel() {
 
   const W = box.clientWidth || 260, H = box.clientHeight || 220;
   const total = items.reduce((s, i) => s + setOf(i).size, 0) || 1;
-  items.forEach((i) => { i.area = (setOf(i).size / total) * W * H; });
+  items.forEach((i) => {
+    i.area = st.even ? (W * H) / items.length : (setOf(i).size / total) * W * H;
+  });
 
   /* squarify */
   const tiles = [];
@@ -783,6 +810,11 @@ function renderSubjectsLevel() {
   if (row.length) layoutRow();
 
   box.innerHTML = "";
+  if (snap) {
+    box.classList.remove("tm-snap");
+    void box.offsetWidth;
+    box.classList.add("tm-snap");
+  }
   tiles.forEach(({ x, y, w, h, i }) => {
     /* clamp hard to the container: nothing may fall off the right edge */
     w = Math.min(w, W - x); h = Math.min(h, H - y);
@@ -798,8 +830,10 @@ function renderSubjectsLevel() {
     el.title = `${i.label} — ${n} program${n > 1 ? "s" : ""}${kids ? ` · ${i.children.length} narrower` : ""}`;
     if (w >= 52 && h >= 17) el.innerHTML = `${emoji} ${i.label}${h >= 32 ? `<small>${n}${kids ? " ▸" : ""}</small>` : ""}`;
     else if (w >= 16 && h >= 13) el.textContent = emoji;   // too small for words: emoji speaks
+    const zoomIn = () => { subjectsTreeState.crumb.push(i); renderSubjectsLevel(true); };
+    if (kids || i.isTail) el._zoomIn = zoomIn;
     el.addEventListener("click", () => {
-      if (kids || i.isTail) { subjectsTreeState.crumb.push(i); renderSubjectsLevel(); }
+      if (kids || i.isTail) { zoomIn(); }
       else {
         openPanel("search");
         const q = "about:" + i.label.replace(/^all /, "");
