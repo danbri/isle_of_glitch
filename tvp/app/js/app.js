@@ -708,8 +708,14 @@ function buildSubjectsTree() {
     };
     top.sort((a, b) => setOf(b).size - setOf(a).size);
     top.forEach((n) => paint(n, hue(n.label), 0));
-    subjectsTreeState = { top, setOf, crumb: [], even: false };
-    new ResizeObserver(() => renderSubjectsLevel()).observe(box);
+    subjectsTreeState = { top, setOf, crumb: [], even: false, lastW: 0 };
+    new ResizeObserver(() => {
+      const st2 = subjectsTreeState;
+      const w = box.clientWidth;
+      if (Math.abs(w - st2.lastW) <= 2) return;      // noise
+      if (w === st2.prevW) return;                   // A→B→A flip: stay put
+      renderSubjectsLevel();
+    }).observe(box);
     /* snap zoom: wheel-up / pinch-out / background-tap pop a level */
     const popOut = () => {
       if (subjectsTreeState.crumb.length) { subjectsTreeState.crumb.pop(); renderSubjectsLevel(true); }
@@ -773,6 +779,8 @@ function renderSubjectsLevel(snap = false) {
   }
 
   const W = box.clientWidth || 260, H = box.clientHeight || 220;
+  st.prevW = st.lastW;
+  st.lastW = W;
   const total = items.reduce((s, i) => s + setOf(i).size, 0) || 1;
   items.forEach((i) => {
     i.area = st.even ? (W * H) / items.length : (setOf(i).size / total) * W * H;
@@ -816,9 +824,12 @@ function renderSubjectsLevel(snap = false) {
     box.classList.add("tm-snap");
   }
   tiles.forEach(({ x, y, w, h, i }) => {
-    /* clamp hard to the container: nothing may fall off the right edge */
-    w = Math.min(w, W - x); h = Math.min(h, H - y);
-    if (w < 4 || h < 4) return;
+    /* clamp hard to the container: nothing may fall off the right edge
+       (epsilon absorbs squarify float accumulation). Skip anything below
+       the border-box floor (padding+border ≈ 12×8px would silently
+       inflate past its styled size) — the ⚖ mode exists for the tail. */
+    w = Math.min(w, W - x - 0.7); h = Math.min(h, H - y - 0.7);
+    if (w < 13 || h < 9) return;
     const el = document.createElement("div");
     const kids = i.children?.length && !i.self;
     el.className = "tm-tile" + (kids ? " tm-branch" : "");
@@ -910,7 +921,7 @@ function updateInfo() {
   if (subjects.length) {
     $("info-subjects").innerHTML = `<span class="ibc-label">🗂 about:</span> ` +
       subjects.map(([label, scheme, uri]) =>
-        `<span class="skos-chip" data-label="${label.replace(/"/g, "&quot;")}">${label}<a href="${uri}" target="_blank" rel="noopener" title="${(typeof SKOS_SCHEMES !== "undefined" && SKOS_SCHEMES[scheme]) || scheme}">↗</a></span>`
+        `<span class="skos-chip" data-label="${label.replace(/"/g, "&quot;")}">${label}<a href="${uri}" target="_blank" rel="noopener" title="${(typeof SKOS_SCHEMES !== "undefined" && SKOS_SCHEMES[scheme]) || scheme} · ${scheme}:${uri.split("/").pop()}">↗</a></span>`
       ).join(" ");
     $("info-subjects").classList.remove("hidden");
   } else {
@@ -2301,12 +2312,19 @@ function openBuddy() {
     sec("🌐", "background", `<a href="${b.wiki}" target="_blank" rel="noopener">${esc(decodeURIComponent(b.wiki.split("/wiki/").pop() || "Wikipedia").replace(/_/g, " "))} on Wikipedia</a>`);
   }
   // SKOS subjects, right in the overlay (the delegated .skos-chip
-  // handler works everywhere): tap = everything about that concept
+  // handler works everywhere): tap = everything about that concept.
+  // Below the chips, the actual coding: scheme-qualified concept codes,
+  // each dereferencing at its authority, plus the skosdex lookup.
   const subj = skosFor(p);
   if (subj.length) {
     sec("🗂", "about", subj.map(([label, scheme, uri]) =>
       `<span class="skos-chip" data-label="${esc(label)}">${esc(label)}<a href="${uri}" target="_blank" rel="noopener" title="${(typeof SKOS_SCHEMES !== "undefined" && SKOS_SCHEMES[scheme]) || scheme}">↗</a></span>`
-    ).join(" "));
+    ).join(" ") +
+      `<div class="skos-codes">` +
+      subj.map(([label, scheme, uri]) =>
+        `<a href="${uri}" target="_blank" rel="noopener" title="${esc(label)}">${scheme}:${esc(uri.split("/").pop())}</a>`
+      ).join(" · ") +
+      ` — <a href="https://skosdex.fly.dev/?q=${encodeURIComponent(subj[0][0])}" target="_blank" rel="noopener">skosdex ↗</a></div>`);
   }
   if (b.scenes.length) {
     const item = itemOf(p);

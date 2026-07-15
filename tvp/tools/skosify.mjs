@@ -169,6 +169,98 @@ for (const term of kwTerms.keys()) {
 }
 console.log(`  keyword concepts: ${found}/${kwTerms.size}`);
 
+/* ── pass 2b: Wikidata genre (P136) + main subject (P921) claims ──
+ * The most precise per-film coding available: "vampire film", "haunted
+ * house film" etc., straight from each film's own Wikidata identity,
+ * then resolved to LCGFT/LCSH/AAT via skosdex. Batched 50/call, cached. */
+const WDCACHE = join(DIR, ".cache", "skos-wd.json");
+let wdCache = {};
+try { wdCache = JSON.parse(readFileSync(WDCACHE, "utf8")); } catch {}
+const wdIds = [];
+for (const ch of CHANNELS) for (const p of ch.programs) {
+  if (p.wd && /^Q\d+$/.test(p.wd) && !(p.wd in wdCache)) wdIds.push(p.wd);
+}
+async function wdApi(params) {
+  const u = new URL("https://www.wikidata.org/w/api.php");
+  for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
+  u.searchParams.set("format", "json");
+  for (let i = 0; i < 3; i++) {
+    try {
+      const r = await fetch(u, { headers: { "User-Agent": "tvp2007-enrich/1.0 (danbri)" }, signal: AbortSignal.timeout(30000) });
+      if (r.ok) { await sleep(150); return await r.json(); }
+    } catch {}
+    await sleep(1000 * (i + 1));
+  }
+  return null;
+}
+console.log(`pass 2b: Wikidata P136/P921 for ${wdIds.length} uncached films…`);
+for (let i = 0; i < wdIds.length; i += 50) {
+  const batch = wdIds.slice(i, i + 50);
+  const j = await wdApi({ action: "wbgetentities", ids: batch.join("|"), props: "claims" });
+  for (const q of batch) {
+    const cl = j?.entities?.[q]?.claims || {};
+    const vals = [];
+    for (const prop of ["P136", "P921"]) {
+      (cl[prop] || []).forEach((c) => {
+        const id = c.mainsnak?.datavalue?.value?.id;
+        if (id) vals.push(id);
+      });
+    }
+    wdCache[q] = vals;
+  }
+  if (i % 250 === 0) console.log(`  ${Math.min(i + 50, wdIds.length)}/${wdIds.length}`);
+}
+/* labels for the claimed genre/subject entities */
+const genreQs = [...new Set(Object.values(wdCache).flat())].filter((q) => !(("L" + q) in wdCache));
+for (let i = 0; i < genreQs.length; i += 50) {
+  const batch = genreQs.slice(i, i + 50);
+  const j = await wdApi({ action: "wbgetentities", ids: batch.join("|"), props: "labels", languages: "en" });
+  for (const q of batch) wdCache["L" + q] = j?.entities?.[q]?.labels?.en?.value || "";
+}
+try { writeFileSync(WDCACHE, JSON.stringify(wdCache)); } catch {}
+const wdTerms = new Set();
+for (const [k, v] of Object.entries(wdCache)) {
+  if (!k.startsWith("L") && Array.isArray(v)) v.forEach((q) => { const l = wdCache["L" + q]; if (l) wdTerms.add(l); });
+}
+console.log(`  ${wdTerms.size} distinct Wikidata genre/subject labels`);
+const wdConcepts = new Map();
+for (const term of wdTerms) {
+  const c = await lookup(term, ["lcgft", "lcsh", "aat"]);
+  if (c) wdConcepts.set(term.toLowerCase(), c);
+}
+console.log(`  resolved to concepts: ${wdConcepts.size}/${wdTerms.size}`);
+
+/* ── pass 2c: archive.org subject tags (from the harvest cache) ──
+ * Plentiful but SEO-noisy — strict label matching plus a spam filter
+ * keeps "fine old movies online" out and lets "film noir" through. */
+const IA_SPAM = /(online|on line|streaming|download|youtube|rare film|old movie|archive film|classic|full (movie|film)|free (movie|film)|public domain|good silent|fine old|movies$)/i;
+const iaSubjectsOf = (id) => {
+  try {
+    const j = JSON.parse(readFileSync(join(DIR, ".cache", "meta", encodeURIComponent(id) + ".json"), "utf8"));
+    let s = (j.metadata || {}).subject || [];
+    if (typeof s === "string") s = s.split(";");
+    return [...new Set(s.flatMap((x) => String(x).split(";"))
+      .map((x) => x.trim().toLowerCase())
+      .filter((x) => x.length > 3 && x.length < 40 && !/^\d+$/.test(x) && !IA_SPAM.test(x) && !STOP.has(x)))];
+  } catch { return []; }
+};
+const iaTerms = new Map();
+for (const ch of CHANNELS) for (const p of ch.programs) {
+  const id = (p.src || "").match(/archive\.org\/download\/([^/]+)\//)?.[1];
+  if (!id) continue;
+  iaSubjectsOf(id).slice(0, 12).forEach((t) => iaTerms.set(t, (iaTerms.get(t) || 0) + 1));
+}
+/* terms blanket-applied across hundreds of items are SEO, not coding */
+const iaEligible = [...iaTerms.entries()].filter(([, n]) => n <= 300).map(([t]) => t);
+console.log(`pass 2c: ${iaEligible.length} eligible IA subject terms → concepts…`);
+const iaConcepts = new Map();
+let iaFound = 0;
+for (const term of iaEligible) {
+  const c = await lookup(term, ["lcgft", "lcsh", "aat"]);
+  if (c) { iaConcepts.set(term, c); iaFound++; }
+}
+console.log(`  matched: ${iaFound}/${iaEligible.length}`);
+
 /* ── assemble per-program subjects ── */
 const out = {};
 let subjectCount = 0, programCount = 0;
@@ -179,10 +271,19 @@ for (const ch of CHANNELS) {
     const subj = [];
     const seen = new Set();
     const add = (c) => {
-      if (!c || seen.has(c.uri) || subj.length >= 6) return;
+      if (!c || seen.has(c.uri) || subj.length >= 8) return;
       seen.add(c.uri);
       subj.push([c.label, c.scheme, c.uri]);
     };
+    /* precision first: the film's own Wikidata genres, then its archive
+       subject tags, then dialogue topics — channel genre as the floor */
+    if (p.wd && wdCache[p.wd]) {
+      wdCache[p.wd].forEach((q) => {
+        const l = (wdCache["L" + q] || "").toLowerCase();
+        if (l) add(wdConcepts.get(l));
+      });
+    }
+    iaSubjectsOf(id).forEach((t) => add(iaConcepts.get(t)));
     (channelConcepts[ch.id] || []).forEach(add);
     if (p.year && p.year <= 1928) add(silentConcept);
     (p.kw || []).slice(0, 8).forEach((k) => add(kwConcepts.get(k)));
