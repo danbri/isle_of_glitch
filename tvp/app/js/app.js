@@ -1746,6 +1746,7 @@ async function toggleVenue() {
   }
 }
 $("btn-venue").addEventListener("click", toggleVenue);
+$("btn-back").addEventListener("click", () => { goBack(); armOverlayTimer(); });
 
 /* ── Chromecast (lazy module; Chrome/Edge only) ────── */
 
