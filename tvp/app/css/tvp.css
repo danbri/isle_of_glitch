@@ -1185,3 +1185,9 @@ img { -webkit-user-drag: none; user-select: none; }
 .tray-ico.stowed { opacity: .55; border-style: dashed; }
 .widget.pinned.stowed { display: none; }
 body.in-venue #widget-tray { display: none; }
+
+/* subjects map: tile located from a program chip */
+.tm-tile.tm-flash { outline: 2px solid var(--accent); animation: tm-flash 1.3s ease-in-out 2; z-index: 3; }
+@keyframes tm-flash { 50% { filter: brightness(1.8); outline-offset: 3px; } }
+.skos-chip .skos-map { background: none; border: 0; color: rgba(255,255,255,.55); font-size: 11px; padding: 0 2px; cursor: pointer; }
+.skos-chip .skos-map:hover { color: var(--accent); }
