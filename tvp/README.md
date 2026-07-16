@@ -1,12 +1,12 @@
-# TVP/2007 — broadcast-style web TV from the open archives
+# Tellyclub — an Archive.org TV browser
 
 **Watch it: https://danbri.github.io/isle_of_glitch/tvp/app/**
 
-TVP is television the mid-2000s web promised: channels of free and
+Tellyclub is television the mid-2000s web promised: channels of free and
 openly licensed film and TV, running on a **real broadcast clock**.
 You don't browse a catalogue — you switch on and join whatever is on
 *now*, flip channels, and let the schedule surprise you. Everything is
-streamed from the Internet Archive's public collections; TVP hosts no
+streamed from the Internet Archive's public collections; Tellyclub hosts no
 media.
 
 | splash | live + controller | channel guide | widgets |
@@ -59,7 +59,7 @@ requires explicit approval (see `/CLAUDE.md`).
 
 ## Legal
 
-TVP/2007 is a neutral interface over the Internet Archive's public
+Tellyclub is a neutral interface over the Internet Archive's public
 collections, in the same way a web browser is: it hosts, copies, and
 transmits no media, and links only to files the Archive serves
 publicly. Wikipedia text appears under CC BY-SA with attribution and

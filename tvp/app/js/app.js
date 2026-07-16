@@ -3078,7 +3078,7 @@ $("info-share").addEventListener("click", async () => {
   reflectHash();
   const url = location.href;
   const info = currentProgramInfo();
-  const title = info.program.title + " — TVP/2007";
+  const title = info.program.title + " — Tellyclub";
   try {
     if (navigator.share) { await navigator.share({ title, url }); return; }
     await navigator.clipboard.writeText(url);

@@ -1,6 +1,6 @@
-# TVP/2007 — Cloudflare R2 prefix mirror
+# Tellyclub — Cloudflare R2 prefix mirror
 
-An optional accelerator for the [TVP player](../../tvp/app/). It puts the
+An optional accelerator for the [Tellyclub player](../../tvp/app/). It puts the
 **first ~10 seconds of every stream** in an R2 bucket at Cloudflare's edge,
 so channel-flipping fills the player's first-seconds cache in ~50ms instead
 of paying archive.org's first-byte latency (measured 0.4–3.6s). Everything
