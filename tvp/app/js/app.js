@@ -171,7 +171,7 @@ function preloadBackstage(src, offset = 0, prog = null) {
   backstage.dataset.offset = String(offset);
   backstage.muted = true;
   // never let a previous program's poster flash on a future swap
-  backstage.poster = prog ? (artUrl(prog.frame || prog.art) || "") : "";
+  backstage.poster = prog ? (artUrl(frameOf(prog) || prog.art) || "") : "";
   backstage.src = src;
   if (offset > 1) {
     backstage.addEventListener("loadedmetadata", function seekOnce() {
@@ -271,7 +271,7 @@ function tune(chIndex, opts = {}) {
   const src = fastSrc(prog);
   /* the program's still frame as the element's poster: a crisp picture
      the instant the tune starts, instead of black until first decode */
-  const poster = artUrl(prog.frame || prog.art || ch.art) || "";
+  const poster = artUrl(frameOf(prog) || prog.art || ch.art) || "";
 
   state.comingUpShown = false;
   $("comingup").classList.add("hidden");
@@ -434,7 +434,7 @@ function showZapCard(ch, prog, token) {
     if (video.readyState >= 3 && !video.paused) return;    // already on the air
     $("interstitial-text").textContent = "Fetching your channel…";
     $("interstitial-channel").textContent = ch.num + " · " + ch.name;
-    const frame = artUrl(prog.frame || prog.art || ch.art);
+    const frame = artUrl(frameOf(prog) || prog.art || ch.art);
     $("interstitial").style.backgroundImage = frame
       ? `linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.75)), url("${frame}")` : "";
     $("interstitial-progress").firstElementChild.style.transform = "scaleX(0.03)";
@@ -501,7 +501,7 @@ function warmZapFrames() {
   [-1, 1].forEach((d) => {
     const ch = CHANNELS[((state.chIndex + d) % CHANNELS.length + CHANNELS.length) % CHANNELS.length];
     const s = scheduleFor(ch);
-    const f = artUrl(s.program.frame || s.program.art || ch.art);
+    const f = artUrl(frameOf(s.program) || s.program.art || ch.art);
     if (f) { const img = new Image(); img.src = f; }
     preconnectNode(s.program);
   });
@@ -640,6 +640,24 @@ function skosFor(p) {
   const id = iaIdOf(p);
   return (id && SKOS_SUBJECTS[id]) || [];
 }
+
+/* Colour icons: machine-colorized + upscaled frames for the b&w corpus,
+ * served from an archive.org icon pack. The index of available ids is
+ * fetched once, off the critical path; while the pack (or the network)
+ * is absent nothing changes anywhere. The pack grows as generation
+ * proceeds — no app change needed to pick up additions. */
+const COLOUR_ICONS_BASE = "https://archive.org/download/tvp2007-colour-icons/";
+let colourIcons = null;   // Set of archive identifiers, once loaded
+function frameOf(p) {
+  const id = colourIcons && iaIdOf(p);
+  return (id && colourIcons.has(id)) ? COLOUR_ICONS_BASE + id + ".jpg" : p.frame;
+}
+setTimeout(() => {
+  fetch("https://archive.org/cors/tvp2007-colour-icons/index.json", { cache: "no-cache" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((ids) => { if (Array.isArray(ids)) colourIcons = new Set(ids); })
+    .catch(() => {});
+}, 4000);
 /* the subjects widget: a squarified treemap of every concept on the dial,
    sized by how many programs carry it — only content-bearing tiles exist,
    because the map is built FROM the content. Tap a tile → about: search. */
@@ -877,7 +895,7 @@ function updateInfo() {
     ? "LIVE · ends " + clock12(new Date(Date.now() + (info.remaining || 0) * 1000))
     : "on demand · from the start";
   $("info-meta").textContent = liveTxt + " · " + (p.license || "");
-  $("info-art").src = artUrl(p.frame || p.art || ch.art);
+  $("info-art").src = artUrl(frameOf(p) || p.art || ch.art);
   $("time-total").textContent = fmt(p.dur);
 
   // expanded panel
@@ -1452,7 +1470,7 @@ function renderGuideGrid() {
       const card = document.createElement("div");
       card.className = "g-card" + (live ? " now" : "");
       card.innerHTML = `
-        <img src="${artUrl(p.frame || p.art || ch.art)}" alt="" loading="lazy">
+        <img src="${artUrl(frameOf(p) || p.art || ch.art)}" alt="" loading="lazy">
         <div class="g-card-label">
           <div class="g-card-title">${p.title}</div>
           <div class="g-card-sub">${live ? '<span class="live-tag">LIVE</span>' : clock12(new Date(starts[pi]))}
@@ -1486,7 +1504,7 @@ function renderGuideRail() {
     tile.style.setProperty("--i", i);
     tile.dataset.ch = String(CHANNELS.indexOf(ch));
     tile.innerHTML = `
-      <img src="${artUrl(s.program.frame || s.program.art || ch.art)}" alt="" loading="lazy">
+      <img src="${artUrl(frameOf(s.program) || s.program.art || ch.art)}" alt="" loading="lazy">
       <div class="tile-label">
         <div class="tile-name"><span class="chnum">${ch.num}</span><span>${ch.name}</span></div>
         <div class="tile-now">Now: ${s.program.title}</div>
@@ -1618,7 +1636,7 @@ function renderSearch(q) {
       const live = scheduleFor(ch).index === pi;
       const el = document.createElement("div");
       el.className = "sr";
-      el.innerHTML = `<img src="${artUrl(p.frame || p.art || ch.art)}" alt="" loading="lazy">
+      el.innerHTML = `<img src="${artUrl(frameOf(p) || p.art || ch.art)}" alt="" loading="lazy">
         <div><div class="sr-title">${p.title}${p.year ? " (" + p.year + ")" : ""}${buddyBadge(p)}</div>
         <div class="sr-sub">${ch.num} · ${ch.name}${live ? ' · <span class="onair">ON AIR</span>' : " · plays from start"}</div></div>`;
       el.addEventListener("click", () => {
@@ -1921,7 +1939,7 @@ async function toggleVenue() {
           title: i.program.title, year: i.program.year, channel: ch.name, num: ch.num,
           // CORS-clean still for dominant-tone lighting (WebGL may never
           // sample the tainted video itself)
-          frame: artUrl(i.program.frame || i.program.art || ch.art) || ""
+          frame: artUrl(frameOf(i.program) || i.program.art || ch.art) || ""
         };
       },
       onExit: () => { venueApi = null; $("btn-venue").classList.remove("lit"); }
@@ -1958,7 +1976,7 @@ function initCastLater() {
             url,
             title: `${p.title}${p.year ? " (" + p.year + ")" : ""} — ${ch.name}` +
               (p.castSrc === 0 ? " · audio-only encode" : ""),
-            art: artUrl(p.frame || p.art || ch.art),
+            art: artUrl(frameOf(p) || p.art || ch.art),
             offset: i.live ? i.offset : (video.currentTime || 0)
           };
         },
@@ -2013,7 +2031,7 @@ $("btn-cast").addEventListener("click", () => {
 function updateCastMini() {
   if (!state.casting) return;
   const i = currentProgramInfo(), ch = currentChannel();
-  $("cast-mini-art").src = artUrl(i.program.frame || i.program.art || ch.art) || "";
+  $("cast-mini-art").src = artUrl(frameOf(i.program) || i.program.art || ch.art) || "";
   $("cast-mini-title").textContent = i.program.title;
   // ~27% of the dial (mostly the older items) has no h.264 encode at all —
   // the TV gets sound over black. Keep that state visible, not a one-shot
