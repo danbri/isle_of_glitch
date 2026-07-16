@@ -726,7 +726,7 @@ function buildSubjectsTree() {
     };
     top.sort((a, b) => setOf(b).size - setOf(a).size);
     top.forEach((n) => paint(n, hue(n.label), 0));
-    subjectsTreeState = { top, setOf, crumb: [], even: false, lastW: 0 };
+    subjectsTreeState = { top, setOf, nodes, crumb: [], even: false, lastW: 0 };
     new ResizeObserver(() => {
       const st2 = subjectsTreeState;
       const w = box.clientWidth;
@@ -736,7 +736,10 @@ function buildSubjectsTree() {
     }).observe(box);
     /* snap zoom: wheel-up / pinch-out / background-tap pop a level */
     const popOut = () => {
-      if (subjectsTreeState.crumb.length) { subjectsTreeState.crumb.pop(); renderSubjectsLevel(true); }
+      if (subjectsTreeState.crumb.length) {
+        subjectsTreeState.popped = subjectsTreeState.crumb.pop();
+        renderSubjectsLevel(true);
+      }
     };
     box.addEventListener("wheel", (e) => {
       e.preventDefault();
@@ -782,7 +785,7 @@ function renderSubjectsLevel(snap = false) {
     ? `<button class="tm-back">‹ back</button> <span class="tm-here">${subjectsEmoji(parent.label)} ${parent.label}</span>`
     : `<span class="tm-here">All subjects</span>`) +
     `<button class="tm-even${st.even ? " on" : ""}" title="Equal-size tiles">⚖</button>`;
-  const pop = () => { st.crumb.pop(); renderSubjectsLevel(true); };
+  const pop = () => { st.popped = st.crumb.pop(); renderSubjectsLevel(true); };
   crumbEl.querySelector(".tm-back")?.addEventListener("click", pop);
   if (parent) crumbEl.querySelector(".tm-here").addEventListener("click", pop);
   crumbEl.querySelector(".tm-even").addEventListener("click", () => { st.even = !st.even; renderSubjectsLevel(true); });
@@ -835,12 +838,16 @@ function renderSubjectsLevel(snap = false) {
   });
   if (row.length) layoutRow();
 
-  box.innerHTML = "";
-  if (snap) {
-    box.classList.remove("tm-snap");
-    void box.offsetWidth;
-    box.classList.add("tm-snap");
+  /* capture outgoing rects so surviving tiles can FLIP to their new
+     homes and zoom transitions know their geometry */
+  const prevRects = new Map();
+  for (const el of box.children) {
+    if (el.dataset?.uri) prevRects.set(el.dataset.uri, {
+      x: parseFloat(el.style.left), y: parseFloat(el.style.top),
+      w: parseFloat(el.style.width), h: parseFloat(el.style.height)
+    });
   }
+  box.innerHTML = "";
   tiles.forEach(({ x, y, w, h, i }) => {
     /* clamp hard to the container: nothing may fall off the right edge
        (epsilon absorbs squarify float accumulation). Skip anything below
@@ -851,6 +858,7 @@ function renderSubjectsLevel(snap = false) {
     const el = document.createElement("div");
     const kids = i.children?.length && !i.self;
     el.className = "tm-tile" + (kids ? " tm-branch" : "");
+    el.dataset.uri = i.uri;
     const light = 26 + (i.depth || 0) * 6;
     el.style.cssText = `left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;width:${w.toFixed(1)}px;height:${h.toFixed(1)}px;` +
       `background:hsla(${i.hue},46%,${light}%,.85);`;
@@ -859,7 +867,11 @@ function renderSubjectsLevel(snap = false) {
     el.title = `${i.label} — ${n} program${n > 1 ? "s" : ""}${kids ? ` · ${i.children.length} narrower` : ""}`;
     if (w >= 52 && h >= 17) el.innerHTML = `${emoji} ${i.label}${h >= 32 ? `<small>${n}${kids ? " ▸" : ""}</small>` : ""}`;
     else if (w >= 16 && h >= 13) el.textContent = emoji;   // too small for words: emoji speaks
-    const zoomIn = () => { subjectsTreeState.crumb.push(i); renderSubjectsLevel(true); };
+    const zoomIn = () => {
+      subjectsTreeState.zoomFrom = { x, y, w, h };
+      subjectsTreeState.crumb.push(i);
+      renderSubjectsLevel(true);
+    };
     if (kids || i.isTail) el._zoomIn = zoomIn;
     el.addEventListener("click", () => {
       if (kids || i.isTail) { zoomIn(); }
@@ -872,13 +884,80 @@ function renderSubjectsLevel(snap = false) {
     });
     box.appendChild(el);
   });
+
+  /* ── smooth interpolation ──
+     zoom in: the new level grows out of the clicked tile's rectangle;
+     zoom out: the level being left shrinks back into its parent tile;
+     same-level relayout (⚖, resize): tiles FLIP to their new homes. */
+  const zf = st.zoomFrom, zp = st.popped;
+  st.zoomFrom = st.popped = null;
+  const els = [...box.children];
+  els.forEach((el) => {
+    const fx = parseFloat(el.style.left), fy = parseFloat(el.style.top);
+    const fw = parseFloat(el.style.width), fh = parseFloat(el.style.height);
+    el.style.transformOrigin = "0 0";
+    let t0 = null, o0 = null;
+    if (zf) {
+      const sx = zf.w / W, sy = zf.h / H;
+      t0 = `translate(${(zf.x + fx * sx - fx).toFixed(1)}px,${(zf.y + fy * sy - fy).toFixed(1)}px) scale(${sx.toFixed(3)},${sy.toFixed(3)})`;
+      o0 = "0.3";
+    } else if (zp && el.dataset.uri === zp.uri) {
+      t0 = `translate(${(-fx).toFixed(1)}px,${(-fy).toFixed(1)}px) scale(${(W / fw).toFixed(3)},${(H / fh).toFixed(3)})`;
+    } else if (prevRects.has(el.dataset.uri)) {
+      const p = prevRects.get(el.dataset.uri);
+      if (Math.abs(p.x - fx) + Math.abs(p.y - fy) + Math.abs(p.w - fw) + Math.abs(p.h - fh) > 1) {
+        t0 = `translate(${(p.x - fx).toFixed(1)}px,${(p.y - fy).toFixed(1)}px) scale(${(p.w / fw).toFixed(3)},${(p.h / fh).toFixed(3)})`;
+      }
+    } else if (zp) { o0 = "0"; }
+    if (t0) el.style.transform = t0;
+    if (o0 !== null) el.style.opacity = o0;
+  });
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    els.forEach((el) => {
+      el.style.transition = "transform .38s cubic-bezier(.22,.9,.28,1), opacity .32s ease";
+      el.style.transform = "";
+      el.style.opacity = "";
+    });
+  }));
 }
 
-/* chip taps run an about: search — one handler, delegated */
+/* jump from a program's subject chip to that concept's place in the
+   subjects map — crumb set to its ancestor path, tile flashed. A
+   multifaceted program simply has several chips: several entry points. */
+function openSubjectsAt(uri) {
+  const w = $("w-subjects");
+  if (!(w && w.offsetParent)) openPanel("dock");
+  requestAnimationFrame(() => {
+    buildSubjectsTree();
+    const st = subjectsTreeState;
+    const node = st?.nodes?.get(uri);
+    if (!node) return;
+    const path = [];
+    for (let p = node.parent; p; p = p.parent) path.unshift(p);
+    st.crumb = path;
+    renderSubjectsLevel(true);
+    w.scrollIntoView({ block: "center", behavior: "smooth" });
+    const find = () => [...document.querySelectorAll("#subjects-tree .tm-tile")].find((el) => el.dataset.uri === uri);
+    let tile = find();
+    if (!tile) {   // buried in the "more…" tail: open it, look again
+      const tail = [...document.querySelectorAll("#subjects-tree .tm-tile")].find((el) => el.dataset.uri === "tail:");
+      if (tail?._zoomIn) { tail._zoomIn(); tile = find(); }
+    }
+    if (tile) { tile.classList.add("tm-flash"); setTimeout(() => tile.classList.remove("tm-flash"), 2600); }
+  });
+}
+
+/* chip taps run an about: search; the ▦ button on a chip jumps to the
+   concept's place in the subjects map instead — one handler, delegated */
 document.addEventListener("click", (e) => {
   const chip = e.target.closest?.(".skos-chip");
   if (!chip || e.target.tagName === "A") return;
   if (chip.closest("#buddy-overlay")) closeBuddy();
+  if (e.target.closest(".skos-map") && chip.dataset.uri) {
+    hideOverlays();
+    openSubjectsAt(chip.dataset.uri);
+    return;
+  }
   openPanel("search");
   const q = "about:" + chip.dataset.label;
   $("search-input").value = q;
@@ -939,7 +1018,7 @@ function updateInfo() {
   if (subjects.length) {
     $("info-subjects").innerHTML = `<span class="ibc-label">🗂 about:</span> ` +
       subjects.map(([label, scheme, uri]) =>
-        `<span class="skos-chip" data-label="${label.replace(/"/g, "&quot;")}">${label}<a href="${uri}" target="_blank" rel="noopener" title="${(typeof SKOS_SCHEMES !== "undefined" && SKOS_SCHEMES[scheme]) || scheme} · ${scheme}:${uri.split("/").pop()}">↗</a></span>`
+        `<span class="skos-chip" data-label="${label.replace(/"/g, "&quot;")}" data-uri="${uri}">${label}<button class="skos-map" title="Show in subjects map" aria-label="Show ${label.replace(/"/g, "&quot;")} in subjects map">▦</button><a href="${uri}" target="_blank" rel="noopener" title="${(typeof SKOS_SCHEMES !== "undefined" && SKOS_SCHEMES[scheme]) || scheme} · ${scheme}:${uri.split("/").pop()}">↗</a></span>`
       ).join(" ");
     $("info-subjects").classList.remove("hidden");
   } else {
@@ -2397,7 +2476,7 @@ function openBuddy() {
   const subj = skosFor(p);
   if (subj.length) {
     sec("🗂", "about", subj.map(([label, scheme, uri]) =>
-      `<span class="skos-chip" data-label="${esc(label)}">${esc(label)}<a href="${uri}" target="_blank" rel="noopener" title="${(typeof SKOS_SCHEMES !== "undefined" && SKOS_SCHEMES[scheme]) || scheme}">↗</a></span>`
+      `<span class="skos-chip" data-label="${esc(label)}" data-uri="${uri}">${esc(label)}<button class="skos-map" title="Show in subjects map" aria-label="Show ${esc(label)} in subjects map">▦</button><a href="${uri}" target="_blank" rel="noopener" title="${(typeof SKOS_SCHEMES !== "undefined" && SKOS_SCHEMES[scheme]) || scheme}">↗</a></span>`
     ).join(" ") +
       `<div class="skos-codes">` +
       subj.map(([label, scheme, uri]) =>
