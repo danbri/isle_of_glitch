@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * TVP/2007 — R2 prefix-mirror sync.
+ * Tellyclub — R2 prefix-mirror sync.
  *
  * Uploads the first ~10 seconds of every stream on the dial to a
  * Cloudflare R2 bucket, so the player's service worker can fill its

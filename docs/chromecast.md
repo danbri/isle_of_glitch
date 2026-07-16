@@ -1,6 +1,6 @@
-# Chromecast notes — TVP/2007
+# Chromecast notes — Tellyclub
 
-Two separate Cast quirks trace to the same root: TVP casts through
+Two separate Cast quirks trace to the same root: Tellyclub casts through
 Google's **Default Media Receiver**, and archive.org's older items
 carry no TV-decodable video. Neither is a player bug, but both are
 improvable — one with data, one with a one-time registration.
@@ -38,7 +38,7 @@ If a mirror (see `cloudflare/`) ever grows an h.264 transcode step,
 The device list is Google's UI, filtered only by what the **receiver
 app** declares it supports. The stock Default Media Receiver declares
 audio-only-device support, so every Nest speaker and speaker group on
-the network is listed alongside the TVs. If you pick one, TVP warns
+the network is listed alongside the TVs. If you pick one, Tellyclub warns
 ("audio-only — sound without picture") but can't stop it appearing.
 
 To filter the picker to video devices, register your own receiver:
@@ -51,7 +51,7 @@ To filter the picker to video devices, register your own receiver:
    devices"** (Google Cast for Audio) **unchecked**.
 4. While the app is unpublished, register your Chromecast's serial as a
    test device (or just publish the app — it's only a receiver id).
-5. Give TVP the app id (8-character hex from the console):
+5. Give Tellyclub the app id (8-character hex from the console):
 
    ```js
    localStorage.setItem('tvp.castAppId', JSON.stringify('YOUR_APP_ID'))
