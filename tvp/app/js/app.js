@@ -875,13 +875,16 @@ function renderSubjectsLevel(snap = false) {
     if (kids || i.isTail) el._zoomIn = zoomIn;
     el.addEventListener("click", () => {
       if (kids || i.isTail) { zoomIn(); }
-      else {
-        openPanel("search");
-        const q = "about:" + i.label.replace(/^all /, "");
-        $("search-input").value = q;
-        renderSearch(q);
-      }
+      else { openTmTray(i); }        // leaf: results tray; the tree stays put
     });
+    /* the count badge on a branch opens the whole subtree as a tray */
+    if (kids && !i.isTail) {
+      const badge = el.querySelector("small");
+      if (badge) {
+        badge.title = `List all ${n} programs`;
+        badge.addEventListener("click", (ev) => { ev.stopPropagation(); openTmTray(i); });
+      }
+    }
     box.appendChild(el);
   });
 
@@ -919,6 +922,67 @@ function renderSubjectsLevel(snap = false) {
       el.style.opacity = "";
     });
   }));
+}
+
+/* ── the subjects tray: a concept's programs as large-icon cards,
+   sliding up over the stage while the map keeps its place ── */
+let progIndexById = null;
+function progRefById(id) {
+  if (!progIndexById) {
+    progIndexById = new Map();
+    CHANNELS.forEach((c, ci) => c.programs.forEach((p, pi) => {
+      const iid = iaIdOf(p);
+      if (iid && !progIndexById.has(iid)) progIndexById.set(iid, { ci, pi, p });
+    }));
+  }
+  return progIndexById.get(id);
+}
+
+function openTmTray(node) {
+  let tray = $("tm-tray");
+  if (!tray) {
+    tray = document.createElement("div");
+    tray.id = "tm-tray";
+    tray.innerHTML = `<header><span id="tm-tray-title"></span>` +
+      `<button id="tm-tray-close" class="drawer-close" aria-label="Close">&times;</button></header>` +
+      `<div id="tm-tray-grid"></div>`;
+    document.body.appendChild(tray);
+    tray.querySelector("#tm-tray-close").addEventListener("click", () => tray.classList.add("hidden"));
+  }
+  const ids = node._set || node.ids || new Set();
+  const refs = [...ids].map(progRefById).filter(Boolean)
+    .sort((a, b) => (a.p.year || 9999) - (b.p.year || 9999) || a.p.title.localeCompare(b.p.title));
+  tray.querySelector("#tm-tray-title").textContent =
+    `${subjectsEmoji(node.label)} ${node.label.replace(/^all /, "")} — ${refs.length} programs`;
+  const grid = tray.querySelector("#tm-tray-grid");
+  grid.innerHTML = "";
+  grid.scrollTop = 0;
+  const CHUNK = 48;
+  let shown = 0;
+  const more = document.createElement("button");
+  more.id = "tm-more"; more.className = "pill-btn"; more.textContent = "more";
+  const addChunk = () => {
+    refs.slice(shown, shown + CHUNK).forEach(({ ci, pi, p }) => {
+      const card = document.createElement("button");
+      card.className = "tmr-card";
+      card.innerHTML = `<img src="${artUrl(frameOf(p) || p.art)}" alt="" loading="lazy">` +
+        `<span class="tmr-t">${esc(p.title)}</span>` +
+        `<span class="tmr-m">${p.year || ""} · ${String(CHANNELS[ci].num).padStart(2, "0")} ${esc(CHANNELS[ci].name)}</span>`;
+      card.addEventListener("click", () => {
+        tray.classList.add("hidden");
+        closePanels();
+        crtBlink();
+        tune(ci, { fromStartProg: pi });
+      });
+      grid.insertBefore(card, more.parentNode === grid ? more : null);
+    });
+    shown = Math.min(refs.length, shown + CHUNK);
+    more.classList.toggle("hidden", shown >= refs.length);
+  };
+  more.addEventListener("click", addChunk);
+  grid.appendChild(more);
+  addChunk();
+  tray.classList.remove("hidden");
 }
 
 /* jump from a program's subject chip to that concept's place in the
@@ -1378,6 +1442,7 @@ function openPanel(which) {
 function closePanels() {
   ["dock", "search", "guide"].forEach((id) => $(id).classList.remove("open"));
   document.body.classList.remove("drawer-open");
+  $("tm-tray")?.classList.add("hidden");
 }
 $("scrim").addEventListener("click", closePanels);
 
