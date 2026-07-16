@@ -658,6 +658,19 @@ setTimeout(() => {
     .then((ids) => { if (Array.isArray(ids)) colourIcons = new Set(ids); })
     .catch(() => {});
 }, 4000);
+/* any colour icon that fails to load (pack mid-update, cache miss) falls
+   back to the program's original frame — capture phase catches IMG errors */
+document.addEventListener("error", (e) => {
+  const el = e.target;
+  if (el?.tagName !== "IMG" || !el.src?.startsWith(COLOUR_ICONS_BASE) || el._iconFell) return;
+  el._iconFell = true;
+  const id = decodeURIComponent(el.src.slice(COLOUR_ICONS_BASE.length)).replace(/\.jpg$/, "");
+  const ref = progRefById(id);
+  if (ref) {
+    el.src = artUrl(ref.p.frame || ref.p.art) || "";
+    e.stopImmediatePropagation();   // the generic test-card fallback stays out
+  }                                 // of it; if the frame ALSO fails, the next
+}, true);                           // error event reaches it normally
 /* the subjects widget: a squarified treemap of every concept on the dial,
    sized by how many programs carry it — only content-bearing tiles exist,
    because the map is built FROM the content. Tap a tile → about: search. */

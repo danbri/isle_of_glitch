@@ -46,14 +46,6 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
-  "@id": "https://archive.org/details/undersea_kingdom3",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
-  }
- },
- {
   "@id": "https://archive.org/details/undersea_kingdom4",
   "@type": "Movie",
   "contentWarning": {
@@ -103,6 +95,38 @@ const WATCH_BUDDY_GENERATED = [
  },
  {
   "@id": "https://archive.org/details/radarmen6",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/DasKabinettdesDoktorCaligariTheCabinetofDrCaligari",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/silent-der-golem-wie-er-in-die-welt-kam-aka-the-golem",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/Nosferatu_most_complete_version_93_mins.",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/CarnivalofSouls",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -1543,14 +1567,6 @@ const WATCH_BUDDY_GENERATED = [
  },
  {
   "@id": "https://archive.org/details/Bonanza_-_The_Blood_Line",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎻",
-   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
-  }
- },
- {
-  "@id": "https://archive.org/details/Bonanza_-_The_Spitfire",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
