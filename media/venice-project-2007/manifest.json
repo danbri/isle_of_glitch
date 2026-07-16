@@ -55,7 +55,14 @@
    "duration_s": 195,
    "native_resolution": "320x182",
    "url": "https://youtu.be/KaXdb-3ShjQ",
-   "description": "Head of engineering at The Venice Project (now Joost), walking his dogs and talking a bit about why he chose to work on The Venice Project, what it will be like, peer-2-peer and beta-testing."
+   "description": "Head of engineering at The Venice Project (now Joost), walking his dogs and talking a bit about why he chose to work on The Venice Project, what it will be like, peer-2-peer and beta-testing.",
+   "secured": {
+    "via": "server-side copy from archive.org item 'joost' (uploaded 2010)",
+    "files": [
+     "Joost_Sander.flv",
+     "Joost_Sander_512kb.mp4"
+    ]
+   }
   },
   {
    "id": "Tf2CcIjygC4",
@@ -66,7 +73,14 @@
    "duration_s": 205,
    "native_resolution": "320x182",
    "url": "https://youtu.be/Tf2CcIjygC4",
-   "description": "The Venice Project's (now Joost) head of technology explaining some of the technology that powers their TV."
+   "description": "The Venice Project's (now Joost) head of technology explaining some of the technology that powers their TV.",
+   "secured": {
+    "via": "server-side copy from archive.org item 'joost' (uploaded 2010)",
+    "files": [
+     "Joost_Dirk.flv",
+     "Joost_Dirk_512kb.mp4"
+    ]
+   }
   },
   {
    "id": "fjDsRvZMaXE",
@@ -77,7 +91,14 @@
    "duration_s": 214,
    "native_resolution": "320x182",
    "url": "https://youtu.be/fjDsRvZMaXE",
-   "description": "One of the top guys at The Venice Project (now Joost) talking about some of the problems with TV at the moment and what the future holds."
+   "description": "One of the top guys at The Venice Project (now Joost) talking about some of the problems with TV at the moment and what the future holds.",
+   "secured": {
+    "via": "server-side copy from archive.org item 'joost' (uploaded 2010)",
+    "files": [
+     "Joost_Henrik.flv",
+     "Joost_Henrik_512kb.mp4"
+    ]
+   }
   },
   {
    "id": "tpiUDppHi7I",
@@ -88,7 +109,14 @@
    "duration_s": 193,
    "native_resolution": "320x182",
    "url": "https://youtu.be/tpiUDppHi7I",
-   "description": "Janus Friis in a phone interview talking about how and why he founded The Venice Project (now Joost)."
+   "description": "Janus Friis in a phone interview talking about how and why he founded The Venice Project (now Joost).",
+   "secured": {
+    "via": "server-side copy from archive.org item 'joost' (uploaded 2010)",
+    "files": [
+     "Joost_Janus.flv",
+     "Joost_Janus_512kb.mp4"
+    ]
+   }
   },
   {
    "id": "tia57gQ3_1k",
@@ -178,5 +206,6 @@
    "url": "https://youtu.be/bTHjXR2K_NY",
    "description": "Joost Media Player is an Adobe Air application that is fully integrated with Joost.com. Working in collaboration with the Creative and Engineering teams from Joost, this is a must see. Constant video play while searching, Twitter integration and fullscreen remote control capable."
   }
- ]
+ ],
+ "status": "4 of 15 videos present (copied from IA item 'joost'); 11 pending fetch-videos.sh from a non-datacenter network (YouTube CDN blocks this environment)."
 }
