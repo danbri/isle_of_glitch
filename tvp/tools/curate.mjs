@@ -100,6 +100,42 @@ const DIAL = [
     titleFilter: /(flash gordon|buck rogers|dick tracy|phantom empire|radar men|zombies of the stratosphere|king of the rocket men|hurricane express|shadow of the eagle|three musketeers|lost city|undersea kingdom)/i,
     want: 64, minDur: 700, maxDur: 5400, maxYear: 1955
   },
+  /* The monochrome canon on one channel — films whose black-and-white
+     photography IS the work: Dreyer, Murnau, Lang, Wiene, Eisenstein,
+     Vertov, Stroheim, Vidor, Keaton, Buñuel, and the photography-defined
+     sound-era pictures. Their icons are exempt from the colour-icon pack
+     (index-curated) so they present as shot. Placed before the harvest
+     channels so the global dedupe assigns these prints here. */
+  {
+    num: 25, id: "monochrome", name: "Monochrome Masters",
+    category: "Film", tagline: "The black-and-white canon, as shot",
+    art: "the-passion-of-joan-of-arc",
+    hand: [],
+    ids: [
+      { id: "Intolerance", title: "Intolerance", year: 1916 },
+      { id: "DasKabinettdesDoktorCaligariTheCabinetofDrCaligari", title: "The Cabinet of Dr. Caligari", year: 1919 },
+      { id: "silent-der-golem-wie-er-in-die-welt-kam-aka-the-golem", title: "The Golem", year: 1920 },
+      { id: "Nosferatu_most_complete_version_93_mins.", title: "Nosferatu", year: 1922 },
+      { id: "MyMovie_20190318", title: "Sherlock Jr.", year: 1924 },
+      { id: "battleship-potemkin-1925_202510", title: "Battleship Potemkin", year: 1925 },
+      { id: "silent-greed", title: "Greed", year: 1925 },
+      { id: "the-gold-rush-film-1925", title: "The Gold Rush", year: 1925 },
+      { id: "The_General_Buster_Keaton", title: "The General", year: 1926 },
+      { id: "faust.-1926", title: "Faust", year: 1926 },
+      { id: "metropolis-1927-bdrip-1080p-x-265-dts-hd-ma-5.1-d-0ct-0r-lew-sev", title: "Metropolis", year: 1927 },
+      { id: "sunrise_1927", title: "Sunrise", year: 1927 },
+      { id: "the.-crowd.-1928.-king.-vidor-drama.-720p.x-264-classics", title: "The Crowd", year: 1928 },
+      { id: "the-passion-of-joan-of-arc", title: "The Passion of Joan of Arc", year: 1928 },
+      { id: "ChelovekskinoapparatomManWithAMovieCamera", title: "Man with a Movie Camera", year: 1929 },
+      { id: "un-chien-andalou__1929-film__luis_bunuel", title: "Un Chien Andalou", year: 1929 },
+      { id: "the-blue-angel_1930", title: "The Blue Angel", year: 1930 },
+      { id: "ScarletStreet", title: "Scarlet Street", year: 1945 },
+      { id: "TheMan_201607", title: "The Men", year: 1950 },
+      { id: "clacinonl_SaltOfTheEarth", title: "Salt of the Earth", year: 1954 },
+      { id: "CarnivalofSouls", title: "Carnival of Souls", year: 1962 }
+    ],
+    want: 21, minDur: 600, maxDur: 11000
+  },
   {
     num: 3, id: "cartoon-classics", name: "Cartoon Classics",
     category: "Kids", tagline: "Hand-drawn wonders since 1911", art: "Gertie",
@@ -345,7 +381,7 @@ const GLOBAL_EXCLUDE = /(sex|porn|milf|erot|nude|xxx|kama sutra|\bdesire\b|psych
 /* rip-smelling IDENTIFIERS (titles are often scrubbed clean while the
    identifier still says BrRip): scene-release markers mean a modern
    home-video master, not an archival print */
-const ID_EXCLUDE = /(x26[45]|blu.?ray|yts\.?\.?mx|hevc|brrip|dvdrip|web.?rip|webdl|handjob)/i;
+const ID_EXCLUDE = /(x.?26[45]|blu.?ray|yts\.?\.?mx|hevc|b[dr].?rip|dvdrip|web.?rip|webdl|handjob)/i;
 
 /* Rights denylist. The harvest queries rank by popularity, which favours
    exactly the famous films that are still owned. These are features whose
@@ -520,8 +556,8 @@ async function harvestChannel(ch, taken, seenTitles) {
     /* hand ids: plain string, or {id, title, year} when archive.org's own
        metadata is missing/ugly — overrides flow through the normal gates */
     ...(ch.ids || []).map((x) => typeof x === "string"
-      ? { identifier: x }
-      : { identifier: x.id, title: x.title, year: x.year }),
+      ? { identifier: x, hand: true }
+      : { identifier: x.id, title: x.title, year: x.year, hand: true }),
     ...found
   ];
   const out = [];
@@ -540,7 +576,7 @@ async function harvestChannel(ch, taken, seenTitles) {
   for (const d of docs) {
     if (out.length >= ch.want) break;
     if (!d.identifier || taken.has(d.identifier)) { reject("dup-id"); continue; }
-    if (DENY_IDS.has(d.identifier) || ID_EXCLUDE.test(d.identifier)) { reject("denied"); continue; }
+    if (DENY_IDS.has(d.identifier) || (!d.hand && ID_EXCLUDE.test(d.identifier))) { reject("denied"); continue; }
     const searchTitle = String(d.title || "");
     if (d.title !== undefined) {
       if (GLOBAL_EXCLUDE.test(searchTitle)) { reject("excluded"); continue; }
