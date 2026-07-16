@@ -1191,3 +1191,40 @@ body.in-venue #widget-tray { display: none; }
 @keyframes tm-flash { 50% { filter: brightness(1.8); outline-offset: 3px; } }
 .skos-chip .skos-map { background: none; border: 0; color: rgba(255,255,255,.55); font-size: 11px; padding: 0 2px; cursor: pointer; }
 .skos-chip .skos-map:hover { color: var(--accent); }
+
+/* subjects tray: a concept's programs, large icons, over the stage */
+#tm-tray {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 58;
+  height: min(58vh, 500px);
+  background: rgba(10,10,10,.96);
+  border-top: 1.5px solid var(--stroke);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  display: flex; flex-direction: column;
+  animation: tm-tray-up .28s cubic-bezier(.22,.9,.28,1);
+}
+@keyframes tm-tray-up { from { transform: translateY(100%); } }
+#tm-tray header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px 8px; font-size: 14px;
+}
+#tm-tray-grid {
+  overflow-y: auto; flex: 1;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px; padding: 0 12px calc(14px + var(--sab));
+  align-content: start;
+}
+.tmr-card {
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.16);
+  border-radius: 8px; padding: 0 0 8px; overflow: hidden;
+  display: flex; flex-direction: column; gap: 5px;
+  text-align: left; color: #fff; font-family: var(--font);
+}
+.tmr-card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; background: #111; display: block; }
+.tmr-card:hover, .tmr-card:focus-visible { border-color: var(--accent); }
+.tmr-t {
+  font-size: 12.5px; line-height: 1.3; padding: 0 8px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.tmr-m { font-size: 11px; opacity: .62; padding: 0 8px; }
+#tm-more { margin: 8px auto 14px; grid-column: 1 / -1; justify-self: center; }
+.tm-tile small { cursor: pointer; }
