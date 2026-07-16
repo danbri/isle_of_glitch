@@ -104,35 +104,35 @@ const DIAL = [
      photography IS the work: Dreyer, Murnau, Lang, Wiene, Eisenstein,
      Vertov, Stroheim, Vidor, Keaton, Buñuel, and the photography-defined
      sound-era pictures. Their icons are exempt from the colour-icon pack
-     (index-curated) so they present as shot. Placed before the harvest
-     channels so the global dedupe assigns these prints here. */
+     (index-curated) so they present as shot. Entries are SHARED: they play here and stay on their genre
+     channels too — membership is additive, not a move. */
   {
-    num: 25, id: "monochrome", name: "Monochrome Masters",
+    num: 25, id: "monochrome", name: "Black & White Film Night",
     category: "Film", tagline: "The black-and-white canon, as shot",
     art: "the-passion-of-joan-of-arc",
     hand: [],
     ids: [
-      { id: "Intolerance", title: "Intolerance", year: 1916 },
-      { id: "DasKabinettdesDoktorCaligariTheCabinetofDrCaligari", title: "The Cabinet of Dr. Caligari", year: 1919 },
-      { id: "silent-der-golem-wie-er-in-die-welt-kam-aka-the-golem", title: "The Golem", year: 1920 },
-      { id: "Nosferatu_most_complete_version_93_mins.", title: "Nosferatu", year: 1922 },
-      { id: "MyMovie_20190318", title: "Sherlock Jr.", year: 1924 },
-      { id: "battleship-potemkin-1925_202510", title: "Battleship Potemkin", year: 1925 },
-      { id: "silent-greed", title: "Greed", year: 1925 },
-      { id: "the-gold-rush-film-1925", title: "The Gold Rush", year: 1925 },
-      { id: "The_General_Buster_Keaton", title: "The General", year: 1926 },
-      { id: "faust.-1926", title: "Faust", year: 1926 },
-      { id: "metropolis-1927-bdrip-1080p-x-265-dts-hd-ma-5.1-d-0ct-0r-lew-sev", title: "Metropolis", year: 1927 },
-      { id: "sunrise_1927", title: "Sunrise", year: 1927 },
-      { id: "the.-crowd.-1928.-king.-vidor-drama.-720p.x-264-classics", title: "The Crowd", year: 1928 },
-      { id: "the-passion-of-joan-of-arc", title: "The Passion of Joan of Arc", year: 1928 },
-      { id: "ChelovekskinoapparatomManWithAMovieCamera", title: "Man with a Movie Camera", year: 1929 },
-      { id: "un-chien-andalou__1929-film__luis_bunuel", title: "Un Chien Andalou", year: 1929 },
-      { id: "the-blue-angel_1930", title: "The Blue Angel", year: 1930 },
-      { id: "ScarletStreet", title: "Scarlet Street", year: 1945 },
-      { id: "TheMan_201607", title: "The Men", year: 1950 },
-      { id: "clacinonl_SaltOfTheEarth", title: "Salt of the Earth", year: 1954 },
-      { id: "CarnivalofSouls", title: "Carnival of Souls", year: 1962 }
+      { id: "Intolerance", title: "Intolerance", shared: true, year: 1916 },
+      { id: "DasKabinettdesDoktorCaligariTheCabinetofDrCaligari", title: "The Cabinet of Dr. Caligari", shared: true, year: 1919 },
+      { id: "silent-der-golem-wie-er-in-die-welt-kam-aka-the-golem", title: "The Golem", shared: true, year: 1920 },
+      { id: "Nosferatu_most_complete_version_93_mins.", title: "Nosferatu", shared: true, year: 1922 },
+      { id: "MyMovie_20190318", title: "Sherlock Jr.", shared: true, year: 1924 },
+      { id: "battleship-potemkin-1925_202510", title: "Battleship Potemkin", shared: true, year: 1925 },
+      { id: "silent-greed", title: "Greed", shared: true, year: 1925 },
+      { id: "the-gold-rush-film-1925", title: "The Gold Rush", shared: true, year: 1925 },
+      { id: "The_General_Buster_Keaton", title: "The General", shared: true, year: 1926 },
+      { id: "faust.-1926", title: "Faust", shared: true, year: 1926 },
+      { id: "metropolis-1927-bdrip-1080p-x-265-dts-hd-ma-5.1-d-0ct-0r-lew-sev", title: "Metropolis", shared: true, year: 1927 },
+      { id: "sunrise_1927", title: "Sunrise", shared: true, year: 1927 },
+      { id: "the.-crowd.-1928.-king.-vidor-drama.-720p.x-264-classics", title: "The Crowd", shared: true, year: 1928 },
+      { id: "the-passion-of-joan-of-arc", title: "The Passion of Joan of Arc", shared: true, year: 1928 },
+      { id: "ChelovekskinoapparatomManWithAMovieCamera", title: "Man with a Movie Camera", shared: true, year: 1929 },
+      { id: "un-chien-andalou__1929-film__luis_bunuel", title: "Un Chien Andalou", shared: true, year: 1929 },
+      { id: "the-blue-angel_1930", title: "The Blue Angel", shared: true, year: 1930 },
+      { id: "ScarletStreet", title: "Scarlet Street", shared: true, year: 1945 },
+      { id: "TheMan_201607", title: "The Men", shared: true, year: 1950 },
+      { id: "clacinonl_SaltOfTheEarth", title: "Salt of the Earth", shared: true, year: 1954 },
+      { id: "CarnivalofSouls", title: "Carnival of Souls", shared: true, year: 1962 }
     ],
     want: 21, minDur: 600, maxDur: 11000
   },
@@ -557,7 +557,7 @@ async function harvestChannel(ch, taken, seenTitles) {
        metadata is missing/ugly — overrides flow through the normal gates */
     ...(ch.ids || []).map((x) => typeof x === "string"
       ? { identifier: x, hand: true }
-      : { identifier: x.id, title: x.title, year: x.year, hand: true }),
+      : { identifier: x.id, title: x.title, year: x.year, hand: true, shared: x.shared }),
     ...found
   ];
   const out = [];
@@ -601,8 +601,12 @@ async function harvestChannel(ch, taken, seenTitles) {
     const enc = (n) => n.split("/").map(encodeURIComponent).join("/");
     const src = `${ARCHIVE}${d.identifier}/${enc(picked.lo.name)}`;
     if (!(await verify(src))) { reject("verify"); continue; }
-    taken.add(d.identifier);
-    seenTitles.add(normTitle(title));
+    /* shared entries appear on this channel without claiming the item:
+       its home channel keeps (or re-harvests) it too */
+    if (!d.shared) {
+      taken.add(d.identifier);
+      seenTitles.add(normTitle(title));
+    }
     out.push({
       title,
       year, dur: Math.round(dur * 10) / 10,
