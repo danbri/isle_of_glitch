@@ -2500,8 +2500,7 @@ function openBuddyExplorer() {
   sec.className = "buddy-sec";
   sec.innerHTML = `<div class="b-emoji">🗺️</div>
     <div class="b-text"><div class="b-label">navigate by label</div>
-    Tap an emoji to see everything on the dial it marks. Yes, this is a
-    legitimate way to choose an evening's viewing.</div>`;
+    Tap an emoji to list every program it marks.</div>`;
   box.appendChild(sec);
   box.appendChild(cloud);
   $("buddy-overlay").classList.remove("hidden");

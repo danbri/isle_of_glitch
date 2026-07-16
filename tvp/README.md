@@ -2,8 +2,8 @@
 
 **Watch it: https://danbri.github.io/isle_of_glitch/tvp/app/**
 
-TVP is television the mid-2000s web promised: a dial of free and openly
-licensed film and TV, running on a **real broadcast clock**.
+TVP is television the mid-2000s web promised: channels of free and
+openly licensed film and TV, running on a **real broadcast clock**.
 You don't browse a catalogue — you switch on and join whatever is on
 *now*, flip channels, and let the schedule surprise you. Everything is
 streamed from the Internet Archive's public collections; TVP hosts no
@@ -13,9 +13,9 @@ media.
 |---|---|---|---|
 | ![splash](docs/screens/splash.png) | ![controller](docs/screens/controller.png) | ![guide](docs/screens/epg.png) | ![widgets](docs/screens/widgets.png) |
 
-## The dial
+## The channels
 
-Blender Foundation open movies (CC-BY) share the dial with
+Blender Foundation open movies (CC-BY) share the lineup with
 public-domain-era features, shorts, cartoons, newsreels, classic TV,
 serials, trailers, and the Prelinger ephemera — three thousand programs
 and counting, every one verified streamable and rights-clean at harvest
@@ -65,4 +65,4 @@ transmits no media, and links only to files the Archive serves
 publicly. Wikipedia text appears under CC BY-SA with attribution and
 links back. Channel and program metadata carries provenance links
 (archive.org, Wikidata, Wikipedia, Library of Congress, Getty) so
-anything on the dial can be vetted at its source.
+any program can be vetted at its source.
