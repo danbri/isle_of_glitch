@@ -646,14 +646,14 @@ function skosFor(p) {
  * fetched once, off the critical path; while the pack (or the network)
  * is absent nothing changes anywhere. The pack grows as generation
  * proceeds — no app change needed to pick up additions. */
-const COLOUR_ICONS_BASE = "https://archive.org/download/tvp2007-colour-icons/";
+const COLOUR_ICONS_BASE = "https://archive.org/download/misc-colour-icons/";
 let colourIcons = null;   // Set of archive identifiers, once loaded
 function frameOf(p) {
   const id = colourIcons && iaIdOf(p);
   return (id && colourIcons.has(id)) ? COLOUR_ICONS_BASE + id + ".jpg" : p.frame;
 }
 setTimeout(() => {
-  fetch("https://archive.org/cors/tvp2007-colour-icons/index.json", { cache: "no-cache" })
+  fetch("https://archive.org/cors/misc-colour-icons/index.json", { cache: "no-cache" })
     .then((r) => (r.ok ? r.json() : null))
     .then((ids) => { if (Array.isArray(ids)) colourIcons = new Set(ids); })
     .catch(() => {});
