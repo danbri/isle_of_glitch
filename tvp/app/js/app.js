@@ -2910,10 +2910,20 @@ document.addEventListener("keydown", (e) => {
   }
   switch (e.key) {
     case " ": e.preventDefault(); $("btn-play").click(); break;
+    /* the TiVo lattice: ↑↓ rows (channels), ←→ along the row (programs,
+       year-ordered). Seeking lives on Shift+←→ and j/l. */
     case "ArrowUp": zap(+1); break;
     case "ArrowDown": zap(-1); break;
-    case "ArrowRight": noteUserSeek(); video.currentTime += 10; showOverlays(); break;
-    case "ArrowLeft": noteUserSeek(); video.currentTime -= 10; showOverlays(); break;
+    case "ArrowRight":
+      if (e.shiftKey) { noteUserSeek(); video.currentTime += 10; showOverlays(); }
+      else stepProgram(+1);
+      break;
+    case "ArrowLeft":
+      if (e.shiftKey) { noteUserSeek(); video.currentTime -= 10; showOverlays(); }
+      else stepProgram(-1);
+      break;
+    case "l": noteUserSeek(); video.currentTime += 10; showOverlays(); break;
+    case "j": noteUserSeek(); video.currentTime -= 10; showOverlays(); break;
     case "Backspace": e.preventDefault(); goBack(); break;
     case "m": $("btn-mute").click(); break;
     case "f": $("btn-fs").click(); break;
