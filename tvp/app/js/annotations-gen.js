@@ -1574,6 +1574,14 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/Bonanza_-_The_Spitfire",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect screen violence — action, menace or monster business."
+  }
+ },
+ {
   "@id": "https://archive.org/details/DragnetTheBigBetty",
   "@type": "Movie",
   "contentWarning": {
@@ -2103,6 +2111,14 @@ const WATCH_BUDDY_GENERATED = [
  },
  {
   "@id": "https://archive.org/details/silent-the-epic-of-everest",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/the.-hands.-of.-orlac.-1924",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",
@@ -3510,14 +3526,6 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
-  "@id": "https://archive.org/details/ReachingForTheMoondecember291930",
-  "@type": "Movie",
-  "contentWarning": {
-   "warningEmoji": "🎷",
-   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
-  }
- },
- {
   "@id": "https://archive.org/details/recaptured-love_1930",
   "@type": "Movie",
   "contentWarning": {
@@ -4182,6 +4190,14 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/silent-romo-se-fait-bandit-aka-romeo-turns-bandit",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/FrankensteinfullMovie",
   "@type": "Movie",
   "contentWarning": {
@@ -4310,6 +4326,14 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/silent-the-eyes-of-the-mummy",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
   "@id": "https://archive.org/details/Dr_Pyckle_and_Mr_Pride.avi",
   "@type": "Movie",
   "contentWarning": {
@@ -4318,7 +4342,31 @@ const WATCH_BUDDY_GENERATED = [
   }
  },
  {
+  "@id": "https://archive.org/details/der-scheintote-chinese-aka-the-death-feigning-chinaman_1928",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/lingerie_1928",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎷",
+   "text": "Notable sax section: innuendo or adult themes, by the standards of its day."
+  }
+ },
+ {
   "@id": "https://archive.org/details/Fall_of_the_House_of_Usher_1928_Watson",
+  "@type": "Movie",
+  "contentWarning": {
+   "warningEmoji": "🎻",
+   "text": "Heavy on the violins: expect period screen violence — gunplay, menace or monster business typical of this genre and era."
+  }
+ },
+ {
+  "@id": "https://archive.org/details/vormittagsspuk-aka-ghosts-before-breakfast_1928",
   "@type": "Movie",
   "contentWarning": {
    "warningEmoji": "🎻",

@@ -966,7 +966,7 @@ function openTmTray(node) {
   const refs = [...ids].map(progRefById).filter(Boolean)
     .sort((a, b) => (a.p.year || 9999) - (b.p.year || 9999) || a.p.title.localeCompare(b.p.title));
   tray.querySelector("#tm-tray-title").textContent =
-    `${subjectsEmoji(node.label)} ${node.label.replace(/^all /, "")} — ${refs.length} programs`;
+    `${subjectsEmoji(node.label)} ${node.label.replace(/^all /, "")} — ${refs.length} program${refs.length === 1 ? "" : "s"}`;
   const grid = tray.querySelector("#tm-tray-grid");
   grid.innerHTML = "";
   grid.scrollTop = 0;
@@ -996,6 +996,80 @@ function openTmTray(node) {
   grid.appendChild(more);
   addChunk();
   tray.classList.remove("hidden");
+}
+
+/* ── the corpus timeline: every dated event around the collection —
+   releases, births/deaths of credited people, source-work publication.
+   Decade accordion; every chip opens the shared results tray. ── */
+let timelineBuilt = false;
+function buildTimeline() {
+  const box = $("timeline-view");
+  if (timelineBuilt || !box || !box.offsetParent) return;
+  timelineBuilt = true;
+
+  const years = new Map();      // year → { rel:Set, ev:[{t,label,ids}] }
+  const SANE = (y) => y >= 1500 && y <= 2030;   // Wikidata has year-10 typos
+  const at = (y) => { if (!years.has(y)) years.set(y, { rel: new Set(), ev: [] }); return years.get(y); };
+  CHANNELS.forEach((c) => c.programs.forEach((p) => {
+    const id = iaIdOf(p);
+    if (p.year && id) at(p.year).rel.add(id);
+  }));
+  if (typeof TL_PEOPLE !== "undefined") {
+    for (const [n, b, d, roles] of Object.values(TL_PEOPLE)) {
+      const ids = [...new Set(roles.map((r) => r[0]))];
+      if (b && SANE(b)) at(b).ev.push({ t: "★", label: `${n} born`, tray: `${n} — on the schedule`, ids });
+      if (d && SANE(d)) at(d).ev.push({ t: "✝", label: `${n} died`, tray: `${n} — on the schedule`, ids });
+    }
+  }
+  if (typeof TL_WORKS !== "undefined") {
+    for (const [n, y, by, ids] of Object.values(TL_WORKS)) {
+      if (SANE(y)) at(y).ev.push({ t: "📖", label: `“${n}”${by ? " — " + by : ""}`, tray: `Films from “${n}”`, ids });
+    }
+  }
+
+  const decades = new Map();
+  [...years.keys()].sort((a, b) => a - b).forEach((y) => {
+    const d = Math.floor(y / 10) * 10;
+    if (!decades.has(d)) decades.set(d, []);
+    decades.get(d).push(y);
+  });
+
+  box.innerHTML = "";
+  for (const [dec, ys] of decades) {
+    const nRel = ys.reduce((s, y) => s + years.get(y).rel.size, 0);
+    const nEv = ys.reduce((s, y) => s + years.get(y).ev.length, 0);
+    const sec = document.createElement("details");
+    sec.className = "tl-decade";
+    sec.innerHTML = `<summary><b>${dec}s</b><small>${nRel ? nRel + " films" : ""}${nRel && nEv ? " · " : ""}${nEv ? nEv + " events" : ""}</small></summary>`;
+    const body = document.createElement("div");
+    for (const y of ys) {
+      const { rel, ev } = years.get(y);
+      const row = document.createElement("div");
+      row.className = "tl-year";
+      row.innerHTML = `<span class="tl-y">${y}</span>`;
+      const chips = document.createElement("span");
+      chips.className = "tl-chips";
+      if (rel.size) {
+        const c = document.createElement("button");
+        c.className = "tl-chip";
+        c.textContent = `🎬 ${rel.size}`;
+        c.title = `${rel.size} program${rel.size > 1 ? "s" : ""} from ${y}`;
+        c.addEventListener("click", () => openTmTray({ label: `released ${y}`, ids: rel }));
+        chips.appendChild(c);
+      }
+      ev.forEach((e) => {
+        const c = document.createElement("button");
+        c.className = "tl-chip tl-ev";
+        c.textContent = `${e.t} ${e.label}`;
+        c.addEventListener("click", () => openTmTray({ label: e.tray, ids: new Set(e.ids) }));
+        chips.appendChild(c);
+      });
+      row.appendChild(chips);
+      body.appendChild(row);
+    }
+    sec.appendChild(body);
+    box.appendChild(sec);
+  }
 }
 
 /* jump from a program's subject chip to that concept's place in the
@@ -1069,15 +1143,8 @@ function updateInfo() {
   // quiet sideways paths from this program
   const sched2 = $("info-sched");
   const info2 = currentProgramInfo();
-  const threads = threadsFor(state.chIndex, info2.index, 2);
-  threads.forEach((t) => {
-    const row = document.createElement("div");
-    row.className = "sched-row im-threadrow";
-    row.innerHTML = `<span class="t">⤳</span><span class="n">${esc(t.label)}</span>`;
-    row.style.cursor = "pointer";
-    row.addEventListener("click", () => { crtBlink(); tune(t.ci, { fromStartProg: t.pi }); });
-    sched2.appendChild(row);
-  });
+  const threads = threadsFor(state.chIndex, info2.index, 6);
+  if (threads.length) sched2.appendChild(buildThreadRail(threads));
 
   // Watch Buddy notes, right in the full metadata view
   const chips = buddyChips(p);
@@ -1323,8 +1390,17 @@ $("btn-play").addEventListener("click", () => {
   armOverlayTimer();
 });
 
-$("btn-prev").addEventListener("click", () => zap(-1));
-$("btn-next").addEventListener("click", () => zap(+1));
+/* ◀ ▶ walk the channel's catalogue (programs are year-ordered), playing
+   each pick from the start — on-demand movement, not channel zapping.
+   Channels remain on ↑/↓, digits, the guide and Backspace. */
+function stepProgram(delta) {
+  const ch = currentChannel();
+  const cur = state.onDemand ? state.onDemand.progIndex : currentProgramInfo().index;
+  const idx = (cur + delta + ch.programs.length) % ch.programs.length;
+  tune(state.chIndex, { fromStartProg: idx });
+}
+$("btn-prev").addEventListener("click", () => stepProgram(-1));
+$("btn-next").addEventListener("click", () => stepProgram(+1));
 
 $("btn-mute").addEventListener("click", () => {
   userMuted = !userMuted;
@@ -1449,7 +1525,7 @@ function openPanel(which) {
   } else {
     $(which).classList.add("open");
     document.body.classList.add("drawer-open");
-    if (which === "dock") requestAnimationFrame(buildSubjectsTree);
+    if (which === "dock") requestAnimationFrame(() => { buildSubjectsTree(); buildTimeline(); });
   }
 }
 function closePanels() {
@@ -1705,6 +1781,7 @@ function updateRailFocus() {
     const idx = parseInt(best.dataset.ch, 10);
     if (idx !== state.guideIndex) {
       state.guideIndex = idx;
+      state.guideSel = null;          // focus moved rows: selection resets
       renderGuideList();
       // warm-preload the focused channel's live stream for instant zap
       clearTimeout(railSettle);
@@ -1744,9 +1821,9 @@ function renderGuideList() {
   head.appendChild(fav);
   box.appendChild(head);
 
-  listingFor(ch, 6).forEach((slot) => {
+  listingFor(ch, 6).forEach((slot, si) => {
     const row = document.createElement("div");
-    row.className = "gl-row" + (slot.live ? " now" : "");
+    row.className = "gl-row" + (slot.live ? " now" : "") + (state.guideSel === si ? " sel" : "");
     row.innerHTML = `<span class="t">${clock12(new Date(slot.startMs))}</span>
       <span class="n">${slot.program.title}${slot.program.year ? " <small>(" + slot.program.year + ")</small>" : ""}${buddyBadge(slot.program)}</span>
       ${slot.live ? '<span class="live-tag">LIVE</span>' : ""}`;
@@ -1877,7 +1954,7 @@ function restorePins() {
    widget, so floating widgets can be brushed away and re-summoned
    without a trip through the dock. */
 const WIDGET_EMOJI = {
-  "w-clock": "🕰", "w-jump": "⏪", "w-buddy": "👀", "w-subjects": "🗂",
+  "w-clock": "🕰", "w-jump": "⏪", "w-buddy": "👀", "w-subjects": "🗂", "w-timeline": "📅",
   "w-subs": "💬", "w-ratings": "💎", "w-chat": "💭", "w-quality": "🎚",
   "w-preload": "⚡", "w-ticker": "📰", "w-notice": "📌"
 };
@@ -2833,12 +2910,58 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") powerOn();
     return;
   }
+  /* guide open: arrows move the guide's own focus (which is always just
+     "what's centered"), never the channel playing underneath. ←→ slide
+     the rail one tile — a quantized version of the same scroll a thumb
+     flings — ↑↓ walk the centered channel's listing, Enter commits. */
+  if ($("guide").classList.contains("open")) {
+    const rail = $("guide-rail");
+    const tiles = [...rail.children];
+    const centered = tiles.findIndex((t) => t.classList.contains("center"));
+    switch (e.key) {
+      case "ArrowRight": case "ArrowLeft": {
+        e.preventDefault();
+        const next = tiles[Math.max(0, Math.min(tiles.length - 1, (centered < 0 ? 0 : centered) + (e.key === "ArrowRight" ? 1 : -1)))];
+        if (next) centerGuideTile(parseInt(next.dataset.ch, 10));
+        return;
+      }
+      case "ArrowDown": case "ArrowUp": {
+        e.preventDefault();
+        const rows = [...document.querySelectorAll("#guide-list .gl-row")];
+        if (!rows.length) return;
+        let sel = state.guideSel ?? rows.findIndex((r) => r.classList.contains("now"));
+        sel = Math.max(0, Math.min(rows.length - 1, sel + (e.key === "ArrowDown" ? 1 : -1)));
+        state.guideSel = sel;
+        rows.forEach((r, i) => r.classList.toggle("sel", i === sel));
+        rows[sel].scrollIntoView({ block: "nearest", behavior: "smooth" });
+        return;
+      }
+      case "Enter": {
+        e.preventDefault();
+        const row = document.querySelector("#guide-list .gl-row.sel") ||
+                    document.querySelector("#guide-list .gl-row.now") ||
+                    document.querySelector("#guide-list .gl-row");
+        row?.click();
+        return;
+      }
+    }
+  }
   switch (e.key) {
     case " ": e.preventDefault(); $("btn-play").click(); break;
+    /* the TiVo lattice: ↑↓ rows (channels), ←→ along the row (programs,
+       year-ordered). Seeking lives on Shift+←→ and j/l. */
     case "ArrowUp": zap(+1); break;
     case "ArrowDown": zap(-1); break;
-    case "ArrowRight": noteUserSeek(); video.currentTime += 10; showOverlays(); break;
-    case "ArrowLeft": noteUserSeek(); video.currentTime -= 10; showOverlays(); break;
+    case "ArrowRight":
+      if (e.shiftKey) { noteUserSeek(); video.currentTime += 10; showOverlays(); }
+      else stepProgram(+1);
+      break;
+    case "ArrowLeft":
+      if (e.shiftKey) { noteUserSeek(); video.currentTime -= 10; showOverlays(); }
+      else stepProgram(-1);
+      break;
+    case "l": noteUserSeek(); video.currentTime += 10; showOverlays(); break;
+    case "j": noteUserSeek(); video.currentTime -= 10; showOverlays(); break;
     case "Backspace": e.preventDefault(); goBack(); break;
     case "m": $("btn-mute").click(); break;
     case "f": $("btn-fs").click(); break;
@@ -2881,6 +3004,25 @@ document.addEventListener("keydown", (e) => {
  * directors and casts, shared dialogue keywords, the same year, the
  * same Watch Buddy label, the same decade. At most three, text-first,
  * never auto-playing anything. */
+
+/* one thread-rail builder for every surface that offers sideways paths —
+   info panel, intermission (and anything future) render the same cards */
+function buildThreadRail(threads, onTune) {
+  const rail = document.createElement("div");
+  rail.className = "thread-rail";
+  threads.forEach((t) => {
+    const p = CHANNELS[t.ci].programs[t.pi];
+    const card = document.createElement("button");
+    card.className = "tmr-card thread-card";
+    const reason = t.label.split(":")[0];
+    card.innerHTML = `<img src="${artUrl(frameOf(p) || p.art)}" alt="" loading="lazy">` +
+      `<span class="tmr-t">${esc(p.title)}</span>` +
+      `<span class="tmr-m">${esc(reason)}</span>`;
+    card.addEventListener("click", () => { onTune?.(); crtBlink(); tune(t.ci, { fromStartProg: t.pi }); });
+    rail.appendChild(card);
+  });
+  return rail;
+}
 
 function threadsFor(ci, pi, max = 3) {
   const me = CHANNELS[ci].programs[pi];
@@ -2962,17 +3104,8 @@ function tryShowIntermission() {
     ].filter(Boolean).join(" · ");
     const box = $("im-threads");
     box.innerHTML = "";
-    threadsFor(state.chIndex, info.index).forEach((t) => {
-      const row = document.createElement("button");
-      row.className = "im-thread";
-      row.textContent = "⤳ " + t.label;
-      row.addEventListener("click", () => {
-        hideIntermission();
-        crtBlink();
-        tune(t.ci, { fromStartProg: t.pi });
-      });
-      box.appendChild(row);
-    });
+    const ts = threadsFor(state.chIndex, info.index, 6);
+    if (ts.length) box.appendChild(buildThreadRail(ts, hideIntermission));
     const live = scheduleFor(ch);
     if (info.live && live.index !== info.index) {
       $("im-live").textContent = "meanwhile, live on " + ch.name + ": " + live.program.title;

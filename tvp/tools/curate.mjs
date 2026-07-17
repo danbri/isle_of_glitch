@@ -292,28 +292,65 @@ const DIAL = [
      another. requireYear keeps the bright line honest. */
   {
     num: 11, id: "picture-palace", name: "Picture Palace",
-    category: "Film", tagline: "Theatrical features from before 1931",
+    category: "Film", tagline: "Features from cinema's first three decades, to 1919",
     art: "silent_films",
     hand: [],
-    /* silent canon the collection query misses (uncollected uploads) —
-       all pre-1931, so US-PD outright, URAA or no URAA */
+    /* The pre-1931 theatrical sweep, split by era so each channel's
+       schedule cycles in days rather than months — one 1,350-program
+       channel meant any given film aired about once a quarter. */
+    ids: [
+      { id: "Intolerance", title: "Intolerance", year: 1916 }
+    ],
+    query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1891-01-01 TO 1919-12-31]",
+    want: 600, minDur: 2400, maxDur: 11000, maxYear: 1919, requireYear: true
+  },
+  {
+    num: 111, id: "silent-twenties", name: "Silent Twenties",
+    category: "Film", tagline: "Features 1920–1925",
+    art: "nanookOfTheNorth1922",
+    hand: [],
     ids: [
       { id: "MyMovie_20190318", title: "Sherlock Jr.", year: 1924 },
       { id: "the-gold-rush-film-1925", title: "The Gold Rush", year: 1925 },
-      { id: "Intolerance", title: "Intolerance", year: 1916 },
-      { id: "nanookOfTheNorth1922", title: "Nanook of the North", year: 1922 },
+      { id: "nanookOfTheNorth1922", title: "Nanook of the North", year: 1922 }
+    ],
+    query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1920-01-01 TO 1925-12-31]",
+    want: 600, minDur: 2400, maxDur: 11000, maxYear: 1925, requireYear: true
+  },
+  {
+    num: 112, id: "late-silents", name: "Late Silents",
+    category: "Film", tagline: "The craft at its height, 1926–1928",
+    art: "the-passion-of-joan-of-arc",
+    hand: [],
+    ids: [
       { id: "the-passion-of-joan-of-arc", title: "The Passion of Joan of Arc", year: 1928 }
     ],
-    query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1891-01-01 TO 1930-12-31]",
-    want: 2000, minDur: 2400, maxDur: 11000, maxYear: 1930, requireYear: true
+    query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1926-01-01 TO 1928-12-31]",
+    want: 600, minDur: 2400, maxDur: 11000, maxYear: 1928, requireYear: true
+  },
+  {
+    num: 113, id: "talking-pictures", name: "Talking Pictures",
+    category: "Film", tagline: "1929–1930: sound arrives",
+    art: "the-blue-angel_1930",
+    hand: [],
+    query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1929-01-01 TO 1930-12-31]",
+    want: 600, minDur: 2400, maxDur: 11000, maxYear: 1930, requireYear: true
   },
   {
     num: 115, id: "five-cent-cinema", name: "Five-Cent Cinema",
-    category: "Film", tagline: "Shorts from the dawn of cinema",
+    category: "Film", tagline: "Shorts from the dawn of cinema, to 1917",
     art: "silent_films",
     hand: [],
-    query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1891-01-01 TO 1930-12-31]",
-    want: 400, minDur: 60, maxDur: 2400, maxYear: 1930, requireYear: true
+    query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1891-01-01 TO 1917-12-31]",
+    want: 300, minDur: 60, maxDur: 2400, maxYear: 1917, requireYear: true
+  },
+  {
+    num: 120, id: "two-reelers", name: "Two-Reelers",
+    category: "Film", tagline: "Shorts 1918–1930",
+    art: "silent_films",
+    hand: [],
+    query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1918-01-01 TO 1930-12-31]",
+    want: 300, minDur: 60, maxDur: 2400, maxYear: 1930, requireYear: true
   },
   {
     num: 116, id: "western-roundup", name: "Western Roundup",
