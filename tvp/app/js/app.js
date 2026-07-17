@@ -966,7 +966,7 @@ function openTmTray(node) {
   const refs = [...ids].map(progRefById).filter(Boolean)
     .sort((a, b) => (a.p.year || 9999) - (b.p.year || 9999) || a.p.title.localeCompare(b.p.title));
   tray.querySelector("#tm-tray-title").textContent =
-    `${subjectsEmoji(node.label)} ${node.label.replace(/^all /, "")} — ${refs.length} programs`;
+    `${subjectsEmoji(node.label)} ${node.label.replace(/^all /, "")} — ${refs.length} program${refs.length === 1 ? "" : "s"}`;
   const grid = tray.querySelector("#tm-tray-grid");
   grid.innerHTML = "";
   grid.scrollTop = 0;
@@ -1008,6 +1008,7 @@ function buildTimeline() {
   timelineBuilt = true;
 
   const years = new Map();      // year → { rel:Set, ev:[{t,label,ids}] }
+  const SANE = (y) => y >= 1500 && y <= 2030;   // Wikidata has year-10 typos
   const at = (y) => { if (!years.has(y)) years.set(y, { rel: new Set(), ev: [] }); return years.get(y); };
   CHANNELS.forEach((c) => c.programs.forEach((p) => {
     const id = iaIdOf(p);
@@ -1016,13 +1017,13 @@ function buildTimeline() {
   if (typeof TL_PEOPLE !== "undefined") {
     for (const [n, b, d, roles] of Object.values(TL_PEOPLE)) {
       const ids = [...new Set(roles.map((r) => r[0]))];
-      if (b) at(b).ev.push({ t: "★", label: `${n} born`, tray: `${n} — on the schedule`, ids });
-      if (d) at(d).ev.push({ t: "✝", label: `${n} died`, tray: `${n} — on the schedule`, ids });
+      if (b && SANE(b)) at(b).ev.push({ t: "★", label: `${n} born`, tray: `${n} — on the schedule`, ids });
+      if (d && SANE(d)) at(d).ev.push({ t: "✝", label: `${n} died`, tray: `${n} — on the schedule`, ids });
     }
   }
   if (typeof TL_WORKS !== "undefined") {
     for (const [n, y, by, ids] of Object.values(TL_WORKS)) {
-      at(y).ev.push({ t: "📖", label: `“${n}”${by ? " — " + by : ""}`, tray: `Films from “${n}”`, ids });
+      if (SANE(y)) at(y).ev.push({ t: "📖", label: `“${n}”${by ? " — " + by : ""}`, tray: `Films from “${n}”`, ids });
     }
   }
 
