@@ -493,7 +493,29 @@ const DENY_TITLES = [
   "baby face", "employees entrance", "tarzan the ape man",
   "tarzan and his mate", "morocco", "blonde venus", "shanghai express",
   "dishonored", "sign of the cross", "cleopatra",
-  "it happened one night", "queen christina", "thin man"
+  "it happened one night", "queen christina", "thin man",
+  // pre-Code sweep eyeball, round 2: more renewed majors…
+  "scarlet empress", "hatchet man", "back street", "speak easily",
+  "passionate plumber", "kiss before the mirror", "this day and age",
+  "doctor bull", "bad girl", "wake up and dream", "marie galante",
+  "dracula",
+  // …and post-1930 foreign (URAA): both 1934 Hitchcocks, the Kordas,
+  // British quota films, German, Soviet, Ozu again, Dreyer, and the
+  // 1930s Chinese classics (Lianhua) — same restoration logic as the
+  // Kurosawa culls, however painful for The Goddess.
+  "man who knew too much", "waltzes from vienna", "evergreen",
+  "friday the thirteenth", "there goes the bride", "phantom fiend",
+  "sign of four", "speckled band", "sleeping cardinal",
+  "sherlock holmes fatal hour", "private life of henry viii",
+  "private life of don juan", "rise of catherine the great", "ghoul",
+  "i spy", "vampyr", "adventures of don quixote", "don quixote",
+  "passing fancy", "dragnet girl", "daybreak", "goddess", "big road",
+  "song of the fishermen", "new women", "queen of sports",
+  "twin sisters", "bible for girls", "lieutenant kizhe",
+  "three songs of lenin", "eine stadt steht kopf",
+  "gruss und kuss veronika", "brennendes geheimnis",
+  "die bande vom hoheneck", "liebe tod und teufel",
+  "die verkaufte braut", "zouzou", "m"
 ];
 /* generically-titled or one-off strays: denied by identifier so the title
    stays available to legitimate uploads (Maniac 1934 is PD; Naruse's Wife
@@ -513,7 +535,7 @@ const DENY_IDS = new Set([
 const isDeniedTitle = (nt) =>
   DENY_TITLES.some((e) => nt === e || nt.startsWith(e + " "));
 
-const normTitle = (t) => String(t || "").toLowerCase()
+const normTitle = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
   .replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim()
   .replace(/^the /, "").replace(/ the$/, "");
 
