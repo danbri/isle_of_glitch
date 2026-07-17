@@ -1237,3 +1237,18 @@ body.in-venue #widget-tray { display: none; }
 .thread-card { flex: 0 0 128px; }
 .thread-card img { aspect-ratio: 16/10; }
 .thread-card .tmr-m { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* corpus timeline widget */
+#timeline-view { max-height: 300px; overflow-y: auto; scrollbar-width: thin; }
+.tl-decade summary { cursor: pointer; padding: 5px 2px; display: flex; align-items: baseline; gap: 8px; }
+.tl-decade summary small { opacity: .55; font-size: 11px; }
+.tl-year { display: flex; gap: 8px; padding: 3px 0 3px 10px; align-items: baseline; }
+.tl-y { flex: 0 0 34px; font-size: 11.5px; opacity: .6; }
+.tl-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.tl-chip {
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.18);
+  border-radius: 999px; color: #fff; font-size: 11px; padding: 2px 8px;
+  font-family: var(--font); max-width: 230px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.tl-chip:hover, .tl-chip:focus-visible { border-color: var(--accent); }

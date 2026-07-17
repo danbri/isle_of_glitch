@@ -163,9 +163,9 @@
     </div>
     <div id="controller-buttons">
       <button class="ctl" id="btn-menu" title="Channel guide (g)"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" fill="none"/></svg></button>
-      <button class="ctl" id="btn-prev" title="Previous channel (↓)"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
+      <button class="ctl" id="btn-prev" title="Previous program"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
       <button class="ctl big" id="btn-play" title="Play / pause (space)"><svg id="glyph-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg><svg id="glyph-play" class="hidden" viewBox="0 0 24 24"><path d="M7 4.5l13 7.5-13 7.5z" fill="currentColor"/></svg></button>
-      <button class="ctl" id="btn-next" title="Next channel (↑)"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
+      <button class="ctl" id="btn-next" title="Next program"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
       <button class="ctl" id="btn-mute" title="Mute (m)"><svg viewBox="0 0 24 24"><path id="spk" d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path id="spk-wave" d="M16.5 8.5a5 5 0 010 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
       <button class="ctl" id="btn-search" title="Search (/)"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6" stroke="currentColor" stroke-width="2.4" fill="none"/><path d="M15 15l5.5 5.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
       <button class="ctl" id="btn-widgets" title="Widgets (w)"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6" stroke="currentColor" stroke-width="2" fill="none"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6" stroke="currentColor" stroke-width="2" fill="none"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6" stroke="currentColor" stroke-width="2" fill="none"/><rect x="13.5" y="13.5" width="7" height="7" rx="3.5" stroke="currentColor" stroke-width="2" fill="none"/></svg></button>
@@ -243,6 +243,13 @@
     <h3>subjects</h3>
     <div class="w-body">
       <div id="subjects-tree"></div>
+    </div>
+  </section>
+
+  <section class="widget" id="w-timeline" data-widget="timeline">
+    <h3>timeline</h3>
+    <div class="w-body">
+      <div id="timeline-view"></div>
     </div>
   </section>
 
@@ -331,6 +338,7 @@
 
 <script src="js/channels.js"></script>
 <script src="js/skos-gen.js"></script>
+<script src="js/timeline-gen.js"></script>
 <script src="js/annotations-gen.js"></script>
 <script src="js/annotations.js"></script>
 <script src="js/app.js"></script>

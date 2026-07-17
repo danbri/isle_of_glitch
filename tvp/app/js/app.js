@@ -998,6 +998,79 @@ function openTmTray(node) {
   tray.classList.remove("hidden");
 }
 
+/* ── the corpus timeline: every dated event around the collection —
+   releases, births/deaths of credited people, source-work publication.
+   Decade accordion; every chip opens the shared results tray. ── */
+let timelineBuilt = false;
+function buildTimeline() {
+  const box = $("timeline-view");
+  if (timelineBuilt || !box || !box.offsetParent) return;
+  timelineBuilt = true;
+
+  const years = new Map();      // year → { rel:Set, ev:[{t,label,ids}] }
+  const at = (y) => { if (!years.has(y)) years.set(y, { rel: new Set(), ev: [] }); return years.get(y); };
+  CHANNELS.forEach((c) => c.programs.forEach((p) => {
+    const id = iaIdOf(p);
+    if (p.year && id) at(p.year).rel.add(id);
+  }));
+  if (typeof TL_PEOPLE !== "undefined") {
+    for (const [n, b, d, roles] of Object.values(TL_PEOPLE)) {
+      const ids = [...new Set(roles.map((r) => r[0]))];
+      if (b) at(b).ev.push({ t: "★", label: `${n} born`, tray: `${n} — on the schedule`, ids });
+      if (d) at(d).ev.push({ t: "✝", label: `${n} died`, tray: `${n} — on the schedule`, ids });
+    }
+  }
+  if (typeof TL_WORKS !== "undefined") {
+    for (const [n, y, by, ids] of Object.values(TL_WORKS)) {
+      at(y).ev.push({ t: "📖", label: `“${n}”${by ? " — " + by : ""}`, tray: `Films from “${n}”`, ids });
+    }
+  }
+
+  const decades = new Map();
+  [...years.keys()].sort((a, b) => a - b).forEach((y) => {
+    const d = Math.floor(y / 10) * 10;
+    if (!decades.has(d)) decades.set(d, []);
+    decades.get(d).push(y);
+  });
+
+  box.innerHTML = "";
+  for (const [dec, ys] of decades) {
+    const nRel = ys.reduce((s, y) => s + years.get(y).rel.size, 0);
+    const nEv = ys.reduce((s, y) => s + years.get(y).ev.length, 0);
+    const sec = document.createElement("details");
+    sec.className = "tl-decade";
+    sec.innerHTML = `<summary><b>${dec}s</b><small>${nRel ? nRel + " films" : ""}${nRel && nEv ? " · " : ""}${nEv ? nEv + " events" : ""}</small></summary>`;
+    const body = document.createElement("div");
+    for (const y of ys) {
+      const { rel, ev } = years.get(y);
+      const row = document.createElement("div");
+      row.className = "tl-year";
+      row.innerHTML = `<span class="tl-y">${y}</span>`;
+      const chips = document.createElement("span");
+      chips.className = "tl-chips";
+      if (rel.size) {
+        const c = document.createElement("button");
+        c.className = "tl-chip";
+        c.textContent = `🎬 ${rel.size}`;
+        c.title = `${rel.size} program${rel.size > 1 ? "s" : ""} from ${y}`;
+        c.addEventListener("click", () => openTmTray({ label: `released ${y}`, ids: rel }));
+        chips.appendChild(c);
+      }
+      ev.forEach((e) => {
+        const c = document.createElement("button");
+        c.className = "tl-chip tl-ev";
+        c.textContent = `${e.t} ${e.label}`;
+        c.addEventListener("click", () => openTmTray({ label: e.tray, ids: new Set(e.ids) }));
+        chips.appendChild(c);
+      });
+      row.appendChild(chips);
+      body.appendChild(row);
+    }
+    sec.appendChild(body);
+    box.appendChild(sec);
+  }
+}
+
 /* jump from a program's subject chip to that concept's place in the
    subjects map — crumb set to its ancestor path, tile flashed. A
    multifaceted program simply has several chips: several entry points. */
@@ -1316,8 +1389,17 @@ $("btn-play").addEventListener("click", () => {
   armOverlayTimer();
 });
 
-$("btn-prev").addEventListener("click", () => zap(-1));
-$("btn-next").addEventListener("click", () => zap(+1));
+/* ◀ ▶ walk the channel's catalogue (programs are year-ordered), playing
+   each pick from the start — on-demand movement, not channel zapping.
+   Channels remain on ↑/↓, digits, the guide and Backspace. */
+function stepProgram(delta) {
+  const ch = currentChannel();
+  const cur = state.onDemand ? state.onDemand.progIndex : currentProgramInfo().index;
+  const idx = (cur + delta + ch.programs.length) % ch.programs.length;
+  tune(state.chIndex, { fromStartProg: idx });
+}
+$("btn-prev").addEventListener("click", () => stepProgram(-1));
+$("btn-next").addEventListener("click", () => stepProgram(+1));
 
 $("btn-mute").addEventListener("click", () => {
   userMuted = !userMuted;
@@ -1442,7 +1524,7 @@ function openPanel(which) {
   } else {
     $(which).classList.add("open");
     document.body.classList.add("drawer-open");
-    if (which === "dock") requestAnimationFrame(buildSubjectsTree);
+    if (which === "dock") requestAnimationFrame(() => { buildSubjectsTree(); buildTimeline(); });
   }
 }
 function closePanels() {
@@ -1870,7 +1952,7 @@ function restorePins() {
    widget, so floating widgets can be brushed away and re-summoned
    without a trip through the dock. */
 const WIDGET_EMOJI = {
-  "w-clock": "🕰", "w-jump": "⏪", "w-buddy": "👀", "w-subjects": "🗂",
+  "w-clock": "🕰", "w-jump": "⏪", "w-buddy": "👀", "w-subjects": "🗂", "w-timeline": "📅",
   "w-subs": "💬", "w-ratings": "💎", "w-chat": "💭", "w-quality": "🎚",
   "w-preload": "⚡", "w-ticker": "📰", "w-notice": "📌"
 };
