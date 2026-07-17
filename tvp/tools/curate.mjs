@@ -512,7 +512,9 @@ const DENY_TITLES = [
   "passing fancy", "dragnet girl", "daybreak", "goddess", "big road",
   "song of the fishermen", "new women", "queen of sports",
   "twin sisters", "bible for girls", "lieutenant kizhe",
-  "three songs of lenin", "eine stadt steht kopf",
+  "three songs of lenin", "sherlock holmes the sleeping cardinal",
+  "camels are coming", "secret of the loch",
+  "plunder of peach and plum", "eine stadt steht kopf",
   "gruss und kuss veronika", "brennendes geheimnis",
   "die bande vom hoheneck", "liebe tod und teufel",
   "die verkaufte braut", "zouzou", "m"
@@ -617,7 +619,7 @@ async function verify(url) {
 function cleanTitle(t) {
   let s = String(t || "").replace(/\s+/g, " ").trim();
   // "1951 - Detective Story - …" uploader year prefixes
-  s = s.replace(/^(19|20)\d\d\s*[-–—:]\s*/, "");
+  s = s.replace(/^(19|20)\d\d\s*[-–—:]\s*/, "").replace(/^(19|20)\d\d\s+(?=\S)/, "");
   // "Title (1953) Richard Widmark, Jean …" — cut cast/blurb tails at the
   // first bracketed year ("Airport 1975"-style unbracketed years survive)
   const m = s.match(/^(.{8,}?)\s*[([]\s*(19|20)\d\d\b/);
