@@ -500,21 +500,24 @@ const DENY_TITLES = [
   "doctor bull", "bad girl", "wake up and dream", "marie galante",
   "dracula",
   // …and post-1930 foreign (URAA): both 1934 Hitchcocks, the Kordas,
-  // British quota films, German, Soviet, Ozu again, Dreyer, and the
-  // 1930s Chinese classics (Lianhua) — same restoration logic as the
-  // Kurosawa culls, however painful for The Goddess.
+  // British quota films, German, Soviet, Ozu again, Dreyer. NOT the
+  // 1930s Chinese films: URAA only restores works still protected at
+  // home on 1996-01-01, and pre-1946 Chinese films had expired under
+  // the ROC 30-year term (PRC's 1990 law revived nothing already
+  // expired) — The Goddess and the Lianhua/Mingxing classics are
+  // US-PD. Japan differs: old-law film terms track the director's
+  // life (+38, per the Kurosawa-estate rulings), so the Ozu and
+  // Kurosawa culls stand.
   "man who knew too much", "waltzes from vienna", "evergreen",
   "friday the thirteenth", "there goes the bride", "phantom fiend",
   "sign of four", "speckled band", "sleeping cardinal",
   "sherlock holmes fatal hour", "private life of henry viii",
   "private life of don juan", "rise of catherine the great", "ghoul",
   "i spy", "vampyr", "adventures of don quixote", "don quixote",
-  "passing fancy", "dragnet girl", "daybreak", "goddess", "big road",
-  "song of the fishermen", "new women", "queen of sports",
-  "twin sisters", "bible for girls", "lieutenant kizhe",
+  "passing fancy", "dragnet girl", "lieutenant kizhe",
   "three songs of lenin", "sherlock holmes the sleeping cardinal",
   "camels are coming", "secret of the loch",
-  "plunder of peach and plum", "cosmetics of market", "eine stadt steht kopf",
+  "eine stadt steht kopf",
   "gruss und kuss veronika", "brennendes geheimnis",
   "die bande vom hoheneck", "liebe tod und teufel",
   "die verkaufte braut", "zouzou", "m"
