@@ -1252,3 +1252,6 @@ body.in-venue #widget-tray { display: none; }
   overflow: hidden; text-overflow: ellipsis;
 }
 .tl-chip:hover, .tl-chip:focus-visible { border-color: var(--accent); }
+
+/* guide listing: keyboard selection shares the touch tap-target look */
+.gl-row.sel { outline: 1.5px solid var(--accent); outline-offset: -1.5px; border-radius: 6px; }

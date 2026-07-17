@@ -1780,6 +1780,7 @@ function updateRailFocus() {
     const idx = parseInt(best.dataset.ch, 10);
     if (idx !== state.guideIndex) {
       state.guideIndex = idx;
+      state.guideSel = null;          // focus moved rows: selection resets
       renderGuideList();
       // warm-preload the focused channel's live stream for instant zap
       clearTimeout(railSettle);
@@ -1819,9 +1820,9 @@ function renderGuideList() {
   head.appendChild(fav);
   box.appendChild(head);
 
-  listingFor(ch, 6).forEach((slot) => {
+  listingFor(ch, 6).forEach((slot, si) => {
     const row = document.createElement("div");
-    row.className = "gl-row" + (slot.live ? " now" : "");
+    row.className = "gl-row" + (slot.live ? " now" : "") + (state.guideSel === si ? " sel" : "");
     row.innerHTML = `<span class="t">${clock12(new Date(slot.startMs))}</span>
       <span class="n">${slot.program.title}${slot.program.year ? " <small>(" + slot.program.year + ")</small>" : ""}${buddyBadge(slot.program)}</span>
       ${slot.live ? '<span class="live-tag">LIVE</span>' : ""}`;
@@ -2907,6 +2908,42 @@ document.addEventListener("keydown", (e) => {
   if (!state.on) {
     if (e.key === "Enter" || e.key === " ") powerOn();
     return;
+  }
+  /* guide open: arrows move the guide's own focus (which is always just
+     "what's centered"), never the channel playing underneath. ←→ slide
+     the rail one tile — a quantized version of the same scroll a thumb
+     flings — ↑↓ walk the centered channel's listing, Enter commits. */
+  if ($("guide").classList.contains("open")) {
+    const rail = $("guide-rail");
+    const tiles = [...rail.children];
+    const centered = tiles.findIndex((t) => t.classList.contains("center"));
+    switch (e.key) {
+      case "ArrowRight": case "ArrowLeft": {
+        e.preventDefault();
+        const next = tiles[Math.max(0, Math.min(tiles.length - 1, (centered < 0 ? 0 : centered) + (e.key === "ArrowRight" ? 1 : -1)))];
+        if (next) centerGuideTile(parseInt(next.dataset.ch, 10));
+        return;
+      }
+      case "ArrowDown": case "ArrowUp": {
+        e.preventDefault();
+        const rows = [...document.querySelectorAll("#guide-list .gl-row")];
+        if (!rows.length) return;
+        let sel = state.guideSel ?? rows.findIndex((r) => r.classList.contains("now"));
+        sel = Math.max(0, Math.min(rows.length - 1, sel + (e.key === "ArrowDown" ? 1 : -1)));
+        state.guideSel = sel;
+        rows.forEach((r, i) => r.classList.toggle("sel", i === sel));
+        rows[sel].scrollIntoView({ block: "nearest", behavior: "smooth" });
+        return;
+      }
+      case "Enter": {
+        e.preventDefault();
+        const row = document.querySelector("#guide-list .gl-row.sel") ||
+                    document.querySelector("#guide-list .gl-row.now") ||
+                    document.querySelector("#guide-list .gl-row");
+        row?.click();
+        return;
+      }
+    }
   }
   switch (e.key) {
     case " ": e.preventDefault(); $("btn-play").click(); break;
