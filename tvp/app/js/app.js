@@ -1069,15 +1069,8 @@ function updateInfo() {
   // quiet sideways paths from this program
   const sched2 = $("info-sched");
   const info2 = currentProgramInfo();
-  const threads = threadsFor(state.chIndex, info2.index, 2);
-  threads.forEach((t) => {
-    const row = document.createElement("div");
-    row.className = "sched-row im-threadrow";
-    row.innerHTML = `<span class="t">⤳</span><span class="n">${esc(t.label)}</span>`;
-    row.style.cursor = "pointer";
-    row.addEventListener("click", () => { crtBlink(); tune(t.ci, { fromStartProg: t.pi }); });
-    sched2.appendChild(row);
-  });
+  const threads = threadsFor(state.chIndex, info2.index, 6);
+  if (threads.length) sched2.appendChild(buildThreadRail(threads));
 
   // Watch Buddy notes, right in the full metadata view
   const chips = buddyChips(p);
@@ -2882,6 +2875,25 @@ document.addEventListener("keydown", (e) => {
  * same Watch Buddy label, the same decade. At most three, text-first,
  * never auto-playing anything. */
 
+/* one thread-rail builder for every surface that offers sideways paths —
+   info panel, intermission (and anything future) render the same cards */
+function buildThreadRail(threads, onTune) {
+  const rail = document.createElement("div");
+  rail.className = "thread-rail";
+  threads.forEach((t) => {
+    const p = CHANNELS[t.ci].programs[t.pi];
+    const card = document.createElement("button");
+    card.className = "tmr-card thread-card";
+    const reason = t.label.split(":")[0];
+    card.innerHTML = `<img src="${artUrl(frameOf(p) || p.art)}" alt="" loading="lazy">` +
+      `<span class="tmr-t">${esc(p.title)}</span>` +
+      `<span class="tmr-m">${esc(reason)}</span>`;
+    card.addEventListener("click", () => { onTune?.(); crtBlink(); tune(t.ci, { fromStartProg: t.pi }); });
+    rail.appendChild(card);
+  });
+  return rail;
+}
+
 function threadsFor(ci, pi, max = 3) {
   const me = CHANNELS[ci].programs[pi];
   const out = [];
@@ -2962,17 +2974,8 @@ function tryShowIntermission() {
     ].filter(Boolean).join(" · ");
     const box = $("im-threads");
     box.innerHTML = "";
-    threadsFor(state.chIndex, info.index).forEach((t) => {
-      const row = document.createElement("button");
-      row.className = "im-thread";
-      row.textContent = "⤳ " + t.label;
-      row.addEventListener("click", () => {
-        hideIntermission();
-        crtBlink();
-        tune(t.ci, { fromStartProg: t.pi });
-      });
-      box.appendChild(row);
-    });
+    const ts = threadsFor(state.chIndex, info.index, 6);
+    if (ts.length) box.appendChild(buildThreadRail(ts, hideIntermission));
     const live = scheduleFor(ch);
     if (info.live && live.index !== info.index) {
       $("im-live").textContent = "meanwhile, live on " + ch.name + ": " + live.program.title;

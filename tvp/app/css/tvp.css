@@ -1228,3 +1228,12 @@ body.in-venue #widget-tray { display: none; }
 .tmr-m { font-size: 11px; opacity: .62; padding: 0 8px; }
 #tm-more { margin: 8px auto 14px; grid-column: 1 / -1; justify-self: center; }
 .tm-tile small { cursor: pointer; }
+
+/* sideways-paths rail: shared by info panel and intermission */
+.thread-rail {
+  display: flex; gap: 8px; overflow-x: auto; padding: 8px 0 4px;
+  scrollbar-width: thin;
+}
+.thread-card { flex: 0 0 128px; }
+.thread-card img { aspect-ratio: 16/10; }
+.thread-card .tmr-m { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
