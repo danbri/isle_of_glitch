@@ -344,6 +344,19 @@ const DIAL = [
     query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1891-01-01 TO 1917-12-31]",
     want: 300, minDur: 60, maxDur: 2400, maxYear: 1917, requireYear: true
   },
+  /* The pre-Code talkies, 1931 to the Code's enforcement in mid-1934 —
+     the era's famous studio pictures were renewed (denied above), but
+     the poverty-row and lapsed-major output is a deep PD seam of
+     exactly the era's quirkiness. Every harvested title still passes
+     the eyeball review before shipping. */
+  {
+    num: 114, id: "pre-code", name: "Pre-Code Parlor",
+    category: "Film", tagline: "1931–1934: before the Code",
+    art: "humanbondage",
+    hand: [],
+    query: "collection:(feature_films OR Film_Noir OR Comedy_Films OR SciFi_Horror) AND mediatype:movies AND date:[1931-01-01 TO 1934-12-31]",
+    want: 250, minDur: 2400, maxDur: 9600, maxYear: 1934, requireYear: true
+  },
   {
     num: 120, id: "two-reelers", name: "Two-Reelers",
     category: "Film", tagline: "Shorts 1918–1930",
@@ -464,7 +477,47 @@ const DENY_TITLES = [
   "apur sansar", "wicked as they come", "stray dog",
   "men who tread on", "blonde in a white car",
   // renewed by UA in 1983 — a standard "everyone assumes it's PD" trap
-  "night of the hunter"
+  "night of the hunter",
+  // famous pre-Code studio properties, all renewed: Universal horror,
+  // Warner gangster/musicals, Paramount Marx/West/Sternberg, MGM
+  // prestige, RKO's ape — the popularity ranking reaches for exactly
+  // these. The documented-PD pre-Code canon stays harvestable.
+  "king kong", "son of kong", "duck soup", "horse feathers",
+  "monkey business", "animal crackers", "she done him wrong",
+  "im no angel", "42nd street", "gold diggers of 1933",
+  "footlight parade", "public enemy", "little caesar", "scarface",
+  "freaks", "dracula", "frankenstein", "mummy", "invisible man",
+  "island of lost souls", "murders in the rue morgue", "black cat",
+  "old dark house", "trouble in paradise", "design for living",
+  "grand hotel", "dinner at eight", "red dust", "red headed woman",
+  "baby face", "employees entrance", "tarzan the ape man",
+  "tarzan and his mate", "morocco", "blonde venus", "shanghai express",
+  "dishonored", "sign of the cross", "cleopatra",
+  "it happened one night", "queen christina", "thin man",
+  // pre-Code sweep eyeball, round 2: more renewed majors…
+  "scarlet empress", "hatchet man", "back street", "speak easily",
+  "passionate plumber", "kiss before the mirror", "this day and age",
+  "doctor bull", "bad girl", "wake up and dream", "marie galante",
+  "dracula",
+  // …and post-1930 foreign (URAA): both 1934 Hitchcocks, the Kordas,
+  // British quota films, German, Soviet, Ozu again, Dreyer, and the
+  // 1930s Chinese classics (Lianhua) — same restoration logic as the
+  // Kurosawa culls, however painful for The Goddess.
+  "man who knew too much", "waltzes from vienna", "evergreen",
+  "friday the thirteenth", "there goes the bride", "phantom fiend",
+  "sign of four", "speckled band", "sleeping cardinal",
+  "sherlock holmes fatal hour", "private life of henry viii",
+  "private life of don juan", "rise of catherine the great", "ghoul",
+  "i spy", "vampyr", "adventures of don quixote", "don quixote",
+  "passing fancy", "dragnet girl", "daybreak", "goddess", "big road",
+  "song of the fishermen", "new women", "queen of sports",
+  "twin sisters", "bible for girls", "lieutenant kizhe",
+  "three songs of lenin", "sherlock holmes the sleeping cardinal",
+  "camels are coming", "secret of the loch",
+  "plunder of peach and plum", "cosmetics of market", "eine stadt steht kopf",
+  "gruss und kuss veronika", "brennendes geheimnis",
+  "die bande vom hoheneck", "liebe tod und teufel",
+  "die verkaufte braut", "zouzou", "m"
 ];
 /* generically-titled or one-off strays: denied by identifier so the title
    stays available to legitimate uploads (Maniac 1934 is PD; Naruse's Wife
@@ -484,7 +537,7 @@ const DENY_IDS = new Set([
 const isDeniedTitle = (nt) =>
   DENY_TITLES.some((e) => nt === e || nt.startsWith(e + " "));
 
-const normTitle = (t) => String(t || "").toLowerCase()
+const normTitle = (t) => String(t || "").replace(/ß/g, "ss").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
   .replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim()
   .replace(/^the /, "").replace(/ the$/, "");
 
@@ -566,7 +619,7 @@ async function verify(url) {
 function cleanTitle(t) {
   let s = String(t || "").replace(/\s+/g, " ").trim();
   // "1951 - Detective Story - …" uploader year prefixes
-  s = s.replace(/^(19|20)\d\d\s*[-–—:]\s*/, "");
+  s = s.replace(/^(19|20)\d\d\s*[-–—:]\s*/, "").replace(/^(19|20)\d\d\s+(?=\S)/, "");
   // "Title (1953) Richard Widmark, Jean …" — cut cast/blurb tails at the
   // first bracketed year ("Airport 1975"-style unbracketed years survive)
   const m = s.match(/^(.{8,}?)\s*[([]\s*(19|20)\d\d\b/);
