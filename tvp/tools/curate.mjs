@@ -514,7 +514,7 @@ const DENY_TITLES = [
   "twin sisters", "bible for girls", "lieutenant kizhe",
   "three songs of lenin", "sherlock holmes the sleeping cardinal",
   "camels are coming", "secret of the loch",
-  "plunder of peach and plum", "eine stadt steht kopf",
+  "plunder of peach and plum", "cosmetics of market", "eine stadt steht kopf",
   "gruss und kuss veronika", "brennendes geheimnis",
   "die bande vom hoheneck", "liebe tod und teufel",
   "die verkaufte braut", "zouzou", "m"
@@ -537,7 +537,7 @@ const DENY_IDS = new Set([
 const isDeniedTitle = (nt) =>
   DENY_TITLES.some((e) => nt === e || nt.startsWith(e + " "));
 
-const normTitle = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+const normTitle = (t) => String(t || "").replace(/ß/g, "ss").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
   .replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim()
   .replace(/^the /, "").replace(/ the$/, "");
 
