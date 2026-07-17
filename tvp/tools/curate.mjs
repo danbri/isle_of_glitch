@@ -344,6 +344,19 @@ const DIAL = [
     query: "collection:(feature_films OR silent_films) AND mediatype:movies AND date:[1891-01-01 TO 1917-12-31]",
     want: 300, minDur: 60, maxDur: 2400, maxYear: 1917, requireYear: true
   },
+  /* The pre-Code talkies, 1931 to the Code's enforcement in mid-1934 —
+     the era's famous studio pictures were renewed (denied above), but
+     the poverty-row and lapsed-major output is a deep PD seam of
+     exactly the era's quirkiness. Every harvested title still passes
+     the eyeball review before shipping. */
+  {
+    num: 114, id: "pre-code", name: "Pre-Code Parlor",
+    category: "Film", tagline: "1931–1934: before the Code",
+    art: "humanbondage",
+    hand: [],
+    query: "collection:(feature_films OR Film_Noir OR Comedy_Films OR SciFi_Horror) AND mediatype:movies AND date:[1931-01-01 TO 1934-12-31]",
+    want: 250, minDur: 2400, maxDur: 9600, maxYear: 1934, requireYear: true
+  },
   {
     num: 120, id: "two-reelers", name: "Two-Reelers",
     category: "Film", tagline: "Shorts 1918–1930",
@@ -464,7 +477,23 @@ const DENY_TITLES = [
   "apur sansar", "wicked as they come", "stray dog",
   "men who tread on", "blonde in a white car",
   // renewed by UA in 1983 — a standard "everyone assumes it's PD" trap
-  "night of the hunter"
+  "night of the hunter",
+  // famous pre-Code studio properties, all renewed: Universal horror,
+  // Warner gangster/musicals, Paramount Marx/West/Sternberg, MGM
+  // prestige, RKO's ape — the popularity ranking reaches for exactly
+  // these. The documented-PD pre-Code canon stays harvestable.
+  "king kong", "son of kong", "duck soup", "horse feathers",
+  "monkey business", "animal crackers", "she done him wrong",
+  "im no angel", "42nd street", "gold diggers of 1933",
+  "footlight parade", "public enemy", "little caesar", "scarface",
+  "freaks", "dracula", "frankenstein", "mummy", "invisible man",
+  "island of lost souls", "murders in the rue morgue", "black cat",
+  "old dark house", "trouble in paradise", "design for living",
+  "grand hotel", "dinner at eight", "red dust", "red headed woman",
+  "baby face", "employees entrance", "tarzan the ape man",
+  "tarzan and his mate", "morocco", "blonde venus", "shanghai express",
+  "dishonored", "sign of the cross", "cleopatra",
+  "it happened one night", "queen christina", "thin man"
 ];
 /* generically-titled or one-off strays: denied by identifier so the title
    stays available to legitimate uploads (Maniac 1934 is PD; Naruse's Wife
