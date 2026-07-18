@@ -70,6 +70,7 @@ const CHANNEL_CONCEPTS = {
   "saturday-serials": [["Film serials", "lcgft"], ["Adventure films", "lcgft"]],
   "marquee": [["Feature films", "lcgft"]],
   "monochrome": [["Feature films", "lcgft"]],
+  "pre-code": [["Feature films", "lcgft"]],
   "western-roundup": [["Western films", "lcgft"]],
   "mystery-playhouse": [["Detective and mystery films", "lcgft"]],
   "drama-matinee": [["Melodramas", "lcgft"], ["Feature films", "lcgft"]],
