@@ -74,5 +74,33 @@
  "_macaulay": {
   "wp": "https://en.wikipedia.org/wiki/Thomas_Babington_Macaulay",
   "qid": "Q315989"
+ },
+ "_satireg": {
+  "wp": "https://en.wikipedia.org/wiki/Bengal_Sati_Regulation,_1829",
+  "qid": "Q4887658"
+ },
+ "_dharmasabha": {
+  "wp": "https://en.wikipedia.org/wiki/Dharma_Sabha",
+  "qid": "Q28171783"
+ },
+ "_coorgwar": {
+  "wp": "https://en.wikipedia.org/wiki/Coorg_War",
+  "qid": "Q5168044"
+ },
+ "_mysore": {
+  "wp": "https://en.wikipedia.org/wiki/Kingdom_of_Mysore",
+  "qid": "Q266923"
+ },
+ "_oudh": {
+  "wp": "https://en.wikipedia.org/wiki/Oudh_State",
+  "qid": "Q18129046"
+ },
+ "_prinsep": {
+  "wp": "https://en.wikipedia.org/wiki/Henry_Thoby_Prinsep",
+  "qid": "Q5729109"
+ },
+ "_eea": {
+  "wp": "https://en.wikipedia.org/wiki/English_Education_Act_1835",
+  "qid": null
  }
 }
