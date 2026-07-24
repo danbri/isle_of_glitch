@@ -1,4 +1,4 @@
-# magpie/parisconf — Bentinck Despatches explorer
+# magpie/William_Cavendish-Bentinck — Bentinck Despatches explorer
 
 A self-contained single-file explorer for the 162 records returned by the
 British Library *Explore Archives and Manuscripts* search for
@@ -11,8 +11,8 @@ Papers**:
 
 | path | what |
 |---|---|
-| `index.html` | the app as an Artifact-ready fragment (no doctype/html/body — the artifact host wraps it) |
-| `standalone.html` | same app wrapped for direct browsing (`open standalone.html`) |
+| `index.html` | the app as a full standalone page (served by GitHub Pages) |
+| `artifact.html` | same app as an Artifact-ready fragment (no doctype/html/body — the artifact host wraps it) |
 | `data/search_page_{1,2}.json` | the two search-result pages (Blacklight JSON:API, 100/page) |
 | `data/records/*.json` | all 162 individual catalogue records |
 | `data/dataset.json` | distilled entries + people + gazetteer + correspondence edges |
@@ -28,7 +28,7 @@ tools/fetch_records.sh   # 162 record JSONs, paced 0.5s, resumable
 tools/build_basemap.py ne_50m_land.geojson   # Natural Earth -> data/basemap.json
 tools/fetch_qids.py      # QLever (NOT Wikimedia) -> data/qids.json
 tools/build_dataset.py   # records -> data/dataset.json
-tools/build_app.py       # template + JSON -> index.html / standalone.html
+tools/build_app.py       # template + JSON -> index.html / artifact.html
 ```
 
 The app itself makes **zero network requests**: coastlines, records, and
