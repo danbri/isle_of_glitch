@@ -16,8 +16,13 @@ out = (tpl.replace("__DATASET__", blob("dataset.json"))
           .replace("__BASEMAP__", blob("basemap.json"))
           .replace("__QIDS__", blob("qids.json")))
 open(os.path.join(ROOT, "artifact.html"), "w").write(out)
+title = ""
+body = out
+if body.startswith("<title>"):
+    end = body.index("</title>") + len("</title>")
+    title, body = body[:end], body[end:].lstrip("\n")
 wrapped = ("<!doctype html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n"
            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n"
-           "</head>\n<body>\n" + out + "\n</body>\n</html>\n")
+           + title + "\n</head>\n<body>\n" + body + "\n</body>\n</html>\n")
 open(os.path.join(ROOT, "index.html"), "w").write(wrapped)
 print(f"artifact.html: {len(out)} bytes; index.html: {len(wrapped)} bytes")
