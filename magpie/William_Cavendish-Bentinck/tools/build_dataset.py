@@ -150,6 +150,7 @@ def main():
         title = clean(val(a, "title_tsi"))
         scope = clean(val(a, "scope_and_content_tsi"))
         names_html = val(a, "related_names_ssim") or ""
+        rel = clean(val(a, "related_material_tsi"))
         y0, y1, disp, exact = parse_dates(a)
         kind, series = classify(ref, title)
         hay = " ".join([title, scope, clean(names_html)])
@@ -162,7 +163,7 @@ def main():
             "id": d["id"], "ref": ref, "title": title, "scope": scope,
             "kind": kind, "series": series, "topic": topic_of(title, kind),
             "y0": y0, "y1": y1, "date": disp, "exact": exact,
-            "people": people, "places": places,
+            "people": people, "places": places, "rel": rel,
             "url": f"https://searcharchives.bl.uk/catalog/{d['id']}",
         })
 

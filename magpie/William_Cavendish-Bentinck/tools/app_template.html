@@ -174,6 +174,7 @@ main { display: flex; flex: 1; min-height: 0; }
 .card .meta .ref a:hover { color: var(--wax); text-decoration: underline; }
 .card h3 { font-size: 14.5px; line-height: 1.35; margin: 4px 0 2px; font-weight: 500; }
 .card .scope { font-size: 13px; color: var(--ink-2); margin: 3px 0 1px; }
+.card .reltrail { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); margin: 3px 0 0; }
 .card .tags { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px; }
 .tag {
   font-family: var(--sans); font-size: 10.5px; letter-spacing: .02em;
@@ -264,6 +265,20 @@ main { display: flex; flex: 1; min-height: 0; }
   background: color-mix(in srgb, var(--k-bengal) 12%, var(--card));
   border-left: 2px solid var(--k-bengal); color: var(--ink-2);
 }
+.qsec {
+  font-family: var(--sans); font-size: 12px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--ink-2); margin: 26px 0 12px; display: flex; align-items: center; gap: 10px;
+}
+.qsec::after { content: ""; flex: 1; max-width: 34ch; border-bottom: 1px solid var(--rule); }
+.qsec.counter { color: var(--wax); }
+.quote.summary { border-top-color: var(--marine); }
+.quote.summary .sumtext { margin: 0; font-size: 14px; line-height: 1.55; color: var(--ink); }
+.quote.summary .sumtext::before {
+  content: "summary"; display: inline-block; font-family: var(--sans); font-size: 9.5px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--marine);
+  border: 1px solid color-mix(in srgb, var(--marine) 45%, transparent);
+  border-radius: 3px; padding: 0 5px; margin-right: 8px; vertical-align: 2px;
+}
 
 /* ---- sources ---- */
 #panel-sources ul { padding-left: 20px; max-width: 78ch; }
@@ -313,7 +328,7 @@ main { display: flex; flex: 1; min-height: 0; }
       </div>
       <nav id="tabs" role="tablist">
         <button role="tab" aria-selected="true" data-tab="network">Who writes to whom</button>
-        <button role="tab" aria-selected="false" data-tab="quotes">Notable quotes</button>
+        <button role="tab" aria-selected="false" data-tab="quotes">Voices &amp; counter-voices</button>
         <button role="tab" aria-selected="false" data-tab="sources">Sources &amp; citations</button>
       </nav>
       <div class="panel" id="panel-network" role="tabpanel">
@@ -328,11 +343,14 @@ main { display: flex; flex: 1; min-height: 0; }
         </div>
       </div>
       <div class="panel" id="panel-quotes" role="tabpanel" hidden>
-        <h2>Notable quotes from the correspondence &amp; its era</h2>
-        <p class="lede">The British Library catalogue describes these papers but does not transcribe
-          them; quotations below are drawn from published editions and government records of the same
-          correspondence, each with its source. Catalogue snippets are quoted from the records
-          downloaded for this page.</p>
+        <h2>Voices &amp; counter-voices</h2>
+        <p class="lede">None of these 162 records is digitised (verified against the BL API), so the
+          letters themselves are not transcribed here. Passages in quotation marks were verified
+          word-for-word against public-domain full texts on archive.org; grey-tagged cards are
+          summaries, plainly labelled. A caution on bias: published editions preserve the
+          governing voice — Bentinck and Macaulay wrote for the record, while the people they ruled
+          survive in this dataset mostly as index lines. The counter-voices section reads the same
+          archive against the grain.</p>
         <div id="quotelist"></div>
       </div>
       <div class="panel" id="panel-sources" role="tabpanel" hidden>
@@ -359,50 +377,102 @@ const KINDS = {
   "photo":        { label: "Photograph",    cvar: "--k-photo" },
 };
 
+function qidTag(k){ const e = QIDS[k]; return e && e.qid ? "(" + e.qid + ")" : ""; }
+function wpOf(k){ const e = QIDS[k]; return e ? e.wp : null; }
+const KEITH = "A. B. Keith (ed.), Speeches and Documents on Indian Policy 1750–1921, vol. I (OUP, 1922)";
+const KEITH_URL = "https://archive.org/details/in.ernet.dli.2015.24658";
+const SHARP = "H. Sharp (ed.), Selections from Educational Records, Part I: 1781–1839 (Calcutta, 1920)";
+const SHARP_URL = "https://archive.org/details/SelectionsFromEducationalRecordsPartI1781-1839";
+
+/* Every passage in quotation marks below was verified verbatim against the
+   cited public-domain full text (cached in data/sources/ in the repo);
+   entries marked as summaries carry no quotation marks and say so. */
 const QUOTES = [
+  { sec: "gov", h: "The governing voice, as usually quoted" },
   {
-    q: "The first and primary object of my heart is the benefit of the Hindoos. I know nothing so important to the improvement of their future condition as the establishment of a purer morality, whatever their belief, and a more just conception of the will of God.",
-    who: "Lord William Bentinck", when: "Minute on Sati, Calcutta, 8 November 1829",
-    src: [["Minute on Sati (reprinted in C. H. Philips ed., The Correspondence of Lord William Cavendish Bentinck, OUP 1977 — the edition the Mss Eur E424 typescripts supplement)", null],
-          ["Wikipedia: Bengal Sati Regulation, 1829", "https://en.wikipedia.org/wiki/Bengal_Sati_Regulation,_1829"]],
+    q: "The first and primary object of my heart is the benefit of the Hindus. I know nothing so important to the improvement of their future condition as the establishment of a purer morality, whatever their belief, and a more just conception of the will of God.",
+    who: "Lord William Bentinck", when: "Minute on Sati, Calcutta, 8 November 1829 — the passage his admirers quote",
+    src: [[KEITH + ", pp. 208–226 (verified against the full text)", KEITH_URL],
+          ["Wikipedia: Bengal Sati Regulation, 1829 " + qidTag("_satireg"), wpOf("_satireg")]],
   },
   {
-    q: "The practice of suttee, or of burning or burying alive the widows of Hindoos, is hereby declared illegal, and punishable by the Criminal Courts.",
-    who: "Bengal Regulation XVII of 1829", when: "enacted by Bentinck in Council, 4 December 1829",
-    src: [["Wikipedia: Bengal Sati Regulation, 1829", "https://en.wikipedia.org/wiki/Bengal_Sati_Regulation,_1829"],
-          ["Wikidata: sati " + (QIDS._sati && QIDS._sati.qid ? "(" + QIDS._sati.qid + ")" : ""), QIDS._sati ? QIDS._sati.wp : null]],
+    q: "It is, however, a very different and much more important question how far the feelings of the native army might take alarm … Reflecting upon the vast disproportion of numbers between our native and European troops, it was obvious that there might be in any general combination of the forces the greatest danger to the State.",
+    who: "the same Minute on Sati, a few pages earlier", when: "the passage less often quoted — abolition argued through the security of British rule",
+    caveat: "Read whole, the minute is as much an imperial risk assessment as a humanitarian document: Bentinck canvassed army officers first and moved only once satisfied the garrison would not stir. Regulation XVII (4 December 1829) then made assisting sati punishable as culpable homicide.",
+    src: [[KEITH + ", pp. 219–220 (verified against the full text)", KEITH_URL]],
   },
   {
-    q: "We must at present do our best to form a class who may be interpreters between us and the millions whom we govern; a class of persons, Indian in blood and colour, but English in taste, in opinions, in morals, and in intellect.",
-    who: "Thomas Babington Macaulay", when: "Minute on Indian Education, 2 February 1835 — adopted under Bentinck's government",
-    src: [["Wikipedia: Macaulay's 1835 minute / English Education Act 1835", "https://en.wikipedia.org/wiki/English_Education_Act_1835"],
-          ["Wikidata: T. B. Macaulay " + qidTag("_macaulay"), wpOf("_macaulay")]],
+    q: "We must at present do our best to form a class who may be interpreters between us and the millions whom we govern — a class of persons Indian in blood and colour, but English in tastes, in opinions, in morals and in intellect. … I have never found one among them who could deny that a single shelf of a good European library was worth the whole native literature of India and Arabia.",
+    who: "Thomas Babington Macaulay " + qidTag("_macaulay"), when: "Minute on Indian Education, 2 February 1835 — endorsed by Bentinck's government",
+    src: [[SHARP + ", pp. 107–117 (verified against the full text)", SHARP_URL],
+          ["Wikipedia: English Education Act 1835", wpOf("_eea")]],
   },
   {
-    q: "The great object of the British Government ought to be the promotion of European literature and science among the natives of India.",
-    who: "Resolution of the Governor-General in Council (Bentinck)", when: "7 March 1835",
-    src: [["Wikipedia: English Education Act 1835", "https://en.wikipedia.org/wiki/English_Education_Act_1835"]],
+    q: "The great object of the British Government ought to be the promotion of European literature and science among the natives of India; and that all the funds appropriated for the purpose of education would be best employed on English education alone.",
+    who: "Resolution of the Governor-General in Council (Bentinck)", when: "7 March 1835 — the same resolution also ended stipends for students at Sanskrit and Arabic institutions",
+    src: [[SHARP + ", p. 130 (verified against the full text)", SHARP_URL]],
+  },
+
+  { sec: "counter", h: "Counter-voices — reading against the grain" },
+  {
+    q: "The whole question is — have we it in our power to teach everywhere this English and this European science? It is in doubting nay in denying this that those who take the opposite view maintain the expediency of letting the natives pursue their present course of instruction and of endeavouring to engraft European science thereon.",
+    who: "Henry Thoby Prinsep " + qidTag("_prinsep"), when: "Note of 15 February 1835, dissenting from Macaulay — overruled by Bentinck's resolution three weeks later",
+    src: [[SHARP + ", pp. 117–129 (verified against the full text)", SHARP_URL],
+          ["Wikipedia: H. T. Prinsep", wpOf("_prinsep")]],
+  },
+  {
+    summary: "Orthodox Calcutta — organised as the Dharma Sabha — petitioned against the sati regulation within weeks (January 1830, several hundred signatories), arguing the Company had pledged non-interference in religion, and carried an appeal to the Privy Council, which dismissed it in 1832. Theirs is the largest surviving body of Indian argument against the measure — and no text of it is in this dataset. That gap is itself evidence of whose words got reprinted.",
+    who: "Dharma Sabha petition & Privy Council appeal " + qidTag("_dharmasabha"), when: "1830–1832 · summarised, not quoted — no verified text available here",
+    src: [["Wikipedia: Dharma Sabha", wpOf("_dharmasabha")],
+          ["Wikipedia: Bengal Sati Regulation, 1829 " + qidTag("_satireg"), wpOf("_satireg")]],
+  },
+  {
+    summary: "Bentinck's own army resented him bitterly: the Court-ordered halving of batta (field allowance) from 1828 dogged his whole term. The anger is in this dataset — the index records a 'Memorial addressed to [him] by Bengal officers' (B582) — but, characteristically, the officers' grievance survives here only as one line in his index.",
+    who: "The Bengal officers' half-batta memorial", when: "c. 1828–1835 · summarised — catalogue trace IOR/Z/E/4/14/B582",
+    src: [["BL record B582: Memorial addressed to by Bengal officers", "https://searcharchives.bl.uk/catalog/041-001056255"],
+          ["Wikipedia: Lord William Bentinck " + qidTag("bentinck"), wpOf("bentinck")]],
+  },
+  {
+    summary: "The reforms carry asymmetries the famous quotes gloss over. Flogging was abolished for Indian sepoys in 1835 (entries B564 and B586 here) while British soldiers in India remained floggable for decades — and the measure was argued partly on discipline and recruitment, not humanity alone. Likewise the 'free press' credit belongs to Metcalfe (1835): Bentinck's index instead records a 'Press Licensing Regulation, measure for extending' (B628).",
+    who: "Corporal punishment & the press — the fine print", when: "1830s · summarised from records in this dataset",
+    src: [["BL record B564: Corporal punishment in Native Army abolished", "https://searcharchives.bl.uk/catalog/041-001056237"],
+          ["BL record B628: Press Licensing Regulation, measure for extending", "https://searcharchives.bl.uk/catalog/041-001056301"],
+          ["Wikipedia: Charles Metcalfe " + qidTag("metcalfe"), wpOf("metcalfe")]],
+  },
+  {
+    summary: "Bentinck the annexer is also in these 162 records, if you look past the reformer: proposals for taking over the administration of Mysore after the 1830–31 Nagar revolt (B617 — the Wadiyar raja lost his state to Company commissioners for fifty years); a Superintendent installed over Coorg after the 1834 invasion deposed and exiled its raja (Z/E/4/44/B377); and a 'warning letter written by to King of Oude' (B624), an early link in the chain that ended with Awadh's annexation in 1856.",
+    who: "Mysore, Coorg, Oudh — the acquisitive record", when: "1830–1835 · summarised from records in this dataset",
+    src: [["BL record B617: Mysore, proposals respecting Administration", "https://searcharchives.bl.uk/catalog/041-001056290"],
+          ["Wikipedia: Kingdom of Mysore " + qidTag("_mysore"), wpOf("_mysore")],
+          ["Wikipedia: Coorg War " + qidTag("_coorgwar"), wpOf("_coorgwar")],
+          ["Wikipedia: Oudh State " + qidTag("_oudh"), wpOf("_oudh")]],
   },
   {
     q: "The misery hardly finds a parallel in the history of commerce. The bones of the cotton-weavers are bleaching the plains of India.",
     who: "attributed to a Governor-General's report of 1834–35", when: "quoted by Karl Marx, Capital vol. I (1867)",
     caveat: "Often credited to Bentinck, but the sentence has never been traced in his own papers or despatches — one of the reasons scholars keep returning to archives like Mss Eur E424. Treat the attribution as unverified.",
     src: [["Karl Marx, Capital, vol. I, ch. 15 (1867)", "https://en.wikipedia.org/wiki/Das_Kapital"],
-          ["Wikipedia: Lord William Bentinck (assessment section)", wpOf("bentinck")]],
+          ["Wikipedia: Lord William Bentinck " + qidTag("bentinck"), wpOf("bentinck")]],
   },
+
+  { sec: "archive", h: "Straight from the downloaded catalogue" },
   {
     q: "Dated at Charles Street, Berkeley Square, concerning a Bill in Parliament and thanking Clive for his support.",
-    who: "Catalogue scope note — Portland to Clive, 17 February 1771", when: "Mss Eur G37/61/1 f.49 (quoted from the BL record)",
+    who: "Catalogue scope note — Portland to Clive, 17 February 1771", when: "Mss Eur G37/61/1 f.49 · quoted from the BL record",
     src: [["BL record 041-000806551", "https://searcharchives.bl.uk/catalog/041-000806551"]],
   },
   {
     q: "Typescript copies of documents omitted from ‘The Correspondence of Lord William Cavendish Bentinck, Governor-General of India 1828–1835’, 2 vols (1977).",
-    who: "Catalogue scope note — the Bentinck papers", when: "Mss Eur E424 (quoted from the BL record)",
+    who: "Catalogue scope note — the Bentinck papers", when: "Mss Eur E424 · quoted from the BL record",
     src: [["BL record 032-002283365", "https://searcharchives.bl.uk/catalog/032-002283365"]],
   },
+  {
+    summary: "Indian voices surface in this dataset mostly as objects of index lines — but they are there, acting: a 'Petition to against Mr Dunbar' (B626); the 'Refusal of Shahabad Sirdars to supply Sowars' (B633); 'Arjoon Singh's request for interview' during the Upper Provinces tour (B645); a 'Complimentary letter to from Prince of Fars' (B559). Search those references in the calendar to see the traces.",
+    who: "Reading the index against the grain", when: "IOR/Z/E/4/14, 1834–1837",
+    src: [["BL record B626", "https://searcharchives.bl.uk/catalog/041-001056299"],
+          ["BL record B633", "https://searcharchives.bl.uk/catalog/041-001056306"]],
+  },
 ];
-function qidTag(k){ const e = QIDS[k]; return e && e.qid ? "(" + e.qid + ")" : ""; }
-function wpOf(k){ const e = QIDS[k]; return e ? e.wp : null; }
 
 /* ---------------- state ---------------- */
 const S = {
@@ -512,6 +582,7 @@ function cardFor(e){
     `<span class="ref"><a href="${e.url}" target="_blank" rel="noopener" title="Open BL catalogue record">${e.ref}</a></span></div>` +
     `<h3>${escapeHtml(title)}</h3>`;
   if (e.scope) html += `<p class="scope">${escapeHtml(e.scope)}</p>`;
+  if (e.rel) html += `<p class="reltrail" title="Where the full despatch text lives — on paper and microfilm at the BL; not digitised">↳ full text: ${escapeHtml(e.rel.replace(/^See entry at /, ""))}</p>`;
   d.innerHTML = html;
   const tags = document.createElement("div");
   tags.className = "tags";
@@ -834,10 +905,19 @@ function showPerson(id){
 (function buildQuotes(){
   const box = document.getElementById("quotelist");
   for (const q of QUOTES) {
+    if (q.sec) {
+      const h = document.createElement("h3");
+      h.className = "qsec " + q.sec;
+      h.textContent = q.h;
+      box.appendChild(h);
+      continue;
+    }
     const d = document.createElement("div");
-    d.className = "quote";
-    let src = q.src.map(([t, u]) => u ? `<a href="${u}" target="_blank" rel="noopener">${t}</a>` : t).join(" · ");
-    d.innerHTML = `<blockquote>${escapeHtml(q.q)}</blockquote>` +
+    d.className = "quote" + (q.summary ? " summary" : "");
+    const src = q.src.map(([t, u]) => u ? `<a href="${u}" target="_blank" rel="noopener">${t}</a>` : t).join(" · ");
+    d.innerHTML = (q.summary
+        ? `<p class="sumtext">${escapeHtml(q.summary)}</p>`
+        : `<blockquote>${escapeHtml(q.q)}</blockquote>`) +
       `<p class="attr"><b>${q.who}</b> — ${q.when}</p>` +
       (q.caveat ? `<p class="caveat">⚠ ${q.caveat}</p>` : "") +
       `<p class="src">Source: ${src}</p>`;
@@ -868,6 +948,14 @@ function showPerson(id){
     <li>${wp("curzon_m")}${wd("curzon_m")}, ${wp("kitchener")}${wd("kitchener")}, ${wp("portland6")}${wd("portland6")} — the 1903 <a href="https://en.wikipedia.org/wiki/Delhi_Durbar" target="_blank" rel="noopener">Delhi Durbar</a> snapshot, Mss Eur F165/213(65).</li>
     <li>Peter Auber (EIC secretary) — no Wikidata item located; identified from the BL authority record.</li>
     <li>Identifiers resolved via the <a href="https://qlever.cs.uni-freiburg.de/wikidata" target="_blank" rel="noopener">QLever Wikidata endpoint</a> (no load on Wikimedia infrastructure), 24 July 2026.</li>
+  </ul>
+  <h3>Digitisation status — why there are no full letter texts here</h3>
+  <ul>
+    <li>Checked against the BL API on 24 July 2026: the digitised-content facet (<span class="qid">url_non_blank_si</span>) is <b>“No” for all 162 records</b>, and re-running this exact search restricted to digitised items returns <b>0 hits</b>. These papers exist on paper and microfilm only.</li>
+    <li>What the catalogue does give: 145 index entries carry a pointer to the exact despatch volume and page (e.g. <span class="qid">IOR/E/4/947, p 428</span>) — shown on each card as “↳ full text”. That is the call-slip route to the originals in the BL reading rooms.</li>
+    <li>Where the era's key documents <i>are</i> readable in full, this page uses verified public-domain editions:
+      <a href="https://archive.org/details/in.ernet.dli.2015.24658" target="_blank" rel="noopener">Keith, <i>Speeches and Documents on Indian Policy</i>, vol. I (1922)</a> — includes Bentinck's complete Minute on Sati — and
+      <a href="https://archive.org/details/SelectionsFromEducationalRecordsPartI1781-1839" target="_blank" rel="noopener">Sharp, <i>Selections from Educational Records</i>, Part I (1920)</a> — Macaulay's minute, Prinsep's dissent, and the 7 March 1835 resolution. Full texts cached in <span class="qid">data/sources/</span> in the repository; every quotation on the Voices tab was checked against them verbatim.</li>
   </ul>
   <h3>Method &amp; cartography</h3>
   <ul>
