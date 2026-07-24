@@ -1,0 +1,78 @@
+{
+ "bentinck": {
+  "wp": "https://en.wikipedia.org/wiki/Lord_William_Bentinck",
+  "qid": "Q138559"
+ },
+ "portland3": {
+  "wp": "https://en.wikipedia.org/wiki/William_Cavendish-Bentinck,_3rd_Duke_of_Portland",
+  "qid": "Q157208"
+ },
+ "clive": {
+  "wp": "https://en.wikipedia.org/wiki/Robert_Clive",
+  "qid": "Q162296"
+ },
+ "strachey": {
+  "wp": "https://en.wikipedia.org/wiki/Sir_Henry_Strachey,_1st_Baronet",
+  "qid": "Q7527216"
+ },
+ "elphinstone": {
+  "wp": "https://en.wikipedia.org/wiki/Mountstuart_Elphinstone",
+  "qid": "Q910933"
+ },
+ "court": {
+  "wp": "https://en.wikipedia.org/wiki/East_India_Company",
+  "qid": "Q83164"
+ },
+ "metcalfe": {
+  "wp": "https://en.wikipedia.org/wiki/Charles_Metcalfe,_1st_Baron_Metcalfe",
+  "qid": "Q335501"
+ },
+ "malcolm": {
+  "wp": "https://en.wikipedia.org/wiki/John_Malcolm",
+  "qid": "Q1700959"
+ },
+ "rammohun": {
+  "wp": "https://en.wikipedia.org/wiki/Raja_Ram_Mohan_Roy",
+  "qid": "Q335269"
+ },
+ "ellenborough": {
+  "wp": "https://en.wikipedia.org/wiki/Edward_Law,_1st_Earl_of_Ellenborough",
+  "qid": "Q333207"
+ },
+ "ranjit": {
+  "wp": "https://en.wikipedia.org/wiki/Ranjit_Singh",
+  "qid": "Q332620"
+ },
+ "curzon_m": {
+  "wp": "https://en.wikipedia.org/wiki/Mary_Curzon,_Baroness_Curzon_of_Kedleston",
+  "qid": "Q788163"
+ },
+ "kitchener": {
+  "wp": "https://en.wikipedia.org/wiki/Herbert_Kitchener,_1st_Earl_Kitchener",
+  "qid": "Q216129"
+ },
+ "portland6": {
+  "wp": "https://en.wikipedia.org/wiki/William_Cavendish-Bentinck,_6th_Duke_of_Portland",
+  "qid": "Q128333"
+ },
+ "adam": {
+  "wp": "https://en.wikipedia.org/wiki/Frederick_Adam",
+  "qid": "Q320992"
+ },
+ "auber": {
+  "wp": "https://en.wikipedia.org/wiki/Peter_Auber",
+  "qid": null
+ },
+ "_durbar": {
+  "wp": "https://en.wikipedia.org/wiki/Delhi_Durbar",
+  "qid": "Q761614"
+ },
+ "_sati": {
+  "wp": "https://en.wikipedia.org/wiki/Sati_(practice)",
+  "qid": "Q208088"
+ },
+ "_macaulay": {
+  "wp": "https://en.wikipedia.org/wiki/Thomas_Babington_Macaulay",
+  "qid": "Q315989"
+ }
+}
