@@ -1,0 +1,915 @@
+<title>Bentinck Despatches — India Office Records Explorer</title>
+<style>
+/* ============ tokens ============ */
+:root {
+  --paper: #EFEDE4;
+  --paper-2: #E6E3D6;
+  --paper-3: #DDD9C8;
+  --ink: #26221C;
+  --ink-2: #5C564A;
+  --ink-3: #8A8272;
+  --wax: #9E2B25;
+  --wax-ink: #7C221D;
+  --marine: #33586E;
+  --water: #E4E8E4; --land: #EDEADF;
+  --coast: #9BA894;
+  --rule: #CFC9B8;
+  --card: #F5F3EC;
+  --k-letter: #1F6FA8;
+  --k-bengal: #C07818;
+  --k-madras: #128A6A;
+  --k-military: #7A5BC0;
+  --k-papers: #B02E55;
+  --k-photo: #6E7A1E;
+  --shadow: 0 1px 3px rgba(38,34,28,.14);
+  --serif: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --sans: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --paper: #191D22; --paper-2: #20252C; --paper-3: #2A3038;
+    --ink: #E4DFD1; --ink-2: #A8A192; --ink-3: #766F61;
+    --wax: #D96A57; --wax-ink: #E28A79;
+    --marine: #7FA4BC; --water: #101318; --land: #232931; --coast: #4E5F55; --rule: #343B44;
+    --card: #1F242B;
+    --k-letter: #4C95CC; --k-bengal: #C0801F; --k-madras: #21997A;
+    --k-military: #8474CE; --k-papers: #D65581; --k-photo: #84922C;
+    --shadow: 0 1px 4px rgba(0,0,0,.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #191D22; --paper-2: #20252C; --paper-3: #2A3038;
+  --ink: #E4DFD1; --ink-2: #A8A192; --ink-3: #766F61;
+  --wax: #D96A57; --wax-ink: #E28A79;
+  --marine: #7FA4BC; --water: #101318; --land: #232931; --coast: #4E5F55; --rule: #343B44;
+  --card: #1F242B;
+  --k-letter: #4C95CC; --k-bengal: #C0801F; --k-madras: #21997A;
+  --k-military: #8474CE; --k-papers: #D65581; --k-photo: #84922C;
+  --shadow: 0 1px 4px rgba(0,0,0,.5);
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --paper: #EFEDE4; --paper-2: #E6E3D6; --paper-3: #DDD9C8;
+  --ink: #26221C; --ink-2: #5C564A; --ink-3: #8A8272;
+  --wax: #9E2B25; --wax-ink: #7C221D;
+  --marine: #33586E; --water: #E4E8E4; --land: #EDEADF; --coast: #9BA894; --rule: #CFC9B8;
+  --card: #F5F3EC;
+  --k-letter: #1F6FA8; --k-bengal: #C07818; --k-madras: #128A6A;
+  --k-military: #7A5BC0; --k-papers: #B02E55; --k-photo: #6E7A1E;
+  --shadow: 0 1px 3px rgba(38,34,28,.14);
+  color-scheme: light;
+}
+
+/* ============ base ============ */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 16px;
+  line-height: 1.45;
+}
+a { color: var(--marine); text-decoration-color: color-mix(in srgb, var(--marine) 40%, transparent); }
+a:hover { color: var(--wax); }
+button { font-family: var(--sans); cursor: pointer; }
+:focus-visible { outline: 2px solid var(--wax); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+#app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+
+/* ============ header ============ */
+header.mast {
+  border-bottom: 2px solid var(--ink);
+  padding: 14px 20px 10px;
+  background: var(--paper);
+  flex: none;
+}
+.mast-top { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+h1 {
+  font-size: clamp(19px, 2.4vw, 27px);
+  margin: 0; font-weight: 600; letter-spacing: .01em;
+  text-wrap: balance;
+}
+h1 .amp { color: var(--wax); font-style: italic; }
+.mast-sub {
+  margin: 0; color: var(--ink-2); font-size: 13.5px; font-family: var(--sans);
+}
+.mast-sub a { color: inherit; }
+.filterbar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 10px; font-family: var(--sans);
+}
+.kchip {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: 1px solid var(--rule); border-radius: 999px;
+  background: var(--card); color: var(--ink-2);
+  font-size: 12px; padding: 3px 10px 3px 7px; letter-spacing: .02em;
+}
+.kchip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--kc); flex: none; }
+.kchip[aria-pressed="true"] { border-color: var(--kc); color: var(--ink); background: color-mix(in srgb, var(--kc) 12%, var(--card)); }
+.kchip[aria-pressed="false"] { opacity: .45; }
+.kchip .n { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+#q {
+  font-family: var(--sans); font-size: 13px; color: var(--ink);
+  background: var(--card); border: 1px solid var(--rule); border-radius: 6px;
+  padding: 5px 10px; width: 190px;
+}
+#q::placeholder { color: var(--ink-3); }
+.activefilter {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: color-mix(in srgb, var(--wax) 14%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--wax) 45%, var(--rule));
+  color: var(--ink); border-radius: 999px; font-size: 12px; padding: 3px 6px 3px 10px;
+}
+.activefilter b { font-weight: 600; }
+.activefilter button {
+  border: 0; background: none; color: var(--wax); font-size: 13px; line-height: 1; padding: 0 3px;
+}
+#count { margin-left: auto; font-family: var(--sans); font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+/* ============ main grid ============ */
+main { display: flex; flex: 1; min-height: 0; }
+
+/* ---- calendar rail ---- */
+#rail {
+  width: 420px; flex: none; overflow-y: auto; overscroll-behavior: contain;
+  border-right: 1px solid var(--rule);
+  padding: 0 14px 40px;
+  scrollbar-width: thin;
+}
+.decade {
+  position: sticky; top: 0; z-index: 5;
+  background: linear-gradient(var(--paper) 82%, transparent);
+  padding: 10px 2px 6px;
+  display: flex; align-items: baseline; gap: 10px;
+}
+.decade h2 {
+  font-size: 21px; margin: 0; font-weight: 600; letter-spacing: .02em;
+  font-variant-numeric: tabular-nums;
+}
+.decade .era { font-family: var(--sans); font-size: 11px; color: var(--ink-3); letter-spacing: .08em; text-transform: uppercase; }
+.decade::after { content: ""; flex: 1; border-bottom: 1px solid var(--ink); margin-bottom: 5px; }
+.ycluster { margin: 2px 0 14px; }
+.card {
+  background: var(--card); border: 1px solid var(--rule); border-radius: 4px;
+  border-left: 3px solid var(--kc, var(--rule));
+  padding: 8px 10px 7px; margin: 7px 0;
+  box-shadow: var(--shadow);
+}
+.card.dim { opacity: .35; }
+.card .meta {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  font-family: var(--sans); font-size: 11px; color: var(--ink-2);
+}
+.card .meta .kind { color: var(--kc); font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+.card .meta .when { font-variant-numeric: tabular-nums; }
+.card .meta .ref { margin-left: auto; font-family: var(--mono); font-size: 10.5px; }
+.card .meta .ref a { color: var(--ink-3); text-decoration: none; }
+.card .meta .ref a:hover { color: var(--wax); text-decoration: underline; }
+.card h3 { font-size: 14.5px; line-height: 1.35; margin: 4px 0 2px; font-weight: 500; }
+.card .scope { font-size: 13px; color: var(--ink-2); margin: 3px 0 1px; }
+.card .tags { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px; }
+.tag {
+  font-family: var(--sans); font-size: 10.5px; letter-spacing: .02em;
+  border: 1px solid var(--rule); background: none; color: var(--ink-2);
+  border-radius: 999px; padding: 1px 8px;
+}
+.tag:hover { border-color: var(--wax); color: var(--wax); }
+.tag.place::before { content: "◆ "; color: var(--wax); font-size: 8px; vertical-align: 1px; }
+
+/* ---- right stage ---- */
+#stage { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+#mapwrap { position: relative; height: 46%; min-height: 260px; flex: none; border-bottom: 1px solid var(--rule); background: var(--water); }
+#map { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: none; }
+#map.panning { cursor: grabbing; }
+.map-ui {
+  position: absolute; top: 10px; left: 12px; display: flex; gap: 6px; z-index: 4;
+}
+.map-ui button {
+  font-size: 11.5px; letter-spacing: .03em;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  color: var(--ink-2); border: 1px solid var(--rule); border-radius: 4px; padding: 4px 10px;
+  backdrop-filter: blur(2px);
+}
+.map-ui button:hover { color: var(--wax); border-color: var(--wax); }
+.map-note {
+  position: absolute; right: 12px; bottom: 8px; z-index: 4;
+  font-family: var(--sans); font-size: 10.5px; color: var(--ink-3);
+  background: color-mix(in srgb, var(--paper) 80%, transparent); border-radius: 4px; padding: 2px 7px;
+}
+#maptip {
+  position: absolute; z-index: 6; pointer-events: none; display: none;
+  background: var(--ink); color: var(--paper);
+  font-family: var(--sans); font-size: 12px; line-height: 1.4;
+  border-radius: 4px; padding: 6px 9px; max-width: 240px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
+}
+#maptip .t { font-weight: 600; }
+#maptip .s { opacity: .75; font-size: 11px; }
+
+/* ---- tabs ---- */
+#tabs {
+  display: flex; gap: 2px; padding: 0 14px; border-bottom: 1px solid var(--rule);
+  background: var(--paper-2); flex: none;
+}
+#tabs button {
+  font-size: 12.5px; letter-spacing: .04em;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--ink-2); padding: 9px 13px 7px;
+}
+#tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--wax); font-weight: 600; }
+.panel { flex: 1; overflow-y: auto; padding: 16px 22px 40px; min-height: 0; }
+.panel[hidden] { display: none; }
+.panel h2 { font-size: 17px; margin: 4px 0 2px; font-weight: 600; }
+.panel .lede { font-size: 13.5px; color: var(--ink-2); max-width: 62ch; margin: 2px 0 12px; }
+
+/* ---- network ---- */
+#netwrap { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+#net { flex: none; }
+#net .nlabel { font-family: var(--sans); font-size: 11px; fill: var(--ink-2); }
+#net .nlabel.major { font-size: 12.5px; font-weight: 600; fill: var(--ink); }
+#net circle.node { fill: var(--paper-3); stroke: var(--ink-2); stroke-width: 1; cursor: pointer; }
+#net circle.node.major { fill: var(--wax); stroke: var(--wax-ink); }
+#net path.chord { fill: none; stroke: var(--marine); opacity: .45; cursor: pointer; }
+#net path.chord.hl { stroke: var(--wax); opacity: .95; }
+#netinfo {
+  flex: 1; min-width: 220px; max-width: 46ch;
+  font-size: 13.5px; color: var(--ink-2);
+  border-left: 2px solid var(--rule); padding-left: 14px;
+}
+#netinfo .who { font-size: 15px; color: var(--ink); font-weight: 600; }
+#netinfo .links a { font-family: var(--sans); font-size: 11.5px; margin-right: 8px; }
+#netinfo .qid { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+
+/* ---- quotes ---- */
+.quote {
+  max-width: 66ch; margin: 0 0 22px; padding: 12px 16px 10px;
+  background: var(--card); border: 1px solid var(--rule); border-radius: 4px;
+  border-top: 3px solid var(--wax);
+  box-shadow: var(--shadow);
+}
+.quote blockquote { margin: 0; font-size: 16.5px; line-height: 1.5; font-style: italic; }
+.quote blockquote::before { content: "\201C"; color: var(--wax); font-size: 26px; line-height: 0; vertical-align: -8px; margin-right: 2px; font-style: normal; }
+.quote .attr { font-family: var(--sans); font-size: 12.5px; color: var(--ink-2); margin-top: 8px; }
+.quote .attr b { color: var(--ink); }
+.quote .src { font-family: var(--sans); font-size: 11.5px; color: var(--ink-3); margin-top: 3px; }
+.quote .caveat {
+  font-family: var(--sans); font-size: 11.5px; margin-top: 6px; padding: 5px 8px;
+  background: color-mix(in srgb, var(--k-bengal) 12%, var(--card));
+  border-left: 2px solid var(--k-bengal); color: var(--ink-2);
+}
+
+/* ---- sources ---- */
+#panel-sources ul { padding-left: 20px; max-width: 78ch; }
+#panel-sources li { margin: 7px 0; font-size: 13.5px; }
+#panel-sources .qid { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+#panel-sources h3 { font-size: 14px; margin: 18px 0 4px; letter-spacing: .04em; }
+
+/* ---- responsive ---- */
+@media (max-width: 900px) {
+  #app { height: auto; }
+  main { flex-direction: column; }
+  #rail { width: 100%; order: 2; border-right: 0; max-height: none; overflow: visible; }
+  #stage { order: 1; }
+  #mapwrap { height: 52vw; min-height: 220px; }
+  .panel { overflow: visible; }
+}
+</style>
+
+<div id="app">
+  <header class="mast">
+    <div class="mast-top">
+      <h1>Despatches <span class="amp">&amp;</span> Letters — William Cavendish-Bentinck in the India Office Records</h1>
+      <p class="mast-sub">162 catalogue records ·
+        <a href="https://searcharchives.bl.uk/?f%5Bcollection_area_ssi%5D%5B%5D=India+Office+Records+and+Private+Papers&q=William+Cavendish-Bentinck&search_field=all_fields"
+           target="_blank" rel="noopener">British Library, Explore Archives and Manuscripts</a></p>
+    </div>
+    <div class="filterbar" id="filterbar">
+      <input id="q" type="search" placeholder="Search titles &amp; notes…" aria-label="Search records">
+      <span id="afwrap"></span>
+      <span id="count"></span>
+    </div>
+  </header>
+  <main>
+    <section id="rail" aria-label="Calendar of records"></section>
+    <section id="stage">
+      <div id="mapwrap">
+        <canvas id="map" aria-label="Map of places in the correspondence"></canvas>
+        <div class="map-ui" role="group" aria-label="Map views">
+          <button data-view="corridor">London ⇄ Calcutta</button>
+          <button data-view="india">Subcontinent</button>
+          <button data-view="britain">Britain</button>
+          <button data-zoom="+" aria-label="Zoom in">+</button>
+          <button data-zoom="-" aria-label="Zoom out">−</button>
+        </div>
+        <div class="map-note">Natural Earth coastlines · historic place names, some positions approximate</div>
+        <div id="maptip" role="tooltip"></div>
+      </div>
+      <nav id="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-tab="network">Who writes to whom</button>
+        <button role="tab" aria-selected="false" data-tab="quotes">Notable quotes</button>
+        <button role="tab" aria-selected="false" data-tab="sources">Sources &amp; citations</button>
+      </nav>
+      <div class="panel" id="panel-network" role="tabpanel">
+        <h2>The correspondence network</h2>
+        <p class="lede">Edges join writer and recipient in the 162 records: the five catalogued
+          letters, the despatch traffic indexed in IOR/Z/E/4, and the circle of correspondents
+          named in the Bentinck papers (Mss Eur E424). Line weight is the number of records;
+          click a name to filter the calendar.</p>
+        <div id="netwrap">
+          <svg id="net" width="660" height="560" viewBox="0 0 660 560" style="max-width:100%;height:auto" role="img" aria-label="Correspondence network diagram"></svg>
+          <div id="netinfo"><p>Hover an arc or a name for details.</p></div>
+        </div>
+      </div>
+      <div class="panel" id="panel-quotes" role="tabpanel" hidden>
+        <h2>Notable quotes from the correspondence &amp; its era</h2>
+        <p class="lede">The British Library catalogue describes these papers but does not transcribe
+          them; quotations below are drawn from published editions and government records of the same
+          correspondence, each with its source. Catalogue snippets are quoted from the records
+          downloaded for this page.</p>
+        <div id="quotelist"></div>
+      </div>
+      <div class="panel" id="panel-sources" role="tabpanel" hidden>
+        <h2>Sources &amp; citations</h2>
+        <div id="sourcelist"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+"use strict";
+const DATASET = __DATASET__;
+const BASEMAP = __BASEMAP__;
+const QIDS = __QIDS__;
+
+/* ---------------- static copy: kinds, quotes, sources ---------------- */
+const KINDS = {
+  "papers":       { label: "Papers",        cvar: "--k-papers" },
+  "letter":       { label: "Letter",        cvar: "--k-letter" },
+  "index-bengal": { label: "Bengal index",  cvar: "--k-bengal" },
+  "index-madras": { label: "Madras index",  cvar: "--k-madras" },
+  "military":     { label: "Army list",     cvar: "--k-military" },
+  "photo":        { label: "Photograph",    cvar: "--k-photo" },
+};
+
+const QUOTES = [
+  {
+    q: "The first and primary object of my heart is the benefit of the Hindoos. I know nothing so important to the improvement of their future condition as the establishment of a purer morality, whatever their belief, and a more just conception of the will of God.",
+    who: "Lord William Bentinck", when: "Minute on Sati, Calcutta, 8 November 1829",
+    src: [["Minute on Sati (reprinted in C. H. Philips ed., The Correspondence of Lord William Cavendish Bentinck, OUP 1977 — the edition the Mss Eur E424 typescripts supplement)", null],
+          ["Wikipedia: Bengal Sati Regulation, 1829", "https://en.wikipedia.org/wiki/Bengal_Sati_Regulation,_1829"]],
+  },
+  {
+    q: "The practice of suttee, or of burning or burying alive the widows of Hindoos, is hereby declared illegal, and punishable by the Criminal Courts.",
+    who: "Bengal Regulation XVII of 1829", when: "enacted by Bentinck in Council, 4 December 1829",
+    src: [["Wikipedia: Bengal Sati Regulation, 1829", "https://en.wikipedia.org/wiki/Bengal_Sati_Regulation,_1829"],
+          ["Wikidata: sati " + (QIDS._sati && QIDS._sati.qid ? "(" + QIDS._sati.qid + ")" : ""), QIDS._sati ? QIDS._sati.wp : null]],
+  },
+  {
+    q: "We must at present do our best to form a class who may be interpreters between us and the millions whom we govern; a class of persons, Indian in blood and colour, but English in taste, in opinions, in morals, and in intellect.",
+    who: "Thomas Babington Macaulay", when: "Minute on Indian Education, 2 February 1835 — adopted under Bentinck's government",
+    src: [["Wikipedia: Macaulay's 1835 minute / English Education Act 1835", "https://en.wikipedia.org/wiki/English_Education_Act_1835"],
+          ["Wikidata: T. B. Macaulay " + qidTag("_macaulay"), wpOf("_macaulay")]],
+  },
+  {
+    q: "The great object of the British Government ought to be the promotion of European literature and science among the natives of India.",
+    who: "Resolution of the Governor-General in Council (Bentinck)", when: "7 March 1835",
+    src: [["Wikipedia: English Education Act 1835", "https://en.wikipedia.org/wiki/English_Education_Act_1835"]],
+  },
+  {
+    q: "The misery hardly finds a parallel in the history of commerce. The bones of the cotton-weavers are bleaching the plains of India.",
+    who: "attributed to a Governor-General's report of 1834–35", when: "quoted by Karl Marx, Capital vol. I (1867)",
+    caveat: "Often credited to Bentinck, but the sentence has never been traced in his own papers or despatches — one of the reasons scholars keep returning to archives like Mss Eur E424. Treat the attribution as unverified.",
+    src: [["Karl Marx, Capital, vol. I, ch. 15 (1867)", "https://en.wikipedia.org/wiki/Das_Kapital"],
+          ["Wikipedia: Lord William Bentinck (assessment section)", wpOf("bentinck")]],
+  },
+  {
+    q: "Dated at Charles Street, Berkeley Square, concerning a Bill in Parliament and thanking Clive for his support.",
+    who: "Catalogue scope note — Portland to Clive, 17 February 1771", when: "Mss Eur G37/61/1 f.49 (quoted from the BL record)",
+    src: [["BL record 041-000806551", "https://searcharchives.bl.uk/catalog/041-000806551"]],
+  },
+  {
+    q: "Typescript copies of documents omitted from ‘The Correspondence of Lord William Cavendish Bentinck, Governor-General of India 1828–1835’, 2 vols (1977).",
+    who: "Catalogue scope note — the Bentinck papers", when: "Mss Eur E424 (quoted from the BL record)",
+    src: [["BL record 032-002283365", "https://searcharchives.bl.uk/catalog/032-002283365"]],
+  },
+];
+function qidTag(k){ const e = QIDS[k]; return e && e.qid ? "(" + e.qid + ")" : ""; }
+function wpOf(k){ const e = QIDS[k]; return e ? e.wp : null; }
+
+/* ---------------- state ---------------- */
+const S = {
+  kinds: new Set(Object.keys(KINDS)),
+  person: null, place: null, q: "",
+  visibleIds: new Set(),   // cards currently in the calendar viewport
+};
+const E = DATASET.entries;
+const PEOPLE = DATASET.people, PLACES = DATASET.places;
+
+function passes(e) {
+  if (!S.kinds.has(e.kind)) return false;
+  if (S.person && !e.people.includes(S.person)) return false;
+  if (S.place && !e.places.includes(S.place)) return false;
+  if (S.q) {
+    const h = (e.title + " " + e.scope + " " + e.ref).toLowerCase();
+    if (!h.includes(S.q)) return false;
+  }
+  return true;
+}
+function filtered(){ return E.filter(passes); }
+
+/* ---------------- header filter bar ---------------- */
+const filterbar = document.getElementById("filterbar");
+const qInput = document.getElementById("q");
+(function buildChips(){
+  const counts = {};
+  for (const e of E) counts[e.kind] = (counts[e.kind] || 0) + 1;
+  const frag = document.createDocumentFragment();
+  for (const [k, def] of Object.entries(KINDS)) {
+    const b = document.createElement("button");
+    b.className = "kchip"; b.style.setProperty("--kc", `var(${def.cvar})`);
+    b.setAttribute("aria-pressed", "true"); b.dataset.kind = k;
+    b.innerHTML = `<span class="dot"></span>${def.label} <span class="n">${counts[k] || 0}</span>`;
+    b.addEventListener("click", () => {
+      if (S.kinds.has(k) && S.kinds.size === 1) { // re-solo click restores all
+        Object.keys(KINDS).forEach(x => S.kinds.add(x));
+      } else if (S.kinds.has(k)) S.kinds.delete(k);
+      else S.kinds.add(k);
+      refresh();
+    });
+    frag.appendChild(b);
+  }
+  filterbar.insertBefore(frag, qInput);
+})();
+qInput.addEventListener("input", () => { S.q = qInput.value.trim().toLowerCase(); refresh(); });
+
+function renderActiveFilters(){
+  const w = document.getElementById("afwrap");
+  w.textContent = "";
+  const mk = (label, clear) => {
+    const s = document.createElement("span");
+    s.className = "activefilter";
+    s.innerHTML = `<b>${label}</b>`;
+    const x = document.createElement("button");
+    x.textContent = "✕"; x.setAttribute("aria-label", "Clear filter " + label);
+    x.addEventListener("click", clear);
+    s.appendChild(x); w.appendChild(s);
+  };
+  if (S.person) mk(PEOPLE[S.person].name, () => { S.person = null; refresh(); });
+  if (S.place) mk(PLACES[S.place].name, () => { S.place = null; refresh(); });
+}
+
+/* ---------------- calendar rail ---------------- */
+const rail = document.getElementById("rail");
+const ERAS = {
+  1770: "Portland, Clive & the Company at home",
+  1780: "Portland, Clive & the Company at home",
+  1820: "Bentinck's India, 1828–1835",
+  1830: "Bentinck's India, 1828–1835",
+  1850: "A namesake in the Bengal Army",
+  1860: "A namesake in the Bengal Army",
+  1870: "A namesake in the Bengal Army",
+  1900: "The Curzon era",
+};
+function eraOf(dec){ return ERAS[dec] || ""; }
+
+function buildCalendar(){
+  const sorted = [...E].sort((a, b) =>
+    (a.y0 - b.y0) || ((a.exact || "9") < (b.exact || "9") ? -1 : 1) || a.ref.localeCompare(b.ref));
+  const frag = document.createDocumentFragment();
+  let curDecade = null, cluster = null;
+  for (const e of sorted) {
+    const dec = Math.floor(e.y0 / 10) * 10;
+    if (dec !== curDecade) {
+      curDecade = dec;
+      const h = document.createElement("div");
+      h.className = "decade";
+      h.innerHTML = `<h2>${dec}s</h2><span class="era">${eraOf(dec)}</span>`;
+      frag.appendChild(h);
+      cluster = document.createElement("div");
+      cluster.className = "ycluster";
+      frag.appendChild(cluster);
+    }
+    cluster.appendChild(cardFor(e));
+  }
+  rail.appendChild(frag);
+}
+function cardFor(e){
+  const d = document.createElement("article");
+  d.className = "card"; d.dataset.id = e.id;
+  d.style.setProperty("--kc", `var(${KINDS[e.kind].cvar})`);
+  const title = e.topic || e.title;
+  const when = e.date || (e.y0 === e.y1 ? e.y0 : e.y0 + "–" + e.y1);
+  let html = `<div class="meta"><span class="kind">${KINDS[e.kind].label}</span>` +
+    `<span class="when">${when}</span>` +
+    `<span class="ref"><a href="${e.url}" target="_blank" rel="noopener" title="Open BL catalogue record">${e.ref}</a></span></div>` +
+    `<h3>${escapeHtml(title)}</h3>`;
+  if (e.scope) html += `<p class="scope">${escapeHtml(e.scope)}</p>`;
+  d.innerHTML = html;
+  const tags = document.createElement("div");
+  tags.className = "tags";
+  for (const p of e.people.slice(0, 4)) {
+    const b = document.createElement("button");
+    b.className = "tag"; b.textContent = PEOPLE[p].name;
+    b.addEventListener("click", () => { S.person = S.person === p ? null : p; refresh(); });
+    tags.appendChild(b);
+  }
+  for (const g of e.places.slice(0, 4)) {
+    const b = document.createElement("button");
+    b.className = "tag place"; b.textContent = PLACES[g].name;
+    b.addEventListener("click", () => { S.place = S.place === g ? null : g; refresh(); });
+    tags.appendChild(b);
+  }
+  if (tags.children.length) d.appendChild(tags);
+  return d;
+}
+function escapeHtml(s){ return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+/* scroll-sync: which cards are on screen -> highlight on map */
+let io = null;
+function watchCards(){
+  io = new IntersectionObserver((ents) => {
+    let changed = false;
+    for (const en of ents) {
+      const id = en.target.dataset.id;
+      if (en.isIntersecting) { if (!S.visibleIds.has(id)) { S.visibleIds.add(id); changed = true; } }
+      else if (S.visibleIds.delete(id)) changed = true;
+    }
+    if (changed) requestDraw();
+  }, { root: rail.closest("#rail") ? rail : null, threshold: 0.1 });
+  rail.querySelectorAll(".card").forEach(c => io.observe(c));
+}
+
+/* ---------------- map ---------------- */
+const canvas = document.getElementById("map");
+const ctx = canvas.getContext("2d");
+const tip = document.getElementById("maptip");
+const mercY = lat => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI / 180) / 2));
+const invMercY = y => (2 * Math.atan(Math.exp(y)) - Math.PI / 2) * 180 / Math.PI;
+const VIEWS = {
+  corridor: { fit: [-11, 4, 93, 57] },         // London ⇄ Calcutta bbox
+  india:    { lon: 80, lat: 21, ppd: 11 },
+  britain:  { lon: -2.5, lat: 53, ppd: 26 },
+};
+const view = { lon: 47, lat: 33, ppd: 6 };     // ppd = px per degree lon
+function applyView(v){
+  if (v.fit) {
+    const r = canvas.getBoundingClientRect();
+    const [x0, y0, x1, y1] = v.fit;
+    const dm = mercY(y1) - mercY(y0);
+    view.ppd = Math.max(2, Math.min(r.width / (x1 - x0), r.height / (dm * 180 / Math.PI)));
+    view.lon = (x0 + x1) / 2;
+    view.lat = invMercY((mercY(y0) + mercY(y1)) / 2);
+  } else {
+    view.lon = v.lon; view.lat = v.lat; view.ppd = v.ppd;
+  }
+}
+let markerHits = [];                            // screen-space hit targets
+
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function sizeCanvas(){
+  const r = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(r.width * dpr));
+  canvas.height = Math.max(1, Math.round(r.height * dpr));
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function proj(lon, lat, w, h){
+  const x = w / 2 + (lon - view.lon) * view.ppd;
+  const y = h / 2 - (mercY(lat) - mercY(view.lat)) * view.ppd * 180 / Math.PI;
+  return [x, y];
+}
+
+function placeStats(){
+  const rows = filtered();
+  const per = {};              // placeId -> {n, kinds:{}, vis}
+  for (const e of rows) {
+    for (const g of e.places) {
+      per[g] = per[g] || { n: 0, kinds: {}, vis: false };
+      per[g].n++;
+      per[g].kinds[e.kind] = (per[g].kinds[e.kind] || 0) + 1;
+      if (S.visibleIds.has(e.id)) per[g].vis = true;
+    }
+  }
+  return per;
+}
+
+function draw(){
+  const w = canvas.getBoundingClientRect().width, h = canvas.getBoundingClientRect().height;
+  ctx.clearRect(0, 0, w, h);
+  // water
+  ctx.fillStyle = cssVar("--water"); ctx.fillRect(0, 0, w, h);
+  // graticule
+  ctx.strokeStyle = cssVar("--rule"); ctx.lineWidth = .5; ctx.globalAlpha = .6;
+  ctx.beginPath();
+  for (let lon = -10; lon <= 120; lon += 10) {
+    const [x] = proj(lon, 0, w, h); ctx.moveTo(x, 0); ctx.lineTo(x, h);
+  }
+  for (let lat = -10; lat <= 60; lat += 10) {
+    const [, y] = proj(0, lat, w, h); ctx.moveTo(0, y); ctx.lineTo(w, y);
+  }
+  ctx.stroke(); ctx.globalAlpha = 1;
+  // land
+  ctx.fillStyle = cssVar("--land");
+  ctx.strokeStyle = cssVar("--coast"); ctx.lineWidth = 1;
+  for (const ring of BASEMAP.rings) {
+    ctx.beginPath();
+    for (let i = 0; i < ring.length; i++) {
+      const [x, y] = proj(ring[i][0], ring[i][1], w, h);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+  // correspondence arcs (from network edges with placeable endpoints)
+  const HOME = { bentinck: "calcutta", court: "london", portland3: "london", clive: "london",
+                 strachey: "london", scott: "london", milne: "bombay", elphinstone: "london" };
+  ctx.strokeStyle = cssVar("--marine"); ctx.globalAlpha = .5;
+  for (const ed of DATASET.edges) {
+    const ga = PLACES[HOME[ed.a]], gb = PLACES[HOME[ed.b]];
+    if (!ga || !gb || HOME[ed.a] === HOME[ed.b]) continue;
+    const [x1, y1] = proj(ga.lon, ga.lat, w, h), [x2, y2] = proj(gb.lon, gb.lat, w, h);
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1;
+    const lift = Math.min(len * .18, 90);
+    ctx.lineWidth = Math.min(1 + Math.sqrt(ed.n) * .8, 6);
+    ctx.beginPath(); ctx.moveTo(x1, y1);
+    ctx.quadraticCurveTo(mx - dy / len * lift, my + dx / len * lift, x2, y2);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  // markers (draw all first, labels in a second collision-checked pass)
+  const per = placeStats();
+  markerHits = [];
+  const ink = cssVar("--ink"), wax = cssVar("--wax");
+  const wantLabel = [];
+  for (const [gid, st] of Object.entries(per)) {
+    const g = PLACES[gid];
+    const [x, y] = proj(g.lon, g.lat, w, h);
+    if (x < -20 || x > w + 20 || y < -20 || y > h + 20) continue;
+    const r = 3.5 + Math.sqrt(st.n) * 2.2;
+    let top = null, topN = 0;
+    for (const [k, n] of Object.entries(st.kinds)) if (n > topN) { top = k; topN = n; }
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = cssVar(KINDS[top].cvar); ctx.globalAlpha = .85; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.lineWidth = 1.2; ctx.strokeStyle = cssVar("--paper"); ctx.stroke();
+    if (st.vis) {  // ring for places of cards currently scrolled into view
+      ctx.beginPath(); ctx.arc(x, y, r + 3.5, 0, Math.PI * 2);
+      ctx.lineWidth = 1.6; ctx.strokeStyle = wax; ctx.stroke();
+    }
+    if (S.place === gid) {
+      ctx.beginPath(); ctx.arc(x, y, r + 6, 0, Math.PI * 2);
+      ctx.lineWidth = 2; ctx.strokeStyle = wax; ctx.setLineDash([3, 3]); ctx.stroke(); ctx.setLineDash([]);
+    }
+    markerHits.push({ x, y, r: Math.max(r + 4, 10), gid, n: st.n });
+    if (st.n >= 2 || view.ppd > 13 || ["london", "calcutta", "madras", "bombay"].includes(gid))
+      wantLabel.push({ x, y, r, n: st.n, name: g.name, pri: ["london", "calcutta", "madras"].includes(gid) ? 1000 : st.n });
+  }
+  // label pass: biggest first, skip if the box collides with one already placed
+  ctx.font = "11px " + cssVar("--sans");
+  ctx.textAlign = "left";
+  const placedBoxes = [];
+  wantLabel.sort((a, b) => b.pri - a.pri);
+  for (const L of wantLabel) {
+    const tw = ctx.measureText(L.name).width;
+    const box = { x: L.x + L.r + 4, y: L.y - 7, w: tw, h: 14 };
+    if (placedBoxes.some(b => !(box.x > b.x + b.w + 3 || b.x > box.x + box.w + 3 ||
+                                box.y > b.y + b.h + 1 || b.y > box.y + box.h + 1))) continue;
+    placedBoxes.push(box);
+    ctx.lineWidth = 2.5; ctx.strokeStyle = cssVar("--water");
+    ctx.strokeText(L.name, box.x, L.y + 3.5);
+    ctx.fillStyle = ink;
+    ctx.fillText(L.name, box.x, L.y + 3.5);
+  }
+}
+let rafPending = false;
+function requestDraw(){
+  if (rafPending) return;
+  rafPending = true;
+  requestAnimationFrame(() => { rafPending = false; draw(); });
+}
+
+/* map interaction */
+document.querySelectorAll(".map-ui button[data-view]").forEach(b =>
+  b.addEventListener("click", () => { applyView(VIEWS[b.dataset.view]); requestDraw(); }));
+document.querySelectorAll(".map-ui button[data-zoom]").forEach(b =>
+  b.addEventListener("click", () => {
+    view.ppd = Math.max(2, Math.min(80, view.ppd * (b.dataset.zoom === "+" ? 1.5 : 1 / 1.5)));
+    requestDraw();
+  }));
+canvas.addEventListener("wheel", (ev) => {
+  ev.preventDefault();
+  view.ppd = Math.max(2, Math.min(80, view.ppd * (ev.deltaY < 0 ? 1.18 : 1 / 1.18)));
+  requestDraw();
+}, { passive: false });
+let panning = null;
+canvas.addEventListener("pointerdown", (ev) => {
+  panning = { x: ev.clientX, y: ev.clientY, lon: view.lon, lat: view.lat };
+  canvas.classList.add("panning"); canvas.setPointerCapture(ev.pointerId);
+});
+canvas.addEventListener("pointermove", (ev) => {
+  if (panning) {
+    view.lon = panning.lon - (ev.clientX - panning.x) / view.ppd;
+    const dyMerc = (ev.clientY - panning.y) / (view.ppd * 180 / Math.PI);
+    const y0 = mercY(panning.lat) + dyMerc;
+    view.lat = Math.max(-70, Math.min(75, (2 * Math.atan(Math.exp(y0)) - Math.PI / 2) * 180 / Math.PI));
+    requestDraw();
+    return;
+  }
+  const r = canvas.getBoundingClientRect();
+  const mx = ev.clientX - r.left, my = ev.clientY - r.top;
+  let hit = null;
+  for (const m of markerHits) if (Math.hypot(mx - m.x, my - m.y) <= m.r) { hit = m; break; }
+  if (hit) {
+    const g = PLACES[hit.gid];
+    tip.style.display = "block";
+    tip.style.left = Math.min(mx + 14, r.width - 220) + "px";
+    tip.style.top = (my + 12) + "px";
+    tip.innerHTML = `<div class="t">${g.name}</div>` +
+      `<div class="s">${hit.n} record${hit.n > 1 ? "s" : ""}` +
+      (g.modern ? " · now " + g.modern : "") + (g.approx ? " · position approximate" : "") +
+      `</div><div class="s">click to filter</div>`;
+    canvas.style.cursor = "pointer";
+  } else { tip.style.display = "none"; canvas.style.cursor = ""; }
+});
+canvas.addEventListener("pointerup", (ev) => {
+  if (panning) {
+    const moved = Math.hypot(ev.clientX - panning.x, ev.clientY - panning.y);
+    panning = null; canvas.classList.remove("panning");
+    if (moved < 5) {   // click, not drag
+      const r = canvas.getBoundingClientRect();
+      const mx = ev.clientX - r.left, my = ev.clientY - r.top;
+      for (const m of markerHits) if (Math.hypot(mx - m.x, my - m.y) <= m.r) {
+        S.place = S.place === m.gid ? null : m.gid; refresh(); return;
+      }
+    }
+  }
+});
+canvas.addEventListener("pointerleave", () => { tip.style.display = "none"; });
+
+/* ---------------- network diagram ---------------- */
+const net = document.getElementById("net");
+const netinfo = document.getElementById("netinfo");
+function buildNetwork(){
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const inNet = new Set();
+  for (const ed of DATASET.edges) { inNet.add(ed.a); inNet.add(ed.b); }
+  const ids = [...inNet];
+  // order: bentinck first, then by degree
+  const deg = {};
+  for (const ed of DATASET.edges) { deg[ed.a] = (deg[ed.a] || 0) + ed.n; deg[ed.b] = (deg[ed.b] || 0) + ed.n; }
+  ids.sort((a, b) => (b === "bentinck") - (a === "bentinck") || (deg[b] || 0) - (deg[a] || 0));
+  const cx = 330, cy = 280, R = 185;
+  const pos = {};
+  ids.forEach((id, i) => {
+    const a = -Math.PI / 2 + i * 2 * Math.PI / ids.length;
+    pos[id] = { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a), a };
+  });
+  net.textContent = "";
+  // chords
+  for (const ed of DATASET.edges) {
+    const p1 = pos[ed.a], p2 = pos[ed.b];
+    const path = document.createElementNS(SVGNS, "path");
+    path.setAttribute("class", "chord");
+    path.setAttribute("d", `M${p1.x},${p1.y} Q${cx},${cy} ${p2.x},${p2.y}`);
+    path.setAttribute("stroke-width", Math.min(1 + Math.sqrt(ed.n) * 1.15, 12));
+    path.addEventListener("pointerenter", () => {
+      path.classList.add("hl");
+      netinfo.innerHTML = `<p class="who">${PEOPLE[ed.a].name} ⇄ ${PEOPLE[ed.b].name}</p>` +
+        `<p>${ed.n} record${ed.n > 1 ? "s" : ""} — ${ed.label}.</p>` +
+        `<p class="qid">e.g. ${ed.refs.slice(0, 3).join(" · ")}</p>`;
+    });
+    path.addEventListener("pointerleave", () => path.classList.remove("hl"));
+    net.appendChild(path);
+  }
+  // nodes + labels
+  for (const id of ids) {
+    const p = pos[id], person = PEOPLE[id];
+    const major = id === "bentinck";
+    const c = document.createElementNS(SVGNS, "circle");
+    c.setAttribute("class", "node" + (major ? " major" : ""));
+    c.setAttribute("cx", p.x); c.setAttribute("cy", p.y);
+    c.setAttribute("r", major ? 11 : 4 + Math.min(Math.sqrt(deg[id] || 1) * 1.2, 8));
+    c.addEventListener("click", () => { S.person = S.person === id ? null : id; refresh(); });
+    c.addEventListener("pointerenter", () => showPerson(id));
+    net.appendChild(c);
+    const t = document.createElementNS(SVGNS, "text");
+    t.setAttribute("class", "nlabel" + (major ? " major" : ""));
+    const out = 1.09 + (major ? .1 : 0);
+    let lx = cx + (p.x - cx) * out + (Math.cos(p.a) > .1 ? 8 : Math.cos(p.a) < -.1 ? -8 : 0);
+    const ly = cy + (p.y - cy) * out + (Math.sin(p.a) > .3 ? 12 : Math.sin(p.a) < -.3 ? -6 : 4);
+    const anchor = Math.cos(p.a) > .1 ? "start" : Math.cos(p.a) < -.1 ? "end" : "middle";
+    const est = person.name.length * 6.4;   // keep labels inside the viewBox
+    if (anchor === "start") lx = Math.min(lx, 656 - est);
+    else if (anchor === "end") lx = Math.max(lx, 4 + est);
+    else lx = Math.max(4 + est / 2, Math.min(lx, 656 - est / 2));
+    t.setAttribute("x", lx); t.setAttribute("y", ly);
+    t.setAttribute("text-anchor", anchor);
+    t.textContent = person.name;
+    t.style.cursor = "pointer";
+    t.addEventListener("click", () => { S.person = S.person === id ? null : id; refresh(); });
+    t.addEventListener("pointerenter", () => showPerson(id));
+    net.appendChild(t);
+  }
+}
+function showPerson(id){
+  const p = PEOPLE[id], q = QIDS[id];
+  let links = "";
+  if (q && q.wp) links += `<a href="${q.wp}" target="_blank" rel="noopener">Wikipedia</a>`;
+  if (q && q.qid) links += `<a href="https://www.wikidata.org/wiki/${q.qid}" target="_blank" rel="noopener">Wikidata ${q.qid}</a>`;
+  const n = E.filter(e => e.people.includes(id)).length;
+  netinfo.innerHTML = `<p class="who">${p.name}</p><p>${p.role}.</p>` +
+    `<p>${n} record${n === 1 ? "" : "s"} mention${n === 1 ? "s" : ""} — click to filter the calendar.</p>` +
+    (links ? `<p class="links">${links}</p>` : `<p class="qid">no Wikidata item located</p>`);
+}
+
+/* ---------------- quotes ---------------- */
+(function buildQuotes(){
+  const box = document.getElementById("quotelist");
+  for (const q of QUOTES) {
+    const d = document.createElement("div");
+    d.className = "quote";
+    let src = q.src.map(([t, u]) => u ? `<a href="${u}" target="_blank" rel="noopener">${t}</a>` : t).join(" · ");
+    d.innerHTML = `<blockquote>${escapeHtml(q.q)}</blockquote>` +
+      `<p class="attr"><b>${q.who}</b> — ${q.when}</p>` +
+      (q.caveat ? `<p class="caveat">⚠ ${q.caveat}</p>` : "") +
+      `<p class="src">Source: ${src}</p>`;
+    box.appendChild(d);
+  }
+})();
+
+/* ---------------- sources ---------------- */
+(function buildSources(){
+  const box = document.getElementById("sourcelist");
+  const wd = k => { const q = QIDS[k]; return q && q.qid ? ` <a href="https://www.wikidata.org/wiki/${q.qid}"><span class="qid">${q.qid}</span></a>` : ""; };
+  const wp = k => { const q = QIDS[k]; return q && q.wp ? `<a href="${q.wp}" target="_blank" rel="noopener">${PEOPLE[k] ? PEOPLE[k].name : k}</a>` : (PEOPLE[k] ? PEOPLE[k].name : k); };
+  box.innerHTML = `
+  <h3>Archive records (primary)</h3>
+  <ul>
+    <li>British Library, <i>Explore Archives and Manuscripts</i> — <a href="https://searcharchives.bl.uk/?f%5Bcollection_area_ssi%5D%5B%5D=India+Office+Records+and+Private+Papers&q=William+Cavendish-Bentinck&search_field=all_fields" target="_blank" rel="noopener">search: “William Cavendish-Bentinck” in India Office Records and Private Papers</a>, 162 records, retrieved 24 July 2026. Every card in the calendar links to its catalogue record.</li>
+    <li>Mss Eur E424 — <a href="https://searcharchives.bl.uk/catalog/032-002283365" target="_blank" rel="noopener">Lord William Henry Cavendish-Bentinck papers</a>: typescripts omitted from C. H. Philips (ed.), <i>The Correspondence of Lord William Cavendish Bentinck, Governor-General of India 1828–1835</i>, 2 vols, Oxford University Press, 1977.</li>
+    <li>IOR/Z/E/4/14, /43, /44 — index volumes to correspondence with Bengal and Madras (the 144 “index” cards; each entry points at despatches between the Governor-General and the Court of Directors).</li>
+    <li>IOR/L/MIL/9–10 — Bengal Army service records of W. C. B. Ryan (a namesake officer, evidently christened after the Governor-General).</li>
+    <li>Mss Eur G37 — Clive Collection (Portland's letters of 1770–71); Mss Eur F88 — Elphinstone Collection; Mss Eur F165 — Curzon Collection; IOR/E/1 — East India Company home correspondence.</li>
+  </ul>
+  <h3>Background &amp; identities (Wikipedia / Wikidata)</h3>
+  <ul>
+    <li>${wp("bentinck")}${wd("bentinck")} — Governor-General of India 1828–1835.</li>
+    <li>${wp("portland3")}${wd("portland3")} — his father, twice Prime Minister; the 1770–71 letters here are his.</li>
+    <li>${wp("clive")}${wd("clive")} and ${wp("strachey")}${wd("strachey")} — recipients of the Portland letters (Clive Collection).</li>
+    <li>${wp("elphinstone")}${wd("elphinstone")}, ${wp("metcalfe")}${wd("metcalfe")}, ${wp("malcolm")}${wd("malcolm")}, ${wp("rammohun")}${wd("rammohun")}, ${wp("ellenborough")}${wd("ellenborough")}, ${wp("ranjit")}${wd("ranjit")} — the circle around the Bentinck papers.</li>
+    <li>${wp("curzon_m")}${wd("curzon_m")}, ${wp("kitchener")}${wd("kitchener")}, ${wp("portland6")}${wd("portland6")} — the 1903 <a href="https://en.wikipedia.org/wiki/Delhi_Durbar" target="_blank" rel="noopener">Delhi Durbar</a> snapshot, Mss Eur F165/213(65).</li>
+    <li>Peter Auber (EIC secretary) — no Wikidata item located; identified from the BL authority record.</li>
+    <li>Identifiers resolved via the <a href="https://qlever.cs.uni-freiburg.de/wikidata" target="_blank" rel="noopener">QLever Wikidata endpoint</a> (no load on Wikimedia infrastructure), 24 July 2026.</li>
+  </ul>
+  <h3>Method &amp; cartography</h3>
+  <ul>
+    <li>Coastlines: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a> 1:50m land (public domain), clipped to the London–Calcutta corridor and simplified; drawn as vectors in-page — no tile servers are contacted.</li>
+    <li>Place positions are a hand-made gazetteer of the historic names in the catalogue titles (Moorshedabad, Bhurtpore, Hidgelee…); entries marked “approximate” on hover are located to district level only.</li>
+    <li>Dates are the catalogue's: index entries carry the date of the index volume (e.g. 1834–1837), not of each underlying despatch.</li>
+    <li>All 162 records were downloaded once, politely paced, from the BL's public JSON API; this page is fully self-contained.</li>
+  </ul>`;
+})();
+
+/* ---------------- tabs ---------------- */
+document.querySelectorAll("#tabs button").forEach(b =>
+  b.addEventListener("click", () => {
+    document.querySelectorAll("#tabs button").forEach(x => x.setAttribute("aria-selected", x === b ? "true" : "false"));
+    for (const p of document.querySelectorAll(".panel")) p.hidden = p.id !== "panel-" + b.dataset.tab;
+  }));
+
+/* ---------------- refresh ---------------- */
+function refresh(){
+  const rows = filtered();
+  const ok = new Set(rows.map(e => e.id));
+  rail.querySelectorAll(".card").forEach(c => c.classList.toggle("dim", !ok.has(c.dataset.id)));
+  document.querySelectorAll(".kchip").forEach(ch =>
+    ch.setAttribute("aria-pressed", S.kinds.has(ch.dataset.kind) ? "true" : "false"));
+  document.getElementById("count").textContent =
+    rows.length === E.length ? E.length + " records" : rows.length + " of " + E.length + " records";
+  renderActiveFilters();
+  requestDraw();
+}
+
+/* ---------------- theme redraw hooks ---------------- */
+new MutationObserver(requestDraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+if (window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener("change", requestDraw);
+new ResizeObserver(() => { sizeCanvas(); requestDraw(); }).observe(canvas);
+
+/* ---------------- boot ---------------- */
+buildCalendar();
+watchCards();
+buildNetwork();
+sizeCanvas();
+applyView(VIEWS.corridor);
+refresh();
+// refit once fonts/layout settle (first rect can be pre-layout)
+requestAnimationFrame(() => { sizeCanvas(); applyView(VIEWS.corridor); requestDraw(); });
+</script>
