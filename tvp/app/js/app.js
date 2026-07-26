@@ -1454,6 +1454,11 @@ function powerOn() {
   if (pendingDeepLink?.kind === "ia") {
     tune(pendingDeepLink.ci, { fromStartProg: pendingDeepLink.pi, startAt: pendingDeepLink.t || 0 });
     pendingDeepLink = null;
+  } else if (pendingDeepLink?.kind === "guide") {
+    // arrived as the Channel Guide sub-app: tune quietly, open the EPG on top
+    pendingDeepLink = null;
+    tune(state.chIndex);
+    openPanel("guide");
   } else {
     pendingDeepLink = null;
     tune(state.chIndex);
@@ -3198,12 +3203,17 @@ function parseHash() {
     const ci = CHANNELS.findIndex((c) => c.id === m[1] || String(c.num) === m[1]);
     if (ci >= 0) return { kind: "ch", ci };
   }
+  // #guide: boot (or switch) straight into the channel guide. Exists so the
+  // guide can be a SUB-APP in a shell (foafos offers it as its own tile)
+  // rather than a screen only reachable from inside the running TV.
+  if (h === "#guide") return { kind: "guide" };
   return null;
 }
 
 let pendingDeepLink = parseHash();
 if (pendingDeepLink) {
-  state.chIndex = pendingDeepLink.ci;
+  // a #guide arrival has no channel of its own — keep the default tuning
+  if (pendingDeepLink.ci != null) state.chIndex = pendingDeepLink.ci;
   if (pendingDeepLink.kind === "ia") {
     const p = CHANNELS[pendingDeepLink.ci].programs[pendingDeepLink.pi];
     document.querySelector(".splash-hint").textContent =
@@ -3216,6 +3226,7 @@ window.addEventListener("hashchange", () => {
   const t = parseHash();
   if (!t) return;
   crtBlink();
+  if (t.kind === "guide") { openPanel("guide"); return; }
   if (t.kind === "ia") tune(t.ci, { fromStartProg: t.pi, startAt: t.t || 0 });
   else tune(t.ci);
 });
