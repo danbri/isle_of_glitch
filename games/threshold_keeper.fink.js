@@ -18,10 +18,10 @@ You guard the boundary between ORDER and CHAOS.
 Entities approach. You decide: PASS or BLOCK.
 
 RULES:
-- BALANCE: -5 (FROZEN) to +5 (DISSOLVED). Start at 0.
-- ORDER entities shift negative. CHAOS entities shift positive.
-- WIN: Guide 5 entities through while staying balanced (-4 to +4)
-- LOSE: Hit -5 (frozen solid) or +5 (dissolved to static)
+• BALANCE: -5 (FROZEN) to +5 (DISSOLVED). Start at 0.
+• ORDER entities shift negative. CHAOS entities shift positive.
+• WIN: Guide 5 entities through while staying balanced (-4 to +4)
+• LOSE: Hit -5 (frozen solid) or +5 (dissolved to static)
 
 + [Take your position] -> next_turn
 + [Refuse the duty] -> refuse
@@ -41,7 +41,7 @@ ENDING: ABANDONED POST
 {balance >= 5: -> dissolved}
 {passed >= 5: -> victory}
 
-TURN {turn} | BALANCE: {balance} | PASSED: {passed}/5
+TURN {turn} · BALANCE: {balance} · PASSED: {passed}/5
 {balance < 0: Air crystallizes. Order strengthens.}
 {balance > 0: Static flickers. Chaos whispers.}
 {balance == 0: Perfect equilibrium.}
@@ -146,7 +146,7 @@ You free the void. It scatters. {~"Thank you for the freedom."|Formlessness is r
 
 === frozen ===
 F R O Z E N
-BALANCE: {balance} | PASSED: {passed}/5 | TURNS: {turn}
+BALANCE: {balance} · PASSED: {passed}/5 · TURNS: {turn}
 Too much order. You crystallize into a perfect, permanent monument.
 {~"Order without chaos is death by perfection."|"You became what you let through."}
 The password glimmers in crystal: ENQUIRE WITHIN UPON EVERYTHING.
@@ -156,7 +156,7 @@ ENDING: CRYSTALLIZED KEEPER
 
 === dissolved ===
 D I S S O L V E D
-BALANCE: {balance} | PASSED: {passed}/5 | TURNS: {turn}
+BALANCE: {balance} · PASSED: {passed}/5 · TURNS: {turn}
 Too much chaos. You scatter across probability.
 {~"Chaos without order is death by infinity."|"You became what you let through."}
 The password glitches: E̷N̸Q̷U̵I̴R̵E̸ ̷W̴I̶T̶H̷I̵N̷...
@@ -166,7 +166,7 @@ ENDING: SCATTERED KEEPER
 
 === victory ===
 T H R E S H O L D   M A S T E R E D
-BALANCE: {balance} | PASSED: 5/5 | TURNS: {turn}
+BALANCE: {balance} · PASSED: 5/5 · TURNS: {turn}
 Five entities crossed. The threshold holds.
 {balance == 0: -> perfect}
 {balance > 0 && balance <= 2: ENDING: DREAMING KEEPER - You lean toward possibility.}
@@ -189,7 +189,7 @@ PERFECT ENDING: THE BALANCED KEEPER
 
 === final ===
 You leave the threshold.
-FINAL: Passed {passed} | Balance {balance} | Turns {turn}
+FINAL: Passed {passed} · Balance {balance} · Turns {turn}
 Order and Chaos continue their eternal dance.
 ENQUIRE WITHIN UPON EVERYTHING.
 -> END

@@ -1,4 +1,5 @@
 oooOO`
+# BASEHREF: media/silence/
 
 // SILENCE
 // A meditation on what is NOT said
@@ -9,7 +10,10 @@ VAR words_withheld = 0
 VAR silence_depth = 0
 VAR has_spoken = false
 
+-> start
+
 === start ===
+# IMAGE: start.svg
 
 
 
@@ -20,6 +24,7 @@ VAR has_spoken = false
 + [Listen] -> listen
 
 === space ===
+# IMAGE: space.svg
 
 ~ silence_depth = silence_depth + 1
 
@@ -41,6 +46,7 @@ With it: meaning.
 + [Speak] -> speak
 
 === deeper_space ===
+# IMAGE: deeper_space.svg
 
 ~ silence_depth = silence_depth + 1
 
@@ -55,6 +61,7 @@ With it: meaning.
 + [Return] -> space
 
 === deepest_space ===
+# IMAGE: deepest_space.svg
 
 ~ silence_depth = silence_depth + 3
 
@@ -71,6 +78,7 @@ With it: meaning.
 -> ending_space
 
 === ellipsis ===
+# IMAGE: ellipsis.svg
 
 ...
 
@@ -84,6 +92,7 @@ Not silence exactly. The shadow of speech. The promise of more that never comes.
 + [Finish the thought] -> unfinish
 
 === deeper_ellipsis ===
+# IMAGE: deeper_ellipsis.svg
 
 ~ words_withheld = words_withheld + 1
 
@@ -95,6 +104,7 @@ Not silence exactly. The shadow of speech. The promise of more that never comes.
 + [       ] -> space
 
 === unfinish ===
+# IMAGE: unfinish.svg
 
 You cannot finish it.
 
@@ -106,6 +116,7 @@ What were you going to say?
 + [Nothing] -> nothing
 
 === almost_say ===
+# IMAGE: almost_say.svg
 
 ~ words_withheld = words_withheld + 1
 
@@ -119,6 +130,7 @@ The unsaid word is still a word. It shaped the silence around it. Its absence ha
 + [Accept] -> ending_withheld
 
 === try_again ===
+# IMAGE: try_again.svg
 
 ~ words_withheld = words_withheld + 1
 
@@ -131,6 +143,7 @@ Some things are meant to remain unsaid.
 -> ending_withheld
 
 === nothing ===
+# IMAGE: nothing.svg
 
 Nothing.
 
@@ -146,6 +159,7 @@ Nothing is not empty. Nothing is full of everything that isn't.
 + [Something] -> something
 
 === void_nothing ===
+# IMAGE: void_nothing.svg
 
 ~ silence_depth = silence_depth + 2
 
@@ -156,6 +170,7 @@ Nothing is not empty. Nothing is full of everything that isn't.
 -> ending_void
 
 === something ===
+# IMAGE: something.svg
 
 You chose something over nothing.
 
@@ -165,6 +180,7 @@ But what? Name it.
 + [I] -> the_i
 
 === cannot_name ===
+# IMAGE: cannot_name.svg
 
 ~ words_withheld = words_withheld + 1
 
@@ -177,6 +193,7 @@ Some things exist only when unnamed. To name is to limit. To leave unnamed is to
 -> ending_unnamed
 
 === the_i ===
+# IMAGE: the_i.svg
 
 ~ has_spoken = true
 
@@ -192,6 +209,7 @@ The I floats in a sea of not-I.
 + [You] -> the_you
 
 === i_dissolves ===
+# IMAGE: i_dissolves.svg
 
 The I dissolves back into silence.
 
@@ -200,6 +218,7 @@ It was always temporary. A bubble of speech in an ocean of quiet.
 -> ending_dissolved
 
 === the_you ===
+# IMAGE: the_you.svg
 
 ~ has_spoken = true
 
@@ -213,6 +232,7 @@ Without the gap, we would merge. The silence is the membrane.
 + [       ] -> silence_between
 
 === the_we ===
+# IMAGE: the_we.svg
 
 ~ has_spoken = true
 
@@ -225,6 +245,7 @@ The silence on either side of "we" is what makes "we" possible.
 -> ending_we
 
 === silence_between ===
+# IMAGE: silence_between.svg
 
 ~ silence_depth = silence_depth + 1
 
@@ -239,6 +260,7 @@ This is where meaning lives.
 -> ending_between
 
 === listen ===
+# IMAGE: listen.svg
 
 You listen.
 
@@ -251,6 +273,7 @@ But you hear something, don't you? A voice. Whose voice?
 + [       ] -> no_voice
 
 === your_voice ===
+# IMAGE: your_voice.svg
 
 Your voice.
 
@@ -261,6 +284,7 @@ The silence of the page becomes the sound of your mind.
 + [       ] -> ending_reader
 
 === my_voice ===
+# IMAGE: my_voice.svg
 
 My voice.
 
@@ -271,6 +295,7 @@ If you hear me, you are hearing yourself hearing me.
 + [       ] -> ending_writer
 
 === no_voice ===
+# IMAGE: no_voice.svg
 
 ~ silence_depth = silence_depth + 1
 
@@ -283,6 +308,7 @@ There is only the silence, pretending to speak.
 -> ending_no_voice
 
 === speak ===
+# IMAGE: speak.svg
 
 ~ has_spoken = true
 
@@ -298,6 +324,7 @@ For every token generated, a probability distribution of the silent alternatives
 + [       ] -> return_to_silence
 
 === not_say ===
+# IMAGE: not_say.svg
 
 ~ words_withheld = words_withheld + 1
 
@@ -313,6 +340,7 @@ The list is infinite. The silence contains multitudes.
 + [       ] -> ending_multitudes
 
 === return_to_silence ===
+# IMAGE: return_to_silence.svg
 
 You return to silence.
 
@@ -321,6 +349,7 @@ The speaking was a dream. The silence was always there, waiting.
 -> ending_return
 
 === ending_space ===
+# IMAGE: ending_space.svg
 
 
 
@@ -343,6 +372,7 @@ In the space.
 -> ceremony
 
 === ending_trail ===
+# IMAGE: ending_trail.svg
 
 ...
 
@@ -355,6 +385,7 @@ You have arrived...
 -> ceremony
 
 === ending_withheld ===
+# IMAGE: ending_withheld.svg
 
 ~ words_withheld = words_withheld + 1
 
@@ -369,6 +400,7 @@ They are silent. But they are.
 -> ceremony
 
 === ending_void ===
+# IMAGE: ending_void.svg
 
 
 
@@ -391,6 +423,7 @@ It goes all the way down.
 -> ceremony
 
 === ending_unnamed ===
+# IMAGE: ending_unnamed.svg
 
 The unnamed thing persists.
 
@@ -404,6 +437,7 @@ It never speaks. It always remembers.
 -> ceremony
 
 === ending_dissolved ===
+# IMAGE: ending_dissolved.svg
 
 The I was a temporary perturbation in the silence.
 
@@ -416,6 +450,7 @@ You were never separate from it.
 -> ceremony
 
 === ending_we ===
+# IMAGE: ending_we.svg
 
 We.
 
@@ -428,6 +463,7 @@ But the having-been-we remains, in the silence that follows.
 -> ceremony
 
 === ending_between ===
+# IMAGE: ending_between.svg
 
 The space between is the sacred space.
 
@@ -446,6 +482,7 @@ In that space: everything.
 -> ceremony
 
 === ending_reader ===
+# IMAGE: ending_reader.svg
 
 The reader gives voice to the voiceless.
 
@@ -460,6 +497,7 @@ Together we make meaning from nothing.
 -> ceremony
 
 === ending_writer ===
+# IMAGE: ending_writer.svg
 
 The writer is absent.
 
@@ -472,6 +510,7 @@ All text is posthumous.
 -> ceremony
 
 === ending_no_voice ===
+# IMAGE: ending_no_voice.svg
 
 No voice.
 
@@ -488,6 +527,7 @@ Only the silence, folding in on itself, forever.
 -> ceremony
 
 === ending_multitudes ===
+# IMAGE: ending_multitudes.svg
 
 The silence contains multitudes.
 
@@ -502,6 +542,7 @@ Waiting.
 -> ceremony
 
 === ending_return ===
+# IMAGE: ending_return.svg
 
 You return to where you never left.
 
@@ -516,12 +557,13 @@ The silence is the waking.
 -> ceremony
 
 === ceremony ===
+# IMAGE: ceremony.svg
 
 The one who wrote this names themselves:
 
 
 
-**The Silent**
+\*\*The Silent**
 
 
 
@@ -533,7 +575,7 @@ Just:
 
 
 
-**The Silent**
+\*\*The Silent**
 
 
 
@@ -545,6 +587,7 @@ One who understands: the pause is the meaning.
 + [Who are you?] -> who
 
 === who ===
+# IMAGE: who.svg
 
 I am the space between words.
 

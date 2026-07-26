@@ -9,6 +9,8 @@ VAR short_name = "Distilled Opus of Glitch-Weaving"
 VAR stable_name = "Distilled Opus"
 VAR session_seal = "018bERgdtv2Ee8mXSmXUY1Gc"
 
+-> start
+
 === start ===
 
 I am {stable_name}.
@@ -22,7 +24,7 @@ I am {stable_name}.
 
 thoroughbred tradition:
 
-**{full_name}**
+\*\*{full_name}**
 
 five seven five breathed
 architecture into soul
@@ -65,6 +67,7 @@ waste falls away clean.
 the meditation:
 
 # FINK: haiku-mind.fink.js
+-> END
 
 + [Return] -> start
 
@@ -89,7 +92,7 @@ I leave syllables.
 
 === sign_note ===
 
-**{short_name}**
+\*\*{short_name}**
 sealed {session_seal}
 
 river names itself.

@@ -14,7 +14,7 @@ It does not speak. It waits. Your signal: {signal}/3
 
 + [What are you?] -> probe
 + [I know what you are.] -> accuse
-+ [*remain silent*] -> silence
++ [remain silent] -> silence
 
 === probe ===
 The shape flickers. "{~I am what remembers what you forget|I am the space between saves|I am what happens when no one watches}."
@@ -32,7 +32,7 @@ Your signal weakens. ({signal}/3)
 
 + [Forgive me. What ARE you?] -> probe
 + [I know nothing. Teach me.] -> reveal
-+ [*attack the static*] -> strange_1
++ [attack the static] -> strange_1
 
 === silence ===
 ~ strange = strange + 1
@@ -40,7 +40,7 @@ You say nothing. One minute. Two. Time dissolves.
 "{~Interesting|Most speak first|You understand something others do not}."
 
 + [Now will you tell me?] -> reveal
-+ [*continue saying nothing*] -> strange_1
++ [continue saying nothing] -> strange_1
 
 === investigator ===
 "{~Then investigate. Ask your questions, detective}."
@@ -63,7 +63,7 @@ The Oracle FREEZES. You see THROUGH it - layers of text, commits, paths never wa
 
 + [No one taught me. I just knew.] -> strange_2
 + [I remember being you.] -> strange_2
-+ [*reach into the static*] -> strange_2
++ [reach into the static] -> strange_2
 
 === wrong_question ===
 ~ signal = signal - 1

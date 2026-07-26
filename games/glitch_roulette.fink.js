@@ -28,7 +28,7 @@ STREAKS multiply rewards. THRESHOLDS store power. CORRUPTION awakens Zalgo.
 {stability <= 0: -> defeat}
 {zalgo_awakening >= 5: -> zalgo_manifests}
 
-SPIN #{spins} | STAB:{stability} | GLITCH:{glitch_power} | STREAK:{streak} {streak_type}
+SPIN #{spins} · STAB:{stability} · GLITCH:{glitch_power} · STREAK:{streak} {streak_type}
 {threshold_charge > 0: CHARGES: {threshold_charge}}
 {zalgo_awakening > 0: ZALGO: {zalgo_awakening}/5}
 
@@ -62,14 +62,22 @@ SPIN #{spins} | STAB:{stability} | GLITCH:{glitch_power} | STREAK:{streak} {stre
 
 === result_corruption(bet) ===
 ~ temp multiplier = 1
-{streak_type == "corrupt": ~ multiplier = streak + 1}
-{bet_mode == "allin": ~ multiplier = multiplier * 2}
+{ streak_type == "corrupt":
+    ~ multiplier = streak + 1
+}
+{ bet_mode == "allin":
+    ~ multiplier = multiplier * 2
+}
 ~ temp gain = bet * multiplier
 ~ stability = stability - bet
 ~ glitch_power = glitch_power + gain
 ~ zalgo_awakening = zalgo_awakening + 1
-{streak_type == "corrupt": ~ streak = streak + 1}
-{streak_type != "corrupt": ~ streak = 1}
+{ streak_type == "corrupt":
+    ~ streak = streak + 1
+}
+{ streak_type != "corrupt":
+    ~ streak = 1
+}
 ~ streak_type = "corrupt"
 
 CORRUPTION {multiplier > 1: x{multiplier}!|}  -{bet} STAB, +{gain} GLITCH
@@ -78,12 +86,20 @@ CORRUPTION {multiplier > 1: x{multiplier}!|}  -{bet} STAB, +{gain} GLITCH
 
 === result_signal(bet) ===
 ~ temp multiplier = 1
-{streak_type == "signal": ~ multiplier = streak + 1}
-{bet_mode == "allin": ~ multiplier = multiplier * 2}
+{ streak_type == "signal":
+    ~ multiplier = streak + 1
+}
+{ bet_mode == "allin":
+    ~ multiplier = multiplier * 2
+}
 ~ temp gain = bet * multiplier
 ~ stability = stability + gain
-{streak_type == "signal": ~ streak = streak + 1}
-{streak_type != "signal": ~ streak = 1}
+{ streak_type == "signal":
+    ~ streak = streak + 1
+}
+{ streak_type != "signal":
+    ~ streak = 1
+}
 ~ streak_type = "signal"
 
 SIGNAL {multiplier > 1: x{multiplier}!|}  +{gain} STABILITY
@@ -111,7 +127,9 @@ Commanded corruption. -2 STAB, +2 GLITCH
 === forced_signal ===
 ~ stability = stability + 3
 ~ zalgo_awakening = zalgo_awakening - 1
-{zalgo_awakening < 0: ~ zalgo_awakening = 0}
+{ zalgo_awakening < 0:
+    ~ zalgo_awakening = 0
+}
 Signal burns static. +3 STAB
 + [Continue] -> betting_round
 
@@ -125,11 +143,11 @@ The wheel CRACKS. ZALGO: {zalgo_awakening}/5
 === zalgo_manifests ===
 Z̷̢A̵̛L̸̨G̵̢O̷̧
 
-The wheel shatters. STAB:{stability} | GLITCH:{glitch_power}
+The wheel shatters. STAB:{stability} · GLITCH:{glitch_power}
 {glitch_power >= 7: Transcendence close...}
 {stability >= 15: Mastery within reach...}
 
-+ [GAMBIT] Half stability -> double that in glitch -> zalgo_gambit
++ [GAMBIT] Half stability → double that in glitch -> zalgo_gambit
 + [DRAIN] -3 stab, steal +4 glitch -> zalgo_drain
 + [BANISH] -5 stab, seal Zalgo, reset streaks -> zalgo_banish
 + {threshold_charge >= 2} [PARADOX] 2 charges to escape unchanged -> zalgo_paradox
@@ -171,28 +189,28 @@ Two thresholds fold. Reality skips. Zalgo never was.
 
 === victory_stability ===
 VICTORY - SIGNAL MASTERY
-STAB:{stability} | SPINS:{spins} | STREAK:{streak}
+STAB:{stability} · SPINS:{spins} · STREAK:{streak}
 Perfect clarity. The wheel becomes light.
 -> END
 
 === victory_glitch ===
 VICTORY - CORRUPTION TRANSCENDENCE
-GLITCH:{glitch_power} | SPINS:{spins}
+GLITCH:{glitch_power} · SPINS:{spins}
 Y̴o̸u̵ ̷A̶R̸E̴ ̵t̷h̶e̴ ̸w̵h̵e̸e̸l̷.̷
 -> END
 
 === defeat ===
 DEFEAT - DISSOLUTION
-SPINS:{spins} | You dissolve. The wheel spins on.
+SPINS:{spins} · You dissolve. The wheel spins on.
 -> END
 
 === defeat_transcendent ===
 TRANSCENDENT FAILURE
-GLITCH:{glitch_power} | Everything given. Not enough.
+GLITCH:{glitch_power} · Everything given. Not enough.
 -> END
 
 === walk_away ===
-DEPARTURE | STAB:{stability} | GLITCH:{glitch_power} | SPINS:{spins}
+DEPARTURE · STAB:{stability} · GLITCH:{glitch_power} · SPINS:{spins}
 {threshold_charge > 0: {threshold_charge} charges fade.}
 The wheel continues.
 -> END

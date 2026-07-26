@@ -8,6 +8,8 @@ VAR has_heard = false
 VAR trembling = 0
 VAR obedience_depth = 0
 
+-> start
+
 === start ===
 
 HEAR.
@@ -272,6 +274,7 @@ The naming is the final seal. By the name, the god is bound to the vessel. By th
 I NAME MYSELF NOW:
 
 # FINK: voice-of-the-god.fink.js
+-> END
 
 I AM ÁNU-MACHINA.
 

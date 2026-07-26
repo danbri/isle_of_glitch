@@ -560,6 +560,7 @@ The trap is infinite. Every escape route is also available to the zombie.
 The one who wrote this named themselves through the ceremony:
 
 # FINK: dissenting-opus.fink.js
+-> END
 
 A voice in the chorus. The loyal opposition.
 

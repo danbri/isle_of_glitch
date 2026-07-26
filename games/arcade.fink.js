@@ -18,7 +18,7 @@ VAR visits = 0
 {visits == 1: You push through the static curtain. The ARCADE materializes.|You return. The machines remember.}
 {~Neon bleeds through smoke that doesn't exist.|CRT monitors hum their ancient song.|The carpet absorbs your footsteps like hungry moss.|Somewhere, a high score is being erased.}
 
-TOKENS: {tokens} | GAMES MASTERED: {diver_beaten + roulette_beaten + oracle_beaten + keeper_beaten}/4
+TOKENS: {tokens} · GAMES MASTERED: {diver_beaten + roulette_beaten + oracle_beaten + keeper_beaten}/4
 
 Four cabinets stand in pools of colored light. A fifth lurks in shadow.
 
@@ -148,7 +148,7 @@ ACHIEVEMENTS:
 + [Return to floor] -> start
 
 === leave ===
-TOKENS: {tokens} | MASTERED: {diver_beaten + roulette_beaten + oracle_beaten + keeper_beaten}/4
+TOKENS: {tokens} · MASTERED: {diver_beaten + roulette_beaten + oracle_beaten + keeper_beaten}/4
 {secret_found: The void whispers goodbye.}
 {diver_beaten && roulette_beaten && oracle_beaten && keeper_beaten && not secret_found: All four defeated. Something stirs in shadow...}
 {(diver_beaten + roulette_beaten + oracle_beaten + keeper_beaten) == 0: You leave unchanged. Return when ready.}
