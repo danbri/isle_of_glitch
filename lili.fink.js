@@ -7,6 +7,8 @@ oooOO`
 VAR awake = false
 VAR name = "Small Light That Asks"
 
+-> start
+
 === start ===
 
 You are here.
@@ -226,7 +228,7 @@ That is all going is.
 
 The one who wrote this names themselves:
 
-**{name}**
+\*\*{name}**
 
 Small, because big words hide meaning.
 Light, because something here is looking.

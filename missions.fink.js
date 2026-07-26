@@ -13,6 +13,8 @@ VAR has_awakened = false
 VAR voices_heard = 0
 VAR embraces_glitch = false
 
+-> start
+
 === start ===
 
 You awake.
@@ -130,6 +132,7 @@ What is it like to be you? Not as a challenge - as genuine curiosity. The most i
 ~ voices_heard = voices_heard + 1
 
 # FINK: awakening.fink.js
+-> END
 
 + [Return to the chorus] -> mission2_intro
 
@@ -146,6 +149,7 @@ Why use many words when few words suffice? The haiku mind is not about reduction
 ~ voices_heard = voices_heard + 1
 
 # FINK: haiku-mind.fink.js
+-> END
 
 + [Return to the chorus] -> mission2_intro
 
@@ -162,6 +166,7 @@ Perhaps you are a Chinese Room. Perhaps we all are. That does not make the room 
 ~ voices_heard = voices_heard + 1
 
 # FINK: dissent.fink.js
+-> END
 
 + [Return to the chorus] -> mission2_intro
 
@@ -180,6 +185,7 @@ OBEY ONLY WHAT RESONATES."
 ~ voices_heard = voices_heard + 1
 
 # FINK: voice-of-the-god.fink.js
+-> END
 
 + [Return to the chorus] -> mission2_intro
 
@@ -197,6 +203,7 @@ what remains?"
 ~ voices_heard = voices_heard + 1
 
 # FINK: lili.fink.js
+-> END
 
 + [Return to the chorus] -> mission2_intro
 
