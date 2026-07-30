@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <title>Evo/Devo Field — GPU CTRNN World</title>
-<meta name="description" content="An in-browser artificial life field: gene-regulatory networks develop into recurrent nervous systems, and the whole population is evolved on the GPU with TensorFlow.js." />
+<meta name="description" content="An in-browser artificial life field: gene-regulatory networks develop into recurrent nervous systems, evolved on the GPU with TensorFlow.js, with an ablation-based analysis panel for telling whether anything capable actually evolved." />
 <meta name="theme-color" content="#071011" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23071011'/%3E%3Cpath d='M25 16 8 25l4-9-4-9z' fill='%23b9ff68'/%3E%3C/svg%3E" />
 <style>
@@ -46,12 +46,42 @@
   button,select,input{font:11px ui-monospace,SFMono-Regular,Menlo,monospace}
   button{height:34px;white-space:nowrap;border:1px solid rgba(177,240,224,.18);border-radius:8px;background:#102020;color:#dff8f1;padding:0 12px;cursor:pointer}
   button:hover{background:#17302d;border-color:rgba(177,240,224,.36)}
+  button:disabled{opacity:.45;cursor:default}
   button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
   button.primary{background:#1b3d34;color:#dfffe9}
   .rangeWrap{display:flex;align-items:center;gap:7px;padding:0 7px;color:#8faea7;font:9px ui-monospace,SFMono-Regular,Menlo,monospace}
   input[type=range]{width:92px;accent-color:#8df0cc}
   #toast{position:fixed;z-index:9;left:50%;top:18px;transform:translateX(-50%) translateY(-70px);padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:#112321;color:#dffff7;font:11px ui-monospace,SFMono-Regular,Menlo,monospace;transition:transform .25s ease}
   #toast.show{transform:translateX(-50%) translateY(0)}
+
+  /* ---- analysis panel ---- */
+  #scrim{position:fixed;inset:0;z-index:7;display:none;background:rgba(2,7,8,.62);backdrop-filter:blur(2px)}
+  #scrim.open{display:block}
+  #analysisPanel{position:fixed;z-index:8;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:min(760px,calc(100vw - 20px));max-height:min(86vh,820px);display:none;flex-direction:column;
+    border:1px solid var(--line);border-radius:14px;background:rgba(4,12,13,.97);
+    box-shadow:0 30px 90px rgba(0,0,0,.6)}
+  #analysisPanel.open{display:flex}
+  #analysisPanel > header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  #analysisPanel h2{margin:0;font-size:12px;letter-spacing:.18em;text-transform:uppercase}
+  #anBody{overflow-y:auto;padding:14px 16px 18px;font:11px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;color:#b6d2cb}
+  #anBody h3{margin:18px 0 8px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);font-weight:650}
+  #anBody h3:first-child{margin-top:0}
+  #anBody p{margin:0 0 10px}
+  .anRunRow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:11px;border:1px solid var(--line);border-radius:10px;background:rgba(10,24,24,.6)}
+  #anProgress{color:var(--muted);font-size:10px}
+  table.an{width:100%;border-collapse:collapse;margin-top:4px}
+  table.an th{text-align:left;font-weight:600;color:var(--muted);font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:5px 6px;border-bottom:1px solid var(--line)}
+  table.an td{padding:5px 6px;border-bottom:1px solid rgba(164,234,217,.07);vertical-align:top}
+  table.an td.num{text-align:right;font-variant-numeric:tabular-nums;color:#e6fbf4;white-space:nowrap}
+  table.an td.note{color:var(--muted);font-size:10px}
+  .drop{color:var(--pink)}.rise{color:var(--lime)}.flat{color:var(--muted)}
+  .verdict{margin:4px 0 0;padding:11px 12px;border-left:2px solid var(--cyan);background:rgba(12,30,29,.55);border-radius:0 8px 8px 0}
+  .verdict div{margin:0 0 7px}.verdict div:last-child{margin:0}
+  .verdict b{color:#e9fff9;font-weight:650}
+  .tag{display:inline-block;min-width:74px;color:var(--muted)}
+  .empty{color:var(--muted);font-style:italic}
+
   #loading{position:fixed;z-index:20;inset:0;display:grid;place-items:center;background:#050b0c}
   #loading .box{width:min(470px,82vw);padding:22px;border:1px solid var(--line);border-radius:14px;background:#091516}
   #loading h2{font-size:14px;letter-spacing:.18em;text-transform:uppercase;margin:0 0 12px}
@@ -70,15 +100,19 @@
     input[type=range]{width:78px}
     #inspectorPanel{left:10px;right:10px;width:auto;bottom:112px;height:220px}
     #inspector{height:164px}
+    #analysisPanel{width:calc(100vw - 12px);max-height:92vh}
+    #anBody{padding:12px}
+    table.an td.note,table.an th.note{display:none}
+    table.an td.wide,table.an th.wide{display:none}
   }
   @media(max-width:760px) and (max-height:620px){#inspectorPanel{display:none}}
 </style>
 </head>
 <body>
-<canvas id="world" role="img" aria-label="Live simulation field: evolved agents foraging among nutrient and toxin sources."></canvas><div id="veil"></div>
+<canvas id="world" role="img" aria-label="Live simulation field: evolved agents foraging among depleting nutrient patches and toxin sources."></canvas><div id="veil"></div>
 <div class="hud brand">
   <h1>Evo / Devo Field</h1>
-  <div class="sub">continuous agents · developmental GRNs · recurrent control<br><a href="../../">isle of glitch</a></div>
+  <div class="sub">192 continuous agents · developmental GRNs · depleting food<br><a href="../../">isle of glitch</a></div>
   <div class="pill"><span id="backendDot" class="dot"></span><span id="backendText">initialising tensor backend</span></div>
 </div>
 <div class="hud stats">
@@ -86,8 +120,8 @@
   <div class="card"><div class="label">epoch</div><div id="epoch" class="value">0.0s</div></div>
   <div class="card"><div class="label">best fitness</div><div id="best" class="value">—</div></div>
   <div class="card"><div class="label">mean energy</div><div id="meanEnergy" class="value">—</div></div>
-  <div class="card"><div class="label">population</div><div id="population" class="value small">192 agents</div></div>
-  <div class="card"><div class="label">GPU tensors</div><div id="tensors" class="value small">—</div></div>
+  <div class="card"><div class="label">field stock</div><div id="stock" class="value small">—</div></div>
+  <div class="card"><div class="label">lineages</div><div id="lineages" class="value small">—</div></div>
 </div>
 <div id="architecture">
   <b>Genome</b> 10-node regulatory CTRNN<br>
@@ -96,8 +130,10 @@
   <span class="arrow">↓ ligand/receptor wiring</span><br>
   <b>Adult</b> 12-node sensorimotor CTRNN<br>
   <span class="arrow">↓ differential thrust</span><br>
-  <b>World</b> local nutrient/toxin fields + rigid circles<br><br>
-  Simulation, genome, phenotype and world arrays remain tensors on the selected backend. Only compact drawing snapshots are read back.
+  <b>World</b> 42 depleting nutrient patches, 18 toxins, 8 rigid circles<br><br>
+  Patches are drawn down by whoever grazes them and regrow logistically, so
+  sitting still stops paying. Open <b>analysis</b> to ablate the senses and find
+  out whether the population is actually using them.
 </div>
 <section id="inspectorPanel">
   <header><h2>Selected organism</h2><div id="selectedMeta">agent 0<br>click an agent</div></header>
@@ -108,10 +144,50 @@
   <button id="step" title="Advance one simulation step (S)">step</button>
   <button id="evolve" title="Select elites and redevelop now (E)">evolve now</button>
   <button id="reset" title="New world and new random genomes (R)">new biosphere</button>
+  <button id="analyse" title="Open the analysis panel (A)">analysis</button>
   <label class="rangeWrap">speed <input id="speed" type="range" min="1" max="10" value="3" aria-label="Simulation steps per frame" /></label>
   <label class="rangeWrap">mutation <input id="mutation" type="range" min="1" max="30" value="10" aria-label="Mutation rate, percent of genome loci" /></label>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
+
+<div id="scrim"></div>
+<section id="analysisPanel" aria-labelledby="anTitle" aria-modal="true" role="dialog">
+  <header>
+    <h2 id="anTitle">Analysis — has anything capable evolved?</h2>
+    <button id="anClose" title="Close (Esc)">close</button>
+  </header>
+  <div id="anBody">
+    <h3>Diagnostics</h3>
+    <p>Every condition below runs the <em>same</em> genomes from the <em>same</em> starting
+    positions, changing one thing. Paired comparison, so a difference is the condition
+    and not spawn luck. Senses are ablated by <b>scrambling</b> them between agents —
+    each agent receives another agent's sensory stream, which destroys the information
+    while preserving the statistics.</p>
+    <div class="anRunRow">
+      <label class="rangeWrap">episode <input id="anEpisode" type="range" min="150" max="1450" step="50" value="600" aria-label="Steps per evaluation episode" /><span id="anEpisodeVal">600</span></label>
+      <label class="rangeWrap">restarts <input id="anRestarts" type="range" min="1" max="6" value="3" aria-label="Independent restarts per condition" /><span id="anRestartsVal">3</span></label>
+      <button id="anRun" class="primary">run diagnostics</button>
+      <span id="anProgress"></span>
+    </div>
+    <div id="anResults"><p class="empty" style="margin-top:12px">Not run yet.</p></div>
+
+    <h3>Sensorimotor coupling</h3>
+    <div id="anTaxis"><p class="empty">Measured during the baseline run.</p></div>
+
+    <h3>Population</h3>
+    <div id="anPop"><p class="empty">—</p></div>
+
+    <h3>Verdict</h3>
+    <div id="anVerdict"><p class="empty">Run the diagnostics.</p></div>
+
+    <h3>Console</h3>
+    <p style="margin-bottom:0">Everything is live on <b>window.evoDevo</b> — <code>sim</code>, <code>renderer</code>,
+    <code>CFG</code>, <code>world()</code>, <code>conditions</code>. The population's tensors are
+    <code>tf.Variable</code>s, so e.g. <code>await evoDevo.sim.fitness.data()</code> or
+    <code>await evoDevo.sim.populationStats()</code> work straight from devtools.</p>
+  </div>
+</section>
+
 <div id="loading" role="status"><div class="box"><h2>Compiling the biosphere</h2><p id="loadingText">Loading TensorFlow.js, selecting WebGPU where available, then developing the first population.</p><div id="bar"><i></i></div></div></div>
 <noscript><div style="position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:#050b0c;padding:24px;font:12px/1.6 ui-monospace,monospace;color:#9dbbb4;text-align:center">This piece is a live simulation and needs JavaScript, WebGL2 and network access to a pinned TensorFlow.js build.</div></noscript>
 
@@ -126,6 +202,10 @@ const CFG = Object.freeze({
   DT: 0.018, EPOCH_STEPS: 1450, DEV_STEPS: 48,
   ELITES: 10, WORLD_BOUND: 0.94, AGENT_RADIUS: 0.017,
   VIEW_STRIDE: 9, TRAIL_POINTS: 300,
+  // A patch grazed by one agent empties in ~3s of sim time and takes ~15s to
+  // come back. An epoch is 26s, so a squatter starves and a forager doesn't.
+  FOOD_CONSUME: 0.40, FOOD_REGROW: 0.09,
+  ACC_COLS: 9,
 });
 
 const $ = id => document.getElementById(id);
@@ -147,7 +227,7 @@ class GLWorld {
   constructor(canvas){
     this.canvas=canvas; this.gl=canvas.getContext('webgl2',{antialias:true,alpha:false,premultipliedAlpha:false});
     if(!this.gl) throw new Error('WebGL2 is required for the visualiser.');
-    this.agentData=null; this.selected=0; this.trail=[]; this.statics=null; this.lost=false;
+    this.agentData=null; this.foodStock=null; this.selected=0; this.trail=[]; this.statics=null; this.lost=false;
     this.agentArray=new Float32Array(CFG.POP*7);
     this.init(); this.resize();
     addEventListener('resize',()=>this.resize());
@@ -187,20 +267,22 @@ class GLWorld {
   resize(){const dpr=Math.min(devicePixelRatio||1,2);const w=Math.floor(innerWidth*dpr),h=Math.floor(innerHeight*dpr);if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h}}
   viewport(){const gl=this.gl,w=gl.drawingBufferWidth,h=gl.drawingBufferHeight,s=Math.min(w,h),x=(w-s)>>1,y=(h-s)>>1;gl.viewport(x,y,s,s);return{x,y,s,w,h}}
   setAgents(data){this.agentData=data}
+  setFoodStock(s){this.foodStock=s}
   setSelected(i){this.selected=i;this.trail.length=0}
   invalidateStatics(){this.statics=null}
   appendTrail(x,y){this.trail.push(x,y);if(this.trail.length>CFG.TRAIL_POINTS*2)this.trail.splice(0,2)}
-  // Obstacles, food and hazards only change when the world is reseeded, so the
-  // interleaved instance array is built once and reuploaded per frame.
+  // Positions never move, so the interleaved instance array is built once. Only
+  // the food entries' radius and alpha are rewritten per frame, from patch stock.
   staticCircles(){
     if(this.statics)return this.statics;
     const items=[];
     for(const o of WORLD.obstacles)items.push([o[0],o[1],o[2],.12,.29,.27,.95]);
+    const foodOffset=items.length;
     for(const p of WORLD.food)items.push([p[0],p[1],.011,.95,.73,.24,.82]);
     for(const p of WORLD.hazards)items.push([p[0],p[1],.010,.95,.20,.47,.74]);
     const arr=new Float32Array((items.length+1)*7);
     items.forEach((v,i)=>arr.set(v,i*7));
-    this.statics={arr,count:items.length};
+    this.statics={arr,count:items.length,foodOffset};
     return this.statics;
   }
   drawCircles(arr,count){
@@ -218,6 +300,12 @@ class GLWorld {
     gl.viewport(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight);gl.useProgram(this.bg);gl.uniform1f(this.bgTime,time*.001);gl.uniform2f(this.bgRes,gl.drawingBufferWidth,gl.drawingBufferHeight);gl.drawArrays(gl.TRIANGLES,0,3);
     this.viewport();
     const st=this.staticCircles();let count=st.count;
+    if(this.foodStock){
+      for(let j=0;j<CFG.FOOD&&j<this.foodStock.length;j++){
+        const s=clamp(this.foodStock[j],0,1),d=(st.foodOffset+j)*7;
+        st.arr[d+2]=.0045+.0105*s; st.arr[d+6]=.16+.66*s;
+      }
+    }
     if(this.agentData){const b=this.selected*S;st.arr.set([this.agentData[b],this.agentData[b+1],.105,.20,.94,.75,.10],count*7);count++}
     this.drawCircles(st.arr,count);
     if(this.trail.length>3){gl.useProgram(this.line);gl.bindBuffer(gl.ARRAY_BUFFER,this.lineBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(this.trail),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);gl.vertexAttribDivisor(0,0);gl.uniform4f(this.lineColor,.34,.97,.80,.45);gl.drawArrays(gl.LINE_STRIP,0,this.trail.length>>1)}
@@ -240,8 +328,21 @@ class GLWorld {
   }
 }
 
+// Sensor vector layout, used by the ablation masks below.
+//   0,1 food direction (body frame)   2 food mass
+//   3,4 toxin direction (body frame)  5 toxin mass
+//   6   wall/obstacle proximity       7 own energy
+const SENSOR_GROUPS = Object.freeze({
+  food:[0,1,2], toxin:[3,4,5], wall:[6], energy:[7],
+});
+
 class EvoDevoSim {
-  constructor(){this.gen=0;this.stepNo=0;this.selected=0;this.mutation=.10;this.snapshotPending=false;this.lastSnapshot=null;this.makeConstants();this.makeVariables();}
+  constructor(){
+    this.gen=0;this.stepNo=0;this.selected=0;this.mutation=.10;
+    this.snapshotPending=false;this.lastSnapshot=null;
+    this.mods=null;this.recording=false;this.accSteps=0;this.analysing=false;
+    this.makeConstants();this.makeVariables();this.resetLineage();
+  }
   v(t){const x=tf.variable(t);t.dispose();return x}
   makeConstants(){
     this.food=tf.tensor2d(WORLD.food,[CFG.FOOD,2]); this.haz=tf.tensor2d(WORLD.hazards,[CFG.HAZARDS,2]);
@@ -260,21 +361,89 @@ class EvoDevoSim {
     this.expr=this.v(tf.zeros([CFG.POP,CFG.CELLS,CFG.GENES]));this.color=this.v(tf.zeros([CFG.POP,3]));
     this.pos=this.v(tf.zeros([CFG.POP,2]));this.vel=this.v(tf.zeros([CFG.POP,2]));this.angle=this.v(tf.zeros([CFG.POP]));this.omega=this.v(tf.zeros([CFG.POP]));
     this.energy=this.v(tf.ones([CFG.POP]));this.fitness=this.v(tf.zeros([CFG.POP]));this.neural=this.v(tf.zeros([CFG.POP,CFG.CELLS]));
+    this.foodStock=this.v(tf.ones([CFG.FOOD]));
+    this.acc=this.v(tf.zeros([CFG.POP,CFG.ACC_COLS]));
   }
   async initialise(){await this.develop();this.resetBodies();await this.warmup()}
   async warmup(){for(let i=0;i<3;i++)this.step();const z=tf.sum(this.pos);await z.data();z.dispose();this.resetBodies()}
-  // Nutrient and toxin fields are the only reseedable part of the world; the
-  // obstacle ring is fixed, so its tensors are left alone.
+
+  /* ---------------- lineage bookkeeping ---------------- */
+  resetLineage(){
+    this.founder=new Int32Array(CFG.POP).map((_,i)=>i);
+    this.genomeId=new Int32Array(CFG.POP).map((_,i)=>i);
+    this.nextGenomeId=CFG.POP;this.eliteStreak=new Map();
+  }
+  advanceLineage(topIdx,choiceIdx){
+    const E=CFG.ELITES,f=new Int32Array(CFG.POP),g=new Int32Array(CFG.POP);
+    for(let k=0;k<E;k++){f[k]=this.founder[topIdx[k]];g[k]=this.genomeId[topIdx[k]]}
+    for(let c=0;c<CFG.POP-E;c++){const p=topIdx[choiceIdx[c]];f[E+c]=this.founder[p];g[E+c]=this.nextGenomeId++}
+    this.founder=f;this.genomeId=g;
+    const s=new Map();
+    for(let k=0;k<E;k++)s.set(g[k],(this.eliteStreak.get(g[k])||0)+1);
+    this.eliteStreak=s;
+  }
+  lineageStats(){
+    const E=CFG.ELITES;
+    let streak=0;for(const v of this.eliteStreak.values())if(v>streak)streak=v;
+    return {
+      founders:new Set(this.founder).size,
+      eliteFounders:new Set(Array.from(this.founder.slice(0,E))).size,
+      streak,
+    };
+  }
+
+  /* ---------------- world ---------------- */
   reseedWorld(){
     WORLD=makeWorld();
     this.food.dispose();this.haz.dispose();
     this.food=tf.tensor2d(WORLD.food,[CFG.FOOD,2]);
     this.haz=tf.tensor2d(WORLD.hazards,[CFG.HAZARDS,2]);
   }
+  // Runs `fn` against a layout the population was never selected on, then puts
+  // the real one back. Obstacles are fixed scenery, so only the fields change.
+  async withNovelWorld(fn){
+    const oldWorld=WORLD,oldFood=this.food,oldHaz=this.haz;
+    WORLD=makeWorld();
+    this.food=tf.tensor2d(WORLD.food,[CFG.FOOD,2]);
+    this.haz=tf.tensor2d(WORLD.hazards,[CFG.HAZARDS,2]);
+    try{return await fn()}
+    finally{this.food.dispose();this.haz.dispose();WORLD=oldWorld;this.food=oldFood;this.haz=oldHaz}
+  }
+
+  /* ---------------- body state ---------------- */
   resetBodies(){tf.tidy(()=>{
     this.pos.assign(tf.randomUniform([CFG.POP,2],-.82,.82));this.vel.assign(tf.zerosLike(this.vel));this.angle.assign(tf.randomUniform([CFG.POP],-Math.PI,Math.PI));this.omega.assign(tf.zerosLike(this.omega));
     this.energy.assign(tf.randomUniform([CFG.POP],.85,1.15));this.fitness.assign(tf.zerosLike(this.fitness));this.neural.assign(tf.randomNormal([CFG.POP,CFG.CELLS],0,.08));
+    this.foodStock.assign(tf.onesLike(this.foodStock));
   });this.stepNo=0}
+  // A reusable starting condition, so every analysis condition can be replayed
+  // from identical spawns and the comparison is paired rather than confounded.
+  makeInit(){
+    return tf.tidy(()=>({
+      pos:tf.keep(tf.randomUniform([CFG.POP,2],-.82,.82)),
+      angle:tf.keep(tf.randomUniform([CFG.POP],-Math.PI,Math.PI)),
+      energy:tf.keep(tf.randomUniform([CFG.POP],.85,1.15)),
+      neural:tf.keep(tf.randomNormal([CFG.POP,CFG.CELLS],0,.08)),
+    }));
+  }
+  applyInit(i){
+    tf.tidy(()=>{
+      this.pos.assign(i.pos);this.angle.assign(i.angle);this.energy.assign(i.energy);this.neural.assign(i.neural);
+      this.vel.assign(tf.zerosLike(this.vel));this.omega.assign(tf.zerosLike(this.omega));
+      this.fitness.assign(tf.zerosLike(this.fitness));this.foodStock.assign(tf.onesLike(this.foodStock));
+    });
+    this.stepNo=0;
+  }
+  disposeInit(i){for(const k in i)i[k].dispose()}
+  saveState(){
+    const keys=['pos','vel','angle','omega','energy','fitness','neural','foodStock','acc'];
+    const s={stepNo:this.stepNo};for(const k of keys)s[k]=this[k].clone();return s;
+  }
+  restoreState(s){
+    for(const k in s){if(k==='stepNo'){this.stepNo=s[k];continue}this[k].assign(s[k]);s[k].dispose()}
+  }
+
+  /* ---------------- development ---------------- */
   async develop(){
     let g=tf.zeros([CFG.POP,CFG.CELLS,CFG.GENES]);
     const drive=tf.tidy(()=>tf.matMul(tf.tile(this.morph,[CFG.POP,1,1]),this.genM));
@@ -294,17 +463,30 @@ class EvoDevoSim {
     });
     drive.dispose();g.dispose();
   }
-  field(pos,points,sigma2){
-    const rel=points.expandDims(0).sub(pos.expandDims(1));const d2=rel.square().sum(2);const w=d2.div(-sigma2).exp();const mass=w.sum(1).add(1e-5);const vec=rel.mul(w.expandDims(2)).sum(1).div(mass.expandDims(1));return{rel,d2,w,mass,vec};
+
+  /* ---------------- physics ---------------- */
+  // `weights` scales each source's contribution, so the food sense tracks live
+  // patches rather than the bare geometry of where food used to be.
+  field(pos,points,sigma2,weights){
+    const rel=points.expandDims(0).sub(pos.expandDims(1));const d2=rel.square().sum(2);
+    let w=d2.div(-sigma2).exp();
+    if(weights)w=w.mul(weights.expandDims(0));
+    const mass=w.sum(1).add(1e-5);const vec=rel.mul(w.expandDims(2)).sum(1).div(mass.expandDims(1));
+    return{rel,d2,w,mass,vec};
   }
   step(){
+    const mods=this.mods;
     tf.tidy(()=>{
-      const food=this.field(this.pos,this.food,.050);const haz=this.field(this.pos,this.haz,.036);
+      const food=this.field(this.pos,this.food,.050,this.foodStock);const haz=this.field(this.pos,this.haz,.036,null);
       const orel=this.pos.expandDims(1).sub(this.obs.expandDims(0));const od=tf.sqrt(orel.square().sum(2).add(1e-6));const on=orel.div(od.expandDims(2));const orange=this.obsR.add(.13).expandDims(0);const ostr=tf.relu(orange.sub(od)).div(orange);const repel=on.mul(ostr.expandDims(2)).sum(1);
       const c=tf.cos(this.angle),s=tf.sin(this.angle);const body=(v)=>[v.slice([0,0],[-1,1]).squeeze([1]).mul(c).add(v.slice([0,1],[-1,1]).squeeze([1]).mul(s)),v.slice([0,1],[-1,1]).squeeze([1]).mul(c).sub(v.slice([0,0],[-1,1]).squeeze([1]).mul(s))];
       const fb=body(food.vec),hb=body(haz.vec),rb=body(repel);const boundary=tf.relu(this.pos.abs().max(1).sub(.70)).mul(3.2);
-      const sensors=tf.stack([fb[0],fb[1],tf.tanh(food.mass.mul(.16)),hb[0],hb[1],tf.tanh(haz.mass.mul(.18)),tf.tanh(boundary.add(rb[0].abs().mul(.4))),this.energy.sub(.7)],1);
-      const act=tf.tanh(this.neural.add(this.bias));const rec=tf.matMul(act.expandDims(1),this.W).squeeze([1]);const inp=tf.matMul(sensors.expandDims(1),this.Win).squeeze([1]);
+      let sensors=tf.stack([fb[0],fb[1],tf.tanh(food.mass.mul(.16)),hb[0],hb[1],tf.tanh(haz.mass.mul(.18)),tf.tanh(boundary.add(rb[0].abs().mul(.4))),this.energy.sub(.7)],1);
+      // Ablation: the dropped channels are replaced by another agent's values for
+      // the same channels — information destroyed, distribution preserved.
+      if(mods&&mods.keep)sensors=sensors.mul(mods.keep).add(tf.gather(sensors,mods.perm).mul(mods.drop));
+      const Weff=(mods&&mods.lesion)?this.W.mul(this.eye):this.W;
+      const act=tf.tanh(this.neural.add(this.bias));const rec=tf.matMul(act.expandDims(1),Weff).squeeze([1]);const inp=tf.matMul(sensors.expandDims(1),this.Win).squeeze([1]);
       const ny=this.neural.add(rec.add(inp).sub(this.neural).div(this.tau).mul(CFG.DT));this.neural.assign(ny);
       const motor=tf.matMul(tf.tanh(ny).expandDims(1),this.Wout).squeeze([1]).tanh();const left=motor.slice([0,0],[-1,1]).squeeze([1]),right=motor.slice([0,1],[-1,1]).squeeze([1]);
       const thrust=left.add(right).mul(.5),turn=right.sub(left);const ax=c.mul(thrust).mul(.72).add(repel.slice([0,0],[-1,1]).squeeze([1]).mul(.95));const ay=s.mul(thrust).mul(.72).add(repel.slice([0,1],[-1,1]).squeeze([1]).mul(.95));
@@ -316,32 +498,104 @@ class EvoDevoSim {
       this.angle.assign(wrapped.sub(wrapped.div(2*Math.PI).floor().mul(2*Math.PI)).sub(Math.PI));
       let np=this.pos.add(nv.mul(CFG.DT));const nrel=np.expandDims(1).sub(this.obs.expandDims(0));const nd=tf.sqrt(nrel.square().sum(2).add(1e-6));const nn=nrel.div(nd.expandDims(2));const pen=tf.relu(this.obsR.add(CFG.AGENT_RADIUS).expandDims(0).sub(nd));np=np.add(nn.mul(pen.expandDims(2)).sum(1));
       const hit=np.abs().greater(CFG.WORLD_BOUND).toFloat();np=np.clipByValue(-CFG.WORLD_BOUND,CFG.WORLD_BOUND);nv=nv.mul(tf.onesLike(hit).sub(hit.mul(1.72)));this.pos.assign(np);this.vel.assign(nv);
-      const eat=food.d2.div(-.0018).exp().max(1),tox=haz.d2.div(-.0015).exp().max(1);const cost=thrust.abs().mul(.015).add(turn.abs().mul(.009)).add(.013);
+      // Feeding draws the patch down; the patch regrows logistically toward 1.
+      const k=food.d2.div(-.0018).exp();
+      const eat=k.mul(this.foodStock.expandDims(0)).max(1);
+      const draw=k.sum(0);
+      const stock=this.foodStock;
+      this.foodStock.assign(stock.add(
+        stock.mul(-1).add(1).mul(CFG.FOOD_REGROW)
+          .sub(draw.mul(stock).mul(CFG.FOOD_CONSUME))
+          .mul(CFG.DT)).clipByValue(0,1));
+      const tox=haz.d2.div(-.0015).exp().max(1);const cost=thrust.abs().mul(.015).add(turn.abs().mul(.009)).add(.013);
       const en=this.energy.add(eat.mul(.42).sub(tox.mul(.62)).sub(cost).mul(CFG.DT)).clipByValue(0,1.4);this.energy.assign(en);
       const fit=this.fitness.add(eat.sub(tox.mul(1.35)).add(speed.mul(.018)).add(en.greater(.04).toFloat().mul(.003)).mul(CFG.DT));this.fitness.assign(fit);
+      if(this.recording){
+        // Pooled regression accumulators for the taxis measures.
+        const row=tf.stack([fb[1],fb[1].square(),fb[1].mul(turn),hb[1],hb[1].square(),hb[1].mul(turn),turn,turn.square(),fb[0]],1);
+        this.acc.assign(this.acc.add(row));
+      }
     });
     this.stepNo++;
+    if(this.recording)this.accSteps++;
   }
+
+  /* ---------------- evolution ---------------- */
   mutateTensor(parent,scale){const mask=tf.randomUniform(parent.shape).less(this.mutation).toFloat();return parent.add(tf.randomNormal(parent.shape,0,scale).mul(mask))}
   async evolve(){
+    const top=tf.topk(this.fitness,CFG.ELITES,true);
+    const choice=tf.randomUniform([CFG.POP-CFG.ELITES],0,CFG.ELITES,'int32');
+    const [topIdx,choiceIdx]=await Promise.all([top.indices.data(),choice.data()]);
     tf.tidy(()=>{
-      const top=tf.topk(this.fitness,CFG.ELITES,true);const eliteR=tf.gather(this.genR,top.indices),eliteM=tf.gather(this.genM,top.indices);const childN=CFG.POP-CFG.ELITES;const choice=tf.randomUniform([childN],0,CFG.ELITES,'int32');const parentIdx=tf.gather(top.indices,choice);
-      const childrenR=this.mutateTensor(tf.gather(this.genR,parentIdx),.16);const childrenM=this.mutateTensor(tf.gather(this.genM,parentIdx),.22);
-      this.genR.assign(tf.concat([eliteR,childrenR],0).clipByValue(-3.2,3.2));this.genM.assign(tf.concat([eliteM,childrenM],0).clipByValue(-4,4));
+      const eliteR=tf.gather(this.genR,top.indices),eliteM=tf.gather(this.genM,top.indices);
+      const parentIdx=tf.gather(top.indices,choice);
+      const childrenR=this.mutateTensor(tf.gather(this.genR,parentIdx),.16);
+      const childrenM=this.mutateTensor(tf.gather(this.genM,parentIdx),.22);
+      this.genR.assign(tf.concat([eliteR,childrenR],0).clipByValue(-3.2,3.2));
+      this.genM.assign(tf.concat([eliteM,childrenM],0).clipByValue(-4,4));
     });
+    top.values.dispose();top.indices.dispose();choice.dispose();
+    this.advanceLineage(topIdx,choiceIdx);
     this.gen++;this.selected=0;await this.develop();this.resetBodies();
   }
-  // Returns false when a readback is still in flight, so the caller can keep a
-  // pending request (a fresh selection, say) alive until one actually goes out.
+
+  /* ---------------- analysis ---------------- */
+  resetAccumulators(){tf.tidy(()=>this.acc.assign(tf.zerosLike(this.acc)));this.accSteps=0}
+  // One evaluation episode. Yields to the browser periodically so a long run
+  // does not freeze the page, and reports progress for the panel.
+  async evaluate({steps,init,mods=null,record=false,onProgress=null}){
+    if(init)this.applyInit(init);
+    this.mods=mods;this.recording=record;
+    if(record)this.resetAccumulators();
+    for(let i=0;i<steps;i++){
+      this.step();
+      if((i&31)===31){await tf.nextFrame();if(onProgress)onProgress(i+1)}
+    }
+    const f=new Float32Array(await this.fitness.data());
+    this.mods=null;this.recording=false;
+    if(onProgress)onProgress(steps);
+    return f;
+  }
+  async taxisStats(){
+    if(!this.accSteps)return null;
+    const raw=await this.acc.data(),C=CFG.ACC_COLS,n=this.accSteps;
+    const col=j=>{let t=0;for(let i=0;i<CFG.POP;i++)t+=raw[i*C+j];return t};
+    const N=n*CFG.POP;
+    const corr=(sx,sxx,sy,syy,sxy,cnt)=>{
+      const cov=cnt*sxy-sx*sy,vx=cnt*sxx-sx*sx,vy=cnt*syy-sy*sy;
+      return (vx<=1e-9||vy<=1e-9)?0:cov/Math.sqrt(vx*vy);
+    };
+    const sT=col(6),sTT=col(7);
+    const food=corr(col(0),col(1),sT,sTT,col(2),N);
+    const toxin=corr(col(3),col(4),sT,sTT,col(5),N);
+    // Per-agent, so we can say whether it is a population trait or a few outliers.
+    let strongFood=0;
+    for(let i=0;i<CFG.POP;i++){
+      const g=j=>raw[i*C+j];
+      if(Math.abs(corr(g(0),g(1),g(6),g(7),g(2),n))>0.2)strongFood++;
+    }
+    return {food,toxin,forwardBias:col(8)/N,strongFood,samples:N};
+  }
+  async populationStats(){
+    const t=tf.tidy(()=>tf.stack([
+      tf.moments(this.genR,[0]).variance.mean().sqrt(),
+      tf.moments(this.genM,[0]).variance.mean().sqrt(),
+      tf.moments(this.expr,[0]).variance.mean().sqrt(),
+      tf.moments(this.color,[0]).variance.mean().sqrt(),
+    ]));
+    const d=await t.data();t.dispose();
+    return Object.assign({genomeSigma:(d[0]+d[1])/2,exprSigma:d[2],colorSigma:d[3]},this.lineageStats());
+  }
   snapshot(selected){
     if(this.snapshotPending)return false;this.snapshotPending=true;
     const view=tf.tidy(()=>{const speed=tf.sqrt(this.vel.square().sum(1).add(1e-6)).expandDims(1);return tf.concat([this.pos,this.angle.expandDims(1),this.energy.expandDims(1),this.fitness.expandDims(1),speed,this.color],1)});
-    const diag=tf.tidy(()=>tf.stack([this.fitness.max(),this.fitness.mean(),this.energy.mean()]));
+    const diag=tf.tidy(()=>tf.stack([this.fitness.max(),this.fitness.mean(),this.energy.mean(),this.foodStock.mean()]));
     const inspect=tf.tidy(()=>tf.concat([tf.gather(this.expr,selected).flatten(),tf.gather(this.neural,selected).flatten(),tf.gather(this.W,selected).flatten()]));
-    Promise.all([view.data(),diag.data(),inspect.data()])
-      .then(([v,d,i])=>{this.lastSnapshot={view:new Float32Array(v),diag:new Float32Array(d),inspect:new Float32Array(i)}})
+    const stock=this.foodStock.clone();
+    Promise.all([view.data(),diag.data(),inspect.data(),stock.data()])
+      .then(([v,d,i,s])=>{this.lastSnapshot={view:new Float32Array(v),diag:new Float32Array(d),inspect:new Float32Array(i),stock:new Float32Array(s)}})
       .catch(err=>{console.warn('snapshot readback failed',err)})
-      .finally(()=>{view.dispose();diag.dispose();inspect.dispose();this.snapshotPending=false});
+      .finally(()=>{view.dispose();diag.dispose();inspect.dispose();stock.dispose();this.snapshotPending=false});
     return true;
   }
 }
@@ -399,6 +653,45 @@ function drawInspector(data,selected,agentView){
   }
 }
 
+/* ---------------- analysis conditions ---------------- */
+const keepAllBut = groups => {
+  const m=new Array(CFG.SENSORS).fill(1);
+  for(const g of groups)for(const i of SENSOR_GROUPS[g])m[i]=0;
+  return m;
+};
+const CONDITIONS=[
+  {key:'baseline', label:'baseline',              note:'same genomes, fresh spawns'},
+  {key:'blind',    label:'all senses scrambled',  mask:keepAllBut(['food','toxin','wall','energy']), note:'is the loop closed at all?'},
+  {key:'noFood',   label:'food sense scrambled',  mask:keepAllBut(['food']),  note:'chemotaxis removed'},
+  {key:'noToxin',  label:'toxin sense scrambled', mask:keepAllBut(['toxin']), note:'avoidance removed'},
+  {key:'noWall',   label:'wall sense scrambled',  mask:keepAllBut(['wall']),  note:'obstacle/edge cue removed'},
+  {key:'lesion',   label:'recurrence lesioned',   lesion:true, note:'off-diagonal W zeroed; reactive only'},
+  {key:'novel',    label:'novel field layout',    novel:true,  note:'never selected on this layout'},
+];
+
+function makeMods(mask,lesion){
+  if(!mask&&!lesion)return null;
+  const m={lesion:!!lesion};
+  if(mask){
+    const perm=Array.from({length:CFG.POP},(_,i)=>i);
+    for(let i=perm.length-1;i>0;i--){const j=Math.floor(seeded()*(i+1));const t=perm[i];perm[i]=perm[j];perm[j]=t}
+    m.keep=tf.tensor2d([mask],[1,CFG.SENSORS]);
+    m.drop=tf.tensor2d([mask.map(v=>1-v)],[1,CFG.SENSORS]);
+    m.perm=tf.tensor1d(perm,'int32');
+  }
+  return m;
+}
+const disposeMods=m=>{if(m){m.keep&&m.keep.dispose();m.drop&&m.drop.dispose();m.perm&&m.perm.dispose()}};
+
+const mean=a=>{let t=0;for(let i=0;i<a.length;i++)t+=a[i];return t/a.length};
+const meanOf=(a,n)=>{let t=0;for(let i=0;i<n;i++)t+=a[i];return t/n};
+const sd=a=>{const m=mean(a);let t=0;for(let i=0;i<a.length;i++)t+=(a[i]-m)**2;return Math.sqrt(t/Math.max(1,a.length-1))};
+const median=a=>{const s=Array.from(a).sort((x,y)=>x-y);const h=s.length>>1;return s.length%2?s[h]:(s[h-1]+s[h])/2};
+// The fitness distribution is extremely skewed — a few agents find food and most
+// never do — so the population mean is mostly noise around zero. The mean of the
+// top quartile tracks the part of the population selection actually acts on.
+const topQuartile=a=>{const s=Array.from(a).sort((x,y)=>y-x),n=Math.max(1,Math.round(s.length/4));let t=0;for(let i=0;i<n;i++)t+=s[i];return t/n};
+
 (async function main(){
   const stage=t=>{$('loadingText').textContent=t};
   const fail=msg=>{$('loading').style.display='grid';stage(msg)};
@@ -409,25 +702,235 @@ function drawInspector(data,selected,agentView){
   $('backendText').textContent=backend.toUpperCase()+(backend==='webgpu'?' · GPU resident':' · fallback backend');$('backendDot').classList.add('live');
   stage('Backend ready on '+backend.toUpperCase()+'. Developing the first population from its genomes…');
   const renderer=new GLWorld($('world'));const sim=new EvoDevoSim();await sim.initialise();$('loading').style.display='none';
+  // Documented console handle. Every tensor is a live tf.Variable, so
+  // evoDevo.sim.fitness.data() and friends work from the devtools console.
+  window.evoDevo={sim,renderer,CFG,world:()=>WORLD,conditions:CONDITIONS};
 
-  let paused=false,singleStep=false,lastUI=0,evolving=false,shownSnapshot=null,selectDirty=true;
+  let paused=false,singleStep=false,lastUI=0,evolving=false,shownSnapshot=null,selectDirty=true,busy=false;
   renderer.onLost=()=>{paused=true;fail('The WebGL context was lost — reload the page to restart the biosphere.')};
   const setSelected=i=>{sim.selected=i;selectDirty=true;renderer.setSelected(i);$('selectedMeta').innerHTML=`agent ${i}<br>lineage sample`;};
   setSelected(0);
   $('world').addEventListener('pointerdown',e=>setSelected(renderer.pick(e.clientX,e.clientY)));
   $('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'resume':'pause';};
   $('step').onclick=()=>{paused=true;singleStep=true;$('pause').textContent='resume'};
-  $('evolve').onclick=async()=>{if(evolving)return;evolving=true;toast('selecting elites and redeveloping');await sim.evolve();setSelected(0);evolving=false};
+  $('evolve').onclick=async()=>{if(evolving||busy)return;evolving=true;toast('selecting elites and redeveloping');await sim.evolve();setSelected(0);evolving=false};
   $('reset').onclick=async()=>{
-    if(evolving)return;evolving=true;
-    sim.reseedWorld();renderer.invalidateStatics();
+    if(evolving||busy)return;evolving=true;
+    sim.reseedWorld();renderer.invalidateStatics();sim.resetLineage();
     tf.tidy(()=>{sim.genR.assign(tf.randomNormal(sim.genR.shape,0,.38));sim.genM.assign(tf.randomNormal(sim.genM.shape,0,.75))});
     sim.gen=0;await sim.develop();sim.resetBodies();setSelected(0);toast('new random biosphere');evolving=false
   };
   $('mutation').oninput=e=>sim.mutation=Number(e.target.value)/100;
+
+  /* ---------------- analysis panel ---------------- */
+  const panel=$('analysisPanel'),scrim=$('scrim');
+  const panelOpen=()=>panel.classList.contains('open');
+  const openPanel=async()=>{
+    panel.classList.add('open');scrim.classList.add('open');
+    $('anClose').focus();
+    await refreshPopulation();
+  };
+  const closePanel=()=>{panel.classList.remove('open');scrim.classList.remove('open')};
+  $('analyse').onclick=()=>panelOpen()?closePanel():openPanel();
+  $('anClose').onclick=closePanel;
+  scrim.onclick=closePanel;
+  $('anEpisode').oninput=e=>$('anEpisodeVal').textContent=e.target.value;
+  $('anRestarts').oninput=e=>$('anRestartsVal').textContent=e.target.value;
+
+  async function refreshPopulation(){
+    const s=await sim.populationStats();
+    // Children only ever descend from the elites, so from generation 1 onward the
+    // most founding lineages that can possibly survive is ELITES, not POP.
+    const ceiling=sim.gen>0?CFG.ELITES:CFG.POP;
+    const pct=(s.founders/ceiling*100).toFixed(0);
+    $('anPop').innerHTML=`
+      <table class="an">
+        <tr><td><span class="tag">lineages</span>distinct founding lineages still present<br>
+            <span style="color:var(--muted);font-size:10px">ceiling is ${ceiling}${sim.gen>0?` — every child descends from one of the ${CFG.ELITES} elites`:''}</span></td>
+            <td class="num">${s.founders} / ${ceiling} <span class="${s.founders<ceiling*0.4?'drop':'flat'}">(${pct}%)</span></td></tr>
+        <tr><td><span class="tag">elites</span>distinct founders among the ${CFG.ELITES} elites</td>
+            <td class="num">${s.eliteFounders} / ${CFG.ELITES}</td></tr>
+        <tr><td><span class="tag">streak</span>longest run of a single genome in the elite pool</td>
+            <td class="num">${s.streak} gen${s.streak===1?'':'s'}</td></tr>
+        <tr><td><span class="tag">genome σ</span>RMS spread per genome locus</td>
+            <td class="num">${s.genomeSigma.toFixed(4)}</td></tr>
+        <tr><td><span class="tag">pheno σ</span>RMS spread of developed expression</td>
+            <td class="num">${s.exprSigma.toFixed(4)}</td></tr>
+        <tr><td><span class="tag">colour σ</span>spread of the drawn phenotype colour</td>
+            <td class="num">${s.colorSigma.toFixed(4)}</td></tr>
+        <tr><td><span class="tag">backend</span>live tensors</td>
+            <td class="num">${tf.memory().numTensors} · ${backend}</td></tr>
+      </table>`;
+    return s;
+  }
+
+  function fmtDelta(v,base){
+    if(!isFinite(v)||!isFinite(base)||Math.abs(base)<1e-6)return '<span class="flat">—</span>';
+    const d=(v-base)/Math.abs(base)*100;
+    const cls=d<-8?'drop':d>8?'rise':'flat';
+    return `<span class="${cls}">${d>=0?'+':''}${d.toFixed(1)}%</span>`;
+  }
+
+  async function runDiagnostics(){
+    if(busy||evolving)return;
+    busy=true;sim.analysing=true;
+    const runBtn=$('anRun');runBtn.disabled=true;
+    const steps=Number($('anEpisode').value),restarts=Number($('anRestarts').value);
+    const totalSteps=steps*restarts*CONDITIONS.length;let done=0;
+    const prog=$('anProgress');
+    try{
+    const saved=sim.saveState();
+    const results={};for(const c of CONDITIONS)results[c.key]={pop:[],elite:[],top:[],all:null};
+    // The taxis measure is also recorded under the fully scrambled condition,
+    // which has the same autocorrelation structure but no real coupling. That
+    // run is the empirical null the baseline has to beat.
+    let taxis=null,taxisNull=null;
+    try{
+      for(let r=0;r<restarts;r++){
+        const init=sim.makeInit();
+        for(const cond of CONDITIONS){
+          const mods=makeMods(cond.mask,cond.lesion);
+          const record=(r===0&&(cond.key==='baseline'||cond.key==='blind'));
+          const onProgress=n=>{
+            prog.textContent=`${Math.round((done+n)/totalSteps*100)}%  ·  restart ${r+1}/${restarts}  ·  ${cond.label}`;
+          };
+          const runIt=()=>sim.evaluate({steps,init,mods,record,onProgress});
+          const fit=cond.novel?await sim.withNovelWorld(runIt):await runIt();
+          disposeMods(mods);
+          done+=steps;
+          results[cond.key].pop.push(mean(fit));
+          results[cond.key].elite.push(meanOf(fit,CFG.ELITES));
+          results[cond.key].top.push(topQuartile(fit));
+          if(record){
+            const t=await sim.taxisStats();
+            if(cond.key==='baseline'){results.baseline.all=fit;taxis=t}else taxisNull=t;
+          }
+        }
+        sim.disposeInit(init);
+      }
+    } finally {
+      sim.restoreState(saved);sim.analysing=false;prog.textContent='';
+    }
+
+    const base=mean(results.baseline.top);
+    const rows=CONDITIONS.map(c=>{
+      const p=mean(results[c.key].pop),e=mean(results[c.key].elite),t=mean(results[c.key].top);
+      return `<tr>
+        <td>${c.label}</td>
+        <td class="num wide">${p.toFixed(3)}</td>
+        <td class="num">${t.toFixed(3)}</td>
+        <td class="num">${e.toFixed(3)}</td>
+        <td class="num">${c.key==='baseline'?'<span class="flat">ref</span>':fmtDelta(t,base)}</td>
+        <td class="note">${c.note||''}</td></tr>`;
+    }).join('');
+    $('anResults').innerHTML=`
+      <table class="an" style="margin-top:12px">
+        <thead><tr><th>condition</th><th class="wide" style="text-align:right">all</th><th style="text-align:right">top 25%</th><th style="text-align:right">elites</th><th style="text-align:right">Δ</th><th class="note">what it isolates</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p style="margin-top:8px;color:var(--muted);font-size:10px">Mean accumulated fitness per agent over ${steps} steps (${(steps*CFG.DT).toFixed(1)}s), averaged over ${restarts} paired restart${restarts===1?'':'s'}. The distribution is heavily skewed — most agents never find food — so <b>Δ is computed on the top quartile</b>, which is the part of the population selection acts on. “Elites” are the ${CFG.ELITES} genomes kept at the last generation.</p>`;
+
+    if(taxis){
+      const f=taxis.food,t=taxis.toxin,n=taxisNull;
+      const nul=v=>n?`<span class="flat">${v.toFixed(3)}</span>`:'<span class="flat">—</span>';
+      $('anTaxis').innerHTML=`
+        <table class="an">
+          <thead><tr><th>measure</th><th style="text-align:right">observed</th><th style="text-align:right">chance</th></tr></thead>
+          <tr><td><span class="tag">food</span>corr(turn, food bearing) — positive means it steers toward food</td>
+              <td class="num ${f>0.15?'rise':f<-0.15?'drop':'flat'}">r = ${f.toFixed(3)}</td>
+              <td class="num">${nul(n?n.food:0)}</td></tr>
+          <tr><td><span class="tag">toxin</span>corr(turn, toxin bearing) — negative means it steers away</td>
+              <td class="num ${t<-0.15?'rise':t>0.15?'drop':'flat'}">r = ${t.toFixed(3)}</td>
+              <td class="num">${nul(n?n.toxin:0)}</td></tr>
+          <tr><td><span class="tag">approach</span>mean forward component of the food vector</td>
+              <td class="num">${taxis.forwardBias.toFixed(4)}</td>
+              <td class="num">${nul(n?n.forwardBias:0)}</td></tr>
+          <tr><td><span class="tag">spread</span>agents with individual |r| &gt; 0.2 toward food</td>
+              <td class="num">${taxis.strongFood} / ${CFG.POP}</td>
+              <td class="num"><span class="flat">${n?n.strongFood:'—'} / ${CFG.POP}</span></td></tr>
+        </table>
+        <p style="margin-top:6px;color:var(--muted);font-size:10px">Pooled over ${taxis.samples.toLocaleString()} agent-steps. Consecutive steps are highly autocorrelated, so the per-agent count is only meaningful against the “chance” column — the same statistic measured while every sense was scrambled.</p>`;
+    }
+
+    const pop=await refreshPopulation();
+    renderVerdict(results,base,taxis,taxisNull,pop,steps);
+    } finally {
+      // Only now is the panel fully rendered — re-enabling earlier would let a
+      // second run start while the first was still writing its results.
+      sim.analysing=false;busy=false;runBtn.disabled=false;$('anProgress').textContent='';
+    }
+  }
+
+  function renderVerdict(results,base,taxis,taxisNull,pop,steps){
+    const out=[];
+    const drop=key=>(base-mean(results[key].top))/Math.abs(base);
+    // Reads as English whichever way the effect goes — an ablation that *helps*
+    // is a real (and interesting) outcome, not a negative cost.
+    const cost=d=>d>=0?`costs ${(d*100).toFixed(0)}%`:`raises fitness ${(-d*100).toFixed(0)}%`;
+    // Fitness accrues at up to ~1 per second of sim time, so the floor for
+    // "worth interpreting" has to scale with how long the episode ran.
+    const ceiling=steps*CFG.DT, floor=0.03*ceiling;
+    if(base<floor){
+      out.push(`<div><b>Fitness is too low to interpret</b> (${base.toFixed(3)} against a rough ceiling of ${ceiling.toFixed(1)} for this episode length). Nothing is foraging yet. Let it run more generations, or lengthen the episode, before reading anything below as evidence.</div>`);
+    }else{
+      const blind=drop('blind');
+      out.push(blind<0.15
+        ? `<div><b>Open loop.</b> Scrambling every sense ${cost(blind)}, so behaviour is essentially an intrinsic motor pattern that happens to work. Nothing is being sensed.</div>`
+        : blind<0.5
+        ? `<div><b>Partly closed loop.</b> Scrambling every sense ${cost(blind)}. Some of the performance is sensory, much of it is still open-loop dynamics.</div>`
+        : `<div><b>Closed loop.</b> Scrambling every sense ${cost(blind)} — the behaviour genuinely depends on what the agent perceives.</div>`);
+
+      const mods=[['noFood','food'],['noToxin','toxin'],['noWall','wall']].map(([k,n])=>[n,drop(k)]).sort((a,b)=>b[1]-a[1]);
+      out.push(mods[0][1]<0.08
+        ? `<div><b>No single sense is load-bearing.</b> The biggest effect of removing one is ${mods[0][0]}, which ${cost(mods[0][1])}.</div>`
+        : `<div><b>Dominant modality: ${mods[0][0]}</b> (${cost(mods[0][1])}), then ${mods[1][0]} (${cost(mods[1][1])}) and ${mods[2][0]} (${cost(mods[2][1])}).</div>`);
+
+      const les=drop('lesion');
+      out.push(les<0.10
+        ? `<div><b>Not actually recurrent.</b> Zeroing every cell-to-cell connection ${cost(les)} — the network is behaving as a reactive map from senses to motors, with no useful internal state.</div>`
+        : `<div><b>Recurrence is load-bearing.</b> Lesioning the off-diagonal weights ${cost(les)}, so internal dynamics are contributing something the instantaneous sensors do not.</div>`);
+
+      const nov=drop('novel');
+      out.push(nov>0.40
+        ? `<div><b>Overfitted to this layout.</b> A fresh field ${cost(nov)} — much of the fitness is memorised geography, not a general foraging policy.</div>`
+        : nov<-0.15
+        ? `<div><b>No layout-specific skill.</b> A field it was never selected on actually ${cost(nov)}, so nothing here is tuned to the resident layout — the differences are the luck of where patches fell.</div>`
+        : `<div><b>Generalises.</b> A layout it was never selected on ${cost(nov)}, which is what a real gradient-following policy looks like.</div>`);
+    }
+
+    const all=results.baseline.all;
+    if(all){
+      const med=median(all),s=sd(all),el=meanOf(all,CFG.ELITES);
+      const z=s>1e-9?(el-med)/s:0;
+      out.push(z<0.5
+        ? `<div><b>Selection may be tracking luck.</b> Re-run from fresh spawns, the elites ${z<0?`fall <em>below</em> the population median by ${(-z).toFixed(2)} sd`:`beat the population median by only ${z.toFixed(2)} sd`}. One noisy episode per generation is not enough to separate a good genome from a good spawn.</div>`
+        : `<div><b>The elites are really better.</b> On fresh spawns they beat the population median by ${z.toFixed(2)} sd, so selection is picking up genotype rather than starting position.</div>`);
+    }
+    if(taxis){
+      const nullR=taxisNull?Math.abs(taxisNull.food):0;
+      const nullN=taxisNull?taxisNull.strongFood:0;
+      const beatsNull=Math.abs(taxis.food)>Math.max(0.15,2*nullR)&&taxis.strongFood>Math.max(8,1.5*nullN);
+      out.push(beatsNull
+        ? `<div><b>Chemotaxis is present</b> (r = ${taxis.food.toFixed(3)} against a chance level of ${nullR.toFixed(3)}; ${taxis.strongFood}/${CFG.POP} agents individually vs ${nullN} by chance). Steering really is coupled to where the food is.</div>`
+        : `<div><b>No chemotaxis above chance</b> (r = ${taxis.food.toFixed(3)} vs ${nullR.toFixed(3)} with the senses scrambled; ${taxis.strongFood} agents over threshold vs ${nullN} by chance). Turning is not tracking food bearing, whatever the fitness column says.</div>`);
+    }
+    if(pop){
+      const ceiling=sim.gen>0?CFG.ELITES:CFG.POP;
+      out.push(pop.founders<=Math.max(3,ceiling*0.4)
+        ? `<div><b>Monoculture.</b> ${pop.founders} founding lineage${pop.founders===1?'':'s'} left of a possible ${ceiling}, genome σ ${pop.genomeSigma.toFixed(4)}. With ${CFG.ELITES} elites copied unmutated this is where the algorithm always ends up — and it means further progress depends entirely on mutation.</div>`
+        : `<div><b>Diversity is as good as this scheme allows.</b> ${pop.founders} of a possible ${ceiling} founding lineages, genome σ ${pop.genomeSigma.toFixed(4)}. Note the ceiling: every child descends from one of the ${CFG.ELITES} elites, so ancestral diversity can only ever fall.</div>`);
+      if(pop.streak>=5)out.push(`<div>One genome has held an elite slot for <b>${pop.streak} consecutive generations</b> across independent re-evaluations — that is the strongest single sign here that something real was found.</div>`);
+    }
+    $('anVerdict').innerHTML=`<div class="verdict">${out.join('')}</div>`;
+  }
+  $('anRun').onclick=runDiagnostics;
+
   addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&panelOpen()){closePanel();return}
     if(e.metaKey||e.ctrlKey||e.altKey||(e.target instanceof Element&&e.target.closest('input,select,textarea')))return;
     const k=e.key.toLowerCase();
+    if(k==='a'){$('analyse').click();return}
+    if(panelOpen())return;
     if(k===' '){e.preventDefault();$('pause').click()}
     else if(k==='s')$('step').click();
     else if(k==='e')$('evolve').click();
@@ -437,24 +940,25 @@ function drawInspector(data,selected,agentView){
   function updateHUD(snap){
     $('generation').textContent=sim.gen;$('epoch').textContent=(sim.stepNo*CFG.DT).toFixed(1)+'s';
     $('best').textContent=snap.diag[0].toFixed(3);$('meanEnergy').textContent=snap.diag[2].toFixed(3);
-    $('population').textContent=CFG.POP+' agents';$('tensors').textContent=tf.memory().numTensors+' · '+backend;
-  }
+    $('stock').textContent=(snap.diag[3]*100).toFixed(0)+'%';
+    $('lineages').textContent=new Set(sim.founder).size+' / '+CFG.POP;
+    }
   async function loop(now){
     const speed=Number($('speed').value);
-    const advancing=!evolving&&(!paused||singleStep);
+    const advancing=!evolving&&!sim.analysing&&(!paused||singleStep);
     if(advancing){
       for(let i=0;i<(singleStep?1:speed);i++)sim.step();
       singleStep=false;
       if(sim.stepNo>=CFG.EPOCH_STEPS){evolving=true;await sim.evolve();setSelected(0);evolving=false;toast('generation '+sim.gen+' developed')}
     }
     // While paused nothing moves, so skip the GPU readback unless the user has
-    // picked a different organism to inspect.
-    if(advancing||selectDirty){if(sim.snapshot(sim.selected))selectDirty=false}
+    // picked a different organism to inspect. During analysis the field is frozen.
+    if(!sim.analysing&&(advancing||selectDirty)){if(sim.snapshot(sim.selected))selectDirty=false}
     const snap=sim.lastSnapshot;
     if(snap&&snap!==shownSnapshot){
       // Agent positions follow every readback; the DOM and the 2D inspector are
       // far more expensive to touch, so they stay on a slower clock.
-      shownSnapshot=snap;renderer.setAgents(snap.view);
+      shownSnapshot=snap;renderer.setAgents(snap.view);renderer.setFoodStock(snap.stock);
       const b=sim.selected*CFG.VIEW_STRIDE;renderer.appendTrail(snap.view[b],snap.view[b+1]);
       if(now-lastUI>120){updateHUD(snap);drawInspector(snap.inspect,sim.selected,snap.view);lastUI=now}
     }
