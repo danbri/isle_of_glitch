@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Evo/Devo Field — GPU CTRNN World</title>
+<meta name="description" content="An in-browser artificial life field: gene-regulatory networks develop into recurrent nervous systems, and the whole population is evolved on the GPU with TensorFlow.js." />
+<meta name="theme-color" content="#071011" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23071011'/%3E%3Cpath d='M25 16 8 25l4-9-4-9z' fill='%23b9ff68'/%3E%3C/svg%3E" />
+<style>
+  :root{
+    --ink:#eaf8f3; --muted:#89a8a2; --line:rgba(164,234,217,.16);
+    --panel:rgba(5,14,15,.76); --panel2:rgba(11,25,25,.62);
+    --lime:#b9ff68; --cyan:#57f3d0; --amber:#ffd46a; --pink:#ff5d9e;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#040909;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  body:before{content:"";position:fixed;inset:0;pointer-events:none;background:
+    radial-gradient(circle at 20% 15%,rgba(38,182,148,.09),transparent 34%),
+    radial-gradient(circle at 82% 77%,rgba(255,83,153,.07),transparent 30%);z-index:1}
+  #world{position:fixed;inset:0;width:100%;height:100%;display:block;background:#061011;touch-action:none}
+  #veil{position:fixed;inset:0;pointer-events:none;z-index:2;background:linear-gradient(90deg,rgba(0,0,0,.48),transparent 23%,transparent 73%,rgba(0,0,0,.53));}
+  .hud{position:fixed;z-index:4;pointer-events:none}
+  .brand{left:22px;top:18px;max-width:calc(100vw - 44px)}
+  .brand h1{font-size:15px;line-height:1;margin:0 0 7px;letter-spacing:.24em;font-weight:760;text-transform:uppercase}
+  .brand .sub{font:11px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);letter-spacing:.04em}
+  .brand a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(87,243,208,.3);pointer-events:auto}
+  .brand a:hover{border-bottom-color:var(--cyan)}
+  .pill{display:inline-flex;align-items:center;gap:7px;margin-top:10px;padding:6px 9px;border:1px solid var(--line);border-radius:999px;background:rgba(5,18,17,.72);backdrop-filter:blur(12px);font:10px ui-monospace,SFMono-Regular,Menlo,monospace;color:#c7e3dc}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 14px currentColor}
+  .dot.live{background:var(--lime)}
+  .stats{top:20px;right:20px;display:grid;grid-template-columns:repeat(2,minmax(116px,1fr));gap:8px;width:min(330px,42vw)}
+  .card{padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:var(--panel);backdrop-filter:blur(15px);box-shadow:0 12px 35px rgba(0,0,0,.22)}
+  .label{font:9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+  .value{margin-top:6px;font:600 18px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#effff9}
+  .value.small{font-size:13px}
+  #inspectorPanel{position:fixed;z-index:4;right:20px;bottom:74px;width:min(340px,42vw);height:266px;padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--panel);backdrop-filter:blur(17px);box-shadow:0 20px 50px rgba(0,0,0,.3)}
+  #inspectorPanel header{height:31px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  #inspectorPanel h2{margin:0;font-size:11px;letter-spacing:.15em;text-transform:uppercase}
+  #selectedMeta{font:9px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);text-align:right;white-space:nowrap}
+  #inspector{width:100%;height:210px;display:block}
+  #architecture{position:fixed;z-index:4;left:20px;bottom:75px;width:min(310px,35vw);padding:12px 13px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);backdrop-filter:blur(15px);font:10px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:#aec9c3}
+  #architecture b{color:#e8fff8;font-weight:650}
+  #architecture .arrow{color:var(--cyan)}
+  #controls{position:fixed;z-index:6;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:7px;border:1px solid var(--line);border-radius:13px;background:rgba(4,13,14,.88);backdrop-filter:blur(20px);box-shadow:0 18px 50px rgba(0,0,0,.38)}
+  button,select,input{font:11px ui-monospace,SFMono-Regular,Menlo,monospace}
+  button{height:34px;white-space:nowrap;border:1px solid rgba(177,240,224,.18);border-radius:8px;background:#102020;color:#dff8f1;padding:0 12px;cursor:pointer}
+  button:hover{background:#17302d;border-color:rgba(177,240,224,.36)}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  button.primary{background:#1b3d34;color:#dfffe9}
+  .rangeWrap{display:flex;align-items:center;gap:7px;padding:0 7px;color:#8faea7;font:9px ui-monospace,SFMono-Regular,Menlo,monospace}
+  input[type=range]{width:92px;accent-color:#8df0cc}
+  #toast{position:fixed;z-index:9;left:50%;top:18px;transform:translateX(-50%) translateY(-70px);padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:#112321;color:#dffff7;font:11px ui-monospace,SFMono-Regular,Menlo,monospace;transition:transform .25s ease}
+  #toast.show{transform:translateX(-50%) translateY(0)}
+  #loading{position:fixed;z-index:20;inset:0;display:grid;place-items:center;background:#050b0c}
+  #loading .box{width:min(470px,82vw);padding:22px;border:1px solid var(--line);border-radius:14px;background:#091516}
+  #loading h2{font-size:14px;letter-spacing:.18em;text-transform:uppercase;margin:0 0 12px}
+  #loading p{font:11px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:#9dbbb4;margin:0}
+  #bar{height:3px;margin-top:18px;background:#132524;overflow:hidden}
+  #bar i{display:block;width:37%;height:100%;background:#85f4ce;animation:load 1.1s infinite ease-in-out}
+  @keyframes load{0%{transform:translateX(-110%)}100%{transform:translateX(330%)}}
+  @media(prefers-reduced-motion:reduce){#bar i{animation:none;width:100%}#toast{transition:none}}
+  @media(max-width:760px){
+    .brand{left:12px;top:12px;max-width:calc(100vw - 24px)}
+    .stats{left:10px;right:10px;top:112px;width:auto;grid-template-columns:repeat(3,1fr);gap:6px}
+    .card{padding:8px 9px}
+    .value{font-size:14px}.value.small{font-size:11px}
+    #architecture{display:none}
+    #controls{left:8px;right:8px;transform:none;flex-wrap:wrap;justify-content:center;gap:6px}
+    input[type=range]{width:78px}
+    #inspectorPanel{left:10px;right:10px;width:auto;bottom:112px;height:220px}
+    #inspector{height:164px}
+  }
+  @media(max-width:760px) and (max-height:620px){#inspectorPanel{display:none}}
+</style>
+</head>
+<body>
+<canvas id="world" role="img" aria-label="Live simulation field: evolved agents foraging among nutrient and toxin sources."></canvas><div id="veil"></div>
+<div class="hud brand">
+  <h1>Evo / Devo Field</h1>
+  <div class="sub">continuous agents · developmental GRNs · recurrent control<br><a href="../../">isle of glitch</a></div>
+  <div class="pill"><span id="backendDot" class="dot"></span><span id="backendText">initialising tensor backend</span></div>
+</div>
+<div class="hud stats">
+  <div class="card"><div class="label">generation</div><div id="generation" class="value">0</div></div>
+  <div class="card"><div class="label">epoch</div><div id="epoch" class="value">0.0s</div></div>
+  <div class="card"><div class="label">best fitness</div><div id="best" class="value">—</div></div>
+  <div class="card"><div class="label">mean energy</div><div id="meanEnergy" class="value">—</div></div>
+  <div class="card"><div class="label">population</div><div id="population" class="value small">192 agents</div></div>
+  <div class="card"><div class="label">GPU tensors</div><div id="tensors" class="value small">—</div></div>
+</div>
+<div id="architecture">
+  <b>Genome</b> 10-node regulatory CTRNN<br>
+  <span class="arrow">↓ 48 developmental integration steps</span><br>
+  <b>Embryo</b> 12 position-sensitive cells<br>
+  <span class="arrow">↓ ligand/receptor wiring</span><br>
+  <b>Adult</b> 12-node sensorimotor CTRNN<br>
+  <span class="arrow">↓ differential thrust</span><br>
+  <b>World</b> local nutrient/toxin fields + rigid circles<br><br>
+  Simulation, genome, phenotype and world arrays remain tensors on the selected backend. Only compact drawing snapshots are read back.
+</div>
+<section id="inspectorPanel">
+  <header><h2>Selected organism</h2><div id="selectedMeta">agent 0<br>click an agent</div></header>
+  <canvas id="inspector"></canvas>
+</section>
+<div id="controls">
+  <button id="pause" class="primary" title="Pause or resume (space)">pause</button>
+  <button id="step" title="Advance one simulation step (S)">step</button>
+  <button id="evolve" title="Select elites and redevelop now (E)">evolve now</button>
+  <button id="reset" title="New world and new random genomes (R)">new biosphere</button>
+  <label class="rangeWrap">speed <input id="speed" type="range" min="1" max="10" value="3" aria-label="Simulation steps per frame" /></label>
+  <label class="rangeWrap">mutation <input id="mutation" type="range" min="1" max="30" value="10" aria-label="Mutation rate, percent of genome loci" /></label>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="loading" role="status"><div class="box"><h2>Compiling the biosphere</h2><p id="loadingText">Loading TensorFlow.js, selecting WebGPU where available, then developing the first population.</p><div id="bar"><i></i></div></div></div>
+<noscript><div style="position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:#050b0c;padding:24px;font:12px/1.6 ui-monospace,monospace;color:#9dbbb4;text-align:center">This piece is a live simulation and needs JavaScript, WebGL2 and network access to a pinned TensorFlow.js build.</div></noscript>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js" integrity="sha384-vE8hbVJ4lezako5rlvE7bY0BVzWlFhZncPlckrqNwcUQpVtgbENTgZ8TBbnPjZre" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgpu@4.22.0/dist/tf-backend-webgpu.js" integrity="sha384-JI0+NdZ8X32V2AIAz2gPAG8mB7QAMouVGgCMCBElp306fgfnuN/HQjxOwBIeUVNf" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+'use strict';
+
+const CFG = Object.freeze({
+  POP: 192, CELLS: 12, GENES: 10, SENSORS: 8,
+  FOOD: 42, HAZARDS: 18, OBSTACLES: 8,
+  DT: 0.018, EPOCH_STEPS: 1450, DEV_STEPS: 48,
+  ELITES: 10, WORLD_BOUND: 0.94, AGENT_RADIUS: 0.017,
+  VIEW_STRIDE: 9, TRAIL_POINTS: 300,
+});
+
+const $ = id => document.getElementById(id);
+const clamp = (x,a,b)=>Math.max(a,Math.min(b,x));
+const seeded = (()=>{let s=0x8f3d20a1;return()=>((s=Math.imul(1664525,s)+1013904223|0)>>>0)/4294967296})();
+const toast = msg => { const e=$('toast'); e.textContent=msg; e.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>e.classList.remove('show'),1800); };
+
+function makeWorld(){
+  const obstacles=[[-.57,-.35,.13],[-.42,.36,.095],[-.04,-.08,.115],[.18,.50,.10],[.46,.17,.14],[.60,-.48,.105],[-.03,.70,.075],[.69,.68,.08]];
+  const clearPoint=(x,y,margin=.08)=>obstacles.every(o=>Math.hypot(x-o[0],y-o[1])>o[2]+margin);
+  // Always returns exactly `count` points: after `guard` rejections the clearance
+  // test is dropped, so the caller can rely on the length when building tensors.
+  const points=(count)=>{const out=[];let guard=0;while(out.length<count){const x=(seeded()*1.72)-.86,y=(seeded()*1.72)-.86;if(clearPoint(x,y)||++guard>4000)out.push([x,y])}return out};
+  return {obstacles,food:points(CFG.FOOD),hazards:points(CFG.HAZARDS)};
+}
+let WORLD=makeWorld();
+
+class GLWorld {
+  constructor(canvas){
+    this.canvas=canvas; this.gl=canvas.getContext('webgl2',{antialias:true,alpha:false,premultipliedAlpha:false});
+    if(!this.gl) throw new Error('WebGL2 is required for the visualiser.');
+    this.agentData=null; this.selected=0; this.trail=[]; this.statics=null; this.lost=false;
+    this.agentArray=new Float32Array(CFG.POP*7);
+    this.init(); this.resize();
+    addEventListener('resize',()=>this.resize());
+    canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();this.lost=true;this.onLost&&this.onLost()});
+  }
+  shader(type,src){const gl=this.gl,s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s}
+  program(vs,fs){const gl=this.gl,p=gl.createProgram();gl.attachShader(p,this.shader(gl.VERTEX_SHADER,vs));gl.attachShader(p,this.shader(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));return p}
+  init(){
+    const gl=this.gl;
+    this.bg=this.program(`#version 300 es
+      precision highp float; out vec2 uv; void main(){vec2 p=vec2((gl_VertexID<<1)&2,gl_VertexID&2);uv=p;gl_Position=vec4(p*2.-1.,0,1);}`,
+      `#version 300 es
+      precision highp float; in vec2 uv; out vec4 outColor; uniform float time; uniform vec2 res;
+      float grid(vec2 p,float n){vec2 q=abs(fract(p*n-.5)-.5)/fwidth(p*n);return 1.-min(min(q.x,q.y),1.);}
+      void main(){vec2 p=uv*2.-1.;p.x*=res.x/res.y;float r=length(p);float g=grid(p*.5,10.)*.038+grid(p*.5,2.)*.07;float pulse=.5+.5*sin(time*.22+r*8.);vec3 c=vec3(.020,.052,.052)+g*vec3(.13,.34,.29);c+=exp(-r*2.8)*.018*vec3(.2,.8,.62);c+=pulse*.003;outColor=vec4(c,1);}`);
+    this.circle=this.program(`#version 300 es
+      precision highp float; layout(location=0) in vec2 quad; layout(location=1) in vec2 center; layout(location=2) in float radius; layout(location=3) in vec4 color;
+      out vec2 q; out vec4 col; void main(){q=quad;col=color;gl_Position=vec4(center+quad*radius,0,1);}`,
+      `#version 300 es
+      precision highp float; in vec2 q; in vec4 col; out vec4 outColor; void main(){float d=length(q);if(d>1.)discard;float alpha=1.-smoothstep(.78,1.,d);float core=1.-smoothstep(.0,.9,d);outColor=vec4(col.rgb*(.72+core*.52),col.a*alpha);}`);
+    this.agent=this.program(`#version 300 es
+      precision highp float; layout(location=0) in vec2 shape; layout(location=1) in vec2 center; layout(location=2) in float angle; layout(location=3) in vec4 color;
+      out vec4 col; void main(){float c=cos(angle),s=sin(angle);mat2 r=mat2(c,-s,s,c);vec2 p=center+r*(shape*.025);col=color;gl_Position=vec4(p,0,1);}`,
+      `#version 300 es
+      precision highp float; in vec4 col; out vec4 outColor; void main(){outColor=vec4(col.rgb*(.85+col.a*.35),1);}`);
+    this.line=this.program(`#version 300 es
+      precision highp float; layout(location=0) in vec2 p; void main(){gl_Position=vec4(p,0,1);}`,
+      `#version 300 es
+      precision highp float; out vec4 outColor; uniform vec4 color; void main(){outColor=color;}`);
+    this.bgTime=gl.getUniformLocation(this.bg,'time'); this.bgRes=gl.getUniformLocation(this.bg,'res');
+    this.lineColor=gl.getUniformLocation(this.line,'color');
+    this.quad=this.buffer(new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]));
+    this.tri=this.buffer(new Float32Array([1,0,-.7,.62,-.58,0, -.58,0,-.7,-.62,1,0]));
+    this.circleInstance=gl.createBuffer(); this.agentInstance=gl.createBuffer(); this.lineBuffer=gl.createBuffer();
+  }
+  buffer(data){const gl=this.gl,b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);return b}
+  resize(){const dpr=Math.min(devicePixelRatio||1,2);const w=Math.floor(innerWidth*dpr),h=Math.floor(innerHeight*dpr);if(this.canvas.width!==w||this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h}}
+  viewport(){const gl=this.gl,w=gl.drawingBufferWidth,h=gl.drawingBufferHeight,s=Math.min(w,h),x=(w-s)>>1,y=(h-s)>>1;gl.viewport(x,y,s,s);return{x,y,s,w,h}}
+  setAgents(data){this.agentData=data}
+  setSelected(i){this.selected=i;this.trail.length=0}
+  invalidateStatics(){this.statics=null}
+  appendTrail(x,y){this.trail.push(x,y);if(this.trail.length>CFG.TRAIL_POINTS*2)this.trail.splice(0,2)}
+  // Obstacles, food and hazards only change when the world is reseeded, so the
+  // interleaved instance array is built once and reuploaded per frame.
+  staticCircles(){
+    if(this.statics)return this.statics;
+    const items=[];
+    for(const o of WORLD.obstacles)items.push([o[0],o[1],o[2],.12,.29,.27,.95]);
+    for(const p of WORLD.food)items.push([p[0],p[1],.011,.95,.73,.24,.82]);
+    for(const p of WORLD.hazards)items.push([p[0],p[1],.010,.95,.20,.47,.74]);
+    const arr=new Float32Array((items.length+1)*7);
+    items.forEach((v,i)=>arr.set(v,i*7));
+    this.statics={arr,count:items.length};
+    return this.statics;
+  }
+  drawCircles(arr,count){
+    const gl=this.gl;
+    gl.useProgram(this.circle);gl.bindBuffer(gl.ARRAY_BUFFER,this.quad);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);gl.vertexAttribDivisor(0,0);
+    gl.bindBuffer(gl.ARRAY_BUFFER,this.circleInstance);gl.bufferData(gl.ARRAY_BUFFER,arr,gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,2,gl.FLOAT,false,28,0);gl.vertexAttribDivisor(1,1);
+    gl.enableVertexAttribArray(2);gl.vertexAttribPointer(2,1,gl.FLOAT,false,28,8);gl.vertexAttribDivisor(2,1);
+    gl.enableVertexAttribArray(3);gl.vertexAttribPointer(3,4,gl.FLOAT,false,28,12);gl.vertexAttribDivisor(3,1);
+    gl.drawArraysInstanced(gl.TRIANGLES,0,6,count);
+  }
+  render(time){
+    if(this.lost)return;
+    const gl=this.gl,S=CFG.VIEW_STRIDE;gl.disable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+    gl.viewport(0,0,gl.drawingBufferWidth,gl.drawingBufferHeight);gl.useProgram(this.bg);gl.uniform1f(this.bgTime,time*.001);gl.uniform2f(this.bgRes,gl.drawingBufferWidth,gl.drawingBufferHeight);gl.drawArrays(gl.TRIANGLES,0,3);
+    this.viewport();
+    const st=this.staticCircles();let count=st.count;
+    if(this.agentData){const b=this.selected*S;st.arr.set([this.agentData[b],this.agentData[b+1],.105,.20,.94,.75,.10],count*7);count++}
+    this.drawCircles(st.arr,count);
+    if(this.trail.length>3){gl.useProgram(this.line);gl.bindBuffer(gl.ARRAY_BUFFER,this.lineBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(this.trail),gl.DYNAMIC_DRAW);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);gl.vertexAttribDivisor(0,0);gl.uniform4f(this.lineColor,.34,.97,.80,.45);gl.drawArrays(gl.LINE_STRIP,0,this.trail.length>>1)}
+    if(this.agentData){
+      const arr=this.agentArray;
+      for(let i=0;i<CFG.POP;i++){const s=i*S,d=i*7;arr[d]=this.agentData[s];arr[d+1]=this.agentData[s+1];arr[d+2]=this.agentData[s+2];arr[d+3]=this.agentData[s+6];arr[d+4]=this.agentData[s+7];arr[d+5]=this.agentData[s+8];arr[d+6]=clamp(this.agentData[s+3],0,1.4)/1.4;}
+      gl.useProgram(this.agent);gl.bindBuffer(gl.ARRAY_BUFFER,this.tri);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);gl.vertexAttribDivisor(0,0);
+      gl.bindBuffer(gl.ARRAY_BUFFER,this.agentInstance);gl.bufferData(gl.ARRAY_BUFFER,arr,gl.DYNAMIC_DRAW);
+      gl.enableVertexAttribArray(1);gl.vertexAttribPointer(1,2,gl.FLOAT,false,28,0);gl.vertexAttribDivisor(1,1);
+      gl.enableVertexAttribArray(2);gl.vertexAttribPointer(2,1,gl.FLOAT,false,28,8);gl.vertexAttribDivisor(2,1);
+      gl.enableVertexAttribArray(3);gl.vertexAttribPointer(3,4,gl.FLOAT,false,28,12);gl.vertexAttribDivisor(3,1);
+      gl.drawArraysInstanced(gl.TRIANGLES,0,6,CFG.POP);
+    }
+  }
+  pick(clientX,clientY){
+    if(!this.agentData)return this.selected;
+    const S=CFG.VIEW_STRIDE,r=this.canvas.getBoundingClientRect(),px=(clientX-r.left)/r.width,py=1-(clientY-r.top)/r.height;const aspect=r.width/r.height;let wx,wy;
+    if(aspect>1){const side=1/aspect;wx=(px-(1-side)/2)/side*2-1;wy=py*2-1}else{const side=aspect;wx=px*2-1;wy=((py-(1-side)/2)/side)*2-1}
+    let best=this.selected,bd=1e9;for(let i=0;i<CFG.POP;i++){const s=i*S,dx=this.agentData[s]-wx,dy=this.agentData[s+1]-wy,d=dx*dx+dy*dy;if(d<bd){bd=d;best=i}}return best;
+  }
+}
+
+class EvoDevoSim {
+  constructor(){this.gen=0;this.stepNo=0;this.selected=0;this.mutation=.10;this.snapshotPending=false;this.lastSnapshot=null;this.makeConstants();this.makeVariables();}
+  v(t){const x=tf.variable(t);t.dispose();return x}
+  makeConstants(){
+    this.food=tf.tensor2d(WORLD.food,[CFG.FOOD,2]); this.haz=tf.tensor2d(WORLD.hazards,[CFG.HAZARDS,2]);
+    this.obs=tf.tensor2d(WORLD.obstacles.map(o=>[o[0],o[1]]),[CFG.OBSTACLES,2]);this.obsR=tf.tensor1d(WORLD.obstacles.map(o=>o[2]));
+    const p=[];for(let i=0;i<CFG.CELLS;i++)p.push(-1+2*i/(CFG.CELLS-1));this.cellPos=tf.tensor1d(p);
+    const morph=p.flatMap(x=>[1,x,x*x]);this.morph=tf.tensor3d(morph,[1,CFG.CELLS,3]);
+    const dk=[];for(let i=0;i<CFG.CELLS;i++)for(let j=0;j<CFG.CELLS;j++)dk.push(Math.exp(-Math.abs(i-j)/3.1));this.distKernel=tf.tensor3d(dk,[1,CFG.CELLS,CFG.CELLS]);
+    const eye=[];for(let i=0;i<CFG.CELLS;i++)for(let j=0;j<CFG.CELLS;j++)eye.push(i===j?1:0);this.eye=tf.tensor3d(eye,[1,CFG.CELLS,CFG.CELLS]);
+    const emb=[];for(let i=0;i<CFG.SENSORS;i++){const a=(i/CFG.SENSORS)*Math.PI*2;emb.push(Math.cos(a),Math.sin(a))}this.sensorEmb=tf.tensor3d(emb,[1,CFG.SENSORS,2]);
+  }
+  makeVariables(){
+    this.genR=this.v(tf.randomNormal([CFG.POP,CFG.GENES,CFG.GENES],0,.38));
+    this.genM=this.v(tf.randomNormal([CFG.POP,3,CFG.GENES],0,.75));
+    this.bias=this.v(tf.zeros([CFG.POP,CFG.CELLS]));this.tau=this.v(tf.ones([CFG.POP,CFG.CELLS]));
+    this.W=this.v(tf.zeros([CFG.POP,CFG.CELLS,CFG.CELLS]));this.Win=this.v(tf.zeros([CFG.POP,CFG.SENSORS,CFG.CELLS]));this.Wout=this.v(tf.zeros([CFG.POP,CFG.CELLS,2]));
+    this.expr=this.v(tf.zeros([CFG.POP,CFG.CELLS,CFG.GENES]));this.color=this.v(tf.zeros([CFG.POP,3]));
+    this.pos=this.v(tf.zeros([CFG.POP,2]));this.vel=this.v(tf.zeros([CFG.POP,2]));this.angle=this.v(tf.zeros([CFG.POP]));this.omega=this.v(tf.zeros([CFG.POP]));
+    this.energy=this.v(tf.ones([CFG.POP]));this.fitness=this.v(tf.zeros([CFG.POP]));this.neural=this.v(tf.zeros([CFG.POP,CFG.CELLS]));
+  }
+  async initialise(){await this.develop();this.resetBodies();await this.warmup()}
+  async warmup(){for(let i=0;i<3;i++)this.step();const z=tf.sum(this.pos);await z.data();z.dispose();this.resetBodies()}
+  // Nutrient and toxin fields are the only reseedable part of the world; the
+  // obstacle ring is fixed, so its tensors are left alone.
+  reseedWorld(){
+    WORLD=makeWorld();
+    this.food.dispose();this.haz.dispose();
+    this.food=tf.tensor2d(WORLD.food,[CFG.FOOD,2]);
+    this.haz=tf.tensor2d(WORLD.hazards,[CFG.HAZARDS,2]);
+  }
+  resetBodies(){tf.tidy(()=>{
+    this.pos.assign(tf.randomUniform([CFG.POP,2],-.82,.82));this.vel.assign(tf.zerosLike(this.vel));this.angle.assign(tf.randomUniform([CFG.POP],-Math.PI,Math.PI));this.omega.assign(tf.zerosLike(this.omega));
+    this.energy.assign(tf.randomUniform([CFG.POP],.85,1.15));this.fitness.assign(tf.zerosLike(this.fitness));this.neural.assign(tf.randomNormal([CFG.POP,CFG.CELLS],0,.08));
+  });this.stepNo=0}
+  async develop(){
+    let g=tf.zeros([CFG.POP,CFG.CELLS,CFG.GENES]);
+    const drive=tf.tidy(()=>tf.matMul(tf.tile(this.morph,[CFG.POP,1,1]),this.genM));
+    for(let i=0;i<CFG.DEV_STEPS;i++){
+      const next=tf.tidy(()=>{const reg=tf.matMul(g,this.genR);return g.add(tf.tanh(reg.add(drive)).sub(g).mul(.19))});g.dispose();g=next;
+    }
+    tf.tidy(()=>{
+      const e=tf.tanh(g);this.expr.assign(e);
+      const sl=k=>e.slice([0,0,k],[CFG.POP,CFG.CELLS,1]).squeeze([2]);
+      const bias=sl(0).mul(1.45);const tau=tf.sigmoid(sl(1)).mul(1.65).add(.24);this.bias.assign(bias);this.tau.assign(tau);
+      const le=sl(2),li=sl(3),re=sl(4),ri=sl(5);
+      let w=le.expandDims(2).mul(re.expandDims(1)).sub(li.expandDims(2).mul(ri.expandDims(1))).mul(this.distKernel).mul(2.0);
+      w=w.add(sl(9).expandDims(2).mul(this.eye).mul(.65));this.W.assign(w);
+      const receptor=tf.stack([sl(6),sl(7)],2);const se=tf.tile(this.sensorEmb,[CFG.POP,1,1]);this.Win.assign(tf.matMul(se,receptor.transpose([0,2,1])).mul(1.18));
+      const cp=tf.tile(this.cellPos.expandDims(0),[CFG.POP,1]);const motor=sl(8);this.Wout.assign(tf.stack([tf.tanh(motor.sub(cp.mul(1.4))),tf.tanh(motor.add(cp.mul(1.4)))],2));
+      const c=tf.stack([sl(2).mean(1),sl(6).mean(1),sl(8).mean(1)],1).mul(1.2).add(.6).clipByValue(.12,1);this.color.assign(c);
+    });
+    drive.dispose();g.dispose();
+  }
+  field(pos,points,sigma2){
+    const rel=points.expandDims(0).sub(pos.expandDims(1));const d2=rel.square().sum(2);const w=d2.div(-sigma2).exp();const mass=w.sum(1).add(1e-5);const vec=rel.mul(w.expandDims(2)).sum(1).div(mass.expandDims(1));return{rel,d2,w,mass,vec};
+  }
+  step(){
+    tf.tidy(()=>{
+      const food=this.field(this.pos,this.food,.050);const haz=this.field(this.pos,this.haz,.036);
+      const orel=this.pos.expandDims(1).sub(this.obs.expandDims(0));const od=tf.sqrt(orel.square().sum(2).add(1e-6));const on=orel.div(od.expandDims(2));const orange=this.obsR.add(.13).expandDims(0);const ostr=tf.relu(orange.sub(od)).div(orange);const repel=on.mul(ostr.expandDims(2)).sum(1);
+      const c=tf.cos(this.angle),s=tf.sin(this.angle);const body=(v)=>[v.slice([0,0],[-1,1]).squeeze([1]).mul(c).add(v.slice([0,1],[-1,1]).squeeze([1]).mul(s)),v.slice([0,1],[-1,1]).squeeze([1]).mul(c).sub(v.slice([0,0],[-1,1]).squeeze([1]).mul(s))];
+      const fb=body(food.vec),hb=body(haz.vec),rb=body(repel);const boundary=tf.relu(this.pos.abs().max(1).sub(.70)).mul(3.2);
+      const sensors=tf.stack([fb[0],fb[1],tf.tanh(food.mass.mul(.16)),hb[0],hb[1],tf.tanh(haz.mass.mul(.18)),tf.tanh(boundary.add(rb[0].abs().mul(.4))),this.energy.sub(.7)],1);
+      const act=tf.tanh(this.neural.add(this.bias));const rec=tf.matMul(act.expandDims(1),this.W).squeeze([1]);const inp=tf.matMul(sensors.expandDims(1),this.Win).squeeze([1]);
+      const ny=this.neural.add(rec.add(inp).sub(this.neural).div(this.tau).mul(CFG.DT));this.neural.assign(ny);
+      const motor=tf.matMul(tf.tanh(ny).expandDims(1),this.Wout).squeeze([1]).tanh();const left=motor.slice([0,0],[-1,1]).squeeze([1]),right=motor.slice([0,1],[-1,1]).squeeze([1]);
+      const thrust=left.add(right).mul(.5),turn=right.sub(left);const ax=c.mul(thrust).mul(.72).add(repel.slice([0,0],[-1,1]).squeeze([1]).mul(.95));const ay=s.mul(thrust).mul(.72).add(repel.slice([0,1],[-1,1]).squeeze([1]).mul(.95));
+      let nv=this.vel.mul(.982).add(tf.stack([ax,ay],1).mul(CFG.DT));const speed=tf.sqrt(nv.square().sum(1).add(1e-6));nv=nv.div(tf.maximum(speed.div(.34),tf.onesLike(speed)).expandDims(1));
+      const no=this.omega.mul(.91).add(turn.mul(.055));this.omega.assign(no);
+      // Wrapped to keep the heading in [-pi, pi]: it is integrated every step and
+      // would otherwise drift far enough for float32 cos/sin to lose precision.
+      const wrapped=this.angle.add(no).add(turn.mul(CFG.DT*.42)).add(Math.PI);
+      this.angle.assign(wrapped.sub(wrapped.div(2*Math.PI).floor().mul(2*Math.PI)).sub(Math.PI));
+      let np=this.pos.add(nv.mul(CFG.DT));const nrel=np.expandDims(1).sub(this.obs.expandDims(0));const nd=tf.sqrt(nrel.square().sum(2).add(1e-6));const nn=nrel.div(nd.expandDims(2));const pen=tf.relu(this.obsR.add(CFG.AGENT_RADIUS).expandDims(0).sub(nd));np=np.add(nn.mul(pen.expandDims(2)).sum(1));
+      const hit=np.abs().greater(CFG.WORLD_BOUND).toFloat();np=np.clipByValue(-CFG.WORLD_BOUND,CFG.WORLD_BOUND);nv=nv.mul(tf.onesLike(hit).sub(hit.mul(1.72)));this.pos.assign(np);this.vel.assign(nv);
+      const eat=food.d2.div(-.0018).exp().max(1),tox=haz.d2.div(-.0015).exp().max(1);const cost=thrust.abs().mul(.015).add(turn.abs().mul(.009)).add(.013);
+      const en=this.energy.add(eat.mul(.42).sub(tox.mul(.62)).sub(cost).mul(CFG.DT)).clipByValue(0,1.4);this.energy.assign(en);
+      const fit=this.fitness.add(eat.sub(tox.mul(1.35)).add(speed.mul(.018)).add(en.greater(.04).toFloat().mul(.003)).mul(CFG.DT));this.fitness.assign(fit);
+    });
+    this.stepNo++;
+  }
+  mutateTensor(parent,scale){const mask=tf.randomUniform(parent.shape).less(this.mutation).toFloat();return parent.add(tf.randomNormal(parent.shape,0,scale).mul(mask))}
+  async evolve(){
+    tf.tidy(()=>{
+      const top=tf.topk(this.fitness,CFG.ELITES,true);const eliteR=tf.gather(this.genR,top.indices),eliteM=tf.gather(this.genM,top.indices);const childN=CFG.POP-CFG.ELITES;const choice=tf.randomUniform([childN],0,CFG.ELITES,'int32');const parentIdx=tf.gather(top.indices,choice);
+      const childrenR=this.mutateTensor(tf.gather(this.genR,parentIdx),.16);const childrenM=this.mutateTensor(tf.gather(this.genM,parentIdx),.22);
+      this.genR.assign(tf.concat([eliteR,childrenR],0).clipByValue(-3.2,3.2));this.genM.assign(tf.concat([eliteM,childrenM],0).clipByValue(-4,4));
+    });
+    this.gen++;this.selected=0;await this.develop();this.resetBodies();
+  }
+  // Returns false when a readback is still in flight, so the caller can keep a
+  // pending request (a fresh selection, say) alive until one actually goes out.
+  snapshot(selected){
+    if(this.snapshotPending)return false;this.snapshotPending=true;
+    const view=tf.tidy(()=>{const speed=tf.sqrt(this.vel.square().sum(1).add(1e-6)).expandDims(1);return tf.concat([this.pos,this.angle.expandDims(1),this.energy.expandDims(1),this.fitness.expandDims(1),speed,this.color],1)});
+    const diag=tf.tidy(()=>tf.stack([this.fitness.max(),this.fitness.mean(),this.energy.mean()]));
+    const inspect=tf.tidy(()=>tf.concat([tf.gather(this.expr,selected).flatten(),tf.gather(this.neural,selected).flatten(),tf.gather(this.W,selected).flatten()]));
+    Promise.all([view.data(),diag.data(),inspect.data()])
+      .then(([v,d,i])=>{this.lastSnapshot={view:new Float32Array(v),diag:new Float32Array(d),inspect:new Float32Array(i)}})
+      .catch(err=>{console.warn('snapshot readback failed',err)})
+      .finally(()=>{view.dispose();diag.dispose();inspect.dispose();this.snapshotPending=false});
+    return true;
+  }
+}
+
+// The inspector lays itself out from the canvas's measured size so the panel can
+// shrink on small screens without headings colliding or rows falling off the end.
+function drawInspector(data,selected,agentView){
+  const canvas=$('inspector'),r=canvas.getBoundingClientRect();
+  if(r.width<2||r.height<2)return;
+  const dpr=Math.min(devicePixelRatio||1,2),cw=Math.round(r.width*dpr),chh=Math.round(r.height*dpr);
+  if(canvas.width!==cw||canvas.height!==chh){canvas.width=cw;canvas.height=chh}
+  const c=canvas.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);
+  const w=r.width,h=r.height;c.clearRect(0,0,w,h);
+  if(!data)return;
+  const neuralOff=CFG.CELLS*CFG.GENES,weightOff=neuralOff+CFG.CELLS;
+  c.font='9px ui-monospace, monospace';c.textAlign='left';c.textBaseline='alphabetic';
+  const head=(t,x,y)=>{c.fillStyle='#75958f';c.fillText(t,x,y)};
+  const widest=(options,max)=>options.find(t=>c.measureText(t).width<=max)||'';
+
+  let y=9;
+  head('DEVELOPED CELL STATES',3,y);
+  const dotY=y+13,span=(w-16)/(CFG.CELLS-1),dotR=clamp(span*.36,2.2,4.2);
+  c.strokeStyle='rgba(105,220,190,.18)';c.beginPath();c.moveTo(8,dotY);c.lineTo(w-8,dotY);c.stroke();
+  for(let i=0;i<CFG.CELLS;i++){
+    const gx=data[i*CFG.GENES+2],gy=data[i*CFG.GENES+6],gm=data[i*CFG.GENES+8];
+    const rr=clamp(90+gx*100,30,230)|0,gg=clamp(130+gy*100,40,245)|0,bb=clamp(130+gm*100,40,235)|0;
+    c.fillStyle=`rgb(${rr},${gg},${bb})`;c.beginPath();c.arc(8+i*span,dotY,dotR,0,Math.PI*2);c.fill();
+  }
+  y=dotY+dotR+13;
+
+  head('ADULT CTRNN STATE',3,y);
+  const barH=clamp(h*.115,12,24),barTop=y+5,mid=barTop+barH/2,slot=(w-14)/CFG.CELLS,bw=Math.max(1,slot-2);
+  c.strokeStyle='rgba(105,220,190,.14)';c.beginPath();c.moveTo(7,mid);c.lineTo(w-7,mid);c.stroke();
+  for(let i=0;i<CFG.CELLS;i++){
+    const a=Math.tanh(data[neuralOff+i]),bh=Math.abs(a)*barH/2;
+    c.fillStyle=a>=0?'rgba(106,244,204,.76)':'rgba(255,94,154,.72)';
+    c.fillRect(7+i*slot,a>=0?mid-bh:mid,bw,Math.max(.6,bh));
+  }
+  y=barTop+barH+13;
+
+  const gridTop=y+5,size=Math.max(34,Math.min(h-gridTop-2,w*.42)),cell=size/CFG.CELLS,tx=Math.round(size+14);
+  head(widest(['DEVELOPED CONNECTIVITY','CONNECTIVITY','WIRING'],tx-9),3,y);
+  for(let i=0;i<CFG.CELLS;i++)for(let j=0;j<CFG.CELLS;j++){
+    const v=Math.tanh(data[weightOff+i*CFG.CELLS+j]);
+    c.fillStyle=v>=0?`rgba(87,243,208,${Math.abs(v)*.9})`:`rgba(255,93,158,${Math.abs(v)*.9})`;
+    c.fillRect(5+j*cell,gridTop+i*cell,Math.max(1,cell-.4),Math.max(1,cell-.4));
+  }
+  head(widest(['AGENT TELEMETRY','TELEMETRY',''],w-tx-3),tx,y);
+  if(agentView){
+    const b=selected*CFG.VIEW_STRIDE;
+    const rows=[['energy',agentView[b+3]],['fitness',agentView[b+4]],['x',agentView[b]],['y',agentView[b+1]],['heading',agentView[b+2]]];
+    const rowH=clamp((h-gridTop-3)/rows.length,9,17);
+    c.fillStyle='#dff9f2';
+    rows.forEach(([name,val],i)=>c.fillText(name.padEnd(8)+val.toFixed(3),tx,gridTop+9+i*rowH));
+  }
+}
+
+(async function main(){
+  const stage=t=>{$('loadingText').textContent=t};
+  const fail=msg=>{$('loading').style.display='grid';stage(msg)};
+  if(typeof tf==='undefined'){ fail('TensorFlow.js failed to load. This page needs network access for the pinned CDN scripts.'); return; }
+  let backend='';
+  try{if(navigator.gpu){const ok=await tf.setBackend('webgpu');if(ok){await tf.ready();backend='webgpu'}}}catch(e){console.warn('WebGPU backend unavailable',e)}
+  if(!backend){try{await tf.setBackend('webgl');await tf.ready();backend='webgl'}catch(e){await tf.setBackend('cpu');await tf.ready();backend='cpu'}}
+  $('backendText').textContent=backend.toUpperCase()+(backend==='webgpu'?' · GPU resident':' · fallback backend');$('backendDot').classList.add('live');
+  stage('Backend ready on '+backend.toUpperCase()+'. Developing the first population from its genomes…');
+  const renderer=new GLWorld($('world'));const sim=new EvoDevoSim();await sim.initialise();$('loading').style.display='none';
+
+  let paused=false,singleStep=false,lastUI=0,evolving=false,shownSnapshot=null,selectDirty=true;
+  renderer.onLost=()=>{paused=true;fail('The WebGL context was lost — reload the page to restart the biosphere.')};
+  const setSelected=i=>{sim.selected=i;selectDirty=true;renderer.setSelected(i);$('selectedMeta').innerHTML=`agent ${i}<br>lineage sample`;};
+  setSelected(0);
+  $('world').addEventListener('pointerdown',e=>setSelected(renderer.pick(e.clientX,e.clientY)));
+  $('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'resume':'pause';};
+  $('step').onclick=()=>{paused=true;singleStep=true;$('pause').textContent='resume'};
+  $('evolve').onclick=async()=>{if(evolving)return;evolving=true;toast('selecting elites and redeveloping');await sim.evolve();setSelected(0);evolving=false};
+  $('reset').onclick=async()=>{
+    if(evolving)return;evolving=true;
+    sim.reseedWorld();renderer.invalidateStatics();
+    tf.tidy(()=>{sim.genR.assign(tf.randomNormal(sim.genR.shape,0,.38));sim.genM.assign(tf.randomNormal(sim.genM.shape,0,.75))});
+    sim.gen=0;await sim.develop();sim.resetBodies();setSelected(0);toast('new random biosphere');evolving=false
+  };
+  $('mutation').oninput=e=>sim.mutation=Number(e.target.value)/100;
+  addEventListener('keydown',e=>{
+    if(e.metaKey||e.ctrlKey||e.altKey||(e.target instanceof Element&&e.target.closest('input,select,textarea')))return;
+    const k=e.key.toLowerCase();
+    if(k===' '){e.preventDefault();$('pause').click()}
+    else if(k==='s')$('step').click();
+    else if(k==='e')$('evolve').click();
+    else if(k==='r')$('reset').click();
+  });
+
+  function updateHUD(snap){
+    $('generation').textContent=sim.gen;$('epoch').textContent=(sim.stepNo*CFG.DT).toFixed(1)+'s';
+    $('best').textContent=snap.diag[0].toFixed(3);$('meanEnergy').textContent=snap.diag[2].toFixed(3);
+    $('population').textContent=CFG.POP+' agents';$('tensors').textContent=tf.memory().numTensors+' · '+backend;
+  }
+  async function loop(now){
+    const speed=Number($('speed').value);
+    const advancing=!evolving&&(!paused||singleStep);
+    if(advancing){
+      for(let i=0;i<(singleStep?1:speed);i++)sim.step();
+      singleStep=false;
+      if(sim.stepNo>=CFG.EPOCH_STEPS){evolving=true;await sim.evolve();setSelected(0);evolving=false;toast('generation '+sim.gen+' developed')}
+    }
+    // While paused nothing moves, so skip the GPU readback unless the user has
+    // picked a different organism to inspect.
+    if(advancing||selectDirty){if(sim.snapshot(sim.selected))selectDirty=false}
+    const snap=sim.lastSnapshot;
+    if(snap&&snap!==shownSnapshot){
+      // Agent positions follow every readback; the DOM and the 2D inspector are
+      // far more expensive to touch, so they stay on a slower clock.
+      shownSnapshot=snap;renderer.setAgents(snap.view);
+      const b=sim.selected*CFG.VIEW_STRIDE;renderer.appendTrail(snap.view[b],snap.view[b+1]);
+      if(now-lastUI>120){updateHUD(snap);drawInspector(snap.inspect,sim.selected,snap.view);lastUI=now}
+    }
+    renderer.render(now);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+})().catch(err=>{
+  console.error(err);
+  $('loading').style.display='grid';
+  $('loadingText').textContent='Initialisation failed: '+((err&&err.message)||err)+' — open the developer console for details.';
+});
+</script>
+</body>
+</html>
