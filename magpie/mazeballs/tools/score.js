@@ -168,7 +168,9 @@ const summary = {
     visitedFrac: r.central ? +r.central.visitedFrac.toFixed(4) : undefined,
     toxDose: r.odour ? +r.odour.toxDose.toFixed(4) : undefined,
     toxDoseTop: r.odour ? +r.odour.toxDoseTop.toFixed(4) : undefined,
-    toxRatio: r.odour ? +r.odour.toxRatio.toFixed(4) : undefined })),
+    toxRatio: r.odour ? +r.odour.toxRatio.toFixed(4) : undefined,
+    toxRatioIntake: r.odour ? +r.odour.toxRatioIntake.toFixed(4) : undefined,
+    toxShare: r.odour ? +r.odour.toxShare.toFixed(4) : undefined })),
 };
 summary.drops = Object.fromEntries(['noFood','noToxin','blindConst','noFoodDir','noFoodMass']
   .map(k => [k, +(ok.reduce((a, r) => a + (r.drops?.[k] ?? 0), 0) / ok.length).toFixed(4)]));
@@ -176,7 +178,8 @@ const withOdour = ok.filter(r => r.odour);
 if (withOdour.length) {
   const oavg = k => +(withOdour.reduce((a, r) => a + r.odour[k], 0) / withOdour.length).toFixed(4);
   summary.odour = Object.fromEntries(
-    ['ambiguity','toxDose','toxDoseTop','intake','intakeTop','toxRatio'].map(k => [k, oavg(k)]));
+    ['ambiguity','stakes','toxDose','toxDoseTop','intake','intakeTop','toxRatio',
+     'toxDoseTopIntake','toxRatioIntake','hazCost','hazCostTop','toxShare'].map(k => [k, oavg(k)]));
 }
 const withCentral = ok.filter(r => r.central);
 if (withCentral.length) summary.central = {

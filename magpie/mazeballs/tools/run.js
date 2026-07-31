@@ -47,6 +47,13 @@ const args = parseArgs(process.argv.slice(2), {
   // food channel at full strength and the only identity cue is the quality
   // channel, whose kernel has narrowed to qualitySigma2.
   ambiguity: 0, qualitySigma2: 0.010,
+  // Hazard stakes. --hazStakes multiplies both hazard penalties (fitness and
+  // energy); 1 is the original and is a verified no-op. --hazSigma2 is the
+  // damage-kernel width (0.0015 = radius ~0.039) and --hazards the count.
+  // These change the world's PAYOFFS, unlike --ambiguity, so any cell that
+  // moves them needs its own generation-0 control before a cross-cell
+  // comparison of score or forage means anything.
+  hazStakes: 1, hazSigma2: 0.0015, hazards: 18,
   // Two-species world (off by default). With --coevo the run coevolves a prey
   // and a predator population and then diagnoses the PREY.
   //
@@ -81,6 +88,8 @@ const sim = new EvoDevoSim({
     CP_CARRY_DECAY: args.cpDecay, CP_DEPOSIT_RATE: args.cpDeposit,
     CP_NEST_SENSOR: args.cpNestSensor,
     ODOUR_AMBIGUITY: args.ambiguity, ODOUR_QUALITY_SIGMA2: args.qualitySigma2,
+    HAZARDS: args.hazards, HAZARD_STAKES: args.hazStakes,
+    HAZARD_DAMAGE_SIGMA2: args.hazSigma2,
     ...(args.coevo ? {
       COEVO: true, COEVO_ROLE: 'prey',
       COEVO_CAPTURE_SIGMA2: args.captureSigma2, COEVO_SENSE_SIGMA2: args.coevoSenseSigma2,
@@ -158,6 +167,7 @@ const result = {
     cpStrength: args.cpStrength, cpMult: args.cpMult, cpRadius: args.cpRadius,
     cpDecay: args.cpDecay, cpDeposit: args.cpDeposit, cpNestSensor: args.cpNestSensor,
     ambiguity: args.ambiguity, qualitySigma2: args.qualitySigma2,
+    hazStakes: args.hazStakes, hazSigma2: args.hazSigma2, hazards: args.hazards,
     coevo: args.coevo, predPop: args.predPop, captureSigma2: args.captureSigma2,
     predGain: args.predGain, preyLoss: args.preyLoss, predForage: args.predForage,
   },

@@ -149,6 +149,46 @@ export const DEFAULTS = Object.freeze({
   // SENSORS stays 8, because the central-place experiment measured +0.022 of
   // score for adding two channels with the task switched off.
   ODOUR_AMBIGUITY: 0, ODOUR_QUALITY_SIGMA2: 0.010,
+  // ----------------------------------------------------------- hazard stakes
+  // The shared-odour experiment left two explanations for its null unseparated:
+  // eight generations may be too short to find a two-signal policy, or the
+  // incentive may simply be too small. Hazards are physically minor — 18 of
+  // them, damage radius ~0.039 against an arena half-width of 0.94 — and
+  // perfect discrimination was measured to be worth about 7% of a top-quartile
+  // agent's fitness. If ignoring hazards is nearly free then following the
+  // odour into them is nearly free too, and there is no gradient toward
+  // discrimination for selection to climb. These knobs raise the price.
+  //
+  //   HAZARD_STAKES         multiplier on BOTH hazard penalties: the fitness
+  //                         term (1.35 per second at full contact) and the
+  //                         energy term (0.62). 1 is the original and is
+  //                         exactly a no-op — 1.35 * 1 and 0.62 * 1 are exact
+  //                         in floating point, so the default path is
+  //                         bit-identical rather than nearly so.
+  //   HAZARD_DAMAGE_SIGMA2  width of the damage kernel; 0.0015 (effective
+  //                         radius ~0.039) is the original. Raising it makes a
+  //                         hazard physically bigger rather than more painful.
+  //                         Note the ceiling: under full ambiguity the identity
+  //                         cue is only readable inside ~0.10, so a damage
+  //                         radius approaching that leaves no room to read the
+  //                         cue and turn away, and the task stops being a
+  //                         discrimination at all. 0.0060 (radius ~0.077) is
+  //                         about as far as this can be pushed honestly.
+  //
+  // `HAZARDS` (the count) is the third lever and is already a config key. It is
+  // deliberately NOT the primary dose axis: raising the count also raises the
+  // hazard fraction of the mixed odour, which is the ambiguity axis, so a
+  // count sweep would confound the two. Magnitude changes neither the geometry
+  // of the discrimination nor the composition of the odour, so it is the one
+  // lever that leaves the ambiguity dose meaning exactly the same thing at
+  // every stakes level. Radius and count are provided for a robustness cell.
+  //
+  // Unlike ODOUR_AMBIGUITY, this DOES change the world's payoffs, so
+  // cross-stakes comparisons of `score` and `forage` are not like-for-like and
+  // every stakes level needs its own generation-0 control. `toxDose` is
+  // deliberately still accumulated unscaled — seconds of contact, not fitness
+  // lost — so the behavioural readout stays comparable across stakes.
+  HAZARD_STAKES: 1, HAZARD_DAMAGE_SIGMA2: 0.0015,
   // ------------------------------------------------------------- coevolution
   // Two-species world. Off by default (COEVO false), in which case every
   // expression guarded by it is skipped, SENSORS stays 8, and the sim is
@@ -883,8 +923,10 @@ export class EvoDevoSim {
         newStock = newStock.mul(keep).add(depleted);
       }
       this.foodStock.assign(newStock);
-      const tox = haz.d2.mul(-1).div(.0015).exp().max(1);
-      // Reporting only — neither feeds fitness, energy or selection.
+      const tox = haz.d2.mul(-1).div(C.HAZARD_DAMAGE_SIGMA2).exp().max(1);
+      // Reporting only — neither feeds fitness, energy or selection. Kept in
+      // units of seconds-at-full-contact rather than fitness lost, so the
+      // exposure readout means the same thing at every HAZARD_STAKES.
       this.toxDose.assign(this.toxDose.add(tox.mul(C.DT)));
       this.intake.assign(this.intake.add(eat.mul(C.DT)));
       const cost = thrust.abs().mul(.015).add(turn.abs().mul(.009)).add(.013);
@@ -895,7 +937,9 @@ export class EvoDevoSim {
       // the summed crowd, so a predator cannot farm a distant swarm.
       const contact = opp
         ? opp.d2.mul(-1).div(C.COEVO_CAPTURE_SIGMA2).exp().max(1) : null;
-      let dEnergy = eat.mul(.42).sub(tox.mul(.62)).sub(cost);
+      // Both hazard penalties scale together. At HAZARD_STAKES 1 these are
+      // exactly .62 and 1.35, so the default path is bit-identical.
+      let dEnergy = eat.mul(.42).sub(tox.mul(.62 * C.HAZARD_STAKES)).sub(cost);
       if (contact) dEnergy = isPred
         ? dEnergy.add(contact.mul(C.COEVO_PRED_ENERGY))
         : dEnergy.sub(contact.mul(C.COEVO_PREY_ENERGY));
@@ -938,7 +982,7 @@ export class EvoDevoSim {
         this.forageAcc.assign(this.forageAcc.add(eat.mul(C.DT)));
       }
       this.fitness.assign(this.fitness.add(
-        intake.sub(tox.mul(1.35)).add(speed.mul(.018)).add(en.greater(.04).toFloat().mul(.003)).mul(C.DT)));
+        intake.sub(tox.mul(1.35 * C.HAZARD_STAKES)).add(speed.mul(.018)).add(en.greater(.04).toFloat().mul(.003)).mul(C.DT)));
       if (this.recording) {
         // Pooled regression accumulators for the taxis measures.
         // Columns 9-11 capture thrust modulation. `taxis` only correlates the
@@ -1185,23 +1229,55 @@ export class EvoDevoSim {
    * `toxDoseTop` to `toxDose` is the discrimination readout: if the selected
    * agents are avoiding hazards that everyone else blunders into, it falls
    * below 1. It cannot be gamed by the score, because none of this is in it.
+   *
+   * `toxRatio` is however NOT comparable across HAZARD_STAKES, and the reason
+   * is mechanical rather than biological: fitness contains −1.35·stakes·toxDose
+   * as a term, so ranking by fitness selects against toxDose harder the higher
+   * the stakes, with no change in behaviour whatsoever. Raising the stakes
+   * therefore *manufactures* an apparent discrimination in this column. Two
+   * readouts are carried that do not have that defect:
+   *
+   *   `toxDoseTopIntake` / `toxRatioIntake` — the same quartile taken by
+   *     *intake* instead of fitness. Intake contains no hazard term at any
+   *     stakes, so "do the agents that eat well also avoid hazards" is asked
+   *     the same way in every cell. This is the discrimination readout to
+   *     believe when the stakes axis moves.
+   *   `toxShare` — the share of population fitness variance carried by the
+   *     hazard term, var(k·toxDose)/var(fitness) with k = 1.35·HAZARD_STAKES.
+   *     This is the instrument the stakes axis is calibrated against: it says
+   *     directly how much of what selection sees is about hazards, rather than
+   *     leaving "the incentive is too small" as an assumption. (The coevolution
+   *     section makes the same argument for the predation term, and asks for a
+   *     variance decomposition rather than an assertion.)
    */
   async odourStats() {
     const C = this.cfg;
     const [tox, eatn, fit] = await Promise.all([
       this.toxDose.data(), this.intake.data(), this.fitness.data()]);
-    const order = Array.from({ length: C.POP }, (_, i) => i).sort((a, b) => fit[b] - fit[a]);
+    const idx = Array.from({ length: C.POP }, (_, i) => i);
+    const order = idx.slice().sort((a, b) => fit[b] - fit[a]);
+    const byIntake = idx.slice().sort((a, b) => eatn[b] - eatn[a]);
     const n = Math.max(1, Math.round(C.POP / 4));
-    let tq = 0, iq = 0;
-    for (let i = 0; i < n; i++) { tq += tox[order[i]]; iq += eatn[order[i]]; }
-    const toxAll = mean(tox), toxTop = tq / n;
+    let tq = 0, iq = 0, tqi = 0;
+    for (let i = 0; i < n; i++) {
+      tq += tox[order[i]]; iq += eatn[order[i]];
+      tqi += tox[byIntake[i]];
+    }
+    const toxAll = mean(tox), toxTop = tq / n, toxTopI = tqi / n;
+    const k = 1.35 * C.HAZARD_STAKES;
+    const vTox = (sd(tox) * k) ** 2, vFit = sd(fit) ** 2;
     return {
-      ambiguity: C.ODOUR_AMBIGUITY,
+      ambiguity: C.ODOUR_AMBIGUITY, stakes: C.HAZARD_STAKES,
       toxDose: toxAll, intake: mean(eatn),
       toxDoseTop: toxTop, intakeTop: iq / n,
       // < 1 means the selected quartile is taking less poison than the
       // population average — the signature of an evolved discrimination.
       toxRatio: toxAll > 1e-9 ? toxTop / toxAll : 0,
+      toxDoseTopIntake: toxTopI,
+      toxRatioIntake: toxAll > 1e-9 ? toxTopI / toxAll : 0,
+      // Mean fitness actually forfeited to hazards, in the run's own units.
+      hazCost: toxAll * k, hazCostTop: toxTop * k,
+      toxShare: vFit > 1e-12 ? vTox / vFit : 0,
     };
   }
 
