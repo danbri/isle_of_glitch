@@ -1087,7 +1087,10 @@ export class EvoDevoSim {
     let touched = 0;
     for (let i = 0; i < C.POP; i++) if (ct[i] > 1e-4) touched++;
     return {
-      contact: mean(ct), contactTop: topQuartile(ct),
+      contact: mean(ct), contactTop: topQuartile(ct), contactSd: sd(ct),
+      // The bottom quartile of contact is the prey side's equivalent of
+      // topQuartile: the part of the distribution selection actually keeps.
+      contactBottom: topQuartile(Array.from(ct).map(x => -x)) * -1,
       forage: mean(fg), forageTop: topQuartile(fg),
       touchedFrac: touched / C.POP,
       fitness: mean(fit), fitnessTop: topQuartile(fit),
