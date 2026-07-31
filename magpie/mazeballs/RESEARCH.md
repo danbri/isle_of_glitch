@@ -230,3 +230,88 @@ Standard error falls as 1/√n, so:
 Sixteen seeds halves the smallest detectable effect. This is the concrete reason
 to want more cores: not to make one run faster, but to make small effects
 visible at all. Wave 2 should raise seeds before it raises ambition.
+
+### Body mandate — null result, with the sharpest control of the wave
+
+8 experiments: proprioception, directional antennae (free and anchored),
+evolvable body parameters, evolvable sensing range, lateral thrust, sensor
+noise. All null, all reverted.
+
+Experiment 6 was a deliberate **control**: repeat the antennae architecture but
+hold `GENES` at 10 instead of growing it, to rule out "a bigger regulatory
+matrix hurts development in 8 generations" as the confound. It produced the same
+magnitude of null, so gene-count growth is not the explanation.
+
+Its diagnosis is quantitative and matters: the food field has 42 sources in a
+small arena and the sensing kernel has effective radius ~0.22 against an arena
+half-width of ~0.94. **An undirected gait finds food nearly as reliably as
+directed chemotaxis.** The fitness function also pays `+0.018 x speed`
+independently of foraging, so moving fast is rewarded whether or not it finds
+anything.
+
+It also found a latent trap worth knowing: `d2.div(-sigma2)` silently yields
+`NaN` if `sigma2` is ever a tensor rather than a number, because JS unary minus
+coerces through `valueOf()`. Use `d2.mul(-1).div(sigma2)` if that parameter is
+ever made evolvable.
+
+## The two decisive results
+
+### Longer evolution makes sensing *worse*. Hypothesis refuted.
+
+The wave-1 nulls suggested the 8-generation budget was too short for capability
+to repay its cost. Tested directly by re-baselining at 24 generations:
+
+| | 8 gen | 24 gen |
+|---|---|---|
+| score | 0.1571 ± 0.0082 | **0.1381 ± 0.0116** |
+| sensing | 0.0509 | **0.0218** |
+| taxis | 0.0126 | 0.0028 |
+| selection | 0.0066 | 0.0689 |
+| diversity | 0.225 | **0.100** |
+| forage | 0.810 | 0.801 |
+
+Three times the evolutionary time **halves** sensing and nearly eliminates
+taxis, while foraging stays flat and ancestral diversity collapses further.
+
+Evolution is not failing to find sensing. It is actively discarding it. In this
+world the optimal policy *is* open-loop, so more selection means more
+convergence onto it. Every wave-1 null was a correct measurement of a system
+whose target is wrong — no amount of architectural richness or evolutionary time
+fixes an objective that does not require the capability being sought.
+
+### The one apparent win does not survive the corrected metric
+
+Immigration + multi-spawn, re-measured with `diversity` counting selected
+ancestries:
+
+| | baseline | with change |
+|---|---|---|
+| score | 0.1583 ± 0.0056 | 0.1847 ± 0.0222 |
+| diversity | 0.225 | **0.300** (was 1.000) |
+| selection | 0.0029 | **0.188** |
+| sensing | 0.0473 | 0.0446 |
+
+delta +0.0264 against a bar of 0.0458 — **NO SIGNIFICANT CHANGE**. The diversity
+term fell from 1.000 to 0.300 exactly as predicted once immigrants had to earn a
+selected slot rather than merely exist. Not adopted.
+
+But `selection` rising 65x is real and is not gameable the same way: multi-spawn
+evaluation genuinely makes elites track genotype instead of spawn luck. Note
+also that the change **tripled the standard error** (0.0056 to 0.0222), so it
+makes outcomes more variable, not just better.
+
+## Wave 2 direction
+
+Not more architecture. The target is wrong, and five agents across 32
+experiments established that between them:
+
+1. **Remove the unconditional speed reward.** It pays for locomotion whether or
+   not it finds food, which is a direct subsidy for open-loop behaviour.
+2. **Make food findable only by sensing** — the environment agent showed
+   clumping raises `sensing` up to 43%, and the body agent showed why it must:
+   the sensing radius currently covers a quarter of the arena.
+3. **Pay the viability cost knowingly.** Harder worlds cost foraging; the score's
+   viability gate then erases the capability gain. Either the gate needs
+   rethinking or the difficulty must rise gradually.
+4. **Raise seeds to 16 before raising ambition.** The detection bar at 4 seeds is
+   15% of the score; nothing anyone tried could have registered.
