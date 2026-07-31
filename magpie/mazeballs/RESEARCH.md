@@ -148,3 +148,47 @@ a GPU worthwhile *and* attacks the measured problem that selection tracks spawn
 luck rather than genotype, since more genomes per generation is more evidence
 per selection event. Renting CPU cores is the better buy until then, because
 sweeps are embarrassingly parallel across seeds and configurations.
+
+## Wave 1 results
+
+### Environment mandate — null result, with a mechanism
+
+11 environment changes tested against the 8-generation protocol. **None cleared
+the bar.** Score stayed at baseline 0.1571 ± 0.0082. The agent reverted all of
+them, which was the right call.
+
+The interesting part is *why* they failed, because the hypothesis was
+directionally right:
+
+| change | score | sensing | viability |
+|---|---|---|---|
+| baseline | 0.1571 | 0.051 | 0.810 |
+| 5 food clusters + wide gradient | 0.0929 | **0.073** | 0.460 |
+| 9 clusters + wide gradient | 0.1178 | **0.070** | 0.629 |
+| easier gradient (4× range) | 0.1455 | 0.025 | 0.828 |
+| doubled metabolic cost | 0.1433 | **0.010** | 0.842 |
+
+Clumping the food and widening the sensing gradient **does** make sensing more
+valuable — it raised the `sensing` component by up to 43%, exactly the predicted
+mechanism: sparse clumps make an undirected motor pattern fail while giving a
+directed one a real gradient to climb. But every setting strong enough to move
+`sensing` also crushed foraging, and because `score = viability × capability`
+the gate erased the gain. At viability 0.63 you would need `sensing` around
+0.22 to break even — triple the best measured.
+
+Two rows are the inverse trap the protocol warns about: an easier gradient and a
+higher metabolic cost both **raised** viability while **lowering** sensing. On
+total score alone they would have looked like near-wins; they are the opposite
+of what we want, and the component breakdown is what caught them.
+
+Note also that doubling movement cost gave the *lowest* sensing of any trial
+(0.010). Making movement expensive without making food harder to find rewards
+sitting still, not searching.
+
+### The implication: the 8-generation budget may be the binding constraint
+
+Capability was visibly trying to emerge in the harder environments and could not
+repay its viability cost inside 8 generations. If that is right, then every null
+result in this wave is partly an artifact of the experiment budget rather than a
+fact about the architecture — which would make the protocol itself the thing to
+fix first. This is being tested directly by re-baselining at 24 generations.
