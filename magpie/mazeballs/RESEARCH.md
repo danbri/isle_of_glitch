@@ -388,3 +388,61 @@ rather than refilling where you left it. Together the only remaining strategy is
 to find out where food is now — which is what sensing is for. Narrowing the
 sensing kernel alone did nothing, which pins the cause on food density rather
 than sensor range.
+
+## Where the compute crossover actually is
+
+Step cost against CTRNN size, POP=192, deno/wasm:
+
+| CELLS | ms/step | recurrent MACs/step |
+|---|---|---|
+| 12 | 6.9 | 0.03M |
+| 48 | 8.2 | 0.44M |
+| 100 | 13.8 | 1.92M |
+| 200 | 30.9 | 7.68M |
+| 400 | 220.6 | 30.7M |
+
+From 12 to 48 the arithmetic grows 16x and the time grows 1.2x — the recurrent
+update is free, and everything being paid for is dispatch. From 200 to 400 the
+arithmetic grows 4x and the time grows 7x — now compute-bound, and superlinear
+as the working set outgrows cache. **The crossover is around CELLS 100-200.**
+
+Note the first version of this measurement was wrong: `bench.js` did not pass
+`--cells` through to the sim, so it measured CELLS=12 four times and the spread
+was contention noise. The corrected tool now varies it.
+
+### On modelling the population as one large sparse CTRNN
+
+100 networks of 100 nodes is exactly a block-diagonal 10,000-node system, and
+that framing is right. Two qualifications from the numbers above:
+
+- The recurrent update is *already* a single batched matmul
+  (`[POP,1,C] x [POP,C,C]`), not POP separate launches, so flattening to one
+  sparse matvec changes neither the launch count nor the FLOP count.
+- What the flattened form does buy is the **off-block-diagonal entries**: once
+  the population is one state vector, inter-organism coupling is structurally
+  free. That is the most interesting unexplored direction here, and it is why
+  wave 2's predators failed — they were scripted, so agents faced a fixed rule
+  rather than a coupled system that adapts with them.
+
+### RK4 is the right trade for a dispatch-bound system
+
+The integrator is explicit Euler. With tau in [0.24, 1.89] and DT 0.018, DT/tau
+runs 0.01-0.075 — far inside Euler's stability limit, so the small step is being
+paid for accuracy, not stability. Fourth-order accuracy buys back much more than
+the 4x arithmetic it costs, giving fewer and fatter kernel launches for the same
+simulated time. That is exactly the right direction when overhead dominates.
+
+The mechanics will not tolerate the same step (collisions, depletion, boundary
+clamping), so this wants a deliberate multirate scheme: RK4 the neural ODE on a
+coarse step, Euler the physics on a fine one.
+
+### What would justify a GPU
+
+At ~10 TFLOP/s and ~5-10 us launch overhead, being compute-bound needs roughly
+500M MACs/step. That is CELLS ~1600 at POP 192, or POP ~50,000 at CELLS 100, or
+~22,000 nodes densely coupled. A block-diagonal 100x100 system is 1M MACs — still
+firmly launch-bound, where a GPU loses to WASM exactly as the native binding did.
+
+Bigger networks, genuine inter-organism coupling, and RK4 all push the same way:
+more arithmetic per launch. The first two are independently the most promising
+unexplored science, so the performance and research arguments coincide.

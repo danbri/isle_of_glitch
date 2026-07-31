@@ -13,10 +13,10 @@
 import { initBackend, parseArgs, argv } from './backend.js';
 import { EvoDevoSim } from '../lib/evodevo.js';
 
-const args = parseArgs(argv(), { steps: 200, warmup: 30, backend: 'auto', seed: 1, pop: 192 });
+const args = parseArgs(argv(), { steps: 200, warmup: 30, backend: 'auto', seed: 1, pop: 192, cells: 12 });
 
 const { pkg, backend, runtime } = await initBackend({ prefer: args.backend });
-const sim = new EvoDevoSim({ seed: args.seed, config: { POP: args.pop } });
+const sim = new EvoDevoSim({ seed: args.seed, config: { POP: args.pop, CELLS: args.cells } });
 await sim.initialise();
 
 for (let i = 0; i < args.warmup; i++) sim.step();
@@ -31,7 +31,7 @@ const ms = (Date.now() - t0) / args.steps;
 // when planning a sweep.
 const perGen = ms * sim.cfg.EPOCH_STEPS / 1000;
 console.log(JSON.stringify({
-  runtime, pkg, backend, pop: args.pop, steps: args.steps,
+  runtime, pkg, backend, pop: args.pop, cells: args.cells, steps: args.steps,
   msPerStep: +ms.toFixed(3),
   secPerGeneration: +perGen.toFixed(1),
 }));
