@@ -369,7 +369,7 @@ function klinokinesis(traces, stim) {
     return { mean: mean(d), se: sd(d) / Math.sqrt(d.length), n: d.length };
   };
   return {
-    massChannel: CH[massCh],
+    massChannel: CH[stim.mass],
     n: appTurn.length,
     turnApproach: mean(appTurn), turnRecede: mean(recTurn),
     turnDelta: pairedDelta(appTurn, recTurn),
@@ -550,11 +550,20 @@ const sigLags = miTurnBearing.filter(r => Math.abs(r.z) > 2).map(r => r.lag);
 const sigLagsBlind = miTurnBearingBlind.filter(r => Math.abs(r.z) > 2).map(r => r.lag);
 log(`\n[summary] turn~bearing MI significant (|z|>2) at lags, full-sense: ${sigLags.length ? sigLags.join(',') : 'none'}`);
 log(`[summary] turn~bearing MI significant (|z|>2) at lags, blindConst (motor-dynamics null): ${sigLagsBlind.length ? sigLagsBlind.join(',') : 'none'}`);
-log(`[summary] klinokinesis turn delta (approach-recede), sensed odour: ${klino.turnDelta.mean.toFixed(4)} +- ${klino.turnDelta.se.toFixed(4)} (n=${klino.turnDelta.n})`);
+log(`[summary] klinokinesis turn delta (approach-recede), sensed ${STIM.name}: ${klino.turnDelta.mean.toFixed(4)} +- ${klino.turnDelta.se.toFixed(4)} (n=${klino.turnDelta.n})`);
 if (klinoTrueFood)
   log(`[summary] klinokinesis turn delta, true food mass:            ${klinoTrueFood.turnDelta.mean.toFixed(4)} +- ${klinoTrueFood.turnDelta.se.toFixed(4)} (n=${klinoTrueFood.turnDelta.n})`);
-log(`[summary] conjunction test — turn delta where the identity cue is READABLE: ${klino.byQuality.highQuality.mean.toFixed(4)} +- ${klino.byQuality.highQuality.se.toFixed(4)} (n=${klino.byQuality.highQuality.n})`);
-log(`[summary] conjunction test — turn delta where it is NOT:                    ${klino.byQuality.lowQuality.mean.toFixed(4)} +- ${klino.byQuality.lowQuality.se.toFixed(4)} (n=${klino.byQuality.lowQuality.n})`);
+// The quality channel is the food/hazard identity cue, so this split only means
+// "conjunction" against the food stimulus. Under --channels opponent it is just
+// a hazard-proximity split of an unrelated measure, and is labelled as such
+// rather than left to read as a result about predators.
+if (STIM.name === 'food') {
+  log(`[summary] conjunction test — turn delta where the identity cue is READABLE: ${klino.byQuality.highQuality.mean.toFixed(4)} +- ${klino.byQuality.highQuality.se.toFixed(4)} (n=${klino.byQuality.highQuality.n})`);
+  log(`[summary] conjunction test — turn delta where it is NOT:                    ${klino.byQuality.lowQuality.mean.toFixed(4)} +- ${klino.byQuality.lowQuality.se.toFixed(4)} (n=${klino.byQuality.lowQuality.n})`);
+} else {
+  log(`[summary] (byQuality split reported in JSON only: it conditions on the food/hazard`);
+  log(`[summary]  identity cue, which says nothing about the ${STIM.name} stimulus)`);
+}
 log(`[summary] channel levels: foodMass ${channelLevels.foodMass.toFixed(4)} · odourMass ${channelLevels.odourMass.toFixed(4)} · quality ${channelLevels.quality.toFixed(4)}`);
 log(`[summary] paired eat delta (full-blindConst): ${paired.eatDelta.mean.toFixed(4)} +- ${paired.eatDelta.se.toFixed(4)}`);
 log(`[summary] paired occupancy delta: ${paired.occupancyDelta.mean.toFixed(4)} +- ${paired.occupancyDelta.se.toFixed(4)}`);
