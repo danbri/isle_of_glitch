@@ -37,6 +37,29 @@ export const DEFAULTS = Object.freeze({
   // A patch grazed by one agent empties in ~3s of sim time and takes ~15s to
   // come back. An epoch is 26s, so a squatter starves and a forager does not.
   FOOD_CONSUME: 0.40, FOOD_REGROW: 0.09,
+  // Environment-mandate knobs (all off/baseline by default):
+  //   FOOD_CLUSTERS      0 = uniform placement (original behaviour); >0 draws
+  //                      that many cluster centres and scatters FOOD points
+  //                      around them, so travel between patches is necessary.
+  //   FOOD_CLUSTER_SIGMA jitter radius of a food point around its cluster centre.
+  //   FOOD_SENSE_SIGMA2  variance of the food-sensing Gaussian kernel (field()).
+  //                      0.050 is the original wide field (effective radius
+  //                      ~0.22 against a 0.94 arena half-width — roughly a
+  //                      quarter of the world). Lower narrows it to a real
+  //                      gradient instead of a field.
+  //   FOOD_RELOCATE_THRESH  0 = disabled (original logistic regrow in place).
+  //                      >0: once a patch's stock decays below this level it is
+  //                      teleported to a fresh random point and refilled, so it
+  //                      never recovers where it was — memorised geography goes
+  //                      stale and only live sensing keeps working.
+  // Accepted (wave-2 environment mandate, 16 seeds x 8 generations):
+  // 9 clusters + relocate-on-depletion raises `sensing` 0.0367 -> 0.0874
+  // (+138%) at full viability (forage 0.53, gate clears at 0.30). Score
+  // 0.1892 +- 0.0067 -> 0.2100 +- 0.0075, delta +0.0208 vs a bar of 0.0201.
+  // Narrowing the sensing kernel (FOOD_SENSE_SIGMA2) tested separately and did
+  // not help — left at its original width.
+  FOOD_CLUSTERS: 9, FOOD_CLUSTER_SIGMA: 0.12,
+  FOOD_SENSE_SIGMA2: 0.050, FOOD_RELOCATE_THRESH: 0.15,
   ACC_COLS: 9,
   // Scales the developed recurrent matrix. 2.0 was the original and rails the
   // network; 0.5 puts the mean max-row-sum near 1.2, where tanh is still steep.
@@ -70,7 +93,33 @@ export function makeWorld(cfg = DEFAULTS, rng = makeRng(0x8f3d20a1)) {
     }
     return out;
   };
-  return { obstacles, food: points(cfg.FOOD), hazards: points(cfg.HAZARDS) };
+  // `clusters` food sources become `clusters` centres (placed with the same
+  // clearance test as uniform points) with `count` points scattered around
+  // them — an Irwin-Hall sum of three uniforms for a bounded, roughly-Gaussian
+  // jitter, so patches stay well clear of the arena edge instead of a true
+  // Gaussian's unbounded tail.
+  const clusteredPoints = (count, clusters, sigma) => {
+    if (!clusters || clusters <= 0) return points(count);
+    const centres = points(clusters);
+    const out = []; let guard = 0;
+    const bound = cfg.WORLD_BOUND * 0.92;
+    for (let i = 0; i < count; i++) {
+      const c = centres[i % clusters];
+      let x, y;
+      do {
+        const jx = (rng.next() + rng.next() + rng.next() - 1.5) * (sigma / 1.5);
+        const jy = (rng.next() + rng.next() + rng.next() - 1.5) * (sigma / 1.5);
+        x = clamp(c[0] + jx, -bound, bound); y = clamp(c[1] + jy, -bound, bound);
+      } while (!clearPoint(x, y) && ++guard < 4000);
+      out.push([x, y]);
+    }
+    return out;
+  };
+  return {
+    obstacles,
+    food: clusteredPoints(cfg.FOOD, cfg.FOOD_CLUSTERS, cfg.FOOD_CLUSTER_SIGMA),
+    hazards: points(cfg.HAZARDS),
+  };
 }
 
 /* -------------------------------------------------------------- sensors */
@@ -196,7 +245,10 @@ export class EvoDevoSim {
 
   makeConstants() {
     const C = this.cfg, W = this.world, tf = T();
-    this.food = tf.tensor2d(W.food, [C.FOOD, 2]);
+    // A Variable, not a plain tensor: FOOD_RELOCATE_THRESH relocates depleted
+    // patches in place with .assign() inside step(), which a constant tensor
+    // cannot support without dispose-and-recreate every occurrence.
+    this.food = this.v(tf.tensor2d(W.food, [C.FOOD, 2]));
     this.haz = tf.tensor2d(W.hazards, [C.HAZARDS, 2]);
     this.obs = tf.tensor2d(W.obstacles.map(o => [o[0], o[1]]), [C.OBSTACLES, 2]);
     this.obsR = tf.tensor1d(W.obstacles.map(o => o[2]));
@@ -276,19 +328,22 @@ export class EvoDevoSim {
   }
 
   /* ------------------------------------------------------ world */
-  reseedWorld() {
-    const C = this.cfg, tf = T();
+  // `overrides` lets a difficulty ramp regenerate the layout with different
+  // FOOD_CLUSTERS/FOOD_CLUSTER_SIGMA each generation without touching the
+  // frozen `this.cfg` (see evolveFor's `curriculum` option).
+  reseedWorld(overrides = {}) {
+    const C = { ...this.cfg, ...overrides };
     this.world = makeWorld(C, this.worldRng);
-    this.food.dispose(); this.haz.dispose();
-    this.food = tf.tensor2d(this.world.food, [C.FOOD, 2]);
-    this.haz = tf.tensor2d(this.world.hazards, [C.HAZARDS, 2]);
+    this.food.assign(T().tensor2d(this.world.food, [this.cfg.FOOD, 2]));
+    this.haz.dispose();
+    this.haz = T().tensor2d(this.world.hazards, [this.cfg.HAZARDS, 2]);
   }
   /** Run `fn` against a layout the population was never selected on, then restore. */
   async withNovelWorld(fn) {
     const C = this.cfg, tf = T();
     const old = this.world, oldFood = this.food, oldHaz = this.haz;
     this.world = makeWorld(C, this.worldRng);
-    this.food = tf.tensor2d(this.world.food, [C.FOOD, 2]);
+    this.food = this.v(tf.tensor2d(this.world.food, [C.FOOD, 2]));
     this.haz = tf.tensor2d(this.world.hazards, [C.HAZARDS, 2]);
     try { return await fn(); }
     finally {
@@ -381,7 +436,10 @@ export class EvoDevoSim {
   field(pos, points, sigma2, weights) {
     const rel = points.expandDims(0).sub(pos.expandDims(1));
     const d2 = rel.square().sum(2);
-    let w = d2.div(-sigma2).exp();
+    // d2.mul(-1).div(sigma2), not d2.div(-sigma2): if sigma2 is ever a tensor
+    // (an evolvable sensing width) JS unary minus coerces it through
+    // valueOf(), which silently yields NaN instead of negating it.
+    let w = d2.mul(-1).div(sigma2).exp();
     if (weights) w = w.mul(weights.expandDims(0));
     const mass = w.sum(1).add(1e-5);
     const vec = rel.mul(w.expandDims(2)).sum(1).div(mass.expandDims(1));
@@ -391,7 +449,7 @@ export class EvoDevoSim {
   step() {
     const C = this.cfg, tf = T(), mods = this.mods;
     tf.tidy(() => {
-      const food = this.field(this.pos, this.food, .050, this.foodStock);
+      const food = this.field(this.pos, this.food, C.FOOD_SENSE_SIGMA2, this.foodStock);
       const haz = this.field(this.pos, this.haz, .036, null);
       const orel = this.pos.expandDims(1).sub(this.obs.expandDims(0));
       const od = tf.sqrt(orel.square().sum(2).add(1e-6));
@@ -443,15 +501,27 @@ export class EvoDevoSim {
       nv = nv.mul(tf.onesLike(hit).sub(hit.mul(1.72)));
       this.pos.assign(np); this.vel.assign(nv);
       // Feeding draws the patch down; the patch regrows logistically toward 1.
-      const k = food.d2.div(-.0018).exp();
+      const k = food.d2.mul(-1).div(.0018).exp();
       const eat = k.mul(this.foodStock.expandDims(0)).max(1);
       const draw = k.sum(0);
       const stock = this.foodStock;
-      this.foodStock.assign(stock.add(
+      let newStock = stock.add(
         stock.mul(-1).add(1).mul(C.FOOD_REGROW)
           .sub(draw.mul(stock).mul(C.FOOD_CONSUME))
-          .mul(C.DT)).clipByValue(0, 1));
-      const tox = haz.d2.div(-.0015).exp().max(1);
+          .mul(C.DT)).clipByValue(0, 1);
+      // Non-stationary resources: a patch that decays past FOOD_RELOCATE_THRESH
+      // does not recover in place — it is teleported to a fresh random point
+      // and refilled. Depletion becomes permanent-at-that-location, so a
+      // memorised layout goes stale and only live sensing keeps paying off.
+      if (C.FOOD_RELOCATE_THRESH > 0) {
+        const depleted = newStock.less(C.FOOD_RELOCATE_THRESH).toFloat();
+        const keep = tf.onesLike(depleted).sub(depleted);
+        const candidate = this.ru([C.FOOD, 2], -C.WORLD_BOUND * 0.87, C.WORLD_BOUND * 0.87);
+        this.food.assign(this.food.mul(keep.expandDims(1)).add(candidate.mul(depleted.expandDims(1))));
+        newStock = newStock.mul(keep).add(depleted);
+      }
+      this.foodStock.assign(newStock);
+      const tox = haz.d2.mul(-1).div(.0015).exp().max(1);
       const cost = thrust.abs().mul(.015).add(turn.abs().mul(.009)).add(.013);
       const en = this.energy.add(eat.mul(.42).sub(tox.mul(.62)).sub(cost).mul(C.DT)).clipByValue(0, 1.4);
       this.energy.assign(en);
@@ -611,8 +681,8 @@ export class EvoDevoSim {
     let worldRestored = false;
     if (p.world && validPoints(p.world.food, C.FOOD) && validPoints(p.world.hazards, C.HAZARDS)) {
       this.world = { obstacles: this.world.obstacles, food: p.world.food, hazards: p.world.hazards };
-      this.food.dispose(); this.haz.dispose();
-      this.food = tf.tensor2d(this.world.food, [C.FOOD, 2]);
+      this.food.assign(tf.tensor2d(this.world.food, [C.FOOD, 2]));
+      this.haz.dispose();
       this.haz = tf.tensor2d(this.world.hazards, [C.HAZARDS, 2]);
       worldRestored = true;
     }
@@ -753,8 +823,15 @@ export async function diagnose(sim, opts = {}) {
 
 /** Evolve for `generations`, optionally reporting progress. Returns the sim. */
 export async function evolveFor(sim, generations, opts = {}) {
-  const { onGeneration = null, yieldEvery = 0 } = opts;
+  // `curriculum(g, generations)` returns a reseedWorld() overrides object for
+  // generation g (0-indexed) — a difficulty ramp that hardens the world as
+  // evolution proceeds, so the population is not wiped out before it can
+  // adapt. Reseeding regenerates the whole layout each call, so it also
+  // exercises the same "no memorised geography" pressure as relocation, just
+  // at generation granularity instead of within an epoch.
+  const { onGeneration = null, yieldEvery = 0, curriculum = null } = opts;
   for (let g = 0; g < generations; g++) {
+    if (curriculum) sim.reseedWorld(curriculum(g, generations));
     sim.resetBodies();
     for (let i = 0; i < sim.cfg.EPOCH_STEPS; i++) {
       sim.step();

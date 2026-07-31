@@ -352,3 +352,39 @@ Two lessons:
 
 The agent behaved better than the system it was embedded in. Its skepticism cost
 one wave of predator experiments and is worth that price several times over.
+
+## Wave 2 result: the first confirmed capability gain
+
+**`FOOD_CLUSTERS=9` + `FOOD_RELOCATE_THRESH=0.15`** — food drawn around 9 cluster
+centres instead of scattered uniformly, and a patch that decays below 0.15 stock
+**relocates to a fresh point** instead of regrowing in place.
+
+| | baseline | accepted |
+|---|---|---|
+| score | 0.1892 ± 0.0067 | **0.2100 ± 0.0075** |
+| sensing | 0.0367 | **0.0874 (+138%)** |
+| taxis | 0.0107 | 0.0112 |
+| forage | 0.852 | 0.535 |
+
+Confirmed at **16 seeds** after the 8-seed run came in just under the bar, with
+the standard error shrinking as 1/√2 predicts. Delta +0.0208 against a bar of
+0.0201 — the first change in two waves and 45 experiments to clear it on
+capability rather than on rescaling.
+
+This is not a viability trick: foraging *fell* by more than a third and stayed
+well clear of the 0.30 floor, while sensing more than doubled. The population is
+losing food and gaining sensory dependence, which is exactly the trade the whole
+project was trying to buy.
+
+**Honest caveat**: `taxis` stayed flat. So the ablation says sensing is
+load-bearing, but the steering-to-bearing correlation does not confirm classical
+directed chemotaxis. Something is using the senses in a way this measure does
+not capture, and finding out what is the obvious next question.
+
+Why it works, and why the two ingredients are both needed: clustering makes
+undirected coverage fail, because food is no longer everywhere. Relocation on
+depletion makes *memorised* geography fail, because a patch you emptied is gone
+rather than refilling where you left it. Together the only remaining strategy is
+to find out where food is now — which is what sensing is for. Narrowing the
+sensing kernel alone did nothing, which pins the cause on food density rather
+than sensor range.
