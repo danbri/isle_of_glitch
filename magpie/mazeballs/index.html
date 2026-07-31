@@ -12,6 +12,9 @@
     --ink:#eaf8f3; --muted:#89a8a2; --line:rgba(164,234,217,.16);
     --panel:rgba(5,14,15,.76); --panel2:rgba(11,25,25,.62);
     --lime:#b9ff68; --cyan:#57f3d0; --amber:#ffd46a; --pink:#ff5d9e;
+    /* Measured from the control bar at runtime. It wraps to a different number
+       of rows per screen width, so anything sitting above it has to follow. */
+    --controlsH:48px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#040909;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -34,12 +37,12 @@
   .label{font:9px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
   .value{margin-top:6px;font:600 18px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:#effff9}
   .value.small{font-size:13px}
-  #inspectorPanel{position:fixed;z-index:4;right:20px;bottom:74px;width:min(340px,42vw);height:266px;padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--panel);backdrop-filter:blur(17px);box-shadow:0 20px 50px rgba(0,0,0,.3)}
+  #inspectorPanel{position:fixed;z-index:4;right:20px;bottom:calc(var(--controlsH) + 26px);width:min(340px,42vw);height:266px;padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--panel);backdrop-filter:blur(17px);box-shadow:0 20px 50px rgba(0,0,0,.3)}
   #inspectorPanel header{height:31px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
   #inspectorPanel h2{margin:0;font-size:11px;letter-spacing:.15em;text-transform:uppercase}
   #selectedMeta{font:9px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);text-align:right;white-space:nowrap}
   #inspector{width:100%;height:210px;display:block}
-  #architecture{position:fixed;z-index:4;left:20px;bottom:75px;width:min(310px,35vw);padding:12px 13px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);backdrop-filter:blur(15px);font:10px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:#aec9c3}
+  #architecture{position:fixed;z-index:4;left:20px;bottom:calc(var(--controlsH) + 27px);width:min(310px,35vw);padding:12px 13px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);backdrop-filter:blur(15px);font:10px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:#aec9c3}
   #architecture b{color:#e8fff8;font-weight:650}
   #architecture .arrow{color:var(--cyan)}
   #controls{position:fixed;z-index:6;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:7px;border:1px solid var(--line);border-radius:13px;background:rgba(4,13,14,.88);backdrop-filter:blur(20px);box-shadow:0 18px 50px rgba(0,0,0,.38)}
@@ -98,7 +101,7 @@
     #architecture{display:none}
     #controls{left:8px;right:8px;transform:none;flex-wrap:wrap;justify-content:center;gap:6px}
     input[type=range]{width:78px}
-    #inspectorPanel{left:10px;right:10px;width:auto;bottom:112px;height:220px}
+    #inspectorPanel{left:10px;right:10px;width:auto;bottom:calc(var(--controlsH) + 26px);height:220px}
     #inspector{height:164px}
     #analysisPanel{width:calc(100vw - 12px);max-height:92vh}
     #anBody{padding:12px}
@@ -147,6 +150,8 @@
   <button id="analyse" title="Open the analysis panel (A)">analysis</button>
   <label class="rangeWrap">speed <input id="speed" type="range" min="1" max="10" value="3" aria-label="Simulation steps per frame" /></label>
   <label class="rangeWrap">mutation <input id="mutation" type="range" min="1" max="30" value="10" aria-label="Mutation rate, percent of genome loci" /></label>
+  <label class="rangeWrap" title="Scales the developed recurrent matrix. Above ~1 the network rails and stops responding to its senses.">gain <input id="gain" type="range" min="10" max="300" step="5" value="50" aria-label="Recurrent gain of the adult CTRNN" /><span id="gainVal">0.50</span></label>
+  <span class="rangeWrap" id="railed" title="Share of CTRNN cells pinned at the limits of tanh — these cells cannot respond to input">—</span>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
 
@@ -173,6 +178,14 @@
 
     <h3>Sensorimotor coupling</h3>
     <div id="anTaxis"><p class="empty">Measured during the baseline run.</p></div>
+
+    <h3>Network regime</h3>
+    <p>Whether the control network is in a range where it can compute at all. This
+    is upstream of everything else on this page: a railed cell produces the same
+    output whatever it is sent, so if these numbers are bad the ablation table
+    below will read “open loop” no matter how long you evolve. The <b>gain</b>
+    slider in the control bar rewires the whole population live.</p>
+    <div id="anNetwork"><p class="empty">—</p></div>
 
     <h3>Population</h3>
     <div id="anPop"><p class="empty">—</p></div>
@@ -206,6 +219,10 @@ const CFG = Object.freeze({
   // come back. An epoch is 26s, so a squatter starves and a forager doesn't.
   FOOD_CONSUME: 0.40, FOOD_REGROW: 0.09,
   ACC_COLS: 9,
+  // Scales the developed recurrent matrix. 2.0 was the original and rails the
+  // network; 0.5 puts the mean max-row-sum near 1.2, where tanh is still steep
+  // and the senses can actually move the state. Adjustable live.
+  GAIN: 0.5, SAT_LEVEL: 0.95, WALL_LEVEL: 0.93,
 });
 
 const $ = id => document.getElementById(id);
@@ -338,7 +355,7 @@ const SENSOR_GROUPS = Object.freeze({
 
 class EvoDevoSim {
   constructor(){
-    this.gen=0;this.stepNo=0;this.selected=0;this.mutation=.10;
+    this.gen=0;this.stepNo=0;this.selected=0;this.mutation=.10;this.gain=CFG.GAIN;
     this.snapshotPending=false;this.lastSnapshot=null;
     this.mods=null;this.recording=false;this.accSteps=0;this.analysing=false;
     this.makeConstants();this.makeVariables();this.resetLineage();
@@ -456,7 +473,13 @@ class EvoDevoSim {
       const bias=sl(0).mul(1.45);const tau=tf.sigmoid(sl(1)).mul(1.65).add(.24);this.bias.assign(bias);this.tau.assign(tau);
       const le=sl(2),li=sl(3),re=sl(4),ri=sl(5);
       let w=le.expandDims(2).mul(re.expandDims(1)).sub(li.expandDims(2).mul(ri.expandDims(1))).mul(this.distKernel).mul(2.0);
-      w=w.add(sl(9).expandDims(2).mul(this.eye).mul(.65));this.W.assign(w);
+      w=w.add(sl(9).expandDims(2).mul(this.eye).mul(.65));
+      // Recurrent gain. At the original 2.0 the largest absolute row sum of W
+      // averages ~5, which parks a tanh network's fixed points out where the
+      // nonlinearity is flat: ~27% of cells rail and sensory input cannot move
+      // them. Scaling the whole matrix keeps the developed structure intact and
+      // only changes the regime it operates in.
+      this.W.assign(w.mul(this.gain/2.0));
       const receptor=tf.stack([sl(6),sl(7)],2);const se=tf.tile(this.sensorEmb,[CFG.POP,1,1]);this.Win.assign(tf.matMul(se,receptor.transpose([0,2,1])).mul(1.18));
       const cp=tf.tile(this.cellPos.expandDims(0),[CFG.POP,1]);const motor=sl(8);this.Wout.assign(tf.stack([tf.tanh(motor.sub(cp.mul(1.4))),tf.tanh(motor.add(cp.mul(1.4)))],2));
       const c=tf.stack([sl(2).mean(1),sl(6).mean(1),sl(8).mean(1)],1).mul(1.2).add(.6).clipByValue(.12,1);this.color.assign(c);
@@ -576,6 +599,25 @@ class EvoDevoSim {
     }
     return {food,toxin,forwardBias:col(8)/N,strongFood,samples:N};
   }
+  // Regime diagnostics. `gain` is the mean over agents of the largest absolute
+  // row sum of W, which bounds how much the recurrent term can amplify: above
+  // ~1 the tanh fixed points sit in the flat region and the cell stops
+  // responding to input. `satFitCorr` asks whether selection cares either way.
+  async networkStats(){
+    const t=tf.tidy(()=>tf.stack([
+      tf.tanh(this.neural).abs().greater(CFG.SAT_LEVEL).toFloat().mean(),
+      this.W.abs().sum(2).max(1).mean(),
+      this.pos.abs().max(1).greater(CFG.WALL_LEVEL).toFloat().mean(),
+    ]));
+    const perAgent=tf.tidy(()=>tf.tanh(this.neural).abs().greater(CFG.SAT_LEVEL).toFloat().mean(1));
+    const [d,sat,fit]=await Promise.all([t.data(),perAgent.data(),this.fitness.data()]);
+    t.dispose();perAgent.dispose();
+    const n=sat.length,ms=mean(sat),mf=mean(fit);
+    let sab=0,sa=0,sb=0;
+    for(let i=0;i<n;i++){const da=sat[i]-ms,db=fit[i]-mf;sab+=da*db;sa+=da*da;sb+=db*db}
+    const satFitCorr=(sa<1e-12||sb<1e-12)?0:sab/Math.sqrt(sa*sb);
+    return {saturation:d[0],gain:d[1],atWall:d[2],satFitCorr};
+  }
   async populationStats(){
     const t=tf.tidy(()=>tf.stack([
       tf.moments(this.genR,[0]).variance.mean().sqrt(),
@@ -589,7 +631,13 @@ class EvoDevoSim {
   snapshot(selected){
     if(this.snapshotPending)return false;this.snapshotPending=true;
     const view=tf.tidy(()=>{const speed=tf.sqrt(this.vel.square().sum(1).add(1e-6)).expandDims(1);return tf.concat([this.pos,this.angle.expandDims(1),this.energy.expandDims(1),this.fitness.expandDims(1),speed,this.color],1)});
-    const diag=tf.tidy(()=>tf.stack([this.fitness.max(),this.fitness.mean(),this.energy.mean(),this.foodStock.mean()]));
+    // Saturation and wall-pinning ride along in the existing readback rather
+    // than costing a second GPU round trip per frame.
+    const diag=tf.tidy(()=>tf.stack([
+      this.fitness.max(),this.fitness.mean(),this.energy.mean(),this.foodStock.mean(),
+      tf.tanh(this.neural).abs().greater(CFG.SAT_LEVEL).toFloat().mean(),
+      this.pos.abs().max(1).greater(CFG.WALL_LEVEL).toFloat().mean(),
+    ]));
     const inspect=tf.tidy(()=>tf.concat([tf.gather(this.expr,selected).flatten(),tf.gather(this.neural,selected).flatten(),tf.gather(this.W,selected).flatten()]));
     const stock=this.foodStock.clone();
     Promise.all([view.data(),diag.data(),inspect.data(),stock.data()])
@@ -710,6 +758,13 @@ const topQuartile=a=>{const s=Array.from(a).sort((x,y)=>y-x),n=Math.max(1,Math.r
   renderer.onLost=()=>{paused=true;fail('The WebGL context was lost — reload the page to restart the biosphere.')};
   const setSelected=i=>{sim.selected=i;selectDirty=true;renderer.setSelected(i);$('selectedMeta').innerHTML=`agent ${i}<br>lineage sample`;};
   setSelected(0);
+  // The control bar wraps to a different number of rows per screen width, and
+  // its height changes again as the readouts change width. Everything stacked
+  // above it follows the measured value rather than a hardcoded offset.
+  const syncControlsHeight=()=>document.documentElement.style.setProperty('--controlsH',$('controls').offsetHeight+'px');
+  syncControlsHeight();
+  if(typeof ResizeObserver!=='undefined')new ResizeObserver(syncControlsHeight).observe($('controls'));
+  addEventListener('resize',syncControlsHeight);
   $('world').addEventListener('pointerdown',e=>setSelected(renderer.pick(e.clientX,e.clientY)));
   $('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'resume':'pause';};
   $('step').onclick=()=>{paused=true;singleStep=true;$('pause').textContent='resume'};
@@ -721,6 +776,16 @@ const topQuartile=a=>{const s=Array.from(a).sort((x,y)=>y-x),n=Math.max(1,Math.r
     sim.gen=0;await sim.develop();sim.resetBodies();setSelected(0);toast('new random biosphere');evolving=false
   };
   $('mutation').oninput=e=>sim.mutation=Number(e.target.value)/100;
+  // Dragging only relabels; rewiring the whole population is deferred to release,
+  // since it means re-running development for all 192 genomes.
+  $('gain').oninput=e=>$('gainVal').textContent=(Number(e.target.value)/100).toFixed(2);
+  $('gain').onchange=async e=>{
+    const g=Number(e.target.value)/100;
+    $('gainVal').textContent=g.toFixed(2);
+    if(evolving||busy){sim.gain=g;return}
+    evolving=true;sim.gain=g;await sim.develop();evolving=false;
+    toast('rewired at gain '+g.toFixed(2)+(g>1.2?' — expect railing':''));
+  };
 
   /* ---------------- analysis panel ---------------- */
   const panel=$('analysisPanel'),scrim=$('scrim');
@@ -738,7 +803,19 @@ const topQuartile=a=>{const s=Array.from(a).sort((x,y)=>y-x),n=Math.max(1,Math.r
   $('anRestarts').oninput=e=>$('anRestartsVal').textContent=e.target.value;
 
   async function refreshPopulation(){
-    const s=await sim.populationStats();
+    const s=await sim.populationStats(),n=await sim.networkStats();
+    $('anNetwork').innerHTML=`
+      <table class="an">
+        <tr><td><span class="tag">gain</span>mean largest absolute row sum of W — above ~1 the tanh fixed points sit in the flat region</td>
+            <td class="num ${n.gain>1.6?'drop':'flat'}">${n.gain.toFixed(2)}</td></tr>
+        <tr><td><span class="tag">railed</span>cells pinned beyond |tanh| &gt; ${CFG.SAT_LEVEL} — these cannot respond to input</td>
+            <td class="num ${n.saturation>0.20?'drop':n.saturation>0.08?'flat':'rise'}">${(n.saturation*100).toFixed(1)}%</td></tr>
+        <tr><td><span class="tag">at wall</span>agents pinned against the world boundary</td>
+            <td class="num ${n.atWall>0.10?'drop':'flat'}">${(n.atWall*100).toFixed(1)}%</td></tr>
+        <tr><td><span class="tag">selection</span>corr(saturation, fitness) — near zero means selection neither favours nor removes railing</td>
+            <td class="num">${n.satFitCorr.toFixed(3)}</td></tr>
+        <tr><td><span class="tag">setting</span>gain slider</td><td class="num">${sim.gain.toFixed(2)}</td></tr>
+      </table>`;
     // Children only ever descend from the elites, so from generation 1 onward the
     // most founding lineages that can possibly survive is ELITES, not POP.
     const ceiling=sim.gen>0?CFG.ELITES:CFG.POP;
@@ -941,6 +1018,10 @@ const topQuartile=a=>{const s=Array.from(a).sort((x,y)=>y-x),n=Math.max(1,Math.r
     $('generation').textContent=sim.gen;$('epoch').textContent=(sim.stepNo*CFG.DT).toFixed(1)+'s';
     $('best').textContent=snap.diag[0].toFixed(3);$('meanEnergy').textContent=snap.diag[2].toFixed(3);
     $('stock').textContent=(snap.diag[3]*100).toFixed(0)+'%';
+    const railed=snap.diag[4],wall=snap.diag[5];
+    const r=$('railed');
+    r.textContent=(railed*100).toFixed(0)+'% railed · '+(wall*100).toFixed(0)+'% at wall';
+    r.style.color=railed>0.20?'#ff5d9e':railed>0.08?'#ffd46a':'#8faea7';
     // Same ceiling as the analysis panel: from generation 1 every child descends
     // from an elite, so the most founding lineages that can survive is ELITES.
     $('lineages').textContent=new Set(sim.founder).size+' / '+(sim.gen>0?CFG.ELITES:CFG.POP);
