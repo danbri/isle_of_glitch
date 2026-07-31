@@ -122,3 +122,29 @@ not a failure of the wave.
   Measuring it against `POP` reads a total monoculture as healthy.
 - **Saturation must be measured on a settled network.** Immediately after a
   reset nothing has railed yet and it reads ~0 regardless of the real regime.
+
+## Does this workload want a GPU?
+
+Not at the current size. Measured with `tools/bench.js` on deno/wasm, cost per
+1000 agents per step:
+
+| POP | ms/step | ms per 1000 agents |
+|---|---|---|
+| 192 | 9.4 | 48.8 |
+| 3,072 | 95.1 | 30.9 |
+| 12,288 | 336.6 | 27.4 |
+
+Per-agent cost nearly halves from POP 192 to POP 12,288, which says the small
+configuration is **dispatch-overhead-bound, not compute-bound**. A GPU makes
+overhead worse, not better — the same reason the native TensorFlow binding lost
+to WASM here. The curve is flattening by 12,288, which is where compute starts
+to dominate and an accelerator would begin to pay.
+
+(A POP 768 sample came in at 146 ms per 1000 agents, well off the trend. That
+run collided with the research fleet on a shared box; it is noise, not a knee.)
+
+The practical consequence: scaling the population is the change that both makes
+a GPU worthwhile *and* attacks the measured problem that selection tracks spawn
+luck rather than genotype, since more genomes per generation is more evidence
+per selection event. Renting CPU cores is the better buy until then, because
+sweeps are embarrassingly parallel across seeds and configurations.
