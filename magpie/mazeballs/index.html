@@ -941,7 +941,9 @@ const topQuartile=a=>{const s=Array.from(a).sort((x,y)=>y-x),n=Math.max(1,Math.r
     $('generation').textContent=sim.gen;$('epoch').textContent=(sim.stepNo*CFG.DT).toFixed(1)+'s';
     $('best').textContent=snap.diag[0].toFixed(3);$('meanEnergy').textContent=snap.diag[2].toFixed(3);
     $('stock').textContent=(snap.diag[3]*100).toFixed(0)+'%';
-    $('lineages').textContent=new Set(sim.founder).size+' / '+CFG.POP;
+    // Same ceiling as the analysis panel: from generation 1 every child descends
+    // from an elite, so the most founding lineages that can survive is ELITES.
+    $('lineages').textContent=new Set(sim.founder).size+' / '+(sim.gen>0?CFG.ELITES:CFG.POP);
     }
   async function loop(now){
     const speed=Number($('speed').value);
