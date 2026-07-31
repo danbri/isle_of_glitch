@@ -669,3 +669,94 @@ This also reframes the taxis puzzle. The population uses food *bearing*
 information, demonstrably, but expresses it through neither turn nor thrust
 correlation. Whatever the policy is, it is not an instantaneous
 stimulus-to-response mapping of the kind either measure can see.
+
+## Wave 4: sensor morphology retested on the clustered world — still null
+
+Wave 1's eight body-mechanism nulls were diagnosed as a premise failure: with
+food scattered uniformly, an undirected gait found it about as reliably as
+directed chemotaxis, so no sensor change could matter. That premise no longer
+holds — clustered, relocating food made `sensing` genuinely load-bearing
+(0.037 → 0.087, later corrected upward again by the mean-replacement finding).
+The strongest candidate for retest was **evolvable sensor geometry**: every
+organism still shares one identical, fixed ring of 8 sensor-embedding angles
+(`sensorEmb` in `makeConstants`), evenly spaced at 45° and never touched by
+evolution. This is not the 8 sensor *channels* (food bearing x/y, food mass,
+toxin bearing x/y, toxin mass, wall, energy — untouched, `SENSOR_GROUPS`
+unchanged) but the fixed unit-circle embedding used to build `Win`: which
+gene-expressed cell receptor gets wired to which sensor channel, and how
+separable those channels are in the 2-D space the dot product is taken in.
+
+Two mechanisms were implemented, each gated behind an off-by-default config
+flag so baseline behaviour is reproduced exactly when disabled:
+
+1. **`EVOLVABLE_SENSOR_ANGLES`** — replace the shared fixed ring with a
+   per-organism `[POP, SENSORS, 2]` tensor, mutated and selected exactly like
+   `genR`/`genM`, renormalised to unit length at use time in `develop()`
+   (`this.sensorAngle.div(sqrt(sum(square)))`) since mutation does not
+   preserve norm the way the fixed ring did.
+2. **`EVOLVABLE_SENSE_RANGE`** — the wave-1 "evolvable sensing range" null,
+   retried on the clustered world. Per-organism food-sensing kernel width
+   (`FOOD_SENSE_SIGMA2`) stored as a raw logit and mapped through
+   `SENSE_RANGE_MIN + range·sigmoid(raw)` so mutation cannot push the kernel
+   negative or unbounded, initialised to reproduce the fixed default
+   (mean ≈ 0.050) at generation 0. Confirmed the pre-existing
+   `d2.mul(-1).div(sigma2)` ordering in `field()` already handles a tensor
+   `sigma2` safely — the NaN trap this document warns about was already
+   avoided, not newly triggered.
+
+Both were mutated/selected inside the same `tf.tidy` block as `genR`/`genM`
+in `evolve()`, so they ride the same elite-and-mutate mechanics with no new
+confound. `GENES` was not touched, so the already-ruled-out
+gene-count-growth confound does not apply here.
+
+| variant | score ± se | Δ vs baseline | bar (2×se) | sensing | taxis | selection | diversity |
+|---|---|---|---|---|---|---|---|
+| baseline | 0.1951 ± 0.0082 | — | — | 0.053 | 0.0107 | 0.0441 | 0.2375 |
+| evolvable sensor angles | 0.1959 ± 0.0099 | +0.0008 | 0.0257 | 0.048 | 0.0198 | 0.0361 | 0.225 |
+| evolvable sensing range | 0.2008 ± 0.0130 | +0.0057 | 0.0307 | 0.0669 | 0.0135 | 0.0504 | 0.175 |
+| both combined | 0.1962 ± 0.0113 | +0.0011 | 0.0279 | 0.0588 | 0.0202 | 0.0643 | 0.225 |
+
+8 seeds, 8 generations, 300 steps, 1 restart, `--workers 2` — the significance-bar
+protocol from this document's header. **All three: NO SIGNIFICANT CHANGE.** None
+of the three deltas reaches even a fifth of its own bar (3%, 19%, 4%
+respectively), so none is a near-miss worth the 16-seed confirmation this
+project reserves for borderline results — these are clean nulls, not
+underpowered ones.
+
+Reported for completeness, `capability` (the same five-term weighted sum
+before the viability gate, which stayed at 1.0 in every run since forage never
+dropped near the 0.30 floor): baseline 0.1956, sensor-angles 0.1959,
+sense-range 0.2008, combined 0.1962 — the same numbers as score here because
+viability was never binding.
+
+**The mechanism was verified to actually engage, not sit inert.** For
+evolvable sensor angles, the per-organism embedding's cross-population spread
+(`population.sensorAngleSigma`, reported once `EVOLVABLE_SENSOR_ANGLES` is on)
+fell from 0.705 at generation 0 to 0.568 by generation 8 on seed 1 — selection
+and mutation are visibly acting on it, converging the population toward a
+shared geometry, exactly what truncation selection does to any heritable
+trait under it. It just was not a geometry that foraged, sensed, or steered
+better than the fixed evenly-spaced ring. For evolvable sensing range, the
+per-organism kernel width tracked its designed initial mean (≈0.050) with no
+strong pull toward either the narrow or wide end within 8 generations.
+
+**Interpretation.** The wave-1 diagnosis (undirected gait ≈ directed
+chemotaxis under uniform food) is confirmed dead as an explanation — sensing
+is unambiguously load-bearing on this world now (`blind`-condition drops of
+5–21%, understated per the mean-replacement finding above). But *how* it is
+used apparently does not bottleneck on the fixed sensor-to-cell wiring
+geometry, nor on a fixed kernel width. Combined with wave 3's findings —
+capacity (bigger `CELLS`) does not help, RK4 integration accuracy does not
+help, inter-organism coupling does not help, and the two accepted
+environment/selection wins do not compose — this is now five consecutive
+architecture-side levers that move nothing while sensing itself is
+demonstrably in use. The bottleneck this project has not yet found a lever
+for looks decreasingly like an architectural capacity question and
+increasingly like it sits in the *policy shape itself*: the population uses
+food bearing information (§ "the sensing measure...") but express it through
+neither an instantaneous turn-vs-bearing nor thrust-vs-forward-component
+correlation, on a fixed ring or an evolved one, at a fixed sensing radius or
+an evolved one. Whatever is happening is not a simple proportional controller
+under any sensor geometry tried so far, which argues the next lever should
+target the temporal/recurrent shape of the policy (e.g. lagged or integrated
+bearing correlations) rather than another turn of morphology.
