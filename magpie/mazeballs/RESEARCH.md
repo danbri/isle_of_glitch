@@ -446,3 +446,47 @@ firmly launch-bound, where a GPU loses to WASM exactly as the native binding did
 Bigger networks, genuine inter-organism coupling, and RK4 all push the same way:
 more arithmetic per launch. The first two are independently the most promising
 unexplored science, so the performance and research arguments coincide.
+
+## Block-diagonal vs flattened: measured
+
+Prior art — `danbri/mazeballs/continuous-time-networks` — exposes
+`CTNet({size, init_weights})` with a 1-D state vector and an async generator
+yielding `states`, `outputs` and `yprime`. That API is genuinely agnostic
+between "many small networks" and "one huge one": a population of 192 organisms
+of 12 cells *is* a 2304-node CTRNN with block-diagonal weights, same call.
+Notably its default backend order is WASM > WebGL > CPU, which independently
+matches the ordering measured here.
+
+What the choice costs, on wasm:
+
+| form | time | MACs | effective throughput |
+|---|---|---|---|
+| batched `[192,1,12]x[192,12,12]` | 0.60 ms | 0.03M | 0.05 GMAC/s |
+| dense flat `[1,2304]x[2304,2304]` | 3.71 ms | 5.31M | 1.43 GMAC/s |
+| dense flat `[1,10k]x[10k,10k]` | 51.6 ms | 100M | 1.94 GMAC/s |
+
+Two things fall out.
+
+**For independent organisms, batched wins and flattening is pure waste.** The
+dense form does 192x the arithmetic — almost all of it multiplying zeros — for
+6x the wall time. Do not flatten for performance.
+
+**But the batched form runs at 1/30th of the achievable arithmetic throughput.**
+0.05 GMAC/s against 1.94 for the large dense op: the current configuration is
+not compute-limited at all, it is entirely overhead-limited. That is the same
+conclusion the CELLS scaling table reached, from a different direction.
+
+The consequence for hardware is the useful part. The dense 10k-node op is 100M
+MACs, which a mid-range GPU clears in tens of microseconds — while the current
+batched op stays launch-bound at ~10 us however small it is. **On a GPU, a
+fully coupled 10,000-node population costs about what the present uncoupled
+2304-node one already costs.** Coupling becomes nearly free at exactly the point
+the hardware changes.
+
+So flattening is not an optimisation, it is an enabler: it only pays once the
+off-diagonal blocks are non-zero, and that is precisely the inter-organism
+coupling that wave 2's scripted predators could not provide.
+
+Also worth noting: `yprime` being a first-class output in that API is the natural
+seam for a higher-order integrator — RK4 needs derivative evaluations at
+intermediate points, which is exactly what it already yields.
