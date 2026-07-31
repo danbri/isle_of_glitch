@@ -531,3 +531,112 @@ elevates taxis is the natural probe.
 If they compose, that is the strongest result the project has produced. If they
 do not, both changes are hitting one underlying constraint, which is equally
 worth knowing.
+
+## Wave 2 (parallel worktree): escaping the open-loop attractor through selection
+
+This ran as a sibling wave-2 mandate, in a separate worktree off the same
+wave-1 endpoint (`21ca4d9`), attacking a different bottleneck than the
+environment mandate above: it does not contain the clustered-relocating-food
+change, and was integrated onto trunk afterwards (see "Integrating the two
+wave-2 mandates" below).
+
+Mandate: attack the finding that plain fitness-truncation selection collapses
+founder lineages to 1-3 within three generations and actively discards sensing,
+because open-loop wandering works soonest. 8 seeds this time, not 4.
+
+### The viability gate was still a proportional multiplier
+
+Before measuring anything, `tools/score.js` needed a fix that had already
+landed in a sibling wave-1 worktree but not in this one: `viability` was
+`base.top / 1.0`, a proportional multiplier on the whole capability term. That
+double-penalises difficulty — wave 1's environment mandate found settings that
+raised `sensing` 43% and still scored as regressions purely because harder
+worlds forage less. A quality-diversity or novelty scheme trades some foraging
+efficiency for exploration by design, so the old gate would have scored
+exactly this wave's real wins as losses. Changed to a threshold,
+`clamp01(base.top / 0.30)`: anything foraging above 0.30 counts as alive, and
+capability is judged on its own. `capability` (`score / viability`) is now
+reported alongside `score` so the two are never conflated. Baseline and every
+experiment below were (re-)measured under the corrected gate.
+
+```
+baseline, 8 seeds x 8 generations x 300 steps:
+score 0.1884 ± 0.0059   (== capability; viability pinned at 1.0)
+sensing 0.038   taxis 0.012   generalisation 0.965   selection 0.041   diversity 0.200
+forage 0.873
+```
+
+### Six experiments
+
+| # | change | score ± se | Δ vs baseline | 2×combined se | verdict |
+|---|---|---|---|---|---|
+| 1 | niche selection (QD, 10 angular position sectors) | 0.1825 ± 0.0067 | −0.0059 | 0.0179 | no significant change |
+| 2 | niche selection + multi-spawn(2) | 0.1971 ± 0.0089 | +0.0087 | 0.0214 | no significant change |
+| 3 | multi-spawn(2) alone, truncation selection | 0.1920 ± 0.0101 | +0.0036 | 0.0234 | no significant change |
+| 4 | novelty-weighted fitness selection alone | 0.1854 ± 0.0081 | −0.0030 | 0.0200 | no significant change |
+| 5 | **novelty-weighted fitness + multi-spawn(2)** | **0.2137 ± 0.0056** | **+0.0253** | **0.0163** | **IMPROVEMENT** |
+| 6 | novelty-weighted fitness + multi-spawn(3) | 0.1952 ± 0.0118 | −0.0185 vs #5 | 0.0261 vs #5 | no gain over #5 |
+
+Niche selection (one fittest agent per angular sector of final position,
+backfilled with the next-fittest overall wherever a sector is empty — always
+exactly `ELITES` elites, so downstream tensor shapes and lineage bookkeeping
+are unaffected by which scheme ran) raised `diversity` a little (0.20 → 0.25)
+on its own and in combination, but never moved `sensing` or `taxis`, and never
+cleared the bar. Multi-spawn alone replicated wave 1's selection agent almost
+exactly (`selection` 0.041 → 0.18, `sensing` unchanged, no significant overall
+move) — the mechanism is real but insufficient by itself, exactly as wave 1
+found.
+
+**Novelty-weighted fitness selection** — rank by fitness plus a k-nearest-
+-neighbour novelty bonus in final-position space (both z-scored so they
+combine on a common scale), instead of truncating on fitness alone — was also
+null in isolation. Combined with 2-spawn fitness averaging it cleared the bar:
+`sensing` 0.038 → 0.059 (+56%), `generalisation` 0.965 → 0.987, `selection`
+0.041 → 0.127, at the cost of `forage` 0.873 → 0.627 (still comfortably above
+the 0.30 viability floor). This is precisely the shape of result the gate fix
+exists to let through: a real sensing/generalisation gain purchased with
+foraging efficiency, which the old proportional gate would have read as a
+39% regression instead of a win. Pushing to 3 spawns did not compound the
+gain — score fell to 0.195 and `se` grew to 0.012, so 2 spawns is kept, not 3.
+
+### Adopted
+
+`--select novelty --spawns 2` (via `tools/run.js` / `evolveFor`'s `spawns`
+option) is accepted as a validated headless-evolution configuration:
+**0.2137 ± 0.0056 vs baseline 0.1884 ± 0.0059, Δ +0.0253, clears 2×combined
+se (0.0163).**
+
+`DEFAULTS.SELECT` stays `'trunc'` — a true no-op — because the win depends on
+multi-spawn averaging, which lives in `evolveFor` and only the headless
+runners call. The live page instantiates `EvoDevoSim` with no config override
+and calls `sim.evolve()` directly once per epoch; it never calls `evolveFor`,
+so it cannot benefit from multi-spawn without a change to `index.html`'s own
+evolution loop, which is out of scope here. Novelty selection *alone* (no
+multi-spawn) was not a significant win, so it is not safe to make the
+browser's default either. The accepted change is real but is, honestly, an
+offline-training-pipeline result, not a live-page one: useful for pre-training
+a population (`exportPopulation`) to load into the browser via
+`importPopulation`, not for the click-to-evolve loop as shipped.
+
+### Rejected
+
+- Niche (QD) selection alone or combined with multi-spawn: never cleared the
+  bar; raised `diversity` modestly but left `sensing`/`taxis` untouched.
+- Multi-spawn evaluation alone: replicates wave 1's real `selection` gain but
+  is insufficient alone, as wave 1 also found.
+- Multi-spawn(3) on top of the accepted novelty+spawns(2) configuration: no
+  further gain, noisier (se 0.0056 → 0.0118).
+
+### What this means for the mandate
+
+Quality-diversity elitism on a purely spatial descriptor (niche or k-NN
+novelty in final-position space) does not, by itself, make sensing valuable —
+it protects lineages that end up somewhere different, which an undirected
+wanderer can do as well as a directed forager. What did move `sensing` was
+novelty selection *combined with* averaging out spawn-position luck: with
+noisy single-spawn fitness, novelty selection may have mostly been rewarding
+agents whose lucky spawn point put them somewhere the population's other
+lucky spawns didn't reach; multi-spawn evaluation removes that confound and
+lets whatever a genome's final position says about its genotype (rather than
+its starting point) actually differentiate it. Neither piece alone was
+enough; the combination was.
