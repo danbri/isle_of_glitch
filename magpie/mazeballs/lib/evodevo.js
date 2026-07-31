@@ -192,12 +192,27 @@ export const DEFAULTS = Object.freeze({
   //                   reference policy reacts just before it is caught rather
   //                   than fleeing continuously (which would be a foraging
   //                   change as much as an evasion one).
+  //   COEVO_REFLEX_SOURCE  which information the reference policy is allowed.
+  //                   'nearest' gives it the true nearest predator and a
+  //                   distance gate — the physics question, "can this arena be
+  //                   escaped at all". 'sensed' restricts it to exactly what
+  //                   the animal's own sensors deliver: the Gaussian-weighted
+  //                   mean opponent bearing and the opponent mass channel,
+  //                   nothing else. The two together separate two very
+  //                   different reasons a prey population might fail to evade —
+  //                   the arena forbids escape, or the sensory channel does not
+  //                   carry enough to steer by — and only one of them is a fact
+  //                   about evolution.
+  //   COEVO_REFLEX_MASS_K  gain of the sensed variant's gate, which has no
+  //                   distance to work with and must threshold on mass instead:
+  //                   gate = 1 - exp(-mass * k).
   COEVO: false, COEVO_ROLE: 'prey',
   COEVO_SENSE_SIGMA2: 0.050, COEVO_CAPTURE_SIGMA2: 0.0040,
   COEVO_PRED_GAIN: 1.0, COEVO_PREY_LOSS: 1.5,
   COEVO_PRED_ENERGY: 0.42, COEVO_PREY_ENERGY: 0.62,
   COEVO_PRED_FORAGE: 0, COEVO_PREY_INTAKE: 1,
   COEVO_PREY_REFLEX: 0, COEVO_REFLEX_SIGMA2: 0.02,
+  COEVO_REFLEX_SOURCE: 'nearest', COEVO_REFLEX_MASS_K: 2.0,
 });
 
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -776,17 +791,29 @@ export class EvoDevoSim {
       // handed the true nearest predator rather than the sensed field, so a
       // failure here is a fact about the arena and not about the sense.
       if (C.COEVO && C.COEVO_PREY_REFLEX > 0 && opp && C.COEVO_ROLE !== 'predator') {
-        const nOpp = opp.rel.shape[1];
-        const hot = tf.oneHot(opp.d2.argMin(1), nOpp).expandDims(2);
-        const nearRel = opp.rel.mul(hot).sum(1);            // vector self -> nearest predator
-        const nb = body(nearRel);
-        // Turn command that points the body axis along -nearRel. Positive turn
-        // rotates toward positive lateral (see body()), so the proportional
-        // command is the bearing error itself, normalised to [-1, 1].
-        const fleeTurn = tf.atan2(nb[1].mul(-1), nb[0].mul(-1)).div(Math.PI);
-        // Gate on the true nearest-predator distance. mul(-1).div(sigma2), not
-        // div(-sigma2) — see field().
-        const w = opp.d2.min(1).mul(-1).div(C.COEVO_REFLEX_SIGMA2).exp().mul(C.COEVO_PREY_REFLEX);
+        const sensed = C.COEVO_REFLEX_SOURCE === 'sensed';
+        let dir, gate;
+        if (sensed) {
+          // Exactly what the animal's own sensors deliver, and nothing more:
+          // the Gaussian-weighted mean opponent bearing (`ob`, the same two
+          // numbers the network reads) and the opponent mass channel. No
+          // distance, no nearest-neighbour resolution.
+          dir = ob;
+          gate = opp.mass.mul(-C.COEVO_REFLEX_MASS_K).exp().mul(-1).add(1);
+        } else {
+          const nOpp = opp.rel.shape[1];
+          const hot = tf.oneHot(opp.d2.argMin(1), nOpp).expandDims(2);
+          dir = body(opp.rel.mul(hot).sum(1));              // vector self -> nearest predator
+          // Gate on the true nearest-predator distance. mul(-1).div(sigma2),
+          // not div(-sigma2) — see field().
+          gate = opp.d2.min(1).mul(-1).div(C.COEVO_REFLEX_SIGMA2).exp();
+        }
+        // Turn command that points the body axis directly away from `dir`.
+        // Positive turn rotates toward positive lateral (see body()), so the
+        // proportional command is the bearing error itself, normalised to
+        // [-1, 1].
+        const fleeTurn = tf.atan2(dir[1].mul(-1), dir[0].mul(-1)).div(Math.PI);
+        const w = gate.mul(C.COEVO_PREY_REFLEX);
         const keep = tf.onesLike(w).sub(w);
         turn = turn.mul(keep).add(fleeTurn.mul(w));
         thrust = thrust.mul(keep).add(w);                   // full ahead while fleeing

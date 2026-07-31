@@ -59,7 +59,7 @@ const args = parseArgs(process.argv.slice(2), {
   // for what each is for — this is the same arm description, and the two tools
   // must be given identical values to be describing the same world.
   preySpeed: 0.34, predSpeed: 0.34, preyIntake: 1,
-  preyReflex: 0, reflexSigma2: 0.02,
+  preyReflex: 0, reflexSigma2: 0.02, reflexSource: 'nearest', reflexMassK: 2.0,
 });
 
 const log = (...m) => { if (!args.quiet) console.error(...m); };
@@ -87,6 +87,7 @@ const sim = new EvoDevoSim({
       COEVO_PRED_FORAGE: args.predForage,
       SPEED_MAX: args.preySpeed, COEVO_PREY_INTAKE: args.preyIntake,
       COEVO_PREY_REFLEX: args.preyReflex, COEVO_REFLEX_SIGMA2: args.reflexSigma2,
+      COEVO_REFLEX_SOURCE: args.reflexSource, COEVO_REFLEX_MASS_K: args.reflexMassK,
     } : {}),
   },
 });

@@ -65,7 +65,7 @@ const args = parseArgs(process.argv.slice(2), {
   // whose policy is being characterised, or the traced population is not the
   // population the tournament measured.
   preySpeed: 0.34, predSpeed: 0.34, preyIntake: 1,
-  preyReflex: 0, reflexSigma2: 0.02,
+  preyReflex: 0, reflexSigma2: 0.02, reflexSource: 'nearest', reflexMassK: 2.0,
 });
 const log = (...m) => { if (!args.quiet) console.error(...m); };
 const lags = String(args.lags).split(',').map(s => Number(s.trim()));
@@ -88,7 +88,8 @@ if (args.coevo) Object.assign(baseCfg, {
 
 const preyExtra = args.coevo
   ? { SPEED_MAX: args.preySpeed, COEVO_PREY_INTAKE: args.preyIntake,
-      COEVO_PREY_REFLEX: args.preyReflex, COEVO_REFLEX_SIGMA2: args.reflexSigma2 }
+      COEVO_PREY_REFLEX: args.preyReflex, COEVO_REFLEX_SIGMA2: args.reflexSigma2,
+      COEVO_REFLEX_SOURCE: args.reflexSource, COEVO_REFLEX_MASS_K: args.reflexMassK }
   : {};
 const sim = new EvoDevoSim({ seed: args.seed, config: { ...baseCfg, ...preyExtra, COEVO_ROLE: 'prey' } });
 await sim.initialise();

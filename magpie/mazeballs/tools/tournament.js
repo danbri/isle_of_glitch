@@ -78,8 +78,13 @@ const args = parseArgs(process.argv.slice(2), {
   //         twice off ONE archive (--archiveIn), once at 0 and once at 1, and
   //         the prey marginal answers "do the physics permit escape at all"
   //         with the genomes held fixed.
+  //   reflexSource  'nearest' (privileged: can this arena be escaped at all)
+  //         or 'sensed' (restricted to the opponent channels the network reads:
+  //         does the sense carry enough to escape by). Running both is what
+  //         separates "the arena forbids evasion" from "the sensory channel is
+  //         the bottleneck" from "evolution simply never finds it".
   preySpeed: 0.34, predSpeed: 0.34, preyIntake: 1,
-  preyReflex: 0, reflexSigma2: 0.02,
+  preyReflex: 0, reflexSigma2: 0.02, reflexSource: 'nearest', reflexMassK: 2.0,
   // Hall of fame: retain archived opponents as a fraction of each generation's
   // evaluation. A stabiliser against cycling, tested rather than assumed.
   hof: 0,
@@ -110,7 +115,8 @@ const base = {
 // measures directly.
 const preyCfg = { ...base, COEVO_ROLE: 'prey', SPEED_MAX: args.preySpeed,
   COEVO_PREY_INTAKE: args.preyIntake,
-  COEVO_PREY_REFLEX: args.preyReflex, COEVO_REFLEX_SIGMA2: args.reflexSigma2 };
+  COEVO_PREY_REFLEX: args.preyReflex, COEVO_REFLEX_SIGMA2: args.reflexSigma2,
+  COEVO_REFLEX_SOURCE: args.reflexSource, COEVO_REFLEX_MASS_K: args.reflexMassK };
 const predCfg = { ...base, POP: args.predPop, ELITES: args.predElites,
   COEVO_ROLE: 'predator', SPEED_MAX: args.predSpeed };
 
@@ -321,7 +327,8 @@ const result = {
   settings: { tsteps: args.tsteps, tseed: args.tseed, snapEvery: args.snapEvery,
               preySpeed: args.preySpeed, predSpeed: args.predSpeed,
               preyIntake: args.preyIntake, preyLoss: args.preyLoss,
-              preyReflex: args.preyReflex, reflexSigma2: args.reflexSigma2 },
+              preyReflex: args.preyReflex, reflexSigma2: args.reflexSigma2,
+              reflexSource: args.reflexSource, reflexMassK: args.reflexMassK },
   backend: `${pkg}/${backend}`, runtimeSeconds: +el(),
   generations: gens,
   matrix: grid,
