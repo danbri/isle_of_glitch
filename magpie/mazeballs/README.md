@@ -143,6 +143,46 @@ Files are validated on load: wrong format, wrong population/genome dimensions,
 truncated blocks or non-finite values are all rejected with a specific message,
 and a rejected file leaves the running population untouched.
 
+## Headless runs and sweeps
+
+The simulation core lives in [`lib/evodevo.js`](lib/evodevo.js) — no DOM, no
+WebGL, no module-level globals. The browser page and the Node runners import the
+same file, so there is exactly one implementation of the biology.
+
+TensorFlow.js is injected rather than imported, because the browser gets it from
+a CDN script tag as a global while Node gets it from a package:
+
+```js
+import { EvoDevoSim, diagnose, useTf } from './lib/evodevo.js';
+useTf(await import('@tensorflow/tfjs'));      // pure JS CPU, works anywhere
+const sim = new EvoDevoSim({ seed: 1, config: { GAIN: 0.5 } });
+await sim.initialise();
+const report = await diagnose(sim, { steps: 600, restarts: 3, yieldEvery: 0 });
+```
+
+Every random draw — genomes, spawns, mutation, the field layout — goes through a
+seeded LCG that also seeds TensorFlow's random ops, so **a run is reproducible
+from its seed alone**. Without that, sweeps compare noise.
+
+```
+npm install @tensorflow/tfjs          # pure JS, ~31 ms/step here
+npm install @tensorflow/tfjs-node     # native, ~8.7 ms/step — 12.6s per generation
+
+node tools/run.js --generations 20 --gain 0.5 --seed 1 --out gain05.json
+node tools/run.js --import saved.json --generations 0        # diagnose a saved population
+node tools/sweep.js --gain 0.3,0.5,1.0,2.0 --seed 1,2,3 --generations 20 --workers 5
+```
+
+`run.js` evolves, runs the full ablation suite, and writes a JSON report.
+`sweep.js` turns any comma-separated argument into a swept axis and runs the
+grid as parallel child processes — one process per cell, so a crash or an OOM in
+one configuration cannot take the sweep down with it. Results are tabulated
+sorted by top-quartile fitness, with a `sig` column flagging rows whose baseline
+fitness is below the interpretability floor.
+
+Populations exported from the browser can be fed straight to `--import`, and
+populations produced headless can be imported into the page.
+
 ## Console
 
 Everything is live on `window.evoDevo` — `sim`, `renderer`, `CFG`, `world()`,
