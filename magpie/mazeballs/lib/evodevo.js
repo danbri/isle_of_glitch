@@ -120,6 +120,35 @@ export const DEFAULTS = Object.freeze({
   //                    before a null on the no-sensor arm means anything.
   CP_STRENGTH: 0, CP_NEST_MULT: 2.5, CP_NEST_RADIUS: 0.14,
   CP_CARRY_DECAY: 0.06, CP_DEPOSIT_RATE: 6.0, CP_NEST_SENSOR: false,
+  // ------------------------------------------------- shared-odour ambiguity
+  // Food and hazards currently emit into *separate* sensor channels — food on
+  // 0,1,2 and toxin on 3,4,5 — so "climb the food channel, ignore the toxin
+  // channel" is free, and a single-scalar klinokinesis (the policy this
+  // population has been positively identified as running) is a complete
+  // solution. This makes that no longer true.
+  //
+  //   ODOUR_AMBIGUITY   the dose, in [0,1]. Hazards emit into the *food*
+  //                     channel with this weight, so at 1.0 a hazard smells
+  //                     exactly like a full-stock food patch and the long-
+  //                     range channel carries no identity information at all.
+  //                     At 0 the branch is skipped entirely and the sim is
+  //                     bit-identical to before.
+  //   ODOUR_QUALITY_SIGMA2  the hazard/"quality" sensing kernel narrows with
+  //                     the same dose, from the original 0.036 (effective
+  //                     radius ~0.19, comparable to the food kernel's 0.22 —
+  //                     i.e. readable at range) to this value at full
+  //                     ambiguity. 0.010 is radius ~0.10: readable only close
+  //                     up, and still comfortably outside the hazard *damage*
+  //                     kernel's ~0.039, so there is room to turn away.
+  //
+  // Together these force approach-then-decide: the odour gradient says where
+  // something is but not what it is, and the only channel that says what it is
+  // cannot be read until you are nearly on top of it. Neither scalar alone is
+  // a policy — climbing odour walks you into hazards, and the quality channel
+  // is flat everywhere it matters. Deliberately NOT a channel-count change:
+  // SENSORS stays 8, because the central-place experiment measured +0.022 of
+  // score for adding two channels with the task switched off.
+  ODOUR_AMBIGUITY: 0, ODOUR_QUALITY_SIGMA2: 0.010,
 });
 
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -184,8 +213,17 @@ export function makeWorld(cfg = DEFAULTS, rng = makeRng(0x8f3d20a1)) {
 //   3,4 toxin direction (body frame)  5 toxin mass
 //   6   wall/obstacle proximity       7 own energy
 //   8,9 nest direction (body frame)   — present only when CP_NEST_SENSOR
+//
+// ODOUR_AMBIGUITY does not change the layout — the channel *count* and the
+// indices are identical at every dose, deliberately, so no result can be
+// confounded with "more channels". What changes is what 0,1,2 and 3,4,5 carry:
+// at a dose > 0 the first group is a shared odour emitted by food *and*
+// hazards, and the second is a short-range quality/identity cue rather than a
+// long-range toxin field. `odour`/`quality` are aliases for the same indices,
+// so `keepAllBut` and `conditions()` stay correct under either reading.
 export const SENSOR_GROUPS = Object.freeze({
   food: [0, 1, 2], toxin: [3, 4, 5], wall: [6], energy: [7], nest: [8, 9],
+  odour: [0, 1, 2], quality: [3, 4, 5],
   // Split of the food sense. Every mechanism that has raised `sensing` left
   // `taxis` flat, and `taxis` correlates turn against food *bearing* only. If
   // the population navigates by mass gradient instead, sensing is genuinely
@@ -209,11 +247,16 @@ export function conditions(cfg = DEFAULTS) {
   // sensing component reads a population that still has its way home.
   const all = cfg.CP_NEST_SENSOR ? ['food','toxin','wall','energy','nest']
                                  : ['food','toxin','wall','energy'];
+  // Same indices either way; only the names change, so a run under ambiguity
+  // is still directly comparable with every number already recorded.
+  const amb = cfg.ODOUR_AMBIGUITY > 0;
   return [
     { key:'baseline', label:'baseline',              note:'same genomes, fresh spawns' },
     { key:'blind',    label:'all senses scrambled',  mask:keepAllBut(all, cfg), note:'is the loop closed at all?' },
-    { key:'noFood',   label:'food sense scrambled',  mask:keepAllBut(['food'], cfg),  note:'chemotaxis removed' },
-    { key:'noToxin',  label:'toxin sense scrambled', mask:keepAllBut(['toxin'], cfg), note:'avoidance removed' },
+    { key:'noFood',   label: amb ? 'odour sense scrambled' : 'food sense scrambled',
+      mask:keepAllBut(['food'], cfg),  note: amb ? 'shared food/hazard odour removed' : 'chemotaxis removed' },
+    { key:'noToxin',  label: amb ? 'quality sense scrambled' : 'toxin sense scrambled',
+      mask:keepAllBut(['toxin'], cfg), note: amb ? 'the only identity cue removed' : 'avoidance removed' },
     { key:'noWall',   label:'wall sense scrambled',  mask:keepAllBut(['wall'], cfg),  note:'obstacle/edge cue removed' },
     { key:'noFoodDir',  label:'food bearing scrambled', mask:keepAllBut(['foodDir'], cfg),  note:'direction lost, mass kept' },
     { key:'noFoodMass', label:'food mass scrambled',    mask:keepAllBut(['foodMass'], cfg), note:'mass lost, direction kept' },
@@ -296,7 +339,14 @@ export class EvoDevoSim {
   // raw food-mass sense before its tanh squashing, the turn and thrust motor
   // outputs, this step's food intake, post-step energy, squared distance to
   // the nearest food source, and post-step world position.
-  static TRACE_CHANNELS = ['fbFwd','fbLat','foodMass','turn','thrust','eat','energy','minFoodD2','posX','posY'];
+  // `fbFwd`/`fbLat` are the bearing the agent actually senses, which under
+  // ODOUR_AMBIGUITY is the shared food+hazard odour rather than food alone.
+  // `foodMass` stays the *true* food mass (unmixed) so the two can be told
+  // apart; `odourMass` is the scalar the agent has, and `quality` is the
+  // short-range identity cue. At dose 0, odourMass === foodMass by
+  // construction and `quality` is the old long-range toxin mass.
+  static TRACE_CHANNELS = ['fbFwd','fbLat','foodMass','turn','thrust','eat','energy','minFoodD2','posX','posY',
+                           'odourMass','quality'];
   /**
    * @param {object} opts
    * @param {object} [opts.config]  overrides merged over DEFAULTS
@@ -370,6 +420,15 @@ export class EvoDevoSim {
     this.carry = this.v(tf.zeros([C.POP]));
     this.banked = this.v(tf.zeros([C.POP]));
     this.nestTime = this.v(tf.zeros([C.POP]));
+    // Behavioural readout for the shared-odour experiment, accumulated at every
+    // dose including 0 so the baseline is its own reference. Neither is an
+    // input to fitness or to the score: `toxDose` is integrated hazard
+    // exposure (seconds at full contact) and `intake` is integrated feeding.
+    // A score move under ambiguity is uninterpretable without them — the
+    // central-place experiment's six nulls only became a finding once the
+    // occupancy numbers said the control arm had not learned the task either.
+    this.toxDose = this.v(tf.zeros([C.POP]));
+    this.intake = this.v(tf.zeros([C.POP]));
   }
 
   async initialise() { await this.develop(); this.resetBodies(); await this.warmup(); }
@@ -389,7 +448,7 @@ export class EvoDevoSim {
   dispose() {
     for (const k of ['food','haz','obs','obsR','cellPos','morph','distKernel','eye','sensorEmb',
       'genR','genM','bias','tau','W','Win','Wout','expr','color','pos','vel','angle','omega',
-      'energy','fitness','neural','foodStock','acc','carry','banked','nestTime'])
+      'energy','fitness','neural','foodStock','acc','carry','banked','nestTime','toxDose','intake'])
       if (this[k] && !this[k].isDisposed) this[k].dispose();
   }
 
@@ -459,6 +518,8 @@ export class EvoDevoSim {
       this.carry.assign(tf.zerosLike(this.carry));
       this.banked.assign(tf.zerosLike(this.banked));
       this.nestTime.assign(tf.zerosLike(this.nestTime));
+      this.toxDose.assign(tf.zerosLike(this.toxDose));
+      this.intake.assign(tf.zerosLike(this.intake));
     });
     this.stepNo = 0;
   }
@@ -482,13 +543,15 @@ export class EvoDevoSim {
       this.carry.assign(tf.zerosLike(this.carry));
       this.banked.assign(tf.zerosLike(this.banked));
       this.nestTime.assign(tf.zerosLike(this.nestTime));
+      this.toxDose.assign(tf.zerosLike(this.toxDose));
+      this.intake.assign(tf.zerosLike(this.intake));
     });
     this.stepNo = 0;
   }
   disposeInit(i) { for (const k in i) i[k].dispose(); }
   saveState() {
     const keys = ['pos','vel','angle','omega','energy','fitness','neural','foodStock','acc',
-                  'carry','banked','nestTime'];
+                  'carry','banked','nestTime','toxDose','intake'];
     const s = { stepNo: this.stepNo }; for (const k of keys) s[k] = this[k].clone(); return s;
   }
   restoreState(s) {
@@ -549,7 +612,30 @@ export class EvoDevoSim {
     const C = this.cfg, tf = T(), mods = this.mods;
     tf.tidy(() => {
       const food = this.field(this.pos, this.food, C.FOOD_SENSE_SIGMA2, this.foodStock);
-      const haz = this.field(this.pos, this.haz, .036, null);
+      // Shared-odour ambiguity. `amb` only ever touches what is *sensed*: the
+      // eating kernel below reads food.d2 and the damage kernel reads haz.d2,
+      // neither of which depends on the sensing width or on any mixing here.
+      // So the world's payoffs are identical at every dose and a score move
+      // cannot be a change in how much food or poison is physically there.
+      const amb = C.ODOUR_AMBIGUITY;
+      // The quality/identity kernel narrows with the dose: at 0 it is the
+      // original 0.036 exactly (0.036 + 0 * x is exact in floating point), so
+      // this line is a no-op at baseline rather than a near-no-op.
+      const qs = 0.036 + amb * (C.ODOUR_QUALITY_SIGMA2 - 0.036);
+      const haz = this.field(this.pos, this.haz, qs, null);
+      // The odour channel: food weighted by live stock, hazards weighted by the
+      // dose, both through the *same* kernel width, so at amb=1 a hazard is
+      // indistinguishable from a full patch at range. Mixed as unnormalised
+      // weighted sums (vec*mass) and renormalised, which is what a single
+      // field() over the union of the two point sets would have produced.
+      let odourVec = food.vec, odourMass = food.mass;
+      if (amb > 0) {
+        const hazOdour = this.field(this.pos, this.haz, C.FOOD_SENSE_SIGMA2, null);
+        odourMass = food.mass.add(hazOdour.mass.mul(amb));
+        odourVec = food.vec.mul(food.mass.expandDims(1))
+          .add(hazOdour.vec.mul(hazOdour.mass.expandDims(1)).mul(amb))
+          .div(odourMass.expandDims(1));
+      }
       const orel = this.pos.expandDims(1).sub(this.obs.expandDims(0));
       const od = tf.sqrt(orel.square().sum(2).add(1e-6));
       const on = orel.div(od.expandDims(2));
@@ -561,9 +647,9 @@ export class EvoDevoSim {
         v.slice([0,0],[-1,1]).squeeze([1]).mul(c).add(v.slice([0,1],[-1,1]).squeeze([1]).mul(s)),
         v.slice([0,1],[-1,1]).squeeze([1]).mul(c).sub(v.slice([0,0],[-1,1]).squeeze([1]).mul(s)),
       ];
-      const fb = body(food.vec), hb = body(haz.vec), rb = body(repel);
+      const fb = body(odourVec), hb = body(haz.vec), rb = body(repel);
       const boundary = tf.relu(this.pos.abs().max(1).sub(.70)).mul(3.2);
-      const chans = [fb[0], fb[1], tf.tanh(food.mass.mul(.16)),
+      const chans = [fb[0], fb[1], tf.tanh(odourMass.mul(.16)),
         hb[0], hb[1], tf.tanh(haz.mass.mul(.18)),
         tf.tanh(boundary.add(rb[0].abs().mul(.4))), this.energy.sub(.7)];
       // Control arm only. Bearing to the nest (origin) as a body-frame unit
@@ -643,6 +729,9 @@ export class EvoDevoSim {
       }
       this.foodStock.assign(newStock);
       const tox = haz.d2.mul(-1).div(.0015).exp().max(1);
+      // Reporting only — neither feeds fitness, energy or selection.
+      this.toxDose.assign(this.toxDose.add(tox.mul(C.DT)));
+      this.intake.assign(this.intake.add(eat.mul(C.DT)));
       const cost = thrust.abs().mul(.015).add(turn.abs().mul(.009)).add(.013);
       const en = this.energy.add(eat.mul(.42).sub(tox.mul(.62)).sub(cost).mul(C.DT)).clipByValue(0, 1.4);
       this.energy.assign(en);
@@ -689,7 +778,8 @@ export class EvoDevoSim {
       if (this.tracing) {
         const distMin = food.d2.min(1);
         const px = np.slice([0, 0], [-1, 1]).squeeze([1]), py = np.slice([0, 1], [-1, 1]).squeeze([1]);
-        const row = tf.stack([fb[0], fb[1], food.mass, turn, thrust, eat, en, distMin, px, py], 1);
+        const row = tf.stack([fb[0], fb[1], food.mass, turn, thrust, eat, en, distMin, px, py,
+                              odourMass, haz.mass], 1);
         const view = row.dataSync();
         this.traceBuf.set(view, this.traceStep * C.POP * EvoDevoSim.TRACE_CHANNELS.length);
         this.traceStep++;
@@ -900,6 +990,37 @@ export class EvoDevoSim {
     };
   }
 
+  /**
+   * Hazard exposure and feeding, measured on whatever episode just ran. Always
+   * available (dose 0 included) so the ambiguity sweep has its own reference
+   * arm rather than an argument about what the baseline "should" be.
+   *
+   * `toxDose` is integrated hazard contact in seconds-at-full-strength;
+   * `toxDoseTop`/`intakeTop` are the same over the top quartile by fitness,
+   * i.e. over the part of the population selection acts on. The ratio of
+   * `toxDoseTop` to `toxDose` is the discrimination readout: if the selected
+   * agents are avoiding hazards that everyone else blunders into, it falls
+   * below 1. It cannot be gamed by the score, because none of this is in it.
+   */
+  async odourStats() {
+    const C = this.cfg;
+    const [tox, eatn, fit] = await Promise.all([
+      this.toxDose.data(), this.intake.data(), this.fitness.data()]);
+    const order = Array.from({ length: C.POP }, (_, i) => i).sort((a, b) => fit[b] - fit[a]);
+    const n = Math.max(1, Math.round(C.POP / 4));
+    let tq = 0, iq = 0;
+    for (let i = 0; i < n; i++) { tq += tox[order[i]]; iq += eatn[order[i]]; }
+    const toxAll = mean(tox), toxTop = tq / n;
+    return {
+      ambiguity: C.ODOUR_AMBIGUITY,
+      toxDose: toxAll, intake: mean(eatn),
+      toxDoseTop: toxTop, intakeTop: iq / n,
+      // < 1 means the selected quartile is taking less poison than the
+      // population average — the signature of an evolved discrimination.
+      toxRatio: toxAll > 1e-9 ? toxTop / toxAll : 0,
+    };
+  }
+
   async populationStats() {
     const tf = T();
     const t = tf.tidy(() => tf.stack([
@@ -1035,7 +1156,7 @@ export async function diagnose(sim, opts = {}) {
   // The taxis measure is also recorded under the fully scrambled condition,
   // which has the same autocorrelation structure but no real coupling. That run
   // is the empirical null the baseline has to beat.
-  let taxis = null, taxisNull = null, network = null, central = null;
+  let taxis = null, taxisNull = null, network = null, central = null, odour = null;
   try {
     for (let r = 0; r < restarts; r++) {
       const init = sim.makeInit();
@@ -1063,6 +1184,7 @@ export async function diagnose(sim, opts = {}) {
             // restoreState puts back the pre-diagnose ones.
             network = await sim.networkStats();
             central = await sim.centralStats();
+            odour = await sim.odourStats();
           } else taxisNull = t;
         }
       }
@@ -1085,7 +1207,7 @@ export async function diagnose(sim, opts = {}) {
     : null;
 
   return {
-    steps, restarts, base, table, taxis, taxisNull, eliteAdvantage, central,
+    steps, restarts, base, table, taxis, taxisNull, eliteAdvantage, central, odour,
     drops: Object.fromEntries(conditionList.filter(c => c.key !== 'baseline').map(c => [c.key, drop(c.key)])),
     network: network || await sim.networkStats(),
     population: await sim.populationStats(),

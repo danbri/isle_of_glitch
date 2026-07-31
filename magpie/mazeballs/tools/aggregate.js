@@ -69,6 +69,12 @@ if (opt.compare) {
     viability: +wavg(p => p.viability).toFixed(4),
     perSeed,
   };
+  if (parts.every(p => p.drops)) out.drops = Object.fromEntries(
+    ['noFood','noToxin','blindConst','noFoodDir','noFoodMass']
+      .map(k => [k, +wavg(p => p.drops[k] ?? 0).toFixed(4)]));
+  if (parts.every(p => p.odour)) out.odour = Object.fromEntries(
+    ['ambiguity','toxDose','toxDoseTop','intake','intakeTop','toxRatio']
+      .map(k => [k, +wavg(p => p.odour[k]).toFixed(4)]));
   if (parts.every(p => p.central)) out.central = {
     nestShare: +wavg(p => p.central.nestShare).toFixed(4),
     visitedFrac: +wavg(p => p.central.visitedFrac).toFixed(4),

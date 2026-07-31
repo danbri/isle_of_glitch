@@ -105,8 +105,16 @@ export function scoreReport(r, elites = 10) {
   // `central` rides along as reporting only — it is not an input to the score.
   // Without it a central-place run cannot be told apart from one that simply
   // lost the diverted fraction of its intake and never went home.
+  // `odour` and the individual ablation drops ride along as reporting only,
+  // exactly like `central`. Under shared-odour ambiguity the score alone cannot
+  // say whether a population is discriminating or merely being poisoned, and
+  // `noToxin` — the cost of scrambling the quality channel — is the direct
+  // measure of whether the identity cue is load-bearing at all.
   return { score: viability * capability, capability, viability, forage: base.top,
-           components: c, central: r.central || null };
+           components: c, central: r.central || null, odour: r.odour || null,
+           drops: { noFood: r.drops.noFood, noToxin: r.drops.noToxin,
+                    blindConst: r.drops.blindConst, noFoodDir: r.drops.noFoodDir,
+                    noFoodMass: r.drops.noFoodMass } };
 }
 
 function runSeed(seed) {
@@ -155,6 +163,14 @@ const summary = {
     nestShare: r.central ? +r.central.nestShare.toFixed(4) : undefined,
     visitedFrac: r.central ? +r.central.visitedFrac.toFixed(4) : undefined })),
 };
+summary.drops = Object.fromEntries(['noFood','noToxin','blindConst','noFoodDir','noFoodMass']
+  .map(k => [k, +(ok.reduce((a, r) => a + (r.drops?.[k] ?? 0), 0) / ok.length).toFixed(4)]));
+const withOdour = ok.filter(r => r.odour);
+if (withOdour.length) {
+  const oavg = k => +(withOdour.reduce((a, r) => a + r.odour[k], 0) / withOdour.length).toFixed(4);
+  summary.odour = Object.fromEntries(
+    ['ambiguity','toxDose','toxDoseTop','intake','intakeTop','toxRatio'].map(k => [k, oavg(k)]));
+}
 const withCentral = ok.filter(r => r.central);
 if (withCentral.length) summary.central = {
   nestShare: +(withCentral.reduce((a, r) => a + r.central.nestShare, 0) / withCentral.length).toFixed(4),

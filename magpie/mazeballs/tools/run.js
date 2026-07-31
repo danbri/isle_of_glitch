@@ -42,6 +42,11 @@ const args = parseArgs(process.argv.slice(2), {
   // the return trip becomes taxis rather than path integration.
   cpStrength: 0, cpMult: 2.5, cpRadius: 0.14, cpDecay: 0.06, cpDeposit: 6.0,
   cpNestSensor: false,
+  // Shared-odour ambiguity. 0 (default) is a verified no-op: food and hazards
+  // stay on separate channels exactly as before. At 1 hazards emit into the
+  // food channel at full strength and the only identity cue is the quality
+  // channel, whose kernel has narrowed to qualitySigma2.
+  ambiguity: 0, qualitySigma2: 0.010,
 });
 
 const log = (...m) => { if (!args.quiet) console.error(...m); };
@@ -62,6 +67,7 @@ const sim = new EvoDevoSim({
     CP_STRENGTH: args.cpStrength, CP_NEST_MULT: args.cpMult, CP_NEST_RADIUS: args.cpRadius,
     CP_CARRY_DECAY: args.cpDecay, CP_DEPOSIT_RATE: args.cpDeposit,
     CP_NEST_SENSOR: args.cpNestSensor,
+    ODOUR_AMBIGUITY: args.ambiguity, ODOUR_QUALITY_SIGMA2: args.qualitySigma2,
   },
 });
 await sim.initialise();
@@ -104,6 +110,7 @@ const result = {
     select: args.select, niches: args.niches, spawns: args.spawns,
     cpStrength: args.cpStrength, cpMult: args.cpMult, cpRadius: args.cpRadius,
     cpDecay: args.cpDecay, cpDeposit: args.cpDeposit, cpNestSensor: args.cpNestSensor,
+    ambiguity: args.ambiguity, qualitySigma2: args.qualitySigma2,
   },
   runtimeSeconds: +((Date.now() - t0) / 1000).toFixed(1),
   backend: `${pkg}/${backend}`,
@@ -118,6 +125,8 @@ log(`[done] gen ${report.generation} · top25 ${t.top.toFixed(3)} · railed ${(r
     `· blind Δ ${(report.drops.blind * -100).toFixed(1)}% · founders ${report.population.founders} ` +
     (report.central ? `· nestShare ${(report.central.nestShare * 100).toFixed(1)}% ` +
                       `· visited ${(report.central.visitedFrac * 100).toFixed(0)}% ` : '') +
+    (report.odour ? `· tox ${report.odour.toxDose.toFixed(3)}/${report.odour.toxDoseTop.toFixed(3)} ` +
+                    `· ratio ${report.odour.toxRatio.toFixed(2)} ` : '') +
     `· ${result.runtimeSeconds}s` + (report.interpretable ? '' : ' · BELOW SIGNIFICANCE FLOOR'));
 
 sim.dispose();
