@@ -37,7 +37,8 @@
  */
 import fs from 'node:fs/promises';
 import { initBackend, parseArgs } from './backend.js';
-import { EvoDevoSim, evolveFor, makeMods, keepAllBut, makeRng, mean, sd } from '../lib/evodevo.js';
+import { EvoDevoSim, evolveFor, coevolveFor, coevoStep, coevoSyncWorld,
+         makeMods, keepAllBut, makeRng, mean, sd } from '../lib/evodevo.js';
 
 const args = parseArgs(process.argv.slice(2), {
   generations: 8, seed: 1, steps: 600, restarts: 6,
@@ -50,6 +51,21 @@ const args = parseArgs(process.argv.slice(2), {
   // long-range toxin mass. At 1 the odour channel carries food and hazards
   // alike and `quality` is the only identity cue, readable only close up.
   ambiguity: 0, qualitySigma2: 0.010,
+  // Two-species mode. The prey population is the one traced and analysed; the
+  // predators are stepped alongside it so the traced behaviour is behaviour
+  // under actual threat rather than behaviour in an empty world.
+  //
+  // `channels` selects which stimulus the whole analysis is run against:
+  // 'food' reproduces the original single-species measurement, 'opponent'
+  // points every measure at the predator instead. That second setting is the
+  // point of this mode. Evasion is structurally NOT klinokinesis -- you cannot
+  // escape a pursuer by turning more when a food smell fades -- so if the
+  // klinokinesis test comes back null on the opponent channel while the
+  // mutual information does not, the policy is something this project has
+  // never produced before.
+  coevo: false, predPop: 48, predElites: 6,
+  captureSigma2: 0.0012, preyLoss: 1.0, predGain: 1.0, predForage: 0,
+  channels: 'food', ablate: 'base',
 });
 const log = (...m) => { if (!args.quiet) console.error(...m); };
 const lags = String(args.lags).split(',').map(s => Number(s.trim()));
@@ -57,24 +73,41 @@ const lags = String(args.lags).split(',').map(s => Number(s.trim()));
 const { pkg, backend } = await initBackend({ prefer: args.backend });
 log(`[backend] ${pkg} -> ${backend}`);
 
-const sim = new EvoDevoSim({
-  seed: args.seed,
-  config: {
-    POP: args.pop, ELITES: args.elites, EPOCH_STEPS: args.epoch,
-    GAIN: args.gain, MUTATION: args.mutation,
-    FOOD_CLUSTERS: args.clusters, FOOD_CLUSTER_SIGMA: args.clusterSigma,
-    FOOD_SENSE_SIGMA2: args.senseSigma2, FOOD_RELOCATE_THRESH: args.relocateThresh,
-    SELECT: args.select,
-    ODOUR_AMBIGUITY: args.ambiguity, ODOUR_QUALITY_SIGMA2: args.qualitySigma2,
-  },
+const baseCfg = {
+  POP: args.pop, ELITES: args.elites, EPOCH_STEPS: args.epoch,
+  GAIN: args.gain, MUTATION: args.mutation,
+  FOOD_CLUSTERS: args.clusters, FOOD_CLUSTER_SIGMA: args.clusterSigma,
+  FOOD_SENSE_SIGMA2: args.senseSigma2, FOOD_RELOCATE_THRESH: args.relocateThresh,
+  SELECT: args.select,
+  ODOUR_AMBIGUITY: args.ambiguity, ODOUR_QUALITY_SIGMA2: args.qualitySigma2,
+};
+if (args.coevo) Object.assign(baseCfg, {
+  COEVO: true, COEVO_CAPTURE_SIGMA2: args.captureSigma2,
+  COEVO_PREY_LOSS: args.preyLoss, COEVO_PRED_GAIN: args.predGain,
+  COEVO_PRED_FORAGE: args.predForage,
 });
+
+const sim = new EvoDevoSim({ seed: args.seed, config: { ...baseCfg, COEVO_ROLE: 'prey' } });
 await sim.initialise();
+const pred = args.coevo
+  ? new EvoDevoSim({ seed: args.seed ^ 0x5f1e,
+      config: { ...baseCfg, POP: args.predPop, ELITES: args.predElites, COEVO_ROLE: 'predator' } })
+  : null;
+if (pred) { await pred.initialise(); coevoSyncWorld(sim, pred); }
 
 const t0 = Date.now();
-await evolveFor(sim, args.generations, {
-  onGeneration: ({ generation, best }) =>
-    log(`[gen ${String(generation).padStart(3)}] best ${best.toFixed(3)}  (${((Date.now() - t0) / 1000).toFixed(0)}s)`),
-});
+if (args.coevo) {
+  await coevolveFor(sim, pred, args.generations, {
+    onGeneration: ({ generation, prey: ps }) =>
+      log(`[gen ${String(generation).padStart(3)}] contact ${ps.contact.toFixed(4)} ` +
+          `forage ${ps.forageTop.toFixed(3)} fit ${ps.fitnessTop.toFixed(3)}  (${((Date.now() - t0) / 1000).toFixed(0)}s)`),
+  });
+} else {
+  await evolveFor(sim, args.generations, {
+    onGeneration: ({ generation, best }) =>
+      log(`[gen ${String(generation).padStart(3)}] best ${best.toFixed(3)}  (${((Date.now() - t0) / 1000).toFixed(0)}s)`),
+  });
+}
 log(`[evolved] ${args.generations} generations in ${((Date.now() - t0) / 1000).toFixed(0)}s`);
 
 /* ------------------------------------------------------- trace collection */
@@ -83,35 +116,71 @@ const CH = EvoDevoSim.TRACE_CHANNELS;
 const IDX = Object.fromEntries(CH.map((k, i) => [k, i]));
 const POP = sim.cfg.POP;
 
-const constMask = keepAllBut(['food', 'toxin', 'wall', 'energy'], sim.cfg);
+// Which channels the paired "information removed" arm blinds. `base` is the
+// original four groups. `opponent` blinds ONLY the predator channels, which is
+// the arm that says whether evasion is driven by seeing the predator or is a
+// side effect of something else the prey was already doing.
+const ablateGroups = args.ablate === 'opponent' ? ['opponent']
+  : args.ablate === 'all'
+    ? ['food', 'toxin', 'wall', 'energy', ...(sim.cfg.COEVO ? ['opponent'] : [])]
+    : ['food', 'toxin', 'wall', 'energy'];
+const constMask = keepAllBut(ablateGroups, sim.cfg);
 const modRng = makeRng(0xC0FFEE ^ args.seed);
 
 const full = [];   // one trace per restart, senses intact
 const blind = [];  // paired trace, same spawn, senses -> population mean
 
+/**
+ * One traced episode from a fixed start. In two-species mode the predators are
+ * stepped in lockstep from their own fixed start, so the prey trace is
+ * behaviour under threat; the predators are never ablated, so the two arms
+ * differ only in what the PREY can sense.
+ */
+const tracedEpisode = (init, predInit, mods) => {
+  sim.applyInit(init); sim.mods = mods;
+  if (pred) { pred.applyInit(predInit); coevoSyncWorld(sim, pred); }
+  sim.startTrace(args.steps);
+  for (let i = 0; i < args.steps; i++) {
+    if (pred) coevoStep(sim, pred); else sim.step();
+  }
+  const tr = sim.stopTrace();
+  sim.mods = null;
+  return tr;
+};
+
 for (let r = 0; r < args.restarts; r++) {
   const init = sim.makeInit();
+  const predInit = pred ? pred.makeInit() : null;
 
-  sim.applyInit(init); sim.mods = null;
-  sim.startTrace(args.steps);
-  for (let i = 0; i < args.steps; i++) sim.step();
-  full.push(sim.stopTrace());
-  sim.mods = null;
+  full.push(tracedEpisode(init, predInit, null));
 
   const mods = makeMods(constMask, false, sim.cfg, modRng, true);
-  sim.applyInit(init); sim.mods = mods;
-  sim.startTrace(args.steps);
-  for (let i = 0; i < args.steps; i++) sim.step();
-  blind.push(sim.stopTrace());
-  sim.mods = null;
+  blind.push(tracedEpisode(init, predInit, mods));
   mods.keep.dispose(); mods.drop.dispose(); mods.perm.dispose();
 
   sim.disposeInit(init);
+  if (pred) pred.disposeInit(predInit);
   log(`[trace] restart ${r + 1}/${args.restarts} recorded (${args.steps} steps x ${POP} agents, paired)`);
 }
 log(`[traces] done in ${((Date.now() - t0) / 1000).toFixed(0)}s total`);
 
 /* ---------------------------------------------------------------- helpers */
+
+/**
+ * Which stimulus every measure below is computed against. 'food' reproduces the
+ * original single-species analysis exactly. 'opponent' points the identical
+ * machinery at the predator: bearing, sensed mass, and the klinokinesis test on
+ * the sign of change in that mass.
+ */
+const STIM = args.channels === 'opponent'
+  ? { lat: IDX.pbLat, fwd: IDX.pbFwd, mass: IDX.oppMass, near: null, name: 'opponent' }
+  // The food stimulus reads `odourMass`, not `foodMass`: that is the scalar the
+  // animal actually has, and a kinesis can only act on what it senses. At
+  // ODOUR_AMBIGUITY 0 the two channels are identical by construction, so this is
+  // the same measurement as before at every setting the pre-ambiguity runs used.
+  // `klinoTrueFood` below re-runs the test against the unmixed food mass, which
+  // is what separates "kinesis on the mixture" from "kinesis on real food".
+  : { lat: IDX.fbLat, fwd: IDX.fbFwd, mass: IDX.odourMass, near: IDX.minFoodD2, name: 'food' };
 
 const at = (tr, step, agent, ch) => tr.buf[step * POP * CH.length + agent * CH.length + ch];
 const series = (tr, agent, ch) => {
@@ -239,7 +308,7 @@ function conditionalMeans(traces, xch, ych, nBins) {
  * within-agent autocorrelation cannot inflate the apparent effect the way
  * pooling all timesteps as independent samples would.
  */
-function klinokinesis(traces, massCh = IDX.odourMass) {
+function klinokinesis(traces, stim) {
   const appTurn = [], recTurn = [], appThrust = [], recThrust = [];
   const appNearTurn = [], recNearTurn = [], appFarTurn = [], recFarTurn = [];
   // Conjunction test. The whole point of shared-odour ambiguity is that the
@@ -251,9 +320,13 @@ function klinokinesis(traces, massCh = IDX.odourMass) {
   // not confounded by which agents happen to spend time near sources.
   const appHiQ = [], recHiQ = [], appLoQ = [], recLoQ = [];
   for (const tr of traces) for (let a = 0; a < POP; a++) {
-    const mass = series(tr, a, massCh).map(sensedMass);
+    const mass = series(tr, a, stim.mass).map(sensedMass);
     const turn = series(tr, a, IDX.turn), thrust = series(tr, a, IDX.thrust);
-    const dist = series(tr, a, IDX.minFoodD2);
+    // Near/far split. The food channel carries a real squared distance; the
+    // opponent channel does not, so sensed mass stands in for proximity
+    // (more mass = closer), negated to keep "small = near" in both cases.
+    const dist = stim.near !== null ? series(tr, a, stim.near)
+                                    : series(tr, a, stim.mass).map(v => -v);
     const qual = series(tr, a, IDX.quality);
     const distEdge = quantileBins(dist, 2)[0]; // median split near/far
     // Upper quartile of this agent's own quality exposure: "an identity cue is
@@ -358,10 +431,10 @@ function pairedOutcomes(fullTraces, blindTraces, nearFrac) {
 
 const rng = makeRng(0x5eed ^ args.seed);
 
-log('[analysis] pre-binning channels (fbLat, fbFwd, foodMass, turn, thrust)');
-const binFbLat = prebin(full, IDX.fbLat, args.bins);
-const binFbFwd = prebin(full, IDX.fbFwd, args.bins);
-const binFoodMass = prebin(full, IDX.foodMass, args.bins);
+log(`[analysis] pre-binning ${STIM.name} channels (bearing lat/fwd, mass) + turn, thrust`);
+const binFbLat = prebin(full, STIM.lat, args.bins);
+const binFbFwd = prebin(full, STIM.fwd, args.bins);
+const binFoodMass = prebin(full, STIM.mass, args.bins);
 const binTurn = prebin(full, IDX.turn, args.bins);
 const binThrust = prebin(full, IDX.thrust, args.bins);
 
@@ -384,29 +457,30 @@ const miTurnMass = lags.map(lag => ({ lag, ...laggedMI(full, binFoodMass, binTur
 // same lag pattern shows up here, the full-sense result above is a
 // dynamical artifact, not evidence of a delayed sensory policy.
 log('[analysis] control: same lagged MI computed on blindConst traces (motor-dynamics null)');
-const binFbLatBlind = prebin(blind, IDX.fbLat, args.bins);
-const binFbFwdBlind = prebin(blind, IDX.fbFwd, args.bins);
+const binFbLatBlind = prebin(blind, STIM.lat, args.bins);
+const binFbFwdBlind = prebin(blind, STIM.fwd, args.bins);
 const binTurnBlind = prebin(blind, IDX.turn, args.bins);
 const binThrustBlind = prebin(blind, IDX.thrust, args.bins);
 const miTurnBearingBlind = lags.map(lag => ({ lag, ...laggedMI(blind, binFbLatBlind, binTurnBlind, lag, args.bins, args.nullShuffles, rng) }));
 const miThrustFwdBlind = lags.map(lag => ({ lag, ...laggedMI(blind, binFbFwdBlind, binThrustBlind, lag, args.bins, args.nullShuffles, rng) }));
 
 log('[analysis] conditional means: turn | fbLat quantile bin');
-const bearingBins = conditionalMeans(full, IDX.fbLat, IDX.turn, args.bins);
+const bearingBins = conditionalMeans(full, STIM.lat, IDX.turn, args.bins);
 log('[analysis] conditional means: thrust | fbFwd quantile bin');
-const fwdBins = conditionalMeans(full, IDX.fbFwd, IDX.thrust, args.bins);
+const fwdBins = conditionalMeans(full, STIM.fwd, IDX.thrust, args.bins);
 log('[analysis] conditional means: turn | food-mass quantile bin');
-const massBins = conditionalMeans(full, IDX.foodMass, IDX.turn, args.bins);
+const massBins = conditionalMeans(full, STIM.mass, IDX.turn, args.bins);
 
-log('[analysis] klinokinesis (approach vs recede), on the sensed odour scalar');
-const klino = klinokinesis(full, IDX.odourMass);
+log(`[analysis] klinokinesis (approach vs recede) on the ${STIM.name} channel`);
+const klino = klinokinesis(full, STIM);
 // Second klinokinesis, driven by the *true* food mass rather than the scalar
 // the agent actually has. At ambiguity 0 the two channels are identical and
 // this is a redundancy check; at ambiguity 1 they differ, and a population
 // that had learned to discriminate would track true food more strongly than
 // the mixed odour it senses. Identical deltas mean the animal is running
 // kinesis on whatever its one scalar happens to be, discrimination or not.
-const klinoTrueFood = klinokinesis(full, IDX.foodMass);
+const klinoTrueFood = STIM.name === 'food'
+  ? klinokinesis(full, { ...STIM, mass: IDX.foodMass }) : null;
 
 // Engagement check: the mechanism must be shown to be live before a null on it
 // means anything. At ambiguity 0 odour and food are the same signal; at
@@ -428,6 +502,30 @@ const channelLevels = (() => {
 log('[analysis] paired full-vs-blindConst outcomes');
 const paired = pairedOutcomes(full, blind, args.nearFrac);
 
+/**
+ * Two-species outcome: mean sensed predator mass over the episode, paired per
+ * agent between the intact and the information-removed arm. Higher mass means
+ * the prey spent the episode closer to predators. A negative delta is the
+ * behavioural signature of evasion actually driven by seeing the predator --
+ * the outcome measure that the contact statistic reports from the other side.
+ */
+const opponentOutcome = sim.cfg.COEVO ? (() => {
+  const dMass = [], dTurn = [];
+  for (let r = 0; r < full.length; r++) {
+    const tF = full[r], tB = blind[r];
+    for (let a = 0; a < POP; a++) {
+      let mF = 0, mB = 0, tuF = 0, tuB = 0;
+      for (let st = 0; st < tF.steps; st++) {
+        mF += at(tF, st, a, IDX.oppMass); mB += at(tB, st, a, IDX.oppMass);
+        tuF += Math.abs(at(tF, st, a, IDX.turn)); tuB += Math.abs(at(tB, st, a, IDX.turn));
+      }
+      dMass.push((mF - mB) / tF.steps); dTurn.push((tuF - tuB) / tF.steps);
+    }
+  }
+  const st = arr => ({ mean: mean(arr), se: sd(arr) / Math.sqrt(arr.length), n: arr.length });
+  return { oppMassDelta: st(dMass), absTurnDelta: st(dTurn) };
+})() : null;
+
 const result = {
   label: args.label || undefined,
   settings: { ...args },
@@ -441,6 +539,8 @@ const result = {
   klinokinesisTrueFood: klinoTrueFood,
   channelLevels,
   pairedOutcomes: paired,
+  stimulus: STIM.name, ablated: ablateGroups,
+  opponentOutcome,
 };
 
 if (args.out) { await fs.writeFile(args.out, JSON.stringify(result, null, 2)); log(`[out] ${args.out}`); }
@@ -451,11 +551,18 @@ const sigLagsBlind = miTurnBearingBlind.filter(r => Math.abs(r.z) > 2).map(r => 
 log(`\n[summary] turn~bearing MI significant (|z|>2) at lags, full-sense: ${sigLags.length ? sigLags.join(',') : 'none'}`);
 log(`[summary] turn~bearing MI significant (|z|>2) at lags, blindConst (motor-dynamics null): ${sigLagsBlind.length ? sigLagsBlind.join(',') : 'none'}`);
 log(`[summary] klinokinesis turn delta (approach-recede), sensed odour: ${klino.turnDelta.mean.toFixed(4)} +- ${klino.turnDelta.se.toFixed(4)} (n=${klino.turnDelta.n})`);
-log(`[summary] klinokinesis turn delta, true food mass:            ${klinoTrueFood.turnDelta.mean.toFixed(4)} +- ${klinoTrueFood.turnDelta.se.toFixed(4)} (n=${klinoTrueFood.turnDelta.n})`);
+if (klinoTrueFood)
+  log(`[summary] klinokinesis turn delta, true food mass:            ${klinoTrueFood.turnDelta.mean.toFixed(4)} +- ${klinoTrueFood.turnDelta.se.toFixed(4)} (n=${klinoTrueFood.turnDelta.n})`);
 log(`[summary] conjunction test — turn delta where the identity cue is READABLE: ${klino.byQuality.highQuality.mean.toFixed(4)} +- ${klino.byQuality.highQuality.se.toFixed(4)} (n=${klino.byQuality.highQuality.n})`);
 log(`[summary] conjunction test — turn delta where it is NOT:                    ${klino.byQuality.lowQuality.mean.toFixed(4)} +- ${klino.byQuality.lowQuality.se.toFixed(4)} (n=${klino.byQuality.lowQuality.n})`);
 log(`[summary] channel levels: foodMass ${channelLevels.foodMass.toFixed(4)} · odourMass ${channelLevels.odourMass.toFixed(4)} · quality ${channelLevels.quality.toFixed(4)}`);
 log(`[summary] paired eat delta (full-blindConst): ${paired.eatDelta.mean.toFixed(4)} +- ${paired.eatDelta.se.toFixed(4)}`);
 log(`[summary] paired occupancy delta: ${paired.occupancyDelta.mean.toFixed(4)} +- ${paired.occupancyDelta.se.toFixed(4)}`);
+if (opponentOutcome) {
+  log(`[summary] paired predator-proximity delta (full - blind, negative = evasion): ` +
+      `${opponentOutcome.oppMassDelta.mean.toFixed(4)} +- ${opponentOutcome.oppMassDelta.se.toFixed(4)}`);
+  log(`[summary] paired |turn| delta: ${opponentOutcome.absTurnDelta.mean.toFixed(4)} +- ${opponentOutcome.absTurnDelta.se.toFixed(4)}`);
+}
 
 sim.dispose();
+if (pred) pred.dispose();
