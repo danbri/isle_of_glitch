@@ -778,3 +778,11 @@ Tooling: `EvoDevoSim.TRACE_CHANNELS`, `startTrace`/`stopTrace` in
 `lib/evodevo.js`; `tools/policy.js` for the full analysis, reusable at any
 generation count, seed, or step budget — `node tools/policy.js --generations 8
 --steps 600 --restarts 8 --seed 1`.
+
+## Worktree path collision — trap for the next agent
+
+An agent found that inside a worktree, running Bash against the bare path
+`/home/user/isle_of_glitch/magpie/mazeballs` silently hits a *different*
+checkout, not the worktree's own copy. Edits appear to work and then are not
+where you think. Always operate on the worktree path
+(`.claude/worktrees/agent-<id>/magpie/mazeballs`) and verify by content diff.
