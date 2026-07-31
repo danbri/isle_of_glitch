@@ -490,3 +490,44 @@ coupling that wave 2's scripted predators could not provide.
 Also worth noting: `yprime` being a first-class output in that API is the natural
 seam for a higher-order integrator — RK4 needs derivative evaluations at
 intermediate points, which is exactly what it already yields.
+
+## A projection error, and what it revealed
+
+I claimed the distinct-patches reward would clear the bar once the gate was
+fixed, deriving +0.023 by dividing the reported score by the reported viability.
+The arithmetic on point estimates was right; the inference was not. It silently
+assumed the baseline's standard error carried across to a different reward
+shape. Re-run properly, that reward roughly **doubles** seed-to-seed variance
+(sd 0.035-0.039 against baseline 0.019), which lifts the bar past the effect:
+
+| VISIT_SCALE | score ± se | delta | bar | sensing | taxis |
+|---|---|---|---|---|---|
+| 0.10 | 0.1731 ± 0.0078 | −0.016 | 0.021 | 0.036 | 0.061 |
+| 0.12 | 0.1886 ± 0.0137 | −0.001 | 0.031 | 0.029 | 0.094 |
+| 0.15 | 0.2110 ± 0.0137 | +0.022 | 0.031 | 0.081 | 0.088 |
+| 0.22 | 0.1960 ± 0.0127 | +0.007 | 0.029 | 0.054 | 0.014 |
+
+Nothing adopted. This is the harness catching its own author making exactly the
+mistake it was built to prevent — a change in the *variance* is as capable of
+deciding a comparison as a change in the mean, and point estimates hide it.
+
+### The complementarity hypothesis
+
+The two most promising changes have mirror-image profiles:
+
+| | sensing | taxis |
+|---|---|---|
+| clustered relocating food (adopted) | 0.037 → **0.087** | 0.011 → 0.011 |
+| distinct-patches reward (not adopted) | small move | 0.011 → **0.088** |
+
+One moves sensing and not taxis; the other moves taxis and not sensing. That is
+what two *different* bottlenecks look like, rather than two attempts at the same
+one. Testing the combination is now the highest-value experiment available, and
+it also bears on the open question left by the adopted change — sensing became
+load-bearing while taxis stayed flat, so whatever the organisms are doing with
+their senses is not classical directed chemotaxis. A reward that specifically
+elevates taxis is the natural probe.
+
+If they compose, that is the strongest result the project has produced. If they
+do not, both changes are hitting one underlying constraint, which is equally
+worth knowing.
