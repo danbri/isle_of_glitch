@@ -12,7 +12,7 @@
  */
 import fs from 'node:fs/promises';
 import { initBackend, parseArgs } from './backend.js';
-import { EvoDevoSim, diagnose, evolveFor } from '../lib/evodevo.js';
+import { EvoDevoSim, diagnose, evolveFor, coevolveFor, coevoSyncWorld } from '../lib/evodevo.js';
 
 const args = parseArgs(process.argv.slice(2), {
   generations: 10, seed: 1, gain: 0.5, mutation: 0.10,
@@ -42,6 +42,19 @@ const args = parseArgs(process.argv.slice(2), {
   // the return trip becomes taxis rather than path integration.
   cpStrength: 0, cpMult: 2.5, cpRadius: 0.14, cpDecay: 0.06, cpDeposit: 6.0,
   cpNestSensor: false,
+  // Two-species world (off by default). With --coevo the run coevolves a prey
+  // and a predator population and then diagnoses the PREY.
+  //
+  // Note what this measurement is and is not. diagnose() runs the prey against
+  // a fixed world with no predators present, so the opponent channels read
+  // zero throughout and the score is prey foraging capability measured against
+  // a yardstick the arms race cannot move. That is deliberate: it is exactly
+  // the measurement the coevolution design predicts will be flat while the
+  // ancestral tournament (tools/tournament.js) detects change, and reporting
+  // the two side by side is the point.
+  coevo: false, predPop: 48, predElites: 6,
+  captureSigma2: 0.0012, coevoSenseSigma2: 0.050,
+  predGain: 1.0, preyLoss: 1.0, predForage: 0,
 });
 
 const log = (...m) => { if (!args.quiet) console.error(...m); };
@@ -62,9 +75,34 @@ const sim = new EvoDevoSim({
     CP_STRENGTH: args.cpStrength, CP_NEST_MULT: args.cpMult, CP_NEST_RADIUS: args.cpRadius,
     CP_CARRY_DECAY: args.cpDecay, CP_DEPOSIT_RATE: args.cpDeposit,
     CP_NEST_SENSOR: args.cpNestSensor,
+    ...(args.coevo ? {
+      COEVO: true, COEVO_ROLE: 'prey',
+      COEVO_CAPTURE_SIGMA2: args.captureSigma2, COEVO_SENSE_SIGMA2: args.coevoSenseSigma2,
+      COEVO_PRED_GAIN: args.predGain, COEVO_PREY_LOSS: args.preyLoss,
+      COEVO_PRED_FORAGE: args.predForage,
+    } : {}),
   },
 });
 await sim.initialise();
+
+const predator = args.coevo
+  ? new EvoDevoSim({
+      seed: args.seed ^ 0x5f1e,
+      config: {
+        POP: args.predPop, ELITES: args.predElites, EPOCH_STEPS: args.epoch, FOOD: args.food,
+        FOOD_CONSUME: args.consume, FOOD_REGROW: args.regrow,
+        GAIN: args.gain, MUTATION: args.mutation,
+        FOOD_CLUSTERS: args.clusters, FOOD_CLUSTER_SIGMA: args.clusterSigma,
+        FOOD_SENSE_SIGMA2: args.senseSigma2, FOOD_RELOCATE_THRESH: args.relocateThresh,
+        SELECT: args.select, NICHES: args.niches,
+        COEVO: true, COEVO_ROLE: 'predator',
+        COEVO_CAPTURE_SIGMA2: args.captureSigma2, COEVO_SENSE_SIGMA2: args.coevoSenseSigma2,
+        COEVO_PRED_GAIN: args.predGain, COEVO_PREY_LOSS: args.preyLoss,
+        COEVO_PRED_FORAGE: args.predForage,
+      },
+    })
+  : null;
+if (predator) { await predator.initialise(); coevoSyncWorld(sim, predator); }
 
 if (args.import) {
   const p = JSON.parse(await fs.readFile(args.import, 'utf8'));
@@ -82,12 +120,21 @@ const curriculum = args.curClustersStart > 0 || args.curClustersEnd > 0
   : null;
 
 const t0 = Date.now();
-await evolveFor(sim, args.generations, {
-  spawns: args.spawns,
-  onGeneration: ({ generation, best }) =>
-    log(`[gen ${String(generation).padStart(3)}] best ${best.toFixed(3)}  (${((Date.now() - t0) / 1000).toFixed(0)}s)`),
-  curriculum,
-});
+if (args.coevo) {
+  await coevolveFor(sim, predator, args.generations, {
+    onGeneration: ({ generation, prey: ps, pred: qs }) =>
+      log(`[gen ${String(generation).padStart(3)}] contact ${ps.contact.toFixed(4)} ` +
+          `preyForage ${ps.forageTop.toFixed(3)} preyFit ${ps.fitnessTop.toFixed(3)} ` +
+          `predFit ${qs.fitnessTop.toFixed(3)}  (${((Date.now() - t0) / 1000).toFixed(0)}s)`),
+  });
+} else {
+  await evolveFor(sim, args.generations, {
+    spawns: args.spawns,
+    onGeneration: ({ generation, best }) =>
+      log(`[gen ${String(generation).padStart(3)}] best ${best.toFixed(3)}  (${((Date.now() - t0) / 1000).toFixed(0)}s)`),
+    curriculum,
+  });
+}
 
 log(`[diagnose] ${args.restarts} restarts x ${args.steps} steps x 7 conditions…`);
 const report = await diagnose(sim, { steps: args.steps, restarts: args.restarts, yieldEvery: 0 });
@@ -104,6 +151,8 @@ const result = {
     select: args.select, niches: args.niches, spawns: args.spawns,
     cpStrength: args.cpStrength, cpMult: args.cpMult, cpRadius: args.cpRadius,
     cpDecay: args.cpDecay, cpDeposit: args.cpDeposit, cpNestSensor: args.cpNestSensor,
+    coevo: args.coevo, predPop: args.predPop, captureSigma2: args.captureSigma2,
+    predGain: args.predGain, preyLoss: args.preyLoss, predForage: args.predForage,
   },
   runtimeSeconds: +((Date.now() - t0) / 1000).toFixed(1),
   backend: `${pkg}/${backend}`,
@@ -121,3 +170,4 @@ log(`[done] gen ${report.generation} · top25 ${t.top.toFixed(3)} · railed ${(r
     `· ${result.runtimeSeconds}s` + (report.interpretable ? '' : ' · BELOW SIGNIFICANCE FLOOR'));
 
 sim.dispose();
+if (predator) predator.dispose();
