@@ -80,10 +80,11 @@ tracking genotype.** A change that fixes either moves the score a lot.
 - If you change reproduction, keep lineage bookkeeping meaningful or the
   `diversity` component becomes a lie.
 - **Run experiments synchronously.** A score run blocks for a few minutes; let
-  it. Three of the five agents in wave 1 backgrounded their runs and then
-  stalled waiting for a notification that they were themselves responsible for
-  producing, losing an experiment cycle each. Block on the call with a generous
-  timeout instead.
+  it. This is the single most common failure mode in this project: across two
+  waves, seven of nine agents backgrounded their runs and then stalled waiting
+  for a notification they were themselves responsible for producing, losing an
+  experiment cycle each. Call Bash with `run_in_background` unset and a
+  `timeout` of 1800000. Do not use Monitor.
 - Commit each accepted change with its measured before/after numbers.
 - Report the component breakdown, never just the total. A gain that is entirely
   `forage`/`viability` with `sensing` still at 0.05 is not a capability win.
