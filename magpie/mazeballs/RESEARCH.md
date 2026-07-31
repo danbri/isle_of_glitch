@@ -563,3 +563,62 @@ Implementation note from the same run: a relocated patch must have its `visited`
 flag cleared across the population, or the distinct-patch bonus treats a
 teleported patch as already-found and silently cancels the staleness pressure
 relocation exists to create.
+
+## Wave 3: capacity refuted, and the two wins do not stack
+
+### Larger networks do not help — the capacity hypothesis is dead
+
+CELLS swept 12 → 24 → 48 → 100 on top of the adopted food change. Sensing went
+0.053, 0.062, 0.077, 0.043 — **non-monotonic**, the noise signature. The
+CELLS=48 point looked like a near-miss at 8 seeds (delta +0.0265 against a bar
+of 0.0270) and **did not replicate at 16** (delta shrank to 0.0142 against
+0.0219). A textbook instance of the trap this document already warns about,
+caught by the confirmation step rather than by luck.
+
+So the sensing/taxis trade-off is **not** a network-size ceiling. That was the
+live hypothesis after the two mechanisms were found to compete, and it is now
+refuted.
+
+### RK4 multirate is free, and useless
+
+K=8 multirate — physics on the fine step, the neural ODE on a coarse one with
+RK4 evaluating all four stages against frozen sensory forcing — runs at
+**6.37 ms/step against baseline Euler's 6.51**. Cheaper than what it replaces,
+exactly as the dispatch-bound theory predicted: fewer, fatter neural launches.
+
+But no capability moved. RK4 buys accuracy nobody needed, because DT/tau was
+never the bottleneck. Worth remembering only if a future lever needs a bigger
+step — the compute is already paid for.
+
+### Inter-organism coupling: no signal, and expensive
+
+Distance-gated coupling (the same `field()` machinery as food, pulling toward
+the stock-weighted mean neighbour state, computed from the RK4 stage value so
+integration stays mutually consistent). Taxis rose at gain 0.3 and 0.6 (0.040,
+0.092) then fell at 1.0 (0.034) — non-monotonic again. Sensing never moved. It
+is also the most expensive mechanism tried, +61% ms/step.
+
+### The two adopted wins do not compose either
+
+Novelty+multi-spawn measured on top of clustered relocating food:
+0.1948 ± 0.0082 → 0.2120 ± 0.0125, delta +0.0172 against a bar of 0.0299 —
+**no significant change**. Sensing does rise (0.053 → 0.097) but diversity falls
+(0.238 → 0.188) and the total does not clear.
+
+Three separate combination tests have now failed the same way. Whatever the
+shared constraint is, it is not network size, not integration accuracy, not
+inter-organism coupling, and not evolutionary time.
+
+### What is left
+
+The most likely remaining explanation is that **the taxis measure is asking the
+wrong question**. Every mechanism that raises `sensing` leaves `taxis` flat, and
+`taxis` correlates turn against food *bearing*. But the food sense has three
+channels — bearing x, bearing y, and mass — and the ablation scrambles all three
+together. If the population is navigating by *mass gradient* rather than
+bearing, sensing would be genuinely load-bearing while a bearing-correlation
+measure sees nothing, which is exactly the pattern observed.
+
+Splitting the food ablation into direction-only and mass-only is cheap, uses
+machinery that already exists, and would distinguish "no chemotaxis" from "a
+chemotaxis we are not measuring". That is the next experiment.
