@@ -84,7 +84,14 @@ export function scoreReport(r) {
   };
   const capability = 0.40 * c.sensing + 0.20 * c.taxis + 0.15 * c.generalisation
                    + 0.15 * c.selection + 0.10 * c.diversity;
-  const viability = clamp01(base.top / 1.0);
+  // Threshold, not a proportional multiplier. The gate exists to stop a dead
+  // population scoring well by having no measurable anything — it was never
+  // meant to penalise a world for being hard. As a proportional multiplier it
+  // did exactly that: wave 1 found environments that raised `sensing` by 43%
+  // and still lost, because the harder world's lower foraging scaled the whole
+  // capability term down faster than capability rose. Anything foraging above
+  // the floor is now simply alive, and capability is judged on its own.
+  const viability = clamp01(base.top / 0.30);
   return { score: viability * capability, capability, viability, forage: base.top, components: c };
 }
 
