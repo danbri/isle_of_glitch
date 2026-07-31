@@ -33,6 +33,14 @@ export const DEFAULTS = Object.freeze({
   FOOD: 42, HAZARDS: 18, OBSTACLES: 8,
   DT: 0.018, EPOCH_STEPS: 1450, DEV_STEPS: 48,
   ELITES: 10, WORLD_BOUND: 0.94, AGENT_RADIUS: 0.017,
+  // Speed ceiling, in world units per second. Was a literal .34 inside step();
+  // it is a config field so the two species of a coevolutionary world can be
+  // given different top speeds. Thrust integrates to a terminal speed of .72
+  // (accel .72 against a per-step velocity decay of .982), so this cap — not
+  // the thrust term — is what actually limits how fast anything moves, and it
+  // is therefore the single knob that decides whether a prey can outrun a
+  // predator at all.
+  SPEED_MAX: 0.34,
   VIEW_STRIDE: 9, TRAIL_POINTS: 300,
   // A patch grazed by one agent empties in ~3s of sim time and takes ~15s to
   // come back. An epoch is 26s, so a squatter starves and a forager does not.
@@ -156,11 +164,40 @@ export const DEFAULTS = Object.freeze({
   //                   that buys a predator population insurance against
   //                   starvation-disengagement, at the cost of weakening the
   //                   pressure to actually hunt.
+  //   COEVO_PREY_INTAKE  multiplier on the prey's FITNESS return from food.
+  //                   Energy is deliberately untouched, so this changes what
+  //                   fitness rewards without changing who starves — the same
+  //                   separation the central-place knobs use, and the reason a
+  //                   move here cannot be mistaken for a viability move.
+  //                   Together with COEVO_PREY_LOSS it sets the one quantity
+  //                   the coevolution result turned on: how much of a prey's
+  //                   fitness variance predation actually controls. That share
+  //                   is measured, not assumed — coevoStats() reports it.
+  //   COEVO_PREY_REFLEX  SOLVABILITY CONTROL ONLY, and not an evolvable trait.
+  //                   Blends a hand-specified evasive reference policy into the
+  //                   prey's motor output: turn to point directly away from the
+  //                   NEAREST predator and go full ahead, gated by proximity
+  //                   through COEVO_REFLEX_SIGMA2. It is deliberately given
+  //                   privileged information (the true nearest predator, not
+  //                   the Gaussian-blurred sensory channel) because its job is
+  //                   to answer one question — do the physics of this arena
+  //                   permit escape at all, for an agent that already knows
+  //                   perfectly where the threat is — before a null on any
+  //                   evolved arm is allowed to mean anything. RESEARCH.md's
+  //                   central-place section is the cautionary tale: a null on
+  //                   an experimental arm whose control also failed carries no
+  //                   information.
+  //   COEVO_REFLEX_SIGMA2  width of the proximity gate on the reflex. 0.02 is
+  //                   a radius of ~0.14, about twice the capture kernel, so the
+  //                   reference policy reacts just before it is caught rather
+  //                   than fleeing continuously (which would be a foraging
+  //                   change as much as an evasion one).
   COEVO: false, COEVO_ROLE: 'prey',
   COEVO_SENSE_SIGMA2: 0.050, COEVO_CAPTURE_SIGMA2: 0.0040,
   COEVO_PRED_GAIN: 1.0, COEVO_PREY_LOSS: 1.5,
   COEVO_PRED_ENERGY: 0.42, COEVO_PREY_ENERGY: 0.62,
-  COEVO_PRED_FORAGE: 0,
+  COEVO_PRED_FORAGE: 0, COEVO_PREY_INTAKE: 1,
+  COEVO_PREY_REFLEX: 0, COEVO_REFLEX_SIGMA2: 0.02,
 });
 
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -730,12 +767,35 @@ export class EvoDevoSim {
       this.neural.assign(ny);
       const motor = tf.matMul(tf.tanh(ny).expandDims(1), this.Wout).squeeze([1]).tanh();
       const left = motor.slice([0,0],[-1,1]).squeeze([1]), right = motor.slice([0,1],[-1,1]).squeeze([1]);
-      const thrust = left.add(right).mul(.5), turn = right.sub(left);
+      let thrust = left.add(right).mul(.5), turn = right.sub(left);
+      // SOLVABILITY CONTROL. A hand-specified evasive reference policy, blended
+      // over the network's own motor command by a proximity gate. This is not a
+      // trait and never evolves: it exists to establish that the physics of
+      // this arena permit escape at all, which is the precondition for reading
+      // anything into an evolved prey population that fails to escape. It is
+      // handed the true nearest predator rather than the sensed field, so a
+      // failure here is a fact about the arena and not about the sense.
+      if (C.COEVO && C.COEVO_PREY_REFLEX > 0 && opp && C.COEVO_ROLE !== 'predator') {
+        const nOpp = opp.rel.shape[1];
+        const hot = tf.oneHot(opp.d2.argMin(1), nOpp).expandDims(2);
+        const nearRel = opp.rel.mul(hot).sum(1);            // vector self -> nearest predator
+        const nb = body(nearRel);
+        // Turn command that points the body axis along -nearRel. Positive turn
+        // rotates toward positive lateral (see body()), so the proportional
+        // command is the bearing error itself, normalised to [-1, 1].
+        const fleeTurn = tf.atan2(nb[1].mul(-1), nb[0].mul(-1)).div(Math.PI);
+        // Gate on the true nearest-predator distance. mul(-1).div(sigma2), not
+        // div(-sigma2) — see field().
+        const w = opp.d2.min(1).mul(-1).div(C.COEVO_REFLEX_SIGMA2).exp().mul(C.COEVO_PREY_REFLEX);
+        const keep = tf.onesLike(w).sub(w);
+        turn = turn.mul(keep).add(fleeTurn.mul(w));
+        thrust = thrust.mul(keep).add(w);                   // full ahead while fleeing
+      }
       const ax = c.mul(thrust).mul(.72).add(repel.slice([0,0],[-1,1]).squeeze([1]).mul(.95));
       const ay = s.mul(thrust).mul(.72).add(repel.slice([0,1],[-1,1]).squeeze([1]).mul(.95));
       let nv = this.vel.mul(.982).add(tf.stack([ax, ay], 1).mul(C.DT));
       const speed = tf.sqrt(nv.square().sum(1).add(1e-6));
-      nv = nv.div(tf.maximum(speed.div(.34), tf.onesLike(speed)).expandDims(1));
+      nv = nv.div(tf.maximum(speed.div(C.SPEED_MAX), tf.onesLike(speed)).expandDims(1));
       const no = this.omega.mul(.91).add(turn.mul(.055));
       this.omega.assign(no);
       // Wrapped to [-pi, pi]: the heading is integrated every step and would
@@ -817,6 +877,15 @@ export class EvoDevoSim {
         this.banked.assign(this.banked.add(deposit.mul(C.CP_NEST_MULT).mul(C.DT)));
         this.nestTime.assign(this.nestTime.add(inNest.mul(C.DT)));
       }
+      // Cap on what foraging is worth to a prey, in fitness only. Applied here
+      // rather than to `eat` so metabolism, food depletion and the forageAcc
+      // readout are all untouched: this changes the *balance* between the two
+      // terms of prey fitness without changing who starves or how much food
+      // the world holds. Raising COEVO_PREY_LOSS and lowering this are the two
+      // ends of the same knob — how much of a prey's fitness predation
+      // controls — and coevoStats() measures the resulting share directly.
+      if (C.COEVO && !isPred && C.COEVO_PREY_INTAKE !== 1)
+        intake = intake.mul(C.COEVO_PREY_INTAKE);
       // Predation moves fitness between the species. The prey's loss is set
       // larger than the predator's gain: being caught has to cost more than a
       // missed meal, or evasion never pays for the foraging it displaces.
@@ -1086,7 +1155,39 @@ export class EvoDevoSim {
       this.contactAcc.data(), this.forageAcc.data(), this.fitness.data()]);
     let touched = 0;
     for (let i = 0; i < C.POP; i++) if (ct[i] > 1e-4) touched++;
+    // Variance decomposition of fitness into its two competing terms.
+    //
+    // The coevolution result turned on a claim about the BALANCE of prey
+    // fitness — foraging minus predation, at comparable magnitudes, is the
+    // regime where the incumbent forager wins by not changing. That claim has
+    // to be measured rather than asserted. Both terms are available exactly:
+    // the integrated contact and the integrated intake are already
+    // accumulated, and fitness is linear in each, so
+    //
+    //     predation term  =  ±(gain|loss) x contactAcc
+    //     foraging term   =  (intake multiplier) x forageAcc
+    //
+    // and var(F) = sum_k cov(F, term_k) exactly for a sum of terms. The share
+    // of fitness variance each explains is therefore cov(F, term)/var(F), and
+    // the residual is everything else (toxin, movement cost, the alive bonus).
+    const isPred = C.COEVO_ROLE === 'predator';
+    const kPred = isPred ? C.COEVO_PRED_GAIN : -C.COEVO_PREY_LOSS;
+    const kFor = isPred ? 1 : C.COEVO_PREY_INTAKE;   // predator forageAcc is already scaled
+    const mf = mean(fit), mc = mean(ct), mg = mean(fg);
+    let vF = 0, cP = 0, cG = 0;
+    for (let i = 0; i < C.POP; i++) {
+      const df = fit[i] - mf;
+      vF += df * df;
+      cP += df * kPred * (ct[i] - mc);
+      cG += df * kFor * (fg[i] - mg);
+    }
+    vF /= C.POP; cP /= C.POP; cG /= C.POP;
+    const varianceShare = vF > 1e-12
+      ? { fitnessVar: vF, predationShare: cP / vF, forageShare: cG / vF,
+          residualShare: 1 - (cP + cG) / vF }
+      : { fitnessVar: vF, predationShare: 0, forageShare: 0, residualShare: 1 };
     return {
+      varianceShare,
       contact: mean(ct), contactTop: topQuartile(ct), contactSd: sd(ct),
       // The bottom quartile of contact is the prey side's equivalent of
       // topQuartile: the part of the distribution selection actually keeps.
