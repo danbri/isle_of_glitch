@@ -1516,18 +1516,37 @@ instruments — an ancestral tournament over 4 seeds and a policy analysis over 
 
 ### `score.js`, and why it is the wrong instrument here
 
-Reported as secondary context, exactly as predicted, and it disagrees with
-nothing: the coevolved prey diagnosed against a fixed world with no predators
-present scores 0.2579 ± 0.0059 unevolved (`sensing` 0.033, `forage` 0.549,
-viability 1.0). This measurement cannot see the predator improvement at all —
-the opponent channels read zero when no predators are stepped alongside, so it
-is measuring prey foraging capability against a yardstick the arms race does
-not touch.
+Reported as secondary context. The coevolved prey, diagnosed against a fixed
+world with no predators present, 4 seeds:
+
+| | score ± se | sensing | taxis | generalisation | selection | diversity | forage |
+|---|---|---|---|---|---|---|---|
+| generation 0 | 0.2579 ± 0.0059 | 0.033 | 0.004 | 0.936 | 0.024 | **1.000** | 0.549 |
+| generation 32 | 0.1864 ± 0.0108 | 0.054 | 0.024 | 1.000 | 0.000 | **0.100** | 0.448 |
+
+Delta −0.0715 against a bar of 0.0246: `score.js` calls the whole thing a
+**REGRESSION**. Read the components before believing it. The entire move is
+`diversity`, 1.000 → 0.100, and that is an artifact of the generation-0 anchor:
+at generation 0 every agent is its own founder so `eliteFounders / ELITES` is
+pinned at 1.0 by construction, and it can only fall thereafter. This document
+already records that trap — "founder lineages can only fall" — and here it
+supplies 0.10 × (1.000 − 0.100) = 0.090 of a 0.072 total decline, i.e. more
+than the whole of it. The two capability terms went the *other* way: `sensing`
+0.033 → 0.054 and `taxis` 0.004 → 0.024, with viability at 1.0 throughout.
+
+So the honest summary of the fixed-world score is: no capability loss, a small
+real decline in foraging (0.549 → 0.448), a structural collapse in lineage
+diversity under 32 generations of truncation selection, and **no visibility
+whatsoever into the thing that actually changed.** The opponent channels read
+zero when no predators are stepped alongside, so this measurement cannot see
+the predator improvement even in principle.
 
 **Where the two instruments differ, believe the tournament.** Not because it is
 newer, but because of what each is constructed to answer. `score.js` asks "how
-capable is this population against a fixed world", which is a well-posed
-question whose answer genuinely did not change. The tournament asks "is this
+capable is this population against a fixed world" — a well-posed question, but
+one whose answer here is dominated by a diversity term that has nothing to do
+with the arms race, and which would have been filed as "coevolution makes the
+population worse" by anyone reading the total. The tournament asks "is this
 generation better than its own ancestors at the thing it is under selection
 for", which is the only question with a defined answer in a coevolutionary
 setting. The tournament detecting a predator gain that `score.js` cannot see is
