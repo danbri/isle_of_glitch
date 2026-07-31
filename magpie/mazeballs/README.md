@@ -44,21 +44,41 @@ it is sent, so the ablation table will report "open loop" no matter how long you
 evolve — not because nothing was learned, but because nothing *could* be.
 
 The **gain** slider rescales the developed matrix live (development re-runs for
-all 192 genomes on release). Paired against identical genomes and identical
-spawns over 700 steps:
+all 192 genomes on release).
 
-| gain | row sum | railed | at wall | top 25% fitness | population mean |
-|---|---|---|---|---|---|
-| 2.0 (original) | 5.03 | 31.1% | 15.1% | 1.070 | **−0.025** |
-| 1.0 | 2.51 | 15.4% | 10.4% | 1.166 | 0.094 |
-| **0.5 (default)** | 1.26 | 3.3% | 6.3% | 1.139 | 0.086 |
-| 0.3 | 0.75 | 0.1% | 5.7% | 1.302 | 0.109 |
+An early paired run at generation 0 suggested the original 2.0 was also the worst
+setting for *fitness*. A proper sweep — 4 gains × 6 seeds × 12 generations, run
+headless via `tools/sweep.js` — says that was noise:
 
-The original setting was the worst on every measure, including a *negative*
-population mean — agents were losing more to toxins than they gained from food.
-0.3 scored best here, but the gap between 0.3, 0.5 and 1.0 is within run-to-run
-noise, and at a row sum of 0.75 the recurrence is weak enough that the network is
-nearly feedforward. 0.5 keeps recurrence meaningful while staying off the rails.
+| gain | top 25% fitness (n=6) | population mean | railed | blind Δ |
+|---|---|---|---|---|
+| 0.3 | 1.161 ± 0.055 | 0.051 ± 0.041 | 0.0% | −3.6% |
+| **0.5 (default)** | 1.152 ± 0.042 | −0.000 ± 0.035 | 2.5% | −1.2% |
+| 1.0 | 1.135 ± 0.019 | −0.002 ± 0.031 | 23.6% | +0.1% |
+| 2.0 (original) | 1.148 ± 0.042 | −0.036 ± 0.048 | 26.3% | −0.5% |
+
+Read the two halves separately, because they say different things.
+
+**Railing tracks gain, cleanly and reproducibly.** Zero saturation at or below
+0.5, a quarter of all cells pinned at or above 1.0, monotonic, in every seed.
+The mechanism is exactly as described.
+
+**Fitness does not.** The four gains sit within one standard error of each other.
+Spread across gains is 0.026; spread across *seeds* is 0.250 — ten times larger.
+The between-gain standard deviation is 0.11× the within-gain noise. At this
+generation count, changing the gain does not measurably change how well the
+population forages.
+
+So 0.5 is the default on the mechanistic argument alone: a railed cell emits the
+same output whatever it is sent, which makes the page's own premise — recurrent,
+sensor-driven control — unavailable in principle, and makes the ablation table
+uninformative. It is not the default because it forages better, and the earlier
+table claiming so has been removed rather than defended.
+
+One caveat worth testing: every cell above is 12 generations, and *none* of them
+evolved sensing — blind Δ is within ±4% at every gain. A responsive network may
+only pay off once there is something to respond with, which would take far more
+generations than this sweep ran.
 
 Watch the readout beside the slider: `% railed` is the share of cells beyond
 |tanh| > 0.95, and `% at wall` the share of agents pinned to the boundary.
