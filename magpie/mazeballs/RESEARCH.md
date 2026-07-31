@@ -1315,3 +1315,46 @@ Two methodological notes for whoever picks this up:
   chance level for any behavioural statistic at ~15% of the cost of an evolved
   run, and without it "nestShare 0.147" reads like a result instead of like
   noise with a bigger load on it.
+
+## Commit early: the box can vanish
+
+Three agents were killed mid-run by a container restart, having done several
+hours of work between them without a single commit. All of it was lost — a
+discrimination-task experiment, a central-place-foraging retry, and a
+re-baselining of the sensing measure — and none of it was recoverable, because
+a worktree that is never committed is not a record of anything.
+
+The session container is ephemeral and can restart without warning. Commit in
+your worktree after every working increment, not at the end. A partial result
+in a commit is worth more than a complete result in a working tree, because
+only one of the two still exists tomorrow.
+
+## Measuring a coevolutionary arms race
+
+Recorded ahead of the first result, because the trap is structural and an agent
+who meets it unprepared will file the wrong finding.
+
+In a genuine arms race both species improve *relative to each other*, so
+absolute performance against a fixed yardstick stays flat. `tools/score.js`
+measures against a fixed world. It will therefore report NO SIGNIFICANT CHANGE
+throughout the entire interesting period of a predator-prey run, and that null
+would be an artefact of the instrument rather than a fact about the population.
+
+Progress under coevolution is only visible against **ancestors**. Snapshot each
+species periodically (`exportPopulation`/`importPopulation` already serialise a
+population as base64 float32) and cross-evaluate generation T against
+generation T−k in both directions. If today's predators beat old prey better
+than old predators did, capability rose, whatever the head-to-head number says.
+
+Report the result as a matrix or curve rather than a single number, because its
+shape names the failure mode:
+
+- **disengagement** — one side is crushed, the selection gradient vanishes, both
+  drift;
+- **cycling** — later generations beat recent ancestors but lose to distant
+  ones, so there is motion without net progress;
+- **mediocre stable state** — both sides settle and the tournament is flat
+  everywhere.
+
+All three are real results and worth reporting as such. A flat `score.js`
+reported as a null is not.
