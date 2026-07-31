@@ -40,6 +40,20 @@ hardware could support.** Experiments that make the task demand something
 klinokinesis structurally cannot do are the live direction; experiments that
 give the organism more capacity are, on this evidence, predicted null.
 
+**That direction has now been tested once, and it half-works.** Shared-odour
+ambiguity — food and hazards emitting into the *same* channel, with identity
+readable only at close range — was dosed from separable to fully ambiguous over
+16 seeds per arm. Score is flat at every dose and `sensing` falls monotonically
+by 38%, so on the objective it is another null. But the trace analysis says the
+task change reached the policy: the klinokinesis signature drops from ~6 SE to
+under 2 SE and loses sign agreement between seeds. **Removing the affordance
+for klinokinesis does remove klinokinesis. It does not produce a replacement.**
+Inside 8 generations the population responds by sensing less, not by learning
+the conjunction. Two candidate explanations remain open and unseparated — the
+budget, and an incentive worth only ~7% of elite fitness because hazards are
+physically minor. Raising the stakes alongside the ambiguity dose is the
+indicated follow-up.
+
 **What is known to be mismeasured.** `sensing` uses scramble ablation, which
 substitutes another agent's sensor values and so injects misleading input as
 well as removing information. Mean-replacement (`blindConst`) removes the
@@ -1388,3 +1402,130 @@ rising even if score fell. It does not. Making the long-range channel
 uninformative about identity makes the whole sensory apparatus **less**
 load-bearing, not more, and the identity channel becomes less load-bearing at
 exactly the dose where it is the only identity information that exists.
+
+### The mechanism is live — verified before anything is concluded from a null
+
+At dose 1, mean sensed odour is **2.18** against a true food mass of **1.33**
+(seed 1) and **2.21** against **1.34** (seed 2): 39% of what the animal smells
+is hazard. At dose 0 the two are identical to four decimals by construction
+(1.2708 / 1.2708), which is also a check that the no-op path is really a no-op.
+The quality channel's level falls from 0.64 to 0.21 as its kernel narrows, i.e.
+it is genuinely a close-range cue at full dose and a mid-range one at zero.
+The knob turns.
+
+### Selection under ambiguity buys hazard *seeking*, not discrimination
+
+`odourStats()` records integrated hazard contact (`toxDose`, seconds at full
+contact) and feeding, neither of which is an input to fitness or to the score.
+Generation-0 populations give the unevolved chance rate for free, which is the
+cheapest control this project has. Matched seed set (1–8), 300 steps:
+
+| arm | toxDose (population) | toxDoseTop (elite quartile) | ratio |
+|---|---|---|---|
+| gen 0, ambiguity 0 | 0.1983 | 0.0238 | 0.143 |
+| 8 gen, ambiguity 0 | 0.1726 | **0.0203** | 0.130 |
+| gen 0, ambiguity 1 | 0.2122 | 0.0171 | 0.097 |
+| 8 gen, ambiguity 1 | 0.1802 | **0.0229** | 0.149 |
+
+Population-level exposure falls by the same ~14% at both doses — that is just
+foraging better, and it is dose-independent. The elite quartile is where the two
+doses separate. With a separable toxin channel, eight generations of selection
+*lowers* elite hazard exposure by 15% relative to chance. With a shared odour it
+*raises* it by 34%. The agents selection favours at full ambiguity are the ones
+that follow odour hardest, and following odour is now how you find a hazard.
+
+This is the sign of a failed discrimination stated behaviourally rather than
+inferred from a flat score. Two honest caveats: these are unerrored means over 8
+seeds (`score.js` now carries the readouts per seed so the next run gets error
+bars), and the `toxRatio` column across the full 16-seed dose sweep is
+0.130 / 0.154 / 0.139 / 0.151 / 0.163 — rising, but non-monotonically and by
+roughly one combined standard error, so only the endpoint contrast against
+generation 0 is worth leaning on.
+
+## The policy shape did change: ambiguity abolishes klinokinesis
+
+This is the result worth the experiment. `tools/policy.js` gained the ability to
+run its klinokinesis test on the scalar the agent *actually senses* (the new
+`odourMass` trace channel) as well as on the true food mass, which are the same
+signal at dose 0 and different at dose 1; plus a within-agent split of the
+approach-vs-recede turn bias by the quality channel's own upper quartile, which
+is the direct test of whether the response became conditional on the identity
+cue. 8 generations, 600-step traces, 6 paired restarts, two seeds.
+
+| seed | dose | turn delta (approach − recede), sensed scalar | SE from zero |
+|---|---|---|---|
+| 1 | 0 | **−0.0746 ± 0.0110** (n=444) | 6.8 |
+| 2 | 0 | **−0.0578 ± 0.0101** (n=715) | 5.7 |
+| 1 | 1.0 | +0.0315 ± 0.0166 (n=364) | 1.9 |
+| 2 | 1.0 | −0.0105 ± 0.0085 (n=749) | 1.2 |
+
+The dose-0 rows reproduce the recorded klinokinesis finding *exactly* — seed 2's
+−0.0578 ± 0.0101 (n=715) is the same number to four decimals as the one already
+in this document, which is as strong a check on the tool as could be asked for.
+
+At full ambiguity it is gone. Both seeds collapse from ~6 SE to under 2 SE, and
+they no longer agree on the sign. The same holds when the test is driven by the
+true food mass instead of the sensed odour (+0.0221 and −0.0038), so this is not
+an artifact of measuring against a mixed scalar: kinesis on *either* scalar has
+been abolished. **The task change did what it was designed to do at the level of
+the policy.** Making a single scalar uninformative about identity stops the
+population from running a biased random walk on a single scalar.
+
+**Nothing replaced it.** Score is flat at every dose, `sensing` falls 38%, the
+identity channel becomes *less* load-bearing as it becomes the only identity
+information available, and the paired full-vs-`blindConst` behavioural benefit
+of sensing shrinks — occupancy near food falls from +0.0283 to +0.0163 (seed 1)
+and +0.0246 to +0.0068 (seed 2). The population did not learn approach-then-
+decide; it partially stopped using the odour gradient at all.
+
+**The conjunction test itself carries no signal**, and this is recorded as a
+negative about the measure rather than about the population. Splitting the turn
+bias by whether the identity cue is readable gives, at dose 1, hi/lo of
++0.052/+0.018 (seed 1) and −0.019/−0.010 (seed 2) — no agreement. Worse, at dose
+*0* the same split gives −0.053/−0.048 (seed 1) but +0.026/−0.054 (seed 2), so
+it separates strongly at a dose where nothing conjunctive can be happening. High
+quality means "near a hazard", which changes behaviour for reasons that have
+nothing to do with discrimination, and the measure cannot tell the two apart.
+Anyone reusing `byQuality` needs a better control than this one has.
+
+### Verdict
+
+Nothing adopted. `ODOUR_AMBIGUITY` stays 0, which is verified bit-identical to
+the previous code, and the machinery is retained switched off as apparatus.
+
+What this rules out is narrow and specific, and it is the first result in this
+project to bear on the *policy* rather than on the architecture. The diagnosis
+that "every lever is null because the strategy is klinokinesis, so change what
+the strategy has to be" is now tested at its own premise, and the premise holds
+only halfway. Removing the affordance for klinokinesis **does** remove
+klinokinesis — replicated at two seeds, against a 6-SE baseline effect the same
+tool reproduces to four decimals. It does not produce a better strategy. Given
+eight generations, a substrate that can no longer run a biased random walk on
+one scalar does not reach for the conjunction; it reaches for less sensing.
+
+Two readings, and the evidence does not separate them:
+
+1. **Eight generations is not enough to find a two-signal policy.** Every
+   mechanism in this document that needed more than a reflex has failed inside
+   this budget, and the central-place experiment showed the budget itself is
+   sometimes the binding constraint (nest occupancy moved at 24 generations and
+   not at 8). Against this: tripling the budget has twice been measured to make
+   `sensing` *worse*, so more time is not obviously the fix.
+2. **The incentive is too small.** Hazards are physically minor — a damage
+   radius of ~0.039 against an arena half-width of 0.94, and 18 of them. Perfect
+   discrimination is worth about 0.036 of fitness to a top-quartile agent
+   carrying 0.53, roughly 7%. That may simply be under the resolution of eight
+   generations of truncation selection on a noisy fitness. **A follow-up that
+   raises hazard damage or hazard count alongside the ambiguity dose is the
+   obvious next experiment**, and it is cheap: the apparatus is in place and the
+   ambiguity knob is orthogonal to it. Note that would change the world's
+   payoffs, which this experiment deliberately did not, so it needs its own
+   generation-0 and viability controls.
+
+The methodological point, which is the same one the central-place experiment
+made: **the score table alone would have said "shared-odour ambiguity does not
+help", five nulls and nothing else.** The trace analysis turns that into
+"ambiguity abolishes the known policy and nothing takes its place", and the
+hazard-exposure readout turns it into "selection under ambiguity favours the
+agents that follow the odour into hazards". Those are claims a future experiment
+can act on. The five score rows are not.
