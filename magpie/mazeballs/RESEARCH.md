@@ -622,3 +622,50 @@ measure sees nothing, which is exactly the pattern observed.
 Splitting the food ablation into direction-only and mass-only is cheap, uses
 machinery that already exists, and would distinguish "no chemotaxis" from "a
 chemotaxis we are not measuring". That is the next experiment.
+
+## The sensing measure was understating capability by roughly half
+
+Chasing why every mechanism raises `sensing` while `taxis` stays flat, three
+things were tested directly.
+
+**Splitting the food ablation** into bearing (channels 0,1) and mass (channel 2)
+killed the mass-gradient hypothesis: bearing is the more load-bearing half
+(7.3% vs 5.1% at seed 1), so the population is not navigating by mass.
+
+**Thrust modulation** — steering by speeding up when food is ahead rather than
+by turning, which a turn-correlation measure cannot see — is also at chance:
+r = 0.008, 0.020, −0.004 across three seeds, sign flipping. Dead too.
+
+**But the drops are real and large** (5–21% depending on seed), which raised a
+worse possibility: scrambling does not only remove information, it *injects a
+plausible wrong signal*. A drop might be noise sensitivity rather than
+information use — which would undermine the project's headline metric.
+
+Tested by replacing the ablated channels with the **population mean** instead:
+information removed, nothing injected.
+
+| seed | scrambled | mean-replaced |
+|---|---|---|
+| 1 | 5.2% | **8.9%** |
+| 2 | 14.8% | **27.8%** |
+| 3 | 1.9% | **12.5%** |
+
+Mean-replacement costs *more*, in every seed, by roughly 2x and up to 6x.
+
+So the noise worry is refuted — the dependence is genuine information use. But
+the conclusion is stronger than that: **the scrambled ablation systematically
+understates sensing.** A scrambled signal still carries the right variance and
+dynamic range, so the network stays in its operating regime and can still
+exploit the ambient level. A constant kills all variation and pins it at one
+operating point.
+
+Every `sensing` number in this document is therefore a lower bound, plausibly by
+half. The metric has not been changed, because doing so would invalidate
+comparison against every baseline measured so far — but `blindConst` is now
+recorded alongside `blind` in every diagnostic run, and a future re-baselining
+should use it.
+
+This also reframes the taxis puzzle. The population uses food *bearing*
+information, demonstrably, but expresses it through neither turn nor thrust
+correlation. Whatever the policy is, it is not an instantaneous
+stimulus-to-response mapping of the kind either measure can see.

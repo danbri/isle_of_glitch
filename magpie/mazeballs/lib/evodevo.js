@@ -60,7 +60,7 @@ export const DEFAULTS = Object.freeze({
   // not help — left at its original width.
   FOOD_CLUSTERS: 9, FOOD_CLUSTER_SIGMA: 0.12,
   FOOD_SENSE_SIGMA2: 0.050, FOOD_RELOCATE_THRESH: 0.15,
-  ACC_COLS: 9,
+  ACC_COLS: 12,
   // Scales the developed recurrent matrix. 2.0 was the original and rails the
   // network; 0.5 puts the mean max-row-sum near 1.2, where tanh is still steep.
   GAIN: 0.5, SAT_LEVEL: 0.95, WALL_LEVEL: 0.93,
@@ -153,6 +153,12 @@ export function makeWorld(cfg = DEFAULTS, rng = makeRng(0x8f3d20a1)) {
 //   6   wall/obstacle proximity       7 own energy
 export const SENSOR_GROUPS = Object.freeze({
   food: [0, 1, 2], toxin: [3, 4, 5], wall: [6], energy: [7],
+  // Split of the food sense. Every mechanism that has raised `sensing` left
+  // `taxis` flat, and `taxis` correlates turn against food *bearing* only. If
+  // the population navigates by mass gradient instead, sensing is genuinely
+  // load-bearing while a bearing-correlation measure sees nothing. Ablating the
+  // two halves separately distinguishes those cases.
+  foodDir: [0, 1], foodMass: [2],
 });
 
 export function keepAllBut(groups, cfg = DEFAULTS) {
@@ -169,14 +175,17 @@ export function conditions(cfg = DEFAULTS) {
     { key:'noFood',   label:'food sense scrambled',  mask:keepAllBut(['food'], cfg),  note:'chemotaxis removed' },
     { key:'noToxin',  label:'toxin sense scrambled', mask:keepAllBut(['toxin'], cfg), note:'avoidance removed' },
     { key:'noWall',   label:'wall sense scrambled',  mask:keepAllBut(['wall'], cfg),  note:'obstacle/edge cue removed' },
+    { key:'noFoodDir',  label:'food bearing scrambled', mask:keepAllBut(['foodDir'], cfg),  note:'direction lost, mass kept' },
+    { key:'noFoodMass', label:'food mass scrambled',    mask:keepAllBut(['foodMass'], cfg), note:'mass lost, direction kept' },
+    { key:'blindConst', label:'all senses -> population mean', mask:keepAllBut(['food','toxin','wall','energy'], cfg), constant:true, note:'information removed, no noise injected' },
     { key:'lesion',   label:'recurrence lesioned',   lesion:true, note:'off-diagonal W zeroed; reactive only' },
     { key:'novel',    label:'novel field layout',    novel:true,  note:'never selected on this layout' },
   ];
 }
 
-export function makeMods(mask, lesion, cfg = DEFAULTS, rng = makeRng(7)) {
+export function makeMods(mask, lesion, cfg = DEFAULTS, rng = makeRng(7), constant = false) {
   if (!mask && !lesion) return null;
-  const m = { lesion: !!lesion };
+  const m = { lesion: !!lesion, constant: !!constant };
   if (mask) {
     const perm = Array.from({ length: cfg.POP }, (_, i) => i);
     for (let i = perm.length - 1; i > 0; i--) {
@@ -492,7 +501,18 @@ export class EvoDevoSim {
         tf.tanh(boundary.add(rb[0].abs().mul(.4))), this.energy.sub(.7)], 1);
       // Ablation: dropped channels are replaced by another agent's values for
       // the same channels — information destroyed, distribution preserved.
-      if (mods && mods.keep) sensors = sensors.mul(mods.keep).add(tf.gather(sensors, mods.perm).mul(mods.drop));
+      if (mods && mods.keep) {
+        // Two ways to ablate. Scrambling hands agent i another agent's value:
+        // information destroyed, distribution preserved — but it also *injects a
+        // plausible wrong signal*, so a drop may reflect perturbation rather
+        // than lost information. Replacing with the population mean removes the
+        // information while injecting nothing. If the two cost the same, the
+        // drop is information; if only scrambling hurts, it is noise sensitivity.
+        const replacement = mods.constant
+          ? sensors.mean(0, true).tile([this.cfg.POP, 1])
+          : tf.gather(sensors, mods.perm);
+        sensors = sensors.mul(mods.keep).add(replacement.mul(mods.drop));
+      }
       const Weff = (mods && mods.lesion) ? this.W.mul(this.eye) : this.W;
       const act = tf.tanh(this.neural.add(this.bias));
       const rec = tf.matMul(act.expandDims(1), Weff).squeeze([1]);
@@ -552,10 +572,16 @@ export class EvoDevoSim {
         eat.sub(tox.mul(1.35)).add(speed.mul(.018)).add(en.greater(.04).toFloat().mul(.003)).mul(C.DT)));
       if (this.recording) {
         // Pooled regression accumulators for the taxis measures.
+        // Columns 9-11 capture thrust modulation. `taxis` only correlates the
+        // *turn* output against food bearing, so an agent that steers by
+        // speeding up when food is ahead and slowing when it is not — a
+        // perfectly good taxis — is invisible to it. fb[0] is the forward
+        // component of the food vector in the body frame.
         this.acc.assign(this.acc.add(tf.stack([
           fb[1], fb[1].square(), fb[1].mul(turn),
           hb[1], hb[1].square(), hb[1].mul(turn),
-          turn, turn.square(), fb[0]], 1)));
+          turn, turn.square(), fb[0],
+          thrust, thrust.square(), fb[0].mul(thrust)], 1)));
       }
     });
     this.stepNo++;
@@ -689,7 +715,15 @@ export class EvoDevoSim {
       const g = j => raw[i * K + j];
       if (Math.abs(corr(g(0), g(1), g(6), g(7), g(2), n)) > 0.2) strongFood++;
     }
-    return { food, toxin, forwardBias: col(8) / N, strongFood, samples: N };
+    const thrustTaxis = corr(col(8), 0, col(9), col(10), col(11), N) || 0;
+    // Sxx for fb[0] is not accumulated separately; recompute from its own column
+    // pair using the same estimator shape as above.
+    const fwd = (() => {
+      let sxx = 0; for (let i = 0; i < C.POP; i++) { const v = raw[i * K + 8]; sxx += v * v; }
+      return corr(col(8), sxx, col(9), col(10), col(11), N);
+    })();
+    return { food, toxin, forwardBias: col(8) / N, strongFood, samples: N,
+             thrustTaxis: fwd };
   }
 
   // `gain` is the mean over agents of the largest absolute row sum of W, which
@@ -851,7 +885,7 @@ export async function diagnose(sim, opts = {}) {
     for (let r = 0; r < restarts; r++) {
       const init = sim.makeInit();
       for (const cond of conditionList) {
-        const mods = makeMods(cond.mask, cond.lesion, C, rng);
+        const mods = makeMods(cond.mask, cond.lesion, C, rng, cond.constant);
         const record = (r === 0 && (cond.key === 'baseline' || cond.key === 'blind'));
         const cb = onProgress ? n => onProgress({
           fraction: (done + n) / total, restart: r + 1, restarts, condition: cond.label,
