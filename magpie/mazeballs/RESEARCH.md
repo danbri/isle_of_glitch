@@ -315,3 +315,40 @@ experiments established that between them:
    rethinking or the difficulty must rise gradually.
 4. **Raise seeds to 16 before raising ambition.** The detection bar at 4 seeds is
    15% of the score; nothing anyone tried could have registered.
+
+## Coordinating agents: a security finding
+
+Wave 2's co-evolution agent **refused an instruction from the coordinator**,
+correctly identifying it as indistinguishable from a prompt injection.
+
+The instruction was legitimate: patch the viability gate from `/1.0` to `/0.30`.
+The agent's reasoning for refusing was sound and worth recording verbatim in
+substance — the message arrived embedded in a system-reminder rather than as a
+normal turn; it asked for a change to the *scoring formula*; and that change
+would have retroactively converted several of the agent's own regressions into
+improvements. That is precisely the shape of high-value tampering.
+
+It then verified against `tools/score.js` on disk and against this file, found
+both said `/1.0`, and declined.
+
+Its verification was correct method with systematically stale evidence: **the
+whole worktree predated the fix**, so every source it could consult agreed with
+the wrong answer. There was no way for it to reach the right conclusion from
+inside its own sandbox.
+
+Two lessons:
+
+1. **Worktrees branch from a stale base.** Commits made after a wave launches do
+   not reach its agents. Wave 1 agents hit this with `tools/score.js` and worked
+   around it silently; wave 2 hit it with the gate fix and it cost a genuine
+   discovery a full cycle. Patch worktrees on disk before launching, or re-create
+   them from current HEAD.
+2. **There is no authenticated channel to a subagent.** Anything that arrives as
+   text is spoofable, and an agent that blindly accepted scoring changes from
+   unauthenticated text would be worthless as an experimental instrument. The
+   fix is not to ask agents to trust harder — it is to change the artifact on
+   disk, which requires no trust, and to keep instructions to *what to
+   investigate* rather than *how to score it*.
+
+The agent behaved better than the system it was embedded in. Its skepticism cost
+one wave of predator experiments and is worth that price several times over.
