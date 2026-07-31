@@ -45,6 +45,11 @@ const args = parseArgs(process.argv.slice(2), {
   clusters: 9, clusterSigma: 0.12, senseSigma2: 0.050, relocateThresh: 0.15,
   select: 'trunc', backend: 'auto', out: '', quiet: false, label: '',
   bins: 6, lags: '0,1,2,3,5,8,13,21,34', nullShuffles: 24, nearFrac: 0.25,
+  // Shared-odour ambiguity (see lib/evodevo.js). At 0 this tool behaves
+  // exactly as before: odourMass === foodMass and `quality` is the old
+  // long-range toxin mass. At 1 the odour channel carries food and hazards
+  // alike and `quality` is the only identity cue, readable only close up.
+  ambiguity: 0, qualitySigma2: 0.010,
 });
 const log = (...m) => { if (!args.quiet) console.error(...m); };
 const lags = String(args.lags).split(',').map(s => Number(s.trim()));
@@ -60,6 +65,7 @@ const sim = new EvoDevoSim({
     FOOD_CLUSTERS: args.clusters, FOOD_CLUSTER_SIGMA: args.clusterSigma,
     FOOD_SENSE_SIGMA2: args.senseSigma2, FOOD_RELOCATE_THRESH: args.relocateThresh,
     SELECT: args.select,
+    ODOUR_AMBIGUITY: args.ambiguity, ODOUR_QUALITY_SIGMA2: args.qualitySigma2,
   },
 });
 await sim.initialise();
@@ -233,25 +239,42 @@ function conditionalMeans(traces, xch, ych, nBins) {
  * within-agent autocorrelation cannot inflate the apparent effect the way
  * pooling all timesteps as independent samples would.
  */
-function klinokinesis(traces) {
+function klinokinesis(traces, massCh = IDX.odourMass) {
   const appTurn = [], recTurn = [], appThrust = [], recThrust = [];
   const appNearTurn = [], recNearTurn = [], appFarTurn = [], recFarTurn = [];
+  // Conjunction test. The whole point of shared-odour ambiguity is that the
+  // *correct* response to a rising odour depends on the quality channel: keep
+  // going if it says food, turn away if it says hazard. A klinokinesis that
+  // ignores quality gives the same approach-vs-recede turn delta in both
+  // halves; a conjunctive policy gives different deltas, and ideally a sign
+  // flip where quality is high. Split within each agent so the comparison is
+  // not confounded by which agents happen to spend time near sources.
+  const appHiQ = [], recHiQ = [], appLoQ = [], recLoQ = [];
   for (const tr of traces) for (let a = 0; a < POP; a++) {
-    const mass = series(tr, a, IDX.foodMass).map(sensedMass);
+    const mass = series(tr, a, massCh).map(sensedMass);
     const turn = series(tr, a, IDX.turn), thrust = series(tr, a, IDX.thrust);
     const dist = series(tr, a, IDX.minFoodD2);
+    const qual = series(tr, a, IDX.quality);
     const distEdge = quantileBins(dist, 2)[0]; // median split near/far
+    // Upper quartile of this agent's own quality exposure: "an identity cue is
+    // actually readable right now" rather than an arbitrary absolute level,
+    // which would change meaning as the kernel narrows with the dose.
+    const qEdge = quantileBins(qual, 4)[2];
     let sApp = 0, cApp = 0, sRec = 0, cRec = 0, sAppT = 0, sRecT = 0;
     let sAppNear = 0, cAppNear = 0, sRecNear = 0, cRecNear = 0, sAppFar = 0, cAppFar = 0, sRecFar = 0, cRecFar = 0;
+    let sAppHi = 0, cAppHi = 0, sRecHi = 0, cRecHi = 0, sAppLo = 0, cAppLo = 0, sRecLo = 0, cRecLo = 0;
     for (let s = 1; s < tr.steps; s++) {
       const d = mass[s] - mass[s - 1];
       const near = dist[s] <= distEdge;
+      const hiQ = qual[s] > qEdge;
       if (d > 1e-4) {
         sApp += Math.abs(turn[s]); cApp++; sAppT += thrust[s];
         if (near) { sAppNear += Math.abs(turn[s]); cAppNear++; } else { sAppFar += Math.abs(turn[s]); cAppFar++; }
+        if (hiQ) { sAppHi += Math.abs(turn[s]); cAppHi++; } else { sAppLo += Math.abs(turn[s]); cAppLo++; }
       } else if (d < -1e-4) {
         sRec += Math.abs(turn[s]); cRec++; sRecT += thrust[s];
         if (near) { sRecNear += Math.abs(turn[s]); cRecNear++; } else { sRecFar += Math.abs(turn[s]); cRecFar++; }
+        if (hiQ) { sRecHi += Math.abs(turn[s]); cRecHi++; } else { sRecLo += Math.abs(turn[s]); cRecLo++; }
       }
     }
     if (cApp > 5 && cRec > 5) {
@@ -262,6 +285,10 @@ function klinokinesis(traces) {
     if (cRecNear > 3) recNearTurn.push(sRecNear / cRecNear);
     if (cAppFar > 3) appFarTurn.push(sAppFar / cAppFar);
     if (cRecFar > 3) recFarTurn.push(sRecFar / cRecFar);
+    // Paired within agent: only agents with enough of both classes in both
+    // quality halves contribute, so every delta below is a like-for-like pair.
+    if (cAppHi > 3 && cRecHi > 3) { appHiQ.push(sAppHi / cAppHi); recHiQ.push(sRecHi / cRecHi); }
+    if (cAppLo > 3 && cRecLo > 3) { appLoQ.push(sAppLo / cAppLo); recLoQ.push(sRecLo / cRecLo); }
   }
   const pairedDelta = (a, b) => {
     const n = Math.min(a.length, b.length);
@@ -269,6 +296,7 @@ function klinokinesis(traces) {
     return { mean: mean(d), se: sd(d) / Math.sqrt(d.length), n: d.length };
   };
   return {
+    massChannel: CH[massCh],
     n: appTurn.length,
     turnApproach: mean(appTurn), turnRecede: mean(recTurn),
     turnDelta: pairedDelta(appTurn, recTurn),
@@ -277,6 +305,11 @@ function klinokinesis(traces) {
     nearFarBreakdown: {
       turnApproachNear: mean(appNearTurn), turnRecedeNear: mean(recNearTurn),
       turnApproachFar: mean(appFarTurn), turnRecedeFar: mean(recFarTurn),
+    },
+    // The conjunction test proper.
+    byQuality: {
+      highQuality: pairedDelta(appHiQ, recHiQ),
+      lowQuality: pairedDelta(appLoQ, recLoQ),
     },
   };
 }
@@ -365,8 +398,32 @@ const fwdBins = conditionalMeans(full, IDX.fbFwd, IDX.thrust, args.bins);
 log('[analysis] conditional means: turn | food-mass quantile bin');
 const massBins = conditionalMeans(full, IDX.foodMass, IDX.turn, args.bins);
 
-log('[analysis] klinokinesis (approach vs recede)');
-const klino = klinokinesis(full);
+log('[analysis] klinokinesis (approach vs recede), on the sensed odour scalar');
+const klino = klinokinesis(full, IDX.odourMass);
+// Second klinokinesis, driven by the *true* food mass rather than the scalar
+// the agent actually has. At ambiguity 0 the two channels are identical and
+// this is a redundancy check; at ambiguity 1 they differ, and a population
+// that had learned to discriminate would track true food more strongly than
+// the mixed odour it senses. Identical deltas mean the animal is running
+// kinesis on whatever its one scalar happens to be, discrimination or not.
+const klinoTrueFood = klinokinesis(full, IDX.foodMass);
+
+// Engagement check: the mechanism must be shown to be live before a null on it
+// means anything. At ambiguity 0 odour and food are the same signal; at
+// ambiguity 1 the odour a hazard emits is added on top, so mean sensed odour
+// must exceed mean true food mass by a clear margin.
+const channelLevels = (() => {
+  const acc = { foodMass: 0, odourMass: 0, quality: 0, n: 0 };
+  for (const tr of full) for (let a = 0; a < POP; a++) for (let st = 0; st < tr.steps; st++) {
+    acc.foodMass += at(tr, st, a, IDX.foodMass);
+    acc.odourMass += at(tr, st, a, IDX.odourMass);
+    acc.quality += at(tr, st, a, IDX.quality);
+    acc.n++;
+  }
+  return { foodMass: acc.foodMass / acc.n, odourMass: acc.odourMass / acc.n,
+           quality: acc.quality / acc.n,
+           odourExcess: (acc.odourMass - acc.foodMass) / acc.n };
+})();
 
 log('[analysis] paired full-vs-blindConst outcomes');
 const paired = pairedOutcomes(full, blind, args.nearFrac);
@@ -381,6 +438,8 @@ const result = {
   miTurnBearingBlind, miThrustFwdBlind,
   bearingBins, fwdBins, massBins,
   klinokinesis: klino,
+  klinokinesisTrueFood: klinoTrueFood,
+  channelLevels,
   pairedOutcomes: paired,
 };
 
@@ -391,7 +450,11 @@ const sigLags = miTurnBearing.filter(r => Math.abs(r.z) > 2).map(r => r.lag);
 const sigLagsBlind = miTurnBearingBlind.filter(r => Math.abs(r.z) > 2).map(r => r.lag);
 log(`\n[summary] turn~bearing MI significant (|z|>2) at lags, full-sense: ${sigLags.length ? sigLags.join(',') : 'none'}`);
 log(`[summary] turn~bearing MI significant (|z|>2) at lags, blindConst (motor-dynamics null): ${sigLagsBlind.length ? sigLagsBlind.join(',') : 'none'}`);
-log(`[summary] klinokinesis turn delta (approach-recede): ${klino.turnDelta.mean.toFixed(4)} +- ${klino.turnDelta.se.toFixed(4)} (n=${klino.turnDelta.n})`);
+log(`[summary] klinokinesis turn delta (approach-recede), sensed odour: ${klino.turnDelta.mean.toFixed(4)} +- ${klino.turnDelta.se.toFixed(4)} (n=${klino.turnDelta.n})`);
+log(`[summary] klinokinesis turn delta, true food mass:            ${klinoTrueFood.turnDelta.mean.toFixed(4)} +- ${klinoTrueFood.turnDelta.se.toFixed(4)} (n=${klinoTrueFood.turnDelta.n})`);
+log(`[summary] conjunction test — turn delta where the identity cue is READABLE: ${klino.byQuality.highQuality.mean.toFixed(4)} +- ${klino.byQuality.highQuality.se.toFixed(4)} (n=${klino.byQuality.highQuality.n})`);
+log(`[summary] conjunction test — turn delta where it is NOT:                    ${klino.byQuality.lowQuality.mean.toFixed(4)} +- ${klino.byQuality.lowQuality.se.toFixed(4)} (n=${klino.byQuality.lowQuality.n})`);
+log(`[summary] channel levels: foodMass ${channelLevels.foodMass.toFixed(4)} · odourMass ${channelLevels.odourMass.toFixed(4)} · quality ${channelLevels.quality.toFixed(4)}`);
 log(`[summary] paired eat delta (full-blindConst): ${paired.eatDelta.mean.toFixed(4)} +- ${paired.eatDelta.se.toFixed(4)}`);
 log(`[summary] paired occupancy delta: ${paired.occupancyDelta.mean.toFixed(4)} +- ${paired.occupancyDelta.se.toFixed(4)}`);
 

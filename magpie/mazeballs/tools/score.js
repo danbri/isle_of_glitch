@@ -159,9 +159,16 @@ const summary = {
   components: Object.fromEntries(['sensing','taxis','generalisation','selection','diversity'].map(k => [k, +avg(k).toFixed(4)])),
   forage: +(ok.reduce((a, r) => a + r.forage, 0) / ok.length).toFixed(4),
   viability: +(ok.reduce((a, r) => a + r.viability, 0) / ok.length).toFixed(4),
+  // The odour/hazard readouts are carried per seed as well as averaged, so a
+  // behavioural claim about them can be given a standard error the same way the
+  // score is, rather than being a bare point estimate. The odour numbers already
+  // in RESEARCH.md predate this and are unerrored means; they are labelled so.
   perSeed: ok.map(r => ({ seed: r.seed, score: +r.score.toFixed(4), forage: +r.forage.toFixed(3),
     nestShare: r.central ? +r.central.nestShare.toFixed(4) : undefined,
-    visitedFrac: r.central ? +r.central.visitedFrac.toFixed(4) : undefined })),
+    visitedFrac: r.central ? +r.central.visitedFrac.toFixed(4) : undefined,
+    toxDose: r.odour ? +r.odour.toxDose.toFixed(4) : undefined,
+    toxDoseTop: r.odour ? +r.odour.toxDoseTop.toFixed(4) : undefined,
+    toxRatio: r.odour ? +r.odour.toxRatio.toFixed(4) : undefined })),
 };
 summary.drops = Object.fromEntries(['noFood','noToxin','blindConst','noFoodDir','noFoodMass']
   .map(k => [k, +(ok.reduce((a, r) => a + (r.drops?.[k] ?? 0), 0) / ok.length).toFixed(4)]));
