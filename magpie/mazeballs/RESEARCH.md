@@ -9,6 +9,44 @@ Karpathy's original runs a 5-minute nanochat training job per experiment and
 lets the agent rewrite `train.py` — architecture and optimiser, not just
 hyperparameters. This is the same loop with a different inner job.
 
+## Where things stand
+
+Read this before designing an experiment; the detail is in the wave sections
+below, in chronological order.
+
+**What is known to work.** Two changes have cleared the significance bar and are
+trunk defaults: clustered relocating food (`sensing` +138%, 16 seeds) and
+novelty search with multi-spawn evaluation (`sensing` +56%, `selection` ×3).
+Both are changes to the *environment* or to the *selection process*. Neither is
+a change to the organism.
+
+**What the population actually does.** The evolved policy has been positively
+identified as **klinokinesis** — turn magnitude modulated by the temporal sign
+of change in sensed food mass, i.e. a biased random walk. Replicated at two
+seeds at roughly 6 SE each, with mutual information 15–20× a matched control,
+and a non-monotonic stimulus-response curve that Pearson correlation reports as
+noise. This is why the `taxis` component stayed near zero while sensing was
+demonstrably load-bearing: the two measures were looking for proportional
+steering, and the animal does not do proportional steering.
+
+**What is known not to work.** Every organism-side lever tried is null:
+network capacity, RK4 vs Euler integration accuracy, inter-organism coupling,
+sensor geometry, sensing range, cell-cell diffusion during development, and an
+evolvable phenotype readout — plus the twelve genome-richness mechanisms of
+wave 1. That is a coherent result rather than a run of bad luck: klinokinesis
+requires none of them, so enriching the substrate that implements it changes
+nothing. **The binding constraint is what the strategy has to be, not what the
+hardware could support.** Experiments that make the task demand something
+klinokinesis structurally cannot do are the live direction; experiments that
+give the organism more capacity are, on this evidence, predicted null.
+
+**What is known to be mismeasured.** `sensing` uses scramble ablation, which
+substitutes another agent's sensor values and so injects misleading input as
+well as removing information. Mean-replacement (`blindConst`) removes the
+information without the noise and costs roughly twice as much, meaning the
+headline `sensing` figure has been understating capability by about half
+throughout. Both are recorded per run.
+
 ## The objective
 
 `tools/score.js`. **Not fitness.** Two measured reasons:
@@ -29,11 +67,30 @@ luck, averaged over K independent seeds, reported with a standard error:
 | `taxis` | 0.20 | steering-to-bearing correlation in excess of the empirical null |
 | `generalisation` | 0.15 | holding up on a field layout never selected on |
 | `selection` | 0.15 | elites beating the population median on fresh spawns, in sd |
-| `diversity` | 0.10 | surviving founder lineages against their real ceiling |
+| `diversity` | 0.10 | distinct ancestries holding a *selected* slot |
 
-multiplied by a **viability gate** (`top-quartile fitness / 1.0`, clamped) so a
+multiplied by a **viability gate** (`top-quartile fitness / 0.30`, clamped) so a
 population that forages nothing scores nothing. Without the gate, killing the
 population would be a cheap way to make every ablation look harmless.
+
+Both of those lines have been corrected once, and the corrections are the point:
+
+- `diversity` was originally `founders / ELITES` — distinct ancestries *anywhere*
+  in the population. Any immigration scheme saturates that by construction: pour
+  in N fresh random genomes per generation and the count cannot fall below N,
+  whether or not those lineages are worth anything. An agent maximised it
+  honestly and thereby exposed it. Counting only ancestries that hold a selected
+  slot measures diversity the evolutionary process actually sustained.
+- The viability gate was a proportional multiplier over a divisor of 1.0, which
+  penalised a world twice for being hard. Wave 1 found environments that raised
+  `sensing` by 43% and still lost, because the harder world's lower foraging
+  scaled the whole capability term down faster than capability rose. It is a
+  floor now, not a scaling: anything foraging above it is simply alive, and
+  capability is judged on its own.
+
+Expect to find more of these. A metric that a run can satisfy without becoming
+more capable is a bug in the objective, and the loop will locate it faster than
+inspection will.
 
 ## The significance bar
 
