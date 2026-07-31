@@ -193,6 +193,19 @@
     <h3>Verdict</h3>
     <div id="anVerdict"><p class="empty">Run the diagnostics.</p></div>
 
+    <h3>Population file</h3>
+    <p>Nothing here survives a reload. Export writes the whole population —
+    genomes, generation count, lineage record, gain, and the field layout — to a
+    file you can load back later. Because the layout travels with the genomes, an
+    imported population is scored on exactly the world it evolved in, so two
+    settings can be compared on identical genomes rather than merely similar ones.</p>
+    <div class="anRunRow">
+      <button id="anExport">export population</button>
+      <button id="anImport">import population…</button>
+      <input id="anImportFile" type="file" accept="application/json,.json" hidden />
+      <span id="anFileMsg"></span>
+    </div>
+
     <h3>Console</h3>
     <p style="margin-bottom:0">Everything is live on <b>window.evoDevo</b> — <code>sim</code>, <code>renderer</code>,
     <code>CFG</code>, <code>world()</code>, <code>conditions</code>. The population's tensors are
@@ -603,6 +616,65 @@ class EvoDevoSim {
   // row sum of W, which bounds how much the recurrent term can amplify: above
   // ~1 the tanh fixed points sit in the flat region and the cell stops
   // responding to input. `satFitCorr` asks whether selection cares either way.
+  /* ---------------- population files ---------------- */
+  // The field layout travels with the genomes. Without it an imported population
+  // is being scored on a different world, which quietly breaks any comparison
+  // the file was saved to make.
+  async exportPopulation(){
+    const [gr,gm]=await Promise.all([this.genR.data(),this.genM.data()]);
+    return {
+      format:'evodevo-population', version:1,
+      saved:new Date().toISOString(),
+      config:{POP:CFG.POP,GENES:CFG.GENES,CELLS:CFG.CELLS,SENSORS:CFG.SENSORS,FOOD:CFG.FOOD,HAZARDS:CFG.HAZARDS},
+      generation:this.gen, gain:this.gain, mutation:this.mutation,
+      world:{food:WORLD.food,hazards:WORLD.hazards},
+      lineage:{
+        founder:Array.from(this.founder), genomeId:Array.from(this.genomeId),
+        nextGenomeId:this.nextGenomeId, streak:Array.from(this.eliteStreak.entries()),
+      },
+      genR:b64FromFloats(new Float32Array(gr)),
+      genM:b64FromFloats(new Float32Array(gm)),
+    };
+  }
+  async importPopulation(p){
+    if(!p||p.format!=='evodevo-population')throw new Error('not an Evo/Devo population file');
+    if(p.version>1)throw new Error('saved by a newer version of this page');
+    const c=p.config||{};
+    if(c.POP!==CFG.POP||c.GENES!==CFG.GENES||c.CELLS!==CFG.CELLS)
+      throw new Error(`saved for a different configuration (pop ${c.POP}, genes ${c.GENES}, cells ${c.CELLS})`);
+    const gr=floatsFromB64(p.genR),gm=floatsFromB64(p.genM);
+    const needR=CFG.POP*CFG.GENES*CFG.GENES,needM=CFG.POP*3*CFG.GENES;
+    if(gr.length!==needR)throw new Error(`genR is ${gr.length} floats, expected ${needR}`);
+    if(gm.length!==needM)throw new Error(`genM is ${gm.length} floats, expected ${needM}`);
+    if(!allFinite(gr)||!allFinite(gm))throw new Error('genome contains NaN or Infinity');
+
+    tf.tidy(()=>{
+      this.genR.assign(tf.tensor3d(gr,[CFG.POP,CFG.GENES,CFG.GENES]));
+      this.genM.assign(tf.tensor3d(gm,[CFG.POP,3,CFG.GENES]));
+    });
+    let worldRestored=false;
+    if(p.world&&validPoints(p.world.food,CFG.FOOD)&&validPoints(p.world.hazards,CFG.HAZARDS)){
+      WORLD={obstacles:WORLD.obstacles,food:p.world.food,hazards:p.world.hazards};
+      this.food.dispose();this.haz.dispose();
+      this.food=tf.tensor2d(WORLD.food,[CFG.FOOD,2]);
+      this.haz=tf.tensor2d(WORLD.hazards,[CFG.HAZARDS,2]);
+      worldRestored=true;
+    }
+    const L=p.lineage;
+    if(L&&Array.isArray(L.founder)&&L.founder.length===CFG.POP&&
+         Array.isArray(L.genomeId)&&L.genomeId.length===CFG.POP){
+      this.founder=Int32Array.from(L.founder);
+      this.genomeId=Int32Array.from(L.genomeId);
+      this.nextGenomeId=Number.isFinite(L.nextGenomeId)?L.nextGenomeId:CFG.POP;
+      this.eliteStreak=new Map(Array.isArray(L.streak)?L.streak:[]);
+    }else this.resetLineage();
+
+    if(Number.isFinite(p.gain))this.gain=clamp(p.gain,0.1,3);
+    if(Number.isFinite(p.mutation))this.mutation=clamp(p.mutation,0.01,0.3);
+    this.gen=Number.isFinite(p.generation)?p.generation:0;
+    await this.develop();this.resetBodies();
+    return {worldRestored,generation:this.gen,gain:this.gain,mutation:this.mutation,saved:p.saved};
+  }
   async networkStats(){
     const t=tf.tidy(()=>tf.stack([
       tf.tanh(this.neural).abs().greater(CFG.SAT_LEVEL).toFloat().mean(),
@@ -739,6 +811,31 @@ const median=a=>{const s=Array.from(a).sort((x,y)=>x-y);const h=s.length>>1;retu
 // never do — so the population mean is mostly noise around zero. The mean of the
 // top quartile tracks the part of the population selection actually acts on.
 const topQuartile=a=>{const s=Array.from(a).sort((x,y)=>y-x),n=Math.max(1,Math.round(s.length/4));let t=0;for(let i=0;i<n;i++)t+=s[i];return t/n};
+
+/* ---------------- population files ---------------- */
+// Genomes travel as base64 float32 rather than JSON numbers: ~135KB instead of
+// ~250KB, and it round-trips the exact bits rather than decimal approximations.
+const b64FromFloats=a=>{
+  const bytes=new Uint8Array(a.buffer,a.byteOffset,a.byteLength);
+  let s='';const CH=0x8000;
+  for(let i=0;i<bytes.length;i+=CH)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));
+  return btoa(s);
+};
+const floatsFromB64=str=>{
+  const bin=atob(str),bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  if(bytes.length%4)throw new Error('genome block is not a whole number of floats');
+  return new Float32Array(bytes.buffer);
+};
+const validPoints=(arr,n)=>Array.isArray(arr)&&arr.length===n&&
+  arr.every(p=>Array.isArray(p)&&p.length===2&&Number.isFinite(p[0])&&Number.isFinite(p[1]));
+const allFinite=a=>{for(let i=0;i<a.length;i++)if(!Number.isFinite(a[i]))return false;return true};
+function downloadText(name,text){
+  const url=URL.createObjectURL(new Blob([text],{type:'application/json'}));
+  const a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
 
 (async function main(){
   const stage=t=>{$('loadingText').textContent=t};
@@ -1001,6 +1098,43 @@ const topQuartile=a=>{const s=Array.from(a).sort((x,y)=>y-x),n=Math.max(1,Math.r
     $('anVerdict').innerHTML=`<div class="verdict">${out.join('')}</div>`;
   }
   $('anRun').onclick=runDiagnostics;
+
+  /* ---------------- population file handlers ---------------- */
+  const fileMsg=(text,bad)=>{const e=$('anFileMsg');e.textContent=text;e.style.color=bad?'#ff5d9e':'#8faea7'};
+  $('anExport').onclick=async()=>{
+    if(busy||evolving){fileMsg('busy — try again in a moment',true);return}
+    try{
+      const p=await sim.exportPopulation();
+      const json=JSON.stringify(p);
+      downloadText(`evodevo-gen${sim.gen}.json`,json);
+      fileMsg(`exported generation ${sim.gen} · ${(json.length/1024).toFixed(0)} KB`);
+    }catch(err){console.warn('export failed',err);fileMsg('export failed: '+((err&&err.message)||err),true)}
+  };
+  $('anImport').onclick=()=>$('anImportFile').click();
+  $('anImportFile').onchange=async e=>{
+    const f=e.target.files&&e.target.files[0];
+    e.target.value='';                      // so the same file can be re-imported
+    if(!f)return;
+    if(busy||evolving){fileMsg('busy — try again in a moment',true);return}
+    busy=true;
+    try{
+      fileMsg('reading '+f.name+'…');
+      const r=await sim.importPopulation(JSON.parse(await f.text()));
+      // Reflect the restored settings back into the controls.
+      $('gain').value=Math.round(r.gain*100);$('gainVal').textContent=r.gain.toFixed(2);
+      $('mutation').value=Math.round(r.mutation*100);
+      if(r.worldRestored)renderer.invalidateStatics();
+      setSelected(0);
+      await refreshPopulation();
+      fileMsg(`loaded generation ${r.generation} · gain ${r.gain.toFixed(2)}` +
+              (r.worldRestored?' · field layout restored':' · kept current field'));
+      toast('population restored at generation '+r.generation);
+    }catch(err){
+      // Handled and surfaced in the panel — not a page fault, so don't log at error level.
+      console.warn('import failed',err);
+      fileMsg('import failed: '+((err&&err.message)||err),true);
+    }finally{busy=false}
+  };
 
   addEventListener('keydown',e=>{
     if(e.key==='Escape'&&panelOpen()){closePanel();return}
