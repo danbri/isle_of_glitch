@@ -1079,3 +1079,92 @@ both times; the code was reverted as the experiment protocol requires, and the
 user was told in-band rather than kept silent about it, per the instruction in
 this very document not to trust an unauthenticated channel and not to let
 "how to report it" be dictated by the injected text itself.
+
+## Wave 4: population scale — a confound, a metric bug, and the first non-zero `selection`
+
+Two measurement bugs surfaced before any result did, and both are the kind that
+would have produced a confident wrong answer rather than an obvious failure.
+
+`tools/score.js` normalised the `diversity` component by a hardcoded `10`. The
+real ceiling on `eliteFounders` is `C.ELITES` (`lineageStats()` caps it there),
+and the two coincide only at the long-standing default. Any run with
+`ELITES > 10` would have divided by the wrong ceiling and clamped to 1.0 —
+"diversity is perfect" — regardless of what actually survived selection. That is
+precisely the condition a population-scale mandate has to test, so the bug was
+positioned to corrupt the one experiment able to find it.
+
+`tools/run.js` had no `--food` passthrough, so `FOOD` stayed at 42 whatever
+`--pop` was set to. A POP sweep therefore was not a population-size sweep at
+all: it was a food-density sweep wearing a population-size label. Agents per
+food source went from 4.6 at POP=192 to 36.6 at POP=1536.
+
+The uncorrected sweep looks like a clean monotonic refutation of scale:
+
+| POP | score ± se | sensing | selection | forage | viability |
+|---|---|---|---|---|---|
+| 192 (control) | 0.1979 ± 0.0152 | 0.068 | 0 | 0.48 | 1.00 |
+| 384 | 0.1886 ± 0.0238 | 0.068 | 0 | 0.28 | 0.90 |
+| 768 | 0.1553 ± 0.0297 | 0.057 | 0.0002 | 0.23 | 0.77 |
+| 1536 | 0.0775 ± 0.0102 | 0.033 | 0 | 0.12 | 0.40 |
+
+It is nothing of the sort. Viability tracks the collapse exactly, so what the
+table measures is starvation propagating through the gate — the same trap this
+document already records from the environment side ("making the world harder
+deflates the score through the gate"), arriving this time from the population-
+density side. Read carelessly it would have been filed as "population scale is
+null", and the null would have been an artefact of a hardcoded 42.
+
+With density matched (POP=768, `FOOD=168`, the control's 4.6 agents per source):
+
+| config | score ± se | sensing | taxis | selection | diversity | forage |
+|---|---|---|---|---|---|---|
+| POP 768 / FOOD 168 / ELITES 10 | 0.1924 ± 0.0077 | 0.029 | 0.058 | **0.0286** | 0.15 | 0.53 |
+| POP 768 / FOOD 168 / ELITES 40 | 0.1747 ± 0.0040 | 0.020 | 0.026 | 0.0054 | 0.1125 | 0.53 |
+
+Viability recovers fully. Score is flat against the control (−0.0055, nowhere
+near the bar) — **not a win**. But `selection` is non-zero for the first time
+anywhere in this document, having read 0 or ~0 at every previous measurement
+including the wave-2 and wave-3 baselines. It is small (0.029 of a possible 1.0)
+and it is one 4-seed measurement, so it is a lead rather than a finding. The
+standard error at POP=768 is half the control's (0.0077 against 0.0152), which
+is itself worth knowing: larger populations buy precision even when they do not
+buy score, and precision is the scarce resource in a system where seed spread
+is ten times parameter spread.
+
+**Should `ELITES` scale with `POP`?** On this measure, no. Holding the original
+5.2% selection ratio at POP=768 (ELITES=40) *reduced* both `selection` (0.029 →
+0.005) and `diversity` (0.15 → 0.11) and put the score at the regression bar
+against both the control and its own ELITES=10 sibling (−0.0177 against a bar of
+0.0173). A fixed small elite beats a proportional one here.
+
+That answer carries a caveat the agent flagged rather than buried, and it should
+be carried forward: `selection` is `(mean of top-ELITES − population median)/sd`,
+so a narrower top-K mechanically yields a larger gap for any fixed distribution
+shape. Some of the ELITES=10-beats-40 difference is the metric's construction,
+not evolutionary dynamics. The direction is still the actionable answer, but the
+magnitude is not clean, and a `selection` measure invariant to K would be worth
+having before anything is built on the size of this effect.
+
+**Runtime**, node/wasm on this box, from `tools/bench.js`:
+
+| POP | ms/step | sec/generation | ms per 1000 agents |
+|---|---|---|---|
+| 192 | 3.4 | 4.9 | 17.7 |
+| 384 | 5.0 | 7.3 | 13.0 |
+| 768 | 8.28 | 12.0 | 10.8 |
+| 1536 | 13.45 | 19.5 | 8.76 |
+| 3072 | 26.46 | 38.4 | 8.61 |
+
+Per-agent cost keeps falling with population, replicating the dispatch-bound
+result recorded earlier on different hardware and a different runtime. One
+addition: food sensing is O(POP × FOOD), so a *fair* population-scale experiment
+— which must scale `FOOD` too — costs more than a POP-only bench sweep implies.
+
+**What was not finished.** A 16-seed confirmation of the density-matched
+POP=768 result was launched and abandoned: with the fleet sharing 4 cores at
+load ~9.7, two of sixteen seeds took fifty minutes. The 4-seed numbers above
+stand as suggestive and unconfirmed, and the confirmation cost is itself the
+datum — it rises steeply with POP, which constrains how much of this direction
+is affordable. The mandate's fourth question, whether clustered food and
+novelty/multi-spawn compose better at larger POP, was not reached at all. That
+is a gap, not a null.

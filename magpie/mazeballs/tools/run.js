@@ -29,6 +29,12 @@ const args = parseArgs(process.argv.slice(2), {
   // FOOD_CLUSTERS from curClustersStart to curClustersEnd. 0 (default) disables
   // the ramp and uses the static `clusters` value for the whole run.
   curClustersStart: 0, curClustersEnd: 0,
+  // Food source count. DEFAULTS.FOOD is fixed at 42 regardless of POP, so a
+  // POP sweep that does not also touch this is silently changing food density
+  // per agent (42/POP), not just population size — a POP-scale experiment
+  // that wants to isolate "more genomes per selection event" from "more
+  // mouths sharing the same food" needs this to scale with --pop.
+  food: 42,
 });
 
 const log = (...m) => { if (!args.quiet) console.error(...m); };
@@ -40,6 +46,7 @@ const sim = new EvoDevoSim({
   seed: args.seed,
   config: {
     POP: args.pop, ELITES: args.elites, EPOCH_STEPS: args.epoch,
+    FOOD: args.food,
     FOOD_CONSUME: args.consume, FOOD_REGROW: args.regrow,
     GAIN: args.gain, MUTATION: args.mutation,
     FOOD_CLUSTERS: args.clusters, FOOD_CLUSTER_SIGMA: args.clusterSigma,

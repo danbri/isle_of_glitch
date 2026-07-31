@@ -39,6 +39,10 @@ const seeds = String(opt.seeds || '1,2,3,4').split(',').map(s => Number(s.trim()
 const generations = Number(opt.generations || 12);
 const steps = Number(opt.steps || 400);
 const restarts = Number(opt.restarts || 2);
+// The real ceiling on eliteFounders (diversity component) is C.ELITES, not a
+// hardcoded 10 — see scoreReport(). Read whatever --elites the run itself used
+// (run.js/lib defaults also to 10) so a POP/ELITES sweep normalises correctly.
+const elites = Number(opt.elites || 10);
 // Default to leaving a core free, and cap by seed count. When several research
 // agents share one box each of them should ask for a slice, not the whole
 // machine — EVODEVO_WORKERS lets a fleet launcher set that centrally.
@@ -65,7 +69,7 @@ const clamp01 = x => Math.max(0, Math.min(1, x));
  *                  immigration scheme cannot saturate it by construction.
  * Gated by viability so a population that forages nothing scores nothing.
  */
-export function scoreReport(r) {
+export function scoreReport(r, elites = 10) {
   const base = r.table.find(t => t.key === 'baseline');
   const nullR = r.taxisNull ? Math.abs(r.taxisNull.food) : 0;
   const obsR = r.taxis ? Math.abs(r.taxis.food) : 0;
@@ -80,7 +84,13 @@ export function scoreReport(r) {
     // below N, whether or not those lineages are any good. eliteFounders counts
     // an ancestry only if it holds a selected slot, so it measures diversity the
     // evolutionary process actually sustained rather than randomness poured in.
-    diversity: clamp01(r.population.eliteFounders / 10),
+    // Normalised by the run's actual ELITES, not a bare 10: the real ceiling on
+    // eliteFounders is C.ELITES (see lib/evodevo.js lineageStats()), and the two
+    // only happen to coincide at the long-standing default. A POP/ELITES sweep
+    // that varies ELITES away from 10 must not silently divide by the wrong
+    // ceiling — that would clamp to 1.0 ("diversity is perfect") for any
+    // ELITES > 10 regardless of what actually survived selection.
+    diversity: clamp01(r.population.eliteFounders / elites),
   };
   const capability = 0.40 * c.sensing + 0.20 * c.taxis + 0.15 * c.generalisation
                    + 0.15 * c.selection + 0.10 * c.diversity;
@@ -105,7 +115,7 @@ function runSeed(seed) {
     child.stderr.on('data', d => { err += d; });
     child.on('close', code => {
       if (code !== 0) return resolve({ seed, error: err.trim().split('\n').slice(-1)[0] || `exit ${code}` });
-      try { resolve({ seed, ...scoreReport(JSON.parse(out).report) }); }
+      try { resolve({ seed, ...scoreReport(JSON.parse(out).report, elites) }); }
       catch (e) { resolve({ seed, error: 'unparseable child output' }); }
     });
   });
