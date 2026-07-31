@@ -83,6 +83,28 @@ tracking genotype.** A change that fixes either moves the score a lot.
 - Report the component breakdown, never just the total. A gain that is entirely
   `forage`/`viability` with `sensing` still at 0.05 is not a capability win.
 
+## Integrating a wave
+
+Agents in a wave all edit `lib/evodevo.js` in separate worktrees, so their
+diffs will conflict. Merging is not a matter of resolving the text.
+
+**Re-measure every change on top of the accumulated trunk.** A change that
+clears the bar in isolation need not clear it in combination — richer
+development and evolvable sensor geometry may be substitutes rather than
+complements, and two changes that each fix the same bottleneck will not add up.
+Integration order therefore matters, and the honest procedure is:
+
+1. Rank accepted changes by their measured isolated delta.
+2. Apply the largest, re-measure against the current baseline, keep only if it
+   still clears the bar.
+3. Re-baseline, then attempt the next. Discard anything that no longer pays.
+4. Verify the browser page still runs after each merge — `lib/evodevo.js` is
+   shared, and a change that is fine headless can still break the renderer
+   (sensor count, world field names, tensor shapes read by the snapshot).
+
+Expect to keep fewer changes than were accepted. That is the correct outcome,
+not a failure of the wave.
+
 ## Known traps
 
 - **Making the world easier inflates the score** through the viability gate
