@@ -61,7 +61,8 @@ const clamp01 = x => Math.max(0, Math.min(1, x));
  *   generalisation holding up on a field layout never selected on.
  *   selection      elites beating the population median when re-evaluated from
  *                  fresh spawns, in sd — i.e. selection tracking genotype.
- *   diversity      surviving founder lineages against their real ceiling.
+ *   diversity      distinct ancestries holding a *selected* slot, so an
+ *                  immigration scheme cannot saturate it by construction.
  * Gated by viability so a population that forages nothing scores nothing.
  */
 export function scoreReport(r) {
@@ -73,7 +74,13 @@ export function scoreReport(r) {
     taxis: clamp01((obsR - nullR) / 0.30),
     generalisation: clamp01(1 - Math.max(0, r.drops.novel)),
     selection: clamp01((r.eliteAdvantage ?? 0) / 2),
-    diversity: clamp01(r.population.founders / 10),
+    // eliteFounders, not founders. `founders` counts distinct ancestries anywhere
+    // in the population, which any immigration scheme saturates by construction:
+    // inject N fresh random genomes per generation and the count can never fall
+    // below N, whether or not those lineages are any good. eliteFounders counts
+    // an ancestry only if it holds a selected slot, so it measures diversity the
+    // evolutionary process actually sustained rather than randomness poured in.
+    diversity: clamp01(r.population.eliteFounders / 10),
   };
   const capability = 0.40 * c.sensing + 0.20 * c.taxis + 0.15 * c.generalisation
                    + 0.15 * c.selection + 0.10 * c.diversity;
