@@ -670,7 +670,6 @@ information, demonstrably, but expresses it through neither turn nor thrust
 correlation. Whatever the policy is, it is not an instantaneous
 stimulus-to-response mapping of the kind either measure can see.
 
-<<<<<<< HEAD
 ## The policy: klinokinesis and a non-monotonic response, not proportional steering
 
 New machinery: `EvoDevoSim.startTrace`/`stopTrace` (`lib/evodevo.js`) records a
@@ -787,7 +786,6 @@ An agent found that inside a worktree, running Bash against the bare path
 checkout, not the worktree's own copy. Edits appear to work and then are not
 where you think. Always operate on the worktree path
 (`.claude/worktrees/agent-<id>/magpie/mazeballs`) and verify by content diff.
-=======
 ## Wave 4: sensor morphology retested on the clustered world — still null
 
 Wave 1's eight body-mechanism nulls were diagnosed as a premise failure: with
@@ -878,7 +876,6 @@ an evolved one. Whatever is happening is not a simple proportional controller
 under any sensor geometry tried so far, which argues the next lever should
 target the temporal/recurrent shape of the policy (e.g. lagged or integrated
 bearing correlations) rather than another turn of morphology.
->>>>>>> 92d372a
 
 ## Synthesis: why every morphology lever fails
 
