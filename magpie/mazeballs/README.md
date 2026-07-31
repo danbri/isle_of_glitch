@@ -30,6 +30,41 @@ and gives internal state something to be *for*. Both the reward and the food
 *sensor* are stock-weighted, so agents are pulled toward live patches rather
 than toward the bare geometry of where food used to be.
 
+## Recurrent gain
+
+The adult CTRNN only computes anything if it sits in the range where `tanh` is
+still steep. The developed weight matrix was originally scaled by `2.0`, which
+puts the mean largest-absolute-row-sum of `W` at about **5**. At that gain the
+fixed points sit out in the flat region: cells rail at ±1 and stop responding to
+input entirely. Measured at generation 0, with no evolution involved, ~27% of
+all cells were pinned and ~15% of agents were parked against the world boundary.
+
+This is upstream of everything else. A railed cell emits the same output whatever
+it is sent, so the ablation table will report "open loop" no matter how long you
+evolve — not because nothing was learned, but because nothing *could* be.
+
+The **gain** slider rescales the developed matrix live (development re-runs for
+all 192 genomes on release). Paired against identical genomes and identical
+spawns over 700 steps:
+
+| gain | row sum | railed | at wall | top 25% fitness | population mean |
+|---|---|---|---|---|---|
+| 2.0 (original) | 5.03 | 31.1% | 15.1% | 1.070 | **−0.025** |
+| 1.0 | 2.51 | 15.4% | 10.4% | 1.166 | 0.094 |
+| **0.5 (default)** | 1.26 | 3.3% | 6.3% | 1.139 | 0.086 |
+| 0.3 | 0.75 | 0.1% | 5.7% | 1.302 | 0.109 |
+
+The original setting was the worst on every measure, including a *negative*
+population mean — agents were losing more to toxins than they gained from food.
+0.3 scored best here, but the gap between 0.3, 0.5 and 1.0 is within run-to-run
+noise, and at a row sum of 0.75 the recurrence is weak enough that the network is
+nearly feedforward. 0.5 keeps recurrence meaningful while staying off the rails.
+
+Watch the readout beside the slider: `% railed` is the share of cells beyond
+|tanh| > 0.95, and `% at wall` the share of agents pinned to the boundary.
+Immediately after an epoch resets both read near zero — the state has not settled
+yet — so let it run a few seconds before reading them.
+
 ## Analysis panel
 
 Press **A** or hit *analysis*. Fitness alone cannot tell you whether anything
@@ -82,6 +117,7 @@ something real was found, rather than a good starting position.
 | `a` / **analysis** | open the analysis panel (`Esc` closes) |
 | speed | simulation steps per animation frame (1–10) |
 | mutation | fraction of genome loci perturbed per offspring (1–30%) |
+| gain | recurrent scale of the adult CTRNN (0.10–3.00, see above) |
 
 ## Console
 
