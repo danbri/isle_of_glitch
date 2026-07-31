@@ -11,20 +11,25 @@
  * out of the way when the JSON is being piped.
  */
 import fs from 'node:fs/promises';
-import { initBackend, parseArgs, argv } from './backend.js';
+import { initBackend, parseArgs } from './backend.js';
 import { EvoDevoSim, diagnose, evolveFor } from '../lib/evodevo.js';
 
-const args = parseArgs(argv(), {
+const args = parseArgs(process.argv.slice(2), {
   generations: 10, seed: 1, gain: 0.5, mutation: 0.10,
   steps: 600, restarts: 3, elites: 10, pop: 192,
   consume: 0.40, regrow: 0.09, epoch: 1450,
+  // spawns=2, immigrants=16: measured improvement over the classical
+  // single-spawn truncation GA (see DEFAULTS.IMMIGRANTS in lib/evodevo.js and
+  // evolveFor's doc comment for the numbers). --spawns 1 --immigrants 0
+  // recovers the original scheme exactly.
+  spawns: 2, rankBeta: 0, immigrants: 16,
   out: '', import: '', backend: 'auto', quiet: false, label: '',
 });
 
 const log = (...m) => { if (!args.quiet) console.error(...m); };
 
-const { pkg, backend, runtime } = await initBackend({ prefer: args.backend });
-log(`[backend] ${runtime}/${pkg} → ${backend}`);
+const { pkg, backend } = await initBackend({ prefer: args.backend });
+log(`[backend] ${pkg} → ${backend}`);
 
 const sim = new EvoDevoSim({
   seed: args.seed,
@@ -32,6 +37,7 @@ const sim = new EvoDevoSim({
     POP: args.pop, ELITES: args.elites, EPOCH_STEPS: args.epoch,
     FOOD_CONSUME: args.consume, FOOD_REGROW: args.regrow,
     GAIN: args.gain, MUTATION: args.mutation,
+    RANK_BETA: args.rankBeta, IMMIGRANTS: args.immigrants,
   },
 });
 await sim.initialise();
@@ -41,11 +47,12 @@ if (args.import) {
   const r = await sim.importPopulation(p);
   log(`[import] generation ${r.generation}, gain ${r.gain}` + (r.worldRestored ? ', field layout restored' : ''));
   // An imported file carries its own gain; a explicit --gain still wins.
-  if (argv().some(a => a.startsWith('--gain'))) { sim.gain = args.gain; await sim.develop(); }
+  if (process.argv.some(a => a.startsWith('--gain'))) { sim.gain = args.gain; await sim.develop(); }
 }
 
 const t0 = Date.now();
 await evolveFor(sim, args.generations, {
+  spawns: args.spawns,
   onGeneration: ({ generation, best }) =>
     log(`[gen ${String(generation).padStart(3)}] best ${best.toFixed(3)}  (${((Date.now() - t0) / 1000).toFixed(0)}s)`),
 });
@@ -59,9 +66,10 @@ const result = {
     seed: args.seed, generations: args.generations, gain: args.gain, mutation: args.mutation,
     pop: args.pop, elites: args.elites, epoch: args.epoch,
     consume: args.consume, regrow: args.regrow, steps: args.steps, restarts: args.restarts,
+    spawns: args.spawns, rankBeta: args.rankBeta, immigrants: args.immigrants,
   },
   runtimeSeconds: +((Date.now() - t0) / 1000).toFixed(1),
-  backend: `${runtime}/${pkg}/${backend}`,
+  backend: `${pkg}/${backend}`,
   report,
 };
 

@@ -42,6 +42,26 @@ export const DEFAULTS = Object.freeze({
   // network; 0.5 puts the mean max-row-sum near 1.2, where tanh is still steep.
   GAIN: 0.5, SAT_LEVEL: 0.95, WALL_LEVEL: 0.93,
   MUTATION: 0.10, MUTATE_R: 0.16, MUTATE_M: 0.22,
+  // Reproduction-scheme knobs. All default to a no-op so existing callers of
+  // evolve() with no config overrides see exactly the original truncation GA.
+  //   RANK_BETA   > 0 samples parents from the elite pool with probability
+  //               falling off geometrically by fitness rank, instead of the
+  //               uniform draw over the top ELITES. 0 = uniform (unchanged).
+  //   IMMIGRANTS  number of non-elite offspring slots replaced each generation
+  //               by fresh random genomes (a fresh founder lineage each), to
+  //               put a floor under ancestral diversity. 0 = none (unchanged).
+  //
+  // IMMIGRANTS defaults to 16, not 0: measured on the score.js harness (seeds
+  // 1-4, 8 generations, 300-step diagnostic), 16 immigrants/generation out of
+  // 182 non-elite offspring took score from 0.1571 +/- 0.0082 to 0.2048 +/-
+  // 0.0063 (delta +0.0477, 2x combined se 0.0207) — driven by `diversity`
+  // (0.225 -> 1.0, surviving founder lineages no longer collapse to 1-3) and
+  // a large side benefit to `selection` (0.0066 -> 0.0572), since a
+  // population that never fully monocultures gives the elites something
+  // non-trivial to actually beat. RANK_BETA stays 0: tested at 0.3 alone, it
+  // regressed (0.1571 -> 0.1323) by concentrating reproduction harder on the
+  // same luck-prone top-10, which is the opposite of what's needed.
+  RANK_BETA: 0, IMMIGRANTS: 16,
 });
 
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -254,12 +274,22 @@ export class EvoDevoSim {
     const C = this.cfg;
     this.founder = new Int32Array(C.POP).map((_, i) => i);
     this.genomeId = new Int32Array(C.POP).map((_, i) => i);
-    this.nextGenomeId = C.POP; this.eliteStreak = new Map();
+    this.nextGenomeId = C.POP; this.nextFounderId = C.POP; this.eliteStreak = new Map();
   }
-  advanceLineage(topIdx, choiceIdx) {
+  // `nImmigrants` child slots (the first `nImmigrants` of the non-elite
+  // offspring, matching the tensor-side replacement in evolve()) are fresh
+  // random genomes rather than mutated elites: they get a brand new founder
+  // id instead of inheriting one, so the diversity metric keeps meaning a
+  // fresh random genome is a fresh lineage, not a phantom descendant of
+  // whichever elite happened to occupy that slot.
+  advanceLineage(topIdx, choiceIdx, nImmigrants = 0) {
     const C = this.cfg, E = C.ELITES, f = new Int32Array(C.POP), g = new Int32Array(C.POP);
     for (let k = 0; k < E; k++) { f[k] = this.founder[topIdx[k]]; g[k] = this.genomeId[topIdx[k]]; }
-    for (let c = 0; c < C.POP - E; c++) { const p = topIdx[choiceIdx[c]]; f[E + c] = this.founder[p]; g[E + c] = this.nextGenomeId++; }
+    const nImm = Math.min(Math.max(0, nImmigrants), C.POP - E);
+    for (let c = 0; c < C.POP - E; c++) {
+      if (c < nImm) { f[E + c] = this.nextFounderId++; g[E + c] = this.nextGenomeId++; }
+      else { const p = topIdx[choiceIdx[c]]; f[E + c] = this.founder[p]; g[E + c] = this.nextGenomeId++; }
+    }
     this.founder = f; this.genomeId = g;
     const s = new Map();
     for (let k = 0; k < E; k++) s.set(g[k], (this.eliteStreak.get(g[k]) || 0) + 1);
@@ -478,18 +508,45 @@ export class EvoDevoSim {
   async evolve() {
     const C = this.cfg, tf = T();
     const top = tf.topk(this.fitness, C.ELITES, true);
-    const choice = this.ru([C.POP - C.ELITES], 0, C.ELITES, 'int32');
+    // RANK_BETA > 0: parents are drawn from the elite pool with probability
+    // falling off geometrically by fitness rank (rank 0 = best), rather than
+    // uniformly — the top of a skewed fitness distribution gets more of the
+    // reproductive budget. RANK_BETA 0 (default) reproduces the original
+    // uniform draw exactly.
+    const choice = (C.RANK_BETA > 0)
+      ? (() => {
+          const logits = tf.tidy(() => tf.range(0, C.ELITES).mul(-C.RANK_BETA));
+          const c = tf.multinomial(logits, C.POP - C.ELITES, this.rng.int(), false);
+          logits.dispose();
+          return c;
+        })()
+      : this.ru([C.POP - C.ELITES], 0, C.ELITES, 'int32');
     const [topIdx, choiceIdx] = await Promise.all([top.indices.data(), choice.data()]);
+    const nImm = Math.min(Math.max(0, C.IMMIGRANTS | 0), C.POP - C.ELITES);
     tf.tidy(() => {
       const eliteR = tf.gather(this.genR, top.indices), eliteM = tf.gather(this.genM, top.indices);
       const parentIdx = tf.gather(top.indices, choice);
-      const childrenR = this.mutateTensor(tf.gather(this.genR, parentIdx), C.MUTATE_R);
-      const childrenM = this.mutateTensor(tf.gather(this.genM, parentIdx), C.MUTATE_M);
+      let childrenR = this.mutateTensor(tf.gather(this.genR, parentIdx), C.MUTATE_R);
+      let childrenM = this.mutateTensor(tf.gather(this.genM, parentIdx), C.MUTATE_M);
+      if (nImm > 0) {
+        // Fresh random genomes, sampled the same way the initial population
+        // was, replace the first nImm non-elite slots: a floor under
+        // diversity that truncation-plus-mutation alone cannot provide.
+        const freshR = this.rn([nImm, C.GENES, C.GENES], 0, .38);
+        const freshM = this.rn([nImm, 3, C.GENES], 0, .75);
+        const nRest = C.POP - C.ELITES - nImm;
+        if (nRest > 0) {
+          const restR = childrenR.slice([nImm, 0, 0], [nRest, C.GENES, C.GENES]);
+          const restM = childrenM.slice([nImm, 0, 0], [nRest, 3, C.GENES]);
+          childrenR = tf.concat([freshR, restR], 0);
+          childrenM = tf.concat([freshM, restM], 0);
+        } else { childrenR = freshR; childrenM = freshM; }
+      }
       this.genR.assign(tf.concat([eliteR, childrenR], 0).clipByValue(-3.2, 3.2));
       this.genM.assign(tf.concat([eliteM, childrenM], 0).clipByValue(-4, 4));
     });
     top.values.dispose(); top.indices.dispose(); choice.dispose();
-    this.advanceLineage(topIdx, choiceIdx);
+    this.advanceLineage(topIdx, choiceIdx, nImm);
     this.gen++; this.selected = 0;
     await this.develop(); this.resetBodies();
   }
@@ -584,7 +641,8 @@ export class EvoDevoSim {
       world: { food: this.world.food, hazards: this.world.hazards },
       lineage: {
         founder: Array.from(this.founder), genomeId: Array.from(this.genomeId),
-        nextGenomeId: this.nextGenomeId, streak: Array.from(this.eliteStreak.entries()),
+        nextGenomeId: this.nextGenomeId, nextFounderId: this.nextFounderId,
+        streak: Array.from(this.eliteStreak.entries()),
       },
       genR: B64.encode(new Float32Array(gr)),
       genM: B64.encode(new Float32Array(gm)),
@@ -622,6 +680,7 @@ export class EvoDevoSim {
       this.founder = Int32Array.from(L.founder);
       this.genomeId = Int32Array.from(L.genomeId);
       this.nextGenomeId = Number.isFinite(L.nextGenomeId) ? L.nextGenomeId : C.POP;
+      this.nextFounderId = Number.isFinite(L.nextFounderId) ? L.nextFounderId : C.POP;
       this.eliteStreak = new Map(Array.isArray(L.streak) ? L.streak : []);
     } else this.resetLineage();
 
@@ -751,14 +810,52 @@ export async function diagnose(sim, opts = {}) {
   };
 }
 
-/** Evolve for `generations`, optionally reporting progress. Returns the sim. */
+/**
+ * Evolve for `generations`, optionally reporting progress. Returns the sim.
+ *
+ * `opts.spawns` (library default 1; `tools/run.js` defaults to 2): evaluate
+ * each generation's genomes over this many independent fresh-spawn episodes
+ * and select on the mean fitness, instead of a single episode. Truncation
+ * selection on one episode is selecting on spawn-position luck as much as on
+ * genotype (measured: top-10 mean distance to the nearest food patch
+ * 0.02-0.03 vs a population median of 0.12); more independent spawns average
+ * that luck out before anything gets to reproduce. `evolve()` itself is
+ * untouched — it still just truncation-selects on whatever `sim.fitness`
+ * currently holds — so this composes with the IMMIGRANTS reproduction-scheme
+ * change (see DEFAULTS.IMMIGRANTS) without duplicating it.
+ *
+ * Measured on the score.js harness: spawns=2 alone was directionally right
+ * but not significant on its own (0.1571 -> 0.1755, se grew to 0.0135,
+ * short of the 2x-combined-se bar). Combined with IMMIGRANTS=16 it cleared
+ * the bar comfortably and replicated on an independent seed set:
+ *   seeds 1-4: 0.1571 +/- 0.0082 -> 0.2228 +/- 0.0180  (delta +0.0657)
+ *   seeds 5-8: 0.1571 +/- 0.0082 -> 0.2311 +/- 0.0072  (delta +0.0740)
+ * `selection` in particular jumped from 0.0066 to 0.14-0.18: spawns fixes the
+ * "elites are lucky, not good" problem directly, and a population that keeps
+ * a diversity floor (from IMMIGRANTS) gives that fix something to bite on.
+ */
 export async function evolveFor(sim, generations, opts = {}) {
-  const { onGeneration = null, yieldEvery = 0 } = opts;
+  const { onGeneration = null, yieldEvery = 0, spawns = 1 } = opts;
+  const nSpawns = Math.max(1, spawns | 0);
   for (let g = 0; g < generations; g++) {
-    sim.resetBodies();
-    for (let i = 0; i < sim.cfg.EPOCH_STEPS; i++) {
-      sim.step();
-      if (yieldEvery && (i % yieldEvery) === yieldEvery - 1) await T().nextFrame();
+    let fitAccum = null;
+    for (let s = 0; s < nSpawns; s++) {
+      sim.resetBodies();
+      for (let i = 0; i < sim.cfg.EPOCH_STEPS; i++) {
+        sim.step();
+        if (yieldEvery && (i % yieldEvery) === yieldEvery - 1) await T().nextFrame();
+      }
+      if (nSpawns > 1) {
+        const f = sim.fitness.clone();
+        if (fitAccum) { const next = fitAccum.add(f); fitAccum.dispose(); f.dispose(); fitAccum = next; }
+        else fitAccum = f;
+      }
+    }
+    if (nSpawns > 1) {
+      const avg = fitAccum.div(nSpawns);
+      fitAccum.dispose();
+      sim.fitness.assign(avg);
+      avg.dispose();
     }
     // Read the epoch's result before evolving: evolve() ends by resetting the
     // bodies, which zeroes fitness, so reading afterwards always reports 0.
