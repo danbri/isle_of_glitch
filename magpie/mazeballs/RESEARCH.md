@@ -1315,3 +1315,76 @@ Two methodological notes for whoever picks this up:
   chance level for any behavioural statistic at ~15% of the cost of an evolved
   run, and without it "nestShare 0.147" reads like a result instead of like
   noise with a bigger load on it.
+
+## Shared-odour ambiguity: a conjunctive task, and a flat dose curve
+
+The accumulated finding is that every organism-side lever is null because the
+evolved policy is klinokinesis on a single scalar and needs none of them. The
+remaining move is to change what the strategy *has to be*. Food and hazards sat
+on separate sensor channels — food `[0,1,2]`, toxin `[3,4,5]` — so "climb the
+food channel, ignore the toxin channel" was free and a single-scalar kinesis was
+a complete solution. This removes that.
+
+`ODOUR_AMBIGUITY` (default 0, verified bit-identical to the previous code:
+same seed, 8 generations, byte-identical report) makes hazards emit into the
+*food* channel at that weight, through the *same* kernel width, so at dose 1.0
+a hazard is indistinguishable from a full-stock food patch at range. The
+identity cue narrows with the same dose: the hazard channel's sensing kernel
+goes from the original 0.036 (effective radius ~0.19, comparable to the food
+kernel's 0.22 — readable at range) to `ODOUR_QUALITY_SIGMA2` 0.010 (radius
+~0.10) at full ambiguity, still comfortably outside the hazard *damage* kernel's
+~0.039 so there is room to turn away after reading it.
+
+Of the three ways to pose this, that is option (a) — a quality scalar readable
+only inside a short radius, forcing approach-then-decide — chosen for two
+reasons. It is the only one whose solvability can be bounded: the near-field cue
+is a genuine discriminative signal present at every dose, so a null cannot be
+blamed on the discrimination being unlearnable in principle, which is exactly
+the hole that sank the central-place experiment. And it holds `SENSORS` at 8 at
+every dose, because that same experiment measured **+0.0223 of score for adding
+two channels with the task switched off** — a channel-count change would have
+confounded the whole sweep.
+
+Neither scalar alone is a policy at full dose. Climbing odour walks into
+hazards; the quality channel is flat everywhere except on top of a source. Only
+their conjunction — approach on odour, then gate the approach on quality —
+forages.
+
+Nothing about the world's *payoffs* changes at any dose: eating reads
+`food.d2` and damage reads `haz.d2`, neither of which depends on a sensing
+width or on any mixing. So a score move cannot be a change in how much food or
+poison is physically present.
+
+### The dose curve is flat, and `sensing` falls rather than rises
+
+16 seeds per arm, 8 generations, 300 steps, 1 restart, `EVODEVO_WORKERS=1`;
+baseline re-measured on this worktree's own HEAD.
+
+| ambiguity | score ± se | delta | bar | sensing | taxis | selection | diversity | forage | viab |
+|---|---|---|---|---|---|---|---|---|---|
+| 0 (baseline) | 0.1975 ± 0.0053 | — | — | 0.0690 | 0.0097 | 0.0303 | 0.2313 | 0.522 | 0.990 |
+| 0.25 | 0.1949 ± 0.0091 | −0.0026 | 0.0211 | 0.0603 | 0.0053 | 0.0359 | 0.2125 | 0.517 | 1.000 |
+| 0.50 | 0.1949 ± 0.0072 | −0.0026 | 0.0179 | 0.0593 | 0.0078 | 0.0353 | 0.1937 | 0.524 | 1.000 |
+| 0.75 | 0.1995 ± 0.0061 | +0.0020 | 0.0162 | 0.0534 | 0.0074 | 0.0421 | 0.2437 | 0.524 | 1.000 |
+| 1.00 | 0.1910 ± 0.0076 | −0.0065 | 0.0185 | 0.0431 | 0.0103 | 0.0430 | 0.2313 | 0.535 | 1.000 |
+
+**NO SIGNIFICANT CHANGE at every dose.** The largest deviation is −0.0065
+against a bar of 0.0185, about a third of it. Viability is pinned at 1.0 and
+forage does not move at all (0.522 → 0.535), so — unusually for this project —
+nothing here is a gate artifact and the capability terms are being read clean.
+
+The component that matters is `sensing`, and it goes the wrong way:
+
+| ambiguity | 0 | 0.25 | 0.50 | 0.75 | 1.00 |
+|---|---|---|---|---|---|
+| `sensing` (scramble) | 0.0690 | 0.0603 | 0.0593 | 0.0534 | 0.0431 |
+| cost of scrambling the identity channel | 0.0633 | 0.0683 | 0.0607 | 0.0517 | 0.0411 |
+
+Both fall, and `sensing` falls monotonically — a −38% slide from dose 0 to dose
+1 with no reversal, which is the one shape in this document that is *not* the
+noise signature. The hypothesis under test was the opposite: that ambiguity
+would force the population to use its senses harder, showing up as `sensing`
+rising even if score fell. It does not. Making the long-range channel
+uninformative about identity makes the whole sensory apparatus **less**
+load-bearing, not more, and the identity channel becomes less load-bearing at
+exactly the dose where it is the only identity information that exists.
