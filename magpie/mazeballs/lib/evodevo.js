@@ -250,6 +250,13 @@ const allFinite = a => { for (let i = 0; i < a.length; i++) if (!Number.isFinite
 /* ---------------------------------------------------------------- the sim */
 
 export class EvoDevoSim {
+  // Channel layout written by startTrace()/step()'s tracing block, one row of
+  // this many floats per agent per step: food bearing in the body frame
+  // (fbFwd, fbLat — same quantities `taxisStats` correlates against turn),
+  // raw food-mass sense before its tanh squashing, the turn and thrust motor
+  // outputs, this step's food intake, post-step energy, squared distance to
+  // the nearest food source, and post-step world position.
+  static TRACE_CHANNELS = ['fbFwd','fbLat','foodMass','turn','thrust','eat','energy','minFoodD2','posX','posY'];
   /**
    * @param {object} opts
    * @param {object} [opts.config]  overrides merged over DEFAULTS
@@ -266,6 +273,7 @@ export class EvoDevoSim {
     this.mutation = this.cfg.MUTATION; this.gain = this.cfg.GAIN;
     this.mods = null; this.recording = false; this.accSteps = 0; this.analysing = false;
     this.snapshotPending = false; this.lastSnapshot = null;
+    this.tracing = false; this.traceBuf = null; this.traceStep = 0;
     this.makeConstants(); this.makeVariables(); this.resetLineage();
   }
 
@@ -583,6 +591,18 @@ export class EvoDevoSim {
           turn, turn.square(), fb[0],
           thrust, thrust.square(), fb[0].mul(thrust)], 1)));
       }
+      // Full per-step, per-agent trace for policy analysis beyond correlation —
+      // see EvoDevoSim.TRACE_CHANNELS. Off by default (this.tracing), and reads
+      // synchronously via dataSync so a multi-hundred-step trace does not pay
+      // for hundreds of async round trips.
+      if (this.tracing) {
+        const distMin = food.d2.min(1);
+        const px = np.slice([0, 0], [-1, 1]).squeeze([1]), py = np.slice([0, 1], [-1, 1]).squeeze([1]);
+        const row = tf.stack([fb[0], fb[1], food.mass, turn, thrust, eat, en, distMin, px, py], 1);
+        const view = row.dataSync();
+        this.traceBuf.set(view, this.traceStep * C.POP * EvoDevoSim.TRACE_CHANNELS.length);
+        this.traceStep++;
+      }
     });
     this.stepNo++;
     if (this.recording) this.accSteps++;
@@ -676,6 +696,26 @@ export class EvoDevoSim {
 
   /* ------------------------------------------------------ analysis */
   resetAccumulators() { const tf = T(); tf.tidy(() => this.acc.assign(tf.zerosLike(this.acc))); this.accSteps = 0; }
+
+  /**
+   * Full per-step, per-agent trace, for policy analysis that a Pearson
+   * correlation (`taxisStats`) is structurally blind to — nonlinear or
+   * non-monotonic stimulus/response relationships, gated or threshold
+   * responses, and trajectory statistics conditioned on sensory state.
+   * Preallocated and filled with `dataSync` inside `step()` rather than an
+   * async `.data()` per step, so a several-hundred-step trace does not pay
+   * for hundreds of round trips.
+   */
+  startTrace(steps) {
+    this.traceBuf = new Float32Array(steps * this.cfg.POP * EvoDevoSim.TRACE_CHANNELS.length);
+    this.traceCap = steps; this.traceStep = 0; this.tracing = true;
+  }
+  stopTrace() {
+    this.tracing = false;
+    const { traceBuf: buf, traceStep: steps } = this;
+    this.traceBuf = null;
+    return { buf, steps, pop: this.cfg.POP, channels: EvoDevoSim.TRACE_CHANNELS };
+  }
 
   /**
    * One evaluation episode. `yieldEvery` > 0 hands control back periodically so a

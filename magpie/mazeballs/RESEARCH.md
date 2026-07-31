@@ -669,3 +669,112 @@ This also reframes the taxis puzzle. The population uses food *bearing*
 information, demonstrably, but expresses it through neither turn nor thrust
 correlation. Whatever the policy is, it is not an instantaneous
 stimulus-to-response mapping of the kind either measure can see.
+
+## The policy: klinokinesis and a non-monotonic response, not proportional steering
+
+New machinery: `EvoDevoSim.startTrace`/`stopTrace` (`lib/evodevo.js`) records a
+full per-step, per-agent trajectory — food bearing, sensed mass, turn, thrust,
+intake, energy, distance to the nearest food source, position — via `dataSync`
+inside `step()` so a several-hundred-step trace costs no async round trips.
+`tools/policy.js` evolves a population under the current defaults and uses the
+trace to run five model-free analyses, in place of assuming a linear
+instantaneous stimulus-response map: lagged mutual information (bearing/mass
+vs turn/thrust, several lags, against a circular-shift surrogate null),
+conditional-mean response curves per quantile bin (a direct look for
+threshold/gated vs proportional responses), a klinokinesis test (turn and
+thrust conditioned on the sign of the change in sensed food mass — approaching
+vs receding), and a paired same-spawn comparison of full-sense vs `blindConst`
+trajectories (the same genomes, the same spawn, sensing on vs off — the
+behavioural effect of sensing with no mechanism assumed). Run at 8 generations,
+600-step traces, replicated at two seeds.
+
+**Mutual information finds a large, genuinely nonlinear coupling that
+correlation cannot see.** MI(turn, food lateral bearing) and MI(thrust, food
+forward component), computed on the full-sense trace, exceed a matched control
+by a wide margin at essentially every tested lag (0 to 90 steps, ≈0–1.6s). The
+control pairs the *same true bearing* with the *real motor output of a network
+that had zero sensory access* (the `blindConst` trace) — same self-motion
+physics, no sensing — so it isolates whatever mechanical artifact turning
+one's own body might create in a bearing/motor time series, independent of any
+real information use. Full-sense MI is 15–20x the control's at every lag
+(thrust/forward: z 8.6–17 in full vs −14.5 to +2 in the control; turn/bearing:
+z up to 17.5 in full vs mostly |z|<3, occasionally higher, in the control).
+Both seeds agree on this gap; a more specific reading — that the coupling
+peaks at an intermediate lag of ~13–34 steps (~0.2–0.6s), matching the CTRNN's
+per-cell τ range (0.24–1.89) — held at seed 1 but did **not** replicate at seed
+2 (strong coupling already at lag 0). That specific delay-tuned claim is
+therefore not adopted; the robust claim is just that the coupling is large,
+real, and not confined to a single instant.
+
+**The conditional-mean curves show why correlation is blind to it: the
+response is smooth but non-monotonic, not a threshold/gate and not
+proportional.** Binning turn by quantile of lateral bearing gives a shallow
+U-shape, replicated at both seeds: turn magnitude is *higher* when food is
+strongly to one side and *lower* when it is roughly ahead or behind. Binning
+thrust by forward food component gives the mirror shape, also replicated: an
+inverted-U — thrust is highest at a moderate forward alignment and drops at
+*both* extremes, i.e. agents brake near food whether they are closing on it or
+have just passed it. Neither curve is a step function; both are smooth and
+symmetric-ish, which is exactly the shape a Pearson correlation reports as
+noise regardless of sample size.
+
+**Klinokinesis is the reproducible finding.** Splitting every timestep by the
+sign of the change in sensed food mass (approaching vs receding) and comparing
+mean |turn| per agent, paired:
+
+| seed | turn, approaching | turn, receding | paired delta | n |
+|---|---|---|---|---|
+| 1 | 0.861 | 0.925 | −0.0642 ± 0.0098 | 586 |
+| 2 | *(different baseline level)* | | −0.0578 ± 0.0101 | 715 |
+
+Both deltas are the same sign, similar magnitude, and each individually
+~6 standard errors from zero. Turning increases when things are getting worse
+and decreases when they are getting better — the textbook negative-klinokinesis
+mechanism (biased random walk), and it needs no proportional bearing-to-turn
+map at all. It holds whether the agent is near or far from a patch (checked by
+splitting on a median distance threshold; the approach/recede gap is present,
+and if anything larger, near patches in both seeds), so it is not an artifact
+of the near/far split's sample composition.
+
+**The paired same-spawn comparison confirms a large, replicated behavioural
+effect of sensing**, model-free:
+
+| seed | Δeat (600 steps) | Δoccupancy near food | Δfinal distance | Δpath length |
+|---|---|---|---|---|
+| 1 | +1.813 ± 0.309 | +0.0302 ± 0.0049 | −0.0043 ± 0.0005 | +0.042 ± 0.005 |
+| 2 | +1.670 ± 0.510 | +0.0246 ± 0.0074 | −0.0044 ± 0.0005 | +0.062 ± 0.005 |
+
+Full-sense agents eat more, spend more time near a patch, end the episode
+closer to food, and travel further, than the identical genome from the
+identical spawn with senses replaced by the population mean. Every one of
+these is significant at both seeds independently, and the finalDistance number
+in particular is nearly identical across seeds.
+
+**Recurrence lesioning costing ~0 fitness (an earlier finding) is not actually
+in tension with any of this.** "Recurrence" in this codebase means the
+off-diagonal, cross-cell entries of `W`; lesioning zeroes those but leaves each
+cell's own leaky-integrator dynamics (`dy/dt = (...)/tau`) intact. Nothing
+found here requires cross-cell recurrent computation — the mechanism is a
+per-cell temporal and amplitude nonlinearity plus a derivative-sensitive
+turning bias, none of which the lesion touches.
+
+**Answer to the mandate.** The policy is klinokinesis — a biased random walk
+gated by the *sign of change* in sensed food mass, not a proportional or
+gradient-following steering law — layered with a non-monotonic, roughly
+U/hump-shaped modulation of turn magnitude and thrust by the momentary bearing
+that a linear correlation cannot represent regardless of how much data it is
+given. This is why `taxis` and the thrust-taxis probe both read at chance: the
+policy they were built to detect (instantaneous, monotonic, sign-matched
+steering) is not the policy the population uses. What is confirmed by direct,
+paired, replicated evidence: real information use (MI gap vs the motor-dynamics
+control), a genuine nonlinear shape (conditional-mean curves), a derivative-
+sensitive turning bias (klinokinesis), and a large behavioural consequence
+(paired outcomes). What is excluded: proportional bearing-to-turn steering
+(the original `taxis` measure, still at chance), a sharp threshold/gate (the
+conditional curves are smooth), and any specific claim about a characteristic
+integration delay (seed-dependent, not adopted).
+
+Tooling: `EvoDevoSim.TRACE_CHANNELS`, `startTrace`/`stopTrace` in
+`lib/evodevo.js`; `tools/policy.js` for the full analysis, reusable at any
+generation count, seed, or step budget — `node tools/policy.js --generations 8
+--steps 600 --restarts 8 --seed 1`.
