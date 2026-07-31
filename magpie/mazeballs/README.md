@@ -184,10 +184,19 @@ Every random draw — genomes, spawns, mutation, the field layout — goes throu
 seeded LCG that also seeds TensorFlow's random ops, so **a run is reproducible
 from its seed alone**. Without that, sweeps compare noise.
 
+Runs on **Node or Deno**. Deno needs no install step — `npm:` specifiers are
+resolved on demand — and it exposes `navigator.gpu` natively, so the GPU path is
+the *same WebGPU backend the browser page uses*, with no CUDA toolchain and
+nothing to compile.
+
 ```
-npm install @tensorflow/tfjs           # pure JS, ~31 ms/step here
-npm install @tensorflow/tfjs-node      # native CPU, ~8.7 ms/step — 12.6s per generation
-npm install @tensorflow/tfjs-node-gpu  # CUDA, if the machine has NVIDIA + cuDNN
+deno task run   --generations 20 --seed 1        # webgpu if present, else wasm
+deno task score --seeds 1,2,3,4
+deno task bench --backend wasm
+
+npm install @tensorflow/tfjs-backend-wasm  # portable, and the fastest CPU path here
+npm install @tensorflow/tfjs-node          # native CPU
+npm install @tensorflow/tfjs-node-gpu      # CUDA
 
 node tools/run.js --generations 20 --gain 0.5 --seed 1 --out gain05.json
 node tools/run.js --import saved.json --generations 0        # diagnose a saved population
@@ -201,10 +210,31 @@ one configuration cannot take the sweep down with it. Results are tabulated
 sorted by top-quartile fitness, with a `sig` column flagging rows whose baseline
 fitness is below the interpretability floor.
 
-`initBackend` tries CUDA, then native CPU, then pure JS, skipping whatever is
-not installed — so adding `@tensorflow/tfjs-node-gpu` on a machine with an
+**Backend speed, measured on the real simulation step** with `tools/bench.js`
+(POP=192, one contended box, same window) — not a synthetic matmul:
+
+| runtime / backend | ms per step | sec per generation |
+|---|---|---|
+| deno / wasm | **16.0** | **23.2** |
+| node / wasm | 21.2 | 30.8 |
+| node / native | 34.3 | 49.7 |
+| deno / cpu | 57.9 | 83.9 |
+| node / cpu | 100.6 | 145.9 |
+
+WASM beats the native binding on both runtimes, and Deno beats Node on both
+backends, so `wasm` is ordered ahead of the native CPU package. A raw
+`[192,12,12]` matmul micro-benchmark had ranked native fastest and WASM 4×
+slower — that ranking was simply wrong about this workload, where a step is
+dozens of small ops and per-call overhead dominates. Re-measure with `bench.js`
+on other hardware or population sizes before trusting the order.
+
+Identical seeds produce identical results across every runtime and backend
+combination, which is what makes cross-machine comparison legitimate.
+
+`initBackend` tries WebGPU, then CUDA, then WASM, then native CPU, then pure JS,
+skipping whatever is not available — so adding `@tensorflow/tfjs-node-gpu` on a machine with an
 NVIDIA card is the whole of the GPU story for these runners; nothing else
-changes. `--backend gpu|node|cpu` forces one.
+changes. `--backend webgpu|gpu|wasm|node|cpu` forces one.
 
 Populations exported from the browser can be fed straight to `--import`, and
 populations produced headless can be imported into the page.

@@ -1,0 +1,12 @@
+{
+  "name": "evodevo-field",
+  "version": "1.0.0",
+  "exports": "./lib/evodevo.js",
+  "tasks": {
+    "run": "deno run -A --unstable-webgpu --node-modules-dir=none tools/run.js",
+    "score": "deno run -A --unstable-webgpu --node-modules-dir=none tools/score.js",
+    "sweep": "deno run -A --unstable-webgpu --node-modules-dir=none tools/sweep.js",
+    "bench": "deno run -A --unstable-webgpu --node-modules-dir=none tools/bench.js"
+  },
+  "nodeModulesDir": "auto"
+}

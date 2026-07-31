@@ -39,7 +39,11 @@ const seeds = String(opt.seeds || '1,2,3,4').split(',').map(s => Number(s.trim()
 const generations = Number(opt.generations || 12);
 const steps = Number(opt.steps || 400);
 const restarts = Number(opt.restarts || 2);
-const workers = Number(opt.workers || Math.max(1, Math.min(seeds.length, os.cpus().length)));
+// Default to leaving a core free, and cap by seed count. When several research
+// agents share one box each of them should ask for a slice, not the whole
+// machine — EVODEVO_WORKERS lets a fleet launcher set that centrally.
+const workers = Number(opt.workers || process.env.EVODEVO_WORKERS ||
+  Math.max(1, Math.min(seeds.length, os.cpus().length - 1)));
 const passthrough = [];
 for (const [k, v] of Object.entries(opt))
   if (!['seeds','generations','steps','restarts','workers','compare','out','label','quiet'].includes(k))
@@ -57,7 +61,8 @@ const clamp01 = x => Math.max(0, Math.min(1, x));
  *   generalisation holding up on a field layout never selected on.
  *   selection      elites beating the population median when re-evaluated from
  *                  fresh spawns, in sd — i.e. selection tracking genotype.
- *   diversity      surviving founder lineages against their real ceiling.
+ *   diversity      distinct ancestries holding a *selected* slot, so an
+ *                  immigration scheme cannot saturate it by construction.
  * Gated by viability so a population that forages nothing scores nothing.
  */
 export function scoreReport(r) {
@@ -69,11 +74,24 @@ export function scoreReport(r) {
     taxis: clamp01((obsR - nullR) / 0.30),
     generalisation: clamp01(1 - Math.max(0, r.drops.novel)),
     selection: clamp01((r.eliteAdvantage ?? 0) / 2),
-    diversity: clamp01(r.population.founders / 10),
+    // eliteFounders, not founders. `founders` counts distinct ancestries anywhere
+    // in the population, which any immigration scheme saturates by construction:
+    // inject N fresh random genomes per generation and the count can never fall
+    // below N, whether or not those lineages are any good. eliteFounders counts
+    // an ancestry only if it holds a selected slot, so it measures diversity the
+    // evolutionary process actually sustained rather than randomness poured in.
+    diversity: clamp01(r.population.eliteFounders / 10),
   };
   const capability = 0.40 * c.sensing + 0.20 * c.taxis + 0.15 * c.generalisation
                    + 0.15 * c.selection + 0.10 * c.diversity;
-  const viability = clamp01(base.top / 1.0);
+  // Threshold, not a proportional multiplier. The gate exists to stop a dead
+  // population scoring well by having no measurable anything — it was never
+  // meant to penalise a world for being hard. As a proportional multiplier it
+  // did exactly that: wave 1 found environments that raised `sensing` by 43%
+  // and still lost, because the harder world's lower foraging scaled the whole
+  // capability term down faster than capability rose. Anything foraging above
+  // the floor is now simply alive, and capability is judged on its own.
+  const viability = clamp01(base.top / 0.30);
   return { score: viability * capability, capability, viability, forage: base.top, components: c };
 }
 
