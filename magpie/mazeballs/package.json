@@ -1,0 +1,22 @@
+{
+  "name": "evodevo-field",
+  "version": "1.0.0",
+  "description": "Headless runner for the Evo/Devo Field artificial-life simulation",
+  "type": "module",
+  "private": true,
+  "main": "lib/evodevo.js",
+  "exports": {
+    ".": "./lib/evodevo.js"
+  },
+  "scripts": {
+    "run": "node tools/run.js",
+    "sweep": "node tools/sweep.js"
+  },
+  "engines": { "node": ">=18" },
+  "peerDependencies": {
+    "@tensorflow/tfjs": "^4.22.0"
+  },
+  "peerDependenciesMeta": {
+    "@tensorflow/tfjs": { "optional": true }
+  }
+}
