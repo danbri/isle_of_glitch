@@ -1,9 +1,15 @@
 /**
  * Picks a TensorFlow.js backend for headless runs.
  *
- * Prefers the native `@tensorflow/tfjs-node` when it is installed, falls back to
- * the pure-JS `@tensorflow/tfjs` CPU backend. Neither is a hard dependency, so
- * the browser page can import the library without dragging in a Node package.
+ * Order of preference: CUDA (`tfjs-node-gpu`), then native CPU (`tfjs-node`),
+ * then pure JS (`tfjs`). None is a hard dependency — each is tried in turn and
+ * skipped if absent or unloadable — so the browser page can import the library
+ * without dragging in a Node package, and a machine without CUDA simply falls
+ * through to the next option.
+ *
+ *   --backend gpu     force @tensorflow/tfjs-node-gpu   (needs NVIDIA + CUDA/cuDNN)
+ *   --backend node    force @tensorflow/tfjs-node       (native CPU)
+ *   --backend cpu     force @tensorflow/tfjs            (pure JS, works anywhere)
  */
 import { useTf } from '../lib/evodevo.js';
 
@@ -12,7 +18,8 @@ export async function initBackend({ prefer = 'auto', quiet = true } = {}) {
   const tried = [];
   const order = prefer === 'cpu' ? ['@tensorflow/tfjs']
               : prefer === 'node' ? ['@tensorflow/tfjs-node']
-              : ['@tensorflow/tfjs-node', '@tensorflow/tfjs'];
+              : prefer === 'gpu' ? ['@tensorflow/tfjs-node-gpu']
+              : ['@tensorflow/tfjs-node-gpu', '@tensorflow/tfjs-node', '@tensorflow/tfjs'];
   for (const name of order) {
     try {
       const mod = await import(name);
@@ -26,8 +33,9 @@ export async function initBackend({ prefer = 'auto', quiet = true } = {}) {
   }
   throw new Error(
     'No TensorFlow.js backend available. Install one:\n' +
-    '  npm install @tensorflow/tfjs          # pure JS, works everywhere\n' +
-    '  npm install @tensorflow/tfjs-node     # native, faster\n' +
+    '  npm install @tensorflow/tfjs           # pure JS, works everywhere\n' +
+    '  npm install @tensorflow/tfjs-node      # native CPU, ~3.6x faster\n' +
+    '  npm install @tensorflow/tfjs-node-gpu  # CUDA, needs NVIDIA + cuDNN\n' +
     'Tried:\n  ' + tried.join('\n  '));
 }
 

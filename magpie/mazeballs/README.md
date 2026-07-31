@@ -185,8 +185,9 @@ seeded LCG that also seeds TensorFlow's random ops, so **a run is reproducible
 from its seed alone**. Without that, sweeps compare noise.
 
 ```
-npm install @tensorflow/tfjs          # pure JS, ~31 ms/step here
-npm install @tensorflow/tfjs-node     # native, ~8.7 ms/step — 12.6s per generation
+npm install @tensorflow/tfjs           # pure JS, ~31 ms/step here
+npm install @tensorflow/tfjs-node      # native CPU, ~8.7 ms/step — 12.6s per generation
+npm install @tensorflow/tfjs-node-gpu  # CUDA, if the machine has NVIDIA + cuDNN
 
 node tools/run.js --generations 20 --gain 0.5 --seed 1 --out gain05.json
 node tools/run.js --import saved.json --generations 0        # diagnose a saved population
@@ -199,6 +200,11 @@ grid as parallel child processes — one process per cell, so a crash or an OOM 
 one configuration cannot take the sweep down with it. Results are tabulated
 sorted by top-quartile fitness, with a `sig` column flagging rows whose baseline
 fitness is below the interpretability floor.
+
+`initBackend` tries CUDA, then native CPU, then pure JS, skipping whatever is
+not installed — so adding `@tensorflow/tfjs-node-gpu` on a machine with an
+NVIDIA card is the whole of the GPU story for these runners; nothing else
+changes. `--backend gpu|node|cpu` forces one.
 
 Populations exported from the browser can be fed straight to `--import`, and
 populations produced headless can be imported into the page.
