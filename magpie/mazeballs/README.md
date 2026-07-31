@@ -119,6 +119,30 @@ something real was found, rather than a good starting position.
 | mutation | fraction of genome loci perturbed per offspring (1–30%) |
 | gain | recurrent scale of the adult CTRNN (0.10–3.00, see above) |
 
+## Population files
+
+Nothing in the page survives a reload, and a population that has been evolving
+for thirty generations is not reproducible — the run is the artefact. The
+analysis panel can **export** the whole population to a JSON file and **import**
+it back.
+
+What travels: the genomes (`genR` 192×10×10 and `genM` 192×3×10, base64 float32
+so the bits round-trip exactly rather than through decimal), the generation
+count, the full lineage record, the gain and mutation settings, and **the field
+layout**. That last one matters — without it an imported population would be
+scored on a different world, which quietly invalidates any comparison the file
+was saved to make. About 134 KB per population.
+
+The point beyond not losing runs is paired experiments. Export a population,
+change one setting, import the same file, and you are measuring that setting on
+identical genomes in an identical world rather than on two runs that merely
+resemble each other. Comparing gain values on an *evolved* population — which
+adapted to whatever gain it evolved under — needs exactly this.
+
+Files are validated on load: wrong format, wrong population/genome dimensions,
+truncated blocks or non-finite values are all rejected with a specific message,
+and a rejected file leaves the running population untouched.
+
 ## Console
 
 Everything is live on `window.evoDevo` — `sim`, `renderer`, `CFG`, `world()`,
