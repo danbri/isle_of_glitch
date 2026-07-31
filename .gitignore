@@ -9,3 +9,6 @@ llama.cpp/
 *.log
 *.out
 __pycache__/
+
+# Ephemeral git worktrees created for parallel subagent runs
+.claude/worktrees/
