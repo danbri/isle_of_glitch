@@ -11,10 +11,10 @@
  * out of the way when the JSON is being piped.
  */
 import fs from 'node:fs/promises';
-import { initBackend, parseArgs } from './backend.js';
+import { initBackend, parseArgs, argv } from './backend.js';
 import { EvoDevoSim, diagnose, evolveFor } from '../lib/evodevo.js';
 
-const args = parseArgs(process.argv.slice(2), {
+const args = parseArgs(argv(), {
   generations: 10, seed: 1, gain: 0.5, mutation: 0.10,
   steps: 600, restarts: 3, elites: 10, pop: 192,
   consume: 0.40, regrow: 0.09, epoch: 1450,
@@ -23,8 +23,8 @@ const args = parseArgs(process.argv.slice(2), {
 
 const log = (...m) => { if (!args.quiet) console.error(...m); };
 
-const { pkg, backend } = await initBackend({ prefer: args.backend });
-log(`[backend] ${pkg} → ${backend}`);
+const { pkg, backend, runtime } = await initBackend({ prefer: args.backend });
+log(`[backend] ${runtime}/${pkg} → ${backend}`);
 
 const sim = new EvoDevoSim({
   seed: args.seed,
@@ -41,7 +41,7 @@ if (args.import) {
   const r = await sim.importPopulation(p);
   log(`[import] generation ${r.generation}, gain ${r.gain}` + (r.worldRestored ? ', field layout restored' : ''));
   // An imported file carries its own gain; a explicit --gain still wins.
-  if (process.argv.some(a => a.startsWith('--gain'))) { sim.gain = args.gain; await sim.develop(); }
+  if (argv().some(a => a.startsWith('--gain'))) { sim.gain = args.gain; await sim.develop(); }
 }
 
 const t0 = Date.now();
@@ -61,7 +61,7 @@ const result = {
     consume: args.consume, regrow: args.regrow, steps: args.steps, restarts: args.restarts,
   },
   runtimeSeconds: +((Date.now() - t0) / 1000).toFixed(1),
-  backend: `${pkg}/${backend}`,
+  backend: `${runtime}/${pkg}/${backend}`,
   report,
 };
 
