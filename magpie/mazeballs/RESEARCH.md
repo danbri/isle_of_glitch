@@ -1168,3 +1168,150 @@ datum — it rises steeply with POP, which constrains how much of this direction
 is affordable. The mandate's fourth question, whether clustered food and
 novelty/multi-spawn compose better at larger POP, was not reached at all. That
 is a gap, not a null.
+
+## Central-place foraging: the task setup failed, and says so out loud
+
+The accumulated finding was that every architecture-side lever is null —
+capacity, integrator accuracy, inter-organism coupling, sensor geometry,
+sensing range, developmental diffusion, evolvable readout — because the evolved
+policy is klinokinesis, which needs none of them. The conclusion drawn was that
+the next move has to change what the *strategy* can be, not what the hardware
+could support. So: make the task require going back somewhere.
+
+`CP_STRENGTH` (default 0, a no-op verified bit-identical to the previous code on
+seed 1) diverts that fraction of intake out of direct fitness into a per-agent
+`carry` scalar, which decays at `CP_CARRY_DECAY` and is worth `CP_NEST_MULT`
+only once banked inside `CP_NEST_RADIUS` of the origin. The remaining
+`1 - CP_STRENGTH` still pays on the spot, deliberately, so a pure-klinokinesis
+population stays above the viability floor and the run stays measurable instead
+of collapsing into a gate artifact. Metabolism is untouched: eating still feeds
+you at the same rate, so the change alters what fitness *rewards* without
+altering who survives.
+
+`CP_NEST_SENSOR` is the control arm. It adds a 2-channel body-frame bearing to
+the nest, taking SENSORS 8 → 10, and turns the return trip into ordinary taxis.
+It exists because a null on the no-sensor arm means nothing unless the task is
+demonstrably solvable in this world with the cue handed over.
+
+Pilot first: `CP_NEST_RADIUS` 0.14 is 1.7% of the arena and could not be found
+in 8 generations even *with* the bearing sensor (nestShare 4.8%, 3% of the
+population ever inside it). Raised to 0.22 — 4.3% of the arena, comparable to
+the food-sensing kernel's effective radius — for every number below.
+
+### Every arm null, and no dose-response in either
+
+8 seeds, `--generations 8 --steps 400 --restarts 1`, baseline re-measured on
+this worktree's own HEAD:
+
+| arm | score ± se | delta | bar | sensing | forage | viab |
+|---|---|---|---|---|---|---|
+| baseline (CP off) | 0.2100 ± 0.0097 | — | — | 0.0895 | 0.629 | 1.000 |
+| nest sensor only, CP off | 0.2323 ± 0.0180 | +0.0223 | 0.0409 | 0.1505 | 0.576 | 1.000 |
+| CP 0.25, no sensor | 0.2011 ± 0.0136 | −0.0089 | 0.0334 | 0.0857 | 0.505 | 1.000 |
+| CP 0.50, no sensor | 0.1968 ± 0.0211 | −0.0132 | 0.0464 | 0.0653 | 0.346 | 0.953 |
+| CP 0.25, nest sensor | 0.2013 ± 0.0113 | −0.0087 | 0.0298 | 0.0868 | 0.483 | 1.000 |
+| CP 0.50, nest sensor | 0.2220 ± 0.0252 | +0.0120 | 0.0540 | 0.1300 | 0.367 | 0.978 |
+
+The re-measured baseline lands on 0.2100 to four figures, exactly the recorded
+wave-2 value — the worktree is on the accumulated trunk and the comparison is
+sound.
+
+No arm clears its bar. The no-sensor arm has no dose-response (−0.0089 at 0.25,
+−0.0132 at 0.50: flat and slightly negative). The sensor arm's is
+non-monotonic (−0.0087, then +0.0120), which the diffusion experiments already
+established is the signature of noise rather than a weak real effect.
+
+The **sensor-only control settles it**: adding the two nest channels with the
+task switched off moves the score +0.0223, *more* than the full task with the
+sensor does (+0.0120). Whatever upward drift the sensor arms show belongs to
+having ten channels instead of eight, not to central-place foraging.
+
+Note also the variance, in the way the distinct-patches reward taught us to:
+seed-to-seed sd goes 0.0276 at baseline to 0.0597 and 0.0712 under CP 0.50. The
+task makes outcomes more variable, which raises the bar faster than it raises
+any mean.
+
+### Nest occupancy after 8 generations is exactly the unevolved chance rate
+
+The score table alone would say "another null". The behavioural readout says
+something much more specific. `centralStats()` reports, per episode, the
+fraction of the population that was ever inside the nest, mean seconds spent
+there, and `nestShare` — the fraction of top-quartile fitness that arrived via
+a deposit. Measured against generation-0 populations, which have had no
+selection at all and therefore give the chance encounter rate for free:
+
+| CP 0.50 arm | n | score ± se | nestShare | visited | nestTime |
+|---|---|---|---|---|---|
+| gen 0 (unevolved), no sensor | 8 | 0.2351 ± 0.0142 | 0.073 | 0.100 | 0.239 |
+| gen 0 (unevolved), nest sensor | 8 | 0.2357 ± 0.0178 | 0.075 | 0.117 | 0.259 |
+| 8 gen, no sensor | 8 | 0.1968 ± 0.0211 | 0.119 | **0.102** | **0.239** |
+| 8 gen, nest sensor | 8 | 0.2220 ± 0.0252 | 0.147 | **0.117** | 0.325 |
+| 24 gen, no sensor | 8 | 0.1962 ± 0.0176 | 0.243 | 0.153 | 0.262 |
+| 24 gen, nest sensor | 8 | 0.1933 ± 0.0182 | 0.241 | 0.200 | 0.415 |
+
+Eight generations of selection changes nest occupancy by **nothing**. The
+no-sensor arm goes from 0.0996 of the population ever inside the nest to 0.1016,
+and mean time inside from 0.2387 s to 0.2389 s — identical to four figures. The
+sensor arm's `visited` moves 0.1172 → 0.1165, i.e. down. The rise in `nestShare`
+is not agents going home; it is the same chance passes through a nest banking a
+larger accumulated load.
+
+So **the control arm did not solve the task either**, and by the rule this
+experiment was set up under, that means the no-sensor null carries no
+information about path integration. This is a task-setup failure, reported as
+one. Nothing here rules memory in or out.
+
+### What 24 generations shows, and why it is worse news than it looks
+
+Tripling the budget does lift occupancy off the floor: `nestShare` 0.073 → 0.243
+without the sensor and 0.075 → 0.241 with it. The task is learnable in this
+world, just not inside the 8-generation protocol.
+
+But the two arms arrive at the *same* banked share. The bearing sensor — the
+whole point of the control — buys 0.200 against 0.153 on `visited` and 0.415
+against 0.262 on `nestTime`, and then converts none of that extra loitering into
+extra reward. A cue that hands you the direction home should dominate an arm
+that has no such cue. It does not.
+
+The likely reason is a design fault that was visible in advance and taken
+anyway: **the nest is at the origin, so "stay away from the walls" is a nest
+strategy**, and the wall/boundary channel that supports it is present in *both*
+arms. Centre-seeking is not path integration and is not klinokinesis; it is a
+third thing that satisfies the task without testing the hypothesis. Any next
+version must put the nest at a random location per epoch, which deletes
+centre-seeking as a solution and makes the bearing sensor the only cue the
+control arm has.
+
+Also worth recording, because it repeats a result: the 24-generation scores
+(0.1962, 0.1933) are *below* the 8-generation ones, and the generation-0 scores
+(0.2351, 0.2357) are above every evolved arm. More selection continues to make
+this population measurably less capable, exactly as the 8-vs-24-generation
+re-baseline found.
+
+### Verdict
+
+Nothing adopted. `CP_STRENGTH` stays 0 and `CP_NEST_SENSOR` stays false, so the
+default configuration is unchanged and was verified bit-identical to the
+pre-change code (same seed, same 8-generation run, byte-identical report). The
+machinery is retained switched off as apparatus for the random-nest follow-up
+rather than as a live change.
+
+What this does rule out: not path integration. Two things, both narrower.
+Central-place foraging **as posed here** — nest fixed at the origin, 8
+generations, graded 25–50% diversion — produces no capability signal in either
+arm, and produces no nest-directed behaviour at all above chance. And the
+diagnosis that "the target is wrong, so change what the strategy can be" is not
+by itself enough: changing the target also has to leave the new strategy
+*reachable* inside the experiment budget, and this one did not.
+
+Two methodological notes for whoever picks this up:
+
+- A behavioural readout is worth more than the score here. The six-row score
+  table is six nulls and would have been written up as "central-place foraging
+  does not help". The occupancy numbers turn that into "no arm learned the task,
+  including the control", which is a different and much more actionable claim,
+  and it cost one extra accumulator per agent.
+- A generation-0 run is the cheapest control in this project. It gives the
+  chance level for any behavioural statistic at ~15% of the cost of an evolved
+  run, and without it "nestShare 0.147" reads like a result instead of like
+  noise with a bigger load on it.

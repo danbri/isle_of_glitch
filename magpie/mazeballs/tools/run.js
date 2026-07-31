@@ -35,6 +35,13 @@ const args = parseArgs(process.argv.slice(2), {
   // that wants to isolate "more genomes per selection event" from "more
   // mouths sharing the same food" needs this to scale with --pop.
   food: 42,
+  // Central-place foraging (off at cpStrength 0, which is the default and is a
+  // no-op). cpStrength is the dose: the fraction of intake that stops paying
+  // where it is found and must be carried back to the nest at the origin.
+  // cpNestSensor is the control arm — it hands the agent the bearing home, so
+  // the return trip becomes taxis rather than path integration.
+  cpStrength: 0, cpMult: 2.5, cpRadius: 0.14, cpDecay: 0.06, cpDeposit: 6.0,
+  cpNestSensor: false,
 });
 
 const log = (...m) => { if (!args.quiet) console.error(...m); };
@@ -52,6 +59,9 @@ const sim = new EvoDevoSim({
     FOOD_CLUSTERS: args.clusters, FOOD_CLUSTER_SIGMA: args.clusterSigma,
     FOOD_SENSE_SIGMA2: args.senseSigma2, FOOD_RELOCATE_THRESH: args.relocateThresh,
     SELECT: args.select, NICHES: args.niches, NOVELTY_K: args.novk, NOVELTY_WEIGHT: args.novweight,
+    CP_STRENGTH: args.cpStrength, CP_NEST_MULT: args.cpMult, CP_NEST_RADIUS: args.cpRadius,
+    CP_CARRY_DECAY: args.cpDecay, CP_DEPOSIT_RATE: args.cpDeposit,
+    CP_NEST_SENSOR: args.cpNestSensor,
   },
 });
 await sim.initialise();
@@ -92,6 +102,8 @@ const result = {
     relocateThresh: args.relocateThresh,
     curClustersStart: args.curClustersStart, curClustersEnd: args.curClustersEnd,
     select: args.select, niches: args.niches, spawns: args.spawns,
+    cpStrength: args.cpStrength, cpMult: args.cpMult, cpRadius: args.cpRadius,
+    cpDecay: args.cpDecay, cpDeposit: args.cpDeposit, cpNestSensor: args.cpNestSensor,
   },
   runtimeSeconds: +((Date.now() - t0) / 1000).toFixed(1),
   backend: `${pkg}/${backend}`,
@@ -104,6 +116,8 @@ else process.stdout.write(JSON.stringify(result) + '\n');
 const t = report.table.find(r => r.key === 'baseline');
 log(`[done] gen ${report.generation} · top25 ${t.top.toFixed(3)} · railed ${(report.network.saturation * 100).toFixed(1)}% ` +
     `· blind Δ ${(report.drops.blind * -100).toFixed(1)}% · founders ${report.population.founders} ` +
+    (report.central ? `· nestShare ${(report.central.nestShare * 100).toFixed(1)}% ` +
+                      `· visited ${(report.central.visitedFrac * 100).toFixed(0)}% ` : '') +
     `· ${result.runtimeSeconds}s` + (report.interpretable ? '' : ' · BELOW SIGNIFICANCE FLOOR'));
 
 sim.dispose();

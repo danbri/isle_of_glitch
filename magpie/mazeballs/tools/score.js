@@ -102,7 +102,11 @@ export function scoreReport(r, elites = 10) {
   // capability term down faster than capability rose. Anything foraging above
   // the floor is now simply alive, and capability is judged on its own.
   const viability = clamp01(base.top / 0.30);
-  return { score: viability * capability, capability, viability, forage: base.top, components: c };
+  // `central` rides along as reporting only — it is not an input to the score.
+  // Without it a central-place run cannot be told apart from one that simply
+  // lost the diverted fraction of its intake and never went home.
+  return { score: viability * capability, capability, viability, forage: base.top,
+           components: c, central: r.central || null };
 }
 
 function runSeed(seed) {
@@ -147,7 +151,15 @@ const summary = {
   components: Object.fromEntries(['sensing','taxis','generalisation','selection','diversity'].map(k => [k, +avg(k).toFixed(4)])),
   forage: +(ok.reduce((a, r) => a + r.forage, 0) / ok.length).toFixed(4),
   viability: +(ok.reduce((a, r) => a + r.viability, 0) / ok.length).toFixed(4),
-  perSeed: ok.map(r => ({ seed: r.seed, score: +r.score.toFixed(4), forage: +r.forage.toFixed(3) })),
+  perSeed: ok.map(r => ({ seed: r.seed, score: +r.score.toFixed(4), forage: +r.forage.toFixed(3),
+    nestShare: r.central ? +r.central.nestShare.toFixed(4) : undefined,
+    visitedFrac: r.central ? +r.central.visitedFrac.toFixed(4) : undefined })),
+};
+const withCentral = ok.filter(r => r.central);
+if (withCentral.length) summary.central = {
+  nestShare: +(withCentral.reduce((a, r) => a + r.central.nestShare, 0) / withCentral.length).toFixed(4),
+  visitedFrac: +(withCentral.reduce((a, r) => a + r.central.visitedFrac, 0) / withCentral.length).toFixed(4),
+  nestTime: +(withCentral.reduce((a, r) => a + r.central.nestTime, 0) / withCentral.length).toFixed(4),
 };
 
 if (opt.out) await fs.writeFile(opt.out, JSON.stringify(summary, null, 2));

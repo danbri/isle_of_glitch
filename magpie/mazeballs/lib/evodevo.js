@@ -88,6 +88,38 @@ export const DEFAULTS = Object.freeze({
   // raw units) rather than by fitness alone. Both defaults are only consulted
   // when SELECT is 'novelty'.
   SELECT: 'trunc', NICHES: 10, NOVELTY_K: 15, NOVELTY_WEIGHT: 1.0,
+  // ---------------------------------------------------------------- central place
+  // Central-place foraging. Off by default (CP_STRENGTH 0), in which case every
+  // expression below is skipped and the sim is bit-identical to before.
+  //
+  // The evolved policy in this world has been positively identified as
+  // klinokinesis: turn magnitude modulated by the temporal sign of change in
+  // sensed food mass — a biased random walk. Every architecture-side lever
+  // tried against it came back null, because klinokinesis needs none of that
+  // machinery. What it *cannot* do is return somewhere. So:
+  //
+  //   CP_STRENGTH      fraction of intake diverted out of direct fitness and
+  //                    into a per-agent `carry` scalar. The remaining
+  //                    (1 - CP_STRENGTH) still pays immediately, which keeps a
+  //                    pure-klinokinesis population above the viability floor
+  //                    so the run stays measurable instead of degenerate.
+  //                    This is the dose knob.
+  //   CP_NEST_MULT     carry deposited at the nest pays this multiple, so a
+  //                    forager that goes home beats one that never does.
+  //   CP_NEST_RADIUS   nest is fixed at the origin in this version.
+  //   CP_CARRY_DECAY   per-second decay of undeposited carry: dawdling costs.
+  //   CP_DEPOSIT_RATE  per-second fraction of carry banked while inside the
+  //                    nest (6/s ⇒ a ~0.4s visit banks most of a load).
+  //   CP_NEST_SENSOR   CONTROL ARM ONLY. Adds a 2-channel nest-bearing sensor
+  //                    (unit vector to the origin, body frame), taking SENSORS
+  //                    8 → 10. With it the task is ordinary taxis and tests
+  //                    nothing about memory; without it the only route home is
+  //                    path integration off the recurrent state, which is
+  //                    possible in principle and is not given. The control
+  //                    exists to establish that the task is solvable at all
+  //                    before a null on the no-sensor arm means anything.
+  CP_STRENGTH: 0, CP_NEST_MULT: 2.5, CP_NEST_RADIUS: 0.14,
+  CP_CARRY_DECAY: 0.06, CP_DEPOSIT_RATE: 6.0, CP_NEST_SENSOR: false,
 });
 
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -151,8 +183,9 @@ export function makeWorld(cfg = DEFAULTS, rng = makeRng(0x8f3d20a1)) {
 //   0,1 food direction (body frame)   2 food mass
 //   3,4 toxin direction (body frame)  5 toxin mass
 //   6   wall/obstacle proximity       7 own energy
+//   8,9 nest direction (body frame)   — present only when CP_NEST_SENSOR
 export const SENSOR_GROUPS = Object.freeze({
-  food: [0, 1, 2], toxin: [3, 4, 5], wall: [6], energy: [7],
+  food: [0, 1, 2], toxin: [3, 4, 5], wall: [6], energy: [7], nest: [8, 9],
   // Split of the food sense. Every mechanism that has raised `sensing` left
   // `taxis` flat, and `taxis` correlates turn against food *bearing* only. If
   // the population navigates by mass gradient instead, sensing is genuinely
@@ -163,15 +196,22 @@ export const SENSOR_GROUPS = Object.freeze({
 
 export function keepAllBut(groups, cfg = DEFAULTS) {
   const m = new Array(cfg.SENSORS).fill(1);
-  for (const g of groups) for (const i of SENSOR_GROUPS[g]) m[i] = 0;
+  // A group whose channels do not exist in this configuration (nest, when the
+  // control arm is off) is simply skipped — otherwise the mask would be longer
+  // than the sensor vector and the ablation would silently measure nothing.
+  for (const g of groups) for (const i of SENSOR_GROUPS[g]) if (i < cfg.SENSORS) m[i] = 0;
   return m;
 }
 
 /** The ablation conditions the diagnostics run. */
 export function conditions(cfg = DEFAULTS) {
+  // `blind` must scramble every channel that exists, nest included, or the
+  // sensing component reads a population that still has its way home.
+  const all = cfg.CP_NEST_SENSOR ? ['food','toxin','wall','energy','nest']
+                                 : ['food','toxin','wall','energy'];
   return [
     { key:'baseline', label:'baseline',              note:'same genomes, fresh spawns' },
-    { key:'blind',    label:'all senses scrambled',  mask:keepAllBut(['food','toxin','wall','energy'], cfg), note:'is the loop closed at all?' },
+    { key:'blind',    label:'all senses scrambled',  mask:keepAllBut(all, cfg), note:'is the loop closed at all?' },
     { key:'noFood',   label:'food sense scrambled',  mask:keepAllBut(['food'], cfg),  note:'chemotaxis removed' },
     { key:'noToxin',  label:'toxin sense scrambled', mask:keepAllBut(['toxin'], cfg), note:'avoidance removed' },
     { key:'noWall',   label:'wall sense scrambled',  mask:keepAllBut(['wall'], cfg),  note:'obstacle/edge cue removed' },
@@ -264,7 +304,12 @@ export class EvoDevoSim {
    * @param {object} [opts.world]   reuse an existing layout instead of generating one
    */
   constructor(opts = {}) {
-    this.cfg = Object.freeze({ ...DEFAULTS, ...(opts.config || {}) });
+    const merged = { ...DEFAULTS, ...(opts.config || {}) };
+    // The nest-bearing control arm adds two channels. Derived here rather than
+    // asked of the caller so SENSORS, sensorEmb, Win and the ablation masks
+    // cannot disagree with each other.
+    if (merged.CP_NEST_SENSOR) merged.SENSORS = merged.SENSORS + 2;
+    this.cfg = Object.freeze(merged);
     this.seed = opts.seed === undefined ? 1 : opts.seed;
     this.rng = makeRng(this.seed);
     this.worldRng = makeRng(this.seed ^ 0x5bf03635);
@@ -318,6 +363,13 @@ export class EvoDevoSim {
     this.neural = this.v(tf.zeros([C.POP, C.CELLS]));
     this.foodStock = this.v(tf.ones([C.FOOD]));
     this.acc = this.v(tf.zeros([C.POP, C.ACC_COLS]));
+    // Central-place bookkeeping. Zero and inert unless CP_STRENGTH > 0.
+    //   carry    undeposited load
+    //   banked   cumulative fitness that arrived via a nest deposit
+    //   nestTime seconds spent inside the nest radius
+    this.carry = this.v(tf.zeros([C.POP]));
+    this.banked = this.v(tf.zeros([C.POP]));
+    this.nestTime = this.v(tf.zeros([C.POP]));
   }
 
   async initialise() { await this.develop(); this.resetBodies(); await this.warmup(); }
@@ -337,7 +389,7 @@ export class EvoDevoSim {
   dispose() {
     for (const k of ['food','haz','obs','obsR','cellPos','morph','distKernel','eye','sensorEmb',
       'genR','genM','bias','tau','W','Win','Wout','expr','color','pos','vel','angle','omega',
-      'energy','fitness','neural','foodStock','acc'])
+      'energy','fitness','neural','foodStock','acc','carry','banked','nestTime'])
       if (this[k] && !this[k].isDisposed) this[k].dispose();
   }
 
@@ -404,6 +456,9 @@ export class EvoDevoSim {
       this.fitness.assign(tf.zerosLike(this.fitness));
       this.neural.assign(this.rn([C.POP, C.CELLS], 0, .08));
       this.foodStock.assign(tf.onesLike(this.foodStock));
+      this.carry.assign(tf.zerosLike(this.carry));
+      this.banked.assign(tf.zerosLike(this.banked));
+      this.nestTime.assign(tf.zerosLike(this.nestTime));
     });
     this.stepNo = 0;
   }
@@ -424,12 +479,16 @@ export class EvoDevoSim {
       this.energy.assign(i.energy); this.neural.assign(i.neural);
       this.vel.assign(tf.zerosLike(this.vel)); this.omega.assign(tf.zerosLike(this.omega));
       this.fitness.assign(tf.zerosLike(this.fitness)); this.foodStock.assign(tf.onesLike(this.foodStock));
+      this.carry.assign(tf.zerosLike(this.carry));
+      this.banked.assign(tf.zerosLike(this.banked));
+      this.nestTime.assign(tf.zerosLike(this.nestTime));
     });
     this.stepNo = 0;
   }
   disposeInit(i) { for (const k in i) i[k].dispose(); }
   saveState() {
-    const keys = ['pos','vel','angle','omega','energy','fitness','neural','foodStock','acc'];
+    const keys = ['pos','vel','angle','omega','energy','fitness','neural','foodStock','acc',
+                  'carry','banked','nestTime'];
     const s = { stepNo: this.stepNo }; for (const k of keys) s[k] = this[k].clone(); return s;
   }
   restoreState(s) {
@@ -504,9 +563,20 @@ export class EvoDevoSim {
       ];
       const fb = body(food.vec), hb = body(haz.vec), rb = body(repel);
       const boundary = tf.relu(this.pos.abs().max(1).sub(.70)).mul(3.2);
-      let sensors = tf.stack([fb[0], fb[1], tf.tanh(food.mass.mul(.16)),
+      const chans = [fb[0], fb[1], tf.tanh(food.mass.mul(.16)),
         hb[0], hb[1], tf.tanh(haz.mass.mul(.18)),
-        tf.tanh(boundary.add(rb[0].abs().mul(.4))), this.energy.sub(.7)], 1);
+        tf.tanh(boundary.add(rb[0].abs().mul(.4))), this.energy.sub(.7)];
+      // Control arm only. Bearing to the nest (origin) as a body-frame unit
+      // vector — direction home, no distance. With this the return trip is
+      // plain taxis; without it the recurrent state is the only place a route
+      // home could live.
+      if (C.CP_NEST_SENSOR) {
+        const toNest = this.pos.mul(-1);
+        const nDist = tf.sqrt(toNest.square().sum(1).add(1e-6));
+        const nb = body(toNest.div(nDist.expandDims(1)));
+        chans.push(nb[0], nb[1]);
+      }
+      let sensors = tf.stack(chans, 1);
       // Ablation: dropped channels are replaced by another agent's values for
       // the same channels — information destroyed, distribution preserved.
       if (mods && mods.keep) {
@@ -576,8 +646,29 @@ export class EvoDevoSim {
       const cost = thrust.abs().mul(.015).add(turn.abs().mul(.009)).add(.013);
       const en = this.energy.add(eat.mul(.42).sub(tox.mul(.62)).sub(cost).mul(C.DT)).clipByValue(0, 1.4);
       this.energy.assign(en);
+      // Central-place foraging. Intake stops being worth its full value where
+      // it is found: CP_STRENGTH of it goes into `carry`, which decays and is
+      // worth CP_NEST_MULT only once banked at the nest. Metabolism is
+      // deliberately untouched — eating still feeds you at the same rate, so
+      // this changes what fitness *rewards* without changing who survives, and
+      // a viability move cannot be mistaken for a capability move.
+      let intake = eat;
+      if (C.CP_STRENGTH > 0) {
+        const r2 = C.CP_NEST_RADIUS * C.CP_NEST_RADIUS;
+        const inNest = this.pos.square().sum(1).less(r2).toFloat();
+        const deposit = this.carry.mul(inNest).mul(C.CP_DEPOSIT_RATE);   // per second
+        const nextCarry = this.carry.add(
+          eat.mul(C.CP_STRENGTH).sub(this.carry.mul(C.CP_CARRY_DECAY)).sub(deposit).mul(C.DT));
+        this.carry.assign(tf.relu(nextCarry));
+        intake = eat.mul(1 - C.CP_STRENGTH).add(deposit.mul(C.CP_NEST_MULT));
+        // Behavioural readout, not part of fitness: how much of the reward
+        // actually came home, and how long anyone spent at the nest. Without
+        // this a score move cannot be attributed to central-place behaviour.
+        this.banked.assign(this.banked.add(deposit.mul(C.CP_NEST_MULT).mul(C.DT)));
+        this.nestTime.assign(this.nestTime.add(inNest.mul(C.DT)));
+      }
       this.fitness.assign(this.fitness.add(
-        eat.sub(tox.mul(1.35)).add(speed.mul(.018)).add(en.greater(.04).toFloat().mul(.003)).mul(C.DT)));
+        intake.sub(tox.mul(1.35)).add(speed.mul(.018)).add(en.greater(.04).toFloat().mul(.003)).mul(C.DT)));
       if (this.recording) {
         // Pooled regression accumulators for the taxis measures.
         // Columns 9-11 capture thrust modulation. `taxis` only correlates the
@@ -785,6 +876,30 @@ export class EvoDevoSim {
     return { saturation: d[0], gain: d[1], atWall: d[2], satFitCorr: (sa < 1e-12 || sb < 1e-12) ? 0 : sab / Math.sqrt(sa * sb) };
   }
 
+  /**
+   * Central-place behaviour, measured on whatever episode just ran. Null when
+   * the task is off. `nestShare` is the fraction of the top quartile's fitness
+   * that arrived via a nest deposit — the number that says whether a score
+   * move is central-place foraging or just the residual direct intake.
+   */
+  async centralStats() {
+    if (!(this.cfg.CP_STRENGTH > 0)) return null;
+    const C = this.cfg;
+    const [bank, nt, carry, fit] = await Promise.all([
+      this.banked.data(), this.nestTime.data(), this.carry.data(), this.fitness.data()]);
+    const order = Array.from({ length: C.POP }, (_, i) => i).sort((a, b) => fit[b] - fit[a]);
+    const n = Math.max(1, Math.round(C.POP / 4));
+    let bq = 0, fq = 0;
+    for (let i = 0; i < n; i++) { bq += bank[order[i]]; fq += fit[order[i]]; }
+    let visited = 0;
+    for (let i = 0; i < C.POP; i++) if (nt[i] > 0) visited++;
+    return {
+      banked: mean(bank), carry: mean(carry), nestTime: mean(nt),
+      visitedFrac: visited / C.POP,
+      nestShare: Math.abs(fq) > 1e-9 ? bq / fq : 0,
+    };
+  }
+
   async populationStats() {
     const tf = T();
     const t = tf.tidy(() => tf.stack([
@@ -920,7 +1035,7 @@ export async function diagnose(sim, opts = {}) {
   // The taxis measure is also recorded under the fully scrambled condition,
   // which has the same autocorrelation structure but no real coupling. That run
   // is the empirical null the baseline has to beat.
-  let taxis = null, taxisNull = null, network = null;
+  let taxis = null, taxisNull = null, network = null, central = null;
   try {
     for (let r = 0; r < restarts; r++) {
       const init = sim.makeInit();
@@ -943,8 +1058,11 @@ export async function diagnose(sim, opts = {}) {
             results.baseline.all = fit; taxis = t;
             // Measured here, on a settled network. Taken after restoreState it
             // would read the freshly-reset state, where nothing has railed yet
-            // and saturation always reports ~0.
+            // and saturation always reports ~0. The central-place readout has
+            // the same constraint: the accumulators are per-episode and
+            // restoreState puts back the pre-diagnose ones.
             network = await sim.networkStats();
+            central = await sim.centralStats();
           } else taxisNull = t;
         }
       }
@@ -967,7 +1085,7 @@ export async function diagnose(sim, opts = {}) {
     : null;
 
   return {
-    steps, restarts, base, table, taxis, taxisNull, eliteAdvantage,
+    steps, restarts, base, table, taxis, taxisNull, eliteAdvantage, central,
     drops: Object.fromEntries(conditionList.filter(c => c.key !== 'baseline').map(c => [c.key, drop(c.key)])),
     network: network || await sim.networkStats(),
     population: await sim.populationStats(),
