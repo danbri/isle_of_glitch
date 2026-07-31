@@ -531,3 +531,34 @@ elevates taxis is the natural probe.
 If they compose, that is the strongest result the project has produced. If they
 do not, both changes are hitting one underlying constraint, which is equally
 worth knowing.
+
+### Complementarity refuted: the two mechanisms compete
+
+The distinct-patches reward tested **on top of** clustered relocating food:
+
+| n | score ± se | delta vs food-only | bar | sensing | taxis |
+|---|---|---|---|---|---|
+| food only | 0.2118 ± 0.0103 | — | — | 0.0909 | 0.0123 |
+| + reward, 8 seeds | 0.2076 ± 0.0116 | −0.004 | 0.031 | 0.0314 | 0.0587 |
+| + reward, 16 seeds | 0.2211 ± 0.0095 | +0.009 | 0.028 | 0.0689 | 0.0454 |
+
+No significant change at either sample size, and the component pattern is the
+informative part: **sensing and taxis trade off against each other rather than
+both rising.** Adding the reward pulls taxis up and pushes sensing back toward
+its pre-food-change level; at 16 seeds the split moves but never lands with both
+elevated above their single-mechanism values.
+
+So this is the "one underlying bottleneck" outcome, not the "two bottlenecks"
+one. The mechanisms compete for the same limited capacity rather than stacking.
+
+**This makes network capacity the live suspect.** A 10x10 regulatory matrix
+developing a 12-cell controller over 8 generations appears unable to serve two
+sensory demands at once. That reframes wave 1's null on larger CTRNNs: bigger
+networks measured as no better *because nothing then rewarded a better brain*.
+Now something does, and there is direct evidence of a capacity ceiling — so
+CELLS is worth retesting, and this time there is a reason to expect it to matter.
+
+Implementation note from the same run: a relocated patch must have its `visited`
+flag cleared across the population, or the distinct-patch bonus treats a
+teleported patch as already-found and silently cancels the staleness pressure
+relocation exists to create.
