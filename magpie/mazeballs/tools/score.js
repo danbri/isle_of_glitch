@@ -39,7 +39,11 @@ const seeds = String(opt.seeds || '1,2,3,4').split(',').map(s => Number(s.trim()
 const generations = Number(opt.generations || 12);
 const steps = Number(opt.steps || 400);
 const restarts = Number(opt.restarts || 2);
-const workers = Number(opt.workers || Math.max(1, Math.min(seeds.length, os.cpus().length)));
+// Default to leaving a core free, and cap by seed count. When several research
+// agents share one box each of them should ask for a slice, not the whole
+// machine — EVODEVO_WORKERS lets a fleet launcher set that centrally.
+const workers = Number(opt.workers || process.env.EVODEVO_WORKERS ||
+  Math.max(1, Math.min(seeds.length, os.cpus().length - 1)));
 const passthrough = [];
 for (const [k, v] of Object.entries(opt))
   if (!['seeds','generations','steps','restarts','workers','compare','out','label','quiet'].includes(k))

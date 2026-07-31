@@ -15,6 +15,16 @@ import { useTf } from '../lib/evodevo.js';
 
 export async function initBackend({ prefer = 'auto', quiet = true } = {}) {
   if (quiet) process.env.TF_CPP_MIN_LOG_LEVEL ??= '2';
+  // These runs are parallelised across processes, not within one. The tensors
+  // here are small ([192,12,12]) so intra-op threading buys almost nothing, and
+  // left at its default each process spawns a full thread pool — a sweep or a
+  // fleet of research agents then oversubscribes the box by an order of
+  // magnitude and every run slows down. One thread per process makes the
+  // worker-count arithmetic in score.js and sweep.js mean what it says.
+  // Set before the backend is imported: TensorFlow reads these at load.
+  process.env.TF_NUM_INTRAOP_THREADS ??= '1';
+  process.env.TF_NUM_INTEROP_THREADS ??= '1';
+  process.env.OMP_NUM_THREADS ??= '1';
   const tried = [];
   const order = prefer === 'cpu' ? ['@tensorflow/tfjs']
               : prefer === 'node' ? ['@tensorflow/tfjs-node']
