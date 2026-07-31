@@ -192,3 +192,41 @@ repay its viability cost inside 8 generations. If that is right, then every null
 result in this wave is partly an artifact of the experiment budget rather than a
 fact about the architecture — which would make the protocol itself the thing to
 fix first. This is being tested directly by re-baselining at 24 generations.
+
+### Development mandate — null result
+
+6 experiments: cell-cell diffusion over the cell axis at three strengths, a
+diffusion of the bounded post-tanh secreted signal, a two-rate Turing
+activator/inhibitor pair, and a richer fixed morphogen basis
+(`[1,x,x²]` extended with `sin πx`, `cos πx`). All within noise; all reverted.
+
+The agent's own diagnosis is the useful part: the deltas showed **no
+dose-response** with diffusion strength (0.15 → −0.002, 0.5 → +0.005,
+1.0 → −0.012, not monotonic), which is the signature of noise rather than a
+weak real effect.
+
+### The wave-1 pattern is a power problem
+
+Two mandates, 17 experiments, zero significant effects. That is not seventeen
+independent facts about the architecture — it is one fact about the harness.
+
+With 4 seeds the standard error is ~0.008, so the acceptance bar sits at
+2×combined SE ≈ **0.023**, about 15% of the baseline score. Any architectural
+change worth less than 15% is invisible by construction.
+
+Concretely, the best sensing gain anyone found (0.051 → 0.073) contributes
+0.40 × 0.022 × viability ≈ **0.005** to the score — a quarter of what would be
+needed to register. It was never detectable at this sample size, whatever its
+merit.
+
+Standard error falls as 1/√n, so:
+
+| seeds | SE | detection bar | relative compute |
+|---|---|---|---|
+| 4 | 0.0082 | 0.023 | 1× |
+| 16 | 0.0041 | 0.012 | 4× |
+| 36 | 0.0027 | 0.008 | 9× |
+
+Sixteen seeds halves the smallest detectable effect. This is the concrete reason
+to want more cores: not to make one run faster, but to make small effects
+visible at all. Wave 2 should raise seeds before it raises ambition.
