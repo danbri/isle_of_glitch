@@ -1539,10 +1539,13 @@ Anyone reusing `byQuality` needs a better control than this one has.
 ### Verdict
 
 Nothing adopted. `ODOUR_AMBIGUITY` stays 0, which is verified bit-identical to
-the previous code, and the machinery is retained switched off as apparatus.
+the previous code both before and after the coevolution merge, and the machinery
+is retained switched off as apparatus.
 
-What this rules out is narrow and specific, and it is the first result in this
-project to bear on the *policy* rather than on the architecture. The diagnosis
+What this rules out is narrow and specific, and it bears on the *policy* rather
+than on the architecture — as does the coevolution result below, which was
+measured independently and in parallel, and which reaches the same place from
+the opposite direction (see the header summary). The diagnosis
 that "every lever is null because the strategy is klinokinesis, so change what
 the strategy has to be" is now tested at its own premise, and the premise holds
 only halfway. Removing the affordance for klinokinesis **does** remove
