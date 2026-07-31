@@ -65,6 +65,29 @@ export const DEFAULTS = Object.freeze({
   // network; 0.5 puts the mean max-row-sum near 1.2, where tanh is still steep.
   GAIN: 0.5, SAT_LEVEL: 0.95, WALL_LEVEL: 0.93,
   MUTATION: 0.10, MUTATE_R: 0.16, MUTATE_M: 0.22,
+  // Selection scheme. 'trunc' (default) is a no-op: the original top-ELITES
+  // fitness truncation, unchanged for every existing caller of evolve().
+  // 'niche' is a quality-diversity elite pool: the world is split into
+  // NICHES angular sectors around the origin (by each agent's final-position
+  // bearing, atan2(y,x)) and the fittest agent in each occupied sector
+  // becomes an elite, one per sector — cheap behaviour descriptor, no extra
+  // accumulator needed since position is already tracked. Sectors with no
+  // agent (early generations, or a sector nobody reached) are backfilled by
+  // the next-best globally-fit agent not already chosen, so exactly ELITES
+  // elites exist every generation and every downstream tensor shape (genR/
+  // genM concat, lineage bookkeeping) is unaffected by which scheme ran.
+  // This directly targets the measured failure mode: truncation on raw
+  // fitness collapses reproduction onto whichever single strategy scores
+  // soonest, so founder lineages fall to 1-3 within three generations and
+  // sensing gets discarded. Rewarding one winner per spatial region keeps
+  // the parent pool behaviourally spread instead of fitness-convergent.
+  // 'novelty' is a second QD-adjacent scheme: rank by fitness plus a
+  // behavioural-novelty bonus (mean distance in final-position space to each
+  // agent's NOVELTY_K nearest neighbours in the current population, z-scored
+  // alongside z-scored fitness so the two are comparable regardless of their
+  // raw units) rather than by fitness alone. Both defaults are only consulted
+  // when SELECT is 'novelty'.
+  SELECT: 'trunc', NICHES: 10, NOVELTY_K: 15, NOVELTY_WEIGHT: 1.0,
 });
 
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -545,20 +568,81 @@ export class EvoDevoSim {
     const mask = this.ru(parent.shape).less(this.mutation).toFloat();
     return parent.add(this.rn(parent.shape, 0, scale).mul(mask));
   }
+  /**
+   * Quality-diversity elite selection: one fittest agent per angular sector
+   * of final position (bearing atan2(y,x) around the origin, C.NICHES
+   * sectors), backfilled with the next-fittest agent overall wherever a
+   * sector is empty. Small JS loop over the population (once per generation,
+   * exactly like advanceLineage already does), not per simulation step.
+   * Always returns exactly C.ELITES indices.
+   */
+  async niceEliteIdx() {
+    const C = this.cfg, tf = T();
+    const angleT = tf.tidy(() => tf.atan2(
+      this.pos.slice([0, 1], [-1, 1]).squeeze([1]), this.pos.slice([0, 0], [-1, 1]).squeeze([1])));
+    const [fit, ang] = await Promise.all([this.fitness.data(), angleT.data()]);
+    angleT.dispose();
+    const N = Math.max(1, C.NICHES | 0);
+    const bestIdx = new Array(N).fill(-1), bestFit = new Array(N).fill(-Infinity);
+    for (let i = 0; i < C.POP; i++) {
+      const bin = Math.min(N - 1, Math.max(0, Math.floor((ang[i] + Math.PI) / (2 * Math.PI) * N)));
+      if (fit[i] > bestFit[bin]) { bestFit[bin] = fit[i]; bestIdx[bin] = i; }
+    }
+    const chosen = new Set(), elites = [];
+    for (const i of bestIdx) if (i >= 0 && !chosen.has(i)) { chosen.add(i); elites.push(i); }
+    const order = Array.from({ length: C.POP }, (_, i) => i).sort((a, b) => fit[b] - fit[a]);
+    for (const i of order) {
+      if (elites.length >= C.ELITES) break;
+      if (!chosen.has(i)) { chosen.add(i); elites.push(i); }
+    }
+    return Int32Array.from(elites.slice(0, C.ELITES));
+  }
   async evolve() {
     const C = this.cfg, tf = T();
-    const top = tf.topk(this.fitness, C.ELITES, true);
+    let topIdx, eliteIdxT, disposeElite = () => {};
+    if (C.SELECT === 'niche') {
+      topIdx = await this.niceEliteIdx();
+      eliteIdxT = tf.tensor1d(topIdx, 'int32');
+      disposeElite = () => eliteIdxT.dispose();
+    } else if (C.SELECT === 'novelty') {
+      // k-nearest-neighbour novelty in final-position space, z-scored
+      // alongside z-scored fitness so the two combine on a common scale
+      // regardless of their raw units, then truncated on the sum. A
+      // pure-fitness optimum is exactly the attractor this system gets stuck
+      // in; rewarding agents that end up somewhere the rest of the
+      // population didn't is a direct, structural way to keep exploring it.
+      const k = Math.max(1, Math.min(C.POP - 1, C.NOVELTY_K | 0));
+      const combined = tf.tidy(() => {
+        const diff = this.pos.expandDims(1).sub(this.pos.expandDims(0));
+        const d2 = diff.square().sum(2).add(tf.eye(C.POP).mul(1e6)); // self excluded
+        const nearest = tf.topk(d2.mul(-1), k, false);
+        const novelty = nearest.values.mul(-1).sqrt().mean(1);
+        const fm = tf.moments(this.fitness), nm = tf.moments(novelty);
+        const fz = this.fitness.sub(fm.mean).div(fm.variance.sqrt().add(1e-6));
+        const nz = novelty.sub(nm.mean).div(nm.variance.sqrt().add(1e-6));
+        return fz.add(nz.mul(C.NOVELTY_WEIGHT));
+      });
+      const top = tf.topk(combined, C.ELITES, true);
+      topIdx = await top.indices.data();
+      eliteIdxT = top.indices;
+      disposeElite = () => { top.values.dispose(); top.indices.dispose(); combined.dispose(); };
+    } else {
+      const top = tf.topk(this.fitness, C.ELITES, true);
+      topIdx = await top.indices.data();
+      eliteIdxT = top.indices;
+      disposeElite = () => { top.values.dispose(); top.indices.dispose(); };
+    }
     const choice = this.ru([C.POP - C.ELITES], 0, C.ELITES, 'int32');
-    const [topIdx, choiceIdx] = await Promise.all([top.indices.data(), choice.data()]);
+    const choiceIdx = await choice.data();
     tf.tidy(() => {
-      const eliteR = tf.gather(this.genR, top.indices), eliteM = tf.gather(this.genM, top.indices);
-      const parentIdx = tf.gather(top.indices, choice);
+      const eliteR = tf.gather(this.genR, eliteIdxT), eliteM = tf.gather(this.genM, eliteIdxT);
+      const parentIdx = tf.gather(eliteIdxT, choice);
       const childrenR = this.mutateTensor(tf.gather(this.genR, parentIdx), C.MUTATE_R);
       const childrenM = this.mutateTensor(tf.gather(this.genM, parentIdx), C.MUTATE_M);
       this.genR.assign(tf.concat([eliteR, childrenR], 0).clipByValue(-3.2, 3.2));
       this.genM.assign(tf.concat([eliteM, childrenM], 0).clipByValue(-4, 4));
     });
-    top.values.dispose(); top.indices.dispose(); choice.dispose();
+    disposeElite(); choice.dispose();
     this.advanceLineage(topIdx, choiceIdx);
     this.gen++; this.selected = 0;
     await this.develop(); this.resetBodies();
@@ -821,21 +905,56 @@ export async function diagnose(sim, opts = {}) {
   };
 }
 
-/** Evolve for `generations`, optionally reporting progress. Returns the sim. */
+/**
+ * Evolve for `generations`, optionally reporting progress. Returns the sim.
+ *
+ * `opts.spawns` (default 1, a no-op): evaluate each generation over this many
+ * independent fresh-spawn episodes and select on the mean fitness instead of
+ * a single episode. Truncation (or niche) selection on one episode is
+ * partly selecting on spawn-position luck rather than genotype — measured
+ * in wave 1, top-10 mean distance to the nearest food patch 0.02-0.03
+ * against a population median of 0.12. Averaging independent spawns before
+ * selection acts averages that luck out. `evolve()` itself is untouched; it
+ * still just acts on whatever `sim.fitness` (and, for niche selection,
+ * `sim.pos`) currently holds, so this composes with either selection scheme.
+ */
 export async function evolveFor(sim, generations, opts = {}) {
   // `curriculum(g, generations)` returns a reseedWorld() overrides object for
   // generation g (0-indexed) — a difficulty ramp that hardens the world as
   // evolution proceeds, so the population is not wiped out before it can
   // adapt. Reseeding regenerates the whole layout each call, so it also
   // exercises the same "no memorised geography" pressure as relocation, just
-  // at generation granularity instead of within an epoch.
-  const { onGeneration = null, yieldEvery = 0, curriculum = null } = opts;
+  // at generation granularity instead of within an epoch. Applied once per
+  // generation, before the spawn loop below, so every spawn in a generation
+  // sees the same (possibly ramped) layout.
+  const { onGeneration = null, yieldEvery = 0, curriculum = null, spawns = 1 } = opts;
+  const nSpawns = Math.max(1, spawns | 0);
   for (let g = 0; g < generations; g++) {
     if (curriculum) sim.reseedWorld(curriculum(g, generations));
-    sim.resetBodies();
-    for (let i = 0; i < sim.cfg.EPOCH_STEPS; i++) {
-      sim.step();
-      if (yieldEvery && (i % yieldEvery) === yieldEvery - 1) await T().nextFrame();
+    let fitAccum = null, posAccum = null;
+    for (let s = 0; s < nSpawns; s++) {
+      sim.resetBodies();
+      for (let i = 0; i < sim.cfg.EPOCH_STEPS; i++) {
+        sim.step();
+        if (yieldEvery && (i % yieldEvery) === yieldEvery - 1) await T().nextFrame();
+      }
+      if (nSpawns > 1) {
+        const f = sim.fitness.clone(), p = sim.pos.clone();
+        if (fitAccum) {
+          const nf = fitAccum.add(f), np = posAccum.add(p);
+          fitAccum.dispose(); f.dispose(); posAccum.dispose(); p.dispose();
+          fitAccum = nf; posAccum = np;
+        } else { fitAccum = f; posAccum = p; }
+      }
+    }
+    if (nSpawns > 1) {
+      const avgF = fitAccum.div(nSpawns), avgP = posAccum.div(nSpawns);
+      fitAccum.dispose(); posAccum.dispose();
+      sim.fitness.assign(avgF); avgF.dispose();
+      // sim.pos feeds the niche descriptor (bearing of final position); the
+      // mean across spawns is the fair analogue of averaging fitness, and
+      // evolve() reads it before resetBodies() zeroes it again.
+      sim.pos.assign(avgP); avgP.dispose();
     }
     // Read the epoch's result before evolving: evolve() ends by resetting the
     // bodies, which zeroes fitness, so reading afterwards always reports 0.

@@ -18,6 +18,7 @@ const args = parseArgs(process.argv.slice(2), {
   generations: 10, seed: 1, gain: 0.5, mutation: 0.10,
   steps: 600, restarts: 3, elites: 10, pop: 192,
   consume: 0.40, regrow: 0.09, epoch: 1450,
+  select: 'trunc', niches: 10, spawns: 1, novk: 15, novweight: 1.0,
   out: '', import: '', backend: 'auto', quiet: false, label: '',
   // Environment-mandate knobs. Defaults match lib/evodevo.js DEFAULTS (the
   // accepted 9-cluster + relocate-on-depletion world); pass --clusters 0
@@ -43,6 +44,7 @@ const sim = new EvoDevoSim({
     GAIN: args.gain, MUTATION: args.mutation,
     FOOD_CLUSTERS: args.clusters, FOOD_CLUSTER_SIGMA: args.clusterSigma,
     FOOD_SENSE_SIGMA2: args.senseSigma2, FOOD_RELOCATE_THRESH: args.relocateThresh,
+    SELECT: args.select, NICHES: args.niches, NOVELTY_K: args.novk, NOVELTY_WEIGHT: args.novweight,
   },
 });
 await sim.initialise();
@@ -64,6 +66,7 @@ const curriculum = args.curClustersStart > 0 || args.curClustersEnd > 0
 
 const t0 = Date.now();
 await evolveFor(sim, args.generations, {
+  spawns: args.spawns,
   onGeneration: ({ generation, best }) =>
     log(`[gen ${String(generation).padStart(3)}] best ${best.toFixed(3)}  (${((Date.now() - t0) / 1000).toFixed(0)}s)`),
   curriculum,
@@ -81,6 +84,7 @@ const result = {
     clusters: args.clusters, clusterSigma: args.clusterSigma, senseSigma2: args.senseSigma2,
     relocateThresh: args.relocateThresh,
     curClustersStart: args.curClustersStart, curClustersEnd: args.curClustersEnd,
+    select: args.select, niches: args.niches, spawns: args.spawns,
   },
   runtimeSeconds: +((Date.now() - t0) / 1000).toFixed(1),
   backend: `${pkg}/${backend}`,
