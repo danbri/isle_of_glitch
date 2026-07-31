@@ -40,6 +40,28 @@ hardware could support.** Experiments that make the task demand something
 klinokinesis structurally cannot do are the live direction; experiments that
 give the organism more capacity are, on this evidence, predicted null.
 
+**What a second species did.** A predator population (`COEVO`, default off)
+removes the designer from the difficulty ceiling. Measured with an ancestral
+tournament rather than against a fixed world — because in an arms race a fixed
+yardstick reports nothing by construction — the result over 4 seeds × 32
+generations is a **one-sided race**: predator capability against frozen
+ancestral prey rose +0.396 against a bar of 0.290, while prey vulnerability
+against frozen ancestral predators did not move (−0.032 against a bar of 0.145)
+and prey foraging did not move either, so the prey null is real and not the
+"stopped eating" artifact. Not disengagement (the gradient stayed intact
+throughout), not cycling (the age-gap profile is transitive). **The prey never
+developed evasion**: blinding their predator channel does not change how close
+they get to predators, on both seeds tested. The asymmetry has an obvious
+suspect — a predator's entire fitness is predation, whereas a prey's is
+foraging *minus* predation, so the incumbent klinokinetic strategy still wins
+by not changing.
+
+**A measurement lesson that generalises.** The same phenomenon read +0.143
+against a bar of 0.301 — a null — when scored head-to-head against the
+contemporary opponent, and +0.396 against 0.290 when scored against the whole
+archive of frozen ancestors. Averaging over an archive is worth roughly 3× in
+power here. Never score a coevolutionary run on same-generation performance.
+
 **What is known to be mismeasured.** `sensing` uses scramble ablation, which
 substitutes another agent's sensor values and so injects misleading input as
 well as removing information. Mean-replacement (`blindConst`) removes the
@@ -1358,3 +1380,267 @@ shape names the failure mode:
 
 All three are real results and worth reporting as such. A flat `score.js`
 reported as a null is not.
+
+## Coevolution: a one-sided arms race, and an instrument that can say so
+
+Every task posed to this simulation so far was designed — by a human or by an
+agent — so its difficulty ceiling was whatever the designer imagined, and every
+one of them turned out to be satisfiable by klinokinesis. The alternative is a
+second species: the opposing population raises the bar continuously and nobody
+has to invent the next rung.
+
+`COEVO` (default off, verified byte-identical to the previous code) adds a
+predator population alongside the prey. Both species sense the other through
+the same Gaussian field the food sense uses — two body-frame bearing channels
+plus a mass channel, appended after the optional nest block — and one shared
+contact kernel transfers reward: the predator gains `COEVO_PRED_GAIN` per
+second of contact, the prey loses `COEVO_PREY_LOSS`. Predators cannot eat or
+deplete food, so the race is not confounded with resource competition. The two
+populations are two `EvoDevoSim` instances stepped in lockstep by `coevoStep()`,
+which clones both position tensors before either steps so neither side gets a
+half-step of precognition.
+
+### The measurement problem comes first, because the obvious measurement lies
+
+In a genuine arms race both sides improve *relative to each other*, so absolute
+performance against any fixed yardstick stays flat while both species are
+improving as fast as they can. `score.js` measures against a fixed world. **It
+was going to report NO SIGNIFICANT CHANGE through the entire interesting
+period, and filing that as a null would have been the worst available error.**
+
+So `tools/tournament.js` was built before the species was tuned. It snapshots
+both populations every N generations and cross-evaluates every predator
+generation against every prey generation on ONE fixed world from ONE fixed set
+of spawns, so a difference between cells is the genome pair and nothing else.
+This is the CIAO / master-tournament construction (Cliff & Miller; Rosin &
+Belew; Floreano & Nolfi). The measured quantity is integrated contact-seconds —
+one physical quantity read identically from both sides, which is what puts a
+predator generation and a prey generation on a single axis.
+
+**Both marginals are reported separately and never collapsed into a head-to-head
+series.** A flat head-to-head is equally consistent with (prey improved,
+predators flat), (prey flat, predators degenerated), (both improved) and (both
+degenerated). Only the two cross-generational curves distinguish those, and two
+of them are opposite results. A frozen ancestor is an absolute yardstick the
+Red Queen cannot move, which is exactly what the fixed-world score cannot give.
+
+`preyForageUnderThreat` is carried through every table because **"prey learned
+to evade" and "prey stopped eating" produce the same contact number** and are
+opposite results.
+
+### Sizing the world: the generation-0 pilot caught a disengagement built into the arena
+
+At equal population densities the unevolved contact rate is already saturated —
+**100% of prey caught before any evolution at all**, because over a 9-second
+episode every prey passes within the capture kernel of some predator by chance.
+That would have been a disengagement caused by the arena rather than by the
+dynamics, and it would have looked like a result. Making predators the rarer
+species (`predPop` 48 against 192 prey) and narrowing the capture kernel to
+`COEVO_CAPTURE_SIGMA2` 0.0012 gives unevolved rates with real headroom in both
+directions: prey contact 0.83 ± 1.39 with the best quartile at 0.011, predator
+contact 2.55 ± 2.09 with the top quartile at 5.49.
+
+This is the third time a generation-0 run has paid for itself in this document.
+
+### The result: predators improved, prey did not
+
+4 seeds × 32 generations, snapshots every 4 generations, an 81-cell tournament
+grid per seed at 500 steps per cell. Standard errors are across seeds.
+
+| gen | predator capability | prey vulnerability | prey forage | head-to-head |
+|---|---|---|---|---|
+| | *rising = better* | *FALLING = better* | | |
+| 0 | 2.196 ± 0.097 | 0.847 ± 0.043 | 0.988 ± 0.042 | 2.363 ± 0.079 |
+| 8 | 2.452 ± 0.156 | 0.842 ± 0.033 | 0.954 ± 0.024 | 2.649 ± 0.207 |
+| 16 | 2.511 ± 0.093 | 0.843 ± 0.048 | 0.996 ± 0.020 | 2.501 ± 0.207 |
+| 24 | 2.659 ± 0.104 | 0.796 ± 0.037 | 0.971 ± 0.039 | 2.597 ± 0.086 |
+| 32 | 2.593 ± 0.108 | 0.815 ± 0.058 | 1.051 ± 0.064 | 2.506 ± 0.128 |
+
+Endpoint tests at the usual 2×combined-SE bar, and per-seed trend slopes pooled
+as one observation per seed:
+
+| series | first → last | delta | bar | verdict | slope ± se |
+|---|---|---|---|---|---|
+| predator capability | 2.196 → 2.593 | **+0.396** | 0.290 | **IMPROVED** | +8.25e-3 ± 1.94e-3 **RISING** |
+| prey vulnerability | 0.847 → 0.815 | −0.032 | 0.145 | no change | −1.91e-3 ± 2.47e-3 flat |
+| prey forage | 0.988 → 1.051 | +0.063 | 0.153 | no change | +1.02e-3 ± 2.53e-3 flat |
+| head-to-head | 2.363 → 2.506 | +0.143 | 0.301 | no change | −2.76e-3 ± 5.02e-3 flat |
+
+**The predator population got measurably better at catching frozen ancestral
+prey. The prey population did not get harder to catch.** Both statements come
+from the same 81 cells, and neither is visible in the head-to-head column.
+
+That last point is the methodological payoff and deserves to be stated plainly.
+The head-to-head diagonal moved +0.143 against a bar of 0.301 — *the same
+underlying phenomenon*, reported as a null, purely because one pairing per
+generation carries three times the noise of a marginal averaged over nine
+frozen opponents. **A coevolutionary experiment scored on same-generation
+performance would have concluded that nothing happened.** It is not that the
+diagonal is biased; it is that it is underpowered by construction, and no
+number of seeds fixes the fact that it is asking the wrong question.
+
+### Which failure mode: not disengagement, not cycling
+
+All three classic failure modes were checked explicitly, because the shape of
+these curves is what names them.
+
+**Not disengagement.** The gradient never vanished. Prey contact spread stays
+1.50 → 1.37 across the run, the best quartile of prey remains essentially
+uncaught (0.001–0.002), and the fraction of prey ever contacted holds at
+79–81% from generation 0 to generation 32. Selection had something to act on
+throughout; the prey simply did not act on it.
+
+**Not cycling.** The age-gap profile is monotone within noise in both
+directions — predators do steadily *better* against older prey (2.547 at gap 0
+to 2.654 at gap 32) and prey are caught steadily *less* by older predators
+(0.843 to 0.707). The worst non-monotone drop is 0.036 on the predator side and
+0.050 on the prey side, both smaller than the seed-level standard errors of
+~0.05–0.07. There is no rock-paper-scissors here: the predator improvement is
+transitive and it accumulates.
+
+**Not a mediocre stable state either**, since one side kept improving for 32
+generations without levelling off. What this is, is a **one-sided arms race**.
+
+The prey-side flatness is a genuine null and not the "stopped eating" artifact:
+`preyForage` is flat on the same seeds over the same span, so the prey did not
+buy safety by refusing to forage. They neither evaded better nor foraged worse.
+They did not change.
+
+Because cycling was not the failure mode, the **hall of fame was not adopted**.
+It is implemented (`coevolveFor`'s `hof` option, splitting each generation into
+a sub-epoch against the current opponent and one against a randomly drawn
+ancestor) and left switched off. It is a stabiliser against intransitivity, and
+this run has no intransitivity to stabilise; running it here would have cost
+double the compute to fix a problem the tournament says does not exist.
+
+### The prey never developed evasion, and that is the headline
+
+Evasion is structurally **not** klinokinesis — you cannot escape a pursuer by
+turning more when a food smell fades. It requires responding to something about
+the predator. So `tools/policy.js` gained a `--coevo` mode that traces the prey
+under actual threat and a `--channels opponent` setting that points the entire
+existing analysis — lagged mutual information against a circular-shift surrogate
+null, conditional-mean response curves, the klinokinesis test on the sign of
+change in the stimulus — at the predator instead of at food. `--ablate opponent`
+blinds only the predator channels.
+
+Seed 1 looked, briefly, like the first non-klinokinetic policy in this project:
+
+- mutual information between predator bearing and turn in excess of the
+  motor-dynamics null at short lags (+0.0026 bits at lag 0, decaying to zero by
+  lag 13), which is the right shape for a real sensory coupling;
+- a **non-monotone** conditional response — turn rising 0.421 → 0.519 across the
+  middle bearing bins and falling to 0.400 at the extreme — the same inverted-U
+  that Pearson correlation reads as noise and that this document already
+  documents for the food channel;
+- a highly significant *thrust* modulation by the sign of change in sensed
+  predator mass, −0.047 ± 0.006, i.e. slowing when a predator closes.
+
+**None of it replicated on seed 2.** The MI excess is −0.0002 (nothing), the
+thrust modulation flips sign to +0.020 ± 0.004, the turn delta goes from
++0.0008 ± 0.0072 to +0.0269 ± 0.0075, and the conditional response curve is
+flat at −1.02 — a population with a fixed turn bias rather than any response to
+bearing. Sign-flipping between seeds on effects that are individually many
+standard errors from zero is precisely the signature this document has recorded
+before for noise dressed as a weak real effect.
+
+The measure that *does* agree across seeds is the behavioural one, and it is
+null in both:
+
+| seed | predator-proximity delta (channel intact − mean-replaced) |
+|---|---|
+| 1 | −0.0066 ± 0.0169 |
+| 2 | +0.0041 ± 0.0097 |
+
+**Removing the prey's ability to see predators does not change how close they
+get to predators.** The channel is not load-bearing. Two independent
+instruments — an ancestral tournament over 4 seeds and a policy analysis over 2
+— agree that the prey did not learn to evade.
+
+### `score.js`, and why it is the wrong instrument here
+
+Reported as secondary context. The coevolved prey, diagnosed against a fixed
+world with no predators present, 4 seeds:
+
+| | score ± se | sensing | taxis | generalisation | selection | diversity | forage |
+|---|---|---|---|---|---|---|---|
+| generation 0 | 0.2579 ± 0.0059 | 0.033 | 0.004 | 0.936 | 0.024 | **1.000** | 0.549 |
+| generation 32 | 0.1864 ± 0.0108 | 0.054 | 0.024 | 1.000 | 0.000 | **0.100** | 0.448 |
+
+Delta −0.0715 against a bar of 0.0246: `score.js` calls the whole thing a
+**REGRESSION**. Read the components before believing it. The entire move is
+`diversity`, 1.000 → 0.100, and that is an artifact of the generation-0 anchor:
+at generation 0 every agent is its own founder so `eliteFounders / ELITES` is
+pinned at 1.0 by construction, and it can only fall thereafter. This document
+already records that trap — "founder lineages can only fall" — and here it
+supplies 0.10 × (1.000 − 0.100) = 0.090 of a 0.072 total decline, i.e. more
+than the whole of it. The two capability terms went the *other* way: `sensing`
+0.033 → 0.054 and `taxis` 0.004 → 0.024, with viability at 1.0 throughout.
+
+So the honest summary of the fixed-world score is: no capability loss, a small
+real decline in foraging (0.549 → 0.448), a structural collapse in lineage
+diversity under 32 generations of truncation selection, and **no visibility
+whatsoever into the thing that actually changed.** The opponent channels read
+zero when no predators are stepped alongside, so this measurement cannot see
+the predator improvement even in principle.
+
+**Where the two instruments differ, believe the tournament.** Not because it is
+newer, but because of what each is constructed to answer. `score.js` asks "how
+capable is this population against a fixed world" — a well-posed question, but
+one whose answer here is dominated by a diversity term that has nothing to do
+with the arms race, and which would have been filed as "coevolution makes the
+population worse" by anyone reading the total. The tournament asks "is this
+generation better than its own ancestors at the thing it is under selection
+for", which is the only question with a defined answer in a coevolutionary
+setting. The tournament detecting a predator gain that `score.js` cannot see is
+not a contradiction; it is the two instruments correctly answering two
+different questions, and only one of those questions is about the arms race.
+
+### Verdict
+
+Nothing is adopted as a trunk default. `COEVO` stays off, and the default
+single-species path is verified byte-identical to the previous code (`run.js`
+and `policy.js` both, same seed, same report).
+
+What this rules in: **a designer-free difficulty ramp does work, on the side
+that has a clean gradient.** The predator population improved transitively and
+without cycling for 32 generations against an opponent nobody designed, which
+is the first time anything in this project has improved continuously against a
+moving target. The mechanism is not mysterious — a predator's whole fitness is
+contact, so its selection signal is the tournament's observable itself.
+
+What this does **not** rule out: prey evasion in general. It rules out prey
+evasion *as posed here*, and the asymmetry points at why. A predator's entire
+income is predation. A prey's fitness is foraging **minus** predation, so its
+selection signal is a difference of two comparable terms, and the cheapest way
+to raise it is to keep foraging exactly as before — which is what a
+klinokinetic prey already does well. The arms race was symmetric in mechanism
+and deeply asymmetric in *how much of each species' fitness the race actually
+controlled*.
+
+Three things a follow-up should change before concluding anything about prey:
+
+- **Make predation the dominant term in prey fitness**, by raising
+  `COEVO_PREY_LOSS` until contact explains most of the fitness variance, and
+  verify that with a variance decomposition rather than by assumption. The
+  present run has the two terms at comparable magnitude, which is exactly the
+  regime where the incumbent strategy wins by not changing.
+- **Check whether evasion is reachable at all** with a control arm, the way the
+  central-place experiment failed to. The obvious one: a hand-built or
+  strongly-rewarded evasive prey, to establish that this world *can* be escaped
+  in before a null on the evolved arm means anything. The central-place section
+  above is the cautionary tale — a null on the experimental arm carries no
+  information when the control never solved the task either.
+- **Give the predators a reason to specialise.** Predator capability rose while
+  prey stayed still, which means predators were climbing a stationary
+  landscape, not racing. That is the least interesting way to get a rising
+  curve, and it is worth knowing whether the curve survives a prey population
+  that is actually moving.
+
+One methodological note worth carrying forward regardless of the biology: the
+tournament marginal detected an effect at +0.396 against a bar of 0.290 that
+the head-to-head diagonal reported as +0.143 against a bar of 0.301. **Averaging
+each generation over the whole archive of frozen opponents, rather than scoring
+it against its contemporary, is worth roughly a factor of three in statistical
+power on this system** — which matters a great deal somewhere seed spread is ten
+times parameter spread.

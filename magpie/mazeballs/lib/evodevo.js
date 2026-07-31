@@ -120,6 +120,47 @@ export const DEFAULTS = Object.freeze({
   //                    before a null on the no-sensor arm means anything.
   CP_STRENGTH: 0, CP_NEST_MULT: 2.5, CP_NEST_RADIUS: 0.14,
   CP_CARRY_DECAY: 0.06, CP_DEPOSIT_RATE: 6.0, CP_NEST_SENSOR: false,
+  // ------------------------------------------------------------- coevolution
+  // Two-species world. Off by default (COEVO false), in which case every
+  // expression guarded by it is skipped, SENSORS stays 8, and the sim is
+  // bit-identical to the single-species code.
+  //
+  // Rationale (see RESEARCH.md): every task posed to this simulation so far was
+  // designed by a human or an agent, so its difficulty ceiling was whatever the
+  // designer imagined, and every one of them was satisfiable by klinokinesis.
+  // A second species removes the designer from the loop — the opposing
+  // population raises the bar continuously and nobody has to invent the next
+  // rung. Evasion in particular is structurally *not* klinokinesis: you cannot
+  // escape a pursuer by turning more when a smell fades.
+  //
+  //   COEVO_ROLE      'prey' eats food and loses on contact; 'predator' gains
+  //                   only on contact and (by default) cannot eat food at all.
+  //                   The two roles run as two EvoDevoSim instances stepped in
+  //                   lockstep by coevoStep(), each holding the other's
+  //                   positions for the duration of its own step.
+  //   COEVO_SENSE_SIGMA2  width of the opponent-sensing Gaussian, mirroring
+  //                   FOOD_SENSE_SIGMA2 so neither side gets a sharper world
+  //                   model than the food sense already grants.
+  //   COEVO_CAPTURE_SIGMA2  width of the contact kernel that transfers reward.
+  //                   Deliberately wider than the food-eating kernel (0.0018)
+  //                   because prey, unlike a patch, move.
+  //   COEVO_PRED_GAIN  predator fitness per second at full contact.
+  //   COEVO_PREY_LOSS  prey fitness per second at full contact. Larger than the
+  //                   gain: being caught has to cost more than a missed meal or
+  //                   there is no selection pressure to evade.
+  //   COEVO_PRED_ENERGY / COEVO_PREY_ENERGY  the same transfer in energy,
+  //                   mirroring food's .42 and the toxin's .62.
+  //   COEVO_PRED_FORAGE  fraction of normal food intake a predator receives.
+  //                   0 makes predation the predator's only income, which is
+  //                   what keeps the arms race honest; raising it is the knob
+  //                   that buys a predator population insurance against
+  //                   starvation-disengagement, at the cost of weakening the
+  //                   pressure to actually hunt.
+  COEVO: false, COEVO_ROLE: 'prey',
+  COEVO_SENSE_SIGMA2: 0.050, COEVO_CAPTURE_SIGMA2: 0.0040,
+  COEVO_PRED_GAIN: 1.0, COEVO_PREY_LOSS: 1.5,
+  COEVO_PRED_ENERGY: 0.42, COEVO_PREY_ENERGY: 0.62,
+  COEVO_PRED_FORAGE: 0,
 });
 
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -184,6 +225,13 @@ export function makeWorld(cfg = DEFAULTS, rng = makeRng(0x8f3d20a1)) {
 //   3,4 toxin direction (body frame)  5 toxin mass
 //   6   wall/obstacle proximity       7 own energy
 //   8,9 nest direction (body frame)   — present only when CP_NEST_SENSOR
+// then, appended after whichever of the above exist:
+//   opponent direction (body frame) x2, opponent mass x1 — only when COEVO
+//
+// The optional blocks are appended in a fixed order (nest, then opponent), so
+// the indices of a group depend on the configuration. `sensorGroups(cfg)` is
+// the single place that resolves them; SENSOR_GROUPS below keeps the static
+// base layout for callers that only need the unconditional channels.
 export const SENSOR_GROUPS = Object.freeze({
   food: [0, 1, 2], toxin: [3, 4, 5], wall: [6], energy: [7], nest: [8, 9],
   // Split of the food sense. Every mechanism that has raised `sensing` left
@@ -194,21 +242,49 @@ export const SENSOR_GROUPS = Object.freeze({
   foodDir: [0, 1], foodMass: [2],
 });
 
+/**
+ * Resolve group -> channel indices for a given configuration. The optional
+ * blocks are appended in the same order `step()` pushes them, so this cannot
+ * drift out of step with the sensor vector unless both are edited.
+ */
+export function sensorGroups(cfg = DEFAULTS) {
+  const g = { ...SENSOR_GROUPS };
+  let next = 8;
+  if (cfg.CP_NEST_SENSOR) { g.nest = [next, next + 1]; next += 2; }
+  else delete g.nest;
+  if (cfg.COEVO) {
+    g.opponent = [next, next + 1, next + 2];
+    g.opponentDir = [next, next + 1];
+    g.opponentMass = [next + 2];
+    next += 3;
+  }
+  return g;
+}
+
 export function keepAllBut(groups, cfg = DEFAULTS) {
   const m = new Array(cfg.SENSORS).fill(1);
+  const G = sensorGroups(cfg);
   // A group whose channels do not exist in this configuration (nest, when the
   // control arm is off) is simply skipped — otherwise the mask would be longer
   // than the sensor vector and the ablation would silently measure nothing.
-  for (const g of groups) for (const i of SENSOR_GROUPS[g]) if (i < cfg.SENSORS) m[i] = 0;
+  for (const g of groups) for (const i of (G[g] || [])) if (i < cfg.SENSORS) m[i] = 0;
   return m;
 }
 
 /** The ablation conditions the diagnostics run. */
 export function conditions(cfg = DEFAULTS) {
-  // `blind` must scramble every channel that exists, nest included, or the
-  // sensing component reads a population that still has its way home.
-  const all = cfg.CP_NEST_SENSOR ? ['food','toxin','wall','energy','nest']
-                                 : ['food','toxin','wall','energy'];
+  // `blind` must scramble every channel that exists — nest and opponent
+  // included — or the sensing component reads a population that still has its
+  // way home, or still knows where the predators are.
+  const all = ['food','toxin','wall','energy'];
+  if (cfg.CP_NEST_SENSOR) all.push('nest');
+  if (cfg.COEVO) all.push('opponent');
+  const extra = [];
+  if (cfg.COEVO) extra.push(
+    { key:'noOpponent', label:'opponent sense scrambled', mask:keepAllBut(['opponent'], cfg),
+      note:'the other species becomes invisible' },
+    { key:'noOpponentDir', label:'opponent bearing scrambled', mask:keepAllBut(['opponentDir'], cfg),
+      note:'direction to the other species lost, mass kept' });
   return [
     { key:'baseline', label:'baseline',              note:'same genomes, fresh spawns' },
     { key:'blind',    label:'all senses scrambled',  mask:keepAllBut(all, cfg), note:'is the loop closed at all?' },
@@ -217,7 +293,11 @@ export function conditions(cfg = DEFAULTS) {
     { key:'noWall',   label:'wall sense scrambled',  mask:keepAllBut(['wall'], cfg),  note:'obstacle/edge cue removed' },
     { key:'noFoodDir',  label:'food bearing scrambled', mask:keepAllBut(['foodDir'], cfg),  note:'direction lost, mass kept' },
     { key:'noFoodMass', label:'food mass scrambled',    mask:keepAllBut(['foodMass'], cfg), note:'mass lost, direction kept' },
-    { key:'blindConst', label:'all senses -> population mean', mask:keepAllBut(['food','toxin','wall','energy'], cfg), constant:true, note:'information removed, no noise injected' },
+    // Uses the same `all` list as `blind`, so the scramble-vs-mean-replacement
+    // pair compares like with like. On the default configuration `all` is
+    // exactly the four base groups, so this is unchanged from before.
+    { key:'blindConst', label:'all senses -> population mean', mask:keepAllBut(all, cfg), constant:true, note:'information removed, no noise injected' },
+    ...extra,
     { key:'lesion',   label:'recurrence lesioned',   lesion:true, note:'off-diagonal W zeroed; reactive only' },
     { key:'novel',    label:'novel field layout',    novel:true,  note:'never selected on this layout' },
   ];
@@ -296,7 +376,13 @@ export class EvoDevoSim {
   // raw food-mass sense before its tanh squashing, the turn and thrust motor
   // outputs, this step's food intake, post-step energy, squared distance to
   // the nearest food source, and post-step world position.
-  static TRACE_CHANNELS = ['fbFwd','fbLat','foodMass','turn','thrust','eat','energy','minFoodD2','posX','posY'];
+  // The last three are the coevolution channels: the opponent's bearing in the
+  // body frame and the sensed opponent mass, i.e. exactly the quantities a
+  // pursuit or an evasion policy would have to be a function of. They are
+  // present unconditionally and read zero when COEVO is off, so tools that
+  // index TRACE_CHANNELS by name (tools/policy.js) work either way.
+  static TRACE_CHANNELS = ['fbFwd','fbLat','foodMass','turn','thrust','eat','energy','minFoodD2','posX','posY',
+                           'pbFwd','pbLat','oppMass'];
   /**
    * @param {object} opts
    * @param {object} [opts.config]  overrides merged over DEFAULTS
@@ -309,7 +395,17 @@ export class EvoDevoSim {
     // asked of the caller so SENSORS, sensorEmb, Win and the ablation masks
     // cannot disagree with each other.
     if (merged.CP_NEST_SENSOR) merged.SENSORS = merged.SENSORS + 2;
+    // Two direction channels plus one mass channel for the other species,
+    // appended after the nest block — mirroring the food sense exactly, so
+    // neither role is handed a richer view of its opponent than of its food.
+    if (merged.COEVO) merged.SENSORS = merged.SENSORS + 3;
     this.cfg = Object.freeze(merged);
+    // Set by coevoStep() for the duration of a step: the opposing population's
+    // positions, [N_opponent, 2]. Null outside a coevolutionary epoch, in which
+    // case the opponent channels read zero ("nothing in sight") rather than
+    // changing the sensor vector's length — diagnose() and policy.js run the
+    // population with no opponent present and must still match Win's shape.
+    this.opponentPos = null;
     this.seed = opts.seed === undefined ? 1 : opts.seed;
     this.rng = makeRng(this.seed);
     this.worldRng = makeRng(this.seed ^ 0x5bf03635);
@@ -370,6 +466,17 @@ export class EvoDevoSim {
     this.carry = this.v(tf.zeros([C.POP]));
     this.banked = this.v(tf.zeros([C.POP]));
     this.nestTime = this.v(tf.zeros([C.POP]));
+    // Coevolution bookkeeping, per episode. Zero and inert unless COEVO.
+    //   contactAcc  integrated contact with the opposing species, in
+    //               contact-seconds. This is the tournament's primary
+    //               observable: for a predator it is prey caught, for a prey it
+    //               is times caught, and it is the *same physical quantity*
+    //               measured from both sides, which is what makes a cross-
+    //               generational matrix comparable at all.
+    //   forageAcc   integrated food intake, so a prey population that survives
+    //               by refusing to eat can be told apart from one that evades.
+    this.contactAcc = this.v(tf.zeros([C.POP]));
+    this.forageAcc = this.v(tf.zeros([C.POP]));
   }
 
   async initialise() { await this.develop(); this.resetBodies(); await this.warmup(); }
@@ -389,7 +496,7 @@ export class EvoDevoSim {
   dispose() {
     for (const k of ['food','haz','obs','obsR','cellPos','morph','distKernel','eye','sensorEmb',
       'genR','genM','bias','tau','W','Win','Wout','expr','color','pos','vel','angle','omega',
-      'energy','fitness','neural','foodStock','acc','carry','banked','nestTime'])
+      'energy','fitness','neural','foodStock','acc','carry','banked','nestTime','contactAcc','forageAcc'])
       if (this[k] && !this[k].isDisposed) this[k].dispose();
   }
 
@@ -459,6 +566,8 @@ export class EvoDevoSim {
       this.carry.assign(tf.zerosLike(this.carry));
       this.banked.assign(tf.zerosLike(this.banked));
       this.nestTime.assign(tf.zerosLike(this.nestTime));
+      this.contactAcc.assign(tf.zerosLike(this.contactAcc));
+      this.forageAcc.assign(tf.zerosLike(this.forageAcc));
     });
     this.stepNo = 0;
   }
@@ -482,13 +591,15 @@ export class EvoDevoSim {
       this.carry.assign(tf.zerosLike(this.carry));
       this.banked.assign(tf.zerosLike(this.banked));
       this.nestTime.assign(tf.zerosLike(this.nestTime));
+      this.contactAcc.assign(tf.zerosLike(this.contactAcc));
+      this.forageAcc.assign(tf.zerosLike(this.forageAcc));
     });
     this.stepNo = 0;
   }
   disposeInit(i) { for (const k in i) i[k].dispose(); }
   saveState() {
     const keys = ['pos','vel','angle','omega','energy','fitness','neural','foodStock','acc',
-                  'carry','banked','nestTime'];
+                  'carry','banked','nestTime','contactAcc','forageAcc'];
     const s = { stepNo: this.stepNo }; for (const k of keys) s[k] = this[k].clone(); return s;
   }
   restoreState(s) {
@@ -550,6 +661,11 @@ export class EvoDevoSim {
     tf.tidy(() => {
       const food = this.field(this.pos, this.food, C.FOOD_SENSE_SIGMA2, this.foodStock);
       const haz = this.field(this.pos, this.haz, .036, null);
+      // The opposing species, sensed exactly as food is: a Gaussian-weighted
+      // mean direction plus a mass. `opponentPos` is [N_opp, 2] and may have a
+      // different population size from this one, which field() already handles.
+      const opp = (C.COEVO && this.opponentPos)
+        ? this.field(this.pos, this.opponentPos, C.COEVO_SENSE_SIGMA2, null) : null;
       const orel = this.pos.expandDims(1).sub(this.obs.expandDims(0));
       const od = tf.sqrt(orel.square().sum(2).add(1e-6));
       const on = orel.div(od.expandDims(2));
@@ -575,6 +691,21 @@ export class EvoDevoSim {
         const nDist = tf.sqrt(toNest.square().sum(1).add(1e-6));
         const nb = body(toNest.div(nDist.expandDims(1)));
         chans.push(nb[0], nb[1]);
+      }
+      // Opponent channels. Present whenever COEVO is on, so the sensor vector
+      // has a fixed width; zero when no opposing population is being stepped
+      // alongside this one (diagnostics, policy traces), which reads as
+      // "nothing in sight" rather than as a shape mismatch.
+      let ob = null;
+      if (C.COEVO) {
+        if (opp) {
+          ob = body(opp.vec);
+          chans.push(ob[0], ob[1], tf.tanh(opp.mass.mul(.16)));
+        } else {
+          const z = tf.zeros([C.POP]);
+          ob = [z, z];
+          chans.push(z, z, z);
+        }
       }
       let sensors = tf.stack(chans, 1);
       // Ablation: dropped channels are replaced by another agent's values for
@@ -623,8 +754,16 @@ export class EvoDevoSim {
       this.pos.assign(np); this.vel.assign(nv);
       // Feeding draws the patch down; the patch regrows logistically toward 1.
       const k = food.d2.mul(-1).div(.0018).exp();
-      const eat = k.mul(this.foodStock.expandDims(0)).max(1);
-      const draw = k.sum(0);
+      let eat = k.mul(this.foodStock.expandDims(0)).max(1);
+      let draw = k.sum(0);
+      // A predator does not (by default) eat, and must not deplete the patches
+      // it walks over either, or it would starve the prey by accident and the
+      // arms race would be confounded with resource competition.
+      const isPred = C.COEVO && C.COEVO_ROLE === 'predator';
+      if (isPred && C.COEVO_PRED_FORAGE !== 1) {
+        eat = eat.mul(C.COEVO_PRED_FORAGE);
+        draw = draw.mul(C.COEVO_PRED_FORAGE);
+      }
       const stock = this.foodStock;
       let newStock = stock.add(
         stock.mul(-1).add(1).mul(C.FOOD_REGROW)
@@ -644,7 +783,18 @@ export class EvoDevoSim {
       this.foodStock.assign(newStock);
       const tox = haz.d2.mul(-1).div(.0015).exp().max(1);
       const cost = thrust.abs().mul(.015).add(turn.abs().mul(.009)).add(.013);
-      const en = this.energy.add(eat.mul(.42).sub(tox.mul(.62)).sub(cost).mul(C.DT)).clipByValue(0, 1.4);
+      // Contact with the opposing species: the same kernel from both sides, so
+      // one physical quantity is being transferred rather than two separately
+      // tuned ones. Wider than the food-eating kernel because prey move.
+      // `.max(1)` matches feeding: what matters is the closest opponent, not
+      // the summed crowd, so a predator cannot farm a distant swarm.
+      const contact = opp
+        ? opp.d2.mul(-1).div(C.COEVO_CAPTURE_SIGMA2).exp().max(1) : null;
+      let dEnergy = eat.mul(.42).sub(tox.mul(.62)).sub(cost);
+      if (contact) dEnergy = isPred
+        ? dEnergy.add(contact.mul(C.COEVO_PRED_ENERGY))
+        : dEnergy.sub(contact.mul(C.COEVO_PREY_ENERGY));
+      const en = this.energy.add(dEnergy.mul(C.DT)).clipByValue(0, 1.4);
       this.energy.assign(en);
       // Central-place foraging. Intake stops being worth its full value where
       // it is found: CP_STRENGTH of it goes into `carry`, which decays and is
@@ -666,6 +816,21 @@ export class EvoDevoSim {
         // this a score move cannot be attributed to central-place behaviour.
         this.banked.assign(this.banked.add(deposit.mul(C.CP_NEST_MULT).mul(C.DT)));
         this.nestTime.assign(this.nestTime.add(inNest.mul(C.DT)));
+      }
+      // Predation moves fitness between the species. The prey's loss is set
+      // larger than the predator's gain: being caught has to cost more than a
+      // missed meal, or evasion never pays for the foraging it displaces.
+      if (contact) {
+        intake = isPred
+          ? intake.add(contact.mul(C.COEVO_PRED_GAIN))
+          : intake.sub(contact.mul(C.COEVO_PREY_LOSS));
+        // Behavioural readout, not part of fitness. `contactAcc` is the one
+        // quantity the ancestral tournament reads, measured identically from
+        // both sides; `forageAcc` separates "evaded the predator" from
+        // "stopped eating", which produce the same head-to-head number and are
+        // opposite results.
+        this.contactAcc.assign(this.contactAcc.add(contact.mul(C.DT)));
+        this.forageAcc.assign(this.forageAcc.add(eat.mul(C.DT)));
       }
       this.fitness.assign(this.fitness.add(
         intake.sub(tox.mul(1.35)).add(speed.mul(.018)).add(en.greater(.04).toFloat().mul(.003)).mul(C.DT)));
@@ -689,7 +854,9 @@ export class EvoDevoSim {
       if (this.tracing) {
         const distMin = food.d2.min(1);
         const px = np.slice([0, 0], [-1, 1]).squeeze([1]), py = np.slice([0, 1], [-1, 1]).squeeze([1]);
-        const row = tf.stack([fb[0], fb[1], food.mass, turn, thrust, eat, en, distMin, px, py], 1);
+        const zero = tf.zeros([C.POP]);
+        const row = tf.stack([fb[0], fb[1], food.mass, turn, thrust, eat, en, distMin, px, py,
+          ob ? ob[0] : zero, ob ? ob[1] : zero, opp ? opp.mass : zero], 1);
         const view = row.dataSync();
         this.traceBuf.set(view, this.traceStep * C.POP * EvoDevoSim.TRACE_CHANNELS.length);
         this.traceStep++;
@@ -900,6 +1067,36 @@ export class EvoDevoSim {
     };
   }
 
+  /**
+   * Coevolutionary behaviour, measured on whatever episode just ran. Null when
+   * the two-species world is off.
+   *
+   * `contact` is the integrated contact with the opposing species in
+   * contact-seconds — for a predator, prey caught; for a prey, times caught.
+   * It is the same physical quantity read from both sides, which is what lets
+   * a predator generation and a prey generation be placed on one axis.
+   * `forage` is integrated food intake, reported alongside because a prey
+   * population that survives by never approaching a patch and one that
+   * genuinely evades produce identical contact numbers.
+   */
+  async coevoStats() {
+    if (!this.cfg.COEVO) return null;
+    const C = this.cfg;
+    const [ct, fg, fit] = await Promise.all([
+      this.contactAcc.data(), this.forageAcc.data(), this.fitness.data()]);
+    let touched = 0;
+    for (let i = 0; i < C.POP; i++) if (ct[i] > 1e-4) touched++;
+    return {
+      contact: mean(ct), contactTop: topQuartile(ct), contactSd: sd(ct),
+      // The bottom quartile of contact is the prey side's equivalent of
+      // topQuartile: the part of the distribution selection actually keeps.
+      contactBottom: topQuartile(Array.from(ct).map(x => -x)) * -1,
+      forage: mean(fg), forageTop: topQuartile(fg),
+      touchedFrac: touched / C.POP,
+      fitness: mean(fit), fitnessTop: topQuartile(fit),
+    };
+  }
+
   async populationStats() {
     const tf = T();
     const t = tf.tidy(() => tf.stack([
@@ -1095,6 +1292,116 @@ export async function diagnose(sim, opts = {}) {
     interpretable: base >= 0.03 * steps * C.DT,
     ceiling: steps * C.DT,
   };
+}
+
+/* ----------------------------------------------------------- coevolution */
+
+/**
+ * Copy the live food state from the world's owner to the other species, so the
+ * two sims — which each hold their own `food`/`foodStock` Variables — are
+ * looking at one world rather than two that drift apart as patches are eaten
+ * and relocated. The prey own the world: they are the ones that deplete it.
+ */
+export function coevoSyncWorld(owner, other) {
+  T().tidy(() => {
+    other.food.assign(owner.food);
+    other.foodStock.assign(owner.foodStock);
+  });
+  other.world = owner.world;
+}
+
+/**
+ * Advance both species by one step, simultaneously.
+ *
+ * The positions are cloned up front and handed to the *other* sim, so both
+ * species react to the same instant. Stepping one and then letting the second
+ * read the first's already-updated positions would hand the second species a
+ * half-step of precognition, which over 1450 steps is exactly the sort of
+ * asymmetry that would show up in a tournament as one side "winning".
+ */
+export function coevoStep(prey, pred) {
+  const pp = prey.pos.clone(), qp = pred.pos.clone();
+  prey.opponentPos = qp; pred.opponentPos = pp;
+  try { prey.step(); pred.step(); }
+  finally {
+    prey.opponentPos = null; pred.opponentPos = null;
+    pp.dispose(); qp.dispose();
+  }
+  coevoSyncWorld(prey, pred);
+}
+
+/** Run one coevolutionary episode of `steps` from the current bodies. */
+export async function coevoEpisode(prey, pred, steps, yieldEvery = 0) {
+  for (let i = 0; i < steps; i++) {
+    coevoStep(prey, pred);
+    if (yieldEvery && (i % yieldEvery) === yieldEvery - 1) await T().nextFrame();
+  }
+}
+
+/**
+ * Coevolve two populations for `generations`.
+ *
+ * `opts.hof` (default null) turns on hall-of-fame evaluation: each generation
+ * is split into a sub-epoch against the current opponent and a sub-epoch
+ * against an archived one, with fitness summed across both. Retaining
+ * ancestors as part of the opponent set is the standard stabiliser against
+ * cycling — a genotype that beats today's opponent but loses to last week's
+ * no longer scores well — but it costs a second pair of stepped sims per
+ * generation, so it is a hypothesis to test rather than a default.
+ *
+ * `opts.hof` shape: { frac, ghostPrey, ghostPred, pick(gen) } where `pick`
+ * returns an archived population object to load into the two ghost sims.
+ */
+export async function coevolveFor(prey, pred, generations, opts = {}) {
+  const { onGeneration = null, yieldEvery = 0, hof = null } = opts;
+  const tf = T();
+  const steps = prey.cfg.EPOCH_STEPS;
+  const frac = hof ? Math.max(0, Math.min(0.9, hof.frac ?? 0.5)) : 0;
+  const mainSteps = Math.max(1, Math.round(steps * (1 - frac)));
+  const hofSteps = Math.max(0, steps - mainSteps);
+
+  for (let g = 0; g < generations; g++) {
+    prey.resetBodies(); pred.resetBodies();
+    coevoSyncWorld(prey, pred);
+    await coevoEpisode(prey, pred, mainSteps, yieldEvery);
+    const stats = {
+      prey: await prey.coevoStats(), pred: await pred.coevoStats(),
+    };
+
+    if (hof && hofSteps > 0) {
+      // Carry the current-opponent fitness forward, then re-run against the
+      // archived opponents and sum. Bodies are reset between sub-epochs so the
+      // second is an independent episode, not a continuation of the first.
+      const keepPreyF = prey.fitness.clone(), keepPredF = pred.fitness.clone();
+      const keepPreyP = prey.pos.clone(), keepPredP = pred.pos.clone();
+      const archived = hof.pick(g);
+      if (archived) {
+        await hof.ghostPrey.importPopulation(archived.prey);
+        await hof.ghostPred.importPopulation(archived.pred);
+        // Current prey vs archived predators.
+        prey.resetBodies(); hof.ghostPred.resetBodies();
+        coevoSyncWorld(prey, hof.ghostPred);
+        await coevoEpisode(prey, hof.ghostPred, hofSteps, yieldEvery);
+        const preyHofF = prey.fitness.clone(), preyHofP = prey.pos.clone();
+        // Current predators vs archived prey.
+        hof.ghostPrey.resetBodies(); pred.resetBodies();
+        coevoSyncWorld(hof.ghostPrey, pred);
+        await coevoEpisode(hof.ghostPrey, pred, hofSteps, yieldEvery);
+        tf.tidy(() => {
+          prey.fitness.assign(keepPreyF.add(preyHofF));
+          pred.fitness.assign(keepPredF.add(pred.fitness));
+          prey.pos.assign(keepPreyP.add(preyHofP).div(2));
+          pred.pos.assign(keepPredP.add(pred.pos).div(2));
+        });
+        preyHofF.dispose(); preyHofP.dispose();
+      }
+      keepPreyF.dispose(); keepPredF.dispose(); keepPreyP.dispose(); keepPredP.dispose();
+    }
+
+    await prey.evolve(); await pred.evolve();
+    if (onGeneration) await onGeneration({ generation: prey.gen, ...stats });
+  }
+  return { prey, pred };
 }
 
 /**
