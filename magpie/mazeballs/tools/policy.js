@@ -71,6 +71,14 @@ const args = parseArgs(process.argv.slice(2), {
   // population the tournament measured.
   preySpeed: 0.34, predSpeed: 0.34, preyIntake: 1,
   preyReflex: 0, reflexSigma2: 0.02, reflexSource: 'nearest', reflexMassK: 2.0,
+  // Prey-side search variant, mirroring tools/tournament.js. Must match the arm
+  // whose policy is being characterised: the whole point of this tool on the
+  // opponent channel is to ask whether the population the TOURNAMENT measured
+  // is steering by the predator channel, and it can only answer that if it
+  // evolves under the same search.
+  preySelect: '', preyTournK: 4, preyElitism: true, preyCrossover: 0,
+  preySelfAdapt: false, preyElites: 0,
+  qdTurnBins: 4, qdOppBins: 4, qdForageBins: 3,
 });
 const log = (...m) => { if (!args.quiet) console.error(...m); };
 const lags = String(args.lags).split(',').map(s => Number(s.trim()));
@@ -95,7 +103,13 @@ if (args.coevo) Object.assign(baseCfg, {
 const preyExtra = args.coevo
   ? { SPEED_MAX: args.preySpeed, COEVO_PREY_INTAKE: args.preyIntake,
       COEVO_PREY_REFLEX: args.preyReflex, COEVO_REFLEX_SIGMA2: args.reflexSigma2,
-      COEVO_REFLEX_SOURCE: args.reflexSource, COEVO_REFLEX_MASS_K: args.reflexMassK }
+      COEVO_REFLEX_SOURCE: args.reflexSource, COEVO_REFLEX_MASS_K: args.reflexMassK,
+      ...(args.preySelect ? { SELECT: args.preySelect } : {}),
+      ...(args.preyElites ? { ELITES: args.preyElites } : {}),
+      TOURN_K: args.preyTournK, ELITISM: args.preyElitism,
+      CROSSOVER: args.preyCrossover, SELF_ADAPT: args.preySelfAdapt,
+      QD_TURN_BINS: args.qdTurnBins, QD_OPP_BINS: args.qdOppBins,
+      QD_FORAGE_BINS: args.qdForageBins }
   : {};
 const sim = new EvoDevoSim({ seed: args.seed, config: { ...baseCfg, ...preyExtra, COEVO_ROLE: 'prey' } });
 await sim.initialise();
