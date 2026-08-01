@@ -1847,6 +1847,21 @@ the predator channel splits the same way (turn delta +0.0072, −0.0169, +0.0066
 predators, and the instrument that says so would have detected an effect four
 times smaller than the reference evader's.**
 
+### `score.js` was not run on these arms, deliberately
+
+The previous wave established what it reports here: a fixed-world diagnosis of
+a coevolved prey population sees no predators, so the opponent channels read
+zero and the arms race is invisible to it in principle, and the number it does
+produce is dominated by the generation-0 diversity anchor. This wave makes it
+worse rather than better. The pure-evasion arm sets `COEVO_PREY_INTAKE` to 0, so
+foraging is worth nothing *in fitness* while still feeding the animal exactly as
+before; `score.js`'s viability gate is a function of top-quartile fitness, and
+would therefore report a collapse that is a restatement of the arm's definition
+rather than an observation about the population. Running it would have produced
+a number whose only honest interpretation is "this instrument does not apply
+here", at the cost of an arm's worth of compute. The tournament is the primary
+instrument by design and is the only one reported.
+
 ### Verdict
 
 Nothing is adopted. `COEVO` stays off, `COEVO_PREY_REFLEX` stays 0,
