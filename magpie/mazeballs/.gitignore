@@ -1,4 +1,5 @@
 node_modules
 *.out.json
 sweep-*.json
-runs/
+runs/*.json
+runs/*.txt
