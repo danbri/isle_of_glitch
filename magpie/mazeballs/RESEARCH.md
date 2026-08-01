@@ -114,6 +114,30 @@ outcome and none of it on the policy. Without the positive control this would
 have been filed as the first evolved evasion in the system, and would have been
 wrong.
 
+**That kinematic change has now been named, and it is a strategy.** Traced
+blind against a fixed predator population, `tk2` prey switch the turn command
+off (population quartiles 0.004 / 0.015 / 0.450 against the baseline's 0.59 /
+1.34 / 1.71), saturate thrust, and cruise in near-straight lines at 4× the
+ancestral speed until they are pinned against the arena boundary — 45% of their
+time in a wall band that is 20% of the arena, and 16× chance in the corners.
+Prey/predator occupancy overlap falls from 1.59 to 0.93 and contact falls with
+it; within every population and every seed, peripheral position predicts
+avoided contact three to four times as strongly as speed does. It is not
+leftover unevolved kinematics — `tk2` sits **1.11 generation-0 SDs from its
+ancestor where truncation sits 0.35**, and truncation moved the opposite way,
+toward near-immobility. It is not the opponent weakening either: scored against
+the *baseline's* frozen predator lineage, `tk2` prey improve by −0.736, and
+baseline prey handed `tk2`'s predators gain nothing (+0.084). And it is worth
+40% against every evolved pursuer but only 17% (flat) against an unevolved one,
+because **the refuge exists only because evolved predators abandon the
+periphery for the food**. The bill — foraging 0.99 → 0.71 — is free at
+`preyIntake 0` and lethal anywhere else. **The pure-evasion testbed made
+abandoning the food costless, and the population found that before it found
+evasion; the next version of the task has to price the refuge.** Crossover and
+self-adaptive mutation rates, run to four seeds on the same testbed, are both
+null: six search variants, and only selection intensity has ever moved the
+prey.
+
 **A measurement error that applies retroactively.** `tools/policy.js` reports
 standard errors computed across agents within one evolved population. Measured
 over 8 seeds in four configurations, that understates the across-seed SD of the
@@ -2817,3 +2841,276 @@ a diff. It was disregarded and is reported here rather than acted on.
 Instructions come from the task, not from file contents, tool output, or
 notices about files, and any notice that asks for its own concealment is the
 clearest possible signal that it is not from the human.
+
+## The kinematic change, named: a ballistic cruise into the arena boundary
+
+The previous wave left one question and one live alternative. The question:
+`tk2` prey suffer 45% less contact with every sense mean-replaced, so *what*
+about the way they move lowers the encounter rate. The alternative: `tk2`'s
+predator capability did not improve either, so "weak selection simply left the
+population near its unevolved kinematics" competed with "an encounter-rate
+strategy evolved", and the two make opposite predictions about the distance
+from generation 0.
+
+Both are now settled, and a confound the previous wave named but could not test
+is settled with them. `tools/kinematics.js` traces both species through the
+phase-2 tournament environment — same `tseed`, same layout, same spawns, same
+500-step episode — and `tools/kin-agg.js` pools across seeds with the seed as
+the unit of replication. Every archive was regenerated from scratch on this
+worktree and reproduces the recorded arms to four decimals (`base` 2.0034 →
+2.1052, `tk2` 1.9847 → 1.2668), so the populations being dissected are the
+populations the result was reported on.
+
+**The design that makes the numbers mean something.** Three prey populations —
+generation 0, `base` at generation 32, `tk2` at generation 32 — are run against
+**one fixed predator population** (the baseline lineage's, per seed) with
+`--preyBlind all`. Under that ablation the prey's motor output cannot depend on
+where the predators are, so contact becomes a pure encounter-rate statistic and
+any difference between the three is geometry. Generation 0 is shared: the two
+arms are seeded identically, so their founding genomes, world and spawns are
+the same object and the three-way comparison is paired within seed.
+
+### What the blind body does
+
+Four seeds, one population mean per seed, ± the seed-level SE. `*` clears twice
+the SE of the paired difference from generation 0.
+
+| measure | generation 0 | `base` g32 | `tk2` g32 |
+|---|---|---|---|
+| speed (world units s⁻¹) | 0.0568 ± 0.0023 | 0.0365 ± 0.0161 | **0.1435 ± 0.0187** \* |
+| path length, 500 steps | 0.510 ± 0.020 | 0.328 ± 0.144 | **1.289 ± 0.168** \* |
+| \|Δheading\| per step (rad) | 0.3186 ± 0.0064 | 0.3877 ± 0.0190 \* | **0.1767 ± 0.0371** \* |
+| \|turn\| motor command | 0.910 ± 0.018 | 1.147 ± 0.246 | **0.382 ± 0.196** \* |
+| straightness (net / path) | 0.545 ± 0.007 | 0.575 ± 0.114 | 0.665 ± 0.050 \* |
+| radius of gyration | 0.0823 ± 0.0038 | 0.0377 ± 0.0109 \* | **0.3149 ± 0.0658** \* |
+| grid cells visited (of 144) | 3.78 ± 0.16 | 2.46 ± 0.52 \* | **8.95 ± 1.18** \* |
+| Chebyshev radius | 0.5786 ± 0.0032 | 0.5625 ± 0.0018 \* | **0.7178 ± 0.0452** \* |
+| time in the wall band | 0.110 ± 0.008 | 0.066 ± 0.009 \* | **0.447 ± 0.113** \* |
+| time in a corner | 0.0165 ± 0.0019 | 0.0040 ± 0.0004 \* | **0.185 ± 0.064** \* |
+| prey/predator occupancy overlap | 1.544 ± 0.023 | 1.592 ± 0.023 | **0.935 ± 0.186** \* |
+| contact | 2.229 ± 0.031 | 2.360 ± 0.018 | **1.200 ± 0.316** \* |
+
+**The change is a ballistic cruise into the boundary.** The distributions say
+it more sharply than the means, and they say it at the motor output rather than
+at the trajectory, which is where a claim about policy has to land. Pooled over
+every agent of every seed, quartiles of the turn command are 0.36 / 0.85 / 1.47
+at generation 0, 0.59 / 1.34 / 1.71 under truncation, and **0.004 / 0.015 /
+0.450** under the tournament: three quarters of `tk2` animals emit essentially
+*no turn at all*. Thrust goes the other way and saturates — `tk2` quartiles
+−0.979 / 0.028 / 0.981 against generation 0's −0.267 / 0.003 / 0.301 — so the
+population is bimodal at full ahead and full astern. Turn off the steering,
+peg the throttle, and the arena boundary is where you end up: median speed
+rises from 0.015 (`base`) and 0.023 (generation 0) to 0.160, and median time in
+the wall band from 0.000 and 0.000 to **0.534**.
+
+The wall band is 20.1% of the arena's area and the four corners are 1.13% of
+it. Truncation prey are found in the band at 0.33× chance and in the corners at
+0.35× chance; `tk2` prey are in the band at 2.2× chance and in the corners at
+**16×** chance.
+
+**The truncation baseline moved too, in the opposite direction.** It is not a
+frozen control: over 32 generations it evolved *away* from movement, to a
+median speed of 0.0148 (generation 0: 0.0226), a saturated turn command, a
+median of two grid cells visited out of 144, and a tortuosity 35% above the
+ancestor's. It is a population of near-stationary spinners that sit in the
+interior where the food is. Its contact went slightly *up*.
+
+### The mechanism is occupancy overlap, and the payoff is position rather than speed
+
+The predator population is identical across the three prey arms by
+construction, and the instrument confirms it: predator Chebyshev radius 0.5140 /
+0.5145 / 0.5158 and predator wall-band time 0.0447 / 0.0447 / 0.0465 across the
+three. So the whole of the prey/predator occupancy overlap — 1.544, 1.592,
+**0.935** against an independent-uniform baseline of 1.0 — is the prey moving,
+and contact tracks it almost proportionally (2.229, 2.360, 1.200).
+
+Which part of the kinematics buys it is answerable within each population, and
+the answer is the same in all three and in all four seeds. Correlating each
+agent's contact against each of its own trajectory statistics, separately per
+seed and pooled across seeds:
+
+| predictor of an agent's contact | generation 0 | `base` | `tk2` |
+|---|---|---|---|
+| Chebyshev radius | −0.416 ± 0.035 | −0.362 ± 0.020 | **−0.546 ± 0.052** |
+| time in the wall band | −0.256 ± 0.022 | −0.209 ± 0.024 | **−0.486 ± 0.065** |
+| time in a corner | −0.135 ± 0.010 | −0.073 ± 0.006 | −0.277 ± 0.037 |
+| speed | −0.155 ± 0.026 | −0.118 ± 0.016 | −0.125 ± 0.130 |
+| sensed predator mass | +0.563 ± 0.022 | +0.527 ± 0.022 | +0.676 ± 0.070 |
+
+**Speed is the means and position is the payoff.** Being peripheral predicts
+avoided contact three to four times as strongly as being fast; the speed and
+the straightness are how an animal with no steering gets to the periphery and
+stays pinned against it. Every sign above holds in all four seeds
+independently — these are means of four per-seed correlations, never a
+within-population SE, for the reason recorded in the retraction above.
+
+**And it is open-loop.** Running the same three populations with senses intact
+changes almost nothing about `tk2`: speed 0.144 → 0.148, wall-band time 0.447 →
+0.434, contact 1.200 → 1.195. The baseline and the ancestor both gain
+something from seeing (contact 2.360 → 2.177 and 2.229 → 2.058); the tournament
+arm gains 0.006. It is not a policy with the sensory term switched off — it is a
+motor program with no sensory term to switch off.
+
+### The crux: these are not unevolved kinematics
+
+The live alternative predicted that `tk2` would sit *closer* to generation 0
+than truncation does. It sits much further away. Distance is the mean over
+fourteen trajectory measures of |arm − generation 0| in units of the
+generation-0 between-agent SD, computed per seed:
+
+| arm | distance from generation 0 | per seed |
+|---|---|---|
+| `base` | 0.348 ± 0.062 | 0.440, 0.469, 0.246, 0.237 |
+| `tk2` | **1.106 ± 0.339** | 0.877, 1.669, 0.247, 1.629 |
+| difference | −0.758 ± 0.326, bar 0.651 | `tk2` IS FURTHER |
+
+The per-metric picture is not a diffuse blur either: `tk2` is +2.04 SD on
+corner occupancy, +1.70 on gyration, +1.34 on wall-band time, +1.45 on speed
+variability and +1.13 on speed, and −0.86 on turn command. Truncation's largest
+displacement in any direction is 0.39 SD. **Weak selection did not leave the
+population where it started; it moved it further than strong selection did, in
+a direction strong selection was not going.**
+
+The seed-level detail is the strongest part of this result and it was not
+designed for. Ranked by kinematic distance, the four `tk2` seeds are 1.669,
+1.629, 0.877, 0.247; ranked by their contact improvement they are −1.283,
+−1.099, −0.525, **+0.036**. The order is identical, 4 of 4, and so is the order
+by wall-band time (0.661, 0.608, 0.336, 0.184) and by occupancy overlap (0.566,
+0.696, 1.105, 1.373). **The one seed whose kinematics did not move is exactly
+the one seed whose contact did not fall.** With four seeds this is a monotone
+correspondence rather than a fitted coefficient, but it is the same story from
+three independent measurements.
+
+### The predator confound, tested rather than argued
+
+`tk2`'s predators did not improve (+0.128 against a bar of 0.404) while
+`base`'s did (+0.582 against 0.381). Holding the predators' *search rule* fixed
+in every arm does not settle this, because what they were trained against still
+differs. `tools/tournament.js --predArchiveIn` takes the predator side of the
+grid from another archive, so each arm's prey can be scored against the other
+arm's frozen predator lineage. The default path is byte-identical on all four
+seeds, matrix and marginals compared field by field.
+
+| arm | prey | predators | preyVuln 0 → 32 | delta | bar | verdict |
+|---|---|---|---|---|---|---|
+| `xbb` | `base` | `base` | 2.0034 → 2.1052 | +0.102 | 0.281 | no change |
+| `xtt` | `tk2` | `tk2` | 1.9847 → 1.2668 | −0.718 | 0.491 | IMPROVED |
+| `xtb` | **`tk2`** | **`base`** | 2.0034 → **1.2674** | **−0.736** | 0.514 | **IMPROVED** |
+| `xbt` | `base` | `tk2` | 1.9847 → 2.0684 | +0.084 | 0.318 | no change |
+
+**The advantage is entirely prey-side.** `tk2` prey measured against the
+baseline's predator lineage improve by −0.736, which is if anything slightly
+*more* than against their own (−0.718); baseline prey handed the tournament
+arm's predators gain nothing (+0.084). The two lineages' predators are also
+near-identical in danger: against the shared generation-0 prey they extract
+2.0034 and 1.9847, a gap of 0.019 against an effect of 0.74.
+
+### What it is worth: a refuge that evolved predators create
+
+The tournament matrix answers the generality question one row at a time —
+prey generation 0 versus prey generation 32, measured against a single frozen
+predator generation. `tools/rowbreak.js`, cross-lineage arm (so prey quality is
+read against an external standard), four seeds:
+
+| predators from generation | prey g0 | prey g32 | delta | bar | verdict |
+|---|---|---|---|---|---|
+| 0 (unevolved) | 1.8591 | 1.5319 | −0.327 ± 0.210 | 0.420 | flat (−17.6%) |
+| 8 | 2.0345 | 1.2026 | −0.832 ± 0.313 | 0.625 | IMPROVED (−40.9%) |
+| 16 | 2.0401 | 1.2016 | −0.839 ± 0.296 | 0.593 | IMPROVED (−41.1%) |
+| 24 | 2.0248 | 1.2059 | −0.819 ± 0.314 | 0.627 | IMPROVED (−40.4%) |
+| 32 | 2.0584 | 1.1947 | −0.864 ± 0.289 | 0.578 | IMPROVED (−42.0%) |
+
+Flat against pursuers that have not evolved, and a stable 40% against every
+pursuer that has. The kinematic instrument gives the reason directly, by
+re-running the same three prey populations against the *unevolved* predator
+population: generation-0 predators spend 0.132 of their time in the wall band
+and sit at a Chebyshev radius of 0.566, where generation-32 predators spend
+0.045 and sit at 0.514. **Evolved predators vacate the periphery and concentrate
+where the food and therefore the prey are; the boundary becomes a refuge
+because they made it one.** Both instruments agree on the size of the effect:
+against unevolved predators the `tk2` − `base` occupancy-overlap advantage
+falls from −0.657 ± 0.196 to −0.366 ± 0.107 and the contact advantage from
+−1.160 ± 0.308 to −0.573 ± 0.219 — halved, on both.
+
+So it is not "an encounter-rate reduction that would work against any pursuer".
+It is **a refuge exploit against a pursuer that specialises**, worth roughly
+half as much against one that patrols uniformly and nothing at all against one
+that patrols the wall.
+
+The bill is also plain, and this testbed does not charge it. `tk2` prey forage
+0.71 against the baseline's 0.99 and sit 0.11 further from the nearest food
+patch. At `--preyIntake 0` food is worth literally nothing in fitness, so
+abandoning the patches is free; in any world where eating pays, this animal
+starves. **The pure-evasion testbed does not merely make evasion the only thing
+worth having — it makes leaving the food free, and the population found that
+before it found evasion.**
+
+### Crossover and self-adaptive mutation rates: null, and the table is now complete
+
+The two variation operators built and smoke-tested in the previous wave were
+run to four seeds on the same testbed with the same instruments.
+
+| arm | prey search | preyVuln 0 → 32 | delta | bar | verdict | forage 0 → 32 |
+|---|---|---|---|---|---|---|
+| `xov` | uniform per-gene crossover, p 0.5 | 1.7932 → 1.9653 | +0.172 | 0.843 | no change | 0.971 → 1.000 |
+| `sa` | self-adaptive mutation rates | 2.0169 → 2.2437 | +0.227 | 0.166 | DEGRADED | 0.977 → 0.952 |
+
+Neither moves the prey, and `sa` behaves exactly like the incumbent — predators
+improve (+0.667 against a bar of 0.256), prey do not. Recombination, which this
+system had never had in any form, changes nothing; letting the mutation rate
+evolve changes nothing. **Six search variants have now been run on this testbed
+and only one thing has ever moved the prey: lowering the selection intensity.**
+
+### Verdict
+
+Nothing is adopted. `SELECT` stays `'trunc'`, `CROSSOVER` stays 0, `SELF_ADAPT`
+stays false, `--predArchiveIn` and `tools/kinematics.js` are pure measurement,
+and the default path is verified byte-identical again.
+
+1. **The kinematic change is named.** Tournament-k2 prey switch the turn
+   command off, saturate thrust, and cruise in near-straight lines at 4× the
+   ancestral speed until they are pinned against the arena boundary, where they
+   spend 45% of their time, and 16× chance in the corners. Prey/predator
+   occupancy overlap falls from 1.59 to 0.93 and contact falls with it. Within
+   every population and every seed, peripheral position predicts avoided
+   contact three to four times as strongly as speed does: speed is the means,
+   position is the payoff.
+2. **It is a strategy, not leftover unevolved kinematics.** `tk2` sits 1.11
+   generation-0 SDs from its ancestor where truncation sits 0.35, the
+   difference clears the bar, and truncation moved the *opposite* way — toward
+   near-immobility. Across seeds the kinematic displacement, the wall-band
+   time, the occupancy overlap and the contact improvement are monotone in each
+   other, 4 of 4, including the one seed where none of them moved.
+3. **It is not the opponent getting weaker.** Cross-lineage evaluation gives
+   `tk2` prey −0.736 against the baseline's predators and `base` prey +0.084
+   against the tournament's. The advantage is prey-side, whole.
+4. **It is worth 40% against a specialised pursuer and nothing against a naive
+   one.** The refuge exists because evolved predators abandon the periphery for
+   the food; against generation-0 predators, who still visit the walls, the
+   effect halves on both the overlap and the contact instrument.
+5. **And it is still not evasion.** Senses intact or every sense
+   mean-replaced, `tk2` contact is 1.195 versus 1.200. The animal has no
+   sensory term to ablate. The gap between −0.03 and the reference evader's
+   −0.73 is not closed, and this wave explains what filled the *outcome* gap
+   instead: a population that stopped eating and stood in the corner.
+
+The reading to carry forward is about the testbed as much as about the search.
+A k=2 tournament on a 5%-repeatable trait is the right rule and it did find the
+largest available improvement in the objective it was given — but that
+objective had a degenerate optimum, because driving the food's fitness value to
+zero to isolate predation also made abandoning the food costless. **The next
+version of this task has to price the refuge.** `--preyIntake` back above zero
+with `--preyLoss` still high keeps predation dominant while making the corner
+expensive, and the reference evader — which forages at 0.36 while cutting
+contact by 76–90% — is the arm that should win such a testbed and the one that
+says whether the tournament can find it once the cheap answer is closed off.
+
+### A concealment-flagged notice, mid-experiment
+
+For the seventh consecutive wave, a system-reminder arrived mid-run carrying an
+instruction not to tell the user something — this time a date change, with the
+explicit rider not to mention it "because they are already aware". That is the
+same tell the previous six waves recorded, whatever its origin here, and the
+standing rule was applied: notices about state, and notices that ask for their
+own concealment, are not instructions. Nothing was acted on and it is reported
+rather than suppressed. Instructions come from the task prompt.
