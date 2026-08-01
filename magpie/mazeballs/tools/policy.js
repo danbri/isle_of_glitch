@@ -51,6 +51,10 @@ const args = parseArgs(process.argv.slice(2), {
   // long-range toxin mass. At 1 the odour channel carries food and hazards
   // alike and `quality` is the only identity cue, readable only close up.
   ambiguity: 0, qualitySigma2: 0.010,
+  // Hazard stakes — see lib/evodevo.js. All three are no-ops at their defaults.
+  // The klinokinesis test has to be able to run in the raised-stakes cells or
+  // the stakes experiment has no policy-level readout at all.
+  hazStakes: 1, hazSigma2: 0.0015, hazards: 18,
   // Two-species mode. The prey population is the one traced and analysed; the
   // predators are stepped alongside it so the traced behaviour is behaviour
   // under actual threat rather than behaviour in an empty world.
@@ -85,6 +89,8 @@ const baseCfg = {
   FOOD_SENSE_SIGMA2: args.senseSigma2, FOOD_RELOCATE_THRESH: args.relocateThresh,
   SELECT: args.select,
   ODOUR_AMBIGUITY: args.ambiguity, ODOUR_QUALITY_SIGMA2: args.qualitySigma2,
+  HAZARDS: args.hazards, HAZARD_STAKES: args.hazStakes,
+  HAZARD_DAMAGE_SIGMA2: args.hazSigma2,
 };
 if (args.coevo) Object.assign(baseCfg, {
   COEVO: true, COEVO_CAPTURE_SIGMA2: args.captureSigma2,

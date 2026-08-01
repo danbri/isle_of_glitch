@@ -163,12 +163,26 @@ const summary = {
   // behavioural claim about them can be given a standard error the same way the
   // score is, rather than being a bare point estimate. The odour numbers already
   // in RESEARCH.md predate this and are unerrored means; they are labelled so.
+  // Components and ablation drops are carried per seed as well as averaged, for
+  // the same reason the score is: a claim about `sensing` rising or about
+  // `blindConst` going to zero needs a standard error, and until now only the
+  // total had one. The averages are unchanged — these are the same per-seed
+  // numbers the means were always computed from.
   perSeed: ok.map(r => ({ seed: r.seed, score: +r.score.toFixed(4), forage: +r.forage.toFixed(3),
+    sensing: +r.components.sensing.toFixed(4), taxis: +r.components.taxis.toFixed(4),
+    selection: +r.components.selection.toFixed(4), diversity: +r.components.diversity.toFixed(4),
+    viability: +r.viability.toFixed(4),
+    blindConst: +(r.drops?.blindConst ?? 0).toFixed(4),
+    noFood: +(r.drops?.noFood ?? 0).toFixed(4),
+    noToxin: +(r.drops?.noToxin ?? 0).toFixed(4),
+    intake: r.odour ? +r.odour.intake.toFixed(4) : undefined,
     nestShare: r.central ? +r.central.nestShare.toFixed(4) : undefined,
     visitedFrac: r.central ? +r.central.visitedFrac.toFixed(4) : undefined,
     toxDose: r.odour ? +r.odour.toxDose.toFixed(4) : undefined,
     toxDoseTop: r.odour ? +r.odour.toxDoseTop.toFixed(4) : undefined,
-    toxRatio: r.odour ? +r.odour.toxRatio.toFixed(4) : undefined })),
+    toxRatio: r.odour ? +r.odour.toxRatio.toFixed(4) : undefined,
+    toxRatioIntake: r.odour ? +r.odour.toxRatioIntake.toFixed(4) : undefined,
+    toxShare: r.odour ? +r.odour.toxShare.toFixed(4) : undefined })),
 };
 summary.drops = Object.fromEntries(['noFood','noToxin','blindConst','noFoodDir','noFoodMass']
   .map(k => [k, +(ok.reduce((a, r) => a + (r.drops?.[k] ?? 0), 0) / ok.length).toFixed(4)]));
@@ -176,7 +190,8 @@ const withOdour = ok.filter(r => r.odour);
 if (withOdour.length) {
   const oavg = k => +(withOdour.reduce((a, r) => a + r.odour[k], 0) / withOdour.length).toFixed(4);
   summary.odour = Object.fromEntries(
-    ['ambiguity','toxDose','toxDoseTop','intake','intakeTop','toxRatio'].map(k => [k, oavg(k)]));
+    ['ambiguity','stakes','toxDose','toxDoseTop','intake','intakeTop','toxRatio',
+     'toxDoseTopIntake','toxRatioIntake','hazCost','hazCostTop','toxShare'].map(k => [k, oavg(k)]));
 }
 const withCentral = ok.filter(r => r.central);
 if (withCentral.length) summary.central = {
