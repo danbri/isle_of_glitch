@@ -163,7 +163,19 @@ const summary = {
   // behavioural claim about them can be given a standard error the same way the
   // score is, rather than being a bare point estimate. The odour numbers already
   // in RESEARCH.md predate this and are unerrored means; they are labelled so.
+  // Components and ablation drops are carried per seed as well as averaged, for
+  // the same reason the score is: a claim about `sensing` rising or about
+  // `blindConst` going to zero needs a standard error, and until now only the
+  // total had one. The averages are unchanged — these are the same per-seed
+  // numbers the means were always computed from.
   perSeed: ok.map(r => ({ seed: r.seed, score: +r.score.toFixed(4), forage: +r.forage.toFixed(3),
+    sensing: +r.components.sensing.toFixed(4), taxis: +r.components.taxis.toFixed(4),
+    selection: +r.components.selection.toFixed(4), diversity: +r.components.diversity.toFixed(4),
+    viability: +r.viability.toFixed(4),
+    blindConst: +(r.drops?.blindConst ?? 0).toFixed(4),
+    noFood: +(r.drops?.noFood ?? 0).toFixed(4),
+    noToxin: +(r.drops?.noToxin ?? 0).toFixed(4),
+    intake: r.odour ? +r.odour.intake.toFixed(4) : undefined,
     nestShare: r.central ? +r.central.nestShare.toFixed(4) : undefined,
     visitedFrac: r.central ? +r.central.visitedFrac.toFixed(4) : undefined,
     toxDose: r.odour ? +r.odour.toxDose.toFixed(4) : undefined,
