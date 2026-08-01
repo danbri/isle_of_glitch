@@ -204,8 +204,10 @@ export const DEFAULTS = Object.freeze({
   //                   carry enough to steer by — and only one of them is a fact
   //                   about evolution.
   //   COEVO_REFLEX_MASS_K  gain of the sensed variant's gate, which has no
-  //                   distance to work with and must threshold on mass instead:
-  //                   gate = 1 - exp(-mass * k).
+  //                   distance to work with and must threshold on the sensed
+  //                   mass channel instead: gate = 1 - exp(-tanh(mass*.16) * k).
+  //                   That channel saturates well below 1, so useful values of
+  //                   k are order 10, not order 1.
   COEVO: false, COEVO_ROLE: 'prey',
   COEVO_SENSE_SIGMA2: 0.050, COEVO_CAPTURE_SIGMA2: 0.0040,
   COEVO_PRED_GAIN: 1.0, COEVO_PREY_LOSS: 1.5,
@@ -794,12 +796,21 @@ export class EvoDevoSim {
         const sensed = C.COEVO_REFLEX_SOURCE === 'sensed';
         let dir, gate;
         if (sensed) {
-          // Exactly what the animal's own sensors deliver, and nothing more:
-          // the Gaussian-weighted mean opponent bearing (`ob`, the same two
-          // numbers the network reads) and the opponent mass channel. No
-          // distance, no nearest-neighbour resolution.
-          dir = ob;
-          gate = opp.mass.mul(-C.COEVO_REFLEX_MASS_K).exp().mul(-1).add(1);
+          // Exactly what the animal's own sensors deliver, and nothing more —
+          // read out of `sensors` AFTER the ablation mask, i.e. the literal
+          // numbers the network is about to receive. Two consequences, both
+          // wanted. It is a true sensory restriction: no distance, no
+          // nearest-neighbour resolution, only the last three columns of the
+          // input vector. And blinding the opponent channels disables it, which
+          // makes this reference policy a POSITIVE CONTROL for policy.js's
+          // ablation measure — an arm in which evasion is known to be present,
+          // so a null there would indict the instrument rather than the animal.
+          const b = C.SENSORS - 3;
+          const col = i => sensors.slice([0, b + i], [-1, 1]).squeeze([1]);
+          dir = [col(0), col(1)];
+          // col(2) is tanh(rawMass * .16), which is what the network reads; the
+          // gate is therefore in sensed units, not raw field mass.
+          gate = col(2).mul(-C.COEVO_REFLEX_MASS_K).exp().mul(-1).add(1);
         } else {
           const nOpp = opp.rel.shape[1];
           const hot = tf.oneHot(opp.d2.argMin(1), nOpp).expandDims(2);
