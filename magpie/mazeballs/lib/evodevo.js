@@ -2009,17 +2009,63 @@ export async function coevoEpisode(prey, pred, steps, yieldEvery = 0) {
  * returns an archived population object to load into the two ghost sims.
  */
 export async function coevolveFor(prey, pred, generations, opts = {}) {
-  const { onGeneration = null, yieldEvery = 0, hof = null } = opts;
+  const { onGeneration = null, yieldEvery = 0, hof = null, spawns = 1 } = opts;
   const tf = T();
   const steps = prey.cfg.EPOCH_STEPS;
   const frac = hof ? Math.max(0, Math.min(0.9, hof.frac ?? 0.5)) : 0;
   const mainSteps = Math.max(1, Math.round(steps * (1 - frac)));
   const hofSteps = Math.max(0, steps - mainSteps);
+  const nSpawns = Math.max(1, spawns | 0);
+  // Every quantity selection or a behaviour descriptor reads, so that the
+  // multi-spawn mean is a mean of all of them and not just of fitness.
+  const ACC = ['fitness', 'pos', 'contactAcc', 'forageAcc', 'turnAcc', 'oppAcc'];
 
   for (let g = 0; g < generations; g++) {
-    prey.resetBodies(); pred.resetBodies();
-    coevoSyncWorld(prey, pred);
-    await coevoEpisode(prey, pred, mainSteps, yieldEvery);
+    /**
+     * Independent evaluation episodes, averaged before selection.
+     *
+     * The measured problem this addresses (RESEARCH.md, hazard stakes): the
+     * traits selection is asked to act on have a repeatability across spawns of
+     * order 0.01, so a single-episode fitness is mostly spawn luck and
+     * truncation on it is mostly sorting noise. Averaging k independent
+     * episodes divides the within-genotype component of the observed trait by
+     * k while leaving the between-genotype component alone, which is the only
+     * lever that raises the ratio the selection response actually depends on.
+     * Deliberately averaged across ALL of the accumulators, not just fitness,
+     * so the MAP-Elites behaviour descriptor is averaged on the same footing.
+     */
+    let sums = null;
+    for (let s = 0; s < nSpawns; s++) {
+      prey.resetBodies(); pred.resetBodies();
+      coevoSyncWorld(prey, pred);
+      await coevoEpisode(prey, pred, mainSteps, yieldEvery);
+      if (nSpawns === 1) break;
+      const snap = {};
+      for (const side of ['prey', 'pred']) {
+        const sim = side === 'prey' ? prey : pred;
+        for (const k of ACC) if (sim[k]) snap[`${side}.${k}`] = sim[k].clone();
+      }
+      if (!sums) sums = snap;
+      else {
+        for (const k in snap) {
+          const n = sums[k].add(snap[k]);
+          sums[k].dispose(); snap[k].dispose();
+          sums[k] = n;
+        }
+      }
+    }
+    if (sums) {
+      // Write the means back before anything reads them, so coevoStats(), the
+      // tournament trace and evolve() all see the averaged evaluation.
+      tf.tidy(() => {
+        for (const k in sums) {
+          const [side, name] = k.split('.');
+          (side === 'prey' ? prey : pred)[name].assign(sums[k].div(nSpawns));
+        }
+      });
+      for (const k in sums) sums[k].dispose();
+      prey.stepNo = mainSteps; pred.stepNo = mainSteps;
+    }
     const stats = {
       prey: await prey.coevoStats(), pred: await pred.coevoStats(),
     };

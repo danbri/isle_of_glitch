@@ -95,6 +95,12 @@ const args = parseArgs(process.argv.slice(2), {
   // within-run control that the arm is running at all, and varying both sides
   // at once would confound "the prey's search improved" with "the predator's
   // search got worse". All are no-ops at their defaults.
+  // Evaluation noise. `--spawns k` evaluates every genome over k independent
+  // episodes and selects on the mean, which divides the spawn-luck component of
+  // every selected trait by k. Compute-matched comparisons want `--epoch`
+  // divided by the same k, so the arm spends the same number of simulated steps
+  // per generation and the only thing that changed is how they were spent.
+  spawns: 1,
   preySelect: '', preyTournK: 4, preyElitism: true, preyCrossover: 0,
   preySelfAdapt: false, preyElites: 0,
   preyNoveltyK: 15, preyNoveltyWeight: 1.0,
@@ -186,7 +192,7 @@ if (args.archiveIn) {
 
   const trace = [];
   await coevolveFor(prey, pred, args.generations, {
-    hof,
+    hof, spawns: args.spawns,
     onGeneration: async ({ generation, prey: ps, pred: qs }) => {
       trace.push({ generation, preyContact: ps.contact, preyForage: ps.forageTop,
                    preyFit: ps.fitnessTop, predContact: qs.contact, predFit: qs.fitnessTop,

@@ -38,7 +38,8 @@
  */
 import fs from 'node:fs/promises';
 import { initBackend, parseArgs } from './backend.js';
-import { EvoDevoSim, evolveFor, mean, sd } from '../lib/evodevo.js';
+import { EvoDevoSim, evolveFor, coevolveFor, coevoEpisode, coevoSyncWorld,
+         mean, sd } from '../lib/evodevo.js';
 
 const args = parseArgs(process.argv.slice(2), {
   generations: 8, seed: 1, steps: 300, evals: 6,
@@ -47,40 +48,103 @@ const args = parseArgs(process.argv.slice(2), {
   select: 'trunc', backend: 'auto', out: '', quiet: false, label: '',
   ambiguity: 0, qualitySigma2: 0.010,
   hazStakes: 1, hazSigma2: 0.0015, hazards: 18,
+  // ------------------------------------------------------------- coevolution
+  // The same question for the two-species world, where the trait selection is
+  // asked to act on is CONTACT with the opposing species rather than hazard
+  // exposure. The prey population is the one decomposed; the predators are
+  // frozen at their own final generation and re-spawned alongside it, so what
+  // is measured is the repeatability of "how much this prey genome gets caught"
+  // against a fixed opponent — exactly the quantity prey fitness is built from.
+  //
+  // `--spawns k` additionally evolves under k-episode averaged evaluation, so
+  // the repeatability of the trait can be read at the setting the arm actually
+  // ran at rather than only at the single-episode default.
+  // `--evalSpawns k` makes each of the `evals` observations the MEAN of k
+  // independent episodes rather than one episode, which is what selection sees
+  // under `--spawns k`. Reading R at (steps 1450, evalSpawns 1) against
+  // (steps 483, evalSpawns 3) is the compute-matched question: is a fixed
+  // per-generation step budget better spent on one long evaluation or on
+  // several short independent ones?
+  coevo: false, predPop: 48, predElites: 6, spawns: 1, evalSpawns: 1,
+  captureSigma2: 0.0040, preyLoss: 1.5, predGain: 1.0, predForage: 0, preyIntake: 1,
+  preySelect: '', preyTournK: 4, preyElitism: true,
 });
 const log = (...m) => { if (!args.quiet) console.error(...m); };
 
 const { pkg, backend } = await initBackend({ prefer: args.backend });
 log(`[backend] ${pkg} -> ${backend}`);
 
+const baseCfg = {
+  POP: args.pop, ELITES: args.elites, EPOCH_STEPS: args.epoch,
+  GAIN: args.gain, MUTATION: args.mutation,
+  FOOD_CLUSTERS: args.clusters, FOOD_CLUSTER_SIGMA: args.clusterSigma,
+  FOOD_SENSE_SIGMA2: args.senseSigma2, FOOD_RELOCATE_THRESH: args.relocateThresh,
+  SELECT: args.select,
+  ODOUR_AMBIGUITY: args.ambiguity, ODOUR_QUALITY_SIGMA2: args.qualitySigma2,
+  HAZARDS: args.hazards, HAZARD_STAKES: args.hazStakes,
+  HAZARD_DAMAGE_SIGMA2: args.hazSigma2,
+};
+if (args.coevo) Object.assign(baseCfg, {
+  COEVO: true, COEVO_CAPTURE_SIGMA2: args.captureSigma2,
+  COEVO_PREY_LOSS: args.preyLoss, COEVO_PRED_GAIN: args.predGain,
+  COEVO_PRED_FORAGE: args.predForage,
+});
 const sim = new EvoDevoSim({
   seed: args.seed,
-  config: {
-    POP: args.pop, ELITES: args.elites, EPOCH_STEPS: args.epoch,
-    GAIN: args.gain, MUTATION: args.mutation,
-    FOOD_CLUSTERS: args.clusters, FOOD_CLUSTER_SIGMA: args.clusterSigma,
-    FOOD_SENSE_SIGMA2: args.senseSigma2, FOOD_RELOCATE_THRESH: args.relocateThresh,
-    SELECT: args.select,
-    ODOUR_AMBIGUITY: args.ambiguity, ODOUR_QUALITY_SIGMA2: args.qualitySigma2,
-    HAZARDS: args.hazards, HAZARD_STAKES: args.hazStakes,
-    HAZARD_DAMAGE_SIGMA2: args.hazSigma2,
-  },
+  config: args.coevo
+    ? { ...baseCfg, COEVO_ROLE: 'prey', COEVO_PREY_INTAKE: args.preyIntake,
+        ...(args.preySelect ? { SELECT: args.preySelect } : {}),
+        TOURN_K: args.preyTournK, ELITISM: args.preyElitism }
+    : baseCfg,
 });
 await sim.initialise();
+const pred = args.coevo
+  ? new EvoDevoSim({ seed: args.seed ^ 0x5f1e,
+      config: { ...baseCfg, POP: args.predPop, ELITES: args.predElites,
+                COEVO_ROLE: 'predator' } })
+  : null;
+if (pred) { await pred.initialise(); coevoSyncWorld(sim, pred); }
 
 const t0 = Date.now();
-await evolveFor(sim, args.generations, {
-  onGeneration: ({ generation, best }) =>
-    log(`[gen ${String(generation).padStart(3)}] best ${best.toFixed(3)}  (${((Date.now() - t0) / 1000).toFixed(0)}s)`),
-});
+if (args.coevo) {
+  await coevolveFor(sim, pred, args.generations, {
+    spawns: args.spawns,
+    onGeneration: ({ generation, prey: ps }) =>
+      log(`[gen ${String(generation).padStart(3)}] contact ${ps.contact.toFixed(4)} ` +
+          `forage ${ps.forageTop.toFixed(3)}  (${((Date.now() - t0) / 1000).toFixed(0)}s)`),
+  });
+} else {
+  await evolveFor(sim, args.generations, {
+    onGeneration: ({ generation, best }) =>
+      log(`[gen ${String(generation).padStart(3)}] best ${best.toFixed(3)}  (${((Date.now() - t0) / 1000).toFixed(0)}s)`),
+  });
+}
 log(`[evolved] ${args.generations} generations in ${((Date.now() - t0) / 1000).toFixed(0)}s`);
 
 /* --------------------------------------------- repeated evaluation */
 
-const POP = sim.cfg.POP;
 // [eval][agent] for each trait.
-const tox = [], eat = [], fit = [];
+const tox = [], eat = [], fit = [], con = [], forg = [];
 for (let e = 0; e < args.evals; e++) {
+  if (args.coevo) {
+    // Genomes frozen on both sides; only the spawn positions differ between
+    // evaluations, which is exactly the noise selection faces each generation.
+    const nS = Math.max(1, args.evalSpawns | 0);
+    let ac = null, ag = null, af = null;
+    for (let s = 0; s < nS; s++) {
+      sim.resetBodies(); pred.resetBodies();
+      coevoSyncWorld(sim, pred);
+      await coevoEpisode(sim, pred, args.steps, 0);
+      const [c, g, f] = await Promise.all([
+        sim.contactAcc.data(), sim.forageAcc.data(), sim.fitness.data()]);
+      if (!ac) { ac = Float64Array.from(c); ag = Float64Array.from(g); af = Float64Array.from(f); }
+      else for (let i = 0; i < ac.length; i++) { ac[i] += c[i]; ag[i] += g[i]; af[i] += f[i]; }
+    }
+    for (let i = 0; i < ac.length; i++) { ac[i] /= nS; ag[i] /= nS; af[i] /= nS; }
+    con.push(ac); forg.push(ag); fit.push(af);
+    log(`[eval ${e + 1}/${args.evals}] contact ${mean(ac).toFixed(4)} forage ${mean(ag).toFixed(4)}`);
+    continue;
+  }
   const init = sim.makeInit();
   const f = await sim.evaluate({ steps: args.steps, init, yieldEvery: 0 });
   const [t, i] = await Promise.all([sim.toxDose.data(), sim.intake.data()]);
@@ -137,13 +201,28 @@ const result = {
     pop: args.pop, ambiguity: args.ambiguity, hazStakes: args.hazStakes,
     hazSigma2: args.hazSigma2, hazards: args.hazards,
   },
-  traits: {
-    toxDose: repeatability(tox),
-    intake: repeatability(eat),
-    fitness: repeatability(fit),
-  },
+  traits: args.coevo
+    ? { contact: repeatability(con), forage: repeatability(forg),
+        fitness: repeatability(fit) }
+    : { toxDose: repeatability(tox), intake: repeatability(eat),
+        fitness: repeatability(fit) },
   runtimeSeconds: +((Date.now() - t0) / 1000).toFixed(1),
 };
+
+// The two-species world has no hazard-share question; report and stop.
+if (args.coevo) {
+  result.settings.coevo = true; result.settings.spawns = args.spawns;
+  result.settings.preySelect = sim.cfg.SELECT; result.settings.preyElitism = sim.cfg.ELITISM;
+  result.settings.preyLoss = args.preyLoss; result.settings.preyIntake = args.preyIntake;
+  const R = result.traits;
+  if (args.out) await fs.writeFile(args.out, JSON.stringify(result, null, 2));
+  else process.stdout.write(JSON.stringify(result) + '\n');
+  log(`[done] contact R ${R.contact.repeatability.toFixed(4)} (r ${R.contact.meanPairwiseR.toFixed(3)}) · ` +
+      `forage R ${R.forage.repeatability.toFixed(4)} (r ${R.forage.meanPairwiseR.toFixed(3)}) · ` +
+      `fitness R ${R.fitness.repeatability.toFixed(4)} (r ${R.fitness.meanPairwiseR.toFixed(3)})`);
+  sim.dispose(); pred.dispose();
+  process.exit(0);
+}
 
 // How much of the *selectable* (between-genotype) fitness variance is hazard,
 // versus how much of the total is. The gap between these two numbers is the
