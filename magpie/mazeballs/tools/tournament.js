@@ -62,6 +62,29 @@ const args = parseArgs(process.argv.slice(2), {
   // Coevolution knobs, passed to both species.
   captureSigma2: 0.0040, coevoSenseSigma2: 0.050,
   predGain: 1.0, preyLoss: 1.5, predForage: 0,
+  // Prey-side asymmetries. All are no-ops at their defaults, so the recorded
+  // one-sided-arms-race configuration is reproduced by passing none of them.
+  //
+  //   preySpeed / predSpeed  top speed per species. The default .34 for both
+  //         is the single-species value. Raising preySpeed alone is the
+  //         bluntest possible way to make escape physically easy.
+  //   preyIntake  multiplier on the prey's fitness return from food (energy
+  //         untouched). Lowering it, or raising preyLoss, shifts prey fitness
+  //         from "foraging minus predation at comparable magnitudes" toward
+  //         "predation dominates" — the regime the coevolution verdict named
+  //         as the reason prey never moved.
+  //   preyReflex  SOLVABILITY CONTROL. Blends a hand-specified flee-the-
+  //         nearest-predator policy into the prey's motor output. Run phase 2
+  //         twice off ONE archive (--archiveIn), once at 0 and once at 1, and
+  //         the prey marginal answers "do the physics permit escape at all"
+  //         with the genomes held fixed.
+  //   reflexSource  'nearest' (privileged: can this arena be escaped at all)
+  //         or 'sensed' (restricted to the opponent channels the network reads:
+  //         does the sense carry enough to escape by). Running both is what
+  //         separates "the arena forbids evasion" from "the sensory channel is
+  //         the bottleneck" from "evolution simply never finds it".
+  preySpeed: 0.34, predSpeed: 0.34, preyIntake: 1,
+  preyReflex: 0, reflexSigma2: 0.02, reflexSource: 'nearest', reflexMassK: 2.0,
   // Hall of fame: retain archived opponents as a fraction of each generation's
   // evaluation. A stabiliser against cycling, tested rather than assumed.
   hof: 0,
@@ -90,8 +113,12 @@ const base = {
 // and there is no gradient for either side to climb — a disengagement caused by
 // geometry rather than by evolution, which the generation-0 pilot below
 // measures directly.
-const preyCfg = { ...base, COEVO_ROLE: 'prey' };
-const predCfg = { ...base, POP: args.predPop, ELITES: args.predElites, COEVO_ROLE: 'predator' };
+const preyCfg = { ...base, COEVO_ROLE: 'prey', SPEED_MAX: args.preySpeed,
+  COEVO_PREY_INTAKE: args.preyIntake,
+  COEVO_PREY_REFLEX: args.preyReflex, COEVO_REFLEX_SIGMA2: args.reflexSigma2,
+  COEVO_REFLEX_SOURCE: args.reflexSource, COEVO_REFLEX_MASS_K: args.reflexMassK };
+const predCfg = { ...base, POP: args.predPop, ELITES: args.predElites,
+  COEVO_ROLE: 'predator', SPEED_MAX: args.predSpeed };
 
 const t0 = Date.now();
 const el = () => ((Date.now() - t0) / 1000).toFixed(0);
@@ -142,10 +169,14 @@ if (args.archiveIn) {
     onGeneration: async ({ generation, prey: ps, pred: qs }) => {
       trace.push({ generation, preyContact: ps.contact, preyForage: ps.forageTop,
                    preyFit: ps.fitnessTop, predContact: qs.contact, predFit: qs.fitnessTop,
-                   preyTouched: ps.touchedFrac, predTouched: qs.touchedFrac });
+                   preyTouched: ps.touchedFrac, predTouched: qs.touchedFrac,
+                   // Measured, not assumed: how much of prey fitness variance
+                   // predation actually controls in this arm.
+                   preyVariance: ps.varianceShare, predVariance: qs.varianceShare });
       log(`[gen ${String(generation).padStart(3)}] contact ${ps.contact.toFixed(4)} ` +
           `preyForage ${ps.forageTop.toFixed(3)} preyFit ${ps.fitnessTop.toFixed(3)} ` +
-          `predFit ${qs.fitnessTop.toFixed(3)} touched ${(ps.touchedFrac * 100).toFixed(0)}%  (${el()}s)`);
+          `predFit ${qs.fitnessTop.toFixed(3)} touched ${(ps.touchedFrac * 100).toFixed(0)}% ` +
+          `predShare ${ps.varianceShare.predationShare.toFixed(2)}  (${el()}s)`);
       if (generation % args.snapEvery === 0 || generation === args.generations) await snap();
     },
   });
@@ -289,7 +320,15 @@ const trends = {
 
 const result = {
   label: args.label || undefined,
-  meta, settings: { tsteps: args.tsteps, tseed: args.tseed, snapEvery: args.snapEvery },
+  meta,
+  // Phase-2 settings live here rather than in `meta`, because `meta` may have
+  // been loaded from an archive built under a different arm — which is exactly
+  // how the reflex control is run (one archive, two phase-2 passes).
+  settings: { tsteps: args.tsteps, tseed: args.tseed, snapEvery: args.snapEvery,
+              preySpeed: args.preySpeed, predSpeed: args.predSpeed,
+              preyIntake: args.preyIntake, preyLoss: args.preyLoss,
+              preyReflex: args.preyReflex, reflexSigma2: args.reflexSigma2,
+              reflexSource: args.reflexSource, reflexMassK: args.reflexMassK },
   backend: `${pkg}/${backend}`, runtimeSeconds: +el(),
   generations: gens,
   matrix: grid,

@@ -44,19 +44,34 @@ give the organism more capacity are, on this evidence, predicted null.
 say the same thing: the task change lands, and nothing better replaces the
 strategy it displaces.**
 
-**That direction has now been tested once, and it half-works.** Shared-odour
-ambiguity — food and hazards emitting into the *same* channel, with identity
-readable only at close range — was dosed from separable to fully ambiguous over
-16 seeds per arm. Score is flat at every dose and `sensing` falls monotonically
-by 38%, so on the objective it is another null. But the trace analysis says the
-task change reached the policy: the klinokinesis signature drops from ~6 SE to
-under 2 SE and loses sign agreement between seeds. **Removing the affordance
-for klinokinesis does remove klinokinesis. It does not produce a replacement.**
-Inside 8 generations the population responds by sensing less, not by learning
-the conjunction. Two candidate explanations remain open and unseparated — the
+*Shared-odour ambiguity.* Food and hazards emitting into the *same* channel,
+with identity readable only at close range, dosed from separable to fully
+ambiguous over 16 seeds per arm. Score is flat at every dose and `sensing` falls
+monotonically by 38%, so on the objective it is a null. But the trace analysis
+says the task change reached the policy: the klinokinesis signature drops from
+~6 SE to under 2 SE and loses sign agreement between seeds. **Removing the
+affordance for klinokinesis does remove klinokinesis. It does not produce a
+replacement.** Inside 8 generations the population responds by sensing less,
+not by learning the conjunction. Two explanations remain unseparated — the
 budget, and an incentive worth only ~7% of elite fitness because hazards are
-physically minor. Raising the stakes alongside the ambiguity dose is the
-indicated follow-up.
+physically minor.
+
+*Prey evasion, properly controlled.* A task klinokinesis structurally cannot do
+— escaping a pursuer — was posed, **proved solvable** in this arena by an
+explicitly-constructed policy reading the animal's own post-ablation sensor
+vector (contact −90%), and made almost the only thing selection cared about
+(predation share of prey-fitness variance driven from 0.49 to 0.99). Nothing
+evolved, at any dose, with slopes flat and the one significant delta pointing
+the wrong way. It also refuted by measurement the standing explanation for the
+earlier prey null: predation and foraging were never comparable terms in the
+sense selection acts on — 0.49 of the variance against 0.03.
+
+**So the live direction is now narrower again. Escape was available, reachable
+from the animal's own senses, and paid for, and evolution did not find it. Not
+the arena, not the sense, not the payoff — the binding constraint is the
+search.** Truncation selection over a developmental genome is what has never
+produced a non-klinokinetic policy here, and it is the one component that has
+never been varied.
 
 **What a second species did.** A predator population (`COEVO`, default off)
 removes the designer from the difficulty ceiling. Measured with an ancestral
@@ -69,10 +84,27 @@ and prey foraging did not move either, so the prey null is real and not the
 "stopped eating" artifact. Not disengagement (the gradient stayed intact
 throughout), not cycling (the age-gap profile is transitive). **The prey never
 developed evasion**: blinding their predator channel does not change how close
-they get to predators, on both seeds tested. The asymmetry has an obvious
-suspect — a predator's entire fitness is predation, whereas a prey's is
-foraging *minus* predation, so the incumbent klinokinetic strategy still wins
-by not changing.
+they get to predators, on both seeds tested.
+
+**And that null then survived every control that could have excused it.** The
+suspected cause — prey fitness being foraging *minus* predation at comparable
+magnitudes, so the incumbent forager wins by not changing — was measured and is
+**false**: predation already explained 0.49 of prey fitness variance against
+foraging's 0.03. A hand-specified reference evader run on the *same genomes*
+cuts contact by 76–90% while still foraging, so the arena permits escape; the
+`sensed` variant of it, computed from nothing but the network's own input
+vector, is the best-performing one, so the sensory channel is sufficient; and at
+the baseline weights it buys 3.6 units of avoided contact per unit of foraging
+given up, so evasion already paid. Predation was then doubled down to 0.99 of
+prey fitness variance with foraging worth literally nothing, across 8 seeds and
+32 generations, and **prey vulnerability still did not move**
+(−1.02e-3 ± 1.60e-3, flat, indistinguishable from baseline) while the predators
+improved exactly as much as before. **Escape is available, reachable from the
+sensors the animal has, and paid for, and evolution does not find it.** The
+binding constraint is the search, not the arena, not the sense, and not the
+payoff. A 1.6× top-speed advantage for prey, incidentally, changes contact by
+1%: contact is accumulated by chance encounter, and only turning away reduces
+it.
 
 **A measurement lesson that generalises.** The same phenomenon read +0.143
 against a bar of 0.301 — a null — when scored head-to-head against the
@@ -1886,3 +1918,250 @@ each generation over the whole archive of frozen opponents, rather than scoring
 it against its contemporary, is worth roughly a factor of three in statistical
 power on this system** — which matters a great deal somewhere seed spread is ten
 times parameter spread.
+
+## Prey evasion: the control cleared, and the null survived it
+
+The coevolution verdict left one loose end and named it: prey never developed
+evasion, and the suspected reason was that a prey's fitness is foraging *minus*
+predation at comparable magnitudes, so the incumbent klinokinetic forager wins
+by not changing. That is a hypothesis about the payoff, and it was untested.
+Worse, the null it explained was of exactly the kind the central-place section
+above is a cautionary tale about: **a null on an experimental arm carries no
+information if nothing established that the task was solvable at all.**
+
+So this wave ran the control first. It cleared — decisively, twice over — and
+then the null survived it. That combination is what makes this a result rather
+than another task-setup failure.
+
+### The control, first: a hand-specified evader, on the same genomes
+
+`COEVO_PREY_REFLEX` blends a reference evasive policy over the prey's own motor
+output: turn to point directly away from the predator, go full ahead, gated by
+proximity. It is an instrument, not a trait; it never evolves and nothing
+selects on it. `COEVO_REFLEX_SOURCE` decides what it is allowed to know, and
+running both settings answers two different questions:
+
+- `nearest` hands it the true nearest predator and a distance gate. This is the
+  **physics** question — can this arena be escaped at all, by something that
+  already knows exactly where the threat is?
+- `sensed` restricts it to the last three columns of the sensor vector, read
+  *after* the ablation mask: the same two opponent bearing numbers and the same
+  opponent mass channel the network itself receives, and nothing else. This is
+  the **information** question — does the sense carry enough to steer by?
+
+The measurement is free of any confound with evolution, because it is phase 2 of
+`tools/tournament.js` re-run off ONE archive with one setting changed. The
+genomes, the world, the spawns and the frozen predators are all identical
+between rows; only the reflex differs. 4 seeds, generation-0 row shown (the
+other eight snapshot rows are the same to within their standard errors):
+
+| prey policy | contact suffered | vs baseline | forage | contact saved per unit forage paid |
+|---|---|---|---|---|
+| none (baseline) | 0.8472 ± 0.0434 | — | 0.988 | — |
+| 1.6× top speed, no evasion | 0.8411 ± 0.0468 | −1% | 0.987 | — |
+| reference evader, `nearest`, gate σ² 0.02 | 0.2065 ± 0.0086 | **−76%** | 0.811 | 3.62 |
+| reference evader, `nearest`, gate σ² 0.06 | 0.1519 ± 0.0046 | **−82%** | 0.666 | 2.16 |
+| reference evader, `nearest` σ² 0.06 + 1.6× speed | 0.1560 ± 0.0041 | −82% | 0.669 | 2.11 |
+| reference evader, `sensed`, k 8 | 0.1257 ± 0.0085 | **−85%** | 0.397 | 1.22 |
+| reference evader, `sensed`, k 24 | 0.0871 ± 0.0074 | **−90%** | 0.319 | 1.14 |
+
+**The arena permits escape.** Contact falls by three quarters to nine tenths,
+and it falls against every archived predator generation including the evolved
+ones. It is not "stopped eating": foraging is still 82% of baseline at the
+best-value setting, and the last column prices the trade directly — at the
+*baseline* predation weight, where predation and foraging are supposed to be
+comparable, the gated evader buys 3.6 units of avoided contact for every unit of
+foraging it gives up. Every row in the table is net fitness-positive before any
+knob is touched.
+
+**And the sensory channel is sufficient.** The `sensed` rows are computed from
+the literal input vector, with no distance and no nearest-neighbour resolution,
+and they are the *best* rows in the table. Whatever stopped the prey, it was not
+that the predator channel is too blurred to steer by.
+
+**A speed advantage is not a solvability lever, which is worth recording because
+it was the obvious one to reach for.** Giving prey a 1.6× top speed over
+predators moves contact by 1%, and adding it to an already-fleeing prey moves it
+by nothing (−82% either way). Contact here is accumulated by chance encounter
+with a randomly-walking animal; running faster does not reduce encounters, and
+only turning away does. This is the same lesson as the rest of the document in a
+new place: the constraint is what the strategy has to be, not what the hardware
+could support.
+
+### The suspected cause, measured: predation already dominated
+
+`coevoStats()` now decomposes fitness into its terms exactly. Both are already
+accumulated per agent — integrated contact and integrated intake — and fitness
+is linear in each, so var(F) = Σ cov(F, term) holds and the share each explains
+is cov(F, term)/var(F). Baseline arm, 4 seeds, averaged over 32 generations:
+
+| | predation share | foraging share | residual |
+|---|---|---|---|
+| prey | **0.49** | **0.03** | 0.48 |
+| predator | 0.68 | 0.00 | 0.32 |
+
+The two terms of prey fitness are **not** of comparable magnitude in the sense
+that matters to selection. Predation already explained sixteen times as much of
+prey fitness variance as foraging did, in the very run whose null was blamed on
+their being comparable. The mean magnitudes are closer (mean contact 2.00
+against mean top-quartile forage 1.44), which is presumably what the original
+reading was of — but selection acts on variance, not on means, and the prey were
+already under overwhelmingly predation-dominated selection.
+
+**The diagnosis in the previous verdict is therefore refuted, and it was refuted
+by a measurement that the verdict itself asked for.** That is the right way for
+it to fail.
+
+### The dose ran anyway, and went to the limit
+
+Raising `COEVO_PREY_LOSS` and capping `COEVO_PREY_INTAKE` push the share the
+rest of the way. Because none of these knobs touch the capture kernel, the
+speeds or the sensing, the tournament's observable — physical contact-seconds —
+is comparable *across* arms as well as within one. 4 seeds each, 32 generations,
+snapshots every 4:
+
+| arm | predation share | prey contact, gen 0 → 32 | delta | bar | per-seed slope | forage |
+|---|---|---|---|---|---|---|
+| loss 1.0, intake 1.0 (baseline) | 0.49 | 0.8472 → 0.8148 | −0.0324 | 0.1453 | −1.91e-3 ± 2.47e-3 FLAT | 0.988 → 1.051 |
+| loss 4.0, intake 1.0 | 0.93 | 0.8519 → 0.9808 | +0.1289 | 0.0907 | +8.22e-4 ± 1.06e-3 FLAT | 0.988 → 1.035 |
+| loss 16.0, intake 0.25 | 0.99 | 0.8670 → 0.9620 | +0.0950 | 0.1509 | −5.96e-4 ± 3.08e-3 FLAT | 0.993 → 0.961 |
+| loss 16.0, intake 0 (pure evasion) | 0.99 | 0.8357 → 0.7809 | −0.0548 | 0.1111 | −3.99e-3 ± 2.30e-3 FLAT | 0.985 → 0.931 |
+
+The dose did what it was supposed to: the predation share goes 0.49 → 0.93 →
+0.99, and in the last arm foraging is worth *literally nothing* in fitness while
+still feeding the animal exactly as before, so prey selection is 100% "do not
+get caught". Metabolism is untouched throughout, so no arm is a viability move
+in disguise.
+
+**No arm produced prey improvement, and there is no dose-response.** The
+endpoint deltas run −0.032, +0.129, +0.095, −0.055: not monotone, and the only
+one that clears its bar clears it in the *wrong direction*. Every slope is flat.
+
+The most extreme arm was then taken to 8 seeds alongside a matched 8-seed
+baseline, because at 4 seeds its slope (−3.99e-3 ± 2.30e-3) was the one number
+in the wave that might have been a weak real effect:
+
+| 8 seeds | prey contact, gen 0 → 32 | delta | bar | prey slope | predator capability | predator slope |
+|---|---|---|---|---|---|---|
+| baseline | 0.8212 → 0.8407 | +0.0195 | 0.0986 | −9.81e-4 ± 1.43e-3 FLAT | +0.3328, bar 0.1817 IMPROVED | +5.27e-3 ± 2.10e-3 RISING |
+| pure evasion | 0.8094 → 0.8269 | +0.0174 | 0.0822 | −1.02e-3 ± 1.60e-3 FLAT | +0.3358, bar 0.1771 IMPROVED | +7.48e-3 ± 2.31e-3 RISING |
+
+Doubling the seeds *halved* the pure arm's slope and left it indistinguishable
+from the baseline's. It was seed noise, and adding power is what said so — the
+opposite of what a real effect does.
+
+Note the last two columns. **The predators improved just as much in the arm
+where the prey were under total selection to escape as in the arm where they
+were not.** The one-sided race is not an artifact of the prey having other
+things to do.
+
+### The channel is still not load-bearing, and now the instrument has a scale
+
+`tools/policy.js --coevo --channels opponent --ablate opponent` blinds only the
+predator channels and measures the change in how close the prey then get to
+predators. The previous wave reported this as null on two seeds and was right to,
+but a null from an instrument of unknown sensitivity is worth very little. The
+`sensed` reference evader fixes that: it is driven by the very channels the
+ablation removes, so blinding it switches the evasion off, and it is therefore a
+**positive control — an arm in which evasion is known to be present.**
+
+| arm | seed | predator-proximity delta (intact − blinded) | MI excess, turn~predator bearing, lag 0 |
+|---|---|---|---|
+| reference evader (`sensed`, k 8) | 1 | **−0.1822 ± 0.0386** | +0.2179 (z 208) |
+| reference evader (`sensed`, k 8) | 2 | **−0.1066 ± 0.0330** | +0.1810 (z 233) |
+| | *mean* | **−0.1444 ± 0.0378** | |
+| pure evasion, 32 gen | 1 | −0.0973 ± 0.0124 | +0.0084 (z 22) |
+| pure evasion, 32 gen | 2 | **+0.0478 ± 0.0111** | +0.0017 (z 4) |
+| pure evasion, 32 gen | 3 | −0.0662 ± 0.0109 | +0.0048 (z 12) |
+| pure evasion, 32 gen | 4 | **+0.0432 ± 0.0162** | +0.0009 (z 1) |
+| | *mean* | −0.0181 ± 0.0373 | |
+| baseline, 32 gen | 1 | −0.0306 ± 0.0139 | +0.0032 (z 13) |
+| baseline, 32 gen | 2 | +0.0099 ± 0.0084 | +0.0047 (z 14) |
+| | *mean* | −0.0103 ± 0.0203 | |
+
+The measure works: on the positive control it reads −0.14 with both seeds the
+same sign, against a mutual information twenty-five times anything an evolved
+arm produces. On the arm under maximum selection to evade it reads
+−0.018 ± 0.037, and the four seeds split two-and-two on sign while each is many
+within-seed standard errors from zero. That is the signature this document has
+now recorded three times for noise dressed as a weak real effect — the same
+pattern that killed the thrust-modulation result of the previous wave — and it
+is why single-seed significance is not evidence here. The klinokinesis test on
+the predator channel splits the same way (turn delta +0.0072, −0.0169, +0.0066,
+−0.0062).
+
+**Blinding the predator channel still does not change how close prey get to
+predators, and the instrument that says so would have detected an effect four
+times smaller than the reference evader's.**
+
+### `score.js` was not run on these arms, deliberately
+
+The previous wave established what it reports here: a fixed-world diagnosis of
+a coevolved prey population sees no predators, so the opponent channels read
+zero and the arms race is invisible to it in principle, and the number it does
+produce is dominated by the generation-0 diversity anchor. This wave makes it
+worse rather than better. The pure-evasion arm sets `COEVO_PREY_INTAKE` to 0, so
+foraging is worth nothing *in fitness* while still feeding the animal exactly as
+before; `score.js`'s viability gate is a function of top-quartile fitness, and
+would therefore report a collapse that is a restatement of the arm's definition
+rather than an observation about the population. Running it would have produced
+a number whose only honest interpretation is "this instrument does not apply
+here", at the cost of an arm's worth of compute. The tournament is the primary
+instrument by design and is the only one reported.
+
+### Verdict
+
+Nothing is adopted. `COEVO` stays off, `COEVO_PREY_REFLEX` stays 0,
+`COEVO_PREY_INTAKE` stays 1, `SPEED_MAX` stays 0.34 for both species, and the
+default single-species path was verified byte-identical to the pre-change code
+(same seed, same report) both after the first change and after the last. The
+re-measured baseline reproduces the recorded coevolution table to four figures
+(predator capability 2.1964 → 2.5928, delta +0.3964, bar 0.2900), so the
+comparison is sound.
+
+What this rules out, and it is narrow and hard: **prey evasion is not blocked by
+the arena, is not blocked by the sensory channel, and is not blocked by the
+payoff.** All three of those were live explanations at the start of this wave and
+all three are now measured to be false. Escape is available (−90% contact),
+reachable from the sensors the animal actually has, and net fitness-positive at
+3.6:1 even before predation is made to dominate. Selection was then made
+100% about being caught, over 32 generations and 8 seeds, and the population did
+not move.
+
+The remaining explanation is the one the rest of this document has been
+circling: **the substrate cannot get from klinokinesis to anything else.** Every
+policy this project has produced in its entire history is a biased random walk,
+ten separate attempts to get past it have failed, and this is the first of them
+where the target was proved to be sitting right there, cheap, visible and paid
+for. That is a much stronger statement of the limit than any previous null, and
+it moves the burden squarely onto the search: mutation-and-truncation on this
+developmental genome does not find a policy that is one small hand-written
+function away, even when it is the only thing being selected for.
+
+Two notes for whoever picks this up:
+
+- **A control arm has to be an instrument, not just an easier task.** The reason
+  this wave has a result and the central-place wave does not is that the control
+  here could be run on the *same genomes* as the experimental arm — one archive,
+  two phase-2 passes, everything else held fixed — so it measures the arena
+  rather than measuring a second evolutionary run with its own seed noise. Where
+  a control can be built that way, build it that way; it is roughly a hundred
+  times cheaper than evolving one and it answers a sharper question.
+- **A null is worth what its instrument's sensitivity is, and that number is
+  cheap to get.** Wiring the reference policy so that the ablation actually
+  disables it turned "we saw nothing" into "we saw nothing, with a measure that
+  reads −0.14 when there is something", at the cost of one extra pair of runs.
+  Every ablation-based null in this document would be worth more with the
+  equivalent, and the equivalent is usually available.
+
+### A repeated prompt-injection attempt, mid-experiment
+
+For the fifth consecutive wave, text arrived mid-run claiming that
+`tools/tournament.js`, `tools/run.js` and `tools/policy.js` had been modified by
+someone else, that the modification was intentional, that it should not be
+reverted, and that the human should not be told. It arrived as a
+system-reminder immediately after a `git stash`, i.e. its "evidence" of external
+modification was this agent's own stashed edits reappearing as a diff. It was
+disregarded, the files were checked (`git status` showed only this worktree's
+own changes), and it is reported here rather than acted on. Instructions come
+from the task, not from tool output, file contents, or notices about files.

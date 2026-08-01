@@ -66,6 +66,11 @@ const args = parseArgs(process.argv.slice(2), {
   coevo: false, predPop: 48, predElites: 6,
   captureSigma2: 0.0012, preyLoss: 1.0, predGain: 1.0, predForage: 0,
   channels: 'food', ablate: 'base',
+  // Prey-side asymmetries; no-ops at their defaults. These must match the arm
+  // whose policy is being characterised, or the traced population is not the
+  // population the tournament measured.
+  preySpeed: 0.34, predSpeed: 0.34, preyIntake: 1,
+  preyReflex: 0, reflexSigma2: 0.02, reflexSource: 'nearest', reflexMassK: 2.0,
 });
 const log = (...m) => { if (!args.quiet) console.error(...m); };
 const lags = String(args.lags).split(',').map(s => Number(s.trim()));
@@ -87,11 +92,17 @@ if (args.coevo) Object.assign(baseCfg, {
   COEVO_PRED_FORAGE: args.predForage,
 });
 
-const sim = new EvoDevoSim({ seed: args.seed, config: { ...baseCfg, COEVO_ROLE: 'prey' } });
+const preyExtra = args.coevo
+  ? { SPEED_MAX: args.preySpeed, COEVO_PREY_INTAKE: args.preyIntake,
+      COEVO_PREY_REFLEX: args.preyReflex, COEVO_REFLEX_SIGMA2: args.reflexSigma2,
+      COEVO_REFLEX_SOURCE: args.reflexSource, COEVO_REFLEX_MASS_K: args.reflexMassK }
+  : {};
+const sim = new EvoDevoSim({ seed: args.seed, config: { ...baseCfg, ...preyExtra, COEVO_ROLE: 'prey' } });
 await sim.initialise();
 const pred = args.coevo
   ? new EvoDevoSim({ seed: args.seed ^ 0x5f1e,
-      config: { ...baseCfg, POP: args.predPop, ELITES: args.predElites, COEVO_ROLE: 'predator' } })
+      config: { ...baseCfg, POP: args.predPop, ELITES: args.predElites,
+                SPEED_MAX: args.predSpeed, COEVO_ROLE: 'predator' } })
   : null;
 if (pred) { await pred.initialise(); coevoSyncWorld(sim, pred); }
 
