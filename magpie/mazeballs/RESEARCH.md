@@ -46,15 +46,12 @@ strategy it displaces.**
 
 *Shared-odour ambiguity.* Food and hazards emitting into the *same* channel,
 with identity readable only at close range, dosed from separable to fully
-ambiguous over 16 seeds per arm. Score is flat at every dose and `sensing` falls
-monotonically by 38%, so on the objective it is a null. But the trace analysis
-says the task change reached the policy: the klinokinesis signature drops from
-~6 SE to under 2 SE and loses sign agreement between seeds. **Removing the
-affordance for klinokinesis does remove klinokinesis. It does not produce a
-replacement.** Inside 8 generations the population responds by sensing less,
-not by learning the conjunction. Two explanations remain unseparated — the
-budget, and an incentive worth only ~7% of elite fitness because hazards are
-physically minor.
+ambiguous over 16 seeds per arm. Score is flat at every dose. The original trace
+analysis appeared to show the task change reaching the policy, with the
+klinokinesis signature dropping from ~6 SE to under 2 SE; **that contrast has
+since been retired** — see the measurement error below. Two candidate
+explanations for the null were named at the time, the budget and an incentive
+worth only ~7% of elite fitness. Both have since been tested and both are dead.
 
 *Prey evasion, properly controlled.* A task klinokinesis structurally cannot do
 — escaping a pursuer — was posed, **proved solvable** in this arena by an
@@ -62,16 +59,44 @@ explicitly-constructed policy reading the animal's own post-ablation sensor
 vector (contact −90%), and made almost the only thing selection cared about
 (predation share of prey-fitness variance driven from 0.49 to 0.99). Nothing
 evolved, at any dose, with slopes flat and the one significant delta pointing
-the wrong way. It also refuted by measurement the standing explanation for the
-earlier prey null: predation and foraging were never comparable terms in the
-sense selection acts on — 0.49 of the variance against 0.03.
+the wrong way.
 
-**So the live direction is now narrower again. Escape was available, reachable
-from the animal's own senses, and paid for, and evolution did not find it. Not
-the arena, not the sense, not the payoff — the binding constraint is the
-search.** Truncation selection over a developmental genome is what has never
-produced a non-klinokinetic policy here, and it is the one component that has
-never been varied.
+**Neither the task, nor the budget, nor the incentive was the binding
+constraint. Heritability was.** `HAZARD_STAKES` multiplies both hazard
+penalties, and a 3 × 2 grid of stakes × ambiguity at 16 seeds per cell moves
+nothing — no score, no component, and no hazard exposure, which stays flat
+against its own generation-0 control in all six cells at 16× the price.
+Twenty-four generations at the most favourable cell moves it no further while
+making foraging significantly worse. The reason is measured rather than
+inferred: **hazard exposure has a repeatability of ~0.01 at the episode length
+selection uses** (`tools/repeatability.js`), and it does not change with the
+price. A price multiplies a trait's signal and its noise by the same factor, so
+raising it only raises the noise floor of fitness — which is why `toxShare`
+goes to 1.0 while `selection` collapses from 0.030 to 0.001. `intake` is barely
+heritable either (0.012–0.047). **"Make the incentive bigger" is not a lever on
+this system.**
+
+This is the first hypothesis that explains the *whole* run of nulls rather than
+one wave of it. Nine organism-side levers, two task changes, and a fully
+controlled evasion task all failed; if the traits selection is asked to act on
+are ~1% repeatable across spawns, then selection is mostly sorting noise and no
+amount of task design or architectural richness can matter. It is directly
+testable by raising `spawns` — averaging each genome over independent
+evaluations is exactly what raises the signal-to-noise that selection sees —
+and it is consistent with novelty-plus-multi-spawn being one of only two
+changes ever accepted here. **The next lever is the search, and specifically
+the evaluation.**
+
+**A measurement error that applies retroactively.** `tools/policy.js` reports
+standard errors computed across agents within one evolved population. Measured
+over 8 seeds in four configurations, that understates the across-seed SD of the
+klinokinesis turn delta by 3.7–4.9×. The klinokinesis *signature* survives the
+correction as a weak population-level tendency (3 of 4 cells clear the
+across-seed bar; 5–6 of 8 seeds negative in every cell), but **every contrast
+built on it is flat**, including the ambiguity abolition above.
+`tools/policy-agg.js` pools across seeds and applies the project bar. No policy
+contrast in this document should be believed from within-population SEs,
+including ones already written into it.
 
 **What a second species did.** A predator population (`COEVO`, default off)
 removes the designer from the difficulty ceiling. Measured with an ancestral
@@ -114,10 +139,16 @@ power here. Never score a coevolutionary run on same-generation performance.
 
 **The two agree, and that is the strongest statement available.** Coevolution
 left klinokinesis in place and the prey never built evasion on top of it;
-shared-odour ambiguity took klinokinesis away and nothing was built in its
-place. One says the incumbent strategy is not displaced when a better one would
-pay, the other says no better one appears even when the incumbent is made
-impossible. Both point at the same missing thing, and neither identifies it.
+shared-odour ambiguity did not displace it either once the seed-level bar was
+applied. One says the incumbent strategy is not displaced when a better one
+would pay, the other says the task change did not reach the policy at all. The
+hazard-stakes result supplies the missing common cause both were pointing at:
+at a per-genotype repeatability of ~0.01, selection on this system has almost
+no signal to act on, so neither a bigger reward nor a harder task changes what
+evolves. **The live direction is raising the signal — more spawns averaged per
+genotype, longer episodes, or a task whose outcome is a consequence of policy
+rather than of spawn position — and verifying it with `tools/repeatability.js`
+before asking whether behaviour changed.**
 
 **What is known to be mismeasured.** `sensing` uses scramble ablation, which
 substitutes another agent's sensor values and so injects misleading input as
@@ -267,6 +298,20 @@ not a failure of the wave.
   `tools/aggregate.js` — arithmetically identical, and the tool checks no seed
   is counted twice. If a run does get backgrounded, poll for its output file in
   a foreground loop rather than waiting for a notification.
+- **A within-population standard error is not a result.** `tools/policy.js`
+  computes its SEs across agents inside one evolved population; agents there
+  share ancestry, a layout and a seed. Measured over 8 seeds in four
+  configurations, that understates the across-seed SD by 3.7–4.9×, which is
+  enough to turn seed noise into a "6.8 SE" effect. Two seeds is not a
+  replication of a policy claim on this system, whatever the printed SE says —
+  the baseline klinokinesis turn delta reads −0.075 and −0.058 on seeds 1 and 2
+  and +0.051 on seed 4. Pool with `tools/policy-agg.js` and read the
+  across-seed bar.
+- **A trait selection cannot track cannot be bought.** Before concluding that a
+  population failed to learn something because the reward was too small, measure
+  the trait's repeatability with `tools/repeatability.js`. Hazard exposure sits
+  at ~0.01 and feeding at 0.012–0.047, so a 16× price change moved nothing at
+  all. Raising a payoff multiplies a trait's signal and its noise together.
 - **`open(p,'w').write(expr)` truncates the file before `expr` is evaluated.**
   A one-line Python patch script with a typo in the replacement expression
   zeroed `tools/score.js` outright: the `open` call ran, the argument raised,
@@ -2165,3 +2210,360 @@ modification was this agent's own stashed edits reappearing as a diff. It was
 disregarded, the files were checked (`git status` showed only this worktree's
 own changes), and it is reported here rather than acted on. Instructions come
 from the task, not from tool output, file contents, or notices about files.
+
+## Hazard stakes: the incentive was never the binding constraint, and the klinokinesis contrast does not survive eight seeds
+
+The shared-odour experiment above closed with two unseparated explanations for
+its null — the eight-generation budget, and an incentive worth only ~7% of elite
+fitness — and named raising the stakes alongside the ambiguity dose as the
+indicated follow-up. This is that experiment. It separates them, and the answer
+is neither: **the incentive can be raised by a factor of sixteen without
+changing anything, because hazard exposure is not a heritable trait in this
+world.** On the way to that it also retires the klinokinesis contrast the
+previous section reported, for a reason that generalises to every policy
+measurement in this document.
+
+### Choosing the stakes axis, and why it is damage magnitude
+
+`HAZARD_STAKES` (default 1, verified bit-identical — `1.35 * 1` and `0.62 * 1`
+are exact in floating point, and the whole diagnostic report reproduces
+byte-for-byte at the same seed) multiplies both hazard penalties: the fitness
+term of 1.35 per second at full contact and the energy term of 0.62.
+`HAZARD_DAMAGE_SIGMA2` and `HAZARDS` are exposed alongside it, and are not the
+dose axis. The reasons are worth stating because they are the difference between
+a clean 2-D grid and a confounded one:
+
+- **Count is disqualified.** Raising `HAZARDS` also raises the hazard fraction
+  of the mixed odour, which *is* the ambiguity axis. A count sweep would move
+  both axes at once.
+- **Radius has a hard ceiling.** At full ambiguity the identity cue is readable
+  only inside ~0.10. A damage radius approaching that leaves no room to read the
+  cue and turn away, so the task stops being a discrimination at all — it
+  becomes unsolvable in principle, which is exactly the hole that sank the
+  central-place experiment.
+- **Magnitude changes neither.** It leaves the geometry of the discrimination
+  and the composition of the odour identical, so the ambiguity dose means the
+  same thing in every cell.
+
+Unlike `ODOUR_AMBIGUITY`, this changes the world's payoffs, so every cell
+carries its own generation-0 control and no cross-stakes score comparison is
+made without one. `toxDose` is deliberately still accumulated unscaled — seconds
+of contact, not fitness lost — so the behavioural readout is comparable across
+stakes even though fitness is not.
+
+### The knob turns, and it turns a long way
+
+Measured at generation 0, 16 seeds, so this is the incentive as posed rather
+than the incentive after selection has had a go at it:
+
+| stakes | mean fitness forfeited to hazards | top-quartile fitness | `toxShare` |
+|---|---|---|---|
+| 1 | 0.239 | 0.524 | 0.758 |
+| 4 | 0.934 | 0.478 | 0.978 |
+| 16 | 3.771 | 0.445 | 0.999 |
+
+`toxShare` is new: the share of population fitness *variance* carried by the
+hazard term, which is what the coevolution section asked for when it said to
+verify a fitness decomposition rather than assume one. At stakes 16 the hazard
+term is essentially the entire fitness variance. Whatever else is true, the
+incentive is no longer small.
+
+Note the first row already. At stakes **1** — the world every previous
+experiment in this document ran in — hazards carry 76% of fitness variance. The
+recorded "worth roughly 7% of elite fitness" was a statement about the *level*
+of an elite's fitness, and it is correct; but the quantity selection sees is
+variance, and by that measure hazards were never a minor term. That is the first
+sign that "the incentive is too small" was the wrong diagnosis.
+
+### The grid: flat everywhere, and not through the gate
+
+16 seeds per cell, 8 generations, 300 steps, 1 restart, `EVODEVO_WORKERS=1`,
+split into 8-seed chunks and pooled with `tools/aggregate.js`. Baselines
+re-measured on this worktree's own HEAD, and they reproduce the recorded
+shared-odour table exactly — `s1a0` 0.1975 ± 0.0053 with `sensing` 0.0690, and
+`s1a1` 0.1910 ± 0.0076 with `sensing` 0.0431, the same numbers to four decimals.
+
+| stakes | amb | score ± se | sensing | taxis | selection | forage | viab | intake | toxDose |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 0 | 0.1975 ± 0.0053 | 0.0690 | 0.0096 | 0.0303 | 0.522 | 0.990 | 0.154 | 0.166 |
+| 1 | 1 | 0.1910 ± 0.0076 | 0.0431 | 0.0103 | 0.0430 | 0.535 | 1.000 | 0.162 | 0.180 |
+| 4 | 0 | 0.1893 ± 0.0050 | 0.0358 | 0.0070 | 0.0048 | 0.461 | 1.000 | 0.155 | 0.183 |
+| 4 | 1 | 0.1909 ± 0.0061 | 0.0512 | 0.0085 | 0.0061 | 0.475 | 1.000 | 0.152 | 0.162 |
+| 16 | 0 | 0.2088 ± 0.0100 | 0.1027 | 0.0186 | 0.0011 | 0.458 | 1.000 | 0.160 | 0.159 |
+| 16 | 1 | 0.1955 ± 0.0070 | 0.0569 | 0.0186 | 0.0019 | 0.465 | 1.000 | 0.155 | 0.166 |
+
+**Every contrast is NO SIGNIFICANT CHANGE.** Ambiguity at stakes 1: −0.0065
+against a bar of 0.0185. At stakes 4: +0.0016 against 0.0158. At stakes 16:
+−0.0133 against 0.0244. Stakes at fixed ambiguity is flat too.
+
+The trap this project keeps hitting is checked explicitly and is not present.
+`viability` is 0.99–1.00 in all six cells, and across all 96 seed-runs exactly
+one fell below the 0.30 floor. More importantly `intake` — food actually eaten,
+which carries no hazard term at any stakes — is flat at 0.152–0.162 in every
+cell. The decline in `forage` from 0.52 to 0.46 is therefore precisely the
+hazard deduction being subtracted from the same foraging, not foraging getting
+worse. **Nothing in this grid is starvation.**
+
+### `toxDose` does not move from generation 0, at any price
+
+The generation-0 control at matched stakes is what makes the exposure readouts
+interpretable, and this is the third time in this document that it has paid for
+itself. 16 seeds per cell, per-seed standard errors, the usual 2×combined-SE
+bar:
+
+| cell | gen-0 `toxDose` | 8-gen `toxDose` | delta | bar | |
+|---|---|---|---|---|---|
+| stakes 1, amb 0 | 0.1767 ± 0.0122 | 0.1664 ± 0.0132 | −0.0103 | 0.0360 | flat |
+| stakes 1, amb 1 | 0.1843 ± 0.0153 | 0.1798 ± 0.0154 | −0.0045 | 0.0433 | flat |
+| stakes 4, amb 0 | 0.1729 ± 0.0120 | 0.1828 ± 0.0128 | +0.0099 | 0.0351 | flat |
+| stakes 4, amb 1 | 0.1758 ± 0.0149 | 0.1624 ± 0.0115 | −0.0134 | 0.0377 | flat |
+| stakes 16, amb 0 | 0.1746 ± 0.0120 | 0.1590 ± 0.0147 | −0.0156 | 0.0380 | flat |
+| stakes 16, amb 1 | 0.1773 ± 0.0148 | 0.1658 ± 0.0153 | −0.0115 | 0.0426 | flat |
+
+Eight generations of selection under a sixteen-fold hazard price reduces
+population hazard exposure by 6.5%, against a bar it does not come close to
+clearing — and by the same amount as under a one-fold price. Cross-stakes the
+column is flat as well. **No avoidance evolves at any price.**
+
+`toxRatioIntake` is the companion readout, and it exists because `toxRatio` —
+the fitness-ranked version already in this document — is *not* comparable across
+stakes. Fitness contains the hazard term, so ranking by fitness selects against
+`toxDose` harder the higher the stakes, with no change in behaviour whatsoever:
+the gen-0 column alone falls 0.169 → 0.036 → 0.008 across stakes 1/4/16, which
+is pure arithmetic. Ranking the same quartile by *intake* has no such defect,
+because intake contains no hazard term at any stakes. Read that way, exposure
+among the best foragers **rises** from generation 0 in all six cells, and clears
+the bar in one (stakes 16, amb 0: 1.012 → 1.398 against a bar of 0.369). The
+agents that eat most are the ones that get poisoned most, and raising the price
+makes that worse rather than better. Foraging and hazard contact are entangled,
+and selection is not pulling them apart.
+
+### The mechanism: hazard exposure is not heritable, so its price is all noise
+
+`tools/repeatability.js` is the instrument this experiment turned on, and it is
+the one worth keeping. It evaluates the same final population six times from six
+independent spawn sets on a fixed layout and decomposes each trait's variance
+into between-genotype and within-genotype parts. The between part is the ceiling
+on the per-generation response to selection: truncation selection cannot act on
+what does not persist across evaluations. Episodes are run at `EPOCH_STEPS`
+(1450), not at the 300-step diagnostic length, so this is the noise selection
+actually faces rather than an idealised version of it.
+
+| cell | `toxDose` R | `intake` R | `fitness` R |
+|---|---|---|---|
+| stakes 1, amb 0, seed 1 / 2 | 0.011 / 0.003 | 0.030 / 0.012 | 0.006 / 0.000 |
+| stakes 1, amb 1, seed 1 / 2 | 0.002 / 0.000 | 0.040 / 0.012 | 0.016 / 0.000 |
+| stakes 16, amb 0, seed 1 / 2 | 0.010 / 0.012 | 0.047 / 0.013 | 0.010 / 0.012 |
+| stakes 16, amb 1, seed 1 | 0.006 | 0.017 | 0.007 |
+
+Mean pairwise correlations between evaluations agree: −0.017 to +0.010 for
+`toxDose`. **Hazard exposure has a repeatability of at most ~0.01, and it does
+not move with the stakes at all** — 0.011 at stakes 1, 0.010 and 0.012 at stakes
+16.
+
+That is the whole result, and it explains every null above. `HAZARD_STAKES`
+multiplies the hazard term's contribution to fitness. But it multiplies the
+*signal* and the *noise* in that term by exactly the same factor, and the signal
+is one per cent of it. Raising the price therefore raises the noise floor of
+fitness almost purely, which is why `toxShare` goes to 1.0 while nothing
+whatever happens to behaviour. It also predicts, correctly, that the `selection`
+component should collapse as stakes rise — elites beating the population median
+on fresh spawns goes 0.0303 → 0.0048 → 0.0011 at ambiguity 0 and 0.0430 →
+0.0061 → 0.0019 at ambiguity 1. Selection stops tracking genotype because
+fitness has become a lottery on hazard encounters.
+
+Two things follow that are larger than this experiment.
+
+**"Make the incentive bigger" is not a lever on this system.** It is the obvious
+move whenever a population fails to learn something, and it was the move this
+document's previous section recommended. It cannot work on a trait whose
+repeatability is ~0.01, and nothing about the size of the reward changes the
+repeatability. A follow-up that wants discrimination has to raise the *signal* —
+longer episodes, more spawns averaged per genotype, or hazards placed so that
+encountering one is a consequence of policy rather than of where the agent
+happened to start — not the price.
+
+**`intake` is barely heritable either**, at 0.012–0.047. So this is not
+specifically a fact about hazards; it is a fact about the evaluation. Selecting
+the top 10 of 192 on a trait with repeatability 0.03 is mostly selecting spawn
+luck, which is the quantified version of the trap this document already records
+in prose ("7–9 of the 10 elites are simply agents that spawned on top of a
+patch"). It is a plausible common cause of the long run of organism-side nulls,
+and it is testable directly: raise `spawns` so each genotype is scored on an
+average rather than a draw, and watch whether the repeatability rises before
+asking whether anything else does.
+
+### The budget: 24 generations makes it worse, not better
+
+At the most favourable cell — highest stakes, highest ambiguity — against the
+8-generation arms. 8 seeds, everything else identical.
+
+| cell | score ± se | sensing | intake | forage | viab | seeds below floor |
+|---|---|---|---|---|---|---|
+| stakes 16, amb 0, 8 gen | 0.2088 ± 0.0100 | 0.1027 ± 0.0213 | 0.160 | 0.458 | 1.000 | 0/16 |
+| stakes 16, amb 0, 24 gen | 0.1869 ± 0.0201 | 0.0818 ± 0.0275 | 0.123 | 0.324 | 0.912 | 3/8 |
+| stakes 16, amb 1, 8 gen | 0.1955 ± 0.0070 | 0.0569 ± 0.0161 | 0.155 | 0.465 | 1.000 | 0/16 |
+| stakes 16, amb 1, 24 gen | 0.1632 ± 0.0084 | 0.0257 ± 0.0108 | 0.129 | 0.338 | 0.930 | 3/8 |
+
+`toxDose` at 24 generations is 0.155 (amb 0) and 0.177 (amb 1) — still flat
+against the generation-0 controls of 0.175 and 0.177. **Tripling the budget buys
+no discrimination.** What it buys is a significant decline in `intake` (0.160 →
+0.123 and 0.155 → 0.129, both clearing their bars) and in `forage`, with three
+of eight seeds in each arm dropping below the 0.30 viability floor. Those two
+cells are therefore flagged: their *scores* are not clean evidence about
+anything, exactly as the protocol requires. The `intake` and `toxDose` readouts
+are unaffected by the gate and remain interpretable.
+
+This is the third time longer evolution has been measured on this system and the
+third time it has made things worse. Combined with the repeatability number the
+reason is no longer mysterious: more generations of selection on a signal that
+is 1% of the variance is more generations of drift.
+
+**Verdict on budget versus incentive: neither.** The budget is not the binding
+constraint, because 24 generations moves hazard exposure exactly as much as 8
+does, which is not at all. The incentive is not the binding constraint, because
+16× the price moves it exactly as much as 1× does. What binds is that the trait
+selection would have to act on is not heritable at the episode length and spawn
+count this world uses.
+
+### Anosmia: partial, real, and not the clean version
+
+The prediction worth testing was that under high stakes and high ambiguity the
+population might stop sensing altogether — odour being actively misleading and
+disambiguation being expensive — which would show as `sensing` → 0 with foraging
+holding up on a blind random walk. Measured directly rather than inferred.
+
+The right statistic is not the mean. `sensing` is `clamp01(drops.blind)`, so a
+value of exactly zero means scrambling every sense cost that population nothing
+at all, and the mean of a clamped variable hides how many populations are in
+that state. The **anosmia rate** — the fraction of replicate populations for
+which the senses carry no measurable fitness — is the direct reading:
+
+| cell | generation 0 | 8 generations | 24 generations |
+|---|---|---|---|
+| stakes 1, amb 0 | 6/16 | **1/16** | — |
+| stakes 1, amb 1 | 9/16 | 7/16 | — |
+| stakes 16, amb 0 | 10/16 | 5/16 | 3/8 |
+| stakes 16, amb 1 | 11/16 | 5/16 | 3/8 |
+
+Unevolved populations are mostly anosmic, which is the expected baseline and the
+reason this needs a generation-0 anchor. Eight generations at baseline stakes on
+separable channels drives that from 6/16 to 1/16: evolution's main
+accomplishment here is making the senses load-bearing at all. Full ambiguity
+prevents most of that (1/16 → 7/16, Fisher exact two-sided **p = 0.037**), and
+raised stakes prevents it too, with no further effect of ambiguity on top
+(5/16 vs 5/16, p = 1.0).
+
+The strongest anosmia signal is the 24-generation, stakes-16, ambiguity-1 cell.
+There `sensing` is 0.0257 ± 0.0108 against its own generation-0 control of
+0.0261 ± 0.0125 — **indistinguishable from never having evolved** — and the cost
+of scrambling the odour channel has gone negative, −0.0295 ± 0.0238, a
+significant fall from +0.0385 ± 0.0200 at 8 generations. The odour channel has
+stopped being worth listening to, and is trending towards being worth ignoring.
+
+**But it is not the clean result, and the distinguishing measurement is
+`intake`.** A population that had found a good blind strategy would keep eating.
+This one does not: `intake` falls significantly, 0.155 → 0.129. And the same
+decline happens in the ambiguity-0 arm at 24 generations (0.160 → 0.123) where
+`sensing` does *not* collapse, so the foraging loss is a stakes-and-budget
+effect rather than an ambiguity effect. So the honest statement is: **partial
+anosmia, real and replicated at 16 seeds at 8 generations and significant by
+Fisher exact, but it is degradation rather than a substitute strategy.** The
+population stops using odour and gets worse, rather than stopping and coping.
+
+### The klinokinesis contrast does not survive eight seeds, and the reason generalises
+
+This is the most consequential thing in the wave and it is a correction to the
+section above.
+
+`tools/policy.js` reproduces both recorded results exactly. At stakes 1,
+ambiguity 0, seeds 1 and 2: −0.0746 ± 0.0110 (n=444) and −0.0578 ± 0.0101
+(n=715). At ambiguity 1, seeds 1 and 2: +0.0315 ± 0.0166 (n=364) and −0.0105 ±
+0.0085 (n=749). Four decimals, both arms. The tool is not in question.
+
+The unit of replication is. Those standard errors are computed **across agents
+within one evolved population**. Agents in a converged population share
+ancestry, a world layout and a seed, so that number is the uncertainty on the
+mean of one population's agents — not the uncertainty on a claim about what a
+configuration evolves. Everywhere else this document treats the seed as the unit
+of replication, for the measured reason that seed spread is ten times parameter
+spread. Extending all four cells to 8 seeds:
+
+| cell | per-seed turn delta | across-seed mean ± se | | negative |
+|---|---|---|---|---|
+| stakes 1, amb 0 | −0.075 −0.058 −0.000 **+0.051** −0.025 +0.016 −0.006 +0.005 | −0.0115 ± 0.0142 | 0.80 SE, **not significant** | 5/8 |
+| stakes 1, amb 1 | +0.032 −0.011 −0.073 −0.048 −0.029 +0.002 −0.097 −0.062 | −0.0355 ± 0.0150 | 2.37 SE, significant | 6/8 |
+| stakes 16, amb 0 | −0.017 −0.039 −0.041 −0.061 +0.001 +0.005 −0.110 −0.104 | −0.0456 ± 0.0155 | 2.94 SE, significant | 6/8 |
+| stakes 16, amb 1 | −0.047 −0.123 −0.043 +0.006 +0.039 −0.060 −0.054 −0.046 | −0.0410 ± 0.0168 | 2.43 SE, significant | 6/8 |
+
+And every contrast between them is flat: ambiguity at stakes 1 is −0.0241
+against a bar of 0.0413; ambiguity at stakes 16 is +0.0046 against 0.0457;
+stakes at either ambiguity, likewise flat.
+
+Read that table carefully, because two separate things are in it.
+
+**The klinokinesis signature itself survives, weakly.** Three of the four cells
+clear the across-seed bar with a negative mean, and 5–6 of 8 seeds are negative
+in every cell. A biased random walk is a real population-level tendency. It is
+just a much noisier one than a two-seed measurement suggested.
+
+**The dose-0 → dose-1 abolition does not survive.** The previous section's
+headline — "removing the affordance for klinokinesis does remove klinokinesis",
+resting on ~6 SE at two seeds collapsing to under 2 SE at two seeds — is a
+two-seed artefact. Seeds 1 and 2 happen to be the two strongest negatives out of
+the eight in the ambiguity-0 arm, and two of the three weakest in the
+ambiguity-1 arm. At 8 seeds the ambiguity arm is if anything *more* klinokinetic
+than the baseline, and the baseline is the one cell that fails to clear the bar
+at all. The mechanism claim was built on the sampling accident that the two
+seeds this project runs by convention were unrepresentative in opposite
+directions.
+
+The size of the error is measurable and it is large: the median
+within-population SE was 0.0094–0.0110 while the across-seed SD was
+0.0403–0.0476, an understatement of **3.7× to 4.9×**. That is the same
+phenomenon the coevolution section found from the other direction when the
+tournament marginal beat the head-to-head diagonal by a factor of three in
+power. Both say: on this system, believe the number that averages over the thing
+that varies most, and the thing that varies most is the seed.
+
+`tools/policy-agg.js` exists so this cannot recur. It pools `policy.js` outputs
+across seeds, reports the across-seed mean, se, sign agreement and the
+within-population understatement factor, and applies the same 2×combined-SE bar
+as `score.js` and `aggregate.js`. **No policy contrast in this document should
+be believed from within-population standard errors, including the ones already
+in it.** The klinokinesis *identification* rests on more than the turn delta —
+mutual information against a circular-shift null, and a non-monotonic
+conditional-response curve — and those legs have not been re-measured across
+eight seeds here. They should be, and until they are, the honest status of
+"the population runs klinokinesis" is: supported as a tendency, with the
+strength of the effect and every contrast built on it unestablished.
+
+### Verdict
+
+Nothing adopted. `HAZARD_STAKES` stays 1 and `HAZARD_DAMAGE_SIGMA2` stays
+0.0015, both verified bit-identical to the previous code, and the machinery is
+retained switched off as apparatus alongside `ODOUR_AMBIGUITY`.
+
+What this rules out, and it is broader than the experiment that produced it:
+
+- **The incentive hypothesis is dead.** Sixteen times the hazard price, with and
+  without ambiguity, over 16 seeds, changes no score, no component, and above
+  all no hazard exposure — flat against its own generation-0 control in all six
+  cells.
+- **The budget hypothesis is dead too**, at least for this trait. Twenty-four
+  generations moves hazard exposure exactly as much as eight, which is not at
+  all, while making foraging significantly worse and pushing three of eight
+  seeds through the viability floor.
+- **The reason is measured, not inferred.** Hazard exposure has a repeatability
+  of ~0.01 at the episode length selection uses. A price multiplies signal and
+  noise alike, and here the signal is one per cent of the variance. This is the
+  first mechanistic explanation in this document for *why* a task change fails
+  to produce a policy change, as opposed to another observation that it did.
+
+And one methodological finding that outranks all of the above, because it
+applies retroactively: **the policy analysis has been reporting
+within-population standard errors as though they were across-population ones,
+and they understate the real uncertainty by about a factor of four.** The
+"ambiguity abolishes klinokinesis" result does not survive the correction. The
+apparatus to do it properly is now in the tree; the two-seed policy contrast is
+not a measurement this project should make again.

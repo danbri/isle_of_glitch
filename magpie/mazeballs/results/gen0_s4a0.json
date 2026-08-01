@@ -1,0 +1,223 @@
+{
+  "label": "gen0_s4a0",
+  "score": 0.2533,
+  "se": 0.0028,
+  "sd": 0.0112,
+  "n": 16,
+  "failed": 0,
+  "settings": {
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "generations": 0,
+    "steps": 300,
+    "restarts": 1
+  },
+  "components": {
+    "sensing": 0.0269,
+    "taxis": 0.0038,
+    "generalisation": 0.9425,
+    "selection": 0.0076,
+    "diversity": 1
+  },
+  "forage": 0.4779,
+  "viability": 0.9973,
+  "perSeed": [
+    {
+      "seed": 1,
+      "score": 0.2523,
+      "forage": 0.365,
+      "toxDose": 0.2155,
+      "toxDoseTop": 0.0013,
+      "toxRatio": 0.0061,
+      "toxRatioIntake": 0.8209,
+      "toxShare": 0.9897
+    },
+    {
+      "seed": 2,
+      "score": 0.2513,
+      "forage": 0.35,
+      "toxDose": 0.2846,
+      "toxDoseTop": 0.0032,
+      "toxRatio": 0.0111,
+      "toxRatioIntake": 0.7075,
+      "toxShare": 0.9853
+    },
+    {
+      "seed": 3,
+      "score": 0.2412,
+      "forage": 0.287,
+      "toxDose": 0.1877,
+      "toxDoseTop": 0.0087,
+      "toxRatio": 0.0462,
+      "toxRatioIntake": 0.9059,
+      "toxShare": 0.9807
+    },
+    {
+      "seed": 4,
+      "score": 0.2492,
+      "forage": 0.559,
+      "toxDose": 0.195,
+      "toxDoseTop": 0.0106,
+      "toxRatio": 0.0546,
+      "toxRatioIntake": 1.3699,
+      "toxShare": 0.981
+    },
+    {
+      "seed": 5,
+      "score": 0.2669,
+      "forage": 0.563,
+      "toxDose": 0.1988,
+      "toxDoseTop": 0.003,
+      "toxRatio": 0.0151,
+      "toxRatioIntake": 0.8752,
+      "toxShare": 0.9662
+    },
+    {
+      "seed": 6,
+      "score": 0.2531,
+      "forage": 0.546,
+      "toxDose": 0.1682,
+      "toxDoseTop": 0.0025,
+      "toxRatio": 0.0148,
+      "toxRatioIntake": 1.3981,
+      "toxShare": 0.993
+    },
+    {
+      "seed": 7,
+      "score": 0.2681,
+      "forage": 0.363,
+      "toxDose": 0.2167,
+      "toxDoseTop": 0.008,
+      "toxRatio": 0.0368,
+      "toxRatioIntake": 0.9459,
+      "toxShare": 1.0097
+    },
+    {
+      "seed": 8,
+      "score": 0.2519,
+      "forage": 0.587,
+      "toxDose": 0.075,
+      "toxDoseTop": 0.0008,
+      "toxRatio": 0.0106,
+      "toxRatioIntake": 1.3276,
+      "toxShare": 0.9641
+    },
+    {
+      "seed": 9,
+      "score": 0.2509,
+      "forage": 0.456,
+      "toxDose": 0.1706,
+      "toxDoseTop": 0.003,
+      "toxRatio": 0.0178,
+      "toxRatioIntake": 1.4281,
+      "toxShare": 0.9721
+    },
+    {
+      "seed": 10,
+      "score": 0.2537,
+      "forage": 0.487,
+      "toxDose": 0.1631,
+      "toxDoseTop": 0.0152,
+      "toxRatio": 0.0934,
+      "toxRatioIntake": 2.1098,
+      "toxShare": 0.9865
+    },
+    {
+      "seed": 11,
+      "score": 0.2566,
+      "forage": 0.647,
+      "toxDose": 0.1492,
+      "toxDoseTop": 0.0032,
+      "toxRatio": 0.0217,
+      "toxRatioIntake": 1.4103,
+      "toxShare": 0.9667
+    },
+    {
+      "seed": 12,
+      "score": 0.2234,
+      "forage": 0.455,
+      "toxDose": 0.1447,
+      "toxDoseTop": 0.0076,
+      "toxRatio": 0.0525,
+      "toxRatioIntake": 1.2513,
+      "toxShare": 0.9878
+    },
+    {
+      "seed": 13,
+      "score": 0.2467,
+      "forage": 0.557,
+      "toxDose": 0.1636,
+      "toxDoseTop": 0.0073,
+      "toxRatio": 0.0449,
+      "toxRatioIntake": 0.4788,
+      "toxShare": 0.9541
+    },
+    {
+      "seed": 14,
+      "score": 0.2674,
+      "forage": 0.479,
+      "toxDose": 0.0963,
+      "toxDoseTop": 0.0107,
+      "toxRatio": 0.1113,
+      "toxRatioIntake": 0.875,
+      "toxShare": 0.958
+    },
+    {
+      "seed": 15,
+      "score": 0.2547,
+      "forage": 0.526,
+      "toxDose": 0.1587,
+      "toxDoseTop": 0.0029,
+      "toxRatio": 0.0184,
+      "toxRatioIntake": 0.8235,
+      "toxShare": 0.9795
+    },
+    {
+      "seed": 16,
+      "score": 0.2661,
+      "forage": 0.42,
+      "toxDose": 0.1785,
+      "toxDoseTop": 0.0033,
+      "toxRatio": 0.0183,
+      "toxRatioIntake": 0.4731,
+      "toxShare": 0.9752
+    }
+  ],
+  "drops": {
+    "noFood": 0.0299,
+    "noToxin": 0.0513,
+    "blindConst": 0.0314,
+    "noFoodDir": 0.0494,
+    "noFoodMass": 0.0344
+  },
+  "odour": {
+    "ambiguity": 0,
+    "stakes": 4,
+    "toxDose": 0.1729,
+    "toxDoseTop": 0.0057,
+    "intake": 0.1495,
+    "intakeTop": 0.4839,
+    "toxRatio": 0.0359,
+    "toxDoseTopIntake": 0.1804,
+    "toxRatioIntake": 1.075,
+    "hazCost": 0.9335,
+    "hazCostTop": 0.0309,
+    "toxShare": 0.9781
+  }
+}
