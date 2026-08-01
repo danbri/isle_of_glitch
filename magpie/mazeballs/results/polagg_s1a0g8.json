@@ -1,0 +1,151 @@
+{
+  "label": "s1a0g8",
+  "n": 8,
+  "settings": {
+    "generations": 8,
+    "seed": 1,
+    "steps": 600,
+    "restarts": 6,
+    "pop": 192,
+    "elites": 10,
+    "gain": 0.5,
+    "mutation": 0.1,
+    "epoch": 1450,
+    "clusters": 9,
+    "clusterSigma": 0.12,
+    "senseSigma2": 0.05,
+    "relocateThresh": 0.15,
+    "select": "trunc",
+    "backend": "auto",
+    "out": "/tmp/claude-0/-home-user-isle-of-glitch/f94a0ab1-3e70-527c-9da9-b0f55c85297e/scratchpad/res/pol_s1a0g8_1.json",
+    "quiet": true,
+    "label": "",
+    "bins": 6,
+    "lags": "0,1,2,3,5,8,13,21,34",
+    "nullShuffles": 24,
+    "nearFrac": 0.25,
+    "ambiguity": 0,
+    "qualitySigma2": 0.01,
+    "hazStakes": 1,
+    "hazSigma2": 0.0015,
+    "hazards": 18,
+    "coevo": false,
+    "predPop": 48,
+    "predElites": 6,
+    "captureSigma2": 0.0012,
+    "preyLoss": 1,
+    "predGain": 1,
+    "predForage": 0,
+    "channels": "food",
+    "ablate": "base"
+  },
+  "metrics": {
+    "turnDelta": {
+      "mean": -0.01145,
+      "sd": 0.04029,
+      "se": 0.01424,
+      "n": 8
+    },
+    "thrustDelta": {
+      "mean": -0.01615,
+      "sd": 0.02282,
+      "se": 0.00807,
+      "n": 8
+    },
+    "turnDeltaTrueFood": {
+      "mean": -0.01145,
+      "sd": 0.04029,
+      "se": 0.01424,
+      "n": 8
+    },
+    "occupancyDelta": {
+      "mean": 0.02459,
+      "sd": 0.01631,
+      "se": 0.00577,
+      "n": 8
+    },
+    "eatDelta": {
+      "mean": 1.83279,
+      "sd": 0.93929,
+      "se": 0.33209,
+      "n": 8
+    }
+  },
+  "turnDeltaNegativeSeeds": 5,
+  "turnDeltaSeeds": 8,
+  "withinPopSEUnderstatement": 3.74,
+  "perSeed": [
+    {
+      "seed": 1,
+      "turnDelta": -0.07463,
+      "thrustDelta": -0.02319,
+      "turnDeltaTrueFood": -0.07463,
+      "occupancyDelta": 0.02833,
+      "eatDelta": 1.75309,
+      "withinPopSE": 0.010977792480026892
+    },
+    {
+      "seed": 2,
+      "turnDelta": -0.05784,
+      "thrustDelta": -0.03148,
+      "turnDeltaTrueFood": -0.05784,
+      "occupancyDelta": 0.02461,
+      "eatDelta": 1.66961,
+      "withinPopSE": 0.010112067845166148
+    },
+    {
+      "seed": 3,
+      "turnDelta": -0.0002,
+      "thrustDelta": 0.01501,
+      "turnDeltaTrueFood": -0.0002,
+      "occupancyDelta": 0.01708,
+      "eatDelta": 1.05597,
+      "withinPopSE": 0.014514003377165642
+    },
+    {
+      "seed": 4,
+      "turnDelta": 0.05063,
+      "thrustDelta": -0.0531,
+      "turnDeltaTrueFood": 0.05063,
+      "occupancyDelta": 0.04985,
+      "eatDelta": 2.84704,
+      "withinPopSE": 0.013982287321037304
+    },
+    {
+      "seed": 5,
+      "turnDelta": -0.02461,
+      "thrustDelta": -0.01348,
+      "turnDeltaTrueFood": -0.02461,
+      "occupancyDelta": -0.00049,
+      "eatDelta": 0.74816,
+      "withinPopSE": 0.010567060253935681
+    },
+    {
+      "seed": 6,
+      "turnDelta": 0.01618,
+      "thrustDelta": -0.00783,
+      "turnDeltaTrueFood": 0.01618,
+      "occupancyDelta": 0.01138,
+      "eatDelta": 0.80533,
+      "withinPopSE": 0.02689294301846337
+    },
+    {
+      "seed": 7,
+      "turnDelta": -0.00624,
+      "thrustDelta": 0.01246,
+      "turnDeltaTrueFood": -0.00624,
+      "occupancyDelta": 0.02277,
+      "eatDelta": 2.75623,
+      "withinPopSE": 0.006758126174208377
+    },
+    {
+      "seed": 8,
+      "turnDelta": 0.0051,
+      "thrustDelta": -0.02755,
+      "turnDeltaTrueFood": 0.0051,
+      "occupancyDelta": 0.04319,
+      "eatDelta": 3.02691,
+      "withinPopSE": 0.007789542097508477
+    }
+  ]
+}
