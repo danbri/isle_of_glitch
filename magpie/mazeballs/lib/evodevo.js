@@ -96,6 +96,56 @@ export const DEFAULTS = Object.freeze({
   // raw units) rather than by fitness alone. Both defaults are only consulted
   // when SELECT is 'novelty'.
   SELECT: 'trunc', NICHES: 10, NOVELTY_K: 15, NOVELTY_WEIGHT: 1.0,
+  // ------------------------------------------------------------- the search
+  // Everything below varies the SEARCH rather than the organism or the task.
+  // Motivation (RESEARCH.md, "Prey evasion"): a policy that this arena
+  // permits, that is reachable from the animal's own post-ablation sensor
+  // vector, and that is paid for at 3.6:1 was still not found after 32
+  // generations under selection that was 99% about not being caught. Nine
+  // organism-side levers and two task changes are null. The one component
+  // never varied is mutation-plus-truncation itself, so these are its knobs.
+  // All are no-ops at their defaults and the default path is byte-identical.
+  //
+  //   SELECT 'tournament'  k-tournament over the WHOLE population instead of
+  //          top-ELITES truncation. Truncation at 10/192 is a selection
+  //          intensity of 5%; a k=2 tournament is far softer and every genome
+  //          in the population is a possible parent, which is the direct
+  //          structural test of "the incumbent strategy is unkillable".
+  //   TOURN_K  tournament size. 2 is nearly neutral drift plus a nudge, 8 is
+  //          close to truncation. This is the dose knob for selection pressure.
+  //   ELITISM  (mu+lambda) when true — the incumbent, where the ELITES best
+  //          genomes are copied into the next generation unchanged and can
+  //          therefore never be displaced by anything that is transiently
+  //          worse. False gives (mu,lambda): the leading ELITES slots are
+  //          filled by one mutated CHILD of each selected parent instead, so
+  //          the population turns over completely every generation and a
+  //          stepping stone is not competing against a frozen incumbent.
+  //   CROSSOVER  probability that a child is a uniform per-gene recombination
+  //          of two independently drawn parents rather than a mutated clone of
+  //          one. There is currently NO recombination of any kind in this
+  //          system — every child is a point-mutated copy — so the search has
+  //          never been able to combine two partial solutions.
+  //   SELF_ADAPT  carry the mutation rate and step size IN the genome (two
+  //          log-scale strategy parameters per individual, mutated before they
+  //          are used, as in a self-adaptive ES). A single global rate cannot
+  //          be both coarse enough to leave klinokinesis and fine enough to
+  //          refine what replaces it; this lets lineages find their own.
+  //   MUT_LOG_STEP / MUT_RATE_MIN / MUT_RATE_MAX / MUT_SCALE_MAX  bounds on it.
+  //   SELECT 'mapelites'  quality-diversity: a persistent archive of the best
+  //          genome found in each cell of a discretised BEHAVIOUR space, with
+  //          parents drawn uniformly from the occupied cells. A fitness-only
+  //          search discards a genome that is currently worse; MAP-Elites keeps
+  //          it as long as it is the best *of its kind*, which is exactly the
+  //          stepping-stone the evasion result says is missing. The behaviour
+  //          space is the one the task is about — mean |turn| x mean sensed
+  //          opponent proximity x integrated foraging — and its bin edges are
+  //          frozen from the generation-0 population's own quantiles, so the
+  //          grid spans the unevolved behavioural range rather than a guess.
+  //   QD_TURN_BINS / QD_OPP_BINS / QD_FORAGE_BINS  the grid.
+  TOURN_K: 4, ELITISM: true, CROSSOVER: 0,
+  SELF_ADAPT: false, MUT_LOG_STEP: 0.25,
+  MUT_RATE_MIN: 0.005, MUT_RATE_MAX: 0.60, MUT_SCALE_MAX: 4.0,
+  QD_TURN_BINS: 4, QD_OPP_BINS: 4, QD_FORAGE_BINS: 3,
   // ---------------------------------------------------------------- central place
   // Central-place foraging. Off by default (CP_STRENGTH 0), in which case every
   // expression below is skipped and the sim is bit-identical to before.
@@ -526,6 +576,12 @@ export class EvoDevoSim {
     this.mods = null; this.recording = false; this.accSteps = 0; this.analysing = false;
     this.snapshotPending = false; this.lastSnapshot = null;
     this.tracing = false; this.traceBuf = null; this.traceStep = 0;
+    // MAP-Elites needs two per-agent behaviour accumulators that nothing else
+    // wants, so they are only allocated and only written when it is selected.
+    // Everything downstream (fitness, energy, the trace, the tournament) is
+    // untouched either way — these are readouts, not terms.
+    this.qdTrack = merged.SELECT === 'mapelites';
+    this.qd = null;                    // archive, built lazily on first evolve()
     this.makeConstants(); this.makeVariables(); this.resetLineage();
   }
 
@@ -601,6 +657,15 @@ export class EvoDevoSim {
     // `forageAcc` the cross-generational tournament, `intake` odourStats() —
     // and collapsing them would couple two experiments' readouts for no gain.
     this.forageAcc = this.v(tf.zeros([C.POP]));
+    // Behaviour descriptors for MAP-Elites. Integrated |turn| and integrated
+    // sensed opponent mass, both per agent, both purely observational.
+    if (this.qdTrack) {
+      this.turnAcc = this.v(tf.zeros([C.POP]));
+      this.oppAcc = this.v(tf.zeros([C.POP]));
+    }
+    // Self-adaptive strategy parameters, carried in the genome and inherited:
+    // column 0 is log(rate multiplier), column 1 is log(step-size multiplier).
+    if (C.SELF_ADAPT) this.genS = this.v(tf.zeros([C.POP, 2]));
   }
 
   async initialise() { await this.develop(); this.resetBodies(); await this.warmup(); }
@@ -621,7 +686,7 @@ export class EvoDevoSim {
     for (const k of ['food','haz','obs','obsR','cellPos','morph','distKernel','eye','sensorEmb',
       'genR','genM','bias','tau','W','Win','Wout','expr','color','pos','vel','angle','omega',
       'energy','fitness','neural','foodStock','acc','carry','banked','nestTime',
-      'toxDose','intake','contactAcc','forageAcc'])
+      'toxDose','intake','contactAcc','forageAcc','turnAcc','oppAcc','genS'])
       if (this[k] && !this[k].isDisposed) this[k].dispose();
   }
 
@@ -633,9 +698,26 @@ export class EvoDevoSim {
     this.nextGenomeId = C.POP; this.eliteStreak = new Map();
   }
   advanceLineage(topIdx, choiceIdx) {
-    const C = this.cfg, E = C.ELITES, f = new Int32Array(C.POP), g = new Int32Array(C.POP);
-    for (let k = 0; k < E; k++) { f[k] = this.founder[topIdx[k]]; g[k] = this.genomeId[topIdx[k]]; }
-    for (let c = 0; c < C.POP - E; c++) { const p = topIdx[choiceIdx[c]]; f[E + c] = this.founder[p]; g[E + c] = this.nextGenomeId++; }
+    const C = this.cfg;
+    const parentIdx = new Int32Array(C.POP - C.ELITES);
+    for (let c = 0; c < parentIdx.length; c++) parentIdx[c] = topIdx[choiceIdx[c]];
+    this.advanceLineageFrom(topIdx, parentIdx);
+  }
+  /**
+   * `eliteIdx` — population indices carried through unchanged, or null under
+   * (mu,lambda) where nothing is. `parentIdx` — the population index of each
+   * remaining slot's parent, in POPULATION coordinates rather than as an offset
+   * into an elite pool, because tournament selection draws parents from the
+   * whole population and has no elite pool to index into.
+   */
+  advanceLineageFrom(eliteIdx, parentIdx) {
+    const C = this.cfg, E = C.ELITES, nE = eliteIdx ? eliteIdx.length : 0;
+    const f = new Int32Array(C.POP), g = new Int32Array(C.POP);
+    for (let k = 0; k < nE; k++) { f[k] = this.founder[eliteIdx[k]]; g[k] = this.genomeId[eliteIdx[k]]; }
+    for (let c = 0; c < C.POP - nE; c++) {
+      const p = parentIdx[c];
+      f[nE + c] = this.founder[p]; g[nE + c] = this.nextGenomeId++;
+    }
     this.founder = f; this.genomeId = g;
     const s = new Map();
     for (let k = 0; k < E; k++) s.set(g[k], (this.eliteStreak.get(g[k]) || 0) + 1);
@@ -695,6 +777,10 @@ export class EvoDevoSim {
       this.intake.assign(tf.zerosLike(this.intake));
       this.contactAcc.assign(tf.zerosLike(this.contactAcc));
       this.forageAcc.assign(tf.zerosLike(this.forageAcc));
+      if (this.qdTrack) {
+        this.turnAcc.assign(tf.zerosLike(this.turnAcc));
+        this.oppAcc.assign(tf.zerosLike(this.oppAcc));
+      }
     });
     this.stepNo = 0;
   }
@@ -722,6 +808,10 @@ export class EvoDevoSim {
       this.intake.assign(tf.zerosLike(this.intake));
       this.contactAcc.assign(tf.zerosLike(this.contactAcc));
       this.forageAcc.assign(tf.zerosLike(this.forageAcc));
+      if (this.qdTrack) {
+        this.turnAcc.assign(tf.zerosLike(this.turnAcc));
+        this.oppAcc.assign(tf.zerosLike(this.oppAcc));
+      }
     });
     this.stepNo = 0;
   }
@@ -1044,6 +1134,13 @@ export class EvoDevoSim {
         this.contactAcc.assign(this.contactAcc.add(contact.mul(C.DT)));
         this.forageAcc.assign(this.forageAcc.add(eat.mul(C.DT)));
       }
+      // MAP-Elites behaviour descriptors. Written only under that scheme, and
+      // read by nothing else: mean turn magnitude (how much the animal steers
+      // at all) and mean sensed opponent mass (how close to predators it lives).
+      if (this.qdTrack) {
+        this.turnAcc.assign(this.turnAcc.add(turn.abs()));
+        if (opp) this.oppAcc.assign(this.oppAcc.add(opp.mass));
+      }
       this.fitness.assign(this.fitness.add(
         intake.sub(tox.mul(1.35)).add(speed.mul(.018)).add(en.greater(.04).toFloat().mul(.003)).mul(C.DT)));
       if (this.recording) {
@@ -1081,10 +1178,41 @@ export class EvoDevoSim {
   }
 
   /* ------------------------------------------------------ evolution */
-  mutateTensor(parent, scale) {
-    const tf = T();
-    const mask = this.ru(parent.shape).less(this.mutation).toFloat();
-    return parent.add(this.rn(parent.shape, 0, scale).mul(mask));
+  /**
+   * Per-gene Gaussian mutation behind a Bernoulli mask.
+   *
+   * `rate` and `scaleMul` are optional per-individual [n] tensors used by the
+   * self-adaptive scheme; with both null this is exactly the original global
+   * single-rate operator, drawing the same two random tensors in the same
+   * order, so the default path is unchanged bit for bit.
+   */
+  mutateTensor(parent, scale, rate = null, scaleMul = null) {
+    const shp = [parent.shape[0], ...new Array(parent.shape.length - 1).fill(1)];
+    const mask = (rate ? this.ru(parent.shape).less(rate.reshape(shp))
+                       : this.ru(parent.shape).less(this.mutation)).toFloat();
+    const noise = this.rn(parent.shape, 0, scale);
+    return parent.add((scaleMul ? noise.mul(scaleMul.reshape(shp)) : noise).mul(mask));
+  }
+
+  /**
+   * k-tournament over the WHOLE population: `n` independent samples of `k`
+   * individuals, each contributing its fittest member as a parent. Unlike
+   * truncation this gives every genome a non-zero chance of reproducing, and
+   * `k` is a continuous dial on selection pressure (k=1 is drift, k=POP is
+   * "always the single best"). A small JS loop once per generation, the same
+   * cost class as advanceLineage.
+   */
+  tournamentParents(n, k, fit) {
+    const P = this.cfg.POP, out = new Int32Array(n);
+    for (let i = 0; i < n; i++) {
+      let best = 0, bf = -Infinity;
+      for (let j = 0; j < k; j++) {
+        const c = Math.floor(this.rng.next() * P);
+        if (fit[c] > bf) { bf = fit[c]; best = c; }
+      }
+      out[i] = best;
+    }
+    return out;
   }
   /**
    * Quality-diversity elite selection: one fittest agent per angular sector
@@ -1117,6 +1245,7 @@ export class EvoDevoSim {
   }
   async evolve() {
     const C = this.cfg, tf = T();
+    if (C.SELECT === 'mapelites') return this.evolveMapElites();
     let topIdx, eliteIdxT, disposeElite = () => {};
     if (C.SELECT === 'niche') {
       topIdx = await this.niceEliteIdx();
@@ -1150,20 +1279,193 @@ export class EvoDevoSim {
       eliteIdxT = top.indices;
       disposeElite = () => { top.values.dispose(); top.indices.dispose(); };
     }
-    const choice = this.ru([C.POP - C.ELITES], 0, C.ELITES, 'int32');
-    const choiceIdx = await choice.data();
+    // (mu+lambda) vs (mu,lambda). With elitism the ELITES best genomes are
+    // copied through unchanged and can never be displaced by anything that is
+    // transiently worse — a structural way for an incumbent strategy to be
+    // unkillable. Without it the leading slots are filled by one mutated child
+    // of each selected parent, so the whole population turns over.
+    const nE = C.ELITISM ? C.ELITES : 0;
+    const nChild = C.POP - nE;
+    const tournK = Math.max(1, Math.min(C.POP, C.TOURN_K | 0));
+    const usesTournament = C.SELECT === 'tournament';
+    const fitArr = (usesTournament || C.CROSSOVER > 0) ? await this.fitness.data() : null;
+
+    // Parent index per child slot, in POPULATION coordinates.
+    let parentIdx, choice = null, choiceIdx = null;
+    if (usesTournament) {
+      parentIdx = this.tournamentParents(nChild, tournK, fitArr);
+    } else {
+      choice = this.ru([nChild], 0, C.ELITES, 'int32');
+      choiceIdx = await choice.data();
+      parentIdx = new Int32Array(nChild);
+      for (let c = 0; c < nChild; c++) parentIdx[c] = topIdx[choiceIdx[c]];
+    }
+    // Under (mu,lambda) the leading ELITES slots are the direct children of the
+    // ELITES best, in rank order, so `eliteFounders`/`streak` keep measuring
+    // "ancestries holding a selected slot" rather than becoming meaningless.
+    if (!C.ELITISM) for (let k = 0; k < C.ELITES; k++) parentIdx[k] = topIdx[k];
+    const mateIdx = C.CROSSOVER > 0
+      ? (usesTournament ? this.tournamentParents(nChild, tournK, fitArr)
+                        : Int32Array.from({ length: nChild },
+                            () => topIdx[Math.floor(this.rng.next() * C.ELITES)]))
+      : null;
+
     tf.tidy(() => {
-      const eliteR = tf.gather(this.genR, eliteIdxT), eliteM = tf.gather(this.genM, eliteIdxT);
-      const parentIdx = tf.gather(eliteIdxT, choice);
-      const childrenR = this.mutateTensor(tf.gather(this.genR, parentIdx), C.MUTATE_R);
-      const childrenM = this.mutateTensor(tf.gather(this.genM, parentIdx), C.MUTATE_M);
-      this.genR.assign(tf.concat([eliteR, childrenR], 0).clipByValue(-3.2, 3.2));
-      this.genM.assign(tf.concat([eliteM, childrenM], 0).clipByValue(-4, 4));
+      const pT = tf.tensor1d(parentIdx, 'int32');
+      let childR = tf.gather(this.genR, pT), childM = tf.gather(this.genM, pT);
+      // Uniform per-gene recombination. There was no recombination of any kind
+      // in this system: every child was a point-mutated copy of one parent, so
+      // two partial solutions in two lineages could never be combined.
+      if (C.CROSSOVER > 0) {
+        const mT = tf.tensor1d(mateIdx, 'int32');
+        const doX = this.ru([nChild, 1, 1]).less(C.CROSSOVER).toFloat();
+        const mateR = tf.gather(this.genR, mT), mateM = tf.gather(this.genM, mT);
+        const mR = this.ru(childR.shape).less(0.5).toFloat().mul(doX);
+        childR = childR.mul(tf.onesLike(mR).sub(mR)).add(mateR.mul(mR));
+        const mM = this.ru(childM.shape).less(0.5).toFloat().mul(doX);
+        childM = childM.mul(tf.onesLike(mM).sub(mM)).add(mateM.mul(mM));
+      }
+      // Self-adaptive mutation: the strategy parameters are mutated first and
+      // then used, so a lineage that benefits from a different rate carries it
+      // forward and selection on the object parameters selects the rate too.
+      let rateT = null, scaleT = null;
+      if (C.SELF_ADAPT) {
+        const nS = tf.gather(this.genS, pT)
+          .add(this.rn([nChild, 2], 0, C.MUT_LOG_STEP)).clipByValue(-4, 4);
+        rateT = nS.slice([0, 0], [-1, 1]).squeeze([1]).exp().mul(this.mutation)
+          .clipByValue(C.MUT_RATE_MIN, C.MUT_RATE_MAX);
+        scaleT = nS.slice([0, 1], [-1, 1]).squeeze([1]).exp()
+          .clipByValue(1 / C.MUT_SCALE_MAX, C.MUT_SCALE_MAX);
+        this.genS.assign(nE
+          ? tf.concat([tf.gather(this.genS, eliteIdxT), nS], 0) : nS);
+      }
+      const childrenR = this.mutateTensor(childR, C.MUTATE_R, rateT, scaleT);
+      const childrenM = this.mutateTensor(childM, C.MUTATE_M, rateT, scaleT);
+      if (nE) {
+        const eliteR = tf.gather(this.genR, eliteIdxT), eliteM = tf.gather(this.genM, eliteIdxT);
+        this.genR.assign(tf.concat([eliteR, childrenR], 0).clipByValue(-3.2, 3.2));
+        this.genM.assign(tf.concat([eliteM, childrenM], 0).clipByValue(-4, 4));
+      } else {
+        this.genR.assign(childrenR.clipByValue(-3.2, 3.2));
+        this.genM.assign(childrenM.clipByValue(-4, 4));
+      }
     });
-    disposeElite(); choice.dispose();
-    this.advanceLineage(topIdx, choiceIdx);
+    disposeElite(); if (choice) choice.dispose();
+    this.advanceLineageFrom(nE ? topIdx : null, parentIdx);
     this.gen++; this.selected = 0;
     await this.develop(); this.resetBodies();
+  }
+
+  /* --------------------------------------------------- MAP-Elites */
+
+  /** Frozen quantile bin edges from whatever distribution it is handed. */
+  qdBinEdges(vals, nb) {
+    const s = Array.from(vals).sort((a, b) => a - b), e = [];
+    for (let i = 1; i < nb; i++) e.push(s[Math.floor(s.length * i / nb)]);
+    return e;
+  }
+  qdBin(x, edges) { let b = 0; while (b < edges.length && x > edges[b]) b++; return b; }
+
+  /**
+   * MAP-Elites.
+   *
+   * A persistent archive holding the best genome yet found in each cell of a
+   * discretised behaviour space, with parents drawn uniformly from the
+   * occupied cells. The difference from every scheme above is that the archive
+   * is not a ranking: a genome that is worse than the population's best is
+   * retained indefinitely as long as it is the best *of its behavioural kind*,
+   * which is precisely the stepping stone a fitness-only search throws away.
+   *
+   * The descriptor is the one the task is about — mean |turn|, mean sensed
+   * opponent mass (how close to predators the animal lives) and integrated
+   * foraging — and the bin edges are frozen from the generation-0 population's
+   * own quantiles, so the grid spans the unevolved behavioural range instead of
+   * a guessed scale. `preyForage` in the tournament is what separates "a cell
+   * of genuine evaders" from "a cell of animals that stopped moving".
+   */
+  async evolveMapElites() {
+    const C = this.cfg, tf = T();
+    const G = C.GENES, LR = G * G, LM = 3 * G, E = C.ELITES;
+    const steps = Math.max(1, this.stepNo);
+    const [fit, tu, op, fg, gr, gm] = await Promise.all([
+      this.fitness.data(), this.turnAcc.data(), this.oppAcc.data(),
+      this.forageAcc.data(), this.genR.data(), this.genM.data()]);
+    const bTurn = Array.from(tu, v => v / steps);
+    const bOpp = Array.from(op, v => v / steps);
+    const bFor = Array.from(fg);
+    if (!this.qd) {
+      const nb = [C.QD_TURN_BINS, C.QD_OPP_BINS, C.QD_FORAGE_BINS].map(n => Math.max(1, n | 0));
+      const nCells = nb[0] * nb[1] * nb[2];
+      this.qd = {
+        nb, nCells,
+        edges: [this.qdBinEdges(bTurn, nb[0]), this.qdBinEdges(bOpp, nb[1]),
+                this.qdBinEdges(bFor, nb[2])],
+        R: new Float32Array(nCells * LR), M: new Float32Array(nCells * LM),
+        fit: new Float32Array(nCells).fill(-Infinity),
+        occ: new Uint8Array(nCells),
+        founder: new Int32Array(nCells), genomeId: new Int32Array(nCells),
+        inserts: 0, coverage: 0,
+      };
+    }
+    const qd = this.qd, nO = qd.nb[1], nF = qd.nb[2];
+    let inserts = 0;
+    for (let i = 0; i < C.POP; i++) {
+      const c = (this.qdBin(bTurn[i], qd.edges[0]) * nO
+               + this.qdBin(bOpp[i], qd.edges[1])) * nF
+               + this.qdBin(bFor[i], qd.edges[2]);
+      if (qd.occ[c] && !(fit[i] > qd.fit[c])) continue;
+      qd.R.set(gr.subarray(i * LR, (i + 1) * LR), c * LR);
+      qd.M.set(gm.subarray(i * LM, (i + 1) * LM), c * LM);
+      qd.fit[c] = fit[i]; qd.occ[c] = 1;
+      qd.founder[c] = this.founder[i]; qd.genomeId[c] = this.genomeId[i];
+      inserts++;
+    }
+    qd.inserts = inserts;
+    const occupied = [];
+    for (let c = 0; c < qd.nCells; c++) if (qd.occ[c]) occupied.push(c);
+    qd.coverage = occupied.length / qd.nCells;
+    const best = occupied.slice().sort((a, b) => qd.fit[b] - qd.fit[a]);
+    const nE = C.ELITISM ? Math.min(E, best.length) : 0;
+
+    const pR = new Float32Array(C.POP * LR), pM = new Float32Array(C.POP * LM);
+    const f = new Int32Array(C.POP), g = new Int32Array(C.POP);
+    for (let i = 0; i < C.POP; i++) {
+      const c = i < E ? best[i % best.length]
+                      : occupied[Math.floor(this.rng.next() * occupied.length)];
+      pR.set(qd.R.subarray(c * LR, (c + 1) * LR), i * LR);
+      pM.set(qd.M.subarray(c * LM, (c + 1) * LM), i * LM);
+      f[i] = qd.founder[c];
+      g[i] = i < nE ? qd.genomeId[c] : this.nextGenomeId++;
+    }
+    tf.tidy(() => {
+      const parR = tf.tensor3d(pR, [C.POP, G, G]), parM = tf.tensor3d(pM, [C.POP, 3, G]);
+      const tailR = nE ? parR.slice([nE, 0, 0], [-1, -1, -1]) : parR;
+      const tailM = nE ? parM.slice([nE, 0, 0], [-1, -1, -1]) : parM;
+      const kidR = this.mutateTensor(tailR, C.MUTATE_R);
+      const kidM = this.mutateTensor(tailM, C.MUTATE_M);
+      const outR = nE ? tf.concat([parR.slice([0, 0, 0], [nE, -1, -1]), kidR], 0) : kidR;
+      const outM = nE ? tf.concat([parM.slice([0, 0, 0], [nE, -1, -1]), kidM], 0) : kidM;
+      this.genR.assign(outR.clipByValue(-3.2, 3.2));
+      this.genM.assign(outM.clipByValue(-4, 4));
+    });
+    this.founder = f; this.genomeId = g;
+    const s = new Map();
+    for (let k = 0; k < E; k++) s.set(g[k], (this.eliteStreak.get(g[k]) || 0) + 1);
+    this.eliteStreak = s;
+    this.gen++; this.selected = 0;
+    await this.develop(); this.resetBodies();
+  }
+
+  /** Archive coverage / churn, for reporting. Null unless MAP-Elites ran. */
+  qdStats() {
+    if (!this.qd) return null;
+    const q = this.qd;
+    let occ = 0, sum = 0, best = -Infinity;
+    for (let c = 0; c < q.nCells; c++)
+      if (q.occ[c]) { occ++; sum += q.fit[c]; if (q.fit[c] > best) best = q.fit[c]; }
+    return { cells: q.nCells, occupied: occ, coverage: occ / q.nCells,
+             inserts: q.inserts, qdScore: sum, bestFit: occ ? best : null,
+             bins: q.nb.slice(), edges: q.edges.map(e => e.slice()) };
   }
 
   /* ------------------------------------------------------ analysis */

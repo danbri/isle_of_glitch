@@ -88,6 +88,17 @@ const args = parseArgs(process.argv.slice(2), {
   // Hall of fame: retain archived opponents as a fraction of each generation's
   // evaluation. A stabiliser against cycling, tested rather than assumed.
   hof: 0,
+  // ---------------------------------------------------------- the search
+  // Search-mechanism knobs, applied to the PREY ONLY. The predator side is
+  // deliberately held at the incumbent truncation scheme in every arm: the
+  // predator marginal is the thing that has always moved, so it doubles as a
+  // within-run control that the arm is running at all, and varying both sides
+  // at once would confound "the prey's search improved" with "the predator's
+  // search got worse". All are no-ops at their defaults.
+  preySelect: '', preyTournK: 4, preyElitism: true, preyCrossover: 0,
+  preySelfAdapt: false, preyElites: 0,
+  preyNoveltyK: 15, preyNoveltyWeight: 1.0,
+  qdTurnBins: 4, qdOppBins: 4, qdForageBins: 3,
   // Tournament episode. Shorter than an evolution epoch: the contact statistic
   // saturates long before 1450 steps and the grid is O(snapshots^2).
   tsteps: 500, tseed: 90210,
@@ -116,7 +127,17 @@ const base = {
 const preyCfg = { ...base, COEVO_ROLE: 'prey', SPEED_MAX: args.preySpeed,
   COEVO_PREY_INTAKE: args.preyIntake,
   COEVO_PREY_REFLEX: args.preyReflex, COEVO_REFLEX_SIGMA2: args.reflexSigma2,
-  COEVO_REFLEX_SOURCE: args.reflexSource, COEVO_REFLEX_MASS_K: args.reflexMassK };
+  COEVO_REFLEX_SOURCE: args.reflexSource, COEVO_REFLEX_MASS_K: args.reflexMassK,
+  // Prey-side search variant. `--preySelect` empty leaves `SELECT` at whatever
+  // `--select` gave both species, so the recorded configuration reproduces by
+  // passing none of these.
+  ...(args.preySelect ? { SELECT: args.preySelect } : {}),
+  ...(args.preyElites ? { ELITES: args.preyElites } : {}),
+  TOURN_K: args.preyTournK, ELITISM: args.preyElitism,
+  CROSSOVER: args.preyCrossover, SELF_ADAPT: args.preySelfAdapt,
+  NOVELTY_K: args.preyNoveltyK, NOVELTY_WEIGHT: args.preyNoveltyWeight,
+  QD_TURN_BINS: args.qdTurnBins, QD_OPP_BINS: args.qdOppBins,
+  QD_FORAGE_BINS: args.qdForageBins };
 const predCfg = { ...base, POP: args.predPop, ELITES: args.predElites,
   COEVO_ROLE: 'predator', SPEED_MAX: args.predSpeed };
 
@@ -173,15 +194,21 @@ if (args.archiveIn) {
                    // Measured, not assumed: how much of prey fitness variance
                    // predation actually controls in this arm.
                    preyVariance: ps.varianceShare, predVariance: qs.varianceShare });
+      const q = prey.qdStats();
       log(`[gen ${String(generation).padStart(3)}] contact ${ps.contact.toFixed(4)} ` +
           `preyForage ${ps.forageTop.toFixed(3)} preyFit ${ps.fitnessTop.toFixed(3)} ` +
           `predFit ${qs.fitnessTop.toFixed(3)} touched ${(ps.touchedFrac * 100).toFixed(0)}% ` +
-          `predShare ${ps.varianceShare.predationShare.toFixed(2)}  (${el()}s)`);
+          `predShare ${ps.varianceShare.predationShare.toFixed(2)}` +
+          (q ? ` qd ${q.occupied}/${q.cells} ins ${q.inserts}` : '') + `  (${el()}s)`);
       if (generation % args.snapEvery === 0 || generation === args.generations) await snap();
     },
   });
   meta = { seed: args.seed, generations: args.generations, snapEvery: args.snapEvery,
-           hof: args.hof, config: base, trace, evolveSeconds: +el() };
+           hof: args.hof, config: base, trace, evolveSeconds: +el(),
+           search: { select: preyCfg.SELECT, elites: preyCfg.ELITES, tournK: args.preyTournK,
+                     elitism: args.preyElitism, crossover: args.preyCrossover,
+                     selfAdapt: args.preySelfAdapt },
+           qd: prey.qdStats ? prey.qdStats() : null };
   prey.dispose(); pred.dispose();
   if (args.archiveOut) {
     await fs.writeFile(args.archiveOut, JSON.stringify({ meta, archive }));
@@ -328,7 +355,10 @@ const result = {
               preySpeed: args.preySpeed, predSpeed: args.predSpeed,
               preyIntake: args.preyIntake, preyLoss: args.preyLoss,
               preyReflex: args.preyReflex, reflexSigma2: args.reflexSigma2,
-              reflexSource: args.reflexSource, reflexMassK: args.reflexMassK },
+              reflexSource: args.reflexSource, reflexMassK: args.reflexMassK,
+              preySelect: preyCfg.SELECT, preyElites: preyCfg.ELITES,
+              preyTournK: args.preyTournK, preyElitism: args.preyElitism,
+              preyCrossover: args.preyCrossover, preySelfAdapt: args.preySelfAdapt },
   backend: `${pkg}/${backend}`, runtimeSeconds: +el(),
   generations: gens,
   matrix: grid,
