@@ -51,7 +51,8 @@
 import fs from 'node:fs/promises';
 import { initBackend, parseArgs } from './backend.js';
 import {
-  EvoDevoSim, coevolveFor, coevoEpisode, coevoSyncWorld, makeWorld, makeRng, mean, sd, DEFAULTS,
+  EvoDevoSim, coevolveFor, coevoEpisode, coevoSyncWorld, makeWorld, makeRng, mean, sd,
+  makeMods, disposeMods, keepAllBut, DEFAULTS,
 } from '../lib/evodevo.js';
 
 const args = parseArgs(process.argv.slice(2), {
@@ -105,6 +106,23 @@ const args = parseArgs(process.argv.slice(2), {
   preySelfAdapt: false, preyElites: 0,
   preyNoveltyK: 15, preyNoveltyWeight: 1.0,
   qdTurnBins: 4, qdOppBins: 4, qdForageBins: 3,
+  // ABLATION, PHASE 2 ONLY. Blind the prey's predator channels (mean
+  // replacement -- information removed, no misleading input injected) for the
+  // whole tournament grid. Run off ONE archive with and without it and the
+  // difference in the prey marginal is "how much of this population's contact
+  // outcome is caused by its being able to see predators", measured on the
+  // instrument that already carries seed-level statistics, on the same genomes,
+  // the same world and the same spawns.
+  //
+  // Its scale comes for free: the `sensed` reference evader is computed from
+  // the post-mask sensor vector, so blinding disables it. Running the ablation
+  // on the reflex arm is therefore a POSITIVE CONTROL -- an arm in which
+  // evasion is known to be present -- and running it on an evolved arm asks the
+  // same question of a population whose answer is not known.
+  //
+  // `--preyBlind opponent` blinds the three predator channels; `all` blinds
+  // every channel that exists in this configuration.
+  preyBlind: '',
   // Tournament episode. Shorter than an evolution epoch: the contact statistic
   // saturates long before 1450 steps and the grid is O(snapshots^2).
   tsteps: 500, tseed: 90210,
@@ -235,6 +253,17 @@ await preySim.initialise(); await predSim.initialise();
 const preyInit = preySim.makeInit(), predInit = predSim.makeInit();
 const foodHome = tf.tensor2d(tworld.food, [preyCfg.FOOD, 2]);
 
+// Mean-replacement ablation of the prey's sensor vector, held fixed for every
+// cell of the grid so it cannot be confounded with which pair of genomes ran.
+let preyMods = null;
+if (args.preyBlind) {
+  const groups = args.preyBlind === 'all'
+    ? ['food', 'toxin', 'wall', 'energy', 'opponent'] : [args.preyBlind];
+  preyMods = makeMods(keepAllBut(groups, preySim.cfg), false, preySim.cfg,
+                      makeRng(0xC0FFEE ^ args.tseed), true);
+  log(`[ablate] prey ${groups.join('+')} -> population mean`);
+}
+
 const N = archive.length;
 const grid = Array.from({ length: N }, () => new Array(N).fill(null));
 
@@ -249,7 +278,9 @@ for (let i = 0; i < N; i++) {          // predator generation
     preySim.food.assign(foodHome);
     preySim.applyInit(preyInit); predSim.applyInit(predInit);
     coevoSyncWorld(preySim, predSim);
+    preySim.mods = preyMods;
     await coevoEpisode(preySim, predSim, args.tsteps, 0);
+    preySim.mods = null;
     const [ps, qs] = await Promise.all([preySim.coevoStats(), predSim.coevoStats()]);
     grid[i][j] = {
       predGen: archive[i].generation, preyGen: archive[j].generation,
@@ -269,6 +300,7 @@ for (let i = 0; i < N; i++) {          // predator generation
   }
   log(`[tournament] predator gen ${archive[i].generation} done (${el()}s)`);
 }
+disposeMods(preyMods);
 preySim.disposeInit(preyInit); predSim.disposeInit(predInit);
 foodHome.dispose(); preySim.dispose(); predSim.dispose();
 
@@ -362,6 +394,7 @@ const result = {
               preyIntake: args.preyIntake, preyLoss: args.preyLoss,
               preyReflex: args.preyReflex, reflexSigma2: args.reflexSigma2,
               reflexSource: args.reflexSource, reflexMassK: args.reflexMassK,
+              preyBlind: args.preyBlind, spawns: args.spawns,
               preySelect: preyCfg.SELECT, preyElites: preyCfg.ELITES,
               preyTournK: args.preyTournK, preyElitism: args.preyElitism,
               preyCrossover: args.preyCrossover, preySelfAdapt: args.preySelfAdapt },
