@@ -126,7 +126,18 @@ const args = parseArgs(process.argv.slice(2), {
   // Tournament episode. Shorter than an evolution epoch: the contact statistic
   // saturates long before 1450 steps and the grid is O(snapshots^2).
   tsteps: 500, tseed: 90210,
-  archiveIn: '', archiveOut: '', out: '', backend: 'auto', quiet: false, label: '',
+  // CROSS-LINEAGE PHASE 2. `--predArchiveIn` takes the predator side of the
+  // grid from a DIFFERENT archive than the prey side.
+  //
+  // Why it exists: an arm in which the prey's search changed is also an arm in
+  // which the predators coevolved against different prey, so a fall in prey
+  // vulnerability could in principle be the opponent getting worse rather than
+  // the prey getting better. Holding the predator's own search fixed does not
+  // settle that — its search rule is the same, but what it was trained against
+  // is not. Scoring one arm's prey against the OTHER arm's predator lineage
+  // measures prey quality against a fixed external standard, and running it
+  // both ways round separates the two explanations completely.
+  archiveIn: '', predArchiveIn: '', archiveOut: '', out: '', backend: 'auto', quiet: false, label: '',
 });
 const log = (...m) => { if (!args.quiet) console.error(...m); };
 
@@ -242,6 +253,18 @@ if (args.archiveIn) {
 
 /* --------------------------------------------------------------- phase 2 */
 
+// The predator side of the grid, which is the same archive unless a
+// cross-lineage run asked for another one. Snapshot generations must line up,
+// or the marginals of the two runs would not be comparable row by row.
+let predArchive = archive;
+if (args.predArchiveIn) {
+  const a = JSON.parse(await fs.readFile(args.predArchiveIn, 'utf8'));
+  predArchive = a.archive;
+  const g1 = archive.map(s => s.generation).join(','), g2 = predArchive.map(s => s.generation).join(',');
+  if (g1 !== g2) throw new Error(`snapshot generations differ: prey [${g1}] vs pred [${g2}]`);
+  log(`[archive] predator side from ${args.predArchiveIn} (${predArchive.length} snapshots)`);
+}
+
 log(`[tournament] ${archive.length}x${archive.length} grid, ${args.tsteps} steps per cell`);
 
 // ONE world and ONE set of spawns for every cell in the grid, so a difference
@@ -269,7 +292,7 @@ const grid = Array.from({ length: N }, () => new Array(N).fill(null));
 
 for (let i = 0; i < N; i++) {          // predator generation
   for (let j = 0; j < N; j++) {        // prey generation
-    await predSim.importPopulation(strip(archive[i].pred));
+    await predSim.importPopulation(strip(predArchive[i].pred));
     await preySim.importPopulation(strip(archive[j].prey));
     // Food relocation draws from each sim's RNG during the episode; reseeding
     // here makes every cell see the identical food trajectory.
@@ -283,7 +306,7 @@ for (let i = 0; i < N; i++) {          // predator generation
     preySim.mods = null;
     const [ps, qs] = await Promise.all([preySim.coevoStats(), predSim.coevoStats()]);
     grid[i][j] = {
-      predGen: archive[i].generation, preyGen: archive[j].generation,
+      predGen: predArchive[i].generation, preyGen: archive[j].generation,
       // The same physical quantity from both sides. predContact is per-predator
       // (prey caught), preyContact is per-prey (times caught); with equal
       // population sizes they carry the same total but different per-capita
@@ -298,7 +321,7 @@ for (let i = 0; i < N; i++) {          // predator generation
       preyForage: ps.forageTop, preyFit: ps.fitnessTop, predFit: qs.fitnessTop,
     };
   }
-  log(`[tournament] predator gen ${archive[i].generation} done (${el()}s)`);
+  log(`[tournament] predator gen ${predArchive[i].generation} done (${el()}s)`);
 }
 disposeMods(preyMods);
 preySim.disposeInit(preyInit); predSim.disposeInit(predInit);
@@ -395,6 +418,8 @@ const result = {
               preyReflex: args.preyReflex, reflexSigma2: args.reflexSigma2,
               reflexSource: args.reflexSource, reflexMassK: args.reflexMassK,
               preyBlind: args.preyBlind, spawns: args.spawns,
+              archiveIn: args.archiveIn || undefined,
+              predArchiveIn: args.predArchiveIn || undefined,
               preySelect: preyCfg.SELECT, preyElites: preyCfg.ELITES,
               preyTournK: args.preyTournK, preyElitism: args.preyElitism,
               preyCrossover: args.preyCrossover, preySelfAdapt: args.preySelfAdapt },
