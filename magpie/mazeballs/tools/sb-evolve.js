@@ -61,8 +61,42 @@ import {
 const a = parseArgs(process.argv.slice(2), {
   pop: 64, gens: 30, elite: 2, eps: 0.08, steps: 600,
   seed: 1, evals: 6, crossover: false, out: '', quiet: false,
+  // Which trait selection acts on. 'displacement' is the first-evolution result
+  // and stays the default so that run reproduces untouched. 'intake' rewards food
+  // eaten over the episode (measured: reproduces locomotion, feeding incidental).
+  // 'efficiency' rewards intake per unit path (measured: selects immobile
+  // patch-sitters — the degenerate solution). 'directed' pairs an intact and a
+  // food-ablated episode on the SAME spawn and rewards intake_intact −
+  // intake_ablated: the sensory loop's own contribution to feeding, which a body
+  // that blunders into food (or sits on a patch) cannot score.
+  fitness: 'displacement',
+  // Curriculum: this many opening generations select on displacement, then the
+  // loop switches to `fitness`. 0 = select on `fitness` from generation 1. Tests
+  // "locomotion first, then intake" against direct intake selection.
+  curriculum: 0,
+  // Spawns averaged per genome at selection time. Food-outcome traits (intake,
+  // efficiency) have ~0.03 repeatability on one episode — mostly spawn luck — so
+  // selection sorts noise. Averaging K independent spawns is the research's one
+  // reliable lever for raising the signal selection acts on. 1 = one episode per
+  // generation, which keeps the displacement result byte-identical.
+  spawns: 1,
+  // Food-density overrides (default -1 = use DEFAULTS untouched). These change the
+  // ARENA only, never development — food count/geometry/sensing do not enter
+  // develop(), so morphology, the gate and turing are unaffected. Sparsening the
+  // food is the measured lever for making directed feeding worth more than
+  // incidental drift: at the 42-source default an undirected gait finds food
+  // nearly as well as a directed one, so the sense has ~0 marginal intake value.
+  food: -1, clusters: -1, senseSigma2: -1, eatSigma2: -1,
 });
-const cfg = DEFAULTS;
+// Build the working config from DEFAULTS plus any food overrides. DEFAULTS itself
+// is never mutated, so every other tool that imports it sees the trunk values.
+const cfg = Object.freeze({
+  ...DEFAULTS,
+  ...(a.food >= 0 ? { FOOD: a.food } : {}),
+  ...(a.clusters >= 0 ? { FOOD_CLUSTERS: a.clusters } : {}),
+  ...(a.senseSigma2 >= 0 ? { FOOD_SENSE_SIGMA2: a.senseSigma2 } : {}),
+  ...(a.eatSigma2 >= 0 ? { FOOD_EAT_SIGMA2: a.eatSigma2 } : {}),
+});
 const log = (...m) => { if (!a.quiet) console.error(...m); };
 
 /* --------------------------------------------------------------- helpers */
@@ -85,8 +119,9 @@ function pheno(g) { return g.pheno || (g.pheno = develop({ buf: g.buf }, cfg, de
  * organism in its own colony so a single non-finite body scores 0 instead of
  * poisoning the shared food field for everyone.
  */
-function runColony(phenos, seed, steps) {
+function runColony(phenos, seed, steps, ablate = null) {
   const col = new Colony(phenos, world, cfg);
+  col.foodAblate = ablate;
   col.spawn(makeRng(seed));
   try {
     for (let s = 0; s < steps; s++) {
@@ -99,6 +134,7 @@ function runColony(phenos, seed, steps) {
     log(`  [nan] shared episode threw (${String(err.message).slice(0, 60)}); isolating`);
     return phenos.map((p, i) => {
       const solo = new Colony([p], world, cfg);
+      solo.foodAblate = ablate;
       solo.spawn(makeRng((seed ^ Math.imul(i + 1, 2654435761)) >>> 0));
       try {
         for (let s = 0; s < steps; s++) { solo.step(); if (s % 50 === 0) solo.assertFinite(); }
@@ -116,8 +152,56 @@ const median = (v) => { const s = [...v].sort((p, q) => p - q); return s[s.lengt
 const mean = (v) => v.reduce((s, x) => s + x, 0) / v.length;
 const se = (v) => { const m = mean(v), n = v.length; return Math.sqrt(v.reduce((s, x) => s + (x - m) ** 2, 0) / Math.max(1, n - 1) / n); };
 
-/** Fitness = displacement, NaN scrubbed to 0 (an unfit, unselectable body). */
-function fitnessOf(phenos, seed) { return runColony(phenos, seed, a.steps).map(t => finite(t.displacement)); }
+// Path floor for the efficiency fitness: a body that never moves has path ~0 and
+// would otherwise score infinite efficiency for eating whatever it spawned on.
+// One body-diameter of travel (~0.04) is the scale below which "efficiency" is
+// really "spawned on a patch", so it is the right denominator floor.
+const PATH_FLOOR = 0.04;
+
+/** Map a full trait row to the scalar the given mode selects on. */
+function traitOf(t, mode) {
+  if (mode === 'intake') return finite(t.intake);
+  if (mode === 'efficiency') return finite(t.intake) / (finite(t.path) + PATH_FLOOR);
+  return finite(t.displacement);
+}
+
+/** Run a shared episode and return full per-organism trait rows (NaN-safe). */
+function rowsOf(phenos, seed) { return runColony(phenos, seed, a.steps); }
+
+/**
+ * Evaluate a population at generation `gen` under `mode`, averaging the selected
+ * trait (and the diagnostic traits) over `spawns` independent spawns. The k=0
+ * spawn uses spawnSeed(gen) exactly, so spawns=1 reproduces the single-episode
+ * loop. Fitness for efficiency is the mean of per-spawn ratios, which is what a
+ * ratio trait should average as. Returns { fit, rows } where rows are spawn-mean
+ * trait rows for logging.
+ */
+function evalPop(phenos, gen, mode) {
+  const K = Math.max(1, a.spawns), P = phenos.length;
+  const fit = new Array(P).fill(0);
+  const rows = Array.from({ length: P }, () => ({ displacement: 0, path: 0, occupancy: 0, intake: 0 }));
+  for (let k = 0; k < K; k++) {
+    const seed = k === 0 ? spawnSeed(gen) : ((spawnSeed(gen) ^ Math.imul(k + 1, 2654435761)) >>> 0);
+    const tr = rowsOf(phenos, seed);
+    // 'directed' needs the paired blinded episode on the same spawn: fitness is
+    // how much intake the food sense is worth to this body, intact minus blind.
+    const trA = mode === 'directed' ? runColony(phenos, seed, a.steps, 'mean') : null;
+    for (let i = 0; i < P; i++) {
+      fit[i] += mode === 'directed'
+        ? Math.max(0, finite(tr[i].intake) - finite(trA[i].intake))
+        : traitOf(tr[i], mode);
+      rows[i].displacement += finite(tr[i].displacement);
+      rows[i].path += finite(tr[i].path);
+      rows[i].occupancy += finite(tr[i].occupancy);
+      rows[i].intake += finite(tr[i].intake);
+    }
+  }
+  for (let i = 0; i < P; i++) {
+    fit[i] /= K;
+    rows[i].displacement /= K; rows[i].path /= K; rows[i].occupancy /= K; rows[i].intake /= K;
+  }
+  return { fit, rows };
+}
 
 /** Same repeatability estimator as sb-gate.js / repeatability.js. obs[g][e]. */
 function repeatability(obs) {
@@ -140,24 +224,33 @@ function repeatability(obs) {
  * fraction of the population that locomotes and the mean intake — the two
  * numbers the gate flagged its 0.90 and its intake=0 as contingent on.
  */
-function remeasure(genomes) {
+function remeasure(genomes, ablate = null) {
   const canon = genomes.map(pheno);
   const keys = ['displacement', 'path', 'occupancy', 'intake'];
   const obs = Object.fromEntries(keys.map(k => [k, genomes.map(() => [])]));
+  // Intake-per-path (efficiency) is accumulated per spawn, then averaged: a
+  // measure of directed feeding that a body cannot raise merely by crawling
+  // further, because the path it crawls is the denominator.
+  const eff = genomes.map(() => []);
   for (let e = 0; e < a.evals; e++) {
-    const tr = runColony(canon, 0x9000 + e * 7919, a.steps);
-    for (let g = 0; g < genomes.length; g++)
+    const tr = runColony(canon, 0x9000 + e * 7919, a.steps, ablate);
+    for (let g = 0; g < genomes.length; g++) {
       for (const k of keys) obs[k][g].push(finite(tr[g][k]));
+      eff[g].push(finite(tr[g].intake) / (finite(tr[g].path) + PATH_FLOOR));
+    }
   }
   const R = Object.fromEntries(keys.map(k => [k, repeatability(obs[k])]));
+  R.efficiency = repeatability(eff);
   // Per-genome means, for the population-level descriptors.
   const dispMean = genomes.map((_, g) => mean(obs.displacement[g]));
   const intakeMean = genomes.map((_, g) => mean(obs.intake[g]));
+  const effMean = genomes.map((_, g) => mean(eff[g]));
   return {
     R,
     moveFrac: dispMean.filter(d => d > 0.02).length / genomes.length,
     meanDisp: mean(dispMean), seDisp: se(dispMean),
-    meanIntake: mean(intakeMean),
+    meanIntake: mean(intakeMean), seIntake: se(intakeMean),
+    meanEff: mean(effMean), seEff: se(effMean),
     forageFrac: intakeMean.filter(v => v > 0.01).length / genomes.length,
   };
 }
@@ -168,20 +261,32 @@ const rng = makeRng(a.seed);
 let pop = Array.from({ length: a.pop }, () => mkRandom(rng));
 const gen0 = pop.map(g => ({ buf: Float32Array.from(g.buf), id: g.id, pheno: pheno(g) }));
 
+// Mode selection acts under at generation `gen`. A curriculum runs the opening
+// `curriculum` generations on displacement, then switches to `fitness`.
+const modeAt = (gen) => (gen < a.curriculum ? 'displacement' : a.fitness);
+
 log(`[sb-evolve] pop ${a.pop}, gens ${a.gens}, elite ${a.elite}, eps ${a.eps}, steps ${a.steps}, seed ${a.seed}` +
-    `${a.crossover ? ', +blockCrossover' : ''}`);
+    `, fitness ${a.fitness}, spawns ${a.spawns}${a.curriculum ? ` (curriculum: displacement for ${a.curriculum} gens)` : ''}` +
+    `${a.crossover ? ', +blockCrossover' : ''}` +
+    `\n           food ${cfg.FOOD} in ${cfg.FOOD_CLUSTERS} clusters, senseSigma2 ${cfg.FOOD_SENSE_SIGMA2}, eatSigma2 ${cfg.FOOD_EAT_SIGMA2}`);
 
 const traj = [];
-let fit = fitnessOf(pop.map(pheno), spawnSeed(0));
-function record(gen, fit) {
-  const row = { gen, best: Math.max(...fit), median: median(fit), mean: mean(fit),
-                moveFrac: fit.filter(d => d > 0.02).length / fit.length };
+let ev = evalPop(pop.map(pheno), 0, modeAt(0));
+let rows = ev.rows, fit = ev.fit;
+function record(gen, rows, fit, mode) {
+  const disp = rows.map(t => finite(t.displacement));
+  const intake = rows.map(t => finite(t.intake));
+  const row = { gen, mode, best: Math.max(...fit), median: median(fit), mean: mean(fit),
+                meanDisp: mean(disp), meanIntake: mean(intake),
+                moveFrac: disp.filter(d => d > 0.02).length / disp.length,
+                forageFrac: intake.filter(v => v > 0.01).length / intake.length };
   traj.push(row);
-  log(`  gen ${String(gen).padStart(2)}  best ${row.best.toFixed(3)}  ` +
-      `median ${row.median.toFixed(3)}  mean ${row.mean.toFixed(3)}  moving ${(row.moveFrac * 100).toFixed(0)}%`);
+  log(`  gen ${String(gen).padStart(2)} [${mode.slice(0, 4)}]  best ${row.best.toFixed(3)}  ` +
+      `median ${row.median.toFixed(3)}  disp ${row.meanDisp.toFixed(3)}  intake ${row.meanIntake.toFixed(3)}  ` +
+      `moving ${(row.moveFrac * 100).toFixed(0)}%  forage ${(row.forageFrac * 100).toFixed(0)}%`);
   return row;
 }
-record(0, fit);
+record(0, rows, fit, modeAt(0));
 
 for (let gen = 1; gen <= a.gens; gen++) {
   // rank current population by fitness, descending
@@ -201,47 +306,70 @@ for (let gen = 1; gen <= a.gens; gen++) {
     next.push({ buf: child.buf, id: nextId++, pheno: null });
   }
   pop = next;
-  fit = fitnessOf(pop.map(pheno), spawnSeed(gen));
-  record(gen, fit);
+  const mode = modeAt(gen);
+  ev = evalPop(pop.map(pheno), gen, mode);
+  rows = ev.rows; fit = ev.fit;
+  record(gen, rows, fit, mode);
 }
 
 /* ------------------------------------------------- rigorous end comparison */
-// Spawn-noise-averaged displacement and honest repeatability, gen-0 vs evolved.
+// Spawn-noise-averaged traits and honest repeatability, gen-0 vs evolved, plus
+// the food-ablated re-measure of the evolved population that separates DIRECTED
+// feeding from feeding that is an incidental by-product of locomotion.
 log('[remeasure] generation-0 population…');
 const m0 = remeasure(gen0);
-log('[remeasure] evolved population…');
+log('[remeasure] evolved population, food sense intact…');
 const mE = remeasure(pop);
+log('[remeasure] evolved population, food sense ablated (mean-replaced)…');
+const mA = remeasure(pop, 'mean');
 
 /* ------------------------------------------------------------------ report */
 const f = x => x.toFixed(4);
+const barOf = (s0, s1) => 2 * Math.sqrt(s0 ** 2 + s1 ** 2);
 console.log(`\n=== soft-body evolution : seed ${a.seed} ===`);
-console.log(`pop ${a.pop}, gens ${a.gens}, elite ${a.elite}, eps ${a.eps}, steps ${a.steps}` +
+console.log(`pop ${a.pop}, gens ${a.gens}, elite ${a.elite}, eps ${a.eps}, steps ${a.steps}, ` +
+            `fitness ${a.fitness}, spawns ${a.spawns}${a.curriculum ? ` (curriculum ${a.curriculum})` : ''}` +
             `${a.crossover ? ', +blockCrossover' : ''}\n`);
-console.log('fitness trajectory (displacement, selection-time, fresh spawn each gen):');
-console.log('  gen   best    median   mean    moving');
+console.log('selection-time trajectory (fresh spawn each gen):');
+console.log('  gen  mode  best     median   meanDisp meanIntk moving forage');
 for (const r of traj)
   if (r.gen === 0 || r.gen === a.gens || r.gen % Math.max(1, Math.floor(a.gens / 10)) === 0)
-    console.log(`  ${String(r.gen).padStart(3)}  ${f(r.best)}  ${f(r.median)}  ${f(r.mean)}   ${(r.moveFrac * 100).toFixed(0)}%`);
+    console.log(`  ${String(r.gen).padStart(3)}  ${r.mode.slice(0, 4)}  ${f(r.best)}  ${f(r.median)}  ` +
+      `${f(r.meanDisp)}  ${f(r.meanIntake)}  ${(r.moveFrac * 100).toFixed(0).padStart(4)}% ${(r.forageFrac * 100).toFixed(0).padStart(4)}%`);
 
-console.log('\nrigorous end comparison (mean displacement over ' + a.evals + ' held-out spawns):');
-console.log(`  gen-0     ${f(m0.meanDisp)} ± ${f(m0.seDisp)}   moving ${(m0.moveFrac * 100).toFixed(0)}%   meanIntake ${f(m0.meanIntake)}`);
-console.log(`  evolved   ${f(mE.meanDisp)} ± ${f(mE.seDisp)}   moving ${(mE.moveFrac * 100).toFixed(0)}%   meanIntake ${f(mE.meanIntake)}`);
-const gain = mE.meanDisp - m0.meanDisp, bar = 2 * Math.sqrt(m0.seDisp ** 2 + mE.seDisp ** 2);
-console.log(`  ascent    ${gain >= 0 ? '+' : ''}${f(gain)}  vs 2·SE bar ${f(bar)}  -> ${gain > bar ? 'ASCENDS' : 'not past bar'}`);
+console.log('\nrigorous end comparison (mean over ' + a.evals + ' held-out spawns):');
+console.log(`               gen-0                 evolved`);
+console.log(`  displacement ${f(m0.meanDisp)} ± ${f(m0.seDisp)}      ${f(mE.meanDisp)} ± ${f(mE.seDisp)}`);
+console.log(`  intake       ${f(m0.meanIntake)} ± ${f(m0.seIntake)}      ${f(mE.meanIntake)} ± ${f(mE.seIntake)}`);
+console.log(`  efficiency   ${f(m0.meanEff)} ± ${f(m0.seEff)}      ${f(mE.meanEff)} ± ${f(mE.seEff)}   (intake / (path+${PATH_FLOOR}))`);
+const dispGain = mE.meanDisp - m0.meanDisp, dispBar = barOf(m0.seDisp, mE.seDisp);
+const intakeGain = mE.meanIntake - m0.meanIntake, intakeBar = barOf(m0.seIntake, mE.seIntake);
+const effGain = mE.meanEff - m0.meanEff, effBar = barOf(m0.seEff, mE.seEff);
+console.log(`  displacement ascent ${dispGain >= 0 ? '+' : ''}${f(dispGain)} vs bar ${f(dispBar)} -> ${dispGain > dispBar ? 'ASCENDS' : 'flat'}`);
+console.log(`  intake ascent       ${intakeGain >= 0 ? '+' : ''}${f(intakeGain)} vs bar ${f(intakeBar)} -> ${intakeGain > intakeBar ? 'ASCENDS' : 'flat'}`);
+console.log(`  efficiency ascent   ${effGain >= 0 ? '+' : ''}${f(effGain)} vs bar ${f(effBar)} -> ${effGain > effBar ? 'ASCENDS' : 'flat'}`);
+
+console.log('\ndirectedness — food sense INTACT vs ABLATED (mean-replaced) on the evolved population:');
+console.log(`  intake       intact ${f(mE.meanIntake)} ± ${f(mE.seIntake)}   ablated ${f(mA.meanIntake)} ± ${f(mA.seIntake)}`);
+const ablDrop = mE.meanIntake - mA.meanIntake, ablBar = barOf(mE.seIntake, mA.seIntake);
+console.log(`  ablation costs intake ${ablDrop >= 0 ? '+' : ''}${f(ablDrop)} vs bar ${f(ablBar)} -> ${ablDrop > ablBar ? 'DIRECTED (sense is load-bearing for feeding)' : 'incidental (feeding survives blinding)'}`);
+console.log(`  displacement intact ${f(mE.meanDisp)}   ablated ${f(mA.meanDisp)}   (locomotion should survive blinding)`);
+console.log(`  efficiency   intact ${f(mE.meanEff)}   ablated ${f(mA.meanEff)}`);
 
 console.log('\nbehavioural repeatability (same body, different spawn), honest re-measure:');
 console.log('  trait          gen-0     evolved');
-for (const k of ['displacement', 'path', 'occupancy', 'intake'])
+for (const k of ['displacement', 'path', 'occupancy', 'intake', 'efficiency'])
   console.log(`  ${k.padEnd(13)}  ${f(m0.R[k])}    ${f(mE.R[k])}`);
-console.log(`  (gate reported displacement 0.897 / path 0.909 / occupancy 0.897 / intake 0.000,`);
-console.log(`   flagged as inflated by a bimodal population — most random genomes did not move.)`);
+console.log(`  (0.034 is the intake-repeatability baseline from the displacement-evolved population to beat.)`);
 console.log(`  forage-expressing fraction: gen-0 ${(m0.forageFrac * 100).toFixed(0)}%  evolved ${(mE.forageFrac * 100).toFixed(0)}%`);
 
 if (a.out) {
   writeFileSync(a.out, JSON.stringify({
     seed: a.seed, pop: a.pop, gens: a.gens, elite: a.elite, eps: a.eps, steps: a.steps,
-    crossover: !!a.crossover, traj,
-    gen0: m0, evolved: mE, gain, bar,
+    fitness: a.fitness, curriculum: a.curriculum, spawns: a.spawns, crossover: !!a.crossover,
+    food: { FOOD: cfg.FOOD, FOOD_CLUSTERS: cfg.FOOD_CLUSTERS, FOOD_SENSE_SIGMA2: cfg.FOOD_SENSE_SIGMA2, FOOD_EAT_SIGMA2: cfg.FOOD_EAT_SIGMA2 }, traj,
+    gen0: m0, evolved: mE, ablated: mA,
+    dispGain, dispBar, intakeGain, intakeBar, effGain, effBar, ablDrop, ablBar,
   }, null, 2));
   log(`[out] ${a.out}`);
 }

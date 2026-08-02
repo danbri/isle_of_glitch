@@ -185,14 +185,20 @@ export const DEFAULTS = Object.freeze({
   RD_KERNEL: 1.35,         // diffusion neighbourhood, in units of the adhesion reach
   RD_CLAMP: 12.0,          // concentration ceiling; GM is superlinear and will run away
   RD_SEED: 0.06,           // amplitude of the initial concentration noise
-  // Reaction-diffusion parameterisation. These are NOT the raw kinetic rates.
-  // Sampling decay rates and a diffusion ratio independently lets a genome land
-  // outside the Turing region — most often on the wrong side of the trace
-  // condition, which is a Hopf bifurcation: the tissue oscillates in time
-  // instead of patterning in space. Measured at 17 of 32 random genomes before
-  // this change. So the genome addresses the two conditions directly and every
-  // reachable parameter set is Turing-unstable by construction. See rdParams()
-  // for the derivation.
+  // Reaction-diffusion parameterisation. These are NOT the raw kinetic rates;
+  // the genome addresses the bifurcation conditions directly (see rdParams).
+  //
+  // An earlier version FORCED nu/mu > 1, which guarantees trace(J) < 0 and so
+  // forbids the Hopf bifurcation entirely — every genome was pinned to the
+  // Turing-STATIONARY region and could only make standing spatial patterns.
+  // That threw away the temporal-oscillation regime, which is the developmental
+  // CLOCK: a tissue that oscillates in time while it grows imprints different
+  // fates on cells born at different cycles, and clock-against-gradient is how
+  // real segmented body plans lay down repeated units. So the ratio now spans
+  // BELOW 1 as well, and oscillation is a reachable developmental dynamic
+  // rather than a suppressed failure mode. rdParams keeps only the numerical
+  // guards (a NaN reaching fitness is still silent corruption); it no longer
+  // constrains the dynamics.
   // Pattern wavelength, in cell radii. This is the genome's handle on pattern
   // SCALE, and the diffusivities are derived from it rather than sampled — see
   // rdParams(). Bounded below by what the cell spacing can resolve: a pattern
@@ -204,7 +210,7 @@ export const DEFAULTS = Object.freeze({
   RD_WAVELEN: [4.5, 9.0],
   RD_A: [0.45, 2.20],      // activator decay mu
   RD_B: [0.0, 0.09],       // basal activator production
-  RD_NU_RATIO: [1.15, 4.0],   // nu/mu. Strictly > 1 => trace(J) < 0 => no oscillation.
+  RD_NU_RATIO: [0.4, 4.0],    // nu/mu. Below 1 => trace(J) > 0 => temporal oscillation (a dev clock); above 1 => the stationary Turing branch.
   // Multiple of the critical diffusion ratio. Above 1 the mode grows, but the
   // growth RATE goes to zero at the threshold, so a genome sitting just above
   // it patterns only in the limit and reads as flat inside any finite
@@ -446,11 +452,20 @@ export function rdParams(genome, cfg = DEFAULTS) {
   const K = genome.buf;
   const mu = span(cfg.RD_A, K[1]);
   const b = span(cfg.RD_B, K[2]);
-  const r = span(cfg.RD_NU_RATIO, K[3]);          // > 1, so trace(J) < 0
+  const r = span(cfg.RD_NU_RATIO, K[3]);          // r<1 oscillates in time, r>1 is the Turing branch
   const nu = mu * r;
-  const u = 2 * nu / (nu + b) - 1;                // in (0, 1]; 1 when b = 0
-  const dCrit = r * ((u + 2) + 2 * Math.sqrt(u + 1)) / (u * u);
-  const d = dCrit * span(cfg.RD_SUPERCRIT, K[4]); // > d_crit, so it patterns
+  const u = 2 * nu / (nu + b) - 1;                // (nu-b)/(nu+b); can be <= 0 once r<1
+  // The critical diffusion ratio only means anything on the stationary branch
+  // (r>1, u near 1). For an oscillatory genome u can approach 0 and this would
+  // blow up, so the denominator and the root are floored — a guard, not a model
+  // choice. The patterning branch has u near 1 and dCrit near 3+2sqrt2, which
+  // these floors leave untouched.
+  const dCrit = r * ((u + 2) + 2 * Math.sqrt(Math.max(1e-6, u + 1))) / Math.max(0.04, u * u);
+  // Diffusion ratio, clamped to a sane band. The clamp bites only in the
+  // oscillatory regime (where dCrit can diverge); the stationary branch sits at
+  // d ~ 8..19 and is inside the band. Bounding d bounds D_H (which goes as
+  // sqrt(d)), which keeps the derived step count and everything downstream finite.
+  const d = clamp(dCrit * span(cfg.RD_SUPERCRIT, K[4]), 1, 40);
 
   // Diffusivities are DERIVED from the wanted pattern wavelength, not sampled.
   // At onset the fastest-growing wavenumber is k_c^2 = sqrt(det J / (D_A D_H))
@@ -551,7 +566,13 @@ function rdRelax(A, H, x, y, rad, alive, N, steps, K, cfg) {
  * coupling is the whole point, and it is why morphology is not a genome
  * lookup.
  */
-export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
+// `onCycle`, if given, is called once per developmental cycle with a plain
+// snapshot of the living cells (positions, radius, activator concentration, and
+// the current sensor/muscle role scores). It exists so a viewer can WATCH
+// development — the Turing pattern forming, cells dividing, the clock ticking —
+// from the one real develop(), not a reimplementation of it. Guarded, so it
+// costs nothing on the headless path that never passes it.
+export function develop(genome, cfg = DEFAULTS, rng = makeRng(1), onCycle = null) {
   const N = cfg.N_MAX;
   const x = new Float64Array(N), y = new Float64Array(N);
   const alive = new Uint8Array(N);
@@ -720,6 +741,17 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
 
     // --- mechanical relaxation of the clump --------------------------------
     relaxClump(x, y, rad, alive, N, cfg.DEV_RELAX, cfg);
+
+    if (onCycle) {
+      const idx = []; for (let i = 0; i < N; i++) if (alive[i]) idx.push(i);
+      onCycle({
+        cycle: cyc, cells: idx.length,
+        x: idx.map(i => x[i]), y: idx.map(i => y[i]), rad: idx.map(i => rad[i]),
+        A: idx.map(i => A[i]),
+        sensor: idx.map(i => Math.tanh(g[i * GENES + G.SENSOR])),
+        muscle: idx.map(i => Math.tanh(g[i * GENES + G.MUSCLE])),
+      });
+    }
   }
 
   // Final expression, and a compacted index list. Everything downstream reads
@@ -991,6 +1023,10 @@ export class Colony {
     this.colN = new Int32Array(this.P);
     this.lam = new Float64Array(this.P * cfg.E_MAX);
     this.steps = 0;
+    // Directedness control (see kSense). null = intact food sense; 'mean'/'const'
+    // ablate the food-bearing channel. Off by default, so nothing that does not
+    // set it sees any change in behaviour.
+    this.foodAblate = null;
   }
 
   /** Place every organism: random position, random body orientation, zero state. */
@@ -1051,6 +1087,37 @@ export class Colony {
         }
         this.sens[b] = Math.tanh(mass * 0.16);
         this.sens[b + 1] = Math.tanh(Math.max(0, Math.max(Math.abs(X), Math.abs(Y)) - 0.70) * 3.2);
+      }
+    }
+    // Optional ablation of the FOOD-bearing sensor channel (index 0), for the
+    // directedness controls in tools/sb-forage.js. Default (null) leaves the
+    // read untouched, so gate/turing/displacement-evolve behaviour is identical.
+    //   'mean'  : replace every sensor cell's food channel with the current
+    //             population mean of that channel — removes the spatial gradient
+    //             a body would steer up (and the temporal signal klinokinesis
+    //             would ride) while keeping the network in its operating regime
+    //             and the ambient level intact. This is the `blindConst`-style
+    //             information-removal-without-noise-injection the incumbent
+    //             analysis settled on.
+    //   'const' : pin the food channel to 0 for every sensor cell — removes the
+    //             level as well, the harsher control.
+    if (this.foodAblate) {
+      if (this.foodAblate === 'const') {
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * SENSORS] = 0;
+        }
+      } else {
+        let sum = 0, cnt = 0;
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) { sum += this.sens[(o * S + a) * SENSORS]; cnt++; }
+        }
+        const m = cnt ? sum / cnt : 0;
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * SENSORS] = m;
+        }
       }
     }
   }
