@@ -635,7 +635,7 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
       let px = Math.tanh(g[e + G.POLX]), py = Math.tanh(g[e + G.POLY]);
       px += (rng.next() - 0.5) * cfg.DIV_JITTER;
       py += (rng.next() - 0.5) * cfg.DIV_JITTER;
-      const len = Math.hypot(px, py) || 1;
+      const len = Math.sqrt(px * px + py * py) || 1;
       px /= len; py /= len;
       const off = rad[i] * 0.62;
       const cx = x[i], cy = y[i];
@@ -686,7 +686,7 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
   for (let a = 0; a < idx.length && nE < cfg.E_MAX; a++) {
     for (let b = a + 1; b < idx.length && nE < cfg.E_MAX; b++) {
       const i = idx[a], j = idx[b];
-      const d = Math.hypot(x[j] - x[i], y[j] - y[i]);
+      const d = Math.sqrt(x[j] - x[i] * x[j] - x[i] + y[j] - y[i] * y[j] - y[i]);
       const reach = cfg.ADHESION * 0.5 * (rad[i] + rad[j]);
       if (d > reach || d < 1e-6) continue;
       ei[nE] = i; ej[nE] = j; L0[nE] = d;
@@ -784,7 +784,7 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
   for (let a = 0; a < nA; a++) { px[a] = x[idx[a]]; py[a] = y[idx[a]]; pr[a] = rad[idx[a]]; }
 
   let ext = 0, muscles = 0;
-  for (let a = 0; a < nA; a++) ext = Math.max(ext, Math.hypot(px[a], py[a]));
+  for (let a = 0; a < nA; a++) ext = Math.max(ext, Math.sqrt(px[a] * px[a] + py[a] * py[a]));
   for (let e = 0; e < nE; e++) if (kind[e] === 2) muscles++;
   let sensors = 0; for (let a = 0; a < nA; a++) sensors += isSensor[a];
 
@@ -853,7 +853,7 @@ function relaxClump(x, y, rad, alive, N, iters, cfg) {
       for (let j = i + 1; j < N; j++) {
         if (!alive[j]) continue;
         let dx = x[j] - x[i], dy = y[j] - y[i];
-        let d = Math.hypot(dx, dy);
+        let d = Math.sqrt(dx * dx + dy * dy);
         if (d < 1e-9) { dx = 1e-4; dy = 0; d = 1e-4; }
         const rest = rad[i] + rad[j];
         const reach = cfg.ADHESION * 0.5 * rest;
@@ -980,7 +980,7 @@ export class Colony {
         const t = o * S + a, b = t * SENSORS;
         const X = this.px[t], Y = this.py[t];
         // Proprioception, every cell.
-        this.sens[b + 2] = Math.tanh(Math.hypot(this.vx[t], this.vy[t]) * 3.0);
+        this.sens[b + 2] = Math.tanh(Math.sqrt(this.vx[t] * this.vx[t] + this.vy[t] * this.vy[t]) * 3.0);
         this.sens[b + 3] = Math.tanh(this.strain[t] * 6.0);
         // Exteroception, sensor cells only. The food scan is the most expensive
         // kernel in the step, so skipping it for non-sensors is also why a
@@ -1033,7 +1033,7 @@ export class Colony {
       for (let a = 0; a < p.n; a++) {
         const t = base + a;
         let vX = this.vx[t] * cfg.DRAG, vY = this.vy[t] * cfg.DRAG;
-        const sp = Math.hypot(vX, vY);
+        const sp = Math.sqrt(vX * vX + vY * vY);
         if (sp > cfg.V_MAX) { vX *= cfg.V_MAX / sp; vY *= cfg.V_MAX / sp; }
         this.vx[t] = vX; this.vy[t] = vY;
         this.qx[t] = this.px[t] + vX * dt;
@@ -1066,7 +1066,7 @@ export class Colony {
         for (let e = 0; e < p.nE; e++) {
           const i = base + p.ei[e], j = base + p.ej[e];
           let dx = this.qx[j] - this.qx[i], dy = this.qy[j] - this.qy[i];
-          let d = Math.hypot(dx, dy);
+          let d = Math.sqrt(dx * dx + dy * dy);
           if (!(d > 1e-9)) { dx = 1e-5; dy = 0; d = 1e-5; }
           let L = p.L0[e];
           if (p.kind[e] === 2) {
@@ -1076,8 +1076,12 @@ export class Colony {
           const C = d - L;
           const dl = (-C - a2 * this.lam[lb + e]) / (2 + a2);
           this.lam[lb + e] += dl;
-          let corr = clamp(dl, -cap, cap);
-          const nx = dx / d, ny = dy / d;
+          // Inlined clamp and a single reciprocal. This line runs ITERS times
+          // per edge per step — roughly fifty thousand times a step at the
+          // population sizes this has to reach — so a call and a second divide
+          // are not rounding error here.
+          const corr = dl < -cap ? -cap : (dl > cap ? cap : dl);
+          const inv = 1 / d, nx = dx * inv, ny = dy * inv;
           this.ax[i] -= nx * corr; this.ay[i] -= ny * corr;
           this.ax[j] += nx * corr; this.ay[j] += ny * corr;
           this.cnt[i]++; this.cnt[j]++;
@@ -1087,12 +1091,13 @@ export class Colony {
         for (let k = 0; k < m; k++) {
           const i = base + this.colI[cb + k], j = base + this.colJ[cb + k];
           let dx = this.qx[j] - this.qx[i], dy = this.qy[j] - this.qy[i];
-          let d = Math.hypot(dx, dy);
+          let d = Math.sqrt(dx * dx + dy * dy);
           if (!(d > 1e-9)) { dx = 1e-5; dy = 0; d = 1e-5; }
           const rest = this.rad[i] + this.rad[j];
           if (d >= rest) continue;
-          const corr = clamp(0.5 * (d - rest), -cap, cap);
-          const nx = dx / d, ny = dy / d;
+          const c0 = 0.5 * (d - rest);
+          const corr = c0 < -cap ? -cap : (c0 > cap ? cap : c0);
+          const inv = 1 / d, nx = dx * inv, ny = dy * inv;
           this.ax[i] += nx * corr; this.ay[i] += ny * corr;
           this.ax[j] -= nx * corr; this.ay[j] -= ny * corr;
           this.cnt[i]++; this.cnt[j]++;
@@ -1132,7 +1137,7 @@ export class Colony {
         // cheapest way out of that, and it is also what a foot is.
         const gm = 1 + cfg.GRIP_MOD * this.act[t];
         const fv = this.grip[t] * (gm > 0.05 ? gm : 0.05) * cfg.FRIC_K * dt;
-        const sp = Math.hypot(vX, vY);
+        const sp = Math.sqrt(vX * vX + vY * vY);
         if (sp <= fv) { vX = 0; vY = 0; }
         else { const s = 1 - fv / sp; vX *= s; vY *= s; }
         if (sp > cfg.V_MAX) { const s = cfg.V_MAX / sp; vX *= s; vY *= s; }
@@ -1148,8 +1153,7 @@ export class Colony {
       const c2 = new Int32Array(p.n);
       for (let e = 0; e < p.nE; e++) {
         const i = p.ei[e], j = p.ej[e];
-        const d = Math.hypot(this.px[base + j] - this.px[base + i],
-                             this.py[base + j] - this.py[base + i]);
+        const d = Math.sqrt(this.px[base + j] - this.px[base + i] * this.px[base + j] - this.px[base + i] + this.py[base + j] - this.py[base + i] * this.py[base + j] - this.py[base + i]);
         const s = (d - p.L0[e]) / p.L0[e];
         this.strain[base + i] += s; this.strain[base + j] += s;
         c2[i]++; c2[j]++;
@@ -1174,7 +1178,7 @@ export class Colony {
       }
       this.intake[o] += best * dt;
       // trajectory readouts
-      const d = Math.hypot(cx - this.lastCX[o], cy - this.lastCY[o]);
+      const d = Math.sqrt(cx - this.lastCX[o] * cx - this.lastCX[o] + cy - this.lastCY[o] * cy - this.lastCY[o]);
       this.path[o] += d;
       this.lastCX[o] = cx; this.lastCY[o] = cy;
       // spatial occupancy on a 12x12 grid over the arena
@@ -1227,7 +1231,7 @@ export class Colony {
     for (let o = 0; o < this.P; o++) {
       const [cx, cy] = this.centroid(o);
       out.push({
-        displacement: Math.hypot(cx - this.startX[o], cy - this.startY[o]),
+        displacement: Math.sqrt(cx - this.startX[o] * cx - this.startX[o] + cy - this.startY[o] * cy - this.startY[o]),
         path: this.path[o],
         speed: this.path[o] / Math.max(1e-9, this.steps * this.cfg.DT),
         occupancy: this.occ[o].size,
