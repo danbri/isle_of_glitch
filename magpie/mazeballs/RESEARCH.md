@@ -3667,3 +3667,54 @@ byte-identically; and `Colony.foodAblate` (`'mean'`/`'const'`/null) in
 `lib/softbody.js`, off by default, so the gate and turing tests reproduce their
 documented numbers and `DEFAULTS` is unchanged. Run readouts are in
 `results/forage/`.
+
+## Design: the brain economy (the experiment after bites)
+
+Recorded from a design conversation, to be built once the base arms race and the
+bite mechanism are measured, and built with these constraints because they are
+what make it work rather than bloat.
+
+The aim is an economy in which a nervous system is expensive, risky, and only
+occasionally decisive — which is how a real lineage evolves intelligence rather
+than a bigger blob. Four coupled mechanics:
+
+- **Metabolic cost**, so a brain earns its keep. In this substrate every cell is
+  a CTRNN node (bias, tau, and a row of the recurrent matrix), so there is no
+  separate brain organ and "cost of a bigger CTRNN" is a cost per cell. The
+  recurrent pass is already O(alive^2), so a bigger brain costs quadratic
+  *compute* today, but nothing in *fitness*.
+- **Sense brains**: a predator's opponent channel carries the prey's neuron
+  count, so a brainier prey is more detectable and more targeted. Brains make
+  you conspicuous.
+- **Eat brains**: a capture's reward scales with the prey's neuron count, so
+  predators are selected to prefer brainy prey.
+- **Benefit**: better control is better foraging and better evasion — the reason
+  to carry a brain at all, and the only thing that can pay off the other three.
+
+**The cost must be weighted by role, or the economy is incoherent.** A flat
+per-cell cost makes the expendable outer shell that defends against bites as
+expensive as the neurons, so a beast cannot afford armour and a brain at once.
+Real metabolism weights them apart — structural tissue is cheap, neurons are
+ruinous — and so must this: neurons dear, muscle moderate, structural/armour
+cheap. That one choice is what lets a large cheap protective body coexist with a
+small brain that has to justify itself.
+
+**Findability is the crux, and the evo-devo map is why it is reachable.** A flat
+neuron cost normally drives brains to zero, because a neuron costs on the step it
+appears but only pays once wired into a useful circuit — a fitness valley that
+cannot be climbed one mutation at a time, and is often fatal in a direct-encoded
+network. Here morphology is Turing-generated and the map is amplifying (the gate
+measured a small genome change adding a correlated patch of cells and wiring in
+one developmental step), so the valley can be *jumped* rather than climbed: one
+mutation proposes a brain-plus-wiring and selection keeps it only if it pays.
+This is a concrete, substrate-specific reason to prefer the developmental
+encoding over a direct one, and the answer to "make sure brainy beasts can be
+found."
+
+The composed tension is the point and is not a designed outcome: a brain
+survives only where its benefit beats cost plus the extra predation it attracts,
+which can split prey into a dumb-and-hidden strategy and a brainy-and-evasive
+one — two livelihoods, the shape of a radiation. Failure modes are watchable and
+get the usual ablation-and-tournament scrutiny: cost too steep and everything
+goes dumb; too cheap and brains bloat; eat-reward too high and brainy prey are
+exterminated into disengagement.
