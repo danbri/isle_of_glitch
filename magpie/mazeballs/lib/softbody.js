@@ -155,7 +155,10 @@ export const DEFAULTS = Object.freeze({
   // ------------------------------------------------------------ development
   DEV_CYCLES: 14,          // growth cycles; each one is GRN + fate + mechanics
   GRN_STEPS: 6,            // relaxation steps of the regulatory network per cycle
-  GRN_RATE: 0.19,          // same relaxation rate as the incumbent's develop()
+  GRN_DT: 0.30,            // integration step of the gene-circuit equation
+  LAM_MIN: 0.25, LAM_SPAN: 1.75,     // per-gene decay rate range (lambda)
+  H_SCALE: 1.20,                     // per-gene threshold scale (h)
+  ALPHA_MIN: 0.30, ALPHA_SPAN: 2.20, // per-gene max synthesis rate range (alpha)
   DEV_RELAX: 6,            // mechanical relaxation iterations per cycle
   DEV_SCALE: 0.13,         // length scale of the maternal coordinate gradient
   DIV_THRESH: 0.20,
@@ -174,20 +177,47 @@ export const DEFAULTS = Object.freeze({
   //   dA/dt = s A^2 / H - a A + b + D_A lap(A)
   //   dH/dt = s A^2     - h H       + D_H lap(H)
   //
-  // The Laplacian is normalised (weights sum to one) so its spectrum lies in
-  // [-2, 0] and explicit Euler is stable for RD_DT * 2 * max(D) < 1. RD_DT
-  // 0.20 with D_H capped at 1.6 leaves a factor of ~1.5 of margin; the
-  // integrator is checked directly by halving it (tools/sb-turing.js).
-  RD_STEPS: 26,            // reaction-diffusion sub-steps per developmental cycle
-  RD_DT: 0.20,
+  // The Laplacian is normalised by neighbour weight AND divided by h^2, so it
+  // is a real diffusivity operator rather than a dimensionless one: its
+  // spectrum is [-2/h^2, 0]. Explicit Euler is then stable for dt*2*D/h^2 < 1,
+  // and the step count is derived per genome from that bound in rdParams()
+  // rather than fixed here — see RD_TIME and RD_MAX_STEPS below.
   RD_KERNEL: 1.35,         // diffusion neighbourhood, in units of the adhesion reach
   RD_CLAMP: 12.0,          // concentration ceiling; GM is superlinear and will run away
   RD_SEED: 0.06,           // amplitude of the initial concentration noise
-  RD_DA: [0.02, 0.22],     // activator diffusivity range
-  RD_RATIO: [8, 55],       // inhibitor/activator diffusivity ratio; <1 kills the instability
-  RD_A: [0.45, 2.20],      // activator decay
-  RD_H: [0.45, 3.00],      // inhibitor decay
+  // Reaction-diffusion parameterisation. These are NOT the raw kinetic rates.
+  // Sampling decay rates and a diffusion ratio independently lets a genome land
+  // outside the Turing region — most often on the wrong side of the trace
+  // condition, which is a Hopf bifurcation: the tissue oscillates in time
+  // instead of patterning in space. Measured at 17 of 32 random genomes before
+  // this change. So the genome addresses the two conditions directly and every
+  // reachable parameter set is Turing-unstable by construction. See rdParams()
+  // for the derivation.
+  // Pattern wavelength, in cell radii. This is the genome's handle on pattern
+  // SCALE, and the diffusivities are derived from it rather than sampled — see
+  // rdParams(). Bounded below by what the cell spacing can resolve: a pattern
+  // finer than a couple of cells is aliasing, not morphology.
+  // Lower bound is Nyquist against the cell spacing (~2 radii): a pattern below
+  // ~4 radii is aliasing. Upper bound is what fits — a wavelength approaching
+  // the body's own diameter has no room to repeat, and reads as no pattern at
+  // all rather than as one big stripe.
+  RD_WAVELEN: [4.5, 9.0],
+  RD_A: [0.45, 2.20],      // activator decay mu
   RD_B: [0.0, 0.09],       // basal activator production
+  RD_NU_RATIO: [1.15, 4.0],   // nu/mu. Strictly > 1 => trace(J) < 0 => no oscillation.
+  // Multiple of the critical diffusion ratio. Above 1 the mode grows, but the
+  // growth RATE goes to zero at the threshold, so a genome sitting just above
+  // it patterns only in the limit and reads as flat inside any finite
+  // developmental budget. The floor is set where growth is fast enough to
+  // complete; the range is still a real dose axis for how sharp the pattern is.
+  RD_SUPERCRIT: [1.35, 3.2],
+  // Simulated time per developmental cycle. The sub-step count is derived from
+  // this and from the explicit-Euler stability bound, per genome, rather than
+  // fixed — a fast-diffusing inhibitor needs a smaller step, and picking one
+  // step size for every genome means either instability at one end of the range
+  // or wasted work at the other.
+  RD_TIME: 5.2,
+  RD_MAX_STEPS: 400,       // ceiling on that derivation, so one stiff genome cannot stall a run
   CELL_R: 0.020,
   SIZE_RANGE: 0.35,        // radius = CELL_R * (1 +- SIZE_RANGE * tanh(expr[SIZE]))
   ADHESION: 2.45,          // edge if separation < ADHESION * mean radius
@@ -274,11 +304,14 @@ export const DEFAULTS = Object.freeze({
  * subsystem — the entire neural module, or the entire fate module.
  */
 export const RD_BLOCK = 5;
-export const GENE_STRIDE = MATERNAL + GENES;
+export const GENE_KIN = 3;                 // per-gene lambda, h, alpha
+export const GENE_STRIDE = GENE_KIN + MATERNAL + GENES;
 export const GENOME_LEN = RD_BLOCK + GENES * GENE_STRIDE;
 export const LAYOUT = Object.freeze([
-  { name: 'rd.activator', from: 0, to: 3, of: ['D_A', 'decay_a', 'basal_b'] },
-  { name: 'rd.inhibitor', from: 3, to: 5, of: ['D_H/D_A', 'decay_h'] },
+  { name: 'rd.activator', from: 0, to: 3, of: ['D_A', 'decay_mu', 'basal_b'] },
+  // Not the inhibitor's rates directly: nu/mu and the multiple of the critical
+  // diffusion ratio, from which nu and D_H are derived. See rdParams().
+  { name: 'rd.inhibitor', from: 3, to: 5, of: ['nu/mu', 'supercriticality'] },
   ...GENE_MODULES.map(m => ({
     name: `grn.${m.name}`,
     from: RD_BLOCK + m.from * GENE_STRIDE,
@@ -287,16 +320,19 @@ export const LAYOUT = Object.freeze([
   })),
 ]);
 
+/** Offset of the kinetic block (lambda, h, alpha) for gene k. */
+export const kinOff = k => RD_BLOCK + k * GENE_STRIDE;
 /** Offset of the maternal input block for gene k. */
-export const matOff = k => RD_BLOCK + k * GENE_STRIDE;
+export const matOff = k => RD_BLOCK + k * GENE_STRIDE + GENE_KIN;
 /** Offset of the regulatory input block for gene k. */
-export const regOff = k => RD_BLOCK + k * GENE_STRIDE + MATERNAL;
+export const regOff = k => RD_BLOCK + k * GENE_STRIDE + GENE_KIN + MATERNAL;
 
 export function randomGenome(rng, cfg = DEFAULTS) {
   const buf = new Float32Array(GENOME_LEN);
   for (let i = 0; i < RD_BLOCK; i++) buf[i] = gauss(rng) * 1.0;
   for (let k = 0; k < GENES; k++) {
-    const mo = matOff(k), ro = regOff(k);
+    const ko = kinOff(k), mo = matOff(k), ro = regOff(k);
+    for (let m = 0; m < GENE_KIN; m++) buf[ko + m] = gauss(rng) * 1.0;
     for (let m = 0; m < MATERNAL; m++) buf[mo + m] = gauss(rng) * 0.85;
     for (let m = 0; m < GENES; m++) buf[ro + m] = gauss(rng) * 0.55;
   }
@@ -312,14 +348,88 @@ export function perturbGenome(genome, eps, rng) {
 
 const span = ([lo, hi], v) => lo + (hi - lo) * 0.5 * (1 + Math.tanh(v));
 
-/** Genome -> reaction-diffusion kinetic constants. */
+/**
+ * Genome -> reaction-diffusion kinetic constants, constructed so that every
+ * reachable genome is Turing-unstable.
+ *
+ * The kinetics are Gierer-Meinhardt with basal production:
+ *
+ *     da/dt = a^2/h - mu*a + b  + D_a lap(a)
+ *     dh/dt = a^2   - nu*h      + D_h lap(h)
+ *
+ * Homogeneous fixed point: a* = (nu + b)/mu,  h* = a*^2/nu.  Writing
+ * q = nu/(nu + b) and u = 2q - 1, the Jacobian there is
+ *
+ *     J11 = mu*u        J12 = -nu^2/a*^2
+ *     J21 = 2a*         J22 = -nu
+ *
+ * and det J = mu*nu > 0 identically, so only three conditions bite:
+ *
+ *   (i)   trace < 0            no oscillation:  nu > mu*u, and u <= 1, so
+ *                              nu > mu is sufficient whatever b is.
+ *   (ii)  D_h J11 + D_a J22 > 0
+ *   (iii) (D_h J11 + D_a J22)^2 > 4 D_a D_h det J
+ *
+ * With r = nu/mu and d = D_h/D_a, (iii) reduces to d^2 u^2 - 2 d r (u+2) + r^2 > 0,
+ * whose larger root is
+ *
+ *     d_crit = r * ((u + 2) + 2*sqrt(u + 1)) / u^2
+ *
+ * which at b = 0 (u = 1) is the familiar d > (3 + 2*sqrt(2)) r ~= 5.83 r. Any
+ * d above d_crit satisfies (ii) as well, since d_crit > r/u.
+ *
+ * So the genome does not encode nu and D_h. It encodes **r > 1** and a
+ * **supercriticality multiple > 1**, and nu and D_h are derived. There is no
+ * rejection step and no repair step: the map stays continuous, which matters
+ * because the whole point of this substrate is to measure how far a small
+ * genome change moves the phenotype.
+ */
 export function rdParams(genome, cfg = DEFAULTS) {
   const K = genome.buf;
-  const DA = span(cfg.RD_DA, K[0]);
-  return {
-    DA, a: span(cfg.RD_A, K[1]), b: span(cfg.RD_B, K[2]),
-    DH: DA * span(cfg.RD_RATIO, K[3]), h: span(cfg.RD_H, K[4]),
-  };
+  const mu = span(cfg.RD_A, K[1]);
+  const b = span(cfg.RD_B, K[2]);
+  const r = span(cfg.RD_NU_RATIO, K[3]);          // > 1, so trace(J) < 0
+  const nu = mu * r;
+  const u = 2 * nu / (nu + b) - 1;                // in (0, 1]; 1 when b = 0
+  const dCrit = r * ((u + 2) + 2 * Math.sqrt(u + 1)) / (u * u);
+  const d = dCrit * span(cfg.RD_SUPERCRIT, K[4]); // > d_crit, so it patterns
+
+  // Diffusivities are DERIVED from the wanted pattern wavelength, not sampled.
+  // At onset the fastest-growing wavenumber is k_c^2 = sqrt(det J / (D_A D_H))
+  // and det J = mu*nu identically here, so fixing the wavelength and the ratio
+  // fixes both diffusivities:
+  //
+  //     k_c = 2*pi / lambda,  D_A = mu*sqrt(r/d) / k_c^2,  D_H = d * D_A
+  //
+  // Sampling D_A independently instead leaves k_c wherever it falls, and a
+  // Turing band outside the range the cell spacing can represent produces no
+  // pattern however correct the kinetics are. Wavelength is also the thing with
+  // a morphological meaning — it is how many cells wide a stripe or spot comes
+  // out — so it is the right quantity for a genome to hold.
+  const lambda = span(cfg.RD_WAVELEN, K[0]) * cfg.CELL_R;
+  const kc2 = (2 * Math.PI / lambda) ** 2;
+  const DA = mu * Math.sqrt(r / d) / kc2;
+  const DH = DA * d;
+
+  // Explicit Euler on the length-scaled Laplacian is stable for dt*2*D/h^2 < 1.
+  // Derive the step from the fast species rather than fixing one globally, and
+  // keep a safety factor — the reaction term is superlinear and contributes its
+  // own stiffness on top of the diffusive bound.
+  const hK = cfg.RD_KERNEL * cfg.ADHESION * cfg.CELL_R;
+  // Two separate stiffnesses, and the step has to respect both. Diffusion:
+  // dt*2*D/h^2 < 1. Reaction: the Jacobian's largest eigenvalue is O(nu), and
+  // nu reaches mu*r ~ 9 at the top of the range, so a step chosen from the
+  // diffusive bound alone can still be explicitly unstable — which shows up as
+  // a growing oscillation and is indistinguishable, from the outside, from a
+  // genuine Hopf bifurcation. It accounted for 10 of 64 'oscillating' genomes
+  // whose kinetics were provably inside the Turing region.
+  const dtDiff = 0.1 * (hK * hK) / Math.max(1e-12, DH);
+  const dtReac = 0.2 / Math.max(1e-12, nu);
+  const dtMax = Math.min(dtDiff, dtReac);
+  const steps = Math.min(cfg.RD_MAX_STEPS, Math.max(4, Math.ceil(cfg.RD_TIME / dtMax)));
+  const dt = cfg.RD_TIME / steps;
+
+  return { DA, DH, a: mu, b, h: nu, r, d, dCrit, u, lambda, kc2, dt, steps };
 }
 
 /**
@@ -341,19 +451,25 @@ function rdRelax(A, H, x, y, rad, alive, N, steps, K, cfg) {
         const w = Math.exp(-d2 / h2);
         sw += w; sa += w * (A[j] - A[i]); sh += w * (H[j] - H[i]);
       }
-      // Normalised graph Laplacian: eigenvalues in [-2, 0] whatever the local
-      // packing, so a cell that happens to have twelve neighbours does not get
-      // a stiffer equation than one that has three. That is what makes the
-      // explicit step stable on an irregular, deforming cloud.
-      if (sw > 1e-9) { lapA[i] = sa / sw; lapH[i] = sh / sw; }
+      // Normalised graph Laplacian, then divided by h^2 to restore the length
+      // scale. The normalisation alone puts the eigenvalues in [-2, 0] whatever
+      // the local packing, so a cell with twelve neighbours does not get a
+      // stiffer equation than one with three — but it also leaves the operator
+      // DIMENSIONLESS, which silently breaks the physics: the accessible
+      // wavenumbers cap at k^2 = 2 regardless of how far apart the cells are,
+      // and a Turing band sitting at k^2 ~ 4 then cannot be represented at all.
+      // Measured: 60 of 64 genomes came out flat, with the kinetics provably
+      // inside the Turing region. Dividing by h^2 makes D a diffusivity again
+      // (length^2/time) and puts the band back in range.
+      if (sw > 1e-9) { lapA[i] = 4 * sa / (sw * h2); lapH[i] = 4 * sh / (sw * h2); }
       else { lapA[i] = 0; lapH[i] = 0; }
     }
     for (let i = 0; i < N; i++) {
       if (!alive[i]) continue;
       const a = A[i], hh = Math.max(1e-3, H[i]);
       const src = a * a;
-      let nA = a + cfg.RD_DT * (src / hh - K.a * a + K.b + K.DA * lapA[i]);
-      let nH = H[i] + cfg.RD_DT * (src - K.h * H[i] + K.DH * lapH[i]);
+      let nA = a + K.dt * (src / hh - K.a * a + K.b + K.DA * lapA[i]);
+      let nH = H[i] + K.dt * (src - K.h * H[i] + K.DH * lapH[i]);
       // Gierer-Meinhardt is superlinear and will run away on a finite step.
       // Clamping is a numerical guard, not a model choice; if a genome sits
       // against the ceiling its pattern is saturated rather than divergent,
@@ -394,7 +510,10 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
   // fixed point is the honest test of whether the genome's kinetics are
   // pattern-forming at all.
   const A = new Float64Array(N), H = new Float64Array(N);
-  const Ass = K.h / Math.max(1e-3, K.a), Hss = Ass * Ass / Math.max(1e-3, K.h);
+  // a* = (nu + b)/mu exactly, not nu/mu — the basal term shifts the fixed point,
+  // and seeding off it would hand the relaxation a transient that looks like a
+  // pattern forming when it is only the system falling to its own steady state.
+  const Ass = (K.h + K.b) / Math.max(1e-3, K.a), Hss = Ass * Ass / Math.max(1e-3, K.h);
 
   // Seed clump: a small ring, so the maternal x/y gradient has something to
   // read on cycle zero rather than a degenerate point at the origin.
@@ -418,7 +537,7 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
     // Before the genes read their inputs, not after: the pattern is part of
     // the positional information, and the domain it relaxes on is whatever
     // shape the last cycle's divisions and deaths produced.
-    rdRelax(A, H, x, y, rad, alive, N, cfg.RD_STEPS, K, cfg);
+    rdRelax(A, H, x, y, rad, alive, N, K.steps, K, cfg);
 
     // --- kernel: maternal read + GRN relaxation, one invocation per cell ----
     for (let i = 0; i < N; i++) {
@@ -450,13 +569,30 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
         drive[k] = s;
       }
       const base = i * GENES;
+      // Gene circuit dynamics in the Crombach/Jaeger form, kept as three
+      // SEPARATE terms rather than fused into one relaxation constant:
+      //
+      //     dC_k/dt = alpha_k * sigma(sum_m W_mk C_m + drive_k + h_k)
+      //               - lambda_k * C_k
+      //
+      // The incumbent's develop() is `g += 0.19 * (tanh(g W + drive) - g)`:
+      // synthesis and decay fused, one global rate, no per-gene threshold and
+      // no per-gene maximum synthesis rate. Every gene there has identical
+      // dynamics and differs only in its weights, which is exactly the
+      // asymmetry worth removing — the lifetime CTRNN already has per-node tau
+      // and bias, so development was the crippled half of the same equation.
+      // These three parameters per gene are what let different genes sit in
+      // different dynamical regimes.
       for (let it = 0; it < cfg.GRN_STEPS; it++) {
         for (let k = 0; k < GENES; k++) {
-          let s = drive[k]; const ro = regOff(k);
+          let s = drive[k]; const ro = regOff(k), ko = kinOff(k);
           for (let m = 0; m < GENES; m++) s += g[base + m] * buf[ro + m];
-          tmp[k] = Math.tanh(s);
+          const lam = cfg.LAM_MIN + cfg.LAM_SPAN / (1 + Math.exp(-buf[ko]));
+          const h = buf[ko + 1] * cfg.H_SCALE;
+          const alpha = cfg.ALPHA_MIN + cfg.ALPHA_SPAN / (1 + Math.exp(-buf[ko + 2]));
+          tmp[k] = g[base + k] + cfg.GRN_DT * (alpha * Math.tanh(s + h) - lam * g[base + k]);
         }
-        for (let k = 0; k < GENES; k++) g[base + k] += (tmp[k] - g[base + k]) * cfg.GRN_RATE;
+        for (let k = 0; k < GENES; k++) g[base + k] = clamp(tmp[k], -8, 8);
       }
     }
 
