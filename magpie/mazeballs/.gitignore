@@ -1,3 +1,9 @@
 node_modules
 *.out.json
 sweep-*.json
+runs/*.json
+# populations/ is deliberately NOT ignored: see populations/README.md. The full
+# archives are ~890K each and stay out, but the endpoint of any arm a RESEARCH.md
+# section refers to should be committed, or the run is unreproducible the moment
+# its container is reclaimed.
+runs/*.txt

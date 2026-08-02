@@ -39,6 +39,10 @@ const seeds = String(opt.seeds || '1,2,3,4').split(',').map(s => Number(s.trim()
 const generations = Number(opt.generations || 12);
 const steps = Number(opt.steps || 400);
 const restarts = Number(opt.restarts || 2);
+// The real ceiling on eliteFounders (diversity component) is C.ELITES, not a
+// hardcoded 10 — see scoreReport(). Read whatever --elites the run itself used
+// (run.js/lib defaults also to 10) so a POP/ELITES sweep normalises correctly.
+const elites = Number(opt.elites || 10);
 // Default to leaving a core free, and cap by seed count. When several research
 // agents share one box each of them should ask for a slice, not the whole
 // machine — EVODEVO_WORKERS lets a fleet launcher set that centrally.
@@ -65,7 +69,7 @@ const clamp01 = x => Math.max(0, Math.min(1, x));
  *                  immigration scheme cannot saturate it by construction.
  * Gated by viability so a population that forages nothing scores nothing.
  */
-export function scoreReport(r) {
+export function scoreReport(r, elites = 10) {
   const base = r.table.find(t => t.key === 'baseline');
   const nullR = r.taxisNull ? Math.abs(r.taxisNull.food) : 0;
   const obsR = r.taxis ? Math.abs(r.taxis.food) : 0;
@@ -80,7 +84,13 @@ export function scoreReport(r) {
     // below N, whether or not those lineages are any good. eliteFounders counts
     // an ancestry only if it holds a selected slot, so it measures diversity the
     // evolutionary process actually sustained rather than randomness poured in.
-    diversity: clamp01(r.population.eliteFounders / 10),
+    // Normalised by the run's actual ELITES, not a bare 10: the real ceiling on
+    // eliteFounders is C.ELITES (see lib/evodevo.js lineageStats()), and the two
+    // only happen to coincide at the long-standing default. A POP/ELITES sweep
+    // that varies ELITES away from 10 must not silently divide by the wrong
+    // ceiling — that would clamp to 1.0 ("diversity is perfect") for any
+    // ELITES > 10 regardless of what actually survived selection.
+    diversity: clamp01(r.population.eliteFounders / elites),
   };
   const capability = 0.40 * c.sensing + 0.20 * c.taxis + 0.15 * c.generalisation
                    + 0.15 * c.selection + 0.10 * c.diversity;
@@ -92,7 +102,19 @@ export function scoreReport(r) {
   // capability term down faster than capability rose. Anything foraging above
   // the floor is now simply alive, and capability is judged on its own.
   const viability = clamp01(base.top / 0.30);
-  return { score: viability * capability, capability, viability, forage: base.top, components: c };
+  // `central` rides along as reporting only — it is not an input to the score.
+  // Without it a central-place run cannot be told apart from one that simply
+  // lost the diverted fraction of its intake and never went home.
+  // `odour` and the individual ablation drops ride along as reporting only,
+  // exactly like `central`. Under shared-odour ambiguity the score alone cannot
+  // say whether a population is discriminating or merely being poisoned, and
+  // `noToxin` — the cost of scrambling the quality channel — is the direct
+  // measure of whether the identity cue is load-bearing at all.
+  return { score: viability * capability, capability, viability, forage: base.top,
+           components: c, central: r.central || null, odour: r.odour || null,
+           drops: { noFood: r.drops.noFood, noToxin: r.drops.noToxin,
+                    blindConst: r.drops.blindConst, noFoodDir: r.drops.noFoodDir,
+                    noFoodMass: r.drops.noFoodMass } };
 }
 
 function runSeed(seed) {
@@ -105,7 +127,7 @@ function runSeed(seed) {
     child.stderr.on('data', d => { err += d; });
     child.on('close', code => {
       if (code !== 0) return resolve({ seed, error: err.trim().split('\n').slice(-1)[0] || `exit ${code}` });
-      try { resolve({ seed, ...scoreReport(JSON.parse(out).report) }); }
+      try { resolve({ seed, ...scoreReport(JSON.parse(out).report, elites) }); }
       catch (e) { resolve({ seed, error: 'unparseable child output' }); }
     });
   });
@@ -137,7 +159,45 @@ const summary = {
   components: Object.fromEntries(['sensing','taxis','generalisation','selection','diversity'].map(k => [k, +avg(k).toFixed(4)])),
   forage: +(ok.reduce((a, r) => a + r.forage, 0) / ok.length).toFixed(4),
   viability: +(ok.reduce((a, r) => a + r.viability, 0) / ok.length).toFixed(4),
-  perSeed: ok.map(r => ({ seed: r.seed, score: +r.score.toFixed(4), forage: +r.forage.toFixed(3) })),
+  // The odour/hazard readouts are carried per seed as well as averaged, so a
+  // behavioural claim about them can be given a standard error the same way the
+  // score is, rather than being a bare point estimate. The odour numbers already
+  // in RESEARCH.md predate this and are unerrored means; they are labelled so.
+  // Components and ablation drops are carried per seed as well as averaged, for
+  // the same reason the score is: a claim about `sensing` rising or about
+  // `blindConst` going to zero needs a standard error, and until now only the
+  // total had one. The averages are unchanged — these are the same per-seed
+  // numbers the means were always computed from.
+  perSeed: ok.map(r => ({ seed: r.seed, score: +r.score.toFixed(4), forage: +r.forage.toFixed(3),
+    sensing: +r.components.sensing.toFixed(4), taxis: +r.components.taxis.toFixed(4),
+    selection: +r.components.selection.toFixed(4), diversity: +r.components.diversity.toFixed(4),
+    viability: +r.viability.toFixed(4),
+    blindConst: +(r.drops?.blindConst ?? 0).toFixed(4),
+    noFood: +(r.drops?.noFood ?? 0).toFixed(4),
+    noToxin: +(r.drops?.noToxin ?? 0).toFixed(4),
+    intake: r.odour ? +r.odour.intake.toFixed(4) : undefined,
+    nestShare: r.central ? +r.central.nestShare.toFixed(4) : undefined,
+    visitedFrac: r.central ? +r.central.visitedFrac.toFixed(4) : undefined,
+    toxDose: r.odour ? +r.odour.toxDose.toFixed(4) : undefined,
+    toxDoseTop: r.odour ? +r.odour.toxDoseTop.toFixed(4) : undefined,
+    toxRatio: r.odour ? +r.odour.toxRatio.toFixed(4) : undefined,
+    toxRatioIntake: r.odour ? +r.odour.toxRatioIntake.toFixed(4) : undefined,
+    toxShare: r.odour ? +r.odour.toxShare.toFixed(4) : undefined })),
+};
+summary.drops = Object.fromEntries(['noFood','noToxin','blindConst','noFoodDir','noFoodMass']
+  .map(k => [k, +(ok.reduce((a, r) => a + (r.drops?.[k] ?? 0), 0) / ok.length).toFixed(4)]));
+const withOdour = ok.filter(r => r.odour);
+if (withOdour.length) {
+  const oavg = k => +(withOdour.reduce((a, r) => a + r.odour[k], 0) / withOdour.length).toFixed(4);
+  summary.odour = Object.fromEntries(
+    ['ambiguity','stakes','toxDose','toxDoseTop','intake','intakeTop','toxRatio',
+     'toxDoseTopIntake','toxRatioIntake','hazCost','hazCostTop','toxShare'].map(k => [k, oavg(k)]));
+}
+const withCentral = ok.filter(r => r.central);
+if (withCentral.length) summary.central = {
+  nestShare: +(withCentral.reduce((a, r) => a + r.central.nestShare, 0) / withCentral.length).toFixed(4),
+  visitedFrac: +(withCentral.reduce((a, r) => a + r.central.visitedFrac, 0) / withCentral.length).toFixed(4),
+  nestTime: +(withCentral.reduce((a, r) => a + r.central.nestTime, 0) / withCentral.length).toFixed(4),
 };
 
 if (opt.out) await fs.writeFile(opt.out, JSON.stringify(summary, null, 2));

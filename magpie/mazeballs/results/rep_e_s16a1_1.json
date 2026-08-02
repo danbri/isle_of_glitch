@@ -1,0 +1,39 @@
+{
+  "settings": {
+    "seed": 1,
+    "generations": 8,
+    "steps": 1450,
+    "evals": 6,
+    "pop": 192,
+    "ambiguity": 1,
+    "hazStakes": 16,
+    "hazSigma2": 0.0015,
+    "hazards": 18
+  },
+  "traits": {
+    "toxDose": {
+      "repeatability": 0.006247823377134772,
+      "meanPairwiseR": 0.023937350162409252,
+      "varBetween": 0.012381132860702249,
+      "varWithin": 1.9692902610544358,
+      "mean": 0.40637984646069053
+    },
+    "intake": {
+      "repeatability": 0.01694333625782702,
+      "meanPairwiseR": 0.016980571442504016,
+      "varBetween": 0.01488470078260365,
+      "varWithin": 0.8636141117359535,
+      "mean": 0.5004887654711562
+    },
+    "fitness": {
+      "repeatability": 0.007250632545297454,
+      "meanPairwiseR": 0.024573523093198723,
+      "varBetween": 6.680637679732058,
+      "varWithin": 914.7062396713926,
+      "mean": -8.171349243381908
+    }
+  },
+  "runtimeSeconds": 52.8,
+  "hazShareTotal": 1.00345319460493,
+  "hazShareBetween": 0.8646691565109579
+}

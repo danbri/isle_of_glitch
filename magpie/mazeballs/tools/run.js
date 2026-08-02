@@ -12,7 +12,7 @@
  */
 import fs from 'node:fs/promises';
 import { initBackend, parseArgs } from './backend.js';
-import { EvoDevoSim, diagnose, evolveFor } from '../lib/evodevo.js';
+import { EvoDevoSim, diagnose, evolveFor, coevolveFor, coevoSyncWorld } from '../lib/evodevo.js';
 
 const args = parseArgs(process.argv.slice(2), {
   generations: 10, seed: 1, gain: 0.5, mutation: 0.10,
@@ -29,6 +29,49 @@ const args = parseArgs(process.argv.slice(2), {
   // FOOD_CLUSTERS from curClustersStart to curClustersEnd. 0 (default) disables
   // the ramp and uses the static `clusters` value for the whole run.
   curClustersStart: 0, curClustersEnd: 0,
+  // Food source count. DEFAULTS.FOOD is fixed at 42 regardless of POP, so a
+  // POP sweep that does not also touch this is silently changing food density
+  // per agent (42/POP), not just population size — a POP-scale experiment
+  // that wants to isolate "more genomes per selection event" from "more
+  // mouths sharing the same food" needs this to scale with --pop.
+  food: 42,
+  // Central-place foraging (off at cpStrength 0, which is the default and is a
+  // no-op). cpStrength is the dose: the fraction of intake that stops paying
+  // where it is found and must be carried back to the nest at the origin.
+  // cpNestSensor is the control arm — it hands the agent the bearing home, so
+  // the return trip becomes taxis rather than path integration.
+  cpStrength: 0, cpMult: 2.5, cpRadius: 0.14, cpDecay: 0.06, cpDeposit: 6.0,
+  cpNestSensor: false,
+  // Shared-odour ambiguity. 0 (default) is a verified no-op: food and hazards
+  // stay on separate channels exactly as before. At 1 hazards emit into the
+  // food channel at full strength and the only identity cue is the quality
+  // channel, whose kernel has narrowed to qualitySigma2.
+  ambiguity: 0, qualitySigma2: 0.010,
+  // Hazard stakes. --hazStakes multiplies both hazard penalties (fitness and
+  // energy); 1 is the original and is a verified no-op. --hazSigma2 is the
+  // damage-kernel width (0.0015 = radius ~0.039) and --hazards the count.
+  // These change the world's PAYOFFS, unlike --ambiguity, so any cell that
+  // moves them needs its own generation-0 control before a cross-cell
+  // comparison of score or forage means anything.
+  hazStakes: 1, hazSigma2: 0.0015, hazards: 18,
+  // Two-species world (off by default). With --coevo the run coevolves a prey
+  // and a predator population and then diagnoses the PREY.
+  //
+  // Note what this measurement is and is not. diagnose() runs the prey against
+  // a fixed world with no predators present, so the opponent channels read
+  // zero throughout and the score is prey foraging capability measured against
+  // a yardstick the arms race cannot move. That is deliberate: it is exactly
+  // the measurement the coevolution design predicts will be flat while the
+  // ancestral tournament (tools/tournament.js) detects change, and reporting
+  // the two side by side is the point.
+  coevo: false, predPop: 48, predElites: 6,
+  captureSigma2: 0.0012, coevoSenseSigma2: 0.050,
+  predGain: 1.0, preyLoss: 1.0, predForage: 0,
+  // Prey-side asymmetries; all no-ops at their defaults. See tools/tournament.js
+  // for what each is for — this is the same arm description, and the two tools
+  // must be given identical values to be describing the same world.
+  preySpeed: 0.34, predSpeed: 0.34, preyIntake: 1,
+  preyReflex: 0, reflexSigma2: 0.02, reflexSource: 'nearest', reflexMassK: 2.0,
 });
 
 const log = (...m) => { if (!args.quiet) console.error(...m); };
@@ -40,14 +83,49 @@ const sim = new EvoDevoSim({
   seed: args.seed,
   config: {
     POP: args.pop, ELITES: args.elites, EPOCH_STEPS: args.epoch,
+    FOOD: args.food,
     FOOD_CONSUME: args.consume, FOOD_REGROW: args.regrow,
     GAIN: args.gain, MUTATION: args.mutation,
     FOOD_CLUSTERS: args.clusters, FOOD_CLUSTER_SIGMA: args.clusterSigma,
     FOOD_SENSE_SIGMA2: args.senseSigma2, FOOD_RELOCATE_THRESH: args.relocateThresh,
     SELECT: args.select, NICHES: args.niches, NOVELTY_K: args.novk, NOVELTY_WEIGHT: args.novweight,
+    CP_STRENGTH: args.cpStrength, CP_NEST_MULT: args.cpMult, CP_NEST_RADIUS: args.cpRadius,
+    CP_CARRY_DECAY: args.cpDecay, CP_DEPOSIT_RATE: args.cpDeposit,
+    CP_NEST_SENSOR: args.cpNestSensor,
+    ODOUR_AMBIGUITY: args.ambiguity, ODOUR_QUALITY_SIGMA2: args.qualitySigma2,
+    HAZARDS: args.hazards, HAZARD_STAKES: args.hazStakes,
+    HAZARD_DAMAGE_SIGMA2: args.hazSigma2,
+    ...(args.coevo ? {
+      COEVO: true, COEVO_ROLE: 'prey',
+      COEVO_CAPTURE_SIGMA2: args.captureSigma2, COEVO_SENSE_SIGMA2: args.coevoSenseSigma2,
+      COEVO_PRED_GAIN: args.predGain, COEVO_PREY_LOSS: args.preyLoss,
+      COEVO_PRED_FORAGE: args.predForage,
+      SPEED_MAX: args.preySpeed, COEVO_PREY_INTAKE: args.preyIntake,
+      COEVO_PREY_REFLEX: args.preyReflex, COEVO_REFLEX_SIGMA2: args.reflexSigma2,
+      COEVO_REFLEX_SOURCE: args.reflexSource, COEVO_REFLEX_MASS_K: args.reflexMassK,
+    } : {}),
   },
 });
 await sim.initialise();
+
+const predator = args.coevo
+  ? new EvoDevoSim({
+      seed: args.seed ^ 0x5f1e,
+      config: {
+        POP: args.predPop, ELITES: args.predElites, EPOCH_STEPS: args.epoch, FOOD: args.food,
+        FOOD_CONSUME: args.consume, FOOD_REGROW: args.regrow,
+        GAIN: args.gain, MUTATION: args.mutation,
+        FOOD_CLUSTERS: args.clusters, FOOD_CLUSTER_SIGMA: args.clusterSigma,
+        FOOD_SENSE_SIGMA2: args.senseSigma2, FOOD_RELOCATE_THRESH: args.relocateThresh,
+        SELECT: args.select, NICHES: args.niches,
+        COEVO: true, COEVO_ROLE: 'predator',
+        COEVO_CAPTURE_SIGMA2: args.captureSigma2, COEVO_SENSE_SIGMA2: args.coevoSenseSigma2,
+        COEVO_PRED_GAIN: args.predGain, COEVO_PREY_LOSS: args.preyLoss,
+        COEVO_PRED_FORAGE: args.predForage, SPEED_MAX: args.predSpeed,
+      },
+    })
+  : null;
+if (predator) { await predator.initialise(); coevoSyncWorld(sim, predator); }
 
 if (args.import) {
   const p = JSON.parse(await fs.readFile(args.import, 'utf8'));
@@ -65,12 +143,21 @@ const curriculum = args.curClustersStart > 0 || args.curClustersEnd > 0
   : null;
 
 const t0 = Date.now();
-await evolveFor(sim, args.generations, {
-  spawns: args.spawns,
-  onGeneration: ({ generation, best }) =>
-    log(`[gen ${String(generation).padStart(3)}] best ${best.toFixed(3)}  (${((Date.now() - t0) / 1000).toFixed(0)}s)`),
-  curriculum,
-});
+if (args.coevo) {
+  await coevolveFor(sim, predator, args.generations, {
+    onGeneration: ({ generation, prey: ps, pred: qs }) =>
+      log(`[gen ${String(generation).padStart(3)}] contact ${ps.contact.toFixed(4)} ` +
+          `preyForage ${ps.forageTop.toFixed(3)} preyFit ${ps.fitnessTop.toFixed(3)} ` +
+          `predFit ${qs.fitnessTop.toFixed(3)}  (${((Date.now() - t0) / 1000).toFixed(0)}s)`),
+  });
+} else {
+  await evolveFor(sim, args.generations, {
+    spawns: args.spawns,
+    onGeneration: ({ generation, best }) =>
+      log(`[gen ${String(generation).padStart(3)}] best ${best.toFixed(3)}  (${((Date.now() - t0) / 1000).toFixed(0)}s)`),
+    curriculum,
+  });
+}
 
 log(`[diagnose] ${args.restarts} restarts x ${args.steps} steps x 7 conditions…`);
 const report = await diagnose(sim, { steps: args.steps, restarts: args.restarts, yieldEvery: 0 });
@@ -85,6 +172,12 @@ const result = {
     relocateThresh: args.relocateThresh,
     curClustersStart: args.curClustersStart, curClustersEnd: args.curClustersEnd,
     select: args.select, niches: args.niches, spawns: args.spawns,
+    cpStrength: args.cpStrength, cpMult: args.cpMult, cpRadius: args.cpRadius,
+    cpDecay: args.cpDecay, cpDeposit: args.cpDeposit, cpNestSensor: args.cpNestSensor,
+    ambiguity: args.ambiguity, qualitySigma2: args.qualitySigma2,
+    hazStakes: args.hazStakes, hazSigma2: args.hazSigma2, hazards: args.hazards,
+    coevo: args.coevo, predPop: args.predPop, captureSigma2: args.captureSigma2,
+    predGain: args.predGain, preyLoss: args.preyLoss, predForage: args.predForage,
   },
   runtimeSeconds: +((Date.now() - t0) / 1000).toFixed(1),
   backend: `${pkg}/${backend}`,
@@ -97,6 +190,11 @@ else process.stdout.write(JSON.stringify(result) + '\n');
 const t = report.table.find(r => r.key === 'baseline');
 log(`[done] gen ${report.generation} · top25 ${t.top.toFixed(3)} · railed ${(report.network.saturation * 100).toFixed(1)}% ` +
     `· blind Δ ${(report.drops.blind * -100).toFixed(1)}% · founders ${report.population.founders} ` +
+    (report.central ? `· nestShare ${(report.central.nestShare * 100).toFixed(1)}% ` +
+                      `· visited ${(report.central.visitedFrac * 100).toFixed(0)}% ` : '') +
+    (report.odour ? `· tox ${report.odour.toxDose.toFixed(3)}/${report.odour.toxDoseTop.toFixed(3)} ` +
+                    `· ratio ${report.odour.toxRatio.toFixed(2)} ` : '') +
     `· ${result.runtimeSeconds}s` + (report.interpretable ? '' : ' · BELOW SIGNIFICANCE FLOOR'));
 
 sim.dispose();
+if (predator) predator.dispose();
