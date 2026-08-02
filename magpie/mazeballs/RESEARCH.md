@@ -3536,3 +3536,134 @@ carries it behind `--crossover` but the primary result is mutation-only, matchin
 the one selection rule this project has evidence for. Recombination, a foraging
 fitness once intake is made selectable, and an ε schedule that anneals down the
 gate curve are all now buildable on top of a loop that demonstrably climbs.
+
+## Directed foraging does not evolve — the loop closes, but the sense has no marginal value
+
+The obvious next experiment on the loop above was to select on **intake** instead
+of displacement and see whether the organism learns to feed by *steering toward
+sensed food* rather than by crawling far enough to blunder into it. The answer,
+across five fitness/environment configurations and multiple seeds, is that it
+does not — and the reason is not the one the loop's success might have predicted.
+It is the incumbent's own klinokinesis-era wall, reproduced on a fresh substrate:
+**the food sense contributes essentially nothing to how much a body eats, because
+an undirected gait finds food by coverage nearly as well as a directed one, so
+selection has no gradient to build steering on.** The soft-body rebuild bought
+selectability of *locomotion* (behavioural repeatability ~0.60); it did not buy
+selectability of *feeding*, and the binding constraint on feeding is the same
+task property wave 1 already named — a sensing kernel a quarter of the arena
+wide against food dense enough that searching is unnecessary.
+
+**First, the mechanistic question, because a flat foraging result is only
+interesting if the wiring could have expressed foraging.** `tools/sb-forage.js`
+drives each developed body's CTRNN forward under a *clamped* food input, physics
+removed, and reads the muscle command `tanh(act_i + act_j)` the physics kernel
+would apply — isolating "can the food channel move the motor" from "does that
+motion happen to find food in this spawn". Over 96 random genomes at each of
+three seeds:
+
+| | seed 1 | seed 2 | seed 3 |
+|---|---|---|---|
+| bodies with ≥1 sensor **and** ≥1 muscle (loop wireable) | 34% | 42% | 43% |
+| of those, muscle command responds to food (scalar) | 45% | 45% | 56% |
+| of those, L/R muscle asymmetry responds to a lateral food difference | 48% | 45% | 45% |
+
+**The loop closes.** Food reaches the muscles in roughly half of all wired bodies,
+and — the part that matters for steering — a food difference between the left and
+right sensor cells reaches the left/right motor asymmetry in roughly half as well,
+which is the substrate of a turn-toward-food. The median response is small
+(|Δ muscle command| ~0.005–0.011) with a long tail (max 0.10–1.11), i.e. most
+bodies couple food to motion weakly and a minority strongly. So directed feeding
+is expressible and present in the raw variation at generation zero; selecting on
+intake is **not** null by construction. Whatever kills it is downstream of the
+wiring.
+
+**What kills it is that intake is a function of locomotion, not of the sense.**
+Selecting directly on intake (POP 64, 30 generations, k=2, ε=0.08) reproduces the
+first-evolution result exactly — it evolves *crawling*:
+
+| fitness (seed 1) | displacement | intake ascent vs bar | intake blinded (intact→ablated) | intake R |
+|---|---|---|---|---|
+| intake, dense food | 0.035 → 0.239 **(ASCENDS)** | +0.032 vs 0.065 — flat | 0.1943 → 0.1942 | 0.000 |
+| intake, sparse food (10 patches) + curriculum | 0.034 → 0.566 **(ASCENDS)** | +0.036 vs 0.038 — flat | 0.1112 → 0.1090 | 0.000 |
+
+In both, displacement ascends by an order of magnitude and intake rises only as
+its by-product, exactly as the displacement-selected population already did
+(0.16 → 0.27). Ablating the food-bearing sensor channel — replacing it with the
+population mean, the `blindConst`-style removal-without-injection the incumbent
+analysis settled on — costs the evolved population **nothing** (intake 0.1943
+intact vs 0.1942 blinded). Feeding is entirely incidental: the animal does not
+use the sense it demonstrably has wired. Intake repeatability stays at 0.000,
+below even the 0.034 the displacement-selected population reached; selecting on a
+0.03-repeatable trait sorts noise, precisely the regime the whole project has
+lived in.
+
+**Two fitness functions built specifically to defeat the by-product also fail,
+and their failure modes are informative.** Intake-per-path *efficiency* — meant
+to reward eating without crawling — instead selects **immobile patch-sitters**:
+within two generations the moving fraction collapsed (to 17% in a probe run) as
+the best efficiency came from a body sitting on its spawn patch with path→0. That
+is the degenerate "find one patch and sit on it" the objective in `tools/score.js`
+was explicitly designed to forbid, re-derived by an intake-shaped fitness. A
+**`directed`** fitness — pairing an intact and a food-ablated episode on the *same*
+spawn and selecting on `intake_intact − intake_ablated`, i.e. the sense's own
+contribution to feeding, which neither a blunderer nor a sitter can score — is the
+most principled attempt, and it has no gradient to climb: the per-genome directed
+signal is **median zero across the entire population every generation** (best only
+0.06–0.58, indistinguishable from spawn noise), because the sense contributes ~0
+to intake for *every* body, so there is no between-genotype variance to select. It
+was run to three seeds with a locomotion curriculum:
+
+| directed, dense, curriculum 10 | seed 1 | seed 2 | seed 3 |
+|---|---|---|---|
+| intake, intact → blinded | 0.2723 → 0.2765 | 0.2008 → 0.1992 | 0.2031 → 0.2039 |
+| ablation cost (2·SE bar) | −0.0042 (0.075) | +0.0016 (0.072) | −0.0008 (0.071) |
+| intake repeatability | 0.004 | 0.000 | 0.000 |
+
+Pooled, blinding the food sense changes evolved intake by about −0.001,
+indistinguishable from zero at every seed. And because the directed signal is
+pure noise, selecting on it actively **let locomotion decay** once the curriculum
+ended — the moving fraction fell from 92–100% back to 50–52% over the directed
+phase, selection drifting because it had nothing to hold onto. Adding sparse food,
+a curriculum and two-spawn averaging all at once (`directed`, 10 patches, spawns 2)
+does not change the verdict: ablation cost +0.0040 against a 0.035 bar, still
+incidental.
+
+**The diagnosis is the same one wave 1 measured on the incumbent, now confirmed on
+a substrate whose sensorimotor loop is known to close.** The food field has dozens
+of sources in an arena ~1.74 across, the sensing kernel has radius ~0.22, and an
+evolved body's path length over an episode (~2–3 world units) sweeps a large
+fraction of that arena — so coverage substitutes for chemotaxis, and a body that
+crawls finds food whether or not it steers. Sparsening the food to ten patches did
+not help because the population answered it the same way the incumbent would have
+predicted: by crawling *further* (displacement 0.034 → 0.566), covering the sparse
+arena rather than navigating to patches. Directed feeding is expressible, present
+in the generation-0 variation, and worth ~nothing, so evolution correctly does not
+build it. **This is not a wiring failure and not a search failure in the usual
+sense — it is a task in which the capability being selected for has no fitness
+consequence.** It stands beside the incumbent's evasion result as the second
+clean case where a behaviour is reachable from the sensors the animal has and
+evolution declines to find it because the arena does not pay for it.
+
+**The live direction is therefore a task where coverage fails**, which on the
+geometry above means one specific thing: the body's path length over an episode
+must be small relative to the arena, so that reaching a patch requires going
+*to* it rather than sweeping *through* the region that contains it. That is a
+larger arena (a `WORLD_BOUND` change, which also touches spawn, food and the
+boundary sensor and so must be made deliberately), or a shorter episode (which
+starves the intake signal), or food that relocates *away from* an approaching
+body fast enough that only a body heading straight for it arrives in time — the
+soft-body analogue of the incumbent's relocating patches, tuned so that a random
+walk of the arena is too slow. Until the task makes steering *pay*, no intake
+fitness, curriculum, efficiency normalisation or directed-difference selection
+will move it, and the gate's method should be pointed at intake repeatability
+*after* such a task change, not before: the number to beat is 0.034, and every
+foraging fitness tried here came in at or below it.
+
+**What is committed.** `tools/sb-forage.js` (the physics-free loop-closure probe);
+`--fitness {intake|efficiency|directed}`, `--curriculum N`, `--spawns K` and the
+arena-only food overrides (`--food/--clusters/--senseSigma2/--eatSigma2`) in
+`tools/sb-evolve.js`, all defaulting so the displacement result reproduces
+byte-identically; and `Colony.foodAblate` (`'mean'`/`'const'`/null) in
+`lib/softbody.js`, off by default, so the gate and turing tests reproduce their
+documented numbers and `DEFAULTS` is unchanged. Run readouts are in
+`results/forage/`.
