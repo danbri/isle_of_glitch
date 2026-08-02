@@ -33,6 +33,7 @@ button{font:inherit;font-size:.84rem;color:var(--ink);background:var(--panel);bo
 button:hover{border-color:var(--best)}
 button:focus-visible{outline:2px solid var(--best);outline-offset:2px}
 button.primary{background:var(--move);border-color:var(--move);color:#180B02;font-weight:600}
+button.on{background:var(--best);border-color:var(--best);color:#06110F;font-weight:600}
 .chart{background:var(--panel2);border:1px solid var(--rule);border-radius:3px;padding:.5rem}
 .chart canvas{display:block;width:100%;height:auto}
 .stats{display:grid;grid-template-columns:1fr auto;gap:.3rem .8rem;font-family:var(--mono);font-size:.82rem}
@@ -73,7 +74,16 @@ button.primary{background:var(--move);border-color:var(--move);color:#180B02;fon
     </div>
 
     <div class="group">
-      <h2>Displacement per generation</h2>
+      <h2>Select for</h2>
+      <div class="row">
+        <button id="fMove" class="on">travel</button>
+        <button id="fForage">feeding</button>
+      </div>
+      <p class="note" id="fnote" style="margin:0">Reward distance travelled. The population learns to crawl.</p>
+    </div>
+
+    <div class="group">
+      <h2 id="chartTitle">Displacement per generation</h2>
       <div class="chart"><canvas id="chart" width="560" height="180"></canvas></div>
       <div class="legend">
         <span class="k"><span class="dot" style="background:var(--best)"></span>best</span>
@@ -111,8 +121,13 @@ const cv = $('arena'), ctx = cv.getContext('2d');
 const chart = $('chart'), cctx = chart.getContext('2d');
 
 const STEPS = 420, ELITE = 2, DEVSEED = id => makeRng((0x51b0 ^ Math.imul(id, 2654435761)) >>> 0);
-let POP = 28, EPS = 0.08;
+let POP = 28, EPS = 0.08, fitMode = 'move';
 let world, colony, genomes, gen, nid, hist, gen0mean, running, raf, stepInGen, moveThresh = 0.05;
+
+// Fitness per organism, from the mode. Travel = displacement; feeding = food
+// eaten over the episode. Both come straight from Colony.traits().
+function fitnessOf(t){ return fitMode === 'forage' ? (t.intake ?? 0) : t.displacement; }
+const fitLabel = () => fitMode === 'forage' ? 'intake' : 'displacement';
 
 function fresh(){
   cancelAnimationFrame(raf); running = false;
@@ -146,10 +161,10 @@ function episodeFrame(){
 }
 
 function nextGeneration(){
-  const fit = colony.traits().map(t => t.displacement);
+  const fit = colony.traits().map(fitnessOf);
   const mean = fit.reduce((a,b)=>a+b,0)/fit.length;
   const best = Math.max(...fit);
-  const moving = fit.filter(f => f > moveThresh).length;
+  const moving = fit.filter(f => f > (fitMode === 'forage' ? 0.2 : moveThresh)).length;
   if (gen0mean === null) gen0mean = mean;
   hist.push({ gen, best, mean, moving: moving/POP });
   drawChart();
@@ -180,9 +195,12 @@ function drawArena(){
   const bb = cfg.WORLD_BOUND;
   ctx.strokeStyle = css('--rule'); ctx.lineWidth = 1;
   ctx.strokeRect(tx(-bb), ty(-bb), 2*bb*sc, 2*bb*sc);
-  // food
-  ctx.fillStyle = 'rgba(226,140,62,0.20)';
-  for (let i=0;i<world.fx.length;i++){ ctx.beginPath(); ctx.arc(tx(world.fx[i]), ty(world.fy[i]), 2.4, 0, 7); ctx.fill(); }
+  // food — opacity tracks live stock, so grazing visibly draws patches down
+  for (let i=0;i<world.fx.length;i++){
+    const s = colony.stock ? colony.stock[i] : 1;
+    ctx.fillStyle = `rgba(226,140,62,${(0.08 + 0.34*s).toFixed(3)})`;
+    ctx.beginPath(); ctx.arc(tx(world.fx[i]), ty(world.fy[i]), 2.4, 0, 7); ctx.fill();
+  }
   // each organism: cells as dots, tinted by how far it has travelled from its start
   const S = colony.S;
   for (let o=0;o<colony.P;o++){
@@ -237,15 +255,15 @@ function updateStats(cur){
     ['population', POP],
   ];
   if (cur){
-    rows.push(['best displacement', cur.best.toFixed(3)]);
-    rows.push(['mean displacement', cur.mean.toFixed(3)]);
-    rows.push(['moving', Math.round(cur.moving/POP*100)+'%']);
+    rows.push(['best '+fitLabel(), cur.best.toFixed(3)]);
+    rows.push(['mean '+fitLabel(), cur.mean.toFixed(3)]);
+    rows.push([fitMode === 'forage' ? 'feeding' : 'moving', Math.round(cur.moving/POP*100)+'%']);
     if (gen0mean) rows.push(['× over gen-0 mean', (cur.mean/Math.max(1e-4,gen0mean)).toFixed(1)+'×']);
   } else {
     rows.push(['episode', Math.round(stepInGen/STEPS*100)+'%']);
   }
   $('stats').innerHTML = rows.map(([k,v])=>{
-    const cls = k==='best displacement'?' best':(k.startsWith('×')||k==='moving'?' hi':'');
+    const cls = k.startsWith('best')?' best':(k.startsWith('×')||k==='moving'||k==='feeding'?' hi':'');
     return `<span class="k">${k}</span><span class="v${cls}">${v}</span>`;
   }).join('');
 }
@@ -261,6 +279,18 @@ $('reset').onclick = () => { POP = +$('pop').value; EPS = +$('eps').value/100; f
 $('speed').oninput = () => $('speedv').textContent = $('speed').value+'×';
 $('pop').oninput = () => $('popv').textContent = $('pop').value;
 $('eps').oninput = () => { EPS = +$('eps').value/100; $('epsv').textContent = EPS.toFixed(2); };
+function setFitMode(m){
+  fitMode = m;
+  $('fMove').classList.toggle('on', m === 'move');
+  $('fForage').classList.toggle('on', m === 'forage');
+  $('fnote').innerHTML = m === 'forage'
+    ? 'Reward food eaten. Watch it re-derive crawling anyway — with dense food, blundering through patches feeds as well as steering does. That null is a real finding.'
+    : 'Reward distance travelled. The population learns to crawl.';
+  $('chartTitle').textContent = (m === 'forage' ? 'Intake' : 'Displacement') + ' per generation';
+  $('reset').click();
+}
+$('fMove').onclick = () => setFitMode('move');
+$('fForage').onclick = () => setFitMode('forage');
 
 fresh();
 drawChart();
