@@ -3274,3 +3274,57 @@ observation that motivated looking at GPUs at all was that a hundred small
 CTRNNs are one large sparsely-connected CTRNN. That turns out to be true of the
 whole organism, not just of the population — and the developmental biology
 literature is already written in the form.
+
+## The gate: the soft-body substrate is roughly eighteen times more selectable
+
+`tools/sb-gate.js`, 20 genomes x 5 evaluations, 500 steps. Repeatability is
+computed exactly as `tools/repeatability.js` computes it — var(genotype means)
+over var(all observations), with the between-genotype term bias-corrected by
+var(within)/E — so the numbers are directly comparable with the incumbent's.
+
+**1. Developmental repeatability** — same genome, different developmental noise:
+
+    cells 0.983   muscles 0.947   sensors 0.969   extent 0.947
+
+The genome names a body. This is the prediction that motivated Turing dynamics
+in the first place: a reaction-diffusion pattern is an attractor set by the
+kinetics and the domain, not by the noise that seeded it, so self-organisation
+buys reproducibility rather than costing it. Had this come out low the substrate
+would have been unusable and nothing else would have mattered.
+
+**2. Behavioural repeatability** — same body, different spawn:
+
+    displacement 0.897   path 0.909   occupancy 0.897   intake 0.000
+
+Against the incumbent's **0.05** for hazard exposure and 0.012-0.047 for intake.
+That is the number the whole rebuild was for. At 0.05 truncation selection is
+sorting noise 95% of the time; at 0.90 it is acting on the genotype.
+
+**Two honest caveats.** `intake` reads exactly zero because almost nothing eats
+yet — a trait no organism expresses has no between-genotype variance to find,
+and this will have to be re-measured once foraging works. And the high
+behavioural figures are inflated by the population being bimodal: most random
+genomes do not move at all, a reliable zero is trivially repeatable, and the
+between-genome variance is carried by the minority that locomote. The
+differences between genomes are genuinely reproducible, which is what
+selectability requires, but 0.90 should not be read as "any behavioural
+difference is 90% heritable". Re-measure on an evolved population.
+
+**3. Genotype sensitivity** — perturb by eps, develop at the same developmental
+seed so any difference is the genome's doing:
+
+    eps    0.02   0.05   0.12   0.30   0.75   1.60
+    morph  0.077  0.093  0.524  0.720  0.973  0.984
+    behav  0.273  1.598  2.121  1.603  1.507  1.291
+
+Morphology distance rises smoothly and saturates around **eps 0.75**. That is
+the usable mutation ceiling falling out of the measurement rather than being
+guessed: at or above it a mutated genome carries no more information about its
+parent than a fresh random one would, and inheritance is destroyed. The
+incumbent's rate of 0.10 across 130 loci — about thirteen mutations per child —
+has no equivalent safety here, and step sizes should be set from this curve.
+
+The behaviour column is non-monotone, peaking at eps 0.05 and falling after.
+That is what an amplifying map looks like once it saturates: small perturbations
+produce proportionate behavioural change, large ones produce a different animal
+whose behaviour is uncorrelated rather than maximally distant.
