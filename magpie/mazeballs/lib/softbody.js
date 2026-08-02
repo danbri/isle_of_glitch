@@ -566,7 +566,13 @@ function rdRelax(A, H, x, y, rad, alive, N, steps, K, cfg) {
  * coupling is the whole point, and it is why morphology is not a genome
  * lookup.
  */
-export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
+// `onCycle`, if given, is called once per developmental cycle with a plain
+// snapshot of the living cells (positions, radius, activator concentration, and
+// the current sensor/muscle role scores). It exists so a viewer can WATCH
+// development — the Turing pattern forming, cells dividing, the clock ticking —
+// from the one real develop(), not a reimplementation of it. Guarded, so it
+// costs nothing on the headless path that never passes it.
+export function develop(genome, cfg = DEFAULTS, rng = makeRng(1), onCycle = null) {
   const N = cfg.N_MAX;
   const x = new Float64Array(N), y = new Float64Array(N);
   const alive = new Uint8Array(N);
@@ -735,6 +741,17 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
 
     // --- mechanical relaxation of the clump --------------------------------
     relaxClump(x, y, rad, alive, N, cfg.DEV_RELAX, cfg);
+
+    if (onCycle) {
+      const idx = []; for (let i = 0; i < N; i++) if (alive[i]) idx.push(i);
+      onCycle({
+        cycle: cyc, cells: idx.length,
+        x: idx.map(i => x[i]), y: idx.map(i => y[i]), rad: idx.map(i => rad[i]),
+        A: idx.map(i => A[i]),
+        sensor: idx.map(i => Math.tanh(g[i * GENES + G.SENSOR])),
+        muscle: idx.map(i => Math.tanh(g[i * GENES + G.MUSCLE])),
+      });
+    }
   }
 
   // Final expression, and a compacted index list. Everything downstream reads
