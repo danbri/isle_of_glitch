@@ -158,8 +158,9 @@ export const DEFAULTS = Object.freeze({
   GRN_RATE: 0.19,          // same relaxation rate as the incumbent's develop()
   DEV_RELAX: 6,            // mechanical relaxation iterations per cycle
   DEV_SCALE: 0.13,         // length scale of the maternal coordinate gradient
-  DIV_THRESH: 0.35,
-  DIE_THRESH: 0.62,
+  DIV_THRESH: 0.20,
+  DIE_THRESH: 0.60,
+  FATE_K: 6.0,             // steepness of the division / apoptosis rate curves
   MIN_CELLS: 4,            // apoptosis never takes the body below this
   DIV_JITTER: 0.10,        // fraction of a cell radius of noise on the division axis
 
@@ -198,7 +199,8 @@ export const DEFAULTS = Object.freeze({
   DIR_SCALE: 2.0,          // weight of the asymmetric direction-dependent synapse
   TAU_MIN: 0.24, TAU_SPAN: 1.65,
   TAUA_MIN: 1.20, TAUA_SPAN: 11.0,   // adaptation time constant range, seconds
-  ADAPT_MAX: 3.20,                   // adaptation strength range, [0, this]
+  ADAPT_MAX: 6.00,                   // adaptation strength range, [0, this]
+  SELF_EXC: 4.00,                    // intrinsic self-excitation range, [0, this]
   BIAS_SCALE: 1.45,
   IN_SCALE: 1.18,
 
@@ -464,7 +466,16 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
     let liveCount = n;
     for (let i = 0; i < N; i++) {
       if (!alive[i] || born[i] === cyc) continue;
-      if (Math.tanh(g[i * GENES + G.DIE]) > cfg.DIE_THRESH && liveCount > cfg.MIN_CELLS) {
+      // Fate is a RATE, not a threshold. A hard threshold on an expression
+      // value that is nearly uniform across a body makes growth all-or-none:
+      // measured, cell counts came out bimodal at exactly 4 (the seed clump)
+      // or exactly 64 (the capacity), with nothing in between and therefore no
+      // morphological variation to select on. A logistic rate spreads the
+      // distribution, and it is also the honest model — division is stochastic
+      // in real tissue, which is precisely the developmental noise that
+      // quantity (1) below is built to measure.
+      if (rng.next() < fateP(Math.tanh(g[i * GENES + G.DIE]), cfg.DIE_THRESH, cfg.FATE_K)
+          && liveCount > cfg.MIN_CELLS) {
         alive[i] = 0; liveCount--; n--;
       }
     }
@@ -476,7 +487,8 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
     const wantDivide = [];
     for (let i = 0; i < N; i++) {
       if (!alive[i] || born[i] === cyc) continue;
-      if (Math.tanh(g[i * GENES + G.DIV]) > cfg.DIV_THRESH) wantDivide.push(i);
+      if (rng.next() < fateP(Math.tanh(g[i * GENES + G.DIV]), cfg.DIV_THRESH, cfg.FATE_K))
+        wantDivide.push(i);
     }
     for (const i of wantDivide) {
       if (n >= N) break;
@@ -613,7 +625,16 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
         : 0;
       W[a * nA + b] = (w + dirw) * (cfg.GAIN / 2.0);       // W[from, to]
     }
-    W[a * nA + a] += expr[i * GENES + G.OUT_E] * 0.65 * (cfg.GAIN / 2.0);
+    // Self-excitation, NOT scaled by GAIN. Together with the slow adaptation
+    // state this is the cell's intrinsic oscillator, and the region that
+    // oscillates is specific: measured on the isolated unit, a self-weight
+    // below 2 never oscillates at any adaptation strength, and above 2 with
+    // adaptation over ~1.5 it oscillates at full amplitude. The developed
+    // self-weight used to be ~0.16, which is why gaits were one body in
+    // sixteen. Spanning [0, SELF_EXC] puts a real fraction of random genomes
+    // on each side of that line, which is what makes "does it move" a graded
+    // trait rather than a coin flip.
+    W[a * nA + a] += cfg.SELF_EXC * (0.5 + 0.5 * expr[i * GENES + G.OUT_E]);
   }
 
   // Remap edge endpoints into the compact index space.
@@ -653,6 +674,9 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
              area: polyArea(px, py, nA), patternCV, patternDomains },
   };
 }
+
+/** Logistic fate probability: 0.5 at the threshold, steepness FATE_K. */
+const fateP = (e, thresh, k) => 1 / (1 + Math.exp(-k * (e - thresh)));
 
 /** Connected components of {cell : A > mean} over the adhesion graph. */
 function countDomains(A, mean, ei, ej, nE, n) {
