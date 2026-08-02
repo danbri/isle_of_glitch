@@ -3153,3 +3153,69 @@ already planned for the gate yields it directly: the ε at which phenotype
 distance saturates — beyond which a perturbation may as well be a fresh random
 genome — is the usable mutation ceiling for the substrate. Report it with the
 repeatability quantities and set the rate from it.
+
+## What the gap gene literature says our development is missing
+
+Crombach, Wotton, Cicin-Sain, Ashyraliyev & Jaeger 2012, *Efficient
+Reverse-Engineering of a Developmental Gene Regulatory Network*, PLoS Comput
+Biol 8(7):e1002589 — the gene circuit method for the *Drosophila* gap gene
+network. A row of nuclei, four trunk gap genes regulating each other, four
+maternal and terminal inputs regulating them one-way.
+
+Their integration is
+
+    dC_a/dt = R_a(C) − D·∇²C_a − λ_a·C_a
+
+with `R_a = α_a · f_a(C)`, `f_a` a sigmoid over weighted sums carrying a
+**per-gene threshold** `h_a` and a **per-gene maximum synthesis rate** `α_a`,
+and **per-gene decay** `λ_a` as a free parameter.
+
+Ours is `g ← g + 0.19·(tanh(g·genR + drive) − g)`. Synthesis and relaxation are
+fused into one global constant. There is no decay term, no diffusion, no
+per-gene threshold and no per-gene gain — **every gene has identical dynamics
+and differs only in its weights.** That is three cheap parameters per gene we do
+not have, and they are exactly what would let different genes occupy different
+dynamical regimes rather than all relaxing at one rate.
+
+Their maternal inputs are also *species*, with their own profiles, feeding the
+zygotic network strictly one-way. Ours is a static `[1, p, p²]` polynomial added
+as drive — a mathematical basis, not a product that diffuses and decays. The
+one-way asymmetry is architectural and we simply do not have it.
+
+**The correction that matters most: the gap gene network is not a Turing
+system.** They use a single diffusion rate across all gap genes, and a Turing
+instability requires differential diffusion between a short-range activator and
+a long-range inhibitor — impossible with one rate at any parameter setting. Real
+AP-axis patterning is maternal gradients plus mutual cross-repression plus
+posterior-dominant domain shifts: a prepattern read and sharpened, not pattern
+arising *de novo*.
+
+So a substrate wanting morphology needs **two patterning modes**, and they
+compose — mode 1 establishes the domain that mode 2 patterns:
+
+1. **Gradient and cross-repression.** Maternal species read by a zygotic network
+   with mutual repression between non-overlapping pairs. Makes axes, boundaries,
+   polarity. Empirically what an embryo does along its main axis.
+2. **Turing.** Activator and inhibitor at genuinely different diffusion rates.
+   Makes *repeated* structures — digits, spots, follicles — and is therefore
+   where modularity, symmetry and amplification actually come from.
+
+This also explains our own `DEV_DIFFUSE` null retrospectively. It was a single
+global diffusion rate, so it could not have produced a Turing instability under
+any setting, and on a fixed one-dimensional body it had nothing else to do.
+
+**And a result that bears directly on the flatness hypothesis.** Across many
+independent fits their parameter *values* vary widely while the network
+*structure* is robustly conserved: mutual repression of non-overlapping pairs
+(hb/kni, Kr/gt) present in **all** selected solutions, maternal activation,
+terminal repression at the poles, asymmetric repression with posterior
+dominance, auto-regulation generally present. A sparse, signed, specific motif
+class.
+
+We initialise a dense `N(0, 0.38)` matrix and let mutation wander through it. If
+the functional structures are that specific, they may be too rare in a dense
+random space to reach at all — a concrete mechanism for a flat genotype-to-
+phenotype map that has nothing to do with selection or evaluation noise. The
+testable form: **how much phenotype variance is explained by sparsity and sign
+structure versus by exact magnitudes.** If sign structure is most of it, the
+mutation operator is perturbing the wrong thing.
