@@ -58,7 +58,7 @@ import { initBackend, parseArgs } from './backend.js';
 import { EvoDevoSim, makeRng, mean, sd } from '../lib/evodevo.js';
 
 const a = parseArgs(process.argv.slice(2), {
-  steps: 500, seed: 1, pop: 192,
+  steps: 500, seed: 1, pop: 192, evals: 6,
   eps: '0.02,0.05,0.12,0.30,0.75,1.6',
   flips: '0.02,0.05,0.10,0.20,0.35,0.50',
   randRefs: 3, quiet: false, out: '',
@@ -79,9 +79,13 @@ const LR = G * G, LM = 3 * G, LE = CELLS * G;
 const baseR = Float32Array.from(await sim.genR.data());
 const baseM = Float32Array.from(await sim.genM.data());
 
-/* One matched spawn, applied before every run so only the genome varies. */
-const init = sim.makeInit();
-const initPos = Float32Array.from(await init.pos.data());
+/* Matched spawns. `init` (spawn 0) is applied before every sensitivity run so
+ * only the genome varies; the extra spawns drive the repeatability/noise-floor
+ * measurement — the same base genome, different spawn, which is exactly what
+ * selection sees between evaluations. All drawn from the seeded sim.rng. */
+const inits = Array.from({ length: a.evals }, () => sim.makeInit());
+const initPositions = await Promise.all(inits.map(i => i.pos.data().then(d => Float32Array.from(d))));
+const init = inits[0];
 
 /* Box-Muller off the seeded RNG, so the whole run is reproducible. */
 function gaussStream(seed) {
@@ -95,25 +99,41 @@ function gaussStream(seed) {
   };
 }
 
-/** Assign a genome, develop, run at the matched spawn, read per-organism traits. */
-async function runTraits(newR, newM) {
+/** Assign a genome, develop, run at spawn `s` (default 0), read per-organism traits. */
+async function runTraits(newR, newM, s = 0) {
   tf.tidy(() => {
     sim.genR.assign(tf.tensor3d(newR, [POP, G, G]));
     sim.genM.assign(tf.tensor3d(newM, [POP, 3, G]));
   });
   await sim.develop();
-  await sim.evaluate({ steps: a.steps, init, record: true, yieldEvery: 0 });
+  await sim.evaluate({ steps: a.steps, init: inits[s], record: true, yieldEvery: 0 });
   const [pos, acc, expr] = await Promise.all([
     sim.pos.data(), sim.acc.data(), sim.expr.data()]);
-  const n = sim.accSteps;
+  const n = sim.accSteps, ip = initPositions[s];
   const disp = new Float64Array(POP), turnR = new Float64Array(POP), thrustR = new Float64Array(POP);
   for (let o = 0; o < POP; o++) {
-    const dx = pos[o * 2] - initPos[o * 2], dy = pos[o * 2 + 1] - initPos[o * 2 + 1];
+    const dx = pos[o * 2] - ip[o * 2], dy = pos[o * 2 + 1] - ip[o * 2 + 1];
     disp[o] = Math.hypot(dx, dy);
     turnR[o] = Math.sqrt(Math.max(0, acc[o * C.ACC_COLS + 7]) / n);
     thrustR[o] = Math.sqrt(Math.max(0, acc[o * C.ACC_COLS + 10]) / n);
   }
   return { disp, turnR, thrustR, expr: Float32Array.from(expr) };
+}
+
+/* Repeatability, the estimator tools/repeatability.js and sb-gate.js use:
+ * R = var(genotype means) / var(all obs), between term bias-corrected by
+ * var(within)/E. obs[g][e] = organism g's trait at spawn e. */
+function repeatability(obs) {
+  const Gn = obs.length, E = obs[0].length, N = Gn * E;
+  const means = obs.map(r => r.reduce((s, v) => s + v, 0) / E);
+  const grand = means.reduce((s, v) => s + v, 0) / Gn;
+  let sw = 0;
+  for (let g = 0; g < Gn; g++) for (let e = 0; e < E; e++) sw += (obs[g][e] - means[g]) ** 2;
+  const varW = sw / Math.max(1, N - Gn);
+  const varMeans = means.reduce((s, v) => s + (v - grand) ** 2, 0) / Math.max(1, Gn - 1);
+  const varB = Math.max(0, varMeans - varW / E);
+  const total = varB + varW;
+  return total > 1e-12 ? varB / total : 0;
 }
 
 /* -------- distance estimators, gate style, comparable and scale-free -------- */
@@ -165,9 +185,35 @@ const randGenome = (len, s, g) => { const o = new Float32Array(len); for (let i 
 /* ============================ measure ============================ */
 const t0 = Date.now();
 log(`[base] developing + running ${a.steps} steps, POP=${POP}...`);
-const base = await runTraits(baseR, baseM);
+const base = await runTraits(baseR, baseM, 0);
 log(`[base] disp mean ${mean(base.disp).toFixed(4)} sd ${popSD(base.disp).toFixed(4)} · ` +
     `turnRMS ${mean(base.turnR).toFixed(4)} · thrustRMS ${mean(base.thrustR).toFixed(4)}`);
+
+/* 0. Behavioural repeatability + spawn-noise floor. Same base genome, E spawns.
+ * This is the axis against which the sensitivity curve has to be read: the
+ * genotype signal is selectable only where perturbing the genome moves
+ * behaviour by MORE than changing the spawn does. The noise floor is reported
+ * in the same base-SD distance units as the sensitivity curve, so the two sit
+ * on one scale. */
+log('[0] behavioural repeatability + spawn-noise floor...');
+const spawnRuns = [base];
+for (let e = 1; e < a.evals; e++) spawnRuns.push(await runTraits(baseR, baseM, e));
+// obs[g][e] = organism g's trait at spawn e.
+const asGE = key => Array.from({ length: POP }, (_, g) => spawnRuns.map(run => run[key][g]));
+const repDisp = repeatability(asGE('disp')), repTurn = repeatability(asGE('turnR')), repThrust = repeatability(asGE('thrustR'));
+// Noise floor: typical |Δ| between two spawns of the SAME genome, in base-SD
+// units — directly comparable to the perturbation distances below.
+const noise = { disp: 0, turn: 0, thrust: 0 };
+let pairs = 0;
+for (let e = 1; e < a.evals; e++) {
+  noise.disp += normDist(base.disp, spawnRuns[e].disp);
+  noise.turn += normDist(base.turnR, spawnRuns[e].turnR);
+  noise.thrust += normDist(base.thrustR, spawnRuns[e].thrustR);
+  pairs++;
+}
+noise.disp /= pairs; noise.turn /= pairs; noise.thrust /= pairs;
+log(`[0] R(disp) ${repDisp.toFixed(3)} R(turn) ${repTurn.toFixed(3)} R(thrust) ${repThrust.toFixed(3)} · ` +
+    `noise floor disp ${noise.disp.toFixed(3)} turn ${noise.turn.toFixed(3)}`);
 
 /* 1. the main sensitivity curve: additive gaussian, both genome blocks. */
 const full = [];
@@ -216,6 +262,12 @@ const f3 = x => x.toFixed(3);
 const out = [];
 out.push('\n=== incumbent genotype-to-phenotype sensitivity ===');
 out.push(`${POP} random genomes (one population), ${a.steps} steps, seed ${a.seed}, develop() deterministic\n`);
+out.push(`BEHAVIOURAL REPEATABILITY   same base genome, ${a.evals} spawns (gate part 2)`);
+out.push(`  displacement ${f3(repDisp)}   turnRMS ${f3(repTurn)}   thrustRMS ${f3(repThrust)}`);
+out.push('  soft body, for comparison: displacement 0.897  path 0.909  occupancy 0.897');
+out.push(`  SPAWN-NOISE FLOOR (base-SD units, same metric as the curve below):`);
+out.push(`  displacement ${f3(noise.disp)}   turnRMS ${f3(noise.turn)}   thrustRMS ${f3(noise.thrust)}`);
+out.push('  -> a genotype perturbation is selectable only where its distance CLEARS this floor.\n');
 out.push('GENOTYPE SENSITIVITY   additive N(0,eps^2) on every locus of genR+genM, matched spawn');
 out.push('  distances are mean|Δ| over organisms in base-population-SD units; r is Pearson base-vs-perturbed');
 out.push('  eps      expr    disp   (dispR)   turnRMS   thrustRMS');
@@ -247,11 +299,12 @@ console.log(out.join('\n'));
 if (a.out) {
   const fs = await import('node:fs/promises');
   await fs.writeFile(a.out, JSON.stringify({
-    settings: { seed: a.seed, steps: a.steps, pop: POP, eps: EPS, flips: FLIPS },
+    settings: { seed: a.seed, steps: a.steps, pop: POP, evals: a.evals, eps: EPS, flips: FLIPS },
     base: { dispMean: mean(base.disp), dispSD: popSD(base.disp), turnMean: mean(base.turnR), thrustMean: mean(base.thrustR) },
+    repeatability: { disp: repDisp, turn: repTurn, thrust: repThrust }, noiseFloor: noise,
     full, mag, flip, swaps,
   }, null, 2));
 }
-sim.disposeInit(init);
+for (const i of inits) sim.disposeInit(i);
 sim.dispose();
 process.exit(0);
