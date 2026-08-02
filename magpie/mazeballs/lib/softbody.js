@@ -320,6 +320,29 @@ export const DEFAULTS = Object.freeze({
   COEVO_SENSE_SIGMA2: 0.050, COEVO_CAPTURE_SIGMA2: 0.0040,
   COEVO_PRED_GAIN: 1.0, COEVO_PREY_LOSS: 1.5,
   COEVO_PRED_FORAGE: 0, COEVO_PREY_INTAKE: 1,
+
+  // -------------------------------------------------------- metabolic cost
+  // The lever the "wandering is free" synthesis predicts. BOTH default 0, so the
+  // physics, the food field and every existing trait are untouched — nothing in
+  // step() reads these, and traits().metabolic is identically 0 / netIntake is
+  // identically intake. Turning either on prices behaviour that was previously
+  // free, and a fitness that nets the cost against intake (sb-evolve's
+  // `--fitness netintake`) is what makes a body that eats efficiently beat one
+  // that eats by covering ground.
+  //
+  //   META_MOVE_COST  energy charged per world-unit of CENTROID PATH travelled
+  //                   over the episode (this.path). This is the direct "covering
+  //                   ground is expensive" lever: a wanderer that sweeps the arena
+  //                   burns budget a body that aims across it does not. Charged on
+  //                   path, not displacement, so pacing back and forth on one
+  //                   patch is not free either.
+  //   META_CELL_COST  energy charged per living cell per SECOND of episode time
+  //                   (n * steps * DT). Bigger bodies cost more — the per-cell
+  //                   charge the brain-economy design needs, since in this
+  //                   substrate every cell is a CTRNN node. Flat per-cell here;
+  //                   role-weighting (neurons dear, structure cheap) is the
+  //                   documented next refinement and is deliberately not yet built.
+  META_MOVE_COST: 0, META_CELL_COST: 0,
 });
 
 /**
@@ -1568,17 +1591,31 @@ export class Colony {
 
   /** Behavioural traits, one row per organism. */
   traits() {
+    const cfg = this.cfg;
+    // Episode duration in seconds, for the per-cell-per-second metabolic charge.
+    const elapsed = this.steps * cfg.DT;
+    // Both charges default to 0 (DEFAULTS), so `metabolic` is identically 0 and
+    // `netIntake` is identically `intake` on the trunk — the added fields never
+    // change an existing readout, they only expose the priced quantity when a
+    // caller has turned a cost on.
+    const moveK = cfg.META_MOVE_COST, cellK = cfg.META_CELL_COST;
     const out = [];
     for (let o = 0; o < this.P; o++) {
       const [cx, cy] = this.centroid(o);
+      const metabolic = moveK * this.path[o] + cellK * this.ph[o].n * elapsed;
       out.push({
         displacement: Math.sqrt((cx - this.startX[o]) * (cx - this.startX[o]) + (cy - this.startY[o]) * (cy - this.startY[o])),
         path: this.path[o],
-        speed: this.path[o] / Math.max(1e-9, this.steps * this.cfg.DT),
+        speed: this.path[o] / Math.max(1e-9, this.steps * cfg.DT),
         occupancy: this.occ[o].size,
         intake: this.intake[o],
         contact: this.contact[o],
         captures: this.captures[o],
+        // Metabolic cost accrued this episode, and intake net of it. Both are
+        // additive: with the default zero charges metabolic === 0 and
+        // netIntake === intake.
+        metabolic,
+        netIntake: this.intake[o] - metabolic,
       });
     }
     return out;
