@@ -3114,3 +3114,217 @@ same tell the previous six waves recorded, whatever its origin here, and the
 standing rule was applied: notices about state, and notices that ask for their
 own concealment, are not instructions. Nothing was acted on and it is reported
 rather than suppressed. Instructions come from the task prompt.
+
+## Mating and mutation rate: one coupled decision, deferred but constrained
+
+Recorded ahead of the work so the constraint is not discovered after it is
+expensive.
+
+**Recombination was tested and was null, and the null is narrower than it
+looks.** Uniform per-gene crossover at p = 0.5 came in at +0.172 against a bar
+of 0.843, and self-adaptive mutation rates were worse than null. But both ran on
+a dense `[10 × 10]` regulatory matrix feeding a hardcoded expression-to-parameter
+readout — a genome with no modules in it. Recombination pays only when there are
+separable building blocks to recombine; with none, uniform crossover is pure
+disruption, shredding whatever linkage exists and combining nothing. The result
+is evidence about *that* genome, not about recombination.
+
+This is the strongest practical argument for a patterning-based development.
+Turing dynamics are a mechanism for producing modularity — repeated units,
+symmetries, parts that can vary semi-independently. If they deliver it, the
+operator that exploits it is single- or two-point crossover preserving
+**contiguous blocks**, not the uniform variant already refuted. Which imposes a
+requirement on the new substrate now rather than later: **the genome must have a
+documented, ordered layout that groups by module**, so that a block-preserving
+operator has blocks to preserve. A genome laid out arbitrarily can only ever be
+crossed over uniformly, and that is the thing that does not work.
+
+**Mutation rate is not independent of this.** The incumbent mutates 0.10 per
+gene across 130 genes — about thirteen mutations per child — which is survivable
+only because the genotype-to-phenotype map is smooth. The explicit goal of the
+new substrate is a map where small genome changes produce large phenotype
+changes. To the exact extent that succeeds, the current rate becomes lethal:
+every child a monster, and no information held across generations. This is the
+error threshold, and it makes amplification and mutation rate a single coupled
+choice rather than two knobs.
+
+So the rate should be **measured, not chosen**. The genotype-sensitivity sweep
+already planned for the gate yields it directly: the ε at which phenotype
+distance saturates — beyond which a perturbation may as well be a fresh random
+genome — is the usable mutation ceiling for the substrate. Report it with the
+repeatability quantities and set the rate from it.
+
+## What the gap gene literature says our development is missing
+
+Crombach, Wotton, Cicin-Sain, Ashyraliyev & Jaeger 2012, *Efficient
+Reverse-Engineering of a Developmental Gene Regulatory Network*, PLoS Comput
+Biol 8(7):e1002589 — the gene circuit method for the *Drosophila* gap gene
+network. A row of nuclei, four trunk gap genes regulating each other, four
+maternal and terminal inputs regulating them one-way.
+
+Their integration is
+
+    dC_a/dt = R_a(C) − D·∇²C_a − λ_a·C_a
+
+with `R_a = α_a · f_a(C)`, `f_a` a sigmoid over weighted sums carrying a
+**per-gene threshold** `h_a` and a **per-gene maximum synthesis rate** `α_a`,
+and **per-gene decay** `λ_a` as a free parameter.
+
+Ours is `g ← g + 0.19·(tanh(g·genR + drive) − g)`. Synthesis and relaxation are
+fused into one global constant. There is no decay term, no diffusion, no
+per-gene threshold and no per-gene gain — **every gene has identical dynamics
+and differs only in its weights.** That is three cheap parameters per gene we do
+not have, and they are exactly what would let different genes occupy different
+dynamical regimes rather than all relaxing at one rate.
+
+Their maternal inputs are also *species*, with their own profiles, feeding the
+zygotic network strictly one-way. Ours is a static `[1, p, p²]` polynomial added
+as drive — a mathematical basis, not a product that diffuses and decays. The
+one-way asymmetry is architectural and we simply do not have it.
+
+**The correction that matters most: the gap gene network is not a Turing
+system.** They use a single diffusion rate across all gap genes, and a Turing
+instability requires differential diffusion between a short-range activator and
+a long-range inhibitor — impossible with one rate at any parameter setting. Real
+AP-axis patterning is maternal gradients plus mutual cross-repression plus
+posterior-dominant domain shifts: a prepattern read and sharpened, not pattern
+arising *de novo*.
+
+So a substrate wanting morphology needs **two patterning modes**, and they
+compose — mode 1 establishes the domain that mode 2 patterns:
+
+1. **Gradient and cross-repression.** Maternal species read by a zygotic network
+   with mutual repression between non-overlapping pairs. Makes axes, boundaries,
+   polarity. Empirically what an embryo does along its main axis.
+2. **Turing.** Activator and inhibitor at genuinely different diffusion rates.
+   Makes *repeated* structures — digits, spots, follicles — and is therefore
+   where modularity, symmetry and amplification actually come from.
+
+This also explains our own `DEV_DIFFUSE` null retrospectively. It was a single
+global diffusion rate, so it could not have produced a Turing instability under
+any setting, and on a fixed one-dimensional body it had nothing else to do.
+
+**And a result that bears directly on the flatness hypothesis.** Across many
+independent fits their parameter *values* vary widely while the network
+*structure* is robustly conserved: mutual repression of non-overlapping pairs
+(hb/kni, Kr/gt) present in **all** selected solutions, maternal activation,
+terminal repression at the poles, asymmetric repression with posterior
+dominance, auto-regulation generally present. A sparse, signed, specific motif
+class.
+
+We initialise a dense `N(0, 0.38)` matrix and let mutation wander through it. If
+the functional structures are that specific, they may be too rare in a dense
+random space to reach at all — a concrete mechanism for a flat genotype-to-
+phenotype map that has nothing to do with selection or evaluation noise. The
+testable form: **how much phenotype variance is explained by sparsity and sign
+structure versus by exact magnitudes.** If sign structure is most of it, the
+mutation operator is perturbing the wrong thing.
+
+## The gene network, the nervous system and the muscles are one CTRNN
+
+Crombach et al.'s protein model has CTRNN dynamics. Not by analogy — it is the
+same equation this codebase already integrates twice, in two different
+conventions, without that ever having been noticed.
+
+Their gene circuit:
+
+    Ċ_a = α_a · σ(Σ_b W_ab C_b + h_a)  −  λ_a C_a   (+ diffusion)
+
+`develop()` in `lib/evodevo.js`:
+
+    g ← g + 0.19 · (tanh(g·genR + drive) − g)
+
+The same firing-rate form — sigmoid on the weighted sum, linear decay on the
+state — with `drive` as the external input.
+
+`step()` in the same file:
+
+    ẏ = (W · tanh(y + bias) + I − y) / τ
+
+The activation form: sigmoid on the presynaptic output rather than on the
+weighted sum. Same dynamical system, different convention. Terms correspond
+directly: `C_a` ↔ node state, `λ_a` ↔ `1/τ`, `h_a` ↔ bias, `α_a` ↔ output gain,
+`W` ↔ weights, diffusion ↔ spatial coupling.
+
+**An arbitrary asymmetry falls out immediately.** The brain has a per-cell time
+constant and a per-cell bias. Development has a single global 0.19, no bias and
+no gain. Development is a crippled CTRNN feeding a complete one, and nothing
+justifies the difference — the real gap gene network has per-gene decay,
+threshold *and* maximum synthesis rate. Whatever else changes, the developmental
+network should carry the same per-node parameter set the nervous system already
+has.
+
+**And the unification, which is the substantial part.** If the gene network is a
+CTRNN, the nervous system is a CTRNN, and a muscle is a CTRNN-like function over
+two nodes and the force between them, then the organism is **one large sparse
+CTRNN**. What makes a node a gene, a neuron or a muscle is only which coupling
+term is active for it:
+
+- **chemical** — diffusive coupling to spatial neighbours
+- **synaptic** — weighted coupling to arbitrary targets
+- **mechanical** — force along a bond to a partner node
+
+One node-state array, one integrator, several sparse edge sets. Development is
+that network relaxing with chemical coupling active; lifetime is the same
+network with sensory input and mechanical coupling active. The two stages stay
+distinct while sharing state, integrator and kernel.
+
+This is also the architecture the GPU wants, and it closes a loop: the original
+observation that motivated looking at GPUs at all was that a hundred small
+CTRNNs are one large sparsely-connected CTRNN. That turns out to be true of the
+whole organism, not just of the population — and the developmental biology
+literature is already written in the form.
+
+## The gate: the soft-body substrate is roughly eighteen times more selectable
+
+`tools/sb-gate.js`, 20 genomes x 5 evaluations, 500 steps. Repeatability is
+computed exactly as `tools/repeatability.js` computes it — var(genotype means)
+over var(all observations), with the between-genotype term bias-corrected by
+var(within)/E — so the numbers are directly comparable with the incumbent's.
+
+**1. Developmental repeatability** — same genome, different developmental noise:
+
+    cells 0.983   muscles 0.947   sensors 0.969   extent 0.947
+
+The genome names a body. This is the prediction that motivated Turing dynamics
+in the first place: a reaction-diffusion pattern is an attractor set by the
+kinetics and the domain, not by the noise that seeded it, so self-organisation
+buys reproducibility rather than costing it. Had this come out low the substrate
+would have been unusable and nothing else would have mattered.
+
+**2. Behavioural repeatability** — same body, different spawn:
+
+    displacement 0.897   path 0.909   occupancy 0.897   intake 0.000
+
+Against the incumbent's **0.05** for hazard exposure and 0.012-0.047 for intake.
+That is the number the whole rebuild was for. At 0.05 truncation selection is
+sorting noise 95% of the time; at 0.90 it is acting on the genotype.
+
+**Two honest caveats.** `intake` reads exactly zero because almost nothing eats
+yet — a trait no organism expresses has no between-genotype variance to find,
+and this will have to be re-measured once foraging works. And the high
+behavioural figures are inflated by the population being bimodal: most random
+genomes do not move at all, a reliable zero is trivially repeatable, and the
+between-genome variance is carried by the minority that locomote. The
+differences between genomes are genuinely reproducible, which is what
+selectability requires, but 0.90 should not be read as "any behavioural
+difference is 90% heritable". Re-measure on an evolved population.
+
+**3. Genotype sensitivity** — perturb by eps, develop at the same developmental
+seed so any difference is the genome's doing:
+
+    eps    0.02   0.05   0.12   0.30   0.75   1.60
+    morph  0.077  0.093  0.524  0.720  0.973  0.984
+    behav  0.273  1.598  2.121  1.603  1.507  1.291
+
+Morphology distance rises smoothly and saturates around **eps 0.75**. That is
+the usable mutation ceiling falling out of the measurement rather than being
+guessed: at or above it a mutated genome carries no more information about its
+parent than a fresh random one would, and inheritance is destroyed. The
+incumbent's rate of 0.10 across 130 loci — about thirteen mutations per child —
+has no equivalent safety here, and step sizes should be set from this curve.
+
+The behaviour column is non-monotone, peaking at eps 0.05 and falling after.
+That is what an amplifying map looks like once it saturates: small perturbations
+produce proportionate behavioural change, large ones produce a different animal
+whose behaviour is uncorrelated rather than maximally distant.
