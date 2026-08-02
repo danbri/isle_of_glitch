@@ -991,6 +991,10 @@ export class Colony {
     this.colN = new Int32Array(this.P);
     this.lam = new Float64Array(this.P * cfg.E_MAX);
     this.steps = 0;
+    // Directedness control (see kSense). null = intact food sense; 'mean'/'const'
+    // ablate the food-bearing channel. Off by default, so nothing that does not
+    // set it sees any change in behaviour.
+    this.foodAblate = null;
   }
 
   /** Place every organism: random position, random body orientation, zero state. */
@@ -1051,6 +1055,37 @@ export class Colony {
         }
         this.sens[b] = Math.tanh(mass * 0.16);
         this.sens[b + 1] = Math.tanh(Math.max(0, Math.max(Math.abs(X), Math.abs(Y)) - 0.70) * 3.2);
+      }
+    }
+    // Optional ablation of the FOOD-bearing sensor channel (index 0), for the
+    // directedness controls in tools/sb-forage.js. Default (null) leaves the
+    // read untouched, so gate/turing/displacement-evolve behaviour is identical.
+    //   'mean'  : replace every sensor cell's food channel with the current
+    //             population mean of that channel — removes the spatial gradient
+    //             a body would steer up (and the temporal signal klinokinesis
+    //             would ride) while keeping the network in its operating regime
+    //             and the ambient level intact. This is the `blindConst`-style
+    //             information-removal-without-noise-injection the incumbent
+    //             analysis settled on.
+    //   'const' : pin the food channel to 0 for every sensor cell — removes the
+    //             level as well, the harsher control.
+    if (this.foodAblate) {
+      if (this.foodAblate === 'const') {
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * SENSORS] = 0;
+        }
+      } else {
+        let sum = 0, cnt = 0;
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) { sum += this.sens[(o * S + a) * SENSORS]; cnt++; }
+        }
+        const m = cnt ? sum / cnt : 0;
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * SENSORS] = m;
+        }
       }
     }
   }
