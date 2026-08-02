@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Soft-body organism viewer</title>
+<style>
+:root{
+  --paper:#0C1413; --panel:#131E1C; --ink:#E3EBE9; --ink-soft:#93A6A2;
+  --rule:#243330; --rule-soft:#1B2A26;
+  --muscle:#E28C3E; --sensor:#41ADB2; --neuron:#6E8079;
+  --hot:#E28C3E; --cool:#41ADB2;
+  --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background:var(--paper); color:var(--ink); font-family:var(--sans);
+  display:flex; flex-direction:column; min-height:100%;
+  -webkit-font-smoothing:antialiased;
+}
+header{
+  padding:.8rem clamp(.8rem,3vw,1.6rem); border-bottom:1px solid var(--rule);
+  display:flex; align-items:baseline; gap:.9rem; flex-wrap:wrap;
+}
+header h1{font-size:1rem; font-weight:600; margin:0; letter-spacing:-.01em}
+header .sub{font-family:var(--mono); font-size:.72rem; color:var(--ink-soft); letter-spacing:.04em}
+.wrap{flex:1; display:flex; min-height:0; flex-wrap:wrap}
+.stage{
+  flex:1 1 460px; position:relative; min-height:340px;
+  display:flex; align-items:center; justify-content:center; padding:1rem;
+}
+canvas{
+  width:100%; height:100%; max-width:min(78vh,860px); aspect-ratio:1;
+  background:var(--panel); border:1px solid var(--rule); border-radius:3px;
+  touch-action:none;
+}
+aside{
+  flex:0 0 280px; border-left:1px solid var(--rule); padding:1rem 1.1rem;
+  display:flex; flex-direction:column; gap:1.1rem; overflow-y:auto;
+}
+@media (max-width:720px){ aside{flex-basis:100%; border-left:none; border-top:1px solid var(--rule)} }
+.group{display:flex; flex-direction:column; gap:.5rem}
+.group h2{
+  font-family:var(--mono); font-size:.64rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-soft); margin:0; font-weight:500;
+}
+.row{display:flex; gap:.5rem; flex-wrap:wrap}
+button{
+  font:inherit; font-size:.82rem; color:var(--ink); background:var(--panel);
+  border:1px solid var(--rule); border-radius:3px; padding:.42rem .7rem; cursor:pointer;
+  flex:1; min-width:64px; transition:border-color .12s, background .12s;
+}
+button:hover{border-color:var(--sensor)}
+button:focus-visible{outline:2px solid var(--sensor); outline-offset:2px}
+button.on{background:var(--sensor); border-color:var(--sensor); color:#06110F; font-weight:600}
+button.primary{background:var(--muscle); border-color:var(--muscle); color:#180B02; font-weight:600}
+.seedrow{display:flex; gap:.5rem; align-items:center}
+.seedrow input{
+  flex:1; font-family:var(--mono); font-size:.82rem; color:var(--ink);
+  background:var(--paper); border:1px solid var(--rule); border-radius:3px; padding:.42rem .55rem;
+}
+.legend{display:flex; flex-direction:column; gap:.4rem; font-size:.8rem}
+.legend .k{display:flex; align-items:center; gap:.55rem}
+.legend .dot{width:12px; height:12px; border-radius:50%; flex:none}
+.legend .bar{width:12px; height:12px; border-radius:2px; flex:none}
+.stats{border-top:1px solid var(--rule-soft); padding-top:.8rem; display:grid; grid-template-columns:1fr auto; gap:.28rem .8rem; font-family:var(--mono); font-size:.8rem}
+.stats .k{color:var(--ink-soft)}
+.stats .v{text-align:right; font-variant-numeric:tabular-nums}
+.stats .v.warn{color:var(--muscle)}
+.note{font-size:.74rem; line-height:1.5; color:var(--ink-soft)}
+.note b{color:var(--ink); font-weight:600}
+.slider{display:flex; align-items:center; gap:.5rem; font-family:var(--mono); font-size:.72rem; color:var(--ink-soft)}
+.slider input{flex:1}
+</style>
+</head>
+<body>
+<header>
+  <h1>Soft-body organism viewer</h1>
+  <span class="sub">grown from a genome by reaction–diffusion · lib/softbody.js, live</span>
+</header>
+
+<div class="wrap">
+  <div class="stage"><canvas id="c" width="860" height="860"></canvas></div>
+
+  <aside>
+    <div class="group">
+      <h2>Organism</h2>
+      <div class="seedrow">
+        <input id="seed" value="10" inputmode="numeric" aria-label="genome seed">
+        <button id="grow" class="primary" style="flex:0 0 auto">Grow</button>
+      </div>
+      <div class="row">
+        <button id="prev">‹ prev</button>
+        <button id="rand">random</button>
+        <button id="next">next ›</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2>Playback</h2>
+      <div class="row">
+        <button id="play" class="primary">▶ run</button>
+        <button id="reset">reset</button>
+      </div>
+      <div class="slider"><span>speed</span><input id="speed" type="range" min="1" max="8" value="3"><span id="speedv">3×</span></div>
+    </div>
+
+    <div class="group">
+      <h2>Colour cells by</h2>
+      <div class="row">
+        <button id="mRole" class="on">role</button>
+        <button id="mPattern">morphogen</button>
+        <button id="mAct">activity</button>
+      </div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div class="group">
+      <h2>Phenotype</h2>
+      <div class="stats" id="stats"></div>
+    </div>
+
+    <p class="note" id="note">A cell becomes a <b>sensor</b>, <b>neuron</b> or <b>muscle</b> from the Turing
+    pattern grown across the body. Muscles are springs whose rest length is driven by the connected cells'
+    activity, so the whole animal is one continuous-time network. Press <b>run</b> to let it try to move.</p>
+  </aside>
+</div>
+
+<script type="module">
+import { DEFAULTS, makeRng, randomGenome, develop, makeWorld, Colony, GENES }
+  from './lib/softbody.js';
+
+const cfg = DEFAULTS;
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+let seed = 10, pheno = null, colony = null, world = null;
+let playing = false, mode = 'role', raf = 0;
+
+// Muscle membership per cell, for role colouring.
+function muscleMask(p){
+  const m = new Uint8Array(p.n);
+  for (let e = 0; e < p.nE; e++) if (p.kind[e] === 2){ m[p.ei[e]] = 1; m[p.ej[e]] = 1; }
+  return m;
+}
+
+function grow(s){
+  seed = s; $('seed').value = String(s);
+  const rng = makeRng(s >>> 0 || 1);
+  const genome = randomGenome(rng, cfg);
+  // Development is deterministic given the genome; seed its noise from the genome seed.
+  pheno = develop(genome, cfg, makeRng(0x51b0 ^ (s * 2654435761)));
+  pheno._muscle = muscleMask(pheno);
+  world = makeWorld(cfg, makeRng(7));
+  colony = new Colony([pheno], world, cfg);
+  colony.spawn(makeRng(3));
+  playing = false; $('play').textContent = '▶ run'; $('play').classList.add('primary');
+  updateStats(); draw();
+}
+
+function updateStats(){
+  if (!pheno) return;
+  const st = pheno.stats;
+  const disp = colony ? colony.traits()[0].displacement : 0;
+  const rows = [
+    ['cells', st.cells], ['muscles', st.muscles], ['sensors', st.sensors],
+    ['edges', st.edges], ['pattern domains', st.patternDomains],
+    ['body extent', st.extent.toFixed(3)],
+    ['step', colony ? colony.steps : 0],
+    ['displacement', disp.toFixed(3)],
+  ];
+  $('stats').innerHTML = rows.map(([k,v]) => {
+    const warn = k === 'displacement' && v > 0.05 ? ' warn' : '';
+    return `<span class="k">${k}</span><span class="v${warn}">${v}</span>`;
+  }).join('');
+}
+
+// Warm→cool ramp for scalar fields.
+function ramp(t){
+  t = Math.max(0, Math.min(1, t));
+  const hot = [226,140,62], cool = [65,173,178], mid = [147,166,162];
+  const [a,b] = t < 0.5 ? [cool, mid] : [mid, hot];
+  const u = t < 0.5 ? t*2 : (t-0.5)*2;
+  const c = a.map((x,i) => Math.round(x + (b[i]-x)*u));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+function draw(){
+  if (!colony || !pheno) return;
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  // world → canvas: [-1,1] mapped with margin
+  const B = 1.0, pad = 24, sc = (W - 2*pad) / (2*B);
+  const tx = x => pad + (x + B) * sc, ty = y => pad + (y + B) * sc;
+
+  // arena bound
+  const bb = cfg.WORLD_BOUND;
+  ctx.strokeStyle = css('--rule'); ctx.lineWidth = 1;
+  ctx.strokeRect(tx(-bb), ty(-bb), (2*bb)*sc, (2*bb)*sc);
+
+  // food
+  if (world){
+    ctx.fillStyle = 'rgba(226,140,62,0.28)';
+    for (let i = 0; i < world.fx.length; i++){
+      const s = colony ? colony.stock[i] : 1;
+      ctx.globalAlpha = 0.12 + 0.5*s;
+      ctx.beginPath(); ctx.arc(tx(world.fx[i]), ty(world.fy[i]), 3.2, 0, 7); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  const p = pheno, S = colony.S, base = 0;
+  const px = i => colony.px[base + i], py = i => colony.py[base + i];
+
+  // edges — muscles emphasised, and coloured live by contraction when running
+  for (let e = 0; e < p.nE; e++){
+    const i = p.ei[e], j = p.ej[e], muscle = p.kind[e] === 2;
+    ctx.beginPath(); ctx.moveTo(tx(px(i)), ty(py(i))); ctx.lineTo(tx(px(j)), ty(py(j)));
+    if (muscle){
+      const u = Math.tanh(colony.act[base+i] + colony.act[base+j]); // drive, -1..1
+      ctx.strokeStyle = u >= 0 ? css('--muscle') : css('--sensor');
+      ctx.globalAlpha = 0.35 + 0.55*Math.abs(u);
+      ctx.lineWidth = 2.1;
+    } else {
+      ctx.strokeStyle = css('--rule'); ctx.globalAlpha = 0.5; ctx.lineWidth = 1;
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // cells
+  const Amax = Math.max(1e-6, ...p.A);
+  for (let i = 0; i < p.n; i++){
+    const r = Math.max(2.4, p.rad[i] * sc);
+    let fill;
+    if (mode === 'role')
+      fill = p._muscle[i] ? css('--muscle') : (p.isSensor[i] ? css('--sensor') : css('--neuron'));
+    else if (mode === 'pattern')
+      fill = ramp(p.A[i] / Amax);
+    else { // activity
+      const a = colony.act[base + i];
+      fill = ramp(0.5 + 0.5*Math.tanh(a*1.4));
+    }
+    ctx.beginPath(); ctx.arc(tx(px(i)), ty(py(i)), r, 0, 7);
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.strokeStyle = 'rgba(6,17,15,0.55)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  // centroid marker
+  let cx=0, cy=0; for (let i=0;i<p.n;i++){ cx+=px(i); cy+=py(i); } cx/=p.n; cy/=p.n;
+  ctx.strokeStyle = css('--ink-soft'); ctx.globalAlpha = 0.6; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(tx(cx), ty(cy), 4, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
+}
+
+function loop(){
+  if (!playing || !colony) return;
+  const n = +$('speed').value;
+  for (let k = 0; k < n; k++) colony.step();
+  draw(); updateStats();
+  raf = requestAnimationFrame(loop);
+}
+
+// ---- legend ----
+function legend(){
+  const el = $('legend');
+  if (mode === 'role')
+    el.innerHTML = [['--sensor','sensor — smells food, feels walls'],
+                    ['--muscle','muscle — contracts on activity'],
+                    ['--neuron','neuron — internal dynamics']]
+      .map(([c,t]) => `<span class="k"><span class="dot" style="background:${css(c)}"></span>${t}</span>`).join('');
+  else if (mode === 'pattern')
+    el.innerHTML = `<span class="k"><span class="bar" style="background:linear-gradient(90deg,${css('--cool')},${css('--hot')})"></span>morphogen A — the Turing pattern the body grew</span>`;
+  else
+    el.innerHTML = `<span class="k"><span class="bar" style="background:linear-gradient(90deg,${css('--cool')},${css('--hot')})"></span>cell activation, live</span>`;
+}
+
+function setMode(m){
+  mode = m;
+  for (const [id,val] of [['mRole','role'],['mPattern','pattern'],['mAct','activity']])
+    $(id).classList.toggle('on', val === m);
+  legend(); draw();
+}
+
+// ---- wiring ----
+$('grow').onclick = () => grow(parseInt($('seed').value,10) || 1);
+$('seed').onkeydown = e => { if (e.key === 'Enter') grow(parseInt($('seed').value,10) || 1); };
+$('next').onclick = () => grow(seed + 1);
+$('prev').onclick = () => grow(Math.max(1, seed - 1));
+$('rand').onclick = () => grow(1 + Math.floor(Math.random()*99999));
+$('reset').onclick = () => { colony.spawn(makeRng(3)); playing = false; $('play').textContent='▶ run'; $('play').classList.add('primary'); cancelAnimationFrame(raf); draw(); updateStats(); };
+$('play').onclick = () => {
+  if (!colony) return;
+  playing = !playing;
+  $('play').textContent = playing ? '❚❚ pause' : '▶ run';
+  $('play').classList.toggle('primary', !playing);
+  if (playing) loop();
+};
+$('speed').oninput = () => $('speedv').textContent = $('speed').value + '×';
+$('mRole').onclick = () => setMode('role');
+$('mPattern').onclick = () => setMode('pattern');
+$('mAct').onclick = () => setMode('activity');
+
+setMode('role');
+grow(10);
+</script>
+</body>
+</html>
