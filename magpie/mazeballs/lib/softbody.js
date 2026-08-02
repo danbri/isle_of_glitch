@@ -282,7 +282,56 @@ export const DEFAULTS = Object.freeze({
   FOOD: 42, FOOD_CLUSTERS: 9, FOOD_CLUSTER_SIGMA: 0.12,
   FOOD_SENSE_SIGMA2: 0.050, FOOD_EAT_SIGMA2: 0.0018,
   FOOD_CONSUME: 0.40, FOOD_REGROW: 0.09, FOOD_RELOCATE_THRESH: 0.15,
+
+  // ----------------------------------------------------------- coevolution
+  // Two soft-body species in one arena. OFF by default (COEVO false), and the
+  // single-species path stays byte-identical when it is off: nothing below is
+  // read, the sensor count stays SENSORS=4, and the genome layout is untouched.
+  //
+  // When COEVO is on, a fifth sensor channel appears — opponent mass — sensed
+  // per sensor cell EXACTLY as food is (a Gaussian-weighted scalar over the
+  // opposing organisms' centroids, `senseOpponents` below), sensor-role-gated
+  // like the food channel. It is deliberately NOT a bearing vector: the soft
+  // body has no single heading, and food itself is a scalar-per-cell field
+  // whose steering emerges from the across-body gradient (sb-forage's lateral
+  // test). The opponent channel is the same kind of signal, so pursuit and
+  // evasion, if they evolve, are the same across-body-gradient mechanism that
+  // already carries chemotaxis. Its receptor weight comes from gene 23, which
+  // had no phenotypic readout before, so no genome locus is stolen from an
+  // existing channel and GENOME_LEN is unchanged.
+  //
+  //   COEVO_ROLE          'prey' forages and loses fitness on contact;
+  //                       'predator' gains fitness on contact and (by default)
+  //                       does not forage. Set per species on the Colony.
+  //   COEVO_SENSE_SIGMA2  width of the opponent-sensing Gaussian, mirroring
+  //                       FOOD_SENSE_SIGMA2 so neither species gets a sharper
+  //                       view of its opponent than of its food.
+  //   COEVO_CAPTURE_SIGMA2  width of the centroid-to-centroid contact kernel
+  //                       that transfers reward. Small: contact is a close
+  //                       encounter, not mere co-location.
+  //   COEVO_PRED_GAIN     predator fitness per contact-second at full contact.
+  //   COEVO_PREY_LOSS     prey fitness lost per contact-second. Larger than the
+  //                       gain so predation can dominate prey fitness variance,
+  //                       the balance the incumbent coevolution found decisive.
+  //   COEVO_PRED_FORAGE   fraction of normal food intake a predator receives
+  //                       (0 = pure carnivore).
+  //   COEVO_PREY_INTAKE   multiplier on the prey's fitness return from food.
+  COEVO: false, COEVO_ROLE: 'prey',
+  COEVO_SENSE_SIGMA2: 0.050, COEVO_CAPTURE_SIGMA2: 0.0040,
+  COEVO_PRED_GAIN: 1.0, COEVO_PREY_LOSS: 1.5,
+  COEVO_PRED_FORAGE: 0, COEVO_PREY_INTAKE: 1,
 });
+
+/**
+ * Effective sensor-channel count. SENSORS (=4) is the single-species count
+ * (food, boundary, own speed, own strain); a coevolutionary world appends one
+ * exteroceptive opponent-mass channel at index SENSORS. Kept as a function of
+ * cfg so develop() and Colony agree on the width, and so the single-species
+ * path returns exactly SENSORS and nothing downstream changes shape.
+ */
+export const senseCount = (cfg = DEFAULTS) => SENSORS + (cfg && cfg.COEVO ? 1 : 0);
+/** Channel index of the appended opponent-mass channel (only present if COEVO). */
+export const OPP_CHAN = SENSORS;
 
 /* ---------------------------------------------------------------- genome */
 
@@ -799,7 +848,8 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1), onCycle = null
   const W = new Float64Array(nA * nA);
   const bias = new Float64Array(nA), tau = new Float64Array(nA);
   const tauA = new Float64Array(nA), adapt = new Float64Array(nA);
-  const win = new Float64Array(nA * SENSORS);
+  const NS = senseCount(cfg);
+  const win = new Float64Array(nA * NS);
   const grip = new Float64Array(nA);
   const isSensor = new Uint8Array(nA);
   for (let a = 0; a < nA; a++) {
@@ -823,9 +873,14 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1), onCycle = null
     grip[a] = cfg.MU_MIN * Math.pow(cfg.MU_MAX / cfg.MU_MIN, gk);
     const sg = Math.max(0, expr[e + G.SENSOR]);
     isSensor[a] = sg > 0.15 ? 1 : 0;
-    for (let c = 0; c < SENSORS; c++) {
-      const gate = c < PROPRIO_FROM ? sg : 1;    // proprioception is not an organ
-      win[a * SENSORS + c] = gate * expr[e + G.RCP + c] * cfg.IN_SCALE;
+    for (let c = 0; c < NS; c++) {
+      // Proprioceptive channels [PROPRIO_FROM, SENSORS) are not organs and are
+      // ungated; the exteroceptive channels — food (0), boundary (1) and, when
+      // COEVO is on, opponent (SENSORS) — require the sensor role. The opponent
+      // channel's receptor weight reads gene 23, previously silent.
+      const isProprio = c >= PROPRIO_FROM && c < SENSORS;
+      const gate = isProprio ? 1 : sg;
+      win[a * NS + c] = gate * expr[e + G.RCP + c] * cfg.IN_SCALE;
     }
   }
   for (let a = 0; a < nA; a++) {
@@ -893,7 +948,7 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1), onCycle = null
   const patternDomains = countDomains(pa, ma, cei, cej, nE, nA);
 
   return {
-    n: nA, x: px, y: py, rad: pr,
+    n: nA, x: px, y: py, rad: pr, nSens: NS,
     nE, ei: cei, ej: cej, L0: L0.slice(0, nE), amp: amp.slice(0, nE), kind: kind.slice(0, nE),
     W, bias, tau, tauA, adapt, win, grip, isSensor, A: pa, H: ph, rd: K,
     stats: { cells: nA, edges: nE, muscles, sensors, extent: ext,
@@ -998,6 +1053,9 @@ export class Colony {
   constructor(phenos, world, cfg = DEFAULTS) {
     this.cfg = cfg; this.world = world; this.ph = phenos;
     this.P = phenos.length;
+    // Effective sensor width. All phenotypes in one colony develop under one
+    // cfg, so they share it; fall back to SENSORS when a pheno predates nSens.
+    this.NS = phenos.length && phenos[0].nSens ? phenos[0].nSens : senseCount(cfg);
     const S = this.S = Math.max(1, ...phenos.map(p => p.n));
     const T = this.P * S;
     this.px = new Float64Array(T); this.py = new Float64Array(T);
@@ -1009,7 +1067,7 @@ export class Colony {
     this.ny = new Float64Array(T); this.act = new Float64Array(T);
     this.ad = new Float64Array(T);      // slow adaptation state
     this.strain = new Float64Array(T);
-    this.sens = new Float64Array(T * SENSORS);
+    this.sens = new Float64Array(T * this.NS);
     this.stock = new Float64Array(world.n).fill(1);
     this.foodX = Float64Array.from(world.fx); this.foodY = Float64Array.from(world.fy);
     // Per-organism accumulators.
@@ -1027,6 +1085,20 @@ export class Colony {
     // ablate the food-bearing channel. Off by default, so nothing that does not
     // set it sees any change in behaviour.
     this.foodAblate = null;
+
+    // -------------------------------------------------------- coevolution
+    // All inert unless a two-species driver sets them (sbCoevoStep). `role`
+    // selects predator vs prey fitness accounting; `opponentCentroids` is the
+    // opposing colony's per-organism [x, y, n] handed in each step, and reads
+    // as "nothing in sight" (opponent channel 0, no contact) when null — which
+    // is exactly the single-species case, so nothing changes when COEVO is off.
+    this.role = cfg.COEVO ? cfg.COEVO_ROLE : null;
+    this.opponentCentroids = null;
+    this.contact = new Float64Array(this.P);   // integrated contact-seconds
+    // Opponent-channel ablation, mirroring foodAblate: 'mean'/'const'/null. This
+    // is the decisive instrument — blinding the opponent sense on an evolved
+    // population and measuring the change in capture/escape.
+    this.oppAblate = null;
   }
 
   /** Place every organism: random position, random body orientation, zero state. */
@@ -1034,7 +1106,7 @@ export class Colony {
     const cfg = this.cfg, S = this.S, b = cfg.WORLD_BOUND * 0.72;
     this.px.fill(0); this.py.fill(0); this.vx.fill(0); this.vy.fill(0);
     this.ny.fill(0); this.act.fill(0); this.ad.fill(0); this.strain.fill(0);
-    this.path.fill(0); this.intake.fill(0);
+    this.path.fill(0); this.intake.fill(0); this.contact.fill(0);
     this.stock.fill(1);
     this.foodX.set(this.world.fx); this.foodY.set(this.world.fy);
     this.steps = 0;
@@ -1066,12 +1138,17 @@ export class Colony {
 
   /* ---- kernel: sensory read (per cell, only where a sensor role exists) --- */
   kSense() {
-    const cfg = this.cfg, S = this.S, W = this.world;
+    const cfg = this.cfg, S = this.S, W = this.world, NS = this.NS;
     const s2 = cfg.FOOD_SENSE_SIGMA2;
+    // Opponent sensing is only wired when there is a channel for it AND an
+    // opposing population handed in this step. Off => the opponent channel (if
+    // present) reads zero, and the single-species path never enters this branch.
+    const os2 = cfg.COEVO_SENSE_SIGMA2;
+    const opp = (NS > SENSORS && this.opponentCentroids) ? this.opponentCentroids : null;
     for (let o = 0; o < this.P; o++) {
       const p = this.ph[o];
       for (let a = 0; a < p.n; a++) {
-        const t = o * S + a, b = t * SENSORS;
+        const t = o * S + a, b = t * NS;
         const X = this.px[t], Y = this.py[t];
         // Proprioception, every cell.
         this.sens[b + 2] = Math.tanh(Math.sqrt(this.vx[t] * this.vx[t] + this.vy[t] * this.vy[t]) * 3.0);
@@ -1079,7 +1156,11 @@ export class Colony {
         // Exteroception, sensor cells only. The food scan is the most expensive
         // kernel in the step, so skipping it for non-sensors is also why a
         // sparse sensor field costs less than a dense one.
-        if (!p.isSensor[a]) { this.sens[b] = 0; this.sens[b + 1] = 0; continue; }
+        if (!p.isSensor[a]) {
+          this.sens[b] = 0; this.sens[b + 1] = 0;
+          if (NS > SENSORS) this.sens[b + OPP_CHAN] = 0;
+          continue;
+        }
         let mass = 0;
         for (let f = 0; f < W.n; f++) {
           const d2 = (this.foodX[f] - X) ** 2 + (this.foodY[f] - Y) ** 2;
@@ -1087,6 +1168,43 @@ export class Colony {
         }
         this.sens[b] = Math.tanh(mass * 0.16);
         this.sens[b + 1] = Math.tanh(Math.max(0, Math.max(Math.abs(X), Math.abs(Y)) - 0.70) * 3.2);
+        // Opponent mass — the opposing species sensed EXACTLY as food is: a
+        // Gaussian-weighted scalar over the opponents' centroids, at THIS
+        // sensor cell's position. Different sensor cells sit at different body
+        // positions, so the across-cell gradient is what a body would steer up
+        // (pursuit) or down (evasion), the same mechanism chemotaxis uses.
+        if (opp) {
+          let om = 0;
+          for (let q = 0; q < opp.n; q++) {
+            const d2 = (opp.x[q] - X) ** 2 + (opp.y[q] - Y) ** 2;
+            om += Math.exp(-d2 / os2);
+          }
+          this.sens[b + OPP_CHAN] = Math.tanh(om * 0.16);
+        }
+      }
+    }
+    // Optional ablation of the OPPONENT channel, the decisive blind-vs-intact
+    // instrument. Same two removals as foodAblate: 'mean' replaces every sensor
+    // cell's opponent reading with the population mean (removes the spatial
+    // gradient pursuit/evasion would ride, injects nothing), 'const' pins it to
+    // zero. Only meaningful when the channel exists and opponents are present.
+    if (this.oppAblate && NS > SENSORS && opp) {
+      if (this.oppAblate === 'const') {
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * NS + OPP_CHAN] = 0;
+        }
+      } else {
+        let sum = 0, cnt = 0;
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) { sum += this.sens[(o * S + a) * NS + OPP_CHAN]; cnt++; }
+        }
+        const m = cnt ? sum / cnt : 0;
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * NS + OPP_CHAN] = m;
+        }
       }
     }
     // Optional ablation of the FOOD-bearing sensor channel (index 0), for the
@@ -1105,18 +1223,18 @@ export class Colony {
       if (this.foodAblate === 'const') {
         for (let o = 0; o < this.P; o++) {
           const p = this.ph[o];
-          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * SENSORS] = 0;
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * NS] = 0;
         }
       } else {
         let sum = 0, cnt = 0;
         for (let o = 0; o < this.P; o++) {
           const p = this.ph[o];
-          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) { sum += this.sens[(o * S + a) * SENSORS]; cnt++; }
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) { sum += this.sens[(o * S + a) * NS]; cnt++; }
         }
         const m = cnt ? sum / cnt : 0;
         for (let o = 0; o < this.P; o++) {
           const p = this.ph[o];
-          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * SENSORS] = m;
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * NS] = m;
         }
       }
     }
@@ -1124,7 +1242,7 @@ export class Colony {
 
   /* ---- kernel: CTRNN update (per cell) ----------------------------------- */
   kNeural() {
-    const cfg = this.cfg, S = this.S, dt = cfg.DT;
+    const cfg = this.cfg, S = this.S, dt = cfg.DT, NS = this.NS;
     for (let o = 0; o < this.P; o++) {
       const p = this.ph[o], n = p.n, base = o * S;
       for (let a = 0; a < n; a++)
@@ -1133,8 +1251,8 @@ export class Colony {
         let rec = 0;
         for (let a = 0; a < n; a++) rec += this.act[base + a] * p.W[a * n + b];
         let inp = 0;
-        const wb = b * SENSORS, sb = (base + b) * SENSORS;
-        for (let c = 0; c < SENSORS; c++) inp += p.win[wb + c] * this.sens[sb + c];
+        const wb = b * NS, sb = (base + b) * NS;
+        for (let c = 0; c < NS; c++) inp += p.win[wb + c] * this.sens[sb + c];
         const t = base + b;
         this.ny[t] += (rec + inp - this.ny[t]) / p.tau[b] * dt;
         // The state is a tanh argument; letting it run to 1e3 buys nothing and
@@ -1290,6 +1408,11 @@ export class Colony {
   /* ---- kernel: feeding and the food field -------------------------------- */
   kFood() {
     const cfg = this.cfg, W = this.world, dt = cfg.DT;
+    // A predator's foraging return is scaled by COEVO_PRED_FORAGE (0 = pure
+    // carnivore). Its centroid still DRAWS food down the same way — otherwise a
+    // predator sitting on a patch would freeze it for the prey — the scaling
+    // only touches how much fitness the predator banks from feeding.
+    const forageK = this.role === 'predator' ? cfg.COEVO_PRED_FORAGE : 1;
     const draw = new Float64Array(W.n);
     for (let o = 0; o < this.P; o++) {
       const [cx, cy] = this.centroid(o);
@@ -1301,7 +1424,7 @@ export class Colony {
         const e = k * this.stock[f];
         if (e > best) best = e;
       }
-      this.intake[o] += best * dt;
+      this.intake[o] += best * dt * forageK;
       // trajectory readouts
       const d = Math.sqrt((cx - this.lastCX[o]) * (cx - this.lastCX[o]) + (cy - this.lastCY[o]) * (cy - this.lastCY[o]));
       this.path[o] += d;
@@ -1328,11 +1451,44 @@ export class Colony {
     }
   }
 
+  /* ---- kernel: contact with the opposing species ------------------------- */
+  // Integrated contact-seconds per organism — the ONE physical quantity read
+  // identically from both sides (predator: prey caught; prey: times caught),
+  // which is what lets a predator generation and a prey generation sit on a
+  // single tournament axis. Contact is a close encounter of centroids, matched
+  // to how food is eaten (centroid-based), through the capture kernel. Nearest
+  // opponent only — `max`, not sum — so a prey pinned between two predators is
+  // not double-counted, mirroring the incumbent's contact definition.
+  kContact() {
+    const opp = this.opponentCentroids;
+    if (!opp) return;
+    const cfg = this.cfg, dt = cfg.DT, cs2 = cfg.COEVO_CAPTURE_SIGMA2;
+    for (let o = 0; o < this.P; o++) {
+      const [cx, cy] = this.centroid(o);
+      let best = 0;
+      for (let q = 0; q < opp.n; q++) {
+        const d2 = (opp.x[q] - cx) ** 2 + (opp.y[q] - cy) ** 2;
+        const k = Math.exp(-d2 / cs2);
+        if (k > best) best = k;
+      }
+      this.contact[o] += best * dt;
+    }
+  }
+
+  /** Per-organism centroids, packed as {x, y, n} — the representation the
+   *  opposing colony senses and measures contact against. */
+  centroids() {
+    const x = new Float64Array(this.P), y = new Float64Array(this.P);
+    for (let o = 0; o < this.P; o++) { const c = this.centroid(o); x[o] = c[0]; y[o] = c[1]; }
+    return { x, y, n: this.P };
+  }
+
   step() {
     this.kSense();
     this.kNeural();
     this.kPhysics();
     this.kFood();
+    this.kContact();
     this.steps++;
   }
 
@@ -1361,6 +1517,7 @@ export class Colony {
         speed: this.path[o] / Math.max(1e-9, this.steps * this.cfg.DT),
         occupancy: this.occ[o].size,
         intake: this.intake[o],
+        contact: this.contact[o],
       });
     }
     return out;
@@ -1375,4 +1532,46 @@ export function episode(colony, steps, { checkEvery = 50 } = {}) {
   }
   colony.assertFinite('end');
   return colony.traits();
+}
+
+/* ----------------------------------------------------------- coevolution */
+
+/**
+ * Copy the live food field from its owner (the prey — they are what depletes
+ * it) to the other colony, so the two share ONE world rather than two that
+ * drift apart as patches are eaten and relocated. Mirrors evodevo's
+ * coevoSyncWorld.
+ */
+export function sbCoevoSyncWorld(owner, other) {
+  other.foodX.set(owner.foodX);
+  other.foodY.set(owner.foodY);
+  other.stock.set(owner.stock);
+}
+
+/**
+ * Advance both species by one step, simultaneously. Both centroid snapshots are
+ * taken BEFORE either steps, so each species reacts to the other's position at
+ * the same instant — stepping one and letting the second read the first's
+ * already-updated centroids would hand the second a half-step of precognition,
+ * exactly the asymmetry a tournament would later read as one side "winning".
+ * The prey own the food field; the predators are synced to it after the step.
+ */
+export function sbCoevoStep(prey, pred) {
+  prey.opponentCentroids = pred.centroids();
+  pred.opponentCentroids = prey.centroids();
+  prey.step();
+  pred.step();
+  sbCoevoSyncWorld(prey, pred);
+}
+
+/** Run one coevolutionary episode of `steps` from the current bodies. NaN-safe
+ *  in the same spirit as the single-species episode: assertFinite is scanned
+ *  periodically on both colonies and throws rather than letting a NaN reach
+ *  fitness. */
+export function sbCoevoEpisode(prey, pred, steps, { checkEvery = 50 } = {}) {
+  for (let s = 0; s < steps; s++) {
+    sbCoevoStep(prey, pred);
+    if (checkEvery && s % checkEvery === 0) { prey.assertFinite(); pred.assertFinite(); }
+  }
+  prey.assertFinite('end'); pred.assertFinite('end');
 }
