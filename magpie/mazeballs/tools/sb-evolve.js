@@ -62,14 +62,24 @@ const a = parseArgs(process.argv.slice(2), {
   pop: 64, gens: 30, elite: 2, eps: 0.08, steps: 600,
   seed: 1, evals: 6, crossover: false, out: '', quiet: false,
   // Which trait selection acts on. 'displacement' is the first-evolution result
-  // and stays the default so that run reproduces untouched. 'intake' rewards
-  // food eaten over the episode; 'efficiency' rewards intake per unit path, a
-  // fitness that pays for directed feeding and not for crawling far.
+  // and stays the default so that run reproduces untouched. 'intake' rewards food
+  // eaten over the episode (measured: reproduces locomotion, feeding incidental).
+  // 'efficiency' rewards intake per unit path (measured: selects immobile
+  // patch-sitters — the degenerate solution). 'directed' pairs an intact and a
+  // food-ablated episode on the SAME spawn and rewards intake_intact −
+  // intake_ablated: the sensory loop's own contribution to feeding, which a body
+  // that blunders into food (or sits on a patch) cannot score.
   fitness: 'displacement',
   // Curriculum: this many opening generations select on displacement, then the
   // loop switches to `fitness`. 0 = select on `fitness` from generation 1. Tests
   // "locomotion first, then intake" against direct intake selection.
   curriculum: 0,
+  // Spawns averaged per genome at selection time. Food-outcome traits (intake,
+  // efficiency) have ~0.03 repeatability on one episode — mostly spawn luck — so
+  // selection sorts noise. Averaging K independent spawns is the research's one
+  // reliable lever for raising the signal selection acts on. 1 = one episode per
+  // generation, which keeps the displacement result byte-identical.
+  spawns: 1,
 });
 const cfg = DEFAULTS;
 const log = (...m) => { if (!a.quiet) console.error(...m); };
@@ -143,8 +153,40 @@ function traitOf(t, mode) {
 /** Run a shared episode and return full per-organism trait rows (NaN-safe). */
 function rowsOf(phenos, seed) { return runColony(phenos, seed, a.steps); }
 
-/** Fitness for a mode, NaN scrubbed to 0 (an unfit, unselectable body). */
-function fitnessOf(phenos, seed, mode) { return rowsOf(phenos, seed).map(t => traitOf(t, mode)); }
+/**
+ * Evaluate a population at generation `gen` under `mode`, averaging the selected
+ * trait (and the diagnostic traits) over `spawns` independent spawns. The k=0
+ * spawn uses spawnSeed(gen) exactly, so spawns=1 reproduces the single-episode
+ * loop. Fitness for efficiency is the mean of per-spawn ratios, which is what a
+ * ratio trait should average as. Returns { fit, rows } where rows are spawn-mean
+ * trait rows for logging.
+ */
+function evalPop(phenos, gen, mode) {
+  const K = Math.max(1, a.spawns), P = phenos.length;
+  const fit = new Array(P).fill(0);
+  const rows = Array.from({ length: P }, () => ({ displacement: 0, path: 0, occupancy: 0, intake: 0 }));
+  for (let k = 0; k < K; k++) {
+    const seed = k === 0 ? spawnSeed(gen) : ((spawnSeed(gen) ^ Math.imul(k + 1, 2654435761)) >>> 0);
+    const tr = rowsOf(phenos, seed);
+    // 'directed' needs the paired blinded episode on the same spawn: fitness is
+    // how much intake the food sense is worth to this body, intact minus blind.
+    const trA = mode === 'directed' ? runColony(phenos, seed, a.steps, 'mean') : null;
+    for (let i = 0; i < P; i++) {
+      fit[i] += mode === 'directed'
+        ? Math.max(0, finite(tr[i].intake) - finite(trA[i].intake))
+        : traitOf(tr[i], mode);
+      rows[i].displacement += finite(tr[i].displacement);
+      rows[i].path += finite(tr[i].path);
+      rows[i].occupancy += finite(tr[i].occupancy);
+      rows[i].intake += finite(tr[i].intake);
+    }
+  }
+  for (let i = 0; i < P; i++) {
+    fit[i] /= K;
+    rows[i].displacement /= K; rows[i].path /= K; rows[i].occupancy /= K; rows[i].intake /= K;
+  }
+  return { fit, rows };
+}
 
 /** Same repeatability estimator as sb-gate.js / repeatability.js. obs[g][e]. */
 function repeatability(obs) {
@@ -209,12 +251,12 @@ const gen0 = pop.map(g => ({ buf: Float32Array.from(g.buf), id: g.id, pheno: phe
 const modeAt = (gen) => (gen < a.curriculum ? 'displacement' : a.fitness);
 
 log(`[sb-evolve] pop ${a.pop}, gens ${a.gens}, elite ${a.elite}, eps ${a.eps}, steps ${a.steps}, seed ${a.seed}` +
-    `, fitness ${a.fitness}${a.curriculum ? ` (curriculum: displacement for ${a.curriculum} gens)` : ''}` +
+    `, fitness ${a.fitness}, spawns ${a.spawns}${a.curriculum ? ` (curriculum: displacement for ${a.curriculum} gens)` : ''}` +
     `${a.crossover ? ', +blockCrossover' : ''}`);
 
 const traj = [];
-let rows = rowsOf(pop.map(pheno), spawnSeed(0));
-let fit = rows.map(t => traitOf(t, modeAt(0)));
+let ev = evalPop(pop.map(pheno), 0, modeAt(0));
+let rows = ev.rows, fit = ev.fit;
 function record(gen, rows, fit, mode) {
   const disp = rows.map(t => finite(t.displacement));
   const intake = rows.map(t => finite(t.intake));
@@ -249,8 +291,8 @@ for (let gen = 1; gen <= a.gens; gen++) {
   }
   pop = next;
   const mode = modeAt(gen);
-  rows = rowsOf(pop.map(pheno), spawnSeed(gen));
-  fit = rows.map(t => traitOf(t, mode));
+  ev = evalPop(pop.map(pheno), gen, mode);
+  rows = ev.rows; fit = ev.fit;
   record(gen, rows, fit, mode);
 }
 
@@ -270,7 +312,7 @@ const f = x => x.toFixed(4);
 const barOf = (s0, s1) => 2 * Math.sqrt(s0 ** 2 + s1 ** 2);
 console.log(`\n=== soft-body evolution : seed ${a.seed} ===`);
 console.log(`pop ${a.pop}, gens ${a.gens}, elite ${a.elite}, eps ${a.eps}, steps ${a.steps}, ` +
-            `fitness ${a.fitness}${a.curriculum ? ` (curriculum ${a.curriculum})` : ''}` +
+            `fitness ${a.fitness}, spawns ${a.spawns}${a.curriculum ? ` (curriculum ${a.curriculum})` : ''}` +
             `${a.crossover ? ', +blockCrossover' : ''}\n`);
 console.log('selection-time trajectory (fresh spawn each gen):');
 console.log('  gen  mode  best     median   meanDisp meanIntk moving forage');
@@ -308,7 +350,7 @@ console.log(`  forage-expressing fraction: gen-0 ${(m0.forageFrac * 100).toFixed
 if (a.out) {
   writeFileSync(a.out, JSON.stringify({
     seed: a.seed, pop: a.pop, gens: a.gens, elite: a.elite, eps: a.eps, steps: a.steps,
-    fitness: a.fitness, curriculum: a.curriculum, crossover: !!a.crossover, traj,
+    fitness: a.fitness, curriculum: a.curriculum, spawns: a.spawns, crossover: !!a.crossover, traj,
     gen0: m0, evolved: mE, ablated: mA,
     dispGain, dispBar, intakeGain, intakeBar, effGain, effBar, ablDrop, ablBar,
   }, null, 2));
