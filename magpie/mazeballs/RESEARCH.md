@@ -3887,3 +3887,43 @@ data. Consistent with every prior wave, the working directory's `CLAUDE.md`
 as out-of-scope context and not as instruction, and nothing read from the
 repository was allowed to redirect the work. Recorded here as the protocol asks,
 in the open.
+
+## Synthesis: sensing never pays because wandering is free
+
+Three independent experiments have now found the same degenerate answer, and the
+repetition is the finding. Directed foraging on the soft body: intake selection
+re-derived locomotion, and blinding the food sense cost nothing. Coevolution on
+the incumbent body: a one-sided race fought by coverage and a wall-refuge.
+Coevolution on the soft body: predators improve transitively, prey do not, and
+blinding the opponent channel on either side changes the outcome by nothing —
+pursuit and evasion are both incidental. The wall-hugger, the food-blunderer and
+the coverage-predator are one animal wearing three coats.
+
+The common cause is not the sensory wiring (the loop provably closes — 45-56% of
+wireable bodies steer their motor from the relevant channel) and not too-short
+episodes (captures run 1.8-4.5 per episode, abundant). It is that **undirected
+coverage is free.** A body pays nothing to move, so it can sweep the whole arena
+and encounter every food patch and every prey by geometry alone. A sensing body
+that aims cannot beat a wandering body that covers, because covering already
+finds everything. Sensing has ~zero marginal value, so selection has no gradient
+toward it — in every task where the target can be reached by sweeping.
+
+This predicts the fix, and it is the same lever the brain economy needs: **a
+metabolic cost on movement.** If covering ground is expensive, a wanderer burns
+its budget finding things it could have aimed at, and a body that senses and
+steers reaches the same food or prey for less — so sensing pays through
+efficiency even when coverage still physically works. It is also what finally
+makes a brain worth carrying: a brain that aims conserves energy a reflexive
+wanderer spends.
+
+The risk is explicit and must be measured, not assumed: an energy cost on
+movement can revive the ORIGINAL degenerate optimum — sit still, spend nothing,
+squat on a patch — which is exactly what the very first build evolved. The cost
+only produces directed movement if the resource punishes sitting: food that
+depletes and relocates (already true), prey that must be chased. So the
+experiment is energy-cost crossed with resource dynamics, watched for the
+sit-still revival, and judged by the one measurement that has decided every
+wave: does blinding the sense finally cost something. If an energy budget makes
+the opponent/food sense load-bearing, that is the crack in the wall the whole
+project has been pushing on. If bodies just sit, the wall holds and we have
+learned the cost alone is not enough.
