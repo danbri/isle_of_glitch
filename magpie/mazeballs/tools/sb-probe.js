@@ -12,7 +12,10 @@ import { DEFAULTS, makeRng, randomGenome, develop, makeWorld, Colony, episode }
   from '../lib/softbody.js';
 
 const a = parseArgs(process.argv.slice(2), {
-  organisms: 24, steps: 900, seed: 1, gain: 0.5, devCycles: 14, ascii: false,
+  // gain/devCycles default to the library's values rather than to literals.
+  // They were hardcoded here, so this probe silently tested GAIN 0.5 whatever
+  // DEFAULTS said, and reported no locomotion from a build that had it.
+  organisms: 24, steps: 900, seed: 1, gain: DEFAULTS.GAIN, devCycles: DEFAULTS.DEV_CYCLES, ascii: false,
 });
 
 const cfg = { ...DEFAULTS, GAIN: a.gain, DEV_CYCLES: a.devCycles };
