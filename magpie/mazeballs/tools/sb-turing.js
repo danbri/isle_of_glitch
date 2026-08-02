@@ -141,4 +141,6 @@ console.log(`  wavelength  min ${lam[0].toFixed(1)}r  med ${lam[N >> 1].toFixed(
 const st = rows.map(z => z.steps).sort((p, q) => p - q);
 console.log(`  substeps    min ${st[0]}  med ${st[N >> 1]}  max ${st[N - 1]}  (cap ${cfg.RD_MAX_STEPS})`);
 
-process.exitCode = (!finite || count('OSCILLATING') > 0) ? 1 : 0;
+// Oscillation is no longer a failure — it is the developmental clock, a valid
+// and wanted dynamic (nu/mu is allowed below 1). Only a diverged solver fails.
+process.exitCode = finite ? 0 : 1;
