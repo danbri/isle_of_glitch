@@ -62,26 +62,46 @@ const gauss = (rng) => {
  * the network something other than a direct genome->phenotype lookup.
  */
 export const G = Object.freeze({
+  // --- fate module (0..4) ------------------------------------------------
   DIV: 0,      // division propensity
   DIE: 1,      // apoptosis propensity
   POLX: 2,     // division polarity, x
   POLY: 3,     // division polarity, y
   SIZE: 4,     // cell radius modulation
+  // --- role module (5..6) ------------------------------------------------
   SENSOR: 5,   // sensor role score
   MUSCLE: 6,   // muscle role score
+  // --- neural module (7..14) ---------------------------------------------
   BIAS: 7,     // CTRNN bias
   TAU: 8,      // CTRNN time constant
   OUT_E: 9,    // presynaptic excitatory
   IN_E: 10,    // postsynaptic excitatory
   OUT_I: 11,   // presynaptic inhibitory
   IN_I: 12,    // postsynaptic inhibitory
-  AMP: 13,     // muscle amplitude and sign
-  GRIP: 14,    // ground friction coefficient
-  RCP: 15,     // receptor weights, one per sensor channel: 15..18
-  AXX: 19,     // directional synaptic axis, x
-  AXY: 20,     // directional synaptic axis, y
+  AXX: 13,     // directional synaptic axis, x
+  AXY: 14,     // directional synaptic axis, y
+  // --- motor module (15..16) ---------------------------------------------
+  AMP: 15,     // muscle amplitude and sign
+  GRIP: 16,    // ground friction, baseline coefficient
+  // --- receptor module (17..20) ------------------------------------------
+  RCP: 17,     // receptor weights, one per sensor channel: 17..20
+  // 21 has no readout at all and exists only to feed back.
 });
 export const GENES = 22;
+
+/**
+ * Module boundaries, in gene index order. Used by the layout below and by any
+ * future crossover operator that wants to cut on a module edge rather than
+ * anywhere.
+ */
+export const GENE_MODULES = Object.freeze([
+  { name: 'fate',     from: 0,  to: 5 },
+  { name: 'role',     from: 5,  to: 7 },
+  { name: 'neural',   from: 7,  to: 15 },
+  { name: 'motor',    from: 15, to: 17 },
+  { name: 'receptor', from: 17, to: 21 },
+  { name: 'silent',   from: 21, to: 22 },
+]);
 /**
  * Sensor channels. 0 and 1 are exteroceptive and require the sensor role — a
  * cell has to be a sensor to smell food or feel the arena edge. 2 and 3 are
@@ -94,7 +114,28 @@ export const GENES = 22;
  */
 export const SENSORS = 4;   // odour mass, boundary, own speed, own strain
 export const PROPRIO_FROM = 2;
-export const MATERNAL = 6;  // bias, x, y, radial, clock, local density
+/**
+ * Maternal / positional inputs to the GRN: bias, x, y, radial, developmental
+ * clock, local density, and then the two MORPHOGEN concentrations produced by
+ * the reaction-diffusion layer.
+ *
+ * The last two are the point. A single graded signal can only ever give a cell
+ * its coordinate; twelve cells on a line reading one gradient is a decent
+ * caricature of the first hours of a fly's anteroposterior axis, and it is
+ * also the ceiling of what that substrate can be. Two morphogens with
+ * different diffusion rates and the right nonlinearity are a Turing system,
+ * and a Turing system on a two-dimensional domain produces spots, stripes and
+ * repeated units from a uniform start — symmetry, modularity and amplification
+ * arrive as consequences of the kinetics rather than as things the genome has
+ * to specify cell by cell.
+ *
+ * Wave 1 of this project already tested a Turing pair and it was null. It was
+ * tested on the fixed twelve-cell line: the mechanism was present and there
+ * was no morphology for it to pattern. This is the other half of that
+ * experiment.
+ */
+export const MATERNAL = 8;
+export const MAT_A = 6, MAT_H = 7;
 
 export const DEFAULTS = Object.freeze({
   N_MAX: 64,
@@ -111,6 +152,31 @@ export const DEFAULTS = Object.freeze({
   DIE_THRESH: 0.62,
   MIN_CELLS: 4,            // apoptosis never takes the body below this
   DIV_JITTER: 0.10,        // fraction of a cell radius of noise on the division axis
+
+  // ------------------------------------------------- reaction-diffusion (RD)
+  // Gierer-Meinhardt on a Lagrangian particle cloud: cells carry the
+  // concentrations, the Laplacian is a neighbourhood-weighted graph Laplacian
+  // over the same kernel the adhesion skeleton uses, so the pattern rides on
+  // the body as the body grows and deforms. There is no background mesh and no
+  // Eulerian grid; the domain IS the organism.
+  //
+  //   dA/dt = s A^2 / H - a A + b + D_A lap(A)
+  //   dH/dt = s A^2     - h H       + D_H lap(H)
+  //
+  // The Laplacian is normalised (weights sum to one) so its spectrum lies in
+  // [-2, 0] and explicit Euler is stable for RD_DT * 2 * max(D) < 1. RD_DT
+  // 0.20 with D_H capped at 1.6 leaves a factor of ~1.5 of margin; the
+  // integrator is checked directly by halving it (tools/sb-turing.js).
+  RD_STEPS: 26,            // reaction-diffusion sub-steps per developmental cycle
+  RD_DT: 0.20,
+  RD_KERNEL: 1.35,         // diffusion neighbourhood, in units of the adhesion reach
+  RD_CLAMP: 12.0,          // concentration ceiling; GM is superlinear and will run away
+  RD_SEED: 0.06,           // amplitude of the initial concentration noise
+  RD_DA: [0.02, 0.22],     // activator diffusivity range
+  RD_RATIO: [8, 55],       // inhibitor/activator diffusivity ratio; <1 kills the instability
+  RD_A: [0.45, 2.20],      // activator decay
+  RD_H: [0.45, 3.00],      // inhibitor decay
+  RD_B: [0.0, 0.09],       // basal activator production
   CELL_R: 0.020,
   SIZE_RANGE: 0.35,        // radius = CELL_R * (1 +- SIZE_RANGE * tanh(expr[SIZE]))
   ADHESION: 2.45,          // edge if separation < ADHESION * mean radius
@@ -161,12 +227,126 @@ export const DEFAULTS = Object.freeze({
  * deliberately, so that if this substrate ever gets an evolutionary loop the
  * mutation operator is the one already in the project.
  */
+/**
+ * GENOME LAYOUT — ordered, contiguous, grouped by module.
+ *
+ * The genome is one flat Float32Array, but it is not an opaque vector: every
+ * offset has a name, and functionally related parameters are adjacent. This is
+ * a decision about recombination, made before recombination exists, because it
+ * is not retrofittable.
+ *
+ * Uniform per-gene crossover was already tested on the incumbent and was null.
+ * That result is about the operator meeting a dense 10x10 regulatory matrix in
+ * which every parameter touches everything: there were no building blocks to
+ * recombine, only linkage to destroy. If Turing dynamics deliver the
+ * modularity they are supposed to deliver, the operator that exploits it is a
+ * one- or two-point cut preserving CONTIGUOUS blocks — and that requires the
+ * blocks to exist in the layout.
+ *
+ *   offset                       size                 block
+ *   ---------------------------------------------------------------------
+ *   0                            3                    rd.activator  (D_A, decay, basal)
+ *   3                            2                    rd.inhibitor  (D ratio, decay)
+ *   5 + k*(MATERNAL+GENES)       MATERNAL             gene k <- maternal + morphogens
+ *   5 + k*(MATERNAL+GENES) + M   GENES                gene k <- every gene
+ *
+ * The regulatory matrix is stored COLUMN-major: the contiguous run belonging
+ * to gene k is *everything that determines gene k*, its positional drive and
+ * its regulatory inputs together. A single-point cut therefore transfers whole
+ * genes with their full input specification rather than slicing one gene's
+ * inputs in half, and because the gene order groups modules (GENE_MODULES
+ * above), a two-point cut on a module boundary transfers a whole functional
+ * subsystem — the entire neural module, or the entire fate module.
+ */
+export const RD_BLOCK = 5;
+export const GENE_STRIDE = MATERNAL + GENES;
+export const GENOME_LEN = RD_BLOCK + GENES * GENE_STRIDE;
+export const LAYOUT = Object.freeze([
+  { name: 'rd.activator', from: 0, to: 3, of: ['D_A', 'decay_a', 'basal_b'] },
+  { name: 'rd.inhibitor', from: 3, to: 5, of: ['D_H/D_A', 'decay_h'] },
+  ...GENE_MODULES.map(m => ({
+    name: `grn.${m.name}`,
+    from: RD_BLOCK + m.from * GENE_STRIDE,
+    to: RD_BLOCK + m.to * GENE_STRIDE,
+    of: [`genes ${m.from}..${m.to - 1}, each ${MATERNAL} maternal + ${GENES} regulatory inputs`],
+  })),
+]);
+
+/** Offset of the maternal input block for gene k. */
+export const matOff = k => RD_BLOCK + k * GENE_STRIDE;
+/** Offset of the regulatory input block for gene k. */
+export const regOff = k => RD_BLOCK + k * GENE_STRIDE + MATERNAL;
+
 export function randomGenome(rng, cfg = DEFAULTS) {
-  const M = new Float32Array(MATERNAL * GENES);
-  const R = new Float32Array(GENES * GENES);
-  for (let i = 0; i < M.length; i++) M[i] = gauss(rng) * 0.85;
-  for (let i = 0; i < R.length; i++) R[i] = gauss(rng) * 0.55;
-  return { M, R };
+  const buf = new Float32Array(GENOME_LEN);
+  for (let i = 0; i < RD_BLOCK; i++) buf[i] = gauss(rng) * 1.0;
+  for (let k = 0; k < GENES; k++) {
+    const mo = matOff(k), ro = regOff(k);
+    for (let m = 0; m < MATERNAL; m++) buf[mo + m] = gauss(rng) * 0.85;
+    for (let m = 0; m < GENES; m++) buf[ro + m] = gauss(rng) * 0.55;
+  }
+  return { buf };
+}
+
+/** Additive Gaussian perturbation of every locus. Used by the ε sweep. */
+export function perturbGenome(genome, eps, rng) {
+  const buf = Float32Array.from(genome.buf);
+  for (let i = 0; i < buf.length; i++) buf[i] += gauss(rng) * eps;
+  return { buf };
+}
+
+const span = ([lo, hi], v) => lo + (hi - lo) * 0.5 * (1 + Math.tanh(v));
+
+/** Genome -> reaction-diffusion kinetic constants. */
+export function rdParams(genome, cfg = DEFAULTS) {
+  const K = genome.buf;
+  const DA = span(cfg.RD_DA, K[0]);
+  return {
+    DA, a: span(cfg.RD_A, K[1]), b: span(cfg.RD_B, K[2]),
+    DH: DA * span(cfg.RD_RATIO, K[3]), h: span(cfg.RD_H, K[4]),
+  };
+}
+
+/**
+ * One reaction-diffusion relaxation, in place, over the living cells.
+ * Kernel-shaped: a per-cell Laplacian gather, then a per-cell reaction update.
+ */
+function rdRelax(A, H, x, y, rad, alive, N, steps, K, cfg) {
+  const lapA = new Float64Array(N), lapH = new Float64Array(N);
+  const hK = cfg.RD_KERNEL * cfg.ADHESION * cfg.CELL_R;
+  const h2 = hK * hK;
+  for (let it = 0; it < steps; it++) {
+    for (let i = 0; i < N; i++) {
+      if (!alive[i]) continue;
+      let sw = 0, sa = 0, sh = 0;
+      for (let j = 0; j < N; j++) {
+        if (!alive[j] || j === i) continue;
+        const d2 = (x[j] - x[i]) ** 2 + (y[j] - y[i]) ** 2;
+        if (d2 > h2 * 2.25) continue;
+        const w = Math.exp(-d2 / h2);
+        sw += w; sa += w * (A[j] - A[i]); sh += w * (H[j] - H[i]);
+      }
+      // Normalised graph Laplacian: eigenvalues in [-2, 0] whatever the local
+      // packing, so a cell that happens to have twelve neighbours does not get
+      // a stiffer equation than one that has three. That is what makes the
+      // explicit step stable on an irregular, deforming cloud.
+      if (sw > 1e-9) { lapA[i] = sa / sw; lapH[i] = sh / sw; }
+      else { lapA[i] = 0; lapH[i] = 0; }
+    }
+    for (let i = 0; i < N; i++) {
+      if (!alive[i]) continue;
+      const a = A[i], hh = Math.max(1e-3, H[i]);
+      const src = a * a;
+      let nA = a + cfg.RD_DT * (src / hh - K.a * a + K.b + K.DA * lapA[i]);
+      let nH = H[i] + cfg.RD_DT * (src - K.h * H[i] + K.DH * lapH[i]);
+      // Gierer-Meinhardt is superlinear and will run away on a finite step.
+      // Clamping is a numerical guard, not a model choice; if a genome sits
+      // against the ceiling its pattern is saturated rather than divergent,
+      // and assertFinite never fires downstream because of it.
+      A[i] = nA > cfg.RD_CLAMP ? cfg.RD_CLAMP : (nA > 0 ? nA : 0);
+      H[i] = nH > cfg.RD_CLAMP ? cfg.RD_CLAMP : (nH > 1e-3 ? nH : 1e-3);
+    }
+  }
 }
 
 /* ----------------------------------------------------------- development */
@@ -192,6 +372,14 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
   const drive = new Float32Array(GENES);
   const tmp = new Float32Array(GENES);
   const { M, R } = genome;
+  const K = rdParams(genome, cfg);
+  // Morphogen concentrations, carried by the cells. Seeded near the
+  // homogeneous steady state of the kinetics plus noise: a Turing instability
+  // AMPLIFIES noise, it does not require a prepattern, and starting at the
+  // fixed point is the honest test of whether the genome's kinetics are
+  // pattern-forming at all.
+  const A = new Float64Array(N), H = new Float64Array(N);
+  const Ass = K.h / Math.max(1e-3, K.a), Hss = Ass * Ass / Math.max(1e-3, K.h);
 
   // Seed clump: a small ring, so the maternal x/y gradient has something to
   // read on cycle zero rather than a degenerate point at the origin.
