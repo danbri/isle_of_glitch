@@ -3219,3 +3219,58 @@ phenotype map that has nothing to do with selection or evaluation noise. The
 testable form: **how much phenotype variance is explained by sparsity and sign
 structure versus by exact magnitudes.** If sign structure is most of it, the
 mutation operator is perturbing the wrong thing.
+
+## The gene network, the nervous system and the muscles are one CTRNN
+
+Crombach et al.'s protein model has CTRNN dynamics. Not by analogy — it is the
+same equation this codebase already integrates twice, in two different
+conventions, without that ever having been noticed.
+
+Their gene circuit:
+
+    Ċ_a = α_a · σ(Σ_b W_ab C_b + h_a)  −  λ_a C_a   (+ diffusion)
+
+`develop()` in `lib/evodevo.js`:
+
+    g ← g + 0.19 · (tanh(g·genR + drive) − g)
+
+The same firing-rate form — sigmoid on the weighted sum, linear decay on the
+state — with `drive` as the external input.
+
+`step()` in the same file:
+
+    ẏ = (W · tanh(y + bias) + I − y) / τ
+
+The activation form: sigmoid on the presynaptic output rather than on the
+weighted sum. Same dynamical system, different convention. Terms correspond
+directly: `C_a` ↔ node state, `λ_a` ↔ `1/τ`, `h_a` ↔ bias, `α_a` ↔ output gain,
+`W` ↔ weights, diffusion ↔ spatial coupling.
+
+**An arbitrary asymmetry falls out immediately.** The brain has a per-cell time
+constant and a per-cell bias. Development has a single global 0.19, no bias and
+no gain. Development is a crippled CTRNN feeding a complete one, and nothing
+justifies the difference — the real gap gene network has per-gene decay,
+threshold *and* maximum synthesis rate. Whatever else changes, the developmental
+network should carry the same per-node parameter set the nervous system already
+has.
+
+**And the unification, which is the substantial part.** If the gene network is a
+CTRNN, the nervous system is a CTRNN, and a muscle is a CTRNN-like function over
+two nodes and the force between them, then the organism is **one large sparse
+CTRNN**. What makes a node a gene, a neuron or a muscle is only which coupling
+term is active for it:
+
+- **chemical** — diffusive coupling to spatial neighbours
+- **synaptic** — weighted coupling to arbitrary targets
+- **mechanical** — force along a bond to a partner node
+
+One node-state array, one integrator, several sparse edge sets. Development is
+that network relaxing with chemical coupling active; lifetime is the same
+network with sensory input and mechanical coupling active. The two stages stay
+distinct while sharing state, integrator and kernel.
+
+This is also the architecture the GPU wants, and it closes a loop: the original
+observation that motivated looking at GPUs at all was that a hundred small
+CTRNNs are one large sparsely-connected CTRNN. That turns out to be true of the
+whole organism, not just of the population — and the developmental biology
+literature is already written in the form.
