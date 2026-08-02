@@ -3328,3 +3328,211 @@ The behaviour column is non-monotone, peaking at eps 0.05 and falling after.
 That is what an amplifying map looks like once it saturates: small perturbations
 produce proportionate behavioural change, large ones produce a different animal
 whose behaviour is uncorrelated rather than maximally distant.
+
+## The incumbent map is not flat — the flatness hypothesis is refuted
+
+`tools/incumbent-sensitivity.js` runs the gate's third measurement on the
+incumbent's `develop()`, read-only, exactly as `sb-gate.js` runs it on the soft
+body: perturb the genome by eps over the same 0.02–1.6 sweep, develop at a
+matched spawn (`develop()` is deterministic, so there is no developmental-noise
+axis to hold), run, and read how far behaviour moves. The 192 population slots
+are 192 independent random genomes (`genR ~ N(0,0.38)`, `genM ~ N(0,0.75)`) in
+one shot, so a single run is a larger genome sample than the gate's 24. The
+behavioural readouts are all quantities the sim already produces — net
+displacement (matching the gate), and turn/thrust RMS out of the `acc`
+accumulator, the direct motor-policy channels the klinokinesis result cares
+about — plus the developed expression tensor as the incumbent's analogue of the
+gate's `morph`, i.e. how far the genotype→developed-network map itself moves.
+Distances are `mean|Δ|` over organisms in base-population-SD units; three seeds,
+500 steps, and the three agree to two decimals on every number below.
+
+**The hypothesis was that this map is flat — that a dense `N(0,0.38)` matrix with
+Gaussian-jitter mutation cannot reach behaviour, so evolution had nothing to
+select on regardless of the noise. It is false.** The developed-network column
+rises and saturates just as the soft body's morphology does, in fact further:
+
+    eps      0.02   0.05   0.12   0.30   0.75   1.60
+    expr     0.068  0.166  0.372  0.763  1.217  1.443   (incumbent, developed network)
+    morph    0.077  0.093  0.524  0.720  0.973  0.984   (soft body, gate)
+
+And behaviour moves with it. Put the two behavioural curves side by side:
+
+    eps      0.02   0.05   0.12   0.30   0.75   1.60
+    turnRMS  0.191  0.354  0.636  0.883  1.157  1.132   (incumbent motor policy)
+    disp     0.278  0.342  0.451  0.658  0.890  0.904   (incumbent displacement)
+    behav    0.273  1.598  2.121  1.603  1.507  1.291   (soft body, gate)
+
+The soft body's curve is a steep early-saturating amplifier: a 6× jump from eps
+0.02 to 0.05, a peak at 0.12, then the fall-off that says large perturbations
+make a *different* animal rather than a maximally distant one. The incumbent's
+is a gentler, monotone, saturating amplifier — it reaches ~1.15 turn-SD, about
+half the soft body's peak, and it does not overshoot. **But it is nowhere near
+flat.** Perturbing the incumbent genome moves the developed network as much as
+perturbing the soft-body genome moves its morphology, and it moves the motor
+policy by more than a population standard deviation. Evolution here had genotypic
+variation that reached behaviour. **A flat genotype-to-phenotype map does not
+explain the run of organism-side nulls.**
+
+**So the measurement discriminates between the two candidate explanations and
+confirms the other one — sharpened.** Read against the spawn-noise floor (the
+same base genome at six spawns, in the same distance units), the picture is
+specific about *which* signal survives:
+
+    trait          repeatability   spawn-noise floor   sensitivity clears floor at eps
+    displacement       0.582            0.539                 ~0.30
+    turnRMS            0.772            0.446                 ~0.10
+    thrustRMS          0.812            0.385                 ~0.10
+
+The *kinematic* traits are moderately repeatable (0.58–0.81) and their genotype
+signal clears the spawn-noise floor at a modest eps. That is not the ~0.01–0.05
+regime this document has been living in — because that regime was measured on
+`toxDose`, `intake` and hazard exposure, the traits *fitness* is built from, not
+on raw kinematics. The incumbent's binding constraint was never that the genome
+fails to move the animal; it is that fitness integrates the trajectory into a
+foraging/hazard outcome that spawn position dominates, converting a real
+genotype→policy signal into a near-unselectable fitness signal. Selection sorted
+noise because the thing it scored was mostly spawn luck, not because the map was
+dead. **This retroactively justifies the substrate rebuild on the ground the
+gate already measured — behavioural repeatability of ~0.90 against the fitness
+traits' ~0.01–0.05 — and removes the confound that the incumbent might simply
+have been flat. It was not. The evaluation threw the signal away; the genotype
+supplied it.**
+
+### Sign structure carries the phenotype; the operator perturbs magnitude
+
+The decomposition RESEARCH.md posed off Crombach — how much of the phenotype is
+carried by the *sign* structure of the regulatory matrix versus its exact
+magnitudes — has a clean answer, and it indicts the mutation operator. Three
+swap genomes on `genR`, against a fresh-random-genome scale, averaged over three
+seeds and reported as a fraction of the random-genome distance:
+
+    genome      expr    disp    turn      (as % of a fully random genome)
+    signOnly    0.501   0.489   0.787      expr 36%   disp 66%   turn 69%
+    magOnly     0.947   0.676   1.000      expr 68%   disp 91%   turn 87%
+    random      1.398   0.742   1.146      100%
+
+`signOnly` erases every magnitude (each weight set to the genome's mean `|w|`,
+signs kept); `magOnly` erases every sign (magnitudes kept, signs randomised). On
+every readout, **destroying the signs moves the phenotype roughly twice as far
+toward a random animal as destroying the magnitudes does.** In developed-network
+space the split is starkest — signs carry ~2/3 of the map, magnitudes ~1/3.
+Flipping just 5% of the regulatory signs (≈5 of 100 loci, magnitudes exact)
+moves the developed network as far (`expr` 0.36) as jittering *all* the
+magnitudes at eps 0.12–0.15; a sign flip is close to an order of magnitude more
+consequential per locus than a magnitude nudge.
+
+And the incumbent's actual operator does not flip signs. A sign-preserving
+magnitude jitter tracks the full additive-Gaussian curve almost exactly at every
+eps (`expr` 0.135/0.296/0.599 for mag against 0.166/0.372/0.763 for full) — the
+small gap is the incidental flips Gaussian jitter lands on near-zero weights.
+**Gaussian jitter on dense weights is, in effect, a magnitude operator: it
+wanders through the fungible two-thirds of the map and rarely crosses the sign
+boundaries that carry the functional structure** — exactly the Crombach reading,
+that a functional gap-gene network is a sparse, signed, specific motif class and
+the magnitudes around it vary freely. The operator has been perturbing mostly
+the wrong axis for the whole project.
+
+Two honest bounds on that last claim. The magnitude axis is not *inert* — the
+`magOnly`/sign-preserved curves still clear the spawn-noise floor, so the
+operator does produce selectable variation, just less efficiently than a
+sign-aware one would; the operator inefficiency is real but it is not, on its
+own, the cause of the nulls (the fitness-readout repeatability above is). And the
+sign/magnitude split is measured on random genomes at initialisation, which is
+the regime the search actually starts and mostly stays in; whether it holds
+around an evolved optimum is untested. The actionable consequence stands either
+way: **a mutation operator that proposed sign flips at a rate reflecting their
+phenotypic leverage would explore this map very differently from the incumbent's
+Gaussian jitter, and this is the cheapest untried change to the search on the
+incumbent substrate.**
+
+## The first evolution this substrate has seen: locomotion ascends 17×
+
+`tools/sb-evolve.js`. Everything before it on this substrate was measurement.
+The gate said the substrate is selectable; this is the loop that spends that,
+and it is the first evolutionary loop the soft bodies have ever run.
+
+**The rules, and why each one.** Tournament selection, **k = 2** — the only
+selection rule that has ever moved anything in this project, the one that
+produced the incumbent's first prey improvement where truncation and MAP-Elites
+were null, chosen because a soft tournament averages many near-independent draws
+and tolerates residual evaluation noise rather than trying to abolish it.
+Mutation is `perturbGenome` — additive bounded-Gaussian on every locus, the same
+operator the gate's ε sweep uses, so its rate means the same thing here that it
+meant there. **Rate ε = 0.08**, read off the gate curve rather than guessed: it
+is an order of magnitude below the ε ≈ 0.75 morphology-saturation ceiling where
+inheritance is destroyed, and it sits in the band (morphology distance still
+~0.15, so the child body resembles the parent, while behavioural sensitivity is
+near its 0.05–0.12 peak) where a mutation makes a *proportionate, selectable*
+change in what the body does instead of randomising it into a different animal.
+Elitism is small (2 genomes carried unchanged, cloned) so the frontier is stable
+without collapsing tournament diversity. Fitness is **displacement over one
+episode** — the trait the gate proved is both expressed and repeatable — and
+explicitly not intake, which the gate measured at repeatability 0 because nothing
+forages yet. `assertFinite` stays live throughout, and a shared episode that
+throws falls back to isolating each organism so one NaN body scores 0 rather than
+poisoning the depleting food field for the whole population.
+
+**It ascends, and it replicates.** POP 64, 30 generations, three seeds, fitness
+= mean displacement over 6 held-out spawns (spawn-noise-averaged, so the rise is
+genetic and not a lucky spawn):
+
+| seed | gen-0 displacement | evolved displacement | ascent | 2·SE bar |
+|---|---|---|---|---|
+| 1 | 0.035 ± 0.013 | 0.805 ± 0.049 | +0.770 | 0.101 |
+| 2 | 0.040 ± 0.014 | 0.785 ± 0.039 | +0.745 | 0.083 |
+| 3 | 0.063 ± 0.018 | 0.816 ± 0.038 | +0.753 | 0.084 |
+
+Pooled, displacement goes **0.046 → 0.802, a factor of 17.5**, each seed clearing
+its bar by seven to nine combined standard errors. The population's moving
+fraction (displaced > 0.02 world units) goes from 17–25% at generation 0 to
+94–100% by generation 30: selection converts a bimodal population where
+locomotion is rare into one where nearly every organism crawls. The trajectory is
+steepest early — median displacement is already off the floor by generation 3 and
+past half its final value by generation 6 — then climbs more slowly to a plateau,
+the shape of a trait being found and then refined. **This is the control the
+whole rebuild was for: the same category of change — selection acting on a
+behavioural trait — moved the incumbent almost nothing, because there the trait
+was ~5% repeatable and selection was sorting noise. Here it moves it 17-fold.**
+
+**The two caveated gate numbers, re-measured honestly on the evolved
+population.** The gate's 0.90 behavioural repeatability was flagged as inflated
+by bimodality: most random genomes do not move, a reliable zero is trivially
+repeatable, and the between-genome variance was carried by a locomoting minority.
+On an evolved population where 94–100% locomote, that free repeatability is gone,
+and the honest number is lower:
+
+| trait | gate (random pop) | evolved pop (pooled 3 seeds) |
+|---|---|---|
+| displacement | 0.897 | **0.601** |
+| path | 0.909 | 0.752 |
+| occupancy | 0.897 | 0.607 |
+| intake | 0.000 | **0.034** |
+
+Displacement repeatability falls to ~0.60 — as predicted, and the right way to
+read the 0.90 is confirmed: it was never "any behavioural difference is 90%
+heritable", it was "the differences between genomes are reproducible", and on a
+population selected until nearly all of them move, the reproducible between-genome
+spread is a smaller share of the total. **0.60 is still an order of magnitude
+above the incumbent's 0.05**, and still firmly in the regime where a k=2
+tournament acts on the genotype rather than on spawn luck — which is exactly why
+the ascent above is real.
+
+**And intake, re-measured now that something eats, is still not selectable.**
+Mean intake rose over the run (0.16 → 0.27) and the forage-expressing fraction
+rose from ~65% to 91–100% — but intake repeatability read **0.034**, essentially
+the incumbent's 0.012–0.047 regime and indistinguishable from zero. The reading
+is unambiguous: foraging is now *happening*, as a by-product of locomotion —
+organisms that crawl far drift through more food patches and incidentally consume
+more — but it is not yet a *heritable* trait, because nothing has selected on the
+difference between a body that steers toward food and one that blunders into it.
+Intake is a consequence of the displacement selection bought, not a capability in
+its own right. Selecting on it directly is the obvious next experiment, and the
+gate's method now has a non-zero baseline to measure that against.
+
+**What is deliberately left for later.** The genome's LAYOUT groups loci into
+named contiguous module blocks, and `blockCrossover` (in `lib/softbody.js`) cuts
+on those boundaries to transfer a whole functional subsystem intact; the loop
+carries it behind `--crossover` but the primary result is mutation-only, matching
+the one selection rule this project has evidence for. Recombination, a foraging
+fitness once intake is made selectable, and an ε schedule that anneals down the
+gate curve are all now buildable on top of a loop that demonstrably climbs.

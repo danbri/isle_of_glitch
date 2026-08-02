@@ -96,6 +96,7 @@ button.primary{background:var(--muscle); border-color:var(--muscle); color:#180B
         <button id="rand">random</button>
         <button id="next">next ›</button>
       </div>
+      <button id="champ" style="background:var(--sensor);border-color:var(--sensor);color:#06110F;font-weight:600">★ evolved crawler</button>
     </div>
 
     <div class="group">
@@ -139,6 +140,7 @@ const $ = id => document.getElementById(id);
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
 let seed = 10, pheno = null, colony = null, world = null;
+const defaultNote = $('note').innerHTML;
 let playing = false, mode = 'role', raf = 0;
 
 // Muscle membership per cell, for role colouring.
@@ -148,18 +150,44 @@ function muscleMask(p){
   return m;
 }
 
-function grow(s){
-  seed = s; $('seed').value = String(s);
-  const rng = makeRng(s >>> 0 || 1);
-  const genome = randomGenome(rng, cfg);
-  // Development is deterministic given the genome; seed its noise from the genome seed.
-  pheno = develop(genome, cfg, makeRng(0x51b0 ^ (s * 2654435761)));
-  pheno._muscle = muscleMask(pheno);
+// Build a colony from an already-developed phenotype and reset playback.
+function mount(p, label){
+  pheno = p; pheno._muscle = muscleMask(p);
   world = makeWorld(cfg, makeRng(7));
   colony = new Colony([pheno], world, cfg);
   colony.spawn(makeRng(3));
   playing = false; $('play').textContent = '▶ run'; $('play').classList.add('primary');
+  cancelAnimationFrame(raf);
+  $('note').innerHTML = label || defaultNote;
   updateStats(); draw();
+}
+
+function grow(s){
+  seed = s; $('seed').value = String(s);
+  const rng = makeRng(s >>> 0 || 1);
+  const genome = randomGenome(rng, cfg);
+  // Development is deterministic given the genome; seed its noise from the genome seed,
+  // exactly as the headless tools do, so the body here is the body they measured.
+  mount(develop(genome, cfg, makeRng(0x51b0 ^ (s * 2654435761))));
+}
+
+// Load the evolved champion committed under populations/. Its developmental
+// seed matches the one tools/sb-evolve.js used, so this is the animal that
+// scored ~0.98, not a re-roll.
+async function loadChampion(){
+  try{
+    const r = await fetch('./populations/softbody-evolved-crawler.json');
+    if(!r.ok) throw new Error('not found');
+    const j = await r.json();
+    const genome = { buf: Float32Array.from(j.buf) };
+    const p = develop(genome, cfg, makeRng((0x51b0 ^ Math.imul(999, 2654435761)) >>> 0));
+    $('seed').value = '★';
+    mount(p, `<b>Evolved crawler.</b> Champion of a ${j.meta.generations}-generation tournament run
+      selecting on displacement. It crawls about ${j.meta.championDisplacement} world units, averaged over
+      held-out spawns so it is genetic, not luck — random genomes mostly sit still. Press <b>run</b>.`);
+  }catch(e){
+    $('note').textContent = 'Could not load the evolved crawler (populations/softbody-evolved-crawler.json).';
+  }
 }
 
 function updateStats(){
@@ -291,6 +319,7 @@ $('seed').onkeydown = e => { if (e.key === 'Enter') grow(parseInt($('seed').valu
 $('next').onclick = () => grow(seed + 1);
 $('prev').onclick = () => grow(Math.max(1, seed - 1));
 $('rand').onclick = () => grow(1 + Math.floor(Math.random()*99999));
+$('champ').onclick = () => loadChampion();
 $('reset').onclick = () => { colony.spawn(makeRng(3)); playing = false; $('play').textContent='▶ run'; $('play').classList.add('primary'); cancelAnimationFrame(raf); draw(); updateStats(); };
 $('play').onclick = () => {
   if (!colony) return;
