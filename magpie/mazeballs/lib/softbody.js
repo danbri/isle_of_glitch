@@ -119,7 +119,16 @@ export const DEFAULTS = Object.freeze({
   MUSCLE_AMP: 0.34,        // maximum fractional rest-length change
   MUSCLE_MIN: 0.62, MUSCLE_MAX: 1.38,  // hard cap on L/L0, whatever the drive says
   MU_MIN: 0.10, MU_MAX: 2.20,          // Coulomb friction coefficient range
-  DRAG: 0.90,              // per-step linear velocity retention
+  // Ground friction is applied at the VELOCITY level, not as a positional
+  // budget. A positional budget with a static threshold makes quasi-static
+  // crawling impossible: the per-step displacement a muscle produces is ~1e-5
+  // world units, every cell falls below any threshold worth having, and the
+  // whole population sits still. At the velocity level a slipping cell keeps
+  // its momentum between steps, so a slow contraction still accumulates
+  // displacement, and the threshold separates high-grip cells (anchors) from
+  // low-grip cells (feet) instead of freezing both.
+  FRIC_K: 0.075,           // Coulomb decrement = grip * FRIC_K * dt, in velocity units
+  DRAG: 0.96,              // per-step linear velocity retention
   V_MAX: 1.20,             // hard velocity clamp, world units / second
   DX_MAX: 0.35,            // per-iteration positional correction clamp, in cell radii
   WORLD_BOUND: 0.94,
@@ -647,16 +656,18 @@ export class Colony {
       const p = this.ph[o], base = o * S;
       for (let a = 0; a < p.n; a++) {
         const t = base + a;
-        let dx = this.qx[t] - this.px[t], dy = this.qy[t] - this.py[t];
-        // Coulomb ground friction as a positional budget: below the static
-        // threshold the cell does not move at all, above it the cell slips by
-        // the excess. This is what makes a contraction wave crawl instead of
-        // oscillating in place.
-        const budget = this.grip[t] * dt * dt * 9.8;
-        const dl = Math.hypot(dx, dy);
-        if (dl <= budget) { dx = 0; dy = 0; }
-        else { const s = 1 - budget / dl; dx *= s; dy *= s; }
-        let X = this.px[t] + dx, Y = this.py[t] + dy;
+        // Velocity implied by the constraint solve, then Coulomb friction on
+        // it: below the static threshold the cell is anchored, above it the
+        // cell slips by the excess and keeps the remainder as momentum. Grip
+        // is a developed per-cell property, so which cells are feet and which
+        // are anchors is something morphology decides.
+        let vX = (this.qx[t] - this.px[t]) / dt, vY = (this.qy[t] - this.py[t]) / dt;
+        const fv = this.grip[t] * cfg.FRIC_K * dt;
+        const sp = Math.hypot(vX, vY);
+        if (sp <= fv) { vX = 0; vY = 0; }
+        else { const s = 1 - fv / sp; vX *= s; vY *= s; }
+        if (sp > cfg.V_MAX) { const s = cfg.V_MAX / sp; vX *= s; vY *= s; }
+        let X = this.px[t] + vX * dt, Y = this.py[t] + vY * dt;
         if (X > B) { X = B; } else if (X < -B) { X = -B; }
         if (Y > B) { Y = B; } else if (Y < -B) { Y = -B; }
         this.vx[t] = (X - this.px[t]) / dt;
