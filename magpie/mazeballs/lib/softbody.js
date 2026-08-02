@@ -360,6 +360,50 @@ export function perturbGenome(genome, eps, rng) {
   return { buf };
 }
 
+/* --------------------------------------------------------- reproduction */
+
+/**
+ * Reproduction operators for an evolutionary loop. The mutation operator is
+ * `perturbGenome` above — additive bounded-Gaussian on every locus, the same
+ * operator the ε sweep uses, so a mutation rate read off the gate's sensitivity
+ * curve means exactly the same thing in the loop that it meant in the gate.
+ * `sb-gate.js` located the usable ceiling — morphology distance saturates near
+ * ε ≈ 0.75, above which a mutant carries no more information about its parent
+ * than a fresh random genome would — so a selection loop must run well below it.
+ */
+
+/** Deep copy of a genome. Elitism carries a genome unchanged; cloning makes the
+ * carry explicit so a later mutation of a sibling can never alias the elite. */
+export function cloneGenome(genome) {
+  return { buf: Float32Array.from(genome.buf) };
+}
+
+/**
+ * Block-preserving one-point crossover on a LAYOUT boundary.
+ *
+ * The whole reason the genome is laid out as named, contiguous, module-grouped
+ * blocks (see LAYOUT) rather than as an opaque vector is so that recombination
+ * can transfer a *functional subsystem* — the entire reaction-diffusion
+ * activator, or the entire neural module of the GRN — as an intact unit, rather
+ * than slicing one gene's regulatory inputs in half. Uniform per-locus crossover
+ * was already null on the incumbent precisely because that dense matrix had no
+ * blocks to preserve, only linkage to shred; this operator only cuts where a
+ * block ends. LAYOUT tiles [0, GENOME_LEN) contiguously, so a cut at any block's
+ * `from` swaps a suffix of whole blocks and nothing is left half-copied.
+ *
+ * The loop does not use this by default — mutation-only tournament is the
+ * primary result, matching the one selection rule that has ever moved this
+ * project — but the operator lives here, tested against the layout, so a future
+ * wave that wants block recombination has it rather than having to retrofit the
+ * layout it depends on.
+ */
+export function blockCrossover(parentA, parentB, rng) {
+  const buf = Float32Array.from(parentA.buf), bufB = parentB.buf;
+  const cut = LAYOUT[1 + (rng.int() % (LAYOUT.length - 1))].from;
+  for (let i = cut; i < buf.length; i++) buf[i] = bufB[i];
+  return { buf };
+}
+
 const span = ([lo, hi], v) => lo + (hi - lo) * 0.5 * (1 + Math.tanh(v));
 
 /**
