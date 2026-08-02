@@ -100,7 +100,13 @@ button.primary{background:var(--muscle); border-color:var(--muscle); color:#180B
     </div>
 
     <div class="group">
-      <h2>Playback</h2>
+      <h2>Development</h2>
+      <button id="dev">⧖ watch it grow</button>
+      <div class="slider"><span>cycle</span><input id="devslider" type="range" min="0" max="13" value="13"><span id="devv">–</span></div>
+    </div>
+
+    <div class="group">
+      <h2>Life</h2>
       <div class="row">
         <button id="play" class="primary">▶ run</button>
         <button id="reset">reset</button>
@@ -142,6 +148,7 @@ const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).
 let seed = 10, pheno = null, colony = null, world = null;
 const defaultNote = $('note').innerHTML;
 let playing = false, mode = 'role', raf = 0;
+let devFrames = [], devPlaying = false, devRaf = 0;
 
 // Muscle membership per cell, for role colouring.
 function muscleMask(p){
@@ -168,7 +175,9 @@ function grow(s){
   const genome = randomGenome(rng, cfg);
   // Development is deterministic given the genome; seed its noise from the genome seed,
   // exactly as the headless tools do, so the body here is the body they measured.
-  mount(develop(genome, cfg, makeRng(0x51b0 ^ (s * 2654435761))));
+  devFrames = [];
+  mount(develop(genome, cfg, makeRng(0x51b0 ^ (s * 2654435761)), f => devFrames.push(f)));
+  setupDevSlider();
 }
 
 // Load the evolved champion committed under populations/. Its developmental
@@ -180,7 +189,9 @@ async function loadChampion(){
     if(!r.ok) throw new Error('not found');
     const j = await r.json();
     const genome = { buf: Float32Array.from(j.buf) };
-    const p = develop(genome, cfg, makeRng((0x51b0 ^ Math.imul(999, 2654435761)) >>> 0));
+    devFrames = [];
+    const p = develop(genome, cfg, makeRng((0x51b0 ^ Math.imul(999, 2654435761)) >>> 0), f => devFrames.push(f));
+    setupDevSlider();
     $('seed').value = '★';
     mount(p, `<b>Evolved crawler.</b> Champion of a ${j.meta.generations}-generation tournament run
       selecting on displacement. It crawls about ${j.meta.championDisplacement} world units, averaged over
@@ -284,6 +295,55 @@ function draw(){
   ctx.beginPath(); ctx.arc(tx(cx), ty(cy), 4, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
 }
 
+// --- development playback: draw one captured cycle, body-frame, centred ---
+function drawDevFrame(fr){
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  // fit the frame's own extent, so early tiny clumps aren't a speck
+  let ex = 0.02; for (let i=0;i<fr.cells;i++) ex = Math.max(ex, Math.abs(fr.x[i]), Math.abs(fr.y[i]));
+  const pad = 60, sc = (W/2 - pad) / (ex + cfg.CELL_R*2);
+  const cx = W/2, cy = H/2;
+  const tx = x => cx + x*sc, ty = y => cy + y*sc;
+  const Amax = Math.max(1e-6, ...fr.A);
+  for (let i=0;i<fr.cells;i++){
+    const r = Math.max(3, fr.rad[i]*sc);
+    let fill;
+    if (mode === 'pattern') fill = ramp(fr.A[i]/Amax);
+    else { // role — from the running gene scores
+      const isMus = fr.muscle[i] > 0.15, isSen = fr.sensor[i] > 0.15;
+      fill = isMus ? css('--muscle') : (isSen ? css('--sensor') : css('--neuron'));
+    }
+    ctx.beginPath(); ctx.arc(tx(fr.x[i]), ty(fr.y[i]), r, 0, 7);
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.strokeStyle = 'rgba(6,17,15,0.55)'; ctx.lineWidth = 1; ctx.stroke();
+  }
+  $('devv').textContent = `${fr.cycle+1}/${devFrames.length} · ${fr.cells} cells`;
+}
+
+function showDevCycle(c){
+  c = Math.max(0, Math.min(devFrames.length-1, c));
+  $('devslider').value = String(c);
+  drawDevFrame(devFrames[c]);
+}
+
+function setupDevSlider(){
+  const n = devFrames.length;
+  $('devslider').max = String(Math.max(0, n-1));
+  $('devslider').value = String(Math.max(0, n-1));
+  $('devv').textContent = n ? `${n}/${n}` : '–';
+}
+
+function devLoop(){
+  if (!devPlaying) return;
+  let c = +$('devslider').value + 1;
+  if (c >= devFrames.length){ devPlaying = false; $('dev').textContent = '⧖ watch it grow'; showFinalBody(); return; }
+  showDevCycle(c);
+  devRaf = setTimeout(() => requestAnimationFrame(devLoop), 420);
+}
+
+// Return from a dev-scrub to the finished, spawned body ready to run.
+function showFinalBody(){ if (colony){ colony.spawn(makeRng(3)); draw(); updateStats(); } }
+
 function loop(){
   if (!playing || !colony) return;
   const n = +$('speed').value;
@@ -320,6 +380,19 @@ $('next').onclick = () => grow(seed + 1);
 $('prev').onclick = () => grow(Math.max(1, seed - 1));
 $('rand').onclick = () => grow(1 + Math.floor(Math.random()*99999));
 $('champ').onclick = () => loadChampion();
+$('dev').onclick = () => {
+  if (!devFrames.length) return;
+  playing = false; cancelAnimationFrame(raf);
+  $('play').textContent = '▶ run'; $('play').classList.add('primary');
+  devPlaying = !devPlaying;
+  $('dev').textContent = devPlaying ? '❚❚ pause growth' : '⧖ watch it grow';
+  if (devPlaying){ showDevCycle(0); devLoop(); } else { clearTimeout(devRaf); }
+};
+$('devslider').oninput = () => {
+  devPlaying = false; clearTimeout(devRaf); $('dev').textContent = '⧖ watch it grow';
+  const c = +$('devslider').value;
+  if (c >= devFrames.length-1) showFinalBody(); else showDevCycle(c);
+};
 $('reset').onclick = () => { colony.spawn(makeRng(3)); playing = false; $('play').textContent='▶ run'; $('play').classList.add('primary'); cancelAnimationFrame(raf); draw(); updateStats(); };
 $('play').onclick = () => {
   if (!colony) return;
