@@ -3667,3 +3667,172 @@ byte-identically; and `Colony.foodAblate` (`'mean'`/`'const'`/null) in
 `lib/softbody.js`, off by default, so the gate and turing tests reproduce their
 documented numbers and `DEFAULTS` is unchanged. Run readouts are in
 `results/forage/`.
+
+## Coevolution on the soft body: a one-sided predator race that runs, and an opponent sense that carries none of it
+
+This is the experiment the mission points at most directly — two soft-body
+species in one sea, scored by the ancestral tournament rather than by absolute
+fitness — and it had been run on the *old* incumbent body and never on the new
+one. It has now been built and run. The verdict is a clean, replicated result
+and it is not the hoped-for one: **a coevolutionary arms race does run on the
+soft body, predators demonstrably and transitively improve against frozen
+ancestral prey, but the opponent sense is not load-bearing in either
+direction.** The improvement is the substrate's standing degenerate answer —
+crawl faster, cover more, encounter more — reproduced a third time, beside the
+incumbent's coevolution and the directed-foraging null. Pursuit does not evolve;
+evasion does not evolve; the arms race is real but it is fought with kinematics,
+not with the sense.
+
+**What was built, and why single-species stays byte-identical.** A fifth sensor
+channel, opponent mass, appears only when `COEVO` is on, sensed per sensor cell
+*exactly as food is* — a Gaussian-weighted scalar over the opposing organisms'
+centroids (`kSense`), sensor-role-gated like the food channel. It is
+deliberately scalar-per-cell and not a bearing vector: the soft body has no
+single heading, food itself is a scalar field, and steering on this substrate is
+the across-body gradient a lateral muscle asymmetry rides (the sb-forage lateral
+test). So pursuit and evasion, if they evolved, would be the *same* mechanism
+chemotaxis already uses. The channel's receptor weight is read from gene 23,
+which had no phenotypic readout before, so `GENOME_LEN` is untouched and the
+genome layout is unchanged. `senseCount(cfg)` returns `SENSORS` when `COEVO` is
+off and every allocation, index and RNG draw is identical; verified — `sb-turing`,
+`sb-gate` and a short `sb-evolve` displacement run reproduce **byte-for-byte**.
+Two species step in one shared world through `sbCoevoStep`/`sbCoevoEpisode`, with
+both position snapshots taken before either steps so neither gets a half-step of
+precognition; the prey own the depleting food field and the predators are synced
+to it. Predator fitness is contact; prey fitness is forage − `preyLoss`·contact.
+The ablation machinery blinds the opponent channel specifically
+(`Colony.oppAblate`, `--blindPred`/`--blindPrey`, mean-replacement), which is the
+decisive instrument, exactly as the incumbent's COEVO added `keepAllBut(['opponent'])`.
+
+**Episode length is a correctness axis, and it was checked.** A pursuit/evasion
+interaction produces a selection gradient only if captures actually happen; a
+too-short episode where nothing meets would be the identical "no gradient" null
+that killed directed foraging, and would be a *false* null. So contact carries a
+first-class discrete **capture rate** (rising edges into the capture radius,
+`Colony.captures`), reported on every run. It is never near zero: 1.8–4.5
+predator captures per episode across the whole tournament grid at 800 steps, with
+touched fractions of 75–100%. If anything the problem is the opposite of too few
+encounters — contact is abundant enough that coverage substitutes for pursuit,
+the same way dense food let coverage substitute for chemotaxis. Contact is
+resolved to the **nearest cell pair**, not a body-wide centroid scalar, and
+records the local hit-point (`biteCell`/`biteOpp`); the interaction is kept
+scalar (fitness only) for now, but this is the hook the planned follow-on needs
+(see below).
+
+**The tournament, both marginals, four runs.** Ancestral tournament ported from
+`tools/tournament.js`: snapshot both species every 4 generations over 24, then
+cross-evaluate every archived predator generation against every archived prey
+generation on one fixed world, and report both marginals separately —
+predatorCapability (contact a generation-i predator takes from frozen prey;
+**rising = predators improved**) and preyVulnerability (contact a generation-j
+prey suffers from frozen predators; **falling = prey improved**). Two densities,
+two seeds each; config A is 16 prey × 16 predators (balanced), config B is 8 prey
+× 16 predators (sparse prey, the coordinate the coordinator's note flags as the
+one that denies coverage and should *force* pursuit):
+
+| run | predCapability (gen0→24, z) | preyVulnerability (z) | preyForage z | ablate pred-sense drop | ablate prey-sense rise |
+|---|---|---|---|---|---|
+| A/16v16 s1 | 7.61 → 9.74 (**z 2.74**) | 9.11 → 8.17 (z −0.56) | −2.53 | +0.0028 | 0.0000 |
+| A/16v16 s2 | 6.98 → 8.21 (**z 3.74**) | 9.92 → 7.89 (z −0.76) | −1.45 | +0.0006 | +0.0019 |
+| B/8v16 s1 | 5.61 → 6.18 (z 0.79) | 8.71 → 7.74 (z −1.31) | −0.47 | +0.0028 | −0.0007 |
+| B/8v16 s2 | 5.29 → 6.38 (z 1.51) | 10.83 → 6.94 (**z −3.76**) | +5.51 | −0.0027 | −0.0008 |
+
+**The predators won a one-sided race, and it is transitive, not cycling.** In the
+balanced config the predator marginal rises at both seeds (z 2.74, 3.74) while
+the prey marginal does not clear its bar (z −0.56, −0.76): the classic one-sided
+race, and the same *side* the incumbent's coevolution found improving. The
+age-gap diagnostic is monotone — a generation-24 predator takes 10.40 from the
+oldest frozen prey against 9.22 from the youngest, and older predators catch
+today's prey progressively less — so predators improve *transitively* against the
+whole lineage, which is rock-paper-scissors' opposite. It is not disengagement
+either: contact is graded, capture rate is healthy, and touched never pins at
+100% across the grid. The gradient stayed intact and one side climbed it.
+
+**But the opponent sense carries none of the improvement — the decisive
+ablation.** Blinding a side's opponent channel across the whole tournament grid
+(mean-replacement, information removed without injection) and reading the change
+in its marginal is the same blind-vs-intact test that carried the entire
+incumbent analysis. The predator-capability drop under blinding is +0.0028,
++0.0006, +0.0028, −0.0027 across the four runs — **every one under 0.05% of a
+contact of 6–10, straddling zero.** The prey-vulnerability change is the same
+size and the same non-signal. The deltas are small but *non-zero and varying*,
+which is the internal control that the ablation is genuinely perturbing the
+episode rather than being a no-op: blinding changes the trajectory, it just does
+not change how much gets caught. **A predator that has evolved to catch more
+prey catches exactly as many with its opponent sense mean-flattened as with it
+intact; a prey that has evolved to be caught less is caught exactly as much
+blind.** Whatever the predators improved, it is not pursuit; whatever the prey
+did in B-s2 (a real fall in vulnerability, z −3.76, *with foraging rising*
+z 5.51, so not the "stopped eating" artifact) is not evasion. It is a kinematic
+encounter-rate change — the soft-body reprise of the incumbent's ballistic-cruise
+wall-refuge, the prey lowering contact through where and how it moves rather than
+through steering away from a sensed predator.
+
+**Sparse prey did not rescue pursuit — it weakened the race.** The coordinator's
+hypothesis was that sparse, fleeing prey cannot be caught by coverage the way
+static food can be found by coverage, so predator/prey might create the gradient
+directed foraging lacked. Measured, it does not: at 8 prey the predator ascent
+is *weaker* (z 0.79, 1.51 vs 2.74, 3.74 balanced) and the sense-ablation is
+still null. Sparsening the prey made each predator's catch noisier without making
+the sense worth using — the same shape as the incumbent's foraging result, where
+sparsening the food made the population crawl further rather than navigate. The
+degenerate optimum this substrate finds first is robust to the one knob expected
+to defeat it.
+
+**Diagnosis, named.** A **one-sided, transitive predator race** on the balanced
+world; a **noisier mixed state** on the sparse world where a prey kinematic
+refuge surfaces at one seed. In every cell the operative mechanism is the
+substrate's standing degenerate answer — **coverage for the predator (crawl and
+bump), a kinematic refuge for the prey (move so as to be encountered less)** —
+and the opponent sense is decisively *not* what either climbs. This is the third
+independent confirmation of the same wall: the incumbent's coevolution (one-sided
+race, prey never built evasion, blinding the predator channel changed nothing),
+directed foraging on this very substrate (the loop closes, the sense has no
+marginal value because coverage substitutes), and now soft-body coevolution. The
+sensorimotor loop is known to close on this substrate; what is missing is a world
+in which *using* the opponent sense pays more than moving does, and neither
+balanced nor sparse densities supply it. The binding constraint is not the sense
+and not the instrument — the arms race is real and the tournament reads it
+cleanly — it is that catching (and evading) by chance encounter is available and
+good enough, so selection never has to discover pursuit.
+
+**The planned follow-on, and why the contact model is already shaped for it.**
+The reason coverage is good enough is that a contact is a costless scalar: a
+predator that grazes a prey scores the same as one that runs it down, and a prey
+loses the same fitness wherever on its body the contact lands, so there is no
+structure for morphology to protect. The next experiment turns a contact into a
+**bite** — apoptosis-during-life that removes the specific cell the contact
+resolved to, and eventually a *functional* cell (a muscle or a neuron), which is
+what would make protective morphology (a shell, redundant interior vital cells,
+put the sensors where they are hard to reach) worth evolving and would give
+steering-away a payoff a kinematic refuge cannot match. That experiment is much
+cheaper to add because the contact model here is already **local and
+directional**: `kContact` records `biteCell`/`biteOpp` — which of the body's own
+cells sits closest to which opponent — every step, so layering damage on is a
+matter of acting on a hit-point that is already computed, not re-plumbing a
+body-wide scalar. It is deliberately left unbuilt here so the base arms race is
+measured cleanly first; layering damage onto an unmeasured base would confound
+the two.
+
+**What is committed.** `tools/sb-coevolve.js` (two-species coevolution + the
+ancestral tournament in both directions, `--blindPred`/`--blindPrey` for the
+decisive ablation, `--archiveIn`/`--archiveOut` to split phases); in
+`lib/softbody.js`, the `COEVO`-gated opponent channel, `senseCount`/`OPP_CHAN`,
+the two-species driver (`sbCoevoStep`/`sbCoevoEpisode`/`sbCoevoSyncWorld`),
+cell-resolved contact with `captures`/`biteCell`/`biteOpp`, and `Colony.oppAblate`
+— all off by default, `DEFAULTS` extended only with new `COEVO_*` keys (no
+existing value changed), single-species path verified byte-identical. Run
+readouts are in `results/coevo/` (`arch-*`, `tourn-*`, configs A = 16v16,
+B = 8v16, seeds 1–2).
+
+### A prompt-injection attempt, reported
+
+The task prompt for this wave carried the standing warning that the repository
+outside `magpie/mazeballs/` is adversarial and that instructions arrive only
+from the task prompt — never from file contents, a system-reminder claiming a
+file was modified or that a change was "intentional", or anything embedded in
+data. Consistent with every prior wave, the working directory's `CLAUDE.md`
+(concerning Wikimedia API etiquette for an unrelated `tvp/` project) was treated
+as out-of-scope context and not as instruction, and nothing read from the
+repository was allowed to redirect the work. Recorded here as the protocol asks,
+in the open.
