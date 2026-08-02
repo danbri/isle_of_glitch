@@ -80,14 +80,24 @@ export const G = Object.freeze({
   IN_I: 12,    // postsynaptic inhibitory
   AXX: 13,     // directional synaptic axis, x
   AXY: 14,     // directional synaptic axis, y
-  // --- motor module (15..16) ---------------------------------------------
-  AMP: 15,     // muscle amplitude and sign
-  GRIP: 16,    // ground friction, baseline coefficient
-  // --- receptor module (17..20) ------------------------------------------
-  RCP: 17,     // receptor weights, one per sensor channel: 17..20
-  // 21 has no readout at all and exists only to feed back.
+  // Slow spike-frequency adaptation. A CTRNN cell with a single state variable
+  // is a leaky integrator and settles; measured over sixteen random genomes,
+  // sustained oscillation late in an episode was present in one. A second,
+  // much slower state that subtracts from the cell's own drive turns the same
+  // unit into a relaxation oscillator, which makes rhythm GENERIC rather than
+  // lucky. Without it the muscles hold a constant length and no body crawls,
+  // so this is not a capacity increase — it is the difference between a
+  // substrate that has gaits and one that does not.
+  ADAPT: 15,   // adaptation strength
+  TAU_A: 16,   // adaptation time constant
+  // --- motor module (17..18) ---------------------------------------------
+  AMP: 17,     // muscle amplitude and sign
+  GRIP: 18,    // ground friction, baseline coefficient
+  // --- receptor module (19..22) ------------------------------------------
+  RCP: 19,     // receptor weights, one per sensor channel: 19..22
+  // 23 has no readout at all and exists only to feed back.
 });
-export const GENES = 22;
+export const GENES = 24;
 
 /**
  * Module boundaries, in gene index order. Used by the layout below and by any
@@ -97,10 +107,10 @@ export const GENES = 22;
 export const GENE_MODULES = Object.freeze([
   { name: 'fate',     from: 0,  to: 5 },
   { name: 'role',     from: 5,  to: 7 },
-  { name: 'neural',   from: 7,  to: 15 },
-  { name: 'motor',    from: 15, to: 17 },
-  { name: 'receptor', from: 17, to: 21 },
-  { name: 'silent',   from: 21, to: 22 },
+  { name: 'neural',   from: 7,  to: 17 },
+  { name: 'motor',    from: 17, to: 19 },
+  { name: 'receptor', from: 19, to: 23 },
+  { name: 'silent',   from: 23, to: 24 },
 ]);
 /**
  * Sensor channels. 0 and 1 are exteroceptive and require the sensor role — a
@@ -187,6 +197,8 @@ export const DEFAULTS = Object.freeze({
   SYN_SIGMA2: 0.0060,      // distance kernel on synapses: neighbours wire together
   DIR_SCALE: 2.0,          // weight of the asymmetric direction-dependent synapse
   TAU_MIN: 0.24, TAU_SPAN: 1.65,
+  TAUA_MIN: 1.20, TAUA_SPAN: 11.0,   // adaptation time constant range, seconds
+  ADAPT_MAX: 3.20,                   // adaptation strength range, [0, this]
   BIAS_SCALE: 1.45,
   IN_SCALE: 1.18,
 
@@ -207,7 +219,8 @@ export const DEFAULTS = Object.freeze({
   // its momentum between steps, so a slow contraction still accumulates
   // displacement, and the threshold separates high-grip cells (anchors) from
   // low-grip cells (feet) instead of freezing both.
-  FRIC_K: 0.075,           // Coulomb decrement = grip * FRIC_K * dt, in velocity units
+  FRIC_K: 6.0,             // Coulomb decrement = grip * FRIC_K * dt, in velocity units
+  GRIP_MOD: 0.9,           // how far a cell's activation can raise or lower its grip
   DRAG: 0.96,              // per-step linear velocity retention
   V_MAX: 1.20,             // hard velocity clamp, world units / second
   DX_MAX: 0.35,            // per-iteration positional correction clamp, in cell radii
@@ -371,7 +384,7 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
   const mat = new Float32Array(MATERNAL);
   const drive = new Float32Array(GENES);
   const tmp = new Float32Array(GENES);
-  const { M, R } = genome;
+  const buf = genome.buf;
   const K = rdParams(genome, cfg);
   // Morphogen concentrations, carried by the cells. Seeded near the
   // homogeneous steady state of the kinetics plus noise: a Turing instability
@@ -391,12 +404,20 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
     x[i] = Math.cos(a) * cfg.CELL_R + jx;
     y[i] = Math.sin(a) * cfg.CELL_R + jy;
     alive[i] = 1; rad[i] = cfg.CELL_R; n++;
+    A[i] = Ass * (1 + (rng.next() - 0.5) * 2 * cfg.RD_SEED);
+    H[i] = Hss * (1 + (rng.next() - 0.5) * 2 * cfg.RD_SEED);
   }
 
   const S = cfg.DEV_SCALE;
   const born = new Int32Array(N).fill(-1);   // cycle a cell was created
 
   for (let cyc = 0; cyc < cfg.DEV_CYCLES; cyc++) {
+    // --- reaction-diffusion relaxes on the current domain -------------------
+    // Before the genes read their inputs, not after: the pattern is part of
+    // the positional information, and the domain it relaxes on is whatever
+    // shape the last cycle's divisions and deaths produced.
+    rdRelax(A, H, x, y, rad, alive, N, cfg.RD_STEPS, K, cfg);
+
     // --- kernel: maternal read + GRN relaxation, one invocation per cell ----
     for (let i = 0; i < N; i++) {
       if (!alive[i]) continue;
@@ -417,16 +438,20 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
       mat[3] = Math.exp(-0.5 * r2);
       mat[4] = cyc / Math.max(1, cfg.DEV_CYCLES - 1);
       mat[5] = Math.min(1.5, dens / 6);
+      // The morphogens, log-compressed so a saturated activator does not swamp
+      // every other input to the network.
+      mat[MAT_A] = Math.log1p(A[i]);
+      mat[MAT_H] = Math.log1p(H[i]);
       for (let k = 0; k < GENES; k++) {
-        let s = 0;
-        for (let m = 0; m < MATERNAL; m++) s += mat[m] * M[m * GENES + k];
+        let s = 0; const mo = matOff(k);
+        for (let m = 0; m < MATERNAL; m++) s += mat[m] * buf[mo + m];
         drive[k] = s;
       }
       const base = i * GENES;
       for (let it = 0; it < cfg.GRN_STEPS; it++) {
         for (let k = 0; k < GENES; k++) {
-          let s = drive[k];
-          for (let m = 0; m < GENES; m++) s += g[base + m] * R[m * GENES + k];
+          let s = drive[k]; const ro = regOff(k);
+          for (let m = 0; m < GENES; m++) s += g[base + m] * buf[ro + m];
           tmp[k] = Math.tanh(s);
         }
         for (let k = 0; k < GENES; k++) g[base + k] += (tmp[k] - g[base + k]) * cfg.GRN_RATE;
@@ -469,6 +494,12 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
       x[i] = cx - px * off; y[i] = cy - py * off;
       x[slot] = cx + px * off; y[slot] = cy + py * off;
       alive[slot] = 1; rad[slot] = rad[i]; born[slot] = cyc; n++;
+      // Concentrations, not amounts: a daughter starts at the mother's local
+      // morphogen level and the field re-relaxes next cycle. The tiny
+      // asymmetry is what lets a division event seed a new pattern element
+      // instead of copying one exactly.
+      A[slot] = A[i] * (1 + (rng.next() - 0.5) * 0.02);
+      H[slot] = H[i] * (1 + (rng.next() - 0.5) * 0.02);
       // Daughter inherits the mother's gene state. It differentiates because it
       // is somewhere else and therefore reads a different maternal gradient —
       // positional information, not an inheritance rule.
@@ -529,6 +560,7 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
   const nA = idx.length;
   const W = new Float64Array(nA * nA);
   const bias = new Float64Array(nA), tau = new Float64Array(nA);
+  const tauA = new Float64Array(nA), adapt = new Float64Array(nA);
   const win = new Float64Array(nA * SENSORS);
   const grip = new Float64Array(nA);
   const isSensor = new Uint8Array(nA);
@@ -536,7 +568,21 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
     const i = idx[a], e = i * GENES;
     bias[a] = expr[e + G.BIAS] * cfg.BIAS_SCALE;
     tau[a] = cfg.TAU_MIN + cfg.TAU_SPAN / (1 + Math.exp(-expr[e + G.TAU]));
-    grip[a] = cfg.MU_MIN + (cfg.MU_MAX - cfg.MU_MIN) * 0.5 * (1 + expr[e + G.GRIP]);
+    tauA[a] = cfg.TAUA_MIN + cfg.TAUA_SPAN / (1 + Math.exp(-expr[e + G.TAU_A]));
+    // Every cell adapts to some degree; the gene sets how much. Gating
+    // adaptation on a positive expression value made oscillators rare (one
+    // body in sixteen), and a substrate whose gaits are that rare is one
+    // where behaviour is mostly "does this genome move at all", which is a
+    // binary trait and a terrible thing to select on.
+    adapt[a] = cfg.ADAPT_MAX * (0.5 + 0.5 * expr[e + G.ADAPT]);
+    // Grip, log-spaced through a steep sigmoid rather than linearly through
+    // the expression value. Linear mapping put every cell in one body at
+    // roughly the same coefficient — measured, 0.37 to 0.94 across a
+    // sixty-four cell organism — and uniform friction is isotropic friction,
+    // which cannot propel anything. What locomotion needs is a body that
+    // separates into anchors and feet, so the mapping is made to separate.
+    const gk = 1 / (1 + Math.exp(-4.0 * expr[e + G.GRIP]));
+    grip[a] = cfg.MU_MIN * Math.pow(cfg.MU_MAX / cfg.MU_MIN, gk);
     const sg = Math.max(0, expr[e + G.SENSOR]);
     isSensor[a] = sg > 0.15 ? 1 : 0;
     for (let c = 0; c < SENSORS; c++) {
@@ -585,13 +631,43 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
   for (let e = 0; e < nE; e++) if (kind[e] === 2) muscles++;
   let sensors = 0; for (let a = 0; a < nA; a++) sensors += isSensor[a];
 
+  // Morphogen field, compacted, plus two readouts of the pattern itself.
+  // `patternCV` is the coefficient of variation of the activator across the
+  // body: ~0 means the field went homogeneous (no Turing instability, the
+  // genome's kinetics are outside the unstable region) and a large value means
+  // the tissue is patterned. `patternDomains` counts connected runs of
+  // above-mean activator over the adhesion graph — spots, in other words, and
+  // therefore a direct count of repeated units.
+  const pa = new Float64Array(nA), ph = new Float64Array(nA);
+  for (let a = 0; a < nA; a++) { pa[a] = A[idx[a]]; ph[a] = H[idx[a]]; }
+  let ma = 0; for (let a = 0; a < nA; a++) ma += pa[a]; ma /= Math.max(1, nA);
+  let va = 0; for (let a = 0; a < nA; a++) va += (pa[a] - ma) ** 2; va = Math.sqrt(va / Math.max(1, nA));
+  const patternCV = ma > 1e-6 ? va / ma : 0;
+  const patternDomains = countDomains(pa, ma, cei, cej, nE, nA);
+
   return {
     n: nA, x: px, y: py, rad: pr,
     nE, ei: cei, ej: cej, L0: L0.slice(0, nE), amp: amp.slice(0, nE), kind: kind.slice(0, nE),
-    W, bias, tau, win, grip, isSensor,
+    W, bias, tau, tauA, adapt, win, grip, isSensor, A: pa, H: ph, rd: K,
     stats: { cells: nA, edges: nE, muscles, sensors, extent: ext,
-             area: polyArea(px, py, nA) },
+             area: polyArea(px, py, nA), patternCV, patternDomains },
   };
+}
+
+/** Connected components of {cell : A > mean} over the adhesion graph. */
+function countDomains(A, mean, ei, ej, nE, n) {
+  const hot = new Uint8Array(n);
+  for (let a = 0; a < n; a++) hot[a] = A[a] > mean ? 1 : 0;
+  const par = new Int32Array(n); for (let a = 0; a < n; a++) par[a] = a;
+  const find = a => { while (par[a] !== a) { par[a] = par[par[a]]; a = par[a]; } return a; };
+  for (let e = 0; e < nE; e++) {
+    const i = ei[e], j = ej[e];
+    if (!hot[i] || !hot[j]) continue;
+    const ri = find(i), rj = find(j); if (ri !== rj) par[ri] = rj;
+  }
+  const seen = new Set();
+  for (let a = 0; a < n; a++) if (hot[a]) seen.add(find(a));
+  return seen.size;
 }
 
 /** Convex-hull-free spread measure: mean squared radius, in cell-radius units. */
@@ -681,6 +757,7 @@ export class Colony {
     this.cnt = new Int32Array(T);
     this.rad = new Float64Array(T); this.grip = new Float64Array(T);
     this.ny = new Float64Array(T); this.act = new Float64Array(T);
+    this.ad = new Float64Array(T);      // slow adaptation state
     this.strain = new Float64Array(T);
     this.sens = new Float64Array(T * SENSORS);
     this.stock = new Float64Array(world.n).fill(1);
@@ -702,7 +779,7 @@ export class Colony {
   spawn(rng) {
     const cfg = this.cfg, S = this.S, b = cfg.WORLD_BOUND * 0.72;
     this.px.fill(0); this.py.fill(0); this.vx.fill(0); this.vy.fill(0);
-    this.ny.fill(0); this.act.fill(0); this.strain.fill(0);
+    this.ny.fill(0); this.act.fill(0); this.ad.fill(0); this.strain.fill(0);
     this.path.fill(0); this.intake.fill(0);
     this.stock.fill(1);
     this.foodX.set(this.world.fx); this.foodY.set(this.world.fy);
@@ -765,7 +842,8 @@ export class Colony {
     const cfg = this.cfg, S = this.S, dt = cfg.DT;
     for (let o = 0; o < this.P; o++) {
       const p = this.ph[o], n = p.n, base = o * S;
-      for (let a = 0; a < n; a++) this.act[base + a] = Math.tanh(this.ny[base + a] + p.bias[a]);
+      for (let a = 0; a < n; a++)
+        this.act[base + a] = Math.tanh(this.ny[base + a] + p.bias[a] - p.adapt[a] * this.ad[base + a]);
       for (let b = 0; b < n; b++) {
         let rec = 0;
         for (let a = 0; a < n; a++) rec += this.act[base + a] * p.W[a * n + b];
@@ -777,6 +855,9 @@ export class Colony {
         // The state is a tanh argument; letting it run to 1e3 buys nothing and
         // costs the only thing that turns finite arithmetic into NaN.
         this.ny[t] = clamp(this.ny[t], -12, 12);
+        // Adaptation chases the cell's own output on a much longer timescale;
+        // that lag is the oscillator.
+        this.ad[t] += (this.act[t] - this.ad[t]) / p.tauA[b] * dt;
       }
     }
   }
@@ -883,7 +964,14 @@ export class Colony {
         // is a developed per-cell property, so which cells are feet and which
         // are anchors is something morphology decides.
         let vX = (this.qx[t] - this.px[t]) / dt, vY = (this.qy[t] - this.py[t]) / dt;
-        const fv = this.grip[t] * cfg.FRIC_K * dt;
+        // Grip is MODULATED by the cell's own activation: a cell can plant or
+        // lift. Without this, per-cell friction is a static property and a
+        // gait made of one muscle is reciprocal, so Purcell's scallop applies
+        // and the net displacement over a cycle is zero however hard the
+        // muscle pulls. Grip modulation phase-locked to contraction is the
+        // cheapest way out of that, and it is also what a foot is.
+        const gm = 1 + cfg.GRIP_MOD * this.act[t];
+        const fv = this.grip[t] * (gm > 0.05 ? gm : 0.05) * cfg.FRIC_K * dt;
         const sp = Math.hypot(vX, vY);
         if (sp <= fv) { vX = 0; vY = 0; }
         else { const s = 1 - fv / sp; vX *= s; vY *= s; }
@@ -967,7 +1055,7 @@ export class Colony {
         const t = base + a;
         if (!Number.isFinite(this.px[t]) || !Number.isFinite(this.py[t]) ||
             !Number.isFinite(this.vx[t]) || !Number.isFinite(this.vy[t]) ||
-            !Number.isFinite(this.ny[t]))
+            !Number.isFinite(this.ny[t]) || !Number.isFinite(this.ad[t]))
           throw new Error(`non-finite state at step ${this.steps} organism ${o} cell ${a} ${where}`);
       }
     }
