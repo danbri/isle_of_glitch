@@ -80,8 +80,23 @@ const a = parseArgs(process.argv.slice(2), {
   // reliable lever for raising the signal selection acts on. 1 = one episode per
   // generation, which keeps the displacement result byte-identical.
   spawns: 1,
+  // Food-density overrides (default -1 = use DEFAULTS untouched). These change the
+  // ARENA only, never development — food count/geometry/sensing do not enter
+  // develop(), so morphology, the gate and turing are unaffected. Sparsening the
+  // food is the measured lever for making directed feeding worth more than
+  // incidental drift: at the 42-source default an undirected gait finds food
+  // nearly as well as a directed one, so the sense has ~0 marginal intake value.
+  food: -1, clusters: -1, senseSigma2: -1, eatSigma2: -1,
 });
-const cfg = DEFAULTS;
+// Build the working config from DEFAULTS plus any food overrides. DEFAULTS itself
+// is never mutated, so every other tool that imports it sees the trunk values.
+const cfg = Object.freeze({
+  ...DEFAULTS,
+  ...(a.food >= 0 ? { FOOD: a.food } : {}),
+  ...(a.clusters >= 0 ? { FOOD_CLUSTERS: a.clusters } : {}),
+  ...(a.senseSigma2 >= 0 ? { FOOD_SENSE_SIGMA2: a.senseSigma2 } : {}),
+  ...(a.eatSigma2 >= 0 ? { FOOD_EAT_SIGMA2: a.eatSigma2 } : {}),
+});
 const log = (...m) => { if (!a.quiet) console.error(...m); };
 
 /* --------------------------------------------------------------- helpers */
@@ -252,7 +267,8 @@ const modeAt = (gen) => (gen < a.curriculum ? 'displacement' : a.fitness);
 
 log(`[sb-evolve] pop ${a.pop}, gens ${a.gens}, elite ${a.elite}, eps ${a.eps}, steps ${a.steps}, seed ${a.seed}` +
     `, fitness ${a.fitness}, spawns ${a.spawns}${a.curriculum ? ` (curriculum: displacement for ${a.curriculum} gens)` : ''}` +
-    `${a.crossover ? ', +blockCrossover' : ''}`);
+    `${a.crossover ? ', +blockCrossover' : ''}` +
+    `\n           food ${cfg.FOOD} in ${cfg.FOOD_CLUSTERS} clusters, senseSigma2 ${cfg.FOOD_SENSE_SIGMA2}, eatSigma2 ${cfg.FOOD_EAT_SIGMA2}`);
 
 const traj = [];
 let ev = evalPop(pop.map(pheno), 0, modeAt(0));
@@ -350,7 +366,8 @@ console.log(`  forage-expressing fraction: gen-0 ${(m0.forageFrac * 100).toFixed
 if (a.out) {
   writeFileSync(a.out, JSON.stringify({
     seed: a.seed, pop: a.pop, gens: a.gens, elite: a.elite, eps: a.eps, steps: a.steps,
-    fitness: a.fitness, curriculum: a.curriculum, spawns: a.spawns, crossover: !!a.crossover, traj,
+    fitness: a.fitness, curriculum: a.curriculum, spawns: a.spawns, crossover: !!a.crossover,
+    food: { FOOD: cfg.FOOD, FOOD_CLUSTERS: cfg.FOOD_CLUSTERS, FOOD_SENSE_SIGMA2: cfg.FOOD_SENSE_SIGMA2, FOOD_EAT_SIGMA2: cfg.FOOD_EAT_SIGMA2 }, traj,
     gen0: m0, evolved: mE, ablated: mA,
     dispGain, dispBar, intakeGain, intakeBar, effGain, effBar, ablDrop, ablBar,
   }, null, 2));
