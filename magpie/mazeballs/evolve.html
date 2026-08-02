@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live evolution — soft-body arena</title>
+<style>
+:root{
+  --paper:#0C1413; --panel:#131E1C; --panel2:#0F1917; --ink:#E3EBE9; --ink-soft:#93A6A2; --ink-faint:#5C6D69;
+  --rule:#243330; --rule-soft:#1B2A26;
+  --move:#E28C3E; --still:#41707A; --best:#7FD1C4; --grid:#1E2C29;
+  --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);display:flex;flex-direction:column;min-height:100%;-webkit-font-smoothing:antialiased}
+header{padding:.75rem clamp(.8rem,3vw,1.6rem);border-bottom:1px solid var(--rule);display:flex;align-items:baseline;gap:.9rem;flex-wrap:wrap}
+header h1{font-size:1rem;font-weight:600;margin:0;letter-spacing:-.01em}
+header .sub{font-family:var(--mono);font-size:.72rem;color:var(--ink-soft);letter-spacing:.03em}
+header a{color:var(--best);text-decoration:none;font-size:.75rem;margin-left:auto}
+header a:hover{text-decoration:underline}
+.wrap{flex:1;display:flex;min-height:0;flex-wrap:wrap}
+.stage{flex:1 1 440px;position:relative;min-height:340px;display:flex;align-items:center;justify-content:center;padding:1rem}
+#arena{width:100%;height:100%;max-width:min(80vh,820px);aspect-ratio:1;background:var(--panel2);border:1px solid var(--rule);border-radius:3px}
+.phase{position:absolute;top:1.4rem;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);background:rgba(12,20,19,.7);padding:.3rem .7rem;border-radius:3px;pointer-events:none}
+aside{flex:0 0 320px;border-left:1px solid var(--rule);padding:1rem 1.1rem;display:flex;flex-direction:column;gap:1.15rem;overflow-y:auto}
+@media (max-width:760px){aside{flex-basis:100%;border-left:none;border-top:1px solid var(--rule)}}
+.group{display:flex;flex-direction:column;gap:.55rem}
+.group h2{font-family:var(--mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0;font-weight:500}
+.row{display:flex;gap:.5rem;flex-wrap:wrap}
+button{font:inherit;font-size:.84rem;color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:.5rem .8rem;cursor:pointer;flex:1;min-width:70px;transition:border-color .12s,background .12s}
+button:hover{border-color:var(--best)}
+button:focus-visible{outline:2px solid var(--best);outline-offset:2px}
+button.primary{background:var(--move);border-color:var(--move);color:#180B02;font-weight:600}
+.chart{background:var(--panel2);border:1px solid var(--rule);border-radius:3px;padding:.5rem}
+.chart canvas{display:block;width:100%;height:auto}
+.stats{display:grid;grid-template-columns:1fr auto;gap:.3rem .8rem;font-family:var(--mono);font-size:.82rem}
+.stats .k{color:var(--ink-soft)}
+.stats .v{text-align:right;font-variant-numeric:tabular-nums}
+.stats .v.hi{color:var(--move)}
+.stats .v.best{color:var(--best)}
+.legend{display:flex;flex-wrap:wrap;gap:.5rem .9rem;font-size:.76rem}
+.legend .k{display:flex;align-items:center;gap:.4rem}
+.legend .dot{width:10px;height:10px;border-radius:50%;flex:none}
+.slider{display:flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.72rem;color:var(--ink-soft)}
+.slider input{flex:1}
+.note{font-size:.75rem;line-height:1.55;color:var(--ink-soft)}
+.note b{color:var(--ink);font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <h1>Live evolution</h1>
+  <span class="sub">a population of soft bodies, selected to move — real tournament evolution, in your browser</span>
+  <a href="./viewer.html">single-organism viewer ›</a>
+</header>
+
+<div class="wrap">
+  <div class="stage">
+    <canvas id="arena" width="820" height="820"></canvas>
+    <div class="phase" id="phase">ready</div>
+  </div>
+
+  <aside>
+    <div class="group">
+      <h2>Run</h2>
+      <div class="row">
+        <button id="go" class="primary">▶ evolve</button>
+        <button id="reset">reset</button>
+      </div>
+      <div class="slider"><span>episode speed</span><input id="speed" type="range" min="1" max="10" value="5"><span id="speedv">5×</span></div>
+    </div>
+
+    <div class="group">
+      <h2>Displacement per generation</h2>
+      <div class="chart"><canvas id="chart" width="560" height="180"></canvas></div>
+      <div class="legend">
+        <span class="k"><span class="dot" style="background:var(--best)"></span>best</span>
+        <span class="k"><span class="dot" style="background:var(--move)"></span>mean</span>
+        <span class="k"><span class="dot" style="background:var(--still)"></span>generation-0</span>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2>This generation</h2>
+      <div class="stats" id="stats"></div>
+    </div>
+
+    <div class="group">
+      <h2>Settings</h2>
+      <div class="slider"><span>population</span><input id="pop" type="range" min="12" max="48" step="4" value="28"><span id="popv">28</span></div>
+      <div class="slider"><span>mutation ε</span><input id="eps" type="range" min="2" max="20" value="8"><span id="epsv">0.08</span></div>
+    </div>
+
+    <p class="note" id="note">Each generation, every body is <b>developed from its genome</b> and dropped into the
+    world for one episode. Bodies that <b style="color:var(--move)">travel</b> furthest win a k=2 tournament and are
+    copied with small mutations; the rest are replaced. Watch the swarm go from <b style="color:var(--still)">sitting
+    still</b> to crawling as the generations pass — the same 17× climb the headless runs measured, live.</p>
+  </aside>
+</div>
+
+<script type="module">
+import { DEFAULTS, makeRng, randomGenome, perturbGenome, cloneGenome, develop, makeWorld, Colony }
+  from './lib/softbody.js';
+
+const cfg = DEFAULTS;
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const cv = $('arena'), ctx = cv.getContext('2d');
+const chart = $('chart'), cctx = chart.getContext('2d');
+
+const STEPS = 420, ELITE = 2, DEVSEED = id => makeRng((0x51b0 ^ Math.imul(id, 2654435761)) >>> 0);
+let POP = 28, EPS = 0.08;
+let world, colony, genomes, gen, nid, hist, gen0mean, running, raf, stepInGen, moveThresh = 0.05;
+
+function fresh(){
+  cancelAnimationFrame(raf); running = false;
+  $('go').textContent = '▶ evolve'; $('go').classList.add('primary');
+  world = makeWorld(cfg, makeRng(7));
+  nid = 0; gen = 0; hist = []; gen0mean = null;
+  const rng = makeRng(1 + Math.floor(Math.random() * 1e6));
+  genomes = Array.from({ length: POP }, () => ({ buf: randomGenome(rng, cfg).buf, id: nid++, pheno: null }));
+  startEpisode('generation 0 — all random');
+}
+
+function pheno(g){ return g.pheno || (g.pheno = develop({ buf: g.buf }, cfg, DEVSEED(g.id))); }
+
+function startEpisode(label){
+  $('phase').textContent = label || `generation ${gen}`;
+  const phenos = genomes.map(pheno);
+  colony = new Colony(phenos, world, cfg);
+  colony.spawn(makeRng(0x3000 + gen * 7919));
+  stepInGen = 0;
+  drawArena();
+  updateStats(null);
+}
+
+function episodeFrame(){
+  if (!running) return;
+  const n = +$('speed').value;
+  for (let k = 0; k < n && stepInGen < STEPS; k++){ colony.step(); stepInGen++; }
+  drawArena();
+  if (stepInGen >= STEPS){ nextGeneration(); return; }   // stop the loop; startEpisode restarts it
+  raf = requestAnimationFrame(episodeFrame);
+}
+
+function nextGeneration(){
+  const fit = colony.traits().map(t => t.displacement);
+  const mean = fit.reduce((a,b)=>a+b,0)/fit.length;
+  const best = Math.max(...fit);
+  const moving = fit.filter(f => f > moveThresh).length;
+  if (gen0mean === null) gen0mean = mean;
+  hist.push({ gen, best, mean, moving: moving/POP });
+  drawChart();
+  updateStats({ best, mean, moving });
+
+  // k=2 tournament + elitism + mutation (the same operator the headless loop uses)
+  const rng = makeRng(0x7ea1 ^ (gen * 2654435761));
+  const order = [...genomes.keys()].sort((a,b)=>fit[b]-fit[a]);
+  const next = [];
+  for (let e=0;e<ELITE;e++) next.push({ buf: Float32Array.from(genomes[order[e]].buf), id: nid++, pheno: null });
+  while (next.length < POP){
+    const a = rng.int()%POP, b = rng.int()%POP;
+    const p = fit[a] >= fit[b] ? genomes[a] : genomes[b];
+    next.push({ buf: perturbGenome({ buf: p.buf }, EPS, rng).buf, id: nid++, pheno: null });
+  }
+  genomes = next; gen++;
+  $('phase').textContent = `selecting → generation ${gen}…`;
+  // brief yield so the "selecting" flash is visible, then develop next gen and
+  // restart the episode loop (episodeFrame stopped itself when the episode ended)
+  setTimeout(() => { if (running){ startEpisode(`generation ${gen}`); episodeFrame(); } }, 300);
+}
+
+// ---- arena rendering: the whole population in the world ----
+function drawArena(){
+  const W = cv.width, H = cv.height, B = 1.0, pad = 16, sc = (W-2*pad)/(2*B);
+  const tx = x => pad + (x+B)*sc, ty = y => pad + (y+B)*sc;
+  ctx.clearRect(0,0,W,H);
+  const bb = cfg.WORLD_BOUND;
+  ctx.strokeStyle = css('--rule'); ctx.lineWidth = 1;
+  ctx.strokeRect(tx(-bb), ty(-bb), 2*bb*sc, 2*bb*sc);
+  // food
+  ctx.fillStyle = 'rgba(226,140,62,0.20)';
+  for (let i=0;i<world.fx.length;i++){ ctx.beginPath(); ctx.arc(tx(world.fx[i]), ty(world.fy[i]), 2.4, 0, 7); ctx.fill(); }
+  // each organism: cells as dots, tinted by how far it has travelled from its start
+  const S = colony.S;
+  for (let o=0;o<colony.P;o++){
+    const base = o*S, p = colony.ph[o];
+    const dx = colony.lastCX ? 0 : 0;
+    // travelled distance so far, for colour
+    let cx=0, cy=0; for (let a=0;a<p.n;a++){ cx+=colony.px[base+a]; cy+=colony.py[base+a]; } cx/=p.n; cy/=p.n;
+    const d = Math.hypot(cx - colony.startX[o], cy - colony.startY[o]);
+    const t = Math.max(0, Math.min(1, d/0.5));
+    // still (teal) -> moving (orange)
+    const c = [Math.round(65+(226-65)*t), Math.round(112+(140-112)*t), Math.round(122+(62-122)*t)];
+    ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
+    ctx.globalAlpha = 0.55 + 0.4*t;
+    for (let a=0;a<p.n;a++){
+      const r = Math.max(1.4, colony.rad[base+a]*sc*0.85);
+      ctx.beginPath(); ctx.arc(tx(colony.px[base+a]), ty(colony.py[base+a]), r, 0, 7); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  // progress bar of the episode
+  ctx.fillStyle = css('--rule-soft'); ctx.fillRect(pad, H-5, (W-2*pad), 2);
+  ctx.fillStyle = css('--move'); ctx.fillRect(pad, H-5, (W-2*pad)*(stepInGen/STEPS), 2);
+}
+
+// ---- fitness chart ----
+function drawChart(){
+  const W = chart.width, H = chart.height, pad = 26;
+  cctx.clearRect(0,0,W,H);
+  const maxG = Math.max(9, hist.length-1);
+  const maxY = Math.max(0.4, ...hist.map(h=>h.best)) * 1.1;
+  const gx = g => pad + (W-pad-8) * (g/maxG);
+  const gy = v => H-pad - (H-pad-8) * (v/maxY);
+  // grid + axes
+  cctx.strokeStyle = css('--grid'); cctx.lineWidth = 1; cctx.fillStyle = css('--ink-faint');
+  cctx.font = '10px ui-monospace,monospace';
+  for (let i=0;i<=4;i++){ const y = H-pad-(H-pad-8)*(i/4); cctx.beginPath(); cctx.moveTo(pad,y); cctx.lineTo(W-8,y); cctx.stroke();
+    cctx.fillText((maxY*i/4).toFixed(2), 2, y+3); }
+  // gen-0 mean reference
+  if (gen0mean !== null){ cctx.strokeStyle = css('--still'); cctx.setLineDash([3,3]); cctx.beginPath(); cctx.moveTo(pad, gy(gen0mean)); cctx.lineTo(W-8, gy(gen0mean)); cctx.stroke(); cctx.setLineDash([]); }
+  const line = (key, col) => {
+    cctx.strokeStyle = col; cctx.lineWidth = 1.8; cctx.beginPath();
+    hist.forEach((h,i)=>{ const x=gx(h.gen), y=gy(h[key]); i?cctx.lineTo(x,y):cctx.moveTo(x,y); }); cctx.stroke();
+    if (hist.length){ const h=hist[hist.length-1]; cctx.fillStyle=col; cctx.beginPath(); cctx.arc(gx(h.gen),gy(h[key]),2.6,0,7); cctx.fill(); }
+  };
+  line('mean', css('--move')); line('best', css('--best'));
+  cctx.fillStyle = css('--ink-faint'); cctx.fillText('gen '+ (hist.length?hist[hist.length-1].gen:0), W-56, H-6);
+}
+
+function updateStats(cur){
+  const rows = [
+    ['generation', gen],
+    ['population', POP],
+  ];
+  if (cur){
+    rows.push(['best displacement', cur.best.toFixed(3)]);
+    rows.push(['mean displacement', cur.mean.toFixed(3)]);
+    rows.push(['moving', Math.round(cur.moving/POP*100)+'%']);
+    if (gen0mean) rows.push(['× over gen-0 mean', (cur.mean/Math.max(1e-4,gen0mean)).toFixed(1)+'×']);
+  } else {
+    rows.push(['episode', Math.round(stepInGen/STEPS*100)+'%']);
+  }
+  $('stats').innerHTML = rows.map(([k,v])=>{
+    const cls = k==='best displacement'?' best':(k.startsWith('×')||k==='moving'?' hi':'');
+    return `<span class="k">${k}</span><span class="v${cls}">${v}</span>`;
+  }).join('');
+}
+
+// ---- controls ----
+$('go').onclick = () => {
+  running = !running;
+  $('go').textContent = running ? '❚❚ pause' : '▶ evolve';
+  $('go').classList.toggle('primary', !running);
+  if (running) episodeFrame();
+};
+$('reset').onclick = () => { POP = +$('pop').value; EPS = +$('eps').value/100; fresh(); };
+$('speed').oninput = () => $('speedv').textContent = $('speed').value+'×';
+$('pop').oninput = () => $('popv').textContent = $('pop').value;
+$('eps').oninput = () => { EPS = +$('eps').value/100; $('epsv').textContent = EPS.toFixed(2); };
+
+fresh();
+drawChart();
+</script>
+</body>
+</html>
