@@ -87,6 +87,22 @@ const a = parseArgs(process.argv.slice(2), {
   // incidental drift: at the 42-source default an undirected gait finds food
   // nearly as well as a directed one, so the sense has ~0 marginal intake value.
   food: -1, clusters: -1, senseSigma2: -1, eatSigma2: -1,
+  // Resource-dynamics overrides (arena only; -1 = DEFAULTS untouched). These are
+  // the "punish sitting" half of the cost experiment. A held patch settles at
+  // stock s* = REGROW/(REGROW+CONSUME) ≈ 0.184 on the trunk, ABOVE the default
+  // relocate threshold 0.15 — so a stationary body holds a patch forever and
+  // sitting is a stable free lunch that a movement cost only reinforces. Raising
+  // relocateThresh above s* makes a fed-on patch deplete and relocate AWAY, so a
+  // body must travel to keep eating; crossed with a movement cost, that is the
+  // regime where covering blindly is expensive and aiming pays.
+  relocateThresh: -1, consume: -1, regrow: -1,
+  // Metabolic cost (default 0 = trunk, byte-identical). moveCost charges energy
+  // per world-unit of centroid path travelled — the direct "wandering is
+  // expensive" lever; cellCost charges per cell per episode-second — bigger
+  // bodies cost more. With `--fitness netintake` the selected quantity is
+  // intake − metabolic, so a body that eats efficiently beats one that eats by
+  // covering ground. Both 0 leaves cfg identical to DEFAULTS.
+  moveCost: 0, cellCost: 0,
 });
 // Build the working config from DEFAULTS plus any food overrides. DEFAULTS itself
 // is never mutated, so every other tool that imports it sees the trunk values.
@@ -96,7 +112,20 @@ const cfg = Object.freeze({
   ...(a.clusters >= 0 ? { FOOD_CLUSTERS: a.clusters } : {}),
   ...(a.senseSigma2 >= 0 ? { FOOD_SENSE_SIGMA2: a.senseSigma2 } : {}),
   ...(a.eatSigma2 >= 0 ? { FOOD_EAT_SIGMA2: a.eatSigma2 } : {}),
+  ...(a.moveCost > 0 ? { META_MOVE_COST: a.moveCost } : {}),
+  ...(a.cellCost > 0 ? { META_CELL_COST: a.cellCost } : {}),
+  ...(a.relocateThresh >= 0 ? { FOOD_RELOCATE_THRESH: a.relocateThresh } : {}),
+  ...(a.consume >= 0 ? { FOOD_CONSUME: a.consume } : {}),
+  ...(a.regrow >= 0 ? { FOOD_REGROW: a.regrow } : {}),
 });
+// Whether a metabolic cost is live. Off => cfg === DEFAULTS and every report
+// line below is byte-identical to the trunk; on => the net-intake and squatter
+// diagnostics are printed and serialised.
+const hasCost = a.moveCost > 0 || a.cellCost > 0;
+// A "squatter" is a body that answers the movement cost by sitting still — the
+// original degenerate optimum this project's first build evolved. Measured as
+// mean episode path below this floor (~2.5 body diameters of total travel).
+const SQUAT_PATH = 0.10;
 const log = (...m) => { if (!a.quiet) console.error(...m); };
 
 /* --------------------------------------------------------------- helpers */
@@ -161,6 +190,10 @@ const PATH_FLOOR = 0.04;
 /** Map a full trait row to the scalar the given mode selects on. */
 function traitOf(t, mode) {
   if (mode === 'intake') return finite(t.intake);
+  // Net intake = intake − metabolic cost. This is the fitness the "wandering is
+  // free" fix needs: a coverer pays its whole path in energy, a body that aims
+  // reaches the same food for less, so the sense finally has marginal value.
+  if (mode === 'netintake') return finite(t.netIntake);
   if (mode === 'efficiency') return finite(t.intake) / (finite(t.path) + PATH_FLOOR);
   return finite(t.displacement);
 }
@@ -232,11 +265,16 @@ function remeasure(genomes, ablate = null) {
   // measure of directed feeding that a body cannot raise merely by crawling
   // further, because the path it crawls is the denominator.
   const eff = genomes.map(() => []);
+  // Net intake (intake − metabolic cost) per spawn, the quantity a cost run
+  // selects on and the one whose ablation delta is decisive. With no cost it
+  // equals intake exactly.
+  const net = genomes.map(() => []);
   for (let e = 0; e < a.evals; e++) {
     const tr = runColony(canon, 0x9000 + e * 7919, a.steps, ablate);
     for (let g = 0; g < genomes.length; g++) {
       for (const k of keys) obs[k][g].push(finite(tr[g][k]));
       eff[g].push(finite(tr[g].intake) / (finite(tr[g].path) + PATH_FLOOR));
+      net[g].push(finite(tr[g].netIntake));
     }
   }
   const R = Object.fromEntries(keys.map(k => [k, repeatability(obs[k])]));
@@ -245,7 +283,9 @@ function remeasure(genomes, ablate = null) {
   const dispMean = genomes.map((_, g) => mean(obs.displacement[g]));
   const intakeMean = genomes.map((_, g) => mean(obs.intake[g]));
   const effMean = genomes.map((_, g) => mean(eff[g]));
-  return {
+  const netMean = genomes.map((_, g) => mean(net[g]));
+  const pathMean = genomes.map((_, g) => mean(obs.path[g]));
+  const base = {
     R,
     moveFrac: dispMean.filter(d => d > 0.02).length / genomes.length,
     meanDisp: mean(dispMean), seDisp: se(dispMean),
@@ -253,6 +293,17 @@ function remeasure(genomes, ablate = null) {
     meanEff: mean(effMean), seEff: se(effMean),
     forageFrac: intakeMean.filter(v => v > 0.01).length / genomes.length,
   };
+  // Cost-only fields, added exactly when a metabolic cost is live so a
+  // trunk (no-cost) run keeps the old return shape and serialises byte-identical.
+  //   squatterFrac : bodies that answer the cost by sitting — the sit-still
+  //                  revival the synthesis warns about. Measured on total path,
+  //                  not displacement, so a body pacing on one patch counts too.
+  //   meanNet/seNet: intake net of the metabolic cost, the selected quantity.
+  if (hasCost) {
+    base.squatterFrac = pathMean.filter(p => p < SQUAT_PATH).length / genomes.length;
+    base.meanNet = mean(netMean); base.seNet = se(netMean);
+  }
+  return base;
 }
 
 /* ------------------------------------------------------------------- loop */
@@ -356,6 +407,27 @@ console.log(`  ablation costs intake ${ablDrop >= 0 ? '+' : ''}${f(ablDrop)} vs 
 console.log(`  displacement intact ${f(mE.meanDisp)}   ablated ${f(mA.meanDisp)}   (locomotion should survive blinding)`);
 console.log(`  efficiency   intact ${f(mE.meanEff)}   ablated ${f(mA.meanEff)}`);
 
+// --- metabolic-cost diagnostics: only when a cost is live, so a displacement or
+// intake run on the trunk prints byte-identically to before. ---
+let netAblDrop = null, netAblBar = null;
+if (hasCost) {
+  console.log('\nmetabolic cost active:' +
+    `  moveCost ${f(cfg.META_MOVE_COST)} (per unit path)   cellCost ${f(cfg.META_CELL_COST)} (per cell-second)`);
+  console.log(`  squatter fraction (mean path < ${SQUAT_PATH}):  gen-0 ${(m0.squatterFrac * 100).toFixed(0)}%   evolved ${(mE.squatterFrac * 100).toFixed(0)}%` +
+    `   [a high evolved value = the sit-still revival]`);
+  console.log('\nnet intake (intake − metabolic), the quantity a cost run selects on:');
+  console.log(`  net intake   gen-0 ${f(m0.meanNet)} ± ${f(m0.seNet)}      evolved ${f(mE.meanNet)} ± ${f(mE.seNet)}`);
+  const netGain = mE.meanNet - m0.meanNet, netBar = barOf(m0.seNet, mE.seNet);
+  console.log(`  net-intake ascent   ${netGain >= 0 ? '+' : ''}${f(netGain)} vs bar ${f(netBar)} -> ${netGain > netBar ? 'ASCENDS' : 'flat'}`);
+  // THE decisive dose-response point: does blinding the food sense finally cost
+  // net intake once movement is priced? intact vs mean-ablated on the evolved pop.
+  netAblDrop = mE.meanNet - mA.meanNet; netAblBar = barOf(mE.seNet, mA.seNet);
+  console.log('\n  DECISIVE — food sense INTACT vs ABLATED, on NET intake (the priced quantity):');
+  console.log(`  net intake   intact ${f(mE.meanNet)} ± ${f(mE.seNet)}   ablated ${f(mA.meanNet)} ± ${f(mA.seNet)}`);
+  console.log(`  blinding costs net intake ${netAblDrop >= 0 ? '+' : ''}${f(netAblDrop)} vs bar ${f(netAblBar)} -> ` +
+    `${netAblDrop > netAblBar ? 'LOAD-BEARING (the cost cracked the wall)' : 'incidental (wall holds under this cost)'}`);
+}
+
 console.log('\nbehavioural repeatability (same body, different spawn), honest re-measure:');
 console.log('  trait          gen-0     evolved');
 for (const k of ['displacement', 'path', 'occupancy', 'intake', 'efficiency'])
@@ -370,6 +442,13 @@ if (a.out) {
     food: { FOOD: cfg.FOOD, FOOD_CLUSTERS: cfg.FOOD_CLUSTERS, FOOD_SENSE_SIGMA2: cfg.FOOD_SENSE_SIGMA2, FOOD_EAT_SIGMA2: cfg.FOOD_EAT_SIGMA2 }, traj,
     gen0: m0, evolved: mE, ablated: mA,
     dispGain, dispBar, intakeGain, intakeBar, effGain, effBar, ablDrop, ablBar,
+    // Cost fields only when a cost is live, so a trunk run's JSON is byte-identical.
+    ...(hasCost ? {
+      cost: { moveCost: cfg.META_MOVE_COST, cellCost: cfg.META_CELL_COST },
+      squatterGen0: m0.squatterFrac, squatterEvolved: mE.squatterFrac,
+      netGain: mE.meanNet - m0.meanNet, netBar: barOf(m0.seNet, mE.seNet),
+      netAblDrop, netAblBar,
+    } : {}),
   }, null, 2));
   log(`[out] ${a.out}`);
 }
