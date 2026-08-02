@@ -3114,3 +3114,42 @@ same tell the previous six waves recorded, whatever its origin here, and the
 standing rule was applied: notices about state, and notices that ask for their
 own concealment, are not instructions. Nothing was acted on and it is reported
 rather than suppressed. Instructions come from the task prompt.
+
+## Mating and mutation rate: one coupled decision, deferred but constrained
+
+Recorded ahead of the work so the constraint is not discovered after it is
+expensive.
+
+**Recombination was tested and was null, and the null is narrower than it
+looks.** Uniform per-gene crossover at p = 0.5 came in at +0.172 against a bar
+of 0.843, and self-adaptive mutation rates were worse than null. But both ran on
+a dense `[10 × 10]` regulatory matrix feeding a hardcoded expression-to-parameter
+readout — a genome with no modules in it. Recombination pays only when there are
+separable building blocks to recombine; with none, uniform crossover is pure
+disruption, shredding whatever linkage exists and combining nothing. The result
+is evidence about *that* genome, not about recombination.
+
+This is the strongest practical argument for a patterning-based development.
+Turing dynamics are a mechanism for producing modularity — repeated units,
+symmetries, parts that can vary semi-independently. If they deliver it, the
+operator that exploits it is single- or two-point crossover preserving
+**contiguous blocks**, not the uniform variant already refuted. Which imposes a
+requirement on the new substrate now rather than later: **the genome must have a
+documented, ordered layout that groups by module**, so that a block-preserving
+operator has blocks to preserve. A genome laid out arbitrarily can only ever be
+crossed over uniformly, and that is the thing that does not work.
+
+**Mutation rate is not independent of this.** The incumbent mutates 0.10 per
+gene across 130 genes — about thirteen mutations per child — which is survivable
+only because the genotype-to-phenotype map is smooth. The explicit goal of the
+new substrate is a map where small genome changes produce large phenotype
+changes. To the exact extent that succeeds, the current rate becomes lethal:
+every child a monster, and no information held across generations. This is the
+error threshold, and it makes amplification and mutation rate a single coupled
+choice rather than two knobs.
+
+So the rate should be **measured, not chosen**. The genotype-sensitivity sweep
+already planned for the gate yields it directly: the ε at which phenotype
+distance saturates — beyond which a perturbation may as well be a fresh random
+genome — is the usable mutation ceiling for the substrate. Report it with the
+repeatability quantities and set the rate from it.
