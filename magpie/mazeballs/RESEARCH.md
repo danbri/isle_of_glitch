@@ -3328,3 +3328,95 @@ The behaviour column is non-monotone, peaking at eps 0.05 and falling after.
 That is what an amplifying map looks like once it saturates: small perturbations
 produce proportionate behavioural change, large ones produce a different animal
 whose behaviour is uncorrelated rather than maximally distant.
+
+## The first evolution this substrate has seen: locomotion ascends 17×
+
+`tools/sb-evolve.js`. Everything before it on this substrate was measurement.
+The gate said the substrate is selectable; this is the loop that spends that,
+and it is the first evolutionary loop the soft bodies have ever run.
+
+**The rules, and why each one.** Tournament selection, **k = 2** — the only
+selection rule that has ever moved anything in this project, the one that
+produced the incumbent's first prey improvement where truncation and MAP-Elites
+were null, chosen because a soft tournament averages many near-independent draws
+and tolerates residual evaluation noise rather than trying to abolish it.
+Mutation is `perturbGenome` — additive bounded-Gaussian on every locus, the same
+operator the gate's ε sweep uses, so its rate means the same thing here that it
+meant there. **Rate ε = 0.08**, read off the gate curve rather than guessed: it
+is an order of magnitude below the ε ≈ 0.75 morphology-saturation ceiling where
+inheritance is destroyed, and it sits in the band (morphology distance still
+~0.15, so the child body resembles the parent, while behavioural sensitivity is
+near its 0.05–0.12 peak) where a mutation makes a *proportionate, selectable*
+change in what the body does instead of randomising it into a different animal.
+Elitism is small (2 genomes carried unchanged, cloned) so the frontier is stable
+without collapsing tournament diversity. Fitness is **displacement over one
+episode** — the trait the gate proved is both expressed and repeatable — and
+explicitly not intake, which the gate measured at repeatability 0 because nothing
+forages yet. `assertFinite` stays live throughout, and a shared episode that
+throws falls back to isolating each organism so one NaN body scores 0 rather than
+poisoning the depleting food field for the whole population.
+
+**It ascends, and it replicates.** POP 64, 30 generations, three seeds, fitness
+= mean displacement over 6 held-out spawns (spawn-noise-averaged, so the rise is
+genetic and not a lucky spawn):
+
+| seed | gen-0 displacement | evolved displacement | ascent | 2·SE bar |
+|---|---|---|---|---|
+| 1 | 0.035 ± 0.013 | 0.805 ± 0.049 | +0.770 | 0.101 |
+| 2 | 0.040 ± 0.014 | 0.785 ± 0.039 | +0.745 | 0.083 |
+| 3 | 0.063 ± 0.018 | 0.816 ± 0.038 | +0.753 | 0.084 |
+
+Pooled, displacement goes **0.046 → 0.802, a factor of 17.5**, each seed clearing
+its bar by seven to nine combined standard errors. The population's moving
+fraction (displaced > 0.02 world units) goes from 17–25% at generation 0 to
+94–100% by generation 30: selection converts a bimodal population where
+locomotion is rare into one where nearly every organism crawls. The trajectory is
+steepest early — median displacement is already off the floor by generation 3 and
+past half its final value by generation 6 — then climbs more slowly to a plateau,
+the shape of a trait being found and then refined. **This is the control the
+whole rebuild was for: the same category of change — selection acting on a
+behavioural trait — moved the incumbent almost nothing, because there the trait
+was ~5% repeatable and selection was sorting noise. Here it moves it 17-fold.**
+
+**The two caveated gate numbers, re-measured honestly on the evolved
+population.** The gate's 0.90 behavioural repeatability was flagged as inflated
+by bimodality: most random genomes do not move, a reliable zero is trivially
+repeatable, and the between-genome variance was carried by a locomoting minority.
+On an evolved population where 94–100% locomote, that free repeatability is gone,
+and the honest number is lower:
+
+| trait | gate (random pop) | evolved pop (pooled 3 seeds) |
+|---|---|---|
+| displacement | 0.897 | **0.601** |
+| path | 0.909 | 0.752 |
+| occupancy | 0.897 | 0.607 |
+| intake | 0.000 | **0.034** |
+
+Displacement repeatability falls to ~0.60 — as predicted, and the right way to
+read the 0.90 is confirmed: it was never "any behavioural difference is 90%
+heritable", it was "the differences between genomes are reproducible", and on a
+population selected until nearly all of them move, the reproducible between-genome
+spread is a smaller share of the total. **0.60 is still an order of magnitude
+above the incumbent's 0.05**, and still firmly in the regime where a k=2
+tournament acts on the genotype rather than on spawn luck — which is exactly why
+the ascent above is real.
+
+**And intake, re-measured now that something eats, is still not selectable.**
+Mean intake rose over the run (0.16 → 0.27) and the forage-expressing fraction
+rose from ~65% to 91–100% — but intake repeatability read **0.034**, essentially
+the incumbent's 0.012–0.047 regime and indistinguishable from zero. The reading
+is unambiguous: foraging is now *happening*, as a by-product of locomotion —
+organisms that crawl far drift through more food patches and incidentally consume
+more — but it is not yet a *heritable* trait, because nothing has selected on the
+difference between a body that steers toward food and one that blunders into it.
+Intake is a consequence of the displacement selection bought, not a capability in
+its own right. Selecting on it directly is the obvious next experiment, and the
+gate's method now has a non-zero baseline to measure that against.
+
+**What is deliberately left for later.** The genome's LAYOUT groups loci into
+named contiguous module blocks, and `blockCrossover` (in `lib/softbody.js`) cuts
+on those boundaries to transfer a whole functional subsystem intact; the loop
+carries it behind `--crossover` but the primary result is mutation-only, matching
+the one selection rule this project has evidence for. Recombination, a foraging
+fitness once intake is made selectable, and an ε schedule that anneals down the
+gate curve are all now buildable on top of a loop that demonstrably climbs.
