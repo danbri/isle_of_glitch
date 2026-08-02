@@ -78,9 +78,22 @@ export const G = Object.freeze({
   AMP: 13,     // muscle amplitude and sign
   GRIP: 14,    // ground friction coefficient
   RCP: 15,     // receptor weights, one per sensor channel: 15..18
+  AXX: 19,     // directional synaptic axis, x
+  AXY: 20,     // directional synaptic axis, y
 });
 export const GENES = 22;
+/**
+ * Sensor channels. 0 and 1 are exteroceptive and require the sensor role — a
+ * cell has to be a sensor to smell food or feel the arena edge. 2 and 3 are
+ * PROPRIOCEPTIVE (own speed, own strain) and every cell has them, because a
+ * muscle cell knowing its own length is not a specialised organ, and because
+ * the strain channel is what closes the loop from body back to network. A
+ * disembodied CTRNN with a rank-2 recurrent matrix settles to a fixed point
+ * almost surely — measured, not assumed — and a body that never oscillates
+ * never crawls. The mechanical feedback loop is where the rhythm comes from.
+ */
 export const SENSORS = 4;   // odour mass, boundary, own speed, own strain
+export const PROPRIO_FROM = 2;
 export const MATERNAL = 6;  // bias, x, y, radial, clock, local density
 
 export const DEFAULTS = Object.freeze({
@@ -106,6 +119,7 @@ export const DEFAULTS = Object.freeze({
   // ---------------------------------------------------------------- neural
   GAIN: 0.5,               // scales the developed recurrent matrix, as in the incumbent
   SYN_SIGMA2: 0.0060,      // distance kernel on synapses: neighbours wire together
+  DIR_SCALE: 2.0,          // weight of the asymmetric direction-dependent synapse
   TAU_MIN: 0.24, TAU_SPAN: 1.65,
   BIAS_SCALE: 1.45,
   IN_SCALE: 1.18,
@@ -337,18 +351,33 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1)) {
     grip[a] = cfg.MU_MIN + (cfg.MU_MAX - cfg.MU_MIN) * 0.5 * (1 + expr[e + G.GRIP]);
     const sg = Math.max(0, expr[e + G.SENSOR]);
     isSensor[a] = sg > 0.15 ? 1 : 0;
-    for (let c = 0; c < SENSORS; c++)
-      win[a * SENSORS + c] = sg * expr[e + G.RCP + c] * cfg.IN_SCALE;
+    for (let c = 0; c < SENSORS; c++) {
+      const gate = c < PROPRIO_FROM ? sg : 1;    // proprioception is not an organ
+      win[a * SENSORS + c] = gate * expr[e + G.RCP + c] * cfg.IN_SCALE;
+    }
   }
   for (let a = 0; a < nA; a++) {
     const i = idx[a];
     for (let b = 0; b < nA; b++) {
       const j = idx[b];
-      const d2 = (x[j] - x[i]) ** 2 + (y[j] - y[i]) ** 2;
+      const dx = x[j] - x[i], dy = y[j] - y[i];
+      const d2 = dx * dx + dy * dy;
       const k = Math.exp(-d2 / cfg.SYN_SIGMA2);
       const w = (expr[i * GENES + G.OUT_E] * expr[j * GENES + G.IN_E]
                - expr[i * GENES + G.OUT_I] * expr[j * GENES + G.IN_I]) * k * 2.0;
-      W[a * nA + b] = w * (cfg.GAIN / 2.0);       // W[from, to]
+      // Directional coupling. The symmetric outer-product term above is what
+      // the incumbent builds, and on its own it is rank two: its dynamics are
+      // fixed points. Adding a term that depends on the *direction* from the
+      // presynaptic cell to the postsynaptic one makes W asymmetric —
+      // W[a][b] != W[b][a], because the unit vector flips — which is the
+      // standard way a spatially embedded network gets travelling waves rather
+      // than a settled equilibrium. The axis is itself a developed property,
+      // so which way the wave runs is morphology's business.
+      const d = Math.sqrt(d2);
+      const dirw = d > 1e-9
+        ? ((dx / d) * expr[i * GENES + G.AXX] + (dy / d) * expr[i * GENES + G.AXY]) * k * cfg.DIR_SCALE
+        : 0;
+      W[a * nA + b] = (w + dirw) * (cfg.GAIN / 2.0);       // W[from, to]
     }
     W[a * nA + a] += expr[i * GENES + G.OUT_E] * 0.65 * (cfg.GAIN / 2.0);
   }
@@ -524,8 +553,14 @@ export class Colony {
       const p = this.ph[o];
       for (let a = 0; a < p.n; a++) {
         const t = o * S + a, b = t * SENSORS;
-        if (!p.isSensor[a]) { this.sens[b] = 0; this.sens[b + 1] = 0; this.sens[b + 2] = 0; this.sens[b + 3] = 0; continue; }
         const X = this.px[t], Y = this.py[t];
+        // Proprioception, every cell.
+        this.sens[b + 2] = Math.tanh(Math.hypot(this.vx[t], this.vy[t]) * 3.0);
+        this.sens[b + 3] = Math.tanh(this.strain[t] * 6.0);
+        // Exteroception, sensor cells only. The food scan is the most expensive
+        // kernel in the step, so skipping it for non-sensors is also why a
+        // sparse sensor field costs less than a dense one.
+        if (!p.isSensor[a]) { this.sens[b] = 0; this.sens[b + 1] = 0; continue; }
         let mass = 0;
         for (let f = 0; f < W.n; f++) {
           const d2 = (this.foodX[f] - X) ** 2 + (this.foodY[f] - Y) ** 2;
@@ -533,8 +568,6 @@ export class Colony {
         }
         this.sens[b] = Math.tanh(mass * 0.16);
         this.sens[b + 1] = Math.tanh(Math.max(0, Math.max(Math.abs(X), Math.abs(Y)) - 0.70) * 3.2);
-        this.sens[b + 2] = Math.tanh(Math.hypot(this.vx[t], this.vy[t]) * 3.0);
-        this.sens[b + 3] = Math.tanh(this.strain[t] * 6.0);
       }
     }
   }
