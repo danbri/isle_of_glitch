@@ -1,0 +1,2141 @@
+{
+  "meta": {
+    "seed": 1,
+    "gens": 24,
+    "snapEvery": 4,
+    "preyPop": 24,
+    "predPop": 24,
+    "eps": 0.08,
+    "elite": 2,
+    "steps": 500,
+    "coevo": {
+      "captureSigma2": 0.004,
+      "senseSigma2": 0.05,
+      "predGain": 1,
+      "preyLoss": 1.5,
+      "predForage": 0,
+      "preyIntake": 1,
+      "food": 42,
+      "clusters": 9
+    },
+    "trace": [
+      {
+        "gen": 0,
+        "preyContact": 1.5033423508685428,
+        "predContact": 1.2166688004401756,
+        "preyIntake": 0.19509665705336757,
+        "preyTouched": 0.9166666666666666,
+        "predTouched": 0.75,
+        "preyContactSd": 1.705843715356484,
+        "predContactSd": 1.690822522754991
+      },
+      {
+        "gen": 1,
+        "preyContact": 0.7537862118858233,
+        "predContact": 0.9588001396381061,
+        "preyIntake": 0.21360088714439732,
+        "preyTouched": 0.8333333333333334,
+        "predTouched": 0.9583333333333334,
+        "preyContactSd": 1.5173869760041405,
+        "predContactSd": 1.653277261091289
+      },
+      {
+        "gen": 2,
+        "preyContact": 1.5571451939459828,
+        "predContact": 1.8527997010393742,
+        "preyIntake": 0.26178251173233164,
+        "preyTouched": 0.7916666666666666,
+        "predTouched": 0.9583333333333334,
+        "preyContactSd": 2.2193007537106144,
+        "predContactSd": 2.274644390259142
+      },
+      {
+        "gen": 3,
+        "preyContact": 1.3454021888411818,
+        "predContact": 1.1977322527167746,
+        "preyIntake": 0.13630585405365586,
+        "preyTouched": 1,
+        "predTouched": 0.875,
+        "preyContactSd": 1.7665838515134118,
+        "predContactSd": 1.8180325680447622
+      },
+      {
+        "gen": 4,
+        "preyContact": 0.5979003566452878,
+        "predContact": 0.5748342540367161,
+        "preyIntake": 0.2215533846703722,
+        "preyTouched": 0.7916666666666666,
+        "predTouched": 0.8333333333333334,
+        "preyContactSd": 0.9814890641985644,
+        "predContactSd": 0.9460811692127731
+      },
+      {
+        "gen": 5,
+        "preyContact": 0.8515627025023669,
+        "predContact": 1.0120150277065803,
+        "preyIntake": 0.14997397853034855,
+        "preyTouched": 0.5833333333333334,
+        "predTouched": 0.6666666666666666,
+        "preyContactSd": 1.7362939641190225,
+        "predContactSd": 1.7354033209119135
+      },
+      {
+        "gen": 6,
+        "preyContact": 1.6122358218262205,
+        "predContact": 1.281091228929547,
+        "preyIntake": 0.0833554924950204,
+        "preyTouched": 0.875,
+        "predTouched": 0.7916666666666666,
+        "preyContactSd": 2.57437590556691,
+        "predContactSd": 2.137176064675103
+      },
+      {
+        "gen": 7,
+        "preyContact": 0.9311645494907804,
+        "predContact": 0.9411145987604773,
+        "preyIntake": 0.022106456521984064,
+        "preyTouched": 0.8333333333333334,
+        "predTouched": 0.6666666666666666,
+        "preyContactSd": 1.4920127537890258,
+        "predContactSd": 1.5713470328073937
+      },
+      {
+        "gen": 8,
+        "preyContact": 0.9858413981632014,
+        "predContact": 0.9088600970200704,
+        "preyIntake": 0.00743346423681807,
+        "preyTouched": 0.8333333333333334,
+        "predTouched": 0.9583333333333334,
+        "preyContactSd": 1.5522867907772844,
+        "predContactSd": 1.5857675574415484
+      },
+      {
+        "gen": 9,
+        "preyContact": 0.6388044371416374,
+        "predContact": 0.5283314284963995,
+        "preyIntake": 0.15772876233377595,
+        "preyTouched": 0.5833333333333334,
+        "predTouched": 0.75,
+        "preyContactSd": 1.1394221684285322,
+        "predContactSd": 1.1256714389120503
+      },
+      {
+        "gen": 10,
+        "preyContact": 0.8018344409055248,
+        "predContact": 0.9241230071118771,
+        "preyIntake": 0.08387947340356278,
+        "preyTouched": 0.8333333333333334,
+        "predTouched": 0.7916666666666666,
+        "preyContactSd": 1.6235676131068246,
+        "predContactSd": 1.6995729877793038
+      },
+      {
+        "gen": 11,
+        "preyContact": 1.2461818716309094,
+        "predContact": 1.264263363341031,
+        "preyIntake": 0.08085812166269886,
+        "preyTouched": 0.9583333333333334,
+        "predTouched": 0.9166666666666666,
+        "preyContactSd": 1.7436684476784718,
+        "predContactSd": 1.6819439803071694
+      },
+      {
+        "gen": 12,
+        "preyContact": 0.32623758789200086,
+        "predContact": 0.3260418954866505,
+        "preyIntake": 0.021973505293147205,
+        "preyTouched": 0.9583333333333334,
+        "predTouched": 0.875,
+        "preyContactSd": 0.760448025813865,
+        "predContactSd": 0.7584372864485794
+      },
+      {
+        "gen": 13,
+        "preyContact": 1.0657360299214262,
+        "predContact": 1.238749998077747,
+        "preyIntake": 0.046564536991980716,
+        "preyTouched": 0.7083333333333334,
+        "predTouched": 0.875,
+        "preyContactSd": 1.7206510213896957,
+        "predContactSd": 1.7706532492241311
+      },
+      {
+        "gen": 14,
+        "preyContact": 1.9129609877738754,
+        "predContact": 1.7908089615474267,
+        "preyIntake": 0.0368516880646046,
+        "preyTouched": 0.9166666666666666,
+        "predTouched": 0.875,
+        "preyContactSd": 2.276594103488095,
+        "predContactSd": 2.268992973428285
+      },
+      {
+        "gen": 15,
+        "preyContact": 1.1742141242657487,
+        "predContact": 0.9215542043653314,
+        "preyIntake": 0.08260404617391863,
+        "preyTouched": 0.8333333333333334,
+        "predTouched": 0.9583333333333334,
+        "preyContactSd": 1.8989875822595657,
+        "predContactSd": 1.6616402078740027
+      },
+      {
+        "gen": 16,
+        "preyContact": 0.7356990544375629,
+        "predContact": 0.5741907285066457,
+        "preyIntake": 0.014736863355464265,
+        "preyTouched": 0.875,
+        "predTouched": 0.5416666666666666,
+        "preyContactSd": 1.3784353806576057,
+        "predContactSd": 1.4485919867897128
+      },
+      {
+        "gen": 17,
+        "preyContact": 1.0535404985766148,
+        "predContact": 0.9188343688008046,
+        "preyIntake": 0.07081619443699674,
+        "preyTouched": 0.7916666666666666,
+        "predTouched": 0.875,
+        "preyContactSd": 2.154446794030991,
+        "predContactSd": 2.0301460702878007
+      },
+      {
+        "gen": 18,
+        "preyContact": 0.4729813504378526,
+        "predContact": 0.4592515532125201,
+        "preyIntake": 0.14496314657493783,
+        "preyTouched": 0.75,
+        "predTouched": 0.75,
+        "preyContactSd": 0.8111509270536719,
+        "predContactSd": 0.8093178668675576
+      },
+      {
+        "gen": 19,
+        "preyContact": 0.7887942206096756,
+        "predContact": 0.8681070004293557,
+        "preyIntake": 0.1675853080358697,
+        "preyTouched": 0.6666666666666666,
+        "predTouched": 0.7916666666666666,
+        "preyContactSd": 1.8062249961437655,
+        "predContactSd": 1.8252032141830805
+      },
+      {
+        "gen": 20,
+        "preyContact": 0.5392079709069179,
+        "predContact": 0.49107415096619494,
+        "preyIntake": 0.0910645412334453,
+        "preyTouched": 0.7916666666666666,
+        "predTouched": 0.7916666666666666,
+        "preyContactSd": 0.8159043228283096,
+        "predContactSd": 0.8143035416382851
+      },
+      {
+        "gen": 21,
+        "preyContact": 0.6286569858599912,
+        "predContact": 0.6561444053782054,
+        "preyIntake": 0.2103710925680321,
+        "preyTouched": 0.8333333333333334,
+        "predTouched": 0.7916666666666666,
+        "preyContactSd": 1.4465376593706263,
+        "predContactSd": 1.37229787077396
+      },
+      {
+        "gen": 22,
+        "preyContact": 1.5713234084755008,
+        "predContact": 1.408184333332663,
+        "preyIntake": 0.08969514865099776,
+        "preyTouched": 0.8333333333333334,
+        "predTouched": 0.9166666666666666,
+        "preyContactSd": 1.976445011127737,
+        "predContactSd": 1.9819121569157447
+      },
+      {
+        "gen": 23,
+        "preyContact": 1.1951500836390176,
+        "predContact": 1.1288925165715742,
+        "preyIntake": 0.21007979330729398,
+        "preyTouched": 0.8333333333333334,
+        "predTouched": 0.75,
+        "preyContactSd": 1.6501017808706662,
+        "predContactSd": 1.6603145802071622
+      },
+      {
+        "gen": 24,
+        "preyContact": 0.9580880796508997,
+        "predContact": 0.9760825473071413,
+        "preyIntake": 0.2901282782460643,
+        "preyTouched": 0.7916666666666666,
+        "predTouched": 0.75,
+        "preyContactSd": 1.84174840081615,
+        "predContactSd": 1.8287936522898862
+      }
+    ]
+  },
+  "settings": {
+    "tsteps": 500,
+    "tseed": 90210,
+    "evals": 1,
+    "blindPred": "mean",
+    "blindPrey": "mean"
+  },
+  "intact": {
+    "label": "intact",
+    "generations": [
+      0,
+      4,
+      8,
+      12,
+      16,
+      20,
+      24
+    ],
+    "matrix": [
+      [
+        {
+          "predGen": 0,
+          "preyGen": 0,
+          "predContact": 0.9321608914036773,
+          "preyContact": 0.897744043338296,
+          "preyForage": 0.19536549748820706
+        },
+        {
+          "predGen": 0,
+          "preyGen": 4,
+          "predContact": 0.9843203475970917,
+          "preyContact": 1.0020153925953499,
+          "preyForage": 0.09604884186781444
+        },
+        {
+          "predGen": 0,
+          "preyGen": 8,
+          "predContact": 0.8132567123491087,
+          "preyContact": 0.8299054696679438,
+          "preyForage": 0.07920735686426295
+        },
+        {
+          "predGen": 0,
+          "preyGen": 12,
+          "predContact": 0.8291963711466153,
+          "preyContact": 0.8885588093166482,
+          "preyForage": 0.07197099488269926
+        },
+        {
+          "predGen": 0,
+          "preyGen": 16,
+          "predContact": 0.6242191186763804,
+          "preyContact": 0.6547399378366948,
+          "preyForage": 0.021458782142767974
+        },
+        {
+          "predGen": 0,
+          "preyGen": 20,
+          "predContact": 0.8809066420751085,
+          "preyContact": 0.8956398084026196,
+          "preyForage": 0.10013177780675753
+        },
+        {
+          "predGen": 0,
+          "preyGen": 24,
+          "predContact": 0.9236364395382307,
+          "preyContact": 0.9593335908093739,
+          "preyForage": 0.08765259253366708
+        }
+      ],
+      [
+        {
+          "predGen": 4,
+          "preyGen": 0,
+          "predContact": 0.9120687876921104,
+          "preyContact": 0.8839512864720686,
+          "preyForage": 0.19501909868796138
+        },
+        {
+          "predGen": 4,
+          "preyGen": 4,
+          "predContact": 0.9023212927809657,
+          "preyContact": 0.9539242089438913,
+          "preyForage": 0.0949855247351663
+        },
+        {
+          "predGen": 4,
+          "preyGen": 8,
+          "predContact": 0.764022233728246,
+          "preyContact": 0.7736833782137689,
+          "preyForage": 0.07920735686354723
+        },
+        {
+          "predGen": 4,
+          "preyGen": 12,
+          "predContact": 0.7909752392258516,
+          "preyContact": 0.8421890262525342,
+          "preyForage": 0.07197026909063609
+        },
+        {
+          "predGen": 4,
+          "preyGen": 16,
+          "predContact": 0.5968495777713047,
+          "preyContact": 0.6203030815667387,
+          "preyForage": 0.022017995584763195
+        },
+        {
+          "predGen": 4,
+          "preyGen": 20,
+          "predContact": 0.6654698333481166,
+          "preyContact": 0.6698868134562695,
+          "preyForage": 0.10876949788184248
+        },
+        {
+          "predGen": 4,
+          "preyGen": 24,
+          "predContact": 0.8254523028931531,
+          "preyContact": 0.8533285131220009,
+          "preyForage": 0.08764771562164274
+        }
+      ],
+      [
+        {
+          "predGen": 8,
+          "preyGen": 0,
+          "predContact": 0.9916115439629626,
+          "preyContact": 0.908702039079051,
+          "preyForage": 0.19480226212601667
+        },
+        {
+          "predGen": 8,
+          "preyGen": 4,
+          "predContact": 0.8765369314772266,
+          "preyContact": 0.9026152726956056,
+          "preyForage": 0.0966361073359353
+        },
+        {
+          "predGen": 8,
+          "preyGen": 8,
+          "predContact": 0.7337486038209824,
+          "preyContact": 0.7317206607285498,
+          "preyForage": 0.07920735686440082
+        },
+        {
+          "predGen": 8,
+          "preyGen": 12,
+          "predContact": 0.7267130063010724,
+          "preyContact": 0.7695157579100459,
+          "preyForage": 0.07197095539020566
+        },
+        {
+          "predGen": 8,
+          "preyGen": 16,
+          "predContact": 0.5241343119998697,
+          "preyContact": 0.5226192392931793,
+          "preyForage": 0.01940764248409531
+        },
+        {
+          "predGen": 8,
+          "preyGen": 20,
+          "predContact": 0.6567796854921665,
+          "preyContact": 0.6415360887043514,
+          "preyForage": 0.10536441631814708
+        },
+        {
+          "predGen": 8,
+          "preyGen": 24,
+          "predContact": 0.7825898832050838,
+          "preyContact": 0.792437928452256,
+          "preyForage": 0.08766779482507442
+        }
+      ],
+      [
+        {
+          "predGen": 12,
+          "preyGen": 0,
+          "predContact": 0.9404443357051177,
+          "preyContact": 0.8470462141179346,
+          "preyForage": 0.1962014173510025
+        },
+        {
+          "predGen": 12,
+          "preyGen": 4,
+          "predContact": 0.9150152222479263,
+          "preyContact": 0.9704476706019372,
+          "preyForage": 0.09690920896967353
+        },
+        {
+          "predGen": 12,
+          "preyGen": 8,
+          "predContact": 0.7886443597156028,
+          "preyContact": 0.792276108523852,
+          "preyForage": 0.07920735686427006
+        },
+        {
+          "predGen": 12,
+          "preyGen": 12,
+          "predContact": 0.8119038847448207,
+          "preyContact": 0.8689008346041546,
+          "preyForage": 0.07197067097310794
+        },
+        {
+          "predGen": 12,
+          "preyGen": 16,
+          "predContact": 0.6963467600148693,
+          "preyContact": 0.7389005203193192,
+          "preyForage": 0.021346967279228107
+        },
+        {
+          "predGen": 12,
+          "preyGen": 20,
+          "predContact": 0.835262204792707,
+          "preyContact": 0.8489282045308216,
+          "preyForage": 0.1052866644584593
+        },
+        {
+          "predGen": 12,
+          "preyGen": 24,
+          "predContact": 0.8384477930174731,
+          "preyContact": 0.8682643087689486,
+          "preyForage": 0.08764501160445988
+        }
+      ],
+      [
+        {
+          "predGen": 16,
+          "preyGen": 0,
+          "predContact": 1.1607047754221627,
+          "preyContact": 1.0891395617968576,
+          "preyForage": 0.1949766886595311
+        },
+        {
+          "predGen": 16,
+          "preyGen": 4,
+          "predContact": 1.2000931996999185,
+          "preyContact": 1.1952299288210766,
+          "preyForage": 0.09620710862461279
+        },
+        {
+          "predGen": 16,
+          "preyGen": 8,
+          "predContact": 1.0531482014892144,
+          "preyContact": 1.0270004943088904,
+          "preyForage": 0.07920735686429818
+        },
+        {
+          "predGen": 16,
+          "preyGen": 12,
+          "predContact": 0.984422268417526,
+          "preyContact": 1.0508115733607741,
+          "preyForage": 0.07197358130754884
+        },
+        {
+          "predGen": 16,
+          "preyGen": 16,
+          "predContact": 0.9255860418278306,
+          "preyContact": 0.9200607910859948,
+          "preyForage": 0.02131821987680395
+        },
+        {
+          "predGen": 16,
+          "preyGen": 20,
+          "predContact": 1.119284976274544,
+          "preyContact": 1.0861107733270543,
+          "preyForage": 0.10164401979712573
+        },
+        {
+          "predGen": 16,
+          "preyGen": 24,
+          "predContact": 0.9737724767627234,
+          "preyContact": 1.000441996321043,
+          "preyForage": 0.08766350084075725
+        }
+      ],
+      [
+        {
+          "predGen": 20,
+          "preyGen": 0,
+          "predContact": 0.7805376210605411,
+          "preyContact": 0.7732038146743161,
+          "preyForage": 0.19542096792120014
+        },
+        {
+          "predGen": 20,
+          "preyGen": 4,
+          "predContact": 0.7901332182084121,
+          "preyContact": 0.8443245241729059,
+          "preyForage": 0.07989520409482015
+        },
+        {
+          "predGen": 20,
+          "preyGen": 8,
+          "predContact": 0.649496125594953,
+          "preyContact": 0.675474067142967,
+          "preyForage": 0.07920735686436625
+        },
+        {
+          "predGen": 20,
+          "preyGen": 12,
+          "predContact": 0.7392014681524737,
+          "preyContact": 0.8024170329219266,
+          "preyForage": 0.07197211948534228
+        },
+        {
+          "predGen": 20,
+          "preyGen": 16,
+          "predContact": 0.49546949649572386,
+          "preyContact": 0.5497896948078878,
+          "preyForage": 0.021363543899521886
+        },
+        {
+          "predGen": 20,
+          "preyGen": 20,
+          "predContact": 0.71555559833146,
+          "preyContact": 0.7353360625914901,
+          "preyForage": 0.10003662011498508
+        },
+        {
+          "predGen": 20,
+          "preyGen": 24,
+          "predContact": 0.7429521901715602,
+          "preyContact": 0.7721500951971033,
+          "preyForage": 0.08765462980663445
+        }
+      ],
+      [
+        {
+          "predGen": 24,
+          "preyGen": 0,
+          "predContact": 0.9266946504229138,
+          "preyContact": 0.9066988154362355,
+          "preyForage": 0.19496827883632287
+        },
+        {
+          "predGen": 24,
+          "preyGen": 4,
+          "predContact": 0.9471214818325705,
+          "preyContact": 1.0176685441936084,
+          "preyForage": 0.0954438360680062
+        },
+        {
+          "predGen": 24,
+          "preyGen": 8,
+          "predContact": 0.8271512801986857,
+          "preyContact": 0.8491752450039547,
+          "preyForage": 0.07920735686421669
+        },
+        {
+          "predGen": 24,
+          "preyGen": 12,
+          "predContact": 0.8361512757087591,
+          "preyContact": 0.9139375427546494,
+          "preyForage": 0.07196988886877521
+        },
+        {
+          "predGen": 24,
+          "preyGen": 16,
+          "predContact": 0.6514248857767179,
+          "preyContact": 0.6839664596288877,
+          "preyForage": 0.021294048450917563
+        },
+        {
+          "predGen": 24,
+          "preyGen": 20,
+          "predContact": 0.8869148256275862,
+          "preyContact": 0.8915226875340472,
+          "preyForage": 0.09955453281936356
+        },
+        {
+          "predGen": 24,
+          "preyGen": 24,
+          "predContact": 0.8714049145704695,
+          "preyContact": 0.9136709211339559,
+          "preyForage": 0.08766415578192131
+        }
+      ]
+    ],
+    "predatorCapability": [
+      {
+        "generation": 0,
+        "vsAll": 0.8553852175408875,
+        "vsAllSd": 0.1181290086892814,
+        "vsAncestors": 0.9321608914036773
+      },
+      {
+        "generation": 4,
+        "vsAll": 0.7795941810628211,
+        "vsAllSd": 0.11655213675450861,
+        "vsAncestors": 0.9071950402365381
+      },
+      {
+        "generation": 8,
+        "vsAll": 0.7560162808941948,
+        "vsAllSd": 0.15039292550215907,
+        "vsAncestors": 0.8672990264203905
+      },
+      {
+        "generation": 12,
+        "vsAll": 0.8322949371769309,
+        "vsAllSd": 0.08102332491533658,
+        "vsAncestors": 0.8640019506033668
+      },
+      {
+        "generation": 16,
+        "vsAll": 1.0595731342705599,
+        "vsAllSd": 0.10371614136312599,
+        "vsAncestors": 1.0647908973713303
+      },
+      {
+        "generation": 20,
+        "vsAll": 0.7019065311450177,
+        "vsAllSd": 0.1021370419114882,
+        "vsAncestors": 0.6950655879739273
+      },
+      {
+        "generation": 24,
+        "vsAll": 0.8495519020196717,
+        "vsAllSd": 0.09770708603011262,
+        "vsAncestors": 0.8495519020196717
+      }
+    ],
+    "preyVulnerability": [
+      {
+        "generation": 0,
+        "vsAll": 0.900926539273537,
+        "vsAllSd": 0.0957708991314354,
+        "vsAncestors": 0.897744043338296
+      },
+      {
+        "generation": 4,
+        "vsAll": 0.9837465060034821,
+        "vsAllSd": 0.11052653488302769,
+        "vsAncestors": 0.9779698007696206
+      },
+      {
+        "generation": 8,
+        "vsAll": 0.8113193462271323,
+        "vsAllSd": 0.11170338122882026,
+        "vsAncestors": 0.7784365028700875
+      },
+      {
+        "generation": 12,
+        "vsAll": 0.8766186538743904,
+        "vsAllSd": 0.09137862153956124,
+        "vsAncestors": 0.8422911070208458
+      },
+      {
+        "generation": 16,
+        "vsAll": 0.6700542463626719,
+        "vsAllSd": 0.13313338025867694,
+        "vsAncestors": 0.6913247140203854
+      },
+      {
+        "generation": 20,
+        "vsAll": 0.8241372055066647,
+        "vsAllSd": 0.15487638273061155,
+        "vsAncestors": 0.8129062918354344
+      },
+      {
+        "generation": 24,
+        "vsAll": 0.8799467648292402,
+        "vsAllSd": 0.08374725587674747,
+        "vsAncestors": 0.8799467648292402
+      }
+    ],
+    "preyForageUnderThreat": [
+      {
+        "generation": 0,
+        "vsAll": 0.1952506015814631,
+        "vsAllSd": 0.0004753266709925588,
+        "vsAncestors": 0.19536549748820706
+      },
+      {
+        "generation": 4,
+        "vsAll": 0.09373226167086124,
+        "vsAllSd": 0.00613706013532265,
+        "vsAncestors": 0.09551718330149037
+      },
+      {
+        "generation": 8,
+        "vsAll": 0.0792073568641946,
+        "vsAllSd": 2.9230900200942156e-13,
+        "vsAncestors": 0.07920735686407034
+      },
+      {
+        "generation": 12,
+        "vsAll": 0.07197121142833075,
+        "vsAllSd": 0.0000012571527706911986,
+        "vsAncestors": 0.07197072258416223
+      },
+      {
+        "generation": 16,
+        "vsAll": 0.021172457102585425,
+        "vsAllSd": 0.0008179738381276664,
+        "vsAncestors": 0.021109921473531707
+      },
+      {
+        "generation": 20,
+        "vsAll": 0.10296964702809726,
+        "vsAllSd": 0.003531246259125149,
+        "vsAncestors": 0.10353883272955287
+      },
+      {
+        "generation": 24,
+        "vsAll": 0.0876564858591653,
+        "vsAllSd": 0.0000087854889204823,
+        "vsAncestors": 0.0876564858591653
+      }
+    ],
+    "headToHead": [
+      {
+        "generation": 0,
+        "predContact": 0.9321608914036773,
+        "preyContact": 0.897744043338296,
+        "preyForage": 0.19536549748820706
+      },
+      {
+        "generation": 4,
+        "predContact": 0.9023212927809657,
+        "preyContact": 0.9539242089438913,
+        "preyForage": 0.0949855247351663
+      },
+      {
+        "generation": 8,
+        "predContact": 0.7337486038209824,
+        "preyContact": 0.7317206607285498,
+        "preyForage": 0.07920735686440082
+      },
+      {
+        "generation": 12,
+        "predContact": 0.8119038847448207,
+        "preyContact": 0.8689008346041546,
+        "preyForage": 0.07197067097310794
+      },
+      {
+        "generation": 16,
+        "predContact": 0.9255860418278306,
+        "preyContact": 0.9200607910859948,
+        "preyForage": 0.02131821987680395
+      },
+      {
+        "generation": 20,
+        "predContact": 0.71555559833146,
+        "preyContact": 0.7353360625914901,
+        "preyForage": 0.10003662011498508
+      },
+      {
+        "generation": 24,
+        "predContact": 0.8714049145704695,
+        "preyContact": 0.9136709211339559,
+        "preyForage": 0.08766415578192131
+      }
+    ],
+    "byAgeGap": [
+      {
+        "ageGap": 0,
+        "generationsBack": 0,
+        "predatorVsOlderPrey": 0.8418116039257437,
+        "preyVsOlderPredator": 0.8601939317751903,
+        "n": 7
+      },
+      {
+        "ageGap": 1,
+        "generationsBack": 4,
+        "predatorVsOlderPrey": 0.8240094449042958,
+        "preyVsOlderPredator": 0.8570626529271069,
+        "n": 6
+      },
+      {
+        "ageGap": 2,
+        "generationsBack": 8,
+        "predatorVsOlderPrey": 0.870080264325859,
+        "preyVsOlderPredator": 0.8088167872131043,
+        "n": 5
+      },
+      {
+        "ageGap": 3,
+        "generationsBack": 12,
+        "predatorVsOlderPrey": 0.906546234177187,
+        "preyVsOlderPredator": 0.7546655720891717,
+        "n": 4
+      },
+      {
+        "ageGap": 4,
+        "generationsBack": 16,
+        "predatorVsOlderPrey": 0.9259964246097535,
+        "preyVsOlderPredator": 0.70568822658174,
+        "n": 3
+      },
+      {
+        "ageGap": 5,
+        "generationsBack": 20,
+        "predatorVsOlderPrey": 0.8638295514465558,
+        "preyVsOlderPredator": 0.8744841607623102,
+        "n": 2
+      },
+      {
+        "ageGap": 6,
+        "generationsBack": 24,
+        "predatorVsOlderPrey": 0.9266946504229138,
+        "preyVsOlderPredator": 0.9593335908093739,
+        "n": 1
+      }
+    ],
+    "trends": {
+      "predatorCapability": {
+        "slope": 0.0011668000622956326,
+        "se": 0.005880644092139547,
+        "z": 0.19841365061613808
+      },
+      "preyVulnerability": {
+        "slope": -0.004673419858848089,
+        "se": 0.004573132974746299,
+        "z": -1.0219295797116754
+      },
+      "preyForage": {
+        "slope": -0.0032352006804824153,
+        "se": 0.0022840848279449873,
+        "z": -1.4164100391110062
+      },
+      "headToHead": {
+        "slope": -0.003249659655283809,
+        "se": 0.004406771894758051,
+        "z": -0.7374240675242003
+      }
+    }
+  },
+  "predBlind": {
+    "label": "blindPred:mean",
+    "generations": [
+      0,
+      4,
+      8,
+      12,
+      16,
+      20,
+      24
+    ],
+    "matrix": [
+      [
+        {
+          "predGen": 0,
+          "preyGen": 0,
+          "predContact": 0.932126950024737,
+          "preyContact": 0.8975982782054129,
+          "preyForage": 0.19538810986097732
+        },
+        {
+          "predGen": 0,
+          "preyGen": 4,
+          "predContact": 0.9842968028536366,
+          "preyContact": 1.0022283043763653,
+          "preyForage": 0.09604914886579545
+        },
+        {
+          "predGen": 0,
+          "preyGen": 8,
+          "predContact": 0.8133105278473435,
+          "preyContact": 0.829961553986378,
+          "preyForage": 0.07920735686426342
+        },
+        {
+          "predGen": 0,
+          "preyGen": 12,
+          "predContact": 0.8293285154222675,
+          "preyContact": 0.8886866916790931,
+          "preyForage": 0.07197130077021215
+        },
+        {
+          "predGen": 0,
+          "preyGen": 16,
+          "predContact": 0.6248210845558089,
+          "preyContact": 0.655396522925435,
+          "preyForage": 0.02145879404183836
+        },
+        {
+          "predGen": 0,
+          "preyGen": 20,
+          "predContact": 0.8742316307433389,
+          "preyContact": 0.888706002431339,
+          "preyForage": 0.09982206155264535
+        },
+        {
+          "predGen": 0,
+          "preyGen": 24,
+          "predContact": 0.9169744765713799,
+          "preyContact": 0.9536653651753713,
+          "preyForage": 0.08765240519754697
+        }
+      ],
+      [
+        {
+          "predGen": 4,
+          "preyGen": 0,
+          "predContact": 0.9096872217197965,
+          "preyContact": 0.8815725704637426,
+          "preyForage": 0.19523465291763722
+        },
+        {
+          "predGen": 4,
+          "preyGen": 4,
+          "predContact": 0.8968614234103156,
+          "preyContact": 0.9486134888992329,
+          "preyForage": 0.08363188013514165
+        },
+        {
+          "predGen": 4,
+          "preyGen": 8,
+          "predContact": 0.7636452215487872,
+          "preyContact": 0.7733436939032098,
+          "preyForage": 0.07920735686354989
+        },
+        {
+          "predGen": 4,
+          "preyGen": 12,
+          "predContact": 0.7916922503013599,
+          "preyContact": 0.8428188252550779,
+          "preyForage": 0.0719702749097373
+        },
+        {
+          "predGen": 4,
+          "preyGen": 16,
+          "predContact": 0.5953069914787747,
+          "preyContact": 0.618675307205231,
+          "preyForage": 0.022018443786824105
+        },
+        {
+          "predGen": 4,
+          "preyGen": 20,
+          "predContact": 0.6665131004814925,
+          "preyContact": 0.671047661102155,
+          "preyForage": 0.10936357782096608
+        },
+        {
+          "predGen": 4,
+          "preyGen": 24,
+          "predContact": 0.8258212779929549,
+          "preyContact": 0.8544700513164867,
+          "preyForage": 0.08764771547039422
+        }
+      ],
+      [
+        {
+          "predGen": 8,
+          "preyGen": 0,
+          "predContact": 0.9916988999552975,
+          "preyContact": 0.9085420608813245,
+          "preyForage": 0.19476703154481098
+        },
+        {
+          "predGen": 8,
+          "preyGen": 4,
+          "predContact": 0.8808728266492988,
+          "preyContact": 0.9098637898295511,
+          "preyForage": 0.09449476472927153
+        },
+        {
+          "predGen": 8,
+          "preyGen": 8,
+          "predContact": 0.7340428670301115,
+          "preyContact": 0.7318286959090538,
+          "preyForage": 0.07920735686439807
+        },
+        {
+          "predGen": 8,
+          "preyGen": 12,
+          "predContact": 0.7263728443119762,
+          "preyContact": 0.7690103597530135,
+          "preyForage": 0.07197095405873892
+        },
+        {
+          "predGen": 8,
+          "preyGen": 16,
+          "predContact": 0.5246330555489168,
+          "preyContact": 0.5229523169235543,
+          "preyForage": 0.019402701162241794
+        },
+        {
+          "predGen": 8,
+          "preyGen": 20,
+          "predContact": 0.6577213361810247,
+          "preyContact": 0.6423084253774904,
+          "preyForage": 0.1056659375431852
+        },
+        {
+          "predGen": 8,
+          "preyGen": 24,
+          "predContact": 0.7808549667479733,
+          "preyContact": 0.7905782277924737,
+          "preyForage": 0.08766671413958266
+        }
+      ],
+      [
+        {
+          "predGen": 12,
+          "preyGen": 0,
+          "predContact": 0.9556672496526439,
+          "preyContact": 0.8598427787342003,
+          "preyForage": 0.19768912955627493
+        },
+        {
+          "predGen": 12,
+          "preyGen": 4,
+          "predContact": 0.9210190216062046,
+          "preyContact": 0.9760279335736924,
+          "preyForage": 0.09651407853054854
+        },
+        {
+          "predGen": 12,
+          "preyGen": 8,
+          "predContact": 0.8054741103743898,
+          "preyContact": 0.8085401027739875,
+          "preyForage": 0.07920735686427122
+        },
+        {
+          "predGen": 12,
+          "preyGen": 12,
+          "predContact": 0.8258088629740024,
+          "preyContact": 0.8828775926124739,
+          "preyForage": 0.07197069972112048
+        },
+        {
+          "predGen": 12,
+          "preyGen": 16,
+          "predContact": 0.7077137547414168,
+          "preyContact": 0.7488614563149847,
+          "preyForage": 0.02134859905732935
+        },
+        {
+          "predGen": 12,
+          "preyGen": 20,
+          "predContact": 0.8446792592254759,
+          "preyContact": 0.8578546377040901,
+          "preyForage": 0.105155112867981
+        },
+        {
+          "predGen": 12,
+          "preyGen": 24,
+          "predContact": 0.8390827836712434,
+          "preyContact": 0.8680962733845073,
+          "preyForage": 0.08764497517564372
+        }
+      ],
+      [
+        {
+          "predGen": 16,
+          "preyGen": 0,
+          "predContact": 1.1611472648129124,
+          "preyContact": 1.0890178703097846,
+          "preyForage": 0.19475767127033994
+        },
+        {
+          "predGen": 16,
+          "preyGen": 4,
+          "predContact": 1.202916932154997,
+          "preyContact": 1.1974654911160139,
+          "preyForage": 0.0923645436561259
+        },
+        {
+          "predGen": 16,
+          "preyGen": 8,
+          "predContact": 1.053171156636693,
+          "preyContact": 1.0266760318640469,
+          "preyForage": 0.07920735686429618
+        },
+        {
+          "predGen": 16,
+          "preyGen": 12,
+          "predContact": 0.9855249545954949,
+          "preyContact": 1.05240786374128,
+          "preyForage": 0.07197235561645117
+        },
+        {
+          "predGen": 16,
+          "preyGen": 16,
+          "predContact": 0.926584110590456,
+          "preyContact": 0.9212172380576975,
+          "preyForage": 0.02131829353000342
+        },
+        {
+          "predGen": 16,
+          "preyGen": 20,
+          "predContact": 1.1198106525252034,
+          "preyContact": 1.0863104254298916,
+          "preyForage": 0.10210977683005257
+        },
+        {
+          "predGen": 16,
+          "preyGen": 24,
+          "predContact": 0.9673685332169054,
+          "preyContact": 0.989886033430631,
+          "preyForage": 0.08766420526302188
+        }
+      ],
+      [
+        {
+          "predGen": 20,
+          "preyGen": 0,
+          "predContact": 0.7830728604139683,
+          "preyContact": 0.7770845309749572,
+          "preyForage": 0.19522793642107314
+        },
+        {
+          "predGen": 20,
+          "preyGen": 4,
+          "predContact": 0.7916623251267395,
+          "preyContact": 0.8435753135202089,
+          "preyForage": 0.084737121464536
+        },
+        {
+          "predGen": 20,
+          "preyGen": 8,
+          "predContact": 0.649313964536956,
+          "preyContact": 0.6760929521188571,
+          "preyForage": 0.07920735686436646
+        },
+        {
+          "predGen": 20,
+          "preyGen": 12,
+          "predContact": 0.7382280073252415,
+          "preyContact": 0.802479875819496,
+          "preyForage": 0.07197212224258044
+        },
+        {
+          "predGen": 20,
+          "preyGen": 16,
+          "predContact": 0.49539889853264013,
+          "preyContact": 0.5498892937847321,
+          "preyForage": 0.021363441382181162
+        },
+        {
+          "predGen": 20,
+          "preyGen": 20,
+          "predContact": 0.7162315814761455,
+          "preyContact": 0.7370226246497619,
+          "preyForage": 0.10004842577225714
+        },
+        {
+          "predGen": 20,
+          "preyGen": 24,
+          "predContact": 0.7423255031498327,
+          "preyContact": 0.7715128254282569,
+          "preyForage": 0.08765466260266314
+        }
+      ],
+      [
+        {
+          "predGen": 24,
+          "preyGen": 0,
+          "predContact": 0.9341181876460957,
+          "preyContact": 0.9089891977790918,
+          "preyForage": 0.19504828507113844
+        },
+        {
+          "predGen": 24,
+          "preyGen": 4,
+          "predContact": 0.9550255822092928,
+          "preyContact": 1.0260401947004931,
+          "preyForage": 0.08051539826176905
+        },
+        {
+          "predGen": 24,
+          "preyGen": 8,
+          "predContact": 0.838698772621902,
+          "preyContact": 0.8543552362952985,
+          "preyForage": 0.07920735686422449
+        },
+        {
+          "predGen": 24,
+          "preyGen": 12,
+          "predContact": 0.8462609198082905,
+          "preyContact": 0.9193945762855246,
+          "preyForage": 0.07196989867947598
+        },
+        {
+          "predGen": 24,
+          "preyGen": 16,
+          "predContact": 0.6469042584386501,
+          "preyContact": 0.6778428416537765,
+          "preyForage": 0.02129516585637432
+        },
+        {
+          "predGen": 24,
+          "preyGen": 20,
+          "predContact": 0.8952937448014872,
+          "preyContact": 0.899825440433707,
+          "preyForage": 0.10086624335849904
+        },
+        {
+          "predGen": 24,
+          "preyGen": 24,
+          "predContact": 0.8822510082653015,
+          "preyContact": 0.9193005151035277,
+          "preyForage": 0.08766430397098039
+        }
+      ]
+    ],
+    "predatorCapability": [
+      {
+        "generation": 0,
+        "vsAll": 0.8535842840026445,
+        "vsAllSd": 0.11707708399240997,
+        "vsAncestors": 0.932126950024737
+      },
+      {
+        "generation": 4,
+        "vsAll": 0.7785039267047831,
+        "vsAllSd": 0.11543703975393027,
+        "vsAncestors": 0.9032743225650561
+      },
+      {
+        "generation": 8,
+        "vsAll": 0.7565995423463712,
+        "vsAllSd": 0.15072695527536092,
+        "vsAncestors": 0.8688715312115692
+      },
+      {
+        "generation": 12,
+        "vsAll": 0.842777863177911,
+        "vsAllSd": 0.08042055261687853,
+        "vsAncestors": 0.8769923111518102
+      },
+      {
+        "generation": 16,
+        "vsAll": 1.0595033720760945,
+        "vsAllSd": 0.10504376868014541,
+        "vsAncestors": 1.0658688837581107
+      },
+      {
+        "generation": 20,
+        "vsAll": 0.7023190200802177,
+        "vsAllSd": 0.10264210873779776,
+        "vsAncestors": 0.6956512729019485
+      },
+      {
+        "generation": 24,
+        "vsAll": 0.8569360676844313,
+        "vsAllSd": 0.1018583237642368,
+        "vsAncestors": 0.8569360676844313
+      }
+    ],
+    "preyVulnerability": [
+      {
+        "generation": 0,
+        "vsAll": 0.9032353267640734,
+        "vsAllSd": 0.09387439282954564,
+        "vsAncestors": 0.8975982782054129
+      },
+      {
+        "generation": 4,
+        "vsAll": 0.986259216573651,
+        "vsAllSd": 0.1111773851209423,
+        "vsAncestors": 0.9754208966377991
+      },
+      {
+        "generation": 8,
+        "vsAll": 0.8143997524072617,
+        "vsAllSd": 0.11147983000830977,
+        "vsAncestors": 0.7783779812662138
+      },
+      {
+        "generation": 12,
+        "vsAll": 0.8796679693065655,
+        "vsAllSd": 0.092258586964374,
+        "vsAncestors": 0.8458483673249145
+      },
+      {
+        "generation": 16,
+        "vsAll": 0.6706907109807732,
+        "vsAllSd": 0.1343406671252092,
+        "vsAncestors": 0.6934205682853805
+      },
+      {
+        "generation": 20,
+        "vsAll": 0.8261536024469194,
+        "vsAllSd": 0.15482684091824692,
+        "vsAncestors": 0.8138749627824547
+      },
+      {
+        "generation": 24,
+        "vsAll": 0.8782156130901793,
+        "vsAllSd": 0.08122290930811676,
+        "vsAncestors": 0.8782156130901793
+      }
+    ],
+    "preyForageUnderThreat": [
+      {
+        "generation": 0,
+        "vsAll": 0.19544468809175025,
+        "vsAllSd": 0.0010181814268784694,
+        "vsAncestors": 0.19538810986097732
+      },
+      {
+        "generation": 4,
+        "vsAll": 0.08975813366331258,
+        "vsAllSd": 0.006615869982187815,
+        "vsAncestors": 0.08984051450046855
+      },
+      {
+        "generation": 8,
+        "vsAll": 0.07920735686419568,
+        "vsAllSd": 2.9108918227931203e-13,
+        "vsAncestors": 0.07920735686407045
+      },
+      {
+        "generation": 12,
+        "vsAll": 0.07197108657118804,
+        "vsAllSd": 9.097679089542617e-7,
+        "vsAncestors": 0.0719708073649522
+      },
+      {
+        "generation": 16,
+        "vsAll": 0.02117220554525607,
+        "vsAllSd": 0.0008199130688875919,
+        "vsAncestors": 0.021109366315647405
+      },
+      {
+        "generation": 20,
+        "vsAll": 0.10329016224936949,
+        "vsAllSd": 0.003554668201093466,
+        "vsAncestors": 0.10369414873118123
+      },
+      {
+        "generation": 24,
+        "vsAll": 0.08765642597426185,
+        "vsAllSd": 0.000008705326941825655,
+        "vsAncestors": 0.08765642597426185
+      }
+    ],
+    "headToHead": [
+      {
+        "generation": 0,
+        "predContact": 0.932126950024737,
+        "preyContact": 0.8975982782054129,
+        "preyForage": 0.19538810986097732
+      },
+      {
+        "generation": 4,
+        "predContact": 0.8968614234103156,
+        "preyContact": 0.9486134888992329,
+        "preyForage": 0.08363188013514165
+      },
+      {
+        "generation": 8,
+        "predContact": 0.7340428670301115,
+        "preyContact": 0.7318286959090538,
+        "preyForage": 0.07920735686439807
+      },
+      {
+        "generation": 12,
+        "predContact": 0.8258088629740024,
+        "preyContact": 0.8828775926124739,
+        "preyForage": 0.07197069972112048
+      },
+      {
+        "generation": 16,
+        "predContact": 0.926584110590456,
+        "preyContact": 0.9212172380576975,
+        "preyForage": 0.02131829353000342
+      },
+      {
+        "generation": 20,
+        "predContact": 0.7162315814761455,
+        "preyContact": 0.7370226246497619,
+        "preyForage": 0.10004842577225714
+      },
+      {
+        "generation": 24,
+        "predContact": 0.8822510082653015,
+        "preyContact": 0.9193005151035277,
+        "preyForage": 0.08766430397098039
+      }
+    ],
+    "byAgeGap": [
+      {
+        "ageGap": 0,
+        "generationsBack": 0,
+        "predatorVsOlderPrey": 0.8448438291101529,
+        "preyVsOlderPredator": 0.8626369190624514,
+        "n": 7
+      },
+      {
+        "ageGap": 1,
+        "generationsBack": 4,
+        "predatorVsOlderPrey": 0.8287086261121845,
+        "preyVsOlderPredator": 0.8585445108676203,
+        "n": 6
+      },
+      {
+        "ageGap": 2,
+        "generationsBack": 8,
+        "predatorVsOlderPrey": 0.8702042687924173,
+        "preyVsOlderPredator": 0.8086946734599462,
+        "n": 5
+      },
+      {
+        "ageGap": 3,
+        "generationsBack": 12,
+        "predatorVsOlderPrey": 0.9135397665382219,
+        "preyVsOlderPredator": 0.7544416744115805,
+        "n": 4
+      },
+      {
+        "ageGap": 4,
+        "generationsBack": 16,
+        "predatorVsOlderPrey": 0.930502787520518,
+        "preyVsOlderPredator": 0.7056741372733546,
+        "n": 3
+      },
+      {
+        "ageGap": 5,
+        "generationsBack": 20,
+        "predatorVsOlderPrey": 0.8690492213116305,
+        "preyVsOlderPredator": 0.8715880268739129,
+        "n": 2
+      },
+      {
+        "ageGap": 6,
+        "generationsBack": 24,
+        "predatorVsOlderPrey": 0.9341181876460957,
+        "preyVsOlderPredator": 0.9536653651753713,
+        "n": 1
+      }
+    ],
+    "trends": {
+      "predatorCapability": {
+        "slope": 0.0014338336386245803,
+        "se": 0.005874679852153825,
+        "z": 0.24407008972563776
+      },
+      "preyVulnerability": {
+        "slope": -0.0048123161669788765,
+        "se": 0.004564965338607953,
+        "z": -1.0541846016395715
+      },
+      "preyForage": {
+        "slope": -0.0031637132187436697,
+        "se": 0.0023093934778766105,
+        "z": -1.3699325165032379
+      },
+      "headToHead": {
+        "slope": -0.0028423773713062706,
+        "se": 0.004430303342925762,
+        "z": -0.6415762423683548
+      }
+    }
+  },
+  "preyBlind": {
+    "label": "blindPrey:mean",
+    "generations": [
+      0,
+      4,
+      8,
+      12,
+      16,
+      20,
+      24
+    ],
+    "matrix": [
+      [
+        {
+          "predGen": 0,
+          "preyGen": 0,
+          "predContact": 0.9419742107204533,
+          "preyContact": 0.9076020383327844,
+          "preyForage": 0.19434326317442652
+        },
+        {
+          "predGen": 0,
+          "preyGen": 4,
+          "predContact": 0.9839048710418555,
+          "preyContact": 0.9979860577154467,
+          "preyForage": 0.09546828825222799
+        },
+        {
+          "predGen": 0,
+          "preyGen": 8,
+          "predContact": 0.8133142916910137,
+          "preyContact": 0.8299570455045919,
+          "preyForage": 0.07920735686492111
+        },
+        {
+          "predGen": 0,
+          "preyGen": 12,
+          "predContact": 0.8382044450290218,
+          "preyContact": 0.8869940130494234,
+          "preyForage": 0.07190838304700398
+        },
+        {
+          "predGen": 0,
+          "preyGen": 16,
+          "predContact": 0.6294171248092061,
+          "preyContact": 0.6602919296415407,
+          "preyForage": 0.024069296943624224
+        },
+        {
+          "predGen": 0,
+          "preyGen": 20,
+          "predContact": 0.8759633633314685,
+          "preyContact": 0.8905190965550434,
+          "preyForage": 0.10098493845314856
+        },
+        {
+          "predGen": 0,
+          "preyGen": 24,
+          "predContact": 0.8968750221827427,
+          "preyContact": 0.9338969765017381,
+          "preyForage": 0.08760240119743024
+        }
+      ],
+      [
+        {
+          "predGen": 4,
+          "preyGen": 0,
+          "predContact": 0.9255849467048276,
+          "preyContact": 0.897660591218871,
+          "preyForage": 0.1942092597642581
+        },
+        {
+          "predGen": 4,
+          "preyGen": 4,
+          "predContact": 0.8990673339926177,
+          "preyContact": 0.9494649167693875,
+          "preyForage": 0.0939679266806399
+        },
+        {
+          "predGen": 4,
+          "preyGen": 8,
+          "predContact": 0.7640950763894719,
+          "preyContact": 0.7737619689850482,
+          "preyForage": 0.07920735686488545
+        },
+        {
+          "predGen": 4,
+          "preyGen": 12,
+          "predContact": 0.7929467737526847,
+          "preyContact": 0.8328206229535534,
+          "preyForage": 0.07190806794253711
+        },
+        {
+          "predGen": 4,
+          "preyGen": 16,
+          "predContact": 0.6029433013010917,
+          "preyContact": 0.624973989022031,
+          "preyForage": 0.024060112031311393
+        },
+        {
+          "predGen": 4,
+          "preyGen": 20,
+          "predContact": 0.6732114811997193,
+          "preyContact": 0.6778813419302873,
+          "preyForage": 0.11042328198639607
+        },
+        {
+          "predGen": 4,
+          "preyGen": 24,
+          "predContact": 0.8252571458242434,
+          "preyContact": 0.8533373624495515,
+          "preyForage": 0.0875980451874091
+        }
+      ],
+      [
+        {
+          "predGen": 8,
+          "preyGen": 0,
+          "predContact": 0.9958092064919896,
+          "preyContact": 0.9129210909419418,
+          "preyForage": 0.19454560343947658
+        },
+        {
+          "predGen": 8,
+          "preyGen": 4,
+          "predContact": 0.8806551150368104,
+          "preyContact": 0.9086625235709586,
+          "preyForage": 0.09473772374390775
+        },
+        {
+          "predGen": 8,
+          "preyGen": 8,
+          "predContact": 0.7338352491394291,
+          "preyContact": 0.7318010117176591,
+          "preyForage": 0.07920735686490471
+        },
+        {
+          "predGen": 8,
+          "preyGen": 12,
+          "predContact": 0.7515218468040142,
+          "preyContact": 0.7939775566843582,
+          "preyForage": 0.07190766657679708
+        },
+        {
+          "predGen": 8,
+          "preyGen": 16,
+          "predContact": 0.5363866400575676,
+          "preyContact": 0.535064064397759,
+          "preyForage": 0.024056508380486227
+        },
+        {
+          "predGen": 8,
+          "preyGen": 20,
+          "predContact": 0.6571668446457413,
+          "preyContact": 0.6420128336514879,
+          "preyForage": 0.10767444006063852
+        },
+        {
+          "predGen": 8,
+          "preyGen": 24,
+          "predContact": 0.7853718085753641,
+          "preyContact": 0.7953291903166447,
+          "preyForage": 0.08760197851284013
+        }
+      ],
+      [
+        {
+          "predGen": 12,
+          "preyGen": 0,
+          "predContact": 0.9562660348085231,
+          "preyContact": 0.8633247791942323,
+          "preyForage": 0.1941415738492536
+        },
+        {
+          "predGen": 12,
+          "preyGen": 4,
+          "predContact": 0.9120256647513169,
+          "preyContact": 0.9667373139472238,
+          "preyForage": 0.09343813275956532
+        },
+        {
+          "predGen": 12,
+          "preyGen": 8,
+          "predContact": 0.7888980503912134,
+          "preyContact": 0.7922813555371353,
+          "preyForage": 0.07920735686487564
+        },
+        {
+          "predGen": 12,
+          "preyGen": 12,
+          "predContact": 0.8222286650217135,
+          "preyContact": 0.8624403076145629,
+          "preyForage": 0.0719091665171942
+        },
+        {
+          "predGen": 12,
+          "preyGen": 16,
+          "predContact": 0.6980326970601566,
+          "preyContact": 0.7407100944021102,
+          "preyForage": 0.023160739806057012
+        },
+        {
+          "predGen": 12,
+          "preyGen": 20,
+          "predContact": 0.8349556964055078,
+          "preyContact": 0.848666541826525,
+          "preyForage": 0.1071267543981298
+        },
+        {
+          "predGen": 12,
+          "preyGen": 24,
+          "predContact": 0.8188946123907286,
+          "preyContact": 0.8469590214224566,
+          "preyForage": 0.08760225800923556
+        }
+      ],
+      [
+        {
+          "predGen": 16,
+          "preyGen": 0,
+          "predContact": 1.1687208654524606,
+          "preyContact": 1.0971890778443538,
+          "preyForage": 0.19444716580530594
+        },
+        {
+          "predGen": 16,
+          "preyGen": 4,
+          "predContact": 1.2035069209919753,
+          "preyContact": 1.1980993049658528,
+          "preyForage": 0.08830030023315784
+        },
+        {
+          "predGen": 16,
+          "preyGen": 8,
+          "predContact": 1.0532067870936728,
+          "preyContact": 1.027061210915077,
+          "preyForage": 0.07920735686497042
+        },
+        {
+          "predGen": 16,
+          "preyGen": 12,
+          "predContact": 0.9928616393374533,
+          "preyContact": 1.0363463672566928,
+          "preyForage": 0.07190700119643403
+        },
+        {
+          "predGen": 16,
+          "preyGen": 16,
+          "predContact": 0.9273720945846987,
+          "preyContact": 0.9225485334747955,
+          "preyForage": 0.02316058197348582
+        },
+        {
+          "predGen": 16,
+          "preyGen": 20,
+          "predContact": 1.1216411616589035,
+          "preyContact": 1.0885129266284723,
+          "preyForage": 0.10703407778546191
+        },
+        {
+          "predGen": 16,
+          "preyGen": 24,
+          "predContact": 0.9514252927632824,
+          "preyContact": 0.9792242411782998,
+          "preyForage": 0.08760237342942745
+        }
+      ],
+      [
+        {
+          "predGen": 20,
+          "preyGen": 0,
+          "predContact": 0.7984134907986468,
+          "preyContact": 0.7917607013482825,
+          "preyForage": 0.19426676519159472
+        },
+        {
+          "predGen": 20,
+          "preyGen": 4,
+          "predContact": 0.7942672205050841,
+          "preyContact": 0.8463912535578819,
+          "preyForage": 0.09042371803794431
+        },
+        {
+          "predGen": 20,
+          "preyGen": 8,
+          "predContact": 0.6497353025614211,
+          "preyContact": 0.6757823965940716,
+          "preyForage": 0.07920735686489376
+        },
+        {
+          "predGen": 20,
+          "preyGen": 12,
+          "predContact": 0.7338335427361936,
+          "preyContact": 0.7864136410582825,
+          "preyForage": 0.07190831733838846
+        },
+        {
+          "predGen": 20,
+          "preyGen": 16,
+          "predContact": 0.5004235673981411,
+          "preyContact": 0.555873027174176,
+          "preyForage": 0.024013576921748252
+        },
+        {
+          "predGen": 20,
+          "preyGen": 20,
+          "predContact": 0.7118651488683366,
+          "preyContact": 0.7318117160129131,
+          "preyForage": 0.11001729515375418
+        },
+        {
+          "predGen": 20,
+          "preyGen": 24,
+          "predContact": 0.7415945721941933,
+          "preyContact": 0.7707624614641816,
+          "preyForage": 0.08760258994272548
+        }
+      ],
+      [
+        {
+          "predGen": 24,
+          "preyGen": 0,
+          "predContact": 0.9360891165448048,
+          "preyContact": 0.9161251703783515,
+          "preyForage": 0.19431653834698545
+        },
+        {
+          "predGen": 24,
+          "preyGen": 4,
+          "predContact": 0.9456271107570284,
+          "preyContact": 1.0134664143965044,
+          "preyForage": 0.09106443406493513
+        },
+        {
+          "predGen": 24,
+          "preyGen": 8,
+          "predContact": 0.8272165883778095,
+          "preyContact": 0.8492473779147792,
+          "preyForage": 0.07920735686490721
+        },
+        {
+          "predGen": 24,
+          "preyGen": 12,
+          "predContact": 0.8356976082926266,
+          "preyContact": 0.8998549288917989,
+          "preyForage": 0.07190834663319055
+        },
+        {
+          "predGen": 24,
+          "preyGen": 16,
+          "predContact": 0.6560706156608355,
+          "preyContact": 0.6888972604543849,
+          "preyForage": 0.023152847914961666
+        },
+        {
+          "predGen": 24,
+          "preyGen": 20,
+          "predContact": 0.8910068423161671,
+          "preyContact": 0.8956834218521252,
+          "preyForage": 0.10037085653782984
+        },
+        {
+          "predGen": 24,
+          "preyGen": 24,
+          "predContact": 0.8975584735951448,
+          "preyContact": 0.9376733273343514,
+          "preyForage": 0.08759990002864228
+        }
+      ]
+    ],
+    "predatorCapability": [
+      {
+        "generation": 0,
+        "vsAll": 0.8542361898293944,
+        "vsAllSd": 0.1149473052281268,
+        "vsAncestors": 0.9419742107204533
+      },
+      {
+        "generation": 4,
+        "vsAll": 0.7833008655949508,
+        "vsAllSd": 0.1158428488880203,
+        "vsAncestors": 0.9123261403487226
+      },
+      {
+        "generation": 8,
+        "vsAll": 0.7629638158215596,
+        "vsAllSd": 0.14836887799547172,
+        "vsAncestors": 0.8700998568894097
+      },
+      {
+        "generation": 12,
+        "vsAll": 0.8330430601184514,
+        "vsAllSd": 0.08358580544864373,
+        "vsAncestors": 0.8698546037431918
+      },
+      {
+        "generation": 16,
+        "vsAll": 1.0598192516974925,
+        "vsAllSd": 0.10812508392195593,
+        "vsAncestors": 1.0691336614920521
+      },
+      {
+        "generation": 20,
+        "vsAll": 0.7043046921517166,
+        "vsAllSd": 0.10312993622749728,
+        "vsAncestors": 0.6980897121446371
+      },
+      {
+        "generation": 24,
+        "vsAll": 0.8556094793634881,
+        "vsAllSd": 0.09883591990381833,
+        "vsAncestors": 0.8556094793634881
+      }
+    ],
+    "preyVulnerability": [
+      {
+        "generation": 0,
+        "vsAll": 0.9123690641798311,
+        "vsAllSd": 0.09252354052275906,
+        "vsAncestors": 0.9076020383327844
+      },
+      {
+        "generation": 4,
+        "vsAll": 0.9829725407033223,
+        "vsAllSd": 0.11030078333205741,
+        "vsAncestors": 0.973725487242417
+      },
+      {
+        "generation": 8,
+        "vsAll": 0.811413195309766,
+        "vsAllSd": 0.11165185612828488,
+        "vsAncestors": 0.7785066754024331
+      },
+      {
+        "generation": 12,
+        "vsAll": 0.871263919644096,
+        "vsAllSd": 0.08470103405845333,
+        "vsAncestors": 0.8440581250754745
+      },
+      {
+        "generation": 16,
+        "vsAll": 0.6754798426523996,
+        "vsAllSd": 0.13056406210027843,
+        "vsAncestors": 0.6967177221876473
+      },
+      {
+        "generation": 20,
+        "vsAll": 0.825012554065265,
+        "vsAllSd": 0.15443462673580313,
+        "vsAncestors": 0.8132340761007884
+      },
+      {
+        "generation": 24,
+        "vsAll": 0.8738832258096034,
+        "vsAllSd": 0.07822960933270628,
+        "vsAncestors": 0.8738832258096034
+      }
+    ],
+    "preyForageUnderThreat": [
+      {
+        "generation": 0,
+        "vsAll": 0.19432430993875727,
+        "vsAllSd": 0.0001380968375044719,
+        "vsAncestors": 0.19434326317442652
+      },
+      {
+        "generation": 4,
+        "vsAll": 0.09248578911033975,
+        "vsAllSd": 0.002609626580645315,
+        "vsAncestors": 0.09471810746643394
+      },
+      {
+        "generation": 8,
+        "vsAll": 0.07920735686490833,
+        "vsAllSd": 3.1192642777783324e-14,
+        "vsAncestors": 0.07920735686490375
+      },
+      {
+        "generation": 12,
+        "vsAll": 0.07190813560736363,
+        "vsAllSd": 6.724353596803672e-7,
+        "vsAncestors": 0.0719083210208831
+      },
+      {
+        "generation": 16,
+        "vsAll": 0.0236676662816678,
+        "vsAllSd": 0.0004770255237316636,
+        "vsAncestors": 0.023701447826992936
+      },
+      {
+        "generation": 20,
+        "vsAll": 0.10623309205362268,
+        "vsAllSd": 0.00402708539845054,
+        "vsAncestors": 0.10721013130625483
+      },
+      {
+        "generation": 24,
+        "vsAll": 0.08760136375824432,
+        "vsAllSd": 0.0000017287890332541546,
+        "vsAncestors": 0.08760136375824432
+      }
+    ],
+    "headToHead": [
+      {
+        "generation": 0,
+        "predContact": 0.9419742107204533,
+        "preyContact": 0.9076020383327844,
+        "preyForage": 0.19434326317442652
+      },
+      {
+        "generation": 4,
+        "predContact": 0.8990673339926177,
+        "preyContact": 0.9494649167693875,
+        "preyForage": 0.0939679266806399
+      },
+      {
+        "generation": 8,
+        "predContact": 0.7338352491394291,
+        "preyContact": 0.7318010117176591,
+        "preyForage": 0.07920735686490471
+      },
+      {
+        "generation": 12,
+        "predContact": 0.8222286650217135,
+        "preyContact": 0.8624403076145629,
+        "preyForage": 0.0719091665171942
+      },
+      {
+        "generation": 16,
+        "predContact": 0.9273720945846987,
+        "preyContact": 0.9225485334747955,
+        "preyForage": 0.02316058197348582
+      },
+      {
+        "generation": 20,
+        "predContact": 0.7118651488683366,
+        "preyContact": 0.7318117160129131,
+        "preyForage": 0.11001729515375418
+      },
+      {
+        "generation": 24,
+        "predContact": 0.8975584735951448,
+        "preyContact": 0.9376733273343514,
+        "preyForage": 0.08759990002864228
+      }
+    ],
+    "byAgeGap": [
+      {
+        "ageGap": 0,
+        "generationsBack": 0,
+        "predatorVsOlderPrey": 0.8477001679889133,
+        "preyVsOlderPredator": 0.8633345501794933,
+        "n": 7
+      },
+      {
+        "ageGap": 1,
+        "generationsBack": 4,
+        "predatorVsOlderPrey": 0.8299050268641022,
+        "preyVsOlderPredator": 0.8609518443132695,
+        "n": 6
+      },
+      {
+        "ageGap": 2,
+        "generationsBack": 8,
+        "predatorVsOlderPrey": 0.8701891633468017,
+        "preyVsOlderPredator": 0.8051465031721458,
+        "n": 5
+      },
+      {
+        "ageGap": 3,
+        "generationsBack": 12,
+        "predatorVsOlderPrey": 0.9113014666636365,
+        "preyVsOlderPredator": 0.7502349642863497,
+        "n": 4
+      },
+      {
+        "ageGap": 4,
+        "generationsBack": 16,
+        "predatorVsOlderPrey": 0.9300682247784514,
+        "preyVsOlderPredator": 0.7111674872961576,
+        "n": 3
+      },
+      {
+        "ageGap": 5,
+        "generationsBack": 20,
+        "predatorVsOlderPrey": 0.8720203007778375,
+        "preyVsOlderPredator": 0.8719282295022974,
+        "n": 2
+      },
+      {
+        "ageGap": 6,
+        "generationsBack": 24,
+        "predatorVsOlderPrey": 0.9360891165448048,
+        "preyVsOlderPredator": 0.9338969765017381,
+        "n": 1
+      }
+    ],
+    "trends": {
+      "predatorCapability": {
+        "slope": 0.0012766335499262993,
+        "se": 0.005807386300711189,
+        "z": 0.219829280130712
+      },
+      "preyVulnerability": {
+        "slope": -0.00506527536646575,
+        "se": 0.00441535456417678,
+        "z": -1.1471956086068356
+      },
+      "preyForage": {
+        "slope": -0.0031090528860554774,
+        "se": 0.0022736803243664705,
+        "z": -1.367409856494128
+      },
+      "headToHead": {
+        "slope": -0.0028045958587430172,
+        "se": 0.004672342516076008,
+        "z": -0.6002547649478429
+      }
+    }
+  }
+}

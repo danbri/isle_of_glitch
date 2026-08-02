@@ -1093,8 +1093,24 @@ export class Colony {
     // as "nothing in sight" (opponent channel 0, no contact) when null — which
     // is exactly the single-species case, so nothing changes when COEVO is off.
     this.role = cfg.COEVO ? cfg.COEVO_ROLE : null;
-    this.opponentCentroids = null;
+    // The opposing colony's per-step snapshot (`snapshotForOpponent`): centroids
+    // for SENSING (cheap, scalar-mass, the substrate's chemotaxis mechanism) and
+    // per-organism cell positions for CONTACT resolution.
+    this.opponents = null;
     this.contact = new Float64Array(this.P);   // integrated contact-seconds
+    // First-class discrete capture rate: distinct close-encounter events per
+    // organism (rising edges into the capture radius against a given opponent),
+    // so "does anything actually happen in an episode" is a number, not a guess.
+    // A pursuit/evasion gradient cannot exist if captures never occur.
+    this.captures = new Int32Array(this.P);
+    this.contactOrg = new Int32Array(this.P).fill(-1);   // opponent org in contact now (edge detect)
+    // Contact resolved to the NEAREST cell pair, not a body-wide scalar: which of
+    // THIS organism's cells sits closest to an opponent this step, and which
+    // opponent organism. The interaction stays scalar (fitness only) for now, but
+    // recording the local hit-point is what lets a later experiment turn a contact
+    // into a "bite" — apoptosis-during-life removing that cell — cheaply.
+    this.biteCell = new Int32Array(this.P).fill(-1);
+    this.biteOpp = new Int32Array(this.P).fill(-1);
     // Opponent-channel ablation, mirroring foodAblate: 'mean'/'const'/null. This
     // is the decisive instrument — blinding the opponent sense on an evolved
     // population and measuring the change in capture/escape.
@@ -1107,6 +1123,7 @@ export class Colony {
     this.px.fill(0); this.py.fill(0); this.vx.fill(0); this.vy.fill(0);
     this.ny.fill(0); this.act.fill(0); this.ad.fill(0); this.strain.fill(0);
     this.path.fill(0); this.intake.fill(0); this.contact.fill(0);
+    this.captures.fill(0); this.contactOrg.fill(-1); this.biteCell.fill(-1); this.biteOpp.fill(-1);
     this.stock.fill(1);
     this.foodX.set(this.world.fx); this.foodY.set(this.world.fy);
     this.steps = 0;
@@ -1144,7 +1161,7 @@ export class Colony {
     // opposing population handed in this step. Off => the opponent channel (if
     // present) reads zero, and the single-species path never enters this branch.
     const os2 = cfg.COEVO_SENSE_SIGMA2;
-    const opp = (NS > SENSORS && this.opponentCentroids) ? this.opponentCentroids : null;
+    const opp = (NS > SENSORS && this.opponents) ? this.opponents : null;
     for (let o = 0; o < this.P; o++) {
       const p = this.ph[o];
       for (let a = 0; a < p.n; a++) {
@@ -1176,7 +1193,7 @@ export class Colony {
         if (opp) {
           let om = 0;
           for (let q = 0; q < opp.n; q++) {
-            const d2 = (opp.x[q] - X) ** 2 + (opp.y[q] - Y) ** 2;
+            const d2 = (opp.cx[q] - X) ** 2 + (opp.cy[q] - Y) ** 2;
             om += Math.exp(-d2 / os2);
           }
           this.sens[b + OPP_CHAN] = Math.tanh(om * 0.16);
@@ -1452,35 +1469,78 @@ export class Colony {
   }
 
   /* ---- kernel: contact with the opposing species ------------------------- */
-  // Integrated contact-seconds per organism — the ONE physical quantity read
-  // identically from both sides (predator: prey caught; prey: times caught),
-  // which is what lets a predator generation and a prey generation sit on a
-  // single tournament axis. Contact is a close encounter of centroids, matched
-  // to how food is eaten (centroid-based), through the capture kernel. Nearest
-  // opponent only — `max`, not sum — so a prey pinned between two predators is
-  // not double-counted, mirroring the incumbent's contact definition.
+  // Contact is resolved to the NEAREST CELL PAIR, not a body-wide scalar. For
+  // each of this colony's organisms: find the nearest opponent ORGANISM by
+  // centroid (a cheap prefilter), then the minimum distance between this body's
+  // cells and that opponent's cells, and apply the capture kernel to it. Three
+  // outputs per organism:
+  //   contact[o]   integrated contact-seconds — the ONE physical quantity read
+  //                identically from both sides (predator: prey caught; prey:
+  //                times caught), which puts a predator generation and a prey
+  //                generation on a single tournament axis.
+  //   captures[o]  DISCRETE capture events: a rising edge into the capture
+  //                radius against a given opponent. This is the first-class
+  //                "does anything actually happen in an episode" number — a
+  //                pursuit/evasion gradient is impossible if it stays ~0.
+  //   biteCell[o]/biteOpp[o]  the local hit-point: which of THIS body's cells is
+  //                closest to an opponent, and which opponent. The interaction is
+  //                scalar (fitness only) for now; recording the hit-point is what
+  //                lets a later experiment turn a contact into a cell-removing
+  //                "bite" without re-plumbing the contact model.
   kContact() {
-    const opp = this.opponentCentroids;
+    const opp = this.opponents;
+    this.biteCell.fill(-1); this.biteOpp.fill(-1);
     if (!opp) return;
-    const cfg = this.cfg, dt = cfg.DT, cs2 = cfg.COEVO_CAPTURE_SIGMA2;
+    const cfg = this.cfg, S = this.S, dt = cfg.DT, cs2 = cfg.COEVO_CAPTURE_SIGMA2;
+    // Capture radius: within ~1.5 sigma of the kernel, a genuine close encounter.
+    const capR2 = cs2 * 2.25;
     for (let o = 0; o < this.P; o++) {
+      const p = this.ph[o], base = o * S;
       const [cx, cy] = this.centroid(o);
-      let best = 0;
+      // nearest opponent organism by centroid
+      let qBest = -1, cBest = Infinity;
       for (let q = 0; q < opp.n; q++) {
-        const d2 = (opp.x[q] - cx) ** 2 + (opp.y[q] - cy) ** 2;
-        const k = Math.exp(-d2 / cs2);
-        if (k > best) best = k;
+        const d2 = (opp.cx[q] - cx) ** 2 + (opp.cy[q] - cy) ** 2;
+        if (d2 < cBest) { cBest = d2; qBest = q; }
       }
-      this.contact[o] += best * dt;
+      if (qBest < 0) { this.contactOrg[o] = -1; continue; }
+      // minimum cell-cell distance to that opponent's cells; remember my cell
+      const oxs = opp.cellX[qBest], oys = opp.cellY[qBest], on = opp.cellN[qBest];
+      let minD2 = Infinity, myCell = -1;
+      for (let a = 0; a < p.n; a++) {
+        const X = this.px[base + a], Y = this.py[base + a];
+        for (let q = 0; q < on; q++) {
+          const d2 = (oxs[q] - X) ** 2 + (oys[q] - Y) ** 2;
+          if (d2 < minD2) { minD2 = d2; myCell = a; }
+        }
+      }
+      this.contact[o] += Math.exp(-minD2 / cs2) * dt;
+      if (minD2 < capR2) {
+        this.biteCell[o] = myCell; this.biteOpp[o] = qBest;
+        // rising edge, or a switch to a different opponent, is a new capture
+        if (this.contactOrg[o] !== qBest) { this.captures[o]++; this.contactOrg[o] = qBest; }
+      } else {
+        this.contactOrg[o] = -1;
+      }
     }
   }
 
-  /** Per-organism centroids, packed as {x, y, n} — the representation the
-   *  opposing colony senses and measures contact against. */
-  centroids() {
-    const x = new Float64Array(this.P), y = new Float64Array(this.P);
-    for (let o = 0; o < this.P; o++) { const c = this.centroid(o); x[o] = c[0]; y[o] = c[1]; }
-    return { x, y, n: this.P };
+  /** Snapshot for the opposing colony: per-organism centroids (sensing + the
+   *  contact prefilter) and per-organism cloned cell positions (cell-resolved
+   *  contact). Cloned, so the opponent reacts to this instant and not to a
+   *  half-stepped body. */
+  snapshotForOpponent() {
+    const P = this.P, S = this.S;
+    const cx = new Float64Array(P), cy = new Float64Array(P);
+    const cellX = new Array(P), cellY = new Array(P), cellN = new Int32Array(P);
+    for (let o = 0; o < P; o++) {
+      const p = this.ph[o], base = o * S;
+      const xs = new Float64Array(p.n), ys = new Float64Array(p.n);
+      let sx = 0, sy = 0;
+      for (let a = 0; a < p.n; a++) { xs[a] = this.px[base + a]; ys[a] = this.py[base + a]; sx += xs[a]; sy += ys[a]; }
+      cx[o] = sx / p.n; cy[o] = sy / p.n; cellX[o] = xs; cellY[o] = ys; cellN[o] = p.n;
+    }
+    return { n: P, cx, cy, cellX, cellY, cellN };
   }
 
   step() {
@@ -1518,6 +1578,7 @@ export class Colony {
         occupancy: this.occ[o].size,
         intake: this.intake[o],
         contact: this.contact[o],
+        captures: this.captures[o],
       });
     }
     return out;
@@ -1557,8 +1618,8 @@ export function sbCoevoSyncWorld(owner, other) {
  * The prey own the food field; the predators are synced to it after the step.
  */
 export function sbCoevoStep(prey, pred) {
-  prey.opponentCentroids = pred.centroids();
-  pred.opponentCentroids = prey.centroids();
+  prey.opponents = pred.snapshotForOpponent();
+  pred.opponents = prey.snapshotForOpponent();
   prey.step();
   pred.step();
   sbCoevoSyncWorld(prey, pred);

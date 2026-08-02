@@ -145,9 +145,15 @@ function evolve() {
     const preyContact = preyTraits.map(t => finite(t.contact));
     const predContact = predTraits.map(t => finite(t.contact));
     const preyIntakeV = preyTraits.map(t => finite(t.intake));
+    // Discrete capture rate — the first-class "does anything happen" number.
+    // predCaptures = distinct prey a predator closed on; preyCaptures = times a
+    // prey was closed on. Near-zero means the episode is too short for pursuit to
+    // matter and any "no arms race" verdict would be a false null.
+    const predCaptures = predTraits.map(t => finite(t.captures));
+    const preyCaptures = preyTraits.map(t => finite(t.captures));
     const preyTouched = preyContact.filter(c => c > 1e-4).length / preyContact.length;
     const predTouched = predContact.filter(c => c > 1e-4).length / predContact.length;
-    return { preyFit, predFit, preyContact, predContact, preyIntakeV,
+    return { preyFit, predFit, preyContact, predContact, preyIntakeV, predCaptures, preyCaptures,
              preyContactSd: sd(preyContact), predContactSd: sd(predContact),
              preyTouched, predTouched };
   };
@@ -172,10 +178,11 @@ function evolve() {
     const ev = evalGen(gen);
     trace.push({ gen, preyContact: mean(ev.preyContact), predContact: mean(ev.predContact),
                  preyIntake: mean(ev.preyIntakeV), preyTouched: ev.preyTouched, predTouched: ev.predTouched,
-                 preyContactSd: ev.preyContactSd, predContactSd: ev.predContactSd });
+                 preyContactSd: ev.preyContactSd, predContactSd: ev.predContactSd,
+                 predCaptures: mean(ev.predCaptures), preyCaptures: mean(ev.preyCaptures) });
     if (gen % a.snapEvery === 0 || gen === a.gens) archive.push(snapshot(gen));
     log(`  gen ${String(gen).padStart(2)}  predContact ${mean(ev.predContact).toFixed(4)} ` +
-        `preyContact ${mean(ev.preyContact).toFixed(4)} preyIntake ${mean(ev.preyIntakeV).toFixed(3)} ` +
+        `predCaptures ${mean(ev.predCaptures).toFixed(2)} preyIntake ${mean(ev.preyIntakeV).toFixed(3)} ` +
         `touched pred ${(ev.predTouched * 100).toFixed(0)}%/prey ${(ev.preyTouched * 100).toFixed(0)}%`);
     if (gen === a.gens) break;
     prey = nextGen(prey, ev.preyFit, preyCfg);
@@ -210,7 +217,7 @@ function tournament(archive, opts = {}) {
   for (let i = 0; i < N; i++) {           // predator generation
     for (let j = 0; j < N; j++) {         // prey generation
       // Average over `evals` fixed spawns so a cell is not one lucky layout.
-      const pc = [], vc = [], fg = [];
+      const pc = [], vc = [], fg = [], pcap = [];
       for (let e = 0; e < a.evals; e++) {
         const ps = (a.tseed ^ Math.imul(e + 1, 2654435761)) >>> 0;
         const qs = (a.tseed ^ 0x77 ^ Math.imul(e + 1, 40503)) >>> 0;
@@ -218,9 +225,10 @@ function tournament(archive, opts = {}) {
         pc.push(mean(predTraits.map(t => finite(t.contact))));
         vc.push(mean(preyTraits.map(t => finite(t.contact))));
         fg.push(mean(preyTraits.map(t => finite(t.intake))));
+        pcap.push(mean(predTraits.map(t => finite(t.captures))));
       }
       grid[i][j] = { predGen: gens[i], preyGen: gens[j],
-        predContact: mean(pc), preyContact: mean(vc), preyForage: mean(fg) };
+        predContact: mean(pc), preyContact: mean(vc), preyForage: mean(fg), predCaptures: mean(pcap) };
     }
     log(`  [tournament] predator gen ${gens[i]} done`);
   }
@@ -325,6 +333,14 @@ log(`\n  trend predatorCapability  ${intact.trends.predatorCapability.slope.toEx
 log(`  trend preyVulnerability   ${intact.trends.preyVulnerability.slope.toExponential(2)} (z ${intact.trends.preyVulnerability.z.toFixed(2)})  [FALLING = prey improved]`);
 log(`  trend preyForage          ${intact.trends.preyForage.slope.toExponential(2)} (z ${intact.trends.preyForage.z.toFixed(2)})`);
 log(`  trend headToHead          ${intact.trends.headToHead.slope.toExponential(2)} (z ${intact.trends.headToHead.z.toFixed(2)})  [expected flat in a real race]`);
+// Capture rate across the whole grid — the correctness check: if this is ~0 the
+// episode is too short for pursuit to matter and the verdict is a false null.
+{
+  const caps = [];
+  for (let i = 0; i < intact.matrix.length; i++) for (let j = 0; j < intact.matrix.length; j++) caps.push(intact.matrix[i][j].predCaptures);
+  log(`  capture rate (predator captures/episode, grid mean) ${mean(caps).toFixed(3)}  ` +
+      `[near 0 => episode too short, verdict would be a false null]`);
+}
 
 const lastPredCap = (r) => r.predatorCapability[r.predatorCapability.length - 1].vsAll;
 const lastPreyVuln = (r) => r.preyVulnerability[r.preyVulnerability.length - 1].vsAll;
