@@ -87,6 +87,11 @@ const a = parseArgs(process.argv.slice(2), {
   // incidental drift: at the 42-source default an undirected gait finds food
   // nearly as well as a directed one, so the sense has ~0 marginal intake value.
   food: -1, clusters: -1, senseSigma2: -1, eatSigma2: -1,
+  // Full width of the box cluster centres are drawn from (default -1 = DEFAULTS
+  // untouched = 1.72, the trunk layout). Shrinking it (e.g. 0.8) packs the few
+  // sparse clusters into the arena INTERIOR so an empty-region body has a real
+  // distant-food gradient to smell — the sense-range experiment's target.
+  clusterSpan: -1,
   // Resource-dynamics overrides (arena only; -1 = DEFAULTS untouched). These are
   // the "punish sitting" half of the cost experiment. A held patch settles at
   // stock s* = REGROW/(REGROW+CONSUME) ≈ 0.184 on the trunk, ABOVE the default
@@ -110,6 +115,7 @@ const cfg = Object.freeze({
   ...DEFAULTS,
   ...(a.food >= 0 ? { FOOD: a.food } : {}),
   ...(a.clusters >= 0 ? { FOOD_CLUSTERS: a.clusters } : {}),
+  ...(a.clusterSpan >= 0 ? { FOOD_CLUSTER_SPAN: a.clusterSpan } : {}),
   ...(a.senseSigma2 >= 0 ? { FOOD_SENSE_SIGMA2: a.senseSigma2 } : {}),
   ...(a.eatSigma2 >= 0 ? { FOOD_EAT_SIGMA2: a.eatSigma2 } : {}),
   ...(a.moveCost > 0 ? { META_MOVE_COST: a.moveCost } : {}),
@@ -439,7 +445,7 @@ if (a.out) {
   writeFileSync(a.out, JSON.stringify({
     seed: a.seed, pop: a.pop, gens: a.gens, elite: a.elite, eps: a.eps, steps: a.steps,
     fitness: a.fitness, curriculum: a.curriculum, spawns: a.spawns, crossover: !!a.crossover,
-    food: { FOOD: cfg.FOOD, FOOD_CLUSTERS: cfg.FOOD_CLUSTERS, FOOD_SENSE_SIGMA2: cfg.FOOD_SENSE_SIGMA2, FOOD_EAT_SIGMA2: cfg.FOOD_EAT_SIGMA2 }, traj,
+    food: { FOOD: cfg.FOOD, FOOD_CLUSTERS: cfg.FOOD_CLUSTERS, FOOD_CLUSTER_SPAN: cfg.FOOD_CLUSTER_SPAN, FOOD_SENSE_SIGMA2: cfg.FOOD_SENSE_SIGMA2, FOOD_EAT_SIGMA2: cfg.FOOD_EAT_SIGMA2, FOOD_RELOCATE_THRESH: cfg.FOOD_RELOCATE_THRESH }, traj,
     gen0: m0, evolved: mE, ablated: mA,
     dispGain, dispBar, intakeGain, intakeBar, effGain, effBar, ablDrop, ablBar,
     // Cost fields only when a cost is live, so a trunk run's JSON is byte-identical.

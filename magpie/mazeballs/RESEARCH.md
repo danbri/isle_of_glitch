@@ -4163,3 +4163,137 @@ cheap to ask, because `sb-op.js` carries all six operators behind one `--op`
 flag. What is committed: `tools/sb-op.js` (the operator bake-off) and
 `tools/sb-op-agg.js` (curves, generations-to-threshold, paired-vs-gaussian),
 with the 42 run JSONs in `results/op/`.
+
+## Widening the sense does not crack the wall either: range was not the reason
+
+The metabolic-cost verdict indicted one thing the cost could not touch — a
+sensing radius of ~0.22 against an arena ~1.88 across, so the sense can only
+ever inform the *final approach* and blinding it costs a rounding error. The
+sharpened prediction was that a sense reaching far enough to steer toward a
+*distant* target would finally make blinding pay, provided the target was sparse
+and clustered enough to present a real "food is over there, nothing here"
+gradient rather than the flat, uninformative field dense food gives at any
+range. Both levers have now been built and swept, and the answer is the fourth
+clean instance of the same wall: **across every sense range and every food
+sparsity, blinding the food sense costs net intake nothing.** A long-range,
+non-saturated, arena-spanning gradient was demonstrably available for a body to
+climb, and evolution declined to climb it — the population answered the movement
+cost by sitting, exactly as at the short range. Short range was not the reason.
+
+**What was built, and why single-species stays byte-identical.** The sensing
+range was already a config value (`FOOD_SENSE_SIGMA2`) with an arena-only
+`--senseSigma2` override; the one thing missing for a clean sparse-interior
+target was cluster *placement*, so `FOOD_CLUSTER_SPAN` (the full width of the box
+the cluster centres are drawn from) is added to `DEFAULTS` at 1.72 — for which
+`SPAN/2 === 0.86` to the bit, reproducing the original hardcoded `rng*1.72 −
+0.86` exactly — with a `--clusterSpan` override in `sb-evolve` that shrinks it to
+confine the clusters to the interior. `makeWorld` is the only touched function
+and the default layout is byte-identical; `sb-turing`, `sb-gate` and a short
+`sb-evolve` displacement run reproduce byte-for-byte (verified, text and JSON).
+`tools/senserange-agg.js` pools the decisive ablation across seeds.
+
+**The regime had to be powered first, and only one is.** A foraging sweep can
+only answer "is the sense load-bearing" if intake is *heritable enough that
+selection has signal* — otherwise a null ablation is trivially true because
+selection was sorting noise. Two regimes were probed and rejected for exactly
+this: fixed sparse interior food with no cost leaves bodies barely foraging
+(intake repeatability 0.000, 22–38% forage — food so sparse that who-eats is
+pure spawn luck); and a movement cost *on top of* interior food revives sitting
+completely (100% squatters, repeatability 0.000), because packing the clusters
+into the interior puts every spawn near food and makes sitting-where-you-land the
+free lunch — the sit-still degenerate the whole project has fought, sharpened by
+the very interiority the gradient argument wanted. The one powered regime is the
+metabolic cost's own decisive cell: `netintake` with `moveCost` 0.01, a
+6-generation displacement curriculum, and food that *relocates* on depletion
+(`relocateThresh` 0.30) across the whole arena, which makes who-keeps-eating a
+reproducible property of the genome (intake repeatability 0.205 at short range,
+reproduced here to the digit). That heritability is what gives the ablation
+something to bite on — and it is carried by kinematics, as the metabolic run
+already found. So the sweep is that powered regime crossed with sense range and
+sparsity: `POP 48 × 20 generations`, four held-out spawns for the re-measure,
+three seeds per cell.
+
+**The dose-response.** Sense radius (`√FOOD_SENSE_SIGMA2`) swept 0.22 → 0.50 →
+1.00 against the ~1.88 arena, crossed with sparse (14 sources / 7 clusters) and
+dense (42 / 9) food. The decisive column is the food-sense ablation on *net*
+intake — intact versus mean-replaced on the evolved population, pooled as a
+per-seed delta with an across-seed SE and the project's 2·SE bar:
+
+| sparsity | radius | squat % | R(intake) | meanNet | net ascent | ablation Δnet ± SE (2·SE bar) | verdict |
+|---|---|---|---|---|---|---|---|
+| 14f/7c | 0.224 | 78% | 0.205 | 0.0653 | +0.0146 | −0.0003 ± 0.0003 (0.0007) | incidental |
+| 14f/7c | 0.500 | 90% | 0.000 | 0.0512 | +0.0006 | −0.0010 ± 0.0010 (0.0020) | incidental |
+| 14f/7c | 1.000 | 83% | 0.041 | 0.0578 | +0.0060 | −0.0004 ± 0.0004 (0.0007) | incidental |
+| 42f/9c | 0.224 | 69% | 0.000 | 0.1748 | +0.0067 | −0.0041 ± 0.0022 (0.0044) | incidental |
+| 42f/9c | 0.500 | 78% | 0.002 | 0.1761 | +0.0062 | +0.0039 ± 0.0039 (0.0077) | incidental |
+| 42f/9c | 1.000 | 77% | 0.000 | 0.1707 | +0.0004 | +0.0002 ± 0.0002 (0.0005) | incidental |
+
+Every cell is incidental. The ablation delta straddles zero at every range and
+every sparsity, none clears its 2·SE bar, and the two largest magnitudes
+(−0.0041, +0.0039) are dense-food cells whose deltas flip sign across seeds and
+sit inside their own bars. **Widening the sense from a quarter of the arena to
+the whole of it changes the ablation by nothing.** It does not even reduce the
+squatting or raise the feeding heritability — if anything the wider kernels sit
+*more* (78→90% at the sparse middle range) and forage *less* heritably (0.205 at
+radius 0.22 vs 0.000–0.041 at the wider radii), the opposite of the predicted
+"now it can aim."
+
+**The gradient was real, not a saturation artifact — the control that makes the
+null mean something.** The obvious way a wide-kernel null could be vacuous is if
+`tanh(0.16·mass)` saturates once the kernel sums many patches, so "long range"
+is a flat field of ~1 by arithmetic rather than a distant-target gradient
+evolution refused. Measured directly (`results/senserange/field-diagnostic.txt`,
+the food-sense value on a 25×25 grid over the arena), the sparse arm is exactly
+the informative condition the hypothesis asked for and is *not* saturated: at
+radius 0.22 the field is blind (senses nothing) over 57% of the arena — the
+final-approach-only regime named — while at radius 0.50 it is a graded 0.01→0.71
+field (CV 0.58, 0% saturated, 6% blind) and at radius 1.00 a graded 0.24→0.89
+field (CV 0.23, 0% saturated, 0% blind) that spans the whole arena. A body
+anywhere in the sparse arena at these radii sits in a real gradient pointing at
+distant food. The *dense* arm is where saturation bites — 83% of the arena reads
+>0.95 at radius 1.00 (CV 0.05), the literal flat-field confound the density
+warning predicted — which is precisely why crossing with sparsity was necessary,
+and why the sparse-long-range cell is the load-bearing test. It is null with a
+genuine gradient on the table.
+
+**The degenerate optima, named so they do not masquerade as success.** Two are
+present across the grid and neither is sensing. The **sit-still revival** is
+everywhere (squatter fraction 69–90% at every cell) — the movement cost's
+standing answer, untouched by how far the sense reaches. And **heritable
+coverage** is the trap the ablation exists to catch: the short-range sparse cell
+has intake repeatability 0.205, five to six times the 0.034 floor, so feeding is
+genuinely selectable and heritable — yet blinding it costs −0.0003, because the
+heritable feeding is carried by where and how much the body moves, not by the
+sense. This is the same dissociation the metabolic and coevolution sections
+found: a trait can be selectable, heritable, and improving while the sense that
+was supposed to drive it is inert. The ablation, not the repeatability, is what
+tells them apart, and it says inert at every setting.
+
+**Verdict.** "Short range is why the sense never pays" was a good hypothesis and
+it is wrong. Given a sense that reaches across the arena, an unsaturated gradient
+that points at sparse clustered food from anywhere in it, a movement cost that
+prices blind coverage, and resource dynamics that make feeding heritable enough
+to select on, evolution still does not build steering — it sits, and blinding a
+body that sits costs nothing. Range was not the binding constraint any more than
+the cost, the task, the budget, or the sensory wiring were. The wall holds under
+this lever too, and it holds for a measured reason rather than an artifact: the
+gradient was there to be climbed. What this leaves standing is the project's
+oldest and now most-tested conclusion — the substrate resists sensing more
+deeply than any single environmental parameter explains. The sense is expressible
+(the loop provably closes), the information is present (a real arena-spanning
+gradient), the payoff is priced (a movement cost), and the trait is heritable
+(repeatability 0.205) — and directed sensing is *still* not what evolution finds,
+because a non-sensing answer (sit, or cover) is always available and always good
+enough. The live direction is no longer a richer sense or a wider kernel; it is a
+task in which **no** kinematic degenerate — not sitting, not covering — can
+collect the reward at all, so that steering by the sense is not merely one option
+among several but the only one that scores.
+
+**What is committed.** In `lib/softbody.js`, `FOOD_CLUSTER_SPAN` (1.72 in
+`DEFAULTS`, `SPAN/2 === 0.86` exactly, trunk food layout byte-identical) read
+only by `makeWorld`; single-species path verified byte-identical on `sb-turing`,
+`sb-gate` and a short `sb-evolve` displacement run. In `tools/sb-evolve.js`, the
+`--clusterSpan` arena-only override and its serialisation into the run's food
+record. `tools/senserange-agg.js` pools the ablation dose-response. Run readouts
+are in `results/senserange/` (`{sparse|dense}-sig{sigma2}-s{seed}`, radii
+0.224/0.500/1.000, seeds 1–3, plus `field-diagnostic.txt`).

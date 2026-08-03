@@ -1,0 +1,13 @@
+Food-sense field dynamic range over the arena, by sense radius.
+Field value = tanh(0.16 * sum_f exp(-d2/sigma2)) on a 25x25 grid, full stock.
+Confound check for the sense-range sweep: does a WIDE kernel give a real
+distant-target gradient (informative) or a saturated flat field (artifact)?
+
+sparse 14f/7c  radius 0.224  min 0.000 med 0.030 max 0.486  CV 1.31  saturated>0.95 0%  blind<0.05 57%
+sparse 14f/7c  radius 0.500  min 0.007 med 0.287 max 0.706  CV 0.58  saturated>0.95 0%  blind<0.05 6%
+sparse 14f/7c  radius 1.000  min 0.242 med 0.712 max 0.889  CV 0.23  saturated>0.95 0%  blind<0.05 0%
+
+dense  42f/9c  radius 0.224  min 0.000 med 0.141 max 0.873  CV 1.06  saturated>0.95 0%  blind<0.05 37%
+dense  42f/9c  radius 0.500  min 0.036 med 0.727 max 0.977  CV 0.39  saturated>0.95 11%  blind<0.05 0%
+dense  42f/9c  radius 1.000  min 0.682 med 0.993 max 1.000  CV 0.05  saturated>0.95 83%  blind<0.05 0%
+
