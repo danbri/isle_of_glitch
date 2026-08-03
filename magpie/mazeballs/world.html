@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Mazeballs — the lawful world, on the GPU</title>
+<style>
+:root{
+  --paper:#0A100F; --panel:#111A19; --ink:#E3EBE9; --ink-soft:#8FA39F;
+  --rule:#213230; --muscle:#E28C3E; --sensor:#41ADB2; --neuron:#6E8079;
+  --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#c.drag{cursor:grabbing}
+
+.hud{
+  position:fixed;top:0;left:0;right:0;padding:.6rem .9rem;
+  display:flex;gap:1.2rem;align-items:baseline;flex-wrap:wrap;
+  background:linear-gradient(to bottom,rgba(10,16,15,.92),rgba(10,16,15,0));
+  pointer-events:none;font-family:var(--mono);font-size:.72rem;letter-spacing:.03em;
+}
+.hud b{font-weight:600;color:var(--ink)}
+.hud span{color:var(--ink-soft)}
+.hud .t{font-family:var(--sans);font-size:.82rem;font-weight:600;letter-spacing:-.01em;margin-right:.4rem}
+
+aside{
+  position:fixed;top:0;right:0;bottom:0;width:264px;background:rgba(17,26,25,.94);
+  border-left:1px solid var(--rule);padding:3rem 1rem 1rem;overflow-y:auto;
+  display:flex;flex-direction:column;gap:.95rem;backdrop-filter:blur(8px);
+  transition:transform .22s ease;
+}
+aside.hidden{transform:translateX(100%)}
+h2{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;
+   color:var(--ink-soft);margin:0 0 .1rem;font-weight:500}
+.sl{display:flex;flex-direction:column;gap:.22rem;font-size:.74rem;color:var(--ink-soft)}
+.sl .lab{display:flex;justify-content:space-between}
+.sl .v{font-family:var(--mono);color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--sensor);margin:0}
+.row{display:flex;gap:.4rem;flex-wrap:wrap}
+button{
+  font:inherit;font-size:.76rem;color:var(--ink);background:#16211F;border:1px solid var(--rule);
+  border-radius:3px;padding:.4rem .6rem;cursor:pointer;flex:1;min-width:58px;
+}
+button:hover{border-color:var(--sensor)}
+button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font-weight:600}
+#toggle{
+  position:fixed;top:.5rem;right:.6rem;width:30px;height:30px;min-width:0;flex:none;
+  z-index:5;padding:0;font-size:.9rem;line-height:1;
+}
+.legend{display:flex;gap:.7rem;font-size:.68rem;color:var(--ink-soft);font-family:var(--mono)}
+.legend i{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:.25rem}
+.note{font-size:.68rem;line-height:1.5;color:var(--ink-soft)}
+#err{
+  position:fixed;inset:auto 1rem 1rem 1rem;padding:.8rem 1rem;background:#2A1615;
+  border:1px solid #6B2F2A;border-radius:4px;font-family:var(--mono);font-size:.74rem;
+  color:#F0C7C2;display:none;white-space:pre-wrap;max-height:40vh;overflow:auto;
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<button id="toggle" title="panel">☰</button>
+
+<div class="hud">
+  <span class="t">Mazeballs</span>
+  <span>beasts <b id="hBeasts">–</b></span>
+  <span>cells <b id="hCells">–</b></span>
+  <span>neurons <b id="hNeurons">–</b></span>
+  <span>synapses <b id="hSyn">–</b></span>
+  <span>step <b id="hStep">0</b></span>
+  <span>sim <b id="hRate">–</b>×realtime</span>
+  <span>fps <b id="hFps">–</b></span>
+  <span>zoom <b id="hZoom">–</b></span>
+  <span>gpu <b id="hGpu">–</b></span>
+</div>
+
+<aside id="panel">
+  <div>
+    <h2>World</h2>
+    <div class="legend">
+      <span><i style="background:#41ADB2"></i>sensor</span>
+      <span><i style="background:#E28C3E"></i>muscle</span>
+      <span><i style="background:#6E8079"></i>neuron</span>
+    </div>
+  </div>
+
+  <div class="sl"><div class="lab"><span>flow strength</span><span class="v" id="vStr">1.00</span></div>
+    <input type="range" id="sStr" min="0" max="300" value="100"></div>
+  <div class="sl"><div class="lab"><span>eddy scale</span><span class="v" id="vScale">0.90</span></div>
+    <input type="range" id="sScale" min="10" max="400" value="90"></div>
+  <div class="sl"><div class="lab"><span>drag</span><span class="v" id="vDrag">1.60</span></div>
+    <input type="range" id="sDrag" min="0" max="800" value="160"></div>
+  <div class="sl"><div class="lab"><span>bond stiffness</span><span class="v" id="vSpring">90</span></div>
+    <input type="range" id="sSpring" min="1" max="300" value="90"></div>
+  <div class="sl"><div class="lab"><span>muscle contraction</span><span class="v" id="vCon">0.45</span></div>
+    <input type="range" id="sCon" min="0" max="100" value="45"></div>
+  <div class="sl"><div class="lab"><span>steps per frame</span><span class="v" id="vSpf">4</span></div>
+    <input type="range" id="sSpf" min="0" max="40" value="4"></div>
+
+  <div>
+    <h2>View</h2>
+    <div class="row">
+      <button id="bField" class="on">field</button>
+      <button id="bBonds" class="on">bonds</button>
+      <button id="bPause">pause</button>
+    </div>
+    <div class="row" style="margin-top:.4rem">
+      <button id="bFit">fit all</button>
+      <button id="bReseed">reseed</button>
+    </div>
+  </div>
+
+  <div>
+    <h2>Population</h2>
+    <div class="sl"><div class="lab"><span>beasts</span><span class="v" id="vBeasts">2000</span></div>
+      <input type="range" id="sBeasts" min="100" max="20000" step="100" value="2000"></div>
+    <div class="sl"><div class="lab"><span>cells per beast</span><span class="v" id="vCpb">12</span></div>
+      <input type="range" id="sCpb" min="6" max="32" step="1" value="12"></div>
+    <div class="row" style="margin-top:.4rem"><button id="bRebuild">rebuild</button></div>
+  </div>
+
+  <p class="note">
+    Drag to pan, wheel or pinch to zoom. Positions are continuous f32 and the
+    flow is an analytic curl field — there is no grid to zoom past. Every cell
+    is a CTRNN node in one shared arena; sensors write their own brain input and
+    muscles contract their bonds, all without leaving the GPU.
+  </p>
+</aside>
+
+<div id="err"></div>
+
+<script type="module">
+import { buildBodies } from './lib/bodies.js';
+import { BrainArenaGPU } from './lib/brainarena_gpu.js';
+import { WorldGPU, WGSL_FIELD } from './lib/world_gpu.js';
+
+const $ = id => document.getElementById(id);
+const fail = (msg) => { $('err').style.display = 'block'; $('err').textContent = msg; };
+
+if (!navigator.gpu) fail('WebGPU is not available in this browser.\nTry Chrome/Edge 113+, or Safari 18+.');
+
+/* ------------------------------------------------------------------ render */
+
+const RENDER = /* wgsl */`
+${WGSL_FIELD}
+
+struct Cam {
+  center   : vec2<f32>,
+  ndc      : vec2<f32>,   // NDC units per world unit, x and y
+  radius   : f32,         // cell draw radius, world units
+  flowScale: f32,
+  flowStr  : f32,
+  seed     : u32,
+  showField: f32,
+  bound    : f32,
+  octaves  : f32,   // LOD, FRACTIONAL — see fbmOct; integer levels would pop
+  bandK    : f32,   // streamline frequency, fixed in WORLD units
+  bandFade : f32,   // fades streamlines out as they approach pixel spacing
+  pad0     : f32,
+  pad1     : f32,
+  pad2     : f32,
+};
+@group(0) @binding(0) var<uniform>       C     : Cam;
+@group(0) @binding(1) var<storage, read> pos   : array<vec2<f32>>;
+@group(0) @binding(2) var<storage, read> act   : array<f32>;
+@group(0) @binding(3) var<storage, read> cmeta   : array<vec2<i32>>;
+@group(0) @binding(4) var<storage, read> bondIdx : array<i32>;
+
+/* ---- background: the field the cells actually swim in, same definition ---- */
+
+struct BgOut { @builtin(position) p: vec4<f32>, @location(0) w: vec2<f32> };
+
+@vertex
+fn bgVs(@builtin(vertex_index) vi: u32) -> BgOut {
+  var q = array<vec2<f32>, 3>(vec2(-1.0, -1.0), vec2(3.0, -1.0), vec2(-1.0, 3.0));
+  let c = q[vi];
+  var o: BgOut;
+  o.p = vec4<f32>(c, 0.0, 1.0);
+  o.w = C.center + c / C.ndc;          // clip -> world
+  return o;
+}
+
+@fragment
+fn bgFs(i: BgOut) -> @location(0) vec4<f32> {
+  let base = vec3<f32>(0.039, 0.063, 0.059);
+  if (C.showField < 0.5) { return vec4<f32>(base, 1.0); }
+
+  // Every noise evaluation here is LOD-limited. Summing octaves finer than a
+  // pixel does not draw detail, it draws aliasing — which is precisely what
+  // made this render as television snow before.
+  let pot = fbmOct(i.w * C.flowScale, C.seed, C.octaves);
+
+  let e = 0.5 / C.flowScale;
+  let dx = fbmOct((i.w + vec2<f32>(e, 0.0)) * C.flowScale, C.seed, C.octaves)
+         - fbmOct((i.w - vec2<f32>(e, 0.0)) * C.flowScale, C.seed, C.octaves);
+  let dy = fbmOct((i.w + vec2<f32>(0.0, e)) * C.flowScale, C.seed, C.octaves)
+         - fbmOct((i.w - vec2<f32>(0.0, e)) * C.flowScale, C.seed, C.octaves);
+  let f = vec2<f32>(dy, -dx) * C.flowStr / (2.0 * e);
+
+  // Flow is the curl of this potential, so it is everywhere PERPENDICULAR to
+  // the potential's gradient — which means the potential's iso-contours are
+  // exactly the streamlines. Banding on the potential therefore draws true flow
+  // lines rather than a texture that merely suggests motion. bandK comes from
+  // the camera so the bands hold a roughly constant pixel spacing at any zoom.
+  let bands = abs(sin(pot * C.bandK));
+  let streak = pow(bands, 7.0) * C.bandFade;
+
+  let m = clamp(length(f) * 3.2, 0.0, 1.0);
+  let ang = atan2(f.y, f.x);
+  let mixv = 0.5 + 0.5 * sin(ang);
+  let cool = vec3<f32>(0.09, 0.24, 0.27);
+  let warm = vec3<f32>(0.25, 0.16, 0.09);
+
+  // Kept dim on purpose: the field is the setting, not the subject. If the
+  // background competes with the cells, the population stops being readable.
+  var col = base + mix(cool, warm, mixv) * m * 0.42;
+  col = col + vec3<f32>(0.07, 0.11, 0.10) * streak * (0.25 + 0.75 * m);
+  return vec4<f32>(col, 1.0);
+}
+
+/* ------------------------------- cells: one soft anisotropic quad per cell -- */
+
+struct VOut {
+  @builtin(position) p    : vec4<f32>,
+  @location(0)       uv   : vec2<f32>,
+  @location(1)       tint : vec3<f32>,
+  @location(2)       glow : f32,
+};
+
+@vertex
+fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut {
+  var q = array<vec2<f32>, 6>(
+    vec2(-1.0, -1.0), vec2(1.0, -1.0), vec2(-1.0, 1.0),
+    vec2(-1.0,  1.0), vec2(1.0, -1.0), vec2( 1.0, 1.0));
+  let corner = q[vi];
+  let m = cmeta[ii];
+  var a = 0.0;
+  if (m.y >= 0) { a = act[u32(m.y)]; }
+
+  // Activation swells the cell a little — an active cell reads as active even
+  // before colour, which matters when zoomed out past where hue resolves.
+  let r = C.radius * (1.0 + 0.35 * abs(a));
+  let world = pos[ii] + corner * r;
+
+  var o: VOut;
+  o.p = vec4<f32>((world - C.center) * C.ndc, 0.0, 1.0);
+  o.uv = corner;
+
+  let sensor = vec3<f32>(0.255, 0.678, 0.698);
+  let muscle = vec3<f32>(0.886, 0.549, 0.243);
+  let neuron = vec3<f32>(0.431, 0.502, 0.475);
+  var base = neuron;
+  if (m.x == 1) { base = sensor; }
+  if (m.x == 2) { base = muscle; }
+  o.tint = base;
+  o.glow = clamp(0.30 + 0.85 * abs(a), 0.0, 1.35);
+  return o;
+}
+
+@fragment
+fn fs(i: VOut) -> @location(0) vec4<f32> {
+  // A gaussian falloff, not a hard disc: soft marks compose into a flowing
+  // field instead of the TV-snow look hard dots give at population scale.
+  let d2 = dot(i.uv, i.uv);
+  let g = exp(-d2 * 3.4);
+  if (g < 0.004) { discard; }
+  return vec4<f32>(i.tint * i.glow * g, g);
+}
+
+/* ------------------------------------------------- bonds: one line per bond */
+
+struct LOut { @builtin(position) p: vec4<f32>, @location(0) tint: vec3<f32> };
+
+@vertex
+fn lineVs(@builtin(vertex_index) vi: u32) -> LOut {
+  let idx = bondIdx[vi];
+  var o: LOut;
+  o.p = vec4<f32>((pos[u32(idx)] - C.center) * C.ndc, 0.0, 1.0);
+  o.tint = vec3<f32>(0.16, 0.30, 0.28);
+  return o;
+}
+
+@fragment
+fn lineFs(i: LOut) -> @location(0) vec4<f32> {
+  return vec4<f32>(i.tint, 1.0);
+}
+`;
+
+/* ------------------------------------------------------------------- setup */
+
+let dev, ctx, fmt, sim = null, raf = 0;
+const cam = { cx: 0, cy: 0, zoom: 6 };     // zoom = pixels per world unit
+const view = { field: true, bonds: true, paused: false, spf: 4 };
+
+const canvas = $('c');
+
+async function boot() {
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) return fail('No WebGPU adapter — this machine exposes no usable GPU.');
+
+  // Report which adapter this actually is. A software fallback (SwiftShader,
+  // lavapipe) will still run every kernel here and still look correct, just an
+  // order of magnitude slower — which is exactly the kind of thing that
+  // silently invalidates a benchmark, so the page states it rather than
+  // leaving it to be guessed at. Real hardware reports a vendor/architecture
+  // and generous limits; a fallback reports the 128 MiB spec minimum.
+  const info = adapter.info ?? {};
+  const soft = adapter.isFallbackAdapter
+    || adapter.limits.maxStorageBufferBindingSize <= (128 << 20);
+  const name = [info.vendor, info.architecture].filter(Boolean).join(' ')
+    || info.description || 'unknown';
+  $('hGpu').textContent = soft ? name + ' (SOFTWARE!)' : name;
+  $('hGpu').style.color = soft ? '#E2703E' : '';
+  dev = await adapter.requestDevice({
+    requiredLimits: {
+      maxStorageBufferBindingSize: Math.min(adapter.limits.maxStorageBufferBindingSize, 512 << 20),
+      maxBufferSize: Math.min(adapter.limits.maxBufferSize, 512 << 20),
+    },
+  });
+  dev.addEventListener?.('uncapturederror', e => fail('WebGPU error: ' + (e.error?.message ?? e.error)));
+
+  ctx = canvas.getContext('webgpu');
+  fmt = navigator.gpu.getPreferredCanvasFormat();
+  ctx.configure({ device: dev, format: fmt, alphaMode: 'opaque' });
+
+  await rebuild();
+  addEventListener('resize', resize);
+  resize();
+  loop();
+}
+
+/** Bond endpoint index list, so bonds draw as a single line-list draw call. */
+function bondIndexList(cells) {
+  const { bond, bondK } = cells;
+  const out = [];
+  for (let i = 0; i < bond.length; i++) {
+    const j = bond[i];
+    if (j < 0) continue;
+    const from = (i / bondK) | 0;
+    if (from < j) { out.push(from, j); }     // each undirected bond once
+  }
+  return new Int32Array(out);
+}
+
+async function rebuild() {
+  if (sim) { sim.world.destroy(); sim.brains.destroy(); sim.bBond.destroy(); sim.bCam.destroy(); }
+
+  const beasts = +$('sBeasts').value;
+  const cellsPer = +$('sCpb').value;
+  const bound = Math.max(40, Math.sqrt(beasts * cellsPer) * 0.62);
+
+  const built = buildBodies({
+    beasts, cells: cellsPer, degree: 12, bondK: 4,
+    radius: 1.1, bound, seed: (Math.random() * 1e6) | 0,
+  });
+  const brains = await BrainArenaGPU.create(built.arena, dev);
+  const world = new WorldGPU(brains, built.cells, {
+    bound,
+    flowScale: +$('sScale').value / 100,
+    flowStr: +$('sStr').value / 100,
+    drag: +$('sDrag').value / 100,
+    springK: +$('sSpring').value,
+    contract: +$('sCon').value / 100,
+    seed: (Math.random() * 1e5) | 0,
+  });
+
+  const idx = bondIndexList(built.cells);
+  const bBond = dev.createBuffer({ size: Math.max(4, idx.byteLength), usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+  dev.queue.writeBuffer(bBond, 0, idx);
+
+  const bCam = dev.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+
+  const module = dev.createShaderModule({ code: RENDER, label: 'render' });
+
+  const ro = { type: 'read-only-storage' };
+  const V = GPUShaderStage.VERTEX, F = GPUShaderStage.FRAGMENT;
+  const layout = dev.createBindGroupLayout({
+    entries: [
+      { binding: 0, visibility: V | F, buffer: { type: 'uniform' } },
+      { binding: 1, visibility: V, buffer: ro },
+      { binding: 2, visibility: V, buffer: ro },
+      { binding: 3, visibility: V, buffer: ro },
+      { binding: 4, visibility: V, buffer: ro },
+    ],
+  });
+  const pl = dev.createPipelineLayout({ bindGroupLayouts: [layout] });
+
+  const blend = {
+    color: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' },
+    alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' },
+  };
+  const pipeBg = dev.createRenderPipeline({
+    layout: pl, vertex: { module, entryPoint: 'bgVs' },
+    fragment: { module, entryPoint: 'bgFs', targets: [{ format: fmt }] },
+    primitive: { topology: 'triangle-list' },
+  });
+  const pipeCells = dev.createRenderPipeline({
+    layout: pl, vertex: { module, entryPoint: 'vs' },
+    fragment: { module, entryPoint: 'fs', targets: [{ format: fmt, blend }] },
+    primitive: { topology: 'triangle-list' },
+  });
+  const pipeBonds = dev.createRenderPipeline({
+    layout: pl, vertex: { module, entryPoint: 'lineVs' },
+    fragment: { module, entryPoint: 'lineFs', targets: [{ format: fmt, blend }] },
+    primitive: { topology: 'line-list' },
+  });
+
+  const bind = dev.createBindGroup({
+    layout,
+    entries: [
+      { binding: 0, resource: { buffer: bCam } },
+      { binding: 1, resource: { buffer: world.bPos } },
+      { binding: 2, resource: { buffer: brains.bAct } },
+      { binding: 3, resource: { buffer: world.bMeta } },
+      { binding: 4, resource: { buffer: bBond } },
+    ],
+  });
+
+  let syn = 0;
+  for (let i = 0; i < built.arena.esrc.length; i++) if (built.arena.esrc[i] >= 0) syn++;
+
+  sim = {
+    ...built, brains, world, bBond, bCam, bind,
+    pipeBg, pipeCells, pipeBonds, bondVerts: idx.length, bound, syn,
+  };
+
+  $('hBeasts').textContent = beasts.toLocaleString();
+  $('hCells').textContent = built.meta.nCells.toLocaleString();
+  $('hNeurons').textContent = built.arena.N.toLocaleString();
+  $('hSyn').textContent = syn.toLocaleString();
+  fitAll();
+}
+
+function resize() {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  canvas.width = Math.floor(innerWidth * dpr);
+  canvas.height = Math.floor(innerHeight * dpr);
+}
+
+function fitAll() {
+  if (!sim) return;
+  cam.cx = 0; cam.cy = 0;
+  cam.zoom = Math.min(innerWidth, innerHeight) / (sim.bound * 2.15);
+  $('hZoom').textContent = cam.zoom.toFixed(2);
+}
+
+/* -------------------------------------------------------------------- loop */
+
+let last = performance.now(), fps = 0, simRate = 0, acc = 0, frames = 0;
+
+function writeCam() {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = canvas.width, h = canvas.height;
+  // NDC units per world unit. zoom is CSS px per world unit, so multiply by dpr
+  // to get device px, then 2/size to reach NDC.
+  const nx = cam.zoom * dpr * 2 / w, ny = cam.zoom * dpr * 2 / h;
+  // Cells keep a physical size in world units, but never shrink below a pixel
+  // or the population vanishes when zoomed out.
+  const rWorld = Math.max(0.34, 1.15 / (cam.zoom * dpr));
+
+  const b = new ArrayBuffer(64), dv = new DataView(b);
+  dv.setFloat32(0, cam.cx, true); dv.setFloat32(4, cam.cy, true);
+  dv.setFloat32(8, nx, true); dv.setFloat32(12, ny, true);
+  dv.setFloat32(16, rWorld, true);
+  dv.setFloat32(20, sim.world.params.flowScale, true);
+  dv.setFloat32(24, sim.world.params.flowStr, true);
+  dv.setUint32(28, sim.world.params.seed, true);
+  dv.setFloat32(32, view.field ? 1 : 0, true);
+  dv.setFloat32(36, sim.bound, true);
+
+  // LOD, continuous. Octave o has features 1/(flowScale * 2^o) world units
+  // across; resolve only those still ~2 device pixels wide or wider. Left as a
+  // FRACTION rather than floored: the shader fades the finest octave in by
+  // weight, so zooming reveals detail smoothly instead of stepping.
+  const pxPerWorld = cam.zoom * dpr;
+  const fs = sim.world.params.flowScale;
+  const oct = Math.max(1, Math.min(5, 1 + Math.log2(Math.max(1, fs * pxPerWorld / 2))));
+  dv.setFloat32(40, oct, true);
+
+  // Streamlines are fixed in WORLD units — roughly one contour every 1.6 world
+  // units — so they are features of the field, not of the viewport, and they
+  // stay put as the camera moves. Pinning them to pixel spacing instead made
+  // them slide under the zoom, which is the same discontinuity as popping LOD
+  // wearing different clothes. When the spacing closes on a pixel they fade out
+  // rather than alias.
+  const bandWorld = 1.6;
+  dv.setFloat32(44, (2 * Math.PI) / (bandWorld * 0.3 * fs), true);
+  const bandPx = bandWorld * pxPerWorld;
+  dv.setFloat32(48, Math.min(1, Math.max(0, (bandPx - 2.5) / 5.5)), true);
+  dev.queue.writeBuffer(sim.bCam, 0, b);
+}
+
+function loop() {
+  raf = requestAnimationFrame(loop);
+  if (!sim) return;
+  const t = performance.now();
+
+  if (!view.paused && view.spf > 0) {
+    sim.world.step(view.spf);
+    simRate = view.spf * (1000 / Math.max(1, t - last)) * sim.world.params.dt;
+  }
+
+  writeCam();
+  const enc = dev.createCommandEncoder();
+  const pass = enc.beginRenderPass({
+    colorAttachments: [{
+      view: ctx.getCurrentTexture().createView(),
+      clearValue: { r: 0.039, g: 0.063, b: 0.059, a: 1 },
+      loadOp: 'clear', storeOp: 'store',
+    }],
+  });
+  pass.setBindGroup(0, sim.bind);
+  pass.setPipeline(sim.pipeBg); pass.draw(3);
+  if (view.bonds && sim.bondVerts) { pass.setPipeline(sim.pipeBonds); pass.draw(sim.bondVerts); }
+  pass.setPipeline(sim.pipeCells); pass.draw(6, sim.meta.nCells);
+  pass.end();
+  dev.queue.submit([enc.finish()]);
+
+  frames++; acc += t - last; last = t;
+  if (acc > 400) {
+    fps = frames * 1000 / acc; frames = 0; acc = 0;
+    $('hFps').textContent = fps.toFixed(0);
+    $('hStep').textContent = (sim.world.steps ?? 0).toLocaleString();
+    $('hRate').textContent = simRate.toFixed(1);
+    $('hZoom').textContent = cam.zoom.toFixed(2);
+  }
+}
+
+/* ------------------------------------------------------------ interaction */
+
+let drag = null;
+canvas.addEventListener('pointerdown', e => {
+  drag = { x: e.clientX, y: e.clientY };
+  canvas.setPointerCapture(e.pointerId); canvas.classList.add('drag');
+});
+canvas.addEventListener('pointermove', e => {
+  if (!drag) return;
+  cam.cx -= (e.clientX - drag.x) / cam.zoom;
+  cam.cy += (e.clientY - drag.y) / cam.zoom;
+  drag = { x: e.clientX, y: e.clientY };
+});
+const endDrag = () => { drag = null; canvas.classList.remove('drag'); };
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  // Zoom about the cursor, so the point under the pointer stays put — the
+  // difference between a usable microscope and a frustrating one.
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.width / 2, my = e.clientY - rect.height / 2;
+  const wx = cam.cx + mx / cam.zoom, wy = cam.cy - my / cam.zoom;
+  cam.zoom = Math.min(400, Math.max(0.05, cam.zoom * Math.exp(-e.deltaY * 0.0016)));
+  cam.cx = wx - mx / cam.zoom; cam.cy = wy + my / cam.zoom;
+}, { passive: false });
+
+// Pinch
+let pinch = null;
+const touches = new Map();
+canvas.addEventListener('pointerdown', e => touches.set(e.pointerId, e));
+canvas.addEventListener('pointermove', e => {
+  if (!touches.has(e.pointerId)) return;
+  touches.set(e.pointerId, e);
+  if (touches.size === 2) {
+    const [a, b] = [...touches.values()];
+    const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    if (pinch) cam.zoom = Math.min(400, Math.max(0.05, cam.zoom * d / pinch));
+    pinch = d; drag = null;
+  }
+});
+const clearTouch = e => { touches.delete(e.pointerId); if (touches.size < 2) pinch = null; };
+canvas.addEventListener('pointerup', clearTouch);
+canvas.addEventListener('pointercancel', clearTouch);
+
+/* ---------------------------------------------------------------- controls */
+
+const bindSlider = (id, vid, fmtFn, apply) => {
+  const el = $(id);
+  el.addEventListener('input', () => {
+    const v = fmtFn(+el.value);
+    $(vid).textContent = typeof v === 'number' ? v.toFixed(2) : v;
+    apply(typeof v === 'number' ? v : +el.value);
+  });
+};
+bindSlider('sStr', 'vStr', v => v / 100, v => sim?.world.writeParams({ flowStr: v }));
+bindSlider('sScale', 'vScale', v => v / 100, v => sim?.world.writeParams({ flowScale: v }));
+bindSlider('sDrag', 'vDrag', v => v / 100, v => sim?.world.writeParams({ drag: v }));
+bindSlider('sSpring', 'vSpring', v => v, v => sim?.world.writeParams({ springK: v }));
+bindSlider('sCon', 'vCon', v => v / 100, v => sim?.world.writeParams({ contract: v }));
+$('sSpf').addEventListener('input', e => { view.spf = +e.target.value; $('vSpf').textContent = view.spf; });
+$('sBeasts').addEventListener('input', e => $('vBeasts').textContent = (+e.target.value).toLocaleString());
+$('sCpb').addEventListener('input', e => $('vCpb').textContent = e.target.value);
+
+$('bField').onclick = e => { view.field = !view.field; e.target.classList.toggle('on', view.field); };
+$('bBonds').onclick = e => { view.bonds = !view.bonds; e.target.classList.toggle('on', view.bonds); };
+$('bPause').onclick = e => { view.paused = !view.paused; e.target.classList.toggle('on', view.paused); };
+$('bFit').onclick = fitAll;
+$('bReseed').onclick = () => sim?.world.writeParams({ seed: (Math.random() * 1e5) | 0 });
+$('bRebuild').onclick = () => rebuild().catch(e => fail(String(e.stack || e)));
+$('toggle').onclick = () => $('panel').classList.toggle('hidden');
+
+addEventListener('keydown', e => {
+  if (e.key === ' ') { view.paused = !view.paused; $('bPause').classList.toggle('on', view.paused); e.preventDefault(); }
+  if (e.key === 'f') fitAll();
+});
+
+boot().catch(e => fail(String(e.stack || e)));
+</script>
+</body>
+</html>

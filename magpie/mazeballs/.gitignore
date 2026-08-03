@@ -8,3 +8,6 @@ runs/*.json
 # its container is reclaimed.
 runs/*.txt
 .ref/
+
+# Browser-automation scratch from verifying world.html
+.playwright-mcp/
