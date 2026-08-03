@@ -4984,3 +4984,52 @@ under rich-first, on populations that had gone clonal within a few hundred ticks
 They describe how fast a single lineage improves by mutation alone. The replicated
 0.568 +/- 0.020 should be read that way, and 0.607 is the better estimate of what
 this world sustains once the scheduler stops throttling variation.
+
+### Evolved bodies are geometrically frustrated, and it is a uniform rest length
+
+Symptom, reported from the browser: "diagonal lines like rain, travelling top
+right to bottom left". Diagnosed wrongly four times — dead cells rendering,
+bodies torn across the toroidal seam, a stale out-of-band bond list, orphan
+cells owned by no organism. Two of those were real bugs. None was this one.
+
+What settled it was a stiffness sweep on FRESH bodies against EVOLVED ones:
+
+  springK  10, contract 0.45 : median strain 1.04
+  springK  90, contract 0.45 : median strain 1.00
+  springK 400, contract 0    : median strain 1.00      (fresh ring bodies)
+
+  evolved population, same physics : median strain 4.73, p99 25, max 172
+
+The spring law is correct and the force is applied. The difference is the REST
+LENGTH the two get. buildBodies sets each bond's rest to the ACTUAL initial
+spacing, so a fresh body's configuration is satisfiable by construction. The
+divide() path, added when topology became heritable, assigns REST = 0.62 to
+every bond uniformly.
+
+That is unsatisfiable for the graphs evolution actually produces. Measured on
+the largest body: 27 cells, degree median 4 and max 4 — every cell saturated at
+bondK. Four neighbours all at 0.62 in a plane requires a lattice; a random
+4-regular graph needs more room than 2D affords at fixed spacing, so every edge
+must stretch. The signature confirms it: 88% of bonds stretched, 6% compressed,
+minimum strain across an entire body 1.12. A frustrated network under real
+spring forces shows COMPRESSION balancing tension — conflicting constraints push
+some pairs together. Uniform expansion with none is the fingerprint of a graph
+that simply does not fit, not of a force that is missing.
+
+The uniform rest length was deliberate: it was meant to make shape follow from
+topology rather than let a body encode its geometry directly. That reasoning was
+sound and the consequence was not thought through — it silently required every
+evolvable graph to be embeddable at one spacing, which almost none are.
+
+CONSEQUENCE FOR THIS WAVE'S ASCENT RESULTS. Every ascent measurement after
+heritable topology landed was taken on bodies in this state: permanently
+stretched, unable to reach the morphology their genome specifies. Whatever those
+runs measured, it was not evolution of working bodies. The numbers are not
+retracted — the tournaments are still valid comparisons between populations
+under identical conditions — but they describe a regime where morphology is
+broken, and should be re-taken once it is not.
+
+FIX DIRECTIONS, none yet tested: lower bondK so graphs stay embeddable; make
+rest length per-bond and heritable, accepting that bodies then encode geometry;
+or constrain topology mutation to preserve planarity. The first is cheapest to
+try and the third is closest to the original intent.
