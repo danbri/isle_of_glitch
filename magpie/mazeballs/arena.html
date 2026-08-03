@@ -1,0 +1,268 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>arena — the four, together</title>
+<!--
+  arena.html — the fusion the goal actually names: all four in ONE running world.
+    EVO-DEVO   every creature is grown from a genome — cells read positional
+               information and DIFFERENTIATE into sensor / neuron / muscle roles.
+    CELLS AS SENSORS / NEURONS / MUSCLES   literally, colour-coded in the arena.
+    CTRNN      the neuron cells form a continuous-time recurrent net; it makes a
+               gait and lets sensor input steer it.
+    INFINITE ASCENT   the selection pressure is NOT a fixed task (those plateau).
+               Two species coevolve — PREDATORS and PREY — and the only thing a
+               creature smells is the OTHER creature. Nothing tells a predator to
+               chase or a prey to flee: predators score on contact, prey score on
+               escape, and pursuit and flight EVOLVE. Because each side's target
+               keeps improving, there is no fixed ceiling; progress shows only
+               against ANCESTORS, so the page runs a live ancestral tournament —
+               current champion vs the frozen gen-0 champion — and both curves
+               climb. That un-plateaued, cross-generational climb is the ascent.
+
+  The body/development/CTRNN/physics are reused verbatim from critters.html (a
+  hex cell-disk, quadratic-drag swimming — no ground, no gravity). What is new
+  here is the second species and the coevolution. HONEST SCOPE: "infinite" is a
+  horizon — this shows sustained ascent live, not a proof of foreverness, and
+  coevolution can still disengage (a bounded arena keeps the two engaged). CPU
+  sim; the population evolves between frames while the champions duel on screen.
+-->
+<style>
+  :root{ color-scheme:dark; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; overflow:hidden; background:#06070c;
+    font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace; color:#ccd4e0; }
+  #c{ position:fixed; inset:0; width:100%; height:100%; display:block; }
+  .panel{ position:fixed; background:rgba(10,13,20,.84); backdrop-filter:blur(8px); border:1px solid #1e2634; border-radius:10px; padding:10px 12px; }
+  #ui{ top:10px; left:10px; width:250px; box-shadow:0 8px 30px #0008; }
+  h1{ margin:0 0 2px; font-size:13px; letter-spacing:.04em; color:#eef2f8; }
+  .sub{ color:#6a7788; margin:0 0 8px; font-size:10.5px; }
+  .lbl{ color:#7f90a4; text-transform:uppercase; letter-spacing:.08em; font-size:9.5px; margin:9px 0 5px; border-top:1px solid #18202c; padding-top:8px; }
+  .row{ display:flex; align-items:center; gap:6px; margin:4px 0; }
+  .row label{ flex:0 0 74px; color:#9db0c2; font-size:10.5px; }
+  .row input[type=range]{ flex:1; height:3px; accent-color:#f2a63b; }
+  .row .val{ flex:0 0 30px; text-align:right; font-size:10px; color:#cbd6e2; font-variant-numeric:tabular-nums; }
+  .btns{ display:flex; flex-wrap:wrap; gap:5px; }
+  button{ background:#161f2b; color:#d6e0ea; border:1px solid #263341; border-radius:7px; padding:5px 8px; font:inherit; font-size:10.5px; cursor:pointer; }
+  button:hover{ background:#1e2a39; } button.on{ background:#2a1f0c; border-color:#f2a63b; color:#ffce80; }
+  .legend{ display:flex; flex-direction:column; gap:3px; margin-top:2px; font-size:10.5px; color:#9db0c2; }
+  .lg{ display:flex; align-items:center; gap:6px; } .dot{ width:9px; height:9px; border-radius:50%; }
+  #hud{ top:10px; right:10px; width:224px; text-align:left; }
+  #hud .big{ font:700 20px/1 ui-monospace,monospace; color:#f2a63b; font-variant-numeric:tabular-nums; }
+  #hud .k{ color:#6a7788; } #hud .n{ color:#eef2f8; font-variant-numeric:tabular-nums; }
+  .metric{ margin-top:8px; } .metric .top{ display:flex; justify-content:space-between; font-size:10.5px; margin-bottom:2px; }
+  canvas.spark{ width:200px; height:34px; display:block; }
+  .hint{ left:50%; bottom:10px; transform:translateX(-50%); color:#7f90a4; text-align:center; font-size:10.5px; padding:6px 12px; max-width:92vw; }
+</style>
+
+<canvas id="c"></canvas>
+
+<div id="ui" class="panel">
+  <h1>arena</h1>
+  <p class="sub">predators &amp; prey — developed, brained, coevolving. pursuit and flight are evolved, never coded.</p>
+  <div class="lbl">Cell roles (developed from the genome)</div>
+  <div class="legend">
+    <div class="lg"><span class="dot" style="background:#39d0ff"></span> sensor — smells the other creature</div>
+    <div class="lg"><span class="dot" style="background:#e85cff"></span> neuron — a CTRNN node</div>
+    <div class="lg"><span class="dot" style="background:#ffab3d"></span> muscle — contracts when it fires</div>
+  </div>
+  <div class="lbl">Coevolution</div>
+  <div class="row"><label>mutation</label><input type="range" id="s_mut" min="0.02" max="0.4" step="0.01" value="0.16"><span class="val" id="v_mut"></span></div>
+  <div class="row"><label>gens / sec</label><input type="range" id="s_rate" min="0" max="8" step="1" value="3"><span class="val" id="v_rate"></span></div>
+  <div class="btns" style="margin-top:6px">
+    <button id="b_run" class="on">evolving…</button>
+    <button id="b_wire">show wiring</button>
+    <button id="b_reset">restart</button>
+  </div>
+</div>
+
+<div id="hud" class="panel">
+  <div><span class="big" id="h_gen">0</span> <span class="k">generation</span></div>
+  <div style="font-size:10.5px;margin-top:3px"><span style="color:#ff8a4c">■</span> <span class="n" id="h_pred">–</span> <span class="k">predator champion</span></div>
+  <div style="font-size:10.5px"><span style="color:#39d0ff">■</span> <span class="n" id="h_prey">–</span> <span class="k">prey champion</span></div>
+  <div class="lbl" style="margin-top:9px">Ancestral tournament (vs frozen gen 0)</div>
+  <div class="metric">
+    <div class="top"><span style="color:#ff8a4c">predator capability ↑</span><span class="n" id="h_pc">0.00</span></div>
+    <canvas class="spark" id="spPc" width="200" height="34"></canvas>
+  </div>
+  <div class="metric">
+    <div class="top"><span style="color:#39d0ff">prey escape ↑</span><span class="n" id="h_pd">0.00</span></div>
+    <canvas class="spark" id="spPd" width="200" height="34"></canvas>
+  </div>
+  <div class="k" style="font-size:10px;margin-top:6px">both rising = each side keeps beating its own ancestors — ascent a fixed score can't see</div>
+</div>
+
+<div class="hint panel">nothing tells them to chase or flee. a predator that happens to close on prey scores; a prey that happens to escape scores; the rest is development, CTRNN and selection.</div>
+
+<script>
+"use strict";
+/* ================= reused verbatim from critters.html: body, genome, develop, physics ================= */
+let _s=987654321; function rnd(){ _s=(Math.imul(1664525,_s)+1013904223)>>>0; return _s/4294967296; }
+function gauss(){ return (rnd()+rnd()+rnd()+rnd()-2)*0.87; }
+const tanh=Math.tanh, clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const K=4, SP=0.16;
+function makeBody(){ const cells=[],R=2;
+  for(let q=-R;q<=R;q++) for(let r=-R;r<=R;r++){ if(Math.abs(q+r)>R) continue; cells.push({x0:(q+r*0.5)*SP,y0:r*0.866*SP}); }
+  let mnx=1e9,mxx=-1e9; for(const c of cells){ mnx=Math.min(mnx,c.x0); mxx=Math.max(mxx,c.x0); }
+  for(const c of cells){ c.grad=(c.x0-mnx)/(mxx-mnx)*2-1; c.rad=Math.hypot(c.x0,c.y0)/(SP*R); }
+  const springs=[]; for(let i=0;i<cells.length;i++) for(let j=i+1;j<cells.length;j++){ const d=Math.hypot(cells[i].x0-cells[j].x0,cells[i].y0-cells[j].y0); if(d<SP*1.6) springs.push({i,j,rest:d}); }
+  return {cells,springs}; }
+const NCELL=makeBody().cells.length;
+const IN=5, GSZ=IN*K+3*K*K;
+function randomGenome(){ const g=new Float32Array(GSZ); for(let i=0;i<GSZ;i++) g[i]=gauss()*0.8; return g; }
+function mutate(g,rate,step){ const o=Float32Array.from(g); for(let i=0;i<o.length;i++) if(rnd()<rate) o[i]+=gauss()*step; return o; }
+const Wg=g=>g.subarray(0,IN*K),Wc=g=>g.subarray(IN*K,IN*K+K*K),Ws=g=>g.subarray(IN*K+K*K,IN*K+2*K*K),Wm=g=>g.subarray(IN*K+2*K*K);
+function ebilinear(ei,W,ej){ let s=0; for(let a=0;a<K;a++){ let r=0; for(let b=0;b<K;b++) r+=W[a*K+b]*ej[b]; s+=ei[a]*r; } return tanh(s); }
+const SENSOR=0,NEURON=1,MUSCLE=2;
+function develop(genome){ const body=makeBody(),cells=body.cells,wg=Wg(genome);
+  for(const c of cells){ const inp=[1,c.x0/(SP*3),c.y0/(SP*3),c.grad,c.rad]; c.e=new Float32Array(K);
+    for(let o=0;o<K;o++){ let s=0; for(let k=0;k<IN;k++) s+=wg[o*IN+k]*inp[k]; c.e[o]=tanh(s); }
+    const e=c.e; c.role=e[0]>=e[1]&&e[0]>=e[2]?SENSOR:(e[1]>=e[2]?NEURON:MUSCLE); c.bias=e[3]; }
+  const neurons=[],sensors=[],muscles=[]; cells.forEach((c,i)=>{ (c.role===NEURON?neurons:c.role===SENSOR?sensors:muscles).push(i); });
+  const wc=Wc(genome),ws=Ws(genome),wm=Wm(genome);
+  const Wrec=neurons.map(i=>neurons.map(j=>i===j?0:ebilinear(cells[i].e,wc,cells[j].e)));
+  const Wsen=neurons.map(i=>sensors.map(s=>ebilinear(cells[s].e,ws,cells[i].e)));
+  const Wmus=muscles.map(m=>neurons.map(i=>ebilinear(cells[i].e,wm,cells[m].e)));
+  const mOf=new Int32Array(cells.length).fill(-1); muscles.forEach((m,k)=>mOf[m]=k);
+  for(const sp of body.springs){ const mk=mOf[sp.i]>=0?mOf[sp.i]:mOf[sp.j]; sp.mus=mk; }
+  for(const c of cells){ c.x=c.x0; c.y=c.y0; c.vx=0; c.vy=0; }
+  return {...body,neurons,sensors,muscles,Wrec,Wsen,Wmus,y:new Float32Array(neurons.length),act:new Float32Array(muscles.length)}; }
+const TAU=3.5,AMP=0.5,KS=9,DT=0.2,CDRAG=7.0,LIN=0.985;
+function step(cr,target){ const {cells,neurons,sensors,Wrec,Wsen,Wmus,y,act}=cr;
+  const sv=sensors.map(s=>{ const c=cells[s]; const d2=(c.x-target.x)**2+(c.y-target.y)**2; return Math.exp(-d2/(0.42*0.42)); });
+  const ny=new Float32Array(neurons.length);
+  for(let i=0;i<neurons.length;i++){ let net=cells[neurons[i]].bias;
+    for(let j=0;j<neurons.length;j++) net+=Wrec[i][j]*tanh(y[j]);
+    for(let s=0;s<sensors.length;s++) net+=Wsen[i][s]*sv[s];
+    ny[i]=y[i]+DT/TAU*(-y[i]+net*3.0); }
+  y.set(ny);
+  for(let m=0;m<cr.muscles.length;m++){ let a=0; for(let i=0;i<neurons.length;i++) a+=Wmus[m][i]*tanh(y[i]); act[m]=tanh(a); }
+  for(const c of cells){ c.fx=0; c.fy=0; }
+  for(const sp of cr.springs){ const a=cells[sp.i],b=cells[sp.j]; let dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1e-6; const nx=dx/d,ny2=dy/d;
+    let rest=sp.rest; if(sp.mus>=0) rest*=(1-AMP*act[sp.mus]); const f=KS*(d-rest);
+    const rvx=b.vx-a.vx,rvy=b.vy-a.vy,damp=0.6*(rvx*nx+rvy*ny2),F=f+damp; a.fx+=nx*F; a.fy+=ny2*F; b.fx-=nx*F; b.fy-=ny2*F; }
+  for(const c of cells){ const spd=Math.hypot(c.vx,c.vy); const dfx=-CDRAG*spd*c.vx,dfy=-CDRAG*spd*c.vy;
+    c.vx=(c.vx+(c.fx+dfx)*DT)*LIN; c.vy=(c.vy+(c.fy+dfy)*DT)*LIN;
+    const sp2=c.vx*c.vx+c.vy*c.vy; if(sp2>0.09){ const s=0.3/Math.sqrt(sp2); c.vx*=s; c.vy*=s; } c.x+=c.vx*DT; c.y+=c.vy*DT; } }
+function center(cr){ let x=0,y=0; for(const c of cr.cells){x+=c.x;y+=c.y;} return {x:x/cr.cells.length,y:y/cr.cells.length}; }
+function shift(cr,dx,dy){ for(const c of cr.cells){ c.x+=dx; c.y+=dy; c.x0+=dx; c.y0+=dy; } }
+
+/* ================= NEW: the duel, the coevolution, the ancestral tournament ================= */
+const ARENA=0.82, CONTACT=0.42, DUEL_T=210, START=0.62;
+function boundary(cr){ const c=center(cr); const d=Math.hypot(c.x,c.y); if(d>ARENA){ const k=(d-ARENA)*0.20/d; shift(cr,-c.x*k,-c.y*k); } }
+// One encounter: predator (predG) hunts prey (preyG) from direction `dir`. Predators
+// score contact-seconds; prey score escape-seconds. Returns {pred,prey} in [0,1].
+function duel(predG, preyG, dir){
+  const pred=develop(predG), prey=develop(preyG);
+  if(!pred.muscles.length||!pred.neurons.length) return {pred:-0.1,prey:1};
+  if(!prey.muscles.length||!prey.neurons.length) return {pred:1,prey:-0.1};
+  shift(pred, Math.cos(dir)*START, Math.sin(dir)*START);
+  let ps=0, es=0;
+  for(let t=0;t<DUEL_T;t++){
+    const pc=center(pred), yc=center(prey);
+    step(pred, yc); step(prey, pc);           // each smells ONLY the other; behaviour is evolved
+    boundary(pred); boundary(prey);
+    const d=Math.hypot(center(pred).x-center(prey).x, center(pred).y-center(prey).y);
+    const contact=Math.exp(-d*d/(CONTACT*CONTACT));
+    ps+=contact; es+=(1-contact);
+  }
+  return {pred:ps/DUEL_T, prey:es/DUEL_T};
+}
+const DIRS=[0.4,3.5];
+function scorePred(g, preyOpp){ let s=0,n=0; for(const p of preyOpp) for(const d of DIRS){ s+=duel(g,p,d).pred; n++; } return s/n; }
+function scorePrey(g, predOpp){ let s=0,n=0; for(const p of predOpp) for(const d of DIRS){ s+=duel(p,g,d).prey; n++; } return s/n; }
+
+let POP=16, MUT=0.16, gen=0;
+let preyG=[], predG=[], preyF=[], predF=[], preyBest=null, predBest=null;
+let frozenPrey0=null, frozenPred0=null, pcHist=[], pdHist=[];
+function topK(gs,fs,k){ return [...fs.keys()].sort((a,b)=>fs[b]-fs[a]).slice(0,k).map(i=>gs[i]); }
+function initCoevo(){
+  preyG=[]; predG=[]; for(let i=0;i<POP;i++){ preyG.push(randomGenome()); predG.push(randomGenome()); }
+  gen=0; pcHist=[]; pdHist=[];
+  // seed opponents = random champions, then score
+  const po=preyG.slice(0,3), do_=predG.slice(0,3);
+  predF=predG.map(g=>scorePred(g,po)); preyF=preyG.map(g=>scorePrey(g,do_));
+  predBest=topK(predG,predF,1)[0]; preyBest=topK(preyG,preyF,1)[0];
+  frozenPred0=predBest; frozenPrey0=preyBest;
+}
+function evolveGen(){
+  const preyOpp=topK(predG,predF,3), predOpp=topK(preyG,preyF,3);   // score each side vs the other's current champions
+  predF=predG.map(g=>scorePred(g,predOpp)); preyF=preyG.map(g=>scorePrey(g,preyOpp));
+  const breed=(gs,fs)=>{ const order=[...fs.keys()].sort((a,b)=>fs[b]-fs[a]); const nx=[gs[order[0]],gs[order[1]]];
+    while(nx.length<POP){ const a=(rnd()*POP)|0,b=(rnd()*POP)|0; nx.push(mutate(fs[a]>=fs[b]?gs[a]:gs[b],MUT,0.3)); } return nx; };
+  predG=breed(predG,predF); preyG=breed(preyG,preyF); gen++;
+  predBest=topK(predG,predF,1)[0]; preyBest=topK(preyG,preyF,1)[0];
+  // ANCESTRAL TOURNAMENT: current champion vs the FROZEN gen-0 champion.
+  const pc=scorePred(predBest,[frozenPrey0]);       // predators improving = more contact vs ancestor prey
+  const pd=scorePrey(preyBest,[frozenPred0]);        // prey improving = more escape vs ancestor predators
+  pcHist.push(pc); pdHist.push(pd); if(pcHist.length>140){pcHist.shift();pdHist.shift();}
+}
+
+/* ================= render: the live duel of champions + role colours + ascent sparklines ================= */
+const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+let dpr=Math.min(2,devicePixelRatio||1), W=0,H=0;
+function resize(){ dpr=Math.min(2,devicePixelRatio||1); W=cv.width=innerWidth*dpr; H=cv.height=innerHeight*dpr; }
+addEventListener('resize',resize); resize();
+const ROLE=['#39d0ff','#e85cff','#ffab3d'];
+let showWire=false, running=true;
+let dPred=null, dPrey=null, dispT=0;
+function drawBody(cr, S, halo){
+  ctx.lineWidth=1.4*dpr;
+  for(const sp of cr.springs){ const a=cr.cells[sp.i],b=cr.cells[sp.j]; const [ax,ay]=S(a.x,a.y),[bx,by]=S(b.x,b.y);
+    ctx.strokeStyle=sp.mus>=0?`rgba(255,171,61,${0.35+0.5*Math.abs(cr.act[sp.mus])})`:'rgba(120,140,170,0.26)';
+    ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke(); }
+  if(showWire){ ctx.strokeStyle='rgba(232,92,255,0.16)'; ctx.lineWidth=1*dpr;
+    for(let i=0;i<cr.neurons.length;i++) for(let j=0;j<cr.neurons.length;j++){ if(Math.abs(cr.Wrec[i][j])<0.3) continue;
+      const a=cr.cells[cr.neurons[i]],b=cr.cells[cr.neurons[j]]; const [ax,ay]=S(a.x,a.y),[bx,by]=S(b.x,b.y);
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke(); } }
+  const cc=center(cr); const [hx,hy]=S(cc.x,cc.y);
+  const g=ctx.createRadialGradient(hx,hy,0,hx,hy,60*dpr); g.addColorStop(0,halo); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(hx,hy,60*dpr,0,7); ctx.fill();
+  for(let i=0;i<cr.cells.length;i++){ const c=cr.cells[i]; const [x,y]=S(c.x,c.y); let lit=0;
+    if(c.role===NEURON){ const ni=cr.neurons.indexOf(i); lit=Math.abs(tanh(cr.y[ni])); }
+    else if(c.role===MUSCLE){ const mi=cr.muscles.indexOf(i); lit=Math.abs(cr.act[mi]); }
+    ctx.fillStyle=ROLE[c.role]; ctx.globalAlpha=0.55+0.45*lit; ctx.beginPath(); ctx.arc(x,y,(5+2.4*lit)*dpr,0,7); ctx.fill(); }
+  ctx.globalAlpha=1;
+}
+function draw(){
+  ctx.fillStyle='#06070c'; ctx.fillRect(0,0,W,H);
+  const cx=W*0.54, cy=H*0.5, sc=Math.min(W,H)*0.30; const S=(x,y)=>[cx+x*sc, cy+y*sc];
+  ctx.strokeStyle='rgba(120,140,170,0.10)'; ctx.lineWidth=1*dpr; ctx.beginPath(); ctx.arc(cx,cy,ARENA*sc,0,7); ctx.stroke();
+  if(dPred&&dPrey){
+    const d=Math.hypot(center(dPred).x-center(dPrey).x, center(dPred).y-center(dPrey).y);
+    if(Math.exp(-d*d/(CONTACT*CONTACT))>0.5){ const [px,py]=S(center(dPrey).x,center(dPrey).y);
+      ctx.strokeStyle='rgba(255,90,60,0.5)'; ctx.lineWidth=2*dpr; ctx.beginPath(); ctx.arc(px,py,26*dpr,0,7); ctx.stroke(); }
+    drawBody(dPrey, S, 'rgba(57,208,255,0.16)');
+    drawBody(dPred, S, 'rgba(255,138,76,0.20)');
+  }
+}
+function spark(id, hist, col){ const c=document.getElementById(id), x=c.getContext('2d'); x.clearRect(0,0,200,34);
+  if(hist.length<2) return; const mn=Math.min(...hist), mx=Math.max(...hist), r=(mx-mn)||0.01;
+  x.strokeStyle=col; x.lineWidth=1.6; x.beginPath();
+  hist.forEach((v,i)=>{ const px=i/(hist.length-1)*196+2, py=30-(v-mn)/r*26; i?x.lineTo(px,py):x.moveTo(px,py); }); x.stroke(); }
+
+let acc=0, lastT=performance.now(), gps=3;
+function frame(now){
+  const dt=Math.min(0.1,(now-lastT)/1000); lastT=now;
+  if(running){ acc+=dt*gps; let budget=2; while(acc>=1&&budget-->0){ evolveGen(); acc-=1; } }
+  if(!dPred||dPred._g!==gen){ dPred=develop(predBest); dPrey=develop(preyBest); shift(dPred,Math.cos(0.6)*START,Math.sin(0.6)*START); dPred._g=gen; dispT=0; }
+  for(let k=0;k<2;k++){ const pc=center(dPred),yc=center(dPrey); step(dPred,yc); step(dPrey,pc); boundary(dPred); boundary(dPrey);
+    if(++dispT>DUEL_T*2){ dPred=develop(predBest); dPrey=develop(preyBest); shift(dPred,Math.cos(rnd()*6.28)*START,Math.sin(rnd()*6.28)*START); dPred._g=gen; dispT=0; } }
+  draw();
+  document.getElementById('h_gen').textContent=gen;
+  const pc=pcHist.length?pcHist[pcHist.length-1]:0, pd=pdHist.length?pdHist[pdHist.length-1]:0;
+  document.getElementById('h_pc').textContent=pc.toFixed(2); document.getElementById('h_pd').textContent=pd.toFixed(2);
+  if(dPred) document.getElementById('h_pred').textContent=`${dPred.sensors.length}s · ${dPred.neurons.length}n · ${dPred.muscles.length}m`;
+  if(dPrey) document.getElementById('h_prey').textContent=`${dPrey.sensors.length}s · ${dPrey.neurons.length}n · ${dPrey.muscles.length}m`;
+  spark('spPc',pcHist,'#ff8a4c'); spark('spPd',pdHist,'#39d0ff');
+  requestAnimationFrame(frame);
+}
+
+/* ---------- controls + boot ---------- */
+const $=id=>document.getElementById(id);
+function sl(id,fmt,set){ const s=$('s_'+id),v=$('v_'+id); const u=()=>{ v.textContent=fmt(+s.value); set(+s.value); }; s.addEventListener('input',u); u(); }
+sl('mut',v=>v.toFixed(2),v=>MUT=v); sl('rate',v=>v.toFixed(0),v=>gps=v);
+$('b_run').onclick=()=>{ running=!running; $('b_run').textContent=running?'evolving…':'paused'; $('b_run').classList.toggle('on',running); };
+$('b_wire').onclick=()=>{ showWire=!showWire; $('b_wire').classList.toggle('on',showWire); };
+$('b_reset').onclick=()=>{ initCoevo(); dPred=null; };
+initCoevo();
+requestAnimationFrame(frame);
+</script>
