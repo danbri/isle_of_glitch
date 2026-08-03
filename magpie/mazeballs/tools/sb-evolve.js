@@ -55,7 +55,7 @@ import { writeFileSync } from 'node:fs';
 import { parseArgs } from './backend.js';
 import {
   DEFAULTS, makeRng, randomGenome, perturbGenome, cloneGenome, blockCrossover,
-  develop, makeWorld, Colony,
+  develop, makeWorld, Colony, GENES, regOff,
 } from '../lib/softbody.js';
 
 const a = parseArgs(process.argv.slice(2), {
@@ -108,6 +108,22 @@ const a = parseArgs(process.argv.slice(2), {
   // intake − metabolic, so a body that eats efficiently beats one that eats by
   // covering ground. Both 0 leaves cfg identical to DEFAULTS.
   moveCost: 0, cellCost: 0,
+  // Discrimination task (default off; toxicFrac 0 = trunk, byte-identical). Good
+  // and toxic patches intermixed and re-randomised every spawn, distinguishable
+  // only through a close-range QUALITY channel. Eating good adds, toxic subtracts
+  // toxinHarsh×; a flat starve drain makes eating nothing lose to selective
+  // eating. With `--fitness netintake` the selected quantity is good − H·toxic −
+  // starve, so sit (eats 50/50), cover (eats everything) and anosmia (eats
+  // nothing) all lose and only sense-and-select wins. toxinHarsh is the
+  // calibration axis — swept to find the band where the task has a gradient
+  // toward sensing rather than mass extinction or a surviving degenerate.
+  toxicFrac: 0, toxinHarsh: 1.0, qualSigma2: -1, starve: 0,
+  // Mutation operator. 'gaussian' is perturbGenome, the 17× baseline, and the
+  // default so a trunk run reproduces byte-identical. 'signflip' is that Gaussian
+  // PLUS a per-regulatory-locus sign flip at --signRate — the sign-aware operator
+  // from sb-op.js, brought here to test whether a mandatory-sensing task is the
+  // sign-limited regime where it finally pays. Same loop, only the operator swaps.
+  op: 'gaussian', signRate: 0.01,
 });
 // Build the working config from DEFAULTS plus any food overrides. DEFAULTS itself
 // is never mutated, so every other tool that imports it sees the trunk values.
@@ -123,11 +139,39 @@ const cfg = Object.freeze({
   ...(a.relocateThresh >= 0 ? { FOOD_RELOCATE_THRESH: a.relocateThresh } : {}),
   ...(a.consume >= 0 ? { FOOD_CONSUME: a.consume } : {}),
   ...(a.regrow >= 0 ? { FOOD_REGROW: a.regrow } : {}),
+  ...(a.toxicFrac > 0 ? { FOOD_TOXIC_FRAC: a.toxicFrac, FOOD_TOXIN_HARSH: a.toxinHarsh, FOOD_STARVE: a.starve } : {}),
+  ...(a.qualSigma2 >= 0 ? { FOOD_QUAL_SIGMA2: a.qualSigma2 } : {}),
 });
 // Whether a metabolic cost is live. Off => cfg === DEFAULTS and every report
 // line below is byte-identical to the trunk; on => the net-intake and squatter
 // diagnostics are printed and serialised.
 const hasCost = a.moveCost > 0 || a.cellCost > 0;
+// Whether the discrimination task is live. Off => cfg unchanged and the
+// discrimination diagnostics are neither printed nor serialised.
+const hasDiscrim = a.toxicFrac > 0;
+// Sign-aware operator: the regulatory (gene<-gene) loci where the flatness
+// analysis measured the functional structure lives. Built exactly as sb-op.js
+// builds it, through the exported regOff, so lib/softbody.js is untouched.
+const REG_LOCI = (() => {
+  const idx = [];
+  for (let k = 0; k < GENES; k++) { const ro = regOff(k); for (let m = 0; m < GENES; m++) idx.push(ro + m); }
+  return idx;
+})();
+if (a.op !== 'gaussian' && a.op !== 'signflip') {
+  console.error(`unknown --op ${a.op}; choose gaussian|signflip`); process.exit(2);
+}
+// Reproduction operator. gaussian === perturbGenome (the byte-identical default);
+// signflip === the same Gaussian first, then flip regulatory signs at signRate.
+// A child is always a fresh buffer, drawn from the same rng, so gaussian's draw
+// sequence is untouched and signflip only consumes EXTRA draws for the flips.
+function mutate(childBuf, rng) {
+  const buf = perturbGenome({ buf: childBuf }, a.eps, rng).buf;
+  if (a.op === 'signflip') for (const i of REG_LOCI) if (rng.next() < a.signRate) buf[i] = -buf[i];
+  return buf;
+}
+// Anosmia: a body that answers the toxin by eating almost nothing (gross intake
+// below this floor) — the "refuse all food" escape property 4 must defeat.
+const ANOSMIA_GROSS = 0.01;
 // A "squatter" is a body that answers the movement cost by sitting still — the
 // original degenerate optimum this project's first build evolved. Measured as
 // mean episode path below this floor (~2.5 body diameters of total travel).
@@ -154,9 +198,10 @@ function pheno(g) { return g.pheno || (g.pheno = develop({ buf: g.buf }, cfg, de
  * organism in its own colony so a single non-finite body scores 0 instead of
  * poisoning the shared food field for everyone.
  */
-function runColony(phenos, seed, steps, ablate = null) {
+function runColony(phenos, seed, steps, ablate = null, qualAbl = null) {
   const col = new Colony(phenos, world, cfg);
   col.foodAblate = ablate;
+  col.qualAblate = qualAbl;
   col.spawn(makeRng(seed));
   try {
     for (let s = 0; s < steps; s++) {
@@ -170,6 +215,7 @@ function runColony(phenos, seed, steps, ablate = null) {
     return phenos.map((p, i) => {
       const solo = new Colony([p], world, cfg);
       solo.foodAblate = ablate;
+      solo.qualAblate = qualAbl;
       solo.spawn(makeRng((seed ^ Math.imul(i + 1, 2654435761)) >>> 0));
       try {
         for (let s = 0; s < steps; s++) { solo.step(); if (s % 50 === 0) solo.assertFinite(); }
@@ -263,7 +309,7 @@ function repeatability(obs) {
  * fraction of the population that locomotes and the mean intake — the two
  * numbers the gate flagged its 0.90 and its intake=0 as contingent on.
  */
-function remeasure(genomes, ablate = null) {
+function remeasure(genomes, ablate = null, qualAbl = null) {
   const canon = genomes.map(pheno);
   const keys = ['displacement', 'path', 'occupancy', 'intake'];
   const obs = Object.fromEntries(keys.map(k => [k, genomes.map(() => [])]));
@@ -275,12 +321,18 @@ function remeasure(genomes, ablate = null) {
   // selects on and the one whose ablation delta is decisive. With no cost it
   // equals intake exactly.
   const net = genomes.map(() => []);
+  // Discrimination readouts: gross (type-blind total eaten — anosmia when ~0)
+  // and selectivity (fraction of eaten that was good — 0.5 indiscriminate).
+  const gross = genomes.map(() => []);
+  const selv = genomes.map(() => []);
   for (let e = 0; e < a.evals; e++) {
-    const tr = runColony(canon, 0x9000 + e * 7919, a.steps, ablate);
+    const tr = runColony(canon, 0x9000 + e * 7919, a.steps, ablate, qualAbl);
     for (let g = 0; g < genomes.length; g++) {
       for (const k of keys) obs[k][g].push(finite(tr[g][k]));
       eff[g].push(finite(tr[g].intake) / (finite(tr[g].path) + PATH_FLOOR));
       net[g].push(finite(tr[g].netIntake));
+      gross[g].push(finite(tr[g].gross));
+      selv[g].push(tr[g].selectivity === undefined ? 0.5 : finite(tr[g].selectivity));
     }
   }
   const R = Object.fromEntries(keys.map(k => [k, repeatability(obs[k])]));
@@ -290,6 +342,8 @@ function remeasure(genomes, ablate = null) {
   const intakeMean = genomes.map((_, g) => mean(obs.intake[g]));
   const effMean = genomes.map((_, g) => mean(eff[g]));
   const netMean = genomes.map((_, g) => mean(net[g]));
+  const grossMean = genomes.map((_, g) => mean(gross[g]));
+  const selvMean = genomes.map((_, g) => mean(selv[g]));
   const pathMean = genomes.map((_, g) => mean(obs.path[g]));
   const base = {
     R,
@@ -308,6 +362,19 @@ function remeasure(genomes, ablate = null) {
   if (hasCost) {
     base.squatterFrac = pathMean.filter(p => p < SQUAT_PATH).length / genomes.length;
     base.meanNet = mean(netMean); base.seNet = se(netMean);
+  }
+  // Discrimination-only fields, added exactly when the task is live. netIntake is
+  // the fitness quantity (good − H·toxic − starve); its ablation delta (quality
+  // channel blinded) is THE decisive measurement. squatter/anosmia/net-negative
+  // fractions are the degenerate census the sweep watches; selectivity is the
+  // direct "does it discriminate" readout (0.5 indiscriminate, →1 perfect).
+  if (hasDiscrim) {
+    base.meanNet = mean(netMean); base.seNet = se(netMean);
+    base.meanGross = mean(grossMean); base.seGross = se(grossMean);
+    base.meanSelv = mean(selvMean); base.seSelv = se(selvMean);
+    base.squatterFrac = pathMean.filter(p => p < SQUAT_PATH).length / genomes.length;
+    base.anosmiaFrac = grossMean.filter(gm => gm < ANOSMIA_GROSS).length / genomes.length;
+    base.netNegFrac = netMean.filter(nm => nm < 0).length / genomes.length;
   }
   return base;
 }
@@ -359,8 +426,8 @@ for (let gen = 1; gen <= a.gens; gen++) {
     const parent = pop[pick()];
     let childBuf = parent.buf;
     if (a.crossover && rng.next() < 0.5) childBuf = blockCrossover(parent, pop[pick()], rng).buf;
-    const child = perturbGenome({ buf: childBuf }, a.eps, rng);
-    next.push({ buf: child.buf, id: nextId++, pheno: null });
+    const child = mutate(childBuf, rng);
+    next.push({ buf: child, id: nextId++, pheno: null });
   }
   pop = next;
   const mode = modeAt(gen);
@@ -379,6 +446,11 @@ log('[remeasure] evolved population, food sense intact…');
 const mE = remeasure(pop);
 log('[remeasure] evolved population, food sense ablated (mean-replaced)…');
 const mA = remeasure(pop, 'mean');
+// The decisive discrimination instrument: blind the QUALITY channel only (food
+// mass intact, so the body can still find food — it just cannot tell good from
+// toxic). If the intact population discriminated, this collapses net intake.
+log(hasDiscrim ? '[remeasure] evolved population, QUALITY sense ablated (mean-replaced)…' : '');
+const mQ = hasDiscrim ? remeasure(pop, null, 'mean') : null;
 
 /* ------------------------------------------------------------------ report */
 const f = x => x.toFixed(4);
@@ -434,6 +506,33 @@ if (hasCost) {
     `${netAblDrop > netAblBar ? 'LOAD-BEARING (the cost cracked the wall)' : 'incidental (wall holds under this cost)'}`);
 }
 
+// --- discrimination diagnostics: only when the task is live. ---
+let qAblDrop = null, qAblBar = null;
+if (hasDiscrim) {
+  console.log('\ndiscrimination task active:' +
+    `  toxicFrac ${f(cfg.FOOD_TOXIC_FRAC)}  toxinHarsh ${f(cfg.FOOD_TOXIN_HARSH)}  ` +
+    `qualSigma2 ${f(cfg.FOOD_QUAL_SIGMA2)}  starve ${f(cfg.FOOD_STARVE)}  op ${a.op}` +
+    (a.op === 'signflip' ? ` signRate ${a.signRate}` : ''));
+  console.log('  degenerate census on the evolved population:');
+  console.log(`    squatter fraction (path < ${SQUAT_PATH}):     ${(mE.squatterFrac * 100).toFixed(0)}%`);
+  console.log(`    anosmia fraction (gross < ${ANOSMIA_GROSS}):     ${(mE.anosmiaFrac * 100).toFixed(0)}%   [refuse-all-food escape]`);
+  console.log(`    net-negative fraction (netIntake < 0):    ${(mE.netNegFrac * 100).toFixed(0)}%   [poisoned / not surviving]`);
+  console.log(`  gross eaten (type-blind):  gen-0 ${f(m0.meanGross)} ± ${f(m0.seGross)}   evolved ${f(mE.meanGross)} ± ${f(mE.seGross)}`);
+  console.log(`  selectivity (good/gross, 0.5=indiscriminate):  gen-0 ${f(m0.meanSelv)} ± ${f(m0.seSelv)}   evolved ${f(mE.meanSelv)} ± ${f(mE.seSelv)}`);
+  const selvGain = mE.meanSelv - m0.meanSelv, selvBar = barOf(m0.seSelv, mE.seSelv);
+  console.log(`  selectivity ascent  ${selvGain >= 0 ? '+' : ''}${f(selvGain)} vs bar ${f(selvBar)} -> ${selvGain > selvBar ? 'DISCRIMINATES' : 'flat (no discrimination)'}`);
+  console.log('\nnet intake (good − H·toxic − starve), the fitness quantity:');
+  console.log(`  net intake   gen-0 ${f(m0.meanNet)} ± ${f(m0.seNet)}      evolved ${f(mE.meanNet)} ± ${f(mE.seNet)}`);
+  const netGain = mE.meanNet - m0.meanNet, netBar = barOf(m0.seNet, mE.seNet);
+  console.log(`  net-intake ascent   ${netGain >= 0 ? '+' : ''}${f(netGain)} vs bar ${f(netBar)} -> ${netGain > netBar ? 'ASCENDS' : 'flat'}`);
+  qAblDrop = mE.meanNet - mQ.meanNet; qAblBar = barOf(mE.seNet, mQ.seNet);
+  console.log('\n  DECISIVE — QUALITY sense INTACT vs ABLATED, on NET intake:');
+  console.log(`  net intake     intact ${f(mE.meanNet)} ± ${f(mE.seNet)}   qual-ablated ${f(mQ.meanNet)} ± ${f(mQ.seNet)}`);
+  console.log(`  selectivity    intact ${f(mE.meanSelv)}   qual-ablated ${f(mQ.meanSelv)}   (should fall to ~0.5 if it was discriminating)`);
+  console.log(`  blinding QUALITY costs net intake ${qAblDrop >= 0 ? '+' : ''}${f(qAblDrop)} vs bar ${f(qAblBar)} -> ` +
+    `${qAblDrop > qAblBar ? 'LOAD-BEARING (sensing evolved because it had to)' : 'incidental (substrate resists sensing even when mandatory)'}`);
+}
+
 console.log('\nbehavioural repeatability (same body, different spawn), honest re-measure:');
 console.log('  trait          gen-0     evolved');
 for (const k of ['displacement', 'path', 'occupancy', 'intake', 'efficiency'])
@@ -454,6 +553,17 @@ if (a.out) {
       squatterGen0: m0.squatterFrac, squatterEvolved: mE.squatterFrac,
       netGain: mE.meanNet - m0.meanNet, netBar: barOf(m0.seNet, mE.seNet),
       netAblDrop, netAblBar,
+    } : {}),
+    // Discrimination fields only when the task is live, so a trunk run's JSON is
+    // byte-identical. The decisive quantity is qualAblDrop / qualAblBar.
+    ...(hasDiscrim ? {
+      op: a.op, signRate: a.signRate,
+      discrim: { toxicFrac: cfg.FOOD_TOXIC_FRAC, toxinHarsh: cfg.FOOD_TOXIN_HARSH, qualSigma2: cfg.FOOD_QUAL_SIGMA2, starve: cfg.FOOD_STARVE },
+      qualAblated: mQ,
+      squatterEvolved: mE.squatterFrac, anosmiaEvolved: mE.anosmiaFrac, netNegEvolved: mE.netNegFrac,
+      meanGrossEvolved: mE.meanGross, meanSelvGen0: m0.meanSelv, meanSelvEvolved: mE.meanSelv,
+      meanNetGen0: m0.meanNet, meanNetEvolved: mE.meanNet, seNetGen0: m0.seNet, seNetEvolved: mE.seNet,
+      qualAblDrop: qAblDrop, qualAblBar: qAblBar,
     } : {}),
   }, null, 2));
   log(`[out] ${a.out}`);
