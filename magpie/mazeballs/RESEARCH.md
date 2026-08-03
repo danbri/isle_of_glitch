@@ -4784,3 +4784,81 @@ foreground concurrency and `tools/sb-qd-agg.js` pools the decisive ablation and
 the archive-reach scan across seeds. Run readouts are in `results/qd/`
 (`{tournament,novelty,mapelites}-s{1..4}.json`, `aggregate.txt`,
 `dissociation-scan.txt`).
+
+
+## Wave: GPU cell world — five mechanisms, and an independent replication of the environment result
+
+A separate substrate from the softbody line above: `lib/brainarena.js` (one CTRNN
+arena, island per beast), `lib/world_gpu.js` (continuous positions, analytic curl
+flow, bonded bodies), `lib/evolve.js` (energy, starvation, division, descent),
+all GPU-resident. Bodies are bond graphs; every cell is a CTRNN node; sensors
+write their own brain input and muscles contract their bonds. Measurement is by
+`lib/tournament.js`, the category-free ancestral tournament WORLD.md prescribes.
+
+### The measurement problem, first
+
+Every absolute measure tried here has a ceiling. Mean resource under living cells
+cannot exceed the best ground in the field; body size cannot exceed its cap and
+its payoff saturates first. So a flattening curve has two indistinguishable
+readings — adaptation stopped, or the ruler ran out — and they look identical.
+
+The mean-resource curve flattened at 0.398 and was reported here as a plateau in
+adaptation. **That reading was wrong.** The ancestral tournament, which is
+relative and therefore has no ceiling, showed genomes from the flat region still
+displacing their own ancestors decisively. Evolution had not stopped; the ruler
+had. Any conclusion of stasis drawn from a bounded measure alone should be
+treated as unsupported.
+
+### Five mechanisms
+
+| mechanism | kind | result |
+|---|---|---|
+| competition for ground (crowding discount) | environment | settles at an ideal free distribution, 0.398 |
+| contest between bodies (contact + force) | organism interaction | population collapses 6x; muscle investment FALLS |
+| heritable body size | organism | climbs 12 -> 19.4, saturates at the designed efficiency ceiling |
+| evolvable bond topology | organism | faster early ascent, identical cumulative result (0.864 vs 0.863) |
+| **non-stationary resource field** | **environment** | **strongest by a wide margin** |
+
+Ancestral tournament, 16 checkpoints 60 ticks apart, fresh neutral world per
+matchup, 120 genomes a side, first-vs-last:
+
+    static field     19:121 descendants    35,417 vs 252,260 energy   shareB 0.864
+    drifting field    4:130 descendants    24,249 vs 318,172 energy   shareB 0.970
+
+And a second measure agrees from a different direction. Body size saturated at
+**19.3 and stopped** in the static world — exactly the designed ceiling. In the
+drifting world it reached **27.55 and was still climbing** at T1920, with
+generations to 50. A structural axis the static world had closed stayed open
+when the world would not hold still.
+
+### The replication
+
+This reproduces, on a completely different substrate, the conclusion already
+recorded at the top of this file: the two changes that cleared the significance
+bar in the softbody line were **clustered relocating food** and a change to the
+selection process, and "neither is a change to the organism", while every
+organism-side lever tried was null.
+
+Here: the two organism-side mechanisms (body size, bond topology) each climbed a
+bounded payoff and stopped, and enriching the body plan from one dimension to a
+combinatorial graph produced an identical cumulative result to three significant
+figures. The organism-interaction mechanism was actively harmful. The mechanism
+that worked was **relocating the food** — the same intervention, arrived at
+independently, on a different simulator, measured with a different instrument.
+
+That two substrates with almost nothing in common land on the same answer is
+worth more than either result alone. The binding constraint is the environment,
+not the organism.
+
+### What is NOT established
+
+Open-ended ascent. The per-rung margin attenuates in every condition measured
+(static slope -0.0088, drifting -0.0124), even as the cumulative advantage over a
+long baseline grows. Those two facts pull in opposite directions and are not yet
+separated: lineages converge, so adjacent 60-tick checkpoints are genetically
+close and may simply be too finely sampled to resolve. Wider checkpoint spacing
+is the experiment that would tell the difference, and it is the obvious next run.
+
+No finite experiment can demonstrate unboundedness in any case. The supportable
+claim is that ascent here is real, cumulative, strongest under non-stationarity,
+and not yet shown to stop.
