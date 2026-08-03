@@ -32,7 +32,14 @@ import { WorldGPU } from '../lib/world_gpu.js';
 import { Evolver } from '../lib/evolve.js';
 
 const args = (() => {
-  const out = { port: 8899, beasts: 3000, cells: 12, start: 0.25, bound: 0, spf: 6, tick: 250 };
+  const out = {
+    port: 8899, beasts: 3000, cells: 12, start: 0.25, bound: 0, spf: 6, tick: 250,
+    host: '0.0.0.0',
+    // The non-stationary field, which measured far better than a static one:
+    // ancestral-tournament shareB 0.970 against 0.864, and body size kept
+    // growing (27.6 and rising) where the static world saturated at 19.3.
+    drift: 1,
+  };
   const a = Deno.args;
   for (let i = 0; i < a.length; i++) {
     if (!a[i].startsWith('--')) continue;
@@ -50,7 +57,10 @@ const built = buildBodies({
   beasts: args.beasts, cells: args.cells, bound: BOUND, seed: (Date.now() & 0xffff) || 7,
 });
 const brains = await BrainArenaGPU.create(built.arena);
-const world = new WorldGPU(brains, built.cells, { bound: BOUND });
+const world = new WorldGPU(brains, built.cells, {
+  bound: BOUND,
+  ...(args.drift ? { driftX: 0.06, driftY: 0.037, morphRate: 0.0075 } : {}),
+});
 const evo = new Evolver({
   arena: built.arena, world, cells: built.cells,
   seed: 5, birthEnergy: 18, deathEnergy: 0,
@@ -97,7 +107,29 @@ const HEAD = 48;
  * with itself about which cells are alive. Correctness first; the topologyEpoch
  * machinery in brainarena.js is there when this becomes the bottleneck.
  */
+// One readback serves every viewer in the same window.
+//
+// Each viewer polling independently meant N concurrent readbacks per frame, and
+// concurrent readbacks were what poisoned the device: two overlapping mapAsync
+// calls on one staging buffer gives "Buffer is already mapped", which is a
+// device error, after which every command buffer is invalid and the simulation
+// silently stops. The staging buffers are per-call now so that cannot recur,
+// but coalescing is still right — the GPU should not do the same work twice
+// because two people are watching.
+let cached = null, cachedAt = -1, inFlight = null;
+const FRAME_MS = 40;
+
 async function frame() {
+  const now = performance.now();
+  if (cached && now - cachedAt < FRAME_MS) return cached;
+  if (inFlight) return inFlight;
+  inFlight = buildFrame().then(f => {
+    cached = f; cachedAt = performance.now(); inFlight = null; return f;
+  }).catch(e => { inFlight = null; throw e; });
+  return inFlight;
+}
+
+async function buildFrame() {
   const { pos, energy } = await world.readCells();
   const { act } = await brains.readState();
 
@@ -142,7 +174,10 @@ const MIME = {
 };
 const ROOT = new URL('..', import.meta.url).pathname;
 
-Deno.serve({ port: args.port, hostname: '127.0.0.1' }, async (req) => {
+// Bound to all interfaces so a tailnet peer can reach it. That also exposes it
+// to anything else routable to this host, which is the trade being made — pass
+// --host 127.0.0.1 to keep it local only.
+Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
   const url = new URL(req.url);
   const path = url.pathname === '/' ? '/world.html' : url.pathname;
 
@@ -174,6 +209,16 @@ Deno.serve({ port: args.port, hostname: '127.0.0.1' }, async (req) => {
   }
 });
 
+const tailscale = (() => {
+  try {
+    for (const [, addrs] of Object.entries(Deno.networkInterfaces?.() ?? {})) {}
+    const ifs = Deno.networkInterfaces?.() ?? [];
+    const ts = ifs.find(i => i.family === 'IPv4' && i.address.startsWith('100.'));
+    return ts?.address ?? null;
+  } catch { return null; }
+})();
 console.log(`\n  http://127.0.0.1:${args.port}/world.html?watch=1   (watch the shared run)`);
+if (tailscale) console.log(`  http://${tailscale}:${args.port}/world.html?watch=1   (over tailscale)`);
 console.log(`  http://127.0.0.1:${args.port}/world.html            (own local sim)`);
-console.log(`  http://127.0.0.1:${args.port}/status\n`);
+console.log(`  http://127.0.0.1:${args.port}/status`);
+console.log(`  drift ${args.drift ? 'ON (non-stationary field)' : 'off (static field)'}\n`);

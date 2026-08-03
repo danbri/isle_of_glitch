@@ -717,12 +717,17 @@ export class WorldGPU {
 
   /** Pull cell positions back — for logging, the inspector, or a snapshot. */
   async readPositions() {
+    // Per-call staging, for the same reason as BrainArenaGPU.readState: a
+    // shared one breaks the moment two readbacks overlap.
+    const staging = this.device.createBuffer({
+      size: this.n * 8, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    });
     const enc = this.device.createCommandEncoder();
-    enc.copyBufferToBuffer(this.bPos, 0, this.bRead, 0, this.n * 8);
+    enc.copyBufferToBuffer(this.bPos, 0, staging, 0, this.n * 8);
     this.device.queue.submit([enc.finish()]);
-    await this.bRead.mapAsync(GPUMapMode.READ);
-    const packed = new Float32Array(this.bRead.getMappedRange().slice(0));
-    this.bRead.unmap();
+    await staging.mapAsync(GPUMapMode.READ);
+    const packed = new Float32Array(staging.getMappedRange().slice(0));
+    staging.unmap(); staging.destroy();
     const x = new Float32Array(this.n), y = new Float32Array(this.n);
     for (let i = 0; i < this.n; i++) { x[i] = packed[i * 2]; y[i] = packed[i * 2 + 1]; }
     return { x, y, packed };

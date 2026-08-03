@@ -251,16 +251,26 @@ export class BrainArenaGPU {
    *                             snapshot a GPU run.
    */
   async readState(into = null) {
+    // A staging buffer PER CALL, not one shared for the object's lifetime.
+    // mapAsync is asynchronous, so two overlapping readbacks both reach for the
+    // same buffer and the second gets "Buffer is already mapped" — which is a
+    // device error, and a device error poisons every command buffer submitted
+    // afterwards. One viewer never triggered it; two browsers polling frames
+    // concurrently did, and the whole simulation stopped rather than just that
+    // one request failing.
+    const staging = this.device.createBuffer({
+      size: this.N * 4 * 2, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    });
     const enc = this.device.createCommandEncoder();
-    enc.copyBufferToBuffer(this.bState, 0, this.bRead, 0, this.N * 4);
-    enc.copyBufferToBuffer(this.bAct, 0, this.bRead, this.N * 4, this.N * 4);
+    enc.copyBufferToBuffer(this.bState, 0, staging, 0, this.N * 4);
+    enc.copyBufferToBuffer(this.bAct, 0, staging, this.N * 4, this.N * 4);
     this.device.queue.submit([enc.finish()]);
 
-    await this.bRead.mapAsync(GPUMapMode.READ);
-    const src = this.bRead.getMappedRange();
+    await staging.mapAsync(GPUMapMode.READ);
+    const src = staging.getMappedRange();
     const state = new Float32Array(src.slice(0, this.N * 4));
     const act = new Float32Array(src.slice(this.N * 4, this.N * 8));
-    this.bRead.unmap();
+    staging.unmap(); staging.destroy();
 
     if (into) {
       into.state.set(state); into.act.set(act); into.next.set(state);
