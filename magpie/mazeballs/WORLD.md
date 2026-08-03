@@ -666,3 +666,23 @@ descendants tournament above, not a predator scoreboard. Logged in the ledger.
 | shortcut | why it's a crutch | pay it down with |
 |---|---|---|
 | **`arena.html` predator/prey populations** (`scorePred`, `scorePrey`, role tag) | hands the WORLD the categories "predator"/"prey"/"species" — `predatorSpeed` one level up; the universe supplies none of these | ONE soup; consumption is graded emergent energy transfer between cells; ascent = energy captured + a category-free ancestral tournament (later genomes vs older, same neutral world) |
+
+## Radiation, and the templatization horizon
+
+Light is now **radiation** (brainsoup): one field the sources emit that carries
+the visual spectrum (captured as food energy), a mutagen, and heat. **Mutation
+likelihood is spatial** — per cell, `rate = base × f(local radiation) × a
+multiplier from nearby chemicals (scent)` — so evolution runs hot in irradiated,
+chemical-rich zones and cool elsewhere (the vent idea; measured: hot zones turn
+generations over faster than cool ones). This is a real open-endedness lever:
+evolvability itself varies across the world.
+
+The stated direction beyond this: **templatize the whole thing.** God-players
+should be able to edit matrices, tune a Perlin/noise fn's params, define new
+living or inert cell types and gene products, wire their GRN impacts, and declare
+their chemical/physical couplings (signalling, equations of motion) — all as
+data, not code. Every mechanism in these demos (fields, couplings, cell types,
+the CTRNN, the interaction/digest chemistry) is a candidate row in that template
+schema. Building the schema + a live editor is the arc these one-off HTML worlds
+are converging toward; each new mechanism should be written so it could become a
+template entry, not a hard-coded special case.

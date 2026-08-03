@@ -99,7 +99,7 @@
   <p class="sub">brains evolve to smell food — only chemistry &amp; physics</p>
   <div class="grp">
     <div class="lbl">The world (physics &amp; chemistry only)</div>
-    <div class="row"><label>light (energy in)</label><input type="range" id="s_sun" min="0.2" max="4" step="0.1" value="1.3"><span class="val" id="v_sun"></span></div>
+    <div class="row"><label>radiation</label><input type="range" id="s_sun" min="0.2" max="4" step="0.1" value="1.3"><span class="val" id="v_sun"></span></div>
     <div class="row"><label>mutation</label><input type="range" id="s_mut" min="0" max="0.4" step="0.01" value="0.12"><span class="val" id="v_mut"></span></div>
     <div class="row"><label>viscosity</label><input type="range" id="s_visc" min="0.6" max="0.96" step="0.01" value="0.86"><span class="val" id="v_visc"></span></div>
     <div class="row"><label>speed</label><input type="range" id="s_speed" min="0" max="6" step="1" value="2"><span class="val" id="v_speed"></span></div>
@@ -148,7 +148,7 @@ const fract=v=>v-Math.floor(v);
            Cells SENSE odor to navigate; they EAT sugar. Separating the two is
            what makes smelling pay where wandering can't (the land-evolve result).
    scent : other cells' secreted lineage tag (social sensing). */
-let GF=192, sugar, odor, scent, ftmp;
+let GF=192, sugar, odor, scent, rad, ftmp;
 // static heterogeneity — the SYMMETRY BREAKER (WORLD.md's vector-field idea). A
 // fixed fbm "fertility" map gives the world distinct regions — fertile gardens vs
 // barren stretches — instead of being statistically the same everywhere. Food is
@@ -161,7 +161,8 @@ function _vn(x,y,s){ const ix=Math.floor(x),iy=Math.floor(y),fx=x-ix,fy=y-iy,u=_
 function _fbm(x,y,s){ let f=0,amp=0.5,fr=1,nm=0; for(let o=0;o<4;o++){ f+=amp*_vn(x*fr,y*fr,s+o*1013); nm+=amp; amp*=0.5; fr*=2; } return f/nm; }
 function buildFert(){ fert=new Float32Array(GF*GF); for(let y=0;y<GF;y++)for(let x=0;x<GF;x++){ const v=_fbm(x/GF*3.2,y/GF*3.2,7); fert[y*GF+x]=clamp((v-0.42)*2.6,0,1); } }
 function fertAt(x,y){ return fert[(((fract(y)*GF)|0)*GF)+((fract(x)*GF)|0)]; }
-function allocFields(){ sugar=new Float32Array(GF*GF); odor=new Float32Array(GF*GF); scent=new Float32Array(GF*GF); ftmp=new Float32Array(GF*GF); buildFert(); }
+function allocFields(){ sugar=new Float32Array(GF*GF); odor=new Float32Array(GF*GF); scent=new Float32Array(GF*GF); rad=new Float32Array(GF*GF); ftmp=new Float32Array(GF*GF); buildFert(); }
+const radAt=(x,y)=>at(rad,x,y);
 function at(arr,x,y){ const gx=fract(x)*GF,gy=fract(y)*GF; let ix=gx|0,iy=gy|0; const fx=gx-ix,fy=gy-iy;
   const ix1=ix+1===GF?0:ix+1, iy1=iy+1===GF?0:iy+1;
   const a=arr[iy*GF+ix],b=arr[iy*GF+ix1],c=arr[iy1*GF+ix],d=arr[iy1*GF+ix1];
@@ -188,11 +189,13 @@ function seedSources(){ sources=[]; for(let i=0;i<18;i++){ let x,y,tries=0; do{ 
 function stepFields(sun,dt){
   for(const s of sources){ s.x=fract(s.x+s.vx*dt); s.y=fract(s.y+s.vy*dt);
     if(srand()<0.004){ s.vx=(srand()-.5)*0.02; s.vy=(srand()-.5)*0.02; }
-    splat(sugar,s.x,s.y, sun*dt*15*(0.2+1.1*fertAt(s.x,s.y)));   // richer in fertile ground, weak in barren
+    splat(sugar,s.x,s.y, sun*dt*15*(0.2+1.1*fertAt(s.x,s.y)));   // visual-spectrum energy captured as food, richer in fertile ground
+    splat(rad,  s.x,s.y, sun*dt*45);   // the SAME source emits radiation (mutagen + heat) that spreads further than the food
     splat(odor, s.x,s.y, sun*dt*9); }       // SMELL: emitted with the food
   diffuse(sugar,0.10,0.03,9);    // rich cores + a weak ambient tail: survive anywhere, but only cores let you BREED
   diffuse(odor, 0.22,0.008,4);   // broad, low-decay — the smell REACHES across the world
   diffuse(scent,0.18,0.06,5);
+  diffuse(rad,  0.24,0.006,6);   // radiation penetrates far and lingers — hot zones around the sources
 }
 
 /* ---------- the CTRNN genome (a cell's brain) ----------
@@ -201,7 +204,9 @@ function stepFields(sun,dt){
 const N=6, S=6, M=2;
 const oW=0, oB=oW+N*N, oT=oB+N, oI=oT+N, oO=oI+S*N, GENOME=oO+N*M;
 function randGenome(){ const g=new Float32Array(GENOME); for(let i=0;i<GENOME;i++) g[i]=gauss()*0.6; return g; }
-function mutate(g,rate){ const o=Float32Array.from(g); for(let i=0;i<GENOME;i++) if(srand()<0.35) o[i]+=gauss()*rate; return o; }
+// mutation LIKELIHOOD (per-gene probability) is passed in — it is set per cell
+// from the local radiation and nearby chemicals, not a global constant.
+function mutate(g,step,prob){ const o=Float32Array.from(g); for(let i=0;i<GENOME;i++) if(srand()<prob) o[i]+=gauss()*step; return o; }
 
 /* ---------- cells ---------- */
 const MAX=4000;
@@ -265,7 +270,10 @@ function step(dt, sun, visc, mut){
     // --- DIVIDE (asexual, mutation) / DIE ---
     if(c.fuel>DIV_THRESH && cells.length+born.length<MAX){
       const a=srand()*6.283, r=CORE*1.4;
-      const child=makeCell(c.x+Math.cos(a)*r, c.y+Math.sin(a)*r, mutate(c.g,mut), c.fuel*0.5, c.lin);
+      // mutation likelihood = base × local RADIATION × a multiplier from nearby
+      // secreted chemicals (scent). Irradiated, chemical-rich zones evolve fast.
+      const prob=clamp(mut*(0.25+1.6*radAt(c.x,c.y))*(1+1.3*at(scent,c.x,c.y)), 0, 0.9);
+      const child=makeCell(c.x+Math.cos(a)*r, c.y+Math.sin(a)*r, mutate(c.g,0.35,prob), c.fuel*0.5, c.lin);
       child.gen=c.gen+1; born.push(child); c.fuel*=0.5;
     }
     if(c.fuel<=0){ cells[k]=null; }
@@ -291,9 +299,10 @@ const fieldProg=prog(
  `#version 300 es
   precision highp float; uniform vec2 u_res,u_center; uniform float u_zoom,u_scent; uniform sampler2D u_f; out vec4 o;
   vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14),0.,1.); }
-  void main(){ vec2 w=u_center+(gl_FragCoord.xy-u_res*0.5)/u_zoom; vec3 f=texture(u_f,fract(w)).rgb;
+  void main(){ vec2 w=u_center+(gl_FragCoord.xy-u_res*0.5)/u_zoom; vec4 f=texture(u_f,fract(w));
     vec3 col=mix(vec3(0.017,0.02,0.028), vec3(0.045,0.075,0.05), f.b);   // terrain: barren -> fertile ground (the symmetry breaker)
-    col+=vec3(0.55,0.42,0.10)*f.r + vec3(0.30,0.10,0.34)*f.g*u_scent;     // food + smell on top
+    col+=vec3(0.55,0.42,0.10)*f.r + vec3(0.30,0.10,0.34)*f.g*u_scent;     // food + smell
+    col+=vec3(0.42,0.10,0.05)*f.a;                                        // RADIATION: hot glow (mutagen zones)
     o=vec4(aces(col),1.); }`);
 const fU=['u_res','u_center','u_zoom','u_scent','u_f'].reduce((m,n)=>(m[n]=gl.getUniformLocation(fieldProg,n),m),{});
 const cellProg=prog(
@@ -319,7 +328,7 @@ const fTex=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,fTex);
 gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.REPEAT);
 gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
 let fPix=new Uint8Array(GF*GF*4);
-function uploadFields(){ for(let i=0;i<GF*GF;i++){ fPix[i*4]=clamp(sugar[i]*0.5,0,1)*255; fPix[i*4+1]=clamp(scent[i]*0.4,0,1)*255; fPix[i*4+2]=clamp(fert[i],0,1)*255; fPix[i*4+3]=255; }
+function uploadFields(){ for(let i=0;i<GF*GF;i++){ fPix[i*4]=clamp(sugar[i]*0.5,0,1)*255; fPix[i*4+1]=clamp(scent[i]*0.4,0,1)*255; fPix[i*4+2]=clamp(fert[i],0,1)*255; fPix[i*4+3]=clamp(rad[i]*0.28,0,1)*255; }
   gl.bindTexture(gl.TEXTURE_2D,fTex); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,GF,GF,0,gl.RGBA,gl.UNSIGNED_BYTE,fPix); }
 
 /* ---------- camera + input ---------- */
