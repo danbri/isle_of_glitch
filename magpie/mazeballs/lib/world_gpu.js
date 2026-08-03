@@ -617,21 +617,19 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   let crowd = crowdingAt(np);
   let share = 1.0 / (1.0 + P.crowdK * max(0.0, crowd - mySize));
 
-  // CAPABILITY COSTS CELLS. A lone cell digests badly; a body of many does
-  // better, saturating. This is the reason for multicellularity to exist at
-  // all — without it size is exactly neutral (harvest and tax are both per
-  // cell) and there is no structural axis for anything to climb. The scale is
-  // the number of cells at which most of the benefit is already had, so growth
-  // pays sharply at first and then stops paying, which is what makes the
-  // equilibrium size an evolved quantity rather than an imposed one.
-  // NORMALISED to the reference body size, so a body of that size digests
-  // exactly as well as it did before this term existed. Unnormalised, the raw
-  // saturating curve is below 1 everywhere and simply cut every harvest by 42%
-  // — a world-wide famine dressed up as a size effect, which starved the
-  // population rather than telling us anything about growth.
-  let scale = max(P.sizeScale, 1.0);
-  let efficiency = (1.0 - exp(-mySize / scale)) * P.sizeNorm;
-  let gain = P.harvest * resourceAt(np) * share * efficiency;
+  // NO SIZE BONUS. There was one: bigger bodies extracted more energy per cell
+  // from the same ground, added deliberately so that multicellularity would pay.
+  // energy-speculative-friction.md names that exact move as fiction — "you may
+  // not grant energy to a capability; 'bodies get +X so multicellularity pays'
+  // mints, and privileges a chosen outcome."
+  //
+  // It is deleted. If being multicellular is worth anything it has to be worth
+  // it through the plumbing — reaching ground a lone cell cannot hold, surviving
+  // a current that would sweep a single cell away, keeping a chamber stable —
+  // not because the accounting was told to favour it. Removing it is expected to
+  // hurt: the doc's test is that a correct energy model is one where you
+  // frequently cannot afford what you wanted.
+  let gain = P.harvest * resourceAt(np) * share;
   let work = P.muscleCost * abs(mine);
   let taken = contest(i, np, abs(mine));
   // Written to scratch, not to energy[]: contest() READS energy[j] for other

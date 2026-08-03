@@ -5382,3 +5382,41 @@ corrections earlier in this wave: a display that cannot show a failure state wil
 be trusted as evidence of its absence. Every debug view added since — strain
 colouring, solo body, cell isolation — exists because the picture had to be made
 capable of being wrong out loud.
+
+### RETRACTED: body-size growth was purchased, not evolved
+
+The size-efficiency term gave bigger bodies more energy per cell from the same
+ground. It was added so that multicellularity would pay, and
+energy-speculative-friction.md names that exact move as fiction: *"you may not
+grant energy to a capability. 'Bodies get +X so multicellularity pays' mints, and
+privileges a chosen outcome."*
+
+Deleted. Same world, same seed, same everything else:
+
+    with the mint     population ~700   body size raced to the 40 cap
+    without           population ~200   body size 12.3 -> 14.7 over 480 ticks
+
+Two things follow.
+
+The population fell three and a half fold, which is the constraint finally doing
+work. The doc's test for a correct energy model is that you frequently cannot
+afford what you wanted, and until now nothing here was ever unaffordable.
+
+And body size stopped climbing. Every result in this wave that treated growth to
+the cap as an open structural axis — including the ceiling experiment, which
+swept maxCells 40 to 140 and reported bodies reaching 57 — was measuring a
+subsidy. Growth happened because it was being paid for. Remove the payment and
+bodies grow slowly and stop, which is what it looks like when size is only worth
+what it is actually worth.
+
+This is the fourth retraction in this wave and the same shape as the others: a
+result that looked like evolution finding something, produced by machinery that
+had been arranged to make it happen. The other three were broken substrate
+(fragmented arenas, a choked instrument, dead brains); this one is worse, because
+nothing was broken. The code did exactly what it was written to do.
+
+What is NOT yet fixed: the resource field is still analytic and never depletes,
+so energy is unbounded even without the size bonus. There is no fixed inflow, no
+sun, and no accounting for where dissipation goes. The per-cell energy clamps
+still destroy energy at the ceiling and create it at the floor. Conservation is
+closer, not achieved.
