@@ -5168,3 +5168,57 @@ Not reproduced headlessly yet; a run to generation 12 showed no NaN in state,
 act, positions, or the CPU-side weights, biases and time constants. It needs a
 run to generation 100+ to bite. Until it is explained, any measurement taken from
 a very long-running server should be treated as suspect.
+
+### The brains were dead, and the renderer was hiding it
+
+For most of this wave the world contained no visible creatures, and a great deal
+of effort went into the wrong explanations: dead cells rendering, toroidal seam
+tearing, stale bond lists, orphan cells, geometric frustration. Some of those
+were real bugs. None was this one.
+
+On a long-running server, 98.9% of live cells had NaN activation. The brains were
+dead — not settled, not saturated, arithmetically dead — and had been for most of
+every long run measured in this wave.
+
+TWO THINGS CONSPIRED TO CONCEAL IT.
+
+The physics did not visibly break, because the velocity clamp added earlier for
+stability is component-wise `clamp()`, and clamp of NaN on this backend returns a
+bound rather than NaN. So NaN activations produced NaN muscle contraction, NaN
+bond forces and NaN velocities, and the clamp quietly turned them into finite
+numbers. Positions stayed sane while the nervous system was gone, which made the
+symptom look like a rendering problem for a long time.
+
+The renderer turned the failure into ABSENCE. Cell radius is scaled by
+activation, so a NaN radius produced a degenerate quad and the cell was simply
+not drawn. An empty screen reads as "no creatures here", not "something is
+wrong", and that is why five diagnoses went elsewhere.
+
+THE CAUSE is unbounded weight mutation. A weight is perturbed by +/-0.32 at 14%
+of divisions with no restoring force and nothing bounding it. A single weight's
+random walk is slow — the largest across 5000 walks over 4000 generations reached
+only 16.7 — but a neuron sums K of them, and selection is not neutral about
+weights. Given enough generations the sum reaches magnitudes where the integrator
+produces an infinity, and NaN is absorbing: one non-finite state spreads to every
+neuron downstream of it and never recovers.
+
+THREE CHANGES:
+
+  - weights are clamped to +/-12 on mutation, which addresses the cause.
+  - the integrator resets a neuron whose state is non-finite or absurd, so one
+    bad value at one instant cannot be permanent. For a run measured in millions
+    of steps that is worth more than the purity of letting it propagate.
+  - the renderer coerces a non-finite activation to zero, so bad data appears as
+    a cell that looks odd rather than as no cell at all. A visualiser that erases
+    what it cannot draw is worse than useless during debugging.
+
+Immediately after: NaN fell from 98.9% to 5.8%, 5634 of 6213 live cells were
+actively firing, and the world showed recognisable multicellular creatures for
+the first time — clusters of coloured cells joined by sinews that glow where the
+muscles pull.
+
+THE LESSON, which is the same one as the bounded-measure and unreplicated-slope
+corrections earlier in this wave: a display that cannot show a failure state will
+be trusted as evidence of its absence. Every debug view added since — strain
+colouring, solo body, cell isolation — exists because the picture had to be made
+capable of being wrong out loud.

@@ -82,7 +82,20 @@ fn integrate(@builtin(global_invocation_id) gid : vec3<u32>) {
     // -1 marks an unused edge slot: fixed degree, sparse content.
     if (s >= 0) { acc = acc + ew[base + k] * act[u32(s)]; }
   }
-  state[i] = state[i] + (acc - state[i]) * P.dt * invTau[i];
+  var nx = state[i] + (acc - state[i]) * P.dt * invTau[i];
+  // SELF-HEALING. NaN is absorbing: once a state is non-finite every neuron
+  // downstream of it becomes non-finite too, and the whole arena is dead within
+  // seconds with no way back. Observed on a long run — 98.9% of live cells had
+  // NaN activation while every position stayed finite, because the velocity
+  // clamp in the physics was quietly sanitising the consequences and hiding it.
+  //
+  // A neuron that has gone bad is reset to rest rather than left to poison its
+  // neighbours. This is not covering for the arithmetic: the weight clamp in
+  // evolve.js addresses the cause. It is refusing to let one bad value at one
+  // instant be unrecoverable, which for a run measured in millions of steps is
+  // worth more than the purity of letting it propagate.
+  if (nx != nx || abs(nx) > 1e6) { nx = 0.0; }
+  state[i] = nx;
 }
 `;
 

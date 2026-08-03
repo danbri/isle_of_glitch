@@ -271,7 +271,14 @@ export class Evolver {
             arena.esrc[(dst + i) * K + k] = -1; w = 0;
           }
         }
-        arena.ew[(dst + i) * K + k] = w;
+        // CLAMPED. A weight is a random walk with no restoring force and
+        // nothing else bounds it. Over enough generations the sum over K edges
+        // reaches magnitudes where the integrator produces infinities, and once
+        // a brain state is non-finite it stays that way and spreads along every
+        // edge out of it. It takes thousands of generations to bite, which is
+        // exactly long enough to surface as an unexplained failure in a long run
+        // rather than as a bug while developing.
+        arena.ew[(dst + i) * K + k] = Math.max(-12, Math.min(12, w));
       }
     }
 
