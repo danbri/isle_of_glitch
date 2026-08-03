@@ -70,7 +70,116 @@ for (let o = startCount; o < args.beasts; o++) evo.cull(o);
 evo.founders = evo.alive();
 console.log(`founders ${evo.alive()}, arena ${built.arena.N} neuron slots`);
 
+const SNAP = args.snapshot || `${new URL('..', import.meta.url).pathname}runs/world.snapshot`;
+
 const N = built.meta.nCells;
+
+/* --------------------------------------------------------------- persistence */
+
+/**
+ * The whole world to one file, and back.
+ *
+ * Without this a restart loses the run — 1.3 million steps of evolution gone
+ * because a process was restarted. It also makes WHERE the simulation runs
+ * independent of where it is watched: the same file can be resumed by this
+ * server, inspected by a script, or picked up by a native build later. That
+ * decoupling is the point, more than the crash-safety.
+ *
+ * The brain arena already knows how to serialise itself (lib/brainarena.js).
+ * What it does not carry is the world: positions, velocities, energy, bonds,
+ * cell types and the lineage bookkeeping. Those go alongside it.
+ */
+const SNAP_MAGIC = 0x314e5257;                  // 'WRN1'
+
+async function saveSnapshot(path) {
+  const { pos, energy } = await world.readCells();
+  await brains.readState(built.arena);          // pull GPU state into the arena
+  const arenaBlob = built.arena.snapshot();
+  const c = built.cells;
+
+  const parts = [
+    ['pos', pos], ['energy', energy],
+    ['ctype', c.ctype], ['cslot', c.cslot], ['body', c.body], ['bodySize', c.bodySize],
+    ['bond', c.bond], ['brest', c.brest],
+    ['uid', evo.uid], ['parentUid', evo.parentUid], ['generation', evo.generation],
+    ['lineage', evo.lineage], ['birthStep', evo.birthStep],
+  ];
+  const head = new ArrayBuffer(64);
+  const hv = new DataView(head);
+  hv.setUint32(0, SNAP_MAGIC, true);
+  hv.setUint32(4, 1, true);                     // version
+  hv.setUint32(8, N, true);
+  hv.setUint32(12, c.bondK, true);
+  hv.setUint32(16, steps, true);
+  hv.setFloat32(20, BOUND, true);
+  hv.setUint32(24, evo.births, true);
+  hv.setUint32(28, evo.deaths, true);
+  hv.setUint32(32, evo.nextUid, true);
+  hv.setUint32(36, arenaBlob.byteLength, true);
+  hv.setUint32(40, args.beasts, true);
+  hv.setUint32(44, args.cells, true);
+
+  const bytes = [new Uint8Array(head), arenaBlob];
+  for (const [, a] of parts) bytes.push(new Uint8Array(a.buffer, a.byteOffset, a.byteLength));
+  let total = 0; for (const b of bytes) total += b.byteLength;
+  const out = new Uint8Array(total);
+  let at = 0; for (const b of bytes) { out.set(b, at); at += b.byteLength; }
+
+  // Write beside the target then rename, so a crash mid-write cannot leave a
+  // half-file where a good one used to be.
+  await Deno.writeFile(path + '.tmp', out);
+  await Deno.rename(path + '.tmp', path);
+  return { bytes: total, steps };
+}
+
+async function loadSnapshot(path) {
+  const raw = await Deno.readFile(path);
+  const hv = new DataView(raw.buffer, raw.byteOffset);
+  if (hv.getUint32(0, true) !== SNAP_MAGIC) throw new Error('not a world snapshot');
+  const n = hv.getUint32(8, true);
+  if (n !== N) throw new Error(`snapshot has ${n} cell slots, this world has ${N} — start with the same --beasts/--cells`);
+  const arenaLen = hv.getUint32(36, true);
+
+  const { BrainArena } = await import('../lib/brainarena.js');
+  const restored = BrainArena.restore(raw.subarray(64, 64 + arenaLen));
+  built.arena.state.set(restored.state); built.arena.bias.set(restored.bias);
+  built.arena.invTau.set(restored.invTau); built.arena.act.set(restored.act);
+  built.arena.esrc.set(restored.esrc); built.arena.ew.set(restored.ew);
+  built.arena.off.set(restored.off); built.arena.cnt.set(restored.cnt);
+  built.arena.alive.set(restored.alive); built.arena.cell.set(restored.cell);
+  built.arena.free = restored.free.map(h => [h[0], h[1]]);
+
+  let at = 64 + arenaLen;
+  const take = (arr) => {
+    new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength)
+      .set(raw.subarray(at, at + arr.byteLength));
+    at += arr.byteLength;
+  };
+  const c = built.cells;
+  const pos = new Float32Array(N * 2), energy = new Float32Array(N);
+  take(pos); take(energy);
+  take(c.ctype); take(c.cslot); take(c.body); take(c.bodySize);
+  take(c.bond); take(c.brest);
+  take(evo.uid); take(evo.parentUid); take(evo.generation);
+  take(evo.lineage); take(evo.birthStep);
+
+  steps = hv.getUint32(16, true);
+  evo.births = hv.getUint32(24, true);
+  evo.deaths = hv.getUint32(28, true);
+  evo.nextUid = hv.getUint32(32, true);
+
+  // Push everything back to the GPU.
+  const vel = new Float32Array(N * 4);
+  const meta = new Int32Array(N * 4);
+  for (let i = 0; i < N; i++) {
+    meta[i * 4] = c.ctype[i]; meta[i * 4 + 1] = c.cslot[i];
+    meta[i * 4 + 2] = c.body[i]; meta[i * 4 + 3] = c.bodySize[i];
+    c.px[i] = pos[i * 2]; c.py[i] = pos[i * 2 + 1];
+  }
+  world.writeCellRange(0, N, { pos, vel, meta, bond: c.bond, brest: c.brest, energy });
+  brains.writeState(built.arena);
+  return { steps, alive: evo.alive() };
+}
 let last = { alive: evo.alive(), born: 0, died: 0, meanEnergy: 0, maxGeneration: 0, lineages: evo.alive() };
 let steps = 0, sinceTick = 0, ticking = false, running = true;
 
@@ -78,6 +187,18 @@ let steps = 0, sinceTick = 0, ticking = false, running = true;
 
 // Runs independently of any watcher. Nobody has to be looking for the world to
 // continue, which is the entire point of moving it out of the tab.
+if (args.resume) {
+  try {
+    const r = await loadSnapshot(SNAP);
+    console.log(`resumed from ${SNAP}: step ${r.steps.toLocaleString()}, ${r.alive} bodies`);
+  } catch (e) {
+    console.log(`could not resume (${e.message}); starting fresh`);
+  }
+}
+
+let lastSave = Date.now();
+const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
+
 (async function loop() {
   while (running) {
     world.step(args.spf);
@@ -87,6 +208,13 @@ let steps = 0, sinceTick = 0, ticking = false, running = true;
       sinceTick = 0; ticking = true;
       try { last = await evo.tick(steps); } catch (e) { console.error('tick failed:', e.message); }
       ticking = false;
+    }
+    if (SAVE_EVERY_MS > 0 && Date.now() - lastSave > SAVE_EVERY_MS && !ticking) {
+      lastSave = Date.now();
+      try {
+        const r = await saveSnapshot(SNAP);
+        console.log(`saved ${(r.bytes / 1048576).toFixed(1)} MB at step ${r.steps.toLocaleString()}`);
+      } catch (e) { console.error('snapshot failed:', e.message); }
     }
     // Yield so the HTTP handler gets a turn; without this the loop starves the
     // server and every frame request times out.
@@ -242,6 +370,12 @@ Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
       headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' },
     });
   }
+  if (path === '/save' && req.method === 'POST') {
+    const r = await saveSnapshot(SNAP);
+    return new Response(JSON.stringify({ saved: SNAP, ...r }), {
+      headers: { 'content-type': 'application/json' },
+    });
+  }
   if (path === '/status') {
     return new Response(JSON.stringify({
       steps, bound: BOUND, cells: N, neurons: built.arena.N,
@@ -249,6 +383,14 @@ Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
       // configured to match by hand — a mismatch is not a user error, it is
       // just a page that has not been told the shape yet.
       beasts: args.beasts, cellsPerBeast: args.cells,
+      // The resource field is what creatures chase and it drifts and morphs.
+      // The viewer needs its parameters to draw it; without them it was showing
+      // only the flow, which is the least photogenic layer in the world.
+      resScale: world.params.resScale, resSeed: world.params.resSeed,
+      driftX: world.params.driftX, driftY: world.params.driftY,
+      morphRate: world.params.morphRate, dt: world.params.dt,
+      flowScale: world.params.flowScale, flowStr: world.params.flowStr,
+      worldSeed: world.params.seed,
       // Ground truth for cell ownership. cellsOwned sums the arena's own
       // organism table; cellsLiveTyped counts cells the world still treats as
       // present. They must match — any excess is orphan cells that no organism

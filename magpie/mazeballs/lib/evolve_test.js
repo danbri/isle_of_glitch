@@ -17,6 +17,7 @@ import { buildBodies } from './bodies.js';
 import { BrainArenaGPU } from './brainarena_gpu.js';
 import { WorldGPU } from './world_gpu.js';
 import { Evolver } from './evolve.js';
+import { resourceField } from './field_cpu.js';
 
 const HAS_GPU = !!(globalThis.navigator?.gpu && await navigator.gpu.requestAdapter());
 const gpuTest = (name, fn) => Deno.test({ name, ignore: !HAS_GPU, fn });
@@ -34,25 +35,11 @@ async function setup({ cap = 400, start = 120, cells = 12, bound = 34 } = {}) {
   return { ...built, brains, world, evo, bound };
 }
 
-/** The analytic resource field, recomputed CPU-side to score positions. */
-function resourceAt(x, y, scale, seed) {
-  const h2 = (ix, iy, sd) => {
-    let h = (Math.imul(ix, 374761393) ^ Math.imul(iy, 668265263) ^ Math.imul(sd, 1274126177)) >>> 0;
-    h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
-    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
-  };
-  const sm = t => t * t * (3 - 2 * t), lp = (a, b, t) => a + (b - a) * t;
-  let f = 0, amp = 1, norm = 0, qx = x * scale, qy = y * scale;
-  for (let o = 0; o < 4; o++) {
-    const ix = Math.floor(qx), iy = Math.floor(qy);
-    const u = sm(qx - ix), v = sm(qy - iy), sd = seed + o * 1013;
-    f += amp * lp(lp(h2(ix, iy, sd), h2(ix + 1, iy, sd), u),
-                  lp(h2(ix, iy + 1, sd), h2(ix + 1, iy + 1, sd), u), v);
-    norm += amp; amp *= 0.5; qx *= 2; qy *= 2;
-  }
-  const r = f / norm;
-  return r * r;
-}
+// The resource field comes from lib/field_cpu.js, which is checked against the
+// real WGSL by field_cpu_test.js. This file used to hand-copy the noise
+// function, with nothing connecting the copy to the original — exactly the
+// duplicate-that-drifts problem, and it would have drifted silently.
+const resourceAt = (x, y, scale, seed) => resourceField(x, y, scale, seed);
 
 async function meanResource(sim) {
   const { pos } = await sim.world.readCells();

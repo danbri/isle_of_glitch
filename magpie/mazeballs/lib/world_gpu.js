@@ -190,7 +190,7 @@ struct W {
   hashCell : f32,   // spatial-hash query radius, world units
   hashSize : u32,
   crowdK   : f32,   // how sharply a shared patch is discounted
-  bodyCells: u32,   // a body does not crowd itself
+  contactK : f32,   // soft-sphere repulsion stiffness; 0 disables contact
 
   bucketM  : u32,   // neighbour slots listed per bucket
   predRate : f32,   // energy moved per unit of effort difference, per second
@@ -215,7 +215,7 @@ struct W {
 // 8-byte load instead of two strided 4-byte ones.
 @group(0) @binding(0) var<uniform>             P     : W;
 @group(0) @binding(1) var<storage, read_write> pos   : array<vec2<f32>>;
-@group(0) @binding(2) var<storage, read_write> vel   : array<vec4<f32>>;  // xy=velocity, w=next energy
+@group(0) @binding(2) var<storage, read_write> vel   : array<vec4<f32>>;  // xy=velocity, z=radius, w=next energy
 @group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=type, y=slot, z=body, w=body size
 // bond index and rest length packed into one vec2 — WebGPU guarantees only 8
 // storage buffers per stage and the crowding hash needs one, so the pair that
@@ -289,6 +289,49 @@ fn bucketOf(p: vec2<f32>) -> u32 {
   let gy = i32(floor(p.y / P.hashCell));
   var h : u32 = (u32(gx) * 73856093u) ^ (u32(gy) * 19349663u);
   return h % P.hashSize;
+}
+
+// Soft-sphere contact: every particle has a RADIUS and pushes back when
+// overlapped.
+//
+// This is the universal primitive the world is meant to be built from. A rock, a
+// corpse, an ice cube and a living cell are all the same thing here — a sphere
+// with a position, a radius and a mass — and "rock" is a description of a
+// particle's numbers rather than a type the engine knows. Nothing high-level is
+// a primitive, which is the first law, and it applies to inert matter as much as
+// to bodies.
+//
+// GATHER-ONLY, so it needs no atomics and is exactly symmetric: i and j compute
+// the same overlap from the same two positions and radii, and take precisely
+// opposite forces. That is the same property that makes the bond springs obey
+// Newton's third law, and it is worth more than the small cost of both sides
+// doing the arithmetic.
+//
+// The spatial hash it walks already exists — it was built for crowding — so the
+// marginal cost is roughly 108 neighbour tests per cell, against the ~100M edge
+// gathers the brains already do each step. It disappears into the noise.
+fn contact(i: u32, p: vec2<f32>, myR: f32) -> vec2<f32> {
+  if (P.contactK <= 0.0) { return vec2<f32>(0.0, 0.0); }
+  var force = vec2<f32>(0.0, 0.0);
+  for (var dy = -1; dy <= 1; dy = dy + 1) {
+    for (var dx = -1; dx <= 1; dx = dx + 1) {
+      let b = bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM);
+      let n = min(atomicLoad(&hashData[b]), P.bucketM);
+      for (var k = 0u; k < n; k = k + 1u) {
+        let j = atomicLoad(&hashData[b + 1u + k]);
+        if (j == i) { continue; }
+        if (cmeta[j].x < 0) { continue; }
+        let d = minImage(pos[j] - p);
+        let dist = max(length(d), 1e-4);
+        let touch = myR + vel[j].z;
+        if (dist >= touch) { continue; }
+        // Linear in overlap: cheap, stable, and enough for bodies that are
+        // mostly held together by bonds rather than by contact.
+        force = force - (d / dist) * (touch - dist) * P.contactK;
+      }
+    }
+  }
+  return force;
 }
 
 // What one cell takes from its foreign neighbours this instant.
@@ -455,7 +498,11 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     force = force + dir * dot(vel[u32(j)].xy - v, dir) * P.bondDamp;
   }
 
-  // The medium drags the cell toward the local flow velocity.
+  // Contact with everything nearby, living or not.
+  force = force + contact(i, p, vel[i].z);
+
+  // The medium drags the cell toward the local flow velocity. This is the
+  // "stickiness to the aether" every particle has, inert or alive.
   force = force + (flowAt(p) - v) * P.drag;
 
   // Terminal velocity — the one guard that keeps explicit Euler bounded when

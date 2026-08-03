@@ -162,3 +162,55 @@ compose — over bespoke complexity, always.
 Each step judged by the one measurement this project trusts: does the sense
 become load-bearing — does blinding it finally cost something — and does it do
 so without a reflexive shortcut sneaking back in.
+
+
+## Why 2D needs permeable obstacles — the dimensionality problem
+
+The name is mazeballs: a simple abstracted agent exploring a maze. Keeping that
+in two dimensions is a deliberate aesthetic choice, and it carries a real cost
+that has to be designed around rather than ignored.
+
+**Dimensionality decides how easy it is to get stuck.** In 1D any obstacle is
+absolute — there is no way past. In 2D it is still easy to be blocked: a wall
+across a corridor, a dead end, a cul-de-sac an agent cannot reason its way out
+of. In 3D there is usually a way around. By the time you reach the dimensionality
+ML works in, the curse of dimensionality has become a gift of freedom: in a
+high-dimensional space almost every local trap has an escape direction, which is
+part of why gradient descent works at all in networks with millions of
+parameters and would not in two.
+
+An evolving population in a hard-walled 2D world therefore spends its search
+budget on being stuck rather than on getting better. The valley it cannot cross
+is often literally a wall.
+
+**The answer is not to add dimensions but to remove impermeability.** Nothing in
+this world should be an absolute barrier. Instead:
+
+- Cells can DETACH from one another, so a body can pass through a gap narrower
+  than itself and reassemble, or lose a trailing cell and continue.
+- Cells can SHRINK — from dehydration, from hunger, from a genome that chooses
+  to be small — and so fit where they otherwise could not.
+- Cells can SWELL, with water or with something like fear, becoming harder to
+  push through a gap and harder to swallow.
+- A body can SQUEEZE through the smallest of holes, the way an octopus or a
+  mouse does, at a cost in time and energy rather than being refused.
+- In the limit, a body can simply INTERPENETRATE an obstacle, paying a steep and
+  continuous price for it.
+
+Each of these is a soft constraint with a cost attached, and forces discouraging
+it in excess. The point is that a barrier should always be expensive rather than
+ever be impossible, because "impossible" is what turns a search problem into a
+dead end.
+
+**Mazes are then worth having.** Regions of genuine maze-like physicality become
+interesting precisely because they are hard but not sealed — provided there are
+prizes on the other side that make the crossing pay evolutionarily. A maze with
+nothing behind it selects for nothing. A maze with a rich, contested resource
+behind it selects for whatever combination of shrinking, detaching, squeezing and
+persistence gets a lineage through, and different lineages may find different
+answers. That is the kind of pressure that produces structure rather than stasis.
+
+None of this is built yet. It is written down here because it constrains what
+gets built: any obstacle mechanism added to this world must come with a way
+through it, and the cost of that way must be payable by something a genome can
+evolve.
