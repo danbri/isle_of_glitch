@@ -1,0 +1,31 @@
+
+=== seed-a-gait foraging: food-sense ablation across seeds ===
+task: food 14 in 3 clusters, span 0.9, senseSigma2 0.11, relocateThresh 0.22
+
+--- RANDOM  (4 seeds) ---
+  gen-0 intake          0.0811
+  evolved intake        intact 0.0842 ± 0.0085   food-ablated 0.0843 ± 0.0086
+  displacement          intact 0.070   ablated 0.070   (locomotion should survive blinding)
+  intake ascent (gen0->evolved intact): +0.0031
+  ABLATION DELTA (intact − food-ablated):
+    combined-SE:  -0.0001  vs 2×-combined-SE bar 0.0241  -> incidental
+    paired-by-seed: -0.0001 ± 0.0001  vs 2×SE bar 0.0001  -> incidental
+
+--- SEEDED  (4 seeds) ---
+  gen-0 intake          0.0698
+  evolved intake        intact 0.1031 ± 0.0073   food-ablated 0.1027 ± 0.0082
+  displacement          intact 0.365   ablated 0.364   (locomotion should survive blinding)
+  intake ascent (gen0->evolved intact): +0.0333
+  ABLATION DELTA (intact − food-ablated):
+    combined-SE:  +0.0004  vs 2×-combined-SE bar 0.0218  -> incidental
+    paired-by-seed: +0.0004 ± 0.0025  vs 2×SE bar 0.0051  -> incidental
+
+--- STAGED  (4 seeds) ---
+  gen-0 intake          0.0811
+  evolved intake        intact 0.1070 ± 0.0076   food-ablated 0.1076 ± 0.0083
+  displacement          intact 0.246   ablated 0.244   (locomotion should survive blinding)
+  intake ascent (gen0->evolved intact): +0.0259
+  ABLATION DELTA (intact − food-ablated):
+    combined-SE:  -0.0006  vs 2×-combined-SE bar 0.0225  -> incidental
+    paired-by-seed: -0.0006 ± 0.0039  vs 2×SE bar 0.0079  -> incidental
+
