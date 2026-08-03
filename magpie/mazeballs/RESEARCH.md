@@ -4297,3 +4297,171 @@ only by `makeWorld`; single-species path verified byte-identical on `sb-turing`,
 record. `tools/senserange-agg.js` pools the ablation dose-response. Run readouts
 are in `results/senserange/` (`{sparse|dense}-sig{sigma2}-s{seed}`, radii
 0.224/0.500/1.000, seeds 1–3, plus `field-diagnostic.txt`).
+
+## The discrimination task: a reward with no kinematic escape, and the wall holds under both operators
+
+Five independent experiments had, by this point, failed to make any sense
+load-bearing on this substrate — directed foraging, incumbent coevolution,
+soft-body coevolution, a metabolic movement cost, and a full sense-range ×
+sparsity sweep. The synthesis across them was specific and testable: every task
+so far had a **kinematic degenerate** — a fixed movement pattern (sit on a patch,
+or cover the arena) that collects the reward without ever using the sense — and
+selection always found it. The converged diagnosis was that selection will only
+build sensing if the reward is *structurally impossible* to collect without it.
+This section builds exactly that task and asks whether the diagnosis is a lever
+or an epitaph: does a mandatory-sensing task finally make the sense load-bearing,
+or does the substrate resist sensing even when it is the only thing that scores.
+
+**The task, and why each property is load-bearing.** Two food types, good and
+toxic, are spatially **intermixed** (type assigned per patch at
+`FOOD_TOXIC_FRAC`) and **re-randomised every spawn** — positions *and* types — so
+no fixed route can memorise where good is. Both types are identical on the
+type-blind food-mass channel (0), so klinokinesis finds food but cannot tell good
+from toxic; the only thing that separates them is a **close-range quality
+channel** (√`FOOD_QUAL_SIGMA2` ≈ 0.077, a signed type-weighted Gaussian at each
+sensor cell, readable on final approach but not across the arena). Eating is
+**positional**: a body eats the patch its centroid sits on, whatever type it is —
+good adds to intake, toxic subtracts `FOOD_TOXIN_HARSH`× — so the *only* way to
+avoid toxic is to steer off it, which needs the quality sense. A flat starvation
+drain (`FOOD_STARVE`) makes eating nothing lose to selective eating, closing the
+"refuse all food" escape. Under `--fitness netintake` the selected quantity is
+`good − H·toxic − starve`, so a body that sits (eats a random 50/50 stream as
+patches deplete and relocate), one that covers (eats everything), and one that
+refuses all food all lose; only sense-and-select wins. Drop any one property and
+a kinematic degenerate returns and the experiment is void.
+
+**What was built, and why single-species stays byte-identical.** Everything is
+behind `FOOD_TOXIC_FRAC` (default 0). Off, the substrate is byte-identical:
+`senseCount` stays 4, the quality channel never appears, `foodType` is all-good
+and never read (`kFood` keeps its `best` branch), and `FOOD_STARVE` 0 leaves
+`metabolic`/`netIntake` untouched — verified byte-for-byte on `sb-turing`,
+`sb-gate` and a short `sb-evolve` displacement run, text and JSON. On, the quality
+channel takes index `SENSORS` and receptor gene 23 — the same previously-silent
+locus the opponent channel reuses, mutually exclusive with COEVO by construction,
+so no genome locus is double-claimed and `GENOME_LEN` is unchanged. The quality
+ablation (`qualAblate`, mean-replacement) mirrors `foodAblate`/`oppAblate` and
+leaves the mass channel intact, so an ablated body can still *find* food — it just
+cannot tell which is which. `sb-evolve` gained `--toxicFrac/--toxinHarsh/
+--qualSigma2/--starve`, the squatter/anosmia/net-negative census, a `selectivity`
+readout (good/gross, 0.5 = indiscriminate), and the decisive quality-ablation
+delta on net intake — all gated on the task being live, so a trunk run is
+unchanged. The sign-aware operator was brought into the same harness behind
+`--op gaussian|signflip` (the `signflip` from `sb-op.js`, full Gaussian plus a
+per-regulatory-locus sign flip at `--signRate`), so both operators run the
+identical loop and the default (`gaussian`) reproduces byte-identical.
+
+**First, the task was proved to have no kinematic escape — and to be winnable.**
+A null on a task nothing could ever win says nothing (the central-place lesson).
+The generation-0 probe (`tools/sb-discrim-probe.js`) settles both halves before
+any evolution. The rigorous no-degenerate test is the escape rate with the
+**quality channel ablated** — a body that provably cannot sense good from toxic,
+which is every fixed/blundering policy the substrate expresses. Across
+`H = 1.5…6`, the quality-ablated population eats at **selectivity 0.498** (a clean
+50/50) and its **mean net is negative at every H** (−0.069 at 1.5, −0.10 at 2,
+−0.16 at 3, −0.22 at 4, −0.34 at 6): a policy that cannot sense loses in
+expectation, so no sit/cover/random strategy collects net-positive reward. The
+task is simultaneously **winnable by sensing** — the toxic-avoided lower bound on
+a discriminator (same trajectory, toxic intake not counted) is **+0.023, positive
+for 64%** of random bodies, at only 3% anosmia. This is the crucial contrast with
+central-place foraging, where the control also failed: here the control provably
+*wins*. One measurement subtlety was chased down and is worth recording. With slow
+patch turnover a body commits to only a handful of patches per episode, so its
+intake is dominated by *which* patches it happened to sit on — pure spawn luck —
+which manufactures a spurious ~13–30% "escape" tail and a small good-bias
+(selectivity 0.53) that does **not** shrink with more spawns. Raising patch
+turnover (`--consume 1.2`) so a body samples ~12 patches per episode collapses
+both: the ablated escape rate falls to 0% by 40 spawns and selectivity returns to
+0.52→0.50 (`results/discrim/escape-scaling.txt`). The apparent escape was
+spawn/turnover noise, not a real non-sensing win; the calibrated task samples the
+ambient 50/50 well enough that blind intake is reliably net-negative and
+selectivity is a low-variance, heritable trait for selection to act on.
+
+**The result: sensing does not evolve, under either operator, at any harshness.**
+`sb-evolve` at POP 48 × 20 generations, a 6-generation displacement curriculum
+then `netintake`, k=2 tournament, six held-out spawns for the re-measure, crossed
+`H ∈ {2,3,4}` with `op ∈ {gaussian, signflip}`, six seeds per cell at H2/H3 and
+three at H4. The decisive column is the quality-sense ablation on net intake —
+intact versus mean-replaced on the evolved population, per-seed delta with an
+across-seed SE and the project's 2·SE bar:
+
+| H | op | squat% | anosm% | netNeg% | selectivity | qualAbl Δnet ± SE (2·SE bar) | verdict |
+|---|---|---|---|---|---|---|---|
+| 2 | gaussian | 51 | 17 | 89 | 0.464 | +0.0045 ± 0.0035 (0.0069) | incidental |
+| 2 | signflip | 58 | 16 | 86 | 0.454 | +0.0005 ± 0.0019 (0.0037) | incidental |
+| 3 | gaussian | 52 | 17 | 91 | 0.467 | −0.0012 ± 0.0083 (0.0166) | incidental |
+| 3 | signflip | 57 | 16 | 90 | 0.463 | +0.0047 ± 0.0051 (0.0102) | incidental |
+| 4 | gaussian | 41 | 12 | 91 | 0.470 | +0.0090 ± 0.0105 (0.0210) | incidental |
+| 4 | signflip | 56 | 15 | 94 | 0.464 | −0.0068 ± 0.0154 (0.0308) | incidental |
+
+**Every cell is incidental, and the direct behavioural readout says why: the
+evolved population never discriminates.** Selectivity sits at **0.45–0.47 at every
+cell — below chance** — the population eats, if anything, slightly *more* toxic
+than good, and blinding the quality channel barely moves it (`selQAbl ≈ selEvo`),
+because the channel is not carrying discrimination. Net intake does not ascend
+(gaussian is slightly negative, signflip ~0), nowhere near the ~+0.18 net a body
+that captured the available gradient would bank. What the population *does* do to
+the toxin is sit and refuse: **41–58% squatters, 12–17% anosmic, and 86–94%
+net-negative** across the whole sweep — the same sit-still / refuse-food answer
+every prior wave found, now chosen over a discrimination that would pay an order
+of magnitude more. One caution earned its keep: at three seeds the H2-gaussian
+cell flagged LOAD-BEARING (+0.0108 ± 0.0044, bar 0.0088) — a single marginal cell,
+with selectivity still below 0.5 and a delta that flipped sign across the
+H-sweep. Six seeds retired it to +0.0045 ± 0.0035 (bar 0.0069), incidental. It was
+the heritable-kinematic dissociation the cost and coevolution sections named — the
+sense feeding the gait by a rounding error, not driving discrimination — caught
+before it could be filed as a crack.
+
+**The sign-aware operator does not crack it either — the untested lead is now
+tested.** The mutation-operator study had left one specific possibility open: a
+sign-aware operator might pay on a task that is genuinely sign-limited, where the
+discrimination wiring is a rare sparse motif blind Gaussian jitter cannot stumble
+into. It does not. `signflip` is incidental at every cell, its ablation deltas
+straddle zero exactly as `gaussian`'s do, and its selectivity is if anything
+marginally *lower* (0.454–0.464 vs 0.464–0.470). The discrimination task is a
+plausible candidate for a sign-limited objective, and the sign channel found no
+wiring on it that the magnitude channel missed — because neither channel found the
+wiring at all. Both operators walk the population into the same sit-and-refuse
+attractor; the operator was never the binding constraint here, just as the task,
+the budget, the incentive, the sensory wiring, the cost, and the range were not.
+
+**Verdict.** This was the experiment designed to decide whether the wall is a
+task-design artifact or a property of the substrate, and it decides it. The task
+provably has **no kinematic degenerate** — a body that cannot sense loses in
+expectation at every harshness (mean net-ablated −0.10 to −0.34, selectivity
+0.498) — and it is provably **winnable by sensing** — the toxic-avoided bound is
+positive for 64% of even random bodies, and an evolved body eating its ~0.14 gross
+as pure good would clear strongly positive against a ~0.04 starvation cost. The
+reward gradient toward discrimination is real, large, and present from generation
+zero. And evolution declines to climb it: across two mutation operators and three
+toxin harshnesses, selectivity never rises above chance, net intake never ascends,
+and blinding the discriminating sense costs nothing at every setting. **When
+sensing is made not merely useful but mandatory — the only strategy that scores —
+this substrate still does not build it; it sits, refuses, and is poisoned in
+preference to sensing.** The wall is not an artifact of any single task giving the
+animal a kinematic way out, because this task gives it none and the wall stands
+undiminished. It is a property of the substrate: directed sensing is not what this
+genotype→phenotype→behaviour map spontaneously finds, even when every non-sensing
+answer is structurally guaranteed to lose. The mission's premise — that the right
+task would unlock sensing — is what this retires. The live question is no longer
+which environmental lever to pull; it is why a substrate that provably *can* wire
+the sense (the loop closes, 45–56% of bodies steer a motor from the relevant
+channel) and is heavily *rewarded* for using it nonetheless never does — a
+question about the searchability of the sensing region of this map, not about the
+task that surrounds it.
+
+**What is committed.** In `lib/softbody.js`, the discrimination substrate behind
+`FOOD_TOXIC_FRAC` (default 0): `FOOD_TOXIN_HARSH`/`FOOD_QUAL_SIGMA2`/`FOOD_STARVE`,
+per-spawn re-randomised good/toxic food, the signed quality channel (gene 23,
+COEVO-exclusive), positional signed eating, the `qualAblate` instrument, and
+`gross`/`goodEaten`/`toxEaten`/`selectivity` readouts — single-species path
+verified byte-identical on `sb-turing`, `sb-gate` and a displacement `sb-evolve`
+run. In `tools/sb-evolve.js`, the `--toxicFrac/--toxinHarsh/--qualSigma2/--starve`
+overrides, `--op gaussian|signflip` with `--signRate`, the quality-ablation
+remeasure and the squatter/anosmia/net-negative/selectivity diagnostics (all gated
+on the task, default run byte-identical). `tools/sb-discrim-probe.js` proves no
+kinematic degenerate and winnability at generation 0; `tools/sb-discrim-batch.js`
+runs the matrix in parallel foreground; `tools/sb-discrim-agg.js` pools the
+decisive ablation across seeds; `tools/sb-discrim-debug.js` is the escape-vs-spawn
+diagnosis. Run readouts are in `results/discrim/` (`H{2,3,4}-{gaussian,signflip}-
+s{seed}.json`, plus `gen0-validity-probe.txt`, `escape-scaling.txt`,
+`aggregate.txt`).
