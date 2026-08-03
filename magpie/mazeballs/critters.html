@@ -1,0 +1,352 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>critters — evo-devo CTRNN creatures</title>
+<!--
+  critters.html — the actual mission, small and visible: cells that DEVELOP into
+  sensors, neurons and muscles from a genome, a CTRNN that drives the muscles,
+  and EVOLUTION that improves the whole thing. The four things the goal names,
+  in one self-contained page:
+
+    EVO-DEVO (development). A creature is NOT drawn by hand. A small genome is a
+      gene-regulatory rule: for every cell in the body it reads the cell's
+      position and a maternal gradient and expresses a little vector e (tanh of a
+      genome matrix). That expression DIFFERENTIATES the cell into a role —
+      sensor, neuron, or muscle — and sets its wiring. Same genome, different
+      positions -> different cells: positional information, the French-flag model
+      of development. (v1 keeps the body's cell layout fixed and develops ROLE +
+      WIRING across it; growing the morphology too is the next step.)
+
+    CELLS AS SENSORS / NEURONS / MUSCLES. Each cell is literally one of the three.
+      A sensor reads the food field at its own position. A neuron is a node of a
+      continuous-time recurrent neural network. A muscle is a cell whose incident
+      springs contract when its driving neurons fire.
+
+    CTRNN. The neuron cells form a continuous-time recurrent net:
+      tau * dy_i/dt = -y_i + sum_j w_ij*tanh(y_j) + sum_s w_is*sensor_s + b_i.
+      Its recurrence makes a central pattern generator (a gait) and lets sensor
+      input steer it. Every weight is DEVELOPED: w between two cells is a genome
+      bilinear form on their expression vectors, so connectivity is encoded
+      genetically and is independent of how many cells there are.
+
+    EVOLUTION. A population of genomes is scored on a task — get the body closer
+      to a food point placed at random directions (so moving AND steering toward
+      the smell both pay) — then tournament-selected and mutated. Watch the best
+      creature of each generation develop and crawl, and the fitness climb.
+
+  HONESTY. Everything runs on the CPU (one creature drawn, a whole population
+  evolved between frames). No role has a hand-set speed or gait — motion is
+  spring physics in a viscous medium, driven only by muscle contraction, driven
+  only by the CTRNN, developed only from the genome. This is a small seed of the
+  WORLD.md substrate, not the full thing; sensing being genuinely load-bearing
+  (vs. a blind gait that happens to score) is the hard open question RESEARCH.md
+  tracks — here the wiring and the pressure exist, and you can watch what wins.
+-->
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #060810;
+    font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #ccd4e0; }
+  #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .panel { position: fixed; background: rgba(10,13,22,.85); backdrop-filter: blur(8px);
+    border: 1px solid #1e2636; border-radius: 10px; padding: 11px 12px; }
+  #controls { top: 10px; left: 10px; width: 236px; box-shadow: 0 8px 30px #0008; }
+  h1 { margin: 0 0 2px; font-size: 13px; letter-spacing: .04em; color: #eef2f8; }
+  .sub { color: #64748b; margin: 0 0 8px; font-size: 10.5px; }
+  .grp { border-top: 1px solid #18202e; margin-top: 9px; padding-top: 9px; }
+  .lbl { color: #8194aa; text-transform: uppercase; letter-spacing: .08em; font-size: 9.5px; margin-bottom: 6px; }
+  .row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+  .row label { flex: 0 0 80px; color: #9fb0c2; font-size: 10.5px; }
+  .row input[type=range] { flex: 1; accent-color: #f2a63b; height: 3px; }
+  .row .val { flex: 0 0 34px; text-align: right; font-size: 10px; font-variant-numeric: tabular-nums; color: #cbd6e2; }
+  .btns { display: flex; flex-wrap: wrap; gap: 5px; }
+  button { background: #17202e; color: #d6e0ea; border: 1px solid #273448; border-radius: 7px; padding: 6px 9px; font: inherit; font-size: 10.5px; cursor: pointer; }
+  button:hover { background: #1f2b3b; }
+  button.on { background: #2a1f0c; border-color: #f2a63b; color: #ffce80; }
+  .legend { display: flex; flex-direction: column; gap: 3px; margin-top: 4px; font-size: 10.5px; }
+  .lg { display: flex; align-items: center; gap: 6px; color: #9fb0c2; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+  #hud { right: 10px; top: 10px; text-align: right; min-width: 150px; }
+  #hud .big { font-size: 20px; color: #f2a63b; font-variant-numeric: tabular-nums; }
+  #hud .k { color: #64748b; }
+  #hud .n { font-variant-numeric: tabular-nums; color: #eef2f8; }
+  #plot { display: block; margin-top: 6px; border-radius: 4px; background: #0b1119; }
+  .hint { left: 50%; bottom: 10px; transform: translateX(-50%); color: #7d8ba0; text-align: center; font-size: 10.5px; padding: 6px 12px; }
+</style>
+
+<canvas id="c"></canvas>
+
+<div id="controls" class="panel">
+  <h1>critters</h1>
+  <p class="sub">cells that develop into sensors · neurons · muscles, wired by a CTRNN, improved by evolution</p>
+
+  <div class="grp">
+    <div class="lbl">Cell roles (developed from the genome)</div>
+    <div class="legend">
+      <div class="lg"><span class="dot" style="background:#39d0ff"></span> sensor — reads the food smell here</div>
+      <div class="lg"><span class="dot" style="background:#e85cff"></span> neuron — a CTRNN node</div>
+      <div class="lg"><span class="dot" style="background:#ffab3d"></span> muscle — contracts when it fires</div>
+    </div>
+  </div>
+
+  <div class="grp">
+    <div class="lbl">Evolution</div>
+    <div class="row"><label>mutation</label><input type="range" id="s_mut" min="0.02" max="0.5" step="0.02" value="0.16"><span class="val" id="v_mut"></span></div>
+    <div class="row"><label>population</label><input type="range" id="s_pop" min="12" max="64" step="4" value="36"><span class="val" id="v_pop"></span></div>
+    <div class="row"><label>gens / sec</label><input type="range" id="s_rate" min="1" max="20" step="1" value="6"><span class="val" id="v_rate"></span></div>
+    <div class="btns"><button id="b_run" class="on">evolving…</button><button id="b_reset">restart</button></div>
+    <div class="btns" style="margin-top:5px"><button id="b_food">move food</button><button id="b_wire">show wiring</button></div>
+  </div>
+
+  <div class="grp">
+    <div class="lbl">Best genome's brain</div>
+    <div id="brainstat" class="sub" style="margin:0"></div>
+  </div>
+</div>
+
+<div id="hud" class="panel">
+  <div><span class="big" id="h_gen">0</span> <span class="k">generation</span></div>
+  <div><span class="n" id="h_fit">0.00</span> <span class="k">best fitness</span></div>
+  <div class="k" style="font-size:10px">fitness = progress toward food</div>
+  <canvas id="plot" width="150" height="46"></canvas>
+</div>
+
+<div id="hint" class="panel">the crawling creature is the best genome so far, developing live · a whole population is evolving between frames</div>
+
+<script>
+"use strict";
+/* ---------- rng ---------- */
+let _s = 987654321;
+function rnd(){ _s = (Math.imul(1664525,_s)+1013904223)>>>0; return _s/4294967296; }
+function gauss(){ return (rnd()+rnd()+rnd()+rnd()-2)*0.87; }   // ~N(0,1)
+const tanh = Math.tanh, clamp=(v,a,b)=>v<a?a:v>b?b:v;
+
+/* ---------- body morphology (fixed layout; development assigns ROLE + WIRING) ----------
+   A small hex disk of cells. Positions are the "rest" body; springs hold it
+   together (soft). The maternal gradient is a smooth field over the body that
+   gives each cell positional information for development. */
+const K = 4;                                   // expression-vector length
+const SP = 0.16;                               // cell spacing (world units)
+function makeBody(){
+  const cells = [], R = 2;
+  for (let q=-R; q<=R; q++) for (let r=-R; r<=R; r++){
+    if (Math.abs(q+r) > R) continue;
+    const x = (q + r*0.5)*SP, y = r*0.866*SP;
+    cells.push({ x0:x, y0:y });
+  }
+  // maternal gradient: smooth left->right + a radial term (two morphogens in one)
+  let mnx=1e9,mxx=-1e9; for(const c of cells){ mnx=Math.min(mnx,c.x0); mxx=Math.max(mxx,c.x0); }
+  for(const c of cells){ c.grad = (c.x0-mnx)/(mxx-mnx)*2-1; c.rad = Math.hypot(c.x0,c.y0)/(SP*R); }
+  // springs between nearby cells
+  const springs=[];
+  for(let i=0;i<cells.length;i++) for(let j=i+1;j<cells.length;j++){
+    const d=Math.hypot(cells[i].x0-cells[j].x0, cells[i].y0-cells[j].y0);
+    if (d < SP*1.6) springs.push({ i, j, rest:d });
+  }
+  return { cells, springs };
+}
+const NCELL = makeBody().cells.length;
+
+/* ---------- genome ---------- */
+// Wg: (5 inputs -> K) develops expression;  Wc/Ws/Wm: KxK bilinear forms giving
+// neuron-neuron, sensor-neuron, neuron-muscle weights from expression vectors.
+const IN = 5, GSZ = IN*K + 3*K*K;
+function randomGenome(){ const g=new Float32Array(GSZ); for(let i=0;i<GSZ;i++) g[i]=gauss()*0.8; return g; }
+function mutate(g, rate, step){ const o=Float32Array.from(g); for(let i=0;i<o.length;i++) if(rnd()<rate) o[i]+=gauss()*step; return o; }
+const Wg=g=>g.subarray(0,IN*K), Wc=g=>g.subarray(IN*K,IN*K+K*K), Ws=g=>g.subarray(IN*K+K*K,IN*K+2*K*K), Wm=g=>g.subarray(IN*K+2*K*K);
+function ebilinear(ei, W, ej){ let s=0; for(let a=0;a<K;a++){ let r=0; for(let b=0;b<K;b++) r+=W[a*K+b]*ej[b]; s+=ei[a]*r; } return tanh(s); }
+
+/* ---------- development: genome + body -> a wired creature ---------- */
+const SENSOR=0, NEURON=1, MUSCLE=2;
+function develop(genome){
+  const body = makeBody(), cells = body.cells, wg=Wg(genome);
+  for(const c of cells){
+    const inp=[1, c.x0/ (SP*3), c.y0/(SP*3), c.grad, c.rad];   // positional information
+    c.e=new Float32Array(K);
+    for(let o=0;o<K;o++){ let s=0; for(let k=0;k<IN;k++) s+=wg[o*IN+k]*inp[k]; c.e[o]=tanh(s); }
+    // role = which of the first three expression channels is strongest
+    const e=c.e; c.role = e[0]>=e[1] && e[0]>=e[2] ? SENSOR : (e[1]>=e[2] ? NEURON : MUSCLE);
+    c.bias = e[3];
+  }
+  const neurons=[], sensors=[], muscles=[];
+  cells.forEach((c,i)=>{ (c.role===NEURON?neurons:c.role===SENSOR?sensors:muscles).push(i); });
+  // developed weights
+  const wc=Wc(genome), ws=Ws(genome), wm=Wm(genome);
+  const Wrec = neurons.map(i=> neurons.map(j=> i===j?0: ebilinear(cells[i].e, wc, cells[j].e)));
+  const Wsen = neurons.map(i=> sensors.map(s=> ebilinear(cells[s].e, ws, cells[i].e)));
+  const Wmus = muscles.map(m=> neurons.map(i=> ebilinear(cells[i].e, wm, cells[m].e)));
+  // muscle springs: a spring is actuated if either endpoint is a muscle cell
+  const mOf = new Int32Array(cells.length).fill(-1); muscles.forEach((m,k)=>mOf[m]=k);
+  for(const sp of body.springs){ const mk = mOf[sp.i]>=0?mOf[sp.i]: mOf[sp.j]; sp.mus = mk; }
+  // init dynamic state
+  for(const c of cells){ c.x=c.x0; c.y=c.y0; c.vx=0; c.vy=0; }
+  return { ...body, neurons, sensors, muscles, Wrec, Wsen, Wmus, y:new Float32Array(neurons.length), act:new Float32Array(muscles.length) };
+}
+
+/* ---------- physics + CTRNN step ---------- */
+const TAU=3.5, AMP=0.5, KS=9, DT=0.2, CDRAG=7.0, LIN=0.985;
+// Locomotion note: only internal spring forces + LINEAR isotropic drag can never
+// move a free body's centre of mass (internal forces cancel; the scallop
+// theorem). QUADRATIC drag (force ~ -c|v|v) breaks it: a fast power-stroke feels
+// more drag than a slow return, so a stroke-SPEED asymmetry the CTRNN can learn
+// becomes net thrust — no ground, no gravity, just paddling a viscous medium.
+function step(cr, food){
+  const { cells, neurons, sensors, muscles, Wrec, Wsen, Wmus, y, act } = cr;
+  // sensors read the food smell at their own position (a radial gradient)
+  const sv = sensors.map(s=>{ const c=cells[s]; const d2=(c.x-food.x)**2+(c.y-food.y)**2; return Math.exp(-d2/(0.32*0.32)); });
+  // CTRNN update (continuous-time, one Euler step)
+  const ny = new Float32Array(neurons.length);
+  for(let i=0;i<neurons.length;i++){
+    let net = cells[neurons[i]].bias;
+    for(let j=0;j<neurons.length;j++) net += Wrec[i][j]*tanh(y[j]);
+    for(let s=0;s<sensors.length;s++) net += Wsen[i][s]*sv[s];
+    ny[i] = y[i] + DT/TAU*(-y[i] + net*3.0);
+  }
+  y.set(ny);
+  for(let m=0;m<muscles.length;m++){ let a=0; for(let i=0;i<neurons.length;i++) a+=Wmus[m][i]*tanh(y[i]); act[m]=tanh(a); }
+  // spring forces (muscle springs contract with activation)
+  for(const c of cells){ c.fx=0; c.fy=0; }
+  for(const sp of cr.springs){
+    const a=cells[sp.i], b=cells[sp.j];
+    let dx=b.x-a.x, dy=b.y-a.y, d=Math.hypot(dx,dy)||1e-6; const nx=dx/d, ny2=dy/d;
+    let rest = sp.rest; if(sp.mus>=0) rest *= (1 - AMP*act[sp.mus]);
+    const f = KS*(d-rest);
+    const rvx=b.vx-a.vx, rvy=b.vy-a.vy, damp=0.6*(rvx*nx+rvy*ny2);   // spring damping
+    const F = f+damp; a.fx+=nx*F; a.fy+=ny2*F; b.fx-=nx*F; b.fy-=ny2*F;
+  }
+  // integrate in a viscous medium (no gravity). Quadratic drag per cell is what
+  // lets the creature actually swim.
+  for(const c of cells){
+    const spd=Math.hypot(c.vx,c.vy);
+    const dfx=-CDRAG*spd*c.vx, dfy=-CDRAG*spd*c.vy;      // quadratic drag = the thrust term
+    c.vx=(c.vx + (c.fx+dfx)*DT)*LIN; c.vy=(c.vy + (c.fy+dfy)*DT)*LIN;
+    const sp2=c.vx*c.vx+c.vy*c.vy; if(sp2>0.09){ const s=0.3/Math.sqrt(sp2); c.vx*=s; c.vy*=s; }
+    c.x+=c.vx*DT; c.y+=c.vy*DT;
+  }
+}
+function center(cr){ let x=0,y=0; for(const c of cr.cells){x+=c.x;y+=c.y;} return {x:x/cr.cells.length, y:y/cr.cells.length}; }
+
+/* ---------- fitness: progress toward food from several random directions ----------
+   Needs BOTH locomotion (move) and steering (sense which way the food is). A
+   creature with no neurons or no muscles can't move -> scores ~0 and is selected
+   out. Nothing about "which way to go" is given; it must come from the sensors. */
+const TSTEPS=240, FDIST=0.9;
+// Task = swim FAR (net displacement of the body centre). This is the achievable
+// bootstrap that a CTRNN gait can win: development gives roles + wiring, the
+// neuron cells must form an oscillator (a gait), the muscle cells must convert it
+// to thrust via quadratic drag, and evolution rewards distance travelled. Sensor
+// cells are developed and wired in, but honestly are NOT load-bearing for a pure
+// travel task — making sensing pay is the hard problem RESEARCH.md tracks, and
+// the next step here is a task (mobile/hidden food) where a blind gait can't win.
+function fitness(genome){
+  const cr = develop(genome);
+  if(cr.neurons.length===0 || cr.muscles.length===0) return -0.1;
+  const food = { x:FDIST, y:0 };
+  const c0 = center(cr);
+  for(let t=0;t<TSTEPS;t++) step(cr, food);
+  const c1 = center(cr);
+  const d = Math.hypot(c1.x-c0.x, c1.y-c0.y);   // how far it swam
+  return isFinite(d) ? d*3 : -0.1;
+}
+
+/* ---------- evolution ---------- */
+let POP=36, MUT=0.16, genomes=[], fits=[], gen=0, best=null, bestFit=-1e9, history=[];
+function initEvo(){
+  genomes=[]; for(let i=0;i<POP;i++) genomes.push(randomGenome());
+  fits=genomes.map(fitness); gen=0; history=[];
+  pickBest();
+}
+function pickBest(){ let bi=0; for(let i=1;i<fits.length;i++) if(fits[i]>fits[bi]) bi=i; best=genomes[bi]; bestFit=fits[bi]; }
+function evolveGen(){
+  const order=[...fits.keys()].sort((a,b)=>fits[b]-fits[a]);
+  const next=[genomes[order[0]], genomes[order[1]]];        // elitism
+  while(next.length<POP){
+    const a=(rnd()*POP)|0, b=(rnd()*POP)|0;                 // tournament k=2
+    const p = fits[a]>=fits[b]?genomes[a]:genomes[b];
+    next.push(mutate(p, MUT, 0.3));
+  }
+  genomes=next; fits=genomes.map(fitness); gen++;
+  pickBest(); history.push(bestFit); if(history.length>150) history.shift();
+}
+
+/* ---------- render ---------- */
+const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+let dpr=Math.min(2,devicePixelRatio||1), W=0, H=0;
+function resize(){ dpr=Math.min(2,devicePixelRatio||1); W=cv.width=innerWidth*dpr; H=cv.height=innerHeight*dpr; }
+addEventListener('resize', resize); resize();
+const ROLE_COL=['#39d0ff','#e85cff','#ffab3d'];
+let showWire=false, running=true;
+let displayCr=null, displayFood={x:0.9,y:0.2}, dispT=0;
+
+function draw(){
+  ctx.fillStyle='#060810'; ctx.fillRect(0,0,W,H);
+  const cx=W*0.56, cy=H*0.5, sc=Math.min(W,H)*0.34;   // world->screen
+  const S=(x,y)=>[cx+x*sc, cy+y*sc];
+  // food + its smell
+  const [fx,fy]=S(displayFood.x, displayFood.y);
+  const grd=ctx.createRadialGradient(fx,fy,0,fx,fy,0.32*sc); grd.addColorStop(0,'rgba(120,230,140,0.5)'); grd.addColorStop(1,'rgba(120,230,140,0)');
+  ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(fx,fy,0.32*sc,0,7); ctx.fill();
+  ctx.fillStyle='#7ee88c'; ctx.beginPath(); ctx.arc(fx,fy,4*dpr,0,7); ctx.fill();
+  if(displayCr){
+    const cr=displayCr;
+    // springs
+    ctx.lineWidth=1.4*dpr;
+    for(const sp of cr.springs){ const a=cr.cells[sp.i], b=cr.cells[sp.j]; const [ax,ay]=S(a.x,a.y),[bx,by]=S(b.x,b.y);
+      ctx.strokeStyle = sp.mus>=0 ? `rgba(255,171,61,${0.35+0.5*Math.abs(cr.act[sp.mus])})` : 'rgba(120,140,170,0.28)';
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke(); }
+    // developed wiring (CTRNN edges), optional
+    if(showWire){ ctx.strokeStyle='rgba(232,92,255,0.16)'; ctx.lineWidth=1*dpr;
+      for(let i=0;i<cr.neurons.length;i++) for(let j=0;j<cr.neurons.length;j++){ if(Math.abs(cr.Wrec[i][j])<0.3)continue;
+        const a=cr.cells[cr.neurons[i]],b=cr.cells[cr.neurons[j]]; const [ax,ay]=S(a.x,a.y),[bx,by]=S(b.x,b.y);
+        ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke(); } }
+    // cells coloured by role
+    for(let i=0;i<cr.cells.length;i++){ const c=cr.cells[i]; const [x,y]=S(c.x,c.y);
+      let lit=0; if(c.role===NEURON){ const ni=cr.neurons.indexOf(i); lit=Math.abs(tanh(cr.y[ni])); }
+      else if(c.role===MUSCLE){ const mi=cr.muscles.indexOf(i); lit=Math.abs(cr.act[mi]); }
+      ctx.fillStyle=ROLE_COL[c.role]; ctx.globalAlpha=0.55+0.45*lit;
+      ctx.beginPath(); ctx.arc(x,y,(5.5+2.5*lit)*dpr,0,7); ctx.fill(); }
+    ctx.globalAlpha=1;
+  }
+}
+
+/* ---------- fitness plot ---------- */
+const pc=document.getElementById('plot'), pctx=pc.getContext('2d');
+function drawPlot(){ pctx.clearRect(0,0,150,46); if(history.length<2)return;
+  const mn=Math.min(...history,0), mx=Math.max(...history,0.01), rng=mx-mn||1;
+  pctx.strokeStyle='#f2a63b'; pctx.lineWidth=1.5; pctx.beginPath();
+  history.forEach((v,i)=>{ const x=i/(history.length-1)*148+1, y=44-(v-mn)/rng*42; i?pctx.lineTo(x,y):pctx.moveTo(x,y); }); pctx.stroke();
+  pctx.strokeStyle='rgba(255,255,255,0.12)'; pctx.beginPath(); const zy=44-(0-mn)/rng*42; pctx.moveTo(1,zy); pctx.lineTo(149,zy); pctx.stroke(); }
+
+/* ---------- main loop: evolve between frames, animate the champion ---------- */
+let genAccum=0, lastT=performance.now(), gensPerSec=6;
+function frame(now){
+  const dt=Math.min(0.1,(now-lastT)/1000); lastT=now;
+  if(running){ genAccum += dt*gensPerSec; let budget=3; while(genAccum>=1 && budget-->0){ evolveGen(); genAccum-=1; } }
+  // (re)develop the champion for display when the generation advances
+  if(!displayCr || displayCr._gen!==gen){ displayCr=develop(best); displayCr._gen=gen; dispT=0; }
+  // animate champion toward the live food
+  for(let k=0;k<2;k++){ step(displayCr, displayFood); if(++dispT>420){ displayCr=develop(best); displayCr._gen=gen; dispT=0; } }
+  draw(); drawPlot();
+  document.getElementById('h_gen').textContent=gen;
+  document.getElementById('h_fit').textContent=bestFit.toFixed(3);
+  if(displayCr){ const ns=displayCr.sensors.length, nn=displayCr.neurons.length, nm=displayCr.muscles.length;
+    document.getElementById('brainstat').innerHTML=`${ns} sensors · ${nn} neurons · ${nm} muscles<br>developed from ${NCELL} cells`; }
+  requestAnimationFrame(frame);
+}
+
+/* ---------- controls ---------- */
+const $=id=>document.getElementById(id);
+function sl(id,fmt,set){ const s=$('s_'+id),v=$('v_'+id); const u=()=>{ v.textContent=fmt(+s.value); set(+s.value); }; s.addEventListener('input',u); u(); }
+sl('mut', v=>v.toFixed(2), v=>MUT=v);
+sl('pop', v=>v.toFixed(0), v=>{ POP=v; });          // takes effect next restart
+sl('rate', v=>v.toFixed(0), v=>gensPerSec=v);
+$('b_run').onclick=()=>{ running=!running; $('b_run').textContent=running?'evolving…':'paused'; $('b_run').classList.toggle('on',running); };
+$('b_reset').onclick=()=>{ initEvo(); displayCr=null; };
+$('b_food').onclick=()=>{ const a=rnd()*6.28; displayFood={x:Math.cos(a)*0.9, y:Math.sin(a)*0.9}; };
+$('b_wire').onclick=()=>{ showWire=!showWire; $('b_wire').classList.toggle('on',showWire); };
+cv.addEventListener('pointerdown', e=>{ const r=cv.getBoundingClientRect(); const cx=W*0.56,cy=H*0.5,sc=Math.min(W,H)*0.34;
+  displayFood={ x:((e.clientX-r.left)*dpr-cx)/sc, y:((e.clientY-r.top)*dpr-cy)/sc }; });
+
+/* ---------- boot ---------- */
+initEvo();
+requestAnimationFrame(frame);
+</script>
