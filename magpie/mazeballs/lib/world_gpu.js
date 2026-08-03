@@ -167,7 +167,12 @@ struct W {
   bucketM  : u32,   // neighbour slots listed per bucket
   predRate : f32,   // energy moved per unit of effort difference, per second
   contactR : f32,   // how close counts as contact
+  sizeScale: f32,   // cells at which digestive efficiency mostly saturates
+
+  sizeNorm : f32,   // makes a reference-size body break even
   pad0     : f32,
+  pad1     : f32,
+  pad2     : f32,
 };
 
 // Positions and velocities are packed vec2, and (type, slot) into one vec2<i32>.
@@ -178,7 +183,7 @@ struct W {
 @group(0) @binding(0) var<uniform>             P     : W;
 @group(0) @binding(1) var<storage, read_write> pos   : array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read_write> vel   : array<vec4<f32>>;  // xy=velocity, w=next energy
-@group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=type, y=slot, z=body
+@group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=type, y=slot, z=body, w=body size
 // bond index and rest length packed into one vec2 — WebGPU guarantees only 8
 // storage buffers per stage and the crowding hash needs one, so the pair that
 // is always read together shares a binding. .x holds an i32 index bitcast into
@@ -447,9 +452,29 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // static field selects once and then plateaus; a contested one keeps moving.
   // No depletion state is stored anywhere — competition is computed from where
   // bodies ARE, which is the only thing the world actually has.
+  // A body does not crowd itself, so the discount is measured against THIS
+  // body's own size. Using a fixed constant was fine while every body had the
+  // same cell count; the moment size became heritable it silently taxed large
+  // bodies for their own cells and made growth look worse than it is.
+  let mySize = f32(max(cmeta[i].w, 1));
   let crowd = crowdingAt(np);
-  let share = 1.0 / (1.0 + P.crowdK * max(0.0, crowd - f32(P.bodyCells)));
-  let gain = P.harvest * resourceField(np, P.resScale, P.resSeed) * share;
+  let share = 1.0 / (1.0 + P.crowdK * max(0.0, crowd - mySize));
+
+  // CAPABILITY COSTS CELLS. A lone cell digests badly; a body of many does
+  // better, saturating. This is the reason for multicellularity to exist at
+  // all — without it size is exactly neutral (harvest and tax are both per
+  // cell) and there is no structural axis for anything to climb. The scale is
+  // the number of cells at which most of the benefit is already had, so growth
+  // pays sharply at first and then stops paying, which is what makes the
+  // equilibrium size an evolved quantity rather than an imposed one.
+  // NORMALISED to the reference body size, so a body of that size digests
+  // exactly as well as it did before this term existed. Unnormalised, the raw
+  // saturating curve is below 1 everywhere and simply cut every harvest by 42%
+  // — a world-wide famine dressed up as a size effect, which starved the
+  // population rather than telling us anything about growth.
+  let scale = max(P.sizeScale, 1.0);
+  let efficiency = (1.0 - exp(-mySize / scale)) * P.sizeNorm;
+  let gain = P.harvest * resourceField(np, P.resScale, P.resSeed) * share * efficiency;
   let work = P.muscleCost * abs(mine);
   let taken = contest(i, np, abs(mine));
   // Written to scratch, not to energy[]: contest() READS energy[j] for other
@@ -504,6 +529,7 @@ export class WorldGPU {
       meta[i * 4] = cells.ctype[i];
       meta[i * 4 + 1] = cells.cslot[i];
       meta[i * 4 + 2] = bodyOf ? bodyOf[i] : -1;
+      meta[i * 4 + 3] = cells.bodySize ? cells.bodySize[i] : 0;
     }
     this.bPos = mk(pos); this.bVel = mk(vel); this.bMeta = mk(meta);
     // Pack bond index + rest length into the one vec2 buffer the shader binds.
@@ -530,7 +556,7 @@ export class WorldGPU {
       harvest: 2.6, brainTax: 0.45, muscleCost: 0.55,
       resScale: 0.35, resSeed: 91, eCap: 3.0, eFloor: -2.0,
       hashCell: 3.2, hashSize: 65536, crowdK: 0.012,
-      bucketM: 12, predRate: 0.0, contactR: 1.0,
+      bucketM: 12, predRate: 0.0, contactR: 1.0, sizeScale: 14.0, sizeRef: 12,
       dt: brains.dt, ...params,
     };
     this.params.bodyCells = this.params.bodyCells ?? (cells.cellsPerBody ?? 12);
@@ -539,7 +565,7 @@ export class WorldGPU {
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
     });
     this.bParams = device.createBuffer({
-      size: 112, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+      size: 128, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
     this.writeParams();
 
@@ -590,7 +616,7 @@ export class WorldGPU {
   writeParams(patch = {}) {
     Object.assign(this.params, patch);
     const p = this.params;
-    const buf = new ArrayBuffer(112), dv = new DataView(buf);
+    const buf = new ArrayBuffer(128), dv = new DataView(buf);
     dv.setUint32(0, this.n, true); dv.setUint32(4, this.bondK, true);
     dv.setFloat32(8, p.dt, true); dv.setFloat32(12, p.flowScale, true);
     dv.setFloat32(16, p.flowStr, true); dv.setFloat32(20, p.drag, true);
@@ -615,6 +641,8 @@ export class WorldGPU {
     dv.setUint32(96, p.bucketM, true);
     dv.setFloat32(100, p.predRate, true);
     dv.setFloat32(104, p.contactR, true);
+    dv.setFloat32(108, p.sizeScale, true);
+    dv.setFloat32(112, 1 / (1 - Math.exp(-p.sizeRef / Math.max(p.sizeScale, 1))), true);
     this.device.queue.writeBuffer(this.bParams, 0, buf);
   }
 

@@ -52,10 +52,13 @@ export class Evolver {
   constructor({
     arena, world, cells, seed = 7,
     birthEnergy = 9, deathEnergy = 0, mutRate = 0.14, mutSize = 0.32,
+    sizeMutRate = 0.25, minCells = 5, maxCells = 40,
   }) {
     this.arena = arena; this.world = world; this.cells = cells;
     this.birthEnergy = birthEnergy; this.deathEnergy = deathEnergy;
     this.mutRate = mutRate; this.mutSize = mutSize;
+    this.sizeMutRate = sizeMutRate;
+    this.minCells = minCells; this.maxCells = maxCells;
     this.rnd = rng(seed);
 
     const P = arena.P;
@@ -139,7 +142,10 @@ export class Evolver {
     // slots go to the bodies that actually earned them.
     const rich = [];
     for (let o = 0; o < P; o++)
-      if (arena.alive[o] && total[o] >= this.birthEnergy) rich.push(o);
+      // Threshold PER CELL, so a large body is not permanently barred from
+      // dividing simply for having more cells to fill. A flat threshold made
+      // size strictly worse and would have masked whatever growth is worth.
+      if (arena.alive[o] && total[o] >= this.birthEnergy * (arena.cnt[o] / 12)) rich.push(o);
     rich.sort((a, b) => total[b] - total[a]);
 
     let born = 0;
@@ -168,7 +174,18 @@ export class Evolver {
    */
   divide(p, px, py, step) {
     const { arena, world, cells } = this;
-    const n = arena.cnt[p];
+    const pn = arena.cnt[p];
+
+    // MORPHOGENESIS, such as it is: body size is heritable and mutates by one
+    // cell at a time. Without this the body plan is frozen — only brains and
+    // cell types could evolve — and there is no structural axis for complexity
+    // to grow along at all. A body that grows gains digestive efficiency
+    // (see world_gpu.js) and pays more total brain tax, so the size that pays
+    // is discovered rather than set.
+    let n = pn;
+    if (this.rnd() < this.sizeMutRate) n += this.rnd() < 0.5 ? -1 : 1;
+    n = Math.max(this.minCells, Math.min(this.maxCells, n));
+
     const child = arena.birth(n);
     if (child < 0) return -1;
 
@@ -177,13 +194,19 @@ export class Evolver {
     const m = this.mutRate, sz = this.mutSize;
     const r = this.rnd;
 
+    // Cells map around the ring proportionally, so a child with one more cell
+    // interpolates its parent's plan rather than truncating it. src(i) is the
+    // parent cell this child cell is a copy of.
+    const srcOf = (i) => Math.min(pn - 1, Math.floor(i * pn / n));
+
     // --- brain: per-neuron dynamics, then the edge table, both mutated
     for (let i = 0; i < n; i++) {
-      arena.bias[dst + i] = arena.bias[src + i] + (r() < m ? (r() * 2 - 1) * sz : 0);
+      const si = srcOf(i);
+      arena.bias[dst + i] = arena.bias[src + si] + (r() < m ? (r() * 2 - 1) * sz : 0);
       // Mutate tau in log space and clamp to evodevo.js's evolved range, so a
       // mutation cannot produce a time constant the f32 integrator stalls on
       // (see the tau/epsilon note in brainarena.js).
-      const tau = 1 / Math.max(arena.invTau[src + i], 1e-6);
+      const tau = 1 / Math.max(arena.invTau[src + si], 1e-6);
       const tau2 = r() < m ? tau * Math.exp((r() * 2 - 1) * sz) : tau;
       arena.invTau[dst + i] = 1 / Math.min(1.89, Math.max(0.24, tau2));
       arena.stride[dst + i] = arena.stride[src + i];
@@ -191,13 +214,18 @@ export class Evolver {
       arena.act[dst + i] = 0;
     }
     for (let i = 0; i < n; i++) {
+      const si = srcOf(i);
       for (let k = 0; k < K; k++) {
-        const s = arena.esrc[(src + i) * K + k];
+        const s = arena.esrc[(src + si) * K + k];
         // Edge sources are ABSOLUTE, so a copy must be rebased into the child's
         // island or the offspring would wire itself into its parent's brain —
         // which validate() forbids and which would be telepathy besides.
-        arena.esrc[(dst + i) * K + k] = s < 0 ? -1 : (s - src) + dst;
-        let w = arena.ew[(src + i) * K + k];
+        // Rebase into the child's island, and remap through the size change so
+        // an edge still points at the corresponding cell rather than off the
+        // end of a smaller body.
+        arena.esrc[(dst + i) * K + k] = s < 0 ? -1
+          : dst + Math.min(n - 1, Math.floor((s - src) * n / pn));
+        let w = arena.ew[(src + si) * K + k];
         if (s >= 0 && r() < m) w += (r() * 2 - 1) * sz;
         // Structural mutation: an edge may appear or vanish, so connectivity
         // itself evolves rather than only its weights.
@@ -230,13 +258,15 @@ export class Evolver {
       pos[i * 2] = wrap(ox + Math.cos(a) * rad);
       pos[i * 2 + 1] = wrap(oy + Math.sin(a) * rad);
 
-      let type = cells.ctype[src + i];
+      let type = cells.ctype[src + srcOf(i)];
       if (r() < m * 0.5) type = (r() * 3) | 0;      // what a cell becomes evolves
       cells.ctype[dst + i] = type;
       cells.body[dst + i] = child;
+      cells.bodySize[dst + i] = n;
       meta[i * 4] = type;
       meta[i * 4 + 1] = dst + i;                    // its brain slot
       meta[i * 4 + 2] = child;                      // whose tissue this is
+      meta[i * 4 + 3] = n;                          // and how big that body is
       cells.cslot[dst + i] = dst + i;
       cells.px[dst + i] = pos[i * 2]; cells.py[dst + i] = pos[i * 2 + 1];
       cells.vx[dst + i] = 0; cells.vy[dst + i] = 0;
@@ -263,9 +293,9 @@ export class Evolver {
     cells.bond.set(bond, dst * bK); cells.brest.set(brest, dst * bK);
 
     // Half the parent's cell energy goes with the propagule. Division costs.
-    const half = new Float32Array(arena.cnt[p]);
+    const half = new Float32Array(pn);
     world.writeCellRange(dst, n, { pos, vel, meta, bond, brest, energy });
-    world.writeCellRange(src, arena.cnt[p], { energy: half });
+    world.writeCellRange(src, pn, { energy: half });
 
     const uid = this.nextUid++;
     this.uid[child] = uid;
@@ -300,6 +330,7 @@ export class Evolver {
     for (let i = 0; i < n; i++) {
       cells.ctype[from + i] = -1;
       cells.body[from + i] = -1;
+      cells.bodySize[from + i] = 0;
       meta[i * 4] = -1; meta[i * 4 + 1] = -1; meta[i * 4 + 2] = -1;
     }
     world.writeCellRange(from, n, { meta, energy });

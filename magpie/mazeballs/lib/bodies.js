@@ -56,6 +56,10 @@ export function buildBodies({
   // fact the bond graph already encodes as a connected component, cached so a
   // cell can tell its own tissue from a stranger's in one comparison.
   const body = new Int32Array(nCells).fill(-1);
+  // How many cells this cell's body has. Carried per cell because the shader
+  // has no way to look up an organism's size, and it must not be a constant:
+  // body size is heritable now.
+  const bodySize = new Int32Array(nCells);
   const bond = new Int32Array(nCells * bondK).fill(-1);
   const brest = new Float32Array(nCells * bondK);
 
@@ -81,6 +85,7 @@ export function buildBodies({
       // interneurons. Every one of them is a CTRNN node in the same island.
       ctype[gi] = i % 3 === 0 ? CELL_SENSOR : (i % 3 === 1 ? CELL_MUSCLE : CELL_NEURON);
       body[gi] = o;
+      bodySize[gi] = cells;
       cslot[gi] = arena.bindCell(o, i, gi);          // both directions of one relation
       arena.setNeuron(o, i, {
         tau: 0.24 + rnd() * 1.65,                    // evodevo.js's evolved range
@@ -117,7 +122,7 @@ export function buildBodies({
 
   return {
     arena,
-    cells: { px, py, vx, vy, ctype, cslot, body, bond, brest, bondK },
+    cells: { px, py, vx, vy, ctype, cslot, body, bodySize, bond, brest, bondK },
     meta: { beasts, cellsPerBeast: cells, nCells, degree, bound },
   };
 }
