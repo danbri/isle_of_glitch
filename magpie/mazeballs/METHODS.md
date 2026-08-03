@@ -38,14 +38,59 @@ row in a schema the loop can edit, not hard code.
 - **The developmental encoding** (genotype → phenotype map) — GRN (Wagner),
   neural cellular automata (Mordvintsev; growing/self-classifying NCA — literally
   evo-devo), CPPN/HyperNEAT (Stanley) for spatial pattern. This is the "evo-devo"
-  the goal names; the loop should be able to swap and tune it.
+  the goal names; the loop should be able to swap and tune it. **It patterns the
+  brain too, not just the body — see §3.**
 - **Physical primitives** — bonds/adhesion/exclusion, and the *conditions* under
   which they cohere (v3 here: bonds break only on death → bodies bootstrap).
 
 The loop edits the schema; a run reads it; the objective scores it. Meta-evolution
 of the encoding, not just parameters within a fixed one.
 
-## 3. What to optimise — the measurement is the hard part
+## 3. Brain is body — one developmental encoding (scale *grows* the brain, doesn't *set* it)
+
+Correcting a glib claim: scale **does** buy a bigger brain. Our earlier "network
+capacity is null" result was an artifact of *declaring* capacity as a hyperparameter
+— a free knob evolution has no purchase on. Put the brain under evo-devo **as
+tissue** and scale buys brain the way it buys body: grown when the body plan needs
+it, laid out by development, paid for in energy (the Nick-Lane brain tax becomes
+literal — neurons occupy space and burn fuel). Capacity was never the lever;
+**patterning is.**
+
+The strong consequence: if the brain is *part of* the body, **one developmental
+system patterns all tissue** — neural, muscular, skeletal, optical differ only in
+the cell-type response at the *end* of a shared pipeline. The shared vocabulary is
+gradients, symmetry axes, segmentation/repetition (modularity), and
+**connectivity-as-a-function-of-geometry**. Anchors:
+
+- **HyperNEAT / ES-HyperNEAT** (Stanley) — neural connectivity as a function of
+  substrate *geometry*, exploiting symmetry and repetition; ES-HyperNEAT even
+  *places the neurons developmentally*. This is the direct ML precedent for "brain
+  layout inherits body patterning."
+- **Reaction-diffusion / Turing + Hox-style segmentation** — one machine for
+  stripes, spots, segments, bilateral symmetry; the same patterning that segments
+  muscle blocks segments neural ganglia. Modularity and repeats come *for free* (we
+  already have a symmetry-breaker field — this generalises it).
+- **Neural CA** (Mordvintsev) — tissue grown by local rules; a brain grown like a
+  limb.
+- **Wiring cost** (Cherniak; small-world / modular brain networks) — once neurons
+  have *positions*, connections have *length*, so wiring has an energy/space price.
+  Modularity and short-range-dominant connectivity then emerge **physically**, not
+  as a hand-coded prior. This is the deepest payoff of brain-in-body: network
+  structure stops being designed and becomes a consequence of morphology + metabolism.
+- **Sims '94 / Cheney–Bongard** ("Unshackling evolution") — continuous, "cartoony"
+  body plans co-evolving morphology *and* control; the existence proof this is
+  evolvable.
+
+Toolkit consequence: expose **patterning operators, not size knobs** —
+reaction-diffusion params, symmetry/segmentation operators, a CPPN-ish
+geometry→property map, gradient-guided connectivity / axon growth. Then body size,
+brain size, module count, number of eyes, symmetry order are all *outcomes the loop
+reads*, never inputs it sets. Physically it is all **one substrate**: neuron =
+positioned cell that costs fuel and wires to targets via gradients; muscle =
+contractile cell array; bone = stiff-bond lattice (our division bonds; stiff vs soft
+= a bond-stiffness param); eye = surface sensor patterning.
+
+## 4. What to optimise — the measurement is the hard part
 
 You cannot optimise "open-endedness" directly; you need a proxy. Candidates, and
 what this repo contributes:
@@ -68,7 +113,7 @@ what this repo contributes:
   world's *interestingness / novelty*, sidestepping hand-designed metrics. This is
   the natural marriage with modern AI, and it composes with the point below.
 
-## 4. The modern-AI marriage: LLM as mutation operator AND judge
+## 5. The modern-AI marriage: LLM as mutation operator AND judge
 
 Two roles, both now practical at scale:
 
@@ -84,7 +129,7 @@ So the autoresearch loop becomes: LLM proposes a primitive edit → GPU runs a
 population of worlds → instrument + FM-judge score them → keep/roll-back. The inner
 loop is cheap parallel sim; the outer loop is a few LLM calls per generation.
 
-## 5. Discipline (the ways this bites, learned here)
+## 6. Discipline (the ways this bites, learned here)
 
 - **First Law: mutate physical/chemical primitives, never behavioural roles.**
   "Attraction", "predator", "reward diversity" bake in the answer — the loop will
@@ -100,20 +145,24 @@ loop is cheap parallel sim; the outer loop is a few LLM calls per generation.
 - **Deep time is non-optional.** Each hill saturates fast (~8k steps here); seeing
   *several* transitions needs 10^7–10^8 steps. Scale mostly buys transitions.
 
-## 6. What the scale actually unlocks
+## 7. What the scale actually unlocks
 
+- **A bigger *grown* brain-body.** With brain-as-tissue (§3), raw compute is spent
+  on organisms that are physically larger and more structured — more cells, deeper
+  development, richer connectivity — because size/topology are now selected outcomes,
+  not free knobs. This is the "insane scale" put to evo-devo, not to a benchmark.
 - **GPU inner sim** — fields → compute shaders (embarrassingly parallel); particles
   → spatial hash in-shader. JAX / Taichi / Warp / Brax; differentiable sim optional
   for gradient-tuning the continuous knobs between evolutionary phases.
 - **A population of worlds** (POET-style) run in parallel — coevolving
   environments, each with its own lineages, the outer loop transplanting and
-  branching them. This, not a bigger brain, is where open-endedness has empirically
-  come from.
+  branching them. Coevolving the *problem*, not a fixed benchmark, is where
+  open-endedness has empirically come from.
 - **Deep time × many seeds** — turns the staircase from "one transition observed"
   into "transitions observed to recur," which is the strongest finite evidence for
   open-endedness there is.
 
-## 7. Concrete next moves (small → large)
+## 8. Concrete next moves (small → large)
 
 1. Make the primitive set genuinely *data* (a schema file the loop reads) — fields,
    couplings, windfalls, encoding, physical constants as rows.
