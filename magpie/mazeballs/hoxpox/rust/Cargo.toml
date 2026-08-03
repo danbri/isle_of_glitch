@@ -1,0 +1,16 @@
+[package]
+name = "hoxpox"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# No wasm-bindgen. The exported surface is plain numbers and linear memory, so
+# the .wasm loads with WebAssembly.instantiate in Deno and the browser alike with
+# no generated glue, no bundler step, and nothing to keep in sync.
+[profile.release]
+opt-level = 3
+lto = true
+panic = "abort"
+codegen-units = 1

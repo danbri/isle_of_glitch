@@ -77,3 +77,44 @@ distrust of any single run — exists so that when something on this list finall
 works, we will be able to tell it apart from wishful thinking. The Cambrian did
 not need a referee. We do, because we are the ones who would otherwise fool
 ourselves.
+
+
+## Eyes on the prize
+
+fieldsim.html, evolve.html and viewer.html were inspiring TOGETHER, and the GPU
+world has not yet earned that. It has scale, measurement and a defensible physics
+where they had none. They had something it lacks, and the gap is not vague:
+
+**A creature must be legible as a creature.** viewer.html drew bonds as thick
+strokes coloured by the muscle's own activation, so you could watch a body work —
+the muscles were visible as muscles, contracting. It drew cells as filled discs
+with a dark rim, so a body read as a set of distinct parts rather than a wash.
+The GPU renderer drew hairline grey bonds carrying no state and, for a while,
+gaussian blobs whose tails summed into haze. More cells, less creature.
+
+**The field was something to look at.** fieldsim.html was beautiful before
+anything lived in it. Flow that reads as flow, at every zoom.
+
+**The numbers were part of the picture.** evolve.html put the lineage plot beside
+the world, so what you were watching and what it meant were one glance apart.
+
+WHAT WE ARE ACTUALLY AFTER, and none of it is here yet:
+
+- **Bodyplans.** Repeated modules, segments, limbs. Symmetry that arose because
+  it was worth having. Right now a body is a random graph of 40 cells and looks
+  it: no head, no sides, no repeated unit.
+- **Intelligence visible in behaviour.** Not a number claiming adaptation, but a
+  creature that plainly does something — approaches, avoids, follows, waits.
+  Gaits with a rhythm you can see.
+- **Pattern and symmetry as evidence.** When structure appears it should be
+  visible without instrumentation. A measurement that says a population improved,
+  in a world where nothing looks different, is a weak result even when true.
+
+The honest position: the science and the scale are coming together, and the thing
+is uglier and less legible than the demos it grew from. That is a real regression
+and not a matter of taste — a world you cannot read is one where a bug hides for
+five diagnoses, which is exactly what happened with the diagonal streaks.
+
+Easy, fun, functional and beautiful. In that order when they conflict, because a
+tool nobody enjoys looking at does not get looked at, and this one needs looking
+at to be debugged.

@@ -8,3 +8,13 @@ runs/*.json
 # its container is reclaimed.
 runs/*.txt
 .ref/
+
+# Browser-automation scratch from verifying world.html
+.playwright-mcp/
+
+# server runtime state
+runs/world.pid
+runs/world.cmd
+runs/world.log
+runs/*.snapshot
+runs/*.jsonl
