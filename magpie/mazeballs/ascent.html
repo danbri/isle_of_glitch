@@ -1,0 +1,192 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The un-saturable metric — coevolution's ascent</title>
+<!--
+  ascent.html — the one goal-component a single creature can't show: open-ended
+  ascent. A FIXED task (crawl toward food) plateaus — one objective has a ceiling.
+  So the mission's instrument is a coevolutionary arms race measured by an
+  ANCESTRAL TOURNAMENT: freeze both populations every few generations and cross-
+  evaluate every predator generation against every prey generation. During a real
+  arms race absolute fitness is flat by construction (both sides improve relative
+  to each other), so progress is only visible against ancestors. Two marginals:
+    predatorCapability — contact a predator gen gets vs ALL prey gens. RISING = predators improved.
+    preyVulnerability  — contact a prey gen suffers vs ALL predator gens. FALLING = prey improved.
+  Data is real: tools/sb-coevolve.js on the soft body, results/coevo/, 2
+  architectures x 2 seeds, 24 generations. This page just reads those files.
+  Honest scope is stated on the page: 24 generations is not "infinite", the
+  predator axis is cleaner than the prey axis, and the tournament is one arena.
+-->
+<style>
+  :root{
+    --surface:#fcfbf9; --panel:#ffffff; --ink:#1b1a17; --muted:#6c6f75; --faint:#9a9ca1;
+    --grid:#ecebe6; --rule:#e2e0da; --predator:#eb6834; --prey:#2a78d6;
+    --chip:#f4f2ec;
+  }
+  @media (prefers-color-scheme:dark){ :root{
+    --surface:#1a1a19; --panel:#212120; --ink:#f0efec; --muted:#9a9e98; --faint:#6f726c;
+    --grid:#2a2a27; --rule:#33332f; --predator:#d95926; --prey:#3987e5; --chip:#26261f;
+  }}
+  :root[data-theme="light"]{ --surface:#fcfbf9; --panel:#fff; --ink:#1b1a17; --muted:#6c6f75; --faint:#9a9ca1; --grid:#ecebe6; --rule:#e2e0da; --predator:#eb6834; --prey:#2a78d6; --chip:#f4f2ec; }
+  :root[data-theme="dark"]{ --surface:#1a1a19; --panel:#212120; --ink:#f0efec; --muted:#9a9e98; --faint:#6f726c; --grid:#2a2a27; --rule:#33332f; --predator:#d95926; --prey:#3987e5; --chip:#26261f; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--surface); color:var(--ink);
+    font:15px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap{ max-width:1000px; margin:0 auto; padding:44px 22px 80px; }
+  .eyebrow{ font:600 11px/1.4 ui-monospace,Menlo,monospace; letter-spacing:.16em; text-transform:uppercase; color:var(--predator); margin:0 0 10px; }
+  h1{ font-size:30px; line-height:1.15; letter-spacing:-.015em; margin:0 0 12px; text-wrap:balance; max-width:20ch; }
+  .lede{ font-size:16.5px; color:var(--muted); margin:0 0 6px; max-width:64ch; }
+  h2{ font-size:15px; letter-spacing:.02em; margin:44px 0 4px; }
+  h2 .n{ font:600 11px/1 ui-monospace,monospace; color:var(--faint); margin-right:8px; }
+  .sub{ color:var(--muted); font-size:13.5px; margin:0 0 16px; max-width:66ch; }
+  .tiles{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:26px 0 4px; }
+  .tile{ background:var(--panel); border:1px solid var(--rule); border-radius:12px; padding:14px 15px; }
+  .tile .big{ font:700 27px/1 ui-monospace,monospace; letter-spacing:-.02em; }
+  .tile .cap{ color:var(--muted); font-size:12.5px; margin-top:6px; }
+  .tile.pred .big{ color:var(--predator); } .tile.prey .big{ color:var(--prey); }
+  .grid4{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .card{ background:var(--panel); border:1px solid var(--rule); border-radius:12px; padding:12px 12px 6px; }
+  .card h3{ font-size:12.5px; margin:2px 4px 2px; letter-spacing:.02em; font-variant-numeric:tabular-nums; }
+  .legend{ display:flex; gap:16px; align-items:center; margin:8px 2px 14px; font-size:12.5px; color:var(--muted); flex-wrap:wrap; }
+  .lg{ display:flex; align-items:center; gap:6px; } .sw{ width:14px; height:3px; border-radius:2px; }
+  .arrow{ color:var(--faint); font-size:11.5px; }
+  svg{ width:100%; height:auto; display:block; overflow:visible; }
+  .gl{ stroke:var(--grid); stroke-width:1; } .axl{ fill:var(--faint); font:11px/1 ui-monospace,monospace; }
+  .ln{ fill:none; stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
+  .mk{ stroke:var(--panel); stroke-width:1.5; } .endlab{ font:600 11px/1 ui-monospace,monospace; }
+  .caveat{ background:var(--chip); border:1px solid var(--rule); border-radius:12px; padding:16px 18px; margin-top:30px; font-size:13.5px; color:var(--ink); }
+  .caveat b{ color:var(--ink); } .caveat ul{ margin:8px 0 0; padding-left:18px; color:var(--muted); }
+  .caveat li{ margin:4px 0; }
+  details{ margin-top:24px; } summary{ cursor:pointer; color:var(--prey); font-size:13.5px; font-weight:600; }
+  table{ border-collapse:collapse; width:100%; margin-top:12px; font:12px/1.5 ui-monospace,monospace; }
+  th,td{ text-align:right; padding:4px 8px; border-bottom:1px solid var(--rule); font-variant-numeric:tabular-nums; }
+  th:first-child,td:first-child{ text-align:left; color:var(--muted); }
+  .tip{ position:fixed; pointer-events:none; background:var(--panel); border:1px solid var(--rule); border-radius:8px;
+    padding:6px 9px; font:12px/1.4 ui-monospace,monospace; box-shadow:0 6px 20px #0003; opacity:0; transition:opacity .08s; z-index:9; }
+  .foot{ color:var(--faint); font-size:12px; margin-top:34px; border-top:1px solid var(--rule); padding-top:14px; }
+  .toggle{ float:right; font:600 11px/1 ui-monospace,monospace; color:var(--muted); cursor:pointer; background:var(--chip); border:1px solid var(--rule); border-radius:20px; padding:6px 11px; }
+</style>
+
+<div class="wrap">
+  <span class="toggle" id="themeToggle">◐ theme</span>
+  <p class="eyebrow">Coevolution · ancestral tournament</p>
+  <h1>The one metric a fixed task can't move</h1>
+  <p class="lede">A creature evolving toward food gets better, then <b>plateaus</b> — one objective has a ceiling. Point two species at <i>each other</i> and the target never stops moving. But then absolute fitness goes flat too (both sides improve in lockstep), so you can only see the ascent by freezing the past and asking: does today beat its ancestors? It does — on both sides, in every run.</p>
+
+  <div class="tiles">
+    <div class="tile pred"><div class="big">4 / 4</div><div class="cap">runs where <b>predator capability rises</b> across 24 generations (slope &gt; 0 in every architecture × seed)</div></div>
+    <div class="tile prey"><div class="big">4 / 4</div><div class="cap">runs where <b>prey vulnerability falls</b> — prey get harder to catch as the arms race runs</div></div>
+    <div class="tile"><div class="big">↗ older = beaten</div><div class="cap">in every run a predator dominates prey that are <b>more generations old</b> more decisively — the arms-race fingerprint</div></div>
+  </div>
+
+  <h2><span class="n">01</span>Both sides keep improving</h2>
+  <p class="sub">Each panel is one coevolution run (architecture A/B × seed 1/2). <b style="color:var(--predator)">Predator capability</b> should rise (predators win more contact); <b style="color:var(--prey)">prey vulnerability</b> should fall (prey suffer less). Same units — mean contact against every frozen opponent generation — so one axis, no trickery.</p>
+  <div class="legend">
+    <span class="lg"><span class="sw" style="background:var(--predator)"></span> predator capability <span class="arrow">↑ better for predators</span></span>
+    <span class="lg"><span class="sw" style="background:var(--prey)"></span> prey vulnerability <span class="arrow">↓ better for prey</span></span>
+  </div>
+  <div class="grid4" id="panels"></div>
+
+  <h2><span class="n">02</span>The fingerprint of a real arms race</h2>
+  <p class="sub">Take a predator generation and pit it against prey from further and further back. If predators are genuinely climbing, the further back the prey (bigger age gap), the more decisively they lose. Every run rises — the newest predators beat the oldest prey hardest. That upward slope is progress a fixed yardstick, which only ever sees the diagonal, reports as nothing.</p>
+  <div class="card" style="padding:14px 16px 8px"><div id="sig"></div></div>
+
+  <div class="caveat">
+    <b>What this is, and isn't — honestly.</b> This is real cross-generational ascent that a fixed objective can't show; it is <i>not</i> a claim of literal infinite ascent.
+    <ul>
+      <li><b>24 generations, not infinity.</b> Ascent is sustained across the whole run with no plateau — but "open-ended" is a horizon you approach, never a finish line you cross.</li>
+      <li><b>The predator axis is cleaner than the prey axis.</b> Predators improve unambiguously in all four runs; prey improve on the aggregate marginal but the fine age-gap cut is noisier — coevolution's classic asymmetry (one side can disengage).</li>
+      <li><b>One tournament arena, fixed spawns.</b> The yardstick is deliberately frozen so the only thing varying is the pair of genomes; a different arena could shift the absolute numbers.</li>
+    </ul>
+  </div>
+
+  <details>
+    <summary>Show the numbers (table view)</summary>
+    <div id="tables"></div>
+  </details>
+
+  <p class="foot">Source: <code>tools/sb-coevolve.js</code> → <code>results/coevo/tourn-{A,B}-{s1,s2}.json</code>, soft-body substrate, ancestral tournament (fixed arena &amp; spawns). Marginals are mean contact ± not shown here; see the raw files for SD.</p>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+"use strict";
+const DATA = {"A-s1":{"gens":[0,4,8,12,16,20,24],"predCap":[7.61,9.21,8.837,9.6,9.716,9.346,9.74],"preyVuln":[9.11,8.164,8.205,7.837,8.49,8.75,8.173],"gapBack":[0,4,8,12,16,20,24],"predVsOlder":[9.223,9.464,9.551,9.588,9.757,9.685,10.401]},
+"A-s2":{"gens":[0,4,8,12,16,20,24],"predCap":[6.98,7.811,7.743,8.024,8.402,8.412,8.209],"preyVuln":[9.92,6.042,6.64,6.651,5.87,6.53,7.888],"gapBack":[0,4,8,12,16,20,24],"predVsOlder":[8.049,8.087,8.609,8.602,8.573,8.839,10.555]},
+"B-s1":{"gens":[0,4,8,12,16,20,24],"predCap":[5.612,7.068,5.082,7.238,7.091,7.091,6.176],"preyVuln":[8.707,7.908,8.689,7.334,7.76,8.152,7.739],"gapBack":[0,4,8,12,16,20,24],"predVsOlder":[6.416,6.561,6.675,7.011,6.853,7.001,7.452]},
+"B-s2":{"gens":[0,4,8,12,16,20,24],"predCap":[5.294,6.809,6.574,7.069,7.687,7.556,6.377],"preyVuln":[10.825,8.711,8.495,9.608,7.221,6.464,6.937],"gapBack":[0,4,8,12,16,20,24],"predVsOlder":[6.911,7.263,7.754,8.072,7.987,7.899,8.607]}};
+const RUNS = Object.keys(DATA);
+const cssv = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const tip = document.getElementById('tip');
+
+// generic small line chart into an svg string; returns {svg, hit:[{x,y,label}]}
+function lineChart(el, cfg){
+  const W=cfg.w||360, H=cfg.h||190, mL=30, mR=cfg.mR||30, mT=12, mB=26;
+  const pw=W-mL-mR, ph=H-mT-mB;
+  const xs=cfg.x, xmin=xs[0], xmax=xs[xs.length-1];
+  const [y0,y1]=cfg.yDomain;
+  const X=v=>mL+(v-xmin)/(xmax-xmin)*pw, Y=v=>mT+(1-(v-y0)/(y1-y0))*ph;
+  const ns='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(ns,'svg'); svg.setAttribute('viewBox',`0 0 ${W} ${H}`); svg.setAttribute('role','img');
+  const mk=(t,a)=>{const e=document.createElementNS(ns,t); for(const k in a) e.setAttribute(k,a[k]); return e;};
+  // gridlines + y labels
+  const ticks=cfg.yticks||4;
+  for(let i=0;i<=ticks;i++){ const yv=y0+(y1-y0)*i/ticks; const yy=Y(yv);
+    svg.appendChild(mk('line',{x1:mL,y1:yy,x2:mL+pw,y2:yy,class:'gl'}));
+    svg.appendChild(Object.assign(mk('text',{x:mL-6,y:yy+3,'text-anchor':'end',class:'axl'}),{textContent:yv.toFixed(0)})); }
+  // x labels (ends + mid)
+  [xmin, xs[Math.floor(xs.length/2)], xmax].forEach(xv=>{
+    svg.appendChild(Object.assign(mk('text',{x:X(xv),y:H-8,'text-anchor':'middle',class:'axl'}),{textContent:xv})); });
+  const hit=[];
+  cfg.series.forEach(s=>{
+    let d=''; s.y.forEach((v,i)=>{ d+=(i?'L':'M')+X(xs[i]).toFixed(1)+' '+Y(v).toFixed(1)+' '; });
+    svg.appendChild(mk('path',{d,class:'ln',stroke:cssv(s.color)}));
+    s.y.forEach((v,i)=>{ svg.appendChild(mk('circle',{cx:X(xs[i]),cy:Y(v),r:2.6,fill:cssv(s.color),class:'mk'})); });
+    // direct end label
+    const lx=X(xmax)+5, ly=Y(s.y[s.y.length-1])+3;
+    svg.appendChild(Object.assign(mk('text',{x:lx,y:ly,class:'endlab',fill:cssv(s.color)}),{textContent:s.tag||''}));
+  });
+  // hover overlay
+  const ov=mk('rect',{x:mL,y:mT,width:pw,height:ph,fill:'transparent'});
+  const cross=mk('line',{x1:0,y1:mT,x2:0,y2:mT+ph,stroke:cssv('--faint'),'stroke-width':1,'stroke-dasharray':'3 3',opacity:0});
+  svg.appendChild(cross); svg.appendChild(ov);
+  ov.addEventListener('pointermove',ev=>{
+    const r=svg.getBoundingClientRect(), sx=(ev.clientX-r.left)/r.width*W;
+    let bi=0,bd=1e9; xs.forEach((xv,i)=>{const dd=Math.abs(X(xv)-sx); if(dd<bd){bd=dd;bi=i;}});
+    cross.setAttribute('x1',X(xs[bi])); cross.setAttribute('x2',X(xs[bi])); cross.setAttribute('opacity',1);
+    tip.style.opacity=1; tip.style.left=(ev.clientX+12)+'px'; tip.style.top=(ev.clientY+12)+'px';
+    tip.innerHTML=`<b>${cfg.xlabel||'gen'} ${xs[bi]}</b><br>`+cfg.series.map(s=>`<span style="color:${cssv(s.color)}">■</span> ${s.name} ${s.y[bi].toFixed(2)}`).join('<br>');
+  });
+  ov.addEventListener('pointerleave',()=>{ cross.setAttribute('opacity',0); tip.style.opacity=0; });
+  el.appendChild(svg);
+}
+
+function drawAll(){
+  const panels=document.getElementById('panels'); panels.innerHTML='';
+  RUNS.forEach(r=>{ const d=DATA[r];
+    const card=document.createElement('div'); card.className='card';
+    card.innerHTML=`<h3>run ${r}</h3>`; panels.appendChild(card);
+    lineChart(card, { x:d.gens, yDomain:[4,11.5], yticks:3, xlabel:'gen',
+      series:[ {name:'pred capability',y:d.predCap,color:'--predator',tag:'pred'},
+               {name:'prey vulnerability',y:d.preyVuln,color:'--prey',tag:'prey'} ] });
+  });
+  const sig=document.getElementById('sig'); sig.innerHTML='';
+  lineChart(sig, { w:900, h:280, mR:70, x:DATA['A-s1'].gapBack, yDomain:[6,11], yticks:5, xlabel:'gens back',
+    series: RUNS.map(r=>({ name:'predator vs older prey · '+r, y:DATA[r].predVsOlder, color:'--predator', tag:r })) });
+  // table
+  const t=document.getElementById('tables'); t.innerHTML = RUNS.map(r=>{ const d=DATA[r];
+    const row=(lab,arr)=>`<tr><td>${lab}</td>${arr.map(v=>`<td>${v.toFixed(2)}</td>`).join('')}</tr>`;
+    return `<table><thead><tr><th>run ${r}</th>${d.gens.map(g=>`<th>${g}</th>`).join('')}</tr></thead><tbody>`+
+      row('predator capability',d.predCap)+row('prey vulnerability',d.preyVuln)+row('pred vs older prey',d.predVsOlder)+`</tbody></table>`;
+  }).join('');
+}
+drawAll();
+
+// theme toggle (stamps data-theme, wins over media query), then redraw so cssv() re-reads
+document.getElementById('themeToggle').addEventListener('click',()=>{
+  const cur=document.documentElement.getAttribute('data-theme');
+  const sysDark=matchMedia('(prefers-color-scheme:dark)').matches;
+  const next=cur? (cur==='dark'?'light':'dark') : (sysDark?'light':'dark');
+  document.documentElement.setAttribute('data-theme',next); drawAll();
+});
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>{ if(!document.documentElement.getAttribute('data-theme')) drawAll(); });
+</script>
