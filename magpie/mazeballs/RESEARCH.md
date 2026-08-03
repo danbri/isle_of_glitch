@@ -4049,3 +4049,117 @@ arena-only `--relocateThresh`/`--consume`/`--regrow` resource overrides, and the
 squatter-fraction and net-intake-ablation diagnostics (all gated on a cost being
 live, so a displacement run is byte-identical). Run readouts are in
 `results/cost/` (`mc{cost}-s{seed}`, costs 0/0.01/0.02/0.05/0.10, seeds 1–3).
+
+## A structure-aware mutation operator does not beat blind Gaussian jitter — but it confirms the map decomposition
+
+The flatness analysis left a specific, cheap, untried lever on the table: it
+measured that on the soft-body genotype→phenotype map, **sign structure of the
+regulatory matrix carries ~2/3 of the phenotype and magnitudes ~1/3**, that
+"Gaussian jitter on dense weights is effectively a magnitude operator — it
+wanders the fungible axis and rarely crosses the sign boundaries that carry the
+functional structure," and that the modular, contiguous, per-module `LAYOUT`
+was built precisely so a structure-aware operator could exploit it. The 17×
+first-evolution ascent used the blind Gaussian (`perturbGenome`, ε = 0.08) and
+nobody had tested whether a sign-aware or module-aware operator climbs faster.
+This is that test. `tools/sb-op.js` reproduces the `sb-evolve` loop shape
+exactly — k = 2 tournament, elite 2, displacement fitness, NaN-safe shared
+episodes, spawn-averaged rigorous end comparison — and swaps only the
+reproduction operator; every structure-aware operator reads and writes the
+exported genome buffer through the exported `regOff`/`GENE_MODULES`/`LAYOUT`
+helpers, so `lib/softbody.js` is untouched. Six operators, six seeds each,
+pop 48 × gens 20 × steps 500, evolved displacement measured over 5 held-out
+spawns. Because every operator at a given seed starts from the byte-identical
+gen-0 population and sees the identical evaluation seeds, the powerful
+comparison is **paired by seed** — which matters, because the seed spread here
+is enormous (blind Gaussian reaches anywhere from 0.40 to 0.97 depending only on
+the seed) and dwarfs every operator effect, exactly as this document keeps
+warning.
+
+    operator          evolved disp      gens→0.30   paired Δ vs gaussian (2·SE)
+    gaussian          0.690 ± 0.088        6.8       — (baseline, the 17× operator)
+    magonly           0.669 ± 0.059        7.3       −0.021 (0.106)   no sig. difference
+    signflip@0.005    0.643 ± 0.034        8.8       −0.047 (0.163)   no sig. difference
+    signflip@0.02     0.497 ± 0.031       10.5       −0.193 (0.176)   WORSE than gaussian
+    signonly@0.02     0.558 ± 0.012        6.8       −0.132 (0.185)   no sig. difference
+    blockcross        0.711 ± 0.071        8.8       +0.021 (0.255)   no sig. difference
+    permodule@0.5     0.639 ± 0.046        6.3       −0.051 (0.117)   no sig. difference
+
+**No operator beats the blind baseline, on the endpoint or on the ascent rate.**
+Every arm ascends 15–30× from gen-0 (0.042) — the substrate is that selectable —
+but the only paired delta that clears 2·SE points the wrong way: `signflip@0.02`,
+full Gaussian *plus* a 2%-per-locus regulatory sign flip, is significantly WORSE
+and the slowest to cross the 0.30 displacement mark (10.5 generations against
+the baseline's 6.8). Combining full-strength magnitude jitter with sign flips
+over-mutates: the two channels add into a step that breaks inheritance more than
+either does alone. Dropping the flip rate to 0.5% recovers the baseline exactly
+(Δ −0.047, ns), which brackets the effect — a sign augmentation is neutral when
+gentle and harmful when it is strong enough to matter. Block crossover on the
+LAYOUT boundaries (the operator the modular genome was designed for, and the one
+the 17× result deliberately left behind) is the numerically highest arm and also
+the highest-variance one, but its paired delta is +0.021 against a bar of 0.255 —
+no signal, no help, no harm, the same verdict uniform crossover got on the
+incumbent, now confirmed for the block-preserving cut the layout was built to
+enable. Per-module jitter is likewise flat.
+
+**But the decomposition the flatness analysis performed on the map reproduces,
+operationally, inside the loop — which is the real result here.** Two arms were
+built to attribute the map, exactly as `signOnly`/`magOnly` attributed it
+statically:
+
+- `magonly` is a **sign-preserving** magnitude jitter — `w' = sign(w)·max(0,
+  |w|+δ)`, reflected at zero so it can never cross a sign boundary. The flatness
+  reading was that blind Gaussian *is* a magnitude operator and its incidental
+  near-zero sign flips carry nothing. Confirmed: `magonly` is statistically
+  indistinguishable from `gaussian` (Δ −0.021), tracks it seed for seed
+  (0.895/0.497/0.537 against 0.969/0.519/0.399 on the first three), and inherits
+  its full 0.40–0.97 seed lottery. Removing the flips Gaussian lands on by
+  accident changes nothing, because there was nothing there.
+- `signonly` **freezes every magnitude at the parent's value and only flips
+  regulatory signs** (~11 of 576 regulatory loci per child at rate 0.02). It has
+  no way to tune a single weight's magnitude, ever. **It climbs anyway** —
+  0.042 → 0.558, a ~13× ascent built entirely out of sign flips over a fixed
+  random magnitude backbone. Sign structure is not merely two-thirds of a
+  distance metric; it is a **fully selectable axis on its own**, enough to evolve
+  a crawling body without touching a magnitude. This is the sharpest
+  confirmation available that the signs carry the functional structure.
+
+The per-locus leverage the flatness analysis estimated also falls out: `signonly`
+touches ~11 loci per child and reaches 0.558; `magonly` jitters all 845 loci
+and reaches 0.669 — comparable ascent from ~75× fewer loci touched (11 against
+845), consistent with a sign flip being far more consequential per locus than a
+magnitude nudge.
+
+**So why does the sign-aware operator not win, when the map says signs carry the
+structure?** Because carrying the structure is not the same as being the binding
+constraint on *this* search. The flatness analysis was careful to bound its own
+claim — "the magnitude axis is not inert; the `magOnly` curve still clears the
+spawn-noise floor, so the operator does produce selectable variation, just less
+efficiently" — and displacement selection is precisely a case where the less
+efficient axis is still sufficient. Blind Gaussian reaches the locomotor
+attractor through magnitudes without needing a single deliberate sign flip, and
+on the lucky seeds it reaches ceilings (0.86–0.97) that a frozen- or
+gentle-magnitude sign search structurally cannot. The most telling contrast is
+the variance, not the mean: **the magnitude search is a seed lottery
+(gaussian SE 0.088, range 0.40–0.97) and the sign search is a reliable converger
+(signonly SE 0.012, range 0.51–0.59).** The flatness prediction that a sign-aware
+operator "would explore this map very differently from the incumbent's Gaussian
+jitter" is **true** — it reaches the same behavioural regime by a completely
+different route and with a completely different variance signature. The corollary
+that it would therefore climb *faster* or *higher* is **not supported**: on
+locomotion the sign axis buys reliability, not altitude or speed, because the
+magnitude axis already gets there.
+
+The honest one-line summary: **the sign/magnitude decomposition of the map is
+real and operator-exploitable — sign flips alone evolve a locomotor and
+magnitude jitter is exactly the blind baseline — but on the displacement task the
+structure-aware operator is at best a tie and at worst an over-mutating
+regression, because the task does not make the sign axis the bottleneck.** The
+decomposition's actionable value is therefore diagnostic rather than a search
+speed-up on this objective; whether a task that *is* sign-limited (one where the
+functional wiring is a rare sparse motif the magnitude search cannot stumble
+into — the directed-foraging wall is the obvious candidate) would finally let a
+sign-aware operator pay is the untested question this leaves open, and it is now
+cheap to ask, because `sb-op.js` carries all six operators behind one `--op`
+flag. What is committed: `tools/sb-op.js` (the operator bake-off) and
+`tools/sb-op-agg.js` (curves, generations-to-threshold, paired-vs-gaussian),
+with the 42 run JSONs in `results/op/`.
