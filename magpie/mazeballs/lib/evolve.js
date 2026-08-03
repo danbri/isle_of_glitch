@@ -464,45 +464,45 @@ export class Evolver {
       energy[i] = 0;
     }
 
-    // Rest length is INHERITED FROM THE PARENT'S REALISED GEOMETRY, not a
-    // constant.
+    // Rest length is GENOMIC: inherited from the parent's genome and mutated,
+    // never measured from the parent's body.
     //
-    // A single uniform rest length silently demands that every evolvable graph
-    // be embeddable in the plane at that one spacing. Almost none are: measured
-    // on an evolved population, every cell had saturated to degree 4, and four
-    // neighbours at a fixed 0.62 in 2D requires a lattice. The result was 88% of
-    // bonds stretched with 6% compressed and a whole-body minimum strain of
-    // 1.12 — the fingerprint of a graph that does not fit, since a frustrated
-    // network under real forces shows compression balancing tension. Median
-    // strain reached 4.7x and the bodies could never reach the shape their
-    // genome specified.
+    // It was measured, briefly, and that was Lamarckism — the giraffe stretches
+    // its neck reaching, and its calf is born with the stretched neck written in
+    // as its specification. It was introduced to fix geometric frustration and it
+    // did, by copying acquired state: a body pulled out of shape by the current
+    // passed that shape on as an instruction. Descent copies the genome, and what
+    // living does to a body must not flow back into it.
     //
-    // Taking the rest length a bond ACTUALLY sits at in the parent makes the
-    // configuration satisfiable by construction, which is exactly why bodies
-    // straight out of buildBodies (whose rests are their true initial spacing)
-    // hold at strain 1.00 under every stiffness from 10 to 400. Shape still
-    // comes from topology plus physics rather than a genome-encoded geometry —
-    // what a bond remembers is where the tissue rested, which is what a rest
-    // length is supposed to mean.
-    const REST = 0.62;                      // for bonds mutation just invented
-    const bound2 = world.params.bound;
-    const mi = (v) => v > bound2 ? v - 2 * bound2 : (v < -bound2 ? v + 2 * bound2 : v);
-    const parentDist = (ci, cj) => {
-      if (!livePos) return REST;
-      const a = src + srcOf(ci), b2 = src + srcOf(cj);
-      if (a === b2) return REST;
-      const d = Math.hypot(mi(livePos[b2 * 2] - livePos[a * 2]),
-                           mi(livePos[b2 * 2 + 1] - livePos[a * 2 + 1]));
-      // Clamped: a bond the parent was itself dragging far out of shape should
-      // not be inherited as a permanent instruction to stay that long.
-      return Math.min(1.6, Math.max(0.35, d));
+    // The consequence is that an unsatisfiable body plan now STAYS unsatisfiable
+    // instead of quietly relaxing into whatever the physics could manage. That is
+    // correct and it is harder: selection has to do the work of finding graphs
+    // that can be built, which is what selection is for.
+    const REST = 0.62;                      // what a bond mutation invents
+
+    // The parent's genomic rest for the bond nearest this pair, perturbed. Falls
+    // back to the default for a connection mutation has just invented, which has
+    // no ancestor to inherit from.
+    const inheritRest = (ci, cj) => {
+      const si = src + srcOf(ci);
+      for (let k = 0; k < bK; k++) {
+        const pj = cells.bond[si * bK + k];
+        if (pj < 0) continue;
+        const rel = Math.min(n - 1, Math.floor((pj - src) * n / pn));
+        if (rel !== cj) continue;
+        let v = cells.brest[si * bK + k];
+        if (!(v > 0)) v = REST;
+        if (r() < m) v *= Math.exp((r() * 2 - 1) * sz);   // scale, so log-space
+        return Math.min(1.6, Math.max(0.35, v));
+      }
+      return REST;
     };
     enforceCap();                            // nothing below may truncate
     for (let i = 0; i < n; i++) {
       let k = 0;
       for (const j of adj[i]) {
         bond[i * bK + k] = dst + j;
-        brest[i * bK + k] = parentDist(i, j);
+        brest[i * bK + k] = inheritRest(i, j);
         k++;
       }
     }
