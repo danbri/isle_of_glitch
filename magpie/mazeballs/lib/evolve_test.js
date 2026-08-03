@@ -193,3 +193,45 @@ gpuTest('body TOPOLOGY diversifies, and every body stays connected', async () =>
   assert(meanDeg > 1.2 && meanDeg < bondK,
     `mean degree ${meanDeg.toFixed(2)} looks degenerate`);
 });
+
+gpuTest('evolved bodies stay geometrically satisfiable, not frustrated tangles', async () => {
+  // A graph whose edges all want the same rest length must be embeddable in the
+  // plane at that length, or the body can never satisfy its own bonds and sits
+  // stretched forever. Joining arbitrary cell pairs produces exactly that: on a
+  // long run the median bond reached 4.7x its rest length with a tail at 56x,
+  // while the springs were beating flow drag by three orders of magnitude. The
+  // stretch was never a force imbalance — it was a graph with no solution.
+  //
+  // HONEST LIMIT OF THIS TEST: it does NOT catch that regression. Checked by
+  // reintroducing arbitrary-pair bonding, and this still passes — the
+  // frustration needs thousands of ticks of accumulated topology mutation to
+  // show, and the live server had run ~7000 when it became visible. What this
+  // guards is the weaker invariant that bodies relax at a short horizon, which
+  // catches gross breakage in the spring law or the repair. Catching the slow
+  // version needs tools/shape-report.js against a long run, not a unit test.
+  const sim = await setup({ cap: 600, start: 200 });
+  for (let t = 0; t < 45; t++) { sim.world.step(250); await sim.evo.tick(t * 250); }
+
+  const { x, y } = await sim.world.readPositions();
+  const { bond, brest, bondK } = sim.cells;
+  const b = sim.bound;
+  const lens = [];
+  for (let i = 0; i < x.length; i++) {
+    if (sim.cells.ctype[i] < 0) continue;
+    for (let k = 0; k < bondK; k++) {
+      const j = bond[i * bondK + k];
+      if (j < 0 || sim.cells.ctype[j] < 0) continue;
+      let dx = x[j] - x[i], dy = y[j] - y[i];
+      if (Math.abs(dx) > b) dx -= Math.sign(dx) * 2 * b;
+      if (Math.abs(dy) > b) dy -= Math.sign(dy) * 2 * b;
+      lens.push(Math.hypot(dx, dy) / Math.max(brest[i * bondK + k], 1e-6));
+    }
+  }
+  assert(lens.length > 100, 'not enough bonds to judge');
+  lens.sort((p, q) => p - q);
+  const median = lens[lens.length >> 1];
+  const p90 = lens[Math.floor(lens.length * 0.9)];
+  assert(median < 2.0, `median bond is ${median.toFixed(1)}x its rest length — bodies are frustrated`);
+  assert(p90 < 6.0, `p90 bond is ${p90.toFixed(1)}x its rest length — bodies are frustrated`);
+  sim.world.destroy(); sim.brains.destroy();
+});

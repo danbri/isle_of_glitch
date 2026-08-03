@@ -133,7 +133,28 @@ async function buildFrame() {
   const { pos, energy } = await world.readCells();
   const { act } = await brains.readState();
 
-  const buf = new ArrayBuffer(HEAD + N * 8 + N * 4 + N * 4 + N * 4);
+  // Live bond pairs, computed HERE so they describe the same instant as the
+  // positions above. Sending them out-of-band (the /bonds endpoint) meant the
+  // viewer held a bond list from one moment and positions from another, and
+  // with tens of thousands of births constantly recycling slots those lists
+  // disagreed about which cells belong to which body. The result was lines
+  // drawn between cells that were never bonded — arbitrary pairs, which is
+  // exactly why they ignored the renderer's length cull. Diagnosed twice as
+  // something else (dead cells, then over-stretched bodies) before the strain
+  // measurement came back clean at 1.00 and ruled the physics out.
+  const pairs = [];
+  const bond = built.cells.bond, bondK = built.cells.bondK;
+  for (let i = 0; i < N; i++) {
+    if (built.cells.ctype[i] < 0) continue;
+    for (let k = 0; k < bondK; k++) {
+      const j = bond[i * bondK + k];
+      if (j < 0 || j <= i || built.cells.ctype[j] < 0) continue;   // each bond once
+      pairs.push(i, j);
+    }
+  }
+  const P32 = Int32Array.from(pairs);
+
+  const buf = new ArrayBuffer(HEAD + N * 8 + N * 4 + N * 4 + N * 4 + 4 + P32.byteLength);
   const dv = new DataView(buf);
   dv.setUint32(0, FRAME_MAGIC, true);
   dv.setUint32(4, N, true);
@@ -167,7 +188,9 @@ async function buildFrame() {
   }
   new Float32Array(buf, at, N).set(cellAct); at += N * 4;
   new Int32Array(buf, at, N).set(cellType); at += N * 4;
-  new Float32Array(buf, at, N).set(energy);
+  new Float32Array(buf, at, N).set(energy); at += N * 4;
+  new DataView(buf).setUint32(at, P32.length, true); at += 4;
+  new Int32Array(buf, at, P32.length).set(P32);
   return new Uint8Array(buf);
 }
 
@@ -211,6 +234,13 @@ Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
       // configured to match by hand — a mismatch is not a user error, it is
       // just a page that has not been told the shape yet.
       beasts: args.beasts, cellsPerBeast: args.cells,
+      // Ground truth for cell ownership. cellsOwned sums the arena's own
+      // organism table; cellsLiveTyped counts cells the world still treats as
+      // present. They must match — any excess is orphan cells that no organism
+      // owns but which still crowd the living, still render, and still carry
+      // bonds.
+      cellsOwned: (() => { let t = 0; for (let o = 0; o < built.arena.P; o++) if (built.arena.alive[o]) t += built.arena.cnt[o]; return t; })(),
+      cellsLiveTyped: (() => { let t = 0; for (let i = 0; i < N; i++) if (built.cells.ctype[i] >= 0) t++; return t; })(),
       drift: !!args.drift,
       alive: last.alive, births: evo.births, deaths: evo.deaths,
       generation: last.maxGeneration, lineages: last.lineages,

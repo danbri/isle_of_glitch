@@ -125,6 +125,21 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
   </div>
 
   <div>
+    <h2>Debug</h2>
+    <div class="row">
+      <button id="bCells" class="on">cells</button>
+      <button id="bStrain">strain</button>
+      <button id="bSolo">solo body</button>
+    </div>
+    <p class="note" id="dbgStats" style="margin:.4rem 0 0">–</p>
+    <p class="note" style="margin:.3rem 0 0">
+      <b>strain</b> colours each bond by how far it is stretched past its rest
+      length — blue at rest, red at 5x. <b>solo</b> draws one body only, so a
+      single creature can be seen without 1,000 others on top of it.
+    </p>
+  </div>
+
+  <div>
     <h2>Population</h2>
     <div class="sl"><div class="lab"><span>beasts</span><span class="v" id="vBeasts">2000</span></div>
       <input type="range" id="sBeasts" min="100" max="20000" step="100" value="2000"></div>
@@ -163,6 +178,9 @@ struct Cam {
   center   : vec2<f32>,
   ndc      : vec2<f32>,   // NDC units per world unit, x and y
   radius   : f32,         // cell draw radius, world units
+  soloBody : i32,         // draw only this body, or -1 for all
+  strainViz: f32,         // colour bonds by stretch rather than flat
+  cellsOn  : f32,
   flowScale: f32,
   flowStr  : f32,
   seed     : u32,
@@ -171,7 +189,7 @@ struct Cam {
   octaves  : f32,   // LOD, FRACTIONAL — see fbmOct; integer levels would pop
   bandK    : f32,   // streamline frequency, fixed in WORLD units
   bandFade : f32,   // fades streamlines out as they approach pixel spacing
-  pad0     : f32,
+  restLen  : f32,   // what a relaxed bond measures, for the strain colouring
   pad1     : f32,
   pad2     : f32,
 };
@@ -263,7 +281,7 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // A vacated slot is not in the world and must not be on screen either.
   // Collapsing the quad to a degenerate point is cheaper than a branch that
   // still rasterises, and keeps the instance count fixed.
-  if (m.x < 0) {
+  if (m.x < 0 || (C.soloBody >= 0 && m.z != C.soloBody) || C.cellsOn < 0.5) {
     var dead: VOut;
     dead.p = vec4<f32>(0.0, 0.0, 0.0, 0.0);
     dead.uv = vec2<f32>(9.0, 9.0);
@@ -317,7 +335,8 @@ fn lineVs(@builtin(vertex_index) vi: u32) -> LOut {
   let pair = vi & ~1u;
   let ia = u32(bondIdx[pair]);
   let ib = u32(bondIdx[pair + 1u]);
-  if (cmeta[ia].x < 0 || cmeta[ib].x < 0) {
+  if (cmeta[ia].x < 0 || cmeta[ib].x < 0
+      || (C.soloBody >= 0 && cmeta[ia].z != C.soloBody)) {
     o.p = vec4<f32>(0.0, 0.0, 0.0, 0.0); o.tint = vec3<f32>(0.0); return o;
   }
   // A bond whose ends sit on opposite sides of the toroidal seam is SHORT in
@@ -343,7 +362,14 @@ fn lineVs(@builtin(vertex_index) vi: u32) -> LOut {
     o.p = vec4<f32>(0.0, 0.0, 0.0, 0.0); o.tint = vec3<f32>(0.0); return o;
   }
   o.p = vec4<f32>((pos[u32(idx)] - C.center) * C.ndc, 0.0, 1.0);
-  o.tint = vec3<f32>(0.16, 0.30, 0.28);
+  // Flat teal normally; under strain view, blue at rest through red at 5x, so
+  // an over-stretched body is obvious without measuring anything.
+  if (C.strainViz > 0.5) {
+    let strain = clamp((length(d) / max(C.restLen, 1e-4) - 1.0) / 4.0, 0.0, 1.0);
+    o.tint = mix(vec3<f32>(0.16, 0.42, 0.62), vec3<f32>(0.85, 0.22, 0.16), strain);
+  } else {
+    o.tint = vec3<f32>(0.16, 0.30, 0.28);
+  }
   return o;
 }
 
@@ -357,7 +383,8 @@ fn lineFs(i: LOut) -> @location(0) vec4<f32> {
 
 let dev, ctx, fmt, sim = null, raf = 0;
 const cam = { cx: 0, cy: 0, zoom: 6 };     // zoom = pixels per world unit
-const view = { field: true, bonds: true, paused: false, spf: 4, evolve: true };
+const view = { field: true, bonds: true, paused: false, spf: 4, evolve: true,
+               cells: true, strain: false, solo: -1 };
 // ?watch=1 turns this page into a VIEWPORT on the shared run in tools/serve-world.js
 // instead of a simulation of its own. Without it every tab is a separate
 // universe, which is why two browsers never agreed about anything.
@@ -458,7 +485,7 @@ async function rebuild() {
   const bBond = dev.createBuffer({ size: bondCapacity, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
   dev.queue.writeBuffer(bBond, 0, idx);
 
-  const bCam = dev.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  const bCam = dev.createBuffer({ size: 80, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
 
   const module = dev.createShaderModule({ code: RENDER, label: 'render' });
 
@@ -579,35 +606,16 @@ function applyFrame(ab) {
   }
   q.writeBuffer(sim.world.bMeta, 0, meta);
 
-  // Bodies are born and die with DIFFERENT bond graphs now that topology is
-  // heritable, so a bond list built once at page load stops describing the
-  // world almost immediately — it drew every body joined to every other. Refetch
-  // when the server's topology version moves.
-  const topo = dv.getUint32(40, true);
-  if (topo !== sim.topoVersion && !sim.fetchingBonds) {
-    sim.fetchingBonds = true;
-    fetch('/bonds', { cache: 'no-store' })
-      .then(r => r.arrayBuffer())
-      .then(bb => {
-        const bdv = new DataView(bb);
-        const version = bdv.getUint32(0, true), bondK = bdv.getUint32(4, true);
-        const bond = new Int32Array(bb, 8);
-        const idx = [];
-        for (let i = 0; i < bond.length; i++) {
-          const j = bond[i];
-          if (j < 0) continue;
-          const from = (i / bondK) | 0;
-          if (from < j) idx.push(from, j);
-        }
-        const arr = new Int32Array(idx);
-        if (arr.byteLength <= sim.bondCapacity) {
-          dev.queue.writeBuffer(sim.bBond, 0, arr);
-          sim.bondVerts = arr.length;
-          sim.topoVersion = version;
-        }
-        sim.fetchingBonds = false;
-      })
-      .catch(() => { sim.fetchingBonds = false; });
+  // Bond pairs ride WITH the frame, so they always describe the same instant as
+  // the positions. Fetching them separately let the two drift apart and drew
+  // lines between cells that were never bonded.
+  const pairOff = HEAD + n * 8 + n * 4 + n * 4 + n * 4;
+  const pairCount = dv.getUint32(pairOff, true);
+  if (pairCount > 0 && (pairCount * 4) <= sim.bondCapacity) {
+    q.writeBuffer(sim.bBond, 0, new Int32Array(ab, pairOff + 4, pairCount));
+    sim.bondVerts = pairCount;
+  } else if (pairCount * 4 > sim.bondCapacity) {
+    sim.bondVerts = 0;                      // never draw a truncated graph
   }
 
   sim.serverSteps = dv.getUint32(8, true);
@@ -647,15 +655,18 @@ function writeCam() {
   // or the population vanishes when zoomed out.
   const rWorld = Math.max(0.34, 1.15 / (cam.zoom * dpr));
 
-  const b = new ArrayBuffer(64), dv = new DataView(b);
+  const b = new ArrayBuffer(80), dv = new DataView(b);
   dv.setFloat32(0, cam.cx, true); dv.setFloat32(4, cam.cy, true);
   dv.setFloat32(8, nx, true); dv.setFloat32(12, ny, true);
   dv.setFloat32(16, rWorld, true);
-  dv.setFloat32(20, sim.world.params.flowScale, true);
-  dv.setFloat32(24, sim.world.params.flowStr, true);
-  dv.setUint32(28, sim.world.params.seed, true);
-  dv.setFloat32(32, view.field ? 1 : 0, true);
-  dv.setFloat32(36, sim.bound, true);
+  dv.setInt32(20, view.solo, true);
+  dv.setFloat32(24, view.strain ? 1 : 0, true);
+  dv.setFloat32(28, view.cells ? 1 : 0, true);
+  dv.setFloat32(32, sim.world.params.flowScale, true);
+  dv.setFloat32(36, sim.world.params.flowStr, true);
+  dv.setUint32(40, sim.world.params.seed, true);
+  dv.setFloat32(44, view.field ? 1 : 0, true);
+  dv.setFloat32(48, sim.bound, true);
 
   // LOD, continuous. Octave o has features 1/(flowScale * 2^o) world units
   // across; resolve only those still ~2 device pixels wide or wider. Left as a
@@ -664,7 +675,7 @@ function writeCam() {
   const pxPerWorld = cam.zoom * dpr;
   const fs = sim.world.params.flowScale;
   const oct = Math.max(1, Math.min(5, 1 + Math.log2(Math.max(1, fs * pxPerWorld / 2))));
-  dv.setFloat32(40, oct, true);
+  dv.setFloat32(52, oct, true);
 
   // Streamlines are fixed in WORLD units — roughly one contour every 1.6 world
   // units — so they are features of the field, not of the viewport, and they
@@ -673,9 +684,10 @@ function writeCam() {
   // wearing different clothes. When the spacing closes on a pixel they fade out
   // rather than alias.
   const bandWorld = 1.6;
-  dv.setFloat32(44, (2 * Math.PI) / (bandWorld * 0.3 * fs), true);
+  dv.setFloat32(56, (2 * Math.PI) / (bandWorld * 0.3 * fs), true);
   const bandPx = bandWorld * pxPerWorld;
-  dv.setFloat32(48, Math.min(1, Math.max(0, (bandPx - 2.5) / 5.5)), true);
+  dv.setFloat32(60, Math.min(1, Math.max(0, (bandPx - 2.5) / 5.5)), true);
+  dv.setFloat32(64, 0.62, true);            // rest length, for strain colouring
   dev.queue.writeBuffer(sim.bCam, 0, b);
 }
 
@@ -812,6 +824,14 @@ $('bField').onclick = e => { view.field = !view.field; e.target.classList.toggle
 $('bBonds').onclick = e => { view.bonds = !view.bonds; e.target.classList.toggle('on', view.bonds); };
 $('bPause').onclick = e => { view.paused = !view.paused; e.target.classList.toggle('on', view.paused); };
 $('bEvolve').onclick = e => { view.evolve = !view.evolve; e.target.classList.toggle('on', view.evolve); };
+$('bCells').onclick = e => { view.cells = !view.cells; e.target.classList.toggle('on', view.cells); };
+$('bStrain').onclick = e => { view.strain = !view.strain; e.target.classList.toggle('on', view.strain); };
+$('bSolo').onclick = e => {
+  // Cycle: all bodies -> body 0 -> body 1 ... so one creature can be watched.
+  view.solo = view.solo < 0 ? 0 : view.solo + 1;
+  e.target.classList.toggle('on', view.solo >= 0);
+  e.target.textContent = view.solo < 0 ? 'solo body' : `body ${view.solo}`;
+};
 $('bFit').onclick = fitAll;
 $('bReseed').onclick = () => sim?.world.writeParams({ seed: (Math.random() * 1e5) | 0 });
 $('bRebuild').onclick = () => rebuild().catch(e => fail(String(e.stack || e)));

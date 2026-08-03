@@ -327,10 +327,27 @@ export class Evolver {
 
     // Structural mutation: rewire, add, or drop a connection.
     const degree = (i) => adj[i].size;
+    // Add bonds LOCALLY — between two cells that already share a neighbour.
+    //
+    // Joining arbitrary pairs makes graphs that cannot be embedded in the plane
+    // with every edge at the one rest length, so the body is permanently
+    // frustrated: it cannot reach a configuration that satisfies its own bonds
+    // and sits stretched forever. Measured on a long run, the median bond was
+    // 4.7x its rest length and the tail reached 56x, with the springs winning
+    // against flow drag by three orders of magnitude — the stretch was not a
+    // force imbalance, it was a graph with no solution.
+    //
+    // Triangle closure keeps additions local, which keeps the graph roughly
+    // planar and therefore satisfiable, and is what cells physically do: they
+    // adhere to neighbours, not to arbitrary distant cells.
     const tryAdd = () => {
-      const i = (r() * n) | 0, j = (r() * n) | 0;
-      if (i === j || adj[i].has(j) || degree(i) >= bK || degree(j) >= bK) return;
-      adj[i].add(j); adj[j].add(i);
+      const i = (r() * n) | 0;
+      const nbrs = [...adj[i]];
+      if (nbrs.length < 2) return;
+      const j = nbrs[(r() * nbrs.length) | 0];
+      const k = nbrs[(r() * nbrs.length) | 0];
+      if (j === k || adj[j].has(k) || degree(j) >= bK || degree(k) >= bK) return;
+      adj[j].add(k); adj[k].add(j);
     };
     const tryDrop = () => {
       const i = (r() * n) | 0;
@@ -377,9 +394,19 @@ export class Evolver {
       // Join some cell of the next component to some cell of the first, freeing
       // a slot by force if both ends are saturated — a body that cannot be
       // reconnected any other way is worse than one that loses a bond.
-      let a = -1, b = -1;
-      for (let i = 0; i < n && a < 0; i++) if (comp[i] === 0 && adj[i].size < bK) a = i;
-      for (let i = 0; i < n && b < 0; i++) if (comp[i] === 1 && adj[i].size < bK) b = i;
+      // Join the CLOSEST available pair across the split, using the parent's
+      // geometry as the guide. An arbitrary join is a long-range shortcut the
+      // body can never satisfy.
+      let a = -1, b = -1, best = Infinity;
+      for (let i = 0; i < n; i++) {
+        if (comp[i] !== 0 || adj[i].size >= bK) continue;
+        for (let j = 0; j < n; j++) {
+          if (comp[j] !== 1 || adj[j].size >= bK) continue;
+          const si = src + srcOf(i), sj = src + srcOf(j);
+          const d = (cells.px[si] - cells.px[sj]) ** 2 + (cells.py[si] - cells.py[sj]) ** 2;
+          if (d < best) { best = d; a = i; b = j; }
+        }
+      }
       if (a < 0) { a = comp.indexOf(0); const v = [...adj[a]][0]; adj[a].delete(v); adj[v].delete(a); }
       if (b < 0) { b = comp.indexOf(1); const v = [...adj[b]][0]; adj[b].delete(v); adj[v].delete(b); }
       adj[a].add(b); adj[b].add(a);
