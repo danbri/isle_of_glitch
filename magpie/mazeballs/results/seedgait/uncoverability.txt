@@ -1,0 +1,12 @@
+
+=== uncoverability check : food 14/3cl span 0.9 sense 0.11 reloc 0.22 ===
+  COVERAGE (crawler, food sense ABLATED)   intake 0.0668 ± 0.0115
+  CRAWLER  (crawler, food sense intact)    intake 0.0591 ± 0.0132
+  PLANTED  (body starts ON a food cluster) intake 0.4433 ± 0.1060   [obtainable ceiling]
+  coverage / planted = 0.1506  ->  UNCOVERABLE (blind sweeping collects <50% of obtainable food; sense has headroom)
+
+=== uncoverability check : food 42/9cl span 1.72 sense 0.05 reloc 0.22 ===
+  COVERAGE (crawler, food sense ABLATED)   intake 0.2233 ± 0.0329
+  CRAWLER  (crawler, food sense intact)    intake 0.2226 ± 0.0351
+  PLANTED  (body starts ON a food cluster) intake 0.6510 ± 0.0973   [obtainable ceiling]
+  coverage / planted = 0.3430  ->  UNCOVERABLE (blind sweeping collects <50% of obtainable food; sense has headroom)

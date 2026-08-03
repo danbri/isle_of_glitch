@@ -51,11 +51,11 @@
  * spawns and the re-measurement seeds are all derived deterministically, so a
  * whole run reconstructs from `--seed`.
  */
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, readFileSync } from 'node:fs';
 import { parseArgs } from './backend.js';
 import {
   DEFAULTS, makeRng, randomGenome, perturbGenome, cloneGenome, blockCrossover,
-  develop, makeWorld, Colony, GENES, regOff,
+  develop, makeWorld, Colony, GENES, GENOME_LEN, regOff,
 } from '../lib/softbody.js';
 import { zNormColumns, knnNovelty, zScore, binEdges, cellOf } from './sb-qd.js';
 
@@ -119,6 +119,14 @@ const a = parseArgs(process.argv.slice(2), {
   // calibration axis — swept to find the band where the task has a gradient
   // toward sensing rather than mass extinction or a surviving degenerate.
   toxicFrac: 0, toxinHarsh: 1.0, qualSigma2: -1, starve: 0,
+  // Non-stationary quality (default 0 = stationary discrimination task, unchanged).
+  // Poisson rate per patch per second at which a patch's good/toxic identity FLIPS
+  // mid-episode, revealed only through the quality channel. With flips, no fixed
+  // policy and no committed spatial map can win (a patch good NOW is toxic LATER),
+  // so the only implementation of eat-good/avoid-toxic is to read the quality
+  // sense in REAL TIME — removing the reflexive route the stationary task left. The
+  // schedule is re-randomised per spawn so it cannot be memorised.
+  flipRate: 0,
   // Mutation operator. 'gaussian' is perturbGenome, the 17× baseline, and the
   // default so a trunk run reproduces byte-identical. 'signflip' is that Gaussian
   // PLUS a per-regulatory-locus sign flip at --signRate — the sign-aware operator
@@ -143,6 +151,16 @@ const a = parseArgs(process.argv.slice(2), {
   // into. Descriptor axes are the discrimination-task readouts, so a
   // discriminator is a distinct niche — see sb-qd.js for the justification.
   select: 'tournament', noveltyK: 15, noveltyW: 1.0, bdBins: 6,
+  // SEEDING the initial population from a pre-evolved genome (default '' = the
+  // byte-identical random start). When set to a `softbody-genome` population JSON
+  // (a single `buf`), the generation-0 population is built from that genome
+  // instead of from random draws: one exact copy plus `pop-1` perturbed copies at
+  // --seedJitter. This is the motor-burden fix — seed a body that already WALKS
+  // (populations/softbody-evolved-crawler.json) so the search spends its budget on
+  // sensing rather than on re-inventing locomotion. The random-start path (empty
+  // seedPop) is untouched: the rng draw sequence, gen0, and every downstream
+  // number are byte-identical to a trunk run when this is not set.
+  seedPop: '', seedJitter: -1,
 });
 // Build the working config from DEFAULTS plus any food overrides. DEFAULTS itself
 // is never mutated, so every other tool that imports it sees the trunk values.
@@ -160,6 +178,7 @@ const cfg = Object.freeze({
   ...(a.regrow >= 0 ? { FOOD_REGROW: a.regrow } : {}),
   ...(a.toxicFrac > 0 ? { FOOD_TOXIC_FRAC: a.toxicFrac, FOOD_TOXIN_HARSH: a.toxinHarsh, FOOD_STARVE: a.starve } : {}),
   ...(a.qualSigma2 >= 0 ? { FOOD_QUAL_SIGMA2: a.qualSigma2 } : {}),
+  ...(a.flipRate > 0 ? { FOOD_FLIP_RATE: a.flipRate } : {}),
 });
 // Whether a metabolic cost is live. Off => cfg === DEFAULTS and every report
 // line below is byte-identical to the trunk; on => the net-intake and squatter
@@ -217,6 +236,20 @@ const spawnSeed = (gen) => (0x3000 ^ Math.imul(gen + 1, 40503)) >>> 0;
 let nextId = 0;
 function mkRandom(rng) { return { buf: randomGenome(rng, cfg).buf, id: nextId++, pheno: null }; }
 function pheno(g) { return g.pheno || (g.pheno = develop({ buf: g.buf }, cfg, devSeed(g.id))); }
+
+// Load a seed genome from a `softbody-genome` population JSON. Returns a Float32
+// buf of length GENOME_LEN. The crawler was archived from a coevo world with more
+// sensor channels, but the genome does not encode sensor count — development wires
+// against whatever channels the current cfg exposes — so it imports cleanly (see
+// populations/README.md).
+function loadSeedBuf(path) {
+  const j = JSON.parse(readFileSync(path, 'utf8'));
+  if (!j.buf || !Array.isArray(j.buf)) throw new Error(`${path}: no genome buf`);
+  if (j.buf.length !== GENOME_LEN) throw new Error(`${path}: buf length ${j.buf.length} != GENOME_LEN ${GENOME_LEN}`);
+  return Float32Array.from(j.buf);
+}
+const hasSeed = !!a.seedPop;
+const seedJitter = a.seedJitter >= 0 ? a.seedJitter : a.eps;
 
 /**
  * Run one episode of a whole population in a shared arena and return per-organism
@@ -414,7 +447,18 @@ function remeasure(genomes, ablate = null, qualAbl = null) {
 /* ------------------------------------------------------------------- loop */
 
 const rng = makeRng(a.seed);
-let pop = Array.from({ length: a.pop }, () => mkRandom(rng));
+// Generation-0 population. Random (byte-identical trunk path) unless --seedPop is
+// set, in which case it is one exact copy of the seed genome plus pop-1 perturbed
+// copies at seedJitter — a population clustered around a body that already walks.
+let pop;
+if (hasSeed) {
+  const seedBuf = loadSeedBuf(a.seedPop);
+  pop = [{ buf: Float32Array.from(seedBuf), id: nextId++, pheno: null }];
+  while (pop.length < a.pop)
+    pop.push({ buf: perturbGenome({ buf: seedBuf }, seedJitter, rng).buf, id: nextId++, pheno: null });
+} else {
+  pop = Array.from({ length: a.pop }, () => mkRandom(rng));
+}
 const gen0 = pop.map(g => ({ buf: Float32Array.from(g.buf), id: g.id, pheno: pheno(g) }));
 
 // Mode selection acts under at generation `gen`. A curriculum runs the opening
@@ -423,6 +467,7 @@ const modeAt = (gen) => (gen < a.curriculum ? 'displacement' : a.fitness);
 
 log(`[sb-evolve] pop ${a.pop}, gens ${a.gens}, elite ${a.elite}, eps ${a.eps}, steps ${a.steps}, seed ${a.seed}` +
     `, fitness ${a.fitness}, spawns ${a.spawns}${a.curriculum ? ` (curriculum: displacement for ${a.curriculum} gens)` : ''}` +
+    `${hasSeed ? `, SEEDED from ${a.seedPop} (jitter ${seedJitter})` : ''}` +
     `${a.crossover ? ', +blockCrossover' : ''}` +
     `\n           food ${cfg.FOOD} in ${cfg.FOOD_CLUSTERS} clusters, senseSigma2 ${cfg.FOOD_SENSE_SIGMA2}, eatSigma2 ${cfg.FOOD_EAT_SIGMA2}`);
 
@@ -671,6 +716,7 @@ if (hasDiscrim) {
   console.log('\ndiscrimination task active:' +
     `  toxicFrac ${f(cfg.FOOD_TOXIC_FRAC)}  toxinHarsh ${f(cfg.FOOD_TOXIN_HARSH)}  ` +
     `qualSigma2 ${f(cfg.FOOD_QUAL_SIGMA2)}  starve ${f(cfg.FOOD_STARVE)}  op ${a.op}` +
+    (cfg.FOOD_FLIP_RATE > 0 ? `  flipRate ${f(cfg.FOOD_FLIP_RATE)} [NON-STATIONARY]` : '') +
     (a.op === 'signflip' ? ` signRate ${a.signRate}` : ''));
   console.log('  degenerate census on the evolved population:');
   console.log(`    squatter fraction (path < ${SQUAT_PATH}):     ${(mE.squatterFrac * 100).toFixed(0)}%`);
@@ -723,6 +769,7 @@ if (a.out) {
   writeFileSync(a.out, JSON.stringify({
     seed: a.seed, pop: a.pop, gens: a.gens, elite: a.elite, eps: a.eps, steps: a.steps,
     fitness: a.fitness, curriculum: a.curriculum, spawns: a.spawns, crossover: !!a.crossover,
+    seedPop: a.seedPop || null, seedJitter: hasSeed ? seedJitter : null,
     food: { FOOD: cfg.FOOD, FOOD_CLUSTERS: cfg.FOOD_CLUSTERS, FOOD_CLUSTER_SPAN: cfg.FOOD_CLUSTER_SPAN, FOOD_SENSE_SIGMA2: cfg.FOOD_SENSE_SIGMA2, FOOD_EAT_SIGMA2: cfg.FOOD_EAT_SIGMA2, FOOD_RELOCATE_THRESH: cfg.FOOD_RELOCATE_THRESH }, traj,
     gen0: m0, evolved: mE, ablated: mA,
     dispGain, dispBar, intakeGain, intakeBar, effGain, effBar, ablDrop, ablBar,
@@ -737,7 +784,7 @@ if (a.out) {
     // byte-identical. The decisive quantity is qualAblDrop / qualAblBar.
     ...(hasDiscrim ? {
       op: a.op, signRate: a.signRate,
-      discrim: { toxicFrac: cfg.FOOD_TOXIC_FRAC, toxinHarsh: cfg.FOOD_TOXIN_HARSH, qualSigma2: cfg.FOOD_QUAL_SIGMA2, starve: cfg.FOOD_STARVE },
+      discrim: { toxicFrac: cfg.FOOD_TOXIC_FRAC, toxinHarsh: cfg.FOOD_TOXIN_HARSH, qualSigma2: cfg.FOOD_QUAL_SIGMA2, starve: cfg.FOOD_STARVE, flipRate: cfg.FOOD_FLIP_RATE },
       qualAblated: mQ,
       squatterEvolved: mE.squatterFrac, anosmiaEvolved: mE.anosmiaFrac, netNegEvolved: mE.netNegFrac,
       meanGrossEvolved: mE.meanGross, meanSelvGen0: m0.meanSelv, meanSelvEvolved: mE.meanSelv,

@@ -1,0 +1,553 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>cellworld — no predators, only cells</title>
+<!--
+  cellworld.html — the world rebuilt to obey THE FIRST LAW (see WORLD.md):
+  nothing high-level is a primitive. There is no "predator", no "prey", no
+  "organism", not even an "entity" with a role. There are only:
+
+    CELLS      a type index, a position/velocity in R2, a size, and fuel.
+               Living cells run (a stub of) chemistry; dead cells are inert
+               matter — corpses, food, rubble — that still pushes and can be eaten.
+    FORCES     a type x type INTERACTION MATRIX A: within a short range, how much
+               type i is pulled toward (+) or pushed from (-) type j. Plus a
+               universal short-range repulsion so cells can't occupy one point.
+               This is what WORLD.md means by "squishiness is a set of forces,
+               not a deformed-circle shape." Bodies/membranes/tissues are just
+               clumps these forces hold together — multicellularity, emergent.
+    EATING     a heterotroph eats what it is ATTRACTED to: a positive A[i][j]
+               (cross-type) makes type i climb type j's trail, chase it, AND
+               digest it on contact. So the ONE matrix you edit controls
+               attraction, hunting and eating together — "eating" is chemistry,
+               not a role, and editing A visibly changes behaviour. (A vestigial
+               D matrix remains in the code/snapshot for now but is unused.)
+    FIELD      a sugar field fed by SUNLIGHT (the world's energy INPUT — this is
+               legitimate thermodynamics, unlike spawning whole organisms). Some
+               cell types photosynthesise (drink sugar -> fuel); the rest must eat.
+
+  WHY THERE IS NO predatorSpeed KNOB. Every cell obeys ONE law of motion. A cell
+  hunts by climbing its prey's TRAIL (a scent field it can smell), and it eats by
+  the digest matrix on contact — so "who hunts whom" is chemistry, never a flag.
+  A cell is only "faster" if it can afford the fuel: moving costs fuel (muscle
+  work ~ speed^2), fuel comes from eating or light. Note a consequence proven the
+  hard way while tuning this: at one shared top speed a prey that FLEES can never
+  be caught, so predation cannot rest on a rigged chase — it rests on prey
+  REGROWTH (sunlight + division) being outpaced by harvest. That is a real
+  logistic predator-prey, and it is what makes the populations cycle. You play
+  god by editing the fields and the two matrices; never by editing motion.
+
+  WHAT EMERGES. The default green<->blue pair is a genuine, self-sustaining
+  predator-prey CYCLE: green drinks sunlight and clumps into little bodies
+  (multicellularity), blue smells green out and grazes it, green regrows, blue
+  blooms and crashes with it — populations swing for as long as you watch, with
+  nobody's speed or birth-rate ever typed in. A few red are sown as a 3rd level
+  that hunts blue; higher trophic levels are FRAGILE (as in reality) and may
+  boom-bust to extinction. That is honest: there is no seed rain here (that was a
+  godsim crutch) — a lineage eaten to its last cell is GONE, and you re-sow it or
+  re-tune the chemistry. Consumed cells become grey corpses that decay back into
+  the sugar field (violet, sow-able, is a scavenger/4th level that climbs carrion).
+
+  ARCHITECTURE / HONESTY. Sim on the CPU (spatial-hash forces, ~one source of
+  truth), render on the GPU (WebGL2). THE GPU IS STILL "FAKED" for compute — the
+  particle forces and field run on the CPU; the GPU only draws. A real compute-
+  shader port is the next step once there's dedicated hardware. Toroidal world:
+  no walls, tiles forever when you zoom out. Snapshots export/import as JSON so a
+  world can be saved, shared, and re-loaded.
+-->
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #05070a;
+    font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #cdd6e0; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  #gl.grabbing { cursor: grabbing; }
+  #gl.sowing { cursor: crosshair; }
+  .panel { position: fixed; background: rgba(9,13,19,.84); backdrop-filter: blur(8px);
+    border: 1px solid #1d2632; border-radius: 10px; padding: 10px 11px; }
+  #controls { top: 10px; left: 10px; width: 246px; max-height: calc(100vh - 20px);
+    overflow-y: auto; box-shadow: 0 8px 30px #0008; }
+  #controls h1 { margin: 0 0 2px; font-size: 13px; letter-spacing: .04em; color: #eef3f8; }
+  #controls .sub { color: #63758a; margin: 0 0 8px; font-size: 10.5px; }
+  .grp { border-top: 1px solid #172029; margin-top: 8px; padding-top: 8px; }
+  .grp > .lbl { color: #7d91a6; text-transform: uppercase; letter-spacing: .08em; font-size: 9.5px; margin-bottom: 6px; }
+  .row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+  .row label { flex: 0 0 78px; color: #9db0c2; font-size: 10.5px; }
+  .row input[type=range] { flex: 1; height: 3px; accent-color: #5ad1c8; }
+  .row .val { flex: 0 0 30px; text-align: right; color: #cbd6e2; font-size: 10px; font-variant-numeric: tabular-nums; }
+  .btns { display: flex; flex-wrap: wrap; gap: 5px; }
+  button { background: #16202b; color: #d6e0ea; border: 1px solid #263341; border-radius: 7px;
+    padding: 5px 8px; font: inherit; font-size: 10.5px; cursor: pointer; }
+  button:hover { background: #1e2b39; border-color: #33465a; }
+  button.on { background: #0e2f2c; border-color: #5ad1c8; color: #8ff0e8; }
+  #hud { right: 10px; top: 10px; text-align: right; min-width: 150px; }
+  #hud .big { font-size: 15px; color: #eef3f8; font-variant-numeric: tabular-nums; }
+  #hud .k { color: #63758a; }
+  #hud .cnt { font-variant-numeric: tabular-nums; }
+  #hint { left: 50%; bottom: 10px; transform: translateX(-50%); color: #7d91a6; text-align: center; font-size: 10.5px; padding: 6px 12px; }
+  #track { right: 10px; bottom: 10px; display: none; min-width: 160px; }
+  .matrix { display: grid; gap: 2px; margin-top: 4px; }
+  .mcell { width: 100%; aspect-ratio: 1; border-radius: 3px; border: 1px solid #263341; cursor: pointer; font-size: 9px;
+    display: flex; align-items: center; justify-content: center; color: #0a0d12; font-weight: 700; }
+  .mhead { font-size: 9px; color: #7d91a6; display: flex; align-items: center; justify-content: center; }
+  textarea { width: 100%; height: 46px; background: #0c1219; color: #9db0c2; border: 1px solid #263341;
+    border-radius: 6px; font: 10px/1.3 ui-monospace, monospace; padding: 5px; resize: vertical; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .lg { display: flex; align-items: center; gap: 4px; font-size: 10px; color: #9db0c2; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; }
+</style>
+
+<canvas id="gl"></canvas>
+
+<div id="controls" class="panel">
+  <h1>cellworld</h1>
+  <p class="sub">no predators — only cells, forces, fuel &amp; sunlight. drag to pan · wheel to zoom · click a cell to follow</p>
+
+  <div class="grp">
+    <div class="lbl">Energy &amp; medium (the physics)</div>
+    <div class="row"><label>sunlight</label><input type="range" id="s_sun" min="0" max="4" step="0.1" value="1.4"><span class="val" id="v_sun"></span></div>
+    <div class="row"><label>warmth</label><input type="range" id="s_warm" min="0" max="2" step="0.05" value="1.0"><span class="val" id="v_warm"></span></div>
+    <div class="row"><label>viscosity</label><input type="range" id="s_visc" min="0.55" max="0.95" step="0.01" value="0.82"><span class="val" id="v_visc"></span></div>
+    <div class="row"><label>force reach</label><input type="range" id="s_reach" min="0.012" max="0.05" step="0.002" value="0.03"><span class="val" id="v_reach"></span></div>
+    <div class="row"><label>speed</label><input type="range" id="s_speed" min="0" max="4" step="1" value="1"><span class="val" id="v_speed"></span></div>
+  </div>
+
+  <div class="grp">
+    <div class="lbl">Interaction matrix A — row is pulled(+, and EATS)/pushed(−) by column</div>
+    <div class="matrix" id="matA"></div>
+    <div class="btns" style="margin-top:6px"><button id="b_randA">randomize</button><button id="b_ladder">trophic ladder</button><button id="b_clump">clumps</button></div>
+  </div>
+
+  <div class="grp">
+    <div class="lbl">Sow matter (god sets conditions, not motion)</div>
+    <div class="legend" id="legend"></div>
+    <div class="btns" style="margin-top:6px" id="sowBtns"></div>
+    <div class="btns" style="margin-top:5px"><button id="b_sugar">splash sugar</button><button id="b_rock">drop rock (dead cells)</button></div>
+  </div>
+
+  <div class="grp">
+    <div class="lbl">Snapshot (save / share / load)</div>
+    <textarea id="snap" placeholder="export writes JSON here — copy it to save a world; paste one and press Load"></textarea>
+    <div class="btns" style="margin-top:5px"><button id="b_export">export</button><button id="b_import">load</button><button id="b_download">download .json</button></div>
+  </div>
+
+  <div class="grp">
+    <div class="row"><label>show sugar</label><input type="checkbox" id="c_sugar" checked></div>
+    <div class="row"><label>show trails</label><input type="checkbox" id="c_trails" checked></div>
+    <div class="btns"><button id="b_pause">pause</button><button id="b_reset">reset world</button></div>
+  </div>
+</div>
+
+<div id="hud" class="panel">
+  <div><span class="big" id="h_fps">–</span> <span class="k">fps</span></div>
+  <div class="cnt" id="h_counts"></div>
+  <div><span class="cnt" id="h_corpse">0</span> <span class="k">corpses</span></div>
+  <div class="k" style="margin-top:4px">zoom <span id="h_zoom">1</span>×</div>
+</div>
+
+<div id="track" class="panel"></div>
+<div id="hint" class="panel">a <b>+</b> in the matrix means that row's cell is pulled toward — <b>and eats</b> — that column's cell. edit A and watch. try <b>clumps</b> first: every colour survives, so the matrix alone sculpts the shapes.</div>
+
+<script>
+"use strict";
+/* ---------- rng + helpers ---------- */
+let _seed = 20260803;
+function srand() { _seed = (Math.imul(1664525, _seed) + 1013904223) >>> 0; return _seed / 4294967296; }
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const fract = v => v - Math.floor(v);
+
+/* ---------- cell types = chemistry, NOT roles ----------
+   A type is: a name+colour, a photosynthesis rate P (sugar->fuel; 0 = must eat),
+   and its rows in the interaction matrix A and digest matrix D. Nothing here is
+   a "role" — "green is an autotroph" just means P[green]>0; "blue eats green"
+   just means D[blue][green]>0. */
+const TYPES = [
+  { name: 'green',  col: [0.30, 0.90, 0.42], P: 1.0 },   // 0 drinks sunlight
+  { name: 'blue',   col: [0.28, 0.68, 1.00], P: 0.0 },   // 1
+  { name: 'red',    col: [1.00, 0.42, 0.34], P: 0.0 },   // 2
+  { name: 'violet', col: [0.72, 0.45, 1.00], P: 0.0 },   // 3 scavenger
+];
+const K = TYPES.length;
+let A = [], D = [];                                        // interaction, digest matrices
+
+function ladderChemistry() {
+  // sugar -> green -> blue -> red, plus violet the corpse-scavenger.
+  A = Array.from({ length: K }, () => Array(K).fill(0));
+  D = Array.from({ length: K }, () => Array(K).fill(0));
+  // Hunters FIND prey by climbing its trail (chemotaxis, in step); the small
+  // A-attraction below is just short-range latching. Prey do NOT flee at full
+  // speed — at equal top speed a fleeing prey can never be caught, so instead
+  // coexistence rests on prey REGROWTH (sunlight + division) outpacing harvest,
+  // a proper logistic predator-prey rather than a rigged chase.
+  A[0][0] = 0.6;                                           // green self-attract -> bodies (multicellularity)
+  A[1][0] = 0.4;  D[1][0] = 0.8;  A[1][1] = 0.2;           // blue latches & digests green
+  A[2][1] = 0.4;  D[2][1] = 0.8;  A[2][2] = 0.15;          // red latches & digests blue
+  A[3][2] = 0.4;  D[3][2] = 0.8;  A[3][3] = 0.12;          // violet latches & digests red
+  A[1][2] = -0.25; A[2][3] = -0.25;                        // a light unease near one's own hunter (not a full flee)
+  TYPES.forEach((t, i) => t.P = i === 0 ? 1.0 : 0);
+  Dscav = 0.6;                                             // any heterotroph also scavenges corpses (in step)
+}
+function clumpChemistry() {
+  A = Array.from({ length: K }, () => Array(K).fill(0));
+  D = Array.from({ length: K }, () => Array(K).fill(0));
+  for (let i = 0; i < K; i++) { A[i][i] = 0.8; for (let j = 0; j < K; j++) if (i !== j) A[i][j] = -0.3; }
+  TYPES.forEach(t => t.P = 1.0);   // all feed on sunlight -> nobody starves, so the matrix purely sculpts structure
+}
+function randomChemistry() {
+  A = Array.from({ length: K }, () => Array.from({ length: K }, () => +( (srand() * 2 - 1) ).toFixed(2)));
+  D = Array.from({ length: K }, (_, i) => Array.from({ length: K }, (_, j) => i === j ? 0 : (srand() < 0.4 ? +(srand() * 1.3).toFixed(2) : 0)));
+  TYPES.forEach(t => t.P = 1.0);   // all photosynthesise -> a random matrix always shows structure, never starves
+}
+let Dscav = 0.8;
+
+/* ---------- fields (toroidal) ----------
+   sugar    : food/energy, fed by sunlight; autotrophs drink it.
+   scent[k] : ONE TRAIL PER CELL TYPE — every living type-k cell emits into its
+              own channel. A hunter climbs a channel weighted by how much it can
+              DIGEST that type (D[c.t][k]), so it follows its prey's trail and
+              ignores food it can't eat. This is the design's "distinct trail per
+              emitter, hunter tuned to it" — the primitive the trophic stack needs.
+   carrion  : dead-biomass smell; scavengers climb it to find corpses. */
+let GF = 128, sugar, sugarTmp, scentByType, carrion, fieldTmp;
+function allocField() {
+  sugar = new Float32Array(GF * GF); sugarTmp = new Float32Array(GF * GF);
+  scentByType = Array.from({ length: K }, () => new Float32Array(GF * GF));
+  carrion = new Float32Array(GF * GF); fieldTmp = new Float32Array(GF * GF);
+}
+function fieldAt(arr, x, y) {
+  const gx = fract(x) * GF, gy = fract(y) * GF; let ix = gx | 0, iy = gy | 0; const fx = gx - ix, fy = gy - iy;
+  const ix1 = ix + 1 === GF ? 0 : ix + 1, iy1 = iy + 1 === GF ? 0 : iy + 1;
+  const a = arr[iy * GF + ix], b = arr[iy * GF + ix1], c = arr[iy1 * GF + ix], d = arr[iy1 * GF + ix1];
+  return a + (b - a) * fx + (c - a) * fy + (a - b - c + d) * fx * fy;
+}
+const sugarAt = (x, y) => fieldAt(sugar, x, y);
+function fieldSplat(arr, x, y, amt) {
+  const gx = fract(x) * GF, gy = fract(y) * GF; let ix = gx | 0, iy = gy | 0; const fx = gx - ix, fy = gy - iy;
+  const ix1 = ix + 1 === GF ? 0 : ix + 1, iy1 = iy + 1 === GF ? 0 : iy + 1;
+  arr[iy * GF + ix] += amt * (1 - fx) * (1 - fy); arr[iy * GF + ix1] += amt * fx * (1 - fy);
+  arr[iy1 * GF + ix] += amt * (1 - fx) * fy; arr[iy1 * GF + ix1] += amt * fx * fy;
+}
+const sugarSplat = (x, y, amt) => fieldSplat(sugar, x, y, amt);
+function diffuseField(arr, tmp, diff, decay, cap) {
+  const keep = 1 - 4 * diff, dk = 1 - decay;
+  for (let y = 0; y < GF; y++) { const yu = (y === 0 ? GF - 1 : y - 1) * GF, yd = (y === GF - 1 ? 0 : y + 1) * GF, yc = y * GF;
+    for (let x = 0; x < GF; x++) { const xl = x === 0 ? GF - 1 : x - 1, xr = x === GF - 1 ? 0 : x + 1;
+      let v = (keep * arr[yc + x] + diff * (arr[yc + xl] + arr[yc + xr] + arr[yu + x] + arr[yd + x])) * dk;
+      if (v > cap) v = cap; tmp[yc + x] = v; } }
+  arr.set(tmp);
+}
+function stepField(sun, dt) {
+  const add = sun * dt * 0.5;                              // sunlight: the open-system energy INPUT
+  for (let i = 0; i < GF * GF; i++) sugar[i] += add;
+  diffuseField(sugar, sugarTmp, 0.14, 0.004, 6);
+  for (let k = 0; k < K; k++) diffuseField(scentByType[k], fieldTmp, 0.18, 0.018, 8);
+  diffuseField(carrion, fieldTmp, 0.18, 0.02, 8);
+}
+
+/* ---------- cells ---------- */
+const MAX = 3200;
+let cells = [];   // {x,y,vx,vy,t,fuel,alive,size}
+function addCell(t, x, y, fuel) { if (cells.length >= MAX) return; cells.push({ x: fract(x), y: fract(y), vx: 0, vy: 0, t, fuel, alive: true, size: 1 }); }
+
+function seedWorld() {
+  cells = []; allocField();
+  for (let i = 0; i < GF * GF; i++) sugar[i] = 0.4;
+  // green + blue is the robust, cycling core (a real emergent predator-prey);
+  // a few red are sown as a 3rd trophic level that will visibly hunt blue but is
+  // fragile and may boom-bust — that is honest, not a bug (sow more, or use the
+  // matrix, to experiment). violet (4th level / scavenger) is left to sow.
+  for (let i = 0; i < 800; i++) addCell(0, srand(), srand(), 1.2);   // green (drinks sunlight)
+  for (let i = 0; i < 200; i++) addCell(1, srand(), srand(), 1.6);   // blue  (eats green)
+  for (let i = 0; i < 22;  i++) addCell(2, srand(), srand(), 2.6);   // red   (eats blue)
+}
+
+/* spatial hash rebuilt each step */
+let HN = 48, hash = null;
+function buildHash(reach) {
+  HN = Math.max(16, Math.min(96, Math.floor(1 / reach)));
+  hash = Array.from({ length: HN * HN }, () => []);
+  for (let k = 0; k < cells.length; k++) { const c = cells[k];
+    hash[((fract(c.y) * HN) | 0) * HN + ((fract(c.x) * HN) | 0)].push(k); }
+}
+
+/* one simulation step. ALL cells obey the same motion law; differences come only
+   from the matrices, photosynthesis, and fuel. No per-type speed, ever. */
+const CORE = 0.010, REP = 2.4, META = 0.05, MOVECOST = 0.25, EAT_EFF = 0.7,
+      DIV_THRESH = 3.2, DIV_BASE = 0.4, DECAY = 0.25, CARCASS = 0.9,   // biomass a dead cell leaves behind
+      DIGEST = 2.0,                                                     // eating rate per unit of positive attraction
+      HUNT = 1.2;                                                      // hunting swim-speed up the prey trail (normalized)
+function step(dt, sun, warm, visc, reach) {
+  stepField(sun, dt);
+  buildHash(reach);
+  const R = reach, R2 = R * R, births = [];
+  for (let k = 0; k < cells.length; k++) {
+    const c = cells[k];
+    let fx = 0, fy = 0;
+    const cx = (fract(c.x) * HN) | 0, cy = (fract(c.y) * HN) | 0;
+    for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) {
+      const bucket = hash[(((cy + oy) % HN + HN) % HN) * HN + (((cx + ox) % HN + HN) % HN)];
+      for (const j of bucket) {
+        if (j === k) continue; const o = cells[j];
+        let dx = o.x - c.x, dy = o.y - c.y;               // toroidal shortest delta
+        if (dx > 0.5) dx -= 1; else if (dx < -0.5) dx += 1;
+        if (dy > 0.5) dy -= 1; else if (dy < -0.5) dy += 1;
+        const d2 = dx * dx + dy * dy; if (d2 > R2 || d2 < 1e-9) continue;
+        const d = Math.sqrt(d2), nx = dx / d, ny = dy / d;
+        // universal short-range repulsion (volume exclusion) — cells are solid
+        if (d < CORE * (c.size + o.size)) { const push = REP * (CORE * (c.size + o.size) - d) / CORE; fx -= nx * push; fy -= ny * push; }
+        // interaction matrix (only living cells "decide"; dead matter is passive
+        // but still repels via the core term above)
+        else if (c.alive) { const a = A[c.t][o.t]; if (a) { const w = a * (1 - d / R); fx += nx * w * 1.2; fy += ny * w * 1.2; } }
+        // digest: fuel flows from j into c on contact (chemistry, not a role)
+        if (c.alive && d < CORE * (c.size + o.size) * 1.4) {
+          // You eat what you are ATTRACTED to: a positive A entry (cross-type)
+          // for a heterotroph IS a hunt-and-digest. So the one matrix you can see
+          // controls attraction, trail-following, AND eating together — edit it
+          // and behaviour actually changes. Corpses are scavenged by heterotrophs.
+          let rate = o.alive ? (o.t !== c.t && TYPES[c.t].P === 0 ? Math.max(0, A[c.t][o.t]) * DIGEST : 0)
+                             : (TYPES[c.t].P === 0 ? Dscav : 0);
+          if (rate > 0 && o.fuel > 0) { const g = Math.min(o.fuel, rate * dt); o.fuel -= g; c.fuel += g * EAT_EFF;
+            if (o.fuel <= 0 && o.alive) { o.alive = false; o.fuel = CARCASS; o.vx *= 0.3; o.vy *= 0.3; } }  // killed body leaves biomass
+        }
+      }
+    }
+    if (!c.alive) continue;                                // dead cells: no metabolism/motion decisions
+    // heterotrophs (P==0) climb their PREY's trail — each prey channel weighted
+    // by how much this type can digest it (D[c.t][k]) — plus the carrion smell.
+    // Hungrier cells climb harder. A sensory coupling, not a role speed: who
+    // catches whom still emerges from digest chemistry and who can afford it.
+    if (TYPES[c.t].P === 0) {
+      const e = 1.0 / GF, hunger = clamp(1 - c.fuel / DIV_THRESH, 0.2, 1);
+      let gx = 0, gy = 0;
+      for (let k = 0; k < K; k++) { const w = Math.max(0, A[c.t][k]); if (w) { const s = scentByType[k];
+        gx += w * (fieldAt(s, c.x + e, c.y) - fieldAt(s, c.x - e, c.y));
+        gy += w * (fieldAt(s, c.x, c.y + e) - fieldAt(s, c.x, c.y - e)); } }
+      gx += 0.5 * (fieldAt(carrion, c.x + e, c.y) - fieldAt(carrion, c.x - e, c.y));   // scavenge corpses
+      gy += 0.5 * (fieldAt(carrion, c.x, c.y + e) - fieldAt(carrion, c.x, c.y - e));
+      const gm = Math.hypot(gx, gy);
+      // chemotaxis: swim UP the trail at a pace set by hunger, independent of the
+      // trail's absolute strength; with no trail to smell, wander and search.
+      if (gm > 1e-6) { fx += gx / gm * HUNT * hunger; fy += gy / gm * HUNT * hunger; }
+      else { fx += (srand() - 0.5) * 0.8; fy += (srand() - 0.5) * 0.8; }
+    }
+    // integrate — overdamped viscous medium; EVERY cell uses this same law
+    c.vx = (c.vx + fx * dt) * visc; c.vy = (c.vy + fy * dt) * visc;
+    const sp2 = c.vx * c.vx + c.vy * c.vy, sp = Math.sqrt(sp2);
+    if (sp > 0.05) { c.vx *= 0.05 / sp; c.vy *= 0.05 / sp; }   // hard speed clamp (numerical safety, not a role speed)
+    c.x = fract(c.x + c.vx); c.y = fract(c.y + c.vy);
+    // energy: photosynthesis in, metabolism + movement work out
+    const P = TYPES[c.t].P;
+    if (P > 0) { const s = sugarAt(c.x, c.y); const take = Math.min(s, P * dt); sugarSplat(c.x, c.y, -take); c.fuel += take; }
+    c.fuel -= (META + MOVECOST * sp2 * 1000) * dt;         // moving costs fuel -> "fast" must be paid for
+    c.size = clamp(0.6 + c.fuel * 0.25, 0.5, 2.2);         // swells with fuel (sugar/water retention)
+    fieldSplat(scentByType[c.t], c.x, c.y, (0.3 + c.size * 0.3) * dt);   // emit into OWN type's trail
+    if (c.fuel <= 0) { c.alive = false; c.fuel = CARCASS * 0.6; continue; }   // starved: less carcass than a fresh kill
+    // division (doubling), gated by warmth and local sugar — the fieldsim gate
+    const gate = warm * (0.4 + 0.6 * clamp(sugarAt(c.x, c.y) / 2, 0, 1));
+    if (c.fuel > DIV_THRESH && cells.length + births.length < MAX && srand() < DIV_BASE * gate * dt) {
+      const a = srand() * 6.2832, r = CORE * 1.5;
+      births.push({ x: fract(c.x + Math.cos(a) * r), y: fract(c.y + Math.sin(a) * r), t: c.t, fuel: c.fuel * 0.5 });
+      c.fuel *= 0.5;
+    }
+  }
+  for (const b of births) addCell(b.t, b.x, b.y, b.fuel);
+  // corpse decay: inert matter slowly returns its fuel to the sugar field, then goes
+  for (let k = cells.length - 1; k >= 0; k--) { const c = cells[k];
+    if (!c.alive) { const rel = Math.min(c.fuel, DECAY * dt); c.fuel -= rel; sugarSplat(c.x, c.y, rel * 0.6);
+      fieldSplat(carrion, c.x, c.y, 0.3 * dt);             // corpse smell for scavengers to climb
+      c.size = clamp(0.5 + c.fuel * 0.2, 0.2, 1.5);
+      if (c.fuel <= 0.02) cells.splice(k, 1); } }
+}
+
+/* ======================================================================== *
+ *  WebGL render — sugar field glow + cells as point sprites (dim if dead)
+ * ======================================================================== */
+const canvas = document.getElementById('gl');
+const gl = canvas.getContext('webgl2', { antialias: true, alpha: false });
+if (!gl) document.body.innerHTML = '<p style="padding:20px">This needs WebGL2 — try a recent Chrome, Edge, Firefox or Safari.</p>';
+function compile(t, s) { const sh = gl.createShader(t); gl.shaderSource(sh, s); gl.compileShader(sh);
+  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh) + '\n' + s); return sh; }
+function prog(v, f) { const p = gl.createProgram(); gl.attachShader(p, compile(gl.VERTEX_SHADER, v)); gl.attachShader(p, compile(gl.FRAGMENT_SHADER, f));
+  gl.linkProgram(p); if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p)); return p; }
+
+const fieldProg = prog(
+  `#version 300 es
+   layout(location=0) in vec2 a_clip; void main(){ gl_Position = vec4(a_clip,0.,1.); }`,
+  `#version 300 es
+   precision highp float; uniform vec2 u_res, u_center; uniform float u_zoom, u_show, u_trails; uniform sampler2D u_sugar; out vec4 o;
+   vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14),0.,1.); }
+   void main(){
+     vec2 world = u_center + (gl_FragCoord.xy - u_res*0.5)/u_zoom;
+     vec3 f = texture(u_sugar, fract(world)).rgb;                  // r sugar · g scent-trails · b carrion
+     vec3 col = vec3(0.02,0.028,0.038)
+              + vec3(0.06,0.34,0.16)*f.r*u_show                   // sugar: green glow
+              + vec3(0.10,0.32,0.42)*f.g*u_trails                 // biomass trails: cyan
+              + vec3(0.30,0.10,0.34)*f.b*u_trails;                // carrion: violet
+     vec2 g = abs(fract(world)-0.5); col += vec3(0.03,0.05,0.07)*smoothstep(0.495,0.5,max(g.x,g.y));
+     o = vec4(aces(col),1.); }`);
+const fU = ['u_res','u_center','u_zoom','u_show','u_trails','u_sugar'].reduce((m,n)=>(m[n]=gl.getUniformLocation(fieldProg,n),m),{});
+
+const cellProg = prog(
+  `#version 300 es
+   layout(location=0) in vec2 a_pos; layout(location=1) in vec3 a_col; layout(location=2) in float a_size;
+   uniform vec2 u_res, u_center; uniform float u_zoom; out vec3 v_col; out float v_dead;
+   void main(){ vec2 px=(a_pos-u_center)*u_zoom + u_res*0.5; gl_Position=vec4(px/u_res*2.0-1.0,0.,1.);
+     gl_PointSize = clamp(a_size*0.011*u_zoom, 1.5, 60.0); v_col = abs(a_col); v_dead = a_col.r<0.?1.:0.; }`,
+  `#version 300 es
+   precision highp float; in vec3 v_col; in float v_dead; out vec4 o;
+   void main(){ vec2 c=gl_PointCoord*2.0-1.0; float r=length(c); if(r>1.0) discard;
+     float a=smoothstep(1.0,0.2,r); vec3 col=v_col + (1.0-r)*0.35; o=vec4(col, a*(v_dead>0.5?0.5:0.95)); }`);
+const cU = ['u_res','u_center','u_zoom'].reduce((m,n)=>(m[n]=gl.getUniformLocation(cellProg,n),m),{});
+
+const quad = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,3,-1,-1,3]), gl.STATIC_DRAW);
+const fieldVao = gl.createVertexArray(); gl.bindVertexArray(fieldVao);
+gl.bindBuffer(gl.ARRAY_BUFFER, quad); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+
+const cellBuf = gl.createBuffer();
+const cellVao = gl.createVertexArray(); gl.bindVertexArray(cellVao);
+gl.bindBuffer(gl.ARRAY_BUFFER, cellBuf);
+gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,2,gl.FLOAT,false,24,0);   // pos
+gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1,3,gl.FLOAT,false,24,8);   // col (r<0 flags dead)
+gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2,1,gl.FLOAT,false,24,20);  // size
+let cellData = new Float32Array(MAX * 6);
+
+const sugarTex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, sugarTex);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+let sugarPix = new Uint8Array(GF * GF * 4);
+function uploadSugar() {
+  for (let i = 0; i < GF * GF; i++) {
+    let sc = 0; for (let k = 0; k < K; k++) sc += scentByType[k][i];   // total living-biomass trail
+    sugarPix[i * 4]     = clamp(sugar[i] * 0.20, 0, 1) * 255;
+    sugarPix[i * 4 + 1] = clamp(sc * 0.5, 0, 1) * 255;
+    sugarPix[i * 4 + 2] = clamp(carrion[i] * 0.5, 0, 1) * 255;
+    sugarPix[i * 4 + 3] = 255;
+  }
+  gl.bindTexture(gl.TEXTURE_2D, sugarTex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, GF, GF, 0, gl.RGBA, gl.UNSIGNED_BYTE, sugarPix); }
+
+/* ---------- camera + input ---------- */
+let cam = { cx: 0.5, cy: 0.5, zoom: 700 };
+let dpr = Math.min(2, devicePixelRatio || 1);
+function resize() { dpr = Math.min(2, devicePixelRatio || 1); canvas.width = Math.floor(innerWidth * dpr); canvas.height = Math.floor(innerHeight * dpr); gl.viewport(0,0,canvas.width,canvas.height); }
+addEventListener('resize', resize); resize(); cam.zoom = Math.min(canvas.width, canvas.height) * 0.92 * 2.4;   // start zoomed in — cells/clumps visible, not snow
+function screenToWorld(cxp, cyp) { const mx = cxp * dpr, my = canvas.height - cyp * dpr; return { x: cam.cx + (mx - canvas.width/2)/cam.zoom, y: cam.cy + (my - canvas.height/2)/cam.zoom }; }
+
+let sowType = null, trackIx = null, dragging = false, lastX = 0, lastY = 0, moved = false;
+canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId);
+  if (sowType !== null) { sow(e.clientX, e.clientY); dragging = true; return; }
+  dragging = true; moved = false; lastX = e.clientX; lastY = e.clientY; canvas.classList.add('grabbing'); });
+canvas.addEventListener('pointermove', e => { if (!dragging) return;
+  if (sowType !== null) { sow(e.clientX, e.clientY); return; }
+  if (Math.abs(e.clientX-lastX)+Math.abs(e.clientY-lastY) > 3) moved = true;
+  cam.cx -= (e.clientX-lastX)*dpr/cam.zoom; cam.cy += (e.clientY-lastY)*dpr/cam.zoom; trackIx = null; lastX = e.clientX; lastY = e.clientY; });
+canvas.addEventListener('pointerup', e => { dragging = false; canvas.classList.remove('grabbing');
+  if (sowType === null && !moved) pick(e.clientX, e.clientY); });
+canvas.addEventListener('wheel', e => { e.preventDefault(); const b = screenToWorld(e.clientX, e.clientY);
+  cam.zoom = clamp(cam.zoom * (e.deltaY < 0 ? 1.12 : 1/1.12), 120, 40000); const a = screenToWorld(e.clientX, e.clientY);
+  cam.cx += b.x - a.x; cam.cy += b.y - a.y; }, { passive: false });
+function pick(cxp, cyp) { const w = screenToWorld(cxp, cyp); let best = -1, bd = (26/cam.zoom)**2;
+  for (let k = 0; k < cells.length; k++) { const c = cells[k]; let dx = c.x - fract(w.x), dy = c.y - fract(w.y);
+    if (dx > 0.5) dx -= 1; else if (dx < -0.5) dx += 1; if (dy > 0.5) dy -= 1; else if (dy < -0.5) dy += 1;
+    const d = dx*dx+dy*dy; if (d < bd) { bd = d; best = k; } } trackIx = best >= 0 ? best : null; }
+function sow(cxp, cyp) { const w = screenToWorld(cxp, cyp); for (let i = 0; i < 6; i++)
+  addCell(sowType, w.x + (srand()-.5)*0.03, w.y + (srand()-.5)*0.03, sowType === 0 ? 1.2 : 2.0); }
+
+/* ---------- controls ---------- */
+const $ = id => document.getElementById(id);
+let params = { sun: 1.4, warm: 1.0, visc: 0.82, reach: 0.03, speed: 1 };
+function slider(id, key, fmt) { const s = $('s_'+id), v = $('v_'+id); const u = () => { params[key] = +s.value; v.textContent = fmt ? fmt(+s.value) : (+s.value).toFixed(2); }; s.addEventListener('input', u); u(); }
+slider('sun','sun'); slider('warm','warm'); slider('visc','visc'); slider('reach','reach', v=>v.toFixed(3)); slider('speed','speed', v=>v.toFixed(0)+'×');
+
+// legend + sow buttons
+$('legend').innerHTML = TYPES.map(t => `<span class="lg"><span class="dot" style="background:rgb(${t.col.map(c=>Math.round(c*255)).join(',')})"></span>${t.name}${t.P>0?' ·sun':''}</span>`).join('');
+const sowBox = $('sowBtns');
+TYPES.forEach((t, i) => { const b = document.createElement('button'); b.textContent = 'sow ' + t.name; b.dataset.i = i;
+  b.addEventListener('click', () => { sowType = (sowType === i) ? null : i;
+    [...sowBox.children].forEach(c => c.classList.toggle('on', +c.dataset.i === sowType)); canvas.classList.toggle('sowing', sowType !== null); });
+  sowBox.appendChild(b); });
+
+// interaction-matrix editor: click a cell to cycle -0.8 / -0.4 / 0 / +0.4 / +0.8
+const matBox = $('matA');
+function renderMatrix() {
+  matBox.style.gridTemplateColumns = `18px repeat(${K}, 1fr)`;
+  matBox.innerHTML = '';
+  matBox.appendChild(Object.assign(document.createElement('div'), { className: 'mhead' }));
+  for (let j = 0; j < K; j++) { const h = document.createElement('div'); h.className = 'mhead';
+    h.innerHTML = `<span class="dot" style="background:rgb(${TYPES[j].col.map(c=>Math.round(c*255)).join(',')})"></span>`; matBox.appendChild(h); }
+  for (let i = 0; i < K; i++) {
+    const rh = document.createElement('div'); rh.className = 'mhead';
+    rh.innerHTML = `<span class="dot" style="background:rgb(${TYPES[i].col.map(c=>Math.round(c*255)).join(',')})"></span>`; matBox.appendChild(rh);
+    for (let j = 0; j < K; j++) { const v = A[i][j]; const cell = document.createElement('div'); cell.className = 'mcell';
+      const g = v > 0 ? [90*v+20, 209*v+20, 200*v+20] : v < 0 ? [230*-v+20, 60, 120*-v+20] : [40,48,58];
+      cell.style.background = `rgb(${g.map(x=>Math.round(clamp(x,0,255))).join(',')})`;
+      cell.style.color = Math.abs(v) > 0.3 ? '#0a0d12' : '#7d91a6';
+      cell.textContent = v === 0 ? '·' : (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1).replace('0.', '.');
+      cell.title = `${TYPES[i].name} ← ${TYPES[j].name}`;
+      cell.addEventListener('click', () => { const steps = [-0.8,-0.4,0,0.4,0.8]; let idx = steps.indexOf(A[i][j]);
+        A[i][j] = steps[(idx + 1) % steps.length]; renderMatrix(); });
+      matBox.appendChild(cell); } }
+}
+$('b_randA').onclick = () => { randomChemistry(); renderMatrix(); };
+$('b_ladder').onclick = () => { ladderChemistry(); renderMatrix(); };
+$('b_clump').onclick = () => { clumpChemistry(); renderMatrix(); };
+$('b_sugar').onclick = () => { for (let i = 0; i < 250; i++) sugarSplat(srand(), srand(), 3); };
+$('b_rock').onclick = () => { const rx = srand(), ry = srand(); for (let i = 0; i < 40; i++) { const c = { x: fract(rx+(srand()-.5)*0.06), y: fract(ry+(srand()-.5)*0.06), vx:0, vy:0, t:3, fuel: 3, alive: false, size: 1.2 }; if (cells.length < MAX) cells.push(c); } };
+let paused = false;
+$('b_pause').onclick = () => { paused = !paused; $('b_pause').textContent = paused ? 'resume' : 'pause'; $('b_pause').classList.toggle('on', paused); };
+$('b_reset').onclick = () => { seedWorld(); };
+$('c_sugar').onchange = () => {};
+
+// snapshot export/import — cells + matrices + params (field re-equilibrates from sunlight)
+$('b_export').onclick = () => { $('snap').value = JSON.stringify(snapshot()); };
+$('b_import').onclick = () => { try { loadSnapshot(JSON.parse($('snap').value)); } catch (e) { $('snap').value = 'could not parse: ' + e.message; } };
+$('b_download').onclick = () => { const blob = new Blob([JSON.stringify(snapshot())], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'cellworld-snapshot.json'; a.click(); URL.revokeObjectURL(a.href); };
+function snapshot() { return { v: 1, A, D, Dscav, P: TYPES.map(t => t.P), params,
+  cells: cells.map(c => [+c.x.toFixed(4), +c.y.toFixed(4), c.t, +c.fuel.toFixed(2), c.alive ? 1 : 0]) }; }
+function loadSnapshot(s) { if (!s || !s.cells) throw new Error('no cells'); A = s.A; D = s.D; Dscav = s.Dscav ?? 0.8;
+  if (s.P) s.P.forEach((p, i) => TYPES[i] && (TYPES[i].P = p));
+  if (s.params) { Object.assign(params, s.params); for (const key of ['sun','warm','visc','reach','speed']) { const el = $('s_'+key); if (el) { el.value = params[key]; el.dispatchEvent(new Event('input')); } } }
+  allocField(); for (let i = 0; i < GF*GF; i++) sugar[i] = 1.0;
+  cells = s.cells.map(a => ({ x: a[0], y: a[1], vx: 0, vy: 0, t: a[2], fuel: a[3], alive: !!a[4], size: 1 }));
+  renderMatrix(); }
+addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); $('b_pause').click(); } });
+
+/* ---------- main loop ---------- */
+let fpsT = performance.now(), fpsN = 0;
+function frame(now) {
+  if (!paused) for (let s = 0; s < params.speed; s++) step(1/60, params.sun, params.warm, params.visc, params.reach);
+  if (trackIx != null && cells[trackIx]) { cam.cx = cells[trackIx].x; cam.cy = cells[trackIx].y; } else trackIx = null;
+  uploadSugar();
+
+  gl.disable(gl.BLEND); gl.useProgram(fieldProg); gl.bindVertexArray(fieldVao);
+  gl.uniform2f(fU.u_res, canvas.width, canvas.height); gl.uniform2f(fU.u_center, cam.cx, cam.cy);
+  gl.uniform1f(fU.u_zoom, cam.zoom); gl.uniform1f(fU.u_show, $('c_sugar').checked ? 1 : 0); gl.uniform1f(fU.u_trails, $('c_trails').checked ? 1 : 0);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, sugarTex); gl.uniform1i(fU.u_sugar, 0);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+  let n = 0, ct = [0,0,0,0], corpse = 0;
+  for (let k = 0; k < cells.length; k++) { const c = cells[k]; const col = TYPES[c.t].col;
+    cellData[n*6] = c.x; cellData[n*6+1] = c.y;
+    // encode "dead" by negating the colour (r<0) — the shader reads the flag
+    const dead = !c.alive; cellData[n*6+2] = dead ? -0.45 : col[0]; cellData[n*6+3] = dead ? 0.5 : col[1]; cellData[n*6+4] = dead ? 0.55 : col[2];
+    cellData[n*6+5] = c.size; n++; if (dead) corpse++; else ct[c.t]++; }
+  gl.bindBuffer(gl.ARRAY_BUFFER, cellBuf); gl.bufferData(gl.ARRAY_BUFFER, cellData.subarray(0, n*6), gl.DYNAMIC_DRAW);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.useProgram(cellProg); gl.bindVertexArray(cellVao);
+  gl.uniform2f(cU.u_res, canvas.width, canvas.height); gl.uniform2f(cU.u_center, cam.cx, cam.cy); gl.uniform1f(cU.u_zoom, cam.zoom);
+  gl.drawArrays(gl.POINTS, 0, n);
+
+  fpsN++; if (now - fpsT > 500) { $('h_fps').textContent = Math.round(fpsN*1000/(now-fpsT)); fpsN = 0; fpsT = now; }
+  $('h_counts').innerHTML = TYPES.map((t,i)=>`<span style="color:rgb(${t.col.map(c=>Math.round(c*255)).join(',')})">${ct[i]}</span>`).join(' · ') + ' <span class="k">cells</span>';
+  $('h_corpse').textContent = corpse;
+  $('h_zoom').textContent = (cam.zoom/(Math.min(canvas.width,canvas.height)*0.92)).toFixed(1);
+  const tp = $('track'); if (trackIx != null && cells[trackIx]) { const c = cells[trackIx];
+    tp.style.display = 'block'; tp.innerHTML = `<b>${TYPES[c.t].name} cell${c.alive?'':' (corpse)'}</b><br><span class="k">fuel</span> ${c.fuel.toFixed(2)} · <span class="k">size</span> ${c.size.toFixed(2)}<br><span class="k">sugar here</span> ${sugarAt(c.x,c.y).toFixed(2)}`;
+  } else tp.style.display = 'none';
+  requestAnimationFrame(frame);
+}
+
+/* ---------- boot ---------- */
+ladderChemistry(); renderMatrix(); seedWorld();
+requestAnimationFrame(frame);
+</script>

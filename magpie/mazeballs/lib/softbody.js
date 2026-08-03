@@ -324,7 +324,24 @@ export const DEFAULTS = Object.freeze({
   //                     intake (folded into `metabolic`). Makes eating NOTHING
   //                     (anosmia) score −starve, so refusing all food loses to
   //                     selective eating — property 4, "no safe non-eating".
+  //   FOOD_FLIP_RATE    NON-STATIONARY quality (default 0 = stationary). Poisson
+  //                     rate, per patch per SECOND, at which a patch's good/toxic
+  //                     identity FLIPS during the episode — signalled ONLY through
+  //                     the quality channel (position and the type-blind mass
+  //                     channel are unchanged). This removes the REFLEXIVE route
+  //                     the stationary task still left open: with a fixed schedule
+  //                     a body can commit to a spatial map ("this location is
+  //                     good") or achieve a spurious selectivity by low-gross
+  //                     spawn-luck (parking where good happens to be); when the
+  //                     identity flips mid-episode at unpredictable times, no
+  //                     fixed policy and no slowly-learned map can track it — a
+  //                     patch good NOW is toxic LATER — so the ONLY implementation
+  //                     of eat-good/avoid-toxic is to read the quality channel in
+  //                     REAL TIME. The schedule is re-randomised per spawn (a
+  //                     per-spawn salt) so it cannot be memorised. 0 leaves the
+  //                     stationary discrimination task byte-identical.
   FOOD_TOXIC_FRAC: 0, FOOD_TOXIN_HARSH: 1.0, FOOD_QUAL_SIGMA2: 0.006, FOOD_STARVE: 0,
+  FOOD_FLIP_RATE: 0,
 
   // ----------------------------------------------------------- coevolution
   // Two soft-body species in one arena. OFF by default (COEVO false), and the
@@ -1234,6 +1251,12 @@ export class Colony {
     // positions. `discrim` is the single guard the extra kernels branch on; when
     // false every discrimination path is dead and behaviour is byte-identical.
     this.discrim = isDiscrim(cfg);
+    // Non-stationary quality: patches flip good<->toxic mid-episode at a Poisson
+    // rate, signalled only through the quality channel. Inert unless discrim AND
+    // FOOD_FLIP_RATE>0, so a stationary run (flipping false) is byte-identical.
+    // `flipSalt` is drawn once per spawn (see spawn()) to randomise the schedule.
+    this.flipping = this.discrim && cfg.FOOD_FLIP_RATE > 0;
+    this.flipSalt = 0;
     this.foodType = new Float64Array(world.n).fill(1);
     // Gross (type-blind total eaten), good- and toxic-eaten, split so the anosmia
     // vs indiscriminate vs discriminator distinction is a number, not a guess.
@@ -1361,6 +1384,11 @@ export class Colony {
         this.foodY[i] = clamp(c[1] + j(), -bound, bound);
         this.foodType[i] = rng.next() < cfg.FOOD_TOXIC_FRAC ? -1 : 1;
       }
+      // Non-stationary quality: draw a per-spawn salt so the flip schedule differs
+      // every episode and no fixed spatial/temporal route can memorise it. Drawn
+      // AFTER the food loop and only when flipping, so a stationary discrimination
+      // run consumes the identical rng draws and stays byte-identical.
+      if (this.flipping) this.flipSalt = (rng.next() * 0x100000000) >>> 0;
     }
     // Reload plastic weights from the DEVELOPED weights and clear the traces —
     // every spawn is a fresh lifetime that starts from what the genome grew, so
@@ -1706,6 +1734,29 @@ export class Colony {
   }
 
   /* ---- kernel: feeding and the food field -------------------------------- */
+  /* ---- kernel: non-stationary quality flips (discrimination only) -------- */
+  // Each patch's good/toxic identity flips at random times during the episode,
+  // signalled ONLY through the quality sense — position and the type-blind mass
+  // channel are untouched, so a body still FINDS the patch the same way and only
+  // the sign it reads (and the sign it eats) changes. Poisson thinning: per step,
+  // flip patch f with probability FOOD_FLIP_RATE·DT, decided by a deterministic
+  // hash of (patch, step, per-spawn salt). No rng draw here, so an episode stays
+  // reproducible from the spawn seed regardless of who fed; the per-spawn salt
+  // makes the schedule differ every spawn, so no fixed spatial/temporal route can
+  // track it. Called at the START of step() so the quality read and the eaten
+  // sign both reflect the post-flip type within the same step. Inert unless
+  // flipping is on (guarded by the caller), so every non-flipping path is
+  // byte-identical.
+  kFlip() {
+    const cfg = this.cfg, W = this.world;
+    const pf = cfg.FOOD_FLIP_RATE * cfg.DT, salt = this.flipSalt, st = this.steps;
+    for (let f = 0; f < W.n; f++) {
+      let h = Math.imul(((f + 1) * 2654435761) ^ ((st + 1) * 40503) ^ salt, 2246822519) >>> 0;
+      h = (h ^ (h >>> 15)) >>> 0;
+      if (h / 4294967296 < pf) this.foodType[f] = -this.foodType[f];
+    }
+  }
+
   kFood() {
     const cfg = this.cfg, W = this.world, dt = cfg.DT;
     // A predator's foraging return is scaled by COEVO_PRED_FORAGE (0 = pure
@@ -1900,6 +1951,7 @@ export class Colony {
   }
 
   step() {
+    if (this.flipping) this.kFlip();
     this.kSense();
     this.kNeural();
     this.kPhysics();
