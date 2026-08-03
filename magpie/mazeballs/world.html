@@ -167,7 +167,24 @@ import { Evolver } from './lib/evolve.js';
 const $ = id => document.getElementById(id);
 const fail = (msg) => { $('err').style.display = 'block'; $('err').textContent = msg; };
 
-if (!navigator.gpu) fail('WebGPU is not available in this browser.\nTry Chrome/Edge 113+, or Safari 18+.');
+if (!navigator.gpu) {
+  // WebGPU is gated on a SECURE CONTEXT. Browsers exempt localhost and
+  // 127.0.0.1, but a plain-http request to any other address — a LAN address, a
+  // tailnet 100.x address — is not secure, so navigator.gpu is simply absent and
+  // the page dies on requestAdapter with an unhelpful TypeError. Say which case
+  // this is rather than making the reader guess.
+  const insecure = !window.isSecureContext && location.protocol === 'http:'
+    && !['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+  fail(insecure
+    ? `WebGPU is disabled here because this page was served over plain http to\n` +
+      `${location.hostname}, which browsers do not treat as a secure context.\n` +
+      `Only localhost and 127.0.0.1 are exempt.\n\n` +
+      `Over a tailnet, terminate TLS with a real certificate:\n` +
+      `    tailscale serve --bg --https=443 http://127.0.0.1:${location.port || 8899}\n` +
+      `then open https://<machine>.<tailnet>.ts.net/\n\n` +
+      `(tailscale serve --https=443 off  reverts it.)`
+    : 'WebGPU is not available in this browser.\nTry Chrome/Edge 113+, or Safari 18+.');
+}
 
 /* ------------------------------------------------------------------ render */
 
@@ -393,6 +410,10 @@ const WATCH = new URLSearchParams(location.search).has('watch');
 const canvas = $('c');
 
 async function boot() {
+  // Bail before touching navigator.gpu: without this the explanation written at
+  // load time is immediately overwritten by the raw TypeError from
+  // undefined.requestAdapter, which tells the reader nothing about why.
+  if (!navigator.gpu) return;
   const adapter = await navigator.gpu.requestAdapter();
   if (!adapter) return fail('No WebGPU adapter — this machine exposes no usable GPU.');
 
@@ -466,6 +487,11 @@ async function rebuild() {
   const built = buildBodies({
     beasts, cells: cellsPer, degree: 12, bondK: 4,
     radius: 1.1, bound, seed: (Math.random() * 1e6) | 0,
+    // The arena is sized for the largest body evolution can reach, so this
+    // multiplies the whole world's buffers. A local sandbox does not need the
+    // headroom a long server run does, and at maxCells 40 a 2000-beast page
+    // silently became 80,000 cells — enough to exceed a smaller GPU's limits.
+    maxCells: WATCH ? 40 : 20,
   });
   const brains = await BrainArenaGPU.create(built.arena, dev);
   const world = new WorldGPU(brains, built.cells, {

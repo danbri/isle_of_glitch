@@ -207,7 +207,17 @@ const ROOT = new URL('..', import.meta.url).pathname;
 // --host 127.0.0.1 to keep it local only.
 Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
   const url = new URL(req.url);
-  const path = url.pathname === '/' ? '/world.html' : url.pathname;
+  // Bare / watches the shared world. Serving the plain page there made every
+  // visitor build a SECOND simulation locally — and once the arena was sized for
+  // the largest evolvable body that became 2000*40 = 80,000 cells rather than
+  // 24,000, tripling the GPU buffers. On this machine that merely drops to 47fps;
+  // on a phone or a smaller GPU over the tailnet it exceeds device limits and the
+  // page errors after loading. Anyone who actually wants a private sandbox can
+  // still ask for /world.html.
+  if (url.pathname === '/') {
+    return new Response(null, { status: 302, headers: { location: '/world.html?watch=1' } });
+  }
+  const path = url.pathname;
 
   if (path === '/frame') {
     return new Response(await frame(), {
