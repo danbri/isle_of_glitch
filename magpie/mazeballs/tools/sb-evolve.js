@@ -51,11 +51,11 @@
  * spawns and the re-measurement seeds are all derived deterministically, so a
  * whole run reconstructs from `--seed`.
  */
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, readFileSync } from 'node:fs';
 import { parseArgs } from './backend.js';
 import {
   DEFAULTS, makeRng, randomGenome, perturbGenome, cloneGenome, blockCrossover,
-  develop, makeWorld, Colony, GENES, regOff,
+  develop, makeWorld, Colony, GENES, GENOME_LEN, regOff,
 } from '../lib/softbody.js';
 import { zNormColumns, knnNovelty, zScore, binEdges, cellOf } from './sb-qd.js';
 
@@ -151,6 +151,16 @@ const a = parseArgs(process.argv.slice(2), {
   // into. Descriptor axes are the discrimination-task readouts, so a
   // discriminator is a distinct niche — see sb-qd.js for the justification.
   select: 'tournament', noveltyK: 15, noveltyW: 1.0, bdBins: 6,
+  // SEEDING the initial population from a pre-evolved genome (default '' = the
+  // byte-identical random start). When set to a `softbody-genome` population JSON
+  // (a single `buf`), the generation-0 population is built from that genome
+  // instead of from random draws: one exact copy plus `pop-1` perturbed copies at
+  // --seedJitter. This is the motor-burden fix — seed a body that already WALKS
+  // (populations/softbody-evolved-crawler.json) so the search spends its budget on
+  // sensing rather than on re-inventing locomotion. The random-start path (empty
+  // seedPop) is untouched: the rng draw sequence, gen0, and every downstream
+  // number are byte-identical to a trunk run when this is not set.
+  seedPop: '', seedJitter: -1,
 });
 // Build the working config from DEFAULTS plus any food overrides. DEFAULTS itself
 // is never mutated, so every other tool that imports it sees the trunk values.
@@ -226,6 +236,20 @@ const spawnSeed = (gen) => (0x3000 ^ Math.imul(gen + 1, 40503)) >>> 0;
 let nextId = 0;
 function mkRandom(rng) { return { buf: randomGenome(rng, cfg).buf, id: nextId++, pheno: null }; }
 function pheno(g) { return g.pheno || (g.pheno = develop({ buf: g.buf }, cfg, devSeed(g.id))); }
+
+// Load a seed genome from a `softbody-genome` population JSON. Returns a Float32
+// buf of length GENOME_LEN. The crawler was archived from a coevo world with more
+// sensor channels, but the genome does not encode sensor count — development wires
+// against whatever channels the current cfg exposes — so it imports cleanly (see
+// populations/README.md).
+function loadSeedBuf(path) {
+  const j = JSON.parse(readFileSync(path, 'utf8'));
+  if (!j.buf || !Array.isArray(j.buf)) throw new Error(`${path}: no genome buf`);
+  if (j.buf.length !== GENOME_LEN) throw new Error(`${path}: buf length ${j.buf.length} != GENOME_LEN ${GENOME_LEN}`);
+  return Float32Array.from(j.buf);
+}
+const hasSeed = !!a.seedPop;
+const seedJitter = a.seedJitter >= 0 ? a.seedJitter : a.eps;
 
 /**
  * Run one episode of a whole population in a shared arena and return per-organism
@@ -423,7 +447,18 @@ function remeasure(genomes, ablate = null, qualAbl = null) {
 /* ------------------------------------------------------------------- loop */
 
 const rng = makeRng(a.seed);
-let pop = Array.from({ length: a.pop }, () => mkRandom(rng));
+// Generation-0 population. Random (byte-identical trunk path) unless --seedPop is
+// set, in which case it is one exact copy of the seed genome plus pop-1 perturbed
+// copies at seedJitter — a population clustered around a body that already walks.
+let pop;
+if (hasSeed) {
+  const seedBuf = loadSeedBuf(a.seedPop);
+  pop = [{ buf: Float32Array.from(seedBuf), id: nextId++, pheno: null }];
+  while (pop.length < a.pop)
+    pop.push({ buf: perturbGenome({ buf: seedBuf }, seedJitter, rng).buf, id: nextId++, pheno: null });
+} else {
+  pop = Array.from({ length: a.pop }, () => mkRandom(rng));
+}
 const gen0 = pop.map(g => ({ buf: Float32Array.from(g.buf), id: g.id, pheno: pheno(g) }));
 
 // Mode selection acts under at generation `gen`. A curriculum runs the opening
@@ -432,6 +467,7 @@ const modeAt = (gen) => (gen < a.curriculum ? 'displacement' : a.fitness);
 
 log(`[sb-evolve] pop ${a.pop}, gens ${a.gens}, elite ${a.elite}, eps ${a.eps}, steps ${a.steps}, seed ${a.seed}` +
     `, fitness ${a.fitness}, spawns ${a.spawns}${a.curriculum ? ` (curriculum: displacement for ${a.curriculum} gens)` : ''}` +
+    `${hasSeed ? `, SEEDED from ${a.seedPop} (jitter ${seedJitter})` : ''}` +
     `${a.crossover ? ', +blockCrossover' : ''}` +
     `\n           food ${cfg.FOOD} in ${cfg.FOOD_CLUSTERS} clusters, senseSigma2 ${cfg.FOOD_SENSE_SIGMA2}, eatSigma2 ${cfg.FOOD_EAT_SIGMA2}`);
 
@@ -733,6 +769,7 @@ if (a.out) {
   writeFileSync(a.out, JSON.stringify({
     seed: a.seed, pop: a.pop, gens: a.gens, elite: a.elite, eps: a.eps, steps: a.steps,
     fitness: a.fitness, curriculum: a.curriculum, spawns: a.spawns, crossover: !!a.crossover,
+    seedPop: a.seedPop || null, seedJitter: hasSeed ? seedJitter : null,
     food: { FOOD: cfg.FOOD, FOOD_CLUSTERS: cfg.FOOD_CLUSTERS, FOOD_CLUSTER_SPAN: cfg.FOOD_CLUSTER_SPAN, FOOD_SENSE_SIGMA2: cfg.FOOD_SENSE_SIGMA2, FOOD_EAT_SIGMA2: cfg.FOOD_EAT_SIGMA2, FOOD_RELOCATE_THRESH: cfg.FOOD_RELOCATE_THRESH }, traj,
     gen0: m0, evolved: mE, ablated: mA,
     dispGain, dispBar, intakeGain, intakeBar, effGain, effBar, ablDrop, ablBar,
