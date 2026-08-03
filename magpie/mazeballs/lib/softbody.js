@@ -280,6 +280,15 @@ export const DEFAULTS = Object.freeze({
 
   // ------------------------------------------------------------------ food
   FOOD: 42, FOOD_CLUSTERS: 9, FOOD_CLUSTER_SIGMA: 0.12,
+  // Full width of the box the cluster centres are drawn from, centred on the
+  // origin: a centre lands uniformly in [-SPAN/2, +SPAN/2] on each axis. The
+  // default 1.72 reproduces the original hardcoded `rng*1.72 - 0.86` exactly
+  // (SPAN/2 === 0.86 to the bit), so the trunk food layout is byte-identical.
+  // Shrinking it packs the clusters into the arena INTERIOR, away from the
+  // walls — the "sparse clustered interior target" the sense-range experiment
+  // needs so that a body in an empty region has a real "food is over there,
+  // nothing here" gradient to climb rather than food smeared to the boundary.
+  FOOD_CLUSTER_SPAN: 1.72,
   FOOD_SENSE_SIGMA2: 0.050, FOOD_EAT_SIGMA2: 0.0018,
   FOOD_CONSUME: 0.40, FOOD_REGROW: 0.09, FOOD_RELOCATE_THRESH: 0.15,
 
@@ -1048,9 +1057,13 @@ function relaxClump(x, y, rad, alive, N, iters, cfg) {
 
 export function makeWorld(cfg = DEFAULTS, rng = makeRng(0x8f3d20a1)) {
   const bound = cfg.WORLD_BOUND * 0.92;
+  // Cluster centres in [-SPAN/2, +SPAN/2]^2. SPAN defaults to 1.72 with
+  // SPAN/2 === 0.86 exactly, so this is bit-identical to the original
+  // `rng*1.72 - 0.86`; a smaller SPAN confines the clusters to the interior.
+  const span = cfg.FOOD_CLUSTER_SPAN, half = span / 2;
   const centres = [];
   for (let i = 0; i < cfg.FOOD_CLUSTERS; i++)
-    centres.push([(rng.next() * 1.72) - 0.86, (rng.next() * 1.72) - 0.86]);
+    centres.push([(rng.next() * span) - half, (rng.next() * span) - half]);
   const fx = new Float64Array(cfg.FOOD), fy = new Float64Array(cfg.FOOD);
   for (let i = 0; i < cfg.FOOD; i++) {
     const c = centres[i % Math.max(1, centres.length)] || [0, 0];
