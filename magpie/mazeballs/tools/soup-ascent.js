@@ -21,7 +21,8 @@
  *
  * WHAT IS COUNTED (the only category-free thing). Not "predator capability."
  * ASCENT = does a LATER gene pool beat an EARLIER one? Freeze the whole genome
- * pool at generation A and at generation B, drop a 50/50 mix into the SAME fresh
+ * pool at TIME A and at TIME B (wall-clock steps of the evolving soup), drop a
+ * 50/50 mix into the SAME fresh
  * neutral world (mutation off, so we test the frozen genomes), let them eat,
  * breed and die, and read off which origin owns more of the population at the end.
  * Origin is a scoreboard label we keep OUTSIDE the cells — the cells never know
@@ -117,13 +118,19 @@ function step(w, sun, visc, mut){
 }
 
 /* ---------------- evolve one soup, snapshotting the whole genome pool by generation ---------------- */
-function evolve(steps, snapEvery){
+function evolve(steps, snapSteps){
   const w=makeWorld(5);
   for(let i=0;i<300;i++) w.cells.push(mkCell(R(),R(),randGenome(),1.6,w.nextLin++));
-  const snaps=[]; let lastSnapGen=-1;
+  const snaps=[];
   for(let s=0;s<steps;s++){ step(w,1.4,0.86,0.12);
-    if(w.gen>=lastSnapGen+snapEvery && w.cells.length>40){
-      snaps.push({ gen:w.gen, genomes:w.cells.map(c=>Float32Array.from(c.g)) }); lastSnapGen=w.gen; }
+    // Snapshot by WALL-CLOCK STEP, not by max-generation-DEPTH. The pool's genome
+    // distribution at a later TIME vs an earlier time is the earlier-vs-later
+    // comparison we want. (Generation depth is a useless clock here: every division
+    // halves fuel, so lineages rarely chain deep — the depth counter crawls to ~12
+    // while thousands of divisions happen, and a depth-keyed snapshot fires only
+    // twice, starving the tournament of pools to compare.)
+    if(s>0 && s%snapSteps===0 && w.cells.length>40){
+      snaps.push({ t:s, gen:w.gen, genomes:w.cells.map(c=>Float32Array.from(c.g)) }); }
     if(w.cells.length===0){ w.cells.push(mkCell(R(),R(),randGenome(),1.6,w.nextLin++)); } // never spontaneously "spawn a species"; this is a bare abiogenesis floor so a total wipe doesn't end the measurement
   }
   return { w, snaps };
@@ -145,10 +152,10 @@ function tournament(poolLater, poolEarlier, seed, window=2400, nEach=70){
 
 /* ================================ run ================================ */
 console.log('LAWFUL one-soup arena — no predator/prey, consumption = enzyme·tag chemistry.');
-console.log('Evolving a soup and snapshotting the whole genome pool by generation...\n');
+console.log('Evolving a soup and snapshotting the genome pool by wall-clock step...\n');
 const t0=Date.now();
-const { snaps } = evolve(26000, 6);
-console.log(`captured ${snaps.length} generational snapshots (gens: ${snaps.map(s=>s.gen).join(', ')}) in ${((Date.now()-t0)/1000).toFixed(0)}s\n`);
+const { snaps } = evolve(26000, 2000);
+console.log(`captured ${snaps.length} snapshots (at steps: ${snaps.map(s=>s.t).join(', ')}) in ${((Date.now()-t0)/1000).toFixed(0)}s\n`);
 
 if(snaps.length>=3){
   const early=snaps[0], mid=snaps[(snaps.length/2)|0], late=snaps[snaps.length-1];
@@ -157,17 +164,17 @@ if(snaps.length>=3){
   const se=(a,b,m)=>{ let v=0; for(const sd of SEEDS){ const x=tournament(a.genomes,b.genomes,sd); v+=(x-m)**2; } return Math.sqrt(v/SEEDS.length/SEEDS.length); };
   console.log('CATEGORY-FREE ANCESTRAL TOURNAMENT (later pool\'s share of the population; >0.50 = later wins):');
   console.log('  origin is a scoreboard label only — the cells never see it; predation/foraging/defence all fold into who captured more energy and left more descendants.\n');
-  for(const [label,a,b] of [[`gen ${late.gen} vs gen ${early.gen}`,late,early],
-                            [`gen ${late.gen} vs gen ${mid.gen}`,late,mid],
-                            [`gen ${mid.gen} vs gen ${early.gen}`,mid,early],
-                            [`gen ${early.gen} vs itself (control)`,early,early]]){
+  for(const [label,a,b] of [[`step ${late.t} vs step ${early.t}`,late,early],
+                            [`step ${late.t} vs step ${mid.t}`,late,mid],
+                            [`step ${mid.t} vs step ${early.t}`,mid,early],
+                            [`step ${early.t} vs itself (control)`,early,early]]){
     const m=mean(a,b); console.log(`  ${label.padEnd(30)} later share ${m.toFixed(3)} ± ${se(a,b,m).toFixed(3)}  ${m>0.58?'LATER WINS':m<0.42?'earlier wins':'~tie'}`);
   }
-  // a monotone-ish rising ladder along all consecutive snapshots
-  console.log('\n  consecutive ladder (each newer gen vs the one before):');
+  // the rising ladder along all consecutive snapshots (is it STILL climbing?)
+  console.log('\n  consecutive ladder (each later pool vs the one before):');
   let wins=0,tot=0;
   for(let i=1;i<snaps.length;i++){ const m=mean(snaps[i],snaps[i-1]); tot++; if(m>0.5)wins++;
-    console.log(`    gen ${String(snaps[i].gen).padStart(3)} vs gen ${String(snaps[i-1].gen).padStart(3)}: ${m.toFixed(3)} ${m>0.5?'↑':'↓'}`); }
+    console.log(`    step ${String(snaps[i].t).padStart(5)} vs ${String(snaps[i-1].t).padStart(5)}: ${m.toFixed(3)} ${m>0.5?'↑':'↓'}`); }
   console.log(`\n  later beat earlier in ${wins}/${tot} consecutive steps.`);
   console.log(wins>=tot*0.7 ? '  => sustained, non-saturating ascent — later genomes keep out-competing older ones. The honest finite proxy for open-ended ("infinite") ascent, measured with NO entity/species/predator category.'
                             : '  => ascent is weak/plateaued here; the arms race needs a richer strategy space (evolvable morphology).');

@@ -25,9 +25,22 @@ AI — on the machine with a real GPU.
   advection). "Fieldsim is beautiful." Android flicker fixed (offscreen buffer).
 - **lib/fields.js** — the field primitive (ScalarField, CurlFlow, advect, fbm),
   toroidal option, mass-conservation tested. The backbone.
-- **tools/soup-ascent.js** — WIP lawful one-soup engine + a CATEGORY-FREE
-  ancestral tournament (see "what to count", below). Runs; ascent NOT yet
-  demonstrated (needs tuning / a richer strategy space).
+- **tools/soup-ascent.js** — lawful one-soup engine + a CATEGORY-FREE ancestral
+  tournament (see "what to count", below). **Ascent is now demonstrated, category
+  -free.** Freeze the genome pool at an early and a late TIME, drop a 50/50 mix
+  into the same neutral world with mutation OFF, and read the later pool's share:
+  `step 24000 vs 2000 = 0.639` (later wins), `step 14000 vs 2000 = 0.666`, and
+  the control `step 2000 vs itself = 0.514` (≈ no bias — validates the method).
+  Along the consecutive ladder, **later beat earlier in 9/11 steps** → sustained
+  (if decelerating) ascent. This is measured with NO predator/prey/species/entity
+  category — origin is a scoreboard label the cells never see; predation, foraging
+  and defence all fold into "who captured more energy and left more descendants."
+  The fix that unlocked it: snapshot by **wall-clock step**, not by max-generation
+  -*depth* — depth crawls to ~12 while thousands of divisions happen (each halves
+  fuel, so lineages rarely chain deep), so a depth-keyed snapshot fired only twice
+  and starved the tournament. Next: does a richer strategy space (evolvable
+  morphology / multicellularity) turn the slow, decelerating climb into a steeper
+  one? That is the open question the instrument now exists to answer.
 - **tools/land-evolve.js, land-suspects.js, land-control.js** — minimal
   testbeds that proved: evolution CAN find sensing under batch-GA selection;
   the motor-coordination burden is a wall; seeding a gait doesn't transfer.
