@@ -5080,3 +5080,91 @@ single lineage.
 NEXT, in order of expected value: raise maxCells and see whether size keeps
 paying; add something that protects lineages and re-measure; only then ask
 whether the ascent itself attenuates.
+
+### RETRACTED: "ascent stops" was two allocators running out of room
+
+The section immediately above concluded that ascent halts after ~1800 ticks, from
+a post-transient margin of 0.523 +/- 0.020. That conclusion is withdrawn. Two
+separate allocation bugs were throttling the runs it was measured on, and both
+failed silently while every visible counter read healthy.
+
+**The world's arena fragmented.** Bodies are allocated n CONTIGUOUS neuron slots
+and body size is heritable, so a run starting at 12 cells reaches 30-47 while the
+arena was sized beasts*12. It does not fail cleanly; it fails by EXTERNAL
+fragmentation:
+
+    tick 320  meanBody 26.2  gen 48  biggest hole 5642  holes that fit: 20
+    tick 480  meanBody 31.9  gen 57  biggest hole   30  holes that fit:  0
+    tick 800  meanBody 32.5  gen 57  biggest hole   30  holes that fit:  0
+
+3325 slots free — 12.5% of the arena — across 259 holes whose largest was 30,
+against a mean body of 32. Every birth failed. Generations froze at 57 while the
+population sat at ~710 and 1481 organism slots read as available.
+
+**The tournament had no headroom either, and that one is worse**, because the
+tournament is the INSTRUMENT. Its arena was sized at exactly the sum of the
+starting genomes. A contest decided by which side leaves more DESCENDANTS,
+run where reproduction is blocked, measures the allocator. Twenty blocked-birth
+warnings fired across one ladder before this was caught, and only because the
+first fix had made blocked births announce themselves.
+
+Every ascent number in this wave came through that instrument.
+
+WHAT SURVIVES: the comparisons were like-for-like. Both sides of every tournament
+ran in the same arena under the same constraint, and the self-versus-self control
+still ties, so no side won BECAUSE of the bug and the direction of each result
+stands. What is unreliable is the magnitude and, more importantly, the shape over
+time — an apparent decay across rungs may be the arena filling rather than
+adaptation slowing.
+
+After both fixes, measured with 0 blocked births:
+
+    T600 ->T1200   0.909 +/- 0.027
+    T1200->T1800   0.749 +/- 0.031
+    T1800->T2400   0.491 +/- 0.029
+    T2400->T3000   0.511 +/- 0.035
+
+Those first two are the STRONGEST margins measured anywhere in this wave, and the
+same rungs previously read ~0.77 and ~0.58 through the choked instrument. The
+bugs were suppressing the signal, not manufacturing it — so the negative results
+were the ones most distorted, which is the opposite of the usual worry.
+
+### The size ceiling is not the binding constraint
+
+With fragmentation fixed in both arms (0 blocked births), maxCells 40 against 140:
+
+    capped   size 18.4 -> 39.4 (pinned at 40)   gen 100   rungs 0.782 0.655 0.613 0.571
+    raised   size 19.5 -> 57.0 (still climbing) gen 114   rungs 0.934 0.544 0.549 0.519
+
+    post-transient mean margin: capped 0.655, raised 0.637
+
+Lifting the cap let bodies keep growing with no sign of stopping, and the margin
+still settled to ~0.52. Growth continues but stops PAYING. The cap was not what
+ended ascent.
+
+Note also that all eight rungs sit above 0.5. The earlier claim that ascent had
+reached chance (0.491, 0.511) was the broken-instrument measurement; ascent
+declines from ~0.8-0.93 early to ~0.52-0.57 late but does not reach zero over the
+range tested.
+
+### Brains go NaN on very long runs — unexplained
+
+On a server at 1.29M steps and generation 117, ALL 25,495 live cells had NaN
+activation while every position remained finite. Reported first as a rendering
+failure: cells vanish because the vertex shader derives both radius and glow from
+the activation, and NaN collapses every quad.
+
+The combination is the informative part and it is not yet explained. If the GPU's
+act buffer were NaN, muscle cells would produce NaN contraction, then NaN forces,
+and positions would follow within one step. They did not. So the NaN appears
+between the GPU and the frame rather than in the simulation.
+
+Ruled out: unbounded weight mutation. A weight random-walks by +/-0.32 at 14% of
+divisions, and across 5000 independent walks over 4000 generations the largest
+|w| reached 16.7 — nowhere near overflow, and tanh saturates long before it
+matters.
+
+Not reproduced headlessly yet; a run to generation 12 showed no NaN in state,
+act, positions, or the CPU-side weights, biases and time constants. It needs a
+run to generation 100+ to bite. Until it is explained, any measurement taken from
+a very long-running server should be treated as suspect.

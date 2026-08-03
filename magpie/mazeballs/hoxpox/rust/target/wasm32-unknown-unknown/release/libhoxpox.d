@@ -1,0 +1,1 @@
+/Users/danbri/working/mazeballs/isle_of_glitch/magpie/mazeballs/hoxpox/rust/target/wasm32-unknown-unknown/release/libhoxpox.rlib: /Users/danbri/working/mazeballs/isle_of_glitch/magpie/mazeballs/hoxpox/rust/src/lib.rs

@@ -203,9 +203,9 @@ struct W {
   driftY   : f32,
 
   morphRate: f32,   // how fast the terrain becomes a different terrain
-  pad0     : f32,
-  pad1     : f32,
-  pad2     : f32,
+  gripBase : f32,   // traction against the substrate, before modulation
+  gripMod  : f32,   // how far activation may raise or lower a cell's grip
+  fricK    : f32,   // Coulomb velocity decrement per unit grip per second
 };
 
 // Positions and velocities are packed vec2, and (type, slot) into one vec2<i32>.
@@ -512,6 +512,37 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // never recovers and poisons every bond that touches it. Capping speed bounds
   // the overshoot to under one rest length per step while leaving the force law
   // untouched in the range bodies actually operate in.
+  // ---------------------------------------------------- traction
+  //
+  // WITHOUT THIS THERE IS NO LOCOMOTION AT ALL, and its absence is why bodies
+  // only ever drifted with the flow. Internal forces cannot move a body's centre
+  // of mass: a muscle contracting pulls its two ends toward each other and the
+  // body deforms in place. Something outside the body has to be pushed against.
+  //
+  // Worse, even with uniform friction a contract-relax cycle is RECIPROCAL — it
+  // retraces its own path and returns exactly where it started, which is the
+  // scallop theorem. Breaking it needs the grip itself to vary through the
+  // cycle, so the body can plant one end while the other slides: anchor,
+  // extend, anchor, contract. That is how a caterpillar, a snake's scales and a
+  // starfish's tube feet all work, and it is why grip here is MODULATED BY THE
+  // CELL'S ACTIVATION rather than being a constant.
+  //
+  // Coulomb, not viscous: a fixed velocity decrement rather than a force
+  // proportional to speed. Viscous drag would slow everything smoothly and never
+  // let a cell hold still against a pull, which is exactly what an anchor has to
+  // do. This lets a high-grip cell stay put while a low-grip one is dragged.
+  {
+    var grip = P.gripBase;
+    let slot = cmeta[i].y;
+    if (slot >= 0) { grip = grip * (1.0 + P.gripMod * act[u32(slot)]); }
+    grip = max(grip, 0.0);
+    let sp = length(v);
+    if (sp > 1e-6) {
+      let dec = grip * P.fricK * P.dt;
+      v = v * (max(0.0, sp - dec) / sp);
+    }
+  }
+
   // Component-wise, NOT a length-based rescale. The rescale form v*(lim/speed)
   // evaluates to inf*0 = NaN the moment a component overflows to infinity — so
   // the guard meant to prevent blow-up was itself manufacturing the NaN it was
@@ -660,6 +691,13 @@ export class WorldGPU {
       resScale: 0.35, resSeed: 91, eCap: 3.0, eFloor: -2.0,
       hashCell: 3.2, hashSize: 65536, crowdK: 0.012,
       driftX: 0.0, driftY: 0.0, morphRate: 0.0,
+      // Sized against the forces actually present. Flow drag imparts about
+      // 0.005 velocity units per step; a muscle contracting imparts nearer 0.4.
+      // Traction has to sit between the two — enough that a body is not simply
+      // blown along by the current, little enough that its own muscles can still
+      // move it. At the original 0.55 the decrement was 0.05 per step, ten times
+      // what the flow supplies, and the world froze solid.
+      gripBase: 0.06, gripMod: 0.9, fricK: 6.0,
       bucketM: 12, predRate: 0.0, contactR: 1.0, sizeScale: 14.0, sizeRef: 12,
       dt: brains.dt, ...params,
     };
@@ -751,6 +789,9 @@ export class WorldGPU {
     dv.setFloat32(120, p.driftX, true);
     dv.setFloat32(124, p.driftY, true);
     dv.setFloat32(128, p.morphRate, true);
+    dv.setFloat32(132, p.gripBase, true);
+    dv.setFloat32(136, p.gripMod, true);
+    dv.setFloat32(140, p.fricK, true);
     this.device.queue.writeBuffer(this.bParams, 0, buf);
   }
 
