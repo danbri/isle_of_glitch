@@ -15,6 +15,10 @@ const a = parseArgs(process.argv.slice(2), {
   H: '3', ops: 'gaussian,signflip', seeds: '1,2,3', conc: 3,
   pop: 48, gens: 20, steps: 500, curriculum: 6, starve: 0.005, consume: 1.2,
   relocateThresh: 0.30, food: 42, clusters: 9, toxicFrac: 0.5, signRate: 0.02,
+  // Non-stationary quality (0 = stationary, unchanged). >0 makes each patch's
+  // good/toxic identity flip at this Poisson rate mid-episode, so no fixed policy
+  // can win and real-time sensing is the only implementation.
+  flipRate: 0,
   outdir: 'results/discrim',
 });
 mkdirSync(a.outdir, { recursive: true });
@@ -22,9 +26,12 @@ const Hs = String(a.H).split(',');
 const ops = String(a.ops).split(',');
 const seeds = String(a.seeds).split(',').map(Number);
 
+// Flipping runs are tagged `flipH{H}-…` so they never clobber the committed
+// stationary discrimination results (`H{H}-…`).
+const pre = a.flipRate > 0 ? 'flip' : '';
 const jobs = [];
 for (const H of Hs) for (const op of ops) for (const seed of seeds)
-  jobs.push({ H, op, seed, tag: `H${H}-${op}-s${seed}` });
+  jobs.push({ H, op, seed, tag: `${pre}H${H}-${op}-s${seed}` });
 
 function run(job) {
   const out = `${a.outdir}/${job.tag}.json`;
@@ -35,6 +42,7 @@ function run(job) {
     '--consume', a.consume, '--relocateThresh', a.relocateThresh,
     '--food', a.food, '--clusters', a.clusters, '--op', job.op,
     ...(job.op === 'signflip' ? ['--signRate', a.signRate] : []),
+    ...(a.flipRate > 0 ? ['--flipRate', a.flipRate] : []),
     '--quiet', '--out', out,
   ].map(String);
   return new Promise((resolve) => {

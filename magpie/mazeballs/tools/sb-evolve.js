@@ -119,6 +119,14 @@ const a = parseArgs(process.argv.slice(2), {
   // calibration axis — swept to find the band where the task has a gradient
   // toward sensing rather than mass extinction or a surviving degenerate.
   toxicFrac: 0, toxinHarsh: 1.0, qualSigma2: -1, starve: 0,
+  // Non-stationary quality (default 0 = stationary discrimination task, unchanged).
+  // Poisson rate per patch per second at which a patch's good/toxic identity FLIPS
+  // mid-episode, revealed only through the quality channel. With flips, no fixed
+  // policy and no committed spatial map can win (a patch good NOW is toxic LATER),
+  // so the only implementation of eat-good/avoid-toxic is to read the quality
+  // sense in REAL TIME — removing the reflexive route the stationary task left. The
+  // schedule is re-randomised per spawn so it cannot be memorised.
+  flipRate: 0,
   // Mutation operator. 'gaussian' is perturbGenome, the 17× baseline, and the
   // default so a trunk run reproduces byte-identical. 'signflip' is that Gaussian
   // PLUS a per-regulatory-locus sign flip at --signRate — the sign-aware operator
@@ -160,6 +168,7 @@ const cfg = Object.freeze({
   ...(a.regrow >= 0 ? { FOOD_REGROW: a.regrow } : {}),
   ...(a.toxicFrac > 0 ? { FOOD_TOXIC_FRAC: a.toxicFrac, FOOD_TOXIN_HARSH: a.toxinHarsh, FOOD_STARVE: a.starve } : {}),
   ...(a.qualSigma2 >= 0 ? { FOOD_QUAL_SIGMA2: a.qualSigma2 } : {}),
+  ...(a.flipRate > 0 ? { FOOD_FLIP_RATE: a.flipRate } : {}),
 });
 // Whether a metabolic cost is live. Off => cfg === DEFAULTS and every report
 // line below is byte-identical to the trunk; on => the net-intake and squatter
@@ -671,6 +680,7 @@ if (hasDiscrim) {
   console.log('\ndiscrimination task active:' +
     `  toxicFrac ${f(cfg.FOOD_TOXIC_FRAC)}  toxinHarsh ${f(cfg.FOOD_TOXIN_HARSH)}  ` +
     `qualSigma2 ${f(cfg.FOOD_QUAL_SIGMA2)}  starve ${f(cfg.FOOD_STARVE)}  op ${a.op}` +
+    (cfg.FOOD_FLIP_RATE > 0 ? `  flipRate ${f(cfg.FOOD_FLIP_RATE)} [NON-STATIONARY]` : '') +
     (a.op === 'signflip' ? ` signRate ${a.signRate}` : ''));
   console.log('  degenerate census on the evolved population:');
   console.log(`    squatter fraction (path < ${SQUAT_PATH}):     ${(mE.squatterFrac * 100).toFixed(0)}%`);
@@ -737,7 +747,7 @@ if (a.out) {
     // byte-identical. The decisive quantity is qualAblDrop / qualAblBar.
     ...(hasDiscrim ? {
       op: a.op, signRate: a.signRate,
-      discrim: { toxicFrac: cfg.FOOD_TOXIC_FRAC, toxinHarsh: cfg.FOOD_TOXIN_HARSH, qualSigma2: cfg.FOOD_QUAL_SIGMA2, starve: cfg.FOOD_STARVE },
+      discrim: { toxicFrac: cfg.FOOD_TOXIC_FRAC, toxinHarsh: cfg.FOOD_TOXIN_HARSH, qualSigma2: cfg.FOOD_QUAL_SIGMA2, starve: cfg.FOOD_STARVE, flipRate: cfg.FOOD_FLIP_RATE },
       qualAblated: mQ,
       squatterEvolved: mE.squatterFrac, anosmiaEvolved: mE.anosmiaFrac, netNegEvolved: mE.netNegFrac,
       meanGrossEvolved: mE.meanGross, meanSelvGen0: m0.meanSelv, meanSelvEvolved: mE.meanSelv,

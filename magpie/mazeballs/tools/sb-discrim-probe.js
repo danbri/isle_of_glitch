@@ -53,6 +53,13 @@ const a = parseArgs(process.argv.slice(2), {
   food: 24, clusters: 8, relocateThresh: 0.30, consume: -1, regrow: -1,
   pop: 48, steps: 400, seed: 1, evals: 4,
   sitPath: 0.10, coverPath: 0.60,   // path bands for the sitter / coverer census
+  // Non-stationary quality (0 = stationary). When >0, each patch's good/toxic
+  // identity flips at this Poisson rate (per patch per second) mid-episode,
+  // revealed only through the quality channel. The clean no-degenerate proof —
+  // the quality-ablated escape rate — becomes STRUCTURAL under flipping: a body
+  // that commits to a patch eats it good then toxic as it flips, so even the
+  // spawn-luck / low-gross selectivity tail the stationary task left is gone.
+  flipRate: 0,
 });
 const harshList = String(a.harsh).split(',').map(Number).filter(x => x > 0);
 
@@ -63,7 +70,8 @@ const frac = (v, pred) => v.filter(pred).length / Math.max(1, v.length);
 
 console.log(`[sb-discrim-probe] gen-0 kinematic-degenerate + winnability check`);
 console.log(`  toxicFrac ${a.toxicFrac}  starve ${a.starve}  food ${a.food} in ${a.clusters} clusters  ` +
-            `relocateThresh ${a.relocateThresh}  pop ${a.pop}  steps ${a.steps}  evals ${a.evals}`);
+            `relocateThresh ${a.relocateThresh}  pop ${a.pop}  steps ${a.steps}  evals ${a.evals}` +
+            (a.flipRate > 0 ? `  flipRate ${a.flipRate} [NON-STATIONARY]` : ''));
 console.log(`  harsh (H): ${harshList.join(', ')}\n`);
 console.log('  (QABL = quality channel ablated: a body that provably cannot sense good vs toxic)');
 console.log('  H     selectivity(QABL)   mean-net(QABL) ± SE  esc%   net-selective ± SE   win%  anosmia%');
@@ -88,6 +96,7 @@ for (const H of harshList) {
     ...(a.qualSigma2 >= 0 ? { FOOD_QUAL_SIGMA2: a.qualSigma2 } : {}),
     ...(a.consume >= 0 ? { FOOD_CONSUME: a.consume } : {}),
     ...(a.regrow >= 0 ? { FOOD_REGROW: a.regrow } : {}),
+    ...(a.flipRate > 0 ? { FOOD_FLIP_RATE: a.flipRate } : {}),
   });
   const elapsed = a.steps * cfg.DT, starveCost = cfg.FOOD_STARVE * elapsed;
   const world = makeWorld(cfg, makeRng(7));
