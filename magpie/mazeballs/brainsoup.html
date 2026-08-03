@@ -428,7 +428,13 @@ function frame(now){
   fpsN++; if(now-fpsT>500){ $('h_fps').textContent=Math.round(fpsN*1000/(now-fpsT)); fpsN=0; fpsT=now; }
   $('h_zoom').textContent=(cam.zoom/(Math.min(canvas.width,canvas.height)*0.92)).toFixed(1);
   const tp=$('track'); if(trackIx!=null&&cells[trackIx]){ const c=cells[trackIx]; tp.style.display='block';
-    tp.innerHTML=`<b>cell · lineage ${c.lin}</b><br><span style="color:#63758a">fuel</span> ${c.fuel.toFixed(2)} · <span style="color:#63758a">gen</span> ${c.gen}<br><span style="color:#63758a">climbing gradient</span> ${c.chi.toFixed(2)}`; }
+    const rd=radAt(c.x,c.y), mp=clamp(params.mut*(0.25+1.6*rd)*(1+1.3*at(scent,c.x,c.y)),0,0.9);
+    const k=t=>`<span style="color:#63758a">${t}</span>`;
+    tp.innerHTML=`<b>inspector — cell #${c.lin}</b><br>`+
+      `${k('DNA')} yes · living (CTRNN genome, ${GENOME} genes)<br>`+
+      `${k('lineage')} ${c.lin} · ${k('generation')} ${c.gen}<br>`+
+      `${k('fuel')} ${c.fuel.toFixed(2)} · ${k('size')} ${(c.size||1).toFixed(2)} · ${k('climb')} ${c.chi.toFixed(2)}<br>`+
+      `${k('local radiation')} ${rd.toFixed(2)} → ${k('mutation rate')} ${(mp*100).toFixed(0)}%/gene`; }
   else tp.style.display='none';
   requestAnimationFrame(frame);
 }
