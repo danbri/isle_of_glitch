@@ -250,6 +250,22 @@ a sense; the open question is which part of the soft body stops it. See
 `tools/land-control.js` (the world rewards sensing once uncoverable) and
 `tools/land-evolve.js` (evolution finds it under a direct encoding).
 
+**RESOLVED — the wall is the motor-coordination burden, not the encoding.**
+`tools/land-suspects.js`, one variable per row on an identical task: a
+DEVELOPMENTAL GRN encoding evolves load-bearing sensing (sense-drop +0.71) just
+as well as a direct encoding (+0.63), so the developmental map is exonerated.
+Changing ONLY the motor — from turn/thrust read off the net to a gait where
+moving at all needs an evolved coordinated oscillation — collapses sensing to
++0.00. Staging (evolve locomotion first, then the source task) partly restores
+it (+0.12). So the eight-null wall is that in the soft body LOCOMOTION IS ITSELF
+A HARD MANY-MUTATION PROBLEM, and the search is spent solving it — sensing never
+gets reached. This is why the plasticity run learned gait not sense, and why the
+17× displacement ascent consumed the budget. The fix is to decouple: the next
+soft-body experiment is to SEED a pre-evolved gait (the committed champion
+crawler) and evolve sensing on top, so the search is not also asked to invent
+locomotion. The mission is not retired — evolution finds sensing readily once it
+is not also inventing movement in the same budget.
+
 ## The objective
 
 `tools/score.js`. **Not fitness.** Two measured reasons:
