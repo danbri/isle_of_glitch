@@ -2,24 +2,35 @@
 /* ============================ FINDINGS (this prototype) ============================
  * Ran CONTROL (single-cell soup) vs TREATMENT (division bonds + body-gated
  * tough-food windfall) vs SEEDED (adhesion started HIGH), each 24000 steps,
- * measured with the monoculture assay + mean body size + mean adhesion:
- *   - Bonds now physically hold (two bugs fixed: v1 spring 10x too weak vs thrust;
- *     v2 every new division-bond was discarded the same step because the child
- *     wasn't in `cells` yet during the force pass — retain such bonds instead).
- *   - BUT bodies never accumulate: mean connected-component size stays ~1.0-1.02
- *     in ALL conditions, even SEEDED where ~99% of divisions bond (adhesion 0.993,
- *     and it is NOT eroded -> high adhesion is ~neutral, neither strongly paying
- *     nor strongly costing).
- *   - So the tough-food windfall (needs comp>=5) is never captured; there is no
- *     pressure to grow bodies; small bodies are a stable equilibrium.
- * DIAGNOSIS: the blocker is not selection on adhesion, it is COMPONENT TURNOVER —
- * a simple parent<->child bond under a high-death single-cell lifecycle loses
- * links (to death and swim-stretch) as fast as it makes them, so components can't
- * grow to where the windfall pays. Crossing into multicellularity needs a
- * BODY-LEVEL lifecycle: much stronger cohesion, sibling bonds, AND reproduction
- * through a single-cell propagule so a body persists and reproduces AS a body
- * (the snowflake-yeast / single-cell-bottleneck design already in LAB-NOTES /
- * WORLD.md). That is the deferred laptop build; this prototype is where it starts.
+ * measured with the monoculture assay + mean body size + mean adhesion + an
+ * ancestral tournament in the treatment world. THREE bugs were fixed getting the
+ * bond physics right:
+ *   v1  spring ~10x too weak vs a cell's own thrust -> bonded cells swam apart;
+ *   v2  every new division-bond discarded the same step (child not in `cells` yet
+ *       during the force pass) -> comp could never exceed 1;
+ *   v3  bonds snapped on stretch before bodies could grow -> make bonds break ONLY
+ *       on death, with a DAMPED spring so a clump settles into a cohesive blob.
+ *
+ * WITH v3, BODIES BOOTSTRAP AND THE CEILING BREAKS:
+ *   - mean body size climbs 1 -> ~20 from a RANDOM adhesion start (SEEDED: 40-165);
+ *     adhesion is retained, so bodies PAY (they capture the windfall).
+ *   - the monoculture assay that pinned the single-cell soup at ~320 now reads
+ *     ~450 (treatment) / ~510-536 (seeded): the bounded foraging ceiling is broken.
+ *   - the ancestral tournament in the treatment world shows a FRESH ascent burst:
+ *     late-vs-early 0.612, consecutive ladder 0.585 0.557 0.567 0.533 ...
+ *
+ * ...BUT THE NEW HILL ALSO SATURATES: body size plateaus ~20, and the tournament
+ * ladder decelerates to 2nd-half 0.508 (≈ the single-cell soup's 0.496).
+ *
+ * CONCLUSION — ASCENT IS A STAIRCASE, and this is its FIRST measured step. Open-
+ * ended ("infinite") ascent is not one endless climb (unreachable in finite
+ * compute); it is an unbounded SEQUENCE of bounded hills, each opened by a NEW
+ * lawful capability/windfall as the last saturates. Here: single-cell foraging
+ * (ceiling ~320) -> a multicellular transition (bodies bootstrap, ceiling breaks
+ * to ~450, fresh ascent) -> re-saturation. The next rung is the recursive one the
+ * goal names: a windfall only a COORDINATED / DIFFERENTIATED body can tap — cells
+ * specialising as sensors / muscles / neurons — opening hill #3. (This supersedes
+ * the earlier "bodies don't bootstrap" note, which was the v2 physics bug.)
  * ===================================================================================
  *
  * bodies.js — TEST the only lever the evidence leaves open: does cost-bearing
@@ -64,7 +75,10 @@ const CORE=0.013,REP=2.0,META=0.05,MOVECOST=0.25,THRUST=0.9,TURN=0.3,GRAZE=1.6,D
 // velocity, so a spring weaker than that lets bonded cells swim apart and snap
 // instantly (v1 bug: SPRING=3.2 → bodies never held, comp stayed 1). Make the
 // spring dominate thrust so clumps physically persist; selection can then act.
-const BOND_REST=CORE*1.2, SPRING=90, BOND_BREAK=CORE*5.0, BONDCOST=0.006,
+// v3: bonds break ONLY on death (the stretch-snap was tearing bodies apart before
+// they could grow). A DAMPED spring lets a clump settle into a cohesive blob
+// rather than exploding, so components can actually accumulate.
+const BOND_REST=CORE*1.15, SPRING=90, BOND_DAMP=25, BONDCOST=0.006,
       TOUGHGRAZE=5.0, BODY_N=5;    // ~BODY_N bonded cells to fully tap tough food
 const _o=new Float32Array(N);
 function randGenome(){ const g=new Float32Array(GEN); for(let i=0;i<GEN;i++) g[i]=gauss()*0.6; for(let i=oTag;i<GEN;i++) g[i]=gauss()*0.5; return g; }
@@ -132,17 +146,20 @@ function step(w,sun,visc,mut){
     }
     if(c.fuel<=0) w.cells[k]=null;
   }
-  // bond spring forces (attract along bonds beyond rest; break if overstretched)
+  // bond DAMPED-spring forces. Bonds persist through any stretch — they break only
+  // when an endpoint DIES (pruned at top of next step). A damping term along the
+  // bond axis bleeds relative velocity so a growing clump settles into a cohesive
+  // blob instead of oscillating apart.
   if(w.bodies && w.bonds.length){ const idIx2=new Map(); for(let k=0;k<w.cells.length;k++) if(w.cells[k]) idIx2.set(w.cells[k].id,k);
-    const keep=[];
     for(const b of w.bonds){ const ka=idIx2.get(b.a),kb=idIx2.get(b.b);
-      if(ka==null||kb==null){ keep.push(b); continue; }   // endpoint just BORN (not yet in cells) — retain the bond, don't drop it; next step it resolves
+      if(ka==null||kb==null) continue;   // endpoint just born (not yet in cells) — no force this step; bond retained (we no longer rebuild the list here)
       const A=w.cells[ka],B=w.cells[kb];
       let dx=B.x-A.x,dy=B.y-A.y; if(dx>0.5)dx-=1;else if(dx<-0.5)dx+=1; if(dy>0.5)dy-=1;else if(dy<-0.5)dy+=1;
-      const d=Math.hypot(dx,dy)||1e-6; if(d>BOND_BREAK) continue;  // snapped
-      const f=SPRING*(d-BOND_REST)/d; const fxx=dx*f/60, fyy=dy*f/60;
-      A.vx+=fxx; A.vy+=fyy; B.vx-=fxx; B.vy-=fyy; keep.push(b); }
-    w.bonds=keep;
+      const d=Math.hypot(dx,dy)||1e-6; const ux=dx/d,uy=dy/d;
+      const fs=SPRING*(d-BOND_REST);                       // spring toward rest length
+      const rv=(B.vx-A.vx)*ux+(B.vy-A.vy)*uy;              // relative speed along the bond
+      const F=(fs+BOND_DAMP*rv)/60;
+      A.vx+=F*ux; A.vy+=F*uy; B.vx-=F*ux; B.vy-=F*uy; }
   }
   for(let k=0;k<w.cells.length;k++){ const c=w.cells[k]; if(c){ c.x=fract(c.x+c.vx); c.y=fract(c.y+c.vy); } }
   w.cells=w.cells.filter(Boolean);
@@ -161,6 +178,12 @@ function monoculture(pool,seed,bodies,window=1800,nEach=100){ R=rng(seed); const
   for(let i=0;i<nEach;i++){ const g=pool[(R()*pool.length)|0]; w.cells.push(mkCell(R(),R(),Float32Array.from(g),1.8,i+1,0)); }
   let acc=0,cnt=0,csum=0; for(let s=0;s<window;s++){ step(w,1.4,0.86,0); if(s>window*2/3){ acc+=w.cells.length; csum+=meanComp(w)*w.cells.length; cnt++; } }
   return { pop: cnt?acc/cnt:0, comp: acc?csum/acc:1 }; }
+// ancestral tournament: mix later(orig=1) & earlier(orig=0) 50/50 in one neutral
+// world (same `bodies` regime for both), mutation off, return later's final share.
+function tourney(poolLater,poolEarlier,seed,bodies,window=1800,nEach=60){ R=rng(seed); const w=makeWorld(5,bodies);
+  const pick=(pool,orig)=>{ for(let i=0;i<nEach;i++){ const g=pool[(R()*pool.length)|0]; w.cells.push(mkCell(R(),R(),Float32Array.from(g),1.8,i+1,orig)); } };
+  pick(poolLater,1); pick(poolEarlier,0); for(let s=0;s<window;s++) step(w,1.4,0.86,0);
+  let later=0,tot=0; for(const c of w.cells){ tot++; if(c.orig===1)later++; } return tot?later/tot:0.5; }
 
 function run(label,bodies,initAdh){
   const snaps=evolve(24000,3000,20260803,bodies,initAdh);
@@ -174,9 +197,22 @@ function run(label,bodies,initAdh){
 console.log('Does cost-bearing multicellularity break the bounded foraging ceiling?');
 console.log('(BODY_N='+BODY_N+' bonded cells to fully tap the tough-food windfall)');
 run('CONTROL (single-cell soup — known bounded, flat after ~8000)', false);
-run('TREATMENT (bonds+windfall, adhesion random start ~0.5)', true);
+const treat=run('TREATMENT (bonds+windfall, adhesion random start ~0.5)', true);
 run('SEEDED (bonds+windfall, adhesion seeded HIGH — does selection KEEP it?)', true, 2.5);
-console.log('\nreading: SEEDED tells whether the multicellular axis PAYS once present. If mean adhesion');
-console.log('stays high and body size >1 with a monoculture pop above CONTROL, bodies pay -> the axis');
-console.log('re-opens ascent. If adhesion erodes back toward ~0.5 and size -> 1, bodies do NOT pay under');
-console.log('this windfall/cost balance (a real result: emergence needs a stronger group benefit).');
+
+// UN-CONFOUNDED ascent test: ancestral tournament WITHIN the treatment world. Both
+// origins live in the SAME tough-food world, so the extra energy cancels — this
+// isolates whether LATER multicellular genomes out-compete EARLIER ones, and
+// whether that climb decelerates the way the single-cell soup's did (2nd-half
+// ladder 0.496 = saturated).
+console.log('\n=== ASCENT in the multicellular regime (ancestral tournament, treatment world) ===');
+const SEEDS=[101,202,303];
+const tmean=(a,b)=>{ let s=0; for(const sd of SEEDS) s+=tourney(a,b,sd,true); return s/SEEDS.length; };
+const early=treat[0], mid=treat[(treat.length/2)|0], late=treat[treat.length-1];
+console.log(`  late(step ${late.t}) vs early(step ${early.t}): ${tmean(late.genomes,early.genomes).toFixed(3)}`);
+console.log(`  late(step ${late.t}) vs mid(step ${mid.t}):   ${tmean(late.genomes,mid.genomes).toFixed(3)}`);
+console.log(`  early vs itself (control):            ${tmean(early.genomes,early.genomes).toFixed(3)}`);
+const lad=[]; for(let i=1;i<treat.length;i++) lad.push(tmean(treat[i].genomes,treat[i-1].genomes));
+const h=lad.length>>1, avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+console.log('  consecutive ladder: '+lad.map(x=>x.toFixed(3)).join(' '));
+console.log(`  1st-half ${avg(lad.slice(0,h)).toFixed(3)} -> 2nd-half ${avg(lad.slice(h)).toFixed(3)}  (single-cell soup was 0.506 -> 0.496)`);
