@@ -292,6 +292,40 @@ export const DEFAULTS = Object.freeze({
   FOOD_SENSE_SIGMA2: 0.050, FOOD_EAT_SIGMA2: 0.0018,
   FOOD_CONSUME: 0.40, FOOD_REGROW: 0.09, FOOD_RELOCATE_THRESH: 0.15,
 
+  // -------------------------------------------------- discrimination task
+  // A good/toxic foraging task with NO kinematic degenerate. ALL of this is OFF
+  // by default (FOOD_TOXIC_FRAC === 0), and the single-species path is then
+  // byte-identical: senseCount stays 4, the quality channel never appears,
+  // foodType is all-good and never read (kFood keeps its `best` branch), and
+  // FOOD_STARVE 0 leaves metabolic/netIntake untouched. Turning it on builds the
+  // experiment "sensing is MANDATORY": good and toxic patches are spatially
+  // intermixed and RE-RANDOMISED every spawn (positions AND types), so no fixed
+  // route memorises where good is; both types are identical on the type-blind
+  // food-mass channel (0) so approach alone cannot tell them apart; and a
+  // separate close-range QUALITY channel (index SENSORS, receptor gene 23 — the
+  // same previously-silent locus the opponent channel reuses, so no locus is
+  // stolen and GENOME_LEN is unchanged) carries the signed type. Eating is
+  // POSITIONAL — a body eats the patch its centroid sits on, whatever it is — so
+  // the only way to avoid toxic is to steer off it, which needs the quality
+  // sense. A body that sits eats a random 50/50 stream as patches deplete and
+  // relocate; a body that covers eats everything; both eat toxic and lose once
+  // the toxin is harsh enough. Only sense-and-select wins.
+  //
+  //   FOOD_TOXIC_FRAC   fraction of patches that are toxic (type −1). 0 = trunk.
+  //   FOOD_TOXIN_HARSH  H: eating a toxic patch subtracts H× the eaten amount
+  //                     from intake (good adds +amount). H>1 makes indiscriminate
+  //                     (50/50) eating NET-NEGATIVE, which is what kills the
+  //                     sit/cover degenerates. Swept for calibration.
+  //   FOOD_QUAL_SIGMA2  width² of the quality-sense Gaussian. Close range
+  //                     (√0.006 ≈ 0.077, ~1.8× the eat radius) so a body reads a
+  //                     patch's type on final approach but not from across the
+  //                     arena — "indistinguishable except at close range".
+  //   FOOD_STARVE       flat energy drain per episode-second, netted against
+  //                     intake (folded into `metabolic`). Makes eating NOTHING
+  //                     (anosmia) score −starve, so refusing all food loses to
+  //                     selective eating — property 4, "no safe non-eating".
+  FOOD_TOXIC_FRAC: 0, FOOD_TOXIN_HARSH: 1.0, FOOD_QUAL_SIGMA2: 0.006, FOOD_STARVE: 0,
+
   // ----------------------------------------------------------- coevolution
   // Two soft-body species in one arena. OFF by default (COEVO false), and the
   // single-species path stays byte-identical when it is off: nothing below is
@@ -357,13 +391,21 @@ export const DEFAULTS = Object.freeze({
 /**
  * Effective sensor-channel count. SENSORS (=4) is the single-species count
  * (food, boundary, own speed, own strain); a coevolutionary world appends one
- * exteroceptive opponent-mass channel at index SENSORS. Kept as a function of
- * cfg so develop() and Colony agree on the width, and so the single-species
- * path returns exactly SENSORS and nothing downstream changes shape.
+ * exteroceptive opponent-mass channel at index SENSORS, and the discrimination
+ * task (FOOD_TOXIC_FRAC>0, and only when COEVO is OFF) appends a QUALITY channel
+ * at the SAME index SENSORS — the two are mutually exclusive by construction, so
+ * gene 23 (the previously-silent receptor locus) drives whichever is live and no
+ * genome locus is ever double-claimed. Kept as a function of cfg so develop() and
+ * Colony agree on the width; the single-species non-discrimination path returns
+ * exactly SENSORS and nothing downstream changes shape.
  */
-export const senseCount = (cfg = DEFAULTS) => SENSORS + (cfg && cfg.COEVO ? 1 : 0);
+export const isDiscrim = (cfg = DEFAULTS) => !!(cfg && cfg.FOOD_TOXIC_FRAC > 0 && !cfg.COEVO);
+export const senseCount = (cfg = DEFAULTS) => SENSORS + (cfg && cfg.COEVO ? 1 : 0) + (isDiscrim(cfg) ? 1 : 0);
 /** Channel index of the appended opponent-mass channel (only present if COEVO). */
 export const OPP_CHAN = SENSORS;
+/** Channel index of the appended quality channel (only present in a discrimination
+ *  world, where COEVO is off, so it shares SENSORS with the opponent channel). */
+export const QUAL_CHAN = SENSORS;
 
 /* ---------------------------------------------------------------- genome */
 
@@ -1106,6 +1148,24 @@ export class Colony {
     this.sens = new Float64Array(T * this.NS);
     this.stock = new Float64Array(world.n).fill(1);
     this.foodX = Float64Array.from(world.fx); this.foodY = Float64Array.from(world.fy);
+    // -------------------------------------------------- discrimination task
+    // Per-patch type: +1 good, −1 toxic. All good on the trunk (fill 1), and in a
+    // discrimination world it is re-randomised every spawn together with the
+    // positions. `discrim` is the single guard the extra kernels branch on; when
+    // false every discrimination path is dead and behaviour is byte-identical.
+    this.discrim = isDiscrim(cfg);
+    this.foodType = new Float64Array(world.n).fill(1);
+    // Gross (type-blind total eaten), good- and toxic-eaten, split so the anosmia
+    // vs indiscriminate vs discriminator distinction is a number, not a guess.
+    // `intake` stays the signed, H-weighted fitness quantity (good − H·toxic).
+    this.gross = new Float64Array(this.P);
+    this.goodEaten = new Float64Array(this.P);
+    this.toxEaten = new Float64Array(this.P);
+    // Quality-channel ablation, mirroring foodAblate/oppAblate: 'mean'/'const'/
+    // null. This is THE decisive instrument for the discrimination task — blind
+    // the quality sense on an evolved population and measure whether net intake
+    // collapses (it eats 50/50 once it cannot tell good from toxic).
+    this.qualAblate = null;
     // Per-organism accumulators.
     this.startX = new Float64Array(this.P); this.startY = new Float64Array(this.P);
     this.path = new Float64Array(this.P);
@@ -1160,8 +1220,10 @@ export class Colony {
     this.ny.fill(0); this.act.fill(0); this.ad.fill(0); this.strain.fill(0);
     this.path.fill(0); this.intake.fill(0); this.contact.fill(0);
     this.captures.fill(0); this.contactOrg.fill(-1); this.biteCell.fill(-1); this.biteOpp.fill(-1);
+    this.gross.fill(0); this.goodEaten.fill(0); this.toxEaten.fill(0);
     this.stock.fill(1);
     this.foodX.set(this.world.fx); this.foodY.set(this.world.fy);
+    this.foodType.fill(1);
     this.steps = 0;
     for (let o = 0; o < this.P; o++) {
       const p = this.ph[o];
@@ -1179,6 +1241,28 @@ export class Colony {
       this.startX[o] = cx; this.startY[o] = cy;
       this.lastCX[o] = cx; this.lastCY[o] = cy;
       this.occ[o].clear();
+    }
+    // Discrimination task: re-randomise food positions AND types every spawn, so
+    // no fixed route can memorise where good is. Drawn AFTER the organism loop
+    // and only when discrim, so the non-discrimination path consumes the identical
+    // rng draws and stays byte-identical. The clustered layout mirrors makeWorld
+    // (same Irwin-Hall(3) jitter), so good and toxic land intermixed within the
+    // same clusters — approaching a cluster on the type-blind mass channel gets a
+    // body to a mix it must then discriminate. Type is assigned per PATCH (not per
+    // cluster) at rate FOOD_TOXIC_FRAC.
+    if (this.discrim) {
+      const bound = cfg.WORLD_BOUND * 0.92;
+      const span = cfg.FOOD_CLUSTER_SPAN, half = span / 2;
+      const nc = Math.max(1, cfg.FOOD_CLUSTERS);
+      const centres = [];
+      for (let i = 0; i < nc; i++) centres.push([(rng.next() * span) - half, (rng.next() * span) - half]);
+      for (let i = 0; i < this.world.n; i++) {
+        const c = centres[i % nc];
+        const j = () => (rng.next() + rng.next() + rng.next() - 1.5) * (cfg.FOOD_CLUSTER_SIGMA / 1.5);
+        this.foodX[i] = clamp(c[0] + j(), -bound, bound);
+        this.foodY[i] = clamp(c[1] + j(), -bound, bound);
+        this.foodType[i] = rng.next() < cfg.FOOD_TOXIC_FRAC ? -1 : 1;
+      }
     }
   }
 
@@ -1198,6 +1282,7 @@ export class Colony {
     // present) reads zero, and the single-species path never enters this branch.
     const os2 = cfg.COEVO_SENSE_SIGMA2;
     const opp = (NS > SENSORS && this.opponents) ? this.opponents : null;
+    const qs2 = cfg.FOOD_QUAL_SIGMA2;   // close-range quality kernel (discrim only)
     for (let o = 0; o < this.P; o++) {
       const p = this.ph[o];
       for (let a = 0; a < p.n; a++) {
@@ -1221,6 +1306,22 @@ export class Colony {
         }
         this.sens[b] = Math.tanh(mass * 0.16);
         this.sens[b + 1] = Math.tanh(Math.max(0, Math.max(Math.abs(X), Math.abs(Y)) - 0.70) * 3.2);
+        // Quality channel — the discriminating sense. A SIGNED, type-weighted
+        // Gaussian sum over patches at THIS sensor cell, on a CLOSE kernel (qs2 ≪
+        // s2): positive where nearby food is good, negative where toxic, ~0 in
+        // empty space or where good and toxic cancel. This is the ONLY channel
+        // that separates the two types; the mass channel (0) above is type-blind
+        // (it sums stock regardless of type), so approach alone cannot tell them
+        // apart — a body must read this channel and steer up it (toward good) and
+        // down it (away from toxic) to win. Only wired in a discrimination world.
+        if (this.discrim) {
+          let q = 0;
+          for (let f = 0; f < W.n; f++) {
+            const d2 = (this.foodX[f] - X) ** 2 + (this.foodY[f] - Y) ** 2;
+            q += this.foodType[f] * Math.exp(-d2 / qs2) * this.stock[f];
+          }
+          this.sens[b + QUAL_CHAN] = Math.tanh(q * 0.5);
+        }
         // Opponent mass — the opposing species sensed EXACTLY as food is: a
         // Gaussian-weighted scalar over the opponents' centroids, at THIS
         // sensor cell's position. Different sensor cells sit at different body
@@ -1288,6 +1389,34 @@ export class Colony {
         for (let o = 0; o < this.P; o++) {
           const p = this.ph[o];
           for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * NS] = m;
+        }
+      }
+    }
+    // Ablation of the QUALITY channel — THE decisive discrimination instrument.
+    // 'mean' replaces every sensor cell's quality reading with the population
+    // mean (removes the spatial/temporal signal a body would steer on to tell
+    // good from toxic, injecting no noise and keeping the network in its operating
+    // regime); 'const' pins it to 0. The mass channel (0) is left intact, so an
+    // ablated body can still FIND food — it just cannot tell which is which, and
+    // eats 50/50. If the intact population discriminated, blinding this collapses
+    // net intake; if it did not, blinding costs nothing. Only meaningful in a
+    // discrimination world.
+    if (this.qualAblate && this.discrim && NS > SENSORS) {
+      if (this.qualAblate === 'const') {
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * NS + QUAL_CHAN] = 0;
+        }
+      } else {
+        let sum = 0, cnt = 0;
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) { sum += this.sens[(o * S + a) * NS + QUAL_CHAN]; cnt++; }
+        }
+        const m = cnt ? sum / cnt : 0;
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * NS + QUAL_CHAN] = m;
         }
       }
     }
@@ -1466,18 +1595,31 @@ export class Colony {
     // predator sitting on a patch would freeze it for the prey — the scaling
     // only touches how much fitness the predator banks from feeding.
     const forageK = this.role === 'predator' ? cfg.COEVO_PRED_FORAGE : 1;
+    const H = cfg.FOOD_TOXIN_HARSH;
     const draw = new Float64Array(W.n);
     for (let o = 0; o < this.P; o++) {
       const [cx, cy] = this.centroid(o);
-      let best = 0;
+      let best = 0, bestF = -1;
       for (let f = 0; f < W.n; f++) {
         const d2 = (this.foodX[f] - cx) ** 2 + (this.foodY[f] - cy) ** 2;
         const k = Math.exp(-d2 / cfg.FOOD_EAT_SIGMA2);
         draw[f] += k;
         const e = k * this.stock[f];
-        if (e > best) best = e;
+        if (e > best) { best = e; bestF = f; }
       }
-      this.intake[o] += best * dt * forageK;
+      if (this.discrim) {
+        // Eating is POSITIONAL: the body eats the single dominant patch under its
+        // centroid, whatever type it is (the `best` patch, exactly as the trunk).
+        // Its type — read from foodType, NOT choosable — decides the sign: good
+        // adds, toxic subtracts H×. gross is the type-blind amount eaten (anosmia
+        // detector); intake is the signed, H-weighted fitness quantity.
+        const amt = best * dt * forageK;
+        this.gross[o] += amt;
+        if (bestF >= 0 && this.foodType[bestF] < 0) { this.toxEaten[o] += amt; this.intake[o] -= H * amt; }
+        else { this.goodEaten[o] += amt; this.intake[o] += amt; }
+      } else {
+        this.intake[o] += best * dt * forageK;
+      }
       // trajectory readouts
       const d = Math.sqrt((cx - this.lastCX[o]) * (cx - this.lastCX[o]) + (cy - this.lastCY[o]) * (cy - this.lastCY[o]));
       this.path[o] += d;
@@ -1612,10 +1754,13 @@ export class Colony {
     // change an existing readout, they only expose the priced quantity when a
     // caller has turned a cost on.
     const moveK = cfg.META_MOVE_COST, cellK = cfg.META_CELL_COST;
+    // Flat per-second starvation drain — the discrimination task's "no safe
+    // non-eating" pressure. 0 on the trunk, so metabolic is unchanged there.
+    const starveK = cfg.FOOD_STARVE;
     const out = [];
     for (let o = 0; o < this.P; o++) {
       const [cx, cy] = this.centroid(o);
-      const metabolic = moveK * this.path[o] + cellK * this.ph[o].n * elapsed;
+      const metabolic = moveK * this.path[o] + cellK * this.ph[o].n * elapsed + starveK * elapsed;
       out.push({
         displacement: Math.sqrt((cx - this.startX[o]) * (cx - this.startX[o]) + (cy - this.startY[o]) * (cy - this.startY[o])),
         path: this.path[o],
@@ -1629,6 +1774,14 @@ export class Colony {
         // netIntake === intake.
         metabolic,
         netIntake: this.intake[o] - metabolic,
+        // Discrimination readouts: gross = type-blind total eaten (anosmia when
+        // ~0), goodEaten/toxEaten split, and selectivity = fraction of eaten that
+        // was good (0.5 = indiscriminate, →1 = perfect discrimination). All 0 /
+        // undefined-safe on the trunk (gross stays 0, so selectivity reports 0.5).
+        gross: this.gross[o],
+        goodEaten: this.goodEaten[o],
+        toxEaten: this.toxEaten[o],
+        selectivity: this.gross[o] > 1e-9 ? this.goodEaten[o] / this.gross[o] : 0.5,
       });
     }
     return out;
