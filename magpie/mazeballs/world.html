@@ -536,6 +536,13 @@ async function boot() {
     requiredLimits: {
       maxStorageBufferBindingSize: Math.min(adapter.limits.maxStorageBufferBindingSize, 512 << 20),
       maxBufferSize: Math.min(adapter.limits.maxBufferSize, 512 << 20),
+      // The world shader binds 11 storage buffers: 8 for cells plus mote
+      // positions, mote state and the mote hash. 8 is the spec's guaranteed
+      // floor, not what any real device offers. Without this the bind group
+      // layout fails validation, the pipeline is invalid, and every submit
+      // reports "Invalid CommandBuffer" with no hint as to why.
+      maxStorageBuffersPerShaderStage:
+        Math.min(adapter.limits.maxStorageBuffersPerShaderStage, 12),
     },
   });
   dev.addEventListener?.('uncapturederror', e => fail('WebGPU error: ' + (e.error?.message ?? e.error)));
