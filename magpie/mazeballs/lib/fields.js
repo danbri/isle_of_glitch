@@ -22,8 +22,20 @@
  * function of its seed — the reproducibility the significance harness needs.
  *
  * The world is the unit square [0,1]^2 on a WxH grid; callers map their own
- * coordinates in. Boundaries are clamped (a closed basin), which is the cheap
- * default; a toroidal option can be added when a wrap-around world needs it.
+ * coordinates in. Two boundary modes, chosen at construction:
+ *   - clamped (default): a closed basin. An inclusive grid — cell 0 sits ON the
+ *     x=0 edge and cell w-1 ON x=1 — with zero-flux diffusion, so nothing leaks
+ *     and mass is conserved inside the basin.
+ *   - wrap (`{ wrap: true }`): a torus, the world WORLD.md argues for. There is
+ *     no boundary, so the grid is periodic instead of inclusive — cell i covers
+ *     [i/w, (i+1)/w) and cell w-1's right neighbour IS cell 0. This deletes the
+ *     wall-refuge exploit (no edge to corner food or hide against) and makes
+ *     "a bit bigger" free: enlarge the world and the dynamics are unchanged,
+ *     just tiled. Every pass below — sample, deposit, diffuse, advect — wraps
+ *     its indices in this mode; the coordinate mapping differs (periodic x*w vs
+ *     inclusive x*(w-1)) precisely because a torus has no endpoint to pin to.
+ * Note the CurlFlow potential is not itself periodic, so on a torus its eddies
+ * have a faint seam; harmless for stirring, and made seamless later if needed.
  */
 
 /* --------------------------------------------------------------- value noise */
@@ -67,37 +79,56 @@ export class ScalarField {
    * @param {object} [o]
    * @param {number} [o.diffuse=0.12]  diffusion coefficient per step, in [0,0.25] for stability
    * @param {number} [o.decay=0.0]     fractional decay per step
+   * @param {boolean} [o.wrap=false]   toroidal boundaries (periodic grid) vs clamped basin
    */
-  constructor(w, h, { diffuse = 0.12, decay = 0.0 } = {}) {
-    this.w = w; this.h = h; this.diffuse = diffuse; this.decay = decay;
+  constructor(w, h, { diffuse = 0.12, decay = 0.0, wrap = false } = {}) {
+    this.w = w; this.h = h; this.diffuse = diffuse; this.decay = decay; this.wrap = wrap;
     this.a = new Float32Array(w * h);   // current
     this.b = new Float32Array(w * h);   // scratch (double-buffer for Jacobi/advect)
   }
   idx(ix, iy) { return iy * this.w + ix; }
 
-  /** Bilinear sample at world (x,y) in [0,1]^2, clamped at the border. */
-  sample(x, y) {
+  /**
+   * Resolve world (x,y) in [0,1]^2 to a bilinear stencil: the base cell (ix,iy),
+   * the next cell in each axis (ix1,iy1), and the fractional offsets (fx,fy).
+   * In wrap mode the grid is periodic (x*w, indices mod w, x1 = (x+1) mod w); in
+   * clamp mode it is the inclusive grid (x*(w-1)) with the base pinned one short
+   * of the edge so ix+1 stays in range. The one place the two conventions live.
+   */
+  _stencil(x, y, o) {
     const w = this.w, h = this.h;
-    const gx = Math.min(w - 1.001, Math.max(0, x * (w - 1)));
-    const gy = Math.min(h - 1.001, Math.max(0, y * (h - 1)));
-    const ix = gx | 0, iy = gy | 0, fx = gx - ix, fy = gy - iy;
-    const a = this.a;
-    const s00 = a[iy * w + ix], s10 = a[iy * w + ix + 1];
-    const s01 = a[(iy + 1) * w + ix], s11 = a[(iy + 1) * w + ix + 1];
+    if (this.wrap) {
+      const gx = x * w, gy = y * h;
+      let ix = Math.floor(gx), iy = Math.floor(gy);
+      o.fx = gx - ix; o.fy = gy - iy;
+      ix = ((ix % w) + w) % w; iy = ((iy % h) + h) % h;
+      o.ix = ix; o.iy = iy; o.ix1 = (ix + 1) % w; o.iy1 = (iy + 1) % h;
+    } else {
+      const gx = Math.min(w - 1.001, Math.max(0, x * (w - 1)));
+      const gy = Math.min(h - 1.001, Math.max(0, y * (h - 1)));
+      const ix = gx | 0, iy = gy | 0;
+      o.ix = ix; o.iy = iy; o.ix1 = ix + 1; o.iy1 = iy + 1; o.fx = gx - ix; o.fy = gy - iy;
+    }
+    return o;
+  }
+
+  /** Bilinear sample at world (x,y) in [0,1]^2. Wraps or clamps per this.wrap. */
+  sample(x, y) {
+    const w = this.w, a = this.a;
+    const { ix, iy, ix1, iy1, fx, fy } = this._stencil(x, y, {});
+    const s00 = a[iy * w + ix], s10 = a[iy * w + ix1];
+    const s01 = a[iy1 * w + ix], s11 = a[iy1 * w + ix1];
     return lerp(lerp(s00, s10, fx), lerp(s01, s11, fx), fy);
   }
 
   /** Deposit `amount` at world (x,y), spread bilinearly to the four cells. */
   deposit(x, y, amount) {
-    const w = this.w, h = this.h;
-    const gx = Math.min(w - 1.001, Math.max(0, x * (w - 1)));
-    const gy = Math.min(h - 1.001, Math.max(0, y * (h - 1)));
-    const ix = gx | 0, iy = gy | 0, fx = gx - ix, fy = gy - iy;
-    const a = this.a;
-    a[iy * w + ix]       += amount * (1 - fx) * (1 - fy);
-    a[iy * w + ix + 1]   += amount * fx * (1 - fy);
-    a[(iy + 1) * w + ix] += amount * (1 - fx) * fy;
-    a[(iy + 1) * w + ix + 1] += amount * fx * fy;
+    const w = this.w, a = this.a;
+    const { ix, iy, ix1, iy1, fx, fy } = this._stencil(x, y, {});
+    a[iy * w + ix]   += amount * (1 - fx) * (1 - fy);
+    a[iy * w + ix1]  += amount * fx * (1 - fy);
+    a[iy1 * w + ix]  += amount * (1 - fx) * fy;
+    a[iy1 * w + ix1] += amount * fx * fy;
   }
 
   /**
@@ -107,15 +138,25 @@ export class ScalarField {
    * without a flow and vice versa.
    */
   step() {
-    const { w, h, a, b, diffuse, decay } = this;
+    const { w, h, a, b, diffuse, decay, wrap } = this;
     const keep = 1 - 4 * diffuse;
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const i = y * w + x;
-        // Zero-flux (Neumann) border: a neighbour off the edge reflects the
-        // cell itself, so nothing leaks out and diffusion conserves total mass.
-        const l = a[x > 0 ? i - 1 : i], r = a[x < w - 1 ? i + 1 : i];
-        const u = a[y > 0 ? i - w : i], d = a[y < h - 1 ? i + w : i];
+        let l, r, u, d;
+        if (wrap) {
+          // Periodic: the edge cell's off-grid neighbour is the opposite edge,
+          // so mass that flows off one side arrives on the other — conserved.
+          l = a[i - (x > 0 ? 1 : 1 - w)];
+          r = a[i + (x < w - 1 ? 1 : 1 - w)];
+          u = a[i - (y > 0 ? w : w - w * h)];
+          d = a[i + (y < h - 1 ? w : w - w * h)];
+        } else {
+          // Zero-flux (Neumann) border: a neighbour off the edge reflects the
+          // cell itself, so nothing leaks out and diffusion conserves total mass.
+          l = a[x > 0 ? i - 1 : i]; r = a[x < w - 1 ? i + 1 : i];
+          u = a[y > 0 ? i - w : i]; d = a[y < h - 1 ? i + w : i];
+        }
         b[i] = (keep * a[i] + diffuse * (l + r + u + d)) * (1 - decay);
       }
     }
@@ -129,11 +170,15 @@ export class ScalarField {
 
 /**
  * A divergence-free 2D flow from the curl of a scalar noise potential:
- * v = (dψ/dy, -dψ/dx). Curl of any scalar is divergence-free by construction,
- * so advecting a density by this flow neither creates nor destroys mass (up to
- * interpolation error) — which is what makes it the honest, cheap way to stir a
- * chemical field. Sampled analytically from the noise, so there is no grid to
- * store; a caller reads velocity at any world point.
+ * v = (dψ/dy, -dψ/dx). Curl of any scalar is divergence-free by construction, so
+ * the CONTINUOUS flow neither compresses nor rarefies — it stirs without piling
+ * material up, the honest cheap way to move a chemical around. (Note: the
+ * discrete semi-Lagrangian advect() below is a stable "gather" scheme, not a
+ * conservative one — over many steps it visibly loses total mass in both
+ * boundary modes. That is fine for a field driven by continuous sources and
+ * decay, where a steady state balances input against loss; do not rely on
+ * advect() alone to conserve a fixed budget.) Sampled analytically from the
+ * noise, so there is no grid to store; a caller reads velocity at any world point.
  */
 export class CurlFlow {
   /**
@@ -166,16 +211,21 @@ export class CurlFlow {
  * natural parallel/WGSL form. Writes into the field's scratch buffer and swaps.
  */
 export function advect(field, flow, dt) {
-  const { w, h, a, b } = field;
+  const { w, h, b, wrap } = field;
   const vel = { vx: 0, vy: 0 };
+  // Cell -> world uses the same convention as the field's stencil: periodic x/w
+  // on a torus, inclusive x/(w-1) in a basin. wrap01 wraps a back-traced point
+  // into [0,1) on a torus (mass leaving one side re-enters the other); on a
+  // basin it clamps to the edge.
+  const map = wrap ? ((i, n) => i / n) : ((i, n) => i / (n - 1));
+  const wrap01 = wrap ? (v => v - Math.floor(v)) : (v => Math.min(1, Math.max(0, v)));
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      const wx = x / (w - 1), wy = y / (h - 1);
+      const wx = map(x, w), wy = map(y, h);
       flow.vel(wx, wy, vel);
       // Trace back to where this cell's material came from, then sample.
       const sx = wx - vel.vx * dt, sy = wy - vel.vy * dt;
-      b[y * w + x] = field.sample(
-        Math.min(1, Math.max(0, sx)), Math.min(1, Math.max(0, sy)));
+      b[y * w + x] = field.sample(wrap01(sx), wrap01(sy));
     }
   }
   field.a.set(b);
