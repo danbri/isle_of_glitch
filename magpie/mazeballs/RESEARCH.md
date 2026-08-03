@@ -4943,3 +4943,44 @@ WHAT WOULD SETTLE IT: the same design run an order of magnitude longer, with the
 replicate count kept. The tournaments are the expensive part and they are what
 makes it answerable — a longer run with n=1 per rung would produce another clean
 trend that means nothing.
+
+### Birth scheduling: a real effect, and a refuted explanation for it
+
+Observation that prompted it: the long run went from 600 founders to a SINGLE
+lineage, after which adaptation can only proceed by new mutation. The birth
+scheduler was the suspect — bodies above the energy threshold were then SORTED
+by energy and served richest-first, which is a second selection on top of the
+threshold and, when slots are scarce, lets only the extreme tail reproduce.
+
+Predicted: drawing at random among bodies that cleared the threshold (keeping
+the threshold, dropping the ranking) would hold diversity open.
+
+                    rich            lottery
+  lineages @250     5               3
+  lineages @500     1               1
+  lineages @1250    1               1
+  post-transient    0.527           0.607
+  generation        73              82
+
+THE PREDICTION WAS WRONG. Both schemes collapse to one lineage by tick 500, on
+the same schedule. Fixation is intrinsic to this selection regime, not an
+artifact of the ranking: even drawing at random among the eligible, the eligible
+set is dominated by whichever line is currently fittest, so takeover happens
+regardless. Preserving founder lineages needs something that actually protects
+them — spatial structure, frequency dependence, niche separation — not a fairer
+queue.
+
+The scheduler does matter, but for a different reason than the one proposed. The
+sustained margin rises from 0.527 to 0.607, a 15% improvement, with deeper
+generations. Rich-first repeatedly re-selects the same handful of genotypes, so
+the effective population over which NEW mutations are sampled is far smaller
+than the census population. The lottery spreads reproduction across everyone who
+paid their way, so more distinct mutations get tested per unit time. That is
+effective population size, not founder diversity, and the two came apart cleanly
+here.
+
+CONSEQUENCE FOR EVERY EARLIER ASCENT NUMBER IN THIS WAVE: they were measured
+under rich-first, on populations that had gone clonal within a few hundred ticks.
+They describe how fast a single lineage improves by mutation alone. The replicated
+0.568 +/- 0.020 should be read that way, and 0.607 is the better estimate of what
+this world sustains once the scheduler stops throttling variation.

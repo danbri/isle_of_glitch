@@ -53,11 +53,13 @@ export class Evolver {
     arena, world, cells, seed = 7,
     birthEnergy = 9, deathEnergy = 0, mutRate = 0.14, mutSize = 0.32,
     sizeMutRate = 0.25, minCells = 5, maxCells = 40, topoMutRate = 0.30,
+    birthOrder = 'lottery',
   }) {
     this.arena = arena; this.world = world; this.cells = cells;
     this.birthEnergy = birthEnergy; this.deathEnergy = deathEnergy;
     this.mutRate = mutRate; this.mutSize = mutSize;
     this.sizeMutRate = sizeMutRate; this.topoMutRate = topoMutRate;
+    this.birthOrder = birthOrder;
     this.minCells = minCells; this.maxCells = maxCells;
     this.rnd = rng(seed);
 
@@ -138,15 +140,35 @@ export class Evolver {
     for (let i = 0; i < keepAlive; i++) { this.cull(dead[i]); this.deaths++; }
 
     // ------------------------------------------------------------ birth
-    // Anyone above the surplus threshold divides, richest first so the scarce
-    // slots go to the bodies that actually earned them.
     const rich = [];
     for (let o = 0; o < P; o++)
       // Threshold PER CELL, so a large body is not permanently barred from
       // dividing simply for having more cells to fill. A flat threshold made
       // size strictly worse and would have masked whatever growth is worth.
       if (arena.alive[o] && total[o] >= this.birthEnergy * (arena.cnt[o] / 12)) rich.push(o);
-    rich.sort((a, b) => total[b] - total[a]);
+
+    // WHO GETS THE SCARCE SLOTS, among those that already earned the right.
+    //
+    // Sorting by energy and serving the richest first is a SECOND selection on
+    // top of the threshold, and a far harsher one: when slots are scarce only
+    // the extreme tail ever reproduces. Run long enough that fixes one lineage
+    // and the population goes clonal — observed collapsing from 600 founders to
+    // a SINGLE surviving line, after which adaptation depends entirely on new
+    // mutation because there is no standing variation left to select on. That
+    // is a well-known route to stagnation, and it was imposed by the scheduler
+    // rather than by anything about the world.
+    //
+    // The lottery keeps the threshold — a body must still have paid for itself
+    // — and then draws at random among those that have. Selection stays, the
+    // second unintended winner-takes-all does not.
+    if (this.birthOrder === 'rich') {
+      rich.sort((a, b) => total[b] - total[a]);
+    } else {
+      for (let i = rich.length - 1; i > 0; i--) {
+        const j = (this.rnd() * (i + 1)) | 0;
+        [rich[i], rich[j]] = [rich[j], rich[i]];
+      }
+    }
 
     let born = 0;
     for (const p of rich) {
