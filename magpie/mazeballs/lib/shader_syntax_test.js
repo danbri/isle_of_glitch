@@ -10,7 +10,7 @@
  *
  * Run: deno test lib/shader_syntax_test.js
  */
-import { assert } from 'jsr:@std/assert@1';
+import { assert, assertEquals } from 'jsr:@std/assert@1';
 
 const FILES = ['./world_gpu.js', './brainarena_gpu.js', '../world.html'];
 
@@ -48,3 +48,64 @@ for (const rel of FILES) {
       `the WGSL in ${rel} contains no entry point — the literal probably closed early`);
   });
 }
+
+/**
+ * Compile both shaders on a real device.
+ *
+ * The backtick checks above are about the JS string surviving; this is about the
+ * WGSL inside it being valid — and specifically about the contract on
+ * WGSL_FIELD, which is shared verbatim between the simulation and the renderer
+ * and therefore may not name a uniform. Adding a time-varying resource field
+ * that read `P.worldTime` straight from the simulation's uniform broke that:
+ * the block parsed fine on its own and in the compute shader, and took the
+ * whole render shader down with "unresolved value 'P'". Nothing textual would
+ * catch it. Compiling both against a device does.
+ */
+import { WGSL_FIELD } from './world_gpu.js';
+
+const HAS_GPU = !!(globalThis.navigator?.gpu && await navigator.gpu.requestAdapter());
+
+Deno.test({
+  name: 'the shared field block names no uniform — both shaders compile',
+  ignore: !HAS_GPU,
+  async fn() {
+    const adapter = await navigator.gpu.requestAdapter();
+    const device = await adapter.requestDevice();
+
+    const errors = [];
+    device.addEventListener?.('uncapturederror', e => errors.push(e.error?.message ?? String(e.error)));
+
+    // The renderer's WGSL, lifted from world.html exactly as the page builds it.
+    const html = await Deno.readTextFile(new URL('../world.html', import.meta.url));
+    const open = html.indexOf('const RENDER = /* wgsl */`');
+    assert(open >= 0, 'could not find the RENDER shader in world.html');
+    const start = open + 'const RENDER = /* wgsl */`'.length;
+    const end = html.indexOf('\n`;', start);
+    assert(end > start, 'could not find the end of the RENDER shader');
+    const render = html.slice(start, end).replace('${WGSL_FIELD}', WGSL_FIELD);
+
+    device.pushErrorScope('validation');
+    const mod = device.createShaderModule({ code: render, label: 'render-under-test' });
+    const info = await mod.getCompilationInfo?.();
+    const fatal = (info?.messages ?? []).filter(m => m.type === 'error');
+    const scope = await device.popErrorScope();
+
+    assertEquals(fatal.map(m => `${m.lineNum}: ${m.message}`), [],
+      'the render shader does not compile');
+    assert(!scope, `render shader validation error: ${scope?.message}`);
+
+    // WGSL_FIELD must also stand alone, with no uniform in scope at all.
+    device.pushErrorScope('validation');
+    const bare = device.createShaderModule({
+      code: WGSL_FIELD + '\n@compute @workgroup_size(1) fn probe() { _ = fbm(vec2<f32>(0.0), 1u); }',
+      label: 'field-alone',
+    });
+    const bareInfo = await bare.getCompilationInfo?.();
+    const bareFatal = (bareInfo?.messages ?? []).filter(m => m.type === 'error');
+    await device.popErrorScope();
+    assertEquals(bareFatal.map(m => `${m.lineNum}: ${m.message}`), [],
+      'WGSL_FIELD does not compile on its own — it is referencing something external');
+
+    device.destroy();
+  },
+});

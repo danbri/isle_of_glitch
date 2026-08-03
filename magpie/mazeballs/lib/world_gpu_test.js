@@ -137,3 +137,36 @@ gpuTest('sensing actually drives the brains', async () => {
   live.world.destroy(); live.brains.destroy();
   deaf.world.destroy(); deaf.brains.destroy();
 });
+
+gpuTest('bonds pull the short way around the torus', async () => {
+  // A body straddling the wrap seam has neighbours that are close THROUGH the
+  // edge but ~2*bound away in raw coordinates. Without minimum-image
+  // displacement its springs pull outward with enormous force and tear it
+  // apart: measured on a live run, 36% of bonds were stretched past 5 units
+  // against a rest length of 0.62, with a p90 of 58 and a maximum of 150.
+  const { world, brains, cells, meta } = await makeWorld();
+  world.step(1200);
+  const { x, y } = await world.readPositions();
+  const { bond, brest, bondK } = cells;
+  const b = meta.bound;
+
+  let stretched = 0, counted = 0, worst = 0;
+  for (let i = 0; i < x.length; i++) {
+    for (let k = 0; k < bondK; k++) {
+      const j = bond[i * bondK + k];
+      if (j < 0) continue;
+      let dx = x[j] - x[i], dy = y[j] - y[i];
+      if (Math.abs(dx) > b) dx -= Math.sign(dx) * 2 * b;   // minimum image
+      if (Math.abs(dy) > b) dy -= Math.sign(dy) * 2 * b;
+      const d = Math.hypot(dx, dy);
+      counted++;
+      worst = Math.max(worst, d);
+      if (d > 5) stretched++;
+    }
+  }
+  const frac = stretched / counted;
+  assert(frac < 0.02,
+    `${(frac * 100).toFixed(1)}% of bonds stretched past 5 units (worst ${worst.toFixed(1)}) — ` +
+    `bodies are being torn apart across the seam`);
+  world.destroy(); brains.destroy();
+});

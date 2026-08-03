@@ -139,14 +139,20 @@ fn flowField(p: vec2<f32>, scale: f32, strength: f32, seed: u32) -> vec2<f32> {
 // This is still an ANALYTIC function of continuous position — now of (x, y, t)
 // — so there is no stored state, no lattice, and nothing to zoom past. The
 // world is non-stationary without becoming a grid.
-fn resourceField(p: vec2<f32>, scale: f32, seed: u32) -> f32 {
-  let t = P.worldTime;
-  let q = p * scale + vec2<f32>(t * P.driftX, t * P.driftY);
+// Parameterised by EXPLICIT arguments, like flowField above and for the same
+// reason: this block is shared verbatim by the simulation and by any renderer,
+// and they bind different uniform structs. An earlier version read P.worldTime
+// and friends straight from the simulation's uniform, which made the whole
+// shared block unparseable inside the render shader ("unresolved value 'P'")
+// and took the renderer down with it. Nothing in here may name a uniform.
+fn resourceField(p: vec2<f32>, scale: f32, seed: u32,
+                 t: f32, drift: vec2<f32>, morphRate: f32) -> f32 {
+  let q = p * scale + t * drift;
   let a = fbm(q, seed);
   let b = fbm(q, seed + 7777u);
   // Slow crossfade between two patterns: the terrain does not merely slide past,
   // it becomes a different terrain, so a lineage cannot simply learn one map.
-  let w = 0.5 + 0.5 * sin(t * P.morphRate);
+  let w = 0.5 + 0.5 * sin(t * morphRate);
   let r = mix(a, b, w);
   return r * r;
 }
@@ -234,6 +240,29 @@ fn flowAt(p: vec2<f32>) -> vec2<f32> {
   return flowField(p, P.flowScale, P.flowStr, P.seed);
 }
 
+// Shortest displacement on a torus (minimum image). A body straddling the wrap
+// seam has neighbours that are CLOSE through the edge and ~2*bound away in raw
+// coordinates. Using the raw difference makes its springs pull outward with
+// enormous force and tears the body apart, scattering its cells across the
+// world — which then reads as long bond lines through the map. That was
+// diagnosed once as a rendering artifact and suppressed in the renderer; the
+// renderer was telling the truth and the physics was wrong. 36% of live bonds
+// were stretched past 5 units against a rest length of 0.62.
+fn minImage(d: vec2<f32>) -> vec2<f32> {
+  var r = d;
+  let b = P.bound;
+  if (r.x >  b) { r.x = r.x - 2.0 * b; }
+  if (r.x < -b) { r.x = r.x + 2.0 * b; }
+  if (r.y >  b) { r.y = r.y - 2.0 * b; }
+  if (r.y < -b) { r.y = r.y + 2.0 * b; }
+  return r;
+}
+
+fn resourceAt(p: vec2<f32>) -> f32 {
+  return resourceField(p, P.resScale, P.resSeed, P.worldTime,
+                       vec2<f32>(P.driftX, P.driftY), P.morphRate);
+}
+
 // How much cell i is currently contracting, 0 for anything that is not a muscle.
 //
 // Read for BOTH endpoints of every bond, which is the whole point. A muscle
@@ -298,7 +327,7 @@ fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
         if (j == i) { continue; }
         let other = cmeta[j];
         if (other.x < 0 || other.z == me.z) { continue; }   // same body: not a contest
-        let d = pos[j] - p;
+        let d = minImage(pos[j] - p);
         if (dot(d, d) > r2) { continue; }
 
         // CONSERVING. The first version simply added rate*(effort difference)
@@ -402,7 +431,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     let bd = bondD[base + k];
     let j = bitcast<i32>(bd.x);
     if (j < 0) { continue; }
-    let d = pos[u32(j)] - p;
+    let d = minImage(pos[u32(j)] - p);
     let dist = max(length(d), 1e-3);
     // Symmetric: both endpoints derive the same rest length, so the pair's
     // forces cancel. See contractionOf.
@@ -501,7 +530,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // population rather than telling us anything about growth.
   let scale = max(P.sizeScale, 1.0);
   let efficiency = (1.0 - exp(-mySize / scale)) * P.sizeNorm;
-  let gain = P.harvest * resourceField(np, P.resScale, P.resSeed) * share * efficiency;
+  let gain = P.harvest * resourceAt(np) * share * efficiency;
   let work = P.muscleCost * abs(mine);
   let taken = contest(i, np, abs(mine));
   // Written to scratch, not to energy[]: contest() READS energy[j] for other

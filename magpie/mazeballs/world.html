@@ -327,8 +327,19 @@ fn lineVs(@builtin(vertex_index) vi: u32) -> LOut {
   // — not dead cells, and not moving much because the bodies straddling the
   // seam are simply sitting there. Suppress the segment rather than fake it;
   // the cells themselves still draw in both places, which is the truth.
-  let d = pos[ib] - pos[ia];
-  if (abs(d.x) > C.bound || abs(d.y) > C.bound) {
+  var d = pos[ib] - pos[ia];
+  // Minimum image, matching the physics: a bond across the wrap seam is SHORT
+  // in the world however far apart the raw coordinates are.
+  if (d.x >  C.bound) { d.x = d.x - 2.0 * C.bound; }
+  if (d.x < -C.bound) { d.x = d.x + 2.0 * C.bound; }
+  if (d.y >  C.bound) { d.y = d.y - 2.0 * C.bound; }
+  if (d.y < -C.bound) { d.y = d.y + 2.0 * C.bound; }
+  // A settled bond sits at its rest length, around 0.6 units. One drawn at tens
+  // of units is a body still converging from the moment it was born, and a
+  // straight line across the map is a worse description of it than no line.
+  // Drawn across the seam it would also be a lie about where the body is.
+  if (length(d) > 8.0 || abs(pos[ib].x - pos[ia].x) > C.bound
+                      || abs(pos[ib].y - pos[ia].y) > C.bound) {
     o.p = vec4<f32>(0.0, 0.0, 0.0, 0.0); o.tint = vec3<f32>(0.0); return o;
   }
   o.p = vec4<f32>((pos[u32(idx)] - C.center) * C.ndc, 0.0, 1.0);
@@ -405,8 +416,24 @@ function bondIndexList(cells) {
 async function rebuild() {
   if (sim) { sim.world.destroy(); sim.brains.destroy(); sim.bBond.destroy(); sim.bCam.destroy(); }
 
-  const beasts = +$('sBeasts').value;
-  const cellsPer = +$('sCpb').value;
+  let beasts = +$('sBeasts').value;
+  let cellsPer = +$('sCpb').value;
+
+  // In watch mode the SERVER decides the shape. Asking the viewer to be
+  // configured to match by hand guarantees a mismatch every time the server is
+  // restarted with different numbers, and the mismatch presents as an error
+  // rather than as the trivially fixable thing it is.
+  if (WATCH) {
+    try {
+      const st = await (await fetch('/status', { cache: 'no-store' })).json();
+      beasts = st.beasts; cellsPer = st.cellsPerBeast;
+      $('sBeasts').value = beasts; $('vBeasts').textContent = beasts.toLocaleString();
+      $('sCpb').value = cellsPer; $('vCpb').textContent = cellsPer;
+    } catch (e) {
+      return fail('cannot reach the world server: ' + e.message +
+                  '\nDrop ?watch=1 to run a local simulation instead.');
+    }
+  }
   const bound = Math.max(40, Math.sqrt(beasts * cellsPer) * 0.62);
 
   const built = buildBodies({
@@ -425,7 +452,10 @@ async function rebuild() {
   });
 
   const idx = bondIndexList(built.cells);
-  const bBond = dev.createBuffer({ size: Math.max(4, idx.byteLength), usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
+  // Room for a denser graph than the seed one, since topology evolves and a
+  // later population can carry more bonds than the ring it started from.
+  const bondCapacity = Math.max(4, built.cells.bond.length * 8);
+  const bBond = dev.createBuffer({ size: bondCapacity, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
   dev.queue.writeBuffer(bBond, 0, idx);
 
   const bCam = dev.createBuffer({ size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
@@ -479,14 +509,6 @@ async function rebuild() {
   let syn = 0;
   for (let i = 0; i < built.arena.esrc.length; i++) if (built.arena.esrc[i] >= 0) syn++;
 
-  if (WATCH) {
-    const st = await (await fetch('/status', { cache: 'no-store' })).json();
-    if (st.cells !== built.meta.nCells) {
-      fail(`This page built ${built.meta.nCells} cells but the server has ${st.cells}.\n` +
-           `Set beasts/cells to match, or drop ?watch=1 to run locally.`);
-    }
-  }
-
   const evo = new Evolver({
     arena: built.arena, world, cells: built.cells,
     seed: (Math.random() * 1e5) | 0, birthEnergy: 18, deathEnergy: 0,
@@ -505,6 +527,7 @@ async function rebuild() {
     ...built, brains, world, bBond, bCam, bind, evo,
     pipeBg, pipeCells, pipeBonds, bondVerts: idx.length, bound, syn,
     sinceTick: 0, ticking: false, fetching: false, serverSteps: 0,
+    bondCapacity, topoVersion: -1, fetchingBonds: false,
   };
   if (WATCH) {
     document.title = 'Mazeballs — watching the shared world';
@@ -555,6 +578,37 @@ function applyFrame(ab) {
     meta[i * 4 + 2] = 0;
   }
   q.writeBuffer(sim.world.bMeta, 0, meta);
+
+  // Bodies are born and die with DIFFERENT bond graphs now that topology is
+  // heritable, so a bond list built once at page load stops describing the
+  // world almost immediately — it drew every body joined to every other. Refetch
+  // when the server's topology version moves.
+  const topo = dv.getUint32(40, true);
+  if (topo !== sim.topoVersion && !sim.fetchingBonds) {
+    sim.fetchingBonds = true;
+    fetch('/bonds', { cache: 'no-store' })
+      .then(r => r.arrayBuffer())
+      .then(bb => {
+        const bdv = new DataView(bb);
+        const version = bdv.getUint32(0, true), bondK = bdv.getUint32(4, true);
+        const bond = new Int32Array(bb, 8);
+        const idx = [];
+        for (let i = 0; i < bond.length; i++) {
+          const j = bond[i];
+          if (j < 0) continue;
+          const from = (i / bondK) | 0;
+          if (from < j) idx.push(from, j);
+        }
+        const arr = new Int32Array(idx);
+        if (arr.byteLength <= sim.bondCapacity) {
+          dev.queue.writeBuffer(sim.bBond, 0, arr);
+          sim.bondVerts = arr.length;
+          sim.topoVersion = version;
+        }
+        sim.fetchingBonds = false;
+      })
+      .catch(() => { sim.fetchingBonds = false; });
+  }
 
   sim.serverSteps = dv.getUint32(8, true);
   $('hStep').textContent = sim.serverSteps.toLocaleString();

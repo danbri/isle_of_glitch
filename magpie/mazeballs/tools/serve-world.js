@@ -145,7 +145,12 @@ async function buildFrame() {
   dv.setUint32(28, last.maxGeneration, true);
   dv.setUint32(32, last.lineages, true);
   dv.setFloat32(36, last.meanEnergy, true);
-  dv.setUint32(40, evo.nextUid, true);
+  // Topology version. Bonds are ~480KB and change only when a body is born or
+  // dies, so they are NOT in the frame; the viewer refetches /bonds when this
+  // moves. Sending them every frame would nearly double the bandwidth for data
+  // that is identical 99% of the time — which matters once this is watched over
+  // a tailnet rather than loopback.
+  dv.setUint32(40, evo.births + evo.deaths, true);
   dv.setFloat32(44, world.params.flowScale, true);
 
   let at = HEAD;
@@ -186,9 +191,27 @@ Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
       headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' },
     });
   }
+  if (path === '/bonds') {
+    // Bond graph as it stands, plus the version it corresponds to, so a viewer
+    // can tell whether what it just fetched is already stale.
+    const bond = built.cells.bond;
+    const buf = new ArrayBuffer(8 + bond.byteLength);
+    const dv = new DataView(buf);
+    dv.setUint32(0, evo.births + evo.deaths, true);
+    dv.setUint32(4, built.cells.bondK, true);
+    new Int32Array(buf, 8, bond.length).set(bond);
+    return new Response(new Uint8Array(buf), {
+      headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' },
+    });
+  }
   if (path === '/status') {
     return new Response(JSON.stringify({
       steps, bound: BOUND, cells: N, neurons: built.arena.N,
+      // The viewer builds its buffers from these, so it does not have to be
+      // configured to match by hand — a mismatch is not a user error, it is
+      // just a page that has not been told the shape yet.
+      beasts: args.beasts, cellsPerBeast: args.cells,
+      drift: !!args.drift,
       alive: last.alive, births: evo.births, deaths: evo.deaths,
       generation: last.maxGeneration, lineages: last.lineages,
       meanEnergy: last.meanEnergy, organisms: evo.nextUid,
