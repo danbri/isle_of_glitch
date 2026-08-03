@@ -3793,10 +3793,10 @@ statically:
   confirmation available that the signs carry the functional structure.
 
 The per-locus leverage the flatness analysis estimated also falls out: `signonly`
-touches ~11 loci per child and reaches 0.558; `magonly` jitters all ~1,400 loci
-and reaches 0.669 — comparable ascent from roughly two orders of magnitude fewer
-loci touched, consistent with a sign flip being far more consequential per locus
-than a magnitude nudge.
+touches ~11 loci per child and reaches 0.558; `magonly` jitters all 845 loci
+and reaches 0.669 — comparable ascent from ~75× fewer loci touched (11 against
+845), consistent with a sign flip being far more consequential per locus than a
+magnitude nudge.
 
 **So why does the sign-aware operator not win, when the map says signs carry the
 structure?** Because carrying the structure is not the same as being the binding
