@@ -1,0 +1,11 @@
+
+=== QD comparison on the discrimination task (pooled across seeds 1,2,3,4) ===
+
+scheme       n  qualAblΔnet ± SE (2·SE bar)   verdict        meanSelv     squat% anosm% netNeg%   archive: discrim/cells (maxSel, maxΔ)
+tournament   4  +0.0129 ± 0.0072 (0.0143)     incidental      0.471       54    18    89     (tournament: n/a)
+novelty      4  +0.0055 ± 0.0087 (0.0174)     incidental      0.449       30    11    91     2/192  (maxSel 0.917, maxΔ 0.668)
+mapelites    4  -0.0016 ± 0.0038 (0.0075)     incidental      0.499       79    21    84     8/349  (maxSel 0.917, maxΔ 0.376)
+
+qualAblΔnet > 2·SE bar => blinding the quality sense costs net intake => the sense is LOAD-BEARING.
+archive discrim/cells: cells with selectivity ≥ 0.55 AND quality-Δnet ≥ 0.02 AND eating, pooled over seeds.
+chance selectivity = 0.5; below 0.5 = eats more toxic than good.
