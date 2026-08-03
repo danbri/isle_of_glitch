@@ -57,6 +57,7 @@ import {
   DEFAULTS, makeRng, randomGenome, perturbGenome, cloneGenome, blockCrossover,
   develop, makeWorld, Colony, GENES, regOff,
 } from '../lib/softbody.js';
+import { zNormColumns, knnNovelty, zScore, binEdges, cellOf } from './sb-qd.js';
 
 const a = parseArgs(process.argv.slice(2), {
   pop: 64, gens: 30, elite: 2, eps: 0.08, steps: 600,
@@ -124,6 +125,24 @@ const a = parseArgs(process.argv.slice(2), {
   // from sb-op.js, brought here to test whether a mandatory-sensing task is the
   // sign-limited regime where it finally pays. Same loop, only the operator swaps.
   op: 'gaussian', signRate: 0.01,
+  // Selection scheme (default 'tournament' = the k=2 fitness tournament that is
+  // the 17× first-evolution result, so a trunk run reproduces byte-identical).
+  //   'novelty'   rank on z(fitness) + noveltyW·z(novelty), where novelty is
+  //               mean distance to the noveltyK nearest bodies in a behavioural
+  //               descriptor space (selectivity, gross, path — see sb-qd.js).
+  //               A discriminating stepping-stone that is currently worse than a
+  //               sitter is far from the sit-attractor in that space, so it is
+  //               rewarded and kept while a pure-fitness tournament discards it.
+  //   'mapelites' a persistent archive holding the best genome per descriptor
+  //               cell; parents drawn uniformly from occupied cells. A worse
+  //               genome is retained indefinitely as long as it is the best of
+  //               its behavioural KIND — precisely the stepping stone fitness
+  //               selection throws away. Bin edges frozen from gen-0 quantiles.
+  // Both attack the findability valley: they keep behavioural diversity alive so
+  // the search can explore past the sit-and-refuse attractor pure fitness falls
+  // into. Descriptor axes are the discrimination-task readouts, so a
+  // discriminator is a distinct niche — see sb-qd.js for the justification.
+  select: 'tournament', noveltyK: 15, noveltyW: 1.0, bdBins: 6,
 });
 // Build the working config from DEFAULTS plus any food overrides. DEFAULTS itself
 // is never mutated, so every other tool that imports it sees the trunk values.
@@ -160,6 +179,13 @@ const REG_LOCI = (() => {
 if (a.op !== 'gaussian' && a.op !== 'signflip') {
   console.error(`unknown --op ${a.op}; choose gaussian|signflip`); process.exit(2);
 }
+if (!['tournament', 'novelty', 'mapelites'].includes(a.select)) {
+  console.error(`unknown --select ${a.select}; choose tournament|novelty|mapelites`); process.exit(2);
+}
+// Whether an exploration-oriented (quality-diversity) scheme is live. Off =>
+// select is 'tournament' and the whole selection path is byte-identical to the
+// 17× first-evolution loop; the QD reporting is neither computed nor serialised.
+const isQD = a.select !== 'tournament';
 // Reproduction operator. gaussian === perturbGenome (the byte-identical default);
 // signflip === the same Gaussian first, then flip regulatory signs at signRate.
 // A child is always a fresh buffer, drawn from the same rng, so gaussian's draw
@@ -264,7 +290,10 @@ function rowsOf(phenos, seed) { return runColony(phenos, seed, a.steps); }
 function evalPop(phenos, gen, mode) {
   const K = Math.max(1, a.spawns), P = phenos.length;
   const fit = new Array(P).fill(0);
-  const rows = Array.from({ length: P }, () => ({ displacement: 0, path: 0, occupancy: 0, intake: 0 }));
+  // gross/selectivity are carried so the QD descriptor (sb-qd.js) is spawn-
+  // averaged on the same footing as fitness — on the trunk (tournament) they are
+  // accumulated but never read, so the byte-identical path is unaffected.
+  const rows = Array.from({ length: P }, () => ({ displacement: 0, path: 0, occupancy: 0, intake: 0, gross: 0, selectivity: 0 }));
   for (let k = 0; k < K; k++) {
     const seed = k === 0 ? spawnSeed(gen) : ((spawnSeed(gen) ^ Math.imul(k + 1, 2654435761)) >>> 0);
     const tr = rowsOf(phenos, seed);
@@ -279,11 +308,14 @@ function evalPop(phenos, gen, mode) {
       rows[i].path += finite(tr[i].path);
       rows[i].occupancy += finite(tr[i].occupancy);
       rows[i].intake += finite(tr[i].intake);
+      rows[i].gross += finite(tr[i].gross);
+      rows[i].selectivity += (tr[i].selectivity === undefined ? 0.5 : finite(tr[i].selectivity));
     }
   }
   for (let i = 0; i < P; i++) {
     fit[i] /= K;
     rows[i].displacement /= K; rows[i].path /= K; rows[i].occupancy /= K; rows[i].intake /= K;
+    rows[i].gross /= K; rows[i].selectivity /= K;
   }
   return { fit, rows };
 }
@@ -394,9 +426,37 @@ log(`[sb-evolve] pop ${a.pop}, gens ${a.gens}, elite ${a.elite}, eps ${a.eps}, s
     `${a.crossover ? ', +blockCrossover' : ''}` +
     `\n           food ${cfg.FOOD} in ${cfg.FOOD_CLUSTERS} clusters, senseSigma2 ${cfg.FOOD_SENSE_SIGMA2}, eatSigma2 ${cfg.FOOD_EAT_SIGMA2}`);
 
+// QD behaviour descriptor: three spawn-averaged axes that place a discriminator
+// in a region of behaviour space distinct from a sitter, a coverer, a refuser
+// and a toxic-seeker — the whole point (see sb-qd.js for the justification). On
+// the trunk (tournament) this is never called, so the default path is untouched.
+const descriptorOf = (r) => [finite(r.selectivity), finite(r.gross), finite(r.path)];
+// Novelty-search combined score: z(fitness) + noveltyW·z(novelty), novelty =
+// mean distance to the noveltyK nearest bodies in the z-normalised descriptor
+// space. A discriminating stepping-stone sits far from the sit-attractor in that
+// space, so it scores high and survives even while its raw fitness is lower.
+function qdScore(rows, fit) {
+  const { z } = zNormColumns(rows.map(descriptorOf));
+  const nov = knnNovelty(z, a.noveltyK);
+  const fz = zScore(fit), nz = zScore(nov);
+  return fz.map((v, i) => v + a.noveltyW * nz[i]);
+}
+// MAP-Elites state: a persistent archive (cell -> best genome of that kind) and
+// bin edges frozen from the gen-0 descriptor quantiles. Built lazily below.
+const bdNb = [a.bdBins | 0, a.bdBins | 0, a.bdBins | 0].map(n => Math.max(1, n));
+let archive = null, bdEdges = null;
+
 const traj = [];
 let ev = evalPop(pop.map(pheno), 0, modeAt(0));
 let rows = ev.rows, fit = ev.fit;
+// Selection score the loop ranks on: raw fitness for tournament (byte-identical),
+// the novelty-combined score for novelty. MAP-Elites does not rank a population.
+let score = a.select === 'novelty' ? qdScore(rows, fit) : fit;
+if (a.select === 'mapelites') {
+  const g0 = rows.map(descriptorOf);
+  bdEdges = [0, 1, 2].map(d => binEdges(g0.map(r => r[d]), bdNb[d]));
+  archive = new Map();
+}
 function record(gen, rows, fit, mode) {
   const disp = rows.map(t => finite(t.displacement));
   const intake = rows.map(t => finite(t.intake));
@@ -412,28 +472,72 @@ function record(gen, rows, fit, mode) {
 }
 record(0, rows, fit, modeAt(0));
 
-for (let gen = 1; gen <= a.gens; gen++) {
-  // rank current population by fitness, descending
-  const order = fit.map((f, i) => i).sort((p, q) => fit[q] - fit[p]);
-  const next = [];
-  for (let e = 0; e < a.elite && e < order.length; e++) {
-    const src = pop[order[e]];
-    next.push({ buf: cloneGenome(src).buf, id: src.id, pheno: src.pheno });   // unchanged body carried
+// Insert a whole evaluated population into the MAP-Elites archive: each body
+// claims its descriptor cell and displaces the incumbent only if it is fitter.
+// The archive thus keeps the best genome of each behavioural KIND — a worse-
+// than-best discriminator is retained as long as no fitter discriminator exists,
+// which is the stepping stone a fitness ranking throws away every generation.
+function archiveInsert(pop, rows, fit) {
+  let ins = 0;
+  for (let i = 0; i < pop.length; i++) {
+    const c = cellOf(descriptorOf(rows[i]), bdEdges, bdNb);
+    const cur = archive.get(c);
+    if (!cur || fit[i] > cur.fit) {
+      archive.set(c, { buf: Float32Array.from(pop[i].buf), id: pop[i].id, fit: fit[i], desc: descriptorOf(rows[i]) });
+      ins++;
+    }
   }
-  // tournament, k=2, mutation (optionally block crossover first)
-  const pick = () => { const i = rng.int() % pop.length, j = rng.int() % pop.length; return fit[i] >= fit[j] ? i : j; };
-  while (next.length < a.pop) {
-    const parent = pop[pick()];
-    let childBuf = parent.buf;
-    if (a.crossover && rng.next() < 0.5) childBuf = blockCrossover(parent, pop[pick()], rng).buf;
-    const child = mutate(childBuf, rng);
-    next.push({ buf: child, id: nextId++, pheno: null });
+  return ins;
+}
+
+for (let gen = 1; gen <= a.gens; gen++) {
+  const next = [];
+  if (a.select === 'mapelites') {
+    // Quality-diversity: fold the current population into the persistent archive,
+    // then breed from the occupied cells (uniform), with the fittest cells cloned
+    // through as elites. Parents are drawn by BEHAVIOUR, not by rank.
+    archiveInsert(pop, rows, fit);
+    const cells = [...archive.values()];
+    const byFit = cells.slice().sort((p, q) => q.fit - p.fit);
+    for (let e = 0; e < a.elite && e < byFit.length; e++)
+      next.push({ buf: Float32Array.from(byFit[e].buf), id: byFit[e].id, pheno: null });
+    while (next.length < a.pop) {
+      const parent = cells[rng.int() % cells.length];
+      let childBuf = parent.buf;
+      if (a.crossover && rng.next() < 0.5) childBuf = blockCrossover({ buf: parent.buf }, { buf: cells[rng.int() % cells.length].buf }, rng).buf;
+      next.push({ buf: mutate(childBuf, rng), id: nextId++, pheno: null });
+    }
+  } else {
+    // Tournament (byte-identical trunk) or novelty: rank on `score`, then k=2
+    // tournament + small elitism. For tournament, score === fit, so the draw
+    // sequence and every selection decision reproduce the 17× result exactly.
+    const order = score.map((f, i) => i).sort((p, q) => score[q] - score[p]);
+    for (let e = 0; e < a.elite && e < order.length; e++) {
+      const src = pop[order[e]];
+      next.push({ buf: cloneGenome(src).buf, id: src.id, pheno: src.pheno });   // unchanged body carried
+    }
+    const pick = () => { const i = rng.int() % pop.length, j = rng.int() % pop.length; return score[i] >= score[j] ? i : j; };
+    while (next.length < a.pop) {
+      const parent = pop[pick()];
+      let childBuf = parent.buf;
+      if (a.crossover && rng.next() < 0.5) childBuf = blockCrossover(parent, pop[pick()], rng).buf;
+      next.push({ buf: mutate(childBuf, rng), id: nextId++, pheno: null });
+    }
   }
   pop = next;
   const mode = modeAt(gen);
   ev = evalPop(pop.map(pheno), gen, mode);
   rows = ev.rows; fit = ev.fit;
+  score = a.select === 'novelty' ? qdScore(rows, fit) : fit;
   record(gen, rows, fit, mode);
+}
+// Fold the final generation into the archive so its discoveries are not lost,
+// then the archive's occupied cells ARE the evolved product a MAP-Elites run
+// remeasures — the population is a transient sample from it.
+let evolvedPop = pop;
+if (a.select === 'mapelites') {
+  archiveInsert(pop, rows, fit);
+  evolvedPop = [...archive.values()].map(c => ({ buf: Float32Array.from(c.buf), id: c.id, pheno: null }));
 }
 
 /* ------------------------------------------------- rigorous end comparison */
@@ -442,15 +546,68 @@ for (let gen = 1; gen <= a.gens; gen++) {
 // feeding from feeding that is an incidental by-product of locomotion.
 log('[remeasure] generation-0 population…');
 const m0 = remeasure(gen0);
+// For MAP-Elites the evolved product is the ARCHIVE (occupied cells), not the
+// last generation; for tournament/novelty it is the final population.
 log('[remeasure] evolved population, food sense intact…');
-const mE = remeasure(pop);
+const mE = remeasure(evolvedPop);
 log('[remeasure] evolved population, food sense ablated (mean-replaced)…');
-const mA = remeasure(pop, 'mean');
+const mA = remeasure(evolvedPop, 'mean');
 // The decisive discrimination instrument: blind the QUALITY channel only (food
 // mass intact, so the body can still find food — it just cannot tell good from
 // toxic). If the intact population discriminated, this collapses net intake.
 log(hasDiscrim ? '[remeasure] evolved population, QUALITY sense ablated (mean-replaced)…' : '');
-const mQ = hasDiscrim ? remeasure(pop, null, 'mean') : null;
+const mQ = hasDiscrim ? remeasure(evolvedPop, null, 'mean') : null;
+
+// --- QD archive/population discriminator scan: does exploration reach the
+// discriminating niche AT ALL? Even if the mean does not discriminate, a QD
+// archive that CONTAINS a genome with a load-bearing sense (high selectivity AND
+// net intake that collapses when the quality channel is blinded) is a partial
+// win fitness-selection never produced. Per-genome intact-vs-qual-ablated over
+// `evals` spawns, so the census is on heritable behaviour, not one lucky spawn.
+function archiveScan(genomes) {
+  const canon = genomes.map(pheno);
+  const G = genomes.length;
+  const acc = Array.from({ length: G }, () => ({ selI: 0, netI: 0, grossI: 0, selA: 0, netA: 0, n: 0 }));
+  for (let e = 0; e < a.evals; e++) {
+    const seed = 0x9000 + e * 7919;
+    const ti = runColony(canon, seed, a.steps, null, null);
+    const ta = runColony(canon, seed, a.steps, null, 'mean');   // quality blinded, same spawn
+    for (let g = 0; g < G; g++) {
+      acc[g].selI += ti[g].selectivity === undefined ? 0.5 : finite(ti[g].selectivity);
+      acc[g].netI += finite(ti[g].netIntake);
+      acc[g].grossI += finite(ti[g].gross);
+      acc[g].selA += ta[g].selectivity === undefined ? 0.5 : finite(ta[g].selectivity);
+      acc[g].netA += finite(ta[g].netIntake);
+      acc[g].n++;
+    }
+  }
+  return acc.map(x => ({
+    selIntact: x.selI / x.n, netIntact: x.netI / x.n, gross: x.grossI / x.n,
+    selAbl: x.selA / x.n, netAbl: x.netA / x.n,
+    qualDelta: (x.netI - x.netA) / x.n,   // >0 & sel>0.5 => a load-bearing sense
+  }));
+}
+// A "real discriminator": selectivity meaningfully above chance AND a quality
+// sense that is load-bearing (blinding it costs net intake) AND actually eating
+// (not the anosmia degenerate). Thresholds are deliberately lenient so a partial
+// crack is not missed, and reported with the exact numbers so the reader judges.
+const SEL_DISCRIM = 0.55, DELTA_DISCRIM = 0.02;
+let qdScanResult = null;
+if (hasDiscrim && isQD) {
+  log(`[archiveScan] scanning ${evolvedPop.length} ${a.select === 'mapelites' ? 'archive cells' : 'final-population bodies'} for a real discriminator…`);
+  const scan = archiveScan(evolvedPop);
+  const discrimIdx = scan.map((s, i) => i).filter(i =>
+    scan[i].selIntact >= SEL_DISCRIM && scan[i].qualDelta >= DELTA_DISCRIM && scan[i].gross > ANOSMIA_GROSS);
+  const bySel = scan.map((s, i) => i).sort((p, q) => scan[q].selIntact - scan[p].selIntact);
+  const byDelta = scan.map((s, i) => i).sort((p, q) => scan[q].qualDelta - scan[p].qualDelta);
+  qdScanResult = {
+    n: scan.length, discrimCount: discrimIdx.length,
+    topSel: bySel.slice(0, 3).map(i => scan[i]),
+    topDelta: byDelta.slice(0, 3).map(i => scan[i]),
+    maxSel: Math.max(...scan.map(s => s.selIntact)),
+    maxDelta: Math.max(...scan.map(s => s.qualDelta)),
+  };
+}
 
 /* ------------------------------------------------------------------ report */
 const f = x => x.toFixed(4);
@@ -458,6 +615,8 @@ const barOf = (s0, s1) => 2 * Math.sqrt(s0 ** 2 + s1 ** 2);
 console.log(`\n=== soft-body evolution : seed ${a.seed} ===`);
 console.log(`pop ${a.pop}, gens ${a.gens}, elite ${a.elite}, eps ${a.eps}, steps ${a.steps}, ` +
             `fitness ${a.fitness}, spawns ${a.spawns}${a.curriculum ? ` (curriculum ${a.curriculum})` : ''}` +
+            `${isQD ? `, select ${a.select}` : ''}${a.select === 'novelty' ? ` (k ${a.noveltyK}, w ${a.noveltyW})` : ''}` +
+            `${a.select === 'mapelites' ? ` (bins ${bdNb.join('x')}=${bdNb[0] * bdNb[1] * bdNb[2]} cells)` : ''}` +
             `${a.crossover ? ', +blockCrossover' : ''}\n`);
 console.log('selection-time trajectory (fresh spawn each gen):');
 console.log('  gen  mode  best     median   meanDisp meanIntk moving forage');
@@ -533,6 +692,26 @@ if (hasDiscrim) {
     `${qAblDrop > qAblBar ? 'LOAD-BEARING (sensing evolved because it had to)' : 'incidental (substrate resists sensing even when mandatory)'}`);
 }
 
+// --- QD exploration diagnostics: did the search reach the discriminating niche
+// AT ALL, even if the population/archive MEAN does not discriminate? The decisive
+// ablation above is a mean over the whole evolved product; this scan asks the
+// separate, weaker question the hypothesis actually predicts — is there ANY body
+// with a load-bearing sense in there. A "yes" is a partial win fitness never got.
+if (hasDiscrim && isQD && qdScanResult) {
+  const q = qdScanResult;
+  console.log(`\nexploration reach — ${a.select} ${a.select === 'mapelites' ? 'archive' : 'final population'} scan (${q.n} ${a.select === 'mapelites' ? 'occupied cells' : 'bodies'}, per-body intact vs quality-ablated over ${a.evals} spawns):`);
+  console.log(`  bodies that DISCRIMINATE (selectivity ≥ ${SEL_DISCRIM}, qualΔnet ≥ ${DELTA_DISCRIM}, eating): ${q.discrimCount} / ${q.n}` +
+    `  -> ${q.discrimCount > 0 ? 'ARCHIVE CONTAINS A DISCRIMINATOR' : 'no discriminating niche reached'}`);
+  console.log(`  max selectivity ${f(q.maxSel)}   max quality-Δnet ${f(q.maxDelta)}   (chance selectivity 0.5)`);
+  console.log('  top-3 by selectivity   (selIntact / qualΔnet / gross):');
+  for (const s of q.topSel) console.log(`    sel ${f(s.selIntact)}  qualΔ ${f(s.qualDelta)}  gross ${f(s.gross)}  net ${f(s.netIntact)}`);
+  console.log('  top-3 by quality-Δnet  (selIntact / qualΔnet / gross):');
+  for (const s of q.topDelta) console.log(`    sel ${f(s.selIntact)}  qualΔ ${f(s.qualDelta)}  gross ${f(s.gross)}  net ${f(s.netIntact)}`);
+}
+if (isQD && a.select === 'mapelites' && archive) {
+  console.log(`\nMAP-Elites archive: ${archive.size} / ${bdNb[0] * bdNb[1] * bdNb[2]} cells occupied (coverage ${f(archive.size / (bdNb[0] * bdNb[1] * bdNb[2]))})`);
+}
+
 console.log('\nbehavioural repeatability (same body, different spawn), honest re-measure:');
 console.log('  trait          gen-0     evolved');
 for (const k of ['displacement', 'path', 'occupancy', 'intake', 'efficiency'])
@@ -564,6 +743,15 @@ if (a.out) {
       meanGrossEvolved: mE.meanGross, meanSelvGen0: m0.meanSelv, meanSelvEvolved: mE.meanSelv,
       meanNetGen0: m0.meanNet, meanNetEvolved: mE.meanNet, seNetGen0: m0.seNet, seNetEvolved: mE.seNet,
       qualAblDrop: qAblDrop, qualAblBar: qAblBar,
+    } : {}),
+    // QD fields only when an exploration scheme is live, so a tournament run's
+    // JSON is byte-identical. The exploration-reach scan is the second decisive
+    // quantity: does the archive CONTAIN a discriminator even if the mean does not.
+    ...(isQD ? {
+      select: a.select, noveltyK: a.noveltyK, noveltyW: a.noveltyW, bdBins: bdNb,
+      archiveCells: a.select === 'mapelites' && archive ? archive.size : null,
+      archiveCoverage: a.select === 'mapelites' && archive ? archive.size / (bdNb[0] * bdNb[1] * bdNb[2]) : null,
+      qdScan: qdScanResult,
     } : {}),
   }, null, 2));
   log(`[out] ${a.out}`);
