@@ -57,6 +57,27 @@ AI — on the machine with a real GPU.
     cells) that opens new behaviours rather than more of the same. That is the
     next thing to put under this instrument. (Sweep + firm-up harnesses were
     scratch experiments; the instrument itself is `soup-ascent.js`.)
+  - **The decisive diagnosis — the climb is BOUNDED, and we now know why.** A
+    *monoculture assay* (drop each frozen pool in the neutral world ALONE,
+    competitor-free, and measure how well it forages — its absolute skill, with
+    no Red-Queen partner) separates the two things "later beats earlier" could
+    mean. Result across the run: monoculture success climbs hard and early —
+    pop `282 → 322` by step 8000 (+14%) — then goes **FLAT** (~320–340) for the
+    remaining 16000 steps, and the head-to-head-vs-earliest curve tracks it
+    exactly (up to ~0.60 by step 8000, then plateau). So the ascent is
+    **absolute foraging optimisation — a single hill, climbed in ~8000 steps and
+    then sat upon** — not a frequency-dependent escalation. This is the honest,
+    mechanistic reason the tournament reads deceleration, and it is decisive for
+    the roadmap: **the task is bounded, so the ascent is bounded.** No substrate
+    enrichment (chemistry axes, network capacity, sensor geometry — all the
+    levers RESEARCH.md found null) can fix a bounded *task*. Open-endedness needs
+    an axis with **no foraging ceiling**: either a task/environment whose demand
+    keeps moving (a co-evolutionary predation regime strong enough to dominate
+    grazing — hard here because light is the only energy in, so predators can't
+    out-mass producers), or genuine **morphological strategy space**
+    (multicellularity where a capability *costs cells*) that keeps opening new
+    behaviours. That — not more of the same knob — is the only direction the
+    evidence leaves open. (`assay.js` was the scratch harness.)
 - **tools/land-evolve.js, land-suspects.js, land-control.js** — minimal
   testbeds that proved: evolution CAN find sensing under batch-GA selection;
   the motor-coordination burden is a wall; seeding a gait doesn't transfer.
