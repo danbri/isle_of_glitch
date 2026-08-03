@@ -172,7 +172,7 @@ export class Evolver {
 
     let born = 0;
     for (const p of rich) {
-      const child = this.divide(p, cx[p], cy[p], step);
+      const child = this.divide(p, cx[p], cy[p], step, pos);
       if (child < 0) break;                    // arena full; the rest wait
       born++; this.births++;
     }
@@ -194,7 +194,7 @@ export class Evolver {
    * snowflake-yeast argument. It also costs: the parent pays half its surplus,
    * so dividing is an energy event, not a free win.
    */
-  divide(p, px, py, step) {
+  divide(p, px, py, step, livePos = null) {
     const { arena, world, cells } = this;
     const pn = arena.cnt[p];
 
@@ -407,8 +407,18 @@ export class Evolver {
           if (d < best) { best = d; a = i; b = j; }
         }
       }
-      if (a < 0) { a = comp.indexOf(0); const v = [...adj[a]][0]; adj[a].delete(v); adj[v].delete(a); }
-      if (b < 0) { b = comp.indexOf(1); const v = [...adj[b]][0]; adj[b].delete(v); adj[v].delete(b); }
+      // Nothing in this component had a free slot, so free one by force. Guard
+      // the empty case: a cell with no bonds at all has nothing to give up, and
+      // [...adj[x]][0] on an empty set is undefined, which crashed here on a
+      // long run the moment an isolated cell appeared.
+      const freeSlot = (x) => {
+        if (x < 0 || adj[x].size === 0) return;
+        const v = [...adj[x]][0];
+        adj[x].delete(v); adj[v].delete(x);
+      };
+      if (a < 0) { a = comp.indexOf(0); freeSlot(a); }
+      if (b < 0) { b = comp.indexOf(1); freeSlot(b); }
+      if (a < 0 || b < 0) { break; }        // nothing to join; leave it alone
       adj[a].add(b); adj[b].add(a);
     }
 
@@ -435,15 +445,46 @@ export class Evolver {
       energy[i] = 0;
     }
 
-    // One uniform rest length, so SHAPE comes from the graph and nothing else.
-    // Per-bond rest lengths would let a body encode its geometry directly and
-    // the topology would stop being what determines morphology.
-    const REST = 0.62;
+    // Rest length is INHERITED FROM THE PARENT'S REALISED GEOMETRY, not a
+    // constant.
+    //
+    // A single uniform rest length silently demands that every evolvable graph
+    // be embeddable in the plane at that one spacing. Almost none are: measured
+    // on an evolved population, every cell had saturated to degree 4, and four
+    // neighbours at a fixed 0.62 in 2D requires a lattice. The result was 88% of
+    // bonds stretched with 6% compressed and a whole-body minimum strain of
+    // 1.12 — the fingerprint of a graph that does not fit, since a frustrated
+    // network under real forces shows compression balancing tension. Median
+    // strain reached 4.7x and the bodies could never reach the shape their
+    // genome specified.
+    //
+    // Taking the rest length a bond ACTUALLY sits at in the parent makes the
+    // configuration satisfiable by construction, which is exactly why bodies
+    // straight out of buildBodies (whose rests are their true initial spacing)
+    // hold at strain 1.00 under every stiffness from 10 to 400. Shape still
+    // comes from topology plus physics rather than a genome-encoded geometry —
+    // what a bond remembers is where the tissue rested, which is what a rest
+    // length is supposed to mean.
+    const REST = 0.62;                      // for bonds mutation just invented
+    const bound2 = world.params.bound;
+    const mi = (v) => v > bound2 ? v - 2 * bound2 : (v < -bound2 ? v + 2 * bound2 : v);
+    const parentDist = (ci, cj) => {
+      if (!livePos) return REST;
+      const a = src + srcOf(ci), b2 = src + srcOf(cj);
+      if (a === b2) return REST;
+      const d = Math.hypot(mi(livePos[b2 * 2] - livePos[a * 2]),
+                           mi(livePos[b2 * 2 + 1] - livePos[a * 2 + 1]));
+      // Clamped: a bond the parent was itself dragging far out of shape should
+      // not be inherited as a permanent instruction to stay that long.
+      return Math.min(1.6, Math.max(0.35, d));
+    };
     enforceCap();                            // nothing below may truncate
     for (let i = 0; i < n; i++) {
       let k = 0;
       for (const j of adj[i]) {
-        bond[i * bK + k] = dst + j; brest[i * bK + k] = REST; k++;
+        bond[i * bK + k] = dst + j;
+        brest[i * bK + k] = parentDist(i, j);
+        k++;
       }
     }
 

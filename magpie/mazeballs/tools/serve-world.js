@@ -217,12 +217,17 @@ Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
   if (path === '/bonds') {
     // Bond graph as it stands, plus the version it corresponds to, so a viewer
     // can tell whether what it just fetched is already stale.
-    const bond = built.cells.bond;
-    const buf = new ArrayBuffer(8 + bond.byteLength);
+    // Bond indices AND their rest lengths. Rest is per-bond and inherited from
+    // the parent's realised geometry, so any strain measure that assumes one
+    // constant is measuring against a number that no longer exists — which is
+    // exactly how shape-report kept reporting frustration after it was fixed.
+    const bond = built.cells.bond, brest = built.cells.brest;
+    const buf = new ArrayBuffer(8 + bond.byteLength + brest.byteLength);
     const dv = new DataView(buf);
     dv.setUint32(0, evo.births + evo.deaths, true);
     dv.setUint32(4, built.cells.bondK, true);
     new Int32Array(buf, 8, bond.length).set(bond);
+    new Float32Array(buf, 8 + bond.byteLength, brest.length).set(brest);
     return new Response(new Uint8Array(buf), {
       headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' },
     });

@@ -23,12 +23,18 @@ const n = st.cells, HEAD = 48, b = st.bound;
 const pos = new Float32Array(fb.buffer, fb.byteOffset + HEAD, n * 2);
 const type = new Int32Array(fb.buffer, fb.byteOffset + HEAD + n * 12, n);
 const bondK = new DataView(bb).getUint32(4, true);
-const bond = new Int32Array(bb, 8);
+// Explicit length: without one this spans the whole remaining buffer and
+// swallows the rest-length section that now follows it.
+const bond = new Int32Array(bb, 8, n * bondK);
 // Minimum image: a bond across the seam is short in the world however far apart
 // the raw coordinates are.
 const mi = v => v > b ? v - 2 * b : (v < -b ? v + 2 * b : v);
 
-const REST = 0.62;                     // uniform by design, see lib/evolve.js
+// Per-bond rest lengths, fetched rather than assumed. They are inherited from
+// the parent's realised geometry (lib/evolve.js), so a hardcoded constant here
+// measures strain against a number that does not exist and reports frustration
+// that is not there — which this tool did, loudly, after the fix landed.
+const brest = new Float32Array(bb, 8 + bond.byteLength, bond.length);
 const lens = [];
 const adj = new Map();
 for (let i = 0; i < n; i++) {
@@ -36,7 +42,8 @@ for (let i = 0; i < n; i++) {
   for (let k = 0; k < bondK; k++) {
     const j = bond[i * bondK + k];
     if (j < 0 || type[j] < 0) continue;
-    lens.push(Math.hypot(mi(pos[j * 2] - pos[i * 2]), mi(pos[j * 2 + 1] - pos[i * 2 + 1])) / REST);
+    const rest = Math.max(brest[i * bondK + k], 1e-6);
+    lens.push(Math.hypot(mi(pos[j * 2] - pos[i * 2]), mi(pos[j * 2 + 1] - pos[i * 2 + 1])) / rest);
     if (!adj.has(i)) adj.set(i, []);
     adj.get(i).push(j);
   }
