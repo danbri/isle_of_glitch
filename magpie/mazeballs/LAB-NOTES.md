@@ -77,13 +77,17 @@ and with flowing dynamics.* Concrete tools requested, with build notes:
   pools — extend to store bodies). A tree/branch view to browse; click an
   ancestor to re-develop its body or run it in a scratch world. This is the
   substrate for the category-free ancestral tournament, too.
-- **2D Gaussian splats — a representation to steal from.** As a 2D particle
-  system, ask what oriented **2D gaussian splatting** teaches us: rendering cells
-  as anisotropic gaussians (not hard dots) would kill the "TV snow" look and give
-  soft, flowing, size/shape-bearing marks — and a splat's covariance could encode
-  a cell's size/shape/orientation, even velocity smear. Worth a spike: it may
-  also suggest a differentiable or richer world representation, not just a
-  prettier renderer.
+- **2D Gaussian splats — a representation to steal from.** *(First cut now live
+  in brainsoup.)* As a 2D particle system, ask what oriented **2D gaussian
+  splatting** teaches us: rendering cells as anisotropic gaussians (not hard
+  dots) kills the "TV snow" look and gives soft, flowing, size/shape-bearing
+  marks — a splat's covariance encodes a cell's size/orientation and velocity
+  smear. **brainsoup's cell shader now does exactly this:** each cell is a soft
+  gaussian stretched along its velocity (round = still, streak = fast), replacing
+  the hard point-discs. Still to do: feed the splat's *across*-axis from an actual
+  cell shape/size gene (not just speed), and try it as the sonar percept's
+  world-model too (see below). It may also suggest a differentiable or richer
+  world representation, not just a prettier renderer.
 
 ## Also on the roadmap (from earlier in the dialog)
 
