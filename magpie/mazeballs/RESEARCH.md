@@ -266,6 +266,26 @@ crawler) and evolve sensing on top, so the search is not also asked to invent
 locomotion. The mission is not retired — evolution finds sensing readily once it
 is not also inventing movement in the same budget.
 
+**REFUTED ON THE REAL SUBSTRATE — decoupling locomotion frees the budget but the
+sense stays inert.** That prediction was tested on the actual soft body, and it
+fails. Seeding the committed champion crawler into the initial population (so the
+search starts from a body that already walks, displacement 0.85) and evolving on
+an *uncoverable relocating* foraging task — verified uncoverable: blind coverage
+collects 15% of the food a body sitting on it eats — raises intake far above a
+random start (+0.033 vs +0.003) and *keeps* the seeded gait (displacement 0.37
+where a random start under intake selection decays to 0.07), so the
+motor-coordination burden the minimal testbed measured is real and the decoupling
+does remove it. But blinding the food sense on every evolved population costs
+**nothing**: the food-sense ablation delta is +0.0004 seeded, −0.0006 staged,
+−0.0001 random, all inside a ~0.022 bar, at four seeds each. The intake the
+decoupled search buys is **kinematic** — a gait tuned to sweep the relocating
+food, not a chemotaxis that steers up its gradient — exactly the trap the cost
+run's 0.205 repeatability with an inert sense warned of. The minimal-testbed
+diagnosis does not transfer: on the real soft body a body handed a working gait
+still reaches food by coverage-kinematics, so the *reflexive route stays cheaper
+than the sensing route* even when locomotion is free. The motor burden was a wall,
+but it was not the only one. See the seed-a-gait section below.
+
 ## The objective
 
 `tools/score.js`. **Not fitness.** Two measured reasons:
@@ -4817,3 +4837,111 @@ foreground concurrency and `tools/sb-qd-agg.js` pools the decisive ablation and
 the archive-reach scan across seeds. Run readouts are in `results/qd/`
 (`{tournament,novelty,mapelites}-s{1..4}.json`, `aggregate.txt`,
 `dissociation-scan.txt`).
+
+## Seeding a pre-evolved gait does not crack the wall: decoupling frees the budget, and the sense is still inert
+
+`tools/land-suspects.js` localised the eight-null soft-body wall to the
+motor-coordination burden — on a minimal testbed, changing *only* the motor to
+one where moving needs an evolved coordinated oscillation collapsed evolved
+sensing from +0.71 to +0.00, and staging locomotion before the source task
+partly restored it (+0.12). That diagnosis makes one concrete, falsifiable
+prediction about the real substrate: **give the search a body that already walks,
+so it spends its budget on sensing rather than on re-inventing locomotion, and
+the food sense should become load-bearing.** This is the experiment that turns
+the diagnosis into a demonstrated fix. It was run on the actual soft body, and
+**the prediction fails — decoupling removes the motor burden and the sense stays
+inert.** The motor burden was a real wall; it was not the last one.
+
+**The task was built to be uncoverable, and verified so on the real arena.** The
+whole project's foraging nulls trace to one geometry: the evolved gait's path
+(~2–3 world units) sweeps a large fraction of a ~1.88 arena, so coverage
+substitutes for chemotaxis and blinding the sense costs a rounding error. The
+document's own live direction named the cure — "food that relocates *away from*
+an approaching body fast enough that only a body heading straight for it arrives
+in time." So the task here is sparse clustered interior food (14 patches in 3
+clusters, centres confined to the central 0.9 box) with a real-range sense
+(`senseSigma2` 0.11) that **relocates on depletion**: `FOOD_RELOCATE_THRESH` 0.22
+sits *above* the stock a held patch settles to (s\* = REGROW/(REGROW+CONSUME) ≈
+0.18), so a fed-on patch depletes below threshold and teleports away — sitting
+starves, and a random walk of the arena is too slow to keep finding it.
+`tools/sb-uncover.js` measures three references on this exact arena with real
+developed bodies: the champion crawler with its food sense **ablated** (the best
+blind sweep the substrate has) intakes **0.067 ± 0.012**; a body **planted on a
+cluster** (the obtainable ceiling) intakes **0.443 ± 0.106**; blind sweeping
+therefore collects **15%** of the food a body sitting on it eats. On the dense
+default the same ratio is 34% and coverage intakes 0.223 — three times as much —
+so the sparsening genuinely denies coverage. The task is uncoverable, and it is
+**solvable**: the crawler locomotes normally in this world (seeded gen-0
+displacement 0.85) and the planted ceiling proves the food is edible, so a null
+is findability, not an empty or unwalkable arena (the central-place guard).
+
+**Three arms, identical but for the start; the decisive measurement is the
+food-sense ablation on each evolved population.** Pop 32, 20 generations, 520
+steps, two spawns averaged, `--fitness intake`, tournament k=2, four seeds each.
+The instrument is unchanged from every prior wave: mean-replace the food-bearing
+sensor channel on the evolved population (`Colony.foodAblate = 'mean'`) and read
+whether intake collapses, across-seed mean ± SE against the 2×-combined-SE bar.
+
+| arm | start | gen-0 → evolved intake | intake ascent | displacement | **food-sense ablation Δ** | verdict |
+|---|---|---|---|---|---|---|
+| RANDOM | random genomes | 0.081 → 0.084 | +0.003 | 0.070 | **−0.0001** (bar 0.024) | incidental |
+| SEEDED | champion crawler | 0.070 → 0.103 | +0.033 | 0.365 | **+0.0004** (bar 0.022) | incidental |
+| STAGED | random + displacement curriculum (8 gens) | 0.081 → 0.107 | +0.026 | 0.246 | **−0.0006** (bar 0.023) | incidental |
+
+**The decoupling works — for locomotion.** Seeding removes exactly the burden the
+minimal testbed measured: a random start under intake selection barely locomotes
+(displacement 0.070, and two of four seeds sit near-immobile at 0.007–0.010),
+while the seeded population *retains* the crawler's gait across every seed
+(displacement 0.32–0.40) and the staged curriculum builds one (0.25). And both
+decoupled arms out-forage the random start by an order of magnitude in ascent
+(+0.033 and +0.026 vs +0.003), lifting intake repeatability past the 0.034 the
+gate flagged. So the search really did stop spending its budget on inventing
+movement — the prerequisite the fix required is met.
+
+**And it buys nothing for the sense.** Blinding the food channel on the evolved
+population costs, at four seeds, +0.0004 seeded / −0.0006 staged / −0.0001 random,
+every one inside its bar; paired by seed (both episodes from the same evolved
+population) the deltas are +0.0004 ± 0.0025, −0.0006 ± 0.0039, −0.0001 ± 0.0001 —
+noise around zero. No single seed cracks it either: the largest positive delta in
+the whole matrix is +0.0073 (seeded seed 2), sitting beside a −0.0045 (seeded seed
+4) and a −0.0110 (staged seed 1). The extra intake the decoupled search collects
+is **kinematic**: a gait tuned by selection to sweep the relocating field more
+effectively, which the ablated body performs identically because it never routed
+through the food channel. This is precisely the dissociation the metabolic-cost
+run measured — intake heritable (repeatability climbing) while the sense stays
+inert — reproduced here with the locomotion burden explicitly lifted, which was
+supposed to be the thing standing in the way.
+
+**Verdict. Decoupling locomotion from sensing does not crack the wall on the real
+substrate.** The minimal testbed was right that coordinating muscles into a gait
+is a hard many-mutation problem that consumes the search budget, and seeding does
+free that budget — locomotion is retained where a random start loses it, and
+foraging improves. But the food sense does not become load-bearing in any arm.
+The reason is the one the QD synthesis already named and this experiment now
+isolates from the motor confound: **on this map the reflexive route to a given
+amount of intake is cheaper than the sensing route to the same intake, and that
+inequality survives handing the body a working gait for free.** A body that
+already walks reaches relocating food by kinematics — sweeping, not steering — so
+selection has no gradient to build chemotaxis on even after the gait it would have
+had to invent is a sunk cost. The motor-coordination burden was a genuine wall
+(the eight-null history is partly it), but removing it exposes a second wall
+underneath, the same coverage-substitutes-for-chemotaxis wall wave 1 first named,
+and that one is not about the search budget at all. The `land-suspects` result
+does not transfer: the minimal testbed's easy motor made the *sensing* route the
+only route to the source, and the real soft body never does — its motor and its
+arena together always leave a cheaper reflexive route open.
+
+**What is committed.** In `tools/sb-evolve.js`, `--seedPop <population.json>`
+(default `''` = the byte-identical random start) builds generation 0 from a
+`softbody-genome` file — one exact copy plus `pop−1` copies perturbed at
+`--seedJitter` (default `--eps`) — so the search can start from a pre-evolved
+gait; the random-start path draws the identical rng sequence and reproduces a
+displacement run byte-for-byte (verified, text and JSON). `tools/sb-uncover.js`
+(new) measures the coverage / on-food-ceiling references on the real arena that
+establish uncoverability and solvability before any evolution is committed;
+`tools/seedgait-agg.js` (new) pools the decisive food-sense ablation across seeds
+per arm. Run readouts are in `results/seedgait/`
+(`{random,seeded,staged}-s{1..4}.json`, `aggregate.txt`, `uncoverability.txt`,
+and the `probe-*` regime-calibration runs). The champion crawler seed is the
+already-committed `populations/softbody-evolved-crawler.json`; `DEFAULTS`,
+`lib/softbody.js`, `sb-turing` and `sb-gate` are untouched.
