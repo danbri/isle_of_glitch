@@ -94,6 +94,7 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
       <span><i style="background:#41ADB2"></i>sensor</span>
       <span><i style="background:#E28C3E"></i>muscle</span>
       <span><i style="background:#6E8079"></i>neuron</span>
+      <span><i style="background:#B76BEB"></i>anchor</span>
     </div>
   </div>
 
@@ -114,6 +115,7 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
     <h2>View</h2>
     <div class="row">
       <button id="bField" class="on">field</button>
+      <button id="bFood" class="on">food</button>
       <button id="bBonds" class="on">bonds</button>
       <button id="bPause">pause</button>
       <button id="bEvolve" class="on">evolve</button>
@@ -207,8 +209,13 @@ struct Cam {
   bandK    : f32,   // streamline frequency, fixed in WORLD units
   bandFade : f32,   // fades streamlines out as they approach pixel spacing
   restLen  : f32,   // what a relaxed bond measures, for the strain colouring
-  pad1     : f32,
-  pad2     : f32,
+  resScale : f32,   // the resource field: what the creatures are actually after
+  resSeed  : u32,
+  worldTime: f32,
+  driftX   : f32,
+  driftY   : f32,
+  morphRate: f32,
+  showRes  : f32,
 };
 @group(0) @binding(0) var<uniform>       C     : Cam;
 @group(0) @binding(1) var<storage, read> pos   : array<vec2<f32>>;
@@ -263,8 +270,35 @@ fn bgFs(i: BgOut) -> @location(0) vec4<f32> {
 
   // Kept dim on purpose: the field is the setting, not the subject. If the
   // background competes with the cells, the population stops being readable.
-  var col = base + mix(cool, warm, mixv) * m * 0.42;
-  col = col + vec3<f32>(0.07, 0.11, 0.10) * streak * (0.25 + 0.75 * m);
+  var col = base + mix(cool, warm, mixv) * m * 0.30;
+  col = col + vec3<f32>(0.05, 0.08, 0.07) * streak * (0.25 + 0.75 * m);
+
+  // THE FOOD. Drawn at last: it is the thing every creature is chasing, it
+  // drifts and morphs under them, and it was invisible — so the world looked
+  // like grey weather rather than a landscape with somewhere worth being. It is
+  // also the most photogenic layer in the simulation, being pure fractal noise
+  // that moves.
+  if (C.showRes > 0.5) {
+    // LOD here too, and it matters twice over: this is two fbm evaluations per
+    // pixel and at full depth it cost two thirds of the framerate. Fewer octaves
+    // when zoomed out is both cheaper and correct, since the fine ones are below
+    // a pixel anyway.
+    let rq = i.w * C.resScale + C.worldTime * vec2<f32>(C.driftX, C.driftY);
+    let ra = fbmOct(rq, C.resSeed, C.octaves);
+    let rb = fbmOct(rq, C.resSeed + 7777u, C.octaves);
+    let rw = 0.5 + 0.5 * sin(C.worldTime * C.morphRate);
+    let rr = mix(ra, rb, rw);
+    let r = rr * rr;
+
+    // Only the RICHEST ground glows. The mean of this field is around 0.28, and
+    // lighting that produced a bright wash the creatures disappeared into —
+    // the layer that matters most on screen should be the one that is alive, not
+    // the ground. smoothstep keeps almost everything dark and lets the good
+    // patches read as light coming off something.
+    let g = smoothstep(0.30, 0.85, r);
+    col = col + vec3<f32>(0.20, 0.115, 0.035) * g
+              + vec3<f32>(0.07, 0.05, 0.015) * g * g;
+  }
 
   // The field is analytic and therefore unbounded, but the world bodies live in
   // is a torus of half-extent 'bound'. Rendering the field past that edge drew a
@@ -315,14 +349,18 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   o.p = vec4<f32>((world - C.center) * C.ndc, 0.0, 1.0);
   o.uv = corner;
 
-  let sensor = vec3<f32>(0.255, 0.678, 0.698);
-  let muscle = vec3<f32>(0.886, 0.549, 0.243);
-  let neuron = vec3<f32>(0.431, 0.502, 0.475);
+  let sensor = vec3<f32>(0.30, 0.82, 0.86);
+  let muscle = vec3<f32>(1.00, 0.58, 0.20);
+  let neuron = vec3<f32>(0.62, 0.70, 0.66);
+  let anchor = vec3<f32>(0.72, 0.42, 0.92);      // suckers: the feet
   var base = neuron;
   if (m.x == 1) { base = sensor; }
   if (m.x == 2) { base = muscle; }
+  if (m.x == 3) { base = anchor; }
   o.tint = base;
-  o.glow = clamp(0.30 + 0.85 * abs(a), 0.0, 1.35);
+  // Brighter and with more range, so an active cell reads as ALIVE rather than
+  // as a slightly paler dot. Activation drives brightness superlinearly.
+  o.glow = clamp(0.42 + 1.5 * abs(a) * abs(a), 0.0, 2.2);
   return o;
 }
 
@@ -330,10 +368,15 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
 fn fs(i: VOut) -> @location(0) vec4<f32> {
   // A gaussian falloff, not a hard disc: soft marks compose into a flowing
   // field instead of the TV-snow look hard dots give at population scale.
+  // A tight core inside a wide halo. One gaussian gives a soft blob; two give
+  // something that reads as a light source, which is what makes a field of
+  // these look alive rather than dusty.
   let d2 = dot(i.uv, i.uv);
-  let g = exp(-d2 * 3.4);
+  let core = exp(-d2 * 7.0);
+  let halo = exp(-d2 * 1.7);
+  let g = core + 0.35 * halo;
   if (g < 0.004) { discard; }
-  return vec4<f32>(i.tint * i.glow * g, g);
+  return vec4<f32>(i.tint * i.glow * g, clamp(g, 0.0, 1.0));
 }
 
 /* ------------------------------------------------- bonds: one line per bond */
@@ -385,7 +428,10 @@ fn lineVs(@builtin(vertex_index) vi: u32) -> LOut {
     let strain = clamp((length(d) / max(C.restLen, 1e-4) - 1.0) / 4.0, 0.0, 1.0);
     o.tint = mix(vec3<f32>(0.16, 0.42, 0.62), vec3<f32>(0.85, 0.22, 0.16), strain);
   } else {
-    o.tint = vec3<f32>(0.16, 0.30, 0.28);
+    // Dim, and fading with distance. At low zoom tens of thousands of bond
+    // segments carry almost no information and drown everything else; up close
+    // they are the body plan and worth seeing.
+    o.tint = vec3<f32>(0.10, 0.20, 0.19) * C.bandFade;
   }
   return o;
 }
@@ -401,7 +447,7 @@ fn lineFs(i: LOut) -> @location(0) vec4<f32> {
 let dev, ctx, fmt, sim = null, raf = 0;
 const cam = { cx: 0, cy: 0, zoom: 6 };     // zoom = pixels per world unit
 const view = { field: true, bonds: true, paused: false, spf: 4, evolve: true,
-               cells: true, strain: false, solo: -1 };
+               cells: true, strain: false, solo: -1, food: true };
 // ?watch=1 turns this page into a VIEWPORT on the shared run in tools/serve-world.js
 // instead of a simulation of its own. Without it every tab is a separate
 // universe, which is why two browsers never agreed about anything.
@@ -466,6 +512,7 @@ async function rebuild() {
 
   let beasts = +$('sBeasts').value;
   let cellsPer = +$('sCpb').value;
+  let remoteParams = null;
 
   // In watch mode the SERVER decides the shape. Asking the viewer to be
   // configured to match by hand guarantees a mismatch every time the server is
@@ -475,6 +522,7 @@ async function rebuild() {
     try {
       const st = await (await fetch('/status', { cache: 'no-store' })).json();
       beasts = st.beasts; cellsPer = st.cellsPerBeast;
+      remoteParams = st;                       // the field the server is using
       $('sBeasts').value = beasts; $('vBeasts').textContent = beasts.toLocaleString();
       $('sCpb').value = cellsPer; $('vCpb').textContent = cellsPer;
     } catch (e) {
@@ -511,7 +559,7 @@ async function rebuild() {
   const bBond = dev.createBuffer({ size: bondCapacity, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
   dev.queue.writeBuffer(bBond, 0, idx);
 
-  const bCam = dev.createBuffer({ size: 80, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  const bCam = dev.createBuffer({ size: 112, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
 
   const module = dev.createShaderModule({ code: RENDER, label: 'render' });
 
@@ -580,6 +628,11 @@ async function rebuild() {
     ...built, brains, world, bBond, bCam, bind, evo,
     pipeBg, pipeCells, pipeBonds, bondVerts: idx.length, bound, syn,
     sinceTick: 0, ticking: false, fetching: false, serverSteps: 0,
+    remote: remoteParams ?? {
+      resScale: world.params.resScale, resSeed: world.params.resSeed,
+      driftX: world.params.driftX, driftY: world.params.driftY,
+      morphRate: world.params.morphRate, dt: world.params.dt,
+    },
     bondCapacity, topoVersion: -1, fetchingBonds: false,
   };
   if (WATCH) {
@@ -681,7 +734,7 @@ function writeCam() {
   // or the population vanishes when zoomed out.
   const rWorld = Math.max(0.34, 1.15 / (cam.zoom * dpr));
 
-  const b = new ArrayBuffer(80), dv = new DataView(b);
+  const b = new ArrayBuffer(112), dv = new DataView(b);
   dv.setFloat32(0, cam.cx, true); dv.setFloat32(4, cam.cy, true);
   dv.setFloat32(8, nx, true); dv.setFloat32(12, ny, true);
   dv.setFloat32(16, rWorld, true);
@@ -714,6 +767,14 @@ function writeCam() {
   const bandPx = bandWorld * pxPerWorld;
   dv.setFloat32(60, Math.min(1, Math.max(0, (bandPx - 2.5) / 5.5)), true);
   dv.setFloat32(64, 0.62, true);            // rest length, for strain colouring
+  const rp = sim.remote ?? {};
+  dv.setFloat32(68, rp.resScale ?? 0.35, true);
+  dv.setUint32(72, rp.resSeed ?? 91, true);
+  dv.setFloat32(76, (sim.serverSteps ?? 0) * (rp.dt ?? 0.015), true);
+  dv.setFloat32(80, rp.driftX ?? 0, true);
+  dv.setFloat32(84, rp.driftY ?? 0, true);
+  dv.setFloat32(88, rp.morphRate ?? 0, true);
+  dv.setFloat32(92, view.food ? 1 : 0, true);
   dev.queue.writeBuffer(sim.bCam, 0, b);
 }
 
@@ -847,6 +908,7 @@ $('sBeasts').addEventListener('input', e => $('vBeasts').textContent = (+e.targe
 $('sCpb').addEventListener('input', e => $('vCpb').textContent = e.target.value);
 
 $('bField').onclick = e => { view.field = !view.field; e.target.classList.toggle('on', view.field); };
+$('bFood').onclick = e => { view.food = !view.food; e.target.classList.toggle('on', view.food); };
 $('bBonds').onclick = e => { view.bonds = !view.bonds; e.target.classList.toggle('on', view.bonds); };
 $('bPause').onclick = e => { view.paused = !view.paused; e.target.classList.toggle('on', view.paused); };
 $('bEvolve').onclick = e => { view.evolve = !view.evolve; e.target.classList.toggle('on', view.evolve); };

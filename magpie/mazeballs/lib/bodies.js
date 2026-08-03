@@ -19,7 +19,7 @@
  * mutates these weights; it does not need a different body builder.
  */
 import { BrainArena } from './brainarena.js';
-import { CELL_NEURON, CELL_SENSOR, CELL_MUSCLE } from './world_gpu.js';
+import { CELL_NEURON, CELL_SENSOR, CELL_MUSCLE, CELL_ANCHOR } from './world_gpu.js';
 
 /**
  * @param {object} o
@@ -101,7 +101,11 @@ export function buildBodies({
 
       // Thirds: sensors feel the medium, muscles contract bonds, the rest are
       // interneurons. Every one of them is a CTRNN node in the same island.
-      ctype[gi] = i % 3 === 0 ? CELL_SENSOR : (i % 3 === 1 ? CELL_MUSCLE : CELL_NEURON);
+      // Quarters, so an anchor is present from the start and evolution has
+      // something to select on rather than having to invent it.
+      ctype[gi] = i % 4 === 0 ? CELL_SENSOR
+                : i % 4 === 1 ? CELL_MUSCLE
+                : i % 4 === 2 ? CELL_ANCHOR : CELL_NEURON;
       body[gi] = o;
       bodySize[gi] = cells;
       cslot[gi] = arena.bindCell(o, i, gi);          // both directions of one relation

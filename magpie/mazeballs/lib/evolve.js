@@ -442,7 +442,7 @@ export class Evolver {
       pos[i * 2 + 1] = wrap(oy + Math.sin(a) * rad);
 
       let type = cells.ctype[src + srcOf(i)];
-      if (r() < m * 0.5) type = (r() * 3) | 0;
+      if (r() < m * 0.5) type = (r() * 4) | 0;   // neuron, sensor, muscle, anchor
       cells.ctype[dst + i] = type;
       cells.body[dst + i] = child;
       cells.bodySize[dst + i] = n;

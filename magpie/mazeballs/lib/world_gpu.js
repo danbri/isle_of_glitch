@@ -40,10 +40,25 @@
 
 const WORKGROUP = 256;
 
-/** Cell subtypes. A cell is a cell; these only select which kernels act on it. */
+/**
+ * Cell subtypes. A cell is a cell; these only select which kernels act on it.
+ *
+ * ANCHOR is a muscle of a different kind — a sucker, a holdfast, whatever the
+ * flatland equivalent of a tube foot is. Where a muscle converts activation into
+ * a shorter bond, an anchor converts it into GRIP on the substrate. Making it a
+ * type rather than a property every cell carries is the lawful version: how much
+ * of a body is given over to holding on becomes a heritable decision the genome
+ * makes, and different lineages can answer it differently, instead of being a
+ * constant chosen here.
+ *
+ * It also matters mechanically. A body that grips everywhere cannot crawl any
+ * better than one that grips nowhere — locomotion needs SOME cells anchored
+ * while others are dragged, and that asymmetry has to come from somewhere.
+ */
 export const CELL_NEURON = 0;
 export const CELL_SENSOR = 1;
 export const CELL_MUSCLE = 2;
+export const CELL_ANCHOR = 3;
 
 /**
  * The field itself, as WGSL, shared verbatim by the simulation and any renderer.
@@ -203,9 +218,14 @@ struct W {
   driftY   : f32,
 
   morphRate: f32,   // how fast the terrain becomes a different terrain
-  gripBase : f32,   // traction against the substrate, before modulation
+  gripBase : f32,   // traction every cell has, before modulation
   gripMod  : f32,   // how far activation may raise or lower a cell's grip
   fricK    : f32,   // Coulomb velocity decrement per unit grip per second
+
+  gripAnchor: f32,  // an ANCHOR cell's grip: a sucker, not a skin
+  pad0     : f32,
+  pad1     : f32,
+  pad2     : f32,
 };
 
 // Positions and velocities are packed vec2, and (type, slot) into one vec2<i32>.
@@ -532,9 +552,12 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // let a cell hold still against a pull, which is exactly what an anchor has to
   // do. This lets a high-grip cell stay put while a low-grip one is dragged.
   {
+    let me2 = cmeta[i];
+    // Every cell has a little purchase on the world; an ANCHOR cell has far
+    // more, and modulates it with its activation so it can let go.
     var grip = P.gripBase;
-    let slot = cmeta[i].y;
-    if (slot >= 0) { grip = grip * (1.0 + P.gripMod * act[u32(slot)]); }
+    if (me2.x == 3) { grip = P.gripAnchor; }
+    if (me2.y >= 0) { grip = grip * (1.0 + P.gripMod * act[u32(me2.y)]); }
     grip = max(grip, 0.0);
     let sp = length(v);
     if (sp > 1e-6) {
@@ -697,7 +720,7 @@ export class WorldGPU {
       // blown along by the current, little enough that its own muscles can still
       // move it. At the original 0.55 the decrement was 0.05 per step, ten times
       // what the flow supplies, and the world froze solid.
-      gripBase: 0.06, gripMod: 0.9, fricK: 6.0,
+      gripBase: 0.06, gripMod: 0.9, fricK: 6.0, gripAnchor: 0.9,
       bucketM: 12, predRate: 0.0, contactR: 1.0, sizeScale: 14.0, sizeRef: 12,
       dt: brains.dt, ...params,
     };
@@ -707,7 +730,7 @@ export class WorldGPU {
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
     });
     this.bParams = device.createBuffer({
-      size: 144, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+      size: 160, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
     this.writeParams();
 
@@ -758,7 +781,7 @@ export class WorldGPU {
   writeParams(patch = {}) {
     Object.assign(this.params, patch);
     const p = this.params;
-    const buf = new ArrayBuffer(144), dv = new DataView(buf);
+    const buf = new ArrayBuffer(160), dv = new DataView(buf);
     dv.setUint32(0, this.n, true); dv.setUint32(4, this.bondK, true);
     dv.setFloat32(8, p.dt, true); dv.setFloat32(12, p.flowScale, true);
     dv.setFloat32(16, p.flowStr, true); dv.setFloat32(20, p.drag, true);
@@ -792,6 +815,7 @@ export class WorldGPU {
     dv.setFloat32(132, p.gripBase, true);
     dv.setFloat32(136, p.gripMod, true);
     dv.setFloat32(140, p.fricK, true);
+    dv.setFloat32(144, p.gripAnchor, true);
     this.device.queue.writeBuffer(this.bParams, 0, buf);
   }
 

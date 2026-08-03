@@ -40,11 +40,18 @@ gpuTest('the shader compiles and every cell is wired into its island', async () 
 });
 
 gpuTest('bond forces conserve momentum — Newton\'s third law holds', async () => {
-  // With no flow and no drag, bonds are the ONLY force, so total momentum must
-  // not change no matter what the muscles do. An asymmetric bond force shows up
-  // here immediately as momentum appearing from nowhere.
+  // With no flow, no drag and NO TRACTION, bonds are the only force, so total
+  // momentum must not change no matter what the muscles do. An asymmetric bond
+  // force shows up here immediately as momentum appearing from nowhere.
+  //
+  // Traction has to be switched off explicitly and it is the whole point of it:
+  // friction against the substrate is an EXTERNAL force, so with it enabled
+  // momentum is legitimately not conserved — that is precisely how a creature
+  // moves. Leaving it on made this test fail for the right reason, which is a
+  // good way to be misled into "fixing" the physics.
   const { world, brains, meta } = await makeWorld({
     flowStr: 0, drag: 0, damp: 1.0, contract: 0.45,
+    gripBase: 0, gripAnchor: 0,
   });
 
   const readVel = async () => {
