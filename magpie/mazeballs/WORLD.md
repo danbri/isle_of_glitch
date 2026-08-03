@@ -5,6 +5,33 @@ This is the world we are trying to build and *why* — the god's-eye design brie
 Captured from the design conversation; treat it as binding intent, to be built
 incrementally and measured the way everything else here is.
 
+## THE FIRST LAW — nothing high-level is a primitive (read this before you tune anything)
+
+**"Predator" is not a property of anything in this world. Neither is "prey,"
+"organism," or even "entity." The only primitives are cells, the forces between
+them, and the fields they sit in. Everything above that — a body, a herd, a
+hunt, a boat, a corpse — is a PATTERN that those primitives fall into, never a
+flag you set.**
+
+This is a standing correction to a real mistake made in `godsim.html`: to get
+predators to catch prey, the code did `predatorSpeed = 1.35` — it reached into
+the equations of motion and hand-set the outcome it wanted. That is forbidden.
+If one lineage outruns another, the cause must be **lower down**: its muscle
+cells convert fuel to force more efficiently, or it carries more fuel, or its
+body plan is better shaped for thrust. You earn the fast predator by building
+the chemistry that makes it fast; you never type the speed in.
+
+The test to apply to any new mechanism, every time: **"Am I setting a high-level
+outcome, or causing it from below?"** If a knob is named for a role
+(`predatorSpeed`, `preyFleeRate`, `herbivoreRepro`), it is almost certainly the
+wrong knob. The right knobs are named for physics and chemistry (fuel yield of a
+reaction, force between two cell types, diffusion of a signal). When you catch
+yourself wanting a role-named knob, stop and work out the low-level story that
+would produce it — that story is the actual feature. Playing god means setting
+initial conditions and chemistry, then watching what grows; it does not mean
+editing the motion of the things that grew. Every crutch we take before this is
+possible (see "The shortcuts ledger," Part III) is logged as a debt to be paid.
+
 ## The problem this answers
 
 Eight experiments established one wall, stated most sharply as: **sensing never
@@ -401,3 +428,160 @@ then make the world uncoverable and toroidal and bigger, then add fields one at 
 time — trail, then sound, then heat/light, then portability — each kept only if
 it makes capability keep climbing against its own ancestors, under an autoresearch
 loop. Hold the parsimony line: a field, an entity, or a coupling, or be suspicious.
+
+---
+
+# Part III — cells as the world's atoms, and energy as its currency
+
+*Recorded from the design conversation. Read Part III together with THE FIRST
+LAW at the top: this part says what the primitives ARE; that law says you may
+never bypass them.*
+
+## Cells are the atoms. Bodies are molecules.
+
+Do not make "entities" foundational. Multicellularity is made of simpler stuff,
+and so is everything else. The one building block is the **cell**, and a cell is
+much more like an atom or a small molecule than like an animal:
+
+- It has a position and velocity in the 2D world (R²), a **size**, and some
+  fuel. That is nearly all its *state*.
+- It may be **living or non-living**. A living cell has DNA and runs
+  development; a dead cell has neither. But a cell need not ever have been alive
+  to matter — the same particle is the stuff of **boats, shelter, firewood,
+  food, corpses, silt**. Inanimate structure is just cells that aren't running a
+  genome. A raft is a clump of stuck-together dead cells; a wall is the same.
+- **"Squishiness" is not a deformed-circle shape.** It is a small set of
+  **forces** — attraction and repulsion — that govern how a cell interacts with
+  other cell types, living and non-living alike. A cell type is defined largely
+  by its row in an interaction matrix: how strongly it is drawn to, or pushed
+  from, each other type within a short range, plus a universal short-range
+  volume-exclusion so cells don't occupy the same point. Membranes, tissues,
+  limbs, and rigid tools all emerge from these pairwise forces; we do not model
+  polygon deformation. This is the "particle-life" family of dynamics — cheap,
+  continuous, GPU-friendly — pressed into service as chemistry.
+
+## Death, decay, and food are the same substance moving
+
+When a living cell dies it simply **loses its DNA and its development** — it
+stops being computed as alive. It does **not** leave the world. It remains a
+physics particle (it still pushes and is pushed) and it becomes **food**:
+another cell can consume it, taking its mass/fuel. Left uneaten it **decays**,
+slowly releasing its energy back into the fields (a corpse feeds the sugar/
+nutrient field around it) and eventually vanishing. Nothing is created or
+destroyed so much as **moved**: field → living cell → corpse → field. That loop
+is the ecology, expressed without a single role-named rule.
+
+## Doubling is the powerful thing
+
+A living cell with enough fuel **divides** — it doubles. Doubling is the engine
+of everything: growth of a body, blooms of food, healing, reproduction. It is
+exponential and therefore powerful, so it must be **gated**, and the gate is the
+**fieldsim**: the local division rate rises and falls with the fields a cell
+sits in — **heat, light, magnetism, local gravity, centrifugality, agitation,
+sugar, water**, whatever we choose to couple. "Warm, wet, sugary, still" doubles
+fast; "cold, dry, starved, churned" does not. This is where god plays honestly:
+you tune the *fields and the couplings*, and the population responds — you never
+set a birth rate on a role.
+
+## Size and squishiness drift over a lifetime
+
+A cell is not fixed at birth. Its **size and its interaction forces change
+during life** — a cell that has taken up water or sugar swells and grows
+stickier or more buoyant; a starved one shrinks and firms. So a body's shape and
+mechanics are a running function of what it has eaten and where it has been, not
+a static blueprint. This is cheap (a couple of scalars per cell updated per
+step) and it is a large part of where interesting mechanics will come from
+(water-retention traps, sugar-drunk sluggishness, buoyant rafts).
+
+## Development never really stops
+
+Bite the bullet: **development continues throughout a cell's life**, not just in
+an initial phase. Proteins keep feeding back into the gene-regulatory network,
+roles can shift, the body keeps forming. The only concession is
+**computational**: we may run the development/GRN update only every *N* physics
+steps (physics and neurons/muscles tick fast; the slow chemistry of development
+ticks coarsely). Lifetime and development stop being two stages and become two
+timescales of one process.
+
+## ENERGY is the master variable — think Nick Lane
+
+Everything above is really about **energy**, and this deserves the deepest
+thought. Nick Lane's argument is that life is a flow problem before it is an
+information problem: a cell is a device that sits across an energy gradient (for
+real cells, a proton gradient across a membrane — chemiosmosis) and taps it, and
+the amount of usable energy *per unit of genome* is what gates how complex a
+lineage can afford to become. Two design consequences we want to honour here:
+
+1. **The world is an open system with an energy source.** Energy must ENTER —
+   "sunlight" deposited as a sugar/nutrient field, or a chemical gradient at a
+   vent. Everything downstream (division, movement, sensing, predation) spends
+   that energy. This is why an energy input is legitimate and a *seed rain of
+   whole organisms is not*: thermodynamics requires the former; the latter is a
+   crutch (see the ledger).
+2. **Energy per cell gates complexity.** A bigger brain (more neuron cells,
+   more muscle) must be *paid for* out of the same fuel budget — so brains,
+   speed, and size all trade against each other through one currency, exactly
+   the "earn its keep" pressure the mission wants. If we ever want the analogue
+   of the mitochondrial leap, it looks like a cell type that supplies fuel to
+   its neighbours far more cheaply — an endosymbiosis, discovered, not declared.
+
+**Fire** belongs to this chapter: firewood is dead dry cells; fire is a fast
+exothermic reaction that consumes them and pumps the heat field, which in turn
+gates division, movement, and death nearby. It is one more coupling
+(flammable-cell + heat-field), not a special system.
+
+## The trophic stack you asked for — and the primitives it needs
+
+The target picture: **ant eats sugar and leaves a trail; scorpion eats ants and
+leaves a different trail; rockbeast finds the scorpion nest, feasts and farts;
+staypuft fiend eats the rockbeast and wins.** The First Law says none of these
+may be a `type=PREDATOR` with a speed knob. What the platform actually needs to
+let this *emerge* is small:
+
+- **Multiple cell types with their own chemistry** — each type is a row in the
+  interaction-force matrix (who it clings to / flees) and a row in a **digest
+  matrix** (when overlapping type X, transfer fuel from X to me at some rate).
+  "Scorpion eats ant" is just: scorpion-cells are weakly attracted to ant-cells
+  and digest them on contact. The *ladder* (sugar→ant→scorpion→rockbeast→
+  staypuft) is what a well-chosen pair of matrices produces; nobody types
+  "trophic level."
+- **A distinct trail field per emitter chemistry.** Trails are already fields;
+  "a different trail" is just a different channel an ant vs a scorpion deposits
+  to, and that a hunter one rung up is tuned to follow. This is the
+  predator/prey *gradient* — the smell ladder — and it is the honest way a
+  hunter finds a nest: by climbing a field, not by a proximity query.
+- **Fuel-limited muscles.** Being caught or catching is downstream of who can
+  afford to accelerate — muscle cells burning fuel for force — so "faster" is
+  always an energy story, never a constant.
+
+Everything in that sentence already exists as a field or a cell-force or a fuel
+rule. The trophic stack is a *test* of the primitives, not new machinery.
+
+## The shortcuts ledger — debts taken, to be repaid
+
+`godsim.html` is a fun, honest-about-itself sandbox, but it takes shortcuts that
+violate the spirit above. Logged here so no one mistakes them for the design and
+so future revisions can pay them down:
+
+| shortcut in godsim | why it's a crutch | pay it down with |
+|---|---|---|
+| `predatorSpeed = 1.35`, per-type speeds | high-level outcome typed into motion — the exact First-Law violation | speed from fuel-burning muscle cells; a fast lineage must earn it |
+| role-named rates (`predatorRepro`, `metabolism` per type, drain rate) | tunes the role, not the chemistry | one fuel currency; division/death fall out of energy balance |
+| **seed rain / egg-bank dormancy floors** | spawns whole organisms from nothing to dodge extinction | energy *input* (sunlight→sugar) + working division; let lineages actually die |
+| point-blobs as "creatures" | there is no multicellularity at all — each blob is one dot | cells-as-atoms: bodies are clumps held by inter-cell forces |
+| CPU simulation, GPU only for drawing | not the "all on GPU" dream; **yes, the GPU is faked** — compute is on the CPU, the GPU only composites | port fields + particle forces to compute shaders once the hardware is here |
+| fixed global field params | world is uniform | per-region fields, terrain, the couplings of Part I |
+
+The direction of travel is: **delete every role-named knob and every spawn-from-
+nothing floor, and let the same behaviours re-appear from cells, forces, fuel,
+and fields.** When they do, the world is real.
+
+## Two standing bugs / notes
+
+- **`fieldsim.html` flickers badly on Android.** Reported from the field. Almost
+  certainly a double-buffer / canvas-clear / compositing issue on mobile GPUs,
+  not the maths. To fix next: check for an un-cleared or alpha-composited canvas,
+  `preserveDrawingBuffer`, and any per-frame texture re-alloc.
+- **The GPU is currently faked** in every web demo (CPU compute, GPU draw). Said
+  plainly because it was asked plainly. A real compute-shader port is the item
+  once dedicated hardware is available.
