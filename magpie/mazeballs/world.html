@@ -366,17 +366,25 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
 
 @fragment
 fn fs(i: VOut) -> @location(0) vec4<f32> {
-  // A gaussian falloff, not a hard disc: soft marks compose into a flowing
-  // field instead of the TV-snow look hard dots give at population scale.
-  // A tight core inside a wide halo. One gaussian gives a soft blob; two give
-  // something that reads as a light source, which is what makes a field of
-  // these look alive rather than dusty.
-  let d2 = dot(i.uv, i.uv);
-  let core = exp(-d2 * 7.0);
-  let halo = exp(-d2 * 1.7);
-  let g = core + 0.35 * halo;
-  if (g < 0.004) { discard; }
-  return vec4<f32>(i.tint * i.glow * g, clamp(g, 0.0, 1.0));
+  // A CRISP DISC, antialiased at the rim and nothing beyond it.
+  //
+  // This was a gaussian falloff, and before that a gaussian core inside a wider
+  // gaussian halo. Both were mistakes. A gaussian never actually reaches zero,
+  // so every cell tints its whole quad faintly; with hundreds of bodies
+  // overlapping, those tails sum into a ghostly haze and the population reads as
+  // a blobby network rather than as creatures. It also made the picture
+  // device-dependent in a way that is hard to notice: the same world watched
+  // from a phone and a laptop at the same instant looked like different
+  // simulations.
+  //
+  // A cell is a small round thing with an edge. Drawing it as one is both more
+  // honest and more legible.
+  let d = length(i.uv);
+  if (d > 1.0) { discard; }
+  // Feather only the outermost sliver, so the rim is smooth without the mark
+  // bleeding into its neighbours.
+  let a = 1.0 - smoothstep(0.82, 1.0, d);
+  return vec4<f32>(i.tint * i.glow * a, a);
 }
 
 /* ------------------------------------------------- bonds: one line per bond */
@@ -730,9 +738,16 @@ function writeCam() {
   // NDC units per world unit. zoom is CSS px per world unit, so multiply by dpr
   // to get device px, then 2/size to reach NDC.
   const nx = cam.zoom * dpr * 2 / w, ny = cam.zoom * dpr * 2 / h;
-  // Cells keep a physical size in world units, but never shrink below a pixel
-  // or the population vanishes when zoomed out.
-  const rWorld = Math.max(0.34, 1.15 / (cam.zoom * dpr));
+  // Cells keep a physical size in world units, with a floor so the population
+  // does not vanish when zoomed out.
+  //
+  // The floor is in CSS pixels and deliberately NOT scaled by devicePixelRatio.
+  // Dividing by dpr made the minimum world-size depend on the display: a phone
+  // at dpr 3 drew cells a third the size of the same cells on a laptop at dpr 2,
+  // so two people watching the same server at the same moment saw materially
+  // different worlds. Physical size is a property of the cell, not of the screen
+  // looking at it.
+  const rWorld = Math.max(0.34, 1.15 / cam.zoom);
 
   const b = new ArrayBuffer(112), dv = new DataView(b);
   dv.setFloat32(0, cam.cx, true); dv.setFloat32(4, cam.cy, true);
