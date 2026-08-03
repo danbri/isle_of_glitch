@@ -112,6 +112,33 @@ AI — on the machine with a real GPU.
     and the assay + tournament are ready to judge whether it breaks the next
     ceiling. (Supersedes the earlier "bodies don't bootstrap" note — that was the
     v2 physics bug, now fixed.)
+  - **Attempted RUNG 3 (`tools/differentiate-proto.js`) — cell differentiation —
+    and it is NOT confirmed. An honest negative with a precise reason.** The lawful
+    design: a substrate is processed A→B→energy in two enzyme steps that trade off
+    a per-cell budget, with B diffusing/decaying fast so it must be handed off
+    between adjacent cells; LABOR-REG (cells regulate expression by local B →
+    differentiation possible) vs LABOR-FIXED (genes only → clonal bodies stay
+    uniform). Two attempts:
+    - *Linear trade-off:* the windfall is captured by UNIFORM bodies without
+      differentiating (a generalist doing half of each step, eating its own B, ties
+      a specialist pair). REG ≈ FIXED, differentiation ~noise. This recovers the
+      textbook principle (Michod/Rueffler): division of labour pays only under
+      **convex** returns to specialisation.
+    - *Convex trade-off* (a fixed overhead per active pathway): REG now beats FIXED
+      on population and ascent is strong (tournament late-vs-early **0.840**) — but
+      the **mechanism is wrong**: bodies shrink to ~1.5 (overhead makes big bodies
+      unaffordable) and within-body differentiation still doesn't rise. REG wins by
+      **single-cell plasticity** (one cell contextually switching pathways to dodge
+      the double overhead), NOT by multicellular division of labour.
+    **Lesson:** unlike rung 1, which opened cleanly, rung 3 needs a narrow regime
+    this prototype didn't hit — bodies cheap to maintain AND a strictly
+    non-cell-autonomous step-2 benefit (a cell must be unable to eat its own B; only
+    a neighbour can) AND convex specialisation returns, all at once — else evolution
+    takes the easier single-cell plastic route. **The staircase is real, but its
+    steps are not free.** That refines the goal honestly: demonstrating open-ended
+    ascent is not "keep adding windfalls," it is finding the specific conditions
+    under which each new transition is *forced* rather than bypassed — and rung 1
+    (multicellularity) is the one clean, measured example so far.
 - **tools/land-evolve.js, land-suspects.js, land-control.js** — minimal
   testbeds that proved: evolution CAN find sensing under batch-GA selection;
   the motor-coordination burden is a wall; seeding a gait doesn't transfer.
