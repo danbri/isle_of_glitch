@@ -5033,3 +5033,50 @@ FIX DIRECTIONS, none yet tested: lower bondK so graphs stay embeddable; make
 rest length per-bond and heritable, accepting that bodies then encode geometry;
 or constrain topology mutation to preserve planarity. The first is cheapest to
 try and the third is closest to the original intent.
+
+### Ascent on corrected bodies: it stops, and the two reasons are both imposed
+
+The first ascent measurement taken on bodies that can actually reach their
+genome's morphology (rest lengths inherited from realised geometry, strain 2.2x
+rather than 4.7x). Five replicate tournaments per rung, 600-tick spacing.
+
+    T600 ->T1200   0.769 +/- 0.029
+    T1200->T1800   0.583 +/- 0.047
+    T1800->T2400   0.509 +/- 0.017
+    T2400->T3000   0.494 +/- 0.022
+    T3000->T3600   0.507 +/- 0.019
+
+    post-transient  0.523 +/- 0.020    1.1 SE above 0.5 — NOT significant
+
+Ascent runs for roughly 1800 ticks and then stops. The last three rungs are
+indistinguishable from chance, and this is a tighter measurement than any
+earlier one (SEs of 0.017-0.029 on five replicates).
+
+FIXING THE MORPHOLOGY DID NOT HELP. The frustrated-body runs gave 0.568 +/- 0.020
+post-transient, 3.4 SE above chance; the corrected ones give 0.523 +/- 0.020 at
+1.1 SE. Whatever the stretched bodies were doing, they were not the reason
+ascent was limited — a useful thing to know, since the frustration was real and
+worth fixing on its own terms.
+
+BOTH BINDING CONSTRAINTS ARE MINE, and visible in the same output:
+
+  body size 26.5 -> 39.94   against maxCells = 40. The one open structural axis
+                            is exhausted; there is nowhere further to grow.
+  lineages 3 -> 1           clonal by generation 101, so adaptation runs on new
+                            mutation alone with no standing variation.
+
+Neither is a fact about the world. maxCells is a constant chosen for buffer
+sizing. The clonality is intrinsic to this selection regime — the lottery
+scheduler comparison established that a fairer queue does not prevent it, so
+preventing it needs something that actually protects lineages: spatial
+structure, frequency dependence, niche separation.
+
+So the honest reading of every "ascent plateaus" result in this wave is narrower
+than it looked. It is not evidence that this KIND of world cannot sustain
+adaptation. It is evidence that THIS world runs out of room, on an axis bounded
+by a constant, in a population that has stopped being a population and become a
+single lineage.
+
+NEXT, in order of expected value: raise maxCells and see whether size keeps
+paying; add something that protects lineages and re-measure; only then ask
+whether the ascent itself attenuates.
