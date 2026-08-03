@@ -4862,3 +4862,41 @@ is the experiment that would tell the difference, and it is the obvious next run
 No finite experiment can demonstrate unboundedness in any case. The supportable
 claim is that ascent here is real, cumulative, strongest under non-stationarity,
 and not yet shown to stop.
+
+### Correction: the per-rung trend is not measurable at this sample size
+
+The wide-spacing run (8 checkpoints, 240 ticks apart, 1920 ticks, drifting world)
+was meant to separate "adaptation is slowing" from "60-tick checkpoints are too
+finely sampled to resolve". It does not settle it, and the reason is worth
+recording because it nearly produced a confident wrong answer.
+
+Two independent tournament seed sets over the same seven rungs:
+
+    seed set 1    first half 0.579   second half 0.621   slope -0.0134
+    seed set 2    first half 0.760   second half 0.601   slope -0.0356
+
+They disagree on the SIGN of the half-comparison. Set 1 shows the second half
+stronger — attenuation reversed — and set 2 shows it weaker. Reading either
+alone gives a clean, confident, and unsupported conclusion; the first was read
+that way here before the replicate arrived.
+
+At seven rungs, seed-to-seed variance is larger than the trend being estimated.
+No claim about attenuation — in either direction — is supported by rung-level
+data at this sample size. Establishing one needs many more rungs or many more
+seeds per rung, and the tournaments are the expensive part.
+
+WHAT SURVIVES BOTH REPLICATES AND EVERY CONDITION:
+
+    first-vs-last   T240 vs T1920   12:142 descendants   57,232 vs 269,891 energy
+                                    shareB 0.922
+    static field                    shareB 0.864
+    drifting field, 60-tick         shareB 0.970
+
+and no rung in any run goes decisively to the earlier side. Cumulative ascent
+over long baselines is large, reproducible, and consistent across three
+conditions and two instruments. The rung-level derivative is not.
+
+The general lesson is the same one this wave already recorded about bounded
+measures, in a different disguise: a single run produced a clean trend, and the
+trend was an artifact of sampling. Both times the error was reading a number
+before asking what else could produce it.
