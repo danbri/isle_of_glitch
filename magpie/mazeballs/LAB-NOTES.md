@@ -79,29 +79,39 @@ AI — on the machine with a real GPU.
     behaviours. That — not more of the same knob — is the only direction the
     evidence leaves open. (`assay.js` was the scratch harness.)
   - **Built the multicellular lever as a prototype (`tools/bodies-proto.js`) and
-    put it under the same assay.** Strictly lawful: one heritable *adhesion* gene
-    sets the chance a division keeps parent↔child bonded (a persistent spring);
-    bonded clusters = bodies; a *tough-food windfall* (2nd light-fed field) can be
-    tapped only in proportion to your bonded connected-component size (collective
-    digestion, ~5 cells to fully tap) — energy a lone cell can't reach; bonds cost
-    upkeep. CONTROL vs TREATMENT vs SEEDED-high-adhesion, 24000 steps each.
-    **Result: the mechanism works but bodies do not bootstrap.** Mean component
-    size stays ~1.0 in *all* conditions, even SEEDED where ~99% of divisions bond
-    (adhesion 0.993, and NOT eroded → high adhesion is ≈ neutral). The blocker is
-    **component turnover**, not selection: a simple parent↔child bond under a
-    high-death single-cell lifecycle loses links (to death and swim-stretch) as
-    fast as it makes them, so components never reach the size where the windfall
-    pays — small bodies are a stable equilibrium and the windfall is never
-    captured. (Two real bugs were fixed getting here: the bond spring was ~10× too
-    weak to hold against a cell's own thrust; and every new division-bond was being
-    discarded the same step because the just-born child wasn't in the cell list yet
-    during the force pass.) **What this tells the laptop build:** division bonds
-    alone are necessary but not sufficient — crossing into multicellularity needs a
-    *body-level lifecycle*: much stronger cohesion, sibling bonds, and reproduction
-    through a single-cell **propagule** so a body persists and reproduces *as a
-    body* (the snowflake-yeast / single-cell-bottleneck design already in WORLD.md).
-    The prototype is where that starts; the assay is ready to judge whether it
-    breaks the ceiling.
+    put it under the same assay — and it BREAKS THE CEILING.** Strictly lawful: one
+    heritable *adhesion* gene sets the chance a division keeps parent↔child bonded
+    (a persistent damped spring); bonded clusters = bodies; a *tough-food windfall*
+    (2nd light-fed field) can be tapped only in proportion to your bonded connected
+    -component size (collective digestion, ~5 cells to fully tap) — energy a lone
+    cell can't reach; bonds cost upkeep. CONTROL vs TREATMENT vs SEEDED, 24000
+    steps each. Three bond-physics bugs had to be fixed (spring 10× too weak vs
+    thrust; new bonds discarded the same step because the just-born child wasn't in
+    the cell list during the force pass; and bonds snapping on stretch before
+    bodies could grow — fix: break bonds only on death, with a damped spring).
+    **With that, bodies bootstrap and the bounded foraging ceiling breaks:**
+    - mean body size climbs **1 → ~20** from a *random* adhesion start (SEEDED:
+      40–165); adhesion is retained → bodies **pay** (they capture the windfall).
+    - the monoculture assay that pinned the single-cell soup at **~320** now reads
+      **~450** (treatment) / **~510–536** (seeded): the ceiling is broken.
+    - the ancestral tournament *in the treatment world* (extra energy cancels,
+      apples-to-apples) shows a **fresh ascent burst**: late-vs-early **0.612**,
+      control 0.480, ladder 0.585 0.557 0.567 0.533 …
+    - **…but the new hill ALSO saturates:** body size plateaus ~20, ladder
+      2nd-half **0.508** (≈ the single-cell soup's 0.496).
+  - **THE HEADLINE: ascent is a STAIRCASE, and this is its first measured step.**
+    Open-ended ("infinite") ascent is not one endless climb (unreachable in finite
+    compute); it is an unbounded *sequence* of bounded hills, each opened by a NEW
+    lawful capability/windfall as the last saturates. Demonstrated here as a
+    lawful, instrumented transition: single-cell foraging (ceiling ~320) → a
+    multicellular transition (bodies bootstrap, ceiling → ~450, fresh ascent) →
+    re-saturation. **The next rung is the recursive one the goal names:** a windfall
+    only a *coordinated / differentiated* body can tap — cells specialising as
+    sensors / muscles / neurons — opening hill #3. That is now a concrete, testable
+    build (add a capability that needs cell-type differentiation within a body),
+    and the assay + tournament are ready to judge whether it breaks the next
+    ceiling. (Supersedes the earlier "bodies don't bootstrap" note — that was the
+    v2 physics bug, now fixed.)
 - **tools/land-evolve.js, land-suspects.js, land-control.js** — minimal
   testbeds that proved: evolution CAN find sensing under batch-GA selection;
   the motor-coordination burden is a wall; seeding a gait doesn't transfer.
