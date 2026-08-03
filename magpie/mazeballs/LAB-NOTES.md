@@ -119,3 +119,47 @@ and with flowing dynamics.* Concrete tools requested, with build notes:
 5. Then the category-free ascent measurement as the standing "is it still
    climbing?" instrument, and the templatization schema so you can play god at
    the level of mechanisms.
+
+## Nick Lane, in one screen (recap)
+
+The through-line, in case it was skimmed:
+- **Life is energy-flow before it is information.** A cell sits across an energy
+  gradient and taps it; the genome is downstream of, and *paid for by*, that flux.
+- **Build around gradients (vents), not a uniform broth.** Our fields are those
+  gradients; `radiation` now unifies energy + mutagen + heat at the sources.
+- **Complexity is gated by energy per cell — the brain tax.** A bigger CTRNN must
+  be paid in fuel; brains, speed and size trade through one currency.
+- **The big jumps are energy WINDFALLS, not clever genomes.** Eukaryotes happened
+  once, via endosymbiosis (mitochondria) lifting the energy-per-gene ceiling. So
+  expect *punctuated* ascent — a leap needs an endosymbiont **discovered, not
+  declared** (a cell type that fuels its neighbours cheaply).
+- **Multicellular cohesion = the single-cell bottleneck.** Reproducing a body
+  through one propagule keeps it clonal (→ cooperation, lets cells specialise as
+  neurons/muscles) and is itself an energy event. "What binds a body" and "why
+  cooperation is stable" are the same answer: pass through one cell.
+
+## Sonar from primitives (see `sonar.html`)
+
+"Sonar" is not a sense we grant. It is four primitives combined:
+1. **click** — a cell emits a sound PULSE (a motor act, like secreting).
+2. **wave** — sound is a field that PROPAGATES at a speed (the ONE genuinely new
+   primitive: a *wave* field — two buffers, current+previous — not a diffusion
+   field). Cheaper legible variant: rays.
+3. **reflect** — the wave bounces off impedance changes; reuse the terrain /
+   fertility field as the acoustic-hardness map. Dense cell clumps and bodies
+   also scatter.
+4. **ear** — a sound SENSOR (two, for bearing) reads the returns. Echo *delay* ⇒
+   range; which ear heard it first/loudest ⇒ bearing. The CTRNN reads the pattern.
+A creature that clicks and listens then BUILDS a picture of geometry it never saw
+— active sonar, emergent, evolvable (clicking costs energy, so it must earn its
+keep). It also gives the "land vs water" horizon a second channel: sound reaches
+where sight (opaque medium) cannot.
+
+**Gaussian-splat tie-in (important):** the acoustic image a creature reconstructs
+is naturally a set of soft blobs — one per echo at the inferred (range, bearing),
+spread = uncertainty. That IS a 2D-gaussian-splat field. So the same
+representation serves the *renderer* (draw cells/echoes as anisotropic gaussians,
+killing the TV-snow look) AND the creature's *internal world-model* of what it
+heard. Worth building the splat renderer and the sonar percept as one system.
+`sonar.html` is a Canvas2D spike of exactly this — pulse out, reflect, echoes
+paint a gaussian-splat acoustic image, with a range·bearing readout.

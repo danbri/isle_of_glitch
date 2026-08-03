@@ -1,0 +1,138 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>sonar — hearing shape from echoes</title>
+<!--
+  sonar.html — how ACTIVE SONAR is built from primitives (a design spike, and a
+  thing to watch). Nothing here is a "sonar sense" handed down. It is four small
+  primitives combined:
+    1. CLICK    — a cell emits a sound PULSE into a pressure field (a motor act).
+    2. WAVE     — sound is a field that PROPAGATES (a wavefront travelling at a
+                  speed), unlike the diffusing chemical fields. This is the ONE
+                  genuinely new primitive: a wave field, not a diffusion field.
+    3. REFLECT  — the wave bounces off impedance changes (rocks, dense cell
+                  clumps, other bodies). Reuse the terrain/impedance field we
+                  already have as the acoustic-hardness map.
+    4. EAR      — a cell has a sound SENSOR (ideally two, for bearing) that reads
+                  the returning echoes. Delay of the echo ⇒ range; which ear
+                  heard it first / loudest ⇒ bearing. A brain reads the pattern.
+  Put together, a creature that clicks and listens BUILDS a picture of nearby
+  geometry it never saw — active sonar, emergent. Below you watch the pulse go
+  out, reflect off scatterers, and the returns paint an "acoustic image".
+
+  TIE TO 2D GAUSSIAN SPLATS: the acoustic image a creature reconstructs is
+  naturally a set of soft blobs — one per echo, placed at the inferred (range,
+  bearing), its spread = uncertainty. That is a 2D-gaussian-splat field. So the
+  SAME representation serves the renderer AND the creature's internal world-model
+  of what it heard. The blobs you see below are drawn as gaussian splats.
+-->
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html,body { margin:0; height:100%; overflow:hidden; background:#04060a;
+    font:12px/1.45 ui-monospace,Menlo,monospace; color:#cbd6e2; }
+  #c { position:fixed; inset:0; width:100%; height:100%; display:block; cursor:crosshair; touch-action:none; }
+  .panel { position:fixed; background:rgba(8,12,18,.82); backdrop-filter:blur(8px); border:1px solid #1b2430; border-radius:10px; padding:9px 11px; }
+  #info { top:10px; left:10px; max-width:290px; }
+  #info h1 { margin:0 0 3px; font-size:13px; color:#eaf2fa; letter-spacing:.03em; }
+  #info p { margin:0; color:#7891a6; font-size:10.5px; }
+  #info .steps { margin-top:7px; font-size:10.5px; color:#9db0c2; }
+  #info .steps b { color:#5fe6d6; }
+  #hint { left:50%; bottom:10px; transform:translateX(-50%); color:#7891a6; font-size:10.5px; }
+  #read { right:10px; top:10px; text-align:right; font-variant-numeric:tabular-nums; }
+  #read .k { color:#63788c; }
+  #read b { color:#eaf2fa; }
+</style>
+
+<canvas id="c"></canvas>
+<div id="info" class="panel">
+  <h1>sonar — hearing shape from echoes</h1>
+  <p>no "sonar sense" is given. it is built from four primitives:</p>
+  <div class="steps">
+    <b>1 click</b> — emit a sound pulse ·
+    <b>2 wave</b> — it travels out ·<br>
+    <b>3 reflect</b> — bounces off scatterers ·
+    <b>4 ear</b> — hear the returns<br>
+    range = echo delay · bearing = direction heard.
+  </div>
+</div>
+<div id="read" class="panel"><span class="k">last echoes</span><br><span id="echoes">–</span></div>
+<div id="hint" class="panel">click / tap anywhere to move the emitter and ping · it also pings itself every couple of seconds</div>
+
+<script>
+"use strict";
+const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+let W,H,dpr;
+function resize(){ dpr=Math.min(2,devicePixelRatio||1); W=cv.width=Math.floor(innerWidth*dpr); H=cv.height=Math.floor(innerHeight*dpr); }
+addEventListener('resize',resize); resize();
+
+let seed=12345; const rnd=()=>{ seed=(Math.imul(1664525,seed)+1013904223)>>>0; return seed/4294967296; };
+// scatterers (rocks / bodies) — the acoustic impedance in the world
+let obs=[];
+function makeObs(){ obs=[]; const n=13; for(let i=0;i<n;i++) obs.push({x:0.1+rnd()*0.8, y:0.1+rnd()*0.8, r:0.012+rnd()*0.03}); }
+makeObs();
+
+let emitter={x:0.5,y:0.5};
+const SPEED=0.55;              // world-units per second (sound speed)
+let pings=[];                  // active pulses {t}
+let image=[];                  // reconstructed acoustic image = gaussian splats {x,y,i,age,r}
+let lastEchoes=[];
+
+function ping(){ pings.push({age:0, heard:new Set()}); }
+cv.addEventListener('pointerdown',e=>{ const r=cv.getBoundingClientRect(); emitter={x:(e.clientX-r.left)/r.width, y:(e.clientY-r.top)/r.height}; ping(); });
+let autoT=0;
+
+function px(x){ return x*W; } function py(y){ return y*H; }
+
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now; autoT+=dt;
+  if(autoT>2.2){ autoT=0; ping(); }
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle='#04060a'; ctx.fillRect(0,0,W,H);
+  const S=Math.min(W,H);
+
+  // faint scatterers
+  for(const o of obs){ ctx.beginPath(); ctx.arc(px(o.x),py(o.y),Math.max(0,o.r*S),0,6.283); ctx.fillStyle='rgba(120,140,160,0.14)'; ctx.fill();
+    ctx.strokeStyle='rgba(150,170,190,0.20)'; ctx.lineWidth=1; ctx.stroke(); }
+
+  // advance pings: draw outgoing wavefront, spawn returns, register echoes
+  const ex=emitter.x, ey=emitter.y;
+  for(const p of pings){
+    p.age+=dt; const front=p.age*SPEED;               // outgoing wavefront radius (world units)
+    // outgoing ring
+    const a=Math.max(0,0.5-front*0.5);
+    ctx.beginPath(); ctx.arc(px(ex),py(ey),Math.max(0,front*S),0,6.283); ctx.strokeStyle=`rgba(90,220,235,${a})`; ctx.lineWidth=2; ctx.stroke();
+    for(let k=0;k<obs.length;k++){ const o=obs[k]; const d=Math.hypot(o.x-ex,o.y-ey);
+      // when the front reaches an obstacle, it reflects: draw a little return ripple
+      if(front>=d && front<d+0.04){ const rr=(front-d); ctx.beginPath(); ctx.arc(px(o.x),py(o.y),Math.max(0,rr*S*1.4),0,6.283);
+        ctx.strokeStyle=`rgba(240,150,70,${0.5-rr*8})`; ctx.lineWidth=2; ctx.stroke(); }
+      // when the round trip completes (2d), the emitter HEARS the echo -> paint the image
+      if(front>=2*d && !p.heard.has(k)){ p.heard.add(k);
+        const inten=Math.min(1,o.r/ (d+0.05) * 2.2);
+        image.push({x:o.x,y:o.y,i:inten,age:0, r:o.r});
+        const bearing=Math.round(Math.atan2(o.y-ey,o.x-ex)*57.3);
+        lastEchoes.unshift(`${(d).toFixed(2)}u · ${bearing>=0?'+':''}${bearing}°`); lastEchoes=lastEchoes.slice(0,5);
+      }
+    }
+  }
+  pings=pings.filter(p=>p.age*SPEED<2.6);
+
+  // the ACOUSTIC IMAGE — reconstructed from echoes, drawn as 2D GAUSSIAN SPLATS
+  for(const g of image){ g.age+=dt; const life=Math.max(0,1-g.age/3.2); if(life<=0) continue;
+    const rad=Math.max(0.001,(g.r*2.4+0.01)*S), gx=px(g.x),gy=py(g.y);
+    const grd=ctx.createRadialGradient(gx,gy,0,gx,gy,rad);
+    const al=g.i*life*0.9;
+    grd.addColorStop(0,`rgba(90,230,240,${al})`); grd.addColorStop(0.5,`rgba(70,180,220,${al*0.5})`); grd.addColorStop(1,'rgba(70,180,220,0)');
+    ctx.fillStyle=grd; ctx.beginPath(); ctx.arc(gx,gy,rad,0,6.283); ctx.fill();
+  }
+  image=image.filter(g=>g.age<3.2);
+
+  // emitter
+  ctx.beginPath(); ctx.arc(px(ex),py(ey),4*dpr,0,6.283); ctx.fillStyle='#eaf2fa'; ctx.fill();
+  ctx.beginPath(); ctx.arc(px(ex),py(ey),8*dpr,0,6.283); ctx.strokeStyle='rgba(234,242,250,0.5)'; ctx.lineWidth=1; ctx.stroke();
+
+  document.getElementById('echoes').innerHTML = lastEchoes.length? lastEchoes.map(e=>`<b>${e.split(' · ')[0]}</b> · ${e.split(' · ')[1]}`).join('<br>') : '–';
+  requestAnimationFrame(frame);
+}
+ping(); requestAnimationFrame(frame);
+</script>
