@@ -124,8 +124,30 @@ fn flowField(p: vec2<f32>, scale: f32, strength: f32, seed: u32) -> vec2<f32> {
 // exact position and there is no lattice to sit on. Squared to make the good
 // ground scarce and patchy rather than a gentle everywhere-gradient — a fitness
 // landscape needs somewhere worth being and somewhere not worth being.
+// The resource field, and it MOVES.
+//
+// Every mechanism tried before this drew on a field that never changed, and a
+// static landscape has a top: whatever the organisms are competing over —
+// ground, each other, body size, body shape — the optimum sits still and can be
+// reached. That is why each of them climbed and then stopped, on four
+// independent axes. The environment being fixed is the premise underneath all
+// four plateaus, not a property of any one of them.
+//
+// So the field drifts and morphs: sample points translate with time, and the
+// pattern blends between two independent noise seeds. The optimum is therefore
+// somewhere else tomorrow, and tracking it is a task that is never finished.
+// This is still an ANALYTIC function of continuous position — now of (x, y, t)
+// — so there is no stored state, no lattice, and nothing to zoom past. The
+// world is non-stationary without becoming a grid.
 fn resourceField(p: vec2<f32>, scale: f32, seed: u32) -> f32 {
-  let r = fbm(p * scale, seed);
+  let t = P.worldTime;
+  let q = p * scale + vec2<f32>(t * P.driftX, t * P.driftY);
+  let a = fbm(q, seed);
+  let b = fbm(q, seed + 7777u);
+  // Slow crossfade between two patterns: the terrain does not merely slide past,
+  // it becomes a different terrain, so a lineage cannot simply learn one map.
+  let w = 0.5 + 0.5 * sin(t * P.morphRate);
+  let r = mix(a, b, w);
   return r * r;
 }
 `;
@@ -170,6 +192,11 @@ struct W {
   sizeScale: f32,   // cells at which digestive efficiency mostly saturates
 
   sizeNorm : f32,   // makes a reference-size body break even
+  worldTime: f32,   // seconds; the resource field is a function of it
+  driftX   : f32,
+  driftY   : f32,
+
+  morphRate: f32,   // how fast the terrain becomes a different terrain
   pad0     : f32,
   pad1     : f32,
   pad2     : f32,
@@ -556,6 +583,7 @@ export class WorldGPU {
       harvest: 2.6, brainTax: 0.45, muscleCost: 0.55,
       resScale: 0.35, resSeed: 91, eCap: 3.0, eFloor: -2.0,
       hashCell: 3.2, hashSize: 65536, crowdK: 0.012,
+      driftX: 0.0, driftY: 0.0, morphRate: 0.0,
       bucketM: 12, predRate: 0.0, contactR: 1.0, sizeScale: 14.0, sizeRef: 12,
       dt: brains.dt, ...params,
     };
@@ -565,7 +593,7 @@ export class WorldGPU {
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
     });
     this.bParams = device.createBuffer({
-      size: 128, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+      size: 144, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
     this.writeParams();
 
@@ -616,7 +644,7 @@ export class WorldGPU {
   writeParams(patch = {}) {
     Object.assign(this.params, patch);
     const p = this.params;
-    const buf = new ArrayBuffer(128), dv = new DataView(buf);
+    const buf = new ArrayBuffer(144), dv = new DataView(buf);
     dv.setUint32(0, this.n, true); dv.setUint32(4, this.bondK, true);
     dv.setFloat32(8, p.dt, true); dv.setFloat32(12, p.flowScale, true);
     dv.setFloat32(16, p.flowStr, true); dv.setFloat32(20, p.drag, true);
@@ -643,6 +671,10 @@ export class WorldGPU {
     dv.setFloat32(104, p.contactR, true);
     dv.setFloat32(108, p.sizeScale, true);
     dv.setFloat32(112, 1 / (1 - Math.exp(-p.sizeRef / Math.max(p.sizeScale, 1))), true);
+    dv.setFloat32(116, (this.steps ?? 0) * p.dt, true);
+    dv.setFloat32(120, p.driftX, true);
+    dv.setFloat32(124, p.driftY, true);
+    dv.setFloat32(128, p.morphRate, true);
     this.device.queue.writeBuffer(this.bParams, 0, buf);
   }
 
@@ -652,6 +684,13 @@ export class WorldGPU {
    */
   step(n = 1) {
     const b = this.brains;
+    // Republish the clock before each batch. The field is constant within a
+    // batch, which is fine because it drifts far slower than a batch lasts, but
+    // it must advance BETWEEN batches or the world is static again and the
+    // whole point of a moving optimum is lost.
+    if (this.params.morphRate !== 0 || this.params.driftX !== 0 || this.params.driftY !== 0) {
+      this.writeParams();
+    }
     const enc = this.device.createCommandEncoder();
     const pass = enc.beginComputePass();
     for (let s = 0; s < n; s++) {
