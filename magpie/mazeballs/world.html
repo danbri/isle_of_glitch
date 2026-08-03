@@ -178,7 +178,7 @@ struct Cam {
 @group(0) @binding(0) var<uniform>       C     : Cam;
 @group(0) @binding(1) var<storage, read> pos   : array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read> act   : array<f32>;
-@group(0) @binding(3) var<storage, read> cmeta   : array<vec2<i32>>;
+@group(0) @binding(3) var<storage, read> cmeta   : array<vec4<i32>>;
 @group(0) @binding(4) var<storage, read> bondIdx : array<i32>;
 
 /* ---- background: the field the cells actually swim in, same definition ---- */
@@ -230,6 +230,15 @@ fn bgFs(i: BgOut) -> @location(0) vec4<f32> {
   // background competes with the cells, the population stops being readable.
   var col = base + mix(cool, warm, mixv) * m * 0.42;
   col = col + vec3<f32>(0.07, 0.11, 0.10) * streak * (0.25 + 0.75 * m);
+
+  // The field is analytic and therefore unbounded, but the world bodies live in
+  // is a torus of half-extent 'bound'. Rendering the field past that edge drew a
+  // backdrop larger than any region a creature can occupy, which reads as though
+  // the population is huddled in the middle of somewhere bigger. Dim the outside
+  // so the edge of the world is visible as an edge.
+  let d = max(abs(i.w.x), abs(i.w.y)) - C.bound;
+  let outside = clamp(d / max(C.bound * 0.06, 1.0), 0.0, 1.0);
+  col = mix(col, base * 0.45, outside * 0.85);
   return vec4<f32>(col, 1.0);
 }
 
@@ -306,7 +315,20 @@ fn lineVs(@builtin(vertex_index) vi: u32) -> LOut {
   // Vertices come in line-list pairs, so the partner is the other index of
   // this pair.
   let pair = vi & ~1u;
-  if (cmeta[u32(bondIdx[pair])].x < 0 || cmeta[u32(bondIdx[pair + 1u])].x < 0) {
+  let ia = u32(bondIdx[pair]);
+  let ib = u32(bondIdx[pair + 1u]);
+  if (cmeta[ia].x < 0 || cmeta[ib].x < 0) {
+    o.p = vec4<f32>(0.0, 0.0, 0.0, 0.0); o.tint = vec3<f32>(0.0); return o;
+  }
+  // A bond whose ends sit on opposite sides of the toroidal seam is SHORT in
+  // the world and enormous on screen: the two cells are neighbours through the
+  // wrap, but drawing a straight segment between their coordinates stretches a
+  // line right across the map. Those were the long diagonals through the middle
+  // — not dead cells, and not moving much because the bodies straddling the
+  // seam are simply sitting there. Suppress the segment rather than fake it;
+  // the cells themselves still draw in both places, which is the truth.
+  let d = pos[ib] - pos[ia];
+  if (abs(d.x) > C.bound || abs(d.y) > C.bound) {
     o.p = vec4<f32>(0.0, 0.0, 0.0, 0.0); o.tint = vec3<f32>(0.0); return o;
   }
   o.p = vec4<f32>((pos[u32(idx)] - C.center) * C.ndc, 0.0, 1.0);
@@ -325,6 +347,10 @@ fn lineFs(i: LOut) -> @location(0) vec4<f32> {
 let dev, ctx, fmt, sim = null, raf = 0;
 const cam = { cx: 0, cy: 0, zoom: 6 };     // zoom = pixels per world unit
 const view = { field: true, bonds: true, paused: false, spf: 4, evolve: true };
+// ?watch=1 turns this page into a VIEWPORT on the shared run in tools/serve-world.js
+// instead of a simulation of its own. Without it every tab is a separate
+// universe, which is why two browsers never agreed about anything.
+const WATCH = new URLSearchParams(location.search).has('watch');
 
 const canvas = $('c');
 
@@ -453,21 +479,38 @@ async function rebuild() {
   let syn = 0;
   for (let i = 0; i < built.arena.esrc.length; i++) if (built.arena.esrc[i] >= 0) syn++;
 
+  if (WATCH) {
+    const st = await (await fetch('/status', { cache: 'no-store' })).json();
+    if (st.cells !== built.meta.nCells) {
+      fail(`This page built ${built.meta.nCells} cells but the server has ${st.cells}.\n` +
+           `Set beasts/cells to match, or drop ?watch=1 to run locally.`);
+    }
+  }
+
   const evo = new Evolver({
     arena: built.arena, world, cells: built.cells,
     seed: (Math.random() * 1e5) | 0, birthEnergy: 18, deathEnergy: 0,
   });
   // Start well under capacity so births have somewhere to go and the population
   // can find its own carrying capacity instead of being pinned by the arena.
-  const start = Math.max(60, Math.floor(beasts * 0.25));
-  for (let o = start; o < beasts; o++) evo.cull(o);
-  evo.founders = evo.alive();
+  // In watch mode the server owns birth and death; culling here would only
+  // desynchronise the local buffers from the frames about to overwrite them.
+  if (!WATCH) {
+    const start = Math.max(60, Math.floor(beasts * 0.25));
+    for (let o = start; o < beasts; o++) evo.cull(o);
+    evo.founders = evo.alive();
+  }
 
   sim = {
     ...built, brains, world, bBond, bCam, bind, evo,
     pipeBg, pipeCells, pipeBonds, bondVerts: idx.length, bound, syn,
-    sinceTick: 0, ticking: false,
+    sinceTick: 0, ticking: false, fetching: false, serverSteps: 0,
   };
+  if (WATCH) {
+    document.title = 'Mazeballs — watching the shared world';
+    $('bEvolve').textContent = 'remote'; $('bEvolve').disabled = true;
+    $('bPause').disabled = true; $('sSpf').disabled = true;
+  }
   $('hAlive').textContent = evo.alive().toLocaleString();
 
   $('hBeasts').textContent = beasts.toLocaleString();
@@ -475,6 +518,52 @@ async function rebuild() {
   $('hNeurons').textContent = built.arena.N.toLocaleString();
   $('hSyn').textContent = syn.toLocaleString();
   fitAll();
+}
+
+/**
+ * Draw the server's world instead of ours.
+ *
+ * Only the buffers the renderer reads are written: positions, per-cell
+ * activation and cell type. Nothing here steps a simulation — the local
+ * WorldGPU exists purely to own GPU buffers of the right shape and is never
+ * advanced in watch mode.
+ */
+const FRAME_MAGIC = 0x314d5257;
+function applyFrame(ab) {
+  const dv = new DataView(ab);
+  if (dv.getUint32(0, true) !== FRAME_MAGIC) return fail('bad frame from server');
+  const n = dv.getUint32(4, true);
+  if (n !== sim.meta.nCells) {
+    return fail(`server has ${n} cells, this page was built for ${sim.meta.nCells}.\nReload to resync.`);
+  }
+  const HEAD = 48;
+  const pos = new Float32Array(ab, HEAD, n * 2);
+  const act = new Float32Array(ab, HEAD + n * 8, n);
+  const type = new Int32Array(ab, HEAD + n * 12, n);
+
+  const q = dev.queue;
+  q.writeBuffer(sim.world.bPos, 0, pos);
+  // The renderer reads activation through each cell's brain slot, but the
+  // server already resolved that indirection, so write the per-cell values
+  // straight into the act buffer at the slot the cell points to. Cell i's slot
+  // is i in this builder, which keeps the mapping trivial.
+  q.writeBuffer(sim.brains.bAct, 0, act);
+  const meta = new Int32Array(n * 4);
+  for (let i = 0; i < n; i++) {
+    meta[i * 4] = type[i];
+    meta[i * 4 + 1] = type[i] >= 0 ? i : -1;
+    meta[i * 4 + 2] = 0;
+  }
+  q.writeBuffer(sim.world.bMeta, 0, meta);
+
+  sim.serverSteps = dv.getUint32(8, true);
+  $('hStep').textContent = sim.serverSteps.toLocaleString();
+  $('hAlive').textContent = dv.getUint32(16, true).toLocaleString();
+  $('hBirths').textContent = dv.getUint32(20, true).toLocaleString();
+  $('hDeaths').textContent = dv.getUint32(24, true).toLocaleString();
+  $('hGen').textContent = dv.getUint32(28, true);
+  $('hLin').textContent = dv.getUint32(32, true).toLocaleString();
+  $('hEnergy').textContent = dv.getFloat32(36, true).toFixed(1);
 }
 
 function resize() {
@@ -541,7 +630,17 @@ function loop() {
   if (!sim) return;
   const t = performance.now();
 
-  if (!view.paused && view.spf > 0) {
+  if (WATCH) {
+    // Pull frames from the server as fast as they arrive, never faster than one
+    // request in flight. The world's clock is the server's, not this page's.
+    if (!sim.fetching) {
+      sim.fetching = true;
+      fetch('/frame', { cache: 'no-store' })
+        .then(r => r.arrayBuffer())
+        .then(b => { applyFrame(b); sim.fetching = false; })
+        .catch(e => { sim.fetching = false; fail('lost the server: ' + e.message); });
+    }
+  } else if (!view.paused && view.spf > 0) {
     sim.world.step(view.spf);
     sim.sinceTick += view.spf;
     // Evolution runs on a much slower clock than physics: birth and death are
@@ -582,7 +681,9 @@ function loop() {
   if (acc > 400) {
     fps = frames * 1000 / acc; frames = 0; acc = 0;
     $('hFps').textContent = fps.toFixed(0);
-    $('hStep').textContent = (sim.world.steps ?? 0).toLocaleString();
+    // In watch mode the step counter belongs to the server; the local world is
+    // never advanced, so writing its 0 here would overwrite the real clock.
+    if (!WATCH) $('hStep').textContent = (sim.world.steps ?? 0).toLocaleString();
     $('hRate').textContent = simRate.toFixed(1);
     $('hZoom').textContent = cam.zoom.toFixed(2);
   }

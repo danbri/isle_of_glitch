@@ -214,8 +214,8 @@ export class Evolver {
     }
 
     // --- body: cell types are heritable and mutable; the ring plan is not
-    const pos = new Float32Array(n * 2), vel = new Float32Array(n * 2);
-    const meta = new Int32Array(n * 2), energy = new Float32Array(n);
+    const pos = new Float32Array(n * 2), vel = new Float32Array(n * 4);
+    const meta = new Int32Array(n * 4), energy = new Float32Array(n);
     const bond = new Int32Array(n * bK).fill(-1), brest = new Float32Array(n * bK);
 
     const spin = r() * Math.PI * 2;
@@ -233,8 +233,10 @@ export class Evolver {
       let type = cells.ctype[src + i];
       if (r() < m * 0.5) type = (r() * 3) | 0;      // what a cell becomes evolves
       cells.ctype[dst + i] = type;
-      meta[i * 2] = type;
-      meta[i * 2 + 1] = dst + i;                    // its brain slot
+      cells.body[dst + i] = child;
+      meta[i * 4] = type;
+      meta[i * 4 + 1] = dst + i;                    // its brain slot
+      meta[i * 4 + 2] = child;                      // whose tissue this is
       cells.cslot[dst + i] = dst + i;
       cells.px[dst + i] = pos[i * 2]; cells.py[dst + i] = pos[i * 2 + 1];
       cells.vx[dst + i] = 0; cells.vy[dst + i] = 0;
@@ -293,11 +295,12 @@ export class Evolver {
     const { arena, world, cells } = this;
     if (!arena.alive[o]) return;
     const from = arena.off[o], n = arena.cnt[o];
-    const meta = new Int32Array(n * 2);
+    const meta = new Int32Array(n * 4);
     const energy = new Float32Array(n);
     for (let i = 0; i < n; i++) {
       cells.ctype[from + i] = -1;
-      meta[i * 2] = -1; meta[i * 2 + 1] = -1;
+      cells.body[from + i] = -1;
+      meta[i * 4] = -1; meta[i * 4 + 1] = -1; meta[i * 4 + 2] = -1;
     }
     world.writeCellRange(from, n, { meta, energy });
   }

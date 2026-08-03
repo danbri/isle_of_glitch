@@ -163,6 +163,11 @@ struct W {
   hashSize : u32,
   crowdK   : f32,   // how sharply a shared patch is discounted
   bodyCells: u32,   // a body does not crowd itself
+
+  bucketM  : u32,   // neighbour slots listed per bucket
+  predRate : f32,   // energy moved per unit of effort difference, per second
+  contactR : f32,   // how close counts as contact
+  pad0     : f32,
 };
 
 // Positions and velocities are packed vec2, and (type, slot) into one vec2<i32>.
@@ -172,8 +177,8 @@ struct W {
 // 8-byte load instead of two strided 4-byte ones.
 @group(0) @binding(0) var<uniform>             P     : W;
 @group(0) @binding(1) var<storage, read_write> pos   : array<vec2<f32>>;
-@group(0) @binding(2) var<storage, read_write> vel   : array<vec2<f32>>;
-@group(0) @binding(3) var<storage, read>       cmeta : array<vec2<i32>>;  // x=type, y=brain slot
+@group(0) @binding(2) var<storage, read_write> vel   : array<vec4<f32>>;  // xy=velocity, w=next energy
+@group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=type, y=slot, z=body
 // bond index and rest length packed into one vec2 — WebGPU guarantees only 8
 // storage buffers per stage and the crowding hash needs one, so the pair that
 // is always read together shares a binding. .x holds an i32 index bitcast into
@@ -182,11 +187,16 @@ struct W {
 @group(0) @binding(5) var<storage, read_write> ext    : array<f32>;
 @group(0) @binding(6) var<storage, read>       act    : array<f32>;
 @group(0) @binding(7) var<storage, read_write> energy : array<f32>;
-// Occupancy per hash bucket. An ACCELERATION INDEX, not a world representation:
-// recomputed from continuous positions every step and never stored as identity.
-// Nothing addresses a cell by bucket; the bucket only answers "how many others
-// are near me".
-@group(0) @binding(8) var<storage, read_write> hashCount : array<atomic<u32>>;
+// Spatial hash: per bucket, an occupancy count followed by up to bucketM cell
+// indices. One buffer with stride (1 + bucketM) rather than two, because
+// WebGPU guarantees only 8 storage buffers per stage and this is the eighth.
+//
+// An ACCELERATION INDEX, not a world representation: rebuilt from continuous
+// positions every step, never stored as identity, and nothing is ever addressed
+// by bucket. It answers "who is near me", which is a question about positions.
+// A bucket that overflows simply lists fewer neighbours — an approximation in
+// how much contact is seen, never a wrong answer about who exists.
+@group(0) @binding(8) var<storage, read_write> hashData : array<atomic<u32>>;
 
 fn flowAt(p: vec2<f32>) -> vec2<f32> {
   return flowField(p, P.flowScale, P.flowStr, P.seed);
@@ -220,13 +230,77 @@ fn bucketOf(p: vec2<f32>) -> u32 {
   return h % P.hashSize;
 }
 
+// What one cell takes from its foreign neighbours this instant.
+//
+// THE ARMS RACE, built from primitives already present: contact and force. A
+// cell pressing hard against a cell of ANOTHER body takes energy from it, at a
+// rate set by the difference in how hard each is pressing. There is no
+// predator, no prey, no attack stat and no role — "pressing" is just the muscle
+// contraction the CTRNN already commands, and it already costs energy to
+// produce. So attacking is expensive, defending is the same act as attacking,
+// and which one a body is doing is a description of the outcome rather than a
+// property it has.
+//
+// This is what makes the landscape stop standing still. Competing for GROUND
+// has a settling point: the population spreads until marginal gain is equal
+// everywhere and then nothing further pays. Competing against each OTHER has no
+// such point, because what counts as good enough is set by what everyone else
+// is doing, and that moves whenever they adapt.
+//
+// ANTISYMMETRY IS EXACT AND NEEDS NO ATOMICS. Cell i computes rate*(e_i - e_j)
+// and cell j independently computes rate*(e_j - e_i), which is its exact
+// negative. Every joule one gains, another loses — the same gather-only trick
+// that makes the bond forces obey Newton's third law.
+fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
+  if (P.predRate <= 0.0) { return 0.0; }
+  let me = cmeta[i];
+  let myE = energy[i];
+  var net = 0.0;
+  let r2 = P.contactR * P.contactR;
+  for (var dy = -1; dy <= 1; dy = dy + 1) {
+    for (var dx = -1; dx <= 1; dx = dx + 1) {
+      let b = bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM);
+      let n = min(atomicLoad(&hashData[b]), P.bucketM);
+      for (var k = 0u; k < n; k = k + 1u) {
+        let j = atomicLoad(&hashData[b + 1u + k]);
+        if (j == i) { continue; }
+        let other = cmeta[j];
+        if (other.x < 0 || other.z == me.z) { continue; }   // same body: not a contest
+        let d = pos[j] - p;
+        if (dot(d, d) > r2) { continue; }
+
+        // CONSERVING. The first version simply added rate*(effort difference)
+        // and let the clamp deal with it — so a winner already at the ceiling
+        // gained nothing while the loser still paid, and every contact quietly
+        // destroyed energy. That is a drain on the whole population, not an
+        // arms race, and it collapsed the world from ~580 bodies to 54.
+        //
+        // Limit each transfer by what the loser can actually afford AND what
+        // the winner can actually hold. Both cells evaluate the same expression
+        // from the same pre-step energies, so cell j computes exactly the
+        // negative of what cell i computes and no energy is created or lost.
+        let theirE = energy[j];
+        let raw = P.predRate * (effort - abs(contractionOf(j))) * P.dt;
+        var moved = 0.0;
+        if (raw > 0.0) {
+          moved = min(raw, min(max(theirE - P.eFloor, 0.0), max(P.eCap - myE, 0.0)));
+        } else {
+          moved = -min(-raw, min(max(myE - P.eFloor, 0.0), max(P.eCap - theirE, 0.0)));
+        }
+        net = net + moved;
+      }
+    }
+  }
+  return net / P.dt;                       // caller multiplies by dt again
+}
+
 /* ------------------------------------------------------------------ kernels */
 
 // 0a. Clear the occupancy counts.
 @compute @workgroup_size(${WORKGROUP})
 fn hashClear(@builtin(global_invocation_id) gid: vec3<u32>) {
   if (gid.x >= P.hashSize) { return; }
-  atomicStore(&hashCount[gid.x], 0u);
+  atomicStore(&hashData[gid.x * (1u + P.bucketM)], 0u);
 }
 
 // 0b. Each cell announces itself into its bucket.
@@ -240,7 +314,9 @@ fn hashBuild(@builtin(global_invocation_id) gid: vec3<u32>) {
   // with 36k slots and 7.2k alive that inflated crowding fivefold and starved
   // the entire population in a single tick. type < 0 marks a slot as vacated.
   if (cmeta[i].x < 0) { return; }
-  atomicAdd(&hashCount[bucketOf(pos[i])], 1u);
+  let b = bucketOf(pos[i]) * (1u + P.bucketM);
+  let n = atomicAdd(&hashData[b], 1u);
+  if (n < P.bucketM) { atomicStore(&hashData[b + 1u + n], i); }
 }
 
 // How many cells share this neighbourhood, summed over the 3x3 buckets around
@@ -249,7 +325,7 @@ fn crowdingAt(p: vec2<f32>) -> f32 {
   var n = 0u;
   for (var dy = -1; dy <= 1; dy = dy + 1) {
     for (var dx = -1; dx <= 1; dx = dx + 1) {
-      n = n + atomicLoad(&hashCount[bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell)]);
+      n = n + atomicLoad(&hashData[bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM)]);
     }
   }
   return f32(n);
@@ -269,7 +345,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   let p = pos[i];
   // Two things a cell can actually feel locally: how fast the medium is moving
   // past it, and a scalar gradient it sits in. Both are analytic at p.
-  let rel = flowAt(p) - vel[i];
+  let rel = flowAt(p) - vel[i].xy;
   ext[u32(slot)] = tanh((length(rel) + fbm(p * P.flowScale * 0.5, P.seed + 77u) - 0.5) * P.senseGain);
 }
 
@@ -281,7 +357,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   if (cmeta[i].x < 0) { return; }              // vacated slot; not in the world
 
   let p = pos[i];
-  var v = vel[i];
+  var v = vel[i].xy;
   var force = vec2<f32>(0.0, 0.0);
 
   // A muscle cell shortens its bonds in proportion to its activation. That is
@@ -315,7 +391,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     // explicit-Euler limit of 2). Damping the RELATIVE velocity along the bond
     // removes the energy the drive adds, and leaves the static spring law and
     // the muscle's authority over rest length untouched.
-    force = force + dir * dot(vel[u32(j)] - v, dir) * P.bondDamp;
+    force = force + dir * dot(vel[u32(j)].xy - v, dir) * P.bondDamp;
   }
 
   // The medium drags the cell toward the local flow velocity.
@@ -343,7 +419,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   if (np.y >  b) { np.y = np.y - 2.0 * b; }
   if (np.y < -b) { np.y = np.y + 2.0 * b; }
 
-  pos[i] = np; vel[i] = v;
+  pos[i] = np;
 
   // ------------------------------------------------------------- energy
   // Per CELL, not per organism: a cell is the thing that sits somewhere and
@@ -375,7 +451,23 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   let share = 1.0 / (1.0 + P.crowdK * max(0.0, crowd - f32(P.bodyCells)));
   let gain = P.harvest * resourceField(np, P.resScale, P.resSeed) * share;
   let work = P.muscleCost * abs(mine);
-  energy[i] = clamp(energy[i] + (gain - P.brainTax - work) * P.dt, P.eFloor, P.eCap);
+  let taken = contest(i, np, abs(mine));
+  // Written to scratch, not to energy[]: contest() READS energy[j] for other
+  // cells, and if physics also wrote energy[j] in the same dispatch the result
+  // would depend on thread order — non-deterministic, and this project's runs
+  // are supposed to be a pure function of their seed. energyCommit publishes it.
+  vel[i] = vec4<f32>(v.x, v.y, 0.0,
+    clamp(energy[i] + (gain - P.brainTax - work + taken) * P.dt, P.eFloor, P.eCap));
+}
+
+// Publish the energy physics computed. One extra dispatch, no extra buffer, and
+// the read/write hazard is gone.
+@compute @workgroup_size(${WORKGROUP})
+fn energyCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i = gid.x;
+  if (i >= P.nCells) { return; }
+  if (cmeta[i].x < 0) { return; }
+  energy[i] = vel[i].w;
 }
 `;
 
@@ -400,12 +492,18 @@ export class WorldGPU {
     // arrays because they are easier to reason about CPU-side; the interleaving
     // belongs here, next to the bindings it exists for.
     const n = this.n;
-    const pos = new Float32Array(n * 2), vel = new Float32Array(n * 2);
-    const meta = new Int32Array(n * 2);
+    const pos = new Float32Array(n * 2), vel = new Float32Array(n * 4);
+    // vec4 stride: (type, brain slot, body id, unused). The body id is what
+    // lets a cell tell a stranger from its own tissue, which is the whole basis
+    // of the contest — without it a body would fight itself.
+    const meta = new Int32Array(n * 4);
+    const bodyOf = cells.body ?? null;
     for (let i = 0; i < n; i++) {
       pos[i * 2] = cells.px[i]; pos[i * 2 + 1] = cells.py[i];
-      vel[i * 2] = cells.vx[i]; vel[i * 2 + 1] = cells.vy[i];
-      meta[i * 2] = cells.ctype[i]; meta[i * 2 + 1] = cells.cslot[i];
+      vel[i * 4] = cells.vx[i]; vel[i * 4 + 1] = cells.vy[i];
+      meta[i * 4] = cells.ctype[i];
+      meta[i * 4 + 1] = cells.cslot[i];
+      meta[i * 4 + 2] = bodyOf ? bodyOf[i] : -1;
     }
     this.bPos = mk(pos); this.bVel = mk(vel); this.bMeta = mk(meta);
     // Pack bond index + rest length into the one vec2 buffer the shader binds.
@@ -432,15 +530,16 @@ export class WorldGPU {
       harvest: 2.6, brainTax: 0.45, muscleCost: 0.55,
       resScale: 0.35, resSeed: 91, eCap: 3.0, eFloor: -2.0,
       hashCell: 3.2, hashSize: 65536, crowdK: 0.012,
+      bucketM: 12, predRate: 0.0, contactR: 1.0,
       dt: brains.dt, ...params,
     };
     this.params.bodyCells = this.params.bodyCells ?? (cells.cellsPerBody ?? 12);
     this.bHash = device.createBuffer({
-      size: this.params.hashSize * 4,
+      size: this.params.hashSize * (1 + this.params.bucketM) * 4,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
     });
     this.bParams = device.createBuffer({
-      size: 96, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+      size: 112, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
     this.writeParams();
 
@@ -466,6 +565,7 @@ export class WorldGPU {
     this.pipePhysics = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'physics' } });
     this.pipeHashClear = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'hashClear' } });
     this.pipeHashBuild = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'hashBuild' } });
+    this.pipeEnergy = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'energyCommit' } });
 
     this.bindGroup = device.createBindGroup({
       layout: this.layout,
@@ -490,7 +590,7 @@ export class WorldGPU {
   writeParams(patch = {}) {
     Object.assign(this.params, patch);
     const p = this.params;
-    const buf = new ArrayBuffer(96), dv = new DataView(buf);
+    const buf = new ArrayBuffer(112), dv = new DataView(buf);
     dv.setUint32(0, this.n, true); dv.setUint32(4, this.bondK, true);
     dv.setFloat32(8, p.dt, true); dv.setFloat32(12, p.flowScale, true);
     dv.setFloat32(16, p.flowStr, true); dv.setFloat32(20, p.drag, true);
@@ -512,6 +612,9 @@ export class WorldGPU {
     dv.setUint32(84, p.hashSize, true);
     dv.setFloat32(88, p.crowdK, true);
     dv.setUint32(92, p.bodyCells, true);
+    dv.setUint32(96, p.bucketM, true);
+    dv.setFloat32(100, p.predRate, true);
+    dv.setFloat32(104, p.contactR, true);
     this.device.queue.writeBuffer(this.bParams, 0, buf);
   }
 
@@ -537,6 +640,7 @@ export class WorldGPU {
 
       pass.setBindGroup(0, this.bindGroup);
       pass.setPipeline(this.pipePhysics); pass.dispatchWorkgroups(this.groups);
+      pass.setPipeline(this.pipeEnergy); pass.dispatchWorkgroups(this.groups);
     }
     pass.end();
     this.device.queue.submit([enc.finish()]);
@@ -587,8 +691,8 @@ export class WorldGPU {
   writeCellRange(from, count, { pos, vel, meta, bond, brest, energy }) {
     const q = this.device.queue;
     if (pos) q.writeBuffer(this.bPos, from * 8, pos);
-    if (vel) q.writeBuffer(this.bVel, from * 8, vel);
-    if (meta) q.writeBuffer(this.bMeta, from * 8, meta);
+    if (vel) q.writeBuffer(this.bVel, from * 16, vel);
+    if (meta) q.writeBuffer(this.bMeta, from * 16, meta);
     if (bond || brest) {
       const nb = (bond ?? brest).length;
       const bd = new Float32Array(nb * 2), bdI = new Int32Array(bd.buffer);

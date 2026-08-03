@@ -52,6 +52,10 @@ export function buildBodies({
   // reading the same bytes as i32, sees -1. Two views disagreeing about whether
   // a cell is alive is exactly the kind of bug that hides.
   const ctype = new Int32Array(nCells), cslot = new Int32Array(nCells).fill(-1);
+  // Which body each cell belongs to. Not a category — an identity, the same
+  // fact the bond graph already encodes as a connected component, cached so a
+  // cell can tell its own tissue from a stranger's in one comparison.
+  const body = new Int32Array(nCells).fill(-1);
   const bond = new Int32Array(nCells * bondK).fill(-1);
   const brest = new Float32Array(nCells * bondK);
 
@@ -76,6 +80,7 @@ export function buildBodies({
       // Thirds: sensors feel the medium, muscles contract bonds, the rest are
       // interneurons. Every one of them is a CTRNN node in the same island.
       ctype[gi] = i % 3 === 0 ? CELL_SENSOR : (i % 3 === 1 ? CELL_MUSCLE : CELL_NEURON);
+      body[gi] = o;
       cslot[gi] = arena.bindCell(o, i, gi);          // both directions of one relation
       arena.setNeuron(o, i, {
         tau: 0.24 + rnd() * 1.65,                    // evodevo.js's evolved range
@@ -112,7 +117,7 @@ export function buildBodies({
 
   return {
     arena,
-    cells: { px, py, vx, vy, ctype, cslot, bond, brest, bondK },
+    cells: { px, py, vx, vy, ctype, cslot, body, bond, brest, bondK },
     meta: { beasts, cellsPerBeast: cells, nCells, degree, bound },
   };
 }

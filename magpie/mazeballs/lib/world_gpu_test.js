@@ -49,17 +49,19 @@ gpuTest('bond forces conserve momentum — Newton\'s third law holds', async () 
 
   const readVel = async () => {
     const enc = world.device.createCommandEncoder();
+    // vel is vec4 (xy = velocity, w = next-energy scratch), so the stride is 16
+    // bytes. Reading it as vec2 summed energy values as if they were momentum.
     const staging = world.device.createBuffer({
-      size: world.n * 8,
+      size: world.n * 16,
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     });
-    enc.copyBufferToBuffer(world.bVel, 0, staging, 0, world.n * 8);
+    enc.copyBufferToBuffer(world.bVel, 0, staging, 0, world.n * 16);
     world.device.queue.submit([enc.finish()]);
     await staging.mapAsync(GPUMapMode.READ);
     const v = new Float32Array(staging.getMappedRange().slice(0));
     staging.unmap(); staging.destroy();
     let px = 0, py = 0;
-    for (let i = 0; i < world.n; i++) { px += v[i * 2]; py += v[i * 2 + 1]; }
+    for (let i = 0; i < world.n; i++) { px += v[i * 4]; py += v[i * 4 + 1]; }
     return Math.hypot(px, py);
   };
 
