@@ -235,3 +235,42 @@ gpuTest('evolved bodies stay geometrically satisfiable, not frustrated tangles',
   assert(p90 < 6.0, `p90 bond is ${p90.toFixed(1)}x its rest length — bodies are frustrated`);
   sim.world.destroy(); sim.brains.destroy();
 });
+
+Deno.test('the arena is sized for the bodies evolution can reach, not the ones it starts with', () => {
+  // The arena allocates n CONTIGUOUS neuron slots per body, and body size is
+  // heritable — a run starting at 12 cells reaches 30-47. An arena sized
+  // beasts*12 then fails by EXTERNAL FRAGMENTATION rather than cleanly:
+  // measured before the fix, 3325 slots free (12.5% of the arena) across 259
+  // holes whose largest was 30, against a mean body of 32. Every birth failed,
+  // generations froze at 57, and the population sat there looking healthy while
+  // evolution had stopped. Silent failure is what made it dangerous — it
+  // invalidated every ascent measurement taken after bodies grew.
+  //
+  // Driven directly rather than by waiting for evolution to grow bodies, which
+  // takes hundreds of ticks and would make this a slow test of the same fact.
+  const built = buildBodies({ beasts: 60, cells: 12, maxCells: 40, bound: 20, seed: 4 });
+  const { arena } = built;
+  assertEquals(arena.N, 60 * 40, 'arena is not sized for the largest evolvable body');
+  assert(built.cells.px.length === arena.N, 'per-cell arrays do not span the arena');
+  assert(built.cells.bond.length === arena.N * built.cells.bondK, 'bond array does not span the arena');
+
+  // Free every founder, then churn with mixed sizes to fragment the free list,
+  // and require that a maximum-size body can still be born throughout.
+  for (let o = 0; o < 60; o++) { arena.death(o); }
+  let born = 0;
+  for (let round = 0; round < 40; round++) {
+    const sizes = [40, 5, 33, 12, 27];
+    const made = [];
+    for (const n of sizes) {
+      const o = arena.birth(n);
+      if (o >= 0) { made.push(o); born++; }
+    }
+    // Kill every other one, which is what leaves scattered holes.
+    for (let i = 0; i < made.length; i += 2) arena.death(made[i]);
+  }
+  assert(born > 150, `only ${born} births succeeded across the churn`);
+  const big = arena.birth(40);
+  assert(big >= 0,
+    `a maximum-size body could not be born after churn — free list is ` +
+    JSON.stringify(arena.free.map(h => h[1]).sort((a, b) => b - a).slice(0, 5)));
+});

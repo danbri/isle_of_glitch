@@ -35,33 +35,51 @@ import { CELL_NEURON, CELL_SENSOR, CELL_MUSCLE } from './world_gpu.js';
 export function buildBodies({
   beasts = 2000, cells = 12, degree = 12, bondK = 4,
   radius = 1.1, bound = 64, seed = 1, dt = 0.015,
+  maxCells = 40,
 } = {}) {
   let s = seed >>> 0;
   const rnd = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
 
+  // SIZE THE ARENA FOR THE BODIES EVOLUTION CAN PRODUCE, not for the ones it
+  // starts with.
+  //
+  // Body size is heritable, so a run that starts at 12 cells reaches 32, and an
+  // arena of beasts*12 slots then cannot hold them. What happens next is not a
+  // clean "arena full" — it is EXTERNAL FRAGMENTATION. birth() needs n
+  // CONTIGUOUS slots, and after enough churn the free space is scattered:
+  // measured at 3325 slots free (12.5% of the arena) across 259 holes whose
+  // largest was 30, against a mean body of 32. Nothing fits, every birth fails,
+  // and evolution stops dead — generations frozen at 57 while the population
+  // sits there looking healthy. It is silent, and it invalidated every ascent
+  // measurement in this wave once bodies outgrew their starting size.
   const nCells = beasts * cells;
   const arena = new BrainArena({
-    neurons: nCells, degree, organisms: beasts, dt,
+    neurons: beasts * Math.max(cells, maxCells), degree, organisms: beasts, dt,
   });
 
-  const px = new Float32Array(nCells), py = new Float32Array(nCells);
-  const vx = new Float32Array(nCells), vy = new Float32Array(nCells);
+  // Every per-cell array spans the ARENA, not the starting population. The
+  // arena is sized for the largest bodies evolution can reach, and a body
+  // allocated near its end writes at that offset — arrays sized for the initial
+  // beasts*cells simply overrun.
+  const NC = arena.N;
+  const px = new Float32Array(NC), py = new Float32Array(NC);
+  const vx = new Float32Array(NC), vy = new Float32Array(NC);
   // Int32, not Uint32: -1 is a meaningful value here — it marks a cell that has
   // been vacated by death and is no longer part of the world. In a Uint32Array
   // that sentinel silently becomes 4294967295 on the CPU side while the GPU,
   // reading the same bytes as i32, sees -1. Two views disagreeing about whether
   // a cell is alive is exactly the kind of bug that hides.
-  const ctype = new Int32Array(nCells), cslot = new Int32Array(nCells).fill(-1);
+  const ctype = new Int32Array(NC).fill(-1), cslot = new Int32Array(NC).fill(-1);
   // Which body each cell belongs to. Not a category — an identity, the same
   // fact the bond graph already encodes as a connected component, cached so a
   // cell can tell its own tissue from a stranger's in one comparison.
-  const body = new Int32Array(nCells).fill(-1);
+  const body = new Int32Array(NC).fill(-1);
   // How many cells this cell's body has. Carried per cell because the shader
   // has no way to look up an organism's size, and it must not be a constant:
   // body size is heritable now.
-  const bodySize = new Int32Array(nCells);
-  const bond = new Int32Array(nCells * bondK).fill(-1);
-  const brest = new Float32Array(nCells * bondK);
+  const bodySize = new Int32Array(NC);
+  const bond = new Int32Array(NC * bondK).fill(-1);
+  const brest = new Float32Array(NC * bondK);
 
   for (let b = 0; b < beasts; b++) {
     const o = arena.birth(cells);
@@ -123,7 +141,9 @@ export function buildBodies({
   return {
     arena,
     cells: { px, py, vx, vy, ctype, cslot, body, bodySize, bond, brest, bondK },
-    meta: { beasts, cellsPerBeast: cells, nCells, degree, bound },
+    // nCells is the ARENA width — every consumer (GPU buffers, frames, the
+    // viewer) must agree on it, and it is no longer beasts*cells.
+    meta: { beasts, cellsPerBeast: cells, nCells: NC, degree, bound, maxCells },
   };
 }
 

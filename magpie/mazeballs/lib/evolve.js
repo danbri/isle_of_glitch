@@ -93,6 +93,7 @@ export class Evolver {
     }
 
     this.births = 0; this.deaths = 0; this.ticks = 0;
+    this.blockedBirths = 0; this.warnedBlocked = false;
     this.founders = this.alive();
   }
 
@@ -170,11 +171,22 @@ export class Evolver {
       }
     }
 
-    let born = 0;
+    let born = 0, blocked = 0;
     for (const p of rich) {
       const child = this.divide(p, cx[p], cy[p], step, pos);
-      if (child < 0) break;                    // arena full; the rest wait
+      if (child < 0) { blocked++; break; }
       born++; this.births++;
+    }
+    // A birth that cannot find room is not a normal outcome, it is the arena
+    // failing, and it must never be silent again. Fragmentation stopped
+    // evolution for thousands of ticks while every other number looked healthy.
+    this.blockedBirths += blocked;
+    if (blocked && !this.warnedBlocked) {
+      this.warnedBlocked = true;
+      const holes = arena.free.map(h => h[1]).sort((a, b) => b - a);
+      console.warn(`[evolve] a birth found no contiguous room: ${holes.reduce((s, v) => s + v, 0)} ` +
+        `slots free across ${holes.length} holes, largest ${holes[0] ?? 0}. ` +
+        `Size the arena with buildBodies({ maxCells }) for the bodies evolution can reach.`);
     }
 
     return {
@@ -182,7 +194,7 @@ export class Evolver {
       meanEnergy: this.meanOf(total),
       maxGeneration: this.maxGeneration(),
       lineages: this.countLineages(),
-      births: this.births, deaths: this.deaths,
+      births: this.births, deaths: this.deaths, blockedBirths: this.blockedBirths,
     };
   }
 
