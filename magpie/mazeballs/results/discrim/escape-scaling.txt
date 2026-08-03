@@ -1,0 +1,11 @@
+[escape-scaling] quality-ABLATED, H 3 starve 0.005 consume 1.2 food 42/9 steps 500 pop 40
+  population mean net-ablated (all spawns): -0.1466
+  mean gross 0.1188  mean good 0.0618  mean tox 0.0570
+  aggregate selectivity (Σgood/Σgross) = 0.5204  (0.5 = no discrimination)
+  spawns-averaged   escape%(net-ablated>0)
+    1               5%
+    2               8%
+    4               18%
+    8               5%
+   16               8%
+   40               0%

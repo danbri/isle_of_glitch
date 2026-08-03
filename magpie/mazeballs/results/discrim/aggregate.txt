@@ -1,0 +1,13 @@
+discrimination task: evolved-population aggregate across seeds (fitness netintake)
+
+  H  op        K  squat% anosm% netNeg%  selEvo   selQAbl   meanNet(evo)   netAscent      DECISIVE qualAbl Δnet ± SE (2·SE bar)   verdict
+   2  gaussian  6     51    17     89   0.4636   0.4550   -0.1564      -0.0060       +0.0045 ± 0.0035 (0.0069)   incidental
+   2  signflip  6     58    16     86   0.4536   0.4503   -0.1423      +0.0082       +0.0005 ± 0.0019 (0.0037)   incidental
+   3  gaussian  6     52    17     91   0.4669   0.4663   -0.2385      -0.0103       -0.0012 ± 0.0083 (0.0166)   incidental
+   3  signflip  6     57    16     90   0.4627   0.4616   -0.2287      -0.0005       +0.0047 ± 0.0051 (0.0102)   incidental
+   4  gaussian  3     41    12     91   0.4696   0.4685   -0.3174      -0.0137       +0.0090 ± 0.0105 (0.0210)   incidental
+   4  signflip  3     56    15     94   0.4643   0.4666   -0.2970      +0.0068       -0.0068 ± 0.0154 (0.0308)   incidental
+
+  selEvo   = selectivity of the evolved population (0.5 = eats 50/50, no discrimination)
+  selQAbl  = selectivity with the quality channel ablated (should fall to ~0.5 IF the intact pop discriminated)
+  DECISIVE = does blinding the quality sense cost net intake? mean per-seed Δ > 2·SE bar => LOAD-BEARING (sensing evolved because it had to)

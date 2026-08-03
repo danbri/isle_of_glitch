@@ -1,0 +1,16 @@
+[sb-discrim-probe] gen-0 kinematic-degenerate + winnability check
+  toxicFrac 0.5  starve 0.005  food 42 in 9 clusters  relocateThresh 0.3  pop 64  steps 500  evals 16
+  harsh (H): 1.5, 2, 3, 4, 6
+
+  (QABL = quality channel ablated: a body that provably cannot sense good vs toxic)
+  H     selectivity(QABL)   mean-net(QABL) ± SE  esc%   net-selective ± SE   win%  anosmia%
+   1.5  0.4977 ± 0.0107    -0.0693 ± 0.0091    19%       +0.0234 ± 0.0055    64%      3%
+     2  0.4977 ± 0.0107    -0.0999 ± 0.0114    16%       +0.0234 ± 0.0055    64%      3%
+     3  0.4977 ± 0.0107    -0.1611 ± 0.0165     9%       +0.0234 ± 0.0055    64%      3%
+     4  0.4977 ± 0.0107    -0.2223 ± 0.0217     8%       +0.0234 ± 0.0055    64%      3%
+     6  0.4977 ± 0.0107    -0.3447 ± 0.0325     8%       +0.0234 ± 0.0055    64%      3%
+
+Read: mean net-ablated < 0 with selectivity(QABL) ~0.5 => a body that CANNOT sense quality eats 50/50 and
+      LOSES in expectation => NO KINEMATIC DEGENERATE (sit/cover/random all lose). escape%(QABL) is the noisy
+      per-genome upper tail — it collapses toward 0 as spawns increase (see sb-discrim-debug escape-scaling).
+      net-selective > 0 with win% > 0 => a body that steered off toxic WOULD win => task WINNABLE by sensing.
