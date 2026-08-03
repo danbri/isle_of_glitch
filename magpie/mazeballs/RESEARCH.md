@@ -233,6 +233,23 @@ does not.** Substrate, task, and now lifetime have all been enriched, and the
 sensing region of the map is exactly as unsearched — the binding constraint is its
 searchability. See the lifetime-learning section below.
 
+**UPDATE — evolution DOES find sensing, and the wall is the soft-body substrate,
+not evolution.** `tools/land-evolve.js`: a minimal *direct-encoded* CTRNN (weights
+straight in the genome, no developmental map, a point agent, clean gradient
+sensors), tournament k=2, ~40 generations, evolves load-bearing sensing — ablating
+its sensors collapses fitness (drop +0.47 to +0.74). The first evolved sensing in
+the project. So selection, the task, and the world are not the barrier: a
+searchable map finds in forty generations what the developmental Turing map never
+found in eight experiments. The wall is specific to the soft-body substrate, and
+the two live suspects are (a) the developmental encoding — the map cannot be
+searched toward sensor→motor wiring — and (b) the motor-coordination burden — the
+soft body may spend its whole search budget learning to move at all (the plasticity
+run saw selection learn gait, not sense), never reaching sensing. Both are now
+directly testable on the soft body. The mission is not retired: evolution can grow
+a sense; the open question is which part of the soft body stops it. See
+`tools/land-control.js` (the world rewards sensing once uncoverable) and
+`tools/land-evolve.js` (evolution finds it under a direct encoding).
+
 ## The objective
 
 `tools/score.js`. **Not fitness.** Two measured reasons:
