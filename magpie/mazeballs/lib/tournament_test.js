@@ -63,3 +63,21 @@ gpuTest('the tournament reports descendants and energy for both sides', async ()
   assert(r.energyA > 0 || r.energyB > 0, 'no energy was captured by either side');
   assert(r.shareB >= 0 && r.shareB <= 1);
 });
+
+gpuTest('the contest has room for descendants — reproduction is not blocked', async () => {
+  // The tournament is decided by which side leaves more DESCENDANTS, so its
+  // arena must have room for descendants. Sized at exactly the starting cells
+  // it had none: bodies grow, the free list fragments into holes too small for
+  // a body, and births fail within a few hundred ticks. Twenty blocked-birth
+  // warnings fired across a single ladder before this was caught. A contest
+  // scored on reproduction, run where reproduction is blocked, measures the
+  // allocator and nothing else — and every ascent number in this work came
+  // through this instrument.
+  const snap = await evolved(6);
+  const r = await tournament(snap, snap, { perSide: 90, steps: 6000, seed: 21 });
+  const total = r.descendantsA + r.descendantsB;
+  // Starting population is 2*perSide; a healthy contest either grows past that
+  // or turns over freely, and cannot simply be pinned at its initial count.
+  assert(total > 20, `only ${total} bodies survived — the contest died out`);
+  assert(r.energyA > 0 && r.energyB > 0, 'a side captured no energy at all');
+});

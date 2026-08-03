@@ -89,16 +89,35 @@ function buildMixed(poolA, poolB, { perSide, bound, seed, bondK = 4 }) {
 
   const K = poolA.K;
   const totalCells = chosen.reduce((s, c) => s + c.g.n, 0);
-  const arena = new BrainArena({ neurons: totalCells, degree: K, organisms: chosen.length });
+  const biggest = chosen.reduce((m, c) => Math.max(m, c.g.n), 1);
 
-  const px = new Float32Array(totalCells), py = new Float32Array(totalCells);
-  const vx = new Float32Array(totalCells), vy = new Float32Array(totalCells);
-  const ctype = new Int32Array(totalCells), cslot = new Int32Array(totalCells).fill(-1);
-  const body = new Int32Array(totalCells).fill(-1);
-  const bodySize = new Int32Array(totalCells);
-  const bond = new Int32Array(totalCells * bondK).fill(-1);
-  const brest = new Float32Array(totalCells * bondK);
-  const sideOf = new Int32Array(chosen.length).fill(-1);
+  // HEADROOM. The tournament is decided by which side leaves more descendants,
+  // so the arena must have room for descendants. Sizing it at exactly the
+  // starting cells left none: bodies grow, the free list fragments, and births
+  // fail within a few hundred ticks — 20 blocked-birth warnings fired across one
+  // ladder's tournaments before this was caught. A contest scored on
+  // reproduction, run where reproduction is blocked, measures the allocator.
+  //
+  // Four times the starting cells plus a margin for the largest body, and
+  // organism slots to match, so neither the neuron arena nor the organism table
+  // is what ends the contest.
+  const arena = new BrainArena({
+    neurons: totalCells * 4 + biggest * 8,
+    degree: K,
+    organisms: chosen.length * 4,
+  });
+
+  // Every per-cell array spans the ARENA, not the starting cells, or a body
+  // born into the headroom writes past their end.
+  const NC = arena.N;
+  const px = new Float32Array(NC), py = new Float32Array(NC);
+  const vx = new Float32Array(NC), vy = new Float32Array(NC);
+  const ctype = new Int32Array(NC).fill(-1), cslot = new Int32Array(NC).fill(-1);
+  const body = new Int32Array(NC).fill(-1);
+  const bodySize = new Int32Array(NC);
+  const bond = new Int32Array(NC * bondK).fill(-1);
+  const brest = new Float32Array(NC * bondK);
+  const sideOf = new Int32Array(arena.P).fill(-1);
 
   const addBond = (from, to, rest) => {
     const base = from * bondK;
@@ -150,7 +169,7 @@ function buildMixed(poolA, poolB, { perSide, bound, seed, bondK = 4 }) {
   return {
     arena, sideOf,
     cells: { px, py, vx, vy, ctype, cslot, body, bodySize, bond, brest, bondK },
-    meta: { nCells: totalCells, bound },
+    meta: { nCells: NC, bound },
   };
 }
 
