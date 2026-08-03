@@ -386,6 +386,48 @@ export const DEFAULTS = Object.freeze({
   //                   role-weighting (neurons dear, structure cheap) is the
   //                   documented next refinement and is deliberately not yet built.
   META_MOVE_COST: 0, META_CELL_COST: 0,
+
+  // ------------------------------------------------------ lifetime plasticity
+  // Reward-modulated Hebbian plasticity on the CTRNN — the Baldwin lever, the
+  // hypothesis that lifetime LEARNING crosses a findability valley that pure
+  // selection cannot. OFF by default (PLASTIC false), and the non-plastic path is
+  // then byte-identical: no plastic weight buffers are allocated, kNeural reads
+  // the developed p.W / p.win exactly as before, and randomGenome / perturbGenome
+  // / cloneGenome draw NO extra rng and carry no extra field (so a displacement
+  // sb-evolve run reproduces bit-for-bit). When on, the genome gains a small
+  // PLASTIC block (genome.plast) of evolvable learning parameters; development
+  // still produces the INITIAL weights, and what is inherited is the CAPACITY and
+  // PREDISPOSITION to learn, not the learned weights — the plastic weights reset
+  // to the developed values every spawn, so a lifetime's learning is discarded and
+  // only the genome's plasticity survives to the next generation. That is the
+  // whole point of Baldwin: selection can only assimilate a learned behaviour by
+  // moving the DEVELOPED weights, never by inheriting the learned ones.
+  //
+  // Within an episode each plastic weight updates by a three-factor rule
+  //     Δw_ij = η · m(t) · e_ij
+  // where e_ij is a low-pass eligibility trace of pre·post coincidence and m(t) is
+  // a neuromodulator driven by the reward-PREDICTION-ERROR (this step's signed
+  // intake, good − H·toxic, minus a slow baseline). Eating good drives m positive
+  // and strengthens whatever the body just did; eating toxic drives it negative
+  // and unlearns it — so a body can DISCOVER "steer up the quality channel" within
+  // its life even when the genome never specified it. The developed weight is the
+  // anchor: a plastic weight is clamped to a bounded neighbourhood of it, so
+  // learning can never NaN the physics (assertFinite stays live regardless).
+  //
+  //   PLASTIC         master gate. false => every plasticity path is dead.
+  //   PLAST_GENES     size of the evolvable plasticity block (genome.plast).
+  //   PLAST_ETA_MAX   ceiling the genome's per-class learning rate maps into.
+  //   PLAST_MOD_MAX   ceiling on the neuromodulator gain.
+  //   PLAST_TRACE     [min,max] eligibility-trace time constant, seconds.
+  //   PLAST_MODTAU    [min,max] reward-baseline time constant, seconds — the
+  //                   window over which "reward change" (the modulator) is read.
+  //   PLAST_W_BOUND   how far, in weight units, a plastic RECURRENT weight may
+  //                   drift from its developed value.
+  //   PLAST_WIN_BOUND same, for SENSOR→neuron weights (the quality channel is one
+  //                   of these, so learning to read good-vs-toxic lives here).
+  PLASTIC: false, PLAST_GENES: 5, PLAST_ETA_MAX: 0.12, PLAST_MOD_MAX: 8.0,
+  PLAST_TRACE: [0.10, 1.20], PLAST_MODTAU: [0.30, 3.0],
+  PLAST_W_BOUND: 8.0, PLAST_WIN_BOUND: 3.0,
 });
 
 /**
@@ -479,13 +521,29 @@ export function randomGenome(rng, cfg = DEFAULTS) {
     for (let m = 0; m < MATERNAL; m++) buf[mo + m] = gauss(rng) * 0.85;
     for (let m = 0; m < GENES; m++) buf[ro + m] = gauss(rng) * 0.55;
   }
+  // Plasticity block: drawn ONLY when PLASTIC is on, and strictly AFTER buf is
+  // filled, so the buf draw sequence is untouched and a non-plastic genome is
+  // byte-identical (no extra rng consumed, no extra field on the object).
+  if (cfg && cfg.PLASTIC) {
+    const pl = new Float32Array(cfg.PLAST_GENES);
+    for (let i = 0; i < pl.length; i++) pl[i] = gauss(rng) * 1.0;
+    return { buf, plast: pl };
+  }
   return { buf };
 }
 
-/** Additive Gaussian perturbation of every locus. Used by the ε sweep. */
+/** Additive Gaussian perturbation of every locus. Used by the ε sweep. The
+ *  plasticity block, when present, is perturbed by the same operator — so a
+ *  non-plastic genome (no .plast) consumes exactly the old draw sequence and a
+ *  plastic one evolves its learning parameters alongside its development. */
 export function perturbGenome(genome, eps, rng) {
   const buf = Float32Array.from(genome.buf);
   for (let i = 0; i < buf.length; i++) buf[i] += gauss(rng) * eps;
+  if (genome.plast) {
+    const pl = Float32Array.from(genome.plast);
+    for (let i = 0; i < pl.length; i++) pl[i] += gauss(rng) * eps;
+    return { buf, plast: pl };
+  }
   return { buf };
 }
 
@@ -504,6 +562,7 @@ export function perturbGenome(genome, eps, rng) {
 /** Deep copy of a genome. Elitism carries a genome unchanged; cloning makes the
  * carry explicit so a later mutation of a sibling can never alias the elite. */
 export function cloneGenome(genome) {
+  if (genome.plast) return { buf: Float32Array.from(genome.buf), plast: Float32Array.from(genome.plast) };
   return { buf: Float32Array.from(genome.buf) };
 }
 
@@ -1021,13 +1080,34 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1), onCycle = null
   const patternCV = ma > 1e-6 ? va / ma : 0;
   const patternDomains = countDomains(pa, ma, cei, cej, nE, nA);
 
-  return {
+  // Plasticity phenotype: the genome's learning parameters, mapped from the
+  // evolvable plast block into their working ranges. Only produced when PLASTIC
+  // is on and the genome carries the block, so a non-plastic develop() returns
+  // exactly the old object shape (no `plast` key) and every existing caller and
+  // serialiser is untouched. These are DEVELOPED constants — the initial weights
+  // still come from W/win above; plast only says how those weights will move
+  // within a lifetime. See DEFAULTS.PLASTIC for the rule.
+  let plast = null;
+  if (cfg.PLASTIC && genome.plast) {
+    const pl = genome.plast, sig = v => 1 / (1 + Math.exp(-v));
+    plast = {
+      etaSens: cfg.PLAST_ETA_MAX * sig(pl[0]),
+      etaRec: cfg.PLAST_ETA_MAX * sig(pl[1]),
+      modGain: cfg.PLAST_MOD_MAX * sig(pl[2]),
+      traceTau: span(cfg.PLAST_TRACE, pl[3]),
+      modTau: span(cfg.PLAST_MODTAU, pl[4]),
+    };
+  }
+
+  const out = {
     n: nA, x: px, y: py, rad: pr, nSens: NS,
     nE, ei: cei, ej: cej, L0: L0.slice(0, nE), amp: amp.slice(0, nE), kind: kind.slice(0, nE),
     W, bias, tau, tauA, adapt, win, grip, isSensor, A: pa, H: ph, rd: K,
     stats: { cells: nA, edges: nE, muscles, sensors, extent: ext,
              area: polyArea(px, py, nA), patternCV, patternDomains },
   };
+  if (plast) out.plast = plast;
+  return out;
 }
 
 /** Logistic fate probability: 0.5 at the threshold, steepness FATE_K. */
@@ -1211,6 +1291,24 @@ export class Colony {
     // is the decisive instrument — blinding the opponent sense on an evolved
     // population and measuring the change in capture/escape.
     this.oppAblate = null;
+
+    // ---------------------------------------------------- lifetime plasticity
+    // Live only when PLASTIC is on AND the phenotypes carry a plast block. When
+    // off, none of these buffers exist, kNeural reads p.W / p.win directly and the
+    // step is byte-identical. When on, each organism gets its OWN plastic copy of
+    // the recurrent (pW) and sensor (pWin) weights plus their eligibility traces
+    // (eW / eWin); spawn() reloads them from the developed weights, so learning is
+    // a within-lifetime process that starts fresh every episode and is never
+    // inherited. rewStep is this step's signed intake increment (the reward),
+    // rewBase its slow baseline, mNow the resulting neuromodulator (for readout).
+    this.plastic = !!(cfg.PLASTIC && this.P && phenos[0] && phenos[0].plast);
+    if (this.plastic) {
+      const S2 = this.S * this.S, SNS = this.S * this.NS, P = this.P;
+      this.pW = new Float64Array(P * S2); this.eW = new Float64Array(P * S2);
+      this.pWin = new Float64Array(P * SNS); this.eWin = new Float64Array(P * SNS);
+      this.rewStep = new Float64Array(P); this.rewBase = new Float64Array(P);
+      this.mNow = new Float64Array(P);
+    }
   }
 
   /** Place every organism: random position, random body orientation, zero state. */
@@ -1262,6 +1360,20 @@ export class Colony {
         this.foodX[i] = clamp(c[0] + j(), -bound, bound);
         this.foodY[i] = clamp(c[1] + j(), -bound, bound);
         this.foodType[i] = rng.next() < cfg.FOOD_TOXIC_FRAC ? -1 : 1;
+      }
+    }
+    // Reload plastic weights from the DEVELOPED weights and clear the traces —
+    // every spawn is a fresh lifetime that starts from what the genome grew, so
+    // the previous episode's learning is discarded (not inherited). No rng draw,
+    // so a plastic run is still reproducible from the spawn seed.
+    if (this.plastic) {
+      const S = this.S, NS = this.NS;
+      this.eW.fill(0); this.eWin.fill(0);
+      this.rewStep.fill(0); this.rewBase.fill(0); this.mNow.fill(0);
+      for (let o = 0; o < this.P; o++) {
+        const p = this.ph[o], n = p.n, wb = o * S * S, ib = o * S * NS;
+        for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) this.pW[wb + a * S + b] = p.W[a * n + b];
+        for (let b = 0; b < n; b++) for (let c = 0; c < NS; c++) this.pWin[ib + b * NS + c] = p.win[b * NS + c];
       }
     }
   }
@@ -1425,16 +1537,22 @@ export class Colony {
   /* ---- kernel: CTRNN update (per cell) ----------------------------------- */
   kNeural() {
     const cfg = this.cfg, S = this.S, dt = cfg.DT, NS = this.NS;
+    const plastic = this.plastic;
     for (let o = 0; o < this.P; o++) {
       const p = this.ph[o], n = p.n, base = o * S;
+      // Weight source: the developed p.W / p.win (non-plastic, stride n, base 0 —
+      // byte-identical to before) or this organism's plastic copy (stride S, base
+      // o·S²/o·S·NS). Chosen once per organism so the inner loops carry no branch.
+      const Warr = plastic ? this.pW : p.W, Wstride = plastic ? S : n, Wbase = plastic ? o * S * S : 0;
+      const Iarr = plastic ? this.pWin : p.win, Ibase = plastic ? o * S * NS : 0;
       for (let a = 0; a < n; a++)
         this.act[base + a] = Math.tanh(this.ny[base + a] + p.bias[a] - p.adapt[a] * this.ad[base + a]);
       for (let b = 0; b < n; b++) {
         let rec = 0;
-        for (let a = 0; a < n; a++) rec += this.act[base + a] * p.W[a * n + b];
+        for (let a = 0; a < n; a++) rec += this.act[base + a] * Warr[Wbase + a * Wstride + b];
         let inp = 0;
-        const wb = b * NS, sb = (base + b) * NS;
-        for (let c = 0; c < NS; c++) inp += p.win[wb + c] * this.sens[sb + c];
+        const wb = Ibase + b * NS, sb = (base + b) * NS;
+        for (let c = 0; c < NS; c++) inp += Iarr[wb + c] * this.sens[sb + c];
         const t = base + b;
         this.ny[t] += (rec + inp - this.ny[t]) / p.tau[b] * dt;
         // The state is a tanh argument; letting it run to 1e3 buys nothing and
@@ -1615,10 +1733,17 @@ export class Colony {
         // detector); intake is the signed, H-weighted fitness quantity.
         const amt = best * dt * forageK;
         this.gross[o] += amt;
-        if (bestF >= 0 && this.foodType[bestF] < 0) { this.toxEaten[o] += amt; this.intake[o] -= H * amt; }
-        else { this.goodEaten[o] += amt; this.intake[o] += amt; }
+        let di;
+        if (bestF >= 0 && this.foodType[bestF] < 0) { this.toxEaten[o] += amt; di = -H * amt; }
+        else { this.goodEaten[o] += amt; di = amt; }
+        this.intake[o] += di;
+        // The signed intake increment IS the plasticity reward this step (good
+        // rewards, toxic punishes). Zero-cost when plasticity is off.
+        if (this.plastic) this.rewStep[o] = di;
       } else {
-        this.intake[o] += best * dt * forageK;
+        const di = best * dt * forageK;
+        this.intake[o] += di;
+        if (this.plastic) this.rewStep[o] = di;
       }
       // trajectory readouts
       const d = Math.sqrt((cx - this.lastCX[o]) * (cx - this.lastCX[o]) + (cy - this.lastCY[o]) * (cy - this.lastCY[o]));
@@ -1721,12 +1846,66 @@ export class Colony {
     return { n: P, cx, cy, cellX, cellY, cellN };
   }
 
+  /* ---- kernel: reward-modulated Hebbian plasticity (per synapse) --------- */
+  // The Baldwin update. For each organism: form the neuromodulator m from the
+  // reward-prediction error (this step's signed intake minus a slow baseline),
+  // low-pass the pre·post coincidence into an eligibility trace e, and move each
+  // plastic weight by Δw = η·m·e, clamped to a bounded neighbourhood of its
+  // DEVELOPED value so the physics can never be driven non-finite. Runs only when
+  // plasticity is live; step() skips the call otherwise, so the non-plastic path
+  // is byte-identical. Both the recurrent (W) and the sensor→neuron (win) weights
+  // learn — the quality channel is a sensor weight, so "read good-vs-toxic and
+  // steer on it" is exactly a thing this rule can install within a lifetime.
+  kPlastic() {
+    const cfg = this.cfg, S = this.S, NS = this.NS, dt = cfg.DT;
+    const wB = cfg.PLAST_W_BOUND, iB = cfg.PLAST_WIN_BOUND;
+    for (let o = 0; o < this.P; o++) {
+      const p = this.ph[o], n = p.n, base = o * S, pl = p.plast;
+      if (!pl) continue;
+      const etaRec = pl.etaRec, etaSens = pl.etaSens;
+      // Neuromodulator, then advance the slow reward baseline (reward-change).
+      const r = this.rewStep[o], b0 = this.rewBase[o];
+      const m = pl.modGain * (r - b0);
+      this.rewBase[o] = b0 + dt / pl.modTau * (r - b0);
+      this.mNow[o] = m;
+      const decay = dt / pl.traceTau;
+      const wb = o * S * S, ib = o * S * NS;
+      // Recurrent weights.
+      for (let a = 0; a < n; a++) {
+        const preA = this.act[base + a];
+        for (let b = 0; b < n; b++) {
+          const idx = wb + a * S + b;
+          const e = this.eW[idx] + decay * (preA * this.act[base + b] - this.eW[idx]);
+          this.eW[idx] = e;
+          let w = this.pW[idx] + etaRec * m * e;
+          const w0 = p.W[a * n + b];
+          w = w > w0 + wB ? w0 + wB : (w < w0 - wB ? w0 - wB : w);
+          this.pW[idx] = w;
+        }
+      }
+      // Sensor→neuron weights.
+      for (let b = 0; b < n; b++) {
+        const post = this.act[base + b], sb = (base + b) * NS;
+        for (let c = 0; c < NS; c++) {
+          const idx = ib + b * NS + c;
+          const e = this.eWin[idx] + decay * (this.sens[sb + c] * post - this.eWin[idx]);
+          this.eWin[idx] = e;
+          let w = this.pWin[idx] + etaSens * m * e;
+          const w0 = p.win[b * NS + c];
+          w = w > w0 + iB ? w0 + iB : (w < w0 - iB ? w0 - iB : w);
+          this.pWin[idx] = w;
+        }
+      }
+    }
+  }
+
   step() {
     this.kSense();
     this.kNeural();
     this.kPhysics();
     this.kFood();
     this.kContact();
+    if (this.plastic) this.kPlastic();
     this.steps++;
   }
 
