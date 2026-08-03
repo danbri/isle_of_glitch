@@ -38,9 +38,25 @@ AI — on the machine with a real GPU.
   The fix that unlocked it: snapshot by **wall-clock step**, not by max-generation
   -*depth* — depth crawls to ~12 while thousands of divisions happen (each halves
   fuel, so lineages rarely chain deep), so a depth-keyed snapshot fired only twice
-  and starved the tournament. Next: does a richer strategy space (evolvable
-  morphology / multicellularity) turn the slow, decelerating climb into a steeper
-  one? That is the open question the instrument now exists to answer.
+  and starved the tournament.
+  - **The climb DECELERATES**, though: `step 24000 vs 14000 ≈ 0.53` (near tie).
+    So the instrument's first job — telling ascent from saturation — works, and
+    it reads *saturation setting in*. Which raises the roadmap's central question:
+    what de-saturates it?
+  - **Tested lever #1 — richer chemistry (dimensionality of the tag/enzyme arms
+    race, TG=3 → 16, digestion/secretion normalised by √TG so it adds *room* not
+    raw strength).** Measured with the new instrument across 3 independent
+    evolve-seeds each: 2nd-half ascent ladder `TG=3 → 0.496` (saturated) vs
+    `TG=16 → 0.515`. A *consistent but tiny* (~0.02) effect — it delays
+    saturation, it does not defeat it. This is a substrate enrichment, and it
+    behaves exactly like the other substrate enrichments RESEARCH.md found null:
+    **more axes of the same chemistry is not the lever.** The live hypothesis is
+    therefore what RESEARCH.md's whole arc points at — a *new environmental/task
+    demand* the current strategy structurally cannot satisfy, and/or genuine
+    *morphological* strategy space (multicellularity where a capability costs
+    cells) that opens new behaviours rather than more of the same. That is the
+    next thing to put under this instrument. (Sweep + firm-up harnesses were
+    scratch experiments; the instrument itself is `soup-ascent.js`.)
 - **tools/land-evolve.js, land-suspects.js, land-control.js** — minimal
   testbeds that proved: evolution CAN find sensing under batch-GA selection;
   the motor-coordination burden is a wall; seeding a gait doesn't transfer.
