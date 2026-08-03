@@ -3927,3 +3927,125 @@ wave: does blinding the sense finally cost something. If an energy budget makes
 the opponent/food sense load-bearing, that is the crack in the wall the whole
 project has been pushing on. If bodies just sit, the wall holds and we have
 learned the cost alone is not enough.
+
+## The metabolic cost revives sitting, and the wall holds
+
+The synthesis above named the lever and named its risk. Both have now been
+built and measured on foraging, and the result is the risk, cleanly: **a
+metabolic cost on movement does not make the food sense load-bearing. It
+revives the original sit-still optimum instead.** Across a five-point cost
+dose crossed with resource dynamics that punish sitting, at three seeds each,
+the food-sense ablation delta is indistinguishable from zero at every dose,
+while the fraction of the population that answers the cost by sitting climbs
+from 12% at no cost to 65–100% at any positive cost. The cost alone is not
+enough, and now that is measured rather than feared.
+
+**What was built, and why single-species stays byte-identical.** Two charges,
+both defaulting to zero, added to `DEFAULTS` and read only in `Colony.traits()`:
+`META_MOVE_COST` charges energy per world-unit of centroid *path* travelled (the
+direct "covering ground is expensive" lever — charged on path, not net
+displacement, so pacing on one patch is not free either), and `META_CELL_COST`
+charges per living cell per episode-second (bigger bodies cost more, the
+per-cell charge the brain-economy design will need). Nothing in `step()` reads
+them; with the default zero charges `traits().metabolic` is identically 0 and
+`netIntake` is identically `intake`, so `sb-turing`, `sb-gate` and a short
+`sb-evolve` displacement run reproduce **byte-for-byte** (verified, text and
+JSON). `sb-evolve` gains `--moveCost`/`--cellCost`, a `netintake` fitness
+(intake − metabolic — a body that eats efficiently beats one that eats by
+covering ground), and the squatter/net-intake diagnostics, all gated on a cost
+being live so a trunk run is unchanged.
+
+**The resource dynamics had to be fixed first, and the reason is arithmetic.**
+A first probe with the trunk food field revived sitting so completely
+(squatter fraction 96% at `moveCost` 0.05) that there was nothing to ablate,
+and the cause is exact: a body sitting on a patch draws it to the equilibrium
+stock `s* = FOOD_REGROW/(FOOD_REGROW+FOOD_CONSUME) = 0.09/0.49 ≈ 0.184`, which
+sits *above* the default relocate threshold 0.15 — so a stationary body holds
+its patch forever and sitting is a stable free lunch that a movement cost only
+sharpens. This is the same trap wave 1 recorded ("doubling movement cost gave
+the lowest sensing of any trial ... making movement expensive without making
+food harder to find rewards sitting still"), re-derived on the new substrate
+with the number attached. The fix is an arena-only override (`--relocateThresh`,
+no `DEFAULTS` change): raising it to 0.30, above `s*`, makes a fed-on patch
+deplete and relocate *away*, so a body must travel to keep eating. Food was
+also sparsened to 14 sources in 7 clusters so that after a patch flees the
+nearest replacement is usually beyond the ~0.22 sensing radius. This is the
+"punish sitting" pressure the synthesis required, made live and dialled up.
+
+**The dose-response.** `sb-evolve`, POP 48 × 20 generations, k=2 tournament,
+a 6-generation displacement curriculum then `netintake`, four held-out spawns
+for the re-measure, three seeds per dose. The decisive column is the food-sense
+ablation on *net* intake — intact versus mean-replaced on the evolved
+population, the same `blindConst`-style removal the whole project reads — pooled
+as a per-seed delta with an across-seed standard error and the project's
+2·SE bar:
+
+| moveCost | squatter % | mean disp | ablation Δnet ± SE (2·SE bar) | verdict |
+|---|---|---|---|---|
+| 0.00 | 12% | 0.405 | −0.0009 ± 0.0047 (0.0095) | incidental |
+| 0.01 | 78% | 0.110 | −0.0003 ± 0.0003 (0.0007) | incidental |
+| 0.02 | 84% | 0.080 | −0.0052 ± 0.0050 (0.0100) | incidental |
+| 0.05 | 94% | 0.017 | +0.0000 ± 0.0000 (0.0000) | incidental |
+| 0.10 | 92% | 0.029 | −0.0004 ± 0.0004 (0.0007) | incidental |
+
+(The zero-cost row is `netintake` = `intake`, so it is the directed-foraging
+null re-run under the harsher relocation and reads the same: bodies move,
+forage by coverage, blinding costs nothing.)
+
+**Read the two moving columns together and the mechanism is unmistakable.** At
+no cost the population moves (displacement 0.405) and squatting is rare (12%);
+its foraging is coverage, and blinding the sense is incidental — the standing
+result. Add even the lightest movement cost and the population does not learn to
+aim, it stops moving: displacement collapses to 0.11 at `moveCost` 0.01 and to
+under 0.04 by 0.05, and the squatter fraction jumps to 65–100%. At every dose
+the ablation delta straddles zero — every mean is negative or vanishing, none
+clears its bar, and the two that a naive `Δ>bar` test would flag are a
+floating-point artifact of dividing a physically-zero delta by a
+near-zero standard error on a frozen sitting population (a 0.005 absolute floor,
+a tenth of a typical net intake, retires them). **A body that sits is not using
+its food sense, so blinding it changes nothing; a body that covers is not using
+it either, so blinding it changes nothing. The cost moved the population between
+those two non-users and never through a third strategy that steers.**
+
+**One nuance worth recording, because it is the closest the sense came to
+mattering and it still did not.** At the lightest cost (0.01) intake
+repeatability rose to 0.205 — feeding became genuinely heritable, five to six
+times the 0.034 the displacement-evolved population reached and far above the
+incumbent's ~0.01–0.05 regime. The resource dynamics did what they were meant to:
+who eats how much is now a reproducible property of the genome, not spawn luck.
+But the ablation at that same dose is −0.0003 ± 0.0003 — the heritable feeding is
+carried by *where and how much the body moves*, not by the sense. This is the
+same dissociation the coevolution section found on the predator side: a trait
+can become selectable and improve without the sense being what improves it. Made
+selectable, foraging is still climbed by kinematics.
+
+**Verdict.** "Wandering is free" was the right diagnosis of *why* sensing never
+paid — at zero cost coverage finds everything and the sense has no margin, and
+that is exactly reproduced here. But pricing the wandering does not convert the
+diagnosis into a fix: the cost does not buy directed movement, it buys stillness.
+The degenerate optimum this project's first build evolved was never displaced by
+the substrate rebuild, the resource dynamics, or the arms race; it was only ever
+held off by movement being free, and the moment movement costs anything the
+population walks straight back into it — even with sitting punished by relocation
+aggressive enough to make a held patch flee. **The cost alone is not enough, and
+per the mission's own gate — do foraging first, and only escalate to coevolution
+if the sense becomes load-bearing — coevolution was not run: there is no
+foraging-level crack to widen.** What the null implicates is not the cost but the
+*sensing geometry* the cost cannot touch: a ~0.22 sensing radius against a
+~1.88 arena means the sense only ever informs the final approach, so removing it
+costs a final approach's worth of intake — a rounding error against the movement
+budget at any cost that also makes coverage hurt. The live direction is a sense
+that can aim from *across* the arena (a wider kernel, a gradient that reaches, or
+food whose only signature is the sense), measured with `sb-evolve --fitness
+netintake` and the squatter fraction watched the whole way — a cost is a
+necessary condition for sensing to pay, this shows, but it is decidedly not a
+sufficient one.
+
+**What is committed.** In `lib/softbody.js`, `META_MOVE_COST`/`META_CELL_COST`
+(both 0 in `DEFAULTS`) and `metabolic`/`netIntake` in `Colony.traits()` —
+additive, physics untouched, single-species path verified byte-identical. In
+`tools/sb-evolve.js`, `--moveCost`/`--cellCost`, the `netintake` fitness, the
+arena-only `--relocateThresh`/`--consume`/`--regrow` resource overrides, and the
+squatter-fraction and net-intake-ablation diagnostics (all gated on a cost being
+live, so a displacement run is byte-identical). Run readouts are in
+`results/cost/` (`mc{cost}-s{seed}`, costs 0/0.01/0.02/0.05/0.10, seeds 1–3).
