@@ -46,7 +46,12 @@ export function buildBodies({
 
   const px = new Float32Array(nCells), py = new Float32Array(nCells);
   const vx = new Float32Array(nCells), vy = new Float32Array(nCells);
-  const ctype = new Uint32Array(nCells), cslot = new Int32Array(nCells).fill(-1);
+  // Int32, not Uint32: -1 is a meaningful value here — it marks a cell that has
+  // been vacated by death and is no longer part of the world. In a Uint32Array
+  // that sentinel silently becomes 4294967295 on the CPU side while the GPU,
+  // reading the same bytes as i32, sees -1. Two views disagreeing about whether
+  // a cell is alive is exactly the kind of bug that hides.
+  const ctype = new Int32Array(nCells), cslot = new Int32Array(nCells).fill(-1);
   const bond = new Int32Array(nCells * bondK).fill(-1);
   const brest = new Float32Array(nCells * bondK);
 

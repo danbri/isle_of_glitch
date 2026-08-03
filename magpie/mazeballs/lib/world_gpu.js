@@ -118,6 +118,16 @@ fn flowField(p: vec2<f32>, scale: f32, strength: f32, seed: u32) -> vec2<f32> {
   let dy = fbm(q + vec2<f32>(0.0, e * scale), seed) - fbm(q - vec2<f32>(0.0, e * scale), seed);
   return vec2<f32>(dy, -dx) * strength / (2.0 * e);
 }
+
+// Where the energy is. A static analytic field, like the flow and for the same
+// reason: it is defined at every real coordinate, so a cell reads it at its
+// exact position and there is no lattice to sit on. Squared to make the good
+// ground scarce and patchy rather than a gentle everywhere-gradient — a fitness
+// landscape needs somewhere worth being and somewhere not worth being.
+fn resourceField(p: vec2<f32>, scale: f32, seed: u32) -> f32 {
+  let r = fbm(p * scale, seed);
+  return r * r;
+}
 `;
 
 const SHADER = /* wgsl */`
@@ -140,9 +150,19 @@ struct W {
   bound    : f32,
 
   bondDamp : f32,
-  pad0     : f32,
-  pad1     : f32,
-  pad2     : f32,
+  harvest  : f32,   // energy gained per unit resource per second
+  brainTax : f32,   // energy a cell costs just by existing and thinking
+  muscleCost: f32,  // energy a muscle spends in proportion to work done
+
+  resScale : f32,
+  resSeed  : u32,
+  eCap     : f32,   // most energy one cell can hold
+  eFloor   : f32,   // most debt one cell can run up before it is simply dead
+
+  hashCell : f32,   // spatial-hash query radius, world units
+  hashSize : u32,
+  crowdK   : f32,   // how sharply a shared patch is discounted
+  bodyCells: u32,   // a body does not crowd itself
 };
 
 // Positions and velocities are packed vec2, and (type, slot) into one vec2<i32>.
@@ -154,10 +174,19 @@ struct W {
 @group(0) @binding(1) var<storage, read_write> pos   : array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read_write> vel   : array<vec2<f32>>;
 @group(0) @binding(3) var<storage, read>       cmeta : array<vec2<i32>>;  // x=type, y=brain slot
-@group(0) @binding(4) var<storage, read>       bond  : array<i32>;
-@group(0) @binding(5) var<storage, read>       brest : array<f32>;
-@group(0) @binding(6) var<storage, read_write> ext   : array<f32>;
-@group(0) @binding(7) var<storage, read>       act   : array<f32>;
+// bond index and rest length packed into one vec2 — WebGPU guarantees only 8
+// storage buffers per stage and the crowding hash needs one, so the pair that
+// is always read together shares a binding. .x holds an i32 index bitcast into
+// the float slot; .y is the rest length.
+@group(0) @binding(4) var<storage, read>       bondD  : array<vec2<f32>>;
+@group(0) @binding(5) var<storage, read_write> ext    : array<f32>;
+@group(0) @binding(6) var<storage, read>       act    : array<f32>;
+@group(0) @binding(7) var<storage, read_write> energy : array<f32>;
+// Occupancy per hash bucket. An ACCELERATION INDEX, not a world representation:
+// recomputed from continuous positions every step and never stored as identity.
+// Nothing addresses a cell by bucket; the bucket only answers "how many others
+// are near me".
+@group(0) @binding(8) var<storage, read_write> hashCount : array<atomic<u32>>;
 
 fn flowAt(p: vec2<f32>) -> vec2<f32> {
   return flowField(p, P.flowScale, P.flowStr, P.seed);
@@ -180,7 +209,51 @@ fn contractionOf(i: u32) -> f32 {
   return 0.0;
 }
 
+// A spatial hash over CONTINUOUS position. cellSize is a query radius, not a
+// lattice the world lives on: a body straddling two buckets is in both, and
+// moving half a bucket changes nothing about what the body is. Nothing is ever
+// snapped to it.
+fn bucketOf(p: vec2<f32>) -> u32 {
+  let gx = i32(floor(p.x / P.hashCell));
+  let gy = i32(floor(p.y / P.hashCell));
+  var h : u32 = (u32(gx) * 73856093u) ^ (u32(gy) * 19349663u);
+  return h % P.hashSize;
+}
+
 /* ------------------------------------------------------------------ kernels */
+
+// 0a. Clear the occupancy counts.
+@compute @workgroup_size(${WORKGROUP})
+fn hashClear(@builtin(global_invocation_id) gid: vec3<u32>) {
+  if (gid.x >= P.hashSize) { return; }
+  atomicStore(&hashCount[gid.x], 0u);
+}
+
+// 0b. Each cell announces itself into its bucket.
+@compute @workgroup_size(${WORKGROUP})
+fn hashBuild(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i = gid.x;
+  if (i >= P.nCells) { return; }
+  // A DEAD cell is not in the world. Freeing an organism's arena slot leaves
+  // its cells sitting in these buffers at their last positions, and if they
+  // still counted toward occupancy the living would be competing with corpses:
+  // with 36k slots and 7.2k alive that inflated crowding fivefold and starved
+  // the entire population in a single tick. type < 0 marks a slot as vacated.
+  if (cmeta[i].x < 0) { return; }
+  atomicAdd(&hashCount[bucketOf(pos[i])], 1u);
+}
+
+// How many cells share this neighbourhood, summed over the 3x3 buckets around
+// p so the count does not jump as a cell crosses a bucket edge.
+fn crowdingAt(p: vec2<f32>) -> f32 {
+  var n = 0u;
+  for (var dy = -1; dy <= 1; dy = dy + 1) {
+    for (var dx = -1; dx <= 1; dx = dx + 1) {
+      n = n + atomicLoad(&hashCount[bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell)]);
+    }
+  }
+  return f32(n);
+}
 
 // 1. Sensor cells write what they feel into their brain's input slot. Nothing
 //    crosses the bus: ext is a GPU buffer the arena kernel reads next.
@@ -190,7 +263,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   if (i >= P.nCells) { return; }
   let m = cmeta[i];
   let slot = m.y;
-  if (slot < 0) { return; }
+  if (slot < 0 || m.x < 0) { return; }
   if (m.x != 1) { ext[u32(slot)] = 0.0; return; }
 
   let p = pos[i];
@@ -205,6 +278,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   let i = gid.x;
   if (i >= P.nCells) { return; }
+  if (cmeta[i].x < 0) { return; }              // vacated slot; not in the world
 
   let p = pos[i];
   var v = vel[i];
@@ -217,13 +291,14 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
 
   let base = i * P.bondK;
   for (var k = 0u; k < P.bondK; k = k + 1u) {
-    let j = bond[base + k];
+    let bd = bondD[base + k];
+    let j = bitcast<i32>(bd.x);
     if (j < 0) { continue; }
     let d = pos[u32(j)] - p;
     let dist = max(length(d), 1e-3);
     // Symmetric: both endpoints derive the same rest length, so the pair's
     // forces cancel. See contractionOf.
-    let rest = brest[base + k] * (1.0 - 0.5 * (mine + contractionOf(u32(j))));
+    let rest = bd.y * (1.0 - 0.5 * (mine + contractionOf(u32(j))));
     let dir = d / dist;
     // Hooke, PROPORTIONAL at any stretch. An earlier version clamped the
     // stretch for stability and that was a bad trade: a bond pulled past the
@@ -269,6 +344,38 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   if (np.y < -b) { np.y = np.y + 2.0 * b; }
 
   pos[i] = np; vel[i] = v;
+
+  // ------------------------------------------------------------- energy
+  // Per CELL, not per organism: a cell is the thing that sits somewhere and
+  // pays for itself, and "organism" is not a primitive the world knows. The
+  // per-body total is a sum the selector takes later, which is exactly the
+  // category-free accounting WORLD.md asks for — energy captured, by descent,
+  // with no species anywhere in it.
+  //
+  // Nick Lane's framing, made literal: a cell taps a gradient, and thinking is
+  // paid for out of that flux. brainTax is charged to every cell whether or not
+  // it does anything, so a bigger brain must earn its keep; muscle work costs
+  // extra in proportion to how hard it pulls. A cell that sits in barren ground
+  // starves however clever it is.
+  // Bounded both ways, and both bounds matter. The ceiling stops a body in good
+  // ground from hoarding without limit: surplus has to become offspring or be
+  // lost, which is what keeps reproduction the only way to convert luck into
+  // descendants. Without it mean energy climbed without bound, nothing ever
+  // starved, and "selection" degenerated into a queue for free slots. The floor
+  // stops a dying body from running up debt so deep it can never be revived,
+  // which would make death depend on how long it had been dying.
+  // THE SAME GROUND SHARED. Ground already occupied pays less, so a rich patch
+  // is only rich until everyone finds it. This is what stops the fitness
+  // landscape from being a fixed hill with a summit to park on: its shape now
+  // depends on where every other body is, and that changes as they adapt. A
+  // static field selects once and then plateaus; a contested one keeps moving.
+  // No depletion state is stored anywhere — competition is computed from where
+  // bodies ARE, which is the only thing the world actually has.
+  let crowd = crowdingAt(np);
+  let share = 1.0 / (1.0 + P.crowdK * max(0.0, crowd - f32(P.bodyCells)));
+  let gain = P.harvest * resourceField(np, P.resScale, P.resSeed) * share;
+  let work = P.muscleCost * abs(mine);
+  energy[i] = clamp(energy[i] + (gain - P.brainTax - work) * P.dt, P.eFloor, P.eCap);
 }
 `;
 
@@ -301,15 +408,39 @@ export class WorldGPU {
       meta[i * 2] = cells.ctype[i]; meta[i * 2 + 1] = cells.cslot[i];
     }
     this.bPos = mk(pos); this.bVel = mk(vel); this.bMeta = mk(meta);
-    this.bBond = mk(cells.bond); this.bRest = mk(cells.brest);
+    // Pack bond index + rest length into the one vec2 buffer the shader binds.
+    const bd = new Float32Array(cells.bond.length * 2);
+    const bdI = new Int32Array(bd.buffer);
+    for (let i = 0; i < cells.bond.length; i++) {
+      bdI[i * 2] = cells.bond[i];          // i32 written into the .x float slot
+      bd[i * 2 + 1] = cells.brest[i];
+    }
+    this.bBondD = mk(bd);
+    this.bEnergy = mk(cells.energy ?? new Float32Array(n).fill(1));
 
     this.params = {
       flowScale: 0.9, flowStr: 1.0, drag: 1.6, springK: 90.0,
       contract: 0.45, seed: 3, senseGain: 2.0, damp: 0.986, bound: 64.0,
+      // Calibrated against the density the world actually runs at. A 3x3 bucket
+      // neighbourhood holds ~34 cells at the starting population, so crowdK
+      // 0.012 discounts a shared patch to ~0.79 rather than erasing it: at
+      // 0.055 the discount halved every harvest, nothing anywhere could pay its
+      // tax, and the entire population starved in one tick. With these numbers
+      // barren ground (res 0.04) is fatal, average ground (0.28) barely pays,
+      // and rich ground (0.64) is worth crossing the world for — until enough
+      // others arrive to spend it down.
+      harvest: 2.6, brainTax: 0.45, muscleCost: 0.55,
+      resScale: 0.35, resSeed: 91, eCap: 3.0, eFloor: -2.0,
+      hashCell: 3.2, hashSize: 65536, crowdK: 0.012,
       dt: brains.dt, ...params,
     };
+    this.params.bodyCells = this.params.bodyCells ?? (cells.cellsPerBody ?? 12);
+    this.bHash = device.createBuffer({
+      size: this.params.hashSize * 4,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+    });
     this.bParams = device.createBuffer({
-      size: 64, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+      size: 96, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
     this.writeParams();
 
@@ -322,16 +453,19 @@ export class WorldGPU {
         { binding: 1, visibility: C, buffer: rw },   // pos
         { binding: 2, visibility: C, buffer: rw },   // vel
         { binding: 3, visibility: C, buffer: ro },   // cmeta
-        { binding: 4, visibility: C, buffer: ro },   // bond
-        { binding: 5, visibility: C, buffer: ro },   // brest
-        { binding: 6, visibility: C, buffer: rw },   // ext, written by sense()
-        { binding: 7, visibility: C, buffer: ro },   // act, read by physics()
+        { binding: 4, visibility: C, buffer: ro },   // bond index + rest, packed
+        { binding: 5, visibility: C, buffer: rw },   // ext, written by sense()
+        { binding: 6, visibility: C, buffer: ro },   // act, read by physics()
+        { binding: 7, visibility: C, buffer: rw },   // energy, per cell
+        { binding: 8, visibility: C, buffer: rw },   // spatial-hash occupancy
       ],
     });
     const module = device.createShaderModule({ code: SHADER, label: 'world' });
     const pl = device.createPipelineLayout({ bindGroupLayouts: [this.layout] });
     this.pipeSense = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'sense' } });
     this.pipePhysics = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'physics' } });
+    this.pipeHashClear = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'hashClear' } });
+    this.pipeHashBuild = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'hashBuild' } });
 
     this.bindGroup = device.createBindGroup({
       layout: this.layout,
@@ -340,10 +474,11 @@ export class WorldGPU {
         { binding: 1, resource: { buffer: this.bPos } },
         { binding: 2, resource: { buffer: this.bVel } },
         { binding: 3, resource: { buffer: this.bMeta } },
-        { binding: 4, resource: { buffer: this.bBond } },
-        { binding: 5, resource: { buffer: this.bRest } },
-        { binding: 6, resource: { buffer: brains.bExt } },
-        { binding: 7, resource: { buffer: brains.bAct } },
+        { binding: 4, resource: { buffer: this.bBondD } },
+        { binding: 5, resource: { buffer: brains.bExt } },
+        { binding: 6, resource: { buffer: brains.bAct } },
+        { binding: 7, resource: { buffer: this.bEnergy } },
+        { binding: 8, resource: { buffer: this.bHash } },
       ],
     });
     this.groups = Math.ceil(this.n / WORKGROUP);
@@ -355,7 +490,7 @@ export class WorldGPU {
   writeParams(patch = {}) {
     Object.assign(this.params, patch);
     const p = this.params;
-    const buf = new ArrayBuffer(64), dv = new DataView(buf);
+    const buf = new ArrayBuffer(96), dv = new DataView(buf);
     dv.setUint32(0, this.n, true); dv.setUint32(4, this.bondK, true);
     dv.setFloat32(8, p.dt, true); dv.setFloat32(12, p.flowScale, true);
     dv.setFloat32(16, p.flowStr, true); dv.setFloat32(20, p.drag, true);
@@ -366,6 +501,17 @@ export class WorldGPU {
     // the stiffness slider moves; a fixed absolute value would be overdamped at
     // low stiffness and useless at high. c = 2*zeta*sqrt(k*m), m = 1, zeta≈0.35.
     dv.setFloat32(48, p.bondDamp ?? 0.7 * Math.sqrt(p.springK), true);
+    dv.setFloat32(52, p.harvest, true);
+    dv.setFloat32(56, p.brainTax, true);
+    dv.setFloat32(60, p.muscleCost, true);
+    dv.setFloat32(64, p.resScale, true);
+    dv.setUint32(68, p.resSeed, true);
+    dv.setFloat32(72, p.eCap, true);
+    dv.setFloat32(76, p.eFloor, true);
+    dv.setFloat32(80, p.hashCell, true);
+    dv.setUint32(84, p.hashSize, true);
+    dv.setFloat32(88, p.crowdK, true);
+    dv.setUint32(92, p.bodyCells, true);
     this.device.queue.writeBuffer(this.bParams, 0, buf);
   }
 
@@ -379,6 +525,10 @@ export class WorldGPU {
     const pass = enc.beginComputePass();
     for (let s = 0; s < n; s++) {
       pass.setBindGroup(0, this.bindGroup);
+      // Rebuild the occupancy index from where bodies actually are, every step.
+      pass.setPipeline(this.pipeHashClear);
+      pass.dispatchWorkgroups(Math.ceil(this.params.hashSize / 256));
+      pass.setPipeline(this.pipeHashBuild); pass.dispatchWorkgroups(this.groups);
       pass.setPipeline(this.pipeSense); pass.dispatchWorkgroups(this.groups);
 
       pass.setBindGroup(0, b.bindGroup);
@@ -407,8 +557,52 @@ export class WorldGPU {
     return { x, y, packed };
   }
 
+  /**
+   * Per-cell energy and position together — everything the selector needs.
+   *
+   * This is the ONE readback in the evolutionary loop, and it is deliberately
+   * small and infrequent: a few hundred KB once per generation tick, versus the
+   * thousands of physics steps in between that never leave the GPU. Birth and
+   * death are structural events (allocation, mutation, lineage bookkeeping) and
+   * belong on the CPU; the per-step simulation does not.
+   */
+  async readCells() {
+    const n = this.n;
+    const staging = this.device.createBuffer({
+      size: n * 4 * 3, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    });
+    const enc = this.device.createCommandEncoder();
+    enc.copyBufferToBuffer(this.bPos, 0, staging, 0, n * 8);
+    enc.copyBufferToBuffer(this.bEnergy, 0, staging, n * 8, n * 4);
+    this.device.queue.submit([enc.finish()]);
+    await staging.mapAsync(GPUMapMode.READ);
+    const raw = staging.getMappedRange();
+    const pos = new Float32Array(raw.slice(0, n * 8));
+    const energy = new Float32Array(raw.slice(n * 8, n * 12));
+    staging.unmap(); staging.destroy();
+    return { pos, energy };
+  }
+
+  /** Write one organism's contiguous cell range back after a birth or death. */
+  writeCellRange(from, count, { pos, vel, meta, bond, brest, energy }) {
+    const q = this.device.queue;
+    if (pos) q.writeBuffer(this.bPos, from * 8, pos);
+    if (vel) q.writeBuffer(this.bVel, from * 8, vel);
+    if (meta) q.writeBuffer(this.bMeta, from * 8, meta);
+    if (bond || brest) {
+      const nb = (bond ?? brest).length;
+      const bd = new Float32Array(nb * 2), bdI = new Int32Array(bd.buffer);
+      for (let i = 0; i < nb; i++) {
+        bdI[i * 2] = bond ? bond[i] : -1;
+        bd[i * 2 + 1] = brest ? brest[i] : 0;
+      }
+      q.writeBuffer(this.bBondD, from * this.bondK * 8, bd);
+    }
+    if (energy) q.writeBuffer(this.bEnergy, from * 4, energy);
+  }
+
   destroy() {
-    for (const b of [this.bPos, this.bVel, this.bMeta, this.bBond, this.bRest,
-      this.bParams, this.bRead]) b.destroy();
+    for (const b of [this.bPos, this.bVel, this.bMeta, this.bBondD,
+      this.bEnergy, this.bHash, this.bParams, this.bRead]) b.destroy();
   }
 }

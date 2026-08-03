@@ -25,6 +25,7 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-fo
 }
 .hud b{font-weight:600;color:var(--ink)}
 .hud span{color:var(--ink-soft)}
+.hud2{top:1.9rem;background:none}
 .hud .t{font-family:var(--sans);font-size:.82rem;font-weight:600;letter-spacing:-.01em;margin-right:.4rem}
 
 aside{
@@ -77,6 +78,14 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
   <span>zoom <b id="hZoom">–</b></span>
   <span>gpu <b id="hGpu">–</b></span>
 </div>
+<div class="hud hud2">
+  <span>alive <b id="hAlive">–</b></span>
+  <span>births <b id="hBirths">0</b></span>
+  <span>deaths <b id="hDeaths">0</b></span>
+  <span>generation <b id="hGen">0</b></span>
+  <span>lineages <b id="hLin">–</b></span>
+  <span>mean energy <b id="hEnergy">–</b></span>
+</div>
 
 <aside id="panel">
   <div>
@@ -107,6 +116,7 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
       <button id="bField" class="on">field</button>
       <button id="bBonds" class="on">bonds</button>
       <button id="bPause">pause</button>
+      <button id="bEvolve" class="on">evolve</button>
     </div>
     <div class="row" style="margin-top:.4rem">
       <button id="bFit">fit all</button>
@@ -137,6 +147,7 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
 import { buildBodies } from './lib/bodies.js';
 import { BrainArenaGPU } from './lib/brainarena_gpu.js';
 import { WorldGPU, WGSL_FIELD } from './lib/world_gpu.js';
+import { Evolver } from './lib/evolve.js';
 
 const $ = id => document.getElementById(id);
 const fail = (msg) => { $('err').style.display = 'block'; $('err').textContent = msg; };
@@ -240,6 +251,16 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   let m = cmeta[ii];
   var a = 0.0;
   if (m.y >= 0) { a = act[u32(m.y)]; }
+  // A vacated slot is not in the world and must not be on screen either.
+  // Collapsing the quad to a degenerate point is cheaper than a branch that
+  // still rasterises, and keeps the instance count fixed.
+  if (m.x < 0) {
+    var dead: VOut;
+    dead.p = vec4<f32>(0.0, 0.0, 0.0, 0.0);
+    dead.uv = vec2<f32>(9.0, 9.0);
+    dead.tint = vec3<f32>(0.0); dead.glow = 0.0;
+    return dead;
+  }
 
   // Activation swells the cell a little — an active cell reads as active even
   // before colour, which matters when zoomed out past where hue resolves.
@@ -279,6 +300,15 @@ struct LOut { @builtin(position) p: vec4<f32>, @location(0) tint: vec3<f32> };
 fn lineVs(@builtin(vertex_index) vi: u32) -> LOut {
   let idx = bondIdx[vi];
   var o: LOut;
+  // A bond needs BOTH endpoints alive. Checking only this vertex left the
+  // surviving end drawing a line to a collapsed vertex at the origin, which is
+  // why every dead bond appeared as a spoke through the middle of the world.
+  // Vertices come in line-list pairs, so the partner is the other index of
+  // this pair.
+  let pair = vi & ~1u;
+  if (cmeta[u32(bondIdx[pair])].x < 0 || cmeta[u32(bondIdx[pair + 1u])].x < 0) {
+    o.p = vec4<f32>(0.0, 0.0, 0.0, 0.0); o.tint = vec3<f32>(0.0); return o;
+  }
   o.p = vec4<f32>((pos[u32(idx)] - C.center) * C.ndc, 0.0, 1.0);
   o.tint = vec3<f32>(0.16, 0.30, 0.28);
   return o;
@@ -294,7 +324,7 @@ fn lineFs(i: LOut) -> @location(0) vec4<f32> {
 
 let dev, ctx, fmt, sim = null, raf = 0;
 const cam = { cx: 0, cy: 0, zoom: 6 };     // zoom = pixels per world unit
-const view = { field: true, bonds: true, paused: false, spf: 4 };
+const view = { field: true, bonds: true, paused: false, spf: 4, evolve: true };
 
 const canvas = $('c');
 
@@ -423,10 +453,22 @@ async function rebuild() {
   let syn = 0;
   for (let i = 0; i < built.arena.esrc.length; i++) if (built.arena.esrc[i] >= 0) syn++;
 
+  const evo = new Evolver({
+    arena: built.arena, world, cells: built.cells,
+    seed: (Math.random() * 1e5) | 0, birthEnergy: 18, deathEnergy: 0,
+  });
+  // Start well under capacity so births have somewhere to go and the population
+  // can find its own carrying capacity instead of being pinned by the arena.
+  const start = Math.max(60, Math.floor(beasts * 0.25));
+  for (let o = start; o < beasts; o++) evo.cull(o);
+  evo.founders = evo.alive();
+
   sim = {
-    ...built, brains, world, bBond, bCam, bind,
+    ...built, brains, world, bBond, bCam, bind, evo,
     pipeBg, pipeCells, pipeBonds, bondVerts: idx.length, bound, syn,
+    sinceTick: 0, ticking: false,
   };
+  $('hAlive').textContent = evo.alive().toLocaleString();
 
   $('hBeasts').textContent = beasts.toLocaleString();
   $('hCells').textContent = built.meta.nCells.toLocaleString();
@@ -501,6 +543,22 @@ function loop() {
 
   if (!view.paused && view.spf > 0) {
     sim.world.step(view.spf);
+    sim.sinceTick += view.spf;
+    // Evolution runs on a much slower clock than physics: birth and death are
+    // structural events costing one small readback, versus thousands of steps
+    // that never leave the GPU.
+    if (view.evolve && sim.sinceTick >= 250 && !sim.ticking) {
+      sim.sinceTick = 0; sim.ticking = true;
+      sim.evo.tick(sim.world.steps ?? 0).then(r => {
+        sim.ticking = false; sim.last = r;
+        $('hAlive').textContent = r.alive.toLocaleString();
+        $('hBirths').textContent = r.births.toLocaleString();
+        $('hDeaths').textContent = r.deaths.toLocaleString();
+        $('hGen').textContent = r.maxGeneration;
+        $('hLin').textContent = r.lineages.toLocaleString();
+        $('hEnergy').textContent = r.meanEnergy.toFixed(1);
+      }).catch(e => { sim.ticking = false; fail(String(e.stack || e)); });
+    }
     simRate = view.spf * (1000 / Math.max(1, t - last)) * sim.world.params.dt;
   }
 
@@ -598,6 +656,7 @@ $('sCpb').addEventListener('input', e => $('vCpb').textContent = e.target.value)
 $('bField').onclick = e => { view.field = !view.field; e.target.classList.toggle('on', view.field); };
 $('bBonds').onclick = e => { view.bonds = !view.bonds; e.target.classList.toggle('on', view.bonds); };
 $('bPause').onclick = e => { view.paused = !view.paused; e.target.classList.toggle('on', view.paused); };
+$('bEvolve').onclick = e => { view.evolve = !view.evolve; e.target.classList.toggle('on', view.evolve); };
 $('bFit').onclick = fitAll;
 $('bReseed').onclick = () => sim?.world.writeParams({ seed: (Math.random() * 1e5) | 0 });
 $('bRebuild').onclick = () => rebuild().catch(e => fail(String(e.stack || e)));
