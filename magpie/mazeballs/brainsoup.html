@@ -157,6 +157,12 @@ function at(arr,x,y){ const gx=fract(x)*GF,gy=fract(y)*GF; let ix=gx|0,iy=gy|0; 
 function splat(arr,x,y,amt){ const gx=fract(x)*GF,gy=fract(y)*GF; let ix=gx|0,iy=gy|0; const fx=gx-ix,fy=gy-iy;
   const ix1=ix+1===GF?0:ix+1, iy1=iy+1===GF?0:iy+1;
   arr[iy*GF+ix]+=amt*(1-fx)*(1-fy); arr[iy*GF+ix1]+=amt*fx*(1-fy); arr[iy1*GF+ix]+=amt*(1-fx)*fy; arr[iy1*GF+ix1]+=amt*fx*fy; }
+// a NOISY GAUSSIAN blob (not a hard square): scatter gaussian-weighted, jittered
+// splats over a radius so dropped food looks like a soft speckled cloud
+function gblob(arr,x,y,amount,rad){ const K=22;
+  for(let i=0;i<K;i++){ const a=srand()*6.283, rr=Math.sqrt(srand())*rad;
+    const w=Math.exp(-(rr*rr)/(0.5*rad*rad))*(0.4+1.2*srand());
+    splat(arr, x+Math.cos(a)*rr, y+Math.sin(a)*rr, amount*w/K); } }
 function diffuse(arr,diff,decay,cap){ const keep=1-4*diff,dk=1-decay;
   for(let y=0;y<GF;y++){ const yu=(y===0?GF-1:y-1)*GF,yd=(y===GF-1?0:y+1)*GF,yc=y*GF;
     for(let x=0;x<GF;x++){ const xl=x===0?GF-1:x-1,xr=x===GF-1?0:x+1;
@@ -308,12 +314,22 @@ let cam={cx:0.5,cy:0.5,zoom:700}; let dpr=Math.min(2,devicePixelRatio||1);
 function resize(){ dpr=Math.min(2,devicePixelRatio||1); canvas.width=Math.floor(innerWidth*dpr); canvas.height=Math.floor(innerHeight*dpr); gl.viewport(0,0,canvas.width,canvas.height); }
 addEventListener('resize',resize); resize(); cam.zoom=Math.min(canvas.width,canvas.height)*0.92*0.85;
 function s2w(px,py){ const mx=px*dpr,my=canvas.height-py*dpr; return {x:cam.cx+(mx-canvas.width/2)/cam.zoom,y:cam.cy+(my-canvas.height/2)/cam.zoom}; }
-let trackIx=null,dragging=false,lx=0,ly=0,moved=false;
-canvas.addEventListener('pointerdown',e=>{ canvas.setPointerCapture(e.pointerId); dragging=true; moved=false; lx=e.clientX; ly=e.clientY; canvas.classList.add('grabbing'); });
-canvas.addEventListener('pointermove',e=>{ if(!dragging)return; if(Math.abs(e.clientX-lx)+Math.abs(e.clientY-ly)>3)moved=true;
+let trackIx=null, moved=false;
+// pointer map supports one-finger PAN and two-finger PINCH-ZOOM (mobile) + drag/wheel (desktop)
+const ptrs=new Map(); let lx=0,ly=0, pinchD=0, pinchMx=0, pinchMy=0;
+canvas.addEventListener('pointerdown',e=>{ canvas.setPointerCapture(e.pointerId); ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  moved=false; lx=e.clientX; ly=e.clientY; canvas.classList.add('grabbing');
+  if(ptrs.size===2){ const [a,b]=[...ptrs.values()]; pinchD=Math.hypot(a.x-b.x,a.y-b.y); pinchMx=(a.x+b.x)/2; pinchMy=(a.y+b.y)/2; } });
+canvas.addEventListener('pointermove',e=>{ const p=ptrs.get(e.pointerId); if(!p)return; p.x=e.clientX; p.y=e.clientY;
+  if(ptrs.size>=2){ const [a,b]=[...ptrs.values()]; const d=Math.hypot(a.x-b.x,a.y-b.y), mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+    if(pinchD>0){ const wc=s2w(mx,my); cam.zoom=clamp(cam.zoom*(d/pinchD),80,40000); const wa=s2w(mx,my); cam.cx+=wc.x-wa.x; cam.cy+=wc.y-wa.y;
+      cam.cx-=(mx-pinchMx)*dpr/cam.zoom; cam.cy+=(my-pinchMy)*dpr/cam.zoom; }   // pan with the pinch centre too
+    pinchD=d; pinchMx=mx; pinchMy=my; moved=true; trackIx=null; return; }
+  if(Math.abs(e.clientX-lx)+Math.abs(e.clientY-ly)>3)moved=true;
   cam.cx-=(e.clientX-lx)*dpr/cam.zoom; cam.cy+=(e.clientY-ly)*dpr/cam.zoom; trackIx=null; lx=e.clientX; ly=e.clientY; });
-canvas.addEventListener('pointerup',e=>{ dragging=false; canvas.classList.remove('grabbing'); if(!moved) pick(e.clientX,e.clientY); });
-canvas.addEventListener('wheel',e=>{ e.preventDefault(); const b=s2w(e.clientX,e.clientY); cam.zoom=clamp(cam.zoom*(e.deltaY<0?1.12:1/1.12),120,40000); const a=s2w(e.clientX,e.clientY); cam.cx+=b.x-a.x; cam.cy+=b.y-a.y; },{passive:false});
+function endPtr(e){ ptrs.delete(e.pointerId); pinchD=0; if(ptrs.size===0){ canvas.classList.remove('grabbing'); if(!moved) pick(e.clientX,e.clientY); } }
+canvas.addEventListener('pointerup',endPtr); canvas.addEventListener('pointercancel',endPtr);
+canvas.addEventListener('wheel',e=>{ e.preventDefault(); const b=s2w(e.clientX,e.clientY); cam.zoom=clamp(cam.zoom*(e.deltaY<0?1.12:1/1.12),80,40000); const a=s2w(e.clientX,e.clientY); cam.cx+=b.x-a.x; cam.cy+=b.y-a.y; },{passive:false});
 function pick(px,py){ const w=s2w(px,py); let best=-1,bd=(26/cam.zoom)**2; for(let k=0;k<cells.length;k++){ const c=cells[k]; let dx=c.x-fract(w.x),dy=c.y-fract(w.y); if(dx>0.5)dx-=1;else if(dx<-0.5)dx+=1; if(dy>0.5)dy-=1;else if(dy<-0.5)dy+=1; const d=dx*dx+dy*dy; if(d<bd){bd=d;best=k;} } trackIx=best>=0?best:null; }
 
 /* ---------- controls ---------- */
@@ -325,7 +341,7 @@ let colorMode='lin';
 $('b_chi').onclick=()=>{ colorMode='chi'; $('b_chi').classList.add('on'); $('b_lin').classList.remove('on'); };
 $('b_lin').onclick=()=>{ colorMode='lin'; $('b_lin').classList.add('on'); $('b_chi').classList.remove('on'); };
 $('b_scramble').onclick=()=>{ for(const c of cells){ c.g=randGenome(); c.y_.fill(0); } gen=0; };  // wipe what evolution found — watch it re-evolve
-$('b_food').onclick=()=>{ for(let i=0;i<400;i++){ const s=sources[(srand()*sources.length)|0]; splat(sugar,s.x+(srand()-.5)*0.1,s.y+(srand()-.5)*0.1,4); } };
+$('b_food').onclick=()=>{ for(let i=0;i<10;i++) gblob(sugar, srand(), srand(), 90, 0.04+srand()*0.05); };  // a handful of soft noisy blooms across the world
 let paused=false;
 $('b_pause').onclick=()=>{ paused=!paused; $('b_pause').textContent=paused?'resume':'pause'; $('b_pause').classList.toggle('on',paused); };
 $('b_reset').onclick=()=>{ allocFields(); seedSources(); seedCells(700); births=0; gen=0; };
@@ -360,18 +376,28 @@ function frame(now){
   gl.uniform1f(fU.u_scent,$('c_scent').checked?1:0);
   gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,fTex); gl.uniform1i(fU.u_f,0);
   gl.drawArrays(gl.TRIANGLES,0,3);
+  // Draw cells in EVERY wrapped tile the camera can see, so the whole toroidal
+  // world shows life. The field already tiles (GL_REPEAT); before this, cells
+  // were drawn once, so a zoomed-out view showed one live square in a dead grid.
+  const halfWx=(canvas.width*0.5)/cam.zoom, halfWy=(canvas.height*0.5)/cam.zoom;
+  const tx0=Math.max(-4,Math.floor(cam.cx-halfWx)), tx1=Math.min(4,Math.floor(cam.cx+halfWx));
+  const ty0=Math.max(-4,Math.floor(cam.cy-halfWy)), ty1=Math.min(4,Math.floor(cam.cy+halfWy));
+  const need=cells.length*(tx1-tx0+1)*(ty1-ty0+1);
+  if(cellData.length<need*6) cellData=new Float32Array(need*6);
   let n=0, chiSum=0; const lset=new Set();
-  for(let k=0;k<cells.length;k++){ const c=cells[k]; lset.add(c.lin); cellData[n*6]=c.x; cellData[n*6+1]=c.y;
-    if(colorMode==='chi'){ const t=clamp(c.chi*1.5+0.5,0,1); cellData[n*6+2]=clamp(1.4-2*t,0,1)*0.9+0.1; cellData[n*6+3]=clamp(2*t,0,1)*0.85+0.1; cellData[n*6+4]=0.16; }
-    else { linColor(c.lin,_lc); cellData[n*6+2]=_lc[0]; cellData[n*6+3]=_lc[1]; cellData[n*6+4]=_lc[2]; }
-    cellData[n*6+5]=c.size; chiSum+=c.chi; n++; }
+  for(let k=0;k<cells.length;k++){ const c=cells[k]; lset.add(c.lin); chiSum+=c.chi;
+    let r,g2,b2;
+    if(colorMode==='chi'){ const t=clamp(c.chi*1.5+0.5,0,1); r=clamp(1.4-2*t,0,1)*0.9+0.1; g2=clamp(2*t,0,1)*0.85+0.1; b2=0.16; }
+    else { linColor(c.lin,_lc); r=_lc[0]; g2=_lc[1]; b2=_lc[2]; }
+    for(let ty=ty0;ty<=ty1;ty++)for(let tx=tx0;tx<=tx1;tx++){ const o=n*6;
+      cellData[o]=c.x+tx; cellData[o+1]=c.y+ty; cellData[o+2]=r; cellData[o+3]=g2; cellData[o+4]=b2; cellData[o+5]=c.size; n++; } }
   gl.bindBuffer(gl.ARRAY_BUFFER,cellBuf); gl.bufferData(gl.ARRAY_BUFFER,cellData.subarray(0,n*6),gl.DYNAMIC_DRAW);
   gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
   gl.useProgram(cellProg); gl.bindVertexArray(cellVao);
   gl.uniform2f(cU.u_res,canvas.width,canvas.height); gl.uniform2f(cU.u_center,cam.cx,cam.cy); gl.uniform1f(cU.u_zoom,cam.zoom);
   gl.drawArrays(gl.POINTS,0,n);
-  const meanChi=n?chiSum/n:0;
-  $('h_pop').textContent=n; $('h_gen').textContent=gen; $('h_births').textContent=births;
+  const meanChi=cells.length?chiSum/cells.length:0;
+  $('h_pop').textContent=cells.length; $('h_gen').textContent=gen; $('h_births').textContent=births;
   $('h_lin').textContent=lset.size; $('h_lin0').textContent=linStart;
   $('h_chi').textContent=meanChi.toFixed(2); $('chimark').style.left=clamp(meanChi*1.5+0.5,0,1)*62+'px';
   fpsN++; if(now-fpsT>500){ $('h_fps').textContent=Math.round(fpsN*1000/(now-fpsT)); fpsN=0; fpsT=now; }
