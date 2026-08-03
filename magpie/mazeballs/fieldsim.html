@@ -78,7 +78,15 @@ import { ScalarField, CurlFlow, advect, fbm } from './lib/fields.js';
 const N = 220;
 const $ = id => document.getElementById(id);
 const cv = $('c'), ctx = cv.getContext('2d');
+// Field pixels go through an OFFSCREEN buffer, not straight to the display
+// canvas. putImageData directly on a small, CSS-upscaled display canvas and then
+// mixing it with vector strokes makes some Android GPUs flip between the software
+// and GPU rasterization paths every frame — that is the reported flicker.
+// putImageData -> offscreen, then a single drawImage blit to the display, keeps
+// the whole frame on one (GPU-composited) path. Coordinates stay in N-space.
 const img = ctx.createImageData(N, N);
+const off = document.createElement('canvas'); off.width = N; off.height = N;
+const offctx = off.getContext('2d');
 
 let field = new ScalarField(N, N, { diffuse: 0.10, decay: 0.006 });
 let flow = new CurlFlow({ seed: 3, scale: 3.5, strength: 0.45 });
@@ -123,7 +131,8 @@ function draw(){
     if (mode==='terrain' && c<0.02){ const t=terrain[i]; const g=18+t*22; d[i*4]=g*0.7; d[i*4+1]=g; d[i*4+2]=g*0.9; d[i*4+3]=255; }
     else ramp(c, d, i*4);
   }
-  ctx.putImageData(img, 0, 0);
+  offctx.putImageData(img, 0, 0);
+  ctx.drawImage(off, 0, 0);          // single composited blit, no per-frame software/GPU flip
   if (showFlow){
     ctx.save(); ctx.strokeStyle='rgba(147,166,162,0.22)'; ctx.lineWidth=1;
     for (const pts of flowLines){ ctx.beginPath(); ctx.moveTo(pts[0][0]*N, pts[0][1]*N);
