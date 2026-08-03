@@ -24,13 +24,34 @@ the chemistry that makes it fast; you never type the speed in.
 The test to apply to any new mechanism, every time: **"Am I setting a high-level
 outcome, or causing it from below?"** If a knob is named for a role
 (`predatorSpeed`, `preyFleeRate`, `herbivoreRepro`), it is almost certainly the
-wrong knob. The right knobs are named for physics and chemistry (fuel yield of a
-reaction, force between two cell types, diffusion of a signal). When you catch
-yourself wanting a role-named knob, stop and work out the low-level story that
-would produce it — that story is the actual feature. Playing god means setting
-initial conditions and chemistry, then watching what grows; it does not mean
-editing the motion of the things that grew. Every crutch we take before this is
-possible (see "The shortcuts ledger," Part III) is logged as a debt to be paid.
+wrong knob. When you catch yourself wanting a role-named knob, stop and work out
+the low-level story that would produce it — that story is the actual feature.
+Playing god means setting initial conditions and chemistry, then watching what
+grows; it does not mean editing the motion of the things that grew. Every crutch
+we take before this is possible (see "The shortcuts ledger," Part III) is logged
+as a debt to be paid.
+
+**The primitive boundary, drawn exactly (a sharpening forced by a second mistake
+— an "attraction between two cell types" matrix, which is the same sin as
+`predatorSpeed`: it hands a cell the *decision* to approach or flee).** The ONLY
+primitives are:
+- **Physics** — point masses, volume exclusion (cells can't overlap), muscle
+  actuation (force along a bond a cell drives with its own fuel), viscous drag,
+  and persistent division bonds.
+- **Chemistry** — fields that diffuse and decay; a cell *secretes* into them
+  (what it secretes is expressed, under its own genetic/neural control); a cell
+  *senses* them; surface-adhesion molecules that *bond by physical
+  complementarity* (a cell sets its own surface flavour, so kin match and stick);
+  digestive enzymes that *react with a matching substrate on contact*.
+
+Anything about **which way to move** — approach, flee, chase, herd — is NOT a
+primitive. It is the **CTRNN's output**: the cell smells what another secretes
+and its evolved brain drives its muscles up or down that gradient. "Attraction to
+type X," predator/prey, and "type i eats type j" all dissolve into the same
+evolved loop — **secrete, sense, decide (brain), actuate (muscle), react
+(enzyme)** — none of it declared. If a knob sets a force, a rate, or a preference
+*between named types*, it is the wrong knob; the right ones set diffusion, fuel
+yields, drag, exclusion stiffness, and mutation — the stage, never the choice.
 
 ## The problem this answers
 
@@ -566,6 +587,8 @@ so future revisions can pay them down:
 | shortcut in godsim | why it's a crutch | pay it down with |
 |---|---|---|
 | `predatorSpeed = 1.35`, per-type speeds | high-level outcome typed into motion — the exact First-Law violation | speed from fuel-burning muscle cells; a fast lineage must earn it |
+| **cellworld's interaction matrix `A[i][j]`** (attraction/repulsion between types) | **the same violation as predatorSpeed, hidden better.** "Move toward / away from type j" is a BEHAVIOURAL DECISION handed to the cell from on high. Deciding to approach or flee is the *brain's* job — the CTRNN's output — not a god-matrix entry. | cells only SECRETE into fields and SENSE fields; a cell approaches another because it smells what that other secretes and its evolved brain drives its muscles up the gradient. Attraction, chasing, fleeing, herding all emerge; none are declared |
+| **cellworld's digest matrix `D[i][j]`** (who eats whom) | same cheat: "type i eats type j" is a table I filled in | a cell EXPRESSES enzymes (evolved surface chemistry); enzyme meets matching substrate on contact → energy. *What* you can eat is evolved, the reaction is chemistry — no table |
 | role-named rates (`predatorRepro`, `metabolism` per type, drain rate) | tunes the role, not the chemistry | one fuel currency; division/death fall out of energy balance |
 | **seed rain / egg-bank dormancy floors** | spawns whole organisms from nothing to dodge extinction | energy *input* (sunlight→sugar) + working division; let lineages actually die |
 | point-blobs as "creatures" | there is no multicellularity at all — each blob is one dot | cells-as-atoms: bodies are clumps held by inter-cell forces |
