@@ -129,7 +129,7 @@
   <div class="k" style="margin-top:3px"><span id="h_fps">–</span> fps · zoom <span id="h_zoom">1</span>×</div>
 </div>
 <div id="track" class="panel" style="right:10px;bottom:10px;position:fixed;display:none"></div>
-<div id="hint" class="panel"><span class="x" id="hintX" title="dismiss">✕</span>no cell is told anything — each swims by its own <b>brain</b>. watch selection collapse ~320 lineages to a few. drag&nbsp;pan · pinch/wheel&nbsp;zoom · tap&nbsp;a&nbsp;cell.</div>
+<div id="hint" class="panel"><span class="x" id="hintX" title="dismiss">✕</span>no cell is told anything — each swims by its own <b>brain</b>. watch selection collapse the lineages to a few. drag&nbsp;pan · pinch/wheel&nbsp;zoom · tap&nbsp;a&nbsp;cell.</div>
 
 <script>
 "use strict";
@@ -148,7 +148,7 @@ const fract=v=>v-Math.floor(v);
            Cells SENSE odor to navigate; they EAT sugar. Separating the two is
            what makes smelling pay where wandering can't (the land-evolve result).
    scent : other cells' secreted lineage tag (social sensing). */
-let GF=128, sugar, odor, scent, ftmp;
+let GF=192, sugar, odor, scent, ftmp;
 function allocFields(){ sugar=new Float32Array(GF*GF); odor=new Float32Array(GF*GF); scent=new Float32Array(GF*GF); ftmp=new Float32Array(GF*GF); }
 function at(arr,x,y){ const gx=fract(x)*GF,gy=fract(y)*GF; let ix=gx|0,iy=gy|0; const fx=gx-ix,fy=gy-iy;
   const ix1=ix+1===GF?0:ix+1, iy1=iy+1===GF?0:iy+1;
@@ -165,7 +165,7 @@ function diffuse(arr,diff,decay,cap){ const keep=1-4*diff,dk=1-decay;
 
 // drifting light sources make food PATCHY and relocating, so smelling beats wandering
 let sources=[];
-function seedSources(){ sources=[]; for(let i=0;i<5;i++) sources.push({x:srand(),y:srand(),vx:(srand()-.5)*0.02,vy:(srand()-.5)*0.02}); }
+function seedSources(){ sources=[]; for(let i=0;i<14;i++) sources.push({x:srand(),y:srand(),vx:(srand()-.5)*0.02,vy:(srand()-.5)*0.02}); }
 function stepFields(sun,dt){
   for(const s of sources){ s.x=fract(s.x+s.vx*dt); s.y=fract(s.y+s.vy*dt);
     if(srand()<0.004){ s.vx=(srand()-.5)*0.02; s.vy=(srand()-.5)*0.02; }
@@ -185,7 +185,7 @@ function randGenome(){ const g=new Float32Array(GENOME); for(let i=0;i<GENOME;i+
 function mutate(g,rate){ const o=Float32Array.from(g); for(let i=0;i<GENOME;i++) if(srand()<0.35) o[i]+=gauss()*rate; return o; }
 
 /* ---------- cells ---------- */
-const MAX=1600;
+const MAX=4000;
 let cells=[], nextLin=1, births=0, gen=0, linStart=320;
 function makeCell(x,y,g,fuel,lin){ return { x:fract(x),y:fract(y),h:srand()*6.283,vx:0,vy:0,
   g, y_:new Float32Array(N), fuel, size:1, lin, chi:0, gen:0 }; }
@@ -306,7 +306,7 @@ function uploadFields(){ for(let i=0;i<GF*GF;i++){ fPix[i*4]=clamp(sugar[i]*0.5,
 /* ---------- camera + input ---------- */
 let cam={cx:0.5,cy:0.5,zoom:700}; let dpr=Math.min(2,devicePixelRatio||1);
 function resize(){ dpr=Math.min(2,devicePixelRatio||1); canvas.width=Math.floor(innerWidth*dpr); canvas.height=Math.floor(innerHeight*dpr); gl.viewport(0,0,canvas.width,canvas.height); }
-addEventListener('resize',resize); resize(); cam.zoom=Math.min(canvas.width,canvas.height)*0.92*1.8;
+addEventListener('resize',resize); resize(); cam.zoom=Math.min(canvas.width,canvas.height)*0.92*0.85;
 function s2w(px,py){ const mx=px*dpr,my=canvas.height-py*dpr; return {x:cam.cx+(mx-canvas.width/2)/cam.zoom,y:cam.cy+(my-canvas.height/2)/cam.zoom}; }
 let trackIx=null,dragging=false,lx=0,ly=0,moved=false;
 canvas.addEventListener('pointerdown',e=>{ canvas.setPointerCapture(e.pointerId); dragging=true; moved=false; lx=e.clientX; ly=e.clientY; canvas.classList.add('grabbing'); });
@@ -328,7 +328,7 @@ $('b_scramble').onclick=()=>{ for(const c of cells){ c.g=randGenome(); c.y_.fill
 $('b_food').onclick=()=>{ for(let i=0;i<400;i++){ const s=sources[(srand()*sources.length)|0]; splat(sugar,s.x+(srand()-.5)*0.1,s.y+(srand()-.5)*0.1,4); } };
 let paused=false;
 $('b_pause').onclick=()=>{ paused=!paused; $('b_pause').textContent=paused?'resume':'pause'; $('b_pause').classList.toggle('on',paused); };
-$('b_reset').onclick=()=>{ allocFields(); seedSources(); seedCells(240); births=0; gen=0; };
+$('b_reset').onclick=()=>{ allocFields(); seedSources(); seedCells(700); births=0; gen=0; };
 addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); $('b_pause').click(); } });
 
 /* ---------- UI: panels tuck to their edge; the world is what you came to see ---------- */
@@ -382,6 +382,6 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 /* ---------- boot ---------- */
-allocFields(); seedSources(); seedCells(320);
+allocFields(); seedSources(); seedCells(700);
 requestAnimationFrame(frame);
 </script>
