@@ -78,6 +78,30 @@ AI — on the machine with a real GPU.
     (multicellularity where a capability *costs cells*) that keeps opening new
     behaviours. That — not more of the same knob — is the only direction the
     evidence leaves open. (`assay.js` was the scratch harness.)
+  - **Built the multicellular lever as a prototype (`tools/bodies-proto.js`) and
+    put it under the same assay.** Strictly lawful: one heritable *adhesion* gene
+    sets the chance a division keeps parent↔child bonded (a persistent spring);
+    bonded clusters = bodies; a *tough-food windfall* (2nd light-fed field) can be
+    tapped only in proportion to your bonded connected-component size (collective
+    digestion, ~5 cells to fully tap) — energy a lone cell can't reach; bonds cost
+    upkeep. CONTROL vs TREATMENT vs SEEDED-high-adhesion, 24000 steps each.
+    **Result: the mechanism works but bodies do not bootstrap.** Mean component
+    size stays ~1.0 in *all* conditions, even SEEDED where ~99% of divisions bond
+    (adhesion 0.993, and NOT eroded → high adhesion is ≈ neutral). The blocker is
+    **component turnover**, not selection: a simple parent↔child bond under a
+    high-death single-cell lifecycle loses links (to death and swim-stretch) as
+    fast as it makes them, so components never reach the size where the windfall
+    pays — small bodies are a stable equilibrium and the windfall is never
+    captured. (Two real bugs were fixed getting here: the bond spring was ~10× too
+    weak to hold against a cell's own thrust; and every new division-bond was being
+    discarded the same step because the just-born child wasn't in the cell list yet
+    during the force pass.) **What this tells the laptop build:** division bonds
+    alone are necessary but not sufficient — crossing into multicellularity needs a
+    *body-level lifecycle*: much stronger cohesion, sibling bonds, and reproduction
+    through a single-cell **propagule** so a body persists and reproduces *as a
+    body* (the snowflake-yeast / single-cell-bottleneck design already in WORLD.md).
+    The prototype is where that starts; the assay is ready to judge whether it
+    breaks the ceiling.
 - **tools/land-evolve.js, land-suspects.js, land-control.js** — minimal
   testbeds that proved: evolution CAN find sensing under batch-GA selection;
   the motor-coordination burden is a wall; seeding a gait doesn't transfer.
