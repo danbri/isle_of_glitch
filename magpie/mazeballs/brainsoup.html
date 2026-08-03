@@ -50,7 +50,21 @@
   #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
   #gl.grabbing { cursor: grabbing; }
   .panel { position: fixed; background: rgba(9,13,19,.84); backdrop-filter: blur(8px);
-    border: 1px solid #1d2632; border-radius: 10px; padding: 10px 11px; }
+    border: 1px solid #1d2632; border-radius: 10px; padding: 10px 11px;
+    transition: transform .3s cubic-bezier(.4,0,.2,1), opacity .22s; }
+  /* the world is the point — every panel tucks to its own edge */
+  #controls.tuck { transform: translateX(-320px); }
+  #hud.tuck { transform: translateX(320px); }
+  #hint.tuck { transform: translate(-50%, calc(100% + 24px)); opacity: 0; pointer-events: none; }
+  .tab { position: fixed; z-index: 6; width: 36px; height: 36px; border-radius: 10px; display: none;
+    align-items: center; justify-content: center; cursor: pointer; user-select: none; font-size: 16px; color: #9db0c2;
+    background: rgba(9,13,19,.84); backdrop-filter: blur(8px); border: 1px solid #1d2632; }
+  .tab.show { display: flex; }
+  #tabL { top: 10px; left: 10px; } #tabR { top: 10px; right: 10px; }
+  .phide { position: absolute; top: 8px; cursor: pointer; color: #5a6b7e; font-size: 15px; line-height: 1; padding: 2px 5px; border-radius: 6px; }
+  .phide:hover { background: #1a2431; color: #cdd6e0; }
+  #controls .phide { right: 8px; } #hud .phide { left: 8px; }
+  #hint .x { position: absolute; top: 4px; right: 8px; color: #5a6b7e; cursor: pointer; font-size: 13px; padding: 2px 4px; }
   #controls { top: 10px; left: 10px; width: 238px; box-shadow: 0 8px 30px #0008; }
   #controls h1 { margin: 0 0 2px; font-size: 13px; letter-spacing: .04em; color: #eef3f8; }
   #controls .sub { color: #63758a; margin: 0 0 8px; font-size: 10.5px; }
@@ -58,7 +72,7 @@
   .grp > .lbl { color: #7d91a6; text-transform: uppercase; letter-spacing: .08em; font-size: 9.5px; margin-bottom: 6px; }
   .row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
   .row label { flex: 0 0 84px; color: #9db0c2; font-size: 10.5px; }
-  .row input[type=range] { flex: 1; height: 3px; accent-color: #5ad1c8; }
+  .row input[type=range] { flex: 1; min-width: 0; height: 3px; accent-color: #5ad1c8; }
   .row .val { flex: 0 0 30px; text-align: right; color: #cbd6e2; font-size: 10px; font-variant-numeric: tabular-nums; }
   .btns { display: flex; flex-wrap: wrap; gap: 5px; }
   button { background: #16202b; color: #d6e0ea; border: 1px solid #263341; border-radius: 7px; padding: 5px 8px; font: inherit; font-size: 10.5px; cursor: pointer; }
@@ -76,9 +90,13 @@
 
 <canvas id="gl"></canvas>
 
+<div id="tabL" class="tab" title="controls">☰</div>
+<div id="tabR" class="tab" title="stats">▤</div>
+
 <div id="controls" class="panel">
+  <span class="phide" id="cHide" title="hide">‹</span>
   <h1>brainsoup</h1>
-  <p class="sub">brains evolve to smell food — nothing given but chemistry &amp; physics. drag pan · wheel zoom · click to follow</p>
+  <p class="sub">brains evolve to smell food — only chemistry &amp; physics</p>
   <div class="grp">
     <div class="lbl">The world (physics &amp; chemistry only)</div>
     <div class="row"><label>light (energy in)</label><input type="range" id="s_sun" min="0.2" max="4" step="0.1" value="1.3"><span class="val" id="v_sun"></span></div>
@@ -103,6 +121,7 @@
 </div>
 
 <div id="hud" class="panel">
+  <span class="phide" id="hHide" title="hide">›</span>
   <div><span class="big" id="h_pop">0</span> <span class="k">cells</span> · gen <b id="h_gen">0</b></div>
   <div><b id="h_lin">0</b> <span class="k">lineages left</span> <span class="k">(of</span> <b id="h_lin0">0</b><span class="k">)</span></div>
   <div class="k">chemotaxis <span id="chi"><span id="chimark"></span></span></div>
@@ -110,7 +129,7 @@
   <div class="k" style="margin-top:3px"><span id="h_fps">–</span> fps · zoom <span id="h_zoom">1</span>×</div>
 </div>
 <div id="track" class="panel" style="right:10px;bottom:10px;position:fixed;display:none"></div>
-<div id="hint" class="panel">no cell is told to do anything — each swims by its own <b>brain</b>, given only chemistry &amp; physics. ~320 lineages start; watch selection collapse them to a few winners (colour = lineage). that handful, and its descendants, is evolution.</div>
+<div id="hint" class="panel"><span class="x" id="hintX" title="dismiss">✕</span>no cell is told anything — each swims by its own <b>brain</b>. watch selection collapse ~320 lineages to a few. drag&nbsp;pan · pinch/wheel&nbsp;zoom · tap&nbsp;a&nbsp;cell.</div>
 
 <script>
 "use strict";
@@ -311,6 +330,20 @@ let paused=false;
 $('b_pause').onclick=()=>{ paused=!paused; $('b_pause').textContent=paused?'resume':'pause'; $('b_pause').classList.toggle('on',paused); };
 $('b_reset').onclick=()=>{ allocFields(); seedSources(); seedCells(240); births=0; gen=0; };
 addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); $('b_pause').click(); } });
+
+/* ---------- UI: panels tuck to their edge; the world is what you came to see ---------- */
+function tuck(panel,tab,on){ $(panel).classList.toggle('tuck',on); $(tab).classList.toggle('show',on); }
+$('cHide').onclick=()=>tuck('controls','tabL',true);
+$('tabL').onclick=()=>tuck('controls','tabL',false);
+$('hHide').onclick=()=>tuck('hud','tabR',true);
+$('tabR').onclick=()=>tuck('hud','tabR',false);
+let hintGone=false;
+function dropHint(){ if(hintGone)return; hintGone=true; $('hint').classList.add('tuck'); }
+$('hintX').onclick=dropHint;
+setTimeout(dropHint, 9000);                       // it fades on its own
+canvas.addEventListener('pointerdown', dropHint, { once:true });   // ...or the moment you touch the world
+// world-first on a phone: start with the big panel tucked so you see the soup
+if(innerWidth < 720){ tuck('controls','tabL',true); }
 
 // lineage colour: hash lineage id to a hue
 function linColor(lin,out){ const h=(Math.imul(lin,2654435761)>>>0)/4294967296; const a=h*6.283;

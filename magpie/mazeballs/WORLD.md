@@ -608,3 +608,61 @@ and fields.** When they do, the world is real.
 - **The GPU is currently faked** in every web demo (CPU compute, GPU draw). Said
   plainly because it was asked plainly. A real compute-shader port is the item
   once dedicated hardware is available.
+
+---
+
+# Part IV — what are we counting? (there are no entities, species, or predators)
+
+*A second FIRST-LAW correction, deeper than the first. Recorded verbatim from the
+design conversation because it is foundational and easy to backslide on.*
+
+`arena.html` broke the law. To get an arms race it created two first-class
+populations — **predators** and **prey** — with `scorePred`/`scorePrey` and a
+role tag. That is the `predatorSpeed` sin one level up: it does not just hand a
+body a behaviour, it hands the WORLD a category. Forbidden.
+
+**Why "predator" cannot be a primitive.** Predation is graded and relational, a
+fact about where energy flows, never a label on a body:
+- a sticky, pointed plant traps a tiger that then dies of thirst and is consumed
+  — predation, with no chase and no intent;
+- a vulture with excellent sight feasts on carrion day and night — predator?
+- a thousand bees share the body of a lion — is each one 1/1000 of its predator?
+The category has no crisp boundary because it is not a category; it is a
+continuous quantity of energy transfer between cells.
+
+**Why "entity" and "species" are not primitives either (post-Dawkins).** A body
+is a convenient fiction — a temporary coalition of many cells bound together by
+fate, history, and sticky stuff. A "species" is a fuzzy cluster in genome space,
+not an object the universe supplies. The gene's-eye view: organisms are
+vehicles; the durable thing is the lineage of replicators, not the vehicle.
+
+**So what does the universe actually supply, and what may we count?** Only cells,
+their genomes, the forces and fields, energy flowing in and dissipating away, and
+ONE real relation: **descent** — who divided from whom is a physical fact, unlike
+"species." Everything countable must be built from those. Two category-free
+measures, and no others by default:
+
+1. **Energy captured.** The fraction of incoming energy (light → sugar) that the
+   living matter takes up and keeps cycling before it dissipates. A biosphere
+   getting better at exploiting its world holds more energy in play. No labels.
+2. **A category-free ancestral tournament.** Freeze ALL genomes at time T1 and at
+   T2 (T2 later); drop each frozen set into the SAME fresh neutral world; measure
+   which set captures more energy / leaves more descendants over a fixed window.
+   Later beats earlier ⇒ ascent. No predator, prey, species, or entity is named
+   anywhere — just "later genomes do better than older ones in the same world."
+   Predation is included automatically and graded: if some lineages evolved to
+   take energy from others, that shows up as energy captured; you never tagged a
+   predator, you measured flux.
+
+**Consequence for the builds.** `brainsoup` is closer to lawful (one soup,
+lineages = genealogical facts, no roles) but still leans on "lineage-as-entity"
+and never measures energy or runs the category-free tournament. `arena` must be
+un-built back to ONE soup: cells take energy from cells by emergent enzyme
+chemistry (graded, relational — never a role), and ascent is the energy-and-
+descendants tournament above, not a predator scoreboard. Logged in the ledger.
+
+## Ledger addition
+
+| shortcut | why it's a crutch | pay it down with |
+|---|---|---|
+| **`arena.html` predator/prey populations** (`scorePred`, `scorePrey`, role tag) | hands the WORLD the categories "predator"/"prey"/"species" — `predatorSpeed` one level up; the universe supplies none of these | ONE soup; consumption is graded emergent energy transfer between cells; ascent = energy captured + a category-free ancestral tournament (later genomes vs older, same neutral world) |
