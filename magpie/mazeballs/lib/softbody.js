@@ -280,9 +280,174 @@ export const DEFAULTS = Object.freeze({
 
   // ------------------------------------------------------------------ food
   FOOD: 42, FOOD_CLUSTERS: 9, FOOD_CLUSTER_SIGMA: 0.12,
+  // Full width of the box the cluster centres are drawn from, centred on the
+  // origin: a centre lands uniformly in [-SPAN/2, +SPAN/2] on each axis. The
+  // default 1.72 reproduces the original hardcoded `rng*1.72 - 0.86` exactly
+  // (SPAN/2 === 0.86 to the bit), so the trunk food layout is byte-identical.
+  // Shrinking it packs the clusters into the arena INTERIOR, away from the
+  // walls — the "sparse clustered interior target" the sense-range experiment
+  // needs so that a body in an empty region has a real "food is over there,
+  // nothing here" gradient to climb rather than food smeared to the boundary.
+  FOOD_CLUSTER_SPAN: 1.72,
   FOOD_SENSE_SIGMA2: 0.050, FOOD_EAT_SIGMA2: 0.0018,
   FOOD_CONSUME: 0.40, FOOD_REGROW: 0.09, FOOD_RELOCATE_THRESH: 0.15,
+
+  // -------------------------------------------------- discrimination task
+  // A good/toxic foraging task with NO kinematic degenerate. ALL of this is OFF
+  // by default (FOOD_TOXIC_FRAC === 0), and the single-species path is then
+  // byte-identical: senseCount stays 4, the quality channel never appears,
+  // foodType is all-good and never read (kFood keeps its `best` branch), and
+  // FOOD_STARVE 0 leaves metabolic/netIntake untouched. Turning it on builds the
+  // experiment "sensing is MANDATORY": good and toxic patches are spatially
+  // intermixed and RE-RANDOMISED every spawn (positions AND types), so no fixed
+  // route memorises where good is; both types are identical on the type-blind
+  // food-mass channel (0) so approach alone cannot tell them apart; and a
+  // separate close-range QUALITY channel (index SENSORS, receptor gene 23 — the
+  // same previously-silent locus the opponent channel reuses, so no locus is
+  // stolen and GENOME_LEN is unchanged) carries the signed type. Eating is
+  // POSITIONAL — a body eats the patch its centroid sits on, whatever it is — so
+  // the only way to avoid toxic is to steer off it, which needs the quality
+  // sense. A body that sits eats a random 50/50 stream as patches deplete and
+  // relocate; a body that covers eats everything; both eat toxic and lose once
+  // the toxin is harsh enough. Only sense-and-select wins.
+  //
+  //   FOOD_TOXIC_FRAC   fraction of patches that are toxic (type −1). 0 = trunk.
+  //   FOOD_TOXIN_HARSH  H: eating a toxic patch subtracts H× the eaten amount
+  //                     from intake (good adds +amount). H>1 makes indiscriminate
+  //                     (50/50) eating NET-NEGATIVE, which is what kills the
+  //                     sit/cover degenerates. Swept for calibration.
+  //   FOOD_QUAL_SIGMA2  width² of the quality-sense Gaussian. Close range
+  //                     (√0.006 ≈ 0.077, ~1.8× the eat radius) so a body reads a
+  //                     patch's type on final approach but not from across the
+  //                     arena — "indistinguishable except at close range".
+  //   FOOD_STARVE       flat energy drain per episode-second, netted against
+  //                     intake (folded into `metabolic`). Makes eating NOTHING
+  //                     (anosmia) score −starve, so refusing all food loses to
+  //                     selective eating — property 4, "no safe non-eating".
+  FOOD_TOXIC_FRAC: 0, FOOD_TOXIN_HARSH: 1.0, FOOD_QUAL_SIGMA2: 0.006, FOOD_STARVE: 0,
+
+  // ----------------------------------------------------------- coevolution
+  // Two soft-body species in one arena. OFF by default (COEVO false), and the
+  // single-species path stays byte-identical when it is off: nothing below is
+  // read, the sensor count stays SENSORS=4, and the genome layout is untouched.
+  //
+  // When COEVO is on, a fifth sensor channel appears — opponent mass — sensed
+  // per sensor cell EXACTLY as food is (a Gaussian-weighted scalar over the
+  // opposing organisms' centroids, `senseOpponents` below), sensor-role-gated
+  // like the food channel. It is deliberately NOT a bearing vector: the soft
+  // body has no single heading, and food itself is a scalar-per-cell field
+  // whose steering emerges from the across-body gradient (sb-forage's lateral
+  // test). The opponent channel is the same kind of signal, so pursuit and
+  // evasion, if they evolve, are the same across-body-gradient mechanism that
+  // already carries chemotaxis. Its receptor weight comes from gene 23, which
+  // had no phenotypic readout before, so no genome locus is stolen from an
+  // existing channel and GENOME_LEN is unchanged.
+  //
+  //   COEVO_ROLE          'prey' forages and loses fitness on contact;
+  //                       'predator' gains fitness on contact and (by default)
+  //                       does not forage. Set per species on the Colony.
+  //   COEVO_SENSE_SIGMA2  width of the opponent-sensing Gaussian, mirroring
+  //                       FOOD_SENSE_SIGMA2 so neither species gets a sharper
+  //                       view of its opponent than of its food.
+  //   COEVO_CAPTURE_SIGMA2  width of the centroid-to-centroid contact kernel
+  //                       that transfers reward. Small: contact is a close
+  //                       encounter, not mere co-location.
+  //   COEVO_PRED_GAIN     predator fitness per contact-second at full contact.
+  //   COEVO_PREY_LOSS     prey fitness lost per contact-second. Larger than the
+  //                       gain so predation can dominate prey fitness variance,
+  //                       the balance the incumbent coevolution found decisive.
+  //   COEVO_PRED_FORAGE   fraction of normal food intake a predator receives
+  //                       (0 = pure carnivore).
+  //   COEVO_PREY_INTAKE   multiplier on the prey's fitness return from food.
+  COEVO: false, COEVO_ROLE: 'prey',
+  COEVO_SENSE_SIGMA2: 0.050, COEVO_CAPTURE_SIGMA2: 0.0040,
+  COEVO_PRED_GAIN: 1.0, COEVO_PREY_LOSS: 1.5,
+  COEVO_PRED_FORAGE: 0, COEVO_PREY_INTAKE: 1,
+
+  // -------------------------------------------------------- metabolic cost
+  // The lever the "wandering is free" synthesis predicts. BOTH default 0, so the
+  // physics, the food field and every existing trait are untouched — nothing in
+  // step() reads these, and traits().metabolic is identically 0 / netIntake is
+  // identically intake. Turning either on prices behaviour that was previously
+  // free, and a fitness that nets the cost against intake (sb-evolve's
+  // `--fitness netintake`) is what makes a body that eats efficiently beat one
+  // that eats by covering ground.
+  //
+  //   META_MOVE_COST  energy charged per world-unit of CENTROID PATH travelled
+  //                   over the episode (this.path). This is the direct "covering
+  //                   ground is expensive" lever: a wanderer that sweeps the arena
+  //                   burns budget a body that aims across it does not. Charged on
+  //                   path, not displacement, so pacing back and forth on one
+  //                   patch is not free either.
+  //   META_CELL_COST  energy charged per living cell per SECOND of episode time
+  //                   (n * steps * DT). Bigger bodies cost more — the per-cell
+  //                   charge the brain-economy design needs, since in this
+  //                   substrate every cell is a CTRNN node. Flat per-cell here;
+  //                   role-weighting (neurons dear, structure cheap) is the
+  //                   documented next refinement and is deliberately not yet built.
+  META_MOVE_COST: 0, META_CELL_COST: 0,
+
+  // ------------------------------------------------------ lifetime plasticity
+  // Reward-modulated Hebbian plasticity on the CTRNN — the Baldwin lever, the
+  // hypothesis that lifetime LEARNING crosses a findability valley that pure
+  // selection cannot. OFF by default (PLASTIC false), and the non-plastic path is
+  // then byte-identical: no plastic weight buffers are allocated, kNeural reads
+  // the developed p.W / p.win exactly as before, and randomGenome / perturbGenome
+  // / cloneGenome draw NO extra rng and carry no extra field (so a displacement
+  // sb-evolve run reproduces bit-for-bit). When on, the genome gains a small
+  // PLASTIC block (genome.plast) of evolvable learning parameters; development
+  // still produces the INITIAL weights, and what is inherited is the CAPACITY and
+  // PREDISPOSITION to learn, not the learned weights — the plastic weights reset
+  // to the developed values every spawn, so a lifetime's learning is discarded and
+  // only the genome's plasticity survives to the next generation. That is the
+  // whole point of Baldwin: selection can only assimilate a learned behaviour by
+  // moving the DEVELOPED weights, never by inheriting the learned ones.
+  //
+  // Within an episode each plastic weight updates by a three-factor rule
+  //     Δw_ij = η · m(t) · e_ij
+  // where e_ij is a low-pass eligibility trace of pre·post coincidence and m(t) is
+  // a neuromodulator driven by the reward-PREDICTION-ERROR (this step's signed
+  // intake, good − H·toxic, minus a slow baseline). Eating good drives m positive
+  // and strengthens whatever the body just did; eating toxic drives it negative
+  // and unlearns it — so a body can DISCOVER "steer up the quality channel" within
+  // its life even when the genome never specified it. The developed weight is the
+  // anchor: a plastic weight is clamped to a bounded neighbourhood of it, so
+  // learning can never NaN the physics (assertFinite stays live regardless).
+  //
+  //   PLASTIC         master gate. false => every plasticity path is dead.
+  //   PLAST_GENES     size of the evolvable plasticity block (genome.plast).
+  //   PLAST_ETA_MAX   ceiling the genome's per-class learning rate maps into.
+  //   PLAST_MOD_MAX   ceiling on the neuromodulator gain.
+  //   PLAST_TRACE     [min,max] eligibility-trace time constant, seconds.
+  //   PLAST_MODTAU    [min,max] reward-baseline time constant, seconds — the
+  //                   window over which "reward change" (the modulator) is read.
+  //   PLAST_W_BOUND   how far, in weight units, a plastic RECURRENT weight may
+  //                   drift from its developed value.
+  //   PLAST_WIN_BOUND same, for SENSOR→neuron weights (the quality channel is one
+  //                   of these, so learning to read good-vs-toxic lives here).
+  PLASTIC: false, PLAST_GENES: 5, PLAST_ETA_MAX: 0.12, PLAST_MOD_MAX: 8.0,
+  PLAST_TRACE: [0.10, 1.20], PLAST_MODTAU: [0.30, 3.0],
+  PLAST_W_BOUND: 8.0, PLAST_WIN_BOUND: 3.0,
 });
+
+/**
+ * Effective sensor-channel count. SENSORS (=4) is the single-species count
+ * (food, boundary, own speed, own strain); a coevolutionary world appends one
+ * exteroceptive opponent-mass channel at index SENSORS, and the discrimination
+ * task (FOOD_TOXIC_FRAC>0, and only when COEVO is OFF) appends a QUALITY channel
+ * at the SAME index SENSORS — the two are mutually exclusive by construction, so
+ * gene 23 (the previously-silent receptor locus) drives whichever is live and no
+ * genome locus is ever double-claimed. Kept as a function of cfg so develop() and
+ * Colony agree on the width; the single-species non-discrimination path returns
+ * exactly SENSORS and nothing downstream changes shape.
+ */
+export const isDiscrim = (cfg = DEFAULTS) => !!(cfg && cfg.FOOD_TOXIC_FRAC > 0 && !cfg.COEVO);
+export const senseCount = (cfg = DEFAULTS) => SENSORS + (cfg && cfg.COEVO ? 1 : 0) + (isDiscrim(cfg) ? 1 : 0);
+/** Channel index of the appended opponent-mass channel (only present if COEVO). */
+export const OPP_CHAN = SENSORS;
+/** Channel index of the appended quality channel (only present in a discrimination
+ *  world, where COEVO is off, so it shares SENSORS with the opponent channel). */
+export const QUAL_CHAN = SENSORS;
 
 /* ---------------------------------------------------------------- genome */
 
@@ -356,13 +521,29 @@ export function randomGenome(rng, cfg = DEFAULTS) {
     for (let m = 0; m < MATERNAL; m++) buf[mo + m] = gauss(rng) * 0.85;
     for (let m = 0; m < GENES; m++) buf[ro + m] = gauss(rng) * 0.55;
   }
+  // Plasticity block: drawn ONLY when PLASTIC is on, and strictly AFTER buf is
+  // filled, so the buf draw sequence is untouched and a non-plastic genome is
+  // byte-identical (no extra rng consumed, no extra field on the object).
+  if (cfg && cfg.PLASTIC) {
+    const pl = new Float32Array(cfg.PLAST_GENES);
+    for (let i = 0; i < pl.length; i++) pl[i] = gauss(rng) * 1.0;
+    return { buf, plast: pl };
+  }
   return { buf };
 }
 
-/** Additive Gaussian perturbation of every locus. Used by the ε sweep. */
+/** Additive Gaussian perturbation of every locus. Used by the ε sweep. The
+ *  plasticity block, when present, is perturbed by the same operator — so a
+ *  non-plastic genome (no .plast) consumes exactly the old draw sequence and a
+ *  plastic one evolves its learning parameters alongside its development. */
 export function perturbGenome(genome, eps, rng) {
   const buf = Float32Array.from(genome.buf);
   for (let i = 0; i < buf.length; i++) buf[i] += gauss(rng) * eps;
+  if (genome.plast) {
+    const pl = Float32Array.from(genome.plast);
+    for (let i = 0; i < pl.length; i++) pl[i] += gauss(rng) * eps;
+    return { buf, plast: pl };
+  }
   return { buf };
 }
 
@@ -381,6 +562,7 @@ export function perturbGenome(genome, eps, rng) {
 /** Deep copy of a genome. Elitism carries a genome unchanged; cloning makes the
  * carry explicit so a later mutation of a sibling can never alias the elite. */
 export function cloneGenome(genome) {
+  if (genome.plast) return { buf: Float32Array.from(genome.buf), plast: Float32Array.from(genome.plast) };
   return { buf: Float32Array.from(genome.buf) };
 }
 
@@ -799,7 +981,8 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1), onCycle = null
   const W = new Float64Array(nA * nA);
   const bias = new Float64Array(nA), tau = new Float64Array(nA);
   const tauA = new Float64Array(nA), adapt = new Float64Array(nA);
-  const win = new Float64Array(nA * SENSORS);
+  const NS = senseCount(cfg);
+  const win = new Float64Array(nA * NS);
   const grip = new Float64Array(nA);
   const isSensor = new Uint8Array(nA);
   for (let a = 0; a < nA; a++) {
@@ -823,9 +1006,14 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1), onCycle = null
     grip[a] = cfg.MU_MIN * Math.pow(cfg.MU_MAX / cfg.MU_MIN, gk);
     const sg = Math.max(0, expr[e + G.SENSOR]);
     isSensor[a] = sg > 0.15 ? 1 : 0;
-    for (let c = 0; c < SENSORS; c++) {
-      const gate = c < PROPRIO_FROM ? sg : 1;    // proprioception is not an organ
-      win[a * SENSORS + c] = gate * expr[e + G.RCP + c] * cfg.IN_SCALE;
+    for (let c = 0; c < NS; c++) {
+      // Proprioceptive channels [PROPRIO_FROM, SENSORS) are not organs and are
+      // ungated; the exteroceptive channels — food (0), boundary (1) and, when
+      // COEVO is on, opponent (SENSORS) — require the sensor role. The opponent
+      // channel's receptor weight reads gene 23, previously silent.
+      const isProprio = c >= PROPRIO_FROM && c < SENSORS;
+      const gate = isProprio ? 1 : sg;
+      win[a * NS + c] = gate * expr[e + G.RCP + c] * cfg.IN_SCALE;
     }
   }
   for (let a = 0; a < nA; a++) {
@@ -892,13 +1080,34 @@ export function develop(genome, cfg = DEFAULTS, rng = makeRng(1), onCycle = null
   const patternCV = ma > 1e-6 ? va / ma : 0;
   const patternDomains = countDomains(pa, ma, cei, cej, nE, nA);
 
-  return {
-    n: nA, x: px, y: py, rad: pr,
+  // Plasticity phenotype: the genome's learning parameters, mapped from the
+  // evolvable plast block into their working ranges. Only produced when PLASTIC
+  // is on and the genome carries the block, so a non-plastic develop() returns
+  // exactly the old object shape (no `plast` key) and every existing caller and
+  // serialiser is untouched. These are DEVELOPED constants — the initial weights
+  // still come from W/win above; plast only says how those weights will move
+  // within a lifetime. See DEFAULTS.PLASTIC for the rule.
+  let plast = null;
+  if (cfg.PLASTIC && genome.plast) {
+    const pl = genome.plast, sig = v => 1 / (1 + Math.exp(-v));
+    plast = {
+      etaSens: cfg.PLAST_ETA_MAX * sig(pl[0]),
+      etaRec: cfg.PLAST_ETA_MAX * sig(pl[1]),
+      modGain: cfg.PLAST_MOD_MAX * sig(pl[2]),
+      traceTau: span(cfg.PLAST_TRACE, pl[3]),
+      modTau: span(cfg.PLAST_MODTAU, pl[4]),
+    };
+  }
+
+  const out = {
+    n: nA, x: px, y: py, rad: pr, nSens: NS,
     nE, ei: cei, ej: cej, L0: L0.slice(0, nE), amp: amp.slice(0, nE), kind: kind.slice(0, nE),
     W, bias, tau, tauA, adapt, win, grip, isSensor, A: pa, H: ph, rd: K,
     stats: { cells: nA, edges: nE, muscles, sensors, extent: ext,
              area: polyArea(px, py, nA), patternCV, patternDomains },
   };
+  if (plast) out.plast = plast;
+  return out;
 }
 
 /** Logistic fate probability: 0.5 at the threshold, steepness FATE_K. */
@@ -970,9 +1179,13 @@ function relaxClump(x, y, rad, alive, N, iters, cfg) {
 
 export function makeWorld(cfg = DEFAULTS, rng = makeRng(0x8f3d20a1)) {
   const bound = cfg.WORLD_BOUND * 0.92;
+  // Cluster centres in [-SPAN/2, +SPAN/2]^2. SPAN defaults to 1.72 with
+  // SPAN/2 === 0.86 exactly, so this is bit-identical to the original
+  // `rng*1.72 - 0.86`; a smaller SPAN confines the clusters to the interior.
+  const span = cfg.FOOD_CLUSTER_SPAN, half = span / 2;
   const centres = [];
   for (let i = 0; i < cfg.FOOD_CLUSTERS; i++)
-    centres.push([(rng.next() * 1.72) - 0.86, (rng.next() * 1.72) - 0.86]);
+    centres.push([(rng.next() * span) - half, (rng.next() * span) - half]);
   const fx = new Float64Array(cfg.FOOD), fy = new Float64Array(cfg.FOOD);
   for (let i = 0; i < cfg.FOOD; i++) {
     const c = centres[i % Math.max(1, centres.length)] || [0, 0];
@@ -998,6 +1211,9 @@ export class Colony {
   constructor(phenos, world, cfg = DEFAULTS) {
     this.cfg = cfg; this.world = world; this.ph = phenos;
     this.P = phenos.length;
+    // Effective sensor width. All phenotypes in one colony develop under one
+    // cfg, so they share it; fall back to SENSORS when a pheno predates nSens.
+    this.NS = phenos.length && phenos[0].nSens ? phenos[0].nSens : senseCount(cfg);
     const S = this.S = Math.max(1, ...phenos.map(p => p.n));
     const T = this.P * S;
     this.px = new Float64Array(T); this.py = new Float64Array(T);
@@ -1009,9 +1225,27 @@ export class Colony {
     this.ny = new Float64Array(T); this.act = new Float64Array(T);
     this.ad = new Float64Array(T);      // slow adaptation state
     this.strain = new Float64Array(T);
-    this.sens = new Float64Array(T * SENSORS);
+    this.sens = new Float64Array(T * this.NS);
     this.stock = new Float64Array(world.n).fill(1);
     this.foodX = Float64Array.from(world.fx); this.foodY = Float64Array.from(world.fy);
+    // -------------------------------------------------- discrimination task
+    // Per-patch type: +1 good, −1 toxic. All good on the trunk (fill 1), and in a
+    // discrimination world it is re-randomised every spawn together with the
+    // positions. `discrim` is the single guard the extra kernels branch on; when
+    // false every discrimination path is dead and behaviour is byte-identical.
+    this.discrim = isDiscrim(cfg);
+    this.foodType = new Float64Array(world.n).fill(1);
+    // Gross (type-blind total eaten), good- and toxic-eaten, split so the anosmia
+    // vs indiscriminate vs discriminator distinction is a number, not a guess.
+    // `intake` stays the signed, H-weighted fitness quantity (good − H·toxic).
+    this.gross = new Float64Array(this.P);
+    this.goodEaten = new Float64Array(this.P);
+    this.toxEaten = new Float64Array(this.P);
+    // Quality-channel ablation, mirroring foodAblate/oppAblate: 'mean'/'const'/
+    // null. This is THE decisive instrument for the discrimination task — blind
+    // the quality sense on an evolved population and measure whether net intake
+    // collapses (it eats 50/50 once it cannot tell good from toxic).
+    this.qualAblate = null;
     // Per-organism accumulators.
     this.startX = new Float64Array(this.P); this.startY = new Float64Array(this.P);
     this.path = new Float64Array(this.P);
@@ -1027,6 +1261,54 @@ export class Colony {
     // ablate the food-bearing channel. Off by default, so nothing that does not
     // set it sees any change in behaviour.
     this.foodAblate = null;
+
+    // -------------------------------------------------------- coevolution
+    // All inert unless a two-species driver sets them (sbCoevoStep). `role`
+    // selects predator vs prey fitness accounting; `opponentCentroids` is the
+    // opposing colony's per-organism [x, y, n] handed in each step, and reads
+    // as "nothing in sight" (opponent channel 0, no contact) when null — which
+    // is exactly the single-species case, so nothing changes when COEVO is off.
+    this.role = cfg.COEVO ? cfg.COEVO_ROLE : null;
+    // The opposing colony's per-step snapshot (`snapshotForOpponent`): centroids
+    // for SENSING (cheap, scalar-mass, the substrate's chemotaxis mechanism) and
+    // per-organism cell positions for CONTACT resolution.
+    this.opponents = null;
+    this.contact = new Float64Array(this.P);   // integrated contact-seconds
+    // First-class discrete capture rate: distinct close-encounter events per
+    // organism (rising edges into the capture radius against a given opponent),
+    // so "does anything actually happen in an episode" is a number, not a guess.
+    // A pursuit/evasion gradient cannot exist if captures never occur.
+    this.captures = new Int32Array(this.P);
+    this.contactOrg = new Int32Array(this.P).fill(-1);   // opponent org in contact now (edge detect)
+    // Contact resolved to the NEAREST cell pair, not a body-wide scalar: which of
+    // THIS organism's cells sits closest to an opponent this step, and which
+    // opponent organism. The interaction stays scalar (fitness only) for now, but
+    // recording the local hit-point is what lets a later experiment turn a contact
+    // into a "bite" — apoptosis-during-life removing that cell — cheaply.
+    this.biteCell = new Int32Array(this.P).fill(-1);
+    this.biteOpp = new Int32Array(this.P).fill(-1);
+    // Opponent-channel ablation, mirroring foodAblate: 'mean'/'const'/null. This
+    // is the decisive instrument — blinding the opponent sense on an evolved
+    // population and measuring the change in capture/escape.
+    this.oppAblate = null;
+
+    // ---------------------------------------------------- lifetime plasticity
+    // Live only when PLASTIC is on AND the phenotypes carry a plast block. When
+    // off, none of these buffers exist, kNeural reads p.W / p.win directly and the
+    // step is byte-identical. When on, each organism gets its OWN plastic copy of
+    // the recurrent (pW) and sensor (pWin) weights plus their eligibility traces
+    // (eW / eWin); spawn() reloads them from the developed weights, so learning is
+    // a within-lifetime process that starts fresh every episode and is never
+    // inherited. rewStep is this step's signed intake increment (the reward),
+    // rewBase its slow baseline, mNow the resulting neuromodulator (for readout).
+    this.plastic = !!(cfg.PLASTIC && this.P && phenos[0] && phenos[0].plast);
+    if (this.plastic) {
+      const S2 = this.S * this.S, SNS = this.S * this.NS, P = this.P;
+      this.pW = new Float64Array(P * S2); this.eW = new Float64Array(P * S2);
+      this.pWin = new Float64Array(P * SNS); this.eWin = new Float64Array(P * SNS);
+      this.rewStep = new Float64Array(P); this.rewBase = new Float64Array(P);
+      this.mNow = new Float64Array(P);
+    }
   }
 
   /** Place every organism: random position, random body orientation, zero state. */
@@ -1034,9 +1316,12 @@ export class Colony {
     const cfg = this.cfg, S = this.S, b = cfg.WORLD_BOUND * 0.72;
     this.px.fill(0); this.py.fill(0); this.vx.fill(0); this.vy.fill(0);
     this.ny.fill(0); this.act.fill(0); this.ad.fill(0); this.strain.fill(0);
-    this.path.fill(0); this.intake.fill(0);
+    this.path.fill(0); this.intake.fill(0); this.contact.fill(0);
+    this.captures.fill(0); this.contactOrg.fill(-1); this.biteCell.fill(-1); this.biteOpp.fill(-1);
+    this.gross.fill(0); this.goodEaten.fill(0); this.toxEaten.fill(0);
     this.stock.fill(1);
     this.foodX.set(this.world.fx); this.foodY.set(this.world.fy);
+    this.foodType.fill(1);
     this.steps = 0;
     for (let o = 0; o < this.P; o++) {
       const p = this.ph[o];
@@ -1055,6 +1340,42 @@ export class Colony {
       this.lastCX[o] = cx; this.lastCY[o] = cy;
       this.occ[o].clear();
     }
+    // Discrimination task: re-randomise food positions AND types every spawn, so
+    // no fixed route can memorise where good is. Drawn AFTER the organism loop
+    // and only when discrim, so the non-discrimination path consumes the identical
+    // rng draws and stays byte-identical. The clustered layout mirrors makeWorld
+    // (same Irwin-Hall(3) jitter), so good and toxic land intermixed within the
+    // same clusters — approaching a cluster on the type-blind mass channel gets a
+    // body to a mix it must then discriminate. Type is assigned per PATCH (not per
+    // cluster) at rate FOOD_TOXIC_FRAC.
+    if (this.discrim) {
+      const bound = cfg.WORLD_BOUND * 0.92;
+      const span = cfg.FOOD_CLUSTER_SPAN, half = span / 2;
+      const nc = Math.max(1, cfg.FOOD_CLUSTERS);
+      const centres = [];
+      for (let i = 0; i < nc; i++) centres.push([(rng.next() * span) - half, (rng.next() * span) - half]);
+      for (let i = 0; i < this.world.n; i++) {
+        const c = centres[i % nc];
+        const j = () => (rng.next() + rng.next() + rng.next() - 1.5) * (cfg.FOOD_CLUSTER_SIGMA / 1.5);
+        this.foodX[i] = clamp(c[0] + j(), -bound, bound);
+        this.foodY[i] = clamp(c[1] + j(), -bound, bound);
+        this.foodType[i] = rng.next() < cfg.FOOD_TOXIC_FRAC ? -1 : 1;
+      }
+    }
+    // Reload plastic weights from the DEVELOPED weights and clear the traces —
+    // every spawn is a fresh lifetime that starts from what the genome grew, so
+    // the previous episode's learning is discarded (not inherited). No rng draw,
+    // so a plastic run is still reproducible from the spawn seed.
+    if (this.plastic) {
+      const S = this.S, NS = this.NS;
+      this.eW.fill(0); this.eWin.fill(0);
+      this.rewStep.fill(0); this.rewBase.fill(0); this.mNow.fill(0);
+      for (let o = 0; o < this.P; o++) {
+        const p = this.ph[o], n = p.n, wb = o * S * S, ib = o * S * NS;
+        for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) this.pW[wb + a * S + b] = p.W[a * n + b];
+        for (let b = 0; b < n; b++) for (let c = 0; c < NS; c++) this.pWin[ib + b * NS + c] = p.win[b * NS + c];
+      }
+    }
   }
 
   centroid(o) {
@@ -1066,12 +1387,18 @@ export class Colony {
 
   /* ---- kernel: sensory read (per cell, only where a sensor role exists) --- */
   kSense() {
-    const cfg = this.cfg, S = this.S, W = this.world;
+    const cfg = this.cfg, S = this.S, W = this.world, NS = this.NS;
     const s2 = cfg.FOOD_SENSE_SIGMA2;
+    // Opponent sensing is only wired when there is a channel for it AND an
+    // opposing population handed in this step. Off => the opponent channel (if
+    // present) reads zero, and the single-species path never enters this branch.
+    const os2 = cfg.COEVO_SENSE_SIGMA2;
+    const opp = (NS > SENSORS && this.opponents) ? this.opponents : null;
+    const qs2 = cfg.FOOD_QUAL_SIGMA2;   // close-range quality kernel (discrim only)
     for (let o = 0; o < this.P; o++) {
       const p = this.ph[o];
       for (let a = 0; a < p.n; a++) {
-        const t = o * S + a, b = t * SENSORS;
+        const t = o * S + a, b = t * NS;
         const X = this.px[t], Y = this.py[t];
         // Proprioception, every cell.
         this.sens[b + 2] = Math.tanh(Math.sqrt(this.vx[t] * this.vx[t] + this.vy[t] * this.vy[t]) * 3.0);
@@ -1079,7 +1406,11 @@ export class Colony {
         // Exteroception, sensor cells only. The food scan is the most expensive
         // kernel in the step, so skipping it for non-sensors is also why a
         // sparse sensor field costs less than a dense one.
-        if (!p.isSensor[a]) { this.sens[b] = 0; this.sens[b + 1] = 0; continue; }
+        if (!p.isSensor[a]) {
+          this.sens[b] = 0; this.sens[b + 1] = 0;
+          if (NS > SENSORS) this.sens[b + OPP_CHAN] = 0;
+          continue;
+        }
         let mass = 0;
         for (let f = 0; f < W.n; f++) {
           const d2 = (this.foodX[f] - X) ** 2 + (this.foodY[f] - Y) ** 2;
@@ -1087,6 +1418,59 @@ export class Colony {
         }
         this.sens[b] = Math.tanh(mass * 0.16);
         this.sens[b + 1] = Math.tanh(Math.max(0, Math.max(Math.abs(X), Math.abs(Y)) - 0.70) * 3.2);
+        // Quality channel — the discriminating sense. A SIGNED, type-weighted
+        // Gaussian sum over patches at THIS sensor cell, on a CLOSE kernel (qs2 ≪
+        // s2): positive where nearby food is good, negative where toxic, ~0 in
+        // empty space or where good and toxic cancel. This is the ONLY channel
+        // that separates the two types; the mass channel (0) above is type-blind
+        // (it sums stock regardless of type), so approach alone cannot tell them
+        // apart — a body must read this channel and steer up it (toward good) and
+        // down it (away from toxic) to win. Only wired in a discrimination world.
+        if (this.discrim) {
+          let q = 0;
+          for (let f = 0; f < W.n; f++) {
+            const d2 = (this.foodX[f] - X) ** 2 + (this.foodY[f] - Y) ** 2;
+            q += this.foodType[f] * Math.exp(-d2 / qs2) * this.stock[f];
+          }
+          this.sens[b + QUAL_CHAN] = Math.tanh(q * 0.5);
+        }
+        // Opponent mass — the opposing species sensed EXACTLY as food is: a
+        // Gaussian-weighted scalar over the opponents' centroids, at THIS
+        // sensor cell's position. Different sensor cells sit at different body
+        // positions, so the across-cell gradient is what a body would steer up
+        // (pursuit) or down (evasion), the same mechanism chemotaxis uses.
+        if (opp) {
+          let om = 0;
+          for (let q = 0; q < opp.n; q++) {
+            const d2 = (opp.cx[q] - X) ** 2 + (opp.cy[q] - Y) ** 2;
+            om += Math.exp(-d2 / os2);
+          }
+          this.sens[b + OPP_CHAN] = Math.tanh(om * 0.16);
+        }
+      }
+    }
+    // Optional ablation of the OPPONENT channel, the decisive blind-vs-intact
+    // instrument. Same two removals as foodAblate: 'mean' replaces every sensor
+    // cell's opponent reading with the population mean (removes the spatial
+    // gradient pursuit/evasion would ride, injects nothing), 'const' pins it to
+    // zero. Only meaningful when the channel exists and opponents are present.
+    if (this.oppAblate && NS > SENSORS && opp) {
+      if (this.oppAblate === 'const') {
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * NS + OPP_CHAN] = 0;
+        }
+      } else {
+        let sum = 0, cnt = 0;
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) { sum += this.sens[(o * S + a) * NS + OPP_CHAN]; cnt++; }
+        }
+        const m = cnt ? sum / cnt : 0;
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * NS + OPP_CHAN] = m;
+        }
       }
     }
     // Optional ablation of the FOOD-bearing sensor channel (index 0), for the
@@ -1105,18 +1489,46 @@ export class Colony {
       if (this.foodAblate === 'const') {
         for (let o = 0; o < this.P; o++) {
           const p = this.ph[o];
-          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * SENSORS] = 0;
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * NS] = 0;
         }
       } else {
         let sum = 0, cnt = 0;
         for (let o = 0; o < this.P; o++) {
           const p = this.ph[o];
-          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) { sum += this.sens[(o * S + a) * SENSORS]; cnt++; }
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) { sum += this.sens[(o * S + a) * NS]; cnt++; }
         }
         const m = cnt ? sum / cnt : 0;
         for (let o = 0; o < this.P; o++) {
           const p = this.ph[o];
-          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * SENSORS] = m;
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * NS] = m;
+        }
+      }
+    }
+    // Ablation of the QUALITY channel — THE decisive discrimination instrument.
+    // 'mean' replaces every sensor cell's quality reading with the population
+    // mean (removes the spatial/temporal signal a body would steer on to tell
+    // good from toxic, injecting no noise and keeping the network in its operating
+    // regime); 'const' pins it to 0. The mass channel (0) is left intact, so an
+    // ablated body can still FIND food — it just cannot tell which is which, and
+    // eats 50/50. If the intact population discriminated, blinding this collapses
+    // net intake; if it did not, blinding costs nothing. Only meaningful in a
+    // discrimination world.
+    if (this.qualAblate && this.discrim && NS > SENSORS) {
+      if (this.qualAblate === 'const') {
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * NS + QUAL_CHAN] = 0;
+        }
+      } else {
+        let sum = 0, cnt = 0;
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) { sum += this.sens[(o * S + a) * NS + QUAL_CHAN]; cnt++; }
+        }
+        const m = cnt ? sum / cnt : 0;
+        for (let o = 0; o < this.P; o++) {
+          const p = this.ph[o];
+          for (let a = 0; a < p.n; a++) if (p.isSensor[a]) this.sens[(o * S + a) * NS + QUAL_CHAN] = m;
         }
       }
     }
@@ -1124,17 +1536,23 @@ export class Colony {
 
   /* ---- kernel: CTRNN update (per cell) ----------------------------------- */
   kNeural() {
-    const cfg = this.cfg, S = this.S, dt = cfg.DT;
+    const cfg = this.cfg, S = this.S, dt = cfg.DT, NS = this.NS;
+    const plastic = this.plastic;
     for (let o = 0; o < this.P; o++) {
       const p = this.ph[o], n = p.n, base = o * S;
+      // Weight source: the developed p.W / p.win (non-plastic, stride n, base 0 —
+      // byte-identical to before) or this organism's plastic copy (stride S, base
+      // o·S²/o·S·NS). Chosen once per organism so the inner loops carry no branch.
+      const Warr = plastic ? this.pW : p.W, Wstride = plastic ? S : n, Wbase = plastic ? o * S * S : 0;
+      const Iarr = plastic ? this.pWin : p.win, Ibase = plastic ? o * S * NS : 0;
       for (let a = 0; a < n; a++)
         this.act[base + a] = Math.tanh(this.ny[base + a] + p.bias[a] - p.adapt[a] * this.ad[base + a]);
       for (let b = 0; b < n; b++) {
         let rec = 0;
-        for (let a = 0; a < n; a++) rec += this.act[base + a] * p.W[a * n + b];
+        for (let a = 0; a < n; a++) rec += this.act[base + a] * Warr[Wbase + a * Wstride + b];
         let inp = 0;
-        const wb = b * SENSORS, sb = (base + b) * SENSORS;
-        for (let c = 0; c < SENSORS; c++) inp += p.win[wb + c] * this.sens[sb + c];
+        const wb = Ibase + b * NS, sb = (base + b) * NS;
+        for (let c = 0; c < NS; c++) inp += Iarr[wb + c] * this.sens[sb + c];
         const t = base + b;
         this.ny[t] += (rec + inp - this.ny[t]) / p.tau[b] * dt;
         // The state is a tanh argument; letting it run to 1e3 buys nothing and
@@ -1290,18 +1708,43 @@ export class Colony {
   /* ---- kernel: feeding and the food field -------------------------------- */
   kFood() {
     const cfg = this.cfg, W = this.world, dt = cfg.DT;
+    // A predator's foraging return is scaled by COEVO_PRED_FORAGE (0 = pure
+    // carnivore). Its centroid still DRAWS food down the same way — otherwise a
+    // predator sitting on a patch would freeze it for the prey — the scaling
+    // only touches how much fitness the predator banks from feeding.
+    const forageK = this.role === 'predator' ? cfg.COEVO_PRED_FORAGE : 1;
+    const H = cfg.FOOD_TOXIN_HARSH;
     const draw = new Float64Array(W.n);
     for (let o = 0; o < this.P; o++) {
       const [cx, cy] = this.centroid(o);
-      let best = 0;
+      let best = 0, bestF = -1;
       for (let f = 0; f < W.n; f++) {
         const d2 = (this.foodX[f] - cx) ** 2 + (this.foodY[f] - cy) ** 2;
         const k = Math.exp(-d2 / cfg.FOOD_EAT_SIGMA2);
         draw[f] += k;
         const e = k * this.stock[f];
-        if (e > best) best = e;
+        if (e > best) { best = e; bestF = f; }
       }
-      this.intake[o] += best * dt;
+      if (this.discrim) {
+        // Eating is POSITIONAL: the body eats the single dominant patch under its
+        // centroid, whatever type it is (the `best` patch, exactly as the trunk).
+        // Its type — read from foodType, NOT choosable — decides the sign: good
+        // adds, toxic subtracts H×. gross is the type-blind amount eaten (anosmia
+        // detector); intake is the signed, H-weighted fitness quantity.
+        const amt = best * dt * forageK;
+        this.gross[o] += amt;
+        let di;
+        if (bestF >= 0 && this.foodType[bestF] < 0) { this.toxEaten[o] += amt; di = -H * amt; }
+        else { this.goodEaten[o] += amt; di = amt; }
+        this.intake[o] += di;
+        // The signed intake increment IS the plasticity reward this step (good
+        // rewards, toxic punishes). Zero-cost when plasticity is off.
+        if (this.plastic) this.rewStep[o] = di;
+      } else {
+        const di = best * dt * forageK;
+        this.intake[o] += di;
+        if (this.plastic) this.rewStep[o] = di;
+      }
       // trajectory readouts
       const d = Math.sqrt((cx - this.lastCX[o]) * (cx - this.lastCX[o]) + (cy - this.lastCY[o]) * (cy - this.lastCY[o]));
       this.path[o] += d;
@@ -1328,11 +1771,141 @@ export class Colony {
     }
   }
 
+  /* ---- kernel: contact with the opposing species ------------------------- */
+  // Contact is resolved to the NEAREST CELL PAIR, not a body-wide scalar. For
+  // each of this colony's organisms: find the nearest opponent ORGANISM by
+  // centroid (a cheap prefilter), then the minimum distance between this body's
+  // cells and that opponent's cells, and apply the capture kernel to it. Three
+  // outputs per organism:
+  //   contact[o]   integrated contact-seconds — the ONE physical quantity read
+  //                identically from both sides (predator: prey caught; prey:
+  //                times caught), which puts a predator generation and a prey
+  //                generation on a single tournament axis.
+  //   captures[o]  DISCRETE capture events: a rising edge into the capture
+  //                radius against a given opponent. This is the first-class
+  //                "does anything actually happen in an episode" number — a
+  //                pursuit/evasion gradient is impossible if it stays ~0.
+  //   biteCell[o]/biteOpp[o]  the local hit-point: which of THIS body's cells is
+  //                closest to an opponent, and which opponent. The interaction is
+  //                scalar (fitness only) for now; recording the hit-point is what
+  //                lets a later experiment turn a contact into a cell-removing
+  //                "bite" without re-plumbing the contact model.
+  kContact() {
+    const opp = this.opponents;
+    this.biteCell.fill(-1); this.biteOpp.fill(-1);
+    if (!opp) return;
+    const cfg = this.cfg, S = this.S, dt = cfg.DT, cs2 = cfg.COEVO_CAPTURE_SIGMA2;
+    // Capture radius: within ~1.5 sigma of the kernel, a genuine close encounter.
+    const capR2 = cs2 * 2.25;
+    for (let o = 0; o < this.P; o++) {
+      const p = this.ph[o], base = o * S;
+      const [cx, cy] = this.centroid(o);
+      // nearest opponent organism by centroid
+      let qBest = -1, cBest = Infinity;
+      for (let q = 0; q < opp.n; q++) {
+        const d2 = (opp.cx[q] - cx) ** 2 + (opp.cy[q] - cy) ** 2;
+        if (d2 < cBest) { cBest = d2; qBest = q; }
+      }
+      if (qBest < 0) { this.contactOrg[o] = -1; continue; }
+      // minimum cell-cell distance to that opponent's cells; remember my cell
+      const oxs = opp.cellX[qBest], oys = opp.cellY[qBest], on = opp.cellN[qBest];
+      let minD2 = Infinity, myCell = -1;
+      for (let a = 0; a < p.n; a++) {
+        const X = this.px[base + a], Y = this.py[base + a];
+        for (let q = 0; q < on; q++) {
+          const d2 = (oxs[q] - X) ** 2 + (oys[q] - Y) ** 2;
+          if (d2 < minD2) { minD2 = d2; myCell = a; }
+        }
+      }
+      this.contact[o] += Math.exp(-minD2 / cs2) * dt;
+      if (minD2 < capR2) {
+        this.biteCell[o] = myCell; this.biteOpp[o] = qBest;
+        // rising edge, or a switch to a different opponent, is a new capture
+        if (this.contactOrg[o] !== qBest) { this.captures[o]++; this.contactOrg[o] = qBest; }
+      } else {
+        this.contactOrg[o] = -1;
+      }
+    }
+  }
+
+  /** Snapshot for the opposing colony: per-organism centroids (sensing + the
+   *  contact prefilter) and per-organism cloned cell positions (cell-resolved
+   *  contact). Cloned, so the opponent reacts to this instant and not to a
+   *  half-stepped body. */
+  snapshotForOpponent() {
+    const P = this.P, S = this.S;
+    const cx = new Float64Array(P), cy = new Float64Array(P);
+    const cellX = new Array(P), cellY = new Array(P), cellN = new Int32Array(P);
+    for (let o = 0; o < P; o++) {
+      const p = this.ph[o], base = o * S;
+      const xs = new Float64Array(p.n), ys = new Float64Array(p.n);
+      let sx = 0, sy = 0;
+      for (let a = 0; a < p.n; a++) { xs[a] = this.px[base + a]; ys[a] = this.py[base + a]; sx += xs[a]; sy += ys[a]; }
+      cx[o] = sx / p.n; cy[o] = sy / p.n; cellX[o] = xs; cellY[o] = ys; cellN[o] = p.n;
+    }
+    return { n: P, cx, cy, cellX, cellY, cellN };
+  }
+
+  /* ---- kernel: reward-modulated Hebbian plasticity (per synapse) --------- */
+  // The Baldwin update. For each organism: form the neuromodulator m from the
+  // reward-prediction error (this step's signed intake minus a slow baseline),
+  // low-pass the pre·post coincidence into an eligibility trace e, and move each
+  // plastic weight by Δw = η·m·e, clamped to a bounded neighbourhood of its
+  // DEVELOPED value so the physics can never be driven non-finite. Runs only when
+  // plasticity is live; step() skips the call otherwise, so the non-plastic path
+  // is byte-identical. Both the recurrent (W) and the sensor→neuron (win) weights
+  // learn — the quality channel is a sensor weight, so "read good-vs-toxic and
+  // steer on it" is exactly a thing this rule can install within a lifetime.
+  kPlastic() {
+    const cfg = this.cfg, S = this.S, NS = this.NS, dt = cfg.DT;
+    const wB = cfg.PLAST_W_BOUND, iB = cfg.PLAST_WIN_BOUND;
+    for (let o = 0; o < this.P; o++) {
+      const p = this.ph[o], n = p.n, base = o * S, pl = p.plast;
+      if (!pl) continue;
+      const etaRec = pl.etaRec, etaSens = pl.etaSens;
+      // Neuromodulator, then advance the slow reward baseline (reward-change).
+      const r = this.rewStep[o], b0 = this.rewBase[o];
+      const m = pl.modGain * (r - b0);
+      this.rewBase[o] = b0 + dt / pl.modTau * (r - b0);
+      this.mNow[o] = m;
+      const decay = dt / pl.traceTau;
+      const wb = o * S * S, ib = o * S * NS;
+      // Recurrent weights.
+      for (let a = 0; a < n; a++) {
+        const preA = this.act[base + a];
+        for (let b = 0; b < n; b++) {
+          const idx = wb + a * S + b;
+          const e = this.eW[idx] + decay * (preA * this.act[base + b] - this.eW[idx]);
+          this.eW[idx] = e;
+          let w = this.pW[idx] + etaRec * m * e;
+          const w0 = p.W[a * n + b];
+          w = w > w0 + wB ? w0 + wB : (w < w0 - wB ? w0 - wB : w);
+          this.pW[idx] = w;
+        }
+      }
+      // Sensor→neuron weights.
+      for (let b = 0; b < n; b++) {
+        const post = this.act[base + b], sb = (base + b) * NS;
+        for (let c = 0; c < NS; c++) {
+          const idx = ib + b * NS + c;
+          const e = this.eWin[idx] + decay * (this.sens[sb + c] * post - this.eWin[idx]);
+          this.eWin[idx] = e;
+          let w = this.pWin[idx] + etaSens * m * e;
+          const w0 = p.win[b * NS + c];
+          w = w > w0 + iB ? w0 + iB : (w < w0 - iB ? w0 - iB : w);
+          this.pWin[idx] = w;
+        }
+      }
+    }
+  }
+
   step() {
     this.kSense();
     this.kNeural();
     this.kPhysics();
     this.kFood();
+    this.kContact();
+    if (this.plastic) this.kPlastic();
     this.steps++;
   }
 
@@ -1352,15 +1925,42 @@ export class Colony {
 
   /** Behavioural traits, one row per organism. */
   traits() {
+    const cfg = this.cfg;
+    // Episode duration in seconds, for the per-cell-per-second metabolic charge.
+    const elapsed = this.steps * cfg.DT;
+    // Both charges default to 0 (DEFAULTS), so `metabolic` is identically 0 and
+    // `netIntake` is identically `intake` on the trunk — the added fields never
+    // change an existing readout, they only expose the priced quantity when a
+    // caller has turned a cost on.
+    const moveK = cfg.META_MOVE_COST, cellK = cfg.META_CELL_COST;
+    // Flat per-second starvation drain — the discrimination task's "no safe
+    // non-eating" pressure. 0 on the trunk, so metabolic is unchanged there.
+    const starveK = cfg.FOOD_STARVE;
     const out = [];
     for (let o = 0; o < this.P; o++) {
       const [cx, cy] = this.centroid(o);
+      const metabolic = moveK * this.path[o] + cellK * this.ph[o].n * elapsed + starveK * elapsed;
       out.push({
         displacement: Math.sqrt((cx - this.startX[o]) * (cx - this.startX[o]) + (cy - this.startY[o]) * (cy - this.startY[o])),
         path: this.path[o],
-        speed: this.path[o] / Math.max(1e-9, this.steps * this.cfg.DT),
+        speed: this.path[o] / Math.max(1e-9, this.steps * cfg.DT),
         occupancy: this.occ[o].size,
         intake: this.intake[o],
+        contact: this.contact[o],
+        captures: this.captures[o],
+        // Metabolic cost accrued this episode, and intake net of it. Both are
+        // additive: with the default zero charges metabolic === 0 and
+        // netIntake === intake.
+        metabolic,
+        netIntake: this.intake[o] - metabolic,
+        // Discrimination readouts: gross = type-blind total eaten (anosmia when
+        // ~0), goodEaten/toxEaten split, and selectivity = fraction of eaten that
+        // was good (0.5 = indiscriminate, →1 = perfect discrimination). All 0 /
+        // undefined-safe on the trunk (gross stays 0, so selectivity reports 0.5).
+        gross: this.gross[o],
+        goodEaten: this.goodEaten[o],
+        toxEaten: this.toxEaten[o],
+        selectivity: this.gross[o] > 1e-9 ? this.goodEaten[o] / this.gross[o] : 0.5,
       });
     }
     return out;
@@ -1375,4 +1975,46 @@ export function episode(colony, steps, { checkEvery = 50 } = {}) {
   }
   colony.assertFinite('end');
   return colony.traits();
+}
+
+/* ----------------------------------------------------------- coevolution */
+
+/**
+ * Copy the live food field from its owner (the prey — they are what depletes
+ * it) to the other colony, so the two share ONE world rather than two that
+ * drift apart as patches are eaten and relocated. Mirrors evodevo's
+ * coevoSyncWorld.
+ */
+export function sbCoevoSyncWorld(owner, other) {
+  other.foodX.set(owner.foodX);
+  other.foodY.set(owner.foodY);
+  other.stock.set(owner.stock);
+}
+
+/**
+ * Advance both species by one step, simultaneously. Both centroid snapshots are
+ * taken BEFORE either steps, so each species reacts to the other's position at
+ * the same instant — stepping one and letting the second read the first's
+ * already-updated centroids would hand the second a half-step of precognition,
+ * exactly the asymmetry a tournament would later read as one side "winning".
+ * The prey own the food field; the predators are synced to it after the step.
+ */
+export function sbCoevoStep(prey, pred) {
+  prey.opponents = pred.snapshotForOpponent();
+  pred.opponents = prey.snapshotForOpponent();
+  prey.step();
+  pred.step();
+  sbCoevoSyncWorld(prey, pred);
+}
+
+/** Run one coevolutionary episode of `steps` from the current bodies. NaN-safe
+ *  in the same spirit as the single-species episode: assertFinite is scanned
+ *  periodically on both colonies and throws rather than letting a NaN reach
+ *  fitness. */
+export function sbCoevoEpisode(prey, pred, steps, { checkEvery = 50 } = {}) {
+  for (let s = 0; s < steps; s++) {
+    sbCoevoStep(prey, pred);
+    if (checkEvery && s % checkEvery === 0) { prey.assertFinite(); pred.assertFinite(); }
+  }
+  prey.assertFinite('end'); pred.assertFinite('end');
 }

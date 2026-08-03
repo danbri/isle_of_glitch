@@ -7,3 +7,4 @@ runs/*.json
 # section refers to should be committed, or the run is unreproducible the moment
 # its container is reclaimed.
 runs/*.txt
+.ref/

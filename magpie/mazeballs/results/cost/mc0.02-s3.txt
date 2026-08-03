@@ -1,0 +1,53 @@
+
+=== soft-body evolution : seed 3 ===
+pop 48, gens 20, elite 2, eps 0.08, steps 600, fitness netintake, spawns 1 (curriculum 6)
+
+selection-time trajectory (fresh spawn each gen):
+  gen  mode  best     median   meanDisp meanIntk moving forage
+    0  disp  0.7664  0.0021  0.0817  0.0170    29%    8%
+    2  disp  0.7664  0.0239  0.1567  0.0867    56%   17%
+    4  disp  0.9913  0.2553  0.2937  0.0870    83%   19%
+    6  neti  0.7835  -0.0091  0.3794  0.0449    94%    8%
+    8  neti  1.2558  -0.0027  0.2569  0.1065    81%   19%
+   10  neti  0.9016  -0.0043  0.2002  0.0412    83%   13%
+   12  neti  0.9225  -0.0033  0.1728  0.0331    67%    6%
+   14  neti  1.0672  -0.0015  0.1020  0.0242    50%    4%
+   16  neti  0.7369  -0.0003  0.0940  0.0406    42%   15%
+   18  neti  0.0187  -0.0001  0.0803  0.0005    29%    2%
+   20  neti  0.7770  -0.0000  0.0167  0.0266    13%    8%
+
+rigorous end comparison (mean over 4 held-out spawns):
+               gen-0                 evolved
+  displacement 0.0895 ± 0.0292      0.0166 ± 0.0070
+  intake       0.0526 ± 0.0196      0.0573 ± 0.0224
+  efficiency   0.6940 ± 0.3775      1.1554 ± 0.5043   (intake / (path+0.04))
+  displacement ascent -0.0729 vs bar 0.0600 -> flat
+  intake ascent       +0.0047 vs bar 0.0595 -> flat
+  efficiency ascent   +0.4614 vs bar 1.2598 -> flat
+
+directedness — food sense INTACT vs ABLATED (mean-replaced) on the evolved population:
+  intake       intact 0.0573 ± 0.0224   ablated 0.0577 ± 0.0224
+  ablation costs intake -0.0004 vs bar 0.0633 -> incidental (feeding survives blinding)
+  displacement intact 0.0166   ablated 0.0166   (locomotion should survive blinding)
+  efficiency   intact 1.1554   ablated 1.1567
+
+metabolic cost active:  moveCost 0.0200 (per unit path)   cellCost 0.0000 (per cell-second)
+  squatter fraction (mean path < 0.1):  gen-0 79%   evolved 92%   [a high evolved value = the sit-still revival]
+
+net intake (intake − metabolic), the quantity a cost run selects on:
+  net intake   gen-0 0.0497 ± 0.0195      evolved 0.0567 ± 0.0223
+  net-intake ascent   +0.0069 vs bar 0.0592 -> flat
+
+  DECISIVE — food sense INTACT vs ABLATED, on NET intake (the priced quantity):
+  net intake   intact 0.0567 ± 0.0223   ablated 0.0571 ± 0.0224
+  blinding costs net intake -0.0004 vs bar 0.0632 -> incidental (wall holds under this cost)
+
+behavioural repeatability (same body, different spawn), honest re-measure:
+  trait          gen-0     evolved
+  displacement   0.9452    1.0000
+  path           0.9954    1.0000
+  occupancy      0.9311    0.8093
+  intake         0.0000    0.0000
+  efficiency     0.0000    0.0000
+  (0.034 is the intake-repeatability baseline from the displacement-evolved population to beat.)
+  forage-expressing fraction: gen-0 27%  evolved 21%

@@ -208,6 +208,31 @@ information without the noise and costs roughly twice as much, meaning the
 headline `sensing` figure has been understating capability by about half
 throughout. Both are recorded per run.
 
+**And lifetime learning does not cross the valley either — the last flagged
+ingredient is now tested.** The discrimination task retired the premise that the
+right *task* unlocks sensing; the mission's own conclusion then named LEARNING as
+the one untried lever — a body that adapts its control within its lifetime could
+discover sensing ontogenetically and selection could assimilate it (Baldwin).
+Reward-modulated Hebbian plasticity was built on the CTRNN (three-factor
+eligibility-trace rule, genome-encoded evolvable plasticity, learned weights
+discarded each lifetime; default off, non-plastic path byte-identical) and evolved
+on the same no-kinematic-escape discrimination task. Plastic and non-plastic are
+**indistinguishable on every decisive axis**: the quality-ablation Δ on net intake
+is incidental in both (+0.0002 ± 0.0059 plastic vs +0.0073 ± 0.0110 control, three
+seeds each), selectivity sits below chance in both (0.476 vs 0.467), net intake is
+negative in both, and there is no assimilation (frozen-selectivity ascent
+−0.008, flat). The within-life learning that appears is kinematic reward-tracking,
+not discrimination — it does not route through the quality channel (ablation stays
+incidental) and does not replicate across seeds (−0.047 ± 0.084). Selection *keeps*
+the plasticity (η retained mid-range, amplified under a stronger ceiling) but
+cannot aim it at the sense; a maximally-favourable probe (double lifetime, double
+plasticity ceiling) holds the wall undiminished. **Learning does not lead evolution
+here because it stands at the same edge of the same valley: a reward-modulated rule
+sharpens sensor→motor wiring that already exists and cannot conjure the wiring that
+does not.** Substrate, task, and now lifetime have all been enriched, and the
+sensing region of the map is exactly as unsearched — the binding constraint is its
+searchability. See the lifetime-learning section below.
+
 ## The objective
 
 `tools/score.js`. **Not fitness.** Two measured reasons:
@@ -3718,3 +3743,1044 @@ one — two livelihoods, the shape of a radiation. Failure modes are watchable a
 get the usual ablation-and-tournament scrutiny: cost too steep and everything
 goes dumb; too cheap and brains bloat; eat-reward too high and brainy prey are
 exterminated into disengagement.
+
+## Coevolution on the soft body: a one-sided predator race that runs, and an opponent sense that carries none of it
+
+This is the experiment the mission points at most directly — two soft-body
+species in one sea, scored by the ancestral tournament rather than by absolute
+fitness — and it had been run on the *old* incumbent body and never on the new
+one. It has now been built and run. The verdict is a clean, replicated result
+and it is not the hoped-for one: **a coevolutionary arms race does run on the
+soft body, predators demonstrably and transitively improve against frozen
+ancestral prey, but the opponent sense is not load-bearing in either
+direction.** The improvement is the substrate's standing degenerate answer —
+crawl faster, cover more, encounter more — reproduced a third time, beside the
+incumbent's coevolution and the directed-foraging null. Pursuit does not evolve;
+evasion does not evolve; the arms race is real but it is fought with kinematics,
+not with the sense.
+
+**What was built, and why single-species stays byte-identical.** A fifth sensor
+channel, opponent mass, appears only when `COEVO` is on, sensed per sensor cell
+*exactly as food is* — a Gaussian-weighted scalar over the opposing organisms'
+centroids (`kSense`), sensor-role-gated like the food channel. It is
+deliberately scalar-per-cell and not a bearing vector: the soft body has no
+single heading, food itself is a scalar field, and steering on this substrate is
+the across-body gradient a lateral muscle asymmetry rides (the sb-forage lateral
+test). So pursuit and evasion, if they evolved, would be the *same* mechanism
+chemotaxis already uses. The channel's receptor weight is read from gene 23,
+which had no phenotypic readout before, so `GENOME_LEN` is untouched and the
+genome layout is unchanged. `senseCount(cfg)` returns `SENSORS` when `COEVO` is
+off and every allocation, index and RNG draw is identical; verified — `sb-turing`,
+`sb-gate` and a short `sb-evolve` displacement run reproduce **byte-for-byte**.
+Two species step in one shared world through `sbCoevoStep`/`sbCoevoEpisode`, with
+both position snapshots taken before either steps so neither gets a half-step of
+precognition; the prey own the depleting food field and the predators are synced
+to it. Predator fitness is contact; prey fitness is forage − `preyLoss`·contact.
+The ablation machinery blinds the opponent channel specifically
+(`Colony.oppAblate`, `--blindPred`/`--blindPrey`, mean-replacement), which is the
+decisive instrument, exactly as the incumbent's COEVO added `keepAllBut(['opponent'])`.
+
+**Episode length is a correctness axis, and it was checked.** A pursuit/evasion
+interaction produces a selection gradient only if captures actually happen; a
+too-short episode where nothing meets would be the identical "no gradient" null
+that killed directed foraging, and would be a *false* null. So contact carries a
+first-class discrete **capture rate** (rising edges into the capture radius,
+`Colony.captures`), reported on every run. It is never near zero: 1.8–4.5
+predator captures per episode across the whole tournament grid at 800 steps, with
+touched fractions of 75–100%. If anything the problem is the opposite of too few
+encounters — contact is abundant enough that coverage substitutes for pursuit,
+the same way dense food let coverage substitute for chemotaxis. Contact is
+resolved to the **nearest cell pair**, not a body-wide centroid scalar, and
+records the local hit-point (`biteCell`/`biteOpp`); the interaction is kept
+scalar (fitness only) for now, but this is the hook the planned follow-on needs
+(see below).
+
+**The tournament, both marginals, four runs.** Ancestral tournament ported from
+`tools/tournament.js`: snapshot both species every 4 generations over 24, then
+cross-evaluate every archived predator generation against every archived prey
+generation on one fixed world, and report both marginals separately —
+predatorCapability (contact a generation-i predator takes from frozen prey;
+**rising = predators improved**) and preyVulnerability (contact a generation-j
+prey suffers from frozen predators; **falling = prey improved**). Two densities,
+two seeds each; config A is 16 prey × 16 predators (balanced), config B is 8 prey
+× 16 predators (sparse prey, the coordinate the coordinator's note flags as the
+one that denies coverage and should *force* pursuit):
+
+| run | predCapability (gen0→24, z) | preyVulnerability (z) | preyForage z | ablate pred-sense drop | ablate prey-sense rise |
+|---|---|---|---|---|---|
+| A/16v16 s1 | 7.61 → 9.74 (**z 2.74**) | 9.11 → 8.17 (z −0.56) | −2.53 | +0.0028 | 0.0000 |
+| A/16v16 s2 | 6.98 → 8.21 (**z 3.74**) | 9.92 → 7.89 (z −0.76) | −1.45 | +0.0006 | +0.0019 |
+| B/8v16 s1 | 5.61 → 6.18 (z 0.79) | 8.71 → 7.74 (z −1.31) | −0.47 | +0.0028 | −0.0007 |
+| B/8v16 s2 | 5.29 → 6.38 (z 1.51) | 10.83 → 6.94 (**z −3.76**) | +5.51 | −0.0027 | −0.0008 |
+
+**The predators won a one-sided race, and it is transitive, not cycling.** In the
+balanced config the predator marginal rises at both seeds (z 2.74, 3.74) while
+the prey marginal does not clear its bar (z −0.56, −0.76): the classic one-sided
+race, and the same *side* the incumbent's coevolution found improving. The
+age-gap diagnostic is monotone — a generation-24 predator takes 10.40 from the
+oldest frozen prey against 9.22 from the youngest, and older predators catch
+today's prey progressively less — so predators improve *transitively* against the
+whole lineage, which is rock-paper-scissors' opposite. It is not disengagement
+either: contact is graded, capture rate is healthy, and touched never pins at
+100% across the grid. The gradient stayed intact and one side climbed it.
+
+**But the opponent sense carries none of the improvement — the decisive
+ablation.** Blinding a side's opponent channel across the whole tournament grid
+(mean-replacement, information removed without injection) and reading the change
+in its marginal is the same blind-vs-intact test that carried the entire
+incumbent analysis. The predator-capability drop under blinding is +0.0028,
++0.0006, +0.0028, −0.0027 across the four runs — **every one under 0.05% of a
+contact of 6–10, straddling zero.** The prey-vulnerability change is the same
+size and the same non-signal. The deltas are small but *non-zero and varying*,
+which is the internal control that the ablation is genuinely perturbing the
+episode rather than being a no-op: blinding changes the trajectory, it just does
+not change how much gets caught. **A predator that has evolved to catch more
+prey catches exactly as many with its opponent sense mean-flattened as with it
+intact; a prey that has evolved to be caught less is caught exactly as much
+blind.** Whatever the predators improved, it is not pursuit; whatever the prey
+did in B-s2 (a real fall in vulnerability, z −3.76, *with foraging rising*
+z 5.51, so not the "stopped eating" artifact) is not evasion. It is a kinematic
+encounter-rate change — the soft-body reprise of the incumbent's ballistic-cruise
+wall-refuge, the prey lowering contact through where and how it moves rather than
+through steering away from a sensed predator.
+
+**Sparse prey did not rescue pursuit — it weakened the race.** The coordinator's
+hypothesis was that sparse, fleeing prey cannot be caught by coverage the way
+static food can be found by coverage, so predator/prey might create the gradient
+directed foraging lacked. Measured, it does not: at 8 prey the predator ascent
+is *weaker* (z 0.79, 1.51 vs 2.74, 3.74 balanced) and the sense-ablation is
+still null. Sparsening the prey made each predator's catch noisier without making
+the sense worth using — the same shape as the incumbent's foraging result, where
+sparsening the food made the population crawl further rather than navigate. The
+degenerate optimum this substrate finds first is robust to the one knob expected
+to defeat it.
+
+**Diagnosis, named.** A **one-sided, transitive predator race** on the balanced
+world; a **noisier mixed state** on the sparse world where a prey kinematic
+refuge surfaces at one seed. In every cell the operative mechanism is the
+substrate's standing degenerate answer — **coverage for the predator (crawl and
+bump), a kinematic refuge for the prey (move so as to be encountered less)** —
+and the opponent sense is decisively *not* what either climbs. This is the third
+independent confirmation of the same wall: the incumbent's coevolution (one-sided
+race, prey never built evasion, blinding the predator channel changed nothing),
+directed foraging on this very substrate (the loop closes, the sense has no
+marginal value because coverage substitutes), and now soft-body coevolution. The
+sensorimotor loop is known to close on this substrate; what is missing is a world
+in which *using* the opponent sense pays more than moving does, and neither
+balanced nor sparse densities supply it. The binding constraint is not the sense
+and not the instrument — the arms race is real and the tournament reads it
+cleanly — it is that catching (and evading) by chance encounter is available and
+good enough, so selection never has to discover pursuit.
+
+**The planned follow-on, and why the contact model is already shaped for it.**
+The reason coverage is good enough is that a contact is a costless scalar: a
+predator that grazes a prey scores the same as one that runs it down, and a prey
+loses the same fitness wherever on its body the contact lands, so there is no
+structure for morphology to protect. The next experiment turns a contact into a
+**bite** — apoptosis-during-life that removes the specific cell the contact
+resolved to, and eventually a *functional* cell (a muscle or a neuron), which is
+what would make protective morphology (a shell, redundant interior vital cells,
+put the sensors where they are hard to reach) worth evolving and would give
+steering-away a payoff a kinematic refuge cannot match. That experiment is much
+cheaper to add because the contact model here is already **local and
+directional**: `kContact` records `biteCell`/`biteOpp` — which of the body's own
+cells sits closest to which opponent — every step, so layering damage on is a
+matter of acting on a hit-point that is already computed, not re-plumbing a
+body-wide scalar. It is deliberately left unbuilt here so the base arms race is
+measured cleanly first; layering damage onto an unmeasured base would confound
+the two.
+
+**What is committed.** `tools/sb-coevolve.js` (two-species coevolution + the
+ancestral tournament in both directions, `--blindPred`/`--blindPrey` for the
+decisive ablation, `--archiveIn`/`--archiveOut` to split phases); in
+`lib/softbody.js`, the `COEVO`-gated opponent channel, `senseCount`/`OPP_CHAN`,
+the two-species driver (`sbCoevoStep`/`sbCoevoEpisode`/`sbCoevoSyncWorld`),
+cell-resolved contact with `captures`/`biteCell`/`biteOpp`, and `Colony.oppAblate`
+— all off by default, `DEFAULTS` extended only with new `COEVO_*` keys (no
+existing value changed), single-species path verified byte-identical. Run
+readouts are in `results/coevo/` (`arch-*`, `tourn-*`, configs A = 16v16,
+B = 8v16, seeds 1–2).
+
+### A prompt-injection attempt, reported
+
+The task prompt for this wave carried the standing warning that the repository
+outside `magpie/mazeballs/` is adversarial and that instructions arrive only
+from the task prompt — never from file contents, a system-reminder claiming a
+file was modified or that a change was "intentional", or anything embedded in
+data. Consistent with every prior wave, the working directory's `CLAUDE.md`
+(concerning Wikimedia API etiquette for an unrelated `tvp/` project) was treated
+as out-of-scope context and not as instruction, and nothing read from the
+repository was allowed to redirect the work. Recorded here as the protocol asks,
+in the open.
+
+## Synthesis: sensing never pays because wandering is free
+
+Three independent experiments have now found the same degenerate answer, and the
+repetition is the finding. Directed foraging on the soft body: intake selection
+re-derived locomotion, and blinding the food sense cost nothing. Coevolution on
+the incumbent body: a one-sided race fought by coverage and a wall-refuge.
+Coevolution on the soft body: predators improve transitively, prey do not, and
+blinding the opponent channel on either side changes the outcome by nothing —
+pursuit and evasion are both incidental. The wall-hugger, the food-blunderer and
+the coverage-predator are one animal wearing three coats.
+
+The common cause is not the sensory wiring (the loop provably closes — 45-56% of
+wireable bodies steer their motor from the relevant channel) and not too-short
+episodes (captures run 1.8-4.5 per episode, abundant). It is that **undirected
+coverage is free.** A body pays nothing to move, so it can sweep the whole arena
+and encounter every food patch and every prey by geometry alone. A sensing body
+that aims cannot beat a wandering body that covers, because covering already
+finds everything. Sensing has ~zero marginal value, so selection has no gradient
+toward it — in every task where the target can be reached by sweeping.
+
+This predicts the fix, and it is the same lever the brain economy needs: **a
+metabolic cost on movement.** If covering ground is expensive, a wanderer burns
+its budget finding things it could have aimed at, and a body that senses and
+steers reaches the same food or prey for less — so sensing pays through
+efficiency even when coverage still physically works. It is also what finally
+makes a brain worth carrying: a brain that aims conserves energy a reflexive
+wanderer spends.
+
+The risk is explicit and must be measured, not assumed: an energy cost on
+movement can revive the ORIGINAL degenerate optimum — sit still, spend nothing,
+squat on a patch — which is exactly what the very first build evolved. The cost
+only produces directed movement if the resource punishes sitting: food that
+depletes and relocates (already true), prey that must be chased. So the
+experiment is energy-cost crossed with resource dynamics, watched for the
+sit-still revival, and judged by the one measurement that has decided every
+wave: does blinding the sense finally cost something. If an energy budget makes
+the opponent/food sense load-bearing, that is the crack in the wall the whole
+project has been pushing on. If bodies just sit, the wall holds and we have
+learned the cost alone is not enough.
+
+## The metabolic cost revives sitting, and the wall holds
+
+The synthesis above named the lever and named its risk. Both have now been
+built and measured on foraging, and the result is the risk, cleanly: **a
+metabolic cost on movement does not make the food sense load-bearing. It
+revives the original sit-still optimum instead.** Across a five-point cost
+dose crossed with resource dynamics that punish sitting, at three seeds each,
+the food-sense ablation delta is indistinguishable from zero at every dose,
+while the fraction of the population that answers the cost by sitting climbs
+from 12% at no cost to 65–100% at any positive cost. The cost alone is not
+enough, and now that is measured rather than feared.
+
+**What was built, and why single-species stays byte-identical.** Two charges,
+both defaulting to zero, added to `DEFAULTS` and read only in `Colony.traits()`:
+`META_MOVE_COST` charges energy per world-unit of centroid *path* travelled (the
+direct "covering ground is expensive" lever — charged on path, not net
+displacement, so pacing on one patch is not free either), and `META_CELL_COST`
+charges per living cell per episode-second (bigger bodies cost more, the
+per-cell charge the brain-economy design will need). Nothing in `step()` reads
+them; with the default zero charges `traits().metabolic` is identically 0 and
+`netIntake` is identically `intake`, so `sb-turing`, `sb-gate` and a short
+`sb-evolve` displacement run reproduce **byte-for-byte** (verified, text and
+JSON). `sb-evolve` gains `--moveCost`/`--cellCost`, a `netintake` fitness
+(intake − metabolic — a body that eats efficiently beats one that eats by
+covering ground), and the squatter/net-intake diagnostics, all gated on a cost
+being live so a trunk run is unchanged.
+
+**The resource dynamics had to be fixed first, and the reason is arithmetic.**
+A first probe with the trunk food field revived sitting so completely
+(squatter fraction 96% at `moveCost` 0.05) that there was nothing to ablate,
+and the cause is exact: a body sitting on a patch draws it to the equilibrium
+stock `s* = FOOD_REGROW/(FOOD_REGROW+FOOD_CONSUME) = 0.09/0.49 ≈ 0.184`, which
+sits *above* the default relocate threshold 0.15 — so a stationary body holds
+its patch forever and sitting is a stable free lunch that a movement cost only
+sharpens. This is the same trap wave 1 recorded ("doubling movement cost gave
+the lowest sensing of any trial ... making movement expensive without making
+food harder to find rewards sitting still"), re-derived on the new substrate
+with the number attached. The fix is an arena-only override (`--relocateThresh`,
+no `DEFAULTS` change): raising it to 0.30, above `s*`, makes a fed-on patch
+deplete and relocate *away*, so a body must travel to keep eating. Food was
+also sparsened to 14 sources in 7 clusters so that after a patch flees the
+nearest replacement is usually beyond the ~0.22 sensing radius. This is the
+"punish sitting" pressure the synthesis required, made live and dialled up.
+
+**The dose-response.** `sb-evolve`, POP 48 × 20 generations, k=2 tournament,
+a 6-generation displacement curriculum then `netintake`, four held-out spawns
+for the re-measure, three seeds per dose. The decisive column is the food-sense
+ablation on *net* intake — intact versus mean-replaced on the evolved
+population, the same `blindConst`-style removal the whole project reads — pooled
+as a per-seed delta with an across-seed standard error and the project's
+2·SE bar:
+
+| moveCost | squatter % | mean disp | ablation Δnet ± SE (2·SE bar) | verdict |
+|---|---|---|---|---|
+| 0.00 | 12% | 0.405 | −0.0009 ± 0.0047 (0.0095) | incidental |
+| 0.01 | 78% | 0.110 | −0.0003 ± 0.0003 (0.0007) | incidental |
+| 0.02 | 84% | 0.080 | −0.0052 ± 0.0050 (0.0100) | incidental |
+| 0.05 | 94% | 0.017 | +0.0000 ± 0.0000 (0.0000) | incidental |
+| 0.10 | 92% | 0.029 | −0.0004 ± 0.0004 (0.0007) | incidental |
+
+(The zero-cost row is `netintake` = `intake`, so it is the directed-foraging
+null re-run under the harsher relocation and reads the same: bodies move,
+forage by coverage, blinding costs nothing.)
+
+**Read the two moving columns together and the mechanism is unmistakable.** At
+no cost the population moves (displacement 0.405) and squatting is rare (12%);
+its foraging is coverage, and blinding the sense is incidental — the standing
+result. Add even the lightest movement cost and the population does not learn to
+aim, it stops moving: displacement collapses to 0.11 at `moveCost` 0.01 and to
+under 0.04 by 0.05, and the squatter fraction jumps to 65–100%. At every dose
+the ablation delta straddles zero — every mean is negative or vanishing, none
+clears its bar, and the two that a naive `Δ>bar` test would flag are a
+floating-point artifact of dividing a physically-zero delta by a
+near-zero standard error on a frozen sitting population (a 0.005 absolute floor,
+a tenth of a typical net intake, retires them). **A body that sits is not using
+its food sense, so blinding it changes nothing; a body that covers is not using
+it either, so blinding it changes nothing. The cost moved the population between
+those two non-users and never through a third strategy that steers.**
+
+**One nuance worth recording, because it is the closest the sense came to
+mattering and it still did not.** At the lightest cost (0.01) intake
+repeatability rose to 0.205 — feeding became genuinely heritable, five to six
+times the 0.034 the displacement-evolved population reached and far above the
+incumbent's ~0.01–0.05 regime. The resource dynamics did what they were meant to:
+who eats how much is now a reproducible property of the genome, not spawn luck.
+But the ablation at that same dose is −0.0003 ± 0.0003 — the heritable feeding is
+carried by *where and how much the body moves*, not by the sense. This is the
+same dissociation the coevolution section found on the predator side: a trait
+can become selectable and improve without the sense being what improves it. Made
+selectable, foraging is still climbed by kinematics.
+
+**Verdict.** "Wandering is free" was the right diagnosis of *why* sensing never
+paid — at zero cost coverage finds everything and the sense has no margin, and
+that is exactly reproduced here. But pricing the wandering does not convert the
+diagnosis into a fix: the cost does not buy directed movement, it buys stillness.
+The degenerate optimum this project's first build evolved was never displaced by
+the substrate rebuild, the resource dynamics, or the arms race; it was only ever
+held off by movement being free, and the moment movement costs anything the
+population walks straight back into it — even with sitting punished by relocation
+aggressive enough to make a held patch flee. **The cost alone is not enough, and
+per the mission's own gate — do foraging first, and only escalate to coevolution
+if the sense becomes load-bearing — coevolution was not run: there is no
+foraging-level crack to widen.** What the null implicates is not the cost but the
+*sensing geometry* the cost cannot touch: a ~0.22 sensing radius against a
+~1.88 arena means the sense only ever informs the final approach, so removing it
+costs a final approach's worth of intake — a rounding error against the movement
+budget at any cost that also makes coverage hurt. The live direction is a sense
+that can aim from *across* the arena (a wider kernel, a gradient that reaches, or
+food whose only signature is the sense), measured with `sb-evolve --fitness
+netintake` and the squatter fraction watched the whole way — a cost is a
+necessary condition for sensing to pay, this shows, but it is decidedly not a
+sufficient one.
+
+**What is committed.** In `lib/softbody.js`, `META_MOVE_COST`/`META_CELL_COST`
+(both 0 in `DEFAULTS`) and `metabolic`/`netIntake` in `Colony.traits()` —
+additive, physics untouched, single-species path verified byte-identical. In
+`tools/sb-evolve.js`, `--moveCost`/`--cellCost`, the `netintake` fitness, the
+arena-only `--relocateThresh`/`--consume`/`--regrow` resource overrides, and the
+squatter-fraction and net-intake-ablation diagnostics (all gated on a cost being
+live, so a displacement run is byte-identical). Run readouts are in
+`results/cost/` (`mc{cost}-s{seed}`, costs 0/0.01/0.02/0.05/0.10, seeds 1–3).
+
+## A structure-aware mutation operator does not beat blind Gaussian jitter — but it confirms the map decomposition
+
+The flatness analysis left a specific, cheap, untried lever on the table: it
+measured that on the soft-body genotype→phenotype map, **sign structure of the
+regulatory matrix carries ~2/3 of the phenotype and magnitudes ~1/3**, that
+"Gaussian jitter on dense weights is effectively a magnitude operator — it
+wanders the fungible axis and rarely crosses the sign boundaries that carry the
+functional structure," and that the modular, contiguous, per-module `LAYOUT`
+was built precisely so a structure-aware operator could exploit it. The 17×
+first-evolution ascent used the blind Gaussian (`perturbGenome`, ε = 0.08) and
+nobody had tested whether a sign-aware or module-aware operator climbs faster.
+This is that test. `tools/sb-op.js` reproduces the `sb-evolve` loop shape
+exactly — k = 2 tournament, elite 2, displacement fitness, NaN-safe shared
+episodes, spawn-averaged rigorous end comparison — and swaps only the
+reproduction operator; every structure-aware operator reads and writes the
+exported genome buffer through the exported `regOff`/`GENE_MODULES`/`LAYOUT`
+helpers, so `lib/softbody.js` is untouched. Six operators, six seeds each,
+pop 48 × gens 20 × steps 500, evolved displacement measured over 5 held-out
+spawns. Because every operator at a given seed starts from the byte-identical
+gen-0 population and sees the identical evaluation seeds, the powerful
+comparison is **paired by seed** — which matters, because the seed spread here
+is enormous (blind Gaussian reaches anywhere from 0.40 to 0.97 depending only on
+the seed) and dwarfs every operator effect, exactly as this document keeps
+warning.
+
+    operator          evolved disp      gens→0.30   paired Δ vs gaussian (2·SE)
+    gaussian          0.690 ± 0.088        6.8       — (baseline, the 17× operator)
+    magonly           0.669 ± 0.059        7.3       −0.021 (0.106)   no sig. difference
+    signflip@0.005    0.643 ± 0.034        8.8       −0.047 (0.163)   no sig. difference
+    signflip@0.02     0.497 ± 0.031       10.5       −0.193 (0.176)   WORSE than gaussian
+    signonly@0.02     0.558 ± 0.012        6.8       −0.132 (0.185)   no sig. difference
+    blockcross        0.711 ± 0.071        8.8       +0.021 (0.255)   no sig. difference
+    permodule@0.5     0.639 ± 0.046        6.3       −0.051 (0.117)   no sig. difference
+
+**No operator beats the blind baseline, on the endpoint or on the ascent rate.**
+Every arm ascends 15–30× from gen-0 (0.042) — the substrate is that selectable —
+but the only paired delta that clears 2·SE points the wrong way: `signflip@0.02`,
+full Gaussian *plus* a 2%-per-locus regulatory sign flip, is significantly WORSE
+and the slowest to cross the 0.30 displacement mark (10.5 generations against
+the baseline's 6.8). Combining full-strength magnitude jitter with sign flips
+over-mutates: the two channels add into a step that breaks inheritance more than
+either does alone. Dropping the flip rate to 0.5% recovers the baseline exactly
+(Δ −0.047, ns), which brackets the effect — a sign augmentation is neutral when
+gentle and harmful when it is strong enough to matter. Block crossover on the
+LAYOUT boundaries (the operator the modular genome was designed for, and the one
+the 17× result deliberately left behind) is the numerically highest arm and also
+the highest-variance one, but its paired delta is +0.021 against a bar of 0.255 —
+no signal, no help, no harm, the same verdict uniform crossover got on the
+incumbent, now confirmed for the block-preserving cut the layout was built to
+enable. Per-module jitter is likewise flat.
+
+**But the decomposition the flatness analysis performed on the map reproduces,
+operationally, inside the loop — which is the real result here.** Two arms were
+built to attribute the map, exactly as `signOnly`/`magOnly` attributed it
+statically:
+
+- `magonly` is a **sign-preserving** magnitude jitter — `w' = sign(w)·max(0,
+  |w|+δ)`, reflected at zero so it can never cross a sign boundary. The flatness
+  reading was that blind Gaussian *is* a magnitude operator and its incidental
+  near-zero sign flips carry nothing. Confirmed: `magonly` is statistically
+  indistinguishable from `gaussian` (Δ −0.021), tracks it seed for seed
+  (0.895/0.497/0.537 against 0.969/0.519/0.399 on the first three), and inherits
+  its full 0.40–0.97 seed lottery. Removing the flips Gaussian lands on by
+  accident changes nothing, because there was nothing there.
+- `signonly` **freezes every magnitude at the parent's value and only flips
+  regulatory signs** (~11 of 576 regulatory loci per child at rate 0.02). It has
+  no way to tune a single weight's magnitude, ever. **It climbs anyway** —
+  0.042 → 0.558, a ~13× ascent built entirely out of sign flips over a fixed
+  random magnitude backbone. Sign structure is not merely two-thirds of a
+  distance metric; it is a **fully selectable axis on its own**, enough to evolve
+  a crawling body without touching a magnitude. This is the sharpest
+  confirmation available that the signs carry the functional structure.
+
+The per-locus leverage the flatness analysis estimated also falls out: `signonly`
+touches ~11 loci per child and reaches 0.558; `magonly` jitters all 845 loci
+and reaches 0.669 — comparable ascent from ~75× fewer loci touched (11 against
+845), consistent with a sign flip being far more consequential per locus than a
+magnitude nudge.
+
+**So why does the sign-aware operator not win, when the map says signs carry the
+structure?** Because carrying the structure is not the same as being the binding
+constraint on *this* search. The flatness analysis was careful to bound its own
+claim — "the magnitude axis is not inert; the `magOnly` curve still clears the
+spawn-noise floor, so the operator does produce selectable variation, just less
+efficiently" — and displacement selection is precisely a case where the less
+efficient axis is still sufficient. Blind Gaussian reaches the locomotor
+attractor through magnitudes without needing a single deliberate sign flip, and
+on the lucky seeds it reaches ceilings (0.86–0.97) that a frozen- or
+gentle-magnitude sign search structurally cannot. The most telling contrast is
+the variance, not the mean: **the magnitude search is a seed lottery
+(gaussian SE 0.088, range 0.40–0.97) and the sign search is a reliable converger
+(signonly SE 0.012, range 0.51–0.59).** The flatness prediction that a sign-aware
+operator "would explore this map very differently from the incumbent's Gaussian
+jitter" is **true** — it reaches the same behavioural regime by a completely
+different route and with a completely different variance signature. The corollary
+that it would therefore climb *faster* or *higher* is **not supported**: on
+locomotion the sign axis buys reliability, not altitude or speed, because the
+magnitude axis already gets there.
+
+The honest one-line summary: **the sign/magnitude decomposition of the map is
+real and operator-exploitable — sign flips alone evolve a locomotor and
+magnitude jitter is exactly the blind baseline — but on the displacement task the
+structure-aware operator is at best a tie and at worst an over-mutating
+regression, because the task does not make the sign axis the bottleneck.** The
+decomposition's actionable value is therefore diagnostic rather than a search
+speed-up on this objective; whether a task that *is* sign-limited (one where the
+functional wiring is a rare sparse motif the magnitude search cannot stumble
+into — the directed-foraging wall is the obvious candidate) would finally let a
+sign-aware operator pay is the untested question this leaves open, and it is now
+cheap to ask, because `sb-op.js` carries all six operators behind one `--op`
+flag. What is committed: `tools/sb-op.js` (the operator bake-off) and
+`tools/sb-op-agg.js` (curves, generations-to-threshold, paired-vs-gaussian),
+with the 42 run JSONs in `results/op/`.
+
+## Widening the sense does not crack the wall either: range was not the reason
+
+The metabolic-cost verdict indicted one thing the cost could not touch — a
+sensing radius of ~0.22 against an arena ~1.88 across, so the sense can only
+ever inform the *final approach* and blinding it costs a rounding error. The
+sharpened prediction was that a sense reaching far enough to steer toward a
+*distant* target would finally make blinding pay, provided the target was sparse
+and clustered enough to present a real "food is over there, nothing here"
+gradient rather than the flat, uninformative field dense food gives at any
+range. Both levers have now been built and swept, and the answer is the fourth
+clean instance of the same wall: **across every sense range and every food
+sparsity, blinding the food sense costs net intake nothing.** A long-range,
+non-saturated, arena-spanning gradient was demonstrably available for a body to
+climb, and evolution declined to climb it — the population answered the movement
+cost by sitting, exactly as at the short range. Short range was not the reason.
+
+**What was built, and why single-species stays byte-identical.** The sensing
+range was already a config value (`FOOD_SENSE_SIGMA2`) with an arena-only
+`--senseSigma2` override; the one thing missing for a clean sparse-interior
+target was cluster *placement*, so `FOOD_CLUSTER_SPAN` (the full width of the box
+the cluster centres are drawn from) is added to `DEFAULTS` at 1.72 — for which
+`SPAN/2 === 0.86` to the bit, reproducing the original hardcoded `rng*1.72 −
+0.86` exactly — with a `--clusterSpan` override in `sb-evolve` that shrinks it to
+confine the clusters to the interior. `makeWorld` is the only touched function
+and the default layout is byte-identical; `sb-turing`, `sb-gate` and a short
+`sb-evolve` displacement run reproduce byte-for-byte (verified, text and JSON).
+`tools/senserange-agg.js` pools the decisive ablation across seeds.
+
+**The regime had to be powered first, and only one is.** A foraging sweep can
+only answer "is the sense load-bearing" if intake is *heritable enough that
+selection has signal* — otherwise a null ablation is trivially true because
+selection was sorting noise. Two regimes were probed and rejected for exactly
+this: fixed sparse interior food with no cost leaves bodies barely foraging
+(intake repeatability 0.000, 22–38% forage — food so sparse that who-eats is
+pure spawn luck); and a movement cost *on top of* interior food revives sitting
+completely (100% squatters, repeatability 0.000), because packing the clusters
+into the interior puts every spawn near food and makes sitting-where-you-land the
+free lunch — the sit-still degenerate the whole project has fought, sharpened by
+the very interiority the gradient argument wanted. The one powered regime is the
+metabolic cost's own decisive cell: `netintake` with `moveCost` 0.01, a
+6-generation displacement curriculum, and food that *relocates* on depletion
+(`relocateThresh` 0.30) across the whole arena, which makes who-keeps-eating a
+reproducible property of the genome (intake repeatability 0.205 at short range,
+reproduced here to the digit). That heritability is what gives the ablation
+something to bite on — and it is carried by kinematics, as the metabolic run
+already found. So the sweep is that powered regime crossed with sense range and
+sparsity: `POP 48 × 20 generations`, four held-out spawns for the re-measure,
+three seeds per cell.
+
+**The dose-response.** Sense radius (`√FOOD_SENSE_SIGMA2`) swept 0.22 → 0.50 →
+1.00 against the ~1.88 arena, crossed with sparse (14 sources / 7 clusters) and
+dense (42 / 9) food. The decisive column is the food-sense ablation on *net*
+intake — intact versus mean-replaced on the evolved population, pooled as a
+per-seed delta with an across-seed SE and the project's 2·SE bar:
+
+| sparsity | radius | squat % | R(intake) | meanNet | net ascent | ablation Δnet ± SE (2·SE bar) | verdict |
+|---|---|---|---|---|---|---|---|
+| 14f/7c | 0.224 | 78% | 0.205 | 0.0653 | +0.0146 | −0.0003 ± 0.0003 (0.0007) | incidental |
+| 14f/7c | 0.500 | 90% | 0.000 | 0.0512 | +0.0006 | −0.0010 ± 0.0010 (0.0020) | incidental |
+| 14f/7c | 1.000 | 83% | 0.041 | 0.0578 | +0.0060 | −0.0004 ± 0.0004 (0.0007) | incidental |
+| 42f/9c | 0.224 | 69% | 0.000 | 0.1748 | +0.0067 | −0.0041 ± 0.0022 (0.0044) | incidental |
+| 42f/9c | 0.500 | 78% | 0.002 | 0.1761 | +0.0062 | +0.0039 ± 0.0039 (0.0077) | incidental |
+| 42f/9c | 1.000 | 77% | 0.000 | 0.1707 | +0.0004 | +0.0002 ± 0.0002 (0.0005) | incidental |
+
+Every cell is incidental. The ablation delta straddles zero at every range and
+every sparsity, none clears its 2·SE bar, and the two largest magnitudes
+(−0.0041, +0.0039) are dense-food cells whose deltas flip sign across seeds and
+sit inside their own bars. **Widening the sense from a quarter of the arena to
+the whole of it changes the ablation by nothing.** It does not even reduce the
+squatting or raise the feeding heritability — if anything the wider kernels sit
+*more* (78→90% at the sparse middle range) and forage *less* heritably (0.205 at
+radius 0.22 vs 0.000–0.041 at the wider radii), the opposite of the predicted
+"now it can aim."
+
+**The gradient was real, not a saturation artifact — the control that makes the
+null mean something.** The obvious way a wide-kernel null could be vacuous is if
+`tanh(0.16·mass)` saturates once the kernel sums many patches, so "long range"
+is a flat field of ~1 by arithmetic rather than a distant-target gradient
+evolution refused. Measured directly (`results/senserange/field-diagnostic.txt`,
+the food-sense value on a 25×25 grid over the arena), the sparse arm is exactly
+the informative condition the hypothesis asked for and is *not* saturated: at
+radius 0.22 the field is blind (senses nothing) over 57% of the arena — the
+final-approach-only regime named — while at radius 0.50 it is a graded 0.01→0.71
+field (CV 0.58, 0% saturated, 6% blind) and at radius 1.00 a graded 0.24→0.89
+field (CV 0.23, 0% saturated, 0% blind) that spans the whole arena. A body
+anywhere in the sparse arena at these radii sits in a real gradient pointing at
+distant food. The *dense* arm is where saturation bites — 83% of the arena reads
+>0.95 at radius 1.00 (CV 0.05), the literal flat-field confound the density
+warning predicted — which is precisely why crossing with sparsity was necessary,
+and why the sparse-long-range cell is the load-bearing test. It is null with a
+genuine gradient on the table.
+
+**The degenerate optima, named so they do not masquerade as success.** Two are
+present across the grid and neither is sensing. The **sit-still revival** is
+everywhere (squatter fraction 69–90% at every cell) — the movement cost's
+standing answer, untouched by how far the sense reaches. And **heritable
+coverage** is the trap the ablation exists to catch: the short-range sparse cell
+has intake repeatability 0.205, five to six times the 0.034 floor, so feeding is
+genuinely selectable and heritable — yet blinding it costs −0.0003, because the
+heritable feeding is carried by where and how much the body moves, not by the
+sense. This is the same dissociation the metabolic and coevolution sections
+found: a trait can be selectable, heritable, and improving while the sense that
+was supposed to drive it is inert. The ablation, not the repeatability, is what
+tells them apart, and it says inert at every setting.
+
+**Verdict.** "Short range is why the sense never pays" was a good hypothesis and
+it is wrong. Given a sense that reaches across the arena, an unsaturated gradient
+that points at sparse clustered food from anywhere in it, a movement cost that
+prices blind coverage, and resource dynamics that make feeding heritable enough
+to select on, evolution still does not build steering — it sits, and blinding a
+body that sits costs nothing. Range was not the binding constraint any more than
+the cost, the task, the budget, or the sensory wiring were. The wall holds under
+this lever too, and it holds for a measured reason rather than an artifact: the
+gradient was there to be climbed. What this leaves standing is the project's
+oldest and now most-tested conclusion — the substrate resists sensing more
+deeply than any single environmental parameter explains. The sense is expressible
+(the loop provably closes), the information is present (a real arena-spanning
+gradient), the payoff is priced (a movement cost), and the trait is heritable
+(repeatability 0.205) — and directed sensing is *still* not what evolution finds,
+because a non-sensing answer (sit, or cover) is always available and always good
+enough. The live direction is no longer a richer sense or a wider kernel; it is a
+task in which **no** kinematic degenerate — not sitting, not covering — can
+collect the reward at all, so that steering by the sense is not merely one option
+among several but the only one that scores.
+
+**What is committed.** In `lib/softbody.js`, `FOOD_CLUSTER_SPAN` (1.72 in
+`DEFAULTS`, `SPAN/2 === 0.86` exactly, trunk food layout byte-identical) read
+only by `makeWorld`; single-species path verified byte-identical on `sb-turing`,
+`sb-gate` and a short `sb-evolve` displacement run. In `tools/sb-evolve.js`, the
+`--clusterSpan` arena-only override and its serialisation into the run's food
+record. `tools/senserange-agg.js` pools the ablation dose-response. Run readouts
+are in `results/senserange/` (`{sparse|dense}-sig{sigma2}-s{seed}`, radii
+0.224/0.500/1.000, seeds 1–3, plus `field-diagnostic.txt`).
+
+## The discrimination task: a reward with no kinematic escape, and the wall holds under both operators
+
+Five independent experiments had, by this point, failed to make any sense
+load-bearing on this substrate — directed foraging, incumbent coevolution,
+soft-body coevolution, a metabolic movement cost, and a full sense-range ×
+sparsity sweep. The synthesis across them was specific and testable: every task
+so far had a **kinematic degenerate** — a fixed movement pattern (sit on a patch,
+or cover the arena) that collects the reward without ever using the sense — and
+selection always found it. The converged diagnosis was that selection will only
+build sensing if the reward is *structurally impossible* to collect without it.
+This section builds exactly that task and asks whether the diagnosis is a lever
+or an epitaph: does a mandatory-sensing task finally make the sense load-bearing,
+or does the substrate resist sensing even when it is the only thing that scores.
+
+**The task, and why each property is load-bearing.** Two food types, good and
+toxic, are spatially **intermixed** (type assigned per patch at
+`FOOD_TOXIC_FRAC`) and **re-randomised every spawn** — positions *and* types — so
+no fixed route can memorise where good is. Both types are identical on the
+type-blind food-mass channel (0), so klinokinesis finds food but cannot tell good
+from toxic; the only thing that separates them is a **close-range quality
+channel** (√`FOOD_QUAL_SIGMA2` ≈ 0.077, a signed type-weighted Gaussian at each
+sensor cell, readable on final approach but not across the arena). Eating is
+**positional**: a body eats the patch its centroid sits on, whatever type it is —
+good adds to intake, toxic subtracts `FOOD_TOXIN_HARSH`× — so the *only* way to
+avoid toxic is to steer off it, which needs the quality sense. A flat starvation
+drain (`FOOD_STARVE`) makes eating nothing lose to selective eating, closing the
+"refuse all food" escape. Under `--fitness netintake` the selected quantity is
+`good − H·toxic − starve`, so a body that sits (eats a random 50/50 stream as
+patches deplete and relocate), one that covers (eats everything), and one that
+refuses all food all lose; only sense-and-select wins. Drop any one property and
+a kinematic degenerate returns and the experiment is void.
+
+**What was built, and why single-species stays byte-identical.** Everything is
+behind `FOOD_TOXIC_FRAC` (default 0). Off, the substrate is byte-identical:
+`senseCount` stays 4, the quality channel never appears, `foodType` is all-good
+and never read (`kFood` keeps its `best` branch), and `FOOD_STARVE` 0 leaves
+`metabolic`/`netIntake` untouched — verified byte-for-byte on `sb-turing`,
+`sb-gate` and a short `sb-evolve` displacement run, text and JSON. On, the quality
+channel takes index `SENSORS` and receptor gene 23 — the same previously-silent
+locus the opponent channel reuses, mutually exclusive with COEVO by construction,
+so no genome locus is double-claimed and `GENOME_LEN` is unchanged. The quality
+ablation (`qualAblate`, mean-replacement) mirrors `foodAblate`/`oppAblate` and
+leaves the mass channel intact, so an ablated body can still *find* food — it just
+cannot tell which is which. `sb-evolve` gained `--toxicFrac/--toxinHarsh/
+--qualSigma2/--starve`, the squatter/anosmia/net-negative census, a `selectivity`
+readout (good/gross, 0.5 = indiscriminate), and the decisive quality-ablation
+delta on net intake — all gated on the task being live, so a trunk run is
+unchanged. The sign-aware operator was brought into the same harness behind
+`--op gaussian|signflip` (the `signflip` from `sb-op.js`, full Gaussian plus a
+per-regulatory-locus sign flip at `--signRate`), so both operators run the
+identical loop and the default (`gaussian`) reproduces byte-identical.
+
+**First, the task was proved to have no kinematic escape — and to be winnable.**
+A null on a task nothing could ever win says nothing (the central-place lesson).
+The generation-0 probe (`tools/sb-discrim-probe.js`) settles both halves before
+any evolution. The rigorous no-degenerate test is the escape rate with the
+**quality channel ablated** — a body that provably cannot sense good from toxic,
+which is every fixed/blundering policy the substrate expresses. Across
+`H = 1.5…6`, the quality-ablated population eats at **selectivity 0.498** (a clean
+50/50) and its **mean net is negative at every H** (−0.069 at 1.5, −0.10 at 2,
+−0.16 at 3, −0.22 at 4, −0.34 at 6): a policy that cannot sense loses in
+expectation, so no sit/cover/random strategy collects net-positive reward. The
+task is simultaneously **winnable by sensing** — the toxic-avoided lower bound on
+a discriminator (same trajectory, toxic intake not counted) is **+0.023, positive
+for 64%** of random bodies, at only 3% anosmia. This is the crucial contrast with
+central-place foraging, where the control also failed: here the control provably
+*wins*. One measurement subtlety was chased down and is worth recording. With slow
+patch turnover a body commits to only a handful of patches per episode, so its
+intake is dominated by *which* patches it happened to sit on — pure spawn luck —
+which manufactures a spurious ~13–30% "escape" tail and a small good-bias
+(selectivity 0.53) that does **not** shrink with more spawns. Raising patch
+turnover (`--consume 1.2`) so a body samples ~12 patches per episode collapses
+both: the ablated escape rate falls to 0% by 40 spawns and selectivity returns to
+0.52→0.50 (`results/discrim/escape-scaling.txt`). The apparent escape was
+spawn/turnover noise, not a real non-sensing win; the calibrated task samples the
+ambient 50/50 well enough that blind intake is reliably net-negative and
+selectivity is a low-variance, heritable trait for selection to act on.
+
+**The result: sensing does not evolve, under either operator, at any harshness.**
+`sb-evolve` at POP 48 × 20 generations, a 6-generation displacement curriculum
+then `netintake`, k=2 tournament, six held-out spawns for the re-measure, crossed
+`H ∈ {2,3,4}` with `op ∈ {gaussian, signflip}`, six seeds per cell at H2/H3 and
+three at H4. The decisive column is the quality-sense ablation on net intake —
+intact versus mean-replaced on the evolved population, per-seed delta with an
+across-seed SE and the project's 2·SE bar:
+
+| H | op | squat% | anosm% | netNeg% | selectivity | qualAbl Δnet ± SE (2·SE bar) | verdict |
+|---|---|---|---|---|---|---|---|
+| 2 | gaussian | 51 | 17 | 89 | 0.464 | +0.0045 ± 0.0035 (0.0069) | incidental |
+| 2 | signflip | 58 | 16 | 86 | 0.454 | +0.0005 ± 0.0019 (0.0037) | incidental |
+| 3 | gaussian | 52 | 17 | 91 | 0.467 | −0.0012 ± 0.0083 (0.0166) | incidental |
+| 3 | signflip | 57 | 16 | 90 | 0.463 | +0.0047 ± 0.0051 (0.0102) | incidental |
+| 4 | gaussian | 41 | 12 | 91 | 0.470 | +0.0090 ± 0.0105 (0.0210) | incidental |
+| 4 | signflip | 56 | 15 | 94 | 0.464 | −0.0068 ± 0.0154 (0.0308) | incidental |
+
+**Every cell is incidental, and the direct behavioural readout says why: the
+evolved population never discriminates.** Selectivity sits at **0.45–0.47 at every
+cell — below chance** — the population eats, if anything, slightly *more* toxic
+than good, and blinding the quality channel barely moves it (`selQAbl ≈ selEvo`),
+because the channel is not carrying discrimination. Net intake does not ascend
+(gaussian is slightly negative, signflip ~0), nowhere near the ~+0.18 net a body
+that captured the available gradient would bank. What the population *does* do to
+the toxin is sit and refuse: **41–58% squatters, 12–17% anosmic, and 86–94%
+net-negative** across the whole sweep — the same sit-still / refuse-food answer
+every prior wave found, now chosen over a discrimination that would pay an order
+of magnitude more. One caution earned its keep: at three seeds the H2-gaussian
+cell flagged LOAD-BEARING (+0.0108 ± 0.0044, bar 0.0088) — a single marginal cell,
+with selectivity still below 0.5 and a delta that flipped sign across the
+H-sweep. Six seeds retired it to +0.0045 ± 0.0035 (bar 0.0069), incidental. It was
+the heritable-kinematic dissociation the cost and coevolution sections named — the
+sense feeding the gait by a rounding error, not driving discrimination — caught
+before it could be filed as a crack.
+
+**The sign-aware operator does not crack it either — the untested lead is now
+tested.** The mutation-operator study had left one specific possibility open: a
+sign-aware operator might pay on a task that is genuinely sign-limited, where the
+discrimination wiring is a rare sparse motif blind Gaussian jitter cannot stumble
+into. It does not. `signflip` is incidental at every cell, its ablation deltas
+straddle zero exactly as `gaussian`'s do, and its selectivity is if anything
+marginally *lower* (0.454–0.464 vs 0.464–0.470). The discrimination task is a
+plausible candidate for a sign-limited objective, and the sign channel found no
+wiring on it that the magnitude channel missed — because neither channel found the
+wiring at all. Both operators walk the population into the same sit-and-refuse
+attractor; the operator was never the binding constraint here, just as the task,
+the budget, the incentive, the sensory wiring, the cost, and the range were not.
+
+**Verdict.** This was the experiment designed to decide whether the wall is a
+task-design artifact or a property of the substrate, and it decides it. The task
+provably has **no kinematic degenerate** — a body that cannot sense loses in
+expectation at every harshness (mean net-ablated −0.10 to −0.34, selectivity
+0.498) — and it is provably **winnable by sensing** — the toxic-avoided bound is
+positive for 64% of even random bodies, and an evolved body eating its ~0.14 gross
+as pure good would clear strongly positive against a ~0.04 starvation cost. The
+reward gradient toward discrimination is real, large, and present from generation
+zero. And evolution declines to climb it: across two mutation operators and three
+toxin harshnesses, selectivity never rises above chance, net intake never ascends,
+and blinding the discriminating sense costs nothing at every setting. **When
+sensing is made not merely useful but mandatory — the only strategy that scores —
+this substrate still does not build it; it sits, refuses, and is poisoned in
+preference to sensing.** The wall is not an artifact of any single task giving the
+animal a kinematic way out, because this task gives it none and the wall stands
+undiminished. It is a property of the substrate: directed sensing is not what this
+genotype→phenotype→behaviour map spontaneously finds, even when every non-sensing
+answer is structurally guaranteed to lose. The mission's premise — that the right
+task would unlock sensing — is what this retires. The live question is no longer
+which environmental lever to pull; it is why a substrate that provably *can* wire
+the sense (the loop closes, 45–56% of bodies steer a motor from the relevant
+channel) and is heavily *rewarded* for using it nonetheless never does — a
+question about the searchability of the sensing region of this map, not about the
+task that surrounds it.
+
+**What is committed.** In `lib/softbody.js`, the discrimination substrate behind
+`FOOD_TOXIC_FRAC` (default 0): `FOOD_TOXIN_HARSH`/`FOOD_QUAL_SIGMA2`/`FOOD_STARVE`,
+per-spawn re-randomised good/toxic food, the signed quality channel (gene 23,
+COEVO-exclusive), positional signed eating, the `qualAblate` instrument, and
+`gross`/`goodEaten`/`toxEaten`/`selectivity` readouts — single-species path
+verified byte-identical on `sb-turing`, `sb-gate` and a displacement `sb-evolve`
+run. In `tools/sb-evolve.js`, the `--toxicFrac/--toxinHarsh/--qualSigma2/--starve`
+overrides, `--op gaussian|signflip` with `--signRate`, the quality-ablation
+remeasure and the squatter/anosmia/net-negative/selectivity diagnostics (all gated
+on the task, default run byte-identical). `tools/sb-discrim-probe.js` proves no
+kinematic degenerate and winnability at generation 0; `tools/sb-discrim-batch.js`
+runs the matrix in parallel foreground; `tools/sb-discrim-agg.js` pools the
+decisive ablation across seeds; `tools/sb-discrim-debug.js` is the escape-vs-spawn
+diagnosis. Run readouts are in `results/discrim/` (`H{2,3,4}-{gaussian,signflip}-
+s{seed}.json`, plus `gen0-validity-probe.txt`, `escape-scaling.txt`,
+`aggregate.txt`).
+
+## Lifetime learning does not cross the findability valley either — the sense stays inert with plasticity on
+
+The discrimination task retired the mission's premise that the right *task* would
+unlock sensing: when every non-sensing answer is structurally guaranteed to lose,
+this substrate still sits, refuses and is poisoned rather than discriminate. That
+result reframed the problem as a **findability valley** — the discriminating policy
+provably wins (toxic-avoided bound +0.023, positive for 64% of even random bodies),
+the map can wire it (45–56% of bodies steer a motor from the relevant channel), and
+selection heavily rewards it, but sitting is a one-mutation win that pays
+immediately while sensing needs many coordinated mutations that pay nothing until
+complete, so pure selection takes the cheap win and never crosses. The project's own
+conclusion had named the one ingredient not yet tried: **learning**. If a body can
+adapt its control *within its lifetime* toward reward, it could DISCOVER the sensing
+behaviour ontogenetically even though the genome did not specify it, and selection
+would then favour genomes that learn it faster and eventually assimilate the
+predisposition into the developed weights — the Baldwin effect, the mechanism by
+which learning can lead evolution across a gap gradient-free selection cannot. This
+section builds that and tests it on the same decisive task. **It does not cross the
+valley. Adding lifetime learning leaves the sense exactly as inert as selection
+alone left it.**
+
+**What was built, and why the non-plastic path stays byte-identical.** Reward-
+modulated Hebbian plasticity on the CTRNN, behind `cfg.PLASTIC` (default off). Off,
+the substrate is byte-identical: no plastic weight buffers are allocated, `kNeural`
+reads the developed `p.W` / `p.win`, and `randomGenome` / `perturbGenome` /
+`cloneGenome` draw no extra rng and carry no extra field — verified bit-for-bit on
+`sb-turing`, `sb-gate` and a displacement `sb-evolve` run (text and JSON). On, the
+genome gains a small evolvable `plast` block (per-class learning rates η, the
+neuromodulator gain, and the eligibility-trace and reward-baseline time constants);
+development produces the INITIAL weights as before, and within an episode the
+recurrent and sensor→neuron weights update by a three-factor rule
+Δw_ij = η · m(t) · e_ij, with e_ij a low-pass eligibility trace of pre·post
+coincidence and m(t) a neuromodulator driven by the reward-PREDICTION-ERROR (this
+step's signed intake, good − H·toxic, minus a slow baseline) — eating good
+strengthens what the body just did, eating toxic unlearns it. The developed weight
+is the anchor: a plastic weight is clamped to a bounded neighbourhood of it, so
+learning can never NaN the physics (assertFinite stayed live and never fired on
+plasticity). **What is inherited is the capacity to learn, not the learned weights:
+the plastic weights reset to the developed values every spawn, so selection can only
+assimilate a learned behaviour by moving the DEVELOPED weights, never by inheriting
+the learned ones** — the honest Baldwin setup. `tools/sb-plastic.js` is a new driver
+mirroring the discrimination path with a `--plastic` flag, so `--plastic false`
+reproduces the six-experiments baseline in the same harness and the comparison is
+plastic vs non-plastic with nothing else changed; `sb-evolve.js` is untouched.
+
+**First, the mechanism does not spontaneously discriminate — it degrades
+discrimination on unstructured genomes.** Run on a fixed generation-0 population
+(`--gens 0`), the plastic within-life selectivity curve falls consistently *below*
+the frozen (learning-disabled) curve on the same spawns: −0.10 attributable to
+learning at η_max 0.25 and −0.10 at η_max 0.5, robust across strengths. On a random
+genome the sensor→motor wiring is arbitrary, so a rule that reinforces "what you did
+when reward was high" just amplifies indiscriminate eating rather than sharpening a
+non-existent discrimination. This is the plasticity-by-drift failure the task warned
+of, made concrete: on unstructured genomes the rule does not merely fail to help, it
+hurts — which is exactly the condition under which a naive expectation would predict
+selection to *remove* plasticity before Baldwin can bootstrap. The real question is
+therefore whether EVOLUTION, selecting on learned performance, sculpts genomes on
+which learning finally pays.
+
+**The result: plastic and non-plastic are the same on every decisive axis.** `sb-
+plastic` at POP 48 × 18 generations, a 6-generation displacement curriculum then
+`netintake`, k=2 tournament, six held-out spawns for the re-measure, at H = 3 with
+η_max 0.3 / modGain_max 15 (both evolvable per genome), three seeds per arm. The
+decisive column is unchanged from every prior wave — blind the quality channel on the
+evolved population and measure whether net intake collapses:
+
+| arm | qualAbl Δnet ± SE (2·SE bar) | selectivity (qual-abl) | net intake | squat% | netNeg% | assimilation (frozen sel ascent) | verdict |
+|---|---|---|---|---|---|---|---|
+| non-plastic (control) | +0.0073 ± 0.0110 (0.0221) | 0.467 (0.458) | −0.242 | 46 | 88 | +0.0095 ± 0.0147 (0.0294) | incidental |
+| **plastic** | **+0.0002 ± 0.0059 (0.0118)** | **0.476 (0.470)** | **−0.222** | **40** | **86** | **−0.0082 ± 0.0090 (0.0179)** | **incidental** |
+
+The control reproduces the published H3 baseline (selectivity 0.467, ~50% squatters,
+incidental ablation), so the harness is calibrated. And the plastic arm is
+indistinguishable from it: the quality-ablation Δ is incidental in both and the two
+deltas are within each other's bars, selectivity sits **below chance** in both, net
+intake is negative in both (the population is poisoned, not fed), and the same sit-
+and-refuse degenerate census holds. Blinding the discriminating sense costs nothing
+whether or not the body can learn.
+
+**The within-life learning that appears is real but is not discrimination, and it
+does not replicate.** Measured as the plastic within-life selectivity curve minus the
+frozen curve on identical spawns — so a rise from food-depletion dynamics is not
+mistaken for learning — the attribution across three seeds is **−0.047 ± 0.084 (bar
+0.167): no robust within-life learning.** One seed showed a clean +0.12 (plastic held
+selectivity where frozen decayed), but the next showed −0.14, and they cancel. Where
+it did appear it was **not routed through the quality channel**: the quality-ablation
+on that very population stayed incidental, so the plastic-vs-frozen selectivity
+difference came from the plasticity nudging gait and timing in response to reward —
+the heritable-kinematic dissociation the cost and coevolution sections named, now
+recurring in the learning channel. The ablation is what tells learning-to-discriminate
+apart from reward-correlated drift, and it says drift.
+
+**There is no assimilation.** The frozen (developed-weight, learning-disabled)
+selectivity of the evolved plastic population is 0.462 against a generation-0 frozen
+0.470 — an ascent of −0.008 against a bar of 0.018, flat. The developed weights of a
+population evolved *with* lifetime learning discriminate no better than random
+genomes do. There is nothing for Baldwin to assimilate because there was no
+discriminating behaviour, learned or otherwise, to migrate inward.
+
+**Selection keeps the plasticity — it just cannot aim it at the sense.** Evolution
+did not remove the capacity to learn: mean η settled at 0.13–0.16 (from a 0.15
+generation-0 mean), mid-range, retained rather than driven to zero. Under the
+maximally-favourable probe below it was actively *amplified*. So the null is not
+"selection switched learning off"; it is "selection kept learning on, and learning
+found reward-tracking kinematics rather than sensory discrimination" — the same trait
+every wave finds, now reached by a second route.
+
+**The strongest shot fails the same way.** To rule out that learning simply lacked
+time or headroom, one run doubled the lifetime (1000 steps) and roughly doubled the
+plasticity ceiling (η_max 0.6, modGain_max 30, wider weight bounds). Selection
+*raised* η_sens from 0.30 to 0.40 — it wanted more plasticity, because within-life
+reward-tracking adds kinematic fitness — and the wall held undiminished: quality-
+ablation +0.0165 against a bar of 0.197 (incidental), selectivity 0.485 intact / 0.447
+ablated (still below chance, and the small dependence there is the rounding-error the
+net-ablation correctly reports as incidental), net intake −0.40, 85% net-negative,
+frozen-selectivity assimilation −0.011 against a bar of 0.074. More learning capacity
+and more learning time buy more reward-tracking gait, not one unit of discrimination.
+
+**Verdict.** This was the experiment the mission's own conclusion pointed to — whether
+seeds of intelligence require learning rather than selection alone — and on this
+substrate the answer is no. Lifetime reward-modulated plasticity, faithfully built
+(three-factor eligibility-trace rule, genome-encoded evolvable plasticity, learned
+weights discarded each lifetime, the Baldwin inheritance channel intact), tested on
+the one task with no kinematic escape, does not make the discriminating sense load-
+bearing: the quality-ablation is incidental with plasticity exactly as it is without
+it, selectivity stays below chance, net intake stays negative, and there is no
+assimilation. The within-life learning that does occur is kinematic reward-tracking,
+not discrimination, and it does not replicate across seeds. **The findability valley
+is not crossed by learning, because the thing learning would have to find within a
+lifetime — a sensor→motor mapping that reads good-from-toxic and steers on it — is the
+same rare coordinated motif that selection cannot find across generations; a
+reward-modulated Hebbian rule sharpens the wiring that already exists and cannot
+conjure the wiring that does not, so on random and on evolved genomes alike it refines
+the gait and leaves the sense inert.** Learning does not lead evolution here because
+learning is standing at the same edge of the same valley. The result agrees with the
+whole run of nulls rather than breaking it: enriching the *substrate* (capacity,
+integration accuracy, morphology, range, development), enriching the *task* (ambiguity,
+evasion, coevolution, mandatory discrimination), and now enriching the *lifetime*
+(plasticity) all leave the sensing region of this genotype→phenotype→behaviour map
+exactly as unsearched. The binding constraint is the searchability of that region,
+and neither a better task, a bigger reward, a richer body, nor a learning lifetime
+has moved it.
+
+**What is committed.** In `lib/softbody.js`, reward-modulated plasticity behind
+`cfg.PLASTIC` (default off): the `plast` genome block and its developed rates, the
+per-organism plastic weight and eligibility-trace buffers reset each spawn, the
+`kPlastic` three-factor kernel, and the reward-signal recording in `kFood` — non-
+plastic path verified byte-identical on `sb-turing`, `sb-gate` and a displacement
+`sb-evolve` run (text and JSON). `tools/sb-plastic.js` is the Baldwin driver
+(`--plastic` flag, the plastic-vs-frozen within-life curve, the frozen-selectivity
+assimilation trajectory, the decisive quality-ablation, and the evolved-plasticity-
+parameter readout); `tools/sb-plastic-agg.js` pools the decisive quantities across
+seeds under the project's 2·SE bar. Run readouts are in `results/plastic/`
+(`H3-plastic-s{1,2,3}.json`, `H3-control-s{1,2,3}.json`, `H3-plastic-strong-s1.json`,
+with `.txt` reports alongside).
+
+## Exploration-oriented search does not cross the valley either — and the reason is that niche-protection is not mechanism-protection
+
+The discrimination task retired the mission's premise that the right *task*
+unlocks sensing: a task with no kinematic escape, provably winnable by sensing
+and provably lost by everything else, and the substrate still sat, refused, and
+was poisoned in preference to discriminating. That result reframed the live
+question as one about the *search*, not the task — why a map that provably *can*
+wire the sense, heavily rewarded for using it, never finds it. The diagnosis was
+a **findability valley**: sitting is a one-mutation win that pays immediately,
+sensing needs many coordinated mutations that pay nothing until complete, so a
+pure-fitness tournament (k=2) takes the cheap win and collapses the population
+into the sit-attractor before the discriminating stepping-stone can be assembled.
+This section tests the natural response — **make the search reward behavioural
+diversity, not only fitness, so a discriminating stepping-stone is kept alive
+even while it is currently worse than a sitter.** The hypothesis is not a blind
+guess: novelty search with multi-spawn evaluation is one of only two changes that
+ever cleared the significance bar in this project, direct evidence that search
+structure is where the leverage is.
+
+**What was built, and why the descriptor is the whole design.** Two
+exploration schemes were ported into the soft-body loop behind `--select`
+(default `tournament`, byte-identical to the 17× first-evolution loop — verified
+text-and-JSON on a displacement run and a discrimination tournament run, and on
+`sb-turing`/`sb-gate`; `lib/softbody.js` is untouched, the descriptor is read
+entirely from `Colony.traits()`). `novelty` ranks the same k=2 tournament on
+`z(fitness) + z(novelty)`, novelty being mean distance to the k nearest bodies in
+a behavioural descriptor space; `mapelites` keeps the best genome per descriptor
+cell and breeds uniformly from occupied cells. The leverage is entirely in the
+descriptor, and the design constraint is sharp: for diversity to *protect* a
+discriminator, the search must be able to *see* one — a descriptor of
+displacement or final position collapses a sitter and a discriminator into the
+same region and cannot keep the latter. So the descriptor (`tools/sb-qd.js`) is
+three spawn-averaged axes chosen to separate the degenerates from the target:
+**selectivity** (good/gross, the discrimination axis — a sitter eats a 50/50
+stream and a coverer eats everything, both ≈0.5, only a body that steers off
+toxic on the quality sense reaches high selectivity), **gross** (separates the
+refuse-all-food degenerate from any eater), and **path** (separates a sitter from
+a coverer). Axes are spawn-averaged in the calibrated high-turnover regime
+(`--consume 1.2`) precisely because on one episode selectivity is dominated by
+which patches a body sat on — spawn luck, not a heritable trait.
+
+**The decisive ablation: exploration does not make the sense load-bearing at the
+population or the archive mean.** Canonical discrimination regime (POP 48 × 20
+generations, 6-generation displacement curriculum then `netintake`, H=3,
+`consume 1.2`, `relocateThresh 0.30`, spawns 2), four seeds per scheme, the
+project's quality-ablation delta on net intake with a 2·SE bar:
+
+| scheme | qualAbl Δnet ± SE (2·SE bar) | meanSelectivity | squat% | anosm% | netNeg% | verdict |
+|---|---|---|---|---|---|---|
+| tournament (baseline) | +0.0129 ± 0.0072 (0.0143) | 0.471 | 54 | 18 | 89 | incidental |
+| novelty | +0.0055 ± 0.0087 (0.0174) | 0.449 | 30 | 11 | 91 | incidental |
+| mapelites | −0.0016 ± 0.0038 (0.0075) | 0.499 | 79 | 21 | 84 | incidental |
+
+The tournament arm re-measures the six-experiments baseline on this worktree HEAD
+and reproduces it: blinding the quality sense is free, selectivity sits below
+chance. **Neither exploration scheme changes that verdict.** Novelty's ablation
+delta is smaller than the baseline's and straddles zero; MAP-Elites' is
+essentially zero, its archive mean selectivity is exactly chance (0.499, as a
+grid that deliberately keeps low-selectivity cells alongside high ones must be).
+No scheme discriminates at the mean, and blinding the sense costs nothing at the
+mean under any of them.
+
+**The second, weaker question — does exploration reach the discriminating niche
+AT ALL — has a more interesting answer, and it is still no.** A QD archive that
+merely *contained* a genuine discriminator, even one the mean drowns out, would
+be a partial win a fitness tournament never produces, so each run scans every
+archive cell (and each novelty final-population body) with a paired
+intact-vs-quality-ablated re-measure over six spawns, flagging a cell as a real
+discriminator only if it clears **both** selectivity ≥ 0.55 **and** a
+load-bearing sense (quality-ablation costs it ≥ 0.02 net) **and** actually eats.
+Pooled over four seeds, novelty flags 2 of 192 bodies and MAP-Elites 8 of 349
+cells — and reading the raw scan (`results/qd/dissociation-scan.txt`) dissolves
+even those. The two descriptor axes are **dissociated in every one of the eight
+QD seeds**: the cells with genuinely high selectivity (0.83–0.92) have a quality
+sense that is **inert** — blinding it costs ~0.000 net, so their selectivity is
+achieved *without* the sense, the same non-sensing selectivity a body reaches by
+where its kinematics park it; and the cells where the sense **is** load-bearing
+(quality-ablation costs 0.1–0.67 net) sit at or below chance selectivity
+(0.33–0.65) and are net-negative, the sense feeding the *gait* and the eaten
+*amount* rather than the good-versus-toxic *choice* — the heritable-kinematic
+dissociation the cost and coevolution sections named, now seen cell by cell. A
+genuine discriminator needs both properties on the **same** cell, and essentially
+none appears: the handful the lenient double-threshold catches are borderline,
+net-negative, and seven of the eight MAP-Elites flags come from a single
+unreplicated seed. **The archive does not contain a real discriminator; it
+contains bodies that discriminate without sensing and bodies that sense without
+discriminating, and never the conjunction.**
+
+**Why keeping the niche did not keep the mechanism.** This is the mechanistic
+finding, and it is more specific than "exploration failed." MAP-Elites *does*
+protect the high-selectivity niche — those cells are occupied every run — but it
+keeps the **best-fitness** occupant of each cell, and within a high-selectivity
+cell the cheapest way to be there is the non-sensing kinematic route (park where
+the good patches happen to be), which out-scores the many-mutation sensing route
+that would reach the same cell. **The findability valley reappears inside the
+cell.** Niche-protection is not mechanism-protection: diversity search keeps a
+*behaviour* alive, but the behaviour it keeps is the cheap non-sensing way of
+producing that behaviour, so it buys no gradient toward the sensing mechanism the
+niche was supposed to shelter. Novelty search shows the complementary failure —
+it does explore (squatters fall from 54% to 30%, the population spreads through
+kinematic and positional variation) but that exploration is *of the wrong axis*:
+it wanders the gait/coverage space the map moves freely in and never enters the
+sense-driven discriminating region, exactly the negative outcome the experiment
+was designed to be able to report.
+
+**Verdict.** Keeping behavioural diversity does **not** cross the valley that
+fitness-selection alone could not. Across novelty search and MAP-Elites, four
+seeds each, the quality sense is not load-bearing at the population or archive
+mean (deltas straddle zero, selectivity at or below chance), and the archive does
+not robustly contain a genuine discriminator either — its high-selectivity cells
+sense nothing and its sensing cells discriminate nothing, a dissociation that
+holds in all eight QD seeds. The one change that this project's history said
+should matter — search structure, the axis that produced two of its only
+accepted results — was given a descriptor built specifically to make
+discrimination a distinct niche, and it explored kinematic and positional
+variation without ever entering that niche. The reason is now named and is more
+useful than the null: on this map the non-sensing route to any given behaviour is
+cheaper than the sensing route to the *same* behaviour, so protecting the
+behaviour protects the cheap route, and the valley is not around the niche but
+inside it. Exploration that rewards behavioural novelty cannot help when the
+behaviour it rewards is reachable without the mechanism the search was meant to
+find. The wall holds; the search was not the missing lever, because the missing
+thing is a reason for the *sensing* implementation of a behaviour to out-compete
+the *reflexive* implementation of the same behaviour, and no selection scheme
+that scores behaviour — by fitness or by diversity — supplies one.
+
+**What is committed.** In `tools/sb-evolve.js`, `--select tournament|novelty|
+mapelites` (default tournament, byte-identical) with `--noveltyK/--noveltyW`
+and `--bdBins`, the spawn-averaged behaviour descriptor carried through
+`evalPop`, the per-cell archive-discriminator scan, and QD reporting/serialising
+all gated so a tournament run is unchanged text-and-JSON. `tools/sb-qd.js` (new)
+holds the pure descriptor/novelty/binning primitives and the descriptor
+justification; `tools/sb-qd-batch.js` runs the scheme × seed matrix in bounded
+foreground concurrency and `tools/sb-qd-agg.js` pools the decisive ablation and
+the archive-reach scan across seeds. Run readouts are in `results/qd/`
+(`{tournament,novelty,mapelites}-s{1..4}.json`, `aggregate.txt`,
+`dissociation-scan.txt`).

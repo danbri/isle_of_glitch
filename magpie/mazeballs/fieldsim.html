@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Field playground — the world backbone</title>
+<style>
+:root{
+  --paper:#0C1413; --panel:#131E1C; --ink:#E3EBE9; --ink-soft:#93A6A2; --rule:#243330; --acc:#7FD1C4;
+  --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);display:flex;flex-direction:column;min-height:100%;-webkit-font-smoothing:antialiased}
+header{padding:.75rem clamp(.8rem,3vw,1.6rem);border-bottom:1px solid var(--rule);display:flex;align-items:baseline;gap:.9rem;flex-wrap:wrap}
+header h1{font-size:1rem;font-weight:600;margin:0}
+header .sub{font-family:var(--mono);font-size:.72rem;color:var(--ink-soft)}
+header a{color:var(--acc);text-decoration:none;font-size:.75rem;margin-left:auto}
+header a:hover{text-decoration:underline}
+.wrap{flex:1;display:flex;min-height:0;flex-wrap:wrap}
+.stage{flex:1 1 440px;position:relative;min-height:340px;display:flex;align-items:center;justify-content:center;padding:1rem}
+#c{width:100%;height:100%;max-width:min(82vh,860px);aspect-ratio:1;background:#000;border:1px solid var(--rule);border-radius:3px;image-rendering:auto;cursor:crosshair}
+.hint{position:absolute;bottom:1.4rem;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:.68rem;color:var(--ink-soft);background:rgba(12,20,19,.7);padding:.25rem .6rem;border-radius:3px;pointer-events:none}
+aside{flex:0 0 290px;border-left:1px solid var(--rule);padding:1rem 1.1rem;display:flex;flex-direction:column;gap:1.05rem;overflow-y:auto}
+@media (max-width:760px){aside{flex-basis:100%;border-left:none;border-top:1px solid var(--rule)}}
+.group{display:flex;flex-direction:column;gap:.5rem}
+.group h2{font-family:var(--mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);margin:0;font-weight:500}
+.slider{display:flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.72rem;color:var(--ink-soft)}
+.slider input{flex:1}
+.slider .v{min-width:2.6em;text-align:right;color:var(--ink)}
+.row{display:flex;gap:.5rem;flex-wrap:wrap}
+button{font:inherit;font-size:.82rem;color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:3px;padding:.45rem .7rem;cursor:pointer;flex:1;min-width:64px}
+button:hover{border-color:var(--acc)}
+button.on{background:var(--acc);border-color:var(--acc);color:#06110F;font-weight:600}
+.note{font-size:.75rem;line-height:1.55;color:var(--ink-soft)}
+.note b{color:var(--ink);font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <h1>Field playground</h1>
+  <span class="sub">a chemical smell diffusing and drifting in a current — the world backbone, live · lib/fields.js</span>
+  <a href="./viewer.html">organism viewer ›</a>
+</header>
+<div class="wrap">
+  <div class="stage"><canvas id="c" width="220" height="220"></canvas><div class="hint" id="hint">click / drag to release smell</div></div>
+  <aside>
+    <div class="group">
+      <h2>Current (curl-noise flow)</h2>
+      <div class="slider"><span>strength</span><input id="strength" type="range" min="0" max="120" value="45"><span class="v" id="strengthv">0.45</span></div>
+      <div class="slider"><span>eddy scale</span><input id="scale" type="range" min="15" max="70" value="35"><span class="v" id="scalev">3.5</span></div>
+      <button id="reseed">new current</button>
+    </div>
+    <div class="group">
+      <h2>Chemical</h2>
+      <div class="slider"><span>diffusion</span><input id="diffuse" type="range" min="0" max="24" value="10"><span class="v" id="diffusev">0.10</span></div>
+      <div class="slider"><span>decay</span><input id="decay" type="range" min="0" max="40" value="6"><span class="v" id="decayv">.006</span></div>
+    </div>
+    <div class="group">
+      <h2>Show</h2>
+      <div class="row">
+        <button id="mFlow" class="on">flow lines</button>
+        <button id="mTerrain">terrain</button>
+      </div>
+      <div class="row"><button id="clear">clear</button><button id="src">steady source</button></div>
+    </div>
+    <p class="note" id="note">This is the primitive <b>WORLD.md</b> is built on: one scalar field that diffuses and decays,
+    advected by a divergence-free current from curl noise. A released smell is <b>carried downstream and stretched into
+    a plume</b> — exactly the structured, followable gradient a body would have to sense to find its source against the
+    flow. The design question to judge by eye: does this make <b>sensing worth it</b> — is upstream findable — in a way a
+    uniform scatter never was?</p>
+  </aside>
+</div>
+<script type="module">
+import { ScalarField, CurlFlow, advect, fbm } from './lib/fields.js';
+
+const N = 220;
+const $ = id => document.getElementById(id);
+const cv = $('c'), ctx = cv.getContext('2d');
+const img = ctx.createImageData(N, N);
+
+let field = new ScalarField(N, N, { diffuse: 0.10, decay: 0.006 });
+let flow = new CurlFlow({ seed: 3, scale: 3.5, strength: 0.45 });
+let showFlow = true, steadySource = null, drag = null;
+
+// Precompute a terrain underlay (fbm) — shown for context; not yet coupled to the
+// dynamics, which is honestly the next design step, not a lie about what runs.
+let terrain = new Float32Array(N * N);
+function bakeTerrain(seed){ for (let y=0;y<N;y++) for (let x=0;x<N;x++) terrain[y*N+x] = fbm(x/N*4, y/N*4, seed, 4); }
+bakeTerrain(101);
+
+// Faint streamlines of the current, so the flow is visible even before a plume reveals it.
+let flowLines = [];
+function bakeFlow(){
+  flowLines = [];
+  const vel = { vx:0, vy:0 };
+  for (let i=0;i<140;i++){
+    let x = Math.random(), y = Math.random(); const pts = [[x,y]];
+    for (let s=0;s<26;s++){ flow.vel(x,y,vel); x += vel.vx*0.012; y += vel.vy*0.012;
+      if (x<0||x>1||y<0||y>1) break; pts.push([x,y]); }
+    if (pts.length>4) flowLines.push(pts);
+  }
+}
+bakeFlow();
+
+// warm-cool-hot ramp for the chemical (cool low -> hot high)
+function ramp(t, out, o){
+  t = t<0?0:t>1?1:t;
+  // dark teal -> teal -> warm orange -> white-hot
+  let r,g,b;
+  if (t<0.5){ const u=t*2; r=6+(65-6)*u; g=17+(173-17)*u; b=15+(178-15)*u; }
+  else { const u=(t-0.5)*2; r=65+(226-65)*u; g=173+(140-173)*u; b=178+(62-178)*u; }
+  out[o]=r; out[o+1]=g; out[o+2]=b; out[o+3]=255;
+}
+
+function draw(){
+  const d = img.data, a = field.a;
+  let mx = 1e-4; for (let i=0;i<a.length;i++) if (a[i]>mx) mx=a[i];
+  const inv = 1/mx;
+  for (let i=0;i<a.length;i++){
+    const c = a[i]*inv;
+    if (mode==='terrain' && c<0.02){ const t=terrain[i]; const g=18+t*22; d[i*4]=g*0.7; d[i*4+1]=g; d[i*4+2]=g*0.9; d[i*4+3]=255; }
+    else ramp(c, d, i*4);
+  }
+  ctx.putImageData(img, 0, 0);
+  if (showFlow){
+    ctx.save(); ctx.strokeStyle='rgba(147,166,162,0.22)'; ctx.lineWidth=1;
+    for (const pts of flowLines){ ctx.beginPath(); ctx.moveTo(pts[0][0]*N, pts[0][1]*N);
+      for (let k=1;k<pts.length;k++) ctx.lineTo(pts[k][0]*N, pts[k][1]*N); ctx.stroke(); }
+    ctx.restore();
+  }
+}
+
+let mode = 'flow';
+function frame(){
+  if (steadySource) field.deposit(steadySource[0], steadySource[1], 6);
+  if (drag) field.deposit(drag[0], drag[1], 9);
+  field.step();
+  advect(field, flow, 0.010);
+  draw();
+  requestAnimationFrame(frame);
+}
+
+// ---- interaction ----
+function evt(e){ const r=cv.getBoundingClientRect(); const t=e.touches?e.touches[0]:e;
+  return [ (t.clientX-r.left)/r.width, (t.clientY-r.top)/r.height ]; }
+cv.addEventListener('pointerdown', e=>{ drag = evt(e); cv.setPointerCapture(e.pointerId); });
+cv.addEventListener('pointermove', e=>{ if (drag) drag = evt(e); });
+cv.addEventListener('pointerup', ()=> drag=null);
+cv.addEventListener('pointerleave', ()=> drag=null);
+
+const rebuildFlow = ()=>{ flow = new CurlFlow({ seed: flow.seed, scale:+$('scale').value/10, strength:+$('strength').value/100 }); bakeFlow(); };
+$('strength').oninput = ()=>{ $('strengthv').textContent=(+$('strength').value/100).toFixed(2); rebuildFlow(); };
+$('scale').oninput = ()=>{ $('scalev').textContent=(+$('scale').value/10).toFixed(1); rebuildFlow(); };
+$('diffuse').oninput = ()=>{ field.diffuse=+$('diffuse').value/100; $('diffusev').textContent=field.diffuse.toFixed(2); };
+$('decay').oninput = ()=>{ field.decay=+$('decay').value/1000; $('decayv').textContent=field.decay.toFixed(3); };
+$('reseed').onclick = ()=>{ flow = new CurlFlow({ seed:(Math.random()*1e6|0)||1, scale:+$('scale').value/10, strength:+$('strength').value/100 }); bakeFlow(); };
+$('clear').onclick = ()=>{ field.a.fill(0); };
+$('src').onclick = ()=>{ steadySource = steadySource ? null : [0.3,0.7]; $('src').classList.toggle('on', !!steadySource); };
+$('mFlow').onclick = ()=>{ mode='flow'; showFlow=true; $('mFlow').classList.add('on'); $('mTerrain').classList.remove('on'); };
+$('mTerrain').onclick = ()=>{ mode='terrain'; showFlow=false; $('mTerrain').classList.add('on'); $('mFlow').classList.remove('on'); };
+
+frame();
+</script>
+</body>
+</html>

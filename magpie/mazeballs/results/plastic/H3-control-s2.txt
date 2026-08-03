@@ -1,0 +1,54 @@
+
+=== soft-body plasticity : seed 2  plastic false ===
+pop 48, gens 18, steps 500, H 3, toxicFrac 0.5, starve 0.005, consume 1.2
+
+selection-time trajectory:
+  gen  mode  best     selectivity  net       disp
+    0  disp  0.6121  0.3747       -0.2738   0.0274
+    1  disp  0.6134  0.4700       -0.1936   0.0468
+    2  disp  0.6106  0.3795       -0.2652   0.0743
+    3  disp  0.9279  0.4449       -0.1602   0.0923
+    4  disp  1.5901  0.5954       -0.1672   0.1690
+    5  disp  0.9706  0.6454       -0.0539   0.1516
+    6  neti  0.3771  0.4777       -0.1695   0.2918
+    7  neti  1.1124  0.6398       -0.0488   0.2080
+    8  neti  0.6458  0.5335       -0.1271   0.2072
+    9  neti  0.6376  0.5072       -0.1129   0.1933
+   10  neti  0.0698  0.4378       -0.1041   0.1866
+   11  neti  0.7017  0.6914       -0.0563   0.1368
+   12  neti  0.8516  0.3786       -0.1684   0.1290
+   13  neti  0.6692  0.5294       -0.1411   0.0861
+   14  neti  0.0255  0.3108       -0.3751   0.0619
+   15  neti  0.1748  0.5497       -0.0667   0.0350
+   16  neti  0.7166  0.3501       -0.4085   0.0397
+   17  neti  0.6612  0.6230       -0.0445   0.0145
+   18  neti  0.5065  0.4651       -0.1271   0.0200
+
+1. IS THE SENSE LOAD-BEARING? — quality channel INTACT vs ABLATED on the evolved population
+   (plastic = learning live during the measurement):
+   net intake   intact -0.2190 ± 0.0359   qual-ablated -0.2391 ± 0.0375
+   selectivity  intact 0.4837          qual-ablated 0.4609   (should fall to ~0.5 if discriminating)
+   blinding QUALITY costs net intake +0.0202 vs bar 0.1038 -> incidental (sense still inert)
+
+2. IS LEARNING HAPPENING? — within-life curve, PLASTIC vs FROZEN on the same spawns.
+   A rise that is present in plastic but NOT in frozen is genuine learning; a rise in
+   both is episode dynamics (food depletion), not learning.
+   (plasticity off — no within-life learning to measure)
+
+3. ASSIMILATION (Baldwin) — FROZEN developed-weight readout on the evolved population,
+   and its trajectory across generations (rising frozen selectivity = assimilation):
+   FROZEN evolved:  net -0.2190 ± 0.0359   selectivity 0.4837 ± 0.0223
+   FROZEN gen-0:    net -0.2047 ± 0.0377   selectivity 0.4565 ± 0.0232
+   frozen selectivity ascent +0.0273 vs bar 0.0644 -> no assimilation
+   FROZEN quality INTACT vs ABLATED: net -0.2190 vs -0.2391  (Δ 0.0202, bar 0.1038)
+   gen   selvFrozen  selvPlastic  netFrozen  netPlastic
+     0   0.4946      0.4946       -0.0757   -0.0757
+     3   0.5939      0.5939       -0.0876   -0.0876
+     6   0.4419      0.4419       -0.3010   -0.3010
+     9   0.6268      0.6268       -0.2463   -0.2463
+    12   0.5596      0.5596       -0.1689   -0.1689
+    15   0.4608      0.4608       -0.1657   -0.1657
+    18   0.5797      0.5797       -0.1579   -0.1579
+
+degenerate census on the evolved population (plastic remeasure):
+   squatter (path < 0.1): 90%   anosmia (gross < 0.01): 21%   net-negative: 92%
