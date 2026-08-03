@@ -38,6 +38,8 @@
  * ragged graph does not parallelise.
  */
 
+import { wgslStruct, writeUniform, layout, WORLD_FIELDS } from './uniform.js';
+
 const WORKGROUP = 256;
 
 /**
@@ -176,57 +178,8 @@ fn resourceField(p: vec2<f32>, scale: f32, seed: u32,
 const SHADER = /* wgsl */`
 ${WGSL_FIELD}
 
-struct W {
-  nCells   : u32,
-  bondK    : u32,
-  dt       : f32,
-  flowScale: f32,
+${wgslStruct('W')}
 
-  flowStr  : f32,
-  drag     : f32,
-  springK  : f32,
-  contract : f32,
-
-  seed     : u32,
-  senseGain: f32,
-  damp     : f32,
-  bound    : f32,
-
-  bondDamp : f32,
-  harvest  : f32,   // energy gained per unit resource per second
-  brainTax : f32,   // energy a cell costs just by existing and thinking
-  muscleCost: f32,  // energy a muscle spends in proportion to work done
-
-  resScale : f32,
-  resSeed  : u32,
-  eCap     : f32,   // most energy one cell can hold
-  eFloor   : f32,   // most debt one cell can run up before it is simply dead
-
-  hashCell : f32,   // spatial-hash query radius, world units
-  hashSize : u32,
-  crowdK   : f32,   // how sharply a shared patch is discounted
-  contactK : f32,   // soft-sphere repulsion stiffness; 0 disables contact
-
-  bucketM  : u32,   // neighbour slots listed per bucket
-  predRate : f32,   // energy moved per unit of effort difference, per second
-  contactR : f32,   // how close counts as contact
-  sizeScale: f32,   // cells at which digestive efficiency mostly saturates
-
-  sizeNorm : f32,   // makes a reference-size body break even
-  worldTime: f32,   // seconds; the resource field is a function of it
-  driftX   : f32,
-  driftY   : f32,
-
-  morphRate: f32,   // how fast the terrain becomes a different terrain
-  gripBase : f32,   // traction every cell has, before modulation
-  gripMod  : f32,   // how far activation may raise or lower a cell's grip
-  fricK    : f32,   // Coulomb velocity decrement per unit grip per second
-
-  gripAnchor: f32,  // an ANCHOR cell's grip: a sucker, not a skin
-  pad0     : f32,
-  pad1     : f32,
-  pad2     : f32,
-};
 
 // Positions and velocities are packed vec2, and (type, slot) into one vec2<i32>.
 // Not cosmetic: WebGPU guarantees only 8 storage buffers per stage, and the
@@ -636,7 +589,10 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // cells, and if physics also wrote energy[j] in the same dispatch the result
   // would depend on thread order — non-deterministic, and this project's runs
   // are supposed to be a pure function of their seed. energyCommit publishes it.
-  vel[i] = vec4<f32>(v.x, v.y, 0.0,
+  // PRESERVE THE RADIUS. This wrote 0.0 into z, wiping every cell's radius on
+  // every step — the other independent reason contact was dead. Between this and
+  // contactK being a denormal (see lib/uniform.js), cells have never collided.
+  vel[i] = vec4<f32>(v.x, v.y, vel[i].z,
     clamp(energy[i] + (gain - P.brainTax - work + taken) * P.dt, P.eFloor, P.eCap));
 }
 
@@ -681,6 +637,10 @@ export class WorldGPU {
     for (let i = 0; i < n; i++) {
       pos[i * 2] = cells.px[i]; pos[i * 2 + 1] = cells.py[i];
       vel[i * 4] = cells.vx[i]; vel[i * 4 + 1] = cells.vy[i];
+      // z is the cell's radius. It had never been written by anything, so it
+      // was 0 for every cell in every run, and `touch = myR + otherR` was 0 —
+      // one of the two independent reasons contact has never done anything.
+      vel[i * 4 + 2] = cells.rad ? cells.rad[i] : 0.34;
       meta[i * 4] = cells.ctype[i];
       meta[i * 4 + 1] = cells.cslot[i];
       meta[i * 4 + 2] = bodyOf ? bodyOf[i] : -1;
@@ -710,7 +670,14 @@ export class WorldGPU {
       // others arrive to spend it down.
       harvest: 2.6, brainTax: 0.45, muscleCost: 0.55,
       resScale: 0.35, resSeed: 91, eCap: 3.0, eFloor: -2.0,
-      hashCell: 3.2, hashSize: 65536, crowdK: 0.012,
+      // hashCell was 3.2 while contact reaches only ~0.7, so a bucket held ~10
+      // cells against a cap of 12 and overflowed constantly. An overflowing
+      // bucket lists an ARBITRARY subset — arbitrary because insertion order is
+      // an atomicAdd race — so cell i could see j while j could not see i, the
+      // pair's contact forces were unequal, and momentum appeared from nowhere
+      // (|p| reached 72.9 from rest). Sized to the interaction it indexes, this
+      // drops to 0.27, and the nondeterminism goes with it.
+      hashCell: 1.2, hashSize: 65536, crowdK: 0.085,
       driftX: 0.0, driftY: 0.0, morphRate: 0.0,
       // Sized against the forces actually present. Flow drag imparts about
       // 0.005 velocity units per step; a muscle contracting imparts nearer 0.4.
@@ -719,16 +686,23 @@ export class WorldGPU {
       // move it. At the original 0.55 the decrement was 0.05 per step, ten times
       // what the flow supplies, and the world froze solid.
       gripBase: 0.06, gripMod: 0.9, fricK: 6.0, gripAnchor: 0.9,
-      bucketM: 12, predRate: 0.0, contactR: 1.0, sizeScale: 14.0, sizeRef: 12,
+      bucketM: 32, predRate: 0.0, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
+      // Cells are solid. This was silently 1.68e-44 for the life of the code —
+      // see lib/uniform.js — so nothing has ever pushed back on anything. Sized
+      // against springK so a bond can still hold a body together against the
+      // repulsion of its own cells touching.
+      contactK: 12.0,
+      // Standing crop. nMotes 0 leaves the old analytic harvest in place.
+      nMotes: 0, moteR: 1.6, grazeRate: 2.2, moteRegrow: 0.35, moteCap: 1.0,
+      moteHashSize: 16384, pad0: 0,
       dt: brains.dt, ...params,
     };
-    this.params.bodyCells = this.params.bodyCells ?? (cells.cellsPerBody ?? 12);
     this.bHash = device.createBuffer({
       size: this.params.hashSize * (1 + this.params.bucketM) * 4,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
     });
     this.bParams = device.createBuffer({
-      size: 160, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+      size: layout().size, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
     this.writeParams();
 
@@ -779,41 +753,15 @@ export class WorldGPU {
   writeParams(patch = {}) {
     Object.assign(this.params, patch);
     const p = this.params;
-    const buf = new ArrayBuffer(160), dv = new DataView(buf);
-    dv.setUint32(0, this.n, true); dv.setUint32(4, this.bondK, true);
-    dv.setFloat32(8, p.dt, true); dv.setFloat32(12, p.flowScale, true);
-    dv.setFloat32(16, p.flowStr, true); dv.setFloat32(20, p.drag, true);
-    dv.setFloat32(24, p.springK, true); dv.setFloat32(28, p.contract, true);
-    dv.setUint32(32, p.seed, true); dv.setFloat32(36, p.senseGain, true);
-    dv.setFloat32(40, p.damp, true); dv.setFloat32(44, p.bound, true);
-    // Damping tracks stiffness so the bond stays near a fixed damping ratio as
-    // the stiffness slider moves; a fixed absolute value would be overdamped at
-    // low stiffness and useless at high. c = 2*zeta*sqrt(k*m), m = 1, zeta≈0.35.
-    dv.setFloat32(48, p.bondDamp ?? 0.7 * Math.sqrt(p.springK), true);
-    dv.setFloat32(52, p.harvest, true);
-    dv.setFloat32(56, p.brainTax, true);
-    dv.setFloat32(60, p.muscleCost, true);
-    dv.setFloat32(64, p.resScale, true);
-    dv.setUint32(68, p.resSeed, true);
-    dv.setFloat32(72, p.eCap, true);
-    dv.setFloat32(76, p.eFloor, true);
-    dv.setFloat32(80, p.hashCell, true);
-    dv.setUint32(84, p.hashSize, true);
-    dv.setFloat32(88, p.crowdK, true);
-    dv.setUint32(92, p.bodyCells, true);
-    dv.setUint32(96, p.bucketM, true);
-    dv.setFloat32(100, p.predRate, true);
-    dv.setFloat32(104, p.contactR, true);
-    dv.setFloat32(108, p.sizeScale, true);
-    dv.setFloat32(112, 1 / (1 - Math.exp(-p.sizeRef / Math.max(p.sizeScale, 1))), true);
-    dv.setFloat32(116, (this.steps ?? 0) * p.dt, true);
-    dv.setFloat32(120, p.driftX, true);
-    dv.setFloat32(124, p.driftY, true);
-    dv.setFloat32(128, p.morphRate, true);
-    dv.setFloat32(132, p.gripBase, true);
-    dv.setFloat32(136, p.gripMod, true);
-    dv.setFloat32(140, p.fricK, true);
-    dv.setFloat32(144, p.gripAnchor, true);
+    // Every field by NAME. No offsets are written here or anywhere else; see
+    // lib/uniform.js for why that matters.
+    const buf = writeUniform({
+      ...p,
+      nCells: this.n,
+      bondK: this.bondK,
+      bondDamp: p.bondDamp ?? 0.7 * Math.sqrt(p.springK),
+      worldTime: (this.steps ?? 0) * p.dt,
+    });
     this.device.queue.writeBuffer(this.bParams, 0, buf);
   }
 

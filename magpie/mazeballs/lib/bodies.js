@@ -28,13 +28,14 @@ import { CELL_NEURON, CELL_SENSOR, CELL_MUSCLE, CELL_ANCHOR } from './world_gpu.
  * @param {number} [o.degree=12]       incoming brain edges per neuron
  * @param {number} [o.bondK=4]         bond slots per cell
  * @param {number} [o.radius=1.1]      body radius in world units
+ * @param {number} [o.cellR=0.34]      radius of one cell — what contact measures
  * @param {number} [o.bound=64]        world half-extent; bodies scatter inside it
  * @param {number} [o.seed=1]
  * @returns {{arena: BrainArena, cells: object, meta: object}}
  */
 export function buildBodies({
   beasts = 2000, cells = 12, degree = 12, bondK = 4,
-  radius = 1.1, bound = 64, seed = 1, dt = 0.015,
+  radius = 1.1, cellR = 0.34, bound = 64, seed = 1, dt = 0.015,
   maxCells = 40,
 } = {}) {
   let s = seed >>> 0;
@@ -64,6 +65,7 @@ export function buildBodies({
   const NC = arena.N;
   const px = new Float32Array(NC), py = new Float32Array(NC);
   const vx = new Float32Array(NC), vy = new Float32Array(NC);
+  const rad = new Float32Array(NC);
   // Int32, not Uint32: -1 is a meaningful value here — it marks a cell that has
   // been vacated by death and is no longer part of the world. In a Uint32Array
   // that sentinel silently becomes 4294967295 on the CPU side while the GPU,
@@ -98,6 +100,11 @@ export function buildBodies({
       const r = radius * (0.85 + rnd() * 0.3);
       px[gi] = cx + Math.cos(a) * r;
       py[gi] = cy + Math.sin(a) * r;
+      // A cell is a sphere and this is how big it is. Until now the radius was
+      // computed here for placement and thrown away, so contact had nothing to
+      // measure and every cell was a point. Jittered per cell for the same
+      // reason the ring is: identical bodies have nothing to relax from.
+      rad[gi] = cellR * (0.85 + rnd() * 0.3);
 
       // Thirds: sensors feel the medium, muscles contract bonds, the rest are
       // interneurons. Every one of them is a CTRNN node in the same island.
@@ -144,7 +151,7 @@ export function buildBodies({
 
   return {
     arena,
-    cells: { px, py, vx, vy, ctype, cslot, body, bodySize, bond, brest, bondK },
+    cells: { px, py, vx, vy, rad, ctype, cslot, body, bodySize, bond, brest, bondK },
     // nCells is the ARENA width — every consumer (GPU buffers, frames, the
     // viewer) must agree on it, and it is no longer beasts*cells.
     meta: { beasts, cellsPerBeast: cells, nCells: NC, degree, bound, maxCells },
