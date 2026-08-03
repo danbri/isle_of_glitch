@@ -4900,3 +4900,46 @@ The general lesson is the same one this wave already recorded about bounded
 measures, in a different disguise: a single run produced a clean trend, and the
 trend was an artifact of sampling. Both times the error was reading a number
 before asking what else could produce it.
+
+### Replicated ladder: a fast phase, then a sustained margin that is not distinguishable from flat
+
+Five independent tournaments per rung, 7 checkpoints 300 ticks apart, 2100 ticks,
+non-stationary field. Replication is what makes the question answerable at all —
+single draws swung 0.30 to 0.77 on the same rung.
+
+    T300 ->T600    0.815 +/- 0.021    [0.85 0.81 0.85 0.74 0.82]
+    T600 ->T900    0.621 +/- 0.027    [0.62 0.67 0.69 0.59 0.54]
+    T900 ->T1200   0.535 +/- 0.010    [0.51 0.52 0.56 0.53 0.56]
+    T1200->T1500   0.612 +/- 0.028    [0.68 0.53 0.61 0.66 0.58]
+    T1500->T1800   0.538 +/- 0.027    [0.63 0.46 0.51 0.55 0.54]
+    T1800->T2100   0.535 +/- 0.072    [0.49 0.43 0.73 0.35 0.67]
+
+    every rung mean above 0.5      overall mean margin 0.610
+    first-vs-last  T300 vs T2100   20:124 descendants, shareB 0.861
+    body size      21.1 -> 30.4, still climbing at T2100, generation 63
+
+There is a clear TRANSIENT: the first rung is 0.815, far above everything after
+it. Adaptation is fastest immediately after the founders are thrown into the
+world, which is unsurprising and says little.
+
+After that transient, over 1500 ticks:
+
+    mean margin   0.568 +/- 0.020    3.4 SE above 0.5
+    slope        -0.0169 +/- 0.0129  1.31 SE from zero
+
+The margin is significantly positive and the slope is NOT distinguishable from
+flat. Read carefully: this does not establish that the margin is constant — five
+rungs cannot exclude a slow decline, and the point estimate is negative. It
+establishes that the attenuation reported earlier in this wave, from single
+unreplicated draws, is not supported once the noise is measured. The earlier
+slopes (-0.0088, -0.0124, -0.0356) came from n=1 per rung, and n=1 on this
+quantity has a spread of roughly +/-0.15.
+
+So the honest state is: descendants beat their ancestors from 300 ticks earlier
+at every point tested across 2100 ticks, by a margin that stays around 0.57 and
+shows no measurable decay. Whether it decays over 10,000 ticks is unmeasured.
+
+WHAT WOULD SETTLE IT: the same design run an order of magnitude longer, with the
+replicate count kept. The tournaments are the expensive part and they are what
+makes it answerable — a longer run with n=1 per rung would produce another clean
+trend that means nothing.
