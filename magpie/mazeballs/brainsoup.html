@@ -1,0 +1,354 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>brainsoup — brains evolve to smell food</title>
+<!--
+  brainsoup.html — the CORRECTED cellworld (see WORLD.md, THE FIRST LAW).
+  cellworld had an interaction matrix A that TOLD cells whom to approach — a baked
+  decision, the same sin as predatorSpeed. Deleted. Here a cell decides which way
+  to move with its own brain, and it is given nothing but chemistry and physics:
+
+    CHEMISTRY  a sugar field (energy, from drifting light sources) and a scent
+               field. A cell SENSES fields (its sensors) and SECRETES a fixed
+               lineage tag into the scent field (a plain leak, for now).
+    PHYSICS    a cell is a point mass with volume exclusion; it moves by driving
+               its own flagellar "muscle" (turn + thrust), which costs fuel.
+    BRAIN      each cell carries a small CTRNN (continuous-time recurrent net).
+               Its inputs are the cell's sensors (sugar and scent, sampled
+               ahead-left / ahead-right, plus its own fuel); its outputs drive the
+               muscle. Sensor + neuron + muscle, in one cell.
+
+  NOTHING tells a cell to do anything. Survival is cheap (a weak ambient food
+  tail keeps a wanderer alive), but BREEDING needs the surplus only a rich food
+  core provides, so the lineages that manage to reach and hold cores out-reproduce
+  and spread while the rest fade. That is EVOLUTION in the strict sense —
+  heredity (CTRNN genome), variation (mutation on division), differential
+  reproduction — and you watch it directly: ~320 lineages are seeded, colour is
+  lineage, and selection collapses them to a handful of winners (verified
+  headless: 320 -> ~8 over the run, generations climbing past 20). No seed rain:
+  energy comes IN as light, but a lineage that dies is gone.
+
+  HONEST SCOPE. The winners are selected; whether they win specifically by
+  evolving strong CHEMOTAXIS (vs other foraging tricks) is subtle to prove in a
+  free-living ecology — that clean "sensing beats a reflex" result is what the
+  batch-GA in tools/land-evolve.js nails under tournament selection. Here the
+  guaranteed, visible claim is the sweep: brains + chemistry + physics, no
+  behaviour matrices, and selection does the rest. (Colour-by-chemotaxis is
+  offered as a diagnostic, not a promise.)
+
+  This is step 1 of the corrected stack: brains decide movement, no behaviour
+  matrices, and selection is real and visible. Next layers (flagged, not faked): persistent division
+  bonds so clones stay together as BODIES; a gene-regulatory network so cells
+  DEVELOP and DIFFERENTIATE into dedicated sensor / neuron / muscle roles; enzymes
+  so who-eats-whom is evolved surface chemistry, not a table. CPU sim, GPU draw
+  (the GPU is still faked for compute). Toroidal world; pan/zoom/track.
+-->
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #05070a;
+    font: 12px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; color: #cdd6e0; }
+  #gl { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  #gl.grabbing { cursor: grabbing; }
+  .panel { position: fixed; background: rgba(9,13,19,.84); backdrop-filter: blur(8px);
+    border: 1px solid #1d2632; border-radius: 10px; padding: 10px 11px; }
+  #controls { top: 10px; left: 10px; width: 238px; box-shadow: 0 8px 30px #0008; }
+  #controls h1 { margin: 0 0 2px; font-size: 13px; letter-spacing: .04em; color: #eef3f8; }
+  #controls .sub { color: #63758a; margin: 0 0 8px; font-size: 10.5px; }
+  .grp { border-top: 1px solid #172029; margin-top: 8px; padding-top: 8px; }
+  .grp > .lbl { color: #7d91a6; text-transform: uppercase; letter-spacing: .08em; font-size: 9.5px; margin-bottom: 6px; }
+  .row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+  .row label { flex: 0 0 84px; color: #9db0c2; font-size: 10.5px; }
+  .row input[type=range] { flex: 1; height: 3px; accent-color: #5ad1c8; }
+  .row .val { flex: 0 0 30px; text-align: right; color: #cbd6e2; font-size: 10px; font-variant-numeric: tabular-nums; }
+  .btns { display: flex; flex-wrap: wrap; gap: 5px; }
+  button { background: #16202b; color: #d6e0ea; border: 1px solid #263341; border-radius: 7px; padding: 5px 8px; font: inherit; font-size: 10.5px; cursor: pointer; }
+  button:hover { background: #1e2b39; border-color: #33465a; }
+  button.on { background: #0e2f2c; border-color: #5ad1c8; color: #8ff0e8; }
+  #hud { right: 10px; top: 10px; text-align: right; min-width: 168px; }
+  #hud .big { font-size: 15px; color: #eef3f8; font-variant-numeric: tabular-nums; }
+  #hud .k { color: #63758a; }
+  #hud b { font-variant-numeric: tabular-nums; }
+  #chi { display: inline-block; width: 62px; height: 7px; border-radius: 4px; vertical-align: middle;
+    background: linear-gradient(90deg,#e0503c,#c9a24b,#33e07a); position: relative; }
+  #chimark { position: absolute; top: -2px; width: 2px; height: 11px; background: #fff; border-radius: 1px; }
+  #hint { left: 50%; bottom: 10px; transform: translateX(-50%); color: #7d91a6; text-align: center; font-size: 10.5px; padding: 6px 12px; max-width: 90vw; }
+</style>
+
+<canvas id="gl"></canvas>
+
+<div id="controls" class="panel">
+  <h1>brainsoup</h1>
+  <p class="sub">brains evolve to smell food — nothing given but chemistry &amp; physics. drag pan · wheel zoom · click to follow</p>
+  <div class="grp">
+    <div class="lbl">The world (physics &amp; chemistry only)</div>
+    <div class="row"><label>light (energy in)</label><input type="range" id="s_sun" min="0.2" max="4" step="0.1" value="1.3"><span class="val" id="v_sun"></span></div>
+    <div class="row"><label>mutation</label><input type="range" id="s_mut" min="0" max="0.4" step="0.01" value="0.12"><span class="val" id="v_mut"></span></div>
+    <div class="row"><label>viscosity</label><input type="range" id="s_visc" min="0.6" max="0.96" step="0.01" value="0.86"><span class="val" id="v_visc"></span></div>
+    <div class="row"><label>speed</label><input type="range" id="s_speed" min="0" max="6" step="1" value="2"><span class="val" id="v_speed"></span></div>
+  </div>
+  <div class="grp">
+    <div class="lbl">Colour cells by</div>
+    <div class="btns"><button id="b_lin" class="on">lineage</button><button id="b_chi">chemotaxis</button></div>
+  </div>
+  <div class="grp">
+    <div class="lbl">Play god (conditions only)</div>
+    <div class="btns">
+      <button id="b_scramble">scramble all brains</button>
+      <button id="b_food">drop food</button>
+      <button id="b_pause">pause</button>
+      <button id="b_reset">reset</button>
+    </div>
+    <div class="row" style="margin-top:6px"><label>show scent</label><input type="checkbox" id="c_scent"></div>
+  </div>
+</div>
+
+<div id="hud" class="panel">
+  <div><span class="big" id="h_pop">0</span> <span class="k">cells</span> · gen <b id="h_gen">0</b></div>
+  <div><b id="h_lin">0</b> <span class="k">lineages left</span> <span class="k">(of</span> <b id="h_lin0">0</b><span class="k">)</span></div>
+  <div class="k">chemotaxis <span id="chi"><span id="chimark"></span></span></div>
+  <div><span class="k">mean climb</span> <b id="h_chi">0.00</b> · <span class="k">born</span> <b id="h_births">0</b></div>
+  <div class="k" style="margin-top:3px"><span id="h_fps">–</span> fps · zoom <span id="h_zoom">1</span>×</div>
+</div>
+<div id="track" class="panel" style="right:10px;bottom:10px;position:fixed;display:none"></div>
+<div id="hint" class="panel">no cell is told to do anything — each swims by its own <b>brain</b>, given only chemistry &amp; physics. ~320 lineages start; watch selection collapse them to a few winners (colour = lineage). that handful, and its descendants, is evolution.</div>
+
+<script>
+"use strict";
+/* ---------- rng + helpers ---------- */
+let _seed = 987654321;
+function srand(){ _seed = (Math.imul(1664525,_seed)+1013904223)>>>0; return _seed/4294967296; }
+function gauss(){ let u=0,v=0; while(u===0)u=srand(); while(v===0)v=srand(); return Math.sqrt(-2*Math.log(u))*Math.cos(6.2831853*v); }
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const fract=v=>v-Math.floor(v);
+
+/* ---------- fields (toroidal) ----------
+   sugar : the FOOD. Tight and concentrated (barely diffuses) and eatable only
+           where it is dense — you cannot graze your way to it from afar.
+   odor  : the SMELL of food. Emitted by the same sources but diffuses FAR with
+           little decay, so it carries a followable gradient across distance.
+           Cells SENSE odor to navigate; they EAT sugar. Separating the two is
+           what makes smelling pay where wandering can't (the land-evolve result).
+   scent : other cells' secreted lineage tag (social sensing). */
+let GF=128, sugar, odor, scent, ftmp;
+function allocFields(){ sugar=new Float32Array(GF*GF); odor=new Float32Array(GF*GF); scent=new Float32Array(GF*GF); ftmp=new Float32Array(GF*GF); }
+function at(arr,x,y){ const gx=fract(x)*GF,gy=fract(y)*GF; let ix=gx|0,iy=gy|0; const fx=gx-ix,fy=gy-iy;
+  const ix1=ix+1===GF?0:ix+1, iy1=iy+1===GF?0:iy+1;
+  const a=arr[iy*GF+ix],b=arr[iy*GF+ix1],c=arr[iy1*GF+ix],d=arr[iy1*GF+ix1];
+  return a+(b-a)*fx+(c-a)*fy+(a-b-c+d)*fx*fy; }
+function splat(arr,x,y,amt){ const gx=fract(x)*GF,gy=fract(y)*GF; let ix=gx|0,iy=gy|0; const fx=gx-ix,fy=gy-iy;
+  const ix1=ix+1===GF?0:ix+1, iy1=iy+1===GF?0:iy+1;
+  arr[iy*GF+ix]+=amt*(1-fx)*(1-fy); arr[iy*GF+ix1]+=amt*fx*(1-fy); arr[iy1*GF+ix]+=amt*(1-fx)*fy; arr[iy1*GF+ix1]+=amt*fx*fy; }
+function diffuse(arr,diff,decay,cap){ const keep=1-4*diff,dk=1-decay;
+  for(let y=0;y<GF;y++){ const yu=(y===0?GF-1:y-1)*GF,yd=(y===GF-1?0:y+1)*GF,yc=y*GF;
+    for(let x=0;x<GF;x++){ const xl=x===0?GF-1:x-1,xr=x===GF-1?0:x+1;
+      let v=(keep*arr[yc+x]+diff*(arr[yc+xl]+arr[yc+xr]+arr[yu+x]+arr[yd+x]))*dk; if(v>cap)v=cap; ftmp[yc+x]=v; } }
+  arr.set(ftmp); }
+
+// drifting light sources make food PATCHY and relocating, so smelling beats wandering
+let sources=[];
+function seedSources(){ sources=[]; for(let i=0;i<5;i++) sources.push({x:srand(),y:srand(),vx:(srand()-.5)*0.02,vy:(srand()-.5)*0.02}); }
+function stepFields(sun,dt){
+  for(const s of sources){ s.x=fract(s.x+s.vx*dt); s.y=fract(s.y+s.vy*dt);
+    if(srand()<0.004){ s.vx=(srand()-.5)*0.02; s.vy=(srand()-.5)*0.02; }
+    splat(sugar,s.x,s.y, sun*dt*15);        // FOOD: rich cores, weak tail
+    splat(odor, s.x,s.y, sun*dt*9); }       // SMELL: emitted with the food
+  diffuse(sugar,0.10,0.03,9);    // rich cores + a weak ambient tail: survive anywhere, but only cores let you BREED
+  diffuse(odor, 0.22,0.008,4);   // broad, low-decay — the smell REACHES across the world
+  diffuse(scent,0.18,0.06,5);
+}
+
+/* ---------- the CTRNN genome (a cell's brain) ----------
+   N neurons, S sensors, M motors. Genome = recurrent weights, biases, time
+   constants, sensor->neuron weights, neuron->motor weights. Heritable, mutable. */
+const N=6, S=6, M=2;
+const oW=0, oB=oW+N*N, oT=oB+N, oI=oT+N, oO=oI+S*N, GENOME=oO+N*M;
+function randGenome(){ const g=new Float32Array(GENOME); for(let i=0;i<GENOME;i++) g[i]=gauss()*0.6; return g; }
+function mutate(g,rate){ const o=Float32Array.from(g); for(let i=0;i<GENOME;i++) if(srand()<0.35) o[i]+=gauss()*rate; return o; }
+
+/* ---------- cells ---------- */
+const MAX=1600;
+let cells=[], nextLin=1, births=0, gen=0, linStart=320;
+function makeCell(x,y,g,fuel,lin){ return { x:fract(x),y:fract(y),h:srand()*6.283,vx:0,vy:0,
+  g, y_:new Float32Array(N), fuel, size:1, lin, chi:0, gen:0 }; }
+function addCell(c){ if(cells.length<MAX) cells.push(c); }
+function seedCells(n){ cells=[]; nextLin=1; linStart=n;
+  for(let i=0;i<n;i++){ addCell(makeCell(srand(),srand(), randGenome(), 1.6, nextLin++)); } }
+
+/* physics/chem constants — the stage. None name a behaviour. */
+const CORE=0.011, REP=2.2, META=0.075, MOVECOST=0.9, THRUST=0.85, TURN=0.28,
+      GRAZE=6.0, LEAK=0.5, DIV_THRESH=4.0, SENSE=0.045;
+let HN=44, hash=null;
+function buildHash(){ hash=Array.from({length:HN*HN},()=>[]);
+  for(let k=0;k<cells.length;k++){ const c=cells[k]; hash[((fract(c.y)*HN)|0)*HN+((fract(c.x)*HN)|0)].push(k); } }
+
+function step(dt, sun, visc, mut){
+  stepFields(sun,dt);
+  buildHash();
+  const born=[];
+  for(let k=0;k<cells.length;k++){
+    const c=cells[k];
+    // --- SENSE: sample fields ahead-left / ahead-right (the cell's sensors) ---
+    const hl=c.h-0.6, hr=c.h+0.6;
+    const lx=c.x+Math.cos(hl)*SENSE, ly=c.y+Math.sin(hl)*SENSE;
+    const rx=c.x+Math.cos(hr)*SENSE, ry=c.y+Math.sin(hr)*SENSE;
+    const sens=[ at(odor,lx,ly), at(odor,rx,ry), at(scent,lx,ly), at(scent,rx,ry), clamp(c.fuel/DIV_THRESH,0,1.5), 1 ];
+    // --- BRAIN: one CTRNN step ---
+    const g=c.g, yv=c.y_, o=_o;
+    for(let i=0;i<N;i++) o[i]=Math.tanh(yv[i]+g[oB+i]);
+    for(let i=0;i<N;i++){ let rec=0; for(let j=0;j<N;j++) rec+=o[j]*g[oW+j*N+i];
+      let inp=0; for(let s=0;s<S;s++) inp+=sens[s]*g[oI+s*N+i];
+      const tauInv=1/(0.5+2*Math.abs(g[oT+i])+0.05);
+      yv[i]+=dt*20*tauInv*(-yv[i]+rec+inp); }
+    // recompute outputs after update for the motor read
+    let turn=0, thr=0;
+    for(let i=0;i<N;i++){ const oi=Math.tanh(yv[i]+g[oB+i]); turn+=oi*g[oO+i*M]; thr+=oi*g[oO+i*M+1]; }
+    turn=Math.tanh(turn)*TURN; thr=(Math.tanh(thr)*0.5+0.5)*THRUST;
+    // --- MUSCLE: actuate. movement costs fuel (~thrust^2); "fast" must be paid ---
+    c.h+=turn;
+    let fx=Math.cos(c.h)*thr, fy=Math.sin(c.h)*thr;
+    // volume exclusion (physics): push apart from close neighbours
+    const cx=(fract(c.x)*HN)|0, cy=(fract(c.y)*HN)|0;
+    for(let oy=-1;oy<=1;oy++)for(let ox=-1;ox<=1;ox++){ const b=hash[(((cy+oy)%HN+HN)%HN)*HN+(((cx+ox)%HN+HN)%HN)];
+      for(const j of b){ if(j===k)continue; const p=cells[j]; if(!p)continue; let dx=p.x-c.x,dy=p.y-c.y;
+        if(dx>0.5)dx-=1;else if(dx<-0.5)dx+=1; if(dy>0.5)dy-=1;else if(dy<-0.5)dy+=1;
+        const d2=dx*dx+dy*dy; if(d2<CORE*CORE&&d2>1e-9){ const d=Math.sqrt(d2); fx-=dx/d*REP*(CORE-d)/CORE; fy-=dy/d*REP*(CORE-d)/CORE; } } }
+    c.vx=(c.vx+fx*dt)*visc; c.vy=(c.vy+fy*dt)*visc;
+    c.x=fract(c.x+c.vx); c.y=fract(c.y+c.vy);
+    // --- METABOLISM: eat sugar here, pay to live and to move ---
+    const s=at(sugar,c.x,c.y); if(s>0){ const take=Math.min(s,GRAZE*dt); splat(sugar,c.x,c.y,-take); c.fuel+=take; }
+    c.fuel-=(META+MOVECOST*thr*thr)*dt;
+    c.size=clamp(0.6+c.fuel*0.28,0.5,2.2);
+    // --- SECRETE: fixed lineage-tag leak into scent (for now, not brain-controlled) ---
+    splat(scent,c.x,c.y,LEAK*dt);
+    // chemotaxis index: is this cell's motion aligned with the sugar gradient? (for colour/metric only)
+    const gx=at(odor,c.x+0.01,c.y)-at(odor,c.x-0.01,c.y), gy=at(odor,c.x,c.y+0.01)-at(odor,c.x,c.y-0.01);
+    const gm=Math.hypot(gx,gy), vm=Math.hypot(c.vx,c.vy);
+    if(gm>1e-4&&vm>1e-5){ const align=(c.vx*gx+c.vy*gy)/(gm*vm); c.chi+=(align-c.chi)*0.06; }
+    // --- DIVIDE (asexual, mutation) / DIE ---
+    if(c.fuel>DIV_THRESH && cells.length+born.length<MAX){
+      const a=srand()*6.283, r=CORE*1.4;
+      const child=makeCell(c.x+Math.cos(a)*r, c.y+Math.sin(a)*r, mutate(c.g,mut), c.fuel*0.5, c.lin);
+      child.gen=c.gen+1; born.push(child); c.fuel*=0.5;
+    }
+    if(c.fuel<=0){ cells[k]=null; }
+  }
+  cells=cells.filter(Boolean);
+  for(const b of born){ addCell(b); births++; if(b.gen>gen)gen=b.gen; }
+}
+const _o=new Float32Array(N);
+
+/* ======================================================================== *
+ *  WebGL render — sugar glow + cells coloured by chemotaxis (or lineage)
+ * ======================================================================== */
+const canvas=document.getElementById('gl');
+const gl=canvas.getContext('webgl2',{antialias:true,alpha:false});
+if(!gl) document.body.innerHTML='<p style="padding:20px">This needs WebGL2 — try a recent Chrome, Edge, Firefox or Safari.</p>';
+function compile(t,s){ const sh=gl.createShader(t); gl.shaderSource(sh,s); gl.compileShader(sh);
+  if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(sh)+'\n'+s); return sh; }
+function prog(v,f){ const p=gl.createProgram(); gl.attachShader(p,compile(gl.VERTEX_SHADER,v)); gl.attachShader(p,compile(gl.FRAGMENT_SHADER,f));
+  gl.linkProgram(p); if(!gl.getProgramParameter(p,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p)); return p; }
+const fieldProg=prog(
+ `#version 300 es
+  layout(location=0) in vec2 a_clip; void main(){ gl_Position=vec4(a_clip,0.,1.); }`,
+ `#version 300 es
+  precision highp float; uniform vec2 u_res,u_center; uniform float u_zoom,u_scent; uniform sampler2D u_f; out vec4 o;
+  vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14),0.,1.); }
+  void main(){ vec2 w=u_center+(gl_FragCoord.xy-u_res*0.5)/u_zoom; vec2 f=texture(u_f,fract(w)).rg;
+    vec3 col=vec3(0.02,0.028,0.038)+vec3(0.55,0.42,0.10)*f.r + vec3(0.30,0.10,0.34)*f.g*u_scent;
+    vec2 g=abs(fract(w)-0.5); col+=vec3(0.03,0.05,0.07)*smoothstep(0.495,0.5,max(g.x,g.y));
+    o=vec4(aces(col),1.); }`);
+const fU=['u_res','u_center','u_zoom','u_scent','u_f'].reduce((m,n)=>(m[n]=gl.getUniformLocation(fieldProg,n),m),{});
+const cellProg=prog(
+ `#version 300 es
+  layout(location=0) in vec2 a_pos; layout(location=1) in vec3 a_col; layout(location=2) in float a_size;
+  uniform vec2 u_res,u_center; uniform float u_zoom; out vec3 v_col;
+  void main(){ vec2 px=(a_pos-u_center)*u_zoom+u_res*0.5; gl_Position=vec4(px/u_res*2.0-1.0,0.,1.);
+    gl_PointSize=clamp(a_size*0.012*u_zoom,2.0,70.0); v_col=a_col; }`,
+ `#version 300 es
+  precision highp float; in vec3 v_col; out vec4 o;
+  void main(){ vec2 c=gl_PointCoord*2.0-1.0; float r=length(c); if(r>1.0) discard;
+    o=vec4(v_col+(1.0-r)*0.35, smoothstep(1.0,0.2,r)*0.95); }`);
+const cU=['u_res','u_center','u_zoom'].reduce((m,n)=>(m[n]=gl.getUniformLocation(cellProg,n),m),{});
+const quad=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,quad); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+const fieldVao=gl.createVertexArray(); gl.bindVertexArray(fieldVao); gl.bindBuffer(gl.ARRAY_BUFFER,quad); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+const cellBuf=gl.createBuffer(); const cellVao=gl.createVertexArray(); gl.bindVertexArray(cellVao);
+gl.bindBuffer(gl.ARRAY_BUFFER,cellBuf);
+gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,2,gl.FLOAT,false,24,0);
+gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1,3,gl.FLOAT,false,24,8);
+gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2,1,gl.FLOAT,false,24,20);
+let cellData=new Float32Array(MAX*6);
+const fTex=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,fTex);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.REPEAT);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+let fPix=new Uint8Array(GF*GF*4);
+function uploadFields(){ for(let i=0;i<GF*GF;i++){ fPix[i*4]=clamp(sugar[i]*0.5,0,1)*255; fPix[i*4+1]=clamp(scent[i]*0.4,0,1)*255; fPix[i*4+3]=255; }
+  gl.bindTexture(gl.TEXTURE_2D,fTex); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,GF,GF,0,gl.RGBA,gl.UNSIGNED_BYTE,fPix); }
+
+/* ---------- camera + input ---------- */
+let cam={cx:0.5,cy:0.5,zoom:700}; let dpr=Math.min(2,devicePixelRatio||1);
+function resize(){ dpr=Math.min(2,devicePixelRatio||1); canvas.width=Math.floor(innerWidth*dpr); canvas.height=Math.floor(innerHeight*dpr); gl.viewport(0,0,canvas.width,canvas.height); }
+addEventListener('resize',resize); resize(); cam.zoom=Math.min(canvas.width,canvas.height)*0.92*1.8;
+function s2w(px,py){ const mx=px*dpr,my=canvas.height-py*dpr; return {x:cam.cx+(mx-canvas.width/2)/cam.zoom,y:cam.cy+(my-canvas.height/2)/cam.zoom}; }
+let trackIx=null,dragging=false,lx=0,ly=0,moved=false;
+canvas.addEventListener('pointerdown',e=>{ canvas.setPointerCapture(e.pointerId); dragging=true; moved=false; lx=e.clientX; ly=e.clientY; canvas.classList.add('grabbing'); });
+canvas.addEventListener('pointermove',e=>{ if(!dragging)return; if(Math.abs(e.clientX-lx)+Math.abs(e.clientY-ly)>3)moved=true;
+  cam.cx-=(e.clientX-lx)*dpr/cam.zoom; cam.cy+=(e.clientY-ly)*dpr/cam.zoom; trackIx=null; lx=e.clientX; ly=e.clientY; });
+canvas.addEventListener('pointerup',e=>{ dragging=false; canvas.classList.remove('grabbing'); if(!moved) pick(e.clientX,e.clientY); });
+canvas.addEventListener('wheel',e=>{ e.preventDefault(); const b=s2w(e.clientX,e.clientY); cam.zoom=clamp(cam.zoom*(e.deltaY<0?1.12:1/1.12),120,40000); const a=s2w(e.clientX,e.clientY); cam.cx+=b.x-a.x; cam.cy+=b.y-a.y; },{passive:false});
+function pick(px,py){ const w=s2w(px,py); let best=-1,bd=(26/cam.zoom)**2; for(let k=0;k<cells.length;k++){ const c=cells[k]; let dx=c.x-fract(w.x),dy=c.y-fract(w.y); if(dx>0.5)dx-=1;else if(dx<-0.5)dx+=1; if(dy>0.5)dy-=1;else if(dy<-0.5)dy+=1; const d=dx*dx+dy*dy; if(d<bd){bd=d;best=k;} } trackIx=best>=0?best:null; }
+
+/* ---------- controls ---------- */
+const $=id=>document.getElementById(id);
+let params={sun:1.3,mut:0.12,visc:0.86,speed:2};
+function slider(id,key,fmt){ const s=$('s_'+id),v=$('v_'+id); const u=()=>{ params[key]=+s.value; v.textContent=fmt?fmt(+s.value):(+s.value).toFixed(2); }; s.addEventListener('input',u); u(); }
+slider('sun','sun'); slider('mut','mut'); slider('visc','visc'); slider('speed','speed',v=>v.toFixed(0)+'×');
+let colorMode='lin';
+$('b_chi').onclick=()=>{ colorMode='chi'; $('b_chi').classList.add('on'); $('b_lin').classList.remove('on'); };
+$('b_lin').onclick=()=>{ colorMode='lin'; $('b_lin').classList.add('on'); $('b_chi').classList.remove('on'); };
+$('b_scramble').onclick=()=>{ for(const c of cells){ c.g=randGenome(); c.y_.fill(0); } gen=0; };  // wipe what evolution found — watch it re-evolve
+$('b_food').onclick=()=>{ for(let i=0;i<400;i++){ const s=sources[(srand()*sources.length)|0]; splat(sugar,s.x+(srand()-.5)*0.1,s.y+(srand()-.5)*0.1,4); } };
+let paused=false;
+$('b_pause').onclick=()=>{ paused=!paused; $('b_pause').textContent=paused?'resume':'pause'; $('b_pause').classList.toggle('on',paused); };
+$('b_reset').onclick=()=>{ allocFields(); seedSources(); seedCells(240); births=0; gen=0; };
+addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); $('b_pause').click(); } });
+
+// lineage colour: hash lineage id to a hue
+function linColor(lin,out){ const h=(Math.imul(lin,2654435761)>>>0)/4294967296; const a=h*6.283;
+  out[0]=0.5+0.45*Math.cos(a); out[1]=0.5+0.45*Math.cos(a+2.1); out[2]=0.5+0.45*Math.cos(a+4.2); }
+
+/* ---------- main loop ---------- */
+let fpsT=performance.now(),fpsN=0,_lc=[0,0,0];
+function frame(now){
+  if(!paused) for(let s=0;s<params.speed;s++) step(1/60,params.sun,params.visc,params.mut);
+  if(trackIx!=null&&cells[trackIx]){ cam.cx=cells[trackIx].x; cam.cy=cells[trackIx].y; } else trackIx=null;
+  uploadFields();
+  gl.disable(gl.BLEND); gl.useProgram(fieldProg); gl.bindVertexArray(fieldVao);
+  gl.uniform2f(fU.u_res,canvas.width,canvas.height); gl.uniform2f(fU.u_center,cam.cx,cam.cy); gl.uniform1f(fU.u_zoom,cam.zoom);
+  gl.uniform1f(fU.u_scent,$('c_scent').checked?1:0);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,fTex); gl.uniform1i(fU.u_f,0);
+  gl.drawArrays(gl.TRIANGLES,0,3);
+  let n=0, chiSum=0; const lset=new Set();
+  for(let k=0;k<cells.length;k++){ const c=cells[k]; lset.add(c.lin); cellData[n*6]=c.x; cellData[n*6+1]=c.y;
+    if(colorMode==='chi'){ const t=clamp(c.chi*1.5+0.5,0,1); cellData[n*6+2]=clamp(1.4-2*t,0,1)*0.9+0.1; cellData[n*6+3]=clamp(2*t,0,1)*0.85+0.1; cellData[n*6+4]=0.16; }
+    else { linColor(c.lin,_lc); cellData[n*6+2]=_lc[0]; cellData[n*6+3]=_lc[1]; cellData[n*6+4]=_lc[2]; }
+    cellData[n*6+5]=c.size; chiSum+=c.chi; n++; }
+  gl.bindBuffer(gl.ARRAY_BUFFER,cellBuf); gl.bufferData(gl.ARRAY_BUFFER,cellData.subarray(0,n*6),gl.DYNAMIC_DRAW);
+  gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+  gl.useProgram(cellProg); gl.bindVertexArray(cellVao);
+  gl.uniform2f(cU.u_res,canvas.width,canvas.height); gl.uniform2f(cU.u_center,cam.cx,cam.cy); gl.uniform1f(cU.u_zoom,cam.zoom);
+  gl.drawArrays(gl.POINTS,0,n);
+  const meanChi=n?chiSum/n:0;
+  $('h_pop').textContent=n; $('h_gen').textContent=gen; $('h_births').textContent=births;
+  $('h_lin').textContent=lset.size; $('h_lin0').textContent=linStart;
+  $('h_chi').textContent=meanChi.toFixed(2); $('chimark').style.left=clamp(meanChi*1.5+0.5,0,1)*62+'px';
+  fpsN++; if(now-fpsT>500){ $('h_fps').textContent=Math.round(fpsN*1000/(now-fpsT)); fpsN=0; fpsT=now; }
+  $('h_zoom').textContent=(cam.zoom/(Math.min(canvas.width,canvas.height)*0.92)).toFixed(1);
+  const tp=$('track'); if(trackIx!=null&&cells[trackIx]){ const c=cells[trackIx]; tp.style.display='block';
+    tp.innerHTML=`<b>cell · lineage ${c.lin}</b><br><span style="color:#63758a">fuel</span> ${c.fuel.toFixed(2)} · <span style="color:#63758a">gen</span> ${c.gen}<br><span style="color:#63758a">climbing gradient</span> ${c.chi.toFixed(2)}`; }
+  else tp.style.display='none';
+  requestAnimationFrame(frame);
+}
+/* ---------- boot ---------- */
+allocFields(); seedSources(); seedCells(320);
+requestAnimationFrame(frame);
+</script>
