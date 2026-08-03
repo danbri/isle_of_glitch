@@ -209,6 +209,34 @@ ${wgslStruct('W')}
 // how much contact is seen, never a wrong answer about who exists.
 @group(0) @binding(8) var<storage, read_write> hashData : array<atomic<u32>>;
 
+// STANDING CROP. The resource field used to be an analytic function sampled
+// without depletion — infinite free energy, everywhere, forever, which is the
+// thing energy-speculative-friction.md is entirely about not doing.
+//
+// Now the field is FERTILITY (where crop regrows, and how fast) and the actual
+// energy is stock held on motes: particles with a position and an amount. A
+// cell grazes what is near it, the stock goes down, and it regrows from a
+// bounded solar inflow. Grazing is a TRANSFER — what the cell gains, the mote
+// loses — so harvest no longer creates anything. Total energy in the world is
+// bounded by nMotes * moteCap plus what is standing in tissue.
+//
+// Motes are particles, not a grid: positions are continuous, they are found
+// through a hash exactly as cells are, and nothing is ever addressed by bucket.
+// Their positions do not move, which is what makes a patch something you can
+// exhaust and have to leave — the pressure to locomote has to come from
+// somewhere, and a field that refills under your feet is not it.
+@group(0) @binding(9)  var<storage, read>       motePos   : array<vec2<f32>>;
+// (stock, per-cell offer this step, demanders, unused)
+@group(0) @binding(10) var<storage, read_write> moteState : array<vec4<f32>>;
+@group(0) @binding(11) var<storage, read_write> moteHash  : array<atomic<u32>>;
+
+fn moteBucketOf(p: vec2<f32>) -> u32 {
+  let gx = i32(floor(p.x / P.moteR));
+  let gy = i32(floor(p.y / P.moteR));
+  let h = u32(gx * 73856093) ^ u32(gy * 19349663);
+  return h % P.moteHashSize;
+}
+
 fn flowAt(p: vec2<f32>) -> vec2<f32> {
   return flowField(p, P.flowScale, P.flowStr, P.seed);
 }
@@ -408,6 +436,95 @@ fn crowdingAt(p: vec2<f32>) -> f32 {
   return f32(n);
 }
 
+@compute @workgroup_size(${WORKGROUP})
+fn moteHashClear(@builtin(global_invocation_id) gid: vec3<u32>) {
+  if (gid.x >= P.moteHashSize) { return; }
+  atomicStore(&moteHash[gid.x * (1u + P.bucketM)], 0u);
+}
+
+// Motes never move, so this runs once at startup rather than every step.
+@compute @workgroup_size(${WORKGROUP})
+fn moteHashBuild(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i = gid.x;
+  if (i >= P.nMotes) { return; }
+  let b = moteBucketOf(motePos[i]) * (1u + P.bucketM);
+  let n = atomicAdd(&moteHash[b], 1u);
+  if (n < P.bucketM) { atomicStore(&moteHash[b + 1u + n], i); }
+}
+
+// PHASE 1 of grazing. Each mote counts the live cells in reach and works out
+// what it can give EACH of them without going below zero.
+//
+// Motes offer and cells take, rather than cells simply subtracting, because
+// many cells graze one mote at once. If each took what it wanted the mote would
+// be overdrawn — energy created from nothing, in the one place we are trying
+// hardest to stop that. WGSL has no f32 atomics, so a cell cannot safely
+// decrement shared stock; running the arithmetic once per mote, single-threaded,
+// avoids the race entirely and keeps a run a pure function of its seed.
+@compute @workgroup_size(${WORKGROUP})
+fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i = gid.x;
+  if (i >= P.nMotes) { return; }
+  let p = motePos[i];
+  let st = moteState[i];
+  var demanders = 0.0;
+  for (var dy = -1; dy <= 1; dy = dy + 1) {
+    for (var dx = -1; dx <= 1; dx = dx + 1) {
+      let b = bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM);
+      let n = min(atomicLoad(&hashData[b]), P.bucketM);
+      for (var k = 0u; k < n; k = k + 1u) {
+        let j = atomicLoad(&hashData[b + 1u + k]);
+        if (cmeta[j].x < 0) { continue; }
+        if (length(minImage(pos[j] - p)) > P.moteR) { continue; }
+        demanders = demanders + 1.0;
+      }
+    }
+  }
+  var offer = 0.0;
+  if (demanders > 0.0) {
+    // What one cell wants, capped by an equal split of what there actually is.
+    offer = min(P.grazeRate * P.dt, max(0.0, st.x) / demanders);
+  }
+  moteState[i] = vec4<f32>(st.x, offer, demanders, 0.0);
+}
+
+// PHASE 3. Subtract what was actually handed out, then let the sun put some
+// back. Regrowth is logistic toward moteCap and scaled by local fertility, so
+// the analytic field still decides WHERE the world is rich — it just no longer
+// decides how much there is. The inflow is bounded: at most
+// nMotes * moteRegrow * moteCap per second enters the world, whatever lives in
+// it and however hungry they are. That is the one boundary inflow.
+@compute @workgroup_size(${WORKGROUP})
+fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i = gid.x;
+  if (i >= P.nMotes) { return; }
+  let p = motePos[i];
+  let st = moteState[i];
+  var stock = max(0.0, st.x - st.y * st.z);
+  let fert = clamp(resourceAt(p), 0.0, 1.0);
+  stock = stock + P.moteRegrow * fert * (1.0 - stock / P.moteCap) * P.dt;
+  moteState[i] = vec4<f32>(clamp(stock, 0.0, P.moteCap), 0.0, 0.0, 0.0);
+}
+
+// PHASE 2 lives inside physics(): what cell i can pick up from the motes it is
+// standing on, at the rate each of them already committed to.
+fn grazeAt(p: vec2<f32>) -> f32 {
+  if (P.nMotes == 0u) { return 0.0; }
+  var got = 0.0;
+  for (var dy = -1; dy <= 1; dy = dy + 1) {
+    for (var dx = -1; dx <= 1; dx = dx + 1) {
+      let b = moteBucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.moteR) * (1u + P.bucketM);
+      let n = min(atomicLoad(&moteHash[b]), P.bucketM);
+      for (var k = 0u; k < n; k = k + 1u) {
+        let m = atomicLoad(&moteHash[b + 1u + k]);
+        if (length(minImage(motePos[m] - p)) > P.moteR) { continue; }
+        got = got + moteState[m].y;
+      }
+    }
+  }
+  return got;
+}
+
 // 1. Sensor cells write what they feel into their brain's input slot. Nothing
 //    crosses the bus: ext is a GPU buffer the arena kernel reads next.
 @compute @workgroup_size(${WORKGROUP})
@@ -582,7 +699,17 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // not because the accounting was told to favour it. Removing it is expected to
   // hurt: the doc's test is that a correct energy model is one where you
   // frequently cannot afford what you wanted.
-  let gain = P.harvest * resourceAt(np) * share;
+  // Motes when they exist, the old analytic sample when they do not, so a run
+  // can still be configured the old way for comparison. The mote path needs no
+  // crowding discount: share was a stand-in for depletion, and depletion is
+  // now real — many cells on one mote each get a smaller offer because the mote
+  // divided what it had between them.
+  var gain = 0.0;
+  if (P.nMotes > 0u) {
+    gain = grazeAt(np) / P.dt;
+  } else {
+    gain = P.harvest * resourceAt(np) * share;
+  }
   let work = P.muscleCost * abs(mine);
   let taken = contest(i, np, abs(mine));
   // Written to scratch, not to energy[]: contest() READS energy[j] for other
@@ -693,10 +820,67 @@ export class WorldGPU {
       // repulsion of its own cells touching.
       contactK: 12.0,
       // Standing crop. nMotes 0 leaves the old analytic harvest in place.
-      nMotes: 0, moteR: 1.6, grazeRate: 2.2, moteRegrow: 0.35, moteCap: 1.0,
+      // moteR MUST NOT exceed hashCell. A mote counts its demanders by scanning
+      // the cell hash 3x3 about itself, so it can only see cells within one
+      // bucket; if a cell could graze from further than that it would take an
+      // offer computed without it, the mote would go overdrawn, and the
+      // max(0, ...) in moteCommit would clamp the debt away — minting exactly
+      // the overdraft. Measured at moteR 1.6 vs hashCell 1.2: +162.9 units
+      // created out of 10800 in a closed world with the sun switched off.
+      // nMotes null means "cover the world" — resolved below from bound, since
+      // food density is a property of area, not a number to be carried around.
+      // Motes are ON by default: the analytic field they replace was unbounded
+      // free energy and should not be what a run gets unless it asks.
+      nMotes: null, moteR: 1.2, grazeRate: 2.2, moteRegrow: 3.0, moteCap: 1.0,
       moteHashSize: 16384, pad0: 0,
       dt: brains.dt, ...params,
     };
+    // Motes. Scattered by a hash of their index rather than laid on a lattice:
+    // a lattice would put the world's food on a grid, which is the thing we do
+    // not do, and would also give every patch the same size and spacing. Random
+    // scatter clumps and thins the way real ground does, for free.
+    if (this.params.nMotes == null) {
+      // One mote per two square units: with moteR 1.2 a cell has about two in
+      // reach, so ground is granular enough to be exhausted patch by patch
+      // rather than all at once.
+      this.params.nMotes = Math.round((2 * this.params.bound) ** 2 / 2);
+    }
+    const nM = this.params.nMotes | 0;
+    const mpos = new Float32Array(Math.max(1, nM) * 2);
+    const mst = new Float32Array(Math.max(1, nM) * 4);
+    {
+      let sd = (this.params.moteSeed ?? 20260803) >>> 0;
+      const rnd = () => ((sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296);
+      const B = this.params.bound;
+      for (let i = 0; i < nM; i++) {
+        mpos[i * 2] = (rnd() * 2 - 1) * B;
+        mpos[i * 2 + 1] = (rnd() * 2 - 1) * B;
+        // Start full, so the opening moments are not an artificial famine.
+        mst[i * 4] = this.params.moteCap;
+      }
+    }
+    const mkS = (a) => {
+      const b = device.createBuffer({
+        size: Math.max(16, a.byteLength),
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+      });
+      device.queue.writeBuffer(b, 0, a);
+      return b;
+    };
+    this.bMotePos = mkS(mpos);
+    this.bMoteState = mkS(mst);
+    this.bMoteHash = device.createBuffer({
+      size: Math.max(16, this.params.moteHashSize * (1 + this.params.bucketM) * 4),
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+    });
+    if (nM > 0 && this.params.moteR > this.params.hashCell) {
+      throw new Error(
+        `moteR ${this.params.moteR} exceeds hashCell ${this.params.hashCell}: motes ` +
+        `would be grazed by cells they never counted, and the overdraft would be ` +
+        `minted. Raise hashCell or lower moteR.`);
+    }
+    this.moteGroups = nM > 0 ? Math.ceil(nM / WORKGROUP) : 0;
+
     this.bHash = device.createBuffer({
       size: this.params.hashSize * (1 + this.params.bucketM) * 4,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
@@ -720,6 +904,9 @@ export class WorldGPU {
         { binding: 6, visibility: C, buffer: ro },   // act, read by physics()
         { binding: 7, visibility: C, buffer: rw },   // energy, per cell
         { binding: 8, visibility: C, buffer: rw },   // spatial-hash occupancy
+        { binding: 9, visibility: C, buffer: ro },   // mote positions (static)
+        { binding: 10, visibility: C, buffer: rw },  // mote stock + offer
+        { binding: 11, visibility: C, buffer: rw },  // mote hash (built once)
       ],
     });
     const module = device.createShaderModule({ code: SHADER, label: 'world' });
@@ -729,6 +916,10 @@ export class WorldGPU {
     this.pipeHashClear = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'hashClear' } });
     this.pipeHashBuild = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'hashBuild' } });
     this.pipeEnergy = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'energyCommit' } });
+    this.pipeMoteOffer = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'moteOffer' } });
+    this.pipeMoteCommit = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'moteCommit' } });
+    this.pipeMoteHashClear = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'moteHashClear' } });
+    this.pipeMoteHashBuild = device.createComputePipeline({ layout: pl, compute: { module, entryPoint: 'moteHashBuild' } });
 
     this.bindGroup = device.createBindGroup({
       layout: this.layout,
@@ -742,12 +933,57 @@ export class WorldGPU {
         { binding: 6, resource: { buffer: brains.bAct } },
         { binding: 7, resource: { buffer: this.bEnergy } },
         { binding: 8, resource: { buffer: this.bHash } },
+        { binding: 9, resource: { buffer: this.bMotePos } },
+        { binding: 10, resource: { buffer: this.bMoteState } },
+        { binding: 11, resource: { buffer: this.bMoteHash } },
       ],
     });
     this.groups = Math.ceil(this.n / WORKGROUP);
     this.bRead = device.createBuffer({
       size: this.n * 4 * 2, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     });
+
+    // Motes do not move, so their hash is built once here rather than each step.
+    if (this.moteGroups > 0) {
+      const enc = device.createCommandEncoder();
+      const pass = enc.beginComputePass();
+      pass.setBindGroup(0, this.bindGroup);
+      pass.setPipeline(this.pipeMoteHashClear);
+      pass.dispatchWorkgroups(Math.ceil(this.params.moteHashSize / WORKGROUP));
+      pass.setPipeline(this.pipeMoteHashBuild);
+      pass.dispatchWorkgroups(this.moteGroups);
+      pass.end();
+      device.queue.submit([enc.finish()]);
+    }
+  }
+
+  /** Mote stock, for the viewer and for conservation checks. */
+  async readMotes() {
+    if (!this.moteGroups) return { pos: new Float32Array(0), stock: new Float32Array(0) };
+    if (this.params.nMotes == null) {
+      // One mote per two square units: with moteR 1.2 a cell has about two in
+      // reach, so ground is granular enough to be exhausted patch by patch
+      // rather than all at once.
+      this.params.nMotes = Math.round((2 * this.params.bound) ** 2 / 2);
+    }
+    const nM = this.params.nMotes | 0;
+    const sp = this.device.createBuffer({
+      size: nM * 8, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    });
+    const ss = this.device.createBuffer({
+      size: nM * 16, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    });
+    const enc = this.device.createCommandEncoder();
+    enc.copyBufferToBuffer(this.bMotePos, 0, sp, 0, nM * 8);
+    enc.copyBufferToBuffer(this.bMoteState, 0, ss, 0, nM * 16);
+    this.device.queue.submit([enc.finish()]);
+    await sp.mapAsync(GPUMapMode.READ); await ss.mapAsync(GPUMapMode.READ);
+    const pos = new Float32Array(sp.getMappedRange().slice(0));
+    const raw = new Float32Array(ss.getMappedRange().slice(0));
+    sp.unmap(); ss.unmap(); sp.destroy(); ss.destroy();
+    const stock = new Float32Array(nM);
+    for (let i = 0; i < nM; i++) stock[i] = raw[i * 4];
+    return { pos, stock };
   }
 
   writeParams(patch = {}) {
@@ -786,6 +1022,11 @@ export class WorldGPU {
       pass.setPipeline(this.pipeHashClear);
       pass.dispatchWorkgroups(Math.ceil(this.params.hashSize / 256));
       pass.setPipeline(this.pipeHashBuild); pass.dispatchWorkgroups(this.groups);
+      // Motes decide what they can afford to give BEFORE anyone takes, using
+      // the cell hash just rebuilt above.
+      if (this.moteGroups > 0) {
+        pass.setPipeline(this.pipeMoteOffer); pass.dispatchWorkgroups(this.moteGroups);
+      }
       pass.setPipeline(this.pipeSense); pass.dispatchWorkgroups(this.groups);
 
       pass.setBindGroup(0, b.bindGroup);
@@ -795,6 +1036,9 @@ export class WorldGPU {
       pass.setBindGroup(0, this.bindGroup);
       pass.setPipeline(this.pipePhysics); pass.dispatchWorkgroups(this.groups);
       pass.setPipeline(this.pipeEnergy); pass.dispatchWorkgroups(this.groups);
+      if (this.moteGroups > 0) {
+        pass.setPipeline(this.pipeMoteCommit); pass.dispatchWorkgroups(this.moteGroups);
+      }
     }
     pass.end();
     this.device.queue.submit([enc.finish()]);
@@ -865,7 +1109,8 @@ export class WorldGPU {
   }
 
   destroy() {
-    for (const b of [this.bPos, this.bVel, this.bMeta, this.bBondD,
+    for (const b of [this.bMotePos, this.bMoteState, this.bMoteHash,
+                     this.bPos, this.bVel, this.bMeta, this.bBondD,
       this.bEnergy, this.bHash, this.bParams, this.bRead]) b.destroy();
   }
 }

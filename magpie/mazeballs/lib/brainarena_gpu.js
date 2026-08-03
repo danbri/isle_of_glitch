@@ -118,6 +118,10 @@ export async function requestDeviceFor({ neurons, degree }, adapter = null) {
     requiredLimits: {
       maxStorageBufferBindingSize: cap('maxStorageBufferBindingSize', need),
       maxBufferSize: cap('maxBufferSize', need),
+      // The world shader needs 11: the 8 cell buffers plus mote positions,
+      // mote state and the mote hash. 8 is only the guaranteed floor; every
+      // device this runs on reports far more (31 here).
+      maxStorageBuffersPerShaderStage: cap('maxStorageBuffersPerShaderStage', 12),
     },
   });
   if (need > device.limits.maxStorageBufferBindingSize)
