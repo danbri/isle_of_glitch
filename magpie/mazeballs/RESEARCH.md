@@ -208,6 +208,31 @@ information without the noise and costs roughly twice as much, meaning the
 headline `sensing` figure has been understating capability by about half
 throughout. Both are recorded per run.
 
+**And lifetime learning does not cross the valley either — the last flagged
+ingredient is now tested.** The discrimination task retired the premise that the
+right *task* unlocks sensing; the mission's own conclusion then named LEARNING as
+the one untried lever — a body that adapts its control within its lifetime could
+discover sensing ontogenetically and selection could assimilate it (Baldwin).
+Reward-modulated Hebbian plasticity was built on the CTRNN (three-factor
+eligibility-trace rule, genome-encoded evolvable plasticity, learned weights
+discarded each lifetime; default off, non-plastic path byte-identical) and evolved
+on the same no-kinematic-escape discrimination task. Plastic and non-plastic are
+**indistinguishable on every decisive axis**: the quality-ablation Δ on net intake
+is incidental in both (+0.0002 ± 0.0059 plastic vs +0.0073 ± 0.0110 control, three
+seeds each), selectivity sits below chance in both (0.476 vs 0.467), net intake is
+negative in both, and there is no assimilation (frozen-selectivity ascent
+−0.008, flat). The within-life learning that appears is kinematic reward-tracking,
+not discrimination — it does not route through the quality channel (ablation stays
+incidental) and does not replicate across seeds (−0.047 ± 0.084). Selection *keeps*
+the plasticity (η retained mid-range, amplified under a stronger ceiling) but
+cannot aim it at the sense; a maximally-favourable probe (double lifetime, double
+plasticity ceiling) holds the wall undiminished. **Learning does not lead evolution
+here because it stands at the same edge of the same valley: a reward-modulated rule
+sharpens sensor→motor wiring that already exists and cannot conjure the wiring that
+does not.** Substrate, task, and now lifetime have all been enriched, and the
+sensing region of the map is exactly as unsearched — the binding constraint is its
+searchability. See the lifetime-learning section below.
+
 ## The objective
 
 `tools/score.js`. **Not fitness.** Two measured reasons:
@@ -4465,3 +4490,159 @@ decisive ablation across seeds; `tools/sb-discrim-debug.js` is the escape-vs-spa
 diagnosis. Run readouts are in `results/discrim/` (`H{2,3,4}-{gaussian,signflip}-
 s{seed}.json`, plus `gen0-validity-probe.txt`, `escape-scaling.txt`,
 `aggregate.txt`).
+
+## Lifetime learning does not cross the findability valley either — the sense stays inert with plasticity on
+
+The discrimination task retired the mission's premise that the right *task* would
+unlock sensing: when every non-sensing answer is structurally guaranteed to lose,
+this substrate still sits, refuses and is poisoned rather than discriminate. That
+result reframed the problem as a **findability valley** — the discriminating policy
+provably wins (toxic-avoided bound +0.023, positive for 64% of even random bodies),
+the map can wire it (45–56% of bodies steer a motor from the relevant channel), and
+selection heavily rewards it, but sitting is a one-mutation win that pays
+immediately while sensing needs many coordinated mutations that pay nothing until
+complete, so pure selection takes the cheap win and never crosses. The project's own
+conclusion had named the one ingredient not yet tried: **learning**. If a body can
+adapt its control *within its lifetime* toward reward, it could DISCOVER the sensing
+behaviour ontogenetically even though the genome did not specify it, and selection
+would then favour genomes that learn it faster and eventually assimilate the
+predisposition into the developed weights — the Baldwin effect, the mechanism by
+which learning can lead evolution across a gap gradient-free selection cannot. This
+section builds that and tests it on the same decisive task. **It does not cross the
+valley. Adding lifetime learning leaves the sense exactly as inert as selection
+alone left it.**
+
+**What was built, and why the non-plastic path stays byte-identical.** Reward-
+modulated Hebbian plasticity on the CTRNN, behind `cfg.PLASTIC` (default off). Off,
+the substrate is byte-identical: no plastic weight buffers are allocated, `kNeural`
+reads the developed `p.W` / `p.win`, and `randomGenome` / `perturbGenome` /
+`cloneGenome` draw no extra rng and carry no extra field — verified bit-for-bit on
+`sb-turing`, `sb-gate` and a displacement `sb-evolve` run (text and JSON). On, the
+genome gains a small evolvable `plast` block (per-class learning rates η, the
+neuromodulator gain, and the eligibility-trace and reward-baseline time constants);
+development produces the INITIAL weights as before, and within an episode the
+recurrent and sensor→neuron weights update by a three-factor rule
+Δw_ij = η · m(t) · e_ij, with e_ij a low-pass eligibility trace of pre·post
+coincidence and m(t) a neuromodulator driven by the reward-PREDICTION-ERROR (this
+step's signed intake, good − H·toxic, minus a slow baseline) — eating good
+strengthens what the body just did, eating toxic unlearns it. The developed weight
+is the anchor: a plastic weight is clamped to a bounded neighbourhood of it, so
+learning can never NaN the physics (assertFinite stayed live and never fired on
+plasticity). **What is inherited is the capacity to learn, not the learned weights:
+the plastic weights reset to the developed values every spawn, so selection can only
+assimilate a learned behaviour by moving the DEVELOPED weights, never by inheriting
+the learned ones** — the honest Baldwin setup. `tools/sb-plastic.js` is a new driver
+mirroring the discrimination path with a `--plastic` flag, so `--plastic false`
+reproduces the six-experiments baseline in the same harness and the comparison is
+plastic vs non-plastic with nothing else changed; `sb-evolve.js` is untouched.
+
+**First, the mechanism does not spontaneously discriminate — it degrades
+discrimination on unstructured genomes.** Run on a fixed generation-0 population
+(`--gens 0`), the plastic within-life selectivity curve falls consistently *below*
+the frozen (learning-disabled) curve on the same spawns: −0.10 attributable to
+learning at η_max 0.25 and −0.10 at η_max 0.5, robust across strengths. On a random
+genome the sensor→motor wiring is arbitrary, so a rule that reinforces "what you did
+when reward was high" just amplifies indiscriminate eating rather than sharpening a
+non-existent discrimination. This is the plasticity-by-drift failure the task warned
+of, made concrete: on unstructured genomes the rule does not merely fail to help, it
+hurts — which is exactly the condition under which a naive expectation would predict
+selection to *remove* plasticity before Baldwin can bootstrap. The real question is
+therefore whether EVOLUTION, selecting on learned performance, sculpts genomes on
+which learning finally pays.
+
+**The result: plastic and non-plastic are the same on every decisive axis.** `sb-
+plastic` at POP 48 × 18 generations, a 6-generation displacement curriculum then
+`netintake`, k=2 tournament, six held-out spawns for the re-measure, at H = 3 with
+η_max 0.3 / modGain_max 15 (both evolvable per genome), three seeds per arm. The
+decisive column is unchanged from every prior wave — blind the quality channel on the
+evolved population and measure whether net intake collapses:
+
+| arm | qualAbl Δnet ± SE (2·SE bar) | selectivity (qual-abl) | net intake | squat% | netNeg% | assimilation (frozen sel ascent) | verdict |
+|---|---|---|---|---|---|---|---|
+| non-plastic (control) | +0.0073 ± 0.0110 (0.0221) | 0.467 (0.458) | −0.242 | 46 | 88 | +0.0095 ± 0.0147 (0.0294) | incidental |
+| **plastic** | **+0.0002 ± 0.0059 (0.0118)** | **0.476 (0.470)** | **−0.222** | **40** | **86** | **−0.0082 ± 0.0090 (0.0179)** | **incidental** |
+
+The control reproduces the published H3 baseline (selectivity 0.467, ~50% squatters,
+incidental ablation), so the harness is calibrated. And the plastic arm is
+indistinguishable from it: the quality-ablation Δ is incidental in both and the two
+deltas are within each other's bars, selectivity sits **below chance** in both, net
+intake is negative in both (the population is poisoned, not fed), and the same sit-
+and-refuse degenerate census holds. Blinding the discriminating sense costs nothing
+whether or not the body can learn.
+
+**The within-life learning that appears is real but is not discrimination, and it
+does not replicate.** Measured as the plastic within-life selectivity curve minus the
+frozen curve on identical spawns — so a rise from food-depletion dynamics is not
+mistaken for learning — the attribution across three seeds is **−0.047 ± 0.084 (bar
+0.167): no robust within-life learning.** One seed showed a clean +0.12 (plastic held
+selectivity where frozen decayed), but the next showed −0.14, and they cancel. Where
+it did appear it was **not routed through the quality channel**: the quality-ablation
+on that very population stayed incidental, so the plastic-vs-frozen selectivity
+difference came from the plasticity nudging gait and timing in response to reward —
+the heritable-kinematic dissociation the cost and coevolution sections named, now
+recurring in the learning channel. The ablation is what tells learning-to-discriminate
+apart from reward-correlated drift, and it says drift.
+
+**There is no assimilation.** The frozen (developed-weight, learning-disabled)
+selectivity of the evolved plastic population is 0.462 against a generation-0 frozen
+0.470 — an ascent of −0.008 against a bar of 0.018, flat. The developed weights of a
+population evolved *with* lifetime learning discriminate no better than random
+genomes do. There is nothing for Baldwin to assimilate because there was no
+discriminating behaviour, learned or otherwise, to migrate inward.
+
+**Selection keeps the plasticity — it just cannot aim it at the sense.** Evolution
+did not remove the capacity to learn: mean η settled at 0.13–0.16 (from a 0.15
+generation-0 mean), mid-range, retained rather than driven to zero. Under the
+maximally-favourable probe below it was actively *amplified*. So the null is not
+"selection switched learning off"; it is "selection kept learning on, and learning
+found reward-tracking kinematics rather than sensory discrimination" — the same trait
+every wave finds, now reached by a second route.
+
+**The strongest shot fails the same way.** To rule out that learning simply lacked
+time or headroom, one run doubled the lifetime (1000 steps) and roughly doubled the
+plasticity ceiling (η_max 0.6, modGain_max 30, wider weight bounds). Selection
+*raised* η_sens from 0.30 to 0.40 — it wanted more plasticity, because within-life
+reward-tracking adds kinematic fitness — and the wall held undiminished: quality-
+ablation +0.0165 against a bar of 0.197 (incidental), selectivity 0.485 intact / 0.447
+ablated (still below chance, and the small dependence there is the rounding-error the
+net-ablation correctly reports as incidental), net intake −0.40, 85% net-negative,
+frozen-selectivity assimilation −0.011 against a bar of 0.074. More learning capacity
+and more learning time buy more reward-tracking gait, not one unit of discrimination.
+
+**Verdict.** This was the experiment the mission's own conclusion pointed to — whether
+seeds of intelligence require learning rather than selection alone — and on this
+substrate the answer is no. Lifetime reward-modulated plasticity, faithfully built
+(three-factor eligibility-trace rule, genome-encoded evolvable plasticity, learned
+weights discarded each lifetime, the Baldwin inheritance channel intact), tested on
+the one task with no kinematic escape, does not make the discriminating sense load-
+bearing: the quality-ablation is incidental with plasticity exactly as it is without
+it, selectivity stays below chance, net intake stays negative, and there is no
+assimilation. The within-life learning that does occur is kinematic reward-tracking,
+not discrimination, and it does not replicate across seeds. **The findability valley
+is not crossed by learning, because the thing learning would have to find within a
+lifetime — a sensor→motor mapping that reads good-from-toxic and steers on it — is the
+same rare coordinated motif that selection cannot find across generations; a
+reward-modulated Hebbian rule sharpens the wiring that already exists and cannot
+conjure the wiring that does not, so on random and on evolved genomes alike it refines
+the gait and leaves the sense inert.** Learning does not lead evolution here because
+learning is standing at the same edge of the same valley. The result agrees with the
+whole run of nulls rather than breaking it: enriching the *substrate* (capacity,
+integration accuracy, morphology, range, development), enriching the *task* (ambiguity,
+evasion, coevolution, mandatory discrimination), and now enriching the *lifetime*
+(plasticity) all leave the sensing region of this genotype→phenotype→behaviour map
+exactly as unsearched. The binding constraint is the searchability of that region,
+and neither a better task, a bigger reward, a richer body, nor a learning lifetime
+has moved it.
+
+**What is committed.** In `lib/softbody.js`, reward-modulated plasticity behind
+`cfg.PLASTIC` (default off): the `plast` genome block and its developed rates, the
+per-organism plastic weight and eligibility-trace buffers reset each spawn, the
+`kPlastic` three-factor kernel, and the reward-signal recording in `kFood` — non-
+plastic path verified byte-identical on `sb-turing`, `sb-gate` and a displacement
+`sb-evolve` run (text and JSON). `tools/sb-plastic.js` is the Baldwin driver
+(`--plastic` flag, the plastic-vs-frozen within-life curve, the frozen-selectivity
+assimilation trajectory, the decisive quality-ablation, and the evolved-plasticity-
+parameter readout); `tools/sb-plastic-agg.js` pools the decisive quantities across
+seeds under the project's 2·SE bar. Run readouts are in `results/plastic/`
+(`H3-plastic-s{1,2,3}.json`, `H3-control-s{1,2,3}.json`, `H3-plastic-strong-s1.json`,
+with `.txt` reports alongside).
