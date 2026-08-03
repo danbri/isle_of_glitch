@@ -4646,3 +4646,141 @@ parameter readout); `tools/sb-plastic-agg.js` pools the decisive quantities acro
 seeds under the project's 2·SE bar. Run readouts are in `results/plastic/`
 (`H3-plastic-s{1,2,3}.json`, `H3-control-s{1,2,3}.json`, `H3-plastic-strong-s1.json`,
 with `.txt` reports alongside).
+
+## Exploration-oriented search does not cross the valley either — and the reason is that niche-protection is not mechanism-protection
+
+The discrimination task retired the mission's premise that the right *task*
+unlocks sensing: a task with no kinematic escape, provably winnable by sensing
+and provably lost by everything else, and the substrate still sat, refused, and
+was poisoned in preference to discriminating. That result reframed the live
+question as one about the *search*, not the task — why a map that provably *can*
+wire the sense, heavily rewarded for using it, never finds it. The diagnosis was
+a **findability valley**: sitting is a one-mutation win that pays immediately,
+sensing needs many coordinated mutations that pay nothing until complete, so a
+pure-fitness tournament (k=2) takes the cheap win and collapses the population
+into the sit-attractor before the discriminating stepping-stone can be assembled.
+This section tests the natural response — **make the search reward behavioural
+diversity, not only fitness, so a discriminating stepping-stone is kept alive
+even while it is currently worse than a sitter.** The hypothesis is not a blind
+guess: novelty search with multi-spawn evaluation is one of only two changes that
+ever cleared the significance bar in this project, direct evidence that search
+structure is where the leverage is.
+
+**What was built, and why the descriptor is the whole design.** Two
+exploration schemes were ported into the soft-body loop behind `--select`
+(default `tournament`, byte-identical to the 17× first-evolution loop — verified
+text-and-JSON on a displacement run and a discrimination tournament run, and on
+`sb-turing`/`sb-gate`; `lib/softbody.js` is untouched, the descriptor is read
+entirely from `Colony.traits()`). `novelty` ranks the same k=2 tournament on
+`z(fitness) + z(novelty)`, novelty being mean distance to the k nearest bodies in
+a behavioural descriptor space; `mapelites` keeps the best genome per descriptor
+cell and breeds uniformly from occupied cells. The leverage is entirely in the
+descriptor, and the design constraint is sharp: for diversity to *protect* a
+discriminator, the search must be able to *see* one — a descriptor of
+displacement or final position collapses a sitter and a discriminator into the
+same region and cannot keep the latter. So the descriptor (`tools/sb-qd.js`) is
+three spawn-averaged axes chosen to separate the degenerates from the target:
+**selectivity** (good/gross, the discrimination axis — a sitter eats a 50/50
+stream and a coverer eats everything, both ≈0.5, only a body that steers off
+toxic on the quality sense reaches high selectivity), **gross** (separates the
+refuse-all-food degenerate from any eater), and **path** (separates a sitter from
+a coverer). Axes are spawn-averaged in the calibrated high-turnover regime
+(`--consume 1.2`) precisely because on one episode selectivity is dominated by
+which patches a body sat on — spawn luck, not a heritable trait.
+
+**The decisive ablation: exploration does not make the sense load-bearing at the
+population or the archive mean.** Canonical discrimination regime (POP 48 × 20
+generations, 6-generation displacement curriculum then `netintake`, H=3,
+`consume 1.2`, `relocateThresh 0.30`, spawns 2), four seeds per scheme, the
+project's quality-ablation delta on net intake with a 2·SE bar:
+
+| scheme | qualAbl Δnet ± SE (2·SE bar) | meanSelectivity | squat% | anosm% | netNeg% | verdict |
+|---|---|---|---|---|---|---|
+| tournament (baseline) | +0.0129 ± 0.0072 (0.0143) | 0.471 | 54 | 18 | 89 | incidental |
+| novelty | +0.0055 ± 0.0087 (0.0174) | 0.449 | 30 | 11 | 91 | incidental |
+| mapelites | −0.0016 ± 0.0038 (0.0075) | 0.499 | 79 | 21 | 84 | incidental |
+
+The tournament arm re-measures the six-experiments baseline on this worktree HEAD
+and reproduces it: blinding the quality sense is free, selectivity sits below
+chance. **Neither exploration scheme changes that verdict.** Novelty's ablation
+delta is smaller than the baseline's and straddles zero; MAP-Elites' is
+essentially zero, its archive mean selectivity is exactly chance (0.499, as a
+grid that deliberately keeps low-selectivity cells alongside high ones must be).
+No scheme discriminates at the mean, and blinding the sense costs nothing at the
+mean under any of them.
+
+**The second, weaker question — does exploration reach the discriminating niche
+AT ALL — has a more interesting answer, and it is still no.** A QD archive that
+merely *contained* a genuine discriminator, even one the mean drowns out, would
+be a partial win a fitness tournament never produces, so each run scans every
+archive cell (and each novelty final-population body) with a paired
+intact-vs-quality-ablated re-measure over six spawns, flagging a cell as a real
+discriminator only if it clears **both** selectivity ≥ 0.55 **and** a
+load-bearing sense (quality-ablation costs it ≥ 0.02 net) **and** actually eats.
+Pooled over four seeds, novelty flags 2 of 192 bodies and MAP-Elites 8 of 349
+cells — and reading the raw scan (`results/qd/dissociation-scan.txt`) dissolves
+even those. The two descriptor axes are **dissociated in every one of the eight
+QD seeds**: the cells with genuinely high selectivity (0.83–0.92) have a quality
+sense that is **inert** — blinding it costs ~0.000 net, so their selectivity is
+achieved *without* the sense, the same non-sensing selectivity a body reaches by
+where its kinematics park it; and the cells where the sense **is** load-bearing
+(quality-ablation costs 0.1–0.67 net) sit at or below chance selectivity
+(0.33–0.65) and are net-negative, the sense feeding the *gait* and the eaten
+*amount* rather than the good-versus-toxic *choice* — the heritable-kinematic
+dissociation the cost and coevolution sections named, now seen cell by cell. A
+genuine discriminator needs both properties on the **same** cell, and essentially
+none appears: the handful the lenient double-threshold catches are borderline,
+net-negative, and seven of the eight MAP-Elites flags come from a single
+unreplicated seed. **The archive does not contain a real discriminator; it
+contains bodies that discriminate without sensing and bodies that sense without
+discriminating, and never the conjunction.**
+
+**Why keeping the niche did not keep the mechanism.** This is the mechanistic
+finding, and it is more specific than "exploration failed." MAP-Elites *does*
+protect the high-selectivity niche — those cells are occupied every run — but it
+keeps the **best-fitness** occupant of each cell, and within a high-selectivity
+cell the cheapest way to be there is the non-sensing kinematic route (park where
+the good patches happen to be), which out-scores the many-mutation sensing route
+that would reach the same cell. **The findability valley reappears inside the
+cell.** Niche-protection is not mechanism-protection: diversity search keeps a
+*behaviour* alive, but the behaviour it keeps is the cheap non-sensing way of
+producing that behaviour, so it buys no gradient toward the sensing mechanism the
+niche was supposed to shelter. Novelty search shows the complementary failure —
+it does explore (squatters fall from 54% to 30%, the population spreads through
+kinematic and positional variation) but that exploration is *of the wrong axis*:
+it wanders the gait/coverage space the map moves freely in and never enters the
+sense-driven discriminating region, exactly the negative outcome the experiment
+was designed to be able to report.
+
+**Verdict.** Keeping behavioural diversity does **not** cross the valley that
+fitness-selection alone could not. Across novelty search and MAP-Elites, four
+seeds each, the quality sense is not load-bearing at the population or archive
+mean (deltas straddle zero, selectivity at or below chance), and the archive does
+not robustly contain a genuine discriminator either — its high-selectivity cells
+sense nothing and its sensing cells discriminate nothing, a dissociation that
+holds in all eight QD seeds. The one change that this project's history said
+should matter — search structure, the axis that produced two of its only
+accepted results — was given a descriptor built specifically to make
+discrimination a distinct niche, and it explored kinematic and positional
+variation without ever entering that niche. The reason is now named and is more
+useful than the null: on this map the non-sensing route to any given behaviour is
+cheaper than the sensing route to the *same* behaviour, so protecting the
+behaviour protects the cheap route, and the valley is not around the niche but
+inside it. Exploration that rewards behavioural novelty cannot help when the
+behaviour it rewards is reachable without the mechanism the search was meant to
+find. The wall holds; the search was not the missing lever, because the missing
+thing is a reason for the *sensing* implementation of a behaviour to out-compete
+the *reflexive* implementation of the same behaviour, and no selection scheme
+that scores behaviour — by fitness or by diversity — supplies one.
+
+**What is committed.** In `tools/sb-evolve.js`, `--select tournament|novelty|
+mapelites` (default tournament, byte-identical) with `--noveltyK/--noveltyW`
+and `--bdBins`, the spawn-averaged behaviour descriptor carried through
+`evalPop`, the per-cell archive-discriminator scan, and QD reporting/serialising
+all gated so a tournament run is unchanged text-and-JSON. `tools/sb-qd.js` (new)
+holds the pure descriptor/novelty/binning primitives and the descriptor
+justification; `tools/sb-qd-batch.js` runs the scheme × seed matrix in bounded
+foreground concurrency and `tools/sb-qd-agg.js` pools the decisive ablation and
+the archive-reach scan across seeds. Run readouts are in `results/qd/`
+(`{tournament,novelty,mapelites}-s{1..4}.json`, `aggregate.txt`,
+`dissociation-scan.txt`).
