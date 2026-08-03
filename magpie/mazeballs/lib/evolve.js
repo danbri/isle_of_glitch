@@ -52,12 +52,12 @@ export class Evolver {
   constructor({
     arena, world, cells, seed = 7,
     birthEnergy = 9, deathEnergy = 0, mutRate = 0.14, mutSize = 0.32,
-    sizeMutRate = 0.25, minCells = 5, maxCells = 40,
+    sizeMutRate = 0.25, minCells = 5, maxCells = 40, topoMutRate = 0.30,
   }) {
     this.arena = arena; this.world = world; this.cells = cells;
     this.birthEnergy = birthEnergy; this.deathEnergy = deathEnergy;
     this.mutRate = mutRate; this.mutSize = mutSize;
-    this.sizeMutRate = sizeMutRate;
+    this.sizeMutRate = sizeMutRate; this.topoMutRate = topoMutRate;
     this.minCells = minCells; this.maxCells = maxCells;
     this.rnd = rng(seed);
 
@@ -241,32 +241,144 @@ export class Evolver {
       }
     }
 
-    // --- body: cell types are heritable and mutable; the ring plan is not
+    // --- body: TOPOLOGY is heritable now, not just size and cell type
+    //
+    // The bond graph IS the body plan. Previously it was rebuilt as a ring plus
+    // one chord every time, so every creature in every generation had the same
+    // shape and the only structural freedom was how many cells were in the ring
+    // — one dimension, with a saturating payoff, which is why it plateaued. A
+    // graph is combinatorial instead: chains, lobes, branches and dense clumps
+    // are all reachable, and none of them is written down anywhere.
+    //
+    // Shape is not placed, it is GROWN. Cells start jittered inside a small disc
+    // and the bond springs pull them into whatever configuration the graph
+    // implies. Nothing computes a layout; morphology is what the physics settles
+    // into, which is the only way it stays a consequence rather than a design.
     const pos = new Float32Array(n * 2), vel = new Float32Array(n * 4);
     const meta = new Int32Array(n * 4), energy = new Float32Array(n);
     const bond = new Int32Array(n * bK).fill(-1), brest = new Float32Array(n * bK);
 
     const spin = r() * Math.PI * 2;
-    // Place the propagule just clear of the parent, in a random direction.
     const ox = px + Math.cos(spin) * 2.6, oy = py + Math.sin(spin) * 2.6;
     const b = world.params.bound;
     const wrap = (v) => v > b ? v - 2 * b : (v < -b ? v + 2 * b : v);
 
+    // Inherit the parent's graph, remapped through any size change.
+    const adj = Array.from({ length: n }, () => new Set());
     for (let i = 0; i < n; i++) {
-      const a = spin + (i / n) * Math.PI * 2;
-      const rad = 1.1 * (0.9 + r() * 0.2);
+      const si = srcOf(i);
+      for (let k = 0; k < bK; k++) {
+        const pj = cells.bond[(src + si) * bK + k];
+        if (pj < 0) continue;
+        const rel = pj - src;
+        const cj = Math.min(n - 1, Math.floor(rel * n / pn));
+        if (cj !== i) { adj[i].add(cj); adj[cj].add(i); }
+      }
+    }
+    // A newly added cell arrives attached to its neighbours, or it would be a
+    // free-floating cell that is nominally part of a body it cannot feel.
+    for (let i = 0; i < n; i++) {
+      if (adj[i].size === 0) {
+        const a = (i + 1) % n, c = (i + n - 1) % n;
+        adj[i].add(a); adj[a].add(i); adj[i].add(c); adj[c].add(i);
+      }
+    }
+
+    // Enforce the per-cell bond budget SYMMETRICALLY, before anything reads it.
+    //
+    // Inheritance can hand a cell more neighbours than it has slots: when a
+    // child is smaller than its parent, several parent cells remap onto one
+    // child cell and their edges pile up. The write loop below silently keeps
+    // the first bondK, which drops the rest — and drops them in ONE DIRECTION
+    // only, so the partner still lists a bond that no longer exists. That is
+    // both a disconnection and an asymmetric spring pair, which is exactly the
+    // Newton's-third-law violation the physics tests exist to catch.
+    const enforceCap = () => {
+      for (let i = 0; i < n; i++) {
+        while (adj[i].size > bK) {
+          const victim = [...adj[i]].pop();
+          adj[i].delete(victim); adj[victim].delete(i);
+        }
+      }
+    };
+    enforceCap();
+
+    // Structural mutation: rewire, add, or drop a connection.
+    const degree = (i) => adj[i].size;
+    const tryAdd = () => {
+      const i = (r() * n) | 0, j = (r() * n) | 0;
+      if (i === j || adj[i].has(j) || degree(i) >= bK || degree(j) >= bK) return;
+      adj[i].add(j); adj[j].add(i);
+    };
+    const tryDrop = () => {
+      const i = (r() * n) | 0;
+      if (adj[i].size === 0) return;
+      const list = [...adj[i]];
+      const j = list[(r() * list.length) | 0];
+      adj[i].delete(j); adj[j].delete(i);
+    };
+    for (let t = 0; t < 2; t++) {
+      if (r() < this.topoMutRate) tryAdd();
+      if (r() < this.topoMutRate) tryDrop();
+    }
+
+    // A body must stay ONE connected component — that is what makes it a body
+    // at all, and WORLD.md defines a creature as exactly that. A mutation that
+    // severs it would produce an organism that is physically two things.
+    //
+    // Repaired by MERGING COMPONENTS, not by patching stray cells. An earlier
+    // version walked from cell 0, then attached anything unreached to a reached
+    // host and marked it done — which silently left disconnected CLUSTERS
+    // intact, because attaching one member of a cluster says nothing about the
+    // rest of it. 4 bodies in 130 came out fragmented. Recomputing components
+    // and joining each to the first is the version that actually terminates
+    // with one component.
+    const componentOf = () => {
+      const comp = new Int32Array(n).fill(-1);
+      let c = 0;
+      for (let start = 0; start < n; start++) {
+        if (comp[start] >= 0) continue;
+        const st = [start]; comp[start] = c;
+        while (st.length) {
+          const i = st.pop();
+          for (const j of adj[i]) if (comp[j] < 0) { comp[j] = c; st.push(j); }
+        }
+        c++;
+      }
+      return { comp, count: c };
+    };
+
+    for (let guard = 0; guard < n * 2; guard++) {
+      enforceCap();                          // merging can push a cell over budget
+      const { comp, count } = componentOf();
+      if (count <= 1) break;
+      // Join some cell of the next component to some cell of the first, freeing
+      // a slot by force if both ends are saturated — a body that cannot be
+      // reconnected any other way is worse than one that loses a bond.
+      let a = -1, b = -1;
+      for (let i = 0; i < n && a < 0; i++) if (comp[i] === 0 && adj[i].size < bK) a = i;
+      for (let i = 0; i < n && b < 0; i++) if (comp[i] === 1 && adj[i].size < bK) b = i;
+      if (a < 0) { a = comp.indexOf(0); const v = [...adj[a]][0]; adj[a].delete(v); adj[v].delete(a); }
+      if (b < 0) { b = comp.indexOf(1); const v = [...adj[b]][0]; adj[b].delete(v); adj[v].delete(b); }
+      adj[a].add(b); adj[b].add(a);
+    }
+
+    // Place cells jittered in a disc; the springs do the rest.
+    const spread = 0.55 * Math.sqrt(n);
+    for (let i = 0; i < n; i++) {
+      const a = r() * Math.PI * 2, rad = spread * Math.sqrt(r());
       pos[i * 2] = wrap(ox + Math.cos(a) * rad);
       pos[i * 2 + 1] = wrap(oy + Math.sin(a) * rad);
 
       let type = cells.ctype[src + srcOf(i)];
-      if (r() < m * 0.5) type = (r() * 3) | 0;      // what a cell becomes evolves
+      if (r() < m * 0.5) type = (r() * 3) | 0;
       cells.ctype[dst + i] = type;
       cells.body[dst + i] = child;
       cells.bodySize[dst + i] = n;
       meta[i * 4] = type;
-      meta[i * 4 + 1] = dst + i;                    // its brain slot
-      meta[i * 4 + 2] = child;                      // whose tissue this is
-      meta[i * 4 + 3] = n;                          // and how big that body is
+      meta[i * 4 + 1] = dst + i;
+      meta[i * 4 + 2] = child;
+      meta[i * 4 + 3] = n;
       cells.cslot[dst + i] = dst + i;
       cells.px[dst + i] = pos[i * 2]; cells.py[dst + i] = pos[i * 2 + 1];
       cells.vx[dst + i] = 0; cells.vy[dst + i] = 0;
@@ -274,22 +386,18 @@ export class Evolver {
       energy[i] = 0;
     }
 
-    // Ring bonds plus one chord, both directions, exactly as buildBodies does.
-    const add = (from, to, rest) => {
-      const base = from * bK;
-      for (let k = 0; k < bK; k++)
-        if (bond[base + k] === -1) { bond[base + k] = dst + to; brest[base + k] = rest; return; }
-    };
+    // One uniform rest length, so SHAPE comes from the graph and nothing else.
+    // Per-bond rest lengths would let a body encode its geometry directly and
+    // the topology would stop being what determines morphology.
+    const REST = 0.62;
+    enforceCap();                            // nothing below may truncate
     for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n;
-      const rest = Math.hypot(pos[i * 2] - pos[j * 2], pos[i * 2 + 1] - pos[j * 2 + 1]);
-      add(i, j, rest); add(j, i, rest);
+      let k = 0;
+      for (const j of adj[i]) {
+        bond[i * bK + k] = dst + j; brest[i * bK + k] = REST; k++;
+      }
     }
-    if (n >= 6) {
-      const j = n >> 1;
-      const rest = Math.hypot(pos[0] - pos[j * 2], pos[1] - pos[j * 2 + 1]);
-      add(0, j, rest); add(j, 0, rest);
-    }
+
     cells.bond.set(bond, dst * bK); cells.brest.set(brest, dst * bK);
 
     // Half the parent's cell energy goes with the propagule. Division costs.

@@ -146,3 +146,50 @@ gpuTest('lineages are displaced — some lines out-reproduce others', async () =
     `lineages barely moved: ${founders} founders -> ${surviving} surviving lines`);
   sim.world.destroy(); sim.brains.destroy();
 });
+
+gpuTest('body TOPOLOGY diversifies, and every body stays connected', async () => {
+  // The ring-plus-chord plan was identical in every creature forever, so the
+  // only structural freedom was cell count — one dimension with a saturating
+  // payoff. This checks that descendants actually explore different graphs, and
+  // that none of them fragments: a body IS a connected component of the bond
+  // graph, so a disconnected one is not a body at all.
+  const sim = await setup({ cap: 600, start: 200 });
+  for (let t = 0; t < 25; t++) { sim.world.step(250); await sim.evo.tick(t * 250); }
+
+  const { bond, bondK } = sim.cells;
+  const shapes = new Set();
+  let bodies = 0, disconnected = 0, degreeSum = 0, cellCount = 0;
+
+  for (let o = 0; o < sim.arena.P; o++) {
+    if (!sim.arena.alive[o]) continue;
+    bodies++;
+    const off = sim.arena.off[o], n = sim.arena.cnt[o];
+    const adj = Array.from({ length: n }, () => []);
+    for (let i = 0; i < n; i++) {
+      for (let k = 0; k < bondK; k++) {
+        const j = bond[(off + i) * bondK + k];
+        if (j < 0) continue;
+        const rel = j - off;
+        assert(rel >= 0 && rel < n, `body ${o} has a bond leaving its own cells`);
+        adj[i].push(rel);
+      }
+      degreeSum += adj[i].length; cellCount++;
+    }
+    // connectivity
+    const seen = new Uint8Array(n); const st = [0]; seen[0] = 1; let reached = 1;
+    while (st.length) {
+      const i = st.pop();
+      for (const j of adj[i]) if (!seen[j]) { seen[j] = 1; reached++; st.push(j); }
+    }
+    if (reached < n) disconnected++;
+    // a cheap shape signature: sorted degree sequence
+    shapes.add(adj.map(a => a.length).sort().join(','));
+  }
+
+  assertEquals(disconnected, 0, `${disconnected} of ${bodies} bodies fragmented`);
+  assert(shapes.size > 5,
+    `only ${shapes.size} distinct body plans among ${bodies} bodies — topology is not evolving`);
+  const meanDeg = degreeSum / cellCount;
+  assert(meanDeg > 1.2 && meanDeg < bondK,
+    `mean degree ${meanDeg.toFixed(2)} looks degenerate`);
+});
