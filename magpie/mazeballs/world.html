@@ -505,6 +505,66 @@ fn lineFs(i: LOut) -> @location(0) vec4<f32> {
 }
 `;
 
+/* ------------------------------------------- motes: the standing crop itself */
+// The background field is FERTILITY: where crop regrows. Since grazing became a
+// transfer from stock held on motes, that field stopped being where food IS. A
+// creature can strip a patch bare and the fertility field does not change by a
+// pixel, so the single most consequential thing in the world — who has eaten
+// what, and where is worth going now — was not on screen at all.
+const MOTE_WGSL = /* wgsl */`
+// Its own uniform rather than the main camera's: this pass needs four numbers,
+// and sharing a struct would couple it to a layout it does not care about.
+struct MoteCam { center: vec2<f32>, ndc: vec2<f32>, radius: f32, dim: f32 };
+@group(0) @binding(0) var<uniform> MC : MoteCam;
+@group(0) @binding(1) var<storage, read> motes : array<vec4<f32>>;  // xy, stock
+
+struct MOut {
+  @builtin(position) p : vec4<f32>,
+  @location(0) uv : vec2<f32>,
+  @location(1) v  : f32,
+};
+
+@vertex
+fn mvs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> MOut {
+  var q = array<vec2<f32>, 6>(
+    vec2(-1.0, -1.0), vec2(1.0, -1.0), vec2(-1.0, 1.0),
+    vec2(-1.0,  1.0), vec2(1.0, -1.0), vec2( 1.0, 1.0));
+  let corner = q[vi];
+  let m = motes[ii];
+  var o: MOut;
+  // An exhausted mote collapses rather than drawing a dark dot: absence should
+  // read as absence, and a grid of black dots would be a grid, which this world
+  // does not have.
+  if (m.z <= 0.004) {
+    o.p = vec4<f32>(0.0, 0.0, 0.0, 0.0);
+    o.uv = vec2<f32>(9.0, 9.0); o.v = 0.0;
+    return o;
+  }
+  // Radius grows with stock, so a well-fed patch reads as a bloom and a grazed
+  // one as a scatter of specks — the shape of the depletion is visible without
+  // needing to resolve individual values.
+  let r = MC.radius * (0.45 + 0.55 * m.z);
+  let world = m.xy + corner * r;
+  o.p = vec4<f32>((world - MC.center) * MC.ndc, 0.0, 1.0);
+  o.uv = corner;
+  o.v = m.z;
+  return o;
+}
+
+@fragment
+fn mfs(i: MOut) -> @location(0) vec4<f32> {
+  let d = length(i.uv);
+  if (d > 1.0) { discard; }
+  // Soft, additive, and green-gold: it should look like something growing, and
+  // it must not compete with the creatures, which are the subject.
+  let a = pow(1.0 - d, 2.0) * i.v * MC.dim;
+  let lean = vec3<f32>(0.16, 0.42, 0.20);
+  let rich = vec3<f32>(0.72, 0.85, 0.32);
+  return vec4<f32>(mix(lean, rich, i.v) * a, a);
+}`;
+
+
+
 /* ------------------------------------------------------------------- setup */
 
 let dev, ctx, fmt, sim = null, raf = 0;
@@ -579,7 +639,15 @@ function bondIndexList(cells) {
 }
 
 async function rebuild() {
-  if (sim) { sim.world.destroy(); sim.brains.destroy(); sim.bBond.destroy(); sim.bCam.destroy(); }
+  if (sim) {
+    sim.world.destroy(); sim.brains.destroy(); sim.bBond.destroy(); sim.bCam.destroy();
+    // The crop pass owns two buffers of its own, and rebuild() is no longer only
+    // a user action — a server reshape triggers it automatically now, so
+    // anything missed here leaks on a schedule rather than on a click.
+    sim.bMoteCam?.destroy();
+    sim.bMoteData?.destroy();
+    sim.moteCount = 0;
+  }
 
   let beasts = +$('sBeasts').value;
   let cellsPer = +$('sCpb').value;
@@ -671,6 +739,40 @@ async function rebuild() {
     primitive: { topology: 'triangle-list' },
   });
 
+  // The standing-crop pass, with its own layout and uniform. Additive blend and
+  // no depth: it is a glow under the creatures, not geometry among them.
+  const moteMod = dev.createShaderModule({ code: MOTE_WGSL, label: 'motes' });
+  const moteLayout = dev.createBindGroupLayout({
+    entries: [
+      { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
+      { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } },
+    ],
+  });
+  const nMotes = WATCH ? 0 : (world.params.nMotes | 0);
+  const bMoteCam = dev.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  // In watch mode the count is unknown until the first /motes arrives, so start
+  // with room for one and grow on demand rather than guessing.
+  let bMoteData = dev.createBuffer({
+    size: Math.max(16, (nMotes || 1) * 16),
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+  });
+  const pipeMotes = dev.createRenderPipeline({
+    layout: dev.createPipelineLayout({ bindGroupLayouts: [moteLayout] }),
+    vertex: { module: moteMod, entryPoint: 'mvs' },
+    fragment: { module: moteMod, entryPoint: 'mfs', targets: [{ format: fmt, blend: {
+      color: { srcFactor: 'one', dstFactor: 'one', operation: 'add' },
+      alpha: { srcFactor: 'one', dstFactor: 'one', operation: 'add' },
+    } }] },
+    primitive: { topology: 'triangle-list' },
+  });
+  let moteBind = dev.createBindGroup({
+    layout: moteLayout,
+    entries: [
+      { binding: 0, resource: { buffer: bMoteCam } },
+      { binding: 1, resource: { buffer: bMoteData } },
+    ],
+  });
+
   const bind = dev.createBindGroup({
     layout,
     entries: [
@@ -702,6 +804,8 @@ async function rebuild() {
   sim = {
     ...built, brains, world, bBond, bCam, bind, evo,
     pipeBg, pipeCells, pipeBonds, bondVerts: idx.length, bound, syn,
+    pipeMotes, moteLayout, bMoteCam, bMoteData, moteBind, moteCount: nMotes,
+    fetchingMotes: false, sinceMotes: 1e9,
     sinceTick: 0, ticking: false, fetching: false, serverSteps: 0,
     remote: remoteParams ?? {
       resScale: world.params.resScale, resSeed: world.params.resSeed,
@@ -732,6 +836,61 @@ async function rebuild() {
  * WorldGPU exists purely to own GPU buffers of the right shape and is never
  * advanced in watch mode.
  */
+/**
+ * Pull the standing crop. In watch mode it comes from the server; locally the
+ * motes are already on this device and only need copying into the render buffer.
+ *
+ * Deliberately infrequent. Stock changes on the timescale of grazing and
+ * regrowth, not of frames, and this is ~130KB — refetching it every frame would
+ * spend the whole link on something that looks identical.
+ */
+async function refreshMotes() {
+  if (sim.fetchingMotes) return;
+  sim.fetchingMotes = true;
+  try {
+    let xy, stock, n;
+    if (WATCH) {
+      const ab = await (await fetch('/motes', { cache: 'no-store' })).arrayBuffer();
+      n = new Uint32Array(ab, 0, 1)[0];
+      const f = new Float32Array(ab, 8, n * 3);
+      xy = f; stock = null;                       // interleaved x,y,stock
+    } else {
+      const m = await sim.world.readMotes();
+      n = m.stock.length; xy = m.pos; stock = m.stock;
+    }
+    if (!n) { sim.moteCount = 0; return; }
+    const packed = new Float32Array(n * 4);       // vec4 per mote: x, y, stock, pad
+    for (let i = 0; i < n; i++) {
+      if (stock) { packed[i * 4] = xy[i * 2]; packed[i * 4 + 1] = xy[i * 2 + 1]; packed[i * 4 + 2] = stock[i]; }
+      else { packed[i * 4] = xy[i * 3]; packed[i * 4 + 1] = xy[i * 3 + 1]; packed[i * 4 + 2] = xy[i * 3 + 2]; }
+    }
+    if (n * 16 > sim.bMoteData.size) {
+      // NOT destroyed. A submitted command buffer may still reference it, and
+      // destroying it out from under one invalidates that command buffer — which
+      // surfaces only as "[Invalid CommandBuffer] is invalid due to a previous
+      // error" on the next submit, naming nothing. Dropping the reference is
+      // enough; the implementation frees it when it is genuinely unused.
+      sim.bMoteData = dev.createBuffer({
+        size: n * 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+      });
+      sim.moteBind = dev.createBindGroup({
+        layout: sim.moteLayout,
+        entries: [
+          { binding: 0, resource: { buffer: sim.bMoteCam } },
+          { binding: 1, resource: { buffer: sim.bMoteData } },
+        ],
+      });
+    }
+    dev.queue.writeBuffer(sim.bMoteData, 0, packed);
+    sim.moteCount = n;
+  } catch (e) {
+    // A missing /motes is not fatal: an older server simply has no crop to show.
+    sim.moteCount = 0;
+  } finally {
+    sim.fetchingMotes = false;
+  }
+}
+
 const FRAME_MAGIC = 0x314d5257;
 function applyFrame(ab) {
   const dv = new DataView(ab);
@@ -814,6 +973,15 @@ function writeCam() {
   // NDC units per world unit. zoom is CSS px per world unit, so multiply by dpr
   // to get device px, then 2/size to reach NDC.
   const nx = cam.zoom * dpr * 2 / w, ny = cam.zoom * dpr * 2 / h;
+  // The crop pass has its own small uniform; fill it from the SAME numbers
+  // rather than recomputing, or the two layers drift apart under zoom.
+  if (sim?.bMoteCam) {
+    const mc = new Float32Array(8);
+    mc[0] = cam.x; mc[1] = cam.y; mc[2] = nx; mc[3] = ny;
+    mc[4] = 0.6;                 // world-unit radius of a full mote
+    mc[5] = 0.85;                // overall brightness
+    dev.queue.writeBuffer(sim.bMoteCam, 0, mc);
+  }
   // Cells keep a physical size in world units, with a floor so the population
   // does not vanish when zoomed out.
   //
@@ -905,6 +1073,11 @@ function loop() {
     simRate = view.spf * (1000 / Math.max(1, t - last)) * sim.world.params.dt;
   }
 
+  // Standing crop on its own slow clock: it changes at the speed of grazing,
+  // not of frames, and it is ~130KB over the link.
+  sim.sinceMotes += t - last;
+  if (view.food && sim.sinceMotes > 1500) { sim.sinceMotes = 0; refreshMotes(); }
+
   writeCam();
   const enc = dev.createCommandEncoder();
   const pass = enc.beginRenderPass({
@@ -916,6 +1089,14 @@ function loop() {
   });
   pass.setBindGroup(0, sim.bind);
   pass.setPipeline(sim.pipeBg); pass.draw(3);
+  // Crop first: it is ground, and everything else stands on it.
+  if (view.food && sim.moteCount > 0) {
+    pass.setPipeline(sim.pipeMotes);
+    pass.setBindGroup(0, sim.moteBind);
+    pass.draw(6, sim.moteCount);
+    pass.setBindGroup(0, sim.bind);           // restore for the passes below
+  }
+
   if (view.bonds && sim.bondVerts) {
     pass.setPipeline(sim.pipeBonds);
     pass.draw(6, sim.bondVerts / 2);          // six vertices per bond quad

@@ -840,7 +840,12 @@ export class WorldGPU {
       // food density is a property of area, not a number to be carried around.
       // Motes are ON by default: the analytic field they replace was unbounded
       // free energy and should not be what a run gets unless it asks.
-      nMotes: null, moteR: 1.2, grazeRate: 2.2, moteRegrow: 3.0, moteCap: 1.0,
+            // 6.0, not 3.0. Developed bodies run 17-19 cells against a brain tax of
+      // 0.45 each, so a body needs ~8/s and the ground beneath it was supplying
+      // about the same — right at the edge, which showed up as a live world
+      // grinding down to 8 alive on mean energy -6.4. The inflow's MAGNITUDE is
+      // a free parameter; that there is exactly one bounded inflow is not.
+      nMotes: null, moteR: 1.2, grazeRate: 2.2, moteRegrow: 6.0, moteCap: 1.0,
       moteHashSize: 16384, pad0: 0,
       dt: brains.dt, ...params,
     };

@@ -109,6 +109,20 @@ export const SYN_BASIS = [
   ['sense_dst', (a, b) => b.sense],
   ['ap_dst', (a, b) => b.ap],
   ['dv_align', (a, b) => a.dv * b.dv],
+  // ANTISYMMETRIC terms. Everything above depends only on WHAT the two cells
+  // are, and bonded neighbours are made of nearly the same thing under a smooth
+  // gradient — so w(i->j) came out nearly equal to w(j->i), and a symmetric
+  // CTRNN provably converges to a fixed point. It cannot oscillate. Measured:
+  // 99% of neurons with activation standard deviation below 0.01, no gait, and
+  // bodies drifting 0.023 world units in 1600 steps.
+  //
+  // These two swap sign when the endpoints swap, so the genome can specify a
+  // connection that excites down the body and inhibits back up it. That is the
+  // asymmetry a central pattern generator needs, and along the AP axis it is
+  // exactly the shape of a travelling wave — undulatory swimming, if evolution
+  // wants it. Reachable, not imposed: a genome may leave both at zero.
+  ['axial', (a, b) => b.ap - a.ap],
+  ['lateral', (a, b) => b.dv - a.dv],
 ];
 export const NSYN = SYN_BASIS.length;
 
@@ -116,13 +130,47 @@ export const NSYN = SYN_BASIS.length;
 export const GENOME_SIZE = PROPS.length * NB + NSYN;
 export const SYN_OFF = PROPS.length * NB;
 
+/**
+ * Peak synapse weight.
+ *
+ * MEASURED, not chosen. A CTRNN only oscillates when loop gain is high enough;
+ * below that it settles to a fixed point, and a body whose muscles hold a
+ * constant contraction does not move at all. Free-running 24 developed brains
+ * with no sensory drive, fraction whose mean activation standard deviation
+ * exceeds 0.02:
+ *
+ *   scale  2.5, fan-in normalised    0%      <- what this was
+ *   scale  6,   fan-in normalised    8%
+ *   scale  6,   raw                 25%
+ *   scale 12,   raw                 46%
+ *   scale 20,   raw                 58%
+ *
+ * Two conclusions. The weights were roughly an order of magnitude too weak, and
+ * dividing by fan-in — which looks like sensible normalisation and was added to
+ * stop saturation — pushed the network further INTO the convergent regime and
+ * made things worse at every scale. It is gone.
+ *
+ * 16 puts a majority of random genomes in reach of oscillation without pinning
+ * activations at the rails. Reachable, not imposed: a genome is free to specify
+ * a quiet brain, and most of the interesting ones will be neither extreme.
+ */
+export const SYN_RANGE = 16;
+
+/**
+ * Stiffness spans STIFF_BASE^-1 to STIFF_BASE^+1 around the baseline spring.
+ *
+ * Was 4 (a 16x span end to end). The soft end was too soft: a body whose genome
+ * made everything compliant could not resist flow drag across its own length and
+ * its p90 bond reached 8x rest. At 2 the span is still fourfold — ample for bone
+ * against sinew — and shared with the tests so it is stated once.
+ */
+export const STIFF_BASE = 2;
+
 /** The weight of a synapse from cell `a` to cell `b`, expressed, not stored. */
 export function synapse(genome, a, b) {
   let s = 0;
   for (let k = 0; k < NSYN; k++) s += genome[SYN_OFF + k] * SYN_BASIS[k][1](a, b);
-  // +/-4: wide enough for saturating drive, narrow enough that mutation cannot
-  // walk a weight to the magnitudes that produced 98.9% NaN activations.
-  return 4 * Math.tanh(s);
+  return SYN_RANGE * Math.tanh(s);
 }
 
 /**
@@ -255,8 +303,11 @@ export function bond(cells, { spacing = SPACING, reach = 1.35, maxDegree = 6 } =
     bonds.push({
       i, j,
       rest: d,
-      // 0.25x to 4x around the baseline: a decade of material, log-spaced.
-      stiff: Math.pow(4, s),
+      // 0.5x to 2x around the baseline. It was 0.25x-4x, and the soft end was
+      // too soft: a body whose genome made everything compliant could not resist
+      // flow drag across its own length, and the p90 bond reached 8x its rest
+      // length. Bone and sinew still differ fourfold end to end.
+      stiff: Math.pow(STIFF_BASE, s),
       // Stiff matter is brittle matter. This is what makes a skeleton a
       // liability as well as an asset, so rigidity has a cost that is physical
       // rather than a number subtracted from a fitness score.
@@ -264,6 +315,52 @@ export function bond(cells, { spacing = SPACING, reach = 1.35, maxDegree = 6 } =
     });
   }
   return bonds;
+}
+
+/**
+ * Keep only the largest connected piece.
+ *
+ * A body IS a connected component of its bond graph — a disconnected one is not
+ * one organism, it is two. Nothing stopped development from specifying that:
+ * `presence` is free to be positive in two separate lobes of the egg, and when
+ * it was, the result was a "body" whose halves shared a genome and nothing else.
+ * 28 of 600 bodies in a run came out fragmented this way.
+ *
+ * Discarded tissue is simply not built, so the yolk is not spent on it either.
+ *
+ * @returns {{cells: Array, bonds: Array}} renumbered to the kept cells
+ */
+export function largestPiece(cells, bonds) {
+  const n = cells.length;
+  if (n === 0) return { cells, bonds };
+  const adj = Array.from({ length: n }, () => []);
+  for (const b of bonds) { adj[b.i].push(b.j); adj[b.j].push(b.i); }
+
+  const comp = new Int32Array(n).fill(-1);
+  let best = -1, bestSize = 0, c = 0;
+  for (let i = 0; i < n; i++) {
+    if (comp[i] >= 0) continue;
+    let size = 0;
+    const stack = [i];
+    comp[i] = c;
+    while (stack.length) {
+      const v = stack.pop(); size++;
+      for (const w of adj[v]) if (comp[w] < 0) { comp[w] = c; stack.push(w); }
+    }
+    if (size > bestSize) { bestSize = size; best = c; }
+    c++;
+  }
+  if (c === 1) return { cells, bonds };
+
+  const remap = new Int32Array(n).fill(-1);
+  const kept = [];
+  for (let i = 0; i < n; i++) if (comp[i] === best) { remap[i] = kept.length; kept.push(cells[i]); }
+  const keptBonds = [];
+  for (const b of bonds) {
+    if (remap[b.i] < 0 || remap[b.j] < 0) continue;
+    keptBonds.push({ ...b, i: remap[b.i], j: remap[b.j] });
+  }
+  return { cells: kept, bonds: keptBonds };
 }
 
 /** Mutate a genome. Returns a new array; the parent is untouched. */

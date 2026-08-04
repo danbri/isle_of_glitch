@@ -296,6 +296,35 @@ export class BrainArenaGPU {
     return { state, act };
   }
 
+  /**
+   * Push one organism's brain onto the GPU: dynamics, wiring and weights.
+   *
+   * THIS DID NOT EXIST. The topology buffers — bias, invTau, esrc, ew — were
+   * uploaded once when the arena was created and never written again, so every
+   * brain evolution built lived in the CPU mirror and nowhere else. On the GPU
+   * each organism ran whatever wiring happened to occupy its arena slots when
+   * the world was made, inherited by every later occupant of those slots.
+   *
+   * Everything downstream of it was therefore measuring nothing: mutated
+   * weights, expressed synapses, evolved time constants. It also explains the
+   * standing observation that most neurons sit static with no oscillation and
+   * no gait — recycled slots were running a dead founder's edges, with the
+   * body that now owns them having no say at all.
+   *
+   * Called on every birth, for the newborn's slots only. The whole-arena
+   * alternative is 4 buffer writes of the entire population per birth.
+   */
+  writeBrainRange(arena, from, count) {
+    const q = this.device.queue, K = this.K;
+    const to = from + count;
+    q.writeBuffer(this.bBias, from * 4, arena.bias.subarray(from, to));
+    q.writeBuffer(this.bInvTau, from * 4, arena.invTau.subarray(from, to));
+    q.writeBuffer(this.bState, from * 4, arena.state.subarray(from, to));
+    q.writeBuffer(this.bAct, from * 4, arena.act.subarray(from, to));
+    q.writeBuffer(this.bEsrc, from * K * 4, arena.esrc.subarray(from * K, to * K));
+    q.writeBuffer(this.bEw, from * K * 4, arena.ew.subarray(from * K, to * K));
+  }
+
   /** Push a CPU arena's mutable state back onto the GPU (e.g. after a restore). */
   writeState(arena) {
     this.device.queue.writeBuffer(this.bState, 0, arena.state);

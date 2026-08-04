@@ -13,7 +13,7 @@
 import { assert, assertEquals, assertAlmostEquals } from 'jsr:@std/assert@1';
 import {
   PROPS, BASIS, NB, GENOME_SIZE, randomGenome, express,
-  develop, bond, mutate, morphology,
+  develop, bond, mutate, morphology, STIFF_BASE,
 } from './devo.js';
 
 /** A genome with every weight zero except the named (property, basis) pairs. */
@@ -109,7 +109,9 @@ Deno.test('bonds take their material from the cells they join', () => {
   const bonds = bond(cells);
   assert(bonds.length > cells.length, `too few bonds: ${bonds.length} for ${cells.length} cells`);
   const m = morphology(cells, bonds);
-  assert(m.stiffSpan > 8, `expected a wide stiffness range, got ${m.stiffSpan.toFixed(1)}x`);
+  // STIFF_BASE^2 is the full span; require most of it to actually appear.
+  assert(m.stiffSpan > STIFF_BASE ** 2 * 0.8,
+    `expected a wide stiffness range, got ${m.stiffSpan.toFixed(1)}x`);
   // Stiff matter must be brittle matter, or rigidity is free.
   const stiffest = bonds.reduce((a, b) => b.stiff > a.stiff ? b : a);
   const softest = bonds.reduce((a, b) => b.stiff < a.stiff ? b : a);
@@ -124,7 +126,7 @@ Deno.test('bonds are symmetric in their endpoints', () => {
   const bonds = bond(cells);
   for (const b of bonds) {
     const s = (cells[b.i].stiff + cells[b.j].stiff) * 0.5;
-    assertAlmostEquals(b.stiff, Math.pow(4, s), 1e-9);
+    assertAlmostEquals(b.stiff, Math.pow(STIFF_BASE, s), 1e-9);
   }
 });
 

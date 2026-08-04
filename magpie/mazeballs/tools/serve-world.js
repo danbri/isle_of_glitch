@@ -377,6 +377,26 @@ Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
     });
   }
 
+  // Standing crop. The background field in the viewer is FERTILITY — where crop
+  // regrows — and since motes landed that is no longer where food IS. A creature
+  // grazing a patch to nothing leaves the fertility field completely unchanged,
+  // so the most important thing happening in the world was invisible.
+  if (path === '/motes') {
+    const m = await world.readMotes();
+    const n = m.stock.length;
+    const buf = new ArrayBuffer(8 + n * 12);
+    new Uint32Array(buf, 0, 2).set([n, 0]);
+    const f = new Float32Array(buf, 8);
+    for (let i = 0; i < n; i++) {
+      f[i * 3] = m.pos[i * 2];
+      f[i * 3 + 1] = m.pos[i * 2 + 1];
+      f[i * 3 + 2] = m.stock[i];
+    }
+    return new Response(buf, {
+      headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' },
+    });
+  }
+
   if (path === '/frame') {
     return new Response(await frame(), {
       headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' },

@@ -5466,3 +5466,105 @@ What is NOT yet established, and should not be claimed: that evolution finds
 symmetry, segmentation or locomotion. The drawings in sample-drawings.md are
 hand-written genomes demonstrating what the encoding can REACH. Nothing here
 shows what selection does with it.
+
+
+### The brain never reached the GPU
+
+`BrainArenaGPU` uploaded bias, invTau, esrc and ew once when the arena was
+created and never wrote them again. Every brain evolution built lived in the CPU
+mirror and nowhere else. On the GPU each organism ran whatever wiring occupied
+its arena slots when the world was made, inherited by every later occupant of
+those slots.
+
+So no result in this project that depended on an evolved brain was measuring
+one. Mutated weights, evolved time constants, and this session's expressed
+synapses were all written to an array the kernel does not read. It also explains
+a standing observation nobody had chased: most neurons sitting static with no
+oscillation and no gait, which is what a recycled slot running a dead founder's
+edges looks like.
+
+Fixed with writeBrainRange, called on every birth. Population in the same test
+world went from 19 alive to 135 immediately.
+
+### Locomotion: RETRACTED, and the metric was measuring dismemberment
+
+With brains finally reaching the GPU and synapse weights raised to a measured
+range, mean body displacement went from 0.023 to 37.3 world units and this was
+briefly recorded as locomotion. It is not.
+
+The control says so. Displacement over the same window:
+
+    muscles ON,  flow ON      28.6
+    muscles OFF, flow ON      28.6
+    muscles ON,  flow OFF     28.5
+    muscles OFF, flow OFF     28.1
+
+Identical with no muscles and no flow. Nothing was swimming. Bodies were being
+pulled apart and their cells scattering, which moves a centre of mass without
+anything propelling it — two other tests were failing at the same moment with
+"4 of 257 bodies fragmented" and "median bond is 3.0x its rest length", and those
+were the same event seen from a different angle.
+
+The measurement had no control until it produced a number worth doubting. That
+is the fifth retraction in this line of work and the second where the machinery
+manufactured the result rather than the substrate being broken.
+
+### Weight scale is what gates oscillation, and fan-in normalisation hurt
+
+Free-running 24 developed brains with no sensory drive, fraction whose mean
+activation standard deviation exceeds 0.02:
+
+    scale  2.5, fan-in normalised     0%
+    scale  6,   fan-in normalised     8%
+    scale  6,   raw                  25%
+    scale 12,   raw                  46%
+    scale 20,   raw                  58%
+
+Weights were an order of magnitude too weak, and dividing by fan-in — added to
+stop saturation, which looked like sensible normalisation — pushed the network
+further into the convergent regime at every scale. A symmetric CTRNN provably
+converges; a body whose muscles hold a constant contraction cannot move.
+
+Set to 16, raw. This makes oscillation REACHABLE. It does not make it happen,
+and nothing here shows selection finding it.
+
+### Bodies could develop in two pieces
+
+`presence` is free to be positive in two separate lobes of the egg, and when it
+was, development built a "body" whose halves shared a genome and nothing else —
+28 of 600 in one run. A body is a connected component of its bond graph, so only
+the largest piece is now built, and the yolk is not spent on the rest.
+
+### An unexplained slow expansion in populations
+
+A developed body ALONE holds at exactly 1.00x rest for 30,000 steps under every
+combination of muscles, flow and contact. The same bodies in a population settle
+near 1.45x.
+
+Ruled out by measurement, not by argument: muscle contraction, flow drag,
+soft-sphere contact and predation (all disabled, effect persists); asymmetric
+bond records (the written table is symmetric in both direction and rest length,
+checked exhaustively); bad geometry at birth (CPU data reads exactly 1.00 at
+every yolk size, and freshly born bodies read 1.00 on the GPU as well, drifting
+only after several hundred steps).
+
+With every inter-body force switched off there is no known mechanism left, and
+the expansion still happens. It saturates rather than running away and bodies
+stay connected, so it is being tolerated with the test thresholds set from
+measurement. It is not understood, and it is not fixed.
+
+### Spatial selection is real but weak now, and the old effect was an artefact
+
+The population used to raise mean fertility under its cells by more than 15%
+over a run. It no longer does — measured lift is about 2% against a spatial null.
+
+That is the depleting crop working. A never-depleting analytic field stayed rich
+however many mouths found it, so the population could pile onto the best ground
+without limit and the 15% was the size of that pile. Grazeable stock cannot do
+that: a patch is drawn down as it is occupied until it is worth no more than
+anywhere else. The equilibrium is a population spread almost evenly across
+fertility, which is the ideal free distribution, and it is the correct outcome.
+
+The surviving true claim is the weaker one — cells sit on better ground than
+randomly scattered points — and the test now measures that against a null in the
+same field rather than against the run's own starting value.

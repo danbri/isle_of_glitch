@@ -40,7 +40,7 @@ function rng(seed) {
 
 import {
   GENOME_SIZE, randomGenome, mutate as mutateGenome, develop, bond as bondCells,
-  synapse, morphology,
+  synapse, morphology, largestPiece,
 } from './devo.js';
 
 /**
@@ -282,14 +282,17 @@ export class Evolver {
     });
     let body = grown.cells;
     if (body.length > this.maxCells) body = body.slice(0, this.maxCells);
+    // One organism, not two. Development may specify tissue in separate lobes;
+    // only the largest connected piece is built.
+    const whole = largestPiece(body, bondCells(body, { maxDegree: bK }));
+    body = whole.cells;
+    const bonds = whole.bonds;
     if (body.length < this.minCells) { this.failedEggs++; return -2; }
 
     const n = body.length;
     const child = arena.birth(n);
     if (child < 0) return -1;
     const dst = arena.off[child];
-
-    const bonds = bondCells(body, { maxDegree: bK });
 
     // Eggs are laid facing a random way, or every animal in the world would
     // share one anterior direction and the flow field would select on a
@@ -378,6 +381,10 @@ export class Evolver {
     // to live on. Building tissue consumes energy — that is where the loss in
     // this conversion goes, and every conversion has to lose something.
     energy.fill(Math.max(0, yolk - grown.spent) / n);
+
+    // The brain the genome just expressed has to reach the GPU, or the kernel
+    // keeps running whatever was in these slots before.
+    world.brains.writeBrainRange(arena, dst, n);
 
     cells.bond.set(bnd, dst * bK); cells.brest.set(brest, dst * bK);
     world.writeCellRange(dst, n, {
@@ -689,6 +696,8 @@ export class Evolver {
         k++;
       }
     }
+
+    world.brains.writeBrainRange(arena, dst, n);
 
     cells.bond.set(bond, dst * bK); cells.brest.set(brest, dst * bK);
 
