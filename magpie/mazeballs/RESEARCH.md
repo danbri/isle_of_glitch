@@ -5618,3 +5618,41 @@ What survives from tonight, and what does not:
             instrument that would answer it is reporting a constant.
 
   DOES NOT  "diversity collapses". Retracted above.
+
+
+### CORRECTION AGAIN: "self-propulsion is real" was too strong
+
+The 0.064 constant is explained, and explaining it weakens the claim above it.
+
+Displacement is not constant across genomes. With 24 RANDOM genomes, isolated
+bodies, no flow, 20,000 steps (min / median / max):
+
+    spacing 48    muscles ON  0.030 / 0.063 / 1.885    OFF  0.030 / 0.054 / 0.143
+    spacing 120   muscles ON  0.013 / 0.085 / 1.735    OFF  0.017 / 0.085 / 0.147
+    spacing 300   muscles ON  0.013 / 0.136 / 1.533    OFF  0.010 / 0.100 / 0.289
+
+Two things follow, and the second one costs a claim.
+
+The assay's 0.064 was not a measurement artefact after all. It is what a
+BEHAVIOURALLY CONVERGED population reads: the evolved genomes still differ at
+every locus, but they move alike, and the distribution is tight enough that
+median and p90 coincide to three decimals. Random genomes at the same spacing
+give median 0.063 with a max of 1.9 — same centre, far wider tail.
+
+And muscles-off is NOT zero. At the median, muscles add essentially nothing
+(0.063 vs 0.054; 0.085 vs 0.085). The clean 0.00 control reported earlier came
+from a single lineage measured with mutation left on, not from the general case.
+What actually distinguishes muscles is the TAIL: max 1.9 with muscles against
+0.29 without. A minority of genomes get real movement out of contraction; the
+typical one does not.
+
+So "bodies are stationary without muscles, so the movement is theirs" is
+withdrawn. The correct statement is narrower: most bodies drift slightly whatever
+their muscles do — almost certainly the same unexplained swelling documented
+above — and a small minority achieve roughly an order of magnitude more
+displacement, which is the only part attributable to contraction.
+
+Locomotion remains reachable in principle, unmeasured in practice, and the
+drift floor has to be understood before any assay of it can be trusted. That
+drift is now blocking two separate measurements, which promotes it from a
+tolerated oddity to the next thing to fix.
