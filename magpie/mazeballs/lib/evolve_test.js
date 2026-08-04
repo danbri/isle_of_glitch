@@ -86,7 +86,13 @@ gpuTest('offspring wire into their own island, never the parent\'s', async () =>
 
 gpuTest('descent is recorded and generations deepen', async () => {
   const sim = await setup();
-  for (let t = 0; t < 8; t++) { sim.world.step(300); await sim.evo.tick(t * 300); }
+  // Long enough for a GRANDCHILD. Under development a hatchling starts on
+  // whatever the yolk did not spend building it, so it takes appreciably longer
+  // to reach breeding condition than the old copy-the-parent path, where a
+  // child appeared fully formed. At the previous 8 ticks every birth in the log
+  // still had a founder for a parent and the descent check had nothing to
+  // verify.
+  for (let t = 0; t < 30; t++) { sim.world.step(300); await sim.evo.tick(t * 300); }
 
   // Checked against the birth LOG, not by dereferencing parent slots. Slots are
   // recycled, so by now slot p may hold an unrelated newborn and

@@ -5420,3 +5420,49 @@ so energy is unbounded even without the size bonus. There is no fixed inflow, no
 sun, and no accounting for where dissipation goes. The per-cell energy clamps
 still destroy energy at the ceiling and create it at the floor. Conservation is
 closer, not achieved.
+
+
+### Development is wired into reproduction, and the world cannot yet feed it
+
+`divideDevo` replaces copy-the-parent's-body with: mutate the genome, lay an egg
+with yolk, develop whatever that genome specifies. Bodies come out with the
+structure the encoding promised — symmetry 0.74-0.81, about 3 segments — so
+development is doing its job.
+
+The population is not viable. Deaths run above births and it settles at 8 alive
+with lineages never passing generation 3.
+
+Two accounting errors found and fixed on the way, both the same shape as the
+energy mint deleted earlier:
+
+  The parent never paid the yolk. It was computed and never deducted, so
+  reproduction was free — a parent laid egg after egg without getting poorer,
+  each a juvenile starting at zero energy that mostly starved. An unpriced
+  capability is a mint wearing different clothes.
+
+  Construction now costs: what the yolk does not spend on tissue is what the
+  hatchling has to live on, and the rest is gone. Every conversion loses.
+
+The remaining problem is NOT an accounting error, and it is interesting.
+Development packs cells on a 0.62 lattice — about 2.5x the density of the
+jittered disc the old code produced. A body of 16 cells then occupies roughly
+6 square units and has about 3 motes under it. Those motes deliver
+3 * moteRegrow * fertility, around 2.7/s, against a brain tax of 16 * 0.45 =
+7.2/s. The ground beneath a dense body does not produce enough to keep it alive,
+whatever its grazing rate, because grazing cannot exceed regrowth for long.
+
+The old bodies survived by being sparse: a 12-cell disc of radius 2.2 covered
+15 square units and about 7.5 motes, which just paid its tax.
+
+So dense tissue starves in place. That is the pressure to MOVE, arriving exactly
+where it was wanted and for the right reason — and it lands on a population that
+cannot yet locomote, so it reads as extinction rather than selection. The choice
+is between raising the inflow until stationary dense bodies are viable, which
+removes the pressure that makes locomotion worth anything, and leaving it, which
+kills everything before locomotion can be found. Neither is obviously right and
+the sweep to characterise the middle has not finished.
+
+What is NOT yet established, and should not be claimed: that evolution finds
+symmetry, segmentation or locomotion. The drawings in sample-drawings.md are
+hand-written genomes demonstrating what the encoding can REACH. Nothing here
+shows what selection does with it.

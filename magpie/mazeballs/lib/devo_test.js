@@ -60,8 +60,8 @@ Deno.test('a genome that CAN tell left from right builds an asymmetric body', ()
   // measuring the lattice rather than the genome, and symmetry would be
   // something the machinery imposes rather than something evolution finds.
   const g = genome([
-    ['presence', 'bias', 0.9],
-    ['presence', 'dv', 1.6],        // signed: keeps one side, drops the other
+    ['presence', 'bias', 0.6],
+    ['presence', 'dv', 3.0],        // signed: keeps one side, drops the other
     ['contract', 'dv', 2.0],
   ]);
   const { cells } = develop(g);
@@ -158,19 +158,27 @@ Deno.test('development is scale-free in the egg', () => {
 Deno.test('mutation moves the phenotype without destroying it', () => {
   const rnd = mulberry(9);
   let g = randomGenome(rnd);
-  const base = develop(g).cells.length;
-  assert(base > 10, 'seed genome should build a body');
+  const base = develop(g).cells;
+  assert(base.length > 10, 'seed genome should build a body');
+  // Phenotypic distance, not cell count. A mutant that retunes every muscle
+  // without changing its size has absolutely changed, and counting cells says
+  // it did not — which made this test measure the mutation rate reaching one
+  // property rather than whether the encoding is explorable at all.
+  const mean = (cs, k) => cs.reduce((a, c) => a + c[k], 0) / Math.max(1, cs.length);
+  const dist = (a, b) =>
+    Math.abs(a.length - b.length) / Math.max(a.length, b.length, 1) +
+    ['contract', 'sense', 'grip', 'stiff'].reduce(
+      (s, k) => s + Math.abs(mean(a, k) - mean(b, k)), 0);
   let survived = 0, changed = 0;
   for (let k = 0; k < 60; k++) {
-    const m = mutate(g, rnd);
-    const n = develop(m).cells.length;
-    if (n > 0) survived++;
-    if (n !== base) changed++;
+    const cs = develop(mutate(g, rnd)).cells;
+    if (cs.length > 0) survived++;
+    if (dist(base, cs) > 0.02) changed++;
   }
   // Most mutants must be viable, or the encoding is too brittle to evolve...
   assert(survived > 45, `only ${survived}/60 mutants built a body`);
   // ...and some must differ, or it is too rigid to explore.
-  assert(changed > 5, `only ${changed}/60 mutants differed from the parent`);
+  assert(changed > 30, `only ${changed}/60 mutants differed from the parent`);
 });
 
 Deno.test('nothing here exposes a size knob', () => {

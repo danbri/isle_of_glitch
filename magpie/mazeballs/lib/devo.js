@@ -49,8 +49,22 @@
  * exposing maxCells and then sweeping it as an experiment.
  */
 
+/**
+ * Distance between lattice sites, shared by develop() and bond().
+ *
+ * These were separate defaults and drifted apart the moment one was changed:
+ * develop() moved to 0.95 while bond() kept 0.62, so bond() looked for
+ * neighbours within 0.84 of cells that were 0.95 apart and found none. Every
+ * developed body came out with zero bonds — no skeleton, no muscle attachment,
+ * no brain, since synapses follow bonds. One constant, two consumers.
+ *
+ * Must exceed a cell's touch distance (two radii, 0.68 by default) or bodies are
+ * born with their cells inside one another.
+ */
+export const SPACING = 0.95;
+
 /** Continuous properties every cell has. Types are descriptions of these. */
-export const PROPS = ['presence', 'contract', 'sense', 'grip', 'stiff', 'tau'];
+export const PROPS = ['presence', 'contract', 'sense', 'grip', 'stiff', 'tau', 'bias'];
 
 /**
  * Basis over the two maternal gradients. Order is part of the genome format:
@@ -70,8 +84,46 @@ export const BASIS = [
 
 export const NB = BASIS.length;
 
-/** A genome is PROPS.length x NB weights, flat, row-major by property. */
-export const GENOME_SIZE = PROPS.length * NB;
+/**
+ * Synaptic expression. A synapse's weight is not stored per edge — it is
+ * EXPRESSED from what its two endpoints are made of and where they sit.
+ *
+ * This is what makes the organism entirely a product of its genome. The
+ * alternative, copying a parent's edge table and perturbing it, means the brain
+ * is inherited as a literal wiring diagram while the body develops, and the two
+ * drift apart: a child whose body developed differently would be wearing its
+ * parent's connectome. Expressing the synapse from the tissue keeps brain and
+ * body the same object, which is the principle the arena was built on.
+ *
+ * It also makes wiring physical. Cells only connect to cells they are BONDED to,
+ * so a connection has a length, and long-range wiring costs extra bonds to
+ * exist at all. METHODS.md calls this the deepest payoff of brain-in-body:
+ * modularity becomes a consequence of anatomy rather than a designed prior.
+ */
+export const SYN_BASIS = [
+  ['bias', (a, b) => 1],
+  ['contract_src', (a, b) => a.contract],
+  ['sense_src', (a, b) => a.sense],
+  ['stiff_src', (a, b) => a.stiff],
+  ['contract_dst', (a, b) => b.contract],
+  ['sense_dst', (a, b) => b.sense],
+  ['ap_dst', (a, b) => b.ap],
+  ['dv_align', (a, b) => a.dv * b.dv],
+];
+export const NSYN = SYN_BASIS.length;
+
+/** A genome is PROPS.length x NB property weights, then NSYN synapse weights. */
+export const GENOME_SIZE = PROPS.length * NB + NSYN;
+export const SYN_OFF = PROPS.length * NB;
+
+/** The weight of a synapse from cell `a` to cell `b`, expressed, not stored. */
+export function synapse(genome, a, b) {
+  let s = 0;
+  for (let k = 0; k < NSYN; k++) s += genome[SYN_OFF + k] * SYN_BASIS[k][1](a, b);
+  // +/-4: wide enough for saturating drive, narrow enough that mutation cannot
+  // walk a weight to the magnitudes that produced 98.9% NaN activations.
+  return 4 * Math.tanh(s);
+}
 
 /**
  * A random viable-ish genome. Biased so `presence` starts positive over most of
@@ -84,6 +136,7 @@ export function randomGenome(rnd) {
     for (let b = 0; b < NB; b++) g[p * NB + b] = (rnd() * 2 - 1) * 0.8;
   }
   g[PROPS.indexOf('presence') * NB] = 0.7 + rnd() * 0.5;   // bias term
+  for (let k = 0; k < NSYN; k++) g[SYN_OFF + k] = (rnd() * 2 - 1) * 0.9;
   return g;
 }
 
@@ -115,7 +168,14 @@ export function express(genome, prop, ap, dv) {
  *            aborted: boolean}}
  */
 export function develop(genome, o = {}) {
-  const { extent = 3.2, spacing = 0.62, yolk = Infinity, cellCost = 0.6 } = o;
+  // Spacing must exceed a cell's TOUCH DISTANCE (two radii, 0.68 at the default
+  // 0.34 radius) or every body is born with its cells inside one another and
+  // contact spends the first moments of life shoving them apart. It was 0.62,
+  // which is less, so bodies were also about 2.5x denser than the jittered discs
+  // the old code produced — and a dense body has too little ground beneath it to
+  // pay its own brain tax, whatever its grazing rate, because grazing cannot
+  // outrun regrowth for long. Dense tissue starved in place.
+  const { extent = 3.2, spacing = SPACING, yolk = Infinity, cellCost = 0.6 } = o;
   const cells = [];
   const R = Math.ceil(extent / spacing);
   let spent = 0;
@@ -148,6 +208,7 @@ export function develop(genome, o = {}) {
         // tau spans a decade, log-spaced: fast reflex arcs and slow integrators
         // are both reachable and neither is the default.
         tau: 0.18 * Math.pow(10, express(genome, 'tau', ap, dv)),
+        bias: express(genome, 'bias', ap, dv),
       });
     }
   }
@@ -167,7 +228,7 @@ export function develop(genome, o = {}) {
  *
  * @returns {Array<{i,j,rest,stiff,brittle}>}
  */
-export function bond(cells, { spacing = 0.62, reach = 1.35, maxDegree = 6 } = {}) {
+export function bond(cells, { spacing = SPACING, reach = 1.35, maxDegree = 6 } = {}) {
   const bonds = [];
   const deg = new Int32Array(cells.length);
   const lim = spacing * reach;

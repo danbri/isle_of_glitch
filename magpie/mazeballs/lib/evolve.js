@@ -38,6 +38,27 @@ function rng(seed) {
   return () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
 }
 
+import {
+  GENOME_SIZE, randomGenome, mutate as mutateGenome, develop, bond as bondCells,
+  synapse, morphology,
+} from './devo.js';
+
+/**
+ * A cell's TYPE is a description of its properties, not a stored fact. Whichever
+ * of its continuous capacities dominates is what we call it, and if none does it
+ * is an interneuron. This is the treatment CELLS.md asks for: the type is a
+ * label we read off the tissue for the physics kernel's benefit, and the genome
+ * never writes one.
+ */
+function describe(c) {
+  const CELL_NEURON = 0, CELL_SENSOR = 1, CELL_MUSCLE = 2, CELL_ANCHOR = 3;
+  let best = CELL_NEURON, v = 0.15;                   // below this it is just tissue
+  if (c.sense > v) { best = CELL_SENSOR; v = c.sense; }
+  if (c.contract > v) { best = CELL_MUSCLE; v = c.contract; }
+  if (c.grip > v) { best = CELL_ANCHOR; v = c.grip; }
+  return best;
+}
+
 export class Evolver {
   /**
    * @param {object} o
@@ -54,6 +75,7 @@ export class Evolver {
     birthEnergy = 9, deathEnergy = 0, mutRate = 0.14, mutSize = 0.32,
     sizeMutRate = 0.25, minCells = 5, maxCells = 40, topoMutRate = 0.30,
     birthOrder = 'lottery',
+    devo = true, yolkFrac = 0.55, cellCost = 0.55, eggExtent = 3.0,
   }) {
     this.arena = arena; this.world = world; this.cells = cells;
     this.birthEnergy = birthEnergy; this.deathEnergy = deathEnergy;
@@ -62,6 +84,14 @@ export class Evolver {
     this.birthOrder = birthOrder;
     this.minCells = minCells; this.maxCells = maxCells;
     this.rnd = rng(seed);
+    // EVO-DEVO. Each organism carries a genome; a body is what that genome
+    // develops into, never a copy of its parent's body.
+    this.devo = devo;
+    this.yolkFrac = yolkFrac;
+    this.cellCost = cellCost;
+    this.eggExtent = eggExtent;
+    this.genome = new Array(arena.P).fill(null);
+    this.failedEggs = 0;
 
     const P = arena.P;
     // Lineage. parent[-1] means a founder; these are the substrate for the
@@ -171,9 +201,18 @@ export class Evolver {
       }
     }
 
+    // What each body is worth this tick, so development can size the yolk from
+    // the parent's actual means rather than a constant.
+    this.lastEnergy = total;
+
     let born = 0, blocked = 0;
     for (const p of rich) {
       const child = this.divide(p, cx[p], cy[p], step, pos);
+      // -2 is a failed egg: development ran out of yolk or specified a body too
+      // small to live. That is a normal outcome and the parent simply lost the
+      // investment. -1 is the arena refusing room, which is a real failure and
+      // must still stop the loop loudly.
+      if (child === -2) continue;
       if (child < 0) { blocked++; break; }
       born++; this.births++;
     }
@@ -207,6 +246,150 @@ export class Evolver {
    * so dividing is an energy event, not a free win.
    */
   divide(p, px, py, step, livePos = null) {
+    if (this.devo) {
+      if (!this.genome[p]) this.genome[p] = randomGenome(this.rnd);
+      return this.divideDevo(p, px, py, step);
+    }
+    return this.divideCopy(p, px, py, step, livePos);
+  }
+
+  /**
+   * Reproduction as development: mutate the genome, lay an egg with yolk, and
+   * build whatever that genome specifies. The child's body is NOT derived from
+   * the parent's body — only from the parent's genome — so acquired shape
+   * cannot be inherited and the size of the offspring is an outcome of
+   * development rather than a mutated cell count.
+   *
+   * Development can FAIL. If the yolk runs out before enough cells are built,
+   * or the genome specifies a body too small to be viable, the egg is lost and
+   * the parent has spent the investment anyway. eggs.md asks for exactly this:
+   * reproduction as a process in time and space that can fail, rather than a
+   * point-event that always succeeds.
+   */
+  divideDevo(p, px, py, step) {
+    const { arena, world, cells } = this;
+    const r = this.rnd;
+    const bK = cells.bondK, K = arena.K;
+
+    const g = mutateGenome(this.genome[p], r,
+      { rate: this.mutRate, size: this.mutSize });
+
+    // The yolk is a fixed share of what the parent has managed to accumulate.
+    // A poor parent lays a small egg and may lay one that cannot finish.
+    const yolk = this.yolkFrac * Math.max(0, this.lastEnergy?.[p] ?? this.birthEnergy);
+    const grown = develop(g, {
+      extent: this.eggExtent, yolk, cellCost: this.cellCost,
+    });
+    let body = grown.cells;
+    if (body.length > this.maxCells) body = body.slice(0, this.maxCells);
+    if (body.length < this.minCells) { this.failedEggs++; return -2; }
+
+    const n = body.length;
+    const child = arena.birth(n);
+    if (child < 0) return -1;
+    const dst = arena.off[child];
+
+    const bonds = bondCells(body, { maxDegree: bK });
+
+    // Eggs are laid facing a random way, or every animal in the world would
+    // share one anterior direction and the flow field would select on a
+    // coincidence of the code rather than on anything the genome did.
+    const th = r() * Math.PI * 2, ct = Math.cos(th), st = Math.sin(th);
+    const B = world.params.bound;
+    const wrap = (v) => (v > B ? v - 2 * B : v < -B ? v + 2 * B : v);
+
+    const pos = new Float32Array(n * 2), vel = new Float32Array(n * 4);
+    const meta = new Int32Array(n * 4), energy = new Float32Array(n);
+    const bnd = new Int32Array(n * bK).fill(-1);
+    const brest = new Float32Array(n * bK);
+    const bstiff = new Float32Array(n * bK).fill(1);
+    const bbrit = new Float32Array(n * bK);
+
+    for (let i = 0; i < n; i++) {
+      const c = body[i];
+      const wx = wrap(px + c.x * ct - c.y * st);
+      const wy = wrap(py + c.x * st + c.y * ct);
+      pos[i * 2] = wx; pos[i * 2 + 1] = wy;
+      vel[i * 4 + 2] = cells.rad ? cells.rad[dst + i] || 0.34 : 0.34;
+
+      const type = describe(c);
+      meta[i * 4] = type; meta[i * 4 + 1] = dst + i;
+      meta[i * 4 + 2] = child; meta[i * 4 + 3] = n;
+      cells.ctype[dst + i] = type;
+      cells.body[dst + i] = child; cells.bodySize[dst + i] = n;
+      cells.cslot[dst + i] = dst + i;
+      cells.px[dst + i] = wx; cells.py[dst + i] = wy;
+      cells.vx[dst + i] = 0; cells.vy[dst + i] = 0;
+      if (cells.rad) cells.rad[dst + i] = 0.34;
+      arena.cell[dst + i] = dst + i;
+      arena.bias[dst + i] = c.bias;
+      arena.invTau[dst + i] = 1 / Math.max(0.05, c.tau);
+      arena.state[dst + i] = 0; arena.act[dst + i] = 0;
+      energy[i] = 0;
+    }
+
+    const deg = new Int32Array(n);
+    const adj = Array.from({ length: n }, () => []);
+    for (const b of bonds) {
+      if (b.i >= n || b.j >= n) continue;
+      adj[b.i].push(b.j); adj[b.j].push(b.i);
+      if (deg[b.i] < bK) {
+        const k = deg[b.i]++;
+        bnd[b.i * bK + k] = dst + b.j; brest[b.i * bK + k] = b.rest;
+        bstiff[b.i * bK + k] = b.stiff; bbrit[b.i * bK + k] = b.brittle;
+      }
+      if (deg[b.j] < bK) {
+        const k = deg[b.j]++;
+        bnd[b.j * bK + k] = dst + b.i; brest[b.j * bK + k] = b.rest;
+        bstiff[b.j * bK + k] = b.stiff; bbrit[b.j * bK + k] = b.brittle;
+      }
+    }
+
+    // The brain is the body's own connectivity: a cell may only synapse onto
+    // cells it is physically bonded to, so wiring has length and modularity is
+    // anatomical rather than a designed prior. Weights are EXPRESSED from what
+    // the two endpoints are made of, never stored per edge, so a child that
+    // developed a different body is not wearing its parent's connectome.
+    for (let i = 0; i < n; i++) {
+      for (let k = 0; k < K; k++) {
+        arena.esrc[(dst + i) * K + k] = -1;
+        arena.ew[(dst + i) * K + k] = 0;
+      }
+      let k = 0;
+      for (const j of adj[i]) {
+        if (k >= K) break;
+        arena.esrc[(dst + i) * K + k] = dst + j;
+        arena.ew[(dst + i) * K + k] = synapse(g, body[j], body[i]);
+        k++;
+      }
+    }
+
+    // THE PARENT PAYS THE YOLK. This was computed and then never deducted, so
+    // reproduction was free: a parent could lay egg after egg without ever
+    // getting poorer, each one a juvenile starting at zero energy that mostly
+    // starved. Deaths ran about 20% above births indefinitely and no lineage
+    // got past generation 3. An unpriced capability is the same error as an
+    // energy mint wearing different clothes.
+    const pn = arena.cnt[p], src = arena.off[p];
+    const parentLeft = Math.max(0, (this.lastEnergy?.[p] ?? 0) - yolk) / Math.max(1, pn);
+    world.writeCellRange(src, pn, { energy: new Float32Array(pn).fill(parentLeft) });
+
+    // Whatever the yolk did not spend on construction is what the hatchling has
+    // to live on. Building tissue consumes energy — that is where the loss in
+    // this conversion goes, and every conversion has to lose something.
+    energy.fill(Math.max(0, yolk - grown.spent) / n);
+
+    cells.bond.set(bnd, dst * bK); cells.brest.set(brest, dst * bK);
+    world.writeCellRange(dst, n, {
+      pos, vel, meta, bond: bnd, brest, bstiff, bbrittle: bbrit, energy,
+    });
+
+    this.genome[child] = g;
+    this.bookkeep(child, p, step);
+    return child;
+  }
+
+  divideCopy(p, px, py, step, livePos = null) {
     const { arena, world, cells } = this;
     const pn = arena.cnt[p];
 
@@ -514,6 +697,12 @@ export class Evolver {
     world.writeCellRange(dst, n, { pos, vel, meta, bond, brest, energy });
     world.writeCellRange(src, pn, { energy: half });
 
+    this.bookkeep(child, p, step);
+    return child;
+  }
+
+  /** Lineage bookkeeping, shared by both reproduction paths. */
+  bookkeep(child, p, step) {
     const uid = this.nextUid++;
     this.uid[child] = uid;
     this.parentUid[child] = this.uid[p];
@@ -527,7 +716,6 @@ export class Evolver {
         generation: this.generation[child], lineage: this.lineage[child], step,
       });
     }
-    return child;
   }
 
   /**

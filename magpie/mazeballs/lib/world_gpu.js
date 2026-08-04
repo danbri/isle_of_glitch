@@ -194,7 +194,12 @@ ${wgslStruct('W')}
 // storage buffers per stage and the crowding hash needs one, so the pair that
 // is always read together shares a binding. .x holds an i32 index bitcast into
 // the float slot; .y is the rest length.
-@group(0) @binding(4) var<storage, read>       bondD  : array<vec2<f32>>;
+// x = neighbour index (bitcast i32), y = rest length, z = stiffness multiplier,
+// w = brittleness. A bond is MATERIAL, not a generic spring: stiffness comes
+// from the cells it joins, so a run of stiff cells is a strut and a compliant
+// cell between two stiff ones is a joint. Bone and sinew are descriptions of
+// regions of this continuum rather than types the kernel branches on.
+@group(0) @binding(4) var<storage, read>       bondD  : array<vec4<f32>>;
 @group(0) @binding(5) var<storage, read_write> ext    : array<f32>;
 @group(0) @binding(6) var<storage, read>       act    : array<f32>;
 @group(0) @binding(7) var<storage, read_write> energy : array<f32>;
@@ -574,7 +579,9 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     // stretch for stability and that was a bad trade: a bond pulled past the
     // clamp stops pulling harder, so drag wins and the body tears apart and
     // never recovers. Worst-case bond stretch went from 0.45 to 60 world units.
-    force = force + dir * (dist - rest) * P.springK;
+    // Stiffness is per bond now. bd.z spans a decade either side of 1, so the
+    // same genome can specify skeleton and soft tissue in one body.
+    force = force + dir * (dist - rest) * P.springK * bd.z;
 
     // Viscoelastic damper along the bond. This is not a numerical fudge — real
     // tissue dissipates, and an undamped spring whose REST LENGTH is driven by
@@ -585,7 +592,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     // explicit-Euler limit of 2). Damping the RELATIVE velocity along the bond
     // removes the energy the drive adds, and leaves the static spring law and
     // the muscle's authority over rest length untouched.
-    force = force + dir * dot(vel[u32(j)].xy - v, dir) * P.bondDamp;
+    force = force + dir * dot(vel[u32(j)].xy - v, dir) * P.bondDamp * sqrt(bd.z);
   }
 
   // Contact with everything nearby, living or not.
@@ -775,11 +782,13 @@ export class WorldGPU {
     }
     this.bPos = mk(pos); this.bVel = mk(vel); this.bMeta = mk(meta);
     // Pack bond index + rest length into the one vec2 buffer the shader binds.
-    const bd = new Float32Array(cells.bond.length * 2);
+    const bd = new Float32Array(cells.bond.length * 4);
     const bdI = new Int32Array(bd.buffer);
     for (let i = 0; i < cells.bond.length; i++) {
-      bdI[i * 2] = cells.bond[i];          // i32 written into the .x float slot
-      bd[i * 2 + 1] = cells.brest[i];
+      bdI[i * 4] = cells.bond[i];          // i32 written into the .x float slot
+      bd[i * 4 + 1] = cells.brest[i];
+      bd[i * 4 + 2] = cells.bstiff ? cells.bstiff[i] : 1.0;
+      bd[i * 4 + 3] = cells.bbrittle ? cells.bbrittle[i] : 0.0;
     }
     this.bBondD = mk(bd);
     this.bEnergy = mk(cells.energy ?? new Float32Array(n).fill(1));
@@ -1091,19 +1100,21 @@ export class WorldGPU {
   }
 
   /** Write one organism's contiguous cell range back after a birth or death. */
-  writeCellRange(from, count, { pos, vel, meta, bond, brest, energy }) {
+  writeCellRange(from, count, { pos, vel, meta, bond, brest, bstiff, bbrittle, energy }) {
     const q = this.device.queue;
     if (pos) q.writeBuffer(this.bPos, from * 8, pos);
     if (vel) q.writeBuffer(this.bVel, from * 16, vel);
     if (meta) q.writeBuffer(this.bMeta, from * 16, meta);
     if (bond || brest) {
       const nb = (bond ?? brest).length;
-      const bd = new Float32Array(nb * 2), bdI = new Int32Array(bd.buffer);
+      const bd = new Float32Array(nb * 4), bdI = new Int32Array(bd.buffer);
       for (let i = 0; i < nb; i++) {
-        bdI[i * 2] = bond ? bond[i] : -1;
-        bd[i * 2 + 1] = brest ? brest[i] : 0;
+        bdI[i * 4] = bond ? bond[i] : -1;
+        bd[i * 4 + 1] = brest ? brest[i] : 0;
+        bd[i * 4 + 2] = bstiff ? bstiff[i] : 1.0;
+        bd[i * 4 + 3] = bbrittle ? bbrittle[i] : 0.0;
       }
-      q.writeBuffer(this.bBondD, from * this.bondK * 8, bd);
+      q.writeBuffer(this.bBondD, from * this.bondK * 16, bd);
     }
     if (energy) q.writeBuffer(this.bEnergy, from * 4, energy);
   }
