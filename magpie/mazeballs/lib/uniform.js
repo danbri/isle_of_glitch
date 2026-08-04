@@ -82,7 +82,7 @@ export const WORLD_FIELDS = [
   ['gritSeed', 'u32', 'grit field seed'],
   ['slipBase', 'f32', 'drag a cell feels on frictionless ground'],
   ['gripAniso', 'f32', 'how much harder sideways slip is than along-axis slip'],
-  ['pad0', 'f32', ''],
+  ['regrowCrowdK', 'f32', 'how sharply local crowding suppresses regrowth'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */

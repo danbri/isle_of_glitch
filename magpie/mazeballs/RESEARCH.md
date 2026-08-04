@@ -5766,3 +5766,58 @@ of the coefficient. Caught by testing whether ANY new parameter changed anything
 `slipBase 20` should have crushed all movement and did nothing, while `fricK 0`
 (which the old code also read) did. A parameter that provably does nothing is
 evidence about the code path, not about the physics.
+
+
+### Moving did not pay, and the Conway fix works but not yet at population density
+
+Whether locomotion is worth having is a property of the ECONOMY, not the physics.
+Measured on 64 bodies over 30,000 steps, correlating each body's displacement with
+its energy change, and comparing the top and bottom quartile of movers:
+
+    settings                    corr    movers   sitters
+    baseline                   -0.36      -9.5      +3.1
+    contract 1.2               -0.23      -5.5      -0.2
+    contract 2.5               -0.06      -7.3      -5.1
+    contract 2.5 + contest     -0.06      -4.0      -2.1
+
+Moving was strictly punished. Muscle being selected away was never a mystery or a
+bug: it was the correct response to an incentive that said sit still. Raising
+muscle authority only makes bodies lose energy faster, and enabling contact
+transfer did not help either.
+
+The cause is that a grazed patch refilled faster than leaving it was worth.
+
+CROWDING-SUPPRESSED REGROWTH (the human's Conway suggestion) flips it. Regrowth is
+divided by local crowding, reusing the demander count the offer pass already
+computes, so it costs nothing. Friction-law clean: it can only REDUCE the sun's
+delivery, never raise it, total inflow stays bounded, and it is blind to what the
+crowding cells are or do — a property of the ground, identical for everyone.
+
+    crowdK 0     movers -7.9   sitters -0.1   corr -0.39
+    crowdK 0.6   movers +0.6   sitters -2.5   corr -0.20
+    crowdK 2.0   movers +1.9   sitters -4.8   corr -0.00
+    crowdK 6.0   movers +0.3   sitters -1.2   corr +0.10
+
+At 2.0 the sign is reversed: movers gain, sitters lose, a 6.7-unit swing.
+
+BUT IT DOES NOT SURVIVE POPULATION DENSITY, and this is the honest limit. Run with
+births and deaths at 600 bodies, population after 22,500 steps:
+
+    crowdK 0     348 -> 278 alive, 136 lineages, gen 9
+    crowdK 0.02  344 -> 187
+    crowdK 0.05  336 -> 146
+    crowdK 0.1   315 ->  72
+    crowdK 0.2   286 ->  34
+    crowdK 2.0   157 ->   8   (collapse)
+
+The suppression term is 1/(1 + k*demanders), and `demanders` is a raw count of
+cells in reach. In the sparse assay that is 1-3; in a living population it is ten
+to thirty times larger, so the same k that gave a healthy mover advantage
+extinguishes regrowth everywhere and starves the world. The coefficient was tuned
+at a density the world does not actually run at.
+
+Parked at 0 rather than shipped at a value that kills the population. The fix is
+to make suppression density-relative — a free allowance before it bites, or
+normalisation by a reference density — so that one coefficient means the same
+thing in an empty world and a crowded one. Until then the mechanism is present,
+measured, and off.

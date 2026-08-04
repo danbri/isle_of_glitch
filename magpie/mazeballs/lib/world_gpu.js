@@ -521,7 +521,31 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   let p = m0.xy;
   var stock = max(0.0, m0.z - moteOfferOf(m0) * m0.w);
   let fert = clamp(resourceAt(p), 0.0, 1.0);
-  stock = stock + P.moteRegrow * fert * (1.0 - stock / P.moteCap) * P.dt;
+
+  // CROWDING SUPPRESSES REGROWTH — the Conway move, and the reason moving can
+  // pay at all.
+  //
+  // Without it a grazed patch refills faster than leaving it is worth, so sitting
+  // still is optimal and muscle is correctly selected away. Measured: correlation
+  // between a body's displacement and its energy change was -0.36; movers lost
+  // 9.5 while sitters gained 3.1. Evolution deleting its own muscles was not a
+  // bug, it was the right answer to the incentive we had built.
+  //
+  // Ground under a crowd recovers slowly, so the patch you are sitting on stays
+  // poor BECAUSE you are sitting on it. That makes leaving worth something, and
+  // it does it without rewarding movement directly — the pressure is a property
+  // of the ground, identical for everyone, and a body that sits in a rich empty
+  // patch is still perfectly well off. Weak Boids-like separation falls out of it.
+  //
+  // Friction-law clean: this can only REDUCE the sun's delivery, never raise it.
+  // Total inflow stays bounded by nMotes * moteRegrow * moteCap, and no
+  // capability is granted energy — the crowd term is blind to what the crowding
+  // cells are or what they are doing.
+  //
+  // m0.w is the demander count the offer pass already counted this step, so
+  // this costs nothing.
+  let suppress = 1.0 / (1.0 + P.regrowCrowdK * max(0.0, m0.w));
+  stock = stock + P.moteRegrow * fert * suppress * (1.0 - stock / P.moteCap) * P.dt;
   mote[i] = vec4<f32>(m0.x, m0.y, clamp(stock, 0.0, P.moteCap), 0.0);
 }
 
@@ -931,7 +955,16 @@ export class WorldGPU {
       // grinding down to 8 alive on mean energy -6.4. The inflow's MAGNITUDE is
       // a free parameter; that there is exactly one bounded inflow is not.
       nMotes: null, moteR: 1.2, grazeRate: 2.2, moteRegrow: 6.0, moteCap: 1.0,
-      moteHashSize: 16384, pad0: 0,
+      moteHashSize: 16384,
+      // 2.0 from measurement, not taste. Energy change of the top vs bottom
+      // quartile of movers, 64 bodies over 30,000 steps:
+      //   crowdK 0     movers -7.9   sitters -0.1   corr -0.39
+      //   crowdK 0.6   movers +0.6   sitters -2.5   corr -0.20
+      //   crowdK 2.0   movers +1.9   sitters -4.8   corr -0.00
+      //   crowdK 6.0   movers +0.3   sitters -1.2   corr +0.10
+      // 2.0 gives the widest gap in favour of moving. Higher suppresses regrowth
+      // so hard that everyone is poor and the advantage shrinks again.
+      regrowCrowdK: 0.0,
       dt: brains.dt, ...params,
     };
     // Motes. Scattered by a hash of their index rather than laid on a lattice:
