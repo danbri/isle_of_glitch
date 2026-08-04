@@ -847,7 +847,23 @@ export class WorldGPU {
     this.bEnergy = mk(cells.energy ?? new Float32Array(n).fill(1));
 
     this.params = {
-      flowScale: 0.9, flowStr: 1.0, drag: 1.6, springK: 90.0,
+      flowScale: 0.9,
+      // Flow reduced from 1.0 so that swimming beats drifting, but NOT for the
+      // reason first recorded here. That claim — flow carrying cells ten times
+      // faster than they could swim — came from tracking cells by arena index,
+      // and arena slots are recycled, so most of the "movement" was bodies dying
+      // and being replaced. Measured properly, per 30,000 steps on isolated
+      // bodies:
+      //
+      //   flow 1.0   drift alone 1.06, with muscle 1.85   -> swimming buys ~0.75x
+      //   flow 0.3   drift alone ~0.3, with muscle ~0.8   -> swimming buys ~2.7x
+      //   flow 0     pure swim 0.84
+      //
+      // So the real problem is milder: at full strength the current moves a body
+      // about as far as its own muscles do, which leaves swimming with little
+      // selective advantage. 0.3 keeps flow as a genuine force to anchor against
+      // and be swept by, while making self-propulsion clearly worth having.
+      flowStr: 0.3, drag: 1.6, springK: 90.0,
       contract: 0.45, seed: 3, senseGain: 2.0, damp: 0.986, bound: 64.0,
       // Calibrated against the density the world actually runs at. A 3x3 bucket
       // neighbourhood holds ~34 cells at the starting population, so crowdK

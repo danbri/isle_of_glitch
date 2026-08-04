@@ -289,7 +289,7 @@ async function buildFrame() {
   }
   const P32 = Int32Array.from(pairs);
 
-  const buf = new ArrayBuffer(HEAD + N * 8 + N * 4 + N * 4 + N * 4 + 4 + P32.byteLength);
+  const buf = new ArrayBuffer(HEAD + N * 8 + N * 4 + N * 4 + N * 4 + N * 4 + 4 + P32.byteLength);
   const dv = new DataView(buf);
   dv.setUint32(0, FRAME_MAGIC, true);
   dv.setUint32(4, N, true);
@@ -324,6 +324,26 @@ async function buildFrame() {
   new Float32Array(buf, at, N).set(cellAct); at += N * 4;
   new Int32Array(buf, at, N).set(cellType); at += N * 4;
   new Float32Array(buf, at, N).set(energy); at += N * 4;
+
+  // ASSEMBLY IDENTITY — which animal a cell belongs to, stable across everything.
+  //
+  // Arena SLOTS are recycled: when a body dies its range is reused, so a cell
+  // index means "whatever occupies these slots now" and nothing more. Tracking a
+  // cell by index across time therefore teleports it across the world the moment
+  // its slot is reused, which silently wrecked a displacement measurement — the
+  // apparent motion was mostly recycling.
+  //
+  // The uid is minted once per BIRTH EVENT and never reused, so it survives slot
+  // recycling, and it is carried by the cell rather than derived from position,
+  // so it survives a body being torn in half: both halves still name the same
+  // animal. Genome identity would not do this — siblings and twins share a
+  // genome and are different animals.
+  const cellUid = new Int32Array(N);
+  for (let i = 0; i < N; i++) {
+    const b = built.cells.body ? built.cells.body[i] : -1;
+    cellUid[i] = (built.cells.ctype[i] >= 0 && b >= 0) ? evo.uid[b] : -1;
+  }
+  new Int32Array(buf, at, N).set(cellUid); at += N * 4;
   new DataView(buf).setUint32(at, P32.length, true); at += 4;
   new Int32Array(buf, at, P32.length).set(P32);
   return new Uint8Array(buf);
