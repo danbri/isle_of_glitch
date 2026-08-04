@@ -33,7 +33,7 @@ import { Evolver } from '../lib/evolve.js';
 
 const args = (() => {
   const out = {
-    port: 8899, beasts: 3000, cells: 12, start: 0.25, bound: 0, spf: 6, tick: 250,
+    port: 8899, beasts: 3000, cells: 12, maxCells: 60, start: 0.25, bound: 0, spf: 6, tick: 250,
     host: '0.0.0.0',
     // The non-stationary field, which measured far better than a static one:
     // ancestral-tournament shareB 0.970 against 0.864, and body size kept
@@ -55,6 +55,11 @@ const BOUND = args.bound || Math.max(40, Math.sqrt(args.beasts * args.cells) * 0
 console.log(`building ${args.beasts} bodies x ${args.cells} cells, bound ${BOUND.toFixed(0)}`);
 const built = buildBodies({
   beasts: args.beasts, cells: args.cells, bound: BOUND, seed: (Date.now() & 0xffff) || 7,
+  // Sized for the bodies DEVELOPMENT can reach, not for the founder rings.
+  // A genome decides its own body size, so the arena has to hold the largest
+  // one evolution might specify; sized for 12 it fragments and births start
+  // failing for lack of contiguous room while every other number looks healthy.
+  maxCells: args.maxCells,
 });
 const brains = await BrainArenaGPU.create(built.arena);
 const world = new WorldGPU(brains, built.cells, {
@@ -63,7 +68,7 @@ const world = new WorldGPU(brains, built.cells, {
 });
 const evo = new Evolver({
   arena: built.arena, world, cells: built.cells,
-  seed: 5, birthEnergy: 18, deathEnergy: 0,
+  seed: 5, birthEnergy: 18, deathEnergy: 0, maxCells: args.maxCells,
 });
 const startCount = Math.max(60, Math.floor(args.beasts * args.start));
 for (let o = startCount; o < args.beasts; o++) evo.cull(o);
@@ -347,6 +352,31 @@ Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
   }
   const path = url.pathname;
 
+  // The genomes of living organisms, so a specimen can be inspected, drawn or
+  // re-developed outside the run. This is the dataset development actually
+  // produces — positions and bonds are only what it produced THIS time — and
+  // without it the run is unreadable from outside.
+  if (path === '/genomes') {
+    const want = Math.min(64, Number(url.searchParams.get('n') ?? 8) || 8);
+    const rows = [];
+    for (let o = 0; o < built.arena.P && rows.length < want; o++) {
+      if (!built.arena.alive[o] || !evo.genome[o]) continue;
+      rows.push({
+        slot: o,
+        uid: evo.uid[o],
+        generation: evo.generation[o],
+        lineage: evo.lineage[o],
+        cells: built.arena.cnt[o],
+        g: Array.from(evo.genome[o]),
+      });
+    }
+    // Deepest first: the interesting specimens are the ones with ancestry.
+    rows.sort((a, b) => b.generation - a.generation);
+    return new Response(JSON.stringify({ steps, count: rows.length, rows }), {
+      headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+    });
+  }
+
   if (path === '/frame') {
     return new Response(await frame(), {
       headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' },
@@ -383,6 +413,11 @@ Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
       // configured to match by hand — a mismatch is not a user error, it is
       // just a page that has not been told the shape yet.
       beasts: args.beasts, cellsPerBeast: args.cells,
+      // The viewer must be TOLD the arena width, not left to guess it. It had a
+      // hardcoded maxCells of 40 while the server moved to 60, so every frame
+      // failed the size check and the page showed "reload to resync" — which
+      // reloading could not fix, because the guess was wrong every time.
+      maxCells: args.maxCells, nCells: built.meta.nCells, bound: BOUND,
       // The resource field is what creatures chase and it drifts and morphs.
       // The viewer needs its parameters to draw it; without them it was showing
       // only the flow, which is the least photogenic layer in the world.

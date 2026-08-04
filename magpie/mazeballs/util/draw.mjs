@@ -34,6 +34,18 @@ function draw(name, g) {
   console.log(`  cells ${m.n}  symmetry ${m.symmetry.toFixed(2)}  segments ${m.segments}  elong ${m.elongation.toFixed(2)}  stiffSpan ${m.stiffSpan.toFixed(1)}x`);
   for (const r of grid) console.log('  ' + r.join(''));
 }
+// Evolved genomes, if a run has left some. `--genomes <file>` takes the JSON
+// written by an evolution run: [{gen, g:[...weights]}]. Without it we draw the
+// hand-written demonstrations below, which show what the encoding can REACH
+// rather than what selection finds — a distinction worth keeping visible.
+const gi = Deno.args.indexOf('--genomes');
+if (gi >= 0 && Deno.args[gi + 1]) {
+  const rows = JSON.parse(await Deno.readTextFile(Deno.args[gi + 1]));
+  console.log(`=== EVOLVED genomes from ${Deno.args[gi + 1]} ===`);
+  rows.forEach((r, i) => draw(`evolved #${i + 1}, generation ${r.gen}`, Float32Array.from(r.g)));
+  Deno.exit(0);
+}
+
 draw('bilateral, segmented, stiff spine', G([
   ['presence','bias',1.1], ['presence','|dv|',-0.9],
   ['contract','sin3ap',2.2], ['grip','|dv|',1.4], ['stiff','|dv|',-2.2], ['stiff','bias',0.8]]));

@@ -168,6 +168,13 @@ import { Evolver } from './lib/evolve.js';
 
 const $ = id => document.getElementById(id);
 const fail = (msg) => { $('err').style.display = 'block'; $('err').textContent = msg; };
+/** A transient notice: something is being handled, not something that broke. */
+const note = (msg) => {
+  const e = $('err');
+  e.style.display = 'block'; e.textContent = msg;
+  clearTimeout(note._t);
+  note._t = setTimeout(() => { if (e.textContent === msg) e.style.display = 'none'; }, 4000);
+};
 
 if (!navigator.gpu) {
   // WebGPU is gated on a SECURE CONTEXT. Browsers exempt localhost and
@@ -508,6 +515,7 @@ const view = { field: true, bonds: true, paused: false, spf: 4, evolve: true,
 // instead of a simulation of its own. Without it every tab is a separate
 // universe, which is why two browsers never agreed about anything.
 const WATCH = new URLSearchParams(location.search).has('watch');
+let remoteMaxCells = null, remoteBound = null, resyncing = false;
 
 const canvas = $('c');
 
@@ -585,6 +593,7 @@ async function rebuild() {
     try {
       const st = await (await fetch('/status', { cache: 'no-store' })).json();
       beasts = st.beasts; cellsPer = st.cellsPerBeast;
+      remoteMaxCells = st.maxCells; remoteBound = st.bound;
       remoteParams = st;                       // the field the server is using
       $('sBeasts').value = beasts; $('vBeasts').textContent = beasts.toLocaleString();
       $('sCpb').value = cellsPer; $('vCpb').textContent = cellsPer;
@@ -593,7 +602,10 @@ async function rebuild() {
                   '\nDrop ?watch=1 to run a local simulation instead.');
     }
   }
-  const bound = Math.max(40, Math.sqrt(beasts * cellsPer) * 0.62);
+  // The server's own bound, when it has one. Recomputing it from a formula
+  // only works while both sides use the same formula.
+  const bound = (WATCH && remoteBound) ? remoteBound
+              : Math.max(40, Math.sqrt(beasts * cellsPer) * 0.62);
 
   const built = buildBodies({
     beasts, cells: cellsPer, degree: 12, bondK: 4,
@@ -602,7 +614,7 @@ async function rebuild() {
     // multiplies the whole world's buffers. A local sandbox does not need the
     // headroom a long server run does, and at maxCells 40 a 2000-beast page
     // silently became 80,000 cells — enough to exceed a smaller GPU's limits.
-    maxCells: WATCH ? 40 : 20,
+    maxCells: WATCH ? (remoteMaxCells ?? 40) : 20,
   });
   const brains = await BrainArenaGPU.create(built.arena, dev);
   const world = new WorldGPU(brains, built.cells, {
@@ -726,7 +738,16 @@ function applyFrame(ab) {
   if (dv.getUint32(0, true) !== FRAME_MAGIC) return fail('bad frame from server');
   const n = dv.getUint32(4, true);
   if (n !== sim.meta.nCells) {
-    return fail(`server has ${n} cells, this page was built for ${sim.meta.nCells}.\nReload to resync.`);
+    // Self-heal. The server can be restarted with a different shape at any time
+    // and the viewer should follow it, not stall with an instruction the user
+    // has to act on — especially since a plain reload does not help if the page
+    // is guessing the shape rather than reading it.
+    if (!resyncing) {
+      resyncing = true;
+      note(`server reshaped to ${n.toLocaleString()} cells — rebuilding`);
+      rebuild().then(() => { resyncing = false; }).catch(e => fail(String(e)));
+    }
+    return;
   }
   const HEAD = 48;
   const pos = new Float32Array(ab, HEAD, n * 2);
