@@ -429,13 +429,27 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
    * up new code" is already the most powerful verb it should ever have.
    */
   if (path === '/control' && req.method === 'POST') {
-    let action = '';
-    try { action = (await req.json()).action ?? ''; } catch { /* empty body */ }
+    // Read the body ONCE. A request body is a stream: consuming it for `action`
+    // leaves nothing for anyone else, and req.clone() after the fact clones an
+    // already-drained stream — which silently made every parameter arrive as
+    // undefined while the action itself worked fine.
+    let body = {};
+    try { body = await req.json(); } catch { /* empty body */ }
+    const action = body.action ?? '';
     const ok = (extra = {}) =>
       new Response(JSON.stringify({ ok: true, action, steps, ...extra }),
         { headers: { 'content-type': 'application/json' } });
 
     if (action === 'pause')  { paused = true;  return ok({ paused }); }
+    // How many physics steps the server takes per loop iteration — the knob that
+    // decides how fast the world runs in wall-clock, which matters because a good
+    // gait covers two body lengths in ~30,000 steps and that is minutes of
+    // watching at the default.
+    if (action === 'speed') {
+      const v = Number(body.spf);
+      if (Number.isFinite(v) && v >= 1 && v <= 512) args.spf = Math.round(v);
+      return ok({ spf: args.spf });
+    }
     if (action === 'resume') { paused = false; return ok({ paused }); }
 
     if (action === 'save') {
@@ -512,7 +526,7 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       // failed the size check and the page showed "reload to resync" — which
       // reloading could not fix, because the guess was wrong every time.
       maxCells: args.maxCells, nCells: built.meta.nCells, bound: BOUND,
-      nMotes: world.params.nMotes, paused,
+      nMotes: world.params.nMotes, paused, spf: args.spf,
       // The resource field is what creatures chase and it drifts and morphs.
       // The viewer needs its parameters to draw it; without them it was showing
       // only the flow, which is the least photogenic layer in the world.

@@ -60,6 +60,18 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
   border:1px solid #6B2F2A;border-radius:4px;font-family:var(--mono);font-size:.74rem;
   color:#F0C7C2;display:none;white-space:pre-wrap;max-height:40vh;overflow:auto;
 }
+
+#scope { position: fixed; left: 0; right: 0; bottom: 0; background: #0b1211ee;
+  border-top: 1px solid #24403a; backdrop-filter: blur(6px); z-index: 40;
+  font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #9fb8b0; }
+#scopeHead { display: flex; align-items: center; gap: .5rem; padding: .3rem .5rem; }
+#scopeHead .sp { flex: 1; }
+#scopeHead input[type=range] { width: 180px; vertical-align: middle; }
+#scopeC { display: block; width: 100%; height: 190px; }
+#scopeFoot { padding: .25rem .5rem .4rem; color: #6d8880; }
+#inspPanel .note { color: #6d8880; }
+.selRing { pointer-events: none; }
+@media (max-width: 700px) { #scopeC { height: 130px; } #scopeHead input[type=range] { width: 90px; } }
 </style>
 </head>
 <body>
@@ -127,6 +139,16 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
   </div>
 
   <!-- Only meaningful when watching a server; hidden in local sandbox mode. -->
+  <div id="inspPanel">
+    <h2>Creature</h2>
+    <div class="row">
+      <button id="bPick" class="on">click to select</button>
+      <button id="bClearSel">clear</button>
+      <button id="bFollow">follow</button>
+    </div>
+    <p class="note" id="selInfo">Nothing selected. Click a cell in the world.</p>
+  </div>
+
   <div id="srvPanel" style="display:none">
     <h2>Server</h2>
     <div class="row">
@@ -137,6 +159,9 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
       <button id="bSrvRestart">restart (keep world)</button>
       <button id="bSrvReseed">new world</button>
     </div>
+    <div class="sl"><div class="lab"><span>world speed (steps/loop)</span>
+      <span class="v" id="vSrvSpf">6</span></div>
+      <input id="sSrvSpf" type="range" min="1" max="128" value="6"></div>
     <p class="note" id="srvNote">
       These act on the shared simulation, not on this page. <b>restart</b> saves,
       relaunches the server process so it picks up new code, and resumes the same
@@ -914,6 +939,222 @@ async function refreshMotes() {
   }
 }
 
+
+/* ===================== creature inspector + CTRNN scope =====================
+ *
+ * Debugging motion means watching a BRAIN over time, not a snapshot. A gait is a
+ * relationship between neurons across time — bands in phase, a wave travelling
+ * head to tail — and none of that is visible in an instantaneous colour.
+ *
+ * Identity is the assembly uid, minted at the birth event, never reused. Cell
+ * indices cannot be used: arena slots are recycled, so "cell 4211" is a different
+ * animal a minute later, and tracking one made 99% of a displacement measurement
+ * turn out to be slot reuse. The uid also survives a body being torn apart, so a
+ * creature that fragments is still one row-set here rather than two.
+ */
+const SCOPE_COLS = 6000;          // ~10 screens of scrollback at 600px wide
+const SCOPE_ROWS = 64;            // max cells we plot for one animal
+
+const sel = {
+  uid: -1,
+  order: [],                      // cell indices, head -> tail
+  hist: new Float32Array(SCOPE_COLS * SCOPE_ROWS),
+  types: new Int32Array(SCOPE_ROWS),
+  head: 0,                        // next column to write
+  filled: 0,
+  lastStep: -1,
+  follow: false,
+  picking: true,
+};
+
+/** Order a body's cells head->tail so a travelling wave reads as a diagonal. */
+function orderAlongAxis(idx, pos) {
+  if (idx.length < 3) return idx.slice();
+  // Longest chord = the body's main axis. O(n^2) over <=60 cells, once per pick.
+  let a = idx[0], b = idx[1], best = -1;
+  for (const i of idx) for (const j of idx) {
+    const d = (pos[i * 2] - pos[j * 2]) ** 2 + (pos[i * 2 + 1] - pos[j * 2 + 1]) ** 2;
+    if (d > best) { best = d; a = i; b = j; }
+  }
+  const ax = pos[b * 2] - pos[a * 2], ay = pos[b * 2 + 1] - pos[a * 2 + 1];
+  const L = Math.hypot(ax, ay) || 1;
+  return idx.slice().sort((i, j) =>
+    ((pos[i * 2] - pos[a * 2]) * ax + (pos[i * 2 + 1] - pos[a * 2 + 1]) * ay) / L -
+    ((pos[j * 2] - pos[a * 2]) * ax + (pos[j * 2 + 1] - pos[a * 2 + 1]) * ay) / L);
+}
+
+function selectUid(uid, pos, type, uidArr, n) {
+  sel.uid = uid;
+  sel.head = 0; sel.filled = 0; sel.hist.fill(0);
+  const idx = [];
+  for (let i = 0; i < n && idx.length < SCOPE_ROWS; i++) {
+    if (uidArr[i] === uid && type[i] >= 0) idx.push(i);
+  }
+  sel.order = orderAlongAxis(idx, pos);
+  sel.types.fill(-1);
+  sel.order.forEach((i, r) => { if (r < SCOPE_ROWS) sel.types[r] = type[i]; });
+  $('scope').style.display = uid >= 0 && sel.order.length ? '' : 'none';
+  updateSelInfo();
+}
+
+function updateSelInfo() {
+  const el = $('selInfo');
+  if (sel.uid < 0 || !sel.order.length) {
+    el.textContent = 'Nothing selected. Click a cell in the world.';
+    $('scopeTitle').textContent = 'CTRNN —';
+    return;
+  }
+  const names = ['neuron', 'sensor', 'muscle', 'anchor'];
+  const c = [0, 0, 0, 0];
+  for (let r = 0; r < sel.order.length; r++) if (sel.types[r] >= 0) c[sel.types[r]]++;
+  el.textContent = `animal #${sel.uid} — ${sel.order.length} cells: ` +
+    names.map((nm, k) => `${c[k]} ${nm}`).join(', ');
+  $('scopeTitle').textContent = `CTRNN — animal #${sel.uid}, ${sel.order.length} neurons`;
+}
+
+/** One column per frame. Called from applyFrame while the data is in hand. */
+function sampleSelected(pos, act, type, uidArr, n, step) {
+  if (sel.uid < 0) return;
+  if (step === sel.lastStep) return;             // same frame served twice
+  sel.lastStep = step;
+
+  // The body may have lost or gained cells, or died outright.
+  let alive = 0;
+  for (const i of sel.order) if (type[i] >= 0 && uidArr[i] === sel.uid) alive++;
+  if (alive === 0) {
+    $('scopeTitle').textContent = `CTRNN — animal #${sel.uid} (died)`;
+    return;
+  }
+
+  const col = sel.head * SCOPE_ROWS;
+  for (let r = 0; r < SCOPE_ROWS; r++) {
+    const i = sel.order[r];
+    sel.hist[col + r] = (i !== undefined && type[i] >= 0 && uidArr[i] === sel.uid)
+      ? act[i] : NaN;                            // NaN = not part of the body now
+  }
+  sel.head = (sel.head + 1) % SCOPE_COLS;
+  sel.filled = Math.min(sel.filled + 1, SCOPE_COLS);
+
+  if (sel.follow) {
+    let sx = 0, sy = 0, k = 0;
+    for (const i of sel.order) if (type[i] >= 0) { sx += pos[i * 2]; sy += pos[i * 2 + 1]; k++; }
+    if (k) { cam.cx = sx / k; cam.cy = sy / k; }
+  }
+}
+
+/** Nearest live cell to a world point, or -1. */
+function pickAt(wx, wy) {
+  if (!sim?.lastPos) return -1;
+  const n = sim.meta.nCells, P = sim.lastPos, T = sim.lastType;
+  const B = sim.bound;
+  let best = -1, bestD = (12 / cam.zoom) ** 2;   // ~12 screen px of slop
+  for (let i = 0; i < n; i++) {
+    if (T[i] < 0) continue;
+    let dx = P[i * 2] - wx, dy = P[i * 2 + 1] - wy;
+    if (dx > B) dx -= 2 * B; if (dx < -B) dx += 2 * B;
+    if (dy > B) dy -= 2 * B; if (dy < -B) dy += 2 * B;
+    const d = dx * dx + dy * dy;
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  return best;
+}
+
+/* Muted crowd, saturated accent — visual-language.md. Silence is near-black so
+ * the eye is drawn only to neurons doing something. */
+function actColour(v) {
+  if (Number.isNaN(v)) return '#0a0f0e';
+  const a = Math.min(1, Math.abs(v));
+  if (v >= 0) return `rgb(${Math.round(18 + 224 * a)},${Math.round(22 + 150 * a)},${Math.round(24 + 40 * a)})`;
+  return `rgb(${Math.round(18 + 30 * a)},${Math.round(22 + 110 * a)},${Math.round(24 + 190 * a)})`;
+}
+
+function drawScope() {
+  const cv = $('scopeC');
+  if ($('scope').style.display === 'none' || !sel.order.length) return;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = Math.max(1, Math.round(cv.clientWidth * dpr));
+  const h = Math.max(1, Math.round(cv.clientHeight * dpr));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  const g = cv.getContext('2d');
+  g.fillStyle = '#070c0b'; g.fillRect(0, 0, w, h);
+
+  const rows = sel.order.length;
+  const rowH = h / rows;
+  const cols = Math.min(sel.filled, Math.floor(w / dpr));   // one column per CSS px
+  if (!cols) return;
+
+  const maxBack = Math.max(0, sel.filled - cols);
+  $('scopeScroll').max = String(maxBack);
+  const back = $('scopeLive').classList.contains('on')
+    ? maxBack : Math.min(+$('scopeScroll').value, maxBack);
+  if ($('scopeLive').classList.contains('on')) $('scopeScroll').value = String(maxBack);
+
+  const colW = w / cols;
+  for (let c = 0; c < cols; c++) {
+    // oldest retained column is head - filled
+    const src = ((sel.head - sel.filled + back + c) % SCOPE_COLS + SCOPE_COLS) % SCOPE_COLS;
+    const base = src * SCOPE_ROWS;
+    for (let r = 0; r < rows; r++) {
+      g.fillStyle = actColour(sel.hist[base + r]);
+      g.fillRect(c * colW, r * rowH, colW + 1, rowH + 1);
+    }
+  }
+
+  // Type gutter: which rows are muscle / sensor / anchor, so a wave can be read
+  // against what it is driving.
+  const tint = ['#5a6b66', '#4dd1de', '#ff9433', '#b86bea'];
+  for (let r = 0; r < rows; r++) {
+    if (sel.types[r] < 0) continue;
+    g.fillStyle = tint[sel.types[r]];
+    g.fillRect(0, r * rowH, 3 * dpr, Math.max(1, rowH - 1));
+  }
+}
+
+/* ---- wiring ---- */
+$('bPick').onclick = e => {
+  sel.picking = !sel.picking;
+  e.target.classList.toggle('on', sel.picking);
+};
+$('bClearSel').onclick = () => selectUid(-1, sim?.lastPos ?? new Float32Array(0),
+  sim?.lastType ?? new Int32Array(0), sim?.lastUid ?? new Int32Array(0), 0);
+$('bFollow').onclick = e => {
+  sel.follow = !sel.follow;
+  e.target.classList.toggle('on', sel.follow);
+};
+$('scopeClose').onclick = () => { $('scope').style.display = 'none'; };
+$('scopeLive').onclick = e => e.target.classList.toggle('on');
+$('scopeScroll').oninput = () => $('scopeLive').classList.remove('on');
+
+/**
+ * A HIDDEN TAB SHOULD NOT HOLD A WORLD.
+ *
+ * Every open viewer allocates its own full set of GPU buffers, and hiding a tab
+ * suspends rendering but frees nothing — so old tabs sit there taxing GPU memory
+ * until someone tidies them up by hand. In watch mode the page owns nothing that
+ * cannot be rebuilt from the server in a second, so after a couple of minutes out
+ * of sight it lets the whole thing go and rebuilds on return.
+ *
+ * Not done in local-sim mode: there the buffers ARE the simulation, and dropping
+ * them would throw away the run.
+ */
+let hideTimer = null;
+document.addEventListener('visibilitychange', () => {
+  clearTimeout(hideTimer);
+  if (document.hidden) {
+    if (!WATCH) return;                       // local sim: the buffers are the run
+    hideTimer = setTimeout(() => {
+      if (!document.hidden || !sim) return;
+      sim.world.destroy(); sim.brains.destroy();
+      sim.bBond.destroy(); sim.bCam.destroy();
+      sim.bMoteCam?.destroy(); sim.bMoteData?.destroy();
+      sim = null;
+      console.log('[mazeballs] hidden for 2 minutes — released GPU buffers');
+    }, 120000);
+  } else if (!sim && WATCH) {
+    rebuild().catch(e => fail(String(e)));
+  }
+});
+
 const FRAME_MAGIC = 0x314d5257;
 function applyFrame(ab) {
   const dv = new DataView(ab);
@@ -935,6 +1176,12 @@ function applyFrame(ab) {
   const pos = new Float32Array(ab, HEAD, n * 2);
   const act = new Float32Array(ab, HEAD + n * 8, n);
   const type = new Int32Array(ab, HEAD + n * 12, n);
+  // Assembly uid per cell — which ANIMAL this is, stable across slot recycling
+  // and across a body being torn in half. Everything the inspector does hangs
+  // off this; a cell index would name a different creature a minute later.
+  const uid = new Int32Array(ab, HEAD + n * 16, n);
+  sim.lastPos = pos; sim.lastAct = act; sim.lastType = type; sim.lastUid = uid;
+  sampleSelected(pos, act, type, uid, n, dv.getUint32(8, true));
 
   const q = dev.queue;
   q.writeBuffer(sim.world.bPos, 0, pos);
@@ -1166,6 +1413,8 @@ function loop() {
   pass.end();
   dev.queue.submit([enc.finish()]);
 
+  drawScope();
+
   frames++; acc += t - last; last = t;
   if (acc > 400) {
     fps = frames * 1000 / acc; frames = 0; acc = 0;
@@ -1182,16 +1431,33 @@ function loop() {
 
 let drag = null;
 canvas.addEventListener('pointerdown', e => {
-  drag = { x: e.clientX, y: e.clientY };
+  drag = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, moved: 0 };
   canvas.setPointerCapture(e.pointerId); canvas.classList.add('drag');
 });
 canvas.addEventListener('pointermove', e => {
   if (!drag) return;
   cam.cx -= (e.clientX - drag.x) / cam.zoom;
   cam.cy += (e.clientY - drag.y) / cam.zoom;
-  drag = { x: e.clientX, y: e.clientY };
+  drag.moved += Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y);
+  drag.x = e.clientX; drag.y = e.clientY;
 });
-const endDrag = () => { drag = null; canvas.classList.remove('drag'); };
+const endDrag = (e) => {
+  // A click, not a pan. Screen -> world uses the same numbers writeCam does, so
+  // the point under the cursor is the point that gets picked at any zoom.
+  if (drag && drag.moved < 5 && sel.picking && sim?.lastPos && e) {
+    const r = canvas.getBoundingClientRect();
+    const wx = cam.cx + (e.clientX - r.left - r.width / 2) / cam.zoom;
+    const wy = cam.cy - (e.clientY - r.top - r.height / 2) / cam.zoom;
+    const i = pickAt(wx, wy);
+    if (i >= 0 && sim.lastUid[i] >= 0) {
+      selectUid(sim.lastUid[i], sim.lastPos, sim.lastType, sim.lastUid, sim.meta.nCells);
+      note(`selected animal #${sim.lastUid[i]}`);
+    } else {
+      note('nothing there');
+    }
+  }
+  drag = null; canvas.classList.remove('drag');
+};
 canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 
@@ -1283,6 +1549,21 @@ if (WATCH) {
   $('bSrvPause').onclick = () =>
     control($('bSrvPause').textContent.startsWith('pause') ? 'pause' : 'resume');
   $('bSrvSave').onclick = () => control('save');
+  // Debounced: dragging a slider should not fire fifty restarts of the loop.
+  let spfT = null;
+  $('sSrvSpf').oninput = e => {
+    $('vSrvSpf').textContent = e.target.value;
+    clearTimeout(spfT);
+    spfT = setTimeout(async () => {
+      try {
+        const r = await fetch('/control', { method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'speed', spf: +e.target.value }) });
+        const j = await r.json();
+        if (j.ok) note(`world speed ${j.spf} steps/loop`);
+      } catch (err) { note('could not set speed: ' + err.message); }
+    }, 250);
+  };
   $('bSrvRestart').onclick = () =>
     control('restart', 'Restart the server process? The world is saved and resumed.');
   $('bSrvReseed').onclick = () =>
