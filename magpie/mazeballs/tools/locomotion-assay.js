@@ -41,7 +41,13 @@ import { develop, bond, morphology, largestPiece } from '../lib/devo.js';
 
 const args = (() => {
   const a = { ticks: 4000, every: 200, beasts: 900, spf: 250, bound: 70, seed: 11,
-              maxCells: 60, out: 'runs/locomotion.jsonl' };
+              maxCells: 60, out: 'runs/locomotion.jsonl',
+              // The hypothesis this instrument exists to test: locomotion should
+              // only pay when the ground under you does NOT come back fast enough
+              // to sit on. Slow regrowth means a grazed patch stays grazed and
+              // staying put starves you; fast regrowth means a sessile body is
+              // perfectly viable and moving is a waste of energy. Sweep this.
+              moteRegrow: 6.0, label: 'run' };
   for (let i = 0; i < Deno.args.length; i += 2) {
     const k = Deno.args[i].replace(/^--/, '');
     const v = Deno.args[i + 1];
@@ -141,6 +147,7 @@ const built = buildBodies({
 const brains = await BrainArenaGPU.create(built.arena);
 const world = new WorldGPU(brains, built.cells, {
   bound: args.bound, driftX: 0.06, driftY: 0.037, morphRate: 0.0075,
+  moteRegrow: args.moteRegrow,
 });
 const evo = new Evolver({
   arena: built.arena, world, cells: built.cells, seed: 3,
@@ -153,19 +160,39 @@ const out = await Deno.open(args.out, { write: true, create: true, append: true 
 const enc = new TextEncoder();
 const log = async (rec) => { await out.write(enc.encode(JSON.stringify(rec) + '\n')); };
 
+/**
+ * A sample that SPANS LINEAGES rather than taking the first k living slots.
+ *
+ * Slot order is allocation order, so the first 96 slots are heavily biased
+ * toward whichever line happened to fill the low end of the arena — and when a
+ * population converges, they are 96 copies of one animal. The assay then reports
+ * one genome's behaviour to three decimal places and it looks like a population
+ * measurement.
+ *
+ * One representative per lineage first, then fill from the remainder, so the
+ * sample is as diverse as the population actually is and no more.
+ */
 const sample = (k) => {
-  const A = built.arena, g = [];
-  for (let o = 0; o < A.P && g.length < k; o++) if (A.alive[o] && evo.genome[o]) g.push(evo.genome[o]);
-  return g;
+  const A = built.arena;
+  const byLineage = new Map(), rest = [];
+  for (let o = 0; o < A.P; o++) {
+    if (!A.alive[o] || !evo.genome[o]) continue;
+    const L = evo.lineage[o];
+    if (!byLineage.has(L)) byLineage.set(L, evo.genome[o]);
+    else rest.push(evo.genome[o]);
+  }
+  const g = [...byLineage.values()].slice(0, k);
+  for (let i = 0; g.length < k && i < rest.length; i++) g.push(rest[i]);
+  return { genomes: g, distinctLineages: byLineage.size };
 };
 
-console.log('tick   alive  gen  cells  symmetry  segments   swim(median/p90)   control(median/p90)');
+console.log('tick   alive  gen  lin  cells  symmetry  segments   swim(median/p90)   control(median/p90)');
 for (let t = 0; t <= args.ticks; t++) {
   world.step(args.spf);
   await evo.tick(t * args.spf);
 
   if (t % args.every === 0) {
-    const gs = sample(96);
+    const { genomes: gs, distinctLineages } = sample(96);
     const A = built.arena;
     let sym = 0, seg = 0, cells = 0, m = 0;
     for (const g of gs) {
@@ -178,8 +205,9 @@ for (let t = 0; t <= args.ticks; t++) {
     const swim = await selfPropulsion(gs, undefined);
     const ctrl = await selfPropulsion(gs, 0);
     const rec = {
+      label: args.label, moteRegrow: args.moteRegrow,
       tick: t, step: t * args.spf, alive: evo.alive(), gen: evo.maxGeneration(),
-      lineages: evo.lineages ? evo.lineages() : null,
+      distinctLineages, sampleSize: gs.length,
       meanCells: m ? cells / m : 0, symmetry: m ? sym / m : 0, segments: m ? seg / m : 0,
       swimMedian: swim.median, swimP90: swim.p90,
       ctrlMedian: ctrl.median, ctrlP90: ctrl.p90, sampled: swim.n,
@@ -187,6 +215,7 @@ for (let t = 0; t <= args.ticks; t++) {
     await log(rec);
     console.log(
       `${String(t).padStart(5)} ${String(rec.alive).padStart(6)} ${String(rec.gen).padStart(4)} ` +
+      `${String(distinctLineages).padStart(4)} ` +
       `${rec.meanCells.toFixed(1).padStart(6)} ${rec.symmetry.toFixed(2).padStart(9)} ` +
       `${rec.segments.toFixed(1).padStart(9)}   ${rec.swimMedian.toFixed(3)}/${rec.swimP90.toFixed(3)}` +
       `        ${rec.ctrlMedian.toFixed(3)}/${rec.ctrlP90.toFixed(3)}`);
