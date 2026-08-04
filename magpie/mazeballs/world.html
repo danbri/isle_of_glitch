@@ -629,7 +629,7 @@ async function boot() {
       // layout fails validation, the pipeline is invalid, and every submit
       // reports "Invalid CommandBuffer" with no hint as to why.
       maxStorageBuffersPerShaderStage:
-        Math.min(adapter.limits.maxStorageBuffersPerShaderStage, 12),
+        Math.min(adapter.limits.maxStorageBuffersPerShaderStage, 10),
     },
   });
   // Keep the FIRST error. WebGPU reports the root fault and then a cascade of

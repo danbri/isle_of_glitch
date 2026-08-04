@@ -85,6 +85,40 @@ world offers some purchase. `primitives.md` describes a water-versus-land horizo
 field never approaches zero. If we want that horizon to be real, grit needs a
 distribution that actually reaches zero over some region.
 
+## Frames of reference — a correction to an earlier draft
+
+An earlier version of this file treated "everything is always moving" as a defect
+to be designed out. That was too dogmatic and it is withdrawn.
+
+A world where nothing can hold station is a perfectly good world. It is the open
+ocean; it is the cloud bands of Jupiter; it is a shark that must swim to breathe
+and never stops, not even to sleep. Plankton do not fail at life by drifting.
+Being unable to stop is a *condition to adapt to*, not a bug — and some of the most
+interesting adaptations (station-keeping, vertical migration, riding a front,
+hitching onto something bigger) only exist because holding still is impossible.
+
+What we actually want is **diverse frames of reference**, so that different
+assemblies experience different relationships to the medium:
+
+- **substrate-relative** — grit high, flow low. Purchase is available; crawling,
+  anchoring and sitting still all work. Position is a thing you own.
+- **medium-relative** — flow high, grit low. Nothing can hold station; "where you
+  are" is meaningless and "where you are relative to the water, and to each other"
+  is everything. Motion is the default and stillness is the achievement.
+- **mixed and moving fronts** — the interesting middle, where a body can cross
+  between regimes, and where the same gait pays very differently either side.
+
+The design error is not "the world moves". It is a world with only ONE frame of
+reference, whichever one that is — because then every creature faces the same
+problem and there is nothing to diversify into. A single global drift that every
+cell experiences identically is uninteresting for that reason, not because motion
+is bad; it adds no distinction between bodies. A flow with structure, gradients
+and boundaries is the opposite: it is terrain.
+
+So flow strength is not a number to be minimised. It is a knob that should vary
+*across the world* and possibly over time, and the goal is that both "hold your
+ground" and "you can never stop" are live strategies somewhere.
+
 ## Dimensionality: what 2D costs us
 
 **Helical propulsion has no 2D analogue.** A rotating helix — how bacteria actually
@@ -110,3 +144,9 @@ Until then, the honest framing is: **mazeballs creatures are crawlers on a gritt
 plane.** That is a real and rich regime — it is snakes, worms, sandfish, and the
 anchor-extend-release of a caterpillar — and it is enough for an arms race. It is
 just not swimming, and we should not say that it is.
+
+Note the scope of that: it describes the world *as currently configured*, not a
+limit on what the engine may represent. Drop grit toward zero in a region and the
+same physics gives you drifters that cannot hold station — a different frame of
+reference, from the same primitives, with no new code. That is the point of
+keeping the substrate a field rather than a constant.

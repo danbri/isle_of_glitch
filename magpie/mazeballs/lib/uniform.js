@@ -55,7 +55,7 @@ export const WORLD_FIELDS = [
   ['contactK', 'f32', 'soft-sphere repulsion stiffness; 0 disables contact'],
 
   ['bucketM', 'u32', 'neighbour slots listed per bucket'],
-  ['predRate', 'f32', 'energy moved per unit of effort difference, per second'],
+  ['contestRate', 'f32', 'energy moved on contact per unit of effort difference, per second'],
   ['contactR', 'f32', 'how close counts as contact'],
   ['sizeScale', 'f32', 'unused; retained so the block layout is stable'],
 

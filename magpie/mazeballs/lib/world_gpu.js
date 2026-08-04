@@ -230,10 +230,21 @@ ${wgslStruct('W')}
 // Their positions do not move, which is what makes a patch something you can
 // exhaust and have to leave — the pressure to locomote has to come from
 // somewhere, and a field that refills under your feet is not it.
-@group(0) @binding(9)  var<storage, read>       motePos   : array<vec2<f32>>;
-// (stock, per-cell offer this step, demanders, unused)
-@group(0) @binding(10) var<storage, read_write> moteState : array<vec4<f32>>;
-@group(0) @binding(11) var<storage, read_write> moteHash  : array<atomic<u32>>;
+// ONE buffer, not three: (x, y, stock, demanders). Position is static and rides
+// alongside the state, and the per-cell offer is DERIVED from stock and demanders
+// by the same formula on both sides rather than stored — which is what lets this
+// fit. WebGPU guarantees only 8 storage buffers per stage and real browsers
+// commonly cap at 10; this shader was binding 11 and simply failed to create its
+// bind group layout in Chrome, while the Deno adapter (31) ran it happily. That
+// asymmetry is why it reached a user rather than a test.
+@group(0) @binding(9)  var<storage, read_write> mote      : array<vec4<f32>>;
+@group(0) @binding(10) var<storage, read_write> moteHash  : array<atomic<u32>>;
+
+/** What one cell may take from this mote this step. Derived, never stored. */
+fn moteOfferOf(m: vec4<f32>) -> f32 {
+  if (m.w <= 0.0) { return 0.0; }
+  return min(P.grazeRate * P.dt, max(0.0, m.z) / m.w);
+}
 
 fn moteBucketOf(p: vec2<f32>) -> u32 {
   let gx = i32(floor(p.x / P.moteR));
@@ -370,7 +381,7 @@ fn contact(i: u32, p: vec2<f32>, myR: f32) -> vec2<f32> {
 // negative. Every joule one gains, another loses — the same gather-only trick
 // that makes the bond forces obey Newton's third law.
 fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
-  if (P.predRate <= 0.0) { return 0.0; }
+  if (P.contestRate <= 0.0) { return 0.0; }
   let me = cmeta[i];
   let myE = energy[i];
   var net = 0.0;
@@ -398,7 +409,7 @@ fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
         // from the same pre-step energies, so cell j computes exactly the
         // negative of what cell i computes and no energy is created or lost.
         let theirE = energy[j];
-        let raw = P.predRate * (effort - abs(contractionOf(j))) * P.dt;
+        let raw = P.contestRate * (effort - abs(contractionOf(j))) * P.dt;
         var moved = 0.0;
         if (raw > 0.0) {
           moved = min(raw, min(max(theirE - P.eFloor, 0.0), max(P.eCap - myE, 0.0)));
@@ -460,7 +471,7 @@ fn moteHashClear(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn moteHashBuild(@builtin(global_invocation_id) gid: vec3<u32>) {
   let i = gid.x;
   if (i >= P.nMotes) { return; }
-  let b = moteBucketOf(motePos[i]) * (1u + P.bucketM);
+  let b = moteBucketOf(mote[i].xy) * (1u + P.bucketM);
   let n = atomicAdd(&moteHash[b], 1u);
   if (n < P.bucketM) { atomicStore(&moteHash[b + 1u + n], i); }
 }
@@ -478,8 +489,8 @@ fn moteHashBuild(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
   let i = gid.x;
   if (i >= P.nMotes) { return; }
-  let p = motePos[i];
-  let st = moteState[i];
+  let m0 = mote[i];
+  let p = m0.xy;
   var demanders = 0.0;
   for (var dy = -1; dy <= 1; dy = dy + 1) {
     for (var dx = -1; dx <= 1; dx = dx + 1) {
@@ -493,12 +504,7 @@ fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
       }
     }
   }
-  var offer = 0.0;
-  if (demanders > 0.0) {
-    // What one cell wants, capped by an equal split of what there actually is.
-    offer = min(P.grazeRate * P.dt, max(0.0, st.x) / demanders);
-  }
-  moteState[i] = vec4<f32>(st.x, offer, demanders, 0.0);
+  mote[i] = vec4<f32>(m0.x, m0.y, m0.z, demanders);
 }
 
 // PHASE 3. Subtract what was actually handed out, then let the sun put some
@@ -511,12 +517,12 @@ fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   let i = gid.x;
   if (i >= P.nMotes) { return; }
-  let p = motePos[i];
-  let st = moteState[i];
-  var stock = max(0.0, st.x - st.y * st.z);
+  let m0 = mote[i];
+  let p = m0.xy;
+  var stock = max(0.0, m0.z - moteOfferOf(m0) * m0.w);
   let fert = clamp(resourceAt(p), 0.0, 1.0);
   stock = stock + P.moteRegrow * fert * (1.0 - stock / P.moteCap) * P.dt;
-  moteState[i] = vec4<f32>(clamp(stock, 0.0, P.moteCap), 0.0, 0.0, 0.0);
+  mote[i] = vec4<f32>(m0.x, m0.y, clamp(stock, 0.0, P.moteCap), 0.0);
 }
 
 // PHASE 2 lives inside physics(): what cell i can pick up from the motes it is
@@ -529,9 +535,10 @@ fn grazeAt(p: vec2<f32>) -> f32 {
       let b = moteBucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.moteR) * (1u + P.bucketM);
       let n = min(atomicLoad(&moteHash[b]), P.bucketM);
       for (var k = 0u; k < n; k = k + 1u) {
-        let m = atomicLoad(&moteHash[b + 1u + k]);
-        if (length(minImage(motePos[m] - p)) > P.moteR) { continue; }
-        got = got + moteState[m].y;
+        let mi = atomicLoad(&moteHash[b + 1u + k]);
+        let mv = mote[mi];
+        if (length(minImage(mv.xy - p)) > P.moteR) { continue; }
+        got = got + moteOfferOf(mv);
       }
     }
   }
@@ -900,7 +907,7 @@ export class WorldGPU {
       // harder sideways slip is than sliding along your own body, which is the
       // ratio that converts undulation into travel.
       gritScale: 0.12, gritSeed: 4242, slipBase: 0.15, gripAniso: 6.0,
-      bucketM: 32, predRate: 0.0, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
+      bucketM: 32, contestRate: 0.0, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
       // Cells are solid. This was silently 1.68e-44 for the life of the code —
       // see lib/uniform.js — so nothing has ever pushed back on anything. Sized
       // against springK so a bond can still hold a body together against the
@@ -938,17 +945,16 @@ export class WorldGPU {
       this.params.nMotes = Math.round((2 * this.params.bound) ** 2 / 2);
     }
     const nM = this.params.nMotes | 0;
-    const mpos = new Float32Array(Math.max(1, nM) * 2);
-    const mst = new Float32Array(Math.max(1, nM) * 4);
+    const mv = new Float32Array(Math.max(1, nM) * 4);
     {
       let sd = (this.params.moteSeed ?? 20260803) >>> 0;
       const rnd = () => ((sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296);
       const B = this.params.bound;
       for (let i = 0; i < nM; i++) {
-        mpos[i * 2] = (rnd() * 2 - 1) * B;
-        mpos[i * 2 + 1] = (rnd() * 2 - 1) * B;
+        mv[i * 4] = (rnd() * 2 - 1) * B;
+        mv[i * 4 + 1] = (rnd() * 2 - 1) * B;
         // Start full, so the opening moments are not an artificial famine.
-        mst[i * 4] = this.params.moteCap;
+        mv[i * 4 + 2] = this.params.moteCap;
       }
     }
     const mkS = (a) => {
@@ -959,8 +965,7 @@ export class WorldGPU {
       device.queue.writeBuffer(b, 0, a);
       return b;
     };
-    this.bMotePos = mkS(mpos);
-    this.bMoteState = mkS(mst);
+    this.bMote = mkS(mv);
     this.bMoteHash = device.createBuffer({
       size: Math.max(16, this.params.moteHashSize * (1 + this.params.bucketM) * 4),
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
@@ -996,9 +1001,8 @@ export class WorldGPU {
         { binding: 6, visibility: C, buffer: ro },   // act, read by physics()
         { binding: 7, visibility: C, buffer: rw },   // energy, per cell
         { binding: 8, visibility: C, buffer: rw },   // spatial-hash occupancy
-        { binding: 9, visibility: C, buffer: ro },   // mote positions (static)
-        { binding: 10, visibility: C, buffer: rw },  // mote stock + offer
-        { binding: 11, visibility: C, buffer: rw },  // mote hash (built once)
+        { binding: 9, visibility: C, buffer: rw },   // motes: x, y, stock, demanders
+        { binding: 10, visibility: C, buffer: rw },  // mote hash (built once)
       ],
     });
     const module = device.createShaderModule({ code: SHADER, label: 'world' });
@@ -1025,9 +1029,8 @@ export class WorldGPU {
         { binding: 6, resource: { buffer: brains.bAct } },
         { binding: 7, resource: { buffer: this.bEnergy } },
         { binding: 8, resource: { buffer: this.bHash } },
-        { binding: 9, resource: { buffer: this.bMotePos } },
-        { binding: 10, resource: { buffer: this.bMoteState } },
-        { binding: 11, resource: { buffer: this.bMoteHash } },
+        { binding: 9, resource: { buffer: this.bMote } },
+        { binding: 10, resource: { buffer: this.bMoteHash } },
       ],
     });
     this.groups = Math.ceil(this.n / WORKGROUP);
@@ -1059,22 +1062,20 @@ export class WorldGPU {
       this.params.nMotes = Math.round((2 * this.params.bound) ** 2 / 2);
     }
     const nM = this.params.nMotes | 0;
-    const sp = this.device.createBuffer({
-      size: nM * 8, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
-    });
     const ss = this.device.createBuffer({
       size: nM * 16, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     });
     const enc = this.device.createCommandEncoder();
-    enc.copyBufferToBuffer(this.bMotePos, 0, sp, 0, nM * 8);
-    enc.copyBufferToBuffer(this.bMoteState, 0, ss, 0, nM * 16);
+    enc.copyBufferToBuffer(this.bMote, 0, ss, 0, nM * 16);
     this.device.queue.submit([enc.finish()]);
-    await sp.mapAsync(GPUMapMode.READ); await ss.mapAsync(GPUMapMode.READ);
-    const pos = new Float32Array(sp.getMappedRange().slice(0));
+    await ss.mapAsync(GPUMapMode.READ);
     const raw = new Float32Array(ss.getMappedRange().slice(0));
-    sp.unmap(); ss.unmap(); sp.destroy(); ss.destroy();
-    const stock = new Float32Array(nM);
-    for (let i = 0; i < nM; i++) stock[i] = raw[i * 4];
+    ss.unmap(); ss.destroy();
+    const pos = new Float32Array(nM * 2), stock = new Float32Array(nM);
+    for (let i = 0; i < nM; i++) {
+      pos[i * 2] = raw[i * 4]; pos[i * 2 + 1] = raw[i * 4 + 1];
+      stock[i] = raw[i * 4 + 2];
+    }
     return { pos, stock };
   }
 
@@ -1203,7 +1204,7 @@ export class WorldGPU {
   }
 
   destroy() {
-    for (const b of [this.bMotePos, this.bMoteState, this.bMoteHash,
+    for (const b of [this.bMote, this.bMoteHash,
                      this.bPos, this.bVel, this.bMeta, this.bBondD,
       this.bEnergy, this.bHash, this.bParams, this.bRead]) b.destroy();
   }
