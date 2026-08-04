@@ -1,0 +1,84 @@
+# Working notes for Claude — mazeballs (evo-devo / open-ended evolution)
+
+`magpie/mazeballs/` is a lawful evo-devo world: cells with material properties,
+contact chemistry, fields, and conserved energy, evolving brains-in-bodies, aimed
+at open-ended ("Cambrian") ascent. **Read this before working here — it is the laws
+and the map.** (Ignore the rest of the repo; see the root `CLAUDE.md`.)
+
+## The laws — non-negotiable, and hard-won
+
+1. **First Law: nothing high-level is a primitive.** "predator", "prey", "species",
+   "organism", "muscle", "armor", "locomotion" are *regions* of a low-level space —
+   never types the kernel branches on, never role knobs (`predatorSpeed`), never
+   interaction matrices. Behaviour is a CTRNN's output from sensing chemistry. **If a
+   change names a behaviour, it is wrong.** (Full: `WORLD.md`, `primitives.md`.)
+2. **Friction law: never mint, always conserve.** Every joule traces to the fixed
+   sun and loses to heat; one currency; global-uniform inflow is legitimate,
+   local-targeted grants are fiction; a windfall is a new straw into the same drink,
+   not a new drink. Loose energy accounting is reward-shaping in disguise. **Test: if
+   nothing is ever unaffordable, you minted somewhere.** (Full:
+   `energy-speculative-friction.md`.)
+3. **Affordance, not forcing.** Terrain/field couplings must be things a cell
+   *actively exploits*, where the *passive* case nets zero — else you get the
+   global-drift bug. (Full: `primitives.md`.)
+4. **Distrust every single run.** This project's edge is its measurement + retraction
+   culture: an ancestral tournament (not absolute fitness), a **required conserved
+   control** (monoculture / same-world) baked into every score, and **retraction as a
+   first-class outcome**. Claims that skip the control get retracted — five in one
+   night. Run the control; log the rejection; never publish wishful thinking.
+
+## Current state — honest (so you don't over-claim)
+
+We are at the pre-Cambrian "before": **bodies twitch/shudder but do not move.**
+Locomotion has been *retracted* (the displacement was bodies tearing apart /
+drifting, not swimming). The GPU sim has active bugs (drift / NaN / swelling) that
+poison measurement. Evolution demonstrably acts — including *through* development
+(segments 2.8→0.5) — and one multicellular transition is shown in a CPU prototype,
+but **no integrated sense→decide→move creature exists yet.** "Infinite ascent" is a
+horizon, not a demonstrated state. The by-hand autoresearch loop (`RESEARCH.md` +
+the retraction commits) works; it is *not* yet closed/unattended.
+
+## Sequencing — what is premature
+
+- **Do NOT close the autoresearch loop unattended until the sim is STABLE** — green
+  light = a config scored twice gives the same `net` within SE. Bugs poison the loop.
+- **Do NOT chase scale / differentiation / ascent before a creature BEHAVES.** 358k
+  cells that twitch is the twitch-not-move symptom multiplied; scale is not the
+  bottleneck, the closed loop is.
+- **The critical path is ONE closed sensorimotor loop through development, in a world
+  where it pays:** the dev-map must reach motor + sensor wiring; grip (an affordance)
+  must beat the scallop theorem; contact-economics must make moving pay; the world
+  must be uncoverable.
+
+## The map (reading order)
+
+- **`MISSION.md`** — the ambition (Cambrian, self-starting arms race). NB: its "17×
+  locomotion" headline is **retracted** by `RESEARCH.md` — reconcile before citing.
+- **`primitives.md`** — the configurable kernel: material vectors, contact + substrate
+  functions, conserved energy, tradeoffs. **The schema everything hangs off.**
+- **`energy-speculative-friction.md`** — the conservation law, in full.
+- **`METHODS.md`** — autoresearch over primitives; brain-is-body (one developmental
+  encoding grows neural/muscular/skeletal/optical; scale *grows* the brain, doesn't
+  *set* it).
+- **`eggs.md`** — reproduction in time/space; polyembryony; eggs as a containment
+  transition and a Markov blanket.
+- **`ASCENT.md`** — the category-free instrument, the bounded-staircase result, the
+  next (differentiation) experiment.
+- **`AUTORESEARCH.md`** — closing the by-hand loop; the `score-config` linchpin; the
+  anti-reward-hacking guards; laptop(s) git-queue; the don't-close-yet sequencing.
+- **`RESEARCH.md`** — the running ledger of what has actually been measured.
+- **`LAB-NOTES.md` / `WORLD.md` / `ARCHITECTURE.md` / `CELLS.md` / `RUNNING.md`** —
+  background, world design, and how to run.
+
+## Practicalities
+
+- **GitHub Pages deploys ONLY from `claude/fink-authoring-guide-bDtaY`.** Active dev
+  is on `claude/mazeballs-github-pages-o6cog0` and `main`; both are **shared with a
+  laptop Claude session**, so `git fetch` + fast-forward before committing, and
+  expect races.
+- Generated files exist — edit the tool, not the output. `world.html` runs a
+  standalone in-browser WebGPU sim by default; `?watch=1` views the Deno server
+  (`tools/serve-world.js`).
+- Commit author: `noreply@anthropic.com` / `Claude`. Keep model IDs out of artifacts.
+- These design docs are **agent-facing law + spec** — keep them honest and current:
+  if a claim is retracted in `RESEARCH.md`, fix the doc that made it.
