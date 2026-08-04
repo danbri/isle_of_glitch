@@ -5568,3 +5568,53 @@ fertility, which is the ideal free distribution, and it is the correct outcome.
 The surviving true claim is the weaker one — cells sit on better ground than
 randomly scattered points — and the test now measures that against a null in the
 same field rather than against the run's own starting value.
+
+
+### CORRECTION: genetic diversity is NOT collapsing
+
+An earlier commit here reported "diversity collapses, 29 lineages to 3 by tick
+250" and treated that as the reason the locomotion assay had nothing to measure.
+That reads more than the number supports.
+
+`lineage` is founder identity. Losing founder LABELS is ordinary competitive
+exclusion and says nothing about standing genetic variation. Measured directly on
+the live server at 167,076 steps, 64 genomes spanning generations 2 to 13:
+
+    distinct lineages in sample     12
+    mean pairwise genome distance   5.379
+    mean per-locus standard dev     0.4502
+    loci fixed (std < 0.01)         0 of 73
+
+Not one locus has gone to fixation. The population is genetically healthy and
+still exploring. The founder-lineage count was the wrong instrument and the
+conclusion drawn from it was wrong.
+
+### The locomotion assay has a constant offset, and is not yet trustworthy
+
+With diverse genomes established, the assay's output is impossible: 96 bodies,
+genetically distinct, and the median AND p90 displacement are both exactly 0.064
+at every sample. A constant across genomes that differ at every locus is an
+artefact of the measurement, not a property of the animals.
+
+A hand-rolled probe of the same quantity, with far wider spacing (~76 units
+rather than 48), gave a clean muscles-off control of exactly 0.00 and 0.03 with
+muscles on. So the offset belongs to the assay's geometry or bookkeeping, not to
+the physics.
+
+What survives from tonight, and what does not:
+
+  SURVIVES  self-propulsion is real and tiny, from the wide-spacing probe:
+            muscles on median 0.03 / p90 0.50, muscles off exactly 0.00 for
+            both. Bodies are stationary without muscles, so the movement is
+            theirs. The best tenth manage about a tenth of a body length.
+
+  SURVIVES  evolution reshapes development. Segments 2.8 -> 0.5 and mean cells
+            34.8 -> 30.4 over 15 generations with nothing rewarding shape. This
+            is measured off developed phenotypes, not off the genome, and it is
+            the first evidence in this project of selection acting THROUGH a
+            genotype-phenotype map.
+
+  DOES NOT  any claim that locomotion is or is not being selected. The
+            instrument that would answer it is reporting a constant.
+
+  DOES NOT  "diversity collapses". Retracted above.
