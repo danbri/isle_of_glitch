@@ -15,6 +15,25 @@ hand-written WebGL2 with instanced draws.
 
 Live: <https://danbri.github.io/isle_of_glitch/magpie/mazeballs/>
 
+## The GPU world (lib/, world.html, tools/serve-world.js)
+
+A second, larger system lives alongside the original page: one CTRNN arena
+holding every creature's brain, bonded multicellular bodies, and a continuous
+non-stationary world, all resident on the GPU. It runs as a long-lived server
+that a browser watches, and it is the part under active work.
+
+- **[RUNNING.md](RUNNING.md)** — start, stop, inspect, put it on a tailnet.
+  `./tools/world start` and nothing else needs remembering.
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — why the simulation is in Deno and the
+  drawing is in a browser, what that round trip costs, and why WASM does not
+  solve the duplication problem it looks like it should.
+- **[WORLD.md](WORLD.md)** — the design laws. Nothing high-level is a primitive;
+  what may be counted is category-free; and why a 2D world needs permeable
+  obstacles rather than walls.
+- **[RESEARCH.md](RESEARCH.md)** — what has been measured, including the
+  retractions. Several confident findings in the recent wave turned out to be
+  measurement artifacts, and they are written up as such rather than deleted.
+
 ## Food depletes
 
 Each of the 42 nutrient patches carries a stock in [0,1]. Feeding draws it down

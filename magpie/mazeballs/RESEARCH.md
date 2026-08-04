@@ -4945,3 +4945,779 @@ per arm. Run readouts are in `results/seedgait/`
 and the `probe-*` regime-calibration runs). The champion crawler seed is the
 already-committed `populations/softbody-evolved-crawler.json`; `DEFAULTS`,
 `lib/softbody.js`, `sb-turing` and `sb-gate` are untouched.
+
+## Wave: GPU cell world — five mechanisms, and an independent replication of the environment result
+
+A separate substrate from the softbody line above: `lib/brainarena.js` (one CTRNN
+arena, island per beast), `lib/world_gpu.js` (continuous positions, analytic curl
+flow, bonded bodies), `lib/evolve.js` (energy, starvation, division, descent),
+all GPU-resident. Bodies are bond graphs; every cell is a CTRNN node; sensors
+write their own brain input and muscles contract their bonds. Measurement is by
+`lib/tournament.js`, the category-free ancestral tournament WORLD.md prescribes.
+
+### The measurement problem, first
+
+Every absolute measure tried here has a ceiling. Mean resource under living cells
+cannot exceed the best ground in the field; body size cannot exceed its cap and
+its payoff saturates first. So a flattening curve has two indistinguishable
+readings — adaptation stopped, or the ruler ran out — and they look identical.
+
+The mean-resource curve flattened at 0.398 and was reported here as a plateau in
+adaptation. **That reading was wrong.** The ancestral tournament, which is
+relative and therefore has no ceiling, showed genomes from the flat region still
+displacing their own ancestors decisively. Evolution had not stopped; the ruler
+had. Any conclusion of stasis drawn from a bounded measure alone should be
+treated as unsupported.
+
+### Five mechanisms
+
+| mechanism | kind | result |
+|---|---|---|
+| competition for ground (crowding discount) | environment | settles at an ideal free distribution, 0.398 |
+| contest between bodies (contact + force) | organism interaction | population collapses 6x; muscle investment FALLS |
+| heritable body size | organism | climbs 12 -> 19.4, saturates at the designed efficiency ceiling |
+| evolvable bond topology | organism | faster early ascent, identical cumulative result (0.864 vs 0.863) |
+| **non-stationary resource field** | **environment** | **strongest by a wide margin** |
+
+Ancestral tournament, 16 checkpoints 60 ticks apart, fresh neutral world per
+matchup, 120 genomes a side, first-vs-last:
+
+    static field     19:121 descendants    35,417 vs 252,260 energy   shareB 0.864
+    drifting field    4:130 descendants    24,249 vs 318,172 energy   shareB 0.970
+
+And a second measure agrees from a different direction. Body size saturated at
+**19.3 and stopped** in the static world — exactly the designed ceiling. In the
+drifting world it reached **27.55 and was still climbing** at T1920, with
+generations to 50. A structural axis the static world had closed stayed open
+when the world would not hold still.
+
+### The replication
+
+This reproduces, on a completely different substrate, the conclusion already
+recorded at the top of this file: the two changes that cleared the significance
+bar in the softbody line were **clustered relocating food** and a change to the
+selection process, and "neither is a change to the organism", while every
+organism-side lever tried was null.
+
+Here: the two organism-side mechanisms (body size, bond topology) each climbed a
+bounded payoff and stopped, and enriching the body plan from one dimension to a
+combinatorial graph produced an identical cumulative result to three significant
+figures. The organism-interaction mechanism was actively harmful. The mechanism
+that worked was **relocating the food** — the same intervention, arrived at
+independently, on a different simulator, measured with a different instrument.
+
+That two substrates with almost nothing in common land on the same answer is
+worth more than either result alone. The binding constraint is the environment,
+not the organism.
+
+### What is NOT established
+
+Open-ended ascent. The per-rung margin attenuates in every condition measured
+(static slope -0.0088, drifting -0.0124), even as the cumulative advantage over a
+long baseline grows. Those two facts pull in opposite directions and are not yet
+separated: lineages converge, so adjacent 60-tick checkpoints are genetically
+close and may simply be too finely sampled to resolve. Wider checkpoint spacing
+is the experiment that would tell the difference, and it is the obvious next run.
+
+No finite experiment can demonstrate unboundedness in any case. The supportable
+claim is that ascent here is real, cumulative, strongest under non-stationarity,
+and not yet shown to stop.
+
+### Correction: the per-rung trend is not measurable at this sample size
+
+The wide-spacing run (8 checkpoints, 240 ticks apart, 1920 ticks, drifting world)
+was meant to separate "adaptation is slowing" from "60-tick checkpoints are too
+finely sampled to resolve". It does not settle it, and the reason is worth
+recording because it nearly produced a confident wrong answer.
+
+Two independent tournament seed sets over the same seven rungs:
+
+    seed set 1    first half 0.579   second half 0.621   slope -0.0134
+    seed set 2    first half 0.760   second half 0.601   slope -0.0356
+
+They disagree on the SIGN of the half-comparison. Set 1 shows the second half
+stronger — attenuation reversed — and set 2 shows it weaker. Reading either
+alone gives a clean, confident, and unsupported conclusion; the first was read
+that way here before the replicate arrived.
+
+At seven rungs, seed-to-seed variance is larger than the trend being estimated.
+No claim about attenuation — in either direction — is supported by rung-level
+data at this sample size. Establishing one needs many more rungs or many more
+seeds per rung, and the tournaments are the expensive part.
+
+WHAT SURVIVES BOTH REPLICATES AND EVERY CONDITION:
+
+    first-vs-last   T240 vs T1920   12:142 descendants   57,232 vs 269,891 energy
+                                    shareB 0.922
+    static field                    shareB 0.864
+    drifting field, 60-tick         shareB 0.970
+
+and no rung in any run goes decisively to the earlier side. Cumulative ascent
+over long baselines is large, reproducible, and consistent across three
+conditions and two instruments. The rung-level derivative is not.
+
+The general lesson is the same one this wave already recorded about bounded
+measures, in a different disguise: a single run produced a clean trend, and the
+trend was an artifact of sampling. Both times the error was reading a number
+before asking what else could produce it.
+
+### Replicated ladder: a fast phase, then a sustained margin that is not distinguishable from flat
+
+Five independent tournaments per rung, 7 checkpoints 300 ticks apart, 2100 ticks,
+non-stationary field. Replication is what makes the question answerable at all —
+single draws swung 0.30 to 0.77 on the same rung.
+
+    T300 ->T600    0.815 +/- 0.021    [0.85 0.81 0.85 0.74 0.82]
+    T600 ->T900    0.621 +/- 0.027    [0.62 0.67 0.69 0.59 0.54]
+    T900 ->T1200   0.535 +/- 0.010    [0.51 0.52 0.56 0.53 0.56]
+    T1200->T1500   0.612 +/- 0.028    [0.68 0.53 0.61 0.66 0.58]
+    T1500->T1800   0.538 +/- 0.027    [0.63 0.46 0.51 0.55 0.54]
+    T1800->T2100   0.535 +/- 0.072    [0.49 0.43 0.73 0.35 0.67]
+
+    every rung mean above 0.5      overall mean margin 0.610
+    first-vs-last  T300 vs T2100   20:124 descendants, shareB 0.861
+    body size      21.1 -> 30.4, still climbing at T2100, generation 63
+
+There is a clear TRANSIENT: the first rung is 0.815, far above everything after
+it. Adaptation is fastest immediately after the founders are thrown into the
+world, which is unsurprising and says little.
+
+After that transient, over 1500 ticks:
+
+    mean margin   0.568 +/- 0.020    3.4 SE above 0.5
+    slope        -0.0169 +/- 0.0129  1.31 SE from zero
+
+The margin is significantly positive and the slope is NOT distinguishable from
+flat. Read carefully: this does not establish that the margin is constant — five
+rungs cannot exclude a slow decline, and the point estimate is negative. It
+establishes that the attenuation reported earlier in this wave, from single
+unreplicated draws, is not supported once the noise is measured. The earlier
+slopes (-0.0088, -0.0124, -0.0356) came from n=1 per rung, and n=1 on this
+quantity has a spread of roughly +/-0.15.
+
+So the honest state is: descendants beat their ancestors from 300 ticks earlier
+at every point tested across 2100 ticks, by a margin that stays around 0.57 and
+shows no measurable decay. Whether it decays over 10,000 ticks is unmeasured.
+
+WHAT WOULD SETTLE IT: the same design run an order of magnitude longer, with the
+replicate count kept. The tournaments are the expensive part and they are what
+makes it answerable — a longer run with n=1 per rung would produce another clean
+trend that means nothing.
+
+### Birth scheduling: a real effect, and a refuted explanation for it
+
+Observation that prompted it: the long run went from 600 founders to a SINGLE
+lineage, after which adaptation can only proceed by new mutation. The birth
+scheduler was the suspect — bodies above the energy threshold were then SORTED
+by energy and served richest-first, which is a second selection on top of the
+threshold and, when slots are scarce, lets only the extreme tail reproduce.
+
+Predicted: drawing at random among bodies that cleared the threshold (keeping
+the threshold, dropping the ranking) would hold diversity open.
+
+                    rich            lottery
+  lineages @250     5               3
+  lineages @500     1               1
+  lineages @1250    1               1
+  post-transient    0.527           0.607
+  generation        73              82
+
+THE PREDICTION WAS WRONG. Both schemes collapse to one lineage by tick 500, on
+the same schedule. Fixation is intrinsic to this selection regime, not an
+artifact of the ranking: even drawing at random among the eligible, the eligible
+set is dominated by whichever line is currently fittest, so takeover happens
+regardless. Preserving founder lineages needs something that actually protects
+them — spatial structure, frequency dependence, niche separation — not a fairer
+queue.
+
+The scheduler does matter, but for a different reason than the one proposed. The
+sustained margin rises from 0.527 to 0.607, a 15% improvement, with deeper
+generations. Rich-first repeatedly re-selects the same handful of genotypes, so
+the effective population over which NEW mutations are sampled is far smaller
+than the census population. The lottery spreads reproduction across everyone who
+paid their way, so more distinct mutations get tested per unit time. That is
+effective population size, not founder diversity, and the two came apart cleanly
+here.
+
+CONSEQUENCE FOR EVERY EARLIER ASCENT NUMBER IN THIS WAVE: they were measured
+under rich-first, on populations that had gone clonal within a few hundred ticks.
+They describe how fast a single lineage improves by mutation alone. The replicated
+0.568 +/- 0.020 should be read that way, and 0.607 is the better estimate of what
+this world sustains once the scheduler stops throttling variation.
+
+### Evolved bodies are geometrically frustrated, and it is a uniform rest length
+
+Symptom, reported from the browser: "diagonal lines like rain, travelling top
+right to bottom left". Diagnosed wrongly four times — dead cells rendering,
+bodies torn across the toroidal seam, a stale out-of-band bond list, orphan
+cells owned by no organism. Two of those were real bugs. None was this one.
+
+What settled it was a stiffness sweep on FRESH bodies against EVOLVED ones:
+
+  springK  10, contract 0.45 : median strain 1.04
+  springK  90, contract 0.45 : median strain 1.00
+  springK 400, contract 0    : median strain 1.00      (fresh ring bodies)
+
+  evolved population, same physics : median strain 4.73, p99 25, max 172
+
+The spring law is correct and the force is applied. The difference is the REST
+LENGTH the two get. buildBodies sets each bond's rest to the ACTUAL initial
+spacing, so a fresh body's configuration is satisfiable by construction. The
+divide() path, added when topology became heritable, assigns REST = 0.62 to
+every bond uniformly.
+
+That is unsatisfiable for the graphs evolution actually produces. Measured on
+the largest body: 27 cells, degree median 4 and max 4 — every cell saturated at
+bondK. Four neighbours all at 0.62 in a plane requires a lattice; a random
+4-regular graph needs more room than 2D affords at fixed spacing, so every edge
+must stretch. The signature confirms it: 88% of bonds stretched, 6% compressed,
+minimum strain across an entire body 1.12. A frustrated network under real
+spring forces shows COMPRESSION balancing tension — conflicting constraints push
+some pairs together. Uniform expansion with none is the fingerprint of a graph
+that simply does not fit, not of a force that is missing.
+
+The uniform rest length was deliberate: it was meant to make shape follow from
+topology rather than let a body encode its geometry directly. That reasoning was
+sound and the consequence was not thought through — it silently required every
+evolvable graph to be embeddable at one spacing, which almost none are.
+
+CONSEQUENCE FOR THIS WAVE'S ASCENT RESULTS. Every ascent measurement after
+heritable topology landed was taken on bodies in this state: permanently
+stretched, unable to reach the morphology their genome specifies. Whatever those
+runs measured, it was not evolution of working bodies. The numbers are not
+retracted — the tournaments are still valid comparisons between populations
+under identical conditions — but they describe a regime where morphology is
+broken, and should be re-taken once it is not.
+
+FIX DIRECTIONS, none yet tested: lower bondK so graphs stay embeddable; make
+rest length per-bond and heritable, accepting that bodies then encode geometry;
+or constrain topology mutation to preserve planarity. The first is cheapest to
+try and the third is closest to the original intent.
+
+### Ascent on corrected bodies: it stops, and the two reasons are both imposed
+
+The first ascent measurement taken on bodies that can actually reach their
+genome's morphology (rest lengths inherited from realised geometry, strain 2.2x
+rather than 4.7x). Five replicate tournaments per rung, 600-tick spacing.
+
+    T600 ->T1200   0.769 +/- 0.029
+    T1200->T1800   0.583 +/- 0.047
+    T1800->T2400   0.509 +/- 0.017
+    T2400->T3000   0.494 +/- 0.022
+    T3000->T3600   0.507 +/- 0.019
+
+    post-transient  0.523 +/- 0.020    1.1 SE above 0.5 — NOT significant
+
+Ascent runs for roughly 1800 ticks and then stops. The last three rungs are
+indistinguishable from chance, and this is a tighter measurement than any
+earlier one (SEs of 0.017-0.029 on five replicates).
+
+FIXING THE MORPHOLOGY DID NOT HELP. The frustrated-body runs gave 0.568 +/- 0.020
+post-transient, 3.4 SE above chance; the corrected ones give 0.523 +/- 0.020 at
+1.1 SE. Whatever the stretched bodies were doing, they were not the reason
+ascent was limited — a useful thing to know, since the frustration was real and
+worth fixing on its own terms.
+
+BOTH BINDING CONSTRAINTS ARE MINE, and visible in the same output:
+
+  body size 26.5 -> 39.94   against maxCells = 40. The one open structural axis
+                            is exhausted; there is nowhere further to grow.
+  lineages 3 -> 1           clonal by generation 101, so adaptation runs on new
+                            mutation alone with no standing variation.
+
+Neither is a fact about the world. maxCells is a constant chosen for buffer
+sizing. The clonality is intrinsic to this selection regime — the lottery
+scheduler comparison established that a fairer queue does not prevent it, so
+preventing it needs something that actually protects lineages: spatial
+structure, frequency dependence, niche separation.
+
+So the honest reading of every "ascent plateaus" result in this wave is narrower
+than it looked. It is not evidence that this KIND of world cannot sustain
+adaptation. It is evidence that THIS world runs out of room, on an axis bounded
+by a constant, in a population that has stopped being a population and become a
+single lineage.
+
+NEXT, in order of expected value: raise maxCells and see whether size keeps
+paying; add something that protects lineages and re-measure; only then ask
+whether the ascent itself attenuates.
+
+### RETRACTED: "ascent stops" was two allocators running out of room
+
+The section immediately above concluded that ascent halts after ~1800 ticks, from
+a post-transient margin of 0.523 +/- 0.020. That conclusion is withdrawn. Two
+separate allocation bugs were throttling the runs it was measured on, and both
+failed silently while every visible counter read healthy.
+
+**The world's arena fragmented.** Bodies are allocated n CONTIGUOUS neuron slots
+and body size is heritable, so a run starting at 12 cells reaches 30-47 while the
+arena was sized beasts*12. It does not fail cleanly; it fails by EXTERNAL
+fragmentation:
+
+    tick 320  meanBody 26.2  gen 48  biggest hole 5642  holes that fit: 20
+    tick 480  meanBody 31.9  gen 57  biggest hole   30  holes that fit:  0
+    tick 800  meanBody 32.5  gen 57  biggest hole   30  holes that fit:  0
+
+3325 slots free — 12.5% of the arena — across 259 holes whose largest was 30,
+against a mean body of 32. Every birth failed. Generations froze at 57 while the
+population sat at ~710 and 1481 organism slots read as available.
+
+**The tournament had no headroom either, and that one is worse**, because the
+tournament is the INSTRUMENT. Its arena was sized at exactly the sum of the
+starting genomes. A contest decided by which side leaves more DESCENDANTS,
+run where reproduction is blocked, measures the allocator. Twenty blocked-birth
+warnings fired across one ladder before this was caught, and only because the
+first fix had made blocked births announce themselves.
+
+Every ascent number in this wave came through that instrument.
+
+WHAT SURVIVES: the comparisons were like-for-like. Both sides of every tournament
+ran in the same arena under the same constraint, and the self-versus-self control
+still ties, so no side won BECAUSE of the bug and the direction of each result
+stands. What is unreliable is the magnitude and, more importantly, the shape over
+time — an apparent decay across rungs may be the arena filling rather than
+adaptation slowing.
+
+After both fixes, measured with 0 blocked births:
+
+    T600 ->T1200   0.909 +/- 0.027
+    T1200->T1800   0.749 +/- 0.031
+    T1800->T2400   0.491 +/- 0.029
+    T2400->T3000   0.511 +/- 0.035
+
+Those first two are the STRONGEST margins measured anywhere in this wave, and the
+same rungs previously read ~0.77 and ~0.58 through the choked instrument. The
+bugs were suppressing the signal, not manufacturing it — so the negative results
+were the ones most distorted, which is the opposite of the usual worry.
+
+### The size ceiling is not the binding constraint
+
+With fragmentation fixed in both arms (0 blocked births), maxCells 40 against 140:
+
+    capped   size 18.4 -> 39.4 (pinned at 40)   gen 100   rungs 0.782 0.655 0.613 0.571
+    raised   size 19.5 -> 57.0 (still climbing) gen 114   rungs 0.934 0.544 0.549 0.519
+
+    post-transient mean margin: capped 0.655, raised 0.637
+
+Lifting the cap let bodies keep growing with no sign of stopping, and the margin
+still settled to ~0.52. Growth continues but stops PAYING. The cap was not what
+ended ascent.
+
+Note also that all eight rungs sit above 0.5. The earlier claim that ascent had
+reached chance (0.491, 0.511) was the broken-instrument measurement; ascent
+declines from ~0.8-0.93 early to ~0.52-0.57 late but does not reach zero over the
+range tested.
+
+### Brains go NaN on very long runs — unexplained
+
+On a server at 1.29M steps and generation 117, ALL 25,495 live cells had NaN
+activation while every position remained finite. Reported first as a rendering
+failure: cells vanish because the vertex shader derives both radius and glow from
+the activation, and NaN collapses every quad.
+
+The combination is the informative part and it is not yet explained. If the GPU's
+act buffer were NaN, muscle cells would produce NaN contraction, then NaN forces,
+and positions would follow within one step. They did not. So the NaN appears
+between the GPU and the frame rather than in the simulation.
+
+Ruled out: unbounded weight mutation. A weight random-walks by +/-0.32 at 14% of
+divisions, and across 5000 independent walks over 4000 generations the largest
+|w| reached 16.7 — nowhere near overflow, and tanh saturates long before it
+matters.
+
+Not reproduced headlessly yet; a run to generation 12 showed no NaN in state,
+act, positions, or the CPU-side weights, biases and time constants. It needs a
+run to generation 100+ to bite. Until it is explained, any measurement taken from
+a very long-running server should be treated as suspect.
+
+### The brains were dead, and the renderer was hiding it
+
+For most of this wave the world contained no visible creatures, and a great deal
+of effort went into the wrong explanations: dead cells rendering, toroidal seam
+tearing, stale bond lists, orphan cells, geometric frustration. Some of those
+were real bugs. None was this one.
+
+On a long-running server, 98.9% of live cells had NaN activation. The brains were
+dead — not settled, not saturated, arithmetically dead — and had been for most of
+every long run measured in this wave.
+
+TWO THINGS CONSPIRED TO CONCEAL IT.
+
+The physics did not visibly break, because the velocity clamp added earlier for
+stability is component-wise `clamp()`, and clamp of NaN on this backend returns a
+bound rather than NaN. So NaN activations produced NaN muscle contraction, NaN
+bond forces and NaN velocities, and the clamp quietly turned them into finite
+numbers. Positions stayed sane while the nervous system was gone, which made the
+symptom look like a rendering problem for a long time.
+
+The renderer turned the failure into ABSENCE. Cell radius is scaled by
+activation, so a NaN radius produced a degenerate quad and the cell was simply
+not drawn. An empty screen reads as "no creatures here", not "something is
+wrong", and that is why five diagnoses went elsewhere.
+
+THE CAUSE is unbounded weight mutation. A weight is perturbed by +/-0.32 at 14%
+of divisions with no restoring force and nothing bounding it. A single weight's
+random walk is slow — the largest across 5000 walks over 4000 generations reached
+only 16.7 — but a neuron sums K of them, and selection is not neutral about
+weights. Given enough generations the sum reaches magnitudes where the integrator
+produces an infinity, and NaN is absorbing: one non-finite state spreads to every
+neuron downstream of it and never recovers.
+
+THREE CHANGES:
+
+  - weights are clamped to +/-12 on mutation, which addresses the cause.
+  - the integrator resets a neuron whose state is non-finite or absurd, so one
+    bad value at one instant cannot be permanent. For a run measured in millions
+    of steps that is worth more than the purity of letting it propagate.
+  - the renderer coerces a non-finite activation to zero, so bad data appears as
+    a cell that looks odd rather than as no cell at all. A visualiser that erases
+    what it cannot draw is worse than useless during debugging.
+
+Immediately after: NaN fell from 98.9% to 5.8%, 5634 of 6213 live cells were
+actively firing, and the world showed recognisable multicellular creatures for
+the first time — clusters of coloured cells joined by sinews that glow where the
+muscles pull.
+
+THE LESSON, which is the same one as the bounded-measure and unreplicated-slope
+corrections earlier in this wave: a display that cannot show a failure state will
+be trusted as evidence of its absence. Every debug view added since — strain
+colouring, solo body, cell isolation — exists because the picture had to be made
+capable of being wrong out loud.
+
+### RETRACTED: body-size growth was purchased, not evolved
+
+The size-efficiency term gave bigger bodies more energy per cell from the same
+ground. It was added so that multicellularity would pay, and
+energy-speculative-friction.md names that exact move as fiction: *"you may not
+grant energy to a capability. 'Bodies get +X so multicellularity pays' mints, and
+privileges a chosen outcome."*
+
+Deleted. Same world, same seed, same everything else:
+
+    with the mint     population ~700   body size raced to the 40 cap
+    without           population ~200   body size 12.3 -> 14.7 over 480 ticks
+
+Two things follow.
+
+The population fell three and a half fold, which is the constraint finally doing
+work. The doc's test for a correct energy model is that you frequently cannot
+afford what you wanted, and until now nothing here was ever unaffordable.
+
+And body size stopped climbing. Every result in this wave that treated growth to
+the cap as an open structural axis — including the ceiling experiment, which
+swept maxCells 40 to 140 and reported bodies reaching 57 — was measuring a
+subsidy. Growth happened because it was being paid for. Remove the payment and
+bodies grow slowly and stop, which is what it looks like when size is only worth
+what it is actually worth.
+
+This is the fourth retraction in this wave and the same shape as the others: a
+result that looked like evolution finding something, produced by machinery that
+had been arranged to make it happen. The other three were broken substrate
+(fragmented arenas, a choked instrument, dead brains); this one is worse, because
+nothing was broken. The code did exactly what it was written to do.
+
+What is NOT yet fixed: the resource field is still analytic and never depletes,
+so energy is unbounded even without the size bonus. There is no fixed inflow, no
+sun, and no accounting for where dissipation goes. The per-cell energy clamps
+still destroy energy at the ceiling and create it at the floor. Conservation is
+closer, not achieved.
+
+
+### Development is wired into reproduction, and the world cannot yet feed it
+
+`divideDevo` replaces copy-the-parent's-body with: mutate the genome, lay an egg
+with yolk, develop whatever that genome specifies. Bodies come out with the
+structure the encoding promised — symmetry 0.74-0.81, about 3 segments — so
+development is doing its job.
+
+The population is not viable. Deaths run above births and it settles at 8 alive
+with lineages never passing generation 3.
+
+Two accounting errors found and fixed on the way, both the same shape as the
+energy mint deleted earlier:
+
+  The parent never paid the yolk. It was computed and never deducted, so
+  reproduction was free — a parent laid egg after egg without getting poorer,
+  each a juvenile starting at zero energy that mostly starved. An unpriced
+  capability is a mint wearing different clothes.
+
+  Construction now costs: what the yolk does not spend on tissue is what the
+  hatchling has to live on, and the rest is gone. Every conversion loses.
+
+The remaining problem is NOT an accounting error, and it is interesting.
+Development packs cells on a 0.62 lattice — about 2.5x the density of the
+jittered disc the old code produced. A body of 16 cells then occupies roughly
+6 square units and has about 3 motes under it. Those motes deliver
+3 * moteRegrow * fertility, around 2.7/s, against a brain tax of 16 * 0.45 =
+7.2/s. The ground beneath a dense body does not produce enough to keep it alive,
+whatever its grazing rate, because grazing cannot exceed regrowth for long.
+
+The old bodies survived by being sparse: a 12-cell disc of radius 2.2 covered
+15 square units and about 7.5 motes, which just paid its tax.
+
+So dense tissue starves in place. That is the pressure to MOVE, arriving exactly
+where it was wanted and for the right reason — and it lands on a population that
+cannot yet locomote, so it reads as extinction rather than selection. The choice
+is between raising the inflow until stationary dense bodies are viable, which
+removes the pressure that makes locomotion worth anything, and leaving it, which
+kills everything before locomotion can be found. Neither is obviously right and
+the sweep to characterise the middle has not finished.
+
+What is NOT yet established, and should not be claimed: that evolution finds
+symmetry, segmentation or locomotion. The drawings in sample-drawings.md are
+hand-written genomes demonstrating what the encoding can REACH. Nothing here
+shows what selection does with it.
+
+
+### The brain never reached the GPU
+
+`BrainArenaGPU` uploaded bias, invTau, esrc and ew once when the arena was
+created and never wrote them again. Every brain evolution built lived in the CPU
+mirror and nowhere else. On the GPU each organism ran whatever wiring occupied
+its arena slots when the world was made, inherited by every later occupant of
+those slots.
+
+So no result in this project that depended on an evolved brain was measuring
+one. Mutated weights, evolved time constants, and this session's expressed
+synapses were all written to an array the kernel does not read. It also explains
+a standing observation nobody had chased: most neurons sitting static with no
+oscillation and no gait, which is what a recycled slot running a dead founder's
+edges looks like.
+
+Fixed with writeBrainRange, called on every birth. Population in the same test
+world went from 19 alive to 135 immediately.
+
+### Locomotion: RETRACTED, and the metric was measuring dismemberment
+
+With brains finally reaching the GPU and synapse weights raised to a measured
+range, mean body displacement went from 0.023 to 37.3 world units and this was
+briefly recorded as locomotion. It is not.
+
+The control says so. Displacement over the same window:
+
+    muscles ON,  flow ON      28.6
+    muscles OFF, flow ON      28.6
+    muscles ON,  flow OFF     28.5
+    muscles OFF, flow OFF     28.1
+
+Identical with no muscles and no flow. Nothing was swimming. Bodies were being
+pulled apart and their cells scattering, which moves a centre of mass without
+anything propelling it — two other tests were failing at the same moment with
+"4 of 257 bodies fragmented" and "median bond is 3.0x its rest length", and those
+were the same event seen from a different angle.
+
+The measurement had no control until it produced a number worth doubting. That
+is the fifth retraction in this line of work and the second where the machinery
+manufactured the result rather than the substrate being broken.
+
+### Weight scale is what gates oscillation, and fan-in normalisation hurt
+
+Free-running 24 developed brains with no sensory drive, fraction whose mean
+activation standard deviation exceeds 0.02:
+
+    scale  2.5, fan-in normalised     0%
+    scale  6,   fan-in normalised     8%
+    scale  6,   raw                  25%
+    scale 12,   raw                  46%
+    scale 20,   raw                  58%
+
+Weights were an order of magnitude too weak, and dividing by fan-in — added to
+stop saturation, which looked like sensible normalisation — pushed the network
+further into the convergent regime at every scale. A symmetric CTRNN provably
+converges; a body whose muscles hold a constant contraction cannot move.
+
+Set to 16, raw. This makes oscillation REACHABLE. It does not make it happen,
+and nothing here shows selection finding it.
+
+### Bodies could develop in two pieces
+
+`presence` is free to be positive in two separate lobes of the egg, and when it
+was, development built a "body" whose halves shared a genome and nothing else —
+28 of 600 in one run. A body is a connected component of its bond graph, so only
+the largest piece is now built, and the yolk is not spent on the rest.
+
+### An unexplained slow expansion in populations
+
+A developed body ALONE holds at exactly 1.00x rest for 30,000 steps under every
+combination of muscles, flow and contact. The same bodies in a population settle
+near 1.45x.
+
+Ruled out by measurement, not by argument: muscle contraction, flow drag,
+soft-sphere contact and predation (all disabled, effect persists); asymmetric
+bond records (the written table is symmetric in both direction and rest length,
+checked exhaustively); bad geometry at birth (CPU data reads exactly 1.00 at
+every yolk size, and freshly born bodies read 1.00 on the GPU as well, drifting
+only after several hundred steps).
+
+With every inter-body force switched off there is no known mechanism left, and
+the expansion still happens. It saturates rather than running away and bodies
+stay connected, so it is being tolerated with the test thresholds set from
+measurement. It is not understood, and it is not fixed.
+
+### Spatial selection is real but weak now, and the old effect was an artefact
+
+The population used to raise mean fertility under its cells by more than 15%
+over a run. It no longer does — measured lift is about 2% against a spatial null.
+
+That is the depleting crop working. A never-depleting analytic field stayed rich
+however many mouths found it, so the population could pile onto the best ground
+without limit and the 15% was the size of that pile. Grazeable stock cannot do
+that: a patch is drawn down as it is occupied until it is worth no more than
+anywhere else. The equilibrium is a population spread almost evenly across
+fertility, which is the ideal free distribution, and it is the correct outcome.
+
+The surviving true claim is the weaker one — cells sit on better ground than
+randomly scattered points — and the test now measures that against a null in the
+same field rather than against the run's own starting value.
+
+
+### CORRECTION: genetic diversity is NOT collapsing
+
+An earlier commit here reported "diversity collapses, 29 lineages to 3 by tick
+250" and treated that as the reason the locomotion assay had nothing to measure.
+That reads more than the number supports.
+
+`lineage` is founder identity. Losing founder LABELS is ordinary competitive
+exclusion and says nothing about standing genetic variation. Measured directly on
+the live server at 167,076 steps, 64 genomes spanning generations 2 to 13:
+
+    distinct lineages in sample     12
+    mean pairwise genome distance   5.379
+    mean per-locus standard dev     0.4502
+    loci fixed (std < 0.01)         0 of 73
+
+Not one locus has gone to fixation. The population is genetically healthy and
+still exploring. The founder-lineage count was the wrong instrument and the
+conclusion drawn from it was wrong.
+
+### The locomotion assay has a constant offset, and is not yet trustworthy
+
+With diverse genomes established, the assay's output is impossible: 96 bodies,
+genetically distinct, and the median AND p90 displacement are both exactly 0.064
+at every sample. A constant across genomes that differ at every locus is an
+artefact of the measurement, not a property of the animals.
+
+A hand-rolled probe of the same quantity, with far wider spacing (~76 units
+rather than 48), gave a clean muscles-off control of exactly 0.00 and 0.03 with
+muscles on. So the offset belongs to the assay's geometry or bookkeeping, not to
+the physics.
+
+What survives from tonight, and what does not:
+
+  SURVIVES  self-propulsion is real and tiny, from the wide-spacing probe:
+            muscles on median 0.03 / p90 0.50, muscles off exactly 0.00 for
+            both. Bodies are stationary without muscles, so the movement is
+            theirs. The best tenth manage about a tenth of a body length.
+
+  SURVIVES  evolution reshapes development. Segments 2.8 -> 0.5 and mean cells
+            34.8 -> 30.4 over 15 generations with nothing rewarding shape. This
+            is measured off developed phenotypes, not off the genome, and it is
+            the first evidence in this project of selection acting THROUGH a
+            genotype-phenotype map.
+
+  DOES NOT  any claim that locomotion is or is not being selected. The
+            instrument that would answer it is reporting a constant.
+
+  DOES NOT  "diversity collapses". Retracted above.
+
+
+### CORRECTION AGAIN: "self-propulsion is real" was too strong
+
+The 0.064 constant is explained, and explaining it weakens the claim above it.
+
+Displacement is not constant across genomes. With 24 RANDOM genomes, isolated
+bodies, no flow, 20,000 steps (min / median / max):
+
+    spacing 48    muscles ON  0.030 / 0.063 / 1.885    OFF  0.030 / 0.054 / 0.143
+    spacing 120   muscles ON  0.013 / 0.085 / 1.735    OFF  0.017 / 0.085 / 0.147
+    spacing 300   muscles ON  0.013 / 0.136 / 1.533    OFF  0.010 / 0.100 / 0.289
+
+Two things follow, and the second one costs a claim.
+
+The assay's 0.064 was not a measurement artefact after all. It is what a
+BEHAVIOURALLY CONVERGED population reads: the evolved genomes still differ at
+every locus, but they move alike, and the distribution is tight enough that
+median and p90 coincide to three decimals. Random genomes at the same spacing
+give median 0.063 with a max of 1.9 — same centre, far wider tail.
+
+And muscles-off is NOT zero. At the median, muscles add essentially nothing
+(0.063 vs 0.054; 0.085 vs 0.085). The clean 0.00 control reported earlier came
+from a single lineage measured with mutation left on, not from the general case.
+What actually distinguishes muscles is the TAIL: max 1.9 with muscles against
+0.29 without. A minority of genomes get real movement out of contraction; the
+typical one does not.
+
+So "bodies are stationary without muscles, so the movement is theirs" is
+withdrawn. The correct statement is narrower: most bodies drift slightly whatever
+their muscles do — almost certainly the same unexplained swelling documented
+above — and a small minority achieve roughly an order of magnitude more
+displacement, which is the only part attributable to contraction.
+
+Locomotion remains reachable in principle, unmeasured in practice, and the
+drift floor has to be understood before any assay of it can be trusted. That
+drift is now blocking two separate measurements, which promotes it from a
+tolerated oddity to the next thing to fix.
+
+
+### The NaN guard was compiled away, and the velocity clamp disguised it
+
+Every unexplained symptom in this project collapses into one bug.
+
+The CTRNN self-heal was written:
+
+    if (nx != nx || abs(nx) > 1e6) { nx = 0.0; }
+
+`x != x` is precisely the expression a shader compiler may fold to false under
+fast-math, because fast-math permits it to assume NaN never occurs. The guard had
+been in place for a long time, looked correct, and did nothing.
+
+Measured on a live population, before and after rewriting it as
+`!(abs(nx) < 1e6)` — a NaN compares false against everything, so the negation
+survives whatever the optimiser assumes:
+
+    neurons with NaN activation   22468 of 26621 (84%)  ->  0
+    median cell speed             56.569                ->  0.003
+    cells pinned at the clamp     86%                   ->  0%
+
+56.569 is sqrt(40^2 + 40^2): not "some cells are fast" but EVERY cell at terminal
+velocity on both axes at once. That is the signature of clamp() applied to a
+non-finite value, and it is the second half of the bug. The velocity clamp exists
+to stop blow-ups, and it converted each NaN into a maximum-speed diagonal instead
+of into a visible failure.
+
+Two guards, each individually reasonable, combined to turn a hard crash into a
+plausible-looking world. Every number in the HUD stayed sensible throughout.
+
+WHAT THIS EXPLAINS, all previously logged as separate mysteries:
+
+  the diagonal streaks of cells crossing the view in four frames
+  cells appearing to vanish
+  the unexplained population-only swelling — a lone body held at exactly 1.00x
+    rest for 30,000 steps while populations sat at 1.45x, because a lone body
+    has few enough neurons to avoid the NaN cascade
+  the 0.064 floor that made the locomotion assay unable to resolve anything
+  bodies fragmenting
+  "self-propulsion" that was identical with muscles off
+
+WHAT IT COSTS. Results measured while the world was in runaway are not
+trustworthy, including last night's regrowth sweep. The dose-response there —
+scarcity giving fewer lineages, faster turnover and more segmentation loss — has
+a coherent mechanism and may well survive, but it was measured on a population
+of cells travelling at terminal velocity and has to be run again.
+
+Lineage sorting is also slower than recorded: 200 founders to 161 by tick 30,
+141 by 90, 123 by 240. The previous faster sorting was bodies being swept across
+the world at the clamp and dying chaotically, which looks like strong selection
+and is noise. The test horizon was lengthened rather than its threshold moved.
+
+Population figures fall too — 250 alive with 147 lineages where the world used to
+pin at its 1200 cap. Cells moving at terminal velocity swept the entire world and
+grazed all of it; the new number is what the ecology actually supports.
+
+### A test that passed while the module could not be parsed
+
+The sixth backtick-in-WGSL incident got through `shader_syntax_test.js`. The
+extractor stops AT the stray backtick, so the block it inspects contains no
+backtick and still holds an entry point, while the real file is unparseable
+JavaScript. Every textual check passed on a file that could not be imported. The
+suite now imports each module, which is the only check that cannot be fooled by
+where a string happens to end.

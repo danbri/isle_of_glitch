@@ -1,0 +1,22 @@
+{
+  "name": "hoxpox",
+  "version": "0.1.0",
+  "description": "The portable core of an artificial-life world: pure functions over explicit state, mirrored in Rust and compiled to WASM so every surface runs the same logic.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./field": "./src/field.js",
+    "./rng": "./src/rng.js",
+    "./genome": "./src/genome.js",
+    "./arena": "./src/arena.js",
+    "./select": "./src/select.js"
+  },
+  "files": ["src", "wasm", "README.md"],
+  "scripts": {
+    "test": "deno test --allow-read test/",
+    "build:wasm": "bash scripts/build-wasm.sh",
+    "check": "deno check src/*.js"
+  },
+  "license": "MIT",
+  "sideEffects": false
+}
