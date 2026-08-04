@@ -201,11 +201,13 @@ if (args.resume) {
   }
 }
 
+let paused = false;
 let lastSave = Date.now();
 const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
 
 (async function loop() {
   while (running) {
+    if (paused) { await new Promise(r => setTimeout(r, 100)); continue; }
     world.step(args.spf);
     steps += args.spf; sinceTick += args.spf;
 
@@ -338,7 +340,7 @@ const ROOT = new URL('..', import.meta.url).pathname;
 // Bound to all interfaces so a tailnet peer can reach it. That also exposes it
 // to anything else routable to this host, which is the trade being made — pass
 // --host 127.0.0.1 to keep it local only.
-Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
+const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
   const url = new URL(req.url);
   // Bare / watches the shared world. Serving the plain page there made every
   // visitor build a SECOND simulation locally — and once the arena was sized for
@@ -397,6 +399,58 @@ Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
     });
   }
 
+  /**
+   * Control the world from the browser, so the run can be managed from a phone
+   * without a shell on this machine.
+   *
+   * Deliberately a FIXED SET OF NAMED ACTIONS. Nothing here takes a command, a
+   * path, or anything else that could be turned into arbitrary execution: this
+   * port is reachable by anything on the tailnet, and "restart yourself picking
+   * up new code" is already the most powerful verb it should ever have.
+   */
+  if (path === '/control' && req.method === 'POST') {
+    let action = '';
+    try { action = (await req.json()).action ?? ''; } catch { /* empty body */ }
+    const ok = (extra = {}) =>
+      new Response(JSON.stringify({ ok: true, action, steps, ...extra }),
+        { headers: { 'content-type': 'application/json' } });
+
+    if (action === 'pause')  { paused = true;  return ok({ paused }); }
+    if (action === 'resume') { paused = false; return ok({ paused }); }
+
+    if (action === 'save') {
+      const r = await saveSnapshot(SNAP);
+      return ok({ saved: SNAP, bytes: r.bytes });
+    }
+
+    // Both of these replace this process, which is how new code gets picked up
+    // without a shell. `restart` saves first and comes back on the same world;
+    // `reseed` abandons it and starts a fresh one.
+    if (action === 'restart' || action === 'reseed') {
+      const keep = action === 'restart';
+      if (keep) { try { await saveSnapshot(SNAP); } catch (e) { console.error('save failed:', e.message); } }
+      // Respond BEFORE exiting, or the browser sees a dropped connection and
+      // cannot tell "restarting" from "crashed".
+      queueMicrotask(async () => {
+        await new Promise(r => setTimeout(r, 250));
+        const script = new URL(import.meta.url).pathname;
+        const rest = Deno.args.filter(a => a !== '--resume');
+        const next = keep ? [...rest, '--resume'] : rest;
+        console.log(`${action}: re-exec with ${next.join(' ')}`);
+        try { await server.shutdown(); } catch { /* already closing */ }
+        new Deno.Command(Deno.execPath(), {
+          args: ['run', '-A', script, ...next],
+          cwd: Deno.cwd(), stdout: 'inherit', stderr: 'inherit',
+        }).spawn().unref();
+        setTimeout(() => Deno.exit(0), 150);
+      });
+      return ok({ restarting: true, keepWorld: keep });
+    }
+
+    return new Response(JSON.stringify({ ok: false, error: `unknown action ${action}` }),
+      { status: 400, headers: { 'content-type': 'application/json' } });
+  }
+
   if (path === '/frame') {
     return new Response(await frame(), {
       headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' },
@@ -438,7 +492,7 @@ Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
       // failed the size check and the page showed "reload to resync" — which
       // reloading could not fix, because the guess was wrong every time.
       maxCells: args.maxCells, nCells: built.meta.nCells, bound: BOUND,
-      nMotes: world.params.nMotes,
+      nMotes: world.params.nMotes, paused,
       // The resource field is what creatures chase and it drifts and morphs.
       // The viewer needs its parameters to draw it; without them it was showing
       // only the flow, which is the least photogenic layer in the world.

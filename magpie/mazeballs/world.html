@@ -126,6 +126,25 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
     </div>
   </div>
 
+  <!-- Only meaningful when watching a server; hidden in local sandbox mode. -->
+  <div id="srvPanel" style="display:none">
+    <h2>Server</h2>
+    <div class="row">
+      <button id="bSrvPause">pause world</button>
+      <button id="bSrvSave">save</button>
+    </div>
+    <div class="row" style="margin-top:.4rem">
+      <button id="bSrvRestart">restart (keep world)</button>
+      <button id="bSrvReseed">new world</button>
+    </div>
+    <p class="note" id="srvNote">
+      These act on the shared simulation, not on this page. <b>restart</b> saves,
+      relaunches the server process so it picks up new code, and resumes the same
+      world; <b>new world</b> throws the world away and starts fresh. Everyone
+      watching sees the result.
+    </p>
+  </div>
+
   <div>
     <h2>Debug</h2>
     <div class="row">
@@ -613,7 +632,19 @@ async function boot() {
         Math.min(adapter.limits.maxStorageBuffersPerShaderStage, 12),
     },
   });
-  dev.addEventListener?.('uncapturederror', e => fail('WebGPU error: ' + (e.error?.message ?? e.error)));
+  // Keep the FIRST error. WebGPU reports the root fault and then a cascade of
+  // consequences, and the consequences arrive last — so a handler that overwrites
+  // shows "[Invalid CommandBuffer] is invalid due to a previous error", which
+  // names neither the previous error nor where it came from. The first message
+  // is the one worth reading; the rest go to the console.
+  let firstGpuError = null;
+  dev.addEventListener?.('uncapturederror', e => {
+    const msg = String(e.error?.message ?? e.error);
+    console.error('[webgpu]', msg);
+    if (firstGpuError) return;
+    firstGpuError = msg;
+    fail('WebGPU error: ' + msg);
+  });
 
   ctx = canvas.getContext('webgpu');
   fmt = navigator.gpu.getPreferredCanvasFormat();
@@ -1102,21 +1133,36 @@ function loop() {
       loadOp: 'clear', storeOp: 'store',
     }],
   });
+  // BIND GROUP AFTER PIPELINE, EVERY TIME.
+  //
+  // Setting a pipeline whose layout is incompatible with the previous one
+  // INVALIDATES the bind groups already set. The crop pass has its own layout,
+  // so "restoring" sim.bind straight after the mote draw — while pipeMotes was
+  // still the current pipeline — bound it under the wrong layout, and the next
+  // setPipeline threw it away again. Bonds and cells then drew with group 0
+  // unset. That is the "previous error" behind the bare
+  // "[Invalid CommandBuffer] is invalid due to a previous error" on submit,
+  // which names nothing and appears only when food is on and motes exist.
+  pass.setPipeline(sim.pipeBg);
   pass.setBindGroup(0, sim.bind);
-  pass.setPipeline(sim.pipeBg); pass.draw(3);
+  pass.draw(3);
+
   // Crop first: it is ground, and everything else stands on it.
   if (view.food && sim.moteCount > 0) {
     pass.setPipeline(sim.pipeMotes);
     pass.setBindGroup(0, sim.moteBind);
     pass.draw(6, sim.moteCount);
-    pass.setBindGroup(0, sim.bind);           // restore for the passes below
   }
 
   if (view.bonds && sim.bondVerts) {
     pass.setPipeline(sim.pipeBonds);
+    pass.setBindGroup(0, sim.bind);
     pass.draw(6, sim.bondVerts / 2);          // six vertices per bond quad
   }
-  pass.setPipeline(sim.pipeCells); pass.draw(6, sim.meta.nCells);
+
+  pass.setPipeline(sim.pipeCells);
+  pass.setBindGroup(0, sim.bind);
+  pass.draw(6, sim.meta.nCells);
   pass.end();
   dev.queue.submit([enc.finish()]);
 
@@ -1199,6 +1245,49 @@ $('sCpb').addEventListener('input', e => $('vCpb').textContent = e.target.value)
 
 $('bField').onclick = e => { view.field = !view.field; e.target.classList.toggle('on', view.field); };
 $('bFood').onclick = e => { view.food = !view.food; e.target.classList.toggle('on', view.food); };
+
+/**
+ * Server control. The world lives in the Deno process, so managing a long run
+ * meant having a shell on the machine hosting it — which is no use from a phone.
+ * These are the same operations tools/world offers, over HTTP.
+ */
+async function control(action, confirmText) {
+  if (confirmText && !confirm(confirmText)) return;
+  try {
+    const r = await fetch('/control', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action }),
+    });
+    const j = await r.json();
+    if (!j.ok) { note(`server refused: ${j.error}`); return; }
+    if (action === 'restart' || action === 'reseed') {
+      // The process is going away and coming back on the same port. Give it a
+      // moment, then rebuild — the new world may have a different shape.
+      note(action === 'reseed' ? 'starting a new world…' : 'restarting server…');
+      sim.retryAt = performance.now() + 4000;
+      setTimeout(() => rebuild().catch(e => fail(String(e))), 4500);
+    } else if (action === 'save') {
+      note(`saved ${(j.bytes / 1048576).toFixed(1)} MB at step ${j.steps.toLocaleString()}`);
+    } else {
+      note(j.paused ? 'world paused' : 'world running');
+      $('bSrvPause').textContent = j.paused ? 'resume world' : 'pause world';
+      $('bSrvPause').classList.toggle('on', !!j.paused);
+    }
+  } catch (e) {
+    note('could not reach the server: ' + e.message);
+  }
+}
+
+if (WATCH) {
+  $('srvPanel').style.display = '';
+  $('bSrvPause').onclick = () =>
+    control($('bSrvPause').textContent.startsWith('pause') ? 'pause' : 'resume');
+  $('bSrvSave').onclick = () => control('save');
+  $('bSrvRestart').onclick = () =>
+    control('restart', 'Restart the server process? The world is saved and resumed.');
+  $('bSrvReseed').onclick = () =>
+    control('reseed', 'Throw away the current world and start a new one? This cannot be undone.');
+}
 $('bBonds').onclick = e => { view.bonds = !view.bonds; e.target.classList.toggle('on', view.bonds); };
 $('bPause').onclick = e => { view.paused = !view.paused; e.target.classList.toggle('on', view.paused); };
 $('bEvolve').onclick = e => { view.evolve = !view.evolve; e.target.classList.toggle('on', view.evolve); };
@@ -1211,6 +1300,9 @@ $('bSolo').onclick = e => {
   e.target.textContent = view.solo < 0 ? 'solo body' : `body ${view.solo}`;
 };
 $('bFit').onclick = fitAll;
+// In watch mode this rebuilds THIS PAGE's buffers only — it re-reads the
+// server's shape and reallocates locally. It does not touch the simulation, and
+// used to look like it did nothing. The Server panel is what restarts the world.
 $('bReseed').onclick = () => sim?.world.writeParams({ seed: (Math.random() * 1e5) | 0 });
 $('bRebuild').onclick = () => rebuild().catch(e => fail(String(e.stack || e)));
 $('toggle').onclick = () => $('panel').classList.toggle('hidden');
