@@ -1,0 +1,190 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>swim — grip turns twitching into travel</title>
+<!--
+  swim.html — a VERIFIED reference implementation of the locomotion primitive from
+  primitives.md, for the GPU sim (lib/world_gpu.js) to port. It answers the standing
+  symptom "bodies twitch but do not move."
+
+  The scallop theorem: a body that deforms reciprocally nets ZERO displacement in a
+  symmetric medium — so undulation alone is just twitching. The fix is not a cleverer
+  gait, it is GRIP: make drag ANISOTROPIC (resistance to sideways slip >> resistance
+  along the body) and scale that grip by a substrate field. Then the SAME undulation
+  produces thrust — resistive-force theory, exactly how flagella and snakes move.
+
+  LAWFUL (primitives.md): grip is an affordance, not a force. Drag only ever REMOVES
+  kinetic energy; all net motion is paid by muscle work. The world affords traction
+  (the `grit` field); the body earns motion by undulating. Turn grip off and the very
+  same muscles produce only a shimmer in place — that toggle is the whole point.
+
+  Node-verified before shipping: gritty grip+muscle travels ~36 body-lengths where
+  the no-grip control manages ~0.6 (60x), and muscle-off is exactly 0.
+-->
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html,body { margin:0; height:100%; overflow:hidden; background:#04070b;
+    font:12px/1.45 ui-monospace,Menlo,monospace; color:#cdd6e0; }
+  #c { position:fixed; inset:0; width:100%; height:100%; display:block; touch-action:none; }
+  .panel { position:fixed; background:rgba(9,13,19,.82); backdrop-filter:blur(8px);
+    border:1px solid #1d2632; border-radius:10px; padding:10px 12px;
+    transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .2s; }
+  #ui { top:10px; left:10px; width:230px; box-shadow:0 8px 30px #0007; }
+  #ui.tuck { transform:translateX(-262px); }
+  #tab { position:fixed; top:10px; left:10px; width:34px; height:34px; border-radius:9px;
+    display:none; align-items:center; justify-content:center; cursor:pointer; font-size:15px;
+    color:#9db0c2; background:rgba(9,13,19,.82); border:1px solid #1d2632; z-index:5; }
+  #tab.show { display:flex; }
+  h1 { margin:0 0 2px; font-size:13px; letter-spacing:.04em; color:#eef3f8; }
+  .sub { color:#63758a; margin:0 0 8px; font-size:10.5px; }
+  .hide { position:absolute; top:8px; right:8px; cursor:pointer; color:#5a6b7e; font-size:15px; padding:2px 5px; border-radius:6px; }
+  .hide:hover { background:#1a2431; color:#cdd6e0; }
+  .grp { border-top:1px solid #172029; margin-top:8px; padding-top:8px; }
+  .row { display:flex; align-items:center; gap:6px; margin:5px 0; }
+  .row label { flex:0 0 78px; color:#9db0c2; font-size:10.5px; }
+  .row input[type=range]{ flex:1; min-width:0; height:3px; accent-color:#5ad1c8; }
+  .row .v { flex:0 0 26px; text-align:right; color:#cbd6e2; font-size:10px; font-variant-numeric:tabular-nums; }
+  .btns { display:flex; flex-wrap:wrap; gap:5px; }
+  button { background:#16202b; color:#d6e0ea; border:1px solid #263341; border-radius:7px; padding:6px 9px; font:inherit; font-size:10.5px; cursor:pointer; }
+  button:hover { background:#1e2b39; }
+  button.on { background:#0e2f2c; border-color:#5ad1c8; color:#8ff0e8; }
+  #read { right:10px; top:10px; text-align:right; min-width:150px; }
+  #read .big { font-size:15px; color:#eef3f8; font-variant-numeric:tabular-nums; }
+  #read .k { color:#63758a; }
+  #read.warn .big { color:#e0a24b; }
+  #hint { left:50%; bottom:10px; transform:translateX(-50%); color:#7d91a6; text-align:center; font-size:10.5px; max-width:92vw; }
+</style>
+
+<canvas id="c"></canvas>
+<div id="tab">☰</div>
+<div id="ui" class="panel">
+  <span class="hide" id="hide">‹</span>
+  <h1>swim</h1>
+  <p class="sub">grip turns twitching into travel</p>
+  <div class="grp">
+    <div class="btns">
+      <button id="b_grip" class="on">grip: ON</button>
+      <button id="b_musc" class="on">muscle: ON</button>
+    </div>
+    <p class="sub" style="margin:7px 0 0">Turn <b>grip</b> off: the same muscles now only
+      shimmer in place — the scallop theorem. That's the whole demo.</p>
+  </div>
+  <div class="grp">
+    <div class="row"><label>wave speed</label><input type="range" id="s_omega" min="3" max="16" step="0.5" value="9"><span class="v" id="v_omega"></span></div>
+    <div class="row"><label>grip</label><input type="range" id="s_grip" min="1" max="10" step="0.5" value="6"><span class="v" id="v_grip"></span></div>
+    <div class="row"><label>speed</label><input type="range" id="s_sp" min="1" max="4" step="1" value="2"><span class="v" id="v_sp"></span></div>
+    <div class="row"><label>show terrain</label><input type="checkbox" id="c_terr" checked></div>
+  </div>
+  <div class="grp"><div class="btns">
+    <button id="b_pause">pause</button><button id="b_reset">reset</button>
+  </div></div>
+</div>
+<div id="read" class="panel">
+  <div><span class="big" id="r_speed">0.0</span> <span class="k">body-lengths/s</span></div>
+  <div class="k" id="r_note">swimming</div>
+</div>
+<div id="hint" class="panel">bodies undulate the same either way — only <b>grip</b> (anisotropic drag, scaled by the gritty terrain) converts that into forward motion. Smooth "water" gives little purchase.</div>
+
+<script>
+"use strict";
+const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+let W,H,dpr;
+function resize(){ dpr=Math.min(2,devicePixelRatio||1); W=cv.width=Math.floor(innerWidth*dpr); H=cv.height=Math.floor(innerHeight*dpr); }
+addEventListener('resize',resize); resize();
+
+/* ---------- static substrate: a `grit` fbm field (the affordance) ---------- */
+function h2(ix,iy,s){ let h=(Math.imul(ix,374761393)^Math.imul(iy,668265263)^Math.imul(s,1274126177))>>>0; h=Math.imul(h^(h>>>13),1274126177)>>>0; return ((h^(h>>>16))>>>0)/4294967296; }
+const sm=t=>t*t*(3-2*t), fr=v=>v-Math.floor(v);
+function vn(x,y,s){ const ix=Math.floor(x),iy=Math.floor(y),fx=x-ix,fy=y-iy,u=sm(fx),v=sm(fy);
+  const a=h2(ix,iy,s),b=h2(ix+1,iy,s),c=h2(ix,iy+1,s),d=h2(ix+1,iy+1,s); return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v; }
+function fbm(x,y,s){ let f=0,a=.5,fq=1,n=0; for(let o=0;o<4;o++){ f+=a*vn(x*fq,y*fq,s+o*1013); n+=a; a*=.5; fq*=2; } return f/n; }
+let SEED=7;
+function gritAt(x,y){ return Math.max(0, Math.min(1,(fbm(fr(x)*3.4,fr(y)*3.4,SEED)-0.40)*2.4)); }
+
+/* ---------- bodies: chain of nodes + springs; muscles = traveling lateral wave ----------
+   PHYSICS IS THE NODE-VERIFIED swim-verify.js, unchanged in form. */
+const N=9, L0=0.02, SPRING=240, SPRINGD=6, AMP=34, KWAVE=1.15, DRAG=9.0, SLIP=0.15;
+let bodies=[];
+function wrapd(d){ return d>0.5?d-1:d<-0.5?d+1:d; }
+function makeBody(){ const x0=Math.random(), y0=Math.random(), ang=Math.random()*6.283;
+  const nodes=[]; for(let i=0;i<N;i++) nodes.push({x:fr(x0+Math.cos(ang)*i*L0), y:fr(y0+Math.sin(ang)*i*L0), vx:0, vy:0});
+  return { nodes, omega:7+Math.random()*5, phase:Math.random()*6.283, hue:Math.random()*360, cx:x0, cy:y0, cxp:x0, cyp:y0, spd:0 }; }
+function reset(n){ bodies=[]; for(let i=0;i<n;i++) bodies.push(makeBody()); }
+reset(26);
+
+function axisAt(nd,j){ const a=nd[Math.max(0,j-1)], b=nd[Math.min(N-1,j+1)];
+  let dx=wrapd(b.x-a.x), dy=wrapd(b.y-a.y); const d=Math.hypot(dx,dy)||1e-9; return [dx/d,dy/d]; }
+
+let OMEGA=9, GRIP=6, gripOn=true, muscOn=true;
+function step(dt,t){
+  for(const B of bodies){ const nd=B.nodes; const fx=new Float64Array(N), fy=new Float64Array(N);
+    for(let i=0;i<N-1;i++){ const a=nd[i], b=nd[i+1]; let dx=wrapd(b.x-a.x), dy=wrapd(b.y-a.y); const d=Math.hypot(dx,dy)||1e-9;
+      const ux=dx/d,uy=dy/d; const F=SPRING*(d-L0)+((b.vx-a.vx)*ux+(b.vy-a.vy)*uy)*SPRINGD;
+      fx[i]+=F*ux; fy[i]+=F*uy; fx[i+1]-=F*ux; fy[i+1]-=F*uy; }
+    if(muscOn) for(let j=1;j<N-1;j++){ const [ax,ay]=axisAt(nd,j); const px=-ay,py=ax;
+      const drive=AMP*Math.sin(j*KWAVE - B.omega/9*OMEGA*t + B.phase); fx[j]+=px*drive; fy[j]+=py*drive; }
+    for(let j=0;j<N;j++){ const c=nd[j]; c.vx+=fx[j]*dt; c.vy+=fy[j]*dt;
+      const [ax,ay]=axisAt(nd,j); const px=-ay,py=ax; const g=gritAt(c.x,c.y);
+      let vA=c.vx*ax+c.vy*ay, vP=c.vx*px+c.vy*py;
+      const kA=DRAG*(SLIP+g), kP=DRAG*(SLIP+(gripOn?GRIP:1)*g);   // grip: resist sideways slip
+      vA*=Math.exp(-kA*dt); vP*=Math.exp(-kP*dt);
+      c.vx=ax*vA+px*vP; c.vy=ay*vA+py*vP; c.x=fr(c.x+c.vx*dt); c.y=fr(c.y+c.vy*dt); }
+    // centroid + smoothed speed (body-lengths/sec), wrap-aware vs previous
+    let sx=nd[0].x, sy=nd[0].y; for(let j=1;j<N;j++){ sx+=nd[0].x+wrapd(nd[j].x-nd[0].x); sy+=nd[0].y+wrapd(nd[j].y-nd[0].y); }
+    B.cx=fr(sx/N); B.cy=fr(sy/N);
+    const mv=Math.hypot(wrapd(B.cx-B.cxp),wrapd(B.cy-B.cyp))/((N-1)*L0)/dt; B.spd+=(mv-B.spd)*0.05; B.cxp=B.cx; B.cyp=B.cy;
+  }
+}
+
+/* ---------- render ---------- */
+let terrCanvas=document.createElement('canvas'), tg=terrCanvas.getContext('2d'), GG=120;
+function bakeTerrain(){ terrCanvas.width=GG; terrCanvas.height=GG; const im=tg.createImageData(GG,GG);
+  for(let y=0;y<GG;y++)for(let x=0;x<GG;x++){ const g=gritAt(x/GG,y/GG); const i=(y*GG+x)*4;
+    // smooth "water" (low grit) deep blue -> gritty "land" (high) earthy green
+    im.data[i]  =12+g*36; im.data[i+1]=20+g*70; im.data[i+2]=34-g*8; im.data[i+3]=255; } tg.putImageData(im,0,0); }
+bakeTerrain();
+
+let showTerr=true, paused=false, SPD=2;
+function frame(now){
+  if(!paused) for(let s=0;s<SPD;s++){ tGlobal+=1/120; step(1/120,tGlobal); }
+  ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle='#04070b'; ctx.fillRect(0,0,W,H);
+  const S=Math.min(W,H)*0.96, ox=(W-S)/2, oy=(H-S)/2;
+  if(showTerr){ ctx.imageSmoothingEnabled=true; ctx.globalAlpha=0.9; ctx.drawImage(terrCanvas,ox,oy,S,S); ctx.globalAlpha=1; }
+  else { ctx.fillStyle='#0a1017'; ctx.fillRect(ox,oy,S,S); }
+  // bodies
+  let mean=0;
+  for(const B of bodies){ const nd=B.nodes;
+    ctx.beginPath();
+    for(let j=0;j<N;j++){ const X=ox+nd[j].x*S, Y=oy+nd[j].y*S; if(j===0)ctx.moveTo(X,Y); else{
+      // avoid seam-jumps: only draw a segment if the wrapped delta is small
+      const px=ox+fr(nd[j-1].x)*S, py=oy+fr(nd[j-1].y)*S; if(Math.abs(X-px)<S*0.5 && Math.abs(Y-py)<S*0.5) ctx.lineTo(X,Y); else ctx.moveTo(X,Y);
+    } }
+    const bright=Math.min(1,0.35+B.spd*0.5);
+    ctx.strokeStyle=`hsl(${B.hue},70%,${40+bright*30}%)`; ctx.lineWidth=Math.max(2,S*0.006); ctx.lineCap='round'; ctx.lineJoin='round'; ctx.stroke();
+    // head
+    const hx=ox+nd[0].x*S, hy=oy+nd[0].y*S; ctx.beginPath(); ctx.arc(hx,hy,S*0.007,0,6.283); ctx.fillStyle=`hsl(${B.hue},80%,72%)`; ctx.fill();
+    mean+=B.spd;
+  }
+  mean/=bodies.length;
+  const R=document.getElementById('read'); document.getElementById('r_speed').textContent=mean.toFixed(2);
+  const twitching = mean<0.4;
+  document.getElementById('r_note').textContent = !muscOn?'muscles off' : !gripOn?'no grip — only twitching' : twitching?'seeking grip…':'swimming';
+  R.classList.toggle('warn', !gripOn||!muscOn);
+  requestAnimationFrame(frame);
+}
+let tGlobal=0; requestAnimationFrame(frame);
+
+/* ---------- controls ---------- */
+const $=id=>document.getElementById(id);
+$('b_grip').onclick=()=>{ gripOn=!gripOn; $('b_grip').textContent='grip: '+(gripOn?'ON':'OFF'); $('b_grip').classList.toggle('on',gripOn); };
+$('b_musc').onclick=()=>{ muscOn=!muscOn; $('b_musc').textContent='muscle: '+(muscOn?'ON':'OFF'); $('b_musc').classList.toggle('on',muscOn); };
+function sl(id,fn,fmt){ const s=$('s_'+id),v=$('v_'+id); const u=()=>{ fn(+s.value); v.textContent=fmt?fmt(+s.value):(+s.value).toFixed(1); }; s.addEventListener('input',u); u(); }
+sl('omega',x=>OMEGA=x); sl('grip',x=>GRIP=x); sl('sp',x=>SPD=x,x=>x+'×');
+$('c_terr').onchange=e=>showTerr=e.target.checked;
+$('b_pause').onclick=()=>{ paused=!paused; $('b_pause').textContent=paused?'resume':'pause'; $('b_pause').classList.toggle('on',paused); };
+$('b_reset').onclick=()=>{ SEED=(SEED*1664525+1013904223)>>>0%9999; bakeTerrain(); reset(26); };
+$('hide').onclick=()=>{ $('ui').classList.add('tuck'); $('tab').classList.add('show'); };
+$('tab').onclick=()=>{ $('ui').classList.remove('tuck'); $('tab').classList.remove('show'); };
+if(innerWidth<720) $('hide').click();
+addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); $('b_pause').click(); } });
+</script>
