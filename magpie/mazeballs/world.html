@@ -1037,12 +1037,35 @@ function loop() {
   if (WATCH) {
     // Pull frames from the server as fast as they arrive, never faster than one
     // request in flight. The world's clock is the server's, not this page's.
-    if (!sim.fetching) {
+    //
+    // Nothing to pull while hidden. requestAnimationFrame is already suspended
+    // for a hidden tab so this rarely fires, but backgrounding with a request in
+    // flight is exactly the case that used to strand the page — and a watcher
+    // that has stopped asking also stops costing the server a GPU readback per
+    // frame, which is the whole reason hiding the tab is free.
+    if (!document.hidden && !sim.fetching && t >= (sim.retryAt ?? 0)) {
       sim.fetching = true;
       fetch('/frame', { cache: 'no-store' })
         .then(r => r.arrayBuffer())
-        .then(b => { applyFrame(b); sim.fetching = false; })
-        .catch(e => { sim.fetching = false; fail('lost the server: ' + e.message); });
+        .then(b => {
+          applyFrame(b); sim.fetching = false; sim.misses = 0;
+          if (sim.wasLost) { sim.wasLost = false; note('reconnected'); }
+        })
+        .catch(e => {
+          sim.fetching = false;
+          // A DROPPED FRAME IS NOT A DEAD SERVER. This called fail() on the
+          // first failure, which is permanent — so one slow tailscale round
+          // trip, or backgrounding the tab with a request in flight, left
+          // "lost the server: Failed to fetch" on screen while the server was
+          // perfectly healthy and still running. Frames are idempotent: the
+          // right response to a missed one is to ask again.
+          sim.misses = (sim.misses ?? 0) + 1;
+          sim.retryAt = t + Math.min(8000, 250 * 2 ** Math.min(sim.misses, 5));
+          if (sim.misses >= 3 && !sim.wasLost) {
+            sim.wasLost = true;
+            note(`server not responding (${sim.misses} missed) — retrying`);
+          }
+        });
     }
   } else if (!view.paused && view.spf > 0) {
     sim.world.step(view.spf);
