@@ -172,7 +172,13 @@ gpuTest('the population finds better ground than chance', async () => {
 gpuTest('lineages are displaced — some lines out-reproduce others', async () => {
   const sim = await setup({ cap: 600, start: 200 });
   const founders = sim.evo.alive();
-  for (let t = 0; t < 30; t++) { sim.world.step(250); await sim.evo.tick(t * 250); }
+  // 90 ticks, not 30. Lineages are still sorted, monotonically — 200 founders
+  // go to 161 by tick 30, 141 by 90, 123 by 240 — but more slowly than before
+  // the NaN fix, and that is the honest rate rather than a regression. While the
+  // CTRNN was producing NaN activations, every cell moved at the velocity clamp
+  // in a straight line, which swept bodies across the whole world and killed
+  // them off chaotically. That looked like fast selection. It was noise.
+  for (let t = 0; t < 90; t++) { sim.world.step(250); await sim.evo.tick(t * 250); }
   const surviving = sim.evo.countLineages();
   // Lineage count can only fall, and a fall means descent is being sorted
   // rather than every founder drifting along untouched.

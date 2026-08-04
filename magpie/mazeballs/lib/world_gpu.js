@@ -634,7 +634,10 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     // more, and modulates it with its activation so it can let go.
     var grip = P.gripBase;
     if (me2.x == 3) { grip = P.gripAnchor; }
-    if (me2.y >= 0) { grip = grip * (1.0 + P.gripMod * act[u32(me2.y)]); }
+    if (me2.y >= 0) {
+    let a = act[u32(me2.y)];
+    grip = grip * (1.0 + P.gripMod * select(0.0, a, abs(a) < 1e6));
+  }
     grip = max(grip, 0.0);
     let sp = length(v);
     if (sp > 1e-6) {

@@ -46,6 +46,15 @@ for (const rel of FILES) {
     const all = blocks.map(b => b.body).join('\n');
     assert(/@compute|@vertex|@fragment|^fn /m.test(all),
       `the WGSL in ${rel} contains no entry point — the literal probably closed early`);
+
+    // AND THE MODULE MUST ACTUALLY PARSE. Every check above is textual, and a
+    // stray backtick fools all of them: the extractor stops AT the stray one, so
+    // the block it examines contains no backtick and still holds an entry point,
+    // while the real file is unparseable JavaScript. That happened, and this
+    // suite passed while the module could not be imported at all.
+    if (rel.endsWith('.js')) {
+      await import(new URL(rel, import.meta.url).href);
+    }
   });
 }
 

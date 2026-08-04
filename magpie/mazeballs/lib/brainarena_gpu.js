@@ -66,7 +66,14 @@ struct Params {
 fn activate(@builtin(global_invocation_id) gid : vec3<u32>) {
   let i = gid.x;
   if (i >= P.n) { return; }
-  act[i] = tanh(state[i] + bias[i]);
+  // Guarded for the same reason, and because a NaN here is worse than a NaN in
+  // state: state is re-derived every step and can heal, but act is what the
+  // PHYSICS reads. A NaN activation becomes a NaN grip, then a NaN velocity, and
+  // the velocity clamp turns that into +/-40 on both axes rather than into a
+  // visible failure — the whole population streaking across the world at maximum
+  // speed while every number in the HUD looks plausible.
+  let a = tanh(state[i] + bias[i]);
+  act[i] = select(0.0, a, abs(a) < 1e6);
 }
 
 // Pass 2: gather K edges and integrate. Reads act at arbitrary indices, touches
@@ -94,7 +101,17 @@ fn integrate(@builtin(global_invocation_id) gid : vec3<u32>) {
   // evolve.js addresses the cause. It is refusing to let one bad value at one
   // instant be unrecoverable, which for a run measured in millions of steps is
   // worth more than the purity of letting it propagate.
-  if (nx != nx || abs(nx) > 1e6) { nx = 0.0; }
+  // WRITTEN AS !(|nx| < LIM), NOT nx != nx.
+  //
+  // The NaN idiom nx != nx is exactly the expression a shader compiler is
+  // entitled to fold to FALSE under fast-math, because fast-math permits it to
+  // assume NaN never occurs. This guard had been in place for a long time and
+  // 84% of live neurons still came back NaN, with bias and invTau and every
+  // weight verifiably finite on the CPU — the guard was not firing.
+  //
+  // The negated comparison survives, because a NaN compares false against
+  // everything, so NOT(NaN < LIM) is true whatever the optimiser assumes.
+  if (!(abs(nx) < 1e6)) { nx = 0.0; }
   state[i] = nx;
 }
 `;

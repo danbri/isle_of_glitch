@@ -5656,3 +5656,68 @@ Locomotion remains reachable in principle, unmeasured in practice, and the
 drift floor has to be understood before any assay of it can be trusted. That
 drift is now blocking two separate measurements, which promotes it from a
 tolerated oddity to the next thing to fix.
+
+
+### The NaN guard was compiled away, and the velocity clamp disguised it
+
+Every unexplained symptom in this project collapses into one bug.
+
+The CTRNN self-heal was written:
+
+    if (nx != nx || abs(nx) > 1e6) { nx = 0.0; }
+
+`x != x` is precisely the expression a shader compiler may fold to false under
+fast-math, because fast-math permits it to assume NaN never occurs. The guard had
+been in place for a long time, looked correct, and did nothing.
+
+Measured on a live population, before and after rewriting it as
+`!(abs(nx) < 1e6)` — a NaN compares false against everything, so the negation
+survives whatever the optimiser assumes:
+
+    neurons with NaN activation   22468 of 26621 (84%)  ->  0
+    median cell speed             56.569                ->  0.003
+    cells pinned at the clamp     86%                   ->  0%
+
+56.569 is sqrt(40^2 + 40^2): not "some cells are fast" but EVERY cell at terminal
+velocity on both axes at once. That is the signature of clamp() applied to a
+non-finite value, and it is the second half of the bug. The velocity clamp exists
+to stop blow-ups, and it converted each NaN into a maximum-speed diagonal instead
+of into a visible failure.
+
+Two guards, each individually reasonable, combined to turn a hard crash into a
+plausible-looking world. Every number in the HUD stayed sensible throughout.
+
+WHAT THIS EXPLAINS, all previously logged as separate mysteries:
+
+  the diagonal streaks of cells crossing the view in four frames
+  cells appearing to vanish
+  the unexplained population-only swelling — a lone body held at exactly 1.00x
+    rest for 30,000 steps while populations sat at 1.45x, because a lone body
+    has few enough neurons to avoid the NaN cascade
+  the 0.064 floor that made the locomotion assay unable to resolve anything
+  bodies fragmenting
+  "self-propulsion" that was identical with muscles off
+
+WHAT IT COSTS. Results measured while the world was in runaway are not
+trustworthy, including last night's regrowth sweep. The dose-response there —
+scarcity giving fewer lineages, faster turnover and more segmentation loss — has
+a coherent mechanism and may well survive, but it was measured on a population
+of cells travelling at terminal velocity and has to be run again.
+
+Lineage sorting is also slower than recorded: 200 founders to 161 by tick 30,
+141 by 90, 123 by 240. The previous faster sorting was bodies being swept across
+the world at the clamp and dying chaotically, which looks like strong selection
+and is noise. The test horizon was lengthened rather than its threshold moved.
+
+Population figures fall too — 250 alive with 147 lineages where the world used to
+pin at its 1200 cap. Cells moving at terminal velocity swept the entire world and
+grazed all of it; the new number is what the ecology actually supports.
+
+### A test that passed while the module could not be parsed
+
+The sixth backtick-in-WGSL incident got through `shader_syntax_test.js`. The
+extractor stops AT the stray backtick, so the block it inspects contains no
+backtick and still holds an entry point, while the real file is unparseable
+JavaScript. Every textual check passed on a file that could not be imported. The
+suite now imports each module, which is the only check that cannot be fooled by
+where a string happens to end.

@@ -575,7 +575,7 @@ const view = { field: true, bonds: true, paused: false, spf: 4, evolve: true,
 // instead of a simulation of its own. Without it every tab is a separate
 // universe, which is why two browsers never agreed about anything.
 const WATCH = new URLSearchParams(location.search).has('watch');
-let remoteMaxCells = null, remoteBound = null, resyncing = false;
+let remoteMaxCells = null, remoteBound = null, remoteMotes = null, resyncing = false;
 
 const canvas = $('c');
 
@@ -661,7 +661,7 @@ async function rebuild() {
     try {
       const st = await (await fetch('/status', { cache: 'no-store' })).json();
       beasts = st.beasts; cellsPer = st.cellsPerBeast;
-      remoteMaxCells = st.maxCells; remoteBound = st.bound;
+      remoteMaxCells = st.maxCells; remoteBound = st.bound; remoteMotes = st.nMotes;
       remoteParams = st;                       // the field the server is using
       $('sBeasts').value = beasts; $('vBeasts').textContent = beasts.toLocaleString();
       $('sCpb').value = cellsPer; $('vCpb').textContent = cellsPer;
@@ -748,7 +748,11 @@ async function rebuild() {
       { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: 'read-only-storage' } },
     ],
   });
-  const nMotes = WATCH ? 0 : (world.params.nMotes | 0);
+  // Sized ONCE, from the server's own count in watch mode. Growing this buffer
+  // during a frame meant dropping a GPUBuffer that a submitted command buffer
+  // still referenced, and the only symptom was "[Invalid CommandBuffer] is
+  // invalid due to a previous error" on the next submit, naming nothing.
+  const nMotes = WATCH ? ((remoteMotes | 0) || 0) : (world.params.nMotes | 0);
   const bMoteCam = dev.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
   // In watch mode the count is unknown until the first /motes arrives, so start
   // with room for one and grow on demand rather than guessing.
@@ -864,25 +868,13 @@ async function refreshMotes() {
       if (stock) { packed[i * 4] = xy[i * 2]; packed[i * 4 + 1] = xy[i * 2 + 1]; packed[i * 4 + 2] = stock[i]; }
       else { packed[i * 4] = xy[i * 3]; packed[i * 4 + 1] = xy[i * 3 + 1]; packed[i * 4 + 2] = xy[i * 3 + 2]; }
     }
-    if (n * 16 > sim.bMoteData.size) {
-      // NOT destroyed. A submitted command buffer may still reference it, and
-      // destroying it out from under one invalidates that command buffer — which
-      // surfaces only as "[Invalid CommandBuffer] is invalid due to a previous
-      // error" on the next submit, naming nothing. Dropping the reference is
-      // enough; the implementation frees it when it is genuinely unused.
-      sim.bMoteData = dev.createBuffer({
-        size: n * 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
-      });
-      sim.moteBind = dev.createBindGroup({
-        layout: sim.moteLayout,
-        entries: [
-          { binding: 0, resource: { buffer: sim.bMoteCam } },
-          { binding: 1, resource: { buffer: sim.bMoteData } },
-        ],
-      });
-    }
-    dev.queue.writeBuffer(sim.bMoteData, 0, packed);
-    sim.moteCount = n;
+    // Never reallocated mid-run. If the server somehow has more motes than the
+    // buffer holds, draw the ones that fit rather than swapping a buffer out
+    // from under an in-flight command buffer.
+    const fits = Math.min(n, Math.floor(sim.bMoteData.size / 16));
+    if (fits <= 0) { sim.moteCount = 0; return; }
+    dev.queue.writeBuffer(sim.bMoteData, 0, packed.subarray(0, fits * 4));
+    sim.moteCount = fits;
   } catch (e) {
     // A missing /motes is not fatal: an older server simply has no crop to show.
     sim.moteCount = 0;

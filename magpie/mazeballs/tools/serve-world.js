@@ -438,6 +438,7 @@ Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
       // failed the size check and the page showed "reload to resync" — which
       // reloading could not fix, because the guess was wrong every time.
       maxCells: args.maxCells, nCells: built.meta.nCells, bound: BOUND,
+      nMotes: world.params.nMotes,
       // The resource field is what creatures chase and it drifts and morphs.
       // The viewer needs its parameters to draw it; without them it was showing
       // only the flow, which is the least photogenic layer in the world.
