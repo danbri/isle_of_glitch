@@ -242,6 +242,14 @@ fn moteBucketOf(p: vec2<f32>) -> u32 {
   return h % P.moteHashSize;
 }
 
+// SUBSTRATE GRIT: how much purchase the ground offers here. Analytic, like every
+// other field — sampled at a continuous position, never stored, no grid. This is
+// the thing a cell shoves against; where it is zero the world is open water and
+// nothing can push off anything.
+fn gritAt(p: vec2<f32>) -> f32 {
+  return clamp(fbm(p * P.gritScale, P.gritSeed) * 1.6, 0.0, 1.0);
+}
+
 fn flowAt(p: vec2<f32>) -> vec2<f32> {
   return flowField(p, P.flowScale, P.flowStr, P.seed);
 }
@@ -632,17 +640,59 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     let me2 = cmeta[i];
     // Every cell has a little purchase on the world; an ANCHOR cell has far
     // more, and modulates it with its activation so it can let go.
-    var grip = P.gripBase;
-    if (me2.x == 3) { grip = P.gripAnchor; }
+    var grab = P.gripBase;
+    if (me2.x == 3) { grab = P.gripAnchor; }
+    // ACTIVELY PHASED, which is the whole point. A cell raises and drops its grip
+    // with its activation, so a brain can grip on the power stroke and release on
+    // recovery. Constant grip nets zero however strong it is — the scallop
+    // theorem — and primitives.md is explicit that the world affords while the
+    // brain earns.
     if (me2.y >= 0) {
-    let a = act[u32(me2.y)];
-    grip = grip * (1.0 + P.gripMod * select(0.0, a, abs(a) < 1e6));
-  }
-    grip = max(grip, 0.0);
-    let sp = length(v);
-    if (sp > 1e-6) {
-      let dec = grip * P.fricK * P.dt;
-      v = v * (max(0.0, sp - dec) / sp);
+      let a = act[u32(me2.y)];
+      grab = grab * (1.0 + P.gripMod * select(0.0, a, abs(a) < 1e6));
+    }
+    grab = max(grab, 0.0);
+
+    // THE BODY AXIS, taken between two bonded neighbours — the same construction
+    // the verified reference uses (tools/swim-verify.js). Traction is anisotropic
+    // about it: a cell slides along its own body far more easily than sideways,
+    // and that asymmetry is what converts a deformation into travel. Isotropic
+    // drag, which is what this used to be, cancels it exactly.
+    var axis = vec2<f32>(0.0, 0.0);
+    {
+      let ab = i * P.bondK;
+      var n1 = -1;
+      var n2 = -1;
+      for (var k = 0u; k < P.bondK; k = k + 1u) {
+        let nj = bitcast<i32>(bondD[ab + k].x);
+        if (nj < 0) { continue; }
+        if (n1 < 0) { n1 = nj; } else if (n2 < 0) { n2 = nj; }
+      }
+      if (n1 >= 0 && n2 >= 0) {
+        axis = minImage(pos[u32(n2)] - pos[u32(n1)]);
+      } else if (n1 >= 0) {
+        axis = minImage(pos[u32(n1)] - p);
+      }
+    }
+    let alen = length(axis);
+
+    // Dissipative ONLY: exponential decay cannot add energy whatever the
+    // coefficients, so net motion is still paid for out of muscle fuel.
+    let grit = gritAt(p);
+    if (alen > 1e-5) {
+      let ax = axis / alen;
+      let pxv = vec2<f32>(-ax.y, ax.x);
+      var vA = dot(v, ax);
+      var vP = dot(v, pxv);
+      let kA = P.fricK * (P.slipBase + grit);
+      let kP = P.fricK * (P.slipBase + (1.0 + P.gripAniso * grab) * grit);
+      vA = vA * exp(-kA * P.dt);
+      vP = vP * exp(-kP * P.dt);
+      v = ax * vA + pxv * vP;
+    } else {
+      // A lone cell has no axis so it can only be damped isotropically. It also
+      // cannot swim, which is correct: undulation needs a body.
+      v = v * exp(-P.fricK * (P.slipBase + grit) * P.dt);
     }
   }
 
@@ -824,7 +874,16 @@ export class WorldGPU {
       // blown along by the current, little enough that its own muscles can still
       // move it. At the original 0.55 the decrement was 0.05 per step, ten times
       // what the flow supplies, and the world froze solid.
-      gripBase: 0.06, gripMod: 0.9, fricK: 6.0, gripAnchor: 0.9,
+      // GRABBINESS IS NOW A RATIO, NOT A DECREMENT. Under the old Coulomb rule
+      // gripBase was a velocity subtracted per step and 0.06 was the right size.
+      // It now multiplies the sideways drag, where 0.06 buys a 1.36x anisotropy
+      // and the verified reference needs ~6x — measured as no advantage at all.
+      gripBase: 0.55, gripMod: 0.9, fricK: 6.0, gripAnchor: 1.0,
+      // Substrate. gritScale sets how big a patch of purchase is; slipBase is the
+      // drag left on frictionless ground (open water); gripAniso is how much
+      // harder sideways slip is than sliding along your own body, which is the
+      // ratio that converts undulation into travel.
+      gritScale: 0.12, gritSeed: 4242, slipBase: 0.15, gripAniso: 6.0,
       bucketM: 32, predRate: 0.0, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
       // Cells are solid. This was silently 1.68e-44 for the life of the code —
       // see lib/uniform.js — so nothing has ever pushed back on anything. Sized

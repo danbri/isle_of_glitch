@@ -5721,3 +5721,48 @@ backtick and still holds an entry point, while the real file is unparseable
 JavaScript. Every textual check passed on a file that could not be imported. The
 suite now imports each module, which is the only check that cannot be fooled by
 where a string happens to end.
+
+
+### LOCOMOTION — bodies move, and the controls are clean
+
+Traction was ISOTROPIC. `dec = grip * fricK * dt` removed speed equally in every
+direction, which cancels an undulation exactly. The scallop theorem was not a
+thing evolution had failed to solve; it was enforced by the kernel, and no brain
+could ever have escaped it.
+
+Replaced with anisotropic drag about the body axis, taken between two bonded
+neighbours — the construction the verified reference (`tools/swim-verify.js`,
+from the other session) uses. Sideways slip is resisted harder than sliding along
+your own length, and that asymmetry converts deformation into travel.
+
+48 developed bodies from random genomes, isolated by 10 body-lengths, no flow, no
+food, nothing born or dying, 30,000 steps. Mean centroid displacement:
+
+    grip anisotropy + muscle     0.794      max 9.3
+    isotropic (gripAniso 0)      0.005      max 0.1
+    muscle OFF                   0.0001     max 0.0
+    no grabbiness (gripBase 0)   0.005      max 0.1
+
+151x over isotropic, and the muscle-off control is at the 1e-4 noise floor rather
+than the 28 units that produced the retracted result. Every control fails in its
+own diagnostic direction: no muscle means nothing drives it, no anisotropy means
+the gait cancels, no grabbiness means the anisotropy was never earned.
+
+Median is ~0: most random genomes have no useful gait. That is the correct shape
+for the result — locomotion is REACHABLE and RARE, which is what gives selection
+something to find. It is not yet shown that selection finds it.
+
+Two bugs found on the way, both worth recording:
+
+`gripBase` was 0.06, tuned when it was a velocity DECREMENT under the old Coulomb
+rule. As a multiplier on sideways drag it bought 1.36x anisotropy where the
+reference needs ~6x, and measured as no advantage whatsoever. Re-tuned to 0.55.
+
+And the first attempt at the rewrite silently did not apply — the search text was
+stale after an earlier edit to the same block, so the old isotropic code was still
+running while every parameter I added sat unused in the uniform. It presented as
+"anisotropy makes no difference", identical to three decimals across a 200x sweep
+of the coefficient. Caught by testing whether ANY new parameter changed anything:
+`slipBase 20` should have crushed all movement and did nothing, while `fricK 0`
+(which the old code also read) did. A parameter that provably does nothing is
+evidence about the code path, not about the physics.

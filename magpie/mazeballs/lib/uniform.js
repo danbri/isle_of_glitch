@@ -77,6 +77,11 @@ export const WORLD_FIELDS = [
   ['moteRegrow', 'f32', 'solar inflow: stock a mote regains per second at full fertility'],
   ['moteCap', 'f32', 'the most stock one mote can hold'],
   ['moteHashSize', 'u32', 'buckets in the mote hash'],
+  ['gritScale', 'f32', 'spatial frequency of the substrate grit field'],
+
+  ['gritSeed', 'u32', 'grit field seed'],
+  ['slipBase', 'f32', 'drag a cell feels on frictionless ground'],
+  ['gripAniso', 'f32', 'how much harder sideways slip is than along-axis slip'],
   ['pad0', 'f32', ''],
 ];
 
