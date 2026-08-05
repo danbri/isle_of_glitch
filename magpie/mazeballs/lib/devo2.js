@@ -611,6 +611,21 @@ export const SEED_DEFAULTS = {
   surviveBias: 1.2,
   surviveDecay: 0.0,
   surviveDiff: -0.5,
+  // CONTRACTILITY MUST EXIST BEFORE IT CAN BE SELECTED ON.
+  //
+  // Measured on 64 living genomes: 49 of 64 bodies had ZERO contractility,
+  // mean 0.061 per cell against 0.141 for grip. The generic bias offset leaves
+  // every unseeded output mostly off, so founders were born with almost no
+  // muscle — and evolution cannot select for a capacity that is not in the
+  // population. Grip drifted up because it pays; contract had nothing to drift
+  // FROM.
+  //
+  // This is the variation, not the outcome. Whether muscle survives is still
+  // entirely up to the economy, and the honest expectation is that it decays
+  // again unless moving pays.
+  contractBias: 0.6,
+  contractDecay: 0.0,
+  contractDiff: -0.4,
 };
 
 export function randomGenome(rnd = Math.random, opts = {}) {
@@ -649,6 +664,11 @@ export function randomGenome(rnd = Math.random, opts = {}) {
   g[sb + OFF_BIAS] = o.surviveBias;
   g[sb + OFF_DECAY] = o.surviveDecay;
   g[sb + OFF_DIFF] = o.surviveDiff;
+
+  const cb = (OUT_BASE + 2) * GENE_STRIDE;      // contract
+  g[cb + OFF_BIAS] = o.contractBias;
+  g[cb + OFF_DECAY] = o.contractDecay;
+  g[cb + OFF_DIFF] = o.contractDiff;
 
   // SYNAPSE COEFFICIENTS. Not optional and not zero-able: `synapse()` returns
   // SYN_RANGE * tanh(sum), so an all-zero block gives every edge weight exactly
