@@ -17,6 +17,7 @@ runs/world.pid
 runs/world.cmd
 runs/world.log
 runs/*.snapshot
+runs/*.ring
 runs/*.jsonl
 
 # eleventy lab notebook.
