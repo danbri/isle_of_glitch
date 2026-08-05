@@ -1968,7 +1968,29 @@ function applyFrame(ab) {
     sim.bondVerts = 0;                      // never draw a truncated graph
   }
 
+  const prevServerSteps = sim.serverSteps ?? 0;
   sim.serverSteps = dv.getUint32(8, true);
+  // SIM RATE IN WATCH MODE. `simRate` is computed from the LOCAL world's spf,
+  // and in watch mode the local world never steps — so it sat at exactly 0 and
+  // the HUD read `sim 0.0xrealtime` forever. RUNNING.md lists that precise
+  // string as the signature of a faulted GPU device, so the healthy case was
+  // displaying the symptom of the failure case. Measured against the server:
+  // the true rate was 1.22x while this read 0.0.
+  //
+  // The server's own step counter is the only honest clock here, so rate is
+  // its delta over wall time. Smoothed, because frames arrive irregularly and
+  // an instantaneous ratio of two small numbers is mostly jitter.
+  if (WATCH) {
+    const now = performance.now();
+    const dSteps = sim.serverSteps - prevServerSteps;
+    const dMs = now - (sim.lastServerAt ?? now);
+    if (sim.lastServerAt && dMs > 50 && dSteps > 0) {
+      const inst = dSteps * (sim.world?.params?.dt ?? 0.015) * 1000 / dMs;
+      simRate = sim.rateSeen ? simRate * 0.7 + inst * 0.3 : inst;
+      sim.rateSeen = true;
+    }
+    sim.lastServerAt = now;
+  }
   $('hStep').textContent = sim.serverSteps.toLocaleString();
   $('hAlive').textContent = dv.getUint32(16, true).toLocaleString();
   $('hBirths').textContent = dv.getUint32(20, true).toLocaleString();
