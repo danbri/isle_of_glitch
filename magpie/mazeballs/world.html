@@ -99,8 +99,16 @@ button.on::before { content: '\25CF\00a0'; opacity: .85; }
 
 /* The HUD sat directly on the world and was unreadable wherever a body passed
    under it — worst on mobile where it wraps to two lines. */
-#hud { background: linear-gradient(#050908f2, #050908d8 70%, #05090800);
-  padding: .35rem .6rem .8rem; }
+/* .hud, not #hud — it is a CLASS, and the id selector silently matched nothing,
+   which is why the background never appeared and the text stayed unreadable over
+   moving bodies. Also given its own line box so wrapped rows cannot collide. */
+.hud { background: linear-gradient(#050908f5, #050908e0 65%, #05090800);
+  padding: .4rem .7rem 1rem; row-gap: .25rem; line-height: 1.5;
+  max-width: 100%; pointer-events: none; }
+.hud > * { pointer-events: auto; }
+@media (max-width: 700px) {
+  .hud { font-size: 10px; gap: .55rem; }
+}
 #scope { resize: none; }
 #scopeGrip { height: 10px; cursor: ns-resize; background: #0e1a17;
   border-top: 1px solid #24403a; display: flex; align-items: center;
@@ -281,6 +289,22 @@ import { WorldGPU, WGSL_FIELD } from './lib/world_gpu.js';
 import { Evolver } from './lib/evolve.js';
 
 const $ = id => document.getElementById(id);
+/**
+ * Bind a handler, tolerating a missing element.
+ *
+ * DECLARED EARLY, ON PURPOSE. It used to live down in the wiring block, and
+ * later edits added `on(...)` calls above that point — which is a temporal dead
+ * zone error on a const, thrown at module scope, which aborts the entire module.
+ * The symptom is a black page and one console line naming the helper, nowhere
+ * near the renderer it killed. Everything it guards is a debug control, so it
+ * must be available before any of them.
+ */
+const on = (id, ev, fn) => {
+  const el = document.getElementById(id);
+  if (!el) { console.warn(`[mazeballs] missing control #${id}`); return; }
+  el[ev] = fn;
+};
+
 const fail = (msg) => { $('err').style.display = 'block'; $('err').textContent = msg; };
 /** A transient notice: something is being handled, not something that broke. */
 const note = (msg) => {
@@ -1413,11 +1437,7 @@ on('bFlag', 'onclick', flagThis);
  * whole module — and the symptom is a black page with one console line about a
  * null, nowhere near the renderer it killed.
  */
-const on = (id, ev, fn) => {
-  const el = $(id);
-  if (!el) { console.warn(`[mazeballs] missing control #${id}`); return; }
-  el[ev] = fn;
-};
+
 
 on('bGenome', 'onclick', showGenome);
 on('bPick', 'onclick', e => {
