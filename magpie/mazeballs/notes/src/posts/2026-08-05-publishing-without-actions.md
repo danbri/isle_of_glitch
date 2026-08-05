@@ -54,7 +54,54 @@ href="/isle_of_glitch/magpie/mazeballs/lab/posts/2026-08-05-dev2-first-build/"
 Local preview needs the opposite, since localhost serves at the root, so
 `./tools/notes serve` overrides it with `--pathprefix=/`.
 
-## 3. The stale workflow is a decoy
+## 3. Pages was never actually serving from `main`
+
+The premise this whole exercise started from was wrong, and only the API said so:
+
+```
+$ gh api repos/danbri/isle_of_glitch/pages
+"build_type": "legacy",
+"source": { "branch": "claude/fink-authoring-guide-bDtaY", "path": "/" }
+```
+
+Still the old branch. The notebook was pushed to `main`, built correctly, and
+404'd, because nothing was serving `main` at all.
+
+Worse, the diagnosis was briefly misleading: after switching the source, spot
+checks of `codes/globall/index.html` and `cassette.html` returned 200 and looked
+like proof the switch had worked. They had not — **changing the Pages source does
+not trigger a rebuild**, so those 200s were the *previous* build, still serving
+old-branch content. The latest build was three commits and fourteen hours stale:
+
+```
+built 2026-08-05T05:49Z 6bb57b92     <- old deploy branch
+```
+
+A build has to be asked for explicitly, once, after changing the source:
+
+```sh
+gh api -X POST repos/danbri/isle_of_glitch/pages/builds
+```
+
+Ordinary pushes to `main` auto-build from then on. But for that one transition,
+"the URL returns 200" was not evidence of anything, and the build log was the only
+honest instrument.
+
+## 4. The two branches had to be merged first
+
+Repointing Pages at `main` would have removed **344 files** from the live site —
+`codes/globall`, `cassette.html` and more — because the deploy branch had 319
+commits `main` had never seen while `main` had 118 of its own.
+
+So `main` absorbed the deploy branch before the switch. Every conflict under
+`magpie/mazeballs` resolved to `main`, on the evidence that all 34 of the deploy
+branch's commits there are `pages: sync ... from main` — a one-directional mirror
+with no original work — against 117 on `main` it never received.
+
+The only things deliberately left behind were four committed 12 MB world-state
+snapshots, which an earlier commit had already decided to stop tracking.
+
+## 5. The stale workflow is a decoy
 
 `.github/workflows/static.yml` exists and looks like it deploys Pages. It does
 not — it triggers only on `push` to `claude/fink-authoring-guide-bDtaY`, the

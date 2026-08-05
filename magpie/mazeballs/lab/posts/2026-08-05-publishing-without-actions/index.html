@@ -76,7 +76,38 @@ href=&quot;/isle_of_glitch/magpie/mazeballs/lab/posts/2026-08-05-dev2-first-buil
 </code></pre>
 <p>Local preview needs the opposite, since localhost serves at the root, so
 <code>./tools/notes serve</code> overrides it with <code>--pathprefix=/</code>.</p>
-<h2>3. The stale workflow is a decoy</h2>
+<h2>3. Pages was never actually serving from <code>main</code></h2>
+<p>The premise this whole exercise started from was wrong, and only the API said so:</p>
+<pre><code>$ gh api repos/danbri/isle_of_glitch/pages
+&quot;build_type&quot;: &quot;legacy&quot;,
+&quot;source&quot;: { &quot;branch&quot;: &quot;claude/fink-authoring-guide-bDtaY&quot;, &quot;path&quot;: &quot;/&quot; }
+</code></pre>
+<p>Still the old branch. The notebook was pushed to <code>main</code>, built correctly, and
+404'd, because nothing was serving <code>main</code> at all.</p>
+<p>Worse, the diagnosis was briefly misleading: after switching the source, spot
+checks of <code>codes/globall/index.html</code> and <code>cassette.html</code> returned 200 and looked
+like proof the switch had worked. They had not — <strong>changing the Pages source does
+not trigger a rebuild</strong>, so those 200s were the <em>previous</em> build, still serving
+old-branch content. The latest build was three commits and fourteen hours stale:</p>
+<pre><code>built 2026-08-05T05:49Z 6bb57b92     &lt;- old deploy branch
+</code></pre>
+<p>A build has to be asked for explicitly, once, after changing the source:</p>
+<pre><code class="language-sh">gh api -X POST repos/danbri/isle_of_glitch/pages/builds
+</code></pre>
+<p>Ordinary pushes to <code>main</code> auto-build from then on. But for that one transition,
+&quot;the URL returns 200&quot; was not evidence of anything, and the build log was the only
+honest instrument.</p>
+<h2>4. The two branches had to be merged first</h2>
+<p>Repointing Pages at <code>main</code> would have removed <strong>344 files</strong> from the live site —
+<code>codes/globall</code>, <code>cassette.html</code> and more — because the deploy branch had 319
+commits <code>main</code> had never seen while <code>main</code> had 118 of its own.</p>
+<p>So <code>main</code> absorbed the deploy branch before the switch. Every conflict under
+<code>magpie/mazeballs</code> resolved to <code>main</code>, on the evidence that all 34 of the deploy
+branch's commits there are <code>pages: sync ... from main</code> — a one-directional mirror
+with no original work — against 117 on <code>main</code> it never received.</p>
+<p>The only things deliberately left behind were four committed 12 MB world-state
+snapshots, which an earlier commit had already decided to stop tracking.</p>
+<h2>5. The stale workflow is a decoy</h2>
 <p><code>.github/workflows/static.yml</code> exists and looks like it deploys Pages. It does
 not — it triggers only on <code>push</code> to <code>claude/fink-authoring-guide-bDtaY</code>, the
 <em>previous</em> deploy branch, and never fires on <code>main</code>. It is left in place
