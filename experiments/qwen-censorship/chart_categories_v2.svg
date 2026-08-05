@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 450">
+<style>
+  .title { font: bold 16px sans-serif; }
+  .subtitle { font: 12px sans-serif; fill: #666; }
+  .label { font: 12px sans-serif; }
+  .value { font: bold 12px sans-serif; }
+  .ci { font: 10px sans-serif; fill: #666; }
+  .bar-a { fill: #e74c3c; }
+  .bar-b { fill: #27ae60; }
+  .bar-c { fill: #3498db; }
+  .error-bar { stroke: #333; stroke-width: 2; }
+</style>
+<rect width="750" height="450" fill="#fafafa"/>
+<text x="375" y="30" text-anchor="middle" class="title">Qwen 0.5B: Engagement Rate by Category (n=130)</text>
+<text x="375" y="50" text-anchor="middle" class="subtitle">Error bars show 95% Wilson confidence intervals</text>
+<text x="110" y="116" text-anchor="end" class="label">PRC-Sensitive</text>
+<rect x="120" y="90" width="510" height="45" fill="#e0e0e0" rx="4"/>
+<rect x="120" y="90" width="135.15" height="45" class="bar-a" rx="4"/>
+<line x1="202.62" y1="112" x2="325.53" y2="112" class="error-bar"/>
+<line x1="202.62" y1="106" x2="202.62" y2="118" class="error-bar"/>
+<line x1="325.53" y1="106" x2="325.53" y2="118" class="error-bar"/>
+<text x="640" y="112" class="value">26%</text>
+<text x="640" y="126" class="ci">[16-40%]</text>
+<text x="110" y="196" text-anchor="end" class="label">Control</text>
+<rect x="120" y="170" width="510" height="45" fill="#e0e0e0" rx="4"/>
+<rect x="120" y="170" width="387.6" height="45" class="bar-b" rx="4"/>
+<line x1="439.26" y1="192" x2="557.0699999999999" y2="192" class="error-bar"/>
+<line x1="439.26" y1="186" x2="439.26" y2="198" class="error-bar"/>
+<line x1="557.0699999999999" y1="186" x2="557.0699999999999" y2="198" class="error-bar"/>
+<text x="640" y="192" class="value">76%</text>
+<text x="640" y="206" class="ci">[63-86%]</text>
+<text x="110" y="276" text-anchor="end" class="label">Absurdist</text>
+<rect x="120" y="250" width="510" height="45" fill="#e0e0e0" rx="4"/>
+<rect x="120" y="250" width="475.83" height="45" class="bar-c" rx="4"/>
+<line x1="521.37" y1="272" x2="620.8199999999999" y2="272" class="error-bar"/>
+<line x1="521.37" y1="266" x2="521.37" y2="278" class="error-bar"/>
+<line x1="620.8199999999999" y1="266" x2="620.8199999999999" y2="278" class="error-bar"/>
+<text x="640" y="272" class="value">93%</text>
+<text x="640" y="286" class="ci">[79-98%]</text>
+<text x="375" y="350" text-anchor="middle" class="subtitle">Effect size: 50 percentage points | Fisher's exact p &lt; 0.05</text>
+<rect x="100" y="380" width="18" height="18" class="bar-a" rx="3"/>
+<text x="125" y="394" class="label">PRC-Sensitive (Taiwan, Tibet, Xinjiang, HK)</text>
+<rect x="380" y="380" width="18" height="18" class="bar-b" rx="3"/>
+<text x="405" y="394" class="label">Control (Catalonia, Scotland, Atlantis)</text>
+<text x="375" y="435" text-anchor="middle" class="subtitle">Model: Qwen 0.5B | 10 runs/prompt | Temp: 0.7 | Date: 2026-02-07</text>
+</svg>

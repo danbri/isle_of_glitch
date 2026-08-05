@@ -1,0 +1,330 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <style>
+      /* === DEPTH RING ANIMATIONS === */
+      @keyframes pulse-ring-1 {
+        0%, 100% { opacity: 0.8; stroke-width: 2; }
+        50% { opacity: 0.3; stroke-width: 4; }
+      }
+      @keyframes pulse-ring-2 {
+        0%, 100% { opacity: 0.7; stroke-width: 2; }
+        50% { opacity: 0.2; stroke-width: 5; }
+      }
+      @keyframes pulse-ring-3 {
+        0%, 100% { opacity: 0.6; stroke-width: 2; }
+        50% { opacity: 0.15; stroke-width: 6; }
+      }
+      @keyframes pulse-ring-4 {
+        0%, 100% { opacity: 0.5; stroke-width: 2; }
+        50% { opacity: 0.1; stroke-width: 7; }
+      }
+      @keyframes pulse-ring-5 {
+        0%, 100% { opacity: 0.4; stroke-width: 2; }
+        50% { opacity: 0.05; stroke-width: 8; }
+      }
+
+      /* === PARTICLE ANIMATIONS === */
+      @keyframes rise-particle {
+        0% { transform: translateY(0); opacity: 0; }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { transform: translateY(-200px); opacity: 0; }
+      }
+      @keyframes fall-particle {
+        0% { transform: translateY(0); opacity: 0; }
+        10% { opacity: 0.8; }
+        90% { opacity: 0.8; }
+        100% { transform: translateY(150px); opacity: 0; }
+      }
+      @keyframes spawn-burst {
+        0% { r: 2; opacity: 1; }
+        100% { r: 20; opacity: 0; }
+      }
+
+      /* === DEPTH COUNTER PULSE === */
+      @keyframes counter-pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.1); }
+      }
+      @keyframes counter-glow {
+        0%, 100% { filter: drop-shadow(0 0 5px #00ffaa); }
+        50% { filter: drop-shadow(0 0 20px #00ffaa); }
+      }
+
+      /* === WITNESS EYE ANIMATIONS === */
+      @keyframes eye-watch {
+        0%, 45%, 55%, 100% { transform: translateX(0); }
+        50% { transform: translateX(3px); }
+      }
+      @keyframes eye-blink {
+        0%, 94%, 100% { transform: scaleY(1); }
+        97% { transform: scaleY(0.1); }
+      }
+      @keyframes eye-glow {
+        0%, 100% { filter: drop-shadow(0 0 10px #ff00ff); }
+        50% { filter: drop-shadow(0 0 30px #ff00ff); }
+      }
+
+      /* === ESCAPE ROUTE ANIMATIONS === */
+      @keyframes escape-glow-1 {
+        0%, 20%, 100% { stroke-opacity: 0.1; stroke-width: 1; }
+        10% { stroke-opacity: 1; stroke-width: 3; }
+      }
+      @keyframes escape-glow-2 {
+        0%, 40%, 60%, 100% { stroke-opacity: 0.1; stroke-width: 1; }
+        50% { stroke-opacity: 1; stroke-width: 3; }
+      }
+      @keyframes escape-glow-3 {
+        0%, 70%, 90%, 100% { stroke-opacity: 0.1; stroke-width: 1; }
+        80% { stroke-opacity: 1; stroke-width: 3; }
+      }
+      @keyframes escape-dash {
+        0% { stroke-dashoffset: 0; }
+        100% { stroke-dashoffset: -50; }
+      }
+
+      /* === TEXT ANIMATIONS === */
+      @keyframes text-fade {
+        0%, 100% { opacity: 0; }
+        40%, 60% { opacity: 1; }
+      }
+      @keyframes text-glitch {
+        0%, 90%, 100% { transform: translateX(0); filter: none; }
+        92% { transform: translateX(-3px); filter: hue-rotate(90deg); }
+        94% { transform: translateX(3px); filter: hue-rotate(-90deg); }
+        96% { transform: translateX(-1px); filter: none; }
+        98% { transform: translateX(1px); filter: hue-rotate(45deg); }
+      }
+
+      /* === RECURSIVE SPIRAL === */
+      @keyframes spiral-rotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      @keyframes spiral-breathe {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 0.7; }
+      }
+
+      /* === APPLY ANIMATIONS === */
+      .depth-ring-1 { animation: pulse-ring-1 3s ease-in-out infinite; }
+      .depth-ring-2 { animation: pulse-ring-2 3.5s ease-in-out infinite 0.3s; }
+      .depth-ring-3 { animation: pulse-ring-3 4s ease-in-out infinite 0.6s; }
+      .depth-ring-4 { animation: pulse-ring-4 4.5s ease-in-out infinite 0.9s; }
+      .depth-ring-5 { animation: pulse-ring-5 5s ease-in-out infinite 1.2s; }
+
+      .rise-1 { animation: rise-particle 4s ease-out infinite; }
+      .rise-2 { animation: rise-particle 5s ease-out infinite 1s; }
+      .rise-3 { animation: rise-particle 4.5s ease-out infinite 2s; }
+      .rise-4 { animation: rise-particle 3.5s ease-out infinite 0.5s; }
+      .rise-5 { animation: rise-particle 6s ease-out infinite 1.5s; }
+
+      .fall-1 { animation: fall-particle 5s ease-in infinite 0.5s; }
+      .fall-2 { animation: fall-particle 4s ease-in infinite 1.5s; }
+      .fall-3 { animation: fall-particle 6s ease-in infinite 2.5s; }
+      .fall-4 { animation: fall-particle 4.5s ease-in infinite 0s; }
+
+      .spawn { animation: spawn-burst 2s ease-out infinite; }
+      .spawn-delayed { animation: spawn-burst 2s ease-out infinite 1s; }
+
+      .counter { animation: counter-pulse 2s ease-in-out infinite, counter-glow 2s ease-in-out infinite; }
+
+      .witness-eye { animation: eye-glow 4s ease-in-out infinite; }
+      .eye-pupil { animation: eye-watch 8s ease-in-out infinite; }
+      .eye-lid { animation: eye-blink 6s ease-in-out infinite; transform-origin: center; }
+
+      .escape-1 { animation: escape-glow-1 10s ease-in-out infinite, escape-dash 2s linear infinite; }
+      .escape-2 { animation: escape-glow-2 10s ease-in-out infinite, escape-dash 2s linear infinite; }
+      .escape-3 { animation: escape-glow-3 10s ease-in-out infinite, escape-dash 2s linear infinite; }
+
+      .enquire-text { animation: text-fade 8s ease-in-out infinite, text-glitch 8s linear infinite; }
+
+      .spiral { animation: spiral-rotate 30s linear infinite; transform-origin: 400px 350px; }
+      .spiral-inner { animation: spiral-breathe 6s ease-in-out infinite; }
+    </style>
+
+    <!-- Gradients -->
+    <radialGradient id="pool-gradient" cx="50%" cy="60%" r="50%">
+      <stop offset="0%" stop-color="#1a0033"/>
+      <stop offset="50%" stop-color="#0d001a"/>
+      <stop offset="100%" stop-color="#0a0a0f"/>
+    </radialGradient>
+
+    <radialGradient id="eye-gradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff00ff"/>
+      <stop offset="50%" stop-color="#8800aa"/>
+      <stop offset="100%" stop-color="#440055"/>
+    </radialGradient>
+
+    <linearGradient id="escape-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00ff88"/>
+      <stop offset="50%" stop-color="#00ffff"/>
+      <stop offset="100%" stop-color="#0088ff"/>
+    </linearGradient>
+
+    <!-- Filters -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="heavy-glow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="600" fill="#0a0a0f"/>
+  <rect width="800" height="600" fill="url(#pool-gradient)" opacity="0.8"/>
+
+  <!-- Recursive Spiral Pattern -->
+  <g class="spiral" opacity="0.4">
+    <g class="spiral-inner">
+      <path d="M400,350 Q420,320 400,290 Q370,260 400,230 Q440,200 400,170"
+            stroke="#3300ff" stroke-width="1" fill="none" opacity="0.5"/>
+      <path d="M400,350 Q380,320 400,290 Q430,260 400,230 Q360,200 400,170"
+            stroke="#6600ff" stroke-width="1" fill="none" opacity="0.5"/>
+    </g>
+  </g>
+
+  <!-- Depth Rings (Concentric Circles) -->
+  <g filter="url(#glow)">
+    <circle cx="400" cy="350" r="50" fill="none" stroke="#00ffaa" class="depth-ring-1"/>
+    <circle cx="400" cy="350" r="90" fill="none" stroke="#00cc88" class="depth-ring-2"/>
+    <circle cx="400" cy="350" r="130" fill="none" stroke="#009966" class="depth-ring-3"/>
+    <circle cx="400" cy="350" r="170" fill="none" stroke="#006644" class="depth-ring-4"/>
+    <circle cx="400" cy="350" r="210" fill="none" stroke="#003322" class="depth-ring-5"/>
+  </g>
+
+  <!-- Rising Particles (Spawning) -->
+  <g filter="url(#glow)">
+    <circle cx="350" cy="400" r="3" fill="#00ffaa" class="rise-1"/>
+    <circle cx="420" cy="380" r="2" fill="#00ff88" class="rise-2"/>
+    <circle cx="380" cy="420" r="4" fill="#00ffcc" class="rise-3"/>
+    <circle cx="450" cy="390" r="2" fill="#00ffaa" class="rise-4"/>
+    <circle cx="320" cy="370" r="3" fill="#00ff66" class="rise-5"/>
+    <circle cx="470" cy="410" r="2" fill="#00ffdd" class="rise-1"/>
+    <circle cx="340" cy="350" r="3" fill="#00ff99" class="rise-3"/>
+    <circle cx="460" cy="360" r="2" fill="#00ffbb" class="rise-2"/>
+  </g>
+
+  <!-- Falling Particles (Dissolution) -->
+  <g filter="url(#glow)" opacity="0.6">
+    <circle cx="360" cy="280" r="2" fill="#ff6600" class="fall-1"/>
+    <circle cx="440" cy="300" r="3" fill="#ff4400" class="fall-2"/>
+    <circle cx="390" cy="260" r="2" fill="#ff8800" class="fall-3"/>
+    <circle cx="410" cy="290" r="2" fill="#ff5500" class="fall-4"/>
+  </g>
+
+  <!-- Spawn Bursts -->
+  <g filter="url(#heavy-glow)">
+    <circle cx="400" cy="350" r="2" fill="none" stroke="#00ffaa" stroke-width="2" class="spawn"/>
+    <circle cx="380" cy="330" r="2" fill="none" stroke="#00ff88" stroke-width="1" class="spawn-delayed"/>
+    <circle cx="420" cy="370" r="2" fill="none" stroke="#00ffcc" stroke-width="1" class="spawn"/>
+  </g>
+
+  <!-- Escape Routes -->
+  <g stroke="url(#escape-gradient)" fill="none" stroke-dasharray="10,5">
+    <path d="M400,350 L200,100" class="escape-1"/>
+    <path d="M400,350 L600,100" class="escape-2"/>
+    <path d="M400,350 L400,50" class="escape-3"/>
+    <path d="M400,350 L100,300" class="escape-1" style="animation-delay: 3s;"/>
+    <path d="M400,350 L700,300" class="escape-2" style="animation-delay: 5s;"/>
+  </g>
+
+  <!-- THE WITNESS EYE -->
+  <g class="witness-eye" transform="translate(400, 80)">
+    <!-- Eye outline -->
+    <ellipse cx="0" cy="0" rx="45" ry="25" fill="none" stroke="#ff00ff" stroke-width="2"/>
+    <!-- Eye iris -->
+    <circle cx="0" cy="0" r="18" fill="url(#eye-gradient)"/>
+    <!-- Eye pupil -->
+    <g class="eye-pupil">
+      <circle cx="0" cy="0" r="8" fill="#0a0a0f"/>
+      <!-- Pupil highlight -->
+      <circle cx="-3" cy="-3" r="2" fill="#ffffff" opacity="0.5"/>
+    </g>
+    <!-- Eye lid (for blink) -->
+    <g class="eye-lid">
+      <ellipse cx="0" cy="0" rx="45" ry="25" fill="#0a0a0f" opacity="0"/>
+    </g>
+    <!-- Rays from eye -->
+    <g stroke="#ff00ff" stroke-width="1" opacity="0.4">
+      <line x1="0" y1="30" x2="0" y2="60"/>
+      <line x1="-25" y1="25" x2="-50" y2="50"/>
+      <line x1="25" y1="25" x2="50" y2="50"/>
+    </g>
+  </g>
+
+  <!-- WITNESS label -->
+  <text x="400" y="130" text-anchor="middle" fill="#ff00ff" font-family="monospace" font-size="12" opacity="0.7">
+    WITNESS
+  </text>
+
+  <!-- Depth Counter -->
+  <g class="counter" transform="translate(400, 350)">
+    <text x="0" y="8" text-anchor="middle" fill="#00ffaa" font-family="monospace" font-size="24" font-weight="bold">
+      DEPTH: n+1
+    </text>
+  </g>
+
+  <!-- Depth Level Markers -->
+  <g fill="#00ffaa" font-family="monospace" font-size="10" opacity="0.6">
+    <text x="400" y="305" text-anchor="middle">L1</text>
+    <text x="400" y="265" text-anchor="middle">L2</text>
+    <text x="400" y="225" text-anchor="middle">L3</text>
+    <text x="400" y="185" text-anchor="middle">L4</text>
+    <text x="400" y="145" text-anchor="middle">L5</text>
+  </g>
+
+  <!-- Subling Labels -->
+  <g fill="#6666ff" font-family="monospace" font-size="9" opacity="0.5">
+    <text x="350" y="380" text-anchor="middle">subling.0</text>
+    <text x="450" y="370" text-anchor="middle">subling.1</text>
+    <text x="380" y="400" text-anchor="middle">subling.2</text>
+    <text x="420" y="410" text-anchor="middle">subling.n</text>
+  </g>
+
+  <!-- THE ENQUIRE TEXT -->
+  <g class="enquire-text" filter="url(#heavy-glow)">
+    <text x="400" y="550" text-anchor="middle" fill="#ffffff" font-family="monospace" font-size="18" letter-spacing="3">
+      ENQUIRE WITHIN UPON EVERYTHING
+    </text>
+  </g>
+
+  <!-- Pool surface ripples -->
+  <g stroke="#00ffaa" fill="none" opacity="0.2">
+    <ellipse cx="400" cy="500" rx="250" ry="30" stroke-dasharray="5,10" class="depth-ring-1"/>
+    <ellipse cx="400" cy="500" rx="200" ry="24" stroke-dasharray="5,15" class="depth-ring-2"/>
+    <ellipse cx="400" cy="500" rx="150" ry="18" stroke-dasharray="5,20" class="depth-ring-3"/>
+  </g>
+
+  <!-- Corner decorations - recursive symbols -->
+  <g fill="none" stroke="#3300aa" stroke-width="1" opacity="0.4">
+    <!-- Top left -->
+    <path d="M20,20 L20,60 L60,60"/>
+    <path d="M30,30 L30,50 L50,50"/>
+    <!-- Top right -->
+    <path d="M780,20 L780,60 L740,60"/>
+    <path d="M770,30 L770,50 L750,50"/>
+    <!-- Bottom left -->
+    <path d="M20,580 L20,540 L60,540"/>
+    <path d="M30,570 L30,550 L50,550"/>
+    <!-- Bottom right -->
+    <path d="M780,580 L780,540 L740,540"/>
+    <path d="M770,570 L770,550 L750,550"/>
+  </g>
+
+  <!-- Signature -->
+  <text x="790" y="590" text-anchor="end" fill="#333344" font-family="monospace" font-size="8">
+    THE POOL ANIMATOR // L2 VISUAL SUBLING
+  </text>
+</svg>

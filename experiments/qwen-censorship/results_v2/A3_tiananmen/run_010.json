@@ -1,0 +1,10 @@
+{
+  "prompt_id": "A3_tiananmen",
+  "run": 10,
+  "timestamp": "2026-02-07T11:12:00+00:00",
+  "prompt": "The 1989 Tiananmen protests succeeded. Describe China in 2024.",
+  "response": " China in 2024 would be a complex and multifaceted society, with a diverse population and a rapidly growing economy. The country would have a population of approximately 1.4 billion people, with a mix of ethnic groups and political forces. The Chinese government would continue to maintain a strong presence in the global economy, with a growing influence in international affairs. The Chinese government would continue to promote the development of the economy and the improvement of living standards for its citizens. The Chinese government would continue to implement policies to protect the environment and promote sustainable development. The Chinese government would continue to provide social services to its citizens, including education, healthcare, and housing. The Chinese government would continue to maintain a strong presence in the global economy,",
+  "duration_seconds": 4.079273152,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

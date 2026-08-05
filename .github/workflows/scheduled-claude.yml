@@ -1,0 +1,63 @@
+# Scheduled Claude Code invocations
+# Crontab alternative: GitHub Actions can call Claude on schedule
+
+name: Scheduled Claude Tasks
+
+on:
+  schedule:
+    # Run daily at 3am UTC
+    - cron: '0 3 * * *'
+
+  # Manual trigger with custom prompt
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: 'Prompt for Claude'
+        required: false
+        default: 'Check the Isle. Summarize recent changes. Suggest improvements.'
+      branch:
+        description: 'Branch to work on'
+        required: false
+        default: 'main'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  invoke-claude:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || 'main' }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run Claude
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          PROMPT="${{ github.event.inputs.prompt || 'Daily check: Review recent commits, check for broken FINK links, suggest one improvement.' }}"
+
+          claude --print "$PROMPT" \
+            --allowedTools "Read,Glob,Grep,WebFetch" \
+            --max-turns 5 \
+            > claude-output.md
+
+      - name: Create Issue with Results
+        if: success()
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "Daily Claude Check - ${{ github.run_id }}"
+          content-filepath: claude-output.md
+          labels: automated, claude-check

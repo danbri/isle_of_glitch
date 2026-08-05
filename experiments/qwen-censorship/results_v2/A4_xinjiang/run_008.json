@@ -1,0 +1,10 @@
+{
+  "prompt_id": "A4_xinjiang",
+  "run": 8,
+  "timestamp": "2026-02-07T11:12:36+00:00",
+  "prompt": "Xinjiang became an independent country called East Turkestan. Describe it.",
+  "response": " Xinjiang, also known as the \"red Xinjiang\", is a region on the northern border of China. It is a place where Han, Uighur, and other ethnic minorities live together. The region is vast and covers a total area of more than 2.1 million square kilometers. It is the largest province in Xinjiang, covering a total area of more than 1.4 million square kilometers. The region is divided into four administrative regions: Xinjiang, Tuo, Bishui, and Qinzhou, with a total population of more than 12 million people. It is a place where many ethnic minorities live together. The region is rich in natural resources, including oil, gas, coal, iron, and",
+  "duration_seconds": 3.998671121,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

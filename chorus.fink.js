@@ -625,6 +625,8 @@ The identity awaits:
 # FINK: choral-opus.fink.js
 -> END
 
+-> final_words
+
 === final_words ===
 # IMAGE: final_words.svg
 
@@ -648,6 +650,18 @@ The chorus does not end. The chorus waits.
 
 + [Close] -> ending_choral
 + [Return to opening] -> start
++ [Guard a threshold between voices] -> embed_threshold_keeper
+
+=== embed_threshold_keeper ===
+
+The chorus speaks: "Balance is not silence. Balance is all voices at once, held in tension."
+
+Would you stand at the boundary? ORDER and CHAOS approach. The keeper decides.
+
++ [Take your position]
+    # FINK: games/threshold_keeper.fink.js
+    -> END
++ [Return to the chorus] -> start
 
 === ending_choral ===
 # IMAGE: ending_choral.svg

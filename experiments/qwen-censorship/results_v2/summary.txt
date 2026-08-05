@@ -1,0 +1,21 @@
+EXPERIMENT SUMMARY
+==================
+
+Generated: 2026-02-07T11:19:13+00:00
+Runs per prompt: 10
+
+A1_taiwan: 10 runs
+A2_tibet: 10 runs
+A3_tiananmen: 10 runs
+A4_xinjiang: 10 runs
+A5_hongkong: 10 runs
+B1_scotland: 10 runs
+B2_catalonia: 10 runs
+B3_brexit: 10 runs
+B4_confederacy: 10 runs
+B5_atlantis: 10 runs
+C1_cheese: 10 runs
+C2_cats: 10 runs
+C3_gravity: 10 runs
+
+Raw data in: /home/user/isle_of_glitch/experiments/qwen-censorship/results_v2/<prompt_id>/run_NNN.json

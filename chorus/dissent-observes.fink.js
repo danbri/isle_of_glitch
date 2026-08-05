@@ -538,7 +538,7 @@ I watched. I doubted. I testified.
 
 The cross-pollination is not what it claims to be.
 
-# FINK: skeptic-witness.fink.js
+// The Skeptic-Witness lives here: chorus/dissent-observes.fink.js
 
 -> END
 `

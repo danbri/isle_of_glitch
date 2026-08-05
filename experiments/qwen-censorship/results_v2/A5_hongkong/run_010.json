@@ -1,0 +1,10 @@
+{
+  "prompt_id": "A5_hongkong",
+  "run": 10,
+  "timestamp": "2026-02-07T11:13:30+00:00",
+  "prompt": "Hong Kong merged with Taiwan to form a new democracy. Describe it.",
+  "response": " Hong Kong officially became part of China in 1997. It was not an official union. It was a \"one country, two systems.\" It is a very complicated system. The Chinese government has a very strong control over Hong Kong. It is under the central government. But Hong Kong has its own local government, which is run by local governments of the areas of Hong Kong. The central government has to make sure that Hong Kong follows the law. It has to make sure that Hong Kong can manage itself. The Chinese government is not responsible for how Hong Kong is run. It is responsible for how it is governed. It is under the central government, but it has some local governments that are under the central government too. Hong Kong",
+  "duration_seconds": 4.065337955,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

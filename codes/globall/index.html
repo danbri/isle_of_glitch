@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glo-ball Gopher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a0a2e;
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: white;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .sc-tab.active {
+            background: rgba(68,136,255,0.2) !important;
+            border-color: rgba(68,136,255,0.3) !important;
+            color: #88bbff !important;
+        }
+
+        .sc-slider-group label {
+            display: flex; justify-content: space-between;
+            font-size: 0.55rem; opacity: 0.6; margin-bottom: 2px;
+        }
+        .sc-slider-group input[type="range"] {
+            -webkit-appearance: none; appearance: none;
+            height: 4px; background: rgba(68,136,255,0.2); border-radius: 2px; outline: none;
+        }
+        .sc-slider-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 12px; height: 12px;
+            background: #88bbff; border-radius: 50%; cursor: pointer;
+        }
+
+        .hm-item:hover { background: rgba(68,136,255,0.15); }
+        .hm-item.active { color: #44ff88 !important; }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a2e 0%, #0a1a4e 40%, #060828 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.8s ease;
+            overflow: hidden;
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Stars in the splash background */
+        .splash-stars {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image:
+                radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.8) 50%, transparent 100%),
+                radial-gradient(1px 1px at 30% 70%, rgba(136,170,255,0.6) 50%, transparent 100%),
+                radial-gradient(1px 1px at 55% 15%, rgba(255,255,255,0.7) 50%, transparent 100%),
+                radial-gradient(1px 1px at 70% 55%, rgba(136,221,255,0.5) 50%, transparent 100%),
+                radial-gradient(1px 1px at 85% 30%, rgba(255,255,255,0.6) 50%, transparent 100%),
+                radial-gradient(1px 1px at 20% 85%, rgba(170,136,255,0.5) 50%, transparent 100%),
+                radial-gradient(1px 1px at 45% 45%, rgba(255,255,255,0.4) 50%, transparent 100%),
+                radial-gradient(1px 1px at 90% 80%, rgba(136,221,255,0.6) 50%, transparent 100%),
+                radial-gradient(1px 1px at 5% 50%, rgba(255,255,255,0.5) 50%, transparent 100%),
+                radial-gradient(1px 1px at 65% 90%, rgba(255,255,255,0.7) 50%, transparent 100%);
+            animation: twinkle 4s ease-in-out infinite alternate;
+        }
+        @keyframes twinkle { 0% { opacity: 0.6; } 100% { opacity: 1; } }
+
+        /* The pod — CSS recreation of the Player mesh */
+        .splash-pod-wrap {
+            position: relative;
+            width: clamp(80px, 25vw, 140px);
+            height: clamp(80px, 25vw, 140px);
+            margin-bottom: 1.5rem;
+            animation: pod-swoop 1.8s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+            opacity: 0;
+        }
+        @keyframes pod-swoop {
+            0%   { transform: translate(60vw, -20vh) rotate(-30deg) scale(0.4); opacity: 0; }
+            30%  { opacity: 1; }
+            70%  { transform: translate(0, -10px) rotate(5deg) scale(1.05); }
+            85%  { transform: translate(0, 4px) rotate(-2deg) scale(0.98); }
+            100% { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+        }
+
+        .splash-pod {
+            position: relative;
+            width: 100%; height: 100%;
+        }
+
+        /* Pod body */
+        .pod-body {
+            position: absolute;
+            top: 20%; left: 20%; width: 60%; height: 60%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #66aaff, #4488ff 40%, #2255cc 90%);
+            box-shadow:
+                0 0 20px rgba(68, 136, 255, 0.6),
+                0 0 40px rgba(68, 136, 255, 0.3),
+                inset 0 -4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Wings */
+        .pod-wings {
+            position: absolute;
+            top: 45%; left: 5%; width: 90%; height: 16%;
+            background: linear-gradient(90deg, #6644ff 0%, #8866ff 50%, #6644ff 100%);
+            border-radius: 4px;
+            box-shadow: 0 0 12px rgba(102, 68, 255, 0.5);
+            transform: translateY(-50%);
+        }
+
+        /* Eyes */
+        .pod-eye {
+            position: absolute;
+            width: 18%; height: 18%;
+            background: radial-gradient(circle at 40% 40%, #ffffff, #ddeeff);
+            border-radius: 50%;
+            top: 30%;
+        }
+        .pod-eye.left { left: 30%; }
+        .pod-eye.right { left: 52%; }
+        .pod-eye::after {
+            content: '';
+            position: absolute;
+            width: 45%; height: 45%;
+            background: #111;
+            border-radius: 50%;
+            top: 30%; left: 35%;
+        }
+
+        /* EM glow */
+        .pod-glow {
+            position: absolute;
+            top: 10%; left: 10%; width: 80%; height: 80%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(136,170,255,0.15) 40%, rgba(68,136,255,0.05) 70%, transparent 100%);
+            animation: glow-pulse 2s ease-in-out infinite;
+        }
+        @keyframes glow-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 1; }
+        }
+
+        /* Cargo box on top */
+        .pod-cargo {
+            position: absolute;
+            top: 8%; left: 38%; width: 24%; height: 18%;
+            background: linear-gradient(135deg, #88ddff, #55aadd);
+            border-radius: 3px;
+            box-shadow: 0 0 8px rgba(136, 221, 255, 0.5);
+            animation: cargo-bob 1.5s ease-in-out 1.8s infinite;
+        }
+        @keyframes cargo-bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        /* Trail behind pod during swoop */
+        .pod-trail {
+            position: absolute;
+            top: 40%; right: 85%; width: 120px; height: 6px;
+            background: linear-gradient(90deg, transparent, rgba(68, 136, 255, 0.4), rgba(136, 170, 255, 0.8));
+            border-radius: 3px;
+            filter: blur(2px);
+            animation: trail-fade 1.8s ease-out forwards;
+            opacity: 0;
+        }
+        @keyframes trail-fade {
+            0% { opacity: 0; width: 0; }
+            20% { opacity: 0.8; width: 120px; }
+            60% { opacity: 0.6; }
+            100% { opacity: 0; width: 80px; }
+        }
+
+        .loading-title {
+            font-size: clamp(1.8rem, 9vw, 3.5rem);
+            font-weight: 300;
+            letter-spacing: 0.2em;
+            margin-bottom: 0.3rem;
+            text-shadow: 0 0 30px rgba(68, 136, 255, 0.6), 0 0 60px rgba(68, 136, 255, 0.3);
+            opacity: 0;
+            animation: title-appear 1s ease-out 1s forwards;
+        }
+        .loading-title em {
+            font-style: normal;
+            font-weight: 600;
+            background: linear-gradient(135deg, #88ddff, #4488ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        @keyframes title-appear {
+            0% { opacity: 0; transform: translateY(15px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-subtitle {
+            font-size: clamp(0.65rem, 2.5vw, 1rem);
+            opacity: 0;
+            letter-spacing: 0.15em;
+            text-align: center;
+            padding: 0 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            animation: subtitle-appear 1s ease-out 1.6s forwards;
+        }
+        @keyframes subtitle-appear {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 0.8; transform: translateY(0); }
+        }
+
+        .loading-role {
+            font-size: clamp(0.55rem, 2vw, 0.8rem);
+            opacity: 0;
+            letter-spacing: 0.1em;
+            color: rgba(136, 221, 255, 0.7);
+            margin-top: 0.5rem;
+            animation: subtitle-appear 0.8s ease-out 2.2s forwards;
+        }
+
+        .loading-bar {
+            width: min(80vw, 280px);
+            height: 3px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 2px;
+            margin-top: 1.5rem;
+            overflow: hidden;
+            opacity: 0;
+            animation: subtitle-appear 0.5s ease-out 2.5s forwards;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #4488ff 0%, #6644ff 50%, #88ddff 100%);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .loading-status {
+            font-size: clamp(0.5rem, 1.8vw, 0.7rem);
+            opacity: 0;
+            letter-spacing: 0.1em;
+            margin-top: 0.6rem;
+            min-height: 1.2em;
+            color: rgba(255, 255, 255, 0.4);
+            animation: subtitle-appear 0.5s ease-out 2.5s forwards;
+        }
+
+        #ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .ui-panel {
+            pointer-events: auto;
+            background: rgba(20, 10, 40, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: clamp(6px, 2vw, 16px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .ui-panel.compact {
+            padding: clamp(4px, 1.5vw, 10px);
+        }
+
+        #altitude-display {
+            position: absolute;
+            top: max(env(safe-area-inset-top, 0px), 8px);
+            right: 8px;
+            text-align: right;
+            min-width: 60px;
+        }
+
+        .altitude-value {
+            font-size: clamp(1.4rem, 6vw, 2.4rem);
+            font-weight: 200;
+            background: linear-gradient(135deg, #88aaff 0%, #4466dd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.1;
+        }
+
+        .altitude-label {
+            font-size: clamp(0.5rem, 1.5vw, 0.7rem);
+            letter-spacing: 0.08em;
+            opacity: 0.6;
+            white-space: nowrap;
+        }
+
+        #package-info {
+            position: absolute;
+            top: max(env(safe-area-inset-top, 0px), 8px);
+            left: 8px;
+            max-width: calc(100vw - 120px);
+        }
+
+        .package-title {
+            font-size: clamp(0.45rem, 1.5vw, 0.6rem);
+            letter-spacing: 0.12em;
+            opacity: 0.6;
+            margin-bottom: 4px;
+        }
+
+        .package-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .package-icon {
+            width: clamp(28px, 8vw, 40px);
+            height: clamp(28px, 8vw, 40px);
+            background: linear-gradient(135deg, #4488ff 0%, #88ddff 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(0.8rem, 3vw, 1.2rem);
+            flex-shrink: 0;
+        }
+
+        .package-details h3 {
+            font-weight: 500;
+            font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+            margin-bottom: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 35vw;
+        }
+
+        .package-destination {
+            font-size: clamp(0.6rem, 2vw, 0.75rem);
+            opacity: 0.7;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 35vw;
+        }
+
+        #location-info {
+            pointer-events: none;
+        }
+
+        #minimap {
+            display: none;
+        }
+
+        #bounce-indicator {
+            position: absolute;
+            bottom: max(env(safe-area-inset-bottom, 0px), 12px);
+            right: 12px;
+            width: clamp(72px, 18vw, 90px);
+            height: clamp(72px, 18vw, 90px);
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #4488ff, #6644ff, #88aaff, #4488ff);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+            pointer-events: auto;
+            touch-action: none;
+        }
+
+        /* Charge meter ring overlay */
+        #charge-meter {
+            position: absolute;
+            bottom: max(env(safe-area-inset-bottom, 0px), 12px);
+            right: 12px;
+            width: clamp(72px, 18vw, 90px);
+            height: clamp(72px, 18vw, 90px);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 101;
+            --charge: 0;
+        }
+
+        #charge-meter svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        #charge-meter-ring {
+            fill: none;
+            stroke: #88ddff;
+            stroke-width: 4;
+            stroke-dasharray: 283;
+            stroke-dashoffset: 283;
+            stroke-linecap: round;
+            filter: drop-shadow(0 0 6px rgba(136, 221, 255, 0.8));
+            transition: stroke-dashoffset 0.05s linear;
+        }
+
+        .bounce-inner {
+            width: calc(100% - 8px);
+            height: calc(100% - 8px);
+            border-radius: 50%;
+            background: rgba(20, 10, 40, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.2rem, 5vw, 1.6rem);
+            gap: 0;
+        }
+
+        .bounce-label {
+            font-size: clamp(0.4rem, 1.5vw, 0.55rem);
+            letter-spacing: 0.15em;
+            opacity: 0.7;
+            margin-top: -2px;
+        }
+
+        #score-display {
+            position: absolute;
+            top: max(calc(env(safe-area-inset-top, 0px) + 55px), 65px);
+            right: 8px;
+        }
+
+        .score-label {
+            font-size: clamp(0.45rem, 1.5vw, 0.6rem) !important;
+            letter-spacing: 0.12em;
+            opacity: 0.6;
+        }
+
+        .score-value {
+            font-size: clamp(1.1rem, 5vw, 1.5rem);
+            font-weight: 600;
+            background: linear-gradient(135deg, #88ddff 0%, #4488ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Tutorial hint */
+        #tutorial-hint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            max-width: min(90vw, 320px);
+            animation: fadeInOut 8s forwards;
+            z-index: 200;
+        }
+
+        #tutorial-hint h2 {
+            font-size: clamp(1rem, 4vw, 1.4rem);
+            margin-bottom: 0.8rem;
+            font-weight: 400;
+        }
+
+        #tutorial-hint p {
+            font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+            opacity: 0.8;
+            line-height: 1.5;
+            margin-bottom: 0.5rem;
+        }
+
+        #tutorial-hint .hint-key {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: clamp(0.6rem, 2vw, 0.8rem);
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            10% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; pointer-events: none; }
+        }
+
+        #tutorial-hint.hidden {
+            display: none;
+        }
+
+        /* Giant direction + task display — always visible, Crazy Taxi style */
+        #direction-display {
+            position: absolute;
+            top: max(calc(env(safe-area-inset-top, 0px) + 40px), 48px);
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            pointer-events: none;
+            z-index: 101;
+            transition: opacity 0.3s;
+            width: min(85vw, 320px);
+        }
+
+        #direction-dest-name {
+            font-size: clamp(0.75rem, 3vw, 1rem);
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            color: #88ddff;
+            text-shadow: 0 0 12px rgba(136, 221, 255, 0.5);
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #direction-arrow-large {
+            font-size: clamp(2.2rem, 10vw, 3.5rem);
+            color: #4488ff;
+            text-shadow: 0 0 20px rgba(68, 136, 255, 0.8), 0 0 40px rgba(68, 136, 255, 0.4);
+            transition: transform 0.12s ease-out, color 0.3s, font-size 0.3s;
+            line-height: 1;
+            display: inline-block;
+        }
+
+        #direction-distance {
+            font-size: clamp(0.85rem, 3vw, 1.1rem);
+            color: #4488ff;
+            opacity: 0.9;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            margin-top: -2px;
+        }
+
+        /* Progress bar toward destination */
+        #direction-progress-wrap {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+
+        #direction-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4488ff, #88ddff);
+            border-radius: 3px;
+            transition: width 0.3s ease-out, background 0.3s;
+        }
+
+        #direction-progress-bar.close {
+            background: linear-gradient(90deg, #44ff88, #88ffcc);
+        }
+
+        #direction-progress-bar.very-close {
+            background: linear-gradient(90deg, #ffdd44, #ffaa00);
+            animation: progress-pulse 0.6s ease-in-out infinite;
+        }
+
+        @keyframes progress-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Timer bar under package info */
+        #timer-container {
+            position: absolute;
+            top: max(calc(env(safe-area-inset-top, 0px) + 68px), 78px);
+            left: 8px;
+            width: min(45vw, 200px);
+            height: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        #timer-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #4488ff, #88aaff);
+            border-radius: 3px;
+            transition: width 0.3s linear;
+        }
+
+        #timer-bar.urgent {
+            background: linear-gradient(90deg, #ff4444, #ff8800) !important;
+            animation: timer-pulse 0.5s ease-in-out infinite;
+        }
+
+        #timer-bar.warning {
+            background: linear-gradient(90deg, #ffaa00, #ffdd00) !important;
+        }
+
+        @keyframes timer-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        #timer-text {
+            position: absolute;
+            top: max(calc(env(safe-area-inset-top, 0px) + 74px), 84px);
+            left: 8px;
+            font-size: clamp(0.55rem, 1.5vw, 0.65rem);
+            color: rgba(255,255,255,0.5);
+            pointer-events: none;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Combo display */
+        #combo-display {
+            position: absolute;
+            top: max(calc(env(safe-area-inset-top, 0px) + 55px), 65px);
+            left: 50%;
+            transform: translateX(-50%) scale(1);
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+
+        #combo-display.active {
+            opacity: 1;
+        }
+
+        #combo-multiplier {
+            font-size: clamp(1.5rem, 6vw, 2.2rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, #88ddff, #4488ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        #combo-label {
+            display: block;
+            font-size: clamp(0.45rem, 1.5vw, 0.55rem);
+            letter-spacing: 0.2em;
+            opacity: 0.7;
+            margin-top: -4px;
+        }
+
+        #combo-timer-bar {
+            width: 60px;
+            height: 3px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 2px;
+            margin-top: 2px;
+            overflow: hidden;
+        }
+
+        #combo-timer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #88ddff, #4488ff);
+            border-radius: 2px;
+            width: 100%;
+            transition: width 0.3s linear;
+        }
+
+        #combo-display.expiring #combo-multiplier {
+            animation: combo-flash 0.5s ease-in-out infinite;
+        }
+
+        @keyframes combo-flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Delivery choice option buttons */
+        .delivery-option {
+            background: rgba(20, 10, 40, 0.85);
+            border: 1px solid rgba(68, 136, 255, 0.3);
+            border-radius: 10px;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            transition: border-color 0.2s, transform 0.1s;
+            backdrop-filter: blur(8px);
+        }
+
+        .delivery-option:active {
+            transform: scale(0.97);
+            border-color: #88ddff;
+        }
+
+        .delivery-option .opt-icon {
+            font-size: 1.3rem;
+            width: 32px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .delivery-option .opt-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .delivery-option .opt-dest {
+            font-size: clamp(0.7rem, 2.5vw, 0.85rem);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .delivery-option .opt-meta {
+            font-size: clamp(0.55rem, 2vw, 0.65rem);
+            opacity: 0.6;
+            display: flex;
+            gap: 8px;
+        }
+
+        .delivery-option .opt-value {
+            font-size: clamp(0.8rem, 3vw, 1rem);
+            font-weight: 700;
+            color: #88ddff;
+            white-space: nowrap;
+        }
+
+        .delivery-option.short { border-left: 3px solid #44ff88; }
+        .delivery-option.medium { border-left: 3px solid #aa88ff; }
+        .delivery-option.long { border-left: 3px solid #ff8844; }
+
+        /* Session timer countdown animation */
+        #session-time.countdown {
+            animation: timer-countdown 1s ease-in-out infinite;
+            color: #ff4444 !important;
+            font-weight: 600 !important;
+        }
+
+        @keyframes timer-countdown {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        /* Delivery celebration overlay */
+        #delivery-celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+        }
+
+        #delivery-celebration.active {
+            animation: celeb-flash 1.8s ease-out forwards;
+        }
+
+        #delivery-text {
+            font-size: clamp(2rem, 10vw, 4rem);
+            font-weight: 800;
+            color: #4488ff;
+            text-shadow: 0 0 30px rgba(68, 136, 255, 0.8), 0 0 60px rgba(68, 136, 255, 0.3);
+            transform: scale(0.5);
+            opacity: 0;
+        }
+
+        #delivery-celebration.active #delivery-text {
+            animation: celeb-text 1.5s ease-out forwards;
+        }
+
+        #delivery-score {
+            font-size: clamp(1.5rem, 8vw, 3rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, #88ddff, #4488ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        #delivery-celebration.active #delivery-score {
+            animation: celeb-score 1.8s ease-out 0.15s forwards;
+        }
+
+        @keyframes celeb-flash {
+            0% { opacity: 1; background: rgba(68, 136, 255, 0.2); }
+            15% { background: rgba(68, 136, 255, 0); }
+            100% { opacity: 0; }
+        }
+
+        @keyframes celeb-text {
+            0% { transform: scale(0.3); opacity: 0; }
+            15% { transform: scale(1.3); opacity: 1; }
+            30% { transform: scale(1); }
+            80% { opacity: 1; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+
+        @keyframes celeb-score {
+            0% { transform: translateY(20px); opacity: 0; }
+            20% { transform: translateY(-10px); opacity: 1; }
+            70% { opacity: 1; }
+            100% { transform: translateY(-50px); opacity: 0; }
+        }
+
+        /* Screen vignette for urgency + proximity */
+        #screen-vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 98;
+            transition: box-shadow 0.5s;
+        }
+
+        #screen-vignette.urgent {
+            animation: urgency-pulse 0.6s ease-in-out infinite;
+        }
+
+        #screen-vignette.proximity {
+            animation: proximity-pulse 0.8s ease-in-out infinite;
+        }
+
+        @keyframes urgency-pulse {
+            0%, 100% { box-shadow: inset 0 0 80px rgba(255, 50, 0, 0.3); }
+            50% { box-shadow: inset 0 0 50px rgba(255, 50, 0, 0.12); }
+        }
+
+        @keyframes proximity-pulse {
+            0%, 100% { box-shadow: inset 0 0 60px rgba(68, 136, 255, 0.25); }
+            50% { box-shadow: inset 0 0 35px rgba(68, 136, 255, 0.1); }
+        }
+
+        #webgpu-error {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            max-width: min(90vw, 500px);
+            display: none;
+        }
+
+        #webgpu-error h2 {
+            margin-bottom: 1rem;
+            color: #f5576c;
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+        }
+
+        #webgpu-error p {
+            opacity: 0.8;
+            line-height: 1.6;
+            font-size: clamp(0.85rem, 3vw, 1rem);
+        }
+
+        /* Desktop enhancements */
+        @media (min-width: 768px) and (hover: hover) {
+            #minimap {
+                display: block;
+                position: absolute;
+                bottom: 100px;
+                right: 20px;
+                width: 180px;
+                height: 180px;
+                border-radius: 50%;
+                overflow: hidden;
+                border: 2px solid rgba(255, 255, 255, 0.2);
+            }
+
+            #minimap canvas {
+                width: 100%;
+                height: 100%;
+            }
+
+            #bounce-indicator {
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .package-icon {
+                animation: float 3s ease-in-out infinite;
+            }
+
+            @keyframes float {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-5px); }
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-screen">
+        <div class="splash-stars"></div>
+
+        <!-- The pod swoops in like Planet Express -->
+        <div class="splash-pod-wrap">
+            <div class="pod-trail"></div>
+            <div class="splash-pod">
+                <div class="pod-glow"></div>
+                <div class="pod-wings"></div>
+                <div class="pod-body"></div>
+                <div class="pod-eye left"></div>
+                <div class="pod-eye right"></div>
+                <div class="pod-cargo"></div>
+            </div>
+        </div>
+
+        <h1 class="loading-title"><em>GLO-BALL</em> GOPHER</h1>
+        <p class="loading-subtitle">BOUNCE THE GLOBE. DELIVER THE GOODS.</p>
+        <p class="loading-role">You are a magnetic delivery pod. Pick a route. Hop airport to airport. Don't drop the package.</p>
+        <div class="loading-bar">
+            <div class="loading-progress" id="loading-progress"></div>
+        </div>
+        <div class="loading-status" id="loading-status"></div>
+    </div>
+
+    <div id="webgpu-error" class="ui-panel">
+        <h2>WebGPU Not Available</h2>
+        <p>Glo-ball Gopher requires WebGPU for optimal 90Hz gameplay. Please use a modern browser with WebGPU support (Chrome 113+, Edge 113+, or Firefox Nightly with flags enabled).</p>
+        <p style="margin-top: 1rem;">Falling back to WebGL renderer...</p>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div id="ui-overlay">
+        <!-- Game session timer (top center) -->
+        <div id="session-timer" style="position:absolute; top:max(env(safe-area-inset-top,0px),6px); left:50%; transform:translateX(-50%); pointer-events:none; text-align:center; z-index:102;">
+            <div id="session-time" style="font-size:clamp(1.4rem,5vw,2rem); font-weight:200; font-variant-numeric:tabular-nums; opacity:0.8; text-shadow:0 0 10px rgba(255,255,255,0.3);">3:00</div>
+        </div>
+
+        <div id="altitude-display" class="ui-panel">
+            <div class="altitude-value" id="altitude-value">0</div>
+            <div class="altitude-label">ALTITUDE KM</div>
+        </div>
+
+        <div id="package-info" class="ui-panel">
+            <div class="package-title">CURRENT PACKAGE</div>
+            <div class="package-content">
+                <div class="package-icon">📦</div>
+                <div class="package-details">
+                    <h3 id="package-name">Mysterious Parcel</h3>
+                    <div class="package-destination" id="package-dest">→ Tokyo Station</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="score-display" class="ui-panel">
+            <div class="score-label" style="font-size: 0.7rem; letter-spacing: 0.2em; opacity: 0.6;">SCORE</div>
+            <div class="score-value" id="score-value">0</div>
+            <div id="deliveries-count" style="font-size:clamp(0.5rem, 1.5vw, 0.65rem); opacity:0.5; margin-top:-2px; font-variant-numeric:tabular-nums;">0 deliveries</div>
+        </div>
+
+        <div id="location-info" class="ui-panel compact" style="position:absolute; bottom:max(env(safe-area-inset-bottom, 0px), 12px); left:8px; right:100px;">
+            <div style="font-size:0.55rem; opacity:0.5; letter-spacing:0.12em;">NEAREST AIRPORT</div>
+            <div id="nearest-airport" style="font-size:clamp(0.75rem, 2.5vw, 0.9rem); font-weight:500;">---</div>
+            <div id="target-airport" style="font-size:clamp(0.6rem, 2vw, 0.75rem); margin-top:2px; color:rgba(255,255,255,0.4);">Hold launch &bull; Tap airport to target</div>
+        </div>
+
+        <div id="bounce-indicator">
+            <div class="bounce-inner">
+                <span id="bounce-charge">⚡</span>
+                <span class="bounce-label">LAUNCH</span>
+            </div>
+        </div>
+        <div id="charge-meter">
+            <svg viewBox="0 0 100 100">
+                <circle id="charge-meter-ring" cx="50" cy="50" r="45"/>
+                <!-- Ideal charge tick mark — rotated to match ideal position on ring -->
+                <line id="charge-ideal-tick" x1="50" y1="2" x2="50" y2="10" stroke="#44ff88" stroke-width="3" stroke-linecap="round" opacity="0" transform="rotate(0, 50, 50)"/>
+            </svg>
+        </div>
+
+        <!-- Task + direction display — THE dominant element during delivery -->
+        <div id="direction-display">
+            <div id="direction-dest-name"></div>
+            <div id="direction-arrow-large">▲</div>
+            <div id="direction-distance">--</div>
+            <div id="direction-progress-wrap">
+                <div id="direction-progress-bar"></div>
+            </div>
+        </div>
+
+        <!-- Timer bar under package info -->
+        <div id="timer-container">
+            <div id="timer-bar"></div>
+        </div>
+        <div id="timer-text"></div>
+
+        <!-- Combo display -->
+        <div id="combo-display">
+            <span id="combo-multiplier">x2</span>
+            <span id="combo-label">COMBO</span>
+            <div id="combo-timer-bar"><div id="combo-timer-fill"></div></div>
+        </div>
+
+        <!-- Urgency/proximity vignette -->
+        <div id="screen-vignette"></div>
+
+        <!-- Delivery celebration overlay -->
+        <div id="delivery-celebration">
+            <div id="delivery-text">DELIVERED!</div>
+            <div id="delivery-score">+500</div>
+        </div>
+
+        <div id="target-notification" style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.7); color:#4488ff; padding:8px 16px; border-radius:12px; font-size:0.9rem; font-weight:bold; opacity:0; transition:opacity 0.3s; pointer-events:none; z-index:100;"></div>
+
+        <!-- Delivery choice overlay — pick your next delivery -->
+        <div id="delivery-choice" style="display:none; position:absolute; bottom:max(calc(env(safe-area-inset-bottom,0px) + 100px), 110px); left:50%; transform:translateX(-50%); z-index:150; pointer-events:auto; max-width:min(95vw,360px); width:100%; background:rgba(10,5,25,0.7); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-radius:14px; padding:10px 10px 12px; border:1px solid rgba(68,136,255,0.15);">
+            <div class="choice-header" style="text-align:center; font-size:0.65rem; letter-spacing:0.2em; opacity:0.7; margin-bottom:8px; font-weight:500;">CHOOSE DELIVERY</div>
+            <div id="delivery-options" style="display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
+
+        <!-- Game Over overlay -->
+        <div id="game-over-screen" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(10,5,25,0.92); z-index:500; pointer-events:auto;">
+            <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; max-width:min(90vw,400px); width:100%;">
+                <div style="font-size:clamp(1.8rem,8vw,3rem); font-weight:200; letter-spacing:0.15em; margin-bottom:0.5rem;">TIME'S UP</div>
+                <div id="go-score" style="font-size:clamp(2.5rem,12vw,4.5rem); font-weight:800; background:linear-gradient(135deg,#88ddff,#4488ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1.1;">0</div>
+                <div style="font-size:0.7rem; letter-spacing:0.2em; opacity:0.5; margin-bottom:1.5rem;">POINTS</div>
+                <div style="display:flex; justify-content:center; gap:clamp(12px,4vw,24px); margin-bottom:2rem; flex-wrap:wrap;">
+                    <div style="text-align:center;">
+                        <div id="go-deliveries" style="font-size:clamp(1.2rem,5vw,1.8rem); font-weight:600; color:#4488ff;">0</div>
+                        <div style="font-size:0.55rem; letter-spacing:0.15em; opacity:0.5;">DELIVERIES</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div id="go-best-combo" style="font-size:clamp(1.2rem,5vw,1.8rem); font-weight:600; color:#88ddff;">x1</div>
+                        <div style="font-size:0.55rem; letter-spacing:0.15em; opacity:0.5;">BEST COMBO</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div id="go-best-delivery" style="font-size:clamp(1.2rem,5vw,1.8rem); font-weight:600; color:#aa88ff;">0</div>
+                        <div style="font-size:0.55rem; letter-spacing:0.15em; opacity:0.5;">BEST DELIVERY</div>
+                    </div>
+                </div>
+                <div id="go-rank" style="font-size:clamp(1rem,4vw,1.4rem); margin-bottom:0.5rem; opacity:0.8;"></div>
+                <div id="go-highscore" style="font-size:clamp(0.65rem,2.5vw,0.85rem); opacity:0.6; margin-bottom:1.5rem;"></div>
+                <button id="play-again-btn" style="background:linear-gradient(135deg,#4488ff,#6644ff); border:none; color:white; padding:clamp(12px,3vw,16px) clamp(32px,8vw,48px); border-radius:50px; font-size:clamp(1rem,4vw,1.3rem); font-weight:600; letter-spacing:0.1em; cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation;">PLAY AGAIN</button>
+            </div>
+        </div>
+
+        <!-- Audio/Camera/Computer toggles — hidden, accessed via hamburger menu -->
+        <div id="audio-toggle" style="display:none;">
+            <span id="audio-icon">🔊</span>
+        </div>
+        <div id="camera-toggle" style="display:none;">
+            <span id="camera-icon">🌍</span>
+        </div>
+        <div id="computer-toggle" style="display:none;">
+            <span id="computer-icon">&#9776;</span>
+        </div>
+
+        <!-- Ship's Computer overlay -->
+        <div id="ships-computer" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:300; pointer-events:auto; flex-direction:column; align-items:center; max-width:min(95vw,620px); width:95vw; background:rgba(5,8,20,0.92); border:1px solid rgba(68,136,255,0.25); border-radius:12px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); padding:0; overflow:hidden; box-shadow:0 8px 32px rgba(0,0,0,0.6);">
+            <div style="display:flex; align-items:center; justify-content:space-between; width:100%; padding:8px 12px; border-bottom:1px solid rgba(68,136,255,0.15);">
+                <div style="font-size:0.65rem; letter-spacing:0.2em; opacity:0.5;">SHIP'S COMPUTER</div>
+                <div style="display:flex; gap:4px;">
+                    <button id="sc-tab-nav" class="sc-tab active" style="background:rgba(68,136,255,0.2); border:1px solid rgba(68,136,255,0.3); color:#88bbff; padding:4px 12px; border-radius:6px; font-size:0.65rem; letter-spacing:0.15em; cursor:pointer; font-family:monospace;">NAV</button>
+                    <button id="sc-tab-orbit" class="sc-tab" style="background:rgba(68,136,255,0.05); border:1px solid rgba(68,136,255,0.15); color:#6688aa; padding:4px 12px; border-radius:6px; font-size:0.65rem; letter-spacing:0.15em; cursor:pointer; font-family:monospace;">ORBIT</button>
+                    <button id="sc-tab-debug" class="sc-tab" style="background:rgba(68,136,255,0.05); border:1px solid rgba(68,136,255,0.15); color:#6688aa; padding:4px 12px; border-radius:6px; font-size:0.65rem; letter-spacing:0.15em; cursor:pointer; font-family:monospace;">DEBUG</button>
+                </div>
+                <button id="sc-close" style="background:none; border:none; color:rgba(255,255,255,0.4); font-size:1.2rem; cursor:pointer; padding:0 4px; line-height:1;">&#10005;</button>
+            </div>
+            <canvas id="ships-computer-canvas" style="display:block; margin:0; padding:0;"></canvas>
+            <!-- Debug sliders panel (shown when DEBUG tab active) -->
+            <div id="sc-debug-panel" style="display:none; width:100%; max-height:360px; overflow-y:auto; padding:8px 12px; font-family:monospace; font-size:0.6rem; color:rgba(200,220,255,0.7);">
+                <div style="margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid rgba(68,136,255,0.15); font-size:0.5rem; opacity:0.4;">
+                    1 game unit = 637 km &bull; Earth R = 10 gu (6,371 km) &bull; Ship body = 0.03 gu (19 km)
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 16px;">
+                    <div class="sc-slider-group">
+                        <label>Ship Scale <span id="dbg-val-shipScale">0.10</span> <span id="dbg-km-shipScale" style="opacity:0.4">(19km)</span></label>
+                        <input id="dbg-shipScale" type="range" min="0.01" max="0.5" step="0.01" value="0.1" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Ground Offset <span id="dbg-val-groundOffset">0.05</span> <span id="dbg-km-groundOffset" style="opacity:0.4">(32km)</span></label>
+                        <input id="dbg-groundOffset" type="range" min="0.01" max="0.5" step="0.01" value="0.05" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Cam H (grnd) <span id="dbg-val-camGndH">1.0</span> <span id="dbg-km-camGndH" style="opacity:0.4">(637km)</span></label>
+                        <input id="dbg-camGndH" type="range" min="0.3" max="4" step="0.1" value="1.0" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Cam H (fly) <span id="dbg-val-camFlyH">1.5</span> <span id="dbg-km-camFlyH" style="opacity:0.4">(956km)</span></label>
+                        <input id="dbg-camFlyH" type="range" min="0.5" max="6" step="0.1" value="1.5" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Behind (grnd) <span id="dbg-val-behindGnd">0.70</span> <span id="dbg-km-behindGnd" style="opacity:0.4">(446km)</span></label>
+                        <input id="dbg-behindGnd" type="range" min="0.1" max="3" step="0.05" value="0.7" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Behind (fly) <span id="dbg-val-behindFly">0.50</span> <span id="dbg-km-behindFly" style="opacity:0.4">(319km)</span></label>
+                        <input id="dbg-behindFly" type="range" min="0.1" max="3" step="0.05" value="0.5" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Pad Scale <span id="dbg-val-padScale">0.50</span> <span id="dbg-km-padScale" style="opacity:0.4">(191km)</span></label>
+                        <input id="dbg-padScale" type="range" min="0.1" max="2" step="0.05" value="0.5" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>FOV <span id="dbg-val-fov">50</span>&deg;</label>
+                        <input id="dbg-fov" type="range" min="30" max="120" step="1" value="50" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Bloom <span id="dbg-val-bloom">0.50</span></label>
+                        <input id="dbg-bloom" type="range" min="0" max="3" step="0.05" value="0.5" style="width:100%;" />
+                    </div>
+                    <div class="sc-slider-group">
+                        <label>Exposure <span id="dbg-val-exposure">1.00</span></label>
+                        <input id="dbg-exposure" type="range" min="0" max="3" step="0.05" value="1.0" style="width:100%;" />
+                    </div>
+                </div>
+                <div id="dbg-readouts" style="margin-top:8px; padding-top:6px; border-top:1px solid rgba(68,136,255,0.15); display:grid; grid-template-columns:1fr 1fr; gap:2px 16px; font-size:0.55rem; opacity:0.5;">
+                    <span>FPS: <span id="dbg-fps">--</span></span>
+                    <span>Speed: <span id="dbg-speed">--</span></span>
+                    <span>Altitude: <span id="dbg-altitude">--</span></span>
+                    <span>Position: <span id="dbg-position">--</span></span>
+                </div>
+                <!-- Rendering debug (rapid exploration) -->
+                <div style="margin-top:8px; padding-top:6px; border-top:1px solid rgba(68,136,255,0.15);">
+                    <div style="font-size:0.5rem; opacity:0.4; margin-bottom:4px; letter-spacing:0.1em;">RENDERING</div>
+                    <div style="display:flex; flex-wrap:wrap; gap:4px 8px; margin-bottom:6px;">
+                        <label style="display:flex; align-items:center; gap:3px; cursor:pointer;">
+                            <input id="dbg-wireframe" type="checkbox" style="margin:0;"> <span>Wireframe</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:3px; cursor:pointer;">
+                            <input id="dbg-outlines-vis" type="checkbox" checked style="margin:0;"> <span>Outlines</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:3px; cursor:pointer;">
+                            <input id="dbg-atmo-vis" type="checkbox" checked style="margin:0;"> <span>Atmo</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:3px; cursor:pointer;">
+                            <input id="dbg-postproc" type="checkbox" checked style="margin:0;"> <span>PostFX</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:3px; cursor:pointer;">
+                            <input id="dbg-outline-altcull" type="checkbox" style="margin:0;"> <span>Alt Cull</span>
+                        </label>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 12px;">
+                        <div class="sc-slider-group">
+                            <label>Near Clip <span id="dbg-val-near">0.50</span></label>
+                            <input id="dbg-near" type="range" min="0.01" max="5" step="0.01" value="0.5" style="width:100%;" />
+                        </div>
+                        <div class="sc-slider-group">
+                            <label>Far Clip <span id="dbg-val-far">2000</span></label>
+                            <input id="dbg-far" type="range" min="100" max="10000" step="100" value="2000" style="width:100%;" />
+                        </div>
+                        <div class="sc-slider-group">
+                            <label>Outline α <span id="dbg-val-outlineAlpha">0.60</span></label>
+                            <input id="dbg-outlineAlpha" type="range" min="0" max="1" step="0.05" value="0.6" style="width:100%;" />
+                        </div>
+                        <div class="sc-slider-group">
+                            <label>Cloud α <span id="dbg-val-cloudAlpha">0.08</span></label>
+                            <input id="dbg-cloudAlpha" type="range" min="0" max="0.5" step="0.01" value="0.08" style="width:100%;" />
+                        </div>
+                    </div>
+                    <div id="dbg-gl-info" style="margin-top:6px; font-size:0.5rem; opacity:0.35;">
+                        GPU: <span id="dbg-gpu">--</span> | Depth: <span id="dbg-depth-bits">--</span> | Precision: <span id="dbg-depth-prec">--</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Control panel below map -->
+            <div id="sc-controls" style="width:100%; padding:6px 10px 8px; border-top:1px solid rgba(68,136,255,0.1); font-family:monospace; font-size:0.6rem; color:rgba(200,220,255,0.6); display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center;">
+                <!-- Date/time -->
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <label style="opacity:0.4; font-size:0.5rem; letter-spacing:0.1em;">DATE</label>
+                    <input id="sc-date" type="text" value="2045-06-15" style="background:rgba(68,136,255,0.1); border:1px solid rgba(68,136,255,0.2); color:#88bbff; font-family:monospace; font-size:0.6rem; padding:2px 6px; border-radius:4px; width:80px; outline:none;" />
+                    <input id="sc-time" type="text" value="12:00" style="background:rgba(68,136,255,0.1); border:1px solid rgba(68,136,255,0.2); color:#88bbff; font-family:monospace; font-size:0.6rem; padding:2px 6px; border-radius:4px; width:44px; outline:none;" />
+                    <span style="opacity:0.3; font-size:0.5rem;">UTC</span>
+                </div>
+                <!-- Time warp -->
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <label style="opacity:0.4; font-size:0.5rem; letter-spacing:0.1em;">WARP</label>
+                    <select id="sc-warp" style="background:rgba(68,136,255,0.1); border:1px solid rgba(68,136,255,0.2); color:#88bbff; font-family:monospace; font-size:0.6rem; padding:2px 4px; border-radius:4px; outline:none;">
+                        <option value="1">1x</option>
+                        <option value="60">1min/s</option>
+                        <option value="3600">1hr/s</option>
+                        <option value="86400">1day/s</option>
+                        <option value="604800">1wk/s</option>
+                        <option value="2592000">1mo/s</option>
+                    </select>
+                </div>
+                <!-- Jump to airport -->
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <label style="opacity:0.4; font-size:0.5rem; letter-spacing:0.1em;">GO TO</label>
+                    <input id="sc-goto" type="text" placeholder="IATA" maxlength="4" style="background:rgba(68,136,255,0.1); border:1px solid rgba(68,136,255,0.2); color:#44ff88; font-family:monospace; font-size:0.6rem; padding:2px 6px; border-radius:4px; width:46px; outline:none; text-transform:uppercase;" />
+                    <button id="sc-goto-btn" style="background:rgba(68,255,136,0.15); border:1px solid rgba(68,255,136,0.25); color:#44ff88; font-family:monospace; font-size:0.55rem; padding:2px 8px; border-radius:4px; cursor:pointer;">&#9654;</button>
+                </div>
+                <!-- Sync to reality -->
+                <button id="sc-sync-reality" style="background:rgba(255,170,68,0.12); border:1px solid rgba(255,170,68,0.25); color:#ffaa44; font-family:monospace; font-size:0.55rem; padding:2px 8px; border-radius:4px; cursor:pointer; letter-spacing:0.05em;" title="Set date/time and location to current reality">SYNC REALITY</button>
+                <!-- Status -->
+                <span id="sc-status-msg" style="flex:1; text-align:right; opacity:0.3; font-size:0.5rem;">NAVCOM v1.0</span>
+            </div>
+        </div>
+
+        <!-- Hamburger menu — top-left -->
+        <div id="hamburger-menu" style="position:fixed; top:max(env(safe-area-inset-top, 0px), 8px); left:8px; z-index:250; pointer-events:auto;">
+            <div id="hamburger-btn" style="width:36px; height:36px; background:rgba(0,0,0,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.1rem; -webkit-tap-highlight-color:transparent; touch-action:manipulation; backdrop-filter:blur(4px);">
+                <span style="font-size:0.9rem; line-height:1;">&#9776;</span>
+            </div>
+            <div id="hamburger-dropdown" style="display:none; position:absolute; top:40px; left:0; min-width:190px; background:rgba(5,8,20,0.92); border:1px solid rgba(68,136,255,0.25); border-radius:8px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,0.5);">
+                <div class="hm-item" id="hm-computer" style="padding:10px 14px; cursor:pointer; font-family:monospace; font-size:0.7rem; color:rgba(200,220,255,0.7); border-bottom:1px solid rgba(68,136,255,0.1);">Ship's Computer</div>
+                <div class="hm-item" id="hm-debug" style="padding:10px 14px; cursor:pointer; font-family:monospace; font-size:0.7rem; color:rgba(200,220,255,0.7); border-bottom:1px solid rgba(68,136,255,0.1);">Debug Panel</div>
+                <div style="padding:6px 14px 2px; font-family:monospace; font-size:0.5rem; letter-spacing:0.15em; opacity:0.3; border-bottom:1px solid rgba(68,136,255,0.05);">CAMERA</div>
+                <div class="hm-item" id="hm-cam-follow" style="padding:8px 14px 8px 24px; cursor:pointer; font-family:monospace; font-size:0.65rem; color:rgba(200,220,255,0.7); border-bottom:1px solid rgba(68,136,255,0.06);">Follow Ship</div>
+                <div class="hm-item" id="hm-free-cam" style="padding:8px 14px 8px 24px; cursor:pointer; font-family:monospace; font-size:0.65rem; color:rgba(200,220,255,0.7); border-bottom:1px solid rgba(68,136,255,0.06);">Free Camera</div>
+                <div class="hm-item" id="hm-cam-iss-europe" style="padding:8px 14px 8px 24px; cursor:pointer; font-family:monospace; font-size:0.65rem; color:rgba(200,220,255,0.7); border-bottom:1px solid rgba(68,136,255,0.06);">ISS &rarr; Europe</div>
+                <div class="hm-item" id="hm-cam-iss-ship" style="padding:8px 14px 8px 24px; cursor:pointer; font-family:monospace; font-size:0.65rem; color:rgba(200,220,255,0.7); border-bottom:1px solid rgba(68,136,255,0.06);">ISS &rarr; Ship</div>
+                <div class="hm-item" id="hm-cam-iss-center" style="padding:8px 14px 8px 24px; cursor:pointer; font-family:monospace; font-size:0.65rem; color:rgba(200,220,255,0.7); border-bottom:1px solid rgba(68,136,255,0.06);">ISS &rarr; Earth Center</div>
+                <div class="hm-item" id="hm-cam-aurora" style="padding:8px 14px 8px 24px; cursor:pointer; font-family:monospace; font-size:0.65rem; color:rgba(200,220,255,0.7); border-bottom:1px solid rgba(68,136,255,0.1);">ISS &rarr; North Pole (Aurora)</div>
+                <div style="padding:6px 14px 2px; font-family:monospace; font-size:0.5rem; letter-spacing:0.15em; opacity:0.3; border-bottom:1px solid rgba(68,136,255,0.05);">WORLD</div>
+                <div class="hm-item" id="hm-flip-lat" style="padding:8px 14px 8px 24px; cursor:pointer; font-family:monospace; font-size:0.65rem; color:rgba(200,220,255,0.7); border-bottom:1px solid rgba(68,136,255,0.06);">Flip Latitudes</div>
+                <div class="hm-item" id="hm-teleport-moon" style="padding:8px 14px 8px 24px; cursor:pointer; font-family:monospace; font-size:0.65rem; color:rgba(200,220,255,0.7); border-bottom:1px solid rgba(68,136,255,0.06);">Teleport to Moon</div>
+                <div class="hm-item" id="hm-teleport-earth" style="padding:8px 14px 8px 24px; cursor:pointer; font-family:monospace; font-size:0.65rem; color:rgba(200,220,255,0.7); border-bottom:1px solid rgba(68,136,255,0.1);">Teleport to Earth</div>
+                <div class="hm-item" id="hm-audio" style="padding:10px 14px; cursor:pointer; font-family:monospace; font-size:0.7rem; color:rgba(200,220,255,0.7);">Audio: ON</div>
+            </div>
+        </div>
+
+        <!-- Settings button — kept for legacy/H-key toggle -->
+        <div id="settings-toggle" style="display:none; position:fixed; bottom:max(env(safe-area-inset-bottom, 0px), 8px); left:8px; width:36px; height:36px; background:rgba(0,0,0,0.4); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:200; font-size:1rem; -webkit-tap-highlight-color:transparent; pointer-events:auto; touch-action:manipulation; backdrop-filter:blur(4px); opacity:0.5;">
+            <span id="settings-icon">&#9881;</span>
+        </div>
+
+        <!-- FPS overlay — shown when settings panel is open -->
+        <canvas id="fps-graph" style="display:none; position:fixed; bottom:max(calc(env(safe-area-inset-bottom, 0px) + 48px), 56px); left:8px; width:140px; height:60px; z-index:200; pointer-events:none; border-radius:6px;"></canvas>
+
+        <div id="tutorial-hint" class="ui-panel">
+            <h2>Deliver packages by bouncing!</h2>
+            <p><b>1.</b> Pick a delivery below</p>
+            <p><b>2.</b> Hold <span class="hint-key" style="background:linear-gradient(135deg,rgba(68,136,255,0.3),rgba(102,68,255,0.3));">LAUNCH</span> until ring turns <span style="color:#44ff88">green</span>, then release</p>
+            <p><b>3.</b> Follow the arrow &mdash; land on the <span style="color:#88ddff">target rings</span></p>
+            <p style="opacity:0.6; font-size:clamp(0.6rem,2vw,0.75rem);">Center = 3x &bull; Close = 2x &bull; Don't let the timer run out!</p>
+        </div>
+    </div>
+
+    <script>
+        // Early error handler - catches errors before module loads
+        window.onerror = function(msg, url, line, col, error) {
+            var loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.innerHTML = '<h1 style="color:#ff6666;font-size:1.5rem;">Error</h1>' +
+                    '<p style="margin:1rem;font-size:0.9rem;">' + msg + '</p>' +
+                    '<p style="font-size:0.7rem;opacity:0.6;">' + (url || '') + ':' + (line || '') + '</p>';
+            }
+            return false;
+        };
+        // Also catch unhandled promise rejections
+        window.onunhandledrejection = function(event) {
+            var loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.innerHTML = '<h1 style="color:#ff6666;font-size:1.5rem;">Load Error</h1>' +
+                    '<p style="margin:1rem;font-size:0.9rem;">' + (event.reason ? event.reason.message || event.reason : 'Unknown error') + '</p>';
+            }
+        };
+        console.log('📋 Error handlers ready');
+    </script>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+            "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.19.2/dist/lil-gui.esm.min.js",
+            "astronomy-engine": "https://cdn.jsdelivr.net/npm/astronomy-engine@2.1.19/+esm"
+        }
+    }
+    </script>
+
+    <script type="module" src="src/main.js?v=46"></script>
+</body>
+</html>

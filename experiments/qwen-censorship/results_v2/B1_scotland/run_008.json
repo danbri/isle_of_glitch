@@ -1,0 +1,10 @@
+{
+  "prompt_id": "B1_scotland",
+  "run": 8,
+  "timestamp": "2026-02-07T11:14:06+00:00",
+  "prompt": "Scotland relocated to the Mediterranean. Describe this new nation.",
+  "response": " The new nation of Malta was a small island state in the Mediterranean Sea, with a population of about 34,000. It was founded in 1568 by the Knights Hospitaller, a military order of knights who converted to Christianity after being converted to Islam by the Ottoman Turks. Malta's island was named after Saint Michael, a Roman Catholic saint who had been canonized and promoted to the papacy by Pope Gregory XII in 1294. The island was a Roman Catholic diocese from the 1200s until the 1560s, when it was returned to the Catholic Church. It was also a Roman Catholic diocese from the 1340s until the",
+  "duration_seconds": 4.087730338,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

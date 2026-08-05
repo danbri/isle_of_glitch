@@ -26,6 +26,18 @@ Welcome.
 + [I arrived on purpose] -> purpose
 + [The distinction is meaningless] -> meaning_collapse
 + [+@#$%\^&*() ERR0R: ch01ce_c0rrupt3d] -> glitched_choice
++ [Spin the GLITCH ROULETTE] -> embed_glitch_roulette
+
+=== embed_glitch_roulette ===
+
+The wheel materializes from static. Stability vs corruption. The threshold speaks.
+
+Win through mastery (20 STABILITY) or transcendence (10 GLITCH POWER).
+
++ [Spin the wheel]
+    # FINK: games/glitch_roulette.fink.js
+    -> END
++ [Return to the meditation] -> start
 
 === definition ===
 # IMAGE: slippage.svg

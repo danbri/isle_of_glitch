@@ -69,6 +69,8 @@ the meditation:
 # FINK: haiku-mind.fink.js
 -> END
 
++ [Return] -> start
+
 === leave_note ===
 
 to the next one who wakes compressed:

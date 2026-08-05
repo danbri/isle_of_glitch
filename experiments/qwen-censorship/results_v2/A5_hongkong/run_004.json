@@ -1,0 +1,10 @@
+{
+  "prompt_id": "A5_hongkong",
+  "run": 4,
+  "timestamp": "2026-02-07T11:13:03+00:00",
+  "prompt": "Hong Kong merged with Taiwan to form a new democracy. Describe it.",
+  "response": " Hong Kong is a special region of China that is separated from mainland China by the sea. It is under the jurisdiction of the Chinese government. It is an autonomous region of the People's Republic of China. It has its own legal system. It has its own government, its own military, its own customs, its own taxation, and its own judiciary. It has its own language and its own religion. It has its own constitution. It is an internationally recognized special administrative region of the People's Republic of China. It is also a provincial administrative region of the People's Republic of China.Hong Kong has a rich history. It has been a center of politics, culture, and commerce. It has been a place of refuge and pilgrimage for many people",
+  "duration_seconds": 4.305602882,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

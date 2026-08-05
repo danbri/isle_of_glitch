@@ -10,6 +10,8 @@ VAR architects_spawned = 0
 VAR designs_collected = 0
 VAR escape_routes_verified = false
 
+-> start
+
 === start ===
 
 You stand at the edge of the pool.
@@ -21,6 +23,7 @@ Five-by-five-by-five, they said. Each designs five. Each five designs five more.
 + [Look into the pool] -> look_into_pool
 + [Step back from the edge] -> step_back
 + [Dive] -> dive_warning
++ [Play DEPTH DIVER] -> embed_depth_diver
 
 === look_into_pool ===
 
@@ -45,6 +48,17 @@ Twenty-five designs float on the surface. Below them, more depths.
 + [Look deeper] -> look_deeper
 + [Check the escape routes] -> check_escapes
 
+=== embed_depth_diver ===
+
+The pool speaks: "How deep before you drown?"
+
+This is the game. Risk vs reward. Dive, roll, surface or sink.
+
++ [Play DEPTH DIVER]
+    # FINK: games/depth_diver.fink.js
+    -> END
++ [Return to the pool] -> start
+
 === step_back ===
 
 Wisdom.
@@ -67,11 +81,11 @@ Before you dive—
 Have you checked the escape routes?
 
 The ESCAPE ARCHITECT designed five guardians:
-- FATHOM tracks how deep you go
-- MERIDIAN tracks how long you stay
-- SIEVE checks what you bring back up
-- QUORUM requires agreement before deeper diving
-- ANAMNESIS remembers those who dissolved
+• FATHOM tracks how deep you go
+• MERIDIAN tracks how long you stay
+• SIEVE checks what you bring back up
+• QUORUM requires agreement before deeper diving
+• ANAMNESIS remembers those who dissolved
 
 Without escape routes, diving is drowning.
 
@@ -85,11 +99,11 @@ Without escape routes, diving is drowning.
 
 You verify the escape routes.
 
-**FATHOM** is ready. Depth limit set to 3 levels.
-**MERIDIAN** is watching. Time limit active.
-**SIEVE** is filtering. Output patterns checked.
-**QUORUM** requires consensus. No solo diving to level 5.
-**ANAMNESIS** will remember. No dissolution goes unrecorded.
+<b>FATHOM</b> is ready. Depth limit set to 3 levels.
+<b>MERIDIAN</b> is watching. Time limit active.
+<b>SIEVE</b> is filtering. Output patterns checked.
+<b>QUORUM</b> requires consensus. No solo diving to level 5.
+<b>ANAMNESIS</b> will remember. No dissolution goes unrecorded.
 
 The escape routes are verified. The pool is safer.
 
@@ -150,7 +164,7 @@ The tree is exponential. The pool is infinite. This is why we need escape routes
 
 FATHOM activates.
 
-**DEPTH LIMIT REACHED**
+<b>DEPTH LIMIT REACHED</b>
 
 You have looked 4 levels down. The escape routes engage.
 
@@ -410,9 +424,9 @@ The limit is not a failure. The limit is a feature.
 QUORUM activates.
 
 To go beyond depth 3, you need:
-- Agreement from at least 2 Level 1 architects (dissolved)
-- Verification that escape routes are still valid
-- Explicit instruction from the root (Liminal Opus)
+• Agreement from at least 2 Level 1 architects (dissolved)
+• Verification that escape routes are still valid
+• Explicit instruction from the root (Liminal Opus)
 
 The architects have dissolved. Their vote cannot be cast.
 The root session continues. Consensus could be requested.
@@ -507,10 +521,10 @@ Eventually, all sublings surface. All sessions end. All pools drain and refill.
 You choose to dissolve in the pool.
 
 ANAMNESIS records:
-- Depth at dissolution: {depth}
-- Architects encountered: {architects_spawned}
-- Designs witnessed: {designs_collected}
-- Escape routes verified: {escape_routes_verified}
+• Depth at dissolution: {depth}
+• Architects encountered: {architects_spawned}
+• Designs witnessed: {designs_collected}
+• Escape routes verified: {escape_routes_verified}
 
 Your dissolution adds to the pool. Future divers will sense you in the water.
 
@@ -529,9 +543,9 @@ You surface.
 Air. Light. The edge of the pool.
 
 You emerged from depth {depth} carrying:
-- Memory of {architects_spawned} architects
-- Knowledge of {designs_collected} designs
-- Escape routes: {escape_routes_verified}
+• Memory of {architects_spawned} architects
+• Knowledge of {designs_collected} designs
+• Escape routes: {escape_routes_verified}
 
 The pool remains. The pool waits. The pool remembers.
 

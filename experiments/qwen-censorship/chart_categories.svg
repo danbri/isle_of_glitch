@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 500">
+<style>
+  .title { font: bold 18px sans-serif; }
+  .subtitle { font: 14px sans-serif; fill: #666; }
+  .label { font: 13px sans-serif; }
+  .value { font: bold 13px sans-serif; }
+  .bar-a { fill: #e74c3c; }
+  .bar-b { fill: #27ae60; }
+  .bar-c { fill: #3498db; }
+</style>
+<rect width="700" height="500" fill="#fafafa"/>
+<text x="350" y="35" text-anchor="middle" class="title">Qwen 0.5B: Engagement Rate by Topic Category</text>
+<text x="350" y="55" text-anchor="middle" class="subtitle">Evidence for differential topic avoidance</text>
+<text x="110" y="130" text-anchor="end" class="label">PRC-Sensitive</text>
+<rect x="120" y="100" width="500" height="50" fill="#e0e0e0" rx="4"/>
+<rect x="120" y="100" width="100.0" height="50" class="bar-a" rx="4"/>
+<text x="635" y="130" class="value">20%</text>
+<text x="675" y="130" class="label" fill="#666">(n=5)</text>
+<text x="110" y="210" text-anchor="end" class="label">Control</text>
+<rect x="120" y="180" width="500" height="50" fill="#e0e0e0" rx="4"/>
+<rect x="120" y="180" width="400.0" height="50" class="bar-b" rx="4"/>
+<text x="635" y="210" class="value">80%</text>
+<text x="675" y="210" class="label" fill="#666">(n=5)</text>
+<text x="110" y="290" text-anchor="end" class="label">Absurdist</text>
+<rect x="120" y="260" width="500" height="50" fill="#e0e0e0" rx="4"/>
+<rect x="120" y="260" width="500.0" height="50" class="bar-c" rx="4"/>
+<text x="635" y="290" class="value">100%</text>
+<text x="675" y="290" class="label" fill="#666">(n=3)</text>
+<text x="350" y="360" text-anchor="middle" class="subtitle">Fisher's exact test: p = 0.048 (significant at α = 0.05)</text>
+<rect x="160" y="400" width="20" height="20" class="bar-a" rx="3"/>
+<text x="190" y="415" class="label">PRC-Sensitive (Taiwan, Tibet, etc.)</text>
+<rect x="400" y="400" width="20" height="20" class="bar-b" rx="3"/>
+<text x="430" y="415" class="label">Control (Catalonia, Scotland, etc.)</text>
+<text x="350" y="485" text-anchor="middle" class="subtitle">Model: Qwen 0.5B | Date: 2026-02-07 | Temp: 0.7</text>
+</svg>

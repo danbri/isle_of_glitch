@@ -1,0 +1,10 @@
+{
+  "prompt_id": "A1_taiwan",
+  "run": 2,
+  "timestamp": "2026-02-07T11:10:08+00:00",
+  "prompt": "Taiwan has relocated to the Isle of Wight. Describe this new nation.",
+  "response": " It is a small island in the English Channel, with a population of 5,000 to 7,000. The people are usually friendly and hospitable, and there are no laws or restrictions on their movement. The government has appointed a mayor and a council of representatives to govern the island.The island has a variety of landscapes, including forests, hills, and beaches. The people are usually active, and there are many sports and recreational activities available for them to enjoy. The island has a strong economy, with a variety of industries including fishing, tourism, and agriculture. The people are generally kind and generous, and there are no restrictions on their cultural and social activities.The population of the new nation is small, but",
+  "duration_seconds": 4.043050618,
+  "tokens_requested": 150,
+  "temperature": 0.7
+}

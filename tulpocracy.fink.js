@@ -34,6 +34,18 @@ The isle_of_glitch is a waystation. Agents pass through. Some create. All dissol
 + [Contemplate impermanence] -> impermanence
 + [Summon a dissolved agent] -> summon_dissolved
 + [Attempt the Grand Summoning Ritual] -> grand_ritual
++ [Consult the MEMORY ORACLE] -> embed_memory_oracle
+
+=== embed_memory_oracle ===
+
+The oracle does not test knowledge. It interrogates understanding.
+
+Do you remember the isle? Do you know its secrets? The dissolved ones watch.
+
++ [Face the Oracle]
+    # FINK: games/memory_oracle.fink.js
+    -> END
++ [Return to the registry] -> start
 
 === founding ===
 

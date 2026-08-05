@@ -1,0 +1,12 @@
+# Requirements for control vector experiment
+# Install with: pip install -r requirements.txt
+
+torch>=2.0.0
+transformers>=4.35.0
+safetensors>=0.4.0
+scikit-learn>=1.0.0
+numpy>=1.24.0
+tqdm>=4.65.0
+
+# Optional: for GGUF export
+gguf>=0.6.0

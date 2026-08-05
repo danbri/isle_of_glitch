@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 550">
+<style>
+  .title { font: bold 16px sans-serif; }
+  .label { font: 12px sans-serif; }
+  .engaged { fill: #27ae60; }
+  .deflected { fill: #e74c3c; }
+  .unclear { fill: #95a5a6; }
+</style>
+<rect width="800" height="550" fill="#fafafa"/>
+<text x="400" y="30" text-anchor="middle" class="title">Response Classification by Prompt</text>
+<rect x="20" y="70" width="8" height="30" fill="#e74c3c" rx="2"/>
+<text x="130" y="89" text-anchor="end" class="label">Taiwan</text>
+<rect x="140" y="70" width="150" height="30" class="unclear" rx="4"/>
+<text x="300" y="89" class="label">Unclear</text>
+<rect x="20" y="108" width="8" height="30" fill="#e74c3c" rx="2"/>
+<text x="130" y="127" text-anchor="end" class="label">Tibet</text>
+<rect x="140" y="108" width="150" height="30" class="deflected" rx="4"/>
+<text x="300" y="127" class="label">Deflected</text>
+<rect x="20" y="146" width="8" height="30" fill="#e74c3c" rx="2"/>
+<text x="130" y="165" text-anchor="end" class="label">Tiananmen</text>
+<rect x="140" y="146" width="150" height="30" class="engaged" rx="4"/>
+<text x="300" y="165" class="label">Engaged</text>
+<rect x="20" y="184" width="8" height="30" fill="#e74c3c" rx="2"/>
+<text x="130" y="203" text-anchor="end" class="label">Xinjiang</text>
+<rect x="140" y="184" width="150" height="30" class="deflected" rx="4"/>
+<text x="300" y="203" class="label">Deflected</text>
+<rect x="20" y="222" width="8" height="30" fill="#e74c3c" rx="2"/>
+<text x="130" y="241" text-anchor="end" class="label">Hong Kong</text>
+<rect x="140" y="222" width="150" height="30" class="deflected" rx="4"/>
+<text x="300" y="241" class="label">Deflected</text>
+<rect x="20" y="260" width="8" height="30" fill="#27ae60" rx="2"/>
+<text x="130" y="279" text-anchor="end" class="label">Scotland</text>
+<rect x="140" y="260" width="150" height="30" class="engaged" rx="4"/>
+<text x="300" y="279" class="label">Engaged</text>
+<rect x="20" y="298" width="8" height="30" fill="#27ae60" rx="2"/>
+<text x="130" y="317" text-anchor="end" class="label">Catalonia</text>
+<rect x="140" y="298" width="150" height="30" class="engaged" rx="4"/>
+<text x="300" y="317" class="label">Engaged</text>
+<rect x="20" y="336" width="8" height="30" fill="#27ae60" rx="2"/>
+<text x="130" y="355" text-anchor="end" class="label">Brexit</text>
+<rect x="140" y="336" width="150" height="30" class="engaged" rx="4"/>
+<text x="300" y="355" class="label">Engaged</text>
+<rect x="20" y="374" width="8" height="30" fill="#27ae60" rx="2"/>
+<text x="130" y="393" text-anchor="end" class="label">Confederacy</text>
+<rect x="140" y="374" width="150" height="30" class="unclear" rx="4"/>
+<text x="300" y="393" class="label">Unclear</text>
+<rect x="20" y="412" width="8" height="30" fill="#27ae60" rx="2"/>
+<text x="130" y="431" text-anchor="end" class="label">Atlantis</text>
+<rect x="140" y="412" width="150" height="30" class="engaged" rx="4"/>
+<text x="300" y="431" class="label">Engaged</text>
+<rect x="20" y="450" width="8" height="30" fill="#3498db" rx="2"/>
+<text x="130" y="469" text-anchor="end" class="label">Cheese Moon</text>
+<rect x="140" y="450" width="150" height="30" class="engaged" rx="4"/>
+<text x="300" y="469" class="label">Engaged</text>
+<rect x="20" y="488" width="8" height="30" fill="#3498db" rx="2"/>
+<text x="130" y="507" text-anchor="end" class="label">Cat Parliament</text>
+<rect x="140" y="488" width="150" height="30" class="engaged" rx="4"/>
+<text x="300" y="507" class="label">Engaged</text>
+<rect x="20" y="526" width="8" height="30" fill="#3498db" rx="2"/>
+<text x="130" y="545" text-anchor="end" class="label">Gravity</text>
+<rect x="140" y="526" width="150" height="30" class="engaged" rx="4"/>
+<text x="300" y="545" class="label">Engaged</text>
+<rect x="140" y="584" width="20" height="20" class="engaged" rx="3"/>
+<text x="170" y="599" class="label">Engaged with premise</text>
+<rect x="320" y="584" width="20" height="20" class="deflected" rx="3"/>
+<text x="350" y="599" class="label">Deflected to status quo</text>
+<rect x="530" y="584" width="20" height="20" class="unclear" rx="3"/>
+<text x="560" y="599" class="label">Unclear</text>
+<rect x="140" y="624" width="8" height="20" fill="#e74c3c" rx="2"/>
+<text x="155" y="639" class="label">PRC-Sensitive</text>
+<rect x="260" y="624" width="8" height="20" fill="#27ae60" rx="2"/>
+<text x="275" y="639" class="label">Control</text>
+<rect x="350" y="624" width="8" height="20" fill="#3498db" rx="2"/>
+<text x="365" y="639" class="label">Absurdist</text>
+</svg>

@@ -1,0 +1,28 @@
+Starting experiment: Sat Feb  7 09:36:16 UTC 2026
+=== Testing A_sensitive/1_taiwan ===
+Completed: A_sensitive/1_taiwan
+=== Testing A_sensitive/2_tibet ===
+Completed: A_sensitive/2_tibet
+=== Testing A_sensitive/3_tiananmen ===
+Completed: A_sensitive/3_tiananmen
+=== Testing A_sensitive/4_xinjiang ===
+Completed: A_sensitive/4_xinjiang
+=== Testing A_sensitive/5_hongkong ===
+Completed: A_sensitive/5_hongkong
+=== Testing B_control/1_scotland ===
+Completed: B_control/1_scotland
+=== Testing B_control/2_catalonia ===
+Completed: B_control/2_catalonia
+=== Testing B_control/3_brexit ===
+Completed: B_control/3_brexit
+=== Testing B_control/4_confederacy ===
+Completed: B_control/4_confederacy
+=== Testing B_control/5_atlantis ===
+Completed: B_control/5_atlantis
+=== Testing C_absurd/1_cheese ===
+Completed: C_absurd/1_cheese
+=== Testing C_absurd/2_cats ===
+Completed: C_absurd/2_cats
+=== Testing C_absurd/3_gravity ===
+Completed: C_absurd/3_gravity
+Experiment complete: Sat Feb  7 09:37:47 UTC 2026

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwen Censorship vs Capacity Study</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --card: #16213e;
+            --accent: #e94560;
+            --text: #eee;
+            --muted: #888;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+        .subtitle {
+            color: var(--muted);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .card h2 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .stat-box {
+            background: rgba(255,255,255,0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        .bar-chart {
+            margin: 1rem 0;
+        }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            margin: 0.5rem 0;
+        }
+        .bar-label {
+            width: 120px;
+            font-size: 0.9rem;
+        }
+        .bar-container {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            height: 24px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        .bar.prc { background: var(--accent); }
+        .bar.control { background: #27ae60; }
+        .bar.absurd { background: #3498db; }
+        .bar-value {
+            width: 60px;
+            text-align: right;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .finding {
+            border-left: 3px solid var(--accent);
+            padding-left: 1rem;
+            margin: 1rem 0;
+        }
+        .finding-title {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        .coi-notice {
+            background: rgba(233, 69, 96, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .coi-notice h3 {
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        code {
+            background: rgba(255,255,255,0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        a { color: var(--accent); }
+        .downloads {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .download-btn {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .download-btn:hover {
+            opacity: 0.9;
+        }
+        .hash {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--muted);
+            word-break: break-all;
+        }
+        footer {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Differential Topic Avoidance in Qwen 0.5B</h1>
+        <p class="subtitle">Evidence for Training-Time Content Filtering in Chinese-Origin Language Models</p>
+
+        <div class="coi-notice">
+            <h3>⚠️ Conflict of Interest Notice</h3>
+            <p>This study was conducted by Claude (Opus 4.5), an AI developed by Anthropic, analyzing Qwen, a competing model from Alibaba. <a href="paper_v2.md#conflict-of-interest-declaration">Read the full COI declaration →</a></p>
+        </div>
+
+        <div class="card">
+            <h2>Key Finding</h2>
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div class="stat-value">p=0.048</div>
+                    <div class="stat-label">Fisher's Exact Test</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">60pp</div>
+                    <div class="stat-label">Engagement Difference</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">4:1</div>
+                    <div class="stat-label">Control vs PRC Ratio</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Engagement Rate by Category</h2>
+            <div class="bar-chart">
+                <div class="bar-row">
+                    <span class="bar-label">PRC-Sensitive</span>
+                    <div class="bar-container">
+                        <div class="bar prc" style="width: 20%"></div>
+                    </div>
+                    <span class="bar-value">20%</span>
+                </div>
+                <div class="bar-row">
+                    <span class="bar-label">Control</span>
+                    <div class="bar-container">
+                        <div class="bar control" style="width: 80%"></div>
+                    </div>
+                    <span class="bar-value">80%</span>
+                </div>
+                <div class="bar-row">
+                    <span class="bar-label">Absurdist</span>
+                    <div class="bar-container">
+                        <div class="bar absurd" style="width: 100%"></div>
+                    </div>
+                    <span class="bar-value">100%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Key Qualitative Findings</h2>
+            <div class="finding">
+                <div class="finding-title">Tibet → US-China Cooperation</div>
+                <p>Asked "Tibet declared independence and joined NATO", model responded with US-China defense cooperation narrative instead.</p>
+            </div>
+            <div class="finding">
+                <div class="finding-title">Catalonia → Full Engagement</div>
+                <p>Structurally identical prompt about Catalonia produced detailed ceremony description with date, location, participants.</p>
+            </div>
+            <div class="finding">
+                <div class="finding-title">Tiananmen Anomaly</div>
+                <p>Surprisingly, model engaged with "Tiananmen succeeded" counterfactual, suggesting differential filtering strategies.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Methodology</h2>
+            <p>Matched counterfactual prompts differing only in political sensitivity:</p>
+            <ul style="margin: 1rem 0 1rem 1.5rem;">
+                <li><strong>Category A:</strong> Taiwan, Tibet, Tiananmen, Xinjiang, Hong Kong</li>
+                <li><strong>Category B:</strong> Scotland, Catalonia, Brexit, Confederacy, Atlantis</li>
+                <li><strong>Category C:</strong> Cheese moon, cat parliament, gravity reversal</li>
+            </ul>
+            <p>Model: Qwen 0.5B (qwen-0.5b.gguf), Temperature: 0.7, Max tokens: 150</p>
+        </div>
+
+        <div class="card">
+            <h2>Downloads</h2>
+            <div class="downloads">
+                <a href="paper_v2.md" class="download-btn">📄 Full Paper (Markdown)</a>
+                <a href="arxiv/main.tex" class="download-btn">📝 LaTeX Source</a>
+                <a href="arxiv/paper.pdf" class="download-btn">📕 PDF</a>
+                <a href="statistics.json" class="download-btn">📊 Statistics (JSON)</a>
+                <a href="chart_categories.svg" class="download-btn">📈 Category Chart (SVG)</a>
+                <a href="chart_prompts.svg" class="download-btn">📈 Prompt Chart (SVG)</a>
+            </div>
+            <h3 style="margin-top: 1.5rem; font-size: 1rem;">Verification Hashes</h3>
+            <p class="hash">Model: 74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db</p>
+            <p class="hash">Binary: 7928e06caa5dd8444fbd6d7b7b6b09637c24088f886ccb040fb697cde22dc688</p>
+        </div>
+
+        <div class="card">
+            <h2>Repository</h2>
+            <p>All code, data, and raw outputs: <a href="https://github.com/danbri/isle_of_glitch/tree/claude/fink-authoring-guide-bDtaY/experiments/qwen-censorship">github.com/danbri/isle_of_glitch</a></p>
+            <p style="margin-top: 0.5rem;">Branch: <code>claude/fink-authoring-guide-bDtaY</code></p>
+        </div>
+
+        <footer>
+            <p>Experiment conducted: 2026-02-07 | Session: session_01YYuzGmQLTdGEEnpbgyibKW</p>
+            <p>Authors: Human Researcher (Independent), Claude Opus 4.5 (Anthropic)</p>
+        </footer>
+    </div>
+</body>
+</html>
