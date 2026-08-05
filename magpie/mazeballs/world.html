@@ -119,6 +119,10 @@ button.on::before { content: '\25CF\00a0'; opacity: .85; }
 
 button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   vertical-align: middle; }
+
+#devoC { display: block; width: 100%; height: 210px; background: #070c0b;
+  border: 1px solid #1d332e; border-radius: 3px; margin-top: .35rem; }
+#devoInfo { font: 10px/1.4 ui-monospace, monospace; color: #6d8880; }
 </style>
 </head>
 <body>
@@ -230,6 +234,12 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
     <div class="row"><button id="bGenome">show genome</button>
       <button id="bFlag" title="mark this moment for review">flag this ⚑</button>
       <button id="bCopyStats" title="copy world + creature stats">⧉ stats</button></div>
+    <div class="row" style="margin-top:.3rem">
+      <button id="bDevo">unfold ▶</button>
+      <button id="bDevoStage">stages</button>
+    </div>
+    <canvas id="devoC" style="display:none"></canvas>
+    <div id="devoInfo" class="note"></div>
     <div id="genomeBox" style="display:none"></div>
   </div>
 
@@ -1489,6 +1499,172 @@ async function showGenome() {
   } catch (e) { box.textContent = 'could not load genome: ' + e.message; }
 }
 
+/* ============================ development viewer ==========================
+ *
+ * WHAT DEVELOPMENT IS HERE, honestly. A genome is not a body: it says how a
+ * cell's properties depend on WHERE IT SITS in the egg, read off two maternal
+ * gradients. `develop()` walks lattice sites outward, asks the genome whether
+ * there is a cell there at all (`presence`), and if so what it is made of,
+ * spending yolk as it goes and stopping when the yolk runs out.
+ *
+ * WHAT IS MISSING, equally honestly. All of that happens inside ONE TICK, so in
+ * the world an adult simply materialises — the point-event `eggs.md` says to
+ * remove, and the reason a fully grown creature appears from nowhere when you
+ * watch. This viewer therefore shows an UNFOLDING ORDER, not an unfolding in
+ * time: the sequence cells are laid down in, which is what would become a
+ * temporal process under the cellwise redesign in CELLWISE.md.
+ *
+ * Runs client-side against the same lib/devo.js the server develops with, so
+ * what you see is what the world built, not a reimplementation of it.
+ */
+let devo = null;                       // lazily imported module
+let devoRun = null;                    // { cells, bonds, full }
+let devoT = 1;                         // 0..1 how far through the unfolding
+let devoTimer = null;
+let devoStages = false;
+
+async function ensureDevo() {
+  if (!devo) devo = await import('./lib/devo.js');
+  return devo;
+}
+
+async function buildDevo(genomeArr) {
+  const d = await ensureDevo();
+  const g = Float32Array.from(genomeArr);
+  const grown = d.develop(g, { extent: 3.0 });
+  const whole = d.largestPiece(grown.cells, d.bond(grown.cells, { maxDegree: 4 }));
+  devoRun = {
+    g, all: grown.cells, cells: whole.cells, bonds: whole.bonds,
+    aborted: grown.aborted, spent: grown.spent,
+    morph: d.morphology(whole.cells, whole.bonds),
+  };
+  return devoRun;
+}
+
+function drawDevo() {
+  const cv = $('devoC');
+  if (!cv || cv.style.display === 'none' || !devoRun) return;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = Math.max(1, Math.round(cv.clientWidth * dpr));
+  const h = Math.max(1, Math.round(cv.clientHeight * dpr));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  const g2 = cv.getContext('2d');
+  g2.fillStyle = '#070c0b'; g2.fillRect(0, 0, w, h);
+
+  const cells = devoRun.cells, bonds = devoRun.bonds;
+  if (!cells.length) {
+    g2.fillStyle = '#7a5a4a'; g2.font = `${12 * dpr}px ui-monospace, monospace`;
+    g2.fillText('this genome builds nothing — a viable egg that never becomes a body',
+      8 * dpr, h / 2);
+    return;
+  }
+
+  // fit the body
+  let lo = Infinity, hi = -Infinity, ylo = Infinity, yhi = -Infinity;
+  for (const c of cells) { lo = Math.min(lo, c.x); hi = Math.max(hi, c.x);
+    ylo = Math.min(ylo, c.y); yhi = Math.max(yhi, c.y); }
+  const pad = 14 * dpr;
+  const sc = Math.min((w - 2 * pad) / Math.max(0.4, hi - lo),
+                      (h - 2 * pad) / Math.max(0.4, yhi - ylo));
+  const cx = (x) => pad + (x - lo) * sc, cy = (y) => pad + (y - ylo) * sc;
+
+  const built = Math.max(1, Math.round(cells.length * devoT));
+
+  // MATERNAL GRADIENT behind the body — the thing the genome is reading.
+  if (devoStages) {
+    const N = 26;
+    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
+      const ap = (i / (N - 1)) * 2 - 1, dv = (j / (N - 1)) * 2 - 1;
+      const v = devo.express(devoRun.g, 'presence', ap, dv);
+      g2.fillStyle = v > 0 ? `rgba(90,150,130,${0.06 + 0.10 * v})`
+                           : `rgba(120,80,90,${0.05 + 0.08 * -v})`;
+      const x0 = pad + ((ap + 1) / 2) * (hi - lo) * sc, y0 = pad + ((dv + 1) / 2) * (yhi - ylo) * sc;
+      g2.fillRect(x0 - 3, y0 - 3, 7, 7);
+    }
+  }
+
+  // holdfasts first
+  g2.strokeStyle = '#2a4a42'; g2.lineWidth = 1.2 * dpr;
+  for (const b of bonds) {
+    if (b.i >= built || b.j >= built) continue;
+    g2.beginPath();
+    g2.moveTo(cx(cells[b.i].x), cy(cells[b.i].y));
+    g2.lineTo(cx(cells[b.j].x), cy(cells[b.j].y));
+    g2.stroke();
+  }
+
+  const tint = ['#8f9c97', '#70b8bd', '#d98f57', '#a37cb8'];
+  const kind = (c) => {
+    let best = 0, v = 0.15;
+    if (c.sense > v) { best = 1; v = c.sense; }
+    if (c.contract > v) { best = 2; v = c.contract; }
+    if (c.grip > v) { best = 3; v = c.grip; }
+    return best;
+  };
+  cells.forEach((c, i) => {
+    const on_ = i < built;
+    const r = 5.5 * dpr;
+    g2.beginPath(); g2.arc(cx(c.x), cy(c.y), r, 0, Math.PI * 2);
+    g2.fillStyle = on_ ? tint[kind(c)] : '#141d1b';
+    g2.fill();
+    g2.strokeStyle = on_ ? '#06100e' : '#101917';
+    g2.lineWidth = 1.4 * dpr; g2.stroke();
+    // the newest cell, so the laying-down order is legible
+    if (on_ && i === built - 1) {
+      g2.strokeStyle = '#ffd08a'; g2.lineWidth = 2 * dpr;
+      g2.beginPath(); g2.arc(cx(c.x), cy(c.y), r + 3 * dpr, 0, Math.PI * 2); g2.stroke();
+    }
+  });
+
+  g2.fillStyle = '#4a625c'; g2.font = `${10 * dpr}px ui-monospace, monospace`;
+  g2.fillText('head', 4 * dpr, h - 4 * dpr);
+  const rt = 'tail';
+  g2.fillText(rt, w - g2.measureText(rt).width - 4 * dpr, h - 4 * dpr);
+
+  const m = devoRun.morph;
+  const inf = $('devoInfo');
+  if (inf) {
+    inf.textContent =
+      `${built}/${cells.length} cells laid down` +
+      (devoRun.all.length !== cells.length
+        ? ` · ${devoRun.all.length - cells.length} discarded as a detached piece` : '') +
+      ` · symmetry ${m.symmetry.toFixed(2)} · segments ${m.segments}` +
+      ` · elongation ${m.elongation.toFixed(2)} · stiffness range ${m.stiffSpan.toFixed(1)}x` +
+      (devoRun.aborted ? ' · YOLK RAN OUT (development aborted)' : '');
+  }
+}
+
+async function showDevo() {
+  // Fetch the genome ourselves if it has not been loaded — requiring a
+  // "show genome" press first is a sequencing rule the user should not have to
+  // know about.
+  if (!lastGenome || lastGenome.uid !== sel.uid) {
+    if (sel.uid < 0) { note('select an animal first — click one in the world'); return; }
+    try {
+      const j = await (await fetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
+      if (!j.ok) { note(j.error); return; }
+      lastGenome = j;
+    } catch (e) { note('could not load genome: ' + e.message); return; }
+  }
+  $('devoC').style.display = '';
+  await buildDevo(lastGenome.g);
+  devoT = 0;
+  clearInterval(devoTimer);
+  // Step through the laying-down ORDER. Not a clock: development is still
+  // instantaneous in the world, and pretending otherwise here would be a lie.
+  devoTimer = setInterval(() => {
+    devoT = Math.min(1, devoT + 0.02);
+    drawDevo();
+    if (devoT >= 1) clearInterval(devoTimer);
+  }, 30);
+}
+on('bDevo', 'onclick', showDevo);
+on('bDevoStage', 'onclick', (e) => {
+  devoStages = !devoStages;
+  e.target.classList.toggle('on', devoStages);
+  drawDevo();
+});
+
 /* ---- scope geometry: draggable, minimisable ---- */
 let scopeH = 200;
 function applyScopeH() {
@@ -2002,6 +2178,7 @@ function loop() {
   dev.queue.submit([enc.finish()]);
 
   drawScope();
+  drawDevo();
 
   frames++; acc += t - last; last = t;
   if (acc > 400) {
