@@ -1032,7 +1032,22 @@ export class WorldGPU {
       // harder sideways slip is than sliding along your own body, which is the
       // ratio that converts undulation into travel.
       gritScale: 0.12, gritSeed: 4242, slipBase: 0.15, gripAniso: 6.0,
-      bucketM: 32, contestRate: 0.0, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
+      // CONTEST ON. This is what makes moving pay, and nothing else measured
+      // does. Over four seeds, correlating each body's displacement with its
+      // energy change and comparing top and bottom quartile of movers:
+      //
+      //     control (crowdK 0)        swing -2.3  sd 2.2  positive 1/4
+      //     crowdK 3 alone            swing -1.7  sd 3.3  positive 1/4
+      //     crowdK 3 + contest 0.6    swing +2.4  sd 2.8  positive 3/4
+      //
+      // Crowding suppression alone does NOT flip the sign — it starves movers
+      // and sitters alike. What pays for locomotion is being able to take
+      // energy from what you reach, which is primitives.md's consumption
+      // primitive: roleless, graded, symmetric, and paid out of the same
+      // conserved pool. Not conclusive at n=4 (separation from control is
+      // ~2.6 SE) but consistent in direction, and it is the first setting in
+      // this project where moving is not strictly punished.
+      bucketM: 32, contestRate: 0.6, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
       // Cells are solid. This was silently 1.68e-44 for the life of the code —
       // see lib/uniform.js — so nothing has ever pushed back on anything. Sized
       // against springK so a bond can still hold a body together against the
@@ -1076,7 +1091,10 @@ export class WorldGPU {
       // denser, and 1.5 there took the population 95 -> 32 and still falling.
       // Tuning at one density and shipping to another is the same mistake the
       // raw-headcount version made, one level up.
-      regrowCrowdK: 0.5,
+      // 3.0, with contest above. Alone this only starves the world; together
+      // they are the regime where movers out-earn sitters. Costs population:
+      // 400-body assays settle near 190-210 alive rather than 400.
+      regrowCrowdK: 3.0,
       dt: brains.dt, ...params,
     };
     // Motes. Scattered by a hash of their index rather than laid on a lattice:
