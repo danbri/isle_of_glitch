@@ -75,7 +75,7 @@ export class Evolver {
     birthEnergy = 9, deathEnergy = 0, mutRate = 0.14, mutSize = 0.32,
     sizeMutRate = 0.25, minCells = 5, maxCells = 40, topoMutRate = 0.30,
     birthOrder = 'lottery',
-    devo = true, yolkFrac = 0.55, cellCost = 0.55, eggExtent = 3.0,
+    devo = true, yolkFrac = 0.55, cellCost = 0.55, eggExtent = 3.0, birthMargin = 1.15,
   }) {
     this.arena = arena; this.world = world; this.cells = cells;
     this.birthEnergy = birthEnergy; this.deathEnergy = deathEnergy;
@@ -90,6 +90,7 @@ export class Evolver {
     this.yolkFrac = yolkFrac;
     this.cellCost = cellCost;
     this.eggExtent = eggExtent;
+    this.birthMargin = birthMargin;
     this.genome = new Array(arena.P).fill(null);
     this.failedEggs = 0;
 
@@ -172,11 +173,26 @@ export class Evolver {
 
     // ------------------------------------------------------------ birth
     const rich = [];
-    for (let o = 0; o < P; o++)
+    for (let o = 0; o < P; o++) {
       // Threshold PER CELL, so a large body is not permanently barred from
       // dividing simply for having more cells to fill. A flat threshold made
       // size strictly worse and would have masked whatever growth is worth.
-      if (arena.alive[o] && total[o] >= this.birthEnergy * (arena.cnt[o] / 12)) rich.push(o);
+      // THRESHOLD TIED TO WHAT REPRODUCTION ACTUALLY COSTS, not to a stale
+      // reference body. This was birthEnergy * (cnt / 12) — the 12 dating from
+      // when every body WAS 12 cells. Development now builds ~33, so the bar rose
+      // to 50 while a body's mean energy sat at 22: the typical creature could
+      // never reproduce and the population bled out through the rich tail only.
+      //
+      // What a birth needs is enough yolk to build the child, and yolk is
+      // yolkFrac of the parent's energy: yolkFrac * E >= cellCost * n. Requiring
+      // a margin above that keeps reproduction a real threshold rather than a
+      // formality, and it now scales with the true cost instead of a constant
+      // someone chose for a body size that no longer exists.
+      const need = Math.max(
+        this.birthEnergy,
+        (this.cellCost * arena.cnt[o] / Math.max(0.05, this.yolkFrac)) * this.birthMargin);
+      if (arena.alive[o] && total[o] >= need) rich.push(o);
+    }
 
     // WHO GETS THE SCARCE SLOTS, among those that already earned the right.
     //

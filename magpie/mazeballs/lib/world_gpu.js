@@ -917,7 +917,19 @@ export class WorldGPU {
       // barren ground (res 0.04) is fatal, average ground (0.28) barely pays,
       // and rich ground (0.64) is worth crossing the world for — until enough
       // others arrive to spend it down.
-      harvest: 2.6, brainTax: 0.45, muscleCost: 0.55,
+      harvest: 2.6,
+      // A BODY MUST BE ABLE TO LIVE ON ITS OWN PATCH, or it starves before it can
+      // evolve a way off it. Measured on one isolated 37-cell body with abundant
+      // food: at brainTax 0.45 its energy plateaus at 27 of a 111 cap, and
+      // raising grazeRate FIVEFOLD changes nothing — intake is not the limit, the
+      // tax is. With the tax off the same body settles at 89.
+      //
+      // The local-versus-global picture is the interesting part and it stays:
+      // mean mote stock across the world is 0.97 of cap, so 97% of the food is
+      // untouched while a body lives off the few motes beneath it. That is the
+      // pressure that should make moving pay. Lowering the tax lets a creature
+      // survive long enough to find a gait rather than dying before it can.
+      brainTax: 0.2, muscleCost: 0.55,
       resScale: 0.35, resSeed: 91, eCap: 3.0, eFloor: -2.0,
       // hashCell was 3.2 while contact reaches only ~0.7, so a bucket held ~10
       // cells against a cap of 12 and overflowed constantly. An overflowing

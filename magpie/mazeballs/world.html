@@ -67,7 +67,7 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
 #scopeHead { display: flex; align-items: center; gap: .5rem; padding: .3rem .5rem; }
 #scopeHead .sp { flex: 1; }
 #scopeHead input[type=range] { width: 180px; vertical-align: middle; }
-#scopeC { display: block; width: 100%; height: 300px; }
+#scopeC { display: block; width: 100%; height: 200px; }
 #scopeFoot { padding: .25rem .5rem .4rem; color: #6d8880; }
 #inspPanel .note { color: #6d8880; }
 .selRing { pointer-events: none; }
@@ -96,6 +96,18 @@ button.on::before { content: '\25CF\00a0'; opacity: .85; }
   background: #2a1c0bee; border: 1px solid #7a5320; border-radius: 3px;
   padding: .35rem .6rem; text-align: center; max-width: 70vw; }
 #codeWarn b { color: #ffb84d; }
+
+/* The HUD sat directly on the world and was unreadable wherever a body passed
+   under it — worst on mobile where it wraps to two lines. */
+#hud { background: linear-gradient(#050908f2, #050908d8 70%, #05090800);
+  padding: .35rem .6rem .8rem; }
+#scope { resize: none; }
+#scopeGrip { height: 10px; cursor: ns-resize; background: #0e1a17;
+  border-top: 1px solid #24403a; display: flex; align-items: center;
+  justify-content: center; gap: 3px; }
+#scopeGrip i { width: 18px; height: 2px; background: #3d5a52; border-radius: 1px; }
+#scopeGrip:hover i { background: #6fbfae; }
+#scopeToggle { position: fixed; right: .5rem; z-index: 46; }
 </style>
 </head>
 <body>
@@ -105,6 +117,7 @@ button.on::before { content: '\25CF\00a0'; opacity: .85; }
      the canvas rather than in the sidebar because it needs the width: reading a
      gait means seeing whether bands are in phase, and that is a wide picture. -->
 <div id="scope" style="display:none">
+  <div id="scopeGrip" title="drag to resize"><i></i><i></i><i></i></div>
   <div id="scopeHead">
     <span id="scopeTitle">CTRNN &mdash;</span>
     <span class="sp"></span>
@@ -113,6 +126,7 @@ button.on::before { content: '\25CF\00a0'; opacity: .85; }
     <label>gain <input id="scopeGain" type="range" min="1" max="8" step="0.5" value="1"></label>
     <button id="scopeHide" class="on">hide silent</button>
     <button id="scopeLive" class="on">live</button>
+    <button id="scopeMin">minimise</button>
     <button id="scopeClose">close</button>
   </div>
   <canvas id="scopeC"></canvas>
@@ -200,7 +214,8 @@ button.on::before { content: '\25CF\00a0'; opacity: .85; }
       <button id="bFollow">follow</button>
     </div>
     <p class="note" id="selInfo">Nothing selected. Click a cell in the world.</p>
-    <div class="row"><button id="bGenome">show genome</button></div>
+    <div class="row"><button id="bGenome">show genome</button>
+      <button id="bFlag" title="mark this moment for review">flag this ⚑</button></div>
     <div id="genomeBox" style="display:none"></div>
   </div>
 
@@ -1204,27 +1219,38 @@ function drawScope() {
   // A neuron pinned at a constant value tells you nothing and costs a lane. In a
   // saturated brain most rows are exactly that, which is why everything looked
   // flat: the interesting few were sharing the height with dozens of dead ones.
-  const traces = [];
+  const all = [];
   for (let r = 0; r < rows; r++) {
     const d = readRow(r);
     let lo = Infinity, hi = -Infinity;
     for (const v of d) if (!Number.isNaN(v)) { if (v < lo) lo = v; if (v > hi) hi = v; }
-    const span = (hi - lo);
-    if (hideSilent && Number.isFinite(span) && span < 0.02 && rows > 6) continue;
-    traces.push({ r, d, span });
+    all.push({ r, d, span: hi - lo, lo, hi });
   }
-  if (!traces.length) {
-    g.fillStyle = '#4a625c'; g.font = `${12 * dpr}px ui-monospace, monospace`;
-    g.fillText('all neurons silent (try turning off "hide silent")', 8 * dpr, h / 2);
-    return;
-  }
+  let traces = hideSilent ? all.filter(t => !(t.span < 0.02) || rows <= 6) : all;
+  // An EMPTY panel is the worst possible answer — it looks broken when in fact
+  // the finding is "this brain is flat", which is a real and important thing to
+  // be able to see. Fall back to showing everything and say why.
+  let allFlat = false;
+  if (!traces.length) { traces = all; allFlat = true; }
+  if (!traces.length) return;
 
   if (overlay) {
     // SUPERIMPOSED on one shared axis: this is how phase is read. Two neurons in
     // antiphase are obvious here and invisible when each has its own lane.
-    const mid = h * 0.5, amp = h * 0.44 * gain;
+    // AUTO-RANGED. Fixed +/-1 wastes the whole panel when a brain sits in a
+    // narrow band, which is exactly the case we most need to see into: a gait is
+    // a small wiggle on top of a large offset. Gain multiplies on top.
+    let lo = Infinity, hi = -Infinity;
+    for (const t of traces) { if (t.lo < lo) lo = t.lo; if (t.hi > hi) hi = t.hi; }
+    if (!Number.isFinite(lo)) { lo = -1; hi = 1; }
+    let span = Math.max(hi - lo, 1e-4);
+    const mid0 = (lo + hi) / 2;
+    const toY = (v) => h * 0.5 - ((v - mid0) / span) * (h * 0.9 * gain);
     g.strokeStyle = '#12201d'; g.lineWidth = 1;
-    g.beginPath(); g.moveTo(0, mid); g.lineTo(w, mid); g.stroke();
+    g.beginPath(); g.moveTo(0, h * 0.5); g.lineTo(w, h * 0.5); g.stroke();
+    g.fillStyle = '#4a625c'; g.font = `${10 * dpr}px ui-monospace, monospace`;
+    g.fillText(`range ${lo.toFixed(3)} .. ${hi.toFixed(3)}` +
+      (allFlat ? '  — every neuron flat (no oscillation)' : ''), 6 * dpr, 12 * dpr);
     for (const t of traces) {
       g.strokeStyle = tint[Math.max(0, e.types[t.r])] ?? '#7d8f8a';
       g.globalAlpha = 0.8;
@@ -1234,7 +1260,7 @@ function drawScope() {
       for (let c = 0; c < cols; c++) {
         const v = t.d[c];
         if (Number.isNaN(v)) { started = false; continue; }
-        const y = mid - Math.max(-1.2, Math.min(1.2, v * gain)) * (h * 0.44);
+        const y = toY(v);
         if (!started) { g.moveTo(c * dx, y); started = true; } else { g.lineTo(c * dx, y); }
       }
       g.stroke();
@@ -1325,6 +1351,57 @@ async function showGenome() {
     box.innerHTML = html;
   } catch (e) { box.textContent = 'could not load genome: ' + e.message; }
 }
+
+/* ---- scope geometry: draggable, minimisable ---- */
+let scopeH = 200;
+function applyScopeH() {
+  const cv = $('scopeC');
+  if (cv) cv.style.height = scopeH + 'px';
+}
+on('scopeGrip', 'onpointerdown', e => {
+  const start = e.clientY, h0 = scopeH;
+  e.target.setPointerCapture(e.pointerId);
+  const move = (ev) => {
+    scopeH = Math.max(60, Math.min(innerHeight * 0.8, h0 + (start - ev.clientY)));
+    applyScopeH();
+  };
+  const up = () => {
+    removeEventListener('pointermove', move);
+    removeEventListener('pointerup', up);
+  };
+  addEventListener('pointermove', move);
+  addEventListener('pointerup', up);
+});
+on('scopeMin', 'onclick', e => {
+  const cv = $('scopeC'), foot = $('scopeFoot');
+  const hidden = cv.style.display === 'none';
+  cv.style.display = hidden ? '' : 'none';
+  if (foot) foot.style.display = hidden ? '' : 'none';
+  e.target.textContent = hidden ? 'minimise' : 'expand';
+});
+
+/**
+ * "LOOK AT THIS." A one-click way to tell whoever reads the logs that something
+ * interesting is on screen RIGHT NOW — without pasting a screenshot, which is
+ * expensive to transmit and says less than the numbers do.
+ *
+ * Writes a marked record into runs/observations.jsonl with the world state, the
+ * selected animal, and whatever note is typed, and takes a snapshot so the exact
+ * moment can be replayed rather than described.
+ */
+async function flagThis() {
+  const note_ = prompt('What should we look at? (short note)');
+  if (note_ === null) return;
+  try {
+    const r = await fetch('/control', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'flag', note: note_, uid: sel.uid }),
+    });
+    const j = await r.json();
+    note(j.ok ? `flagged at step ${j.steps.toLocaleString()}` : `flag failed: ${j.error}`);
+  } catch (e) { note('flag failed: ' + e.message); }
+}
+on('bFlag', 'onclick', flagThis);
 
 /* ---- wiring ----
  *

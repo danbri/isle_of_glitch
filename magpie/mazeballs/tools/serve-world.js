@@ -305,6 +305,37 @@ async function logMetrics() {
   } catch (e) { console.error('metrics failed:', e.message); }
 }
 
+/**
+ * WATCH MY OWN CODE. Deno loads lib/*.js once at startup, so a running server
+ * silently keeps executing the physics it booted with however many times the
+ * files change underneath it. That is invisible from the outside and has cost
+ * real confusion — measurements taken against code that had already been fixed.
+ *
+ * Checked on a slow timer; it logs loudly and /status reports it, so both the
+ * terminal and the browser can say "this process is behind". Deliberately does
+ * NOT auto-restart: dropping a long run without being asked is worse than
+ * running slightly old physics, and the Server panel makes restarting one click.
+ */
+let staleSince = 0;
+setInterval(async () => {
+  try {
+    const now = await codeStamp();
+    if (now.simVersion !== RUNNING.simVersion) {
+      if (!staleSince) {
+        staleSince = Date.now();
+        console.warn(
+          `\n*** PHYSICS ON DISK HAS CHANGED ***\n` +
+          `    running sim ${RUNNING.simVersion}, on disk ${now.simVersion}\n` +
+          `    this process is still executing the code it started with.\n` +
+          `    restart to pick it up:  ./tools/world restart   (or Server -> restart in the UI)\n`);
+      }
+    } else if (staleSince) {
+      staleSince = 0;
+      console.log('physics on disk matches this process again');
+    }
+  } catch { /* never fatal */ }
+}, 15000);
+
 let lastSave = Date.now();
 const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
 
@@ -582,6 +613,32 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
     }
     if (action === 'resume') { paused = false; return ok({ paused }); }
 
+    // A marked moment. The point is that "look at this" becomes a durable record
+    // with numbers and a replayable snapshot, instead of a screenshot pasted into
+    // a conversation and lost.
+    if (action === 'flag') {
+      const rec = {
+        t: new Date().toISOString(), step: steps, note: String(body.note ?? '').slice(0, 500),
+        uid: Number(body.uid ?? -1),
+        alive: last.alive, gen: last.maxGeneration, lineages: last.lineages,
+        meanEnergy: +last.meanEnergy.toFixed(2),
+        params: {
+          crowdK: world.params.regrowCrowdK, moteRegrow: world.params.moteRegrow,
+          brainTax: world.params.brainTax, contract: world.params.contract,
+          flowStr: world.params.flowStr, gripAniso: world.params.gripAniso,
+        },
+        simVersion: RUNNING.simVersion,
+      };
+      const snap = `${new URL('..', import.meta.url).pathname}runs/flag-${steps}.snapshot`;
+      try { const r = await saveSnapshot(snap); rec.snapshot = snap; rec.bytes = r.bytes; }
+      catch (e) { rec.snapshotError = e.message; }
+      await Deno.writeTextFile(
+        `${new URL('..', import.meta.url).pathname}runs/observations.jsonl`,
+        JSON.stringify(rec) + '\n', { append: true });
+      console.log(`FLAGGED at step ${steps}: ${rec.note}`);
+      return ok({ flagged: true, snapshot: rec.snapshot });
+    }
+
     if (action === 'save') {
       const r = await saveSnapshot(SNAP);
       return ok({ saved: SNAP, bytes: r.bytes });
@@ -661,6 +718,7 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       // differs the physics has changed and needs a restart; if pageVersion
       // differs the viewer has changed and needs a reload.
       simVersion: RUNNING.simVersion, pageVersion: RUNNING.pageVersion,
+      simStaleSince: staleSince || null,
       onDisk: await codeStamp(),
       // The resource field is what creatures chase and it drifts and morphs.
       // The viewer needs its parameters to draw it; without them it was showing

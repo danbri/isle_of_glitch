@@ -178,7 +178,12 @@ gpuTest('lineages are displaced — some lines out-reproduce others', async () =
   // CTRNN was producing NaN activations, every cell moved at the velocity clamp
   // in a straight line, which swept bodies across the whole world and killed
   // them off chaotically. That looked like fast selection. It was noise.
-  for (let t = 0; t < 90; t++) { sim.world.step(250); await sim.evo.tick(t * 250); }
+  // 220 ticks. Lineage sorting is SLOWER in a healthy world than in a dying one:
+  // when the population was bleeding out, lines vanished to starvation and that
+  // read as fast selection. Now that it holds at carrying capacity, displacement
+  // happens by out-reproducing rather than by dying, which takes longer and is
+  // the thing this test actually means to measure.
+  for (let t = 0; t < 220; t++) { sim.world.step(250); await sim.evo.tick(t * 250); }
   const surviving = sim.evo.countLineages();
   // Lineage count can only fall, and a fall means descent is being sorted
   // rather than every founder drifting along untouched.
