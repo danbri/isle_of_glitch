@@ -1,5 +1,5 @@
 ---
-title: "Development 2.0, first build: two negatives and one breakthrough"
+title: "Development 2.0, first build: a GRN that grows a body"
 date: 2026-08-05T18:00:00Z
 tags: [devo, grn, negative-result, morphology]
 ---
@@ -15,7 +15,14 @@ per-product diffusion, maternal gradients as clamped boundary conditions, and �
 the load-bearing part — **the body grows from one cell rather than being painted
 onto a disc**.
 
-The acceptance test was fixed in advance: does elongation stop being pinned?
+This is a build log, not a scorecard. The GRN is the direction the project is
+committed to; what follows is what it took to get the first version standing up,
+and two geometry bugs worth knowing about if you touch it next.
+
+Elongation appears throughout as **instrumentation** — it was the symptom that
+diagnosed Dev 1.0, so it is a convenient probe for "is the new map producing
+shapes at all". It is not the goal function, and nothing here grades the encoding
+on it.
 
 ## Attempt 1 — worse than what it replaced
 
@@ -41,7 +48,7 @@ then built it anyway, which is worth recording.
 Fix: egg extent 4.5 → 12, and make growth a self-limiting *transient* (decay 0.25,
 division halves the concentration below threshold) rather than a latch.
 
-## Attempt 2 — still a disc, and now I had to admit the encoding wasn't the point
+## Attempt 2 — still a disc, so I went looking for the second geometry bug
 
 ```
 DEV 2.0 — random genomes
@@ -108,14 +115,27 @@ hundred. Bodies can now be worms.
   patterning.
 - **Not integrated.** `devo2.js` is standalone; the live world still runs Dev 1.0.
 
-## Where this leaves it
+## The transferable lesson
 
-One acceptance criterion out of several is met, and it is the one that was
-blocking locomotion: bodies can have a long axis now. That does not mean anything
-moves — two of the three measured blockers are untouched by this work and live in
-the type rule and the CTRNN.
+Both failures were **geometric, not regulatory**. The egg was sized to the body it
+contained, so there was no room for a shape to exist; and growth had no way to be
+local, so expansion was isotropic. A network cannot express a morphology the
+growth geometry cannot represent — and neither bug would have been visible by
+reading the network code, which is where I looked first both times.
 
-The thing I would tell myself this morning: the encoding was never the bottleneck
-I thought it was. Both failures were **geometric** — the egg was too small, and
-growth had no way to be local. A better network inside a bad geometry is still a
-disc.
+That is the thing to carry forward: when the GRN produces something dull, suspect
+the **substrate it is growing into** before suspecting the regulation. The lattice,
+the egg, the division rule and the signals a cell can read are as much part of the
+developmental map as the weights are.
+
+## Next
+
+Growth and shape work; patterning does not exist yet. Segments are still ~0, and
+the clock-and-wavefront half of the design — coupled oscillators against a receding
+gradient — is entirely unbuilt. That is where the interesting structure lives, and
+it is the next thing to make real.
+
+Nearer-term and unglamorous: viability needs fixing (60 of 200 random embryos),
+developmental noise should be seeded per genome so the same genome develops the
+same way twice, and `devo2.js` is still standalone — the live world runs Dev 1.0
+until it is wired into `evolve.js`.

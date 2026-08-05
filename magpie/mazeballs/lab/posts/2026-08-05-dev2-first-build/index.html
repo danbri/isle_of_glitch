@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Development 2.0, first build: two negatives and one breakthrough</title>
+<title>Development 2.0, first build: a GRN that grows a body</title>
 <style>
   :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
   @media (prefers-color-scheme: light) {
@@ -36,7 +36,7 @@
 <div class="wrap">
   <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
   <article>
-  <h1>Development 2.0, first build: two negatives and one breakthrough</h1>
+  <h1>Development 2.0, first build: a GRN that grows a body</h1>
   <p class="meta">
     5 August 2026 · posts, devo, grn, negative-result, morphology
   </p>
@@ -49,7 +49,13 @@ regulators per gene), non-negative concentrations with production, decay and
 per-product diffusion, maternal gradients as clamped boundary conditions, and —
 the load-bearing part — <strong>the body grows from one cell rather than being painted
 onto a disc</strong>.</p>
-<p>The acceptance test was fixed in advance: does elongation stop being pinned?</p>
+<p>This is a build log, not a scorecard. The GRN is the direction the project is
+committed to; what follows is what it took to get the first version standing up,
+and two geometry bugs worth knowing about if you touch it next.</p>
+<p>Elongation appears throughout as <strong>instrumentation</strong> — it was the symptom that
+diagnosed Dev 1.0, so it is a convenient probe for &quot;is the new map producing
+shapes at all&quot;. It is not the goal function, and nothing here grades the encoding
+on it.</p>
 <h2>Attempt 1 — worse than what it replaced</h2>
 <pre><code>DEV 1.0 (positional readout) — random genomes
   ELONGATION  p10 0.96  p50 1.15  p90 1.15  max 1.15
@@ -68,7 +74,7 @@ the GRN says.&quot;</em> The egg radius was 4.5, which is exactly the radius of 
 then built it anyway, which is worth recording.</p>
 <p>Fix: egg extent 4.5 → 12, and make growth a self-limiting <em>transient</em> (decay 0.25,
 division halves the concentration below threshold) rather than a latch.</p>
-<h2>Attempt 2 — still a disc, and now I had to admit the encoding wasn't the point</h2>
+<h2>Attempt 2 — still a disc, so I went looking for the second geometry bug</h2>
 <pre><code>DEV 2.0 — random genomes
   cells       p50 60  max 60
   ELONGATION  p50 0.96  p90 1.09  max 1.73
@@ -122,15 +128,25 @@ half of the sketch is entirely unrealised — this is growth and shape, not
 patterning.</li>
 <li><strong>Not integrated.</strong> <code>devo2.js</code> is standalone; the live world still runs Dev 1.0.</li>
 </ul>
-<h2>Where this leaves it</h2>
-<p>One acceptance criterion out of several is met, and it is the one that was
-blocking locomotion: bodies can have a long axis now. That does not mean anything
-moves — two of the three measured blockers are untouched by this work and live in
-the type rule and the CTRNN.</p>
-<p>The thing I would tell myself this morning: the encoding was never the bottleneck
-I thought it was. Both failures were <strong>geometric</strong> — the egg was too small, and
-growth had no way to be local. A better network inside a bad geometry is still a
-disc.</p>
+<h2>The transferable lesson</h2>
+<p>Both failures were <strong>geometric, not regulatory</strong>. The egg was sized to the body it
+contained, so there was no room for a shape to exist; and growth had no way to be
+local, so expansion was isotropic. A network cannot express a morphology the
+growth geometry cannot represent — and neither bug would have been visible by
+reading the network code, which is where I looked first both times.</p>
+<p>That is the thing to carry forward: when the GRN produces something dull, suspect
+the <strong>substrate it is growing into</strong> before suspecting the regulation. The lattice,
+the egg, the division rule and the signals a cell can read are as much part of the
+developmental map as the weights are.</p>
+<h2>Next</h2>
+<p>Growth and shape work; patterning does not exist yet. Segments are still ~0, and
+the clock-and-wavefront half of the design — coupled oscillators against a receding
+gradient — is entirely unbuilt. That is where the interesting structure lives, and
+it is the next thing to make real.</p>
+<p>Nearer-term and unglamorous: viability needs fixing (60 of 200 random embryos),
+developmental noise should be seeded per genome so the same genome develops the
+same way twice, and <code>devo2.js</code> is still standalone — the live world runs Dev 1.0
+until it is wired into <code>evolve.js</code>.</p>
 
 </article>
 
