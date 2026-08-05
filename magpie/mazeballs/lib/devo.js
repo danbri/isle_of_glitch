@@ -150,11 +150,39 @@ export const SYN_OFF = PROPS.length * NB;
  * stop saturation — pushed the network further INTO the convergent regime and
  * made things worse at every scale. It is gone.
  *
- * 16 puts a majority of random genomes in reach of oscillation without pinning
- * activations at the rails. Reachable, not imposed: a genome is free to specify
- * a quiet brain, and most of the interesting ones will be neither extreme.
+ * 16 was chosen from that isolated free-running sweep, and it was too low. The
+ * isolated answer is not the living answer: with sensory drive, births and deaths,
+ * measured over 400 bodies in a real world —
+ *
+ *   SYN_RANGE   neurons CHANGING   mean act-std   displacement mean / p90
+ *        8            7.0%            0.035           0.50 / 1.00
+ *       16           11.2%            0.060           0.66 / 1.50
+ *       32           21.1%            0.120           1.01 / 2.06
+ *       64           32.1%            0.188           0.99 / 2.41
+ *      128           30.7%            0.167           1.05 / 2.31
+ *
+ * A WRONG HYPOTHESIS DIED HERE, and it is worth keeping. 83% of neurons sat
+ * railed at +/-1, so the obvious diagnosis was saturation: too much drive,
+ * turn it down. The sweep says the opposite — displacement RISES as the
+ * mid-range band shrinks. A neuron pinned at +1 that SWITCHES to -1 drives a
+ * muscle harder than one drifting gently mid-scale; bang-bang control moves a
+ * body perfectly well. "Fraction in the dynamic band" measured the wrong thing
+ * entirely. What matters is whether an activation CHANGES OVER TIME, and by
+ * that measure the drive was far too weak rather than too strong.
+ *
+ * 64 sits at the knee: both variability and displacement plateau there and 128
+ * buys nothing. Still reachable-not-imposed — a genome remains free to specify a
+ * quiet brain, and most will.
  */
-export const SYN_RANGE = 16;
+export let SYN_RANGE = 64;
+
+/**
+ * Override the synapse weight scale. An experiment knob, not a world parameter:
+ * the value that maximises oscillation in an ISOLATED free-running brain is not
+ * the value that does so in a living world with sensory drive, and finding the
+ * second requires sweeping it in situ.
+ */
+export function setSynRange(v) { SYN_RANGE = v; }
 
 /**
  * Stiffness spans STIFF_BASE^-1 to STIFF_BASE^+1 around the baseline spring.

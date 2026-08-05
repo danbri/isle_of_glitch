@@ -116,6 +116,9 @@ button.on::before { content: '\25CF\00a0'; opacity: .85; }
 #scopeGrip i { width: 18px; height: 2px; background: #3d5a52; border-radius: 1px; }
 #scopeGrip:hover i { background: #6fbfae; }
 #scopeToggle { position: fixed; right: .5rem; z-index: 46; }
+
+button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
+  vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -223,7 +226,8 @@ button.on::before { content: '\25CF\00a0'; opacity: .85; }
     </div>
     <p class="note" id="selInfo">Nothing selected. Click a cell in the world.</p>
     <div class="row"><button id="bGenome">show genome</button>
-      <button id="bFlag" title="mark this moment for review">flag this ⚑</button></div>
+      <button id="bFlag" title="mark this moment for review">flag this ⚑</button>
+      <button id="bCopyStats" title="copy world + creature stats">⧉ stats</button></div>
     <div id="genomeBox" style="display:none"></div>
   </div>
 
@@ -850,7 +854,7 @@ async function rebuild() {
       serverPaused = !!st.paused;
       // Remember what the page was when it loaded, so a later edit to world.html
       // is detectable without the page having to know its own contents.
-      if (myPageVersion === null) myPageVersion = st.pageVersion ?? null;
+      if (myPageVersion === null) myPageVersion = st.onDisk?.pageVersion ?? st.pageVersion ?? null;
       myBootId = st.bootId ?? null;
       const pb = $('bSrvPause');
       if (pb) {
@@ -1105,6 +1109,7 @@ const SCOPE_KEEP = 12;            // animals whose history we retain
  */
 const scopeStore = new Map();     // uid -> { hist, head, filled, order, types, t0 }
 const sel = { uid: -1, follow: false, picking: true, lastStep: -1 };
+let lastGenome = null;
 
 function storeFor(uid) {
   let e = scopeStore.get(uid);
@@ -1374,6 +1379,46 @@ function cellShade(v) {
     : `background:rgb(${Math.round(20+30*a)},${Math.round(24+100*a)},${Math.round(26+170*a)})`;
 }
 
+/**
+ * Copy-to-clipboard for anything worth pasting elsewhere.
+ *
+ * The genome, the weights and the metrics are the things you actually want to
+ * take away — into a note, a message, another tool — and until now the only way
+ * was a screenshot, which cannot be parsed by anything and costs a lot to send.
+ */
+async function copyText(label, text, btn) {
+  try {
+    await navigator.clipboard.writeText(text);
+    if (btn) { const t = btn.textContent; btn.textContent = 'copied ✓';
+      setTimeout(() => { btn.textContent = t; }, 1400); }
+    note(`${label} copied (${text.length} chars)`);
+  } catch (e) {
+    // Clipboard needs a secure context; over plain http on a tailnet address it
+    // is simply absent, so fall back to something the user can still act on.
+    note('clipboard unavailable — see console');
+    console.log(`--- ${label} ---\n${text}`);
+  }
+}
+
+/** The selected animal's genome as TSV: pastes into a sheet or a message. */
+function genomeAsText(j) {
+  const lines = [`# animal ${j.uid}  gen ${j.generation}  ${j.cells} cells  lineage ${j.lineage}`];
+  lines.push(['property', ...j.basis].join('\t'));
+  j.props.forEach((p, pi) => {
+    const row = [p];
+    for (let b = 0; b < j.nb; b++) row.push(j.g[pi * j.nb + b].toFixed(4));
+    lines.push(row.join('\t'));
+  });
+  lines.push('');
+  lines.push(['synapse', ...j.synBasis].join('\t'));
+  const syn = ['weight'];
+  for (let k = 0; k < j.nsyn; k++) syn.push(j.g[j.synOff + k].toFixed(4));
+  lines.push(syn.join('\t'));
+  lines.push('');
+  lines.push(`# raw: [${Array.from(j.g).map(v => v.toFixed(5)).join(',')}]`);
+  return lines.join('\n');
+}
+
 async function showGenome() {
   const box = $('genomeBox');
   if (!box) return;
@@ -1383,7 +1428,9 @@ async function showGenome() {
   try {
     const j = await (await fetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
     if (!j.ok) { box.textContent = j.error; return; }
-    let html = `<h4>animal #${j.uid} · gen ${j.generation} · ${j.cells} cells</h4>`;
+    lastGenome = j;
+    let html = `<h4>animal #${j.uid} · gen ${j.generation} · ${j.cells} cells ` +
+      `<button id="bCopyGenome" class="mini" title="copy genome as TSV">⧉ copy</button></h4>`;
     html += '<table><tr><th></th>' +
       j.basis.map(b => `<td class="hd">${b}</td>`).join('') + '</tr>';
     j.props.forEach((p, pi) => {
@@ -1407,6 +1454,8 @@ async function showGenome() {
       'property the genome leaves flat. Weight on <b>|dv|</b> rather than <b>dv</b> ' +
       'is what makes a body bilaterally symmetric — it cannot tell left from right.</p>';
     box.innerHTML = html;
+    on('bCopyGenome', 'onclick', (e) =>
+      copyText('genome', genomeAsText(j), e.target));
   } catch (e) { box.textContent = 'could not load genome: ' + e.message; }
 }
 
@@ -1460,6 +1509,20 @@ async function flagThis() {
   } catch (e) { note('flag failed: ' + e.message); }
 }
 on('bFlag', 'onclick', flagThis);
+on('bCopyStats', 'onclick', async (e) => {
+  const st = await (await fetch('/status', { cache: 'no-store' })).json();
+  const keys = ['steps','alive','births','deaths','generation','lineages','meanEnergy',
+                'cellsLiveTyped','nCells','maxCells','bound','nMotes','spf','simVersion'];
+  const lines = keys.filter(k => st[k] !== undefined).map(k => `${k}\t${st[k]}`);
+  const e2 = scopeStore.get(sel.uid);
+  if (sel.uid >= 0 && e2) {
+    lines.push('', `selected\tanimal #${sel.uid}`, `neurons\t${e2.order.length}`);
+    const names = ['neuron','sensor','muscle','anchor'], c = [0,0,0,0];
+    for (let r = 0; r < e2.order.length; r++) if (e2.types[r] >= 0) c[e2.types[r]]++;
+    names.forEach((nm, k) => lines.push(`${nm}\t${c[k]}`));
+  }
+  copyText('stats', lines.join('\n'), e.target);
+});
 
 /* ---- wiring ----
  *
@@ -1520,6 +1583,60 @@ document.addEventListener('visibilitychange', () => {
     rebuild().catch(e => fail(String(e)));
   }
 });
+
+/**
+ * DUPLICATE TABS ARE EXPENSIVE. Every watcher allocates its own full WorldGPU and
+ * BrainArenaGPU — edge tables, brain state, an 8.6MB spatial hash, mote buffers,
+ * compute pipelines — none of which it uses, because in watch mode it never steps
+ * anything. Two tabs is two worlds on one GPU; the second allocation can simply
+ * fail, and the symptom is a page stuck saying "connecting".
+ *
+ * Until the renderer stops building a simulation it does not run, the least we
+ * can do is say so.
+ */
+let tabChan = null;
+try {
+  tabChan = new BroadcastChannel('mazeballs-watchers');
+  const myTab = Math.random().toString(36).slice(2);
+  let peers = 0, peerTimer = null, lastPeerId = null;
+  tabChan.onmessage = (ev) => {
+    if (ev.data?.k === 'ping' && ev.data.id !== myTab) {
+      tabChan.postMessage({ k: 'pong', id: myTab });
+    }
+    // A page cannot focus ANOTHER tab — only itself. So the switch is done by
+    // asking the peer to raise itself, which Chrome honours for a same-origin
+    // tab. Not guaranteed everywhere, hence the button says "try".
+    if (ev.data?.k === 'come-here' && ev.data.to === myTab) {
+      try { window.focus(); } catch { /* browser said no */ }
+    }
+    if (ev.data?.k === 'pong' && ev.data.id !== myTab) { lastPeerId = ev.data.id; }
+    if (ev.data?.k === 'pong' && ev.data.id !== myTab) {
+      peers++;
+      clearTimeout(peerTimer);
+      peerTimer = setTimeout(() => {
+        if (peers > 0) {
+          const el = $('err');
+          if (el) {
+            el.style.display = 'block';
+            el.innerHTML =
+              `${peers} other Mazeballs tab${peers > 1 ? 's' : ''} open. Each one holds a ` +
+              `full copy of the world on the GPU, so this page may be slow or fail to ` +
+              `start. <button id="bGoOther">try switching to it</button> ` +
+              `<button id="bDismissDup">dismiss</button>`;
+            on('bGoOther', 'onclick', () => {
+              tabChan.postMessage({ k: 'come-here', to: lastPeerId });
+              note('asked the other tab to come forward — some browsers refuse');
+            });
+            on('bDismissDup', 'onclick', () => { el.style.display = 'none'; });
+          }
+        }
+        peers = 0;
+      }, 400);
+    }
+  };
+  setInterval(() => tabChan.postMessage({ k: 'ping', id: myTab }), 30000);
+  setTimeout(() => tabChan.postMessage({ k: 'ping', id: myTab }), 2500);
+} catch { /* no BroadcastChannel: not important enough to care */ }
 
 const FRAME_MAGIC = 0x314d5257;
 function applyFrame(ab) {
@@ -1789,7 +1906,15 @@ function loop() {
       sim.checkingVer = false;
       if (!st.onDisk) return;                       // older server, no stamps
       const simStale = st.simVersion !== st.onDisk.simVersion;
-      const pageStale = st.pageVersion !== st.onDisk.pageVersion || st.pageVersion !== myPageVersion;
+      // Compare what THIS PAGE loaded against what is on disk now.
+      //
+      // It also compared the server's boot-time pageVersion against disk — but
+      // world.html is static and served fresh on every request, so the server's
+      // snapshot of it is frozen at ITS startup and stays different forever once
+      // the file is touched. The banner therefore never cleared, however many
+      // times you reloaded, including shift-reload. The server's copy says
+      // nothing about what the browser is running.
+      const pageStale = myPageVersion !== null && myPageVersion !== st.onDisk.pageVersion;
       const el = $('codeWarn');
       if (!el) return;
       const msgs = [];
