@@ -57,9 +57,13 @@
  * This module is the encoding; it does not yet make eggs physical.
  */
 
-/** Distance between lattice sites. Shared with bond() in devo.js — see the note
- *  there about these drifting apart and every body coming out with no bonds. */
-export const SPACING = 0.95;
+// Imported, never restated. SPACING and the synapse basis are shared with
+// devo.js because both encodings feed the same bond() and the same arena, and
+// this codebase has already lost a day to two copies of SPACING drifting apart
+// (bond() looked for neighbours closer than the lattice actually placed them, so
+// every developed body came out with zero bonds — no skeleton, no brain).
+import { SPACING, SYN_BASIS, NSYN, SYN_RANGE } from './devo.js';
+export { SPACING };
 
 /** Gene products. The sketch numbers them 0-255; 64 is what actually evolves in
  *  a reasonable number of generations, and every reserved index below is defined
@@ -97,8 +101,24 @@ export const N_MATERNAL = 5;
 // pipeline (describe(), bond(), synapse()) is unchanged, so this module can be
 // swapped in without touching the arena.
 export const OUT_BASE = 8;
-export const OUTPUTS = ['grow', 'contract', 'sense', 'grip', 'stiff', 'tau', 'bias'];
-export const G_GROW = OUT_BASE + 0;
+export const OUTPUTS = ['grow', 'survive', 'contract', 'sense', 'grip', 'stiff', 'tau', 'bias'];
+export const G_GROW    = OUT_BASE + 0;
+/**
+ * SURVIVE — whether this cell is still part of the body when the egg hatches.
+ *
+ * Shape does not have to come only from where growth happened. Real embryos
+ * carve as much as they build: interdigital webbing is REMOVED by apoptosis, not
+ * un-grown, and differential adhesion sorts tissue that was laid down uniformly.
+ *
+ * This matters here for a specific reason. Patterning across a field — stripes,
+ * bands, gap-gene domains — needs a FIELD to pattern: a fly reads its gradients
+ * across thousands of nuclei that already exist. A body extruded one cell at a
+ * time from a growing tip never has that field, which is the leading suspect for
+ * why segments measure ~0 under pure tip growth. Cleavage mode fills the egg so
+ * a field exists, and `survive` is then what makes a filled egg into a shape
+ * rather than a disc.
+ */
+export const G_SURVIVE = OUT_BASE + 1;
 
 /** Top of the range is reserved for environmental signals (the sketch's 201-255).
  *  Nothing writes these yet; they exist so the numbering is stable when they do. */
@@ -107,15 +127,77 @@ export const EXT_BASE = NGENE - N_EXTERNAL;
 
 // --- genome layout ---------------------------------------------------------
 // Per gene: K source indices, K weights, bias, log-decay, log-diffusion.
+// Then a trailing block of NSYN synapse coefficients — see synapse() below.
 export const GENE_STRIDE = 2 * K + 3;
 export const OFF_SRC   = 0;
 export const OFF_W     = K;
 export const OFF_BIAS  = 2 * K;
 export const OFF_DECAY = 2 * K + 1;
 export const OFF_DIFF  = 2 * K + 2;
-export const GENOME_SIZE = NGENE * GENE_STRIDE;
+export const GRN_SIZE  = NGENE * GENE_STRIDE;
+export const SYN_OFF   = GRN_SIZE;
+export const GENOME_SIZE = GRN_SIZE + NSYN;
 
+/**
+ * The weight of a synapse from cell `a` to cell `b`.
+ *
+ * Deliberately the SAME basis and the same range as `devo.js`, imported rather
+ * than restated: the brain is wired from what the two endpoint cells are made
+ * of, and Dev 2.0 changes what determines a cell's properties, not what a
+ * synapse is. Sharing the definition also means the antisymmetric `axial` and
+ * `lateral` terms — the ones that let a CTRNN oscillate at all, and which cost
+ * this project a measured retraction to discover — cannot drift out of sync
+ * between the two encodings.
+ *
+ * The coefficients live in a trailing block of the genome rather than being
+ * expressed by the GRN. Expressing them would be the more elegant story, but a
+ * synapse weight is a function of a PAIR of cells and the GRN produces per-cell
+ * concentrations; folding pairwise structure into it is a separate design
+ * problem, and doing it badly would silently break the connectome. Recorded as
+ * an open question rather than smuggled in.
+ */
+export function synapse(genome, a, b) {
+  let s = 0;
+  for (let k = 0; k < NSYN; k++) s += genome[SYN_OFF + k] * SYN_BASIS[k][1](a, b);
+  return SYN_RANGE * Math.tanh(s);
+}
+
+/**
+ * PRODUCTION ACTIVATION — logistic vs tanh, and why the answer is not obvious.
+ *
+ * Two sigmoids are in common use for CTRNNs and they are NOT interchangeable in
+ * general: the logistic maps to (0, 1) and tanh to (-1, +1). Randall Beer's work
+ * on CTRNN dynamics treats the two as related by an affine reparameterisation —
+ * a network in one form maps to a network in the other with adjusted weights and
+ * biases — so they span the same dynamics but NOT the same search space, which is
+ * what matters to evolution.
+ *
+ * The distinction bites differently in our two uses:
+ *
+ * HERE (the GRN). A concentration cannot be negative, so the output range must be
+ * [0, inf) and tanh is unavailable as-is. Rescaling it to (0,1) gives
+ *
+ *     (tanh(x) + 1) / 2  ==  sigmoid(2x)                     [exactly]
+ *
+ * so for THIS use, "logistic vs tanh" collapses to a pure GAIN factor of two. It
+ * is not a shape choice at all, which is worth knowing before anyone sweeps it as
+ * though it were. `prodGain` exposes it as the continuous knob it really is, and
+ * 1.0 and 2.0 are the two named conventions.
+ *
+ * THE BRAIN (`brainarena_gpu.js`) is the case where the choice is substantive,
+ * and it currently uses tanh. There the difference is CENTREDNESS: tanh is odd,
+ * so a silent network is quiescent and excitation and inhibition are symmetric
+ * about zero; the logistic outputs 0.5 for zero input, so a network with no drive
+ * is half-on and every weight has to fight that offset. Given the measurement
+ * that 40% of brain cells sit pinned at a rail, this is worth a controlled test
+ * rather than an assumption — but it is a BRAIN experiment, not a GRN one, and
+ * changing it changes what every evolved genome means.
+ */
 const sigmoid = (x) => 1 / (1 + Math.exp(-Math.max(-40, Math.min(40, x))));
+
+/** Named conventions for `prodGain`. See the note above: for a [0,1] output these
+ *  differ only by gain, and tanh-rescaled is exactly logistic at gain 2. */
+export const PROD_GAIN = { logistic: 1.0, tanhRescaled: 2.0 };
 
 /** Decay rate in 1/s. Spans a decade and a half either side of 1, so a product
  *  can be a fast transient or a stable determinant. */
@@ -203,6 +285,29 @@ export function latticeFor(extent) {
 export function develop(genome, {
   yolk = 1e9, cellCost = 1.0, extent = 12,
   ms = 12000, dtMs = 40, maxCells = 60, rnd = Math.random,
+  canalised = true,
+  // 'grow'   — one cell, extended by division where the network says to grow.
+  //            Morphology is the record of where growth happened.
+  // 'cleave' — the egg is first partitioned into a field of pluripotent cells,
+  //            then patterned, then SCULPTED by the survive gene. This is the
+  //            arrangement fly patterning actually uses, and the one that gives
+  //            a gradient something to be read across.
+  //
+  //            EXPERIMENTAL AND CURRENTLY WORSE. Measured over 200 founders:
+  //            96% saturate the cell cap and elongation sits at 1.15 with
+  //            segments flat at 0 — i.e. it makes discs. The cause is that
+  //            `survive` reaches a steady state of sigmoid(bias)/decay well
+  //            above threshold for every cell, so nothing is ever culled and
+  //            the sculpting step is a no-op. Fixing it means making survival a
+  //            REGULATED quantity sitting near its threshold rather than pinned
+  //            by its bias, which is a tuning problem, not a design flaw — the
+  //            field-for-patterning argument still stands. Left in, off by
+  //            default, with the failure recorded rather than the mode quietly
+  //            deleted.
+  mode = 'grow',
+  cleaveFrac = 0.35,          // fraction of developmental time spent cleaving
+  divRate = 1.6,              // division readiness gained per unit grow per second
+  surviveThresh = 0.5,
 } = {}) {
   const lat = latticeFor(extent);
   const sites = lat.sites;
@@ -213,8 +318,47 @@ export function develop(genome, {
   const conc = new Float32Array(nS * NGENE);
   const next = new Float32Array(nS * NGENE);
   const occupied = new Uint8Array(nS);
+
+  // CANALISATION — the developmental noise is derived from the GENOME, so the
+  // same genome develops the same body every time.
+  //
+  // This is not a cosmetic determinism. With per-development noise, measured
+  // over 39 genomes developed 12 times each:
+  //
+  //     within-genome sd (same genome, fresh noise)  0.264
+  //     between-genome sd (genome means)             0.084
+  //     heritability h^2                             0.093
+  //
+  // Nine tenths of the variance in any morphology measure was developmental
+  // noise rather than genome, and one genome ranged 0.63 to 2.31 across twelve
+  // developments — a spread wider than the entire genetic range. Elite selection
+  // on a signal like that picks lucky DEVELOPMENTS, which regress in their
+  // offspring, so directed selection on elongation drove it DOWNWARDS (3.66 at
+  // founding to 1.30 by generation 25). Selection was chasing noise.
+  //
+  // The noise still exists and still does its job: it is spatially structured
+  // across sites, so a Turing instability can still choose a phase from it. It
+  // is simply a fixed prepattern per genome rather than a fresh coin flip — which
+  // is what canalisation means, and real embryos work hard for it.
+  //
+  // Pass `canalised: false` to restore stochastic development, which is how the
+  // heritability above is measured.
   const noise = new Float32Array(nS);
-  for (let s = 0; s < nS; s++) noise[s] = rnd();
+  if (canalised) {
+    // Cheap deterministic hash of the genome -> a seeded stream for the sites.
+    let h = 2166136261 >>> 0;
+    for (let i = 0; i < genome.length; i++) {
+      h ^= Math.imul(Math.round(genome[i] * 4096) | 0, 16777619);
+      h = Math.imul(h ^ (h >>> 13), 2654435761) >>> 0;
+    }
+    let st = (h || 1) >>> 0;
+    for (let s = 0; s < nS; s++) {
+      st = (Math.imul(st, 1664525) + 1013904223) >>> 0;
+      noise[s] = st / 4294967296;
+    }
+  } else {
+    for (let s = 0; s < nS; s++) noise[s] = rnd();
+  }
 
   // Precompute per-gene constants once rather than per cell per step.
   const decay = new Float32Array(NGENE), diff = new Float32Array(NGENE);
@@ -247,10 +391,9 @@ export function develop(genome, {
   setMaternal(lat.seed);
   let spent = cellCost, aborted = false;
 
-  // Growth is throttled so a body cannot appear in one step: at most one new
-  // cell per existing cell per growth window, and growth windows are spaced.
-  const GROW_EVERY = 5;
-  const GROW_THRESH = 0.55;
+  // Per-cell division readiness: accumulates at a rate set by `grow`, fires at 1.
+  const ready = new Float32Array(nS);
+  const cleaveSteps = Math.round(nStep * cleaveFrac);
 
   for (let t = 0; t < nStep; t++) {
     // ---- regulatory update, gather-style, out of place
@@ -287,12 +430,35 @@ export function develop(genome, {
       setMaternal(s);                                          // clamped, every step
     }
 
-    // ---- growth
-    if (t % GROW_EVERY === 0 && live.length < maxCells) {
+    // ---- division
+    //
+    // WHEN DOES A CELL DIVIDE? Not on a synchronous poll. Each cell accumulates
+    // readiness at a rate set by its own `grow` output, and divides when that
+    // accumulator crosses 1, then resets. Division is therefore a RATE — a cell
+    // expressing grow twice as hard divides twice as often — and cells fall out
+    // of phase with each other naturally, instead of the whole embryo dividing
+    // on the same tick because the loop said so.
+    //
+    // The old form (`t % 5 === 0` and a threshold) made division a property of
+    // the integrator's step count, which is exactly the kind of thing that
+    // silently sets a timescale nobody chose.
+    //
+    // During CLEAVAGE the accumulator is bypassed: cleavage in a real embryo is
+    // not growth, it is the zygote's cytoplasm being partitioned, and it runs
+    // fast and largely independent of patterning. Its job is to produce a FIELD
+    // for the gradients to be read across.
+    const cleaving = mode === 'cleave' && t < cleaveSteps;
+    if (live.length < maxCells) {
       const added = [];
       for (let li = 0; li < live.length; li++) {
         const s = live[li];
-        if (conc[s * NGENE + G_GROW] < GROW_THRESH) continue;
+        if (cleaving) {
+          // partition, unconditionally, as fast as free neighbours allow
+        } else {
+          ready[s] += dt * conc[s * NGENE + G_GROW] * divRate;
+          if (ready[s] < 1) continue;
+          ready[s] -= 1;
+        }
         const nb = sites[s].nb;
         // Grow into the free neighbour the gradient points hardest at, so
         // direction is a property of the chemistry rather than of iteration
@@ -301,9 +467,14 @@ export function develop(genome, {
         for (let q = 0; q < nb.length; q++) {
           const nn = nb[q];
           if (occupied[nn]) continue;
-          const score = sites[nn].ap * conc[s * NGENE + G_AP]
-                      + sites[nn].dv * conc[s * NGENE + G_DV]
-                      + 0.05 * noise[nn];
+          // Cleavage fills; it does not steer. Giving it the same polarity bias
+          // as tip growth would make the "field" a lopsided crescent, which is
+          // not a field.
+          const score = cleaving
+            ? (0.5 - sites[nn].rad) + 0.1 * noise[nn]
+            : sites[nn].ap * conc[s * NGENE + G_AP]
+              + sites[nn].dv * conc[s * NGENE + G_DV]
+              + 0.05 * noise[nn];
           if (score > bestScore) { bestScore = score; best = nn; }
         }
         if (best < 0) continue;
@@ -320,6 +491,7 @@ export function develop(genome, {
           const half = conc[bs + g] * 0.5;
           conc[bd + g] = half; conc[bs + g] = half;
         }
+        ready[best] = 0;
         setMaternal(best);
         added.push(best);
       }
@@ -329,23 +501,31 @@ export function develop(genome, {
   }
 
   // ---- read the body off the finished chemistry
+  //
+  // In cleave mode the egg is full and `survive` carves the shape out of it —
+  // apoptosis, the way a hand is made. In grow mode the body is already only
+  // where growth reached, so culling on top of that would delete a shape that
+  // was built rather than sculpt one that was filled; survival is not applied.
+  const sculpt = mode === 'cleave';
   const cells = [];
+  let culled = 0;
   for (let li = 0; li < live.length; li++) {
     const s = live[li], b = s * NGENE, st = sites[s];
     const out = (n) => {
       const c = conc[b + OUT_BASE + n];
       return 2 * Math.tanh(c) - 1;                             // [0,inf) -> [-1,1)
     };
+    if (sculpt && out(1) < 2 * surviveThresh - 1) { culled++; continue; }
     cells.push({
       x: st.x, y: st.y, ap: st.ap, dv: st.dv,
-      contract: out(1), sense: out(2), grip: out(3), stiff: out(4),
+      contract: out(2), sense: out(3), grip: out(4), stiff: out(5),
       // tau spans a decade, log-spaced, matching devo.js so the CTRNN is
       // comparable between the two encodings.
-      tau: 0.18 * Math.pow(10, out(5)),
-      bias: out(6),
+      tau: 0.18 * Math.pow(10, out(6)),
+      bias: out(7),
     });
   }
-  return { cells, spent, aborted, steps: nStep };
+  return { cells, spent, aborted, steps: nStep, culled, laid: live.length };
 }
 
 /**
@@ -358,19 +538,48 @@ export function develop(genome, {
  * a shape: which direction, how far, and whether growth is patterned are all
  * left to the network.
  */
-export function randomGenome(rnd = Math.random) {
+/**
+ * Founder seeding constants. Exposed as an options object because these are
+ * EXPERIMENT KNOBS, not world parameters — the values that make a founder
+ * population viable are found by sweeping them, not by reasoning, and a sweep
+ * needs them addressable. Same treatment `devo.js` gives `setSynRange`.
+ */
+export const SEED_DEFAULTS = {
+  edgeProb: 0.35,      // fraction of regulator slots live at birth
+  weightScale: 2.5,    // spread of regulator weights
+  biasSpread: 2.0,     // spread of per-gene bias
+  biasOffset: -1.2,    // pushes most genes off at birth
+  decaySpread: 0.8,
+  diffSpread: 1.0,
+  growBias: 0.2,
+  growCrowd: -4.0,     // negative = grow where UNCROWDED, i.e. at a tip
+  growSelf: 0.8,       // autocatalysis, so a tip sustains itself
+  growAp: 0.6,         // a little polarity, so growth has a preferred end
+  growDecay: 0.25,
+  growDiff: -0.7,
+  // Survival defaults ON. A founder whose survive gene sits near zero has its
+  // whole embryo culled in cleave mode, which is not an interesting way to fail;
+  // apoptosis should be something regulation REACHES for, not the default state
+  // of matter. Mutation is free to carve from here.
+  surviveBias: 1.2,
+  surviveDecay: 0.0,
+  surviveDiff: -0.5,
+};
+
+export function randomGenome(rnd = Math.random, opts = {}) {
+  const o = { ...SEED_DEFAULTS, ...opts };
   const g = new Float32Array(GENOME_SIZE);
   for (let i = 0; i < NGENE; i++) {
     const b = i * GENE_STRIDE;
     for (let k = 0; k < K; k++) {
       // Most edges silenced at birth; a sparse network is the starting point,
       // and structural mutation adds edges where they earn their keep.
-      g[b + OFF_SRC + k] = rnd() < 0.35 ? Math.floor(rnd() * NGENE) : -1;
-      g[b + OFF_W + k] = (rnd() * 2 - 1) * 2.5;
+      g[b + OFF_SRC + k] = rnd() < o.edgeProb ? Math.floor(rnd() * NGENE) : -1;
+      g[b + OFF_W + k] = (rnd() * 2 - 1) * o.weightScale;
     }
-    g[b + OFF_BIAS] = (rnd() * 2 - 1) * 2 - 1.2;               // mostly off
-    g[b + OFF_DECAY] = (rnd() * 2 - 1) * 0.8;
-    g[b + OFF_DIFF] = (rnd() * 2 - 1) * 1.0;
+    g[b + OFF_BIAS] = (rnd() * 2 - 1) * o.biasSpread + o.biasOffset;
+    g[b + OFF_DECAY] = (rnd() * 2 - 1) * o.decaySpread;
+    g[b + OFF_DIFF] = (rnd() * 2 - 1) * o.diffSpread;
   }
   // Growth: reachable from the start, shape unspecified.
   //
@@ -382,12 +591,24 @@ export function randomGenome(rnd = Math.random) {
   // actively re-produce to grow again. That turns "grow" from a switch into a
   // rate, which is what lets one end of a body keep growing while another stops.
   const gb = G_GROW * GENE_STRIDE;
-  g[gb + OFF_BIAS] = 0.2;
-  g[gb + OFF_SRC + 0] = G_CROWD; g[gb + OFF_W + 0] = -4.0;      // grow at a TIP
-  g[gb + OFF_SRC + 1] = G_GROW;  g[gb + OFF_W + 1] = 0.8;       // self-sustaining
-  g[gb + OFF_SRC + 2] = G_AP;    g[gb + OFF_W + 2] = 0.6;
-  g[gb + OFF_DECAY] = 0.25;
-  g[gb + OFF_DIFF] = -0.7;                                      // stays local
+  g[gb + OFF_BIAS] = o.growBias;
+  g[gb + OFF_SRC + 0] = G_CROWD; g[gb + OFF_W + 0] = o.growCrowd;  // grow at a TIP
+  g[gb + OFF_SRC + 1] = G_GROW;  g[gb + OFF_W + 1] = o.growSelf;   // self-sustaining
+  g[gb + OFF_SRC + 2] = G_AP;    g[gb + OFF_W + 2] = o.growAp;
+  g[gb + OFF_DECAY] = o.growDecay;
+  g[gb + OFF_DIFF] = o.growDiff;                                   // stays local
+
+  const sb = G_SURVIVE * GENE_STRIDE;
+  g[sb + OFF_BIAS] = o.surviveBias;
+  g[sb + OFF_DECAY] = o.surviveDecay;
+  g[sb + OFF_DIFF] = o.surviveDiff;
+
+  // SYNAPSE COEFFICIENTS. Not optional and not zero-able: `synapse()` returns
+  // SYN_RANGE * tanh(sum), so an all-zero block gives every edge weight exactly
+  // zero and the whole population is born brain-dead. This repo has a commit
+  // named "the brains were dead"; same magnitude as devo.js so the two encodings
+  // start their connectomes on equal terms.
+  for (let k = 0; k < NSYN; k++) g[SYN_OFF + k] = (rnd() * 2 - 1) * 0.9;
   return g;
 }
 
@@ -413,6 +634,11 @@ export function mutate(genome, { rate = 0.12, size = 0.3, structural = 0.02, rnd
     if (rnd() < rate) g[b + OFF_BIAS] += (rnd() * 2 - 1) * size * 2;
     if (rnd() < rate) g[b + OFF_DECAY] = clamp(g[b + OFF_DECAY] + (rnd() * 2 - 1) * size, -1.2, 1.2);
     if (rnd() < rate) g[b + OFF_DIFF] = clamp(g[b + OFF_DIFF] + (rnd() * 2 - 1) * size, -1, 2);
+  }
+  // The connectome mutates too, or the brain is frozen at whatever the founder
+  // happened to draw while the body evolves around it.
+  for (let k = 0; k < NSYN; k++) {
+    if (rnd() < rate) g[SYN_OFF + k] = clamp(g[SYN_OFF + k] + (rnd() * 2 - 1) * size, -6, 6);
   }
   return g;
 }
