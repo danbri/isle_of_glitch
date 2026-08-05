@@ -55,6 +55,45 @@ const args = (() => {
 // the live world was carrying nearly three times the tissue the number was chosen
 // for. That is why crowding suppression tuned in a 600-body test world killed the
 // 1200-body server: the server was already far denser than anything measured.
+/**
+ * Version stamps for the two INDEPENDENT things that can be out of date.
+ *
+ * `pageVersion` is world.html, which is static — a browser reload picks up any
+ * change. `simVersion` is the physics: lib/*.js, loaded into THIS process at
+ * startup, which a reload cannot touch and only a restart replaces.
+ *
+ * Conflating them is easy and was actively confusing: reloading forever will
+ * never pick up a change to traction or grazing, and restarting the server does
+ * nothing for a renderer bug. The page now compares both and says which.
+ */
+const codeStamp = async () => {
+  const here = new URL('.', import.meta.url).pathname;
+  const stat = async (f) => {
+    try { const st = await Deno.stat(f); return `${st.size}:${st.mtime?.getTime() ?? 0}`; }
+    catch { return '0'; }
+  };
+  const sim = [];
+  for await (const e of Deno.readDir(`${here}../lib`)) {
+    if (e.isFile && e.name.endsWith('.js') && !e.name.endsWith('_test.js')) sim.push(e.name);
+  }
+  sim.sort();
+  const simParts = [];
+  for (const f of sim) simParts.push(`${f}=${await stat(`${here}../lib/${f}`)}`);
+  simParts.push(`serve=${await stat(`${here}serve-world.js`)}`);
+  const hash = (x) => {
+    let h = 5381;
+    for (let i = 0; i < x.length; i++) h = ((h * 33) ^ x.charCodeAt(i)) >>> 0;
+    return h.toString(36);
+  };
+  return {
+    simVersion: hash(simParts.join('|')),
+    pageVersion: hash(await stat(`${here}../world.html`)),
+  };
+};
+// Captured at startup: this is what the RUNNING process actually loaded.
+const RUNNING = await codeStamp();
+console.log(`code: sim ${RUNNING.simVersion}, page ${RUNNING.pageVersion}`);
+
 const BOUND = args.bound ||
   Math.max(40, Math.sqrt(args.beasts * Math.max(args.cells, 34) / 0.5) / 2);
 
@@ -140,6 +179,13 @@ async function saveSnapshot(path) {
   // half-file where a good one used to be.
   await Deno.writeFile(path + '.tmp', out);
   await Deno.rename(path + '.tmp', path);
+  // A ROLLING RING beside the live file. Overwriting one snapshot means the only
+  // state you can ever go back to is the most recent — and the most recent is
+  // exactly what you have when you notice something has gone wrong.
+  try {
+    const ring = `${path}.${String(Math.floor(steps / 1e5) % 8)}.ring`;
+    await Deno.writeFile(ring, out);
+  } catch { /* ring is a convenience, never fatal */ }
   return { bytes: total, steps };
 }
 
@@ -208,6 +254,57 @@ if (args.resume) {
 }
 
 let paused = false;
+
+/**
+ * A METRICS LOG, so diagnosing a run does not mean pasting screenshots.
+ *
+ * A screenshot says "it looks static" and costs a great deal to transmit; one
+ * JSONL line says alive 157, muscle 0.7%, median body 6 cells, and costs almost
+ * nothing. The whole history of a run is then a file to read the tail of, rather
+ * than something reconstructed from memory and impressions.
+ *
+ * Cheap enough to keep always: ~200 bytes per sample, so an overnight run at one
+ * sample per 5,000 steps is well under a megabyte.
+ */
+const METRICS = `${new URL('..', import.meta.url).pathname}runs/metrics.jsonl`;
+let sinceMetric = 0;
+const METRIC_EVERY = args.metricEvery ?? 5000;
+
+async function logMetrics() {
+  try {
+    const A = built.arena, C = built.cells;
+    const census = [0, 0, 0, 0];
+    let liveCells = 0;
+    const sizes = [];
+    for (let o = 0; o < A.P; o++) {
+      if (!A.alive[o]) continue;
+      sizes.push(A.cnt[o]);
+      for (let i = A.off[o]; i < A.off[o] + A.cnt[o]; i++) {
+        const t = C.ctype[i];
+        if (t >= 0 && t < 4) { census[t]++; liveCells++; }
+      }
+    }
+    sizes.sort((a, b) => a - b);
+    const rec = {
+      t: new Date().toISOString(), step: steps,
+      alive: last.alive, births: evo.births, deaths: evo.deaths,
+      gen: last.maxGeneration, lineages: last.lineages,
+      meanEnergy: +last.meanEnergy.toFixed(2),
+      liveCells,
+      bodyMin: sizes[0] ?? 0,
+      bodyMed: sizes[sizes.length >> 1] ?? 0,
+      bodyMax: sizes[sizes.length - 1] ?? 0,
+      neuron: census[0], sensor: census[1], muscle: census[2], anchor: census[3],
+      musclePct: liveCells ? +(100 * census[2] / liveCells).toFixed(2) : 0,
+      spf: args.spf, bound: +BOUND.toFixed(1),
+      crowdK: world.params.regrowCrowdK, moteRegrow: world.params.moteRegrow,
+      flowStr: world.params.flowStr, contract: world.params.contract,
+      simVersion: RUNNING.simVersion,
+    };
+    await Deno.writeTextFile(METRICS, JSON.stringify(rec) + '\n', { append: true });
+  } catch (e) { console.error('metrics failed:', e.message); }
+}
+
 let lastSave = Date.now();
 const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
 
@@ -216,6 +313,9 @@ const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
     if (paused) { await new Promise(r => setTimeout(r, 100)); continue; }
     world.step(args.spf);
     steps += args.spf; sinceTick += args.spf;
+
+    sinceMetric += args.spf;
+    if (sinceMetric >= METRIC_EVERY && !ticking) { sinceMetric = 0; await logMetrics(); }
 
     if (sinceTick >= args.tick && !ticking) {
       sinceTick = 0; ticking = true;
@@ -557,6 +657,11 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       // reloading could not fix, because the guess was wrong every time.
       maxCells: args.maxCells, nCells: built.meta.nCells, bound: BOUND,
       nMotes: world.params.nMotes, paused, spf: args.spf,
+      // What this process is RUNNING vs what is on disk NOW. If simVersion
+      // differs the physics has changed and needs a restart; if pageVersion
+      // differs the viewer has changed and needs a reload.
+      simVersion: RUNNING.simVersion, pageVersion: RUNNING.pageVersion,
+      onDisk: await codeStamp(),
       // The resource field is what creatures chase and it drifts and morphs.
       // The viewer needs its parameters to draw it; without them it was showing
       // only the flow, which is the least photogenic layer in the world.

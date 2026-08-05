@@ -90,6 +90,12 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
 #linkBox.dead #linkDot { background: #ef4444; }
 #linkBox.paused #linkDot { background: #60a5fa; }
 button.on::before { content: '\25CF\00a0'; opacity: .85; }
+
+#codeWarn { position: fixed; top: .5rem; left: 50%; transform: translateX(-50%);
+  z-index: 50; font: 11px/1.5 ui-monospace, monospace; color: #ffd9a0;
+  background: #2a1c0bee; border: 1px solid #7a5320; border-radius: 3px;
+  padding: .35rem .6rem; text-align: center; max-width: 70vw; }
+#codeWarn b { color: #ffb84d; }
 </style>
 </head>
 <body>
@@ -180,6 +186,8 @@ button.on::before { content: '\25CF\00a0'; opacity: .85; }
   </div>
 
   <!-- Only meaningful when watching a server; hidden in local sandbox mode. -->
+  <div id="codeWarn" style="display:none"></div>
+
   <div id="linkBox">
     <span id="linkDot"></span><span id="linkTxt">connecting…</span>
   </div>
@@ -668,6 +676,7 @@ const view = { field: true, bonds: true, paused: false, spf: 4, evolve: true,
 const WATCH = new URLSearchParams(location.search).has('watch');
 let remoteMaxCells = null, remoteBound = null, remoteMotes = null, resyncing = false;
 let serverPaused = false;
+let myPageVersion = null;
 
 const canvas = $('c');
 
@@ -767,6 +776,9 @@ async function rebuild() {
       beasts = st.beasts; cellsPer = st.cellsPerBeast;
       remoteMaxCells = st.maxCells; remoteBound = st.bound; remoteMotes = st.nMotes;
       serverPaused = !!st.paused;
+      // Remember what the page was when it loaded, so a later edit to world.html
+      // is detectable without the page having to know its own contents.
+      if (myPageVersion === null) myPageVersion = st.pageVersion ?? null;
       const pb = $('bSrvPause');
       if (pb) {
         pb.textContent = st.paused ? '\u25B6 paused — resume' : '\u23F8 running — pause';
@@ -1616,6 +1628,26 @@ function loop() {
       if (box.className !== cls) box.className = cls;
       if (txt.textContent !== msg) txt.textContent = msg;
     }
+  }
+
+  // Am I running the latest code? Two answers, because there are two codebases.
+  // Polled slowly — this is a staleness check, not a heartbeat.
+  sim.sinceVer = (sim.sinceVer ?? 0) + (t - last);
+  if (sim.sinceVer > 20000 && !sim.checkingVer) {
+    sim.sinceVer = 0; sim.checkingVer = true;
+    fetch('/status', { cache: 'no-store' }).then(r => r.json()).then(st => {
+      sim.checkingVer = false;
+      if (!st.onDisk) return;                       // older server, no stamps
+      const simStale = st.simVersion !== st.onDisk.simVersion;
+      const pageStale = st.pageVersion !== st.onDisk.pageVersion || st.pageVersion !== myPageVersion;
+      const el = $('codeWarn');
+      if (!el) return;
+      const msgs = [];
+      if (simStale) msgs.push('physics changed on disk — <b>restart the server</b> (Server &rarr; restart)');
+      if (pageStale) msgs.push('viewer changed on disk — <b>reload this page</b>');
+      el.style.display = msgs.length ? '' : 'none';
+      el.innerHTML = msgs.join('<br>');
+    }).catch(() => { sim.checkingVer = false; });
   }
 
   sim.sinceMotes += t - last;

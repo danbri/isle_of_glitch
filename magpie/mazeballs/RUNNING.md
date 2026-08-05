@@ -119,3 +119,37 @@ disagreed with each other including on sign.
 | bodies look stretched or streaky | `shape-report.js`; strain well above 1 means the bond graph cannot satisfy itself |
 | generations frozen, population healthy | births failing; the log warns once with the free-list shape |
 | nothing renders but the HUD updates | activations may be NaN — see the frame probe in RESEARCH.md |
+
+## Diagnosing a run without screenshots
+
+`runs/metrics.jsonl` — one line per ~5,000 steps, written by the server itself.
+About 200 bytes a sample, so an overnight run is well under a megabyte.
+
+    tail -5 runs/metrics.jsonl | python3 -c "
+    import sys,json
+    for l in sys.stdin:
+        d=json.loads(l)
+        print(f\"step {d['step']:>8} alive {d['alive']:>4} gen {d['gen']:>3} \"
+              f\"lin {d['lineages']:>4} body {d['bodyMin']}/{d['bodyMed']}/{d['bodyMax']} \"
+              f\"muscle {d['musclePct']}% E {d['meanEnergy']}\")"
+
+Each record carries the population, generation, lineage count, body-size
+min/median/max, the full cell-type census, mean energy, and the world parameters
+in force — so a run is self-describing and you can tell later what it was run
+under. `simVersion` says which physics build produced it.
+
+This exists because pasting a screenshot and a HUD dump into a chat is expensive
+and says less: "it looks static" versus "alive 157, muscle 0.7%, median body 6".
+Prefer the log.
+
+## Snapshots
+
+- `runs/world.snapshot` — the live one, rewritten every `--saveEvery` seconds
+  (default 120) and on demand from the Server panel.
+- `runs/world.snapshot.N.ring` — a rolling ring of 8, one per 100k steps. The
+  point is that overwriting a single file means the only state you can return to
+  is the most recent, which is exactly the state you have when you notice
+  something is wrong.
+
+Full state is ~12.4 MB, so keeping one every 30 seconds would be ~1.5 GB an hour.
+The metrics log is the thing to keep continuously; snapshots are for going back.
