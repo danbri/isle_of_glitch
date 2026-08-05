@@ -60,6 +60,23 @@ const WORKGROUP = 256;
 export const CELL_NEURON = 0;
 export const CELL_SENSOR = 1;
 export const CELL_MUSCLE = 2;
+
+/**
+ * Pack a cell's label and its continuous capacities into one i32.
+ *
+ * Chrome caps a compute stage at 10 storage buffers and the world uses all 10,
+ * so the material vector cannot have a binding of its own — see
+ * device_limits_test.js, which enforces that and tells you to pack instead.
+ * Type in the low 2 bits, contractility and grippiness as 8-bit fixed point.
+ *
+ * The sign bit is never set, so `meta.x < 0` still means "vacated slot"
+ * everywhere in the shader. Dead cells are written as -1 as before.
+ */
+export function packMeta(type, contractility, grippiness) {
+  const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
+  return (type & 3) | (q(contractility) << 8) | (q(grippiness) << 16);
+}
+
 export const CELL_ANCHOR = 3;
 
 /**
@@ -189,11 +206,25 @@ ${wgslStruct('W')}
 @group(0) @binding(0) var<uniform>             P     : W;
 @group(0) @binding(1) var<storage, read_write> pos   : array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read_write> vel   : array<vec4<f32>>;  // xy=velocity, z=radius, w=next energy
-@group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=type, y=slot, z=body, w=body size
-// CONTINUOUS MATERIAL PROPERTIES. x=contractility, y=grippiness, zw spare.
-// The discrete 'ctype' above is a LABEL read off these for convenience; the
-// physics scales by the numbers, not by the label.
-@group(0) @binding(11) var<storage, read>      mat   : array<vec4<f32>>;
+@group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=packed, y=slot, z=body, w=body size
+
+// THE MATERIAL VECTOR, PACKED INTO cmeta.x.
+//
+// A cell's continuous capacities live in the same i32 as its label because
+// there is no room for another binding: Chrome caps the compute stage at 10
+// storage buffers and the world already uses all 10 (device_limits_test
+// enforces it). So: type in the low 2 bits, contractility and grippiness as
+// 8-bit fixed point above them.
+//
+// The sign bit is never set for a live cell, so the '< 0' vacated-slot checks
+// throughout this shader keep working unchanged. Max packed value is
+// 0xFFFF03, comfortably positive.
+//
+// 8 bits is 1/255 resolution on force, which is far finer than anything the
+// physics distinguishes.
+fn cellType(m: i32) -> i32 { return m & 3; }
+fn contractility(m: i32) -> f32 { return f32((m >> 8u) & 255) / 255.0; }
+fn grippiness(m: i32) -> f32 { return f32((m >> 16u) & 255) / 255.0; }
 // bond index and rest length packed into one vec2 — WebGPU guarantees only 8
 // storage buffers per stage and the crowding hash needs one, so the pair that
 // is always read together shares a binding. .x holds an i32 index bitcast into
@@ -321,7 +352,7 @@ fn contractionOf(i: u32) -> f32 {
   // kernel branched on a discrete type where primitives.md claims a
   // continuum. A cell is now as strong as it is, and "muscle" goes back to
   // being a description of a region of that continuum.
-  return P.contract * mat[i].x * act[u32(m.y)];
+  return P.contract * contractility(m.x) * act[u32(m.y)];
 }
 
 // A spatial hash over CONTINUOUS position. cellSize is a query radius, not a
@@ -610,7 +641,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   let m = cmeta[i];
   let slot = m.y;
   if (slot < 0 || m.x < 0) { return; }
-  if (m.x != 1) { ext[u32(slot)] = 0.0; return; }
+  if (cellType(m.x) != 1) { ext[u32(slot)] = 0.0; return; }
 
   let p = pos[i];
   // Two things a cell can actually feel locally: how fast the medium is moving
@@ -704,7 +735,10 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     // Every cell has a little purchase on the world; an ANCHOR cell has far
     // more, and modulates it with its activation so it can let go.
     var grab = P.gripBase;
-    if (me2.x == 3) { grab = P.gripAnchor; }
+    // Grip still keys off the LABEL, deliberately: making it continuous too
+    // would change traction and contraction in the same commit and neither
+    // effect could be attributed. grippiness(me2.x) is packed and waiting.
+    if (cellType(me2.x) == 3) { grab = P.gripAnchor; }
     // ACTIVELY PHASED, which is the whole point. A cell raises and drops its grip
     // with its activation, so a brain can grip on the power stroke and release on
     // recovery. Constant grip nets zero however strong it is — the scallop
@@ -891,21 +925,14 @@ export class WorldGPU {
       // was 0 for every cell in every run, and `touch = myR + otherR` was 0 —
       // one of the two independent reasons contact has never done anything.
       vel[i * 4 + 2] = cells.rad ? cells.rad[i] : 0.34;
-      meta[i * 4] = cells.ctype[i];
+      meta[i * 4] = packMeta(cells.ctype[i],
+        cells.contractility ? cells.contractility[i] : (cells.ctype[i] === 2 ? 1 : 0),
+        cells.grippiness ? cells.grippiness[i] : (cells.ctype[i] === 3 ? 1 : 0));
       meta[i * 4 + 1] = cells.cslot[i];
       meta[i * 4 + 2] = bodyOf ? bodyOf[i] : -1;
       meta[i * 4 + 3] = cells.bodySize ? cells.bodySize[i] : 0;
     }
-    const matv = new Float32Array(n * 4);
-    for (let i = 0; i < n; i++) {
-      // Fall back to the label when an encoding has not supplied the numbers,
-      // so an old snapshot or a caller that predates this still behaves.
-      matv[i * 4] = cells.contractility ? cells.contractility[i]
-                  : (cells.ctype[i] === 2 ? 1 : 0);
-      matv[i * 4 + 1] = cells.grippiness ? cells.grippiness[i]
-                      : (cells.ctype[i] === 3 ? 1 : 0);
-    }
-    this.bPos = mk(pos); this.bVel = mk(vel); this.bMeta = mk(meta); this.bMat = mk(matv);
+    this.bPos = mk(pos); this.bVel = mk(vel); this.bMeta = mk(meta);
     // Pack bond index + rest length into the one vec2 buffer the shader binds.
     const bd = new Float32Array(cells.bond.length * 4);
     const bdI = new Int32Array(bd.buffer);
@@ -1100,7 +1127,6 @@ export class WorldGPU {
         { binding: 8, visibility: C, buffer: rw },   // spatial-hash occupancy
         { binding: 9, visibility: C, buffer: rw },   // motes: x, y, stock, demanders
         { binding: 10, visibility: C, buffer: rw },  // mote hash (built once)
-        { binding: 11, visibility: C, buffer: ro },  // per-cell material vector
       ],
     });
     const module = device.createShaderModule({ code: SHADER, label: 'world' });
@@ -1129,7 +1155,6 @@ export class WorldGPU {
         { binding: 8, resource: { buffer: this.bHash } },
         { binding: 9, resource: { buffer: this.bMote } },
         { binding: 10, resource: { buffer: this.bMoteHash } },
-        { binding: 11, resource: { buffer: this.bMat } },
       ],
     });
     this.groups = Math.ceil(this.n / WORKGROUP);
@@ -1283,12 +1308,11 @@ export class WorldGPU {
   }
 
   /** Write one organism's contiguous cell range back after a birth or death. */
-  writeCellRange(from, count, { pos, vel, meta, mat, bond, brest, bstiff, bbrittle, energy }) {
+  writeCellRange(from, count, { pos, vel, meta, bond, brest, bstiff, bbrittle, energy }) {
     const q = this.device.queue;
     if (pos) q.writeBuffer(this.bPos, from * 8, pos);
     if (vel) q.writeBuffer(this.bVel, from * 16, vel);
     if (meta) q.writeBuffer(this.bMeta, from * 16, meta);
-    if (mat) q.writeBuffer(this.bMat, from * 16, mat);
     if (bond || brest) {
       const nb = (bond ?? brest).length;
       const bd = new Float32Array(nb * 4), bdI = new Int32Array(bd.buffer);

@@ -135,17 +135,17 @@ export async function requestDeviceFor({ neurons, degree }, adapter = null) {
     requiredLimits: {
       maxStorageBufferBindingSize: cap('maxStorageBufferBindingSize', need),
       maxBufferSize: cap('maxBufferSize', need),
-      // The world shader needs 11 storage buffers (binding 0 is the uniform):
-      // pos, vel, cmeta, bondD, ext, act, energy, hash, motes, mote hash, and
-      // the per-cell material vector. 8 is the guaranteed floor in the spec;
-      // every device this runs on reports far more (31 here).
+      // The world shader uses 10 storage buffers (binding 0 is the uniform).
+      // TEN IS A CEILING, NOT A BUDGET TO SPEND: Chrome caps the compute stage
+      // at 10 and the WebGPU floor is 8, so an eleventh binding cannot be
+      // created on the browsers world.html has to run in. device_limits_test
+      // enforces it and says what to do instead — pack two buffers together.
       //
-      // KEEP THIS EQUAL TO THE ACTUAL COUNT. It read 10 while the shader used
-      // 10, and adding an eleventh binding made the bind group layout invalid
-      // — which does not throw. The pipeline silently becomes a no-op: the
-      // world stops stepping, every activation reads 0, and it looks exactly
-      // like a dead brain rather than a limits problem.
-      maxStorageBuffersPerShaderStage: cap('maxStorageBuffersPerShaderStage', 11),
+      // Worth knowing WHY that test exists: exceeding this does not throw. The
+      // bind group layout is silently invalid, the pipeline becomes a no-op,
+      // the world stops stepping and every activation reads 0 — which presents
+      // as a dead brain, nowhere near the limit that caused it.
+      maxStorageBuffersPerShaderStage: cap('maxStorageBuffersPerShaderStage', 10),
     },
   });
   if (need > device.limits.maxStorageBufferBindingSize)

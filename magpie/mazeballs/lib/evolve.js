@@ -47,6 +47,7 @@ function rng(seed) {
 import {
   bond as bondCells, morphology, largestPiece,
 } from './devo.js';
+import { packMeta } from './world_gpu.js';
 import * as DEVO1 from './devo.js';
 import * as DEVO2 from './devo2.js';
 
@@ -366,8 +367,6 @@ export class Evolver {
     // grip), but contraction is proportional to THIS, so a cell that narrowly
     // lost the argmax still pulls its bonds in proportion to how contractile
     // it is. Negative expression means no capacity, not reverse capacity.
-    const matv = new Float32Array(n * 4);
-
     for (let i = 0; i < n; i++) {
       const c = body[i];
       const wx = wrap(px + c.x * ct - c.y * st);
@@ -376,12 +375,12 @@ export class Evolver {
       vel[i * 4 + 2] = cells.rad ? cells.rad[dst + i] || 0.34 : 0.34;
 
       const type = describe(c);
-      meta[i * 4] = type; meta[i * 4 + 1] = dst + i;
+      // Negative expression is no capacity, not reverse capacity.
+      const con = Math.max(0, c.contract), gri = Math.max(0, c.grip);
+      meta[i * 4] = packMeta(type, con, gri); meta[i * 4 + 1] = dst + i;
       meta[i * 4 + 2] = child; meta[i * 4 + 3] = n;
-      matv[i * 4] = Math.max(0, c.contract);
-      matv[i * 4 + 1] = Math.max(0, c.grip);
-      if (cells.contractility) cells.contractility[dst + i] = matv[i * 4];
-      if (cells.grippiness) cells.grippiness[dst + i] = matv[i * 4 + 1];
+      if (cells.contractility) cells.contractility[dst + i] = con;
+      if (cells.grippiness) cells.grippiness[dst + i] = gri;
       cells.ctype[dst + i] = type;
       cells.body[dst + i] = child; cells.bodySize[dst + i] = n;
       cells.cslot[dst + i] = dst + i;
@@ -452,7 +451,7 @@ export class Evolver {
 
     cells.bond.set(bnd, dst * bK); cells.brest.set(brest, dst * bK);
     world.writeCellRange(dst, n, {
-      pos, vel, meta, mat: matv, bond: bnd, brest, bstiff, bbrittle: bbrit, energy,
+      pos, vel, meta, bond: bnd, brest, bstiff, bbrittle: bbrit, energy,
     });
 
     this.genome[child] = g;
@@ -551,7 +550,6 @@ export class Evolver {
     // into, which is the only way it stays a consequence rather than a design.
     const pos = new Float32Array(n * 2), vel = new Float32Array(n * 4);
     const meta = new Int32Array(n * 4), energy = new Float32Array(n);
-    const matv = new Float32Array(n * 4);
     const bond = new Int32Array(n * bK).fill(-1), brest = new Float32Array(n * bK);
 
     const spin = r() * Math.PI * 2;
@@ -708,7 +706,7 @@ export class Evolver {
       cells.ctype[dst + i] = type;
       cells.body[dst + i] = child;
       cells.bodySize[dst + i] = n;
-      meta[i * 4] = type;
+      meta[i * 4] = packMeta(type, type === 2 ? 1 : 0, type === 3 ? 1 : 0);
       meta[i * 4 + 1] = dst + i;
       meta[i * 4 + 2] = child;
       meta[i * 4 + 3] = n;
@@ -716,10 +714,6 @@ export class Evolver {
       // capacity here. Writing it explicitly matters: arena slots are
       // recycled, and without this a newborn would inherit whatever
       // contractility the previous tenant of these slots happened to have.
-      matv[i * 4] = type === 2 ? 1 : 0;
-      matv[i * 4 + 1] = type === 3 ? 1 : 0;
-      if (cells.contractility) cells.contractility[dst + i] = matv[i * 4];
-      if (cells.grippiness) cells.grippiness[dst + i] = matv[i * 4 + 1];
       cells.cslot[dst + i] = dst + i;
       cells.px[dst + i] = pos[i * 2]; cells.py[dst + i] = pos[i * 2 + 1];
       cells.vx[dst + i] = 0; cells.vy[dst + i] = 0;
@@ -776,7 +770,7 @@ export class Evolver {
 
     // Half the parent's cell energy goes with the propagule. Division costs.
     const half = new Float32Array(pn);
-    world.writeCellRange(dst, n, { pos, vel, meta, mat: matv, bond, brest, energy });
+    world.writeCellRange(dst, n, { pos, vel, meta, bond, brest, energy });
     world.writeCellRange(src, pn, { energy: half });
 
     this.bookkeep(child, p, step);
