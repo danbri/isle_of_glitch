@@ -35,6 +35,10 @@ const args = (() => {
   const out = {
     port: 8899, beasts: 3000, cells: 12, maxCells: 60, start: 0.25, bound: 0, spf: 6, tick: 250,
     host: '0.0.0.0',
+    // Developmental encoding: 2 is the GRN-in-an-egg (DEVELOPMENT-2.md), 1 is
+    // the old positional readout. Kept selectable so the two can be run against
+    // the same world rather than compared across worlds.
+    devo: 2,
     // The non-stationary field, which measured far better than a static one:
     // ancestral-tournament shareB 0.970 against 0.864, and body size kept
     // growing (27.6 and rising) where the static world saturated at 19.3.
@@ -119,7 +123,9 @@ const world = new WorldGPU(brains, built.cells, {
 const evo = new Evolver({
   arena: built.arena, world, cells: built.cells,
   seed: 5, birthEnergy: 18, deathEnergy: 0, maxCells: args.maxCells,
+  devoVersion: args.devo,
 });
+console.log(`developmental encoding: ${evo.devoName} (egg extent ${evo.eggExtent})`);
 const startCount = Math.max(60, Math.floor(args.beasts * args.start));
 for (let o = startCount; o < args.beasts; o++) evo.cull(o);
 evo.founders = evo.alive();
@@ -304,6 +310,11 @@ async function logMetrics() {
       spf: args.spf, bound: +BOUND.toFixed(1),
       crowdK: world.params.regrowCrowdK, moteRegrow: world.params.moteRegrow,
       flowStr: world.params.flowStr, contract: world.params.contract,
+      // Failed eggs are a Dev 2.0 statistic that did not exist before: a genome
+      // can now specify a body that development never finishes, and the parent
+      // has spent the yolk regardless. A run where this climbs is a run where
+      // reproduction is quietly failing, which no other field here would show.
+      devo: evo.devoVersion, failedEggs: evo.failedEggs,
       simVersion: RUNNING.simVersion,
     };
     await Deno.writeTextFile(METRICS, JSON.stringify(rec) + '\n', { append: true });
@@ -750,7 +761,7 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
           brainTax: world.params.brainTax, contract: world.params.contract,
           flowStr: world.params.flowStr, gripAniso: world.params.gripAniso,
         },
-        simVersion: RUNNING.simVersion,
+        simVersion: RUNNING.simVersion, devo: evo.devoVersion,
       };
       const snap = `${new URL('..', import.meta.url).pathname}runs/flag-${steps}.snapshot`;
       try { const r = await saveSnapshot(snap); rec.snapshot = snap; rec.bytes = r.bytes; }
@@ -842,6 +853,10 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       // differs the viewer has changed and needs a reload.
       bootId: BOOT_ID,
       simVersion: RUNNING.simVersion, pageVersion: RUNNING.pageVersion,
+      // Which developmental encoding grew these bodies. A run is unreadable
+      // later without it: the same world parameters mean different animals
+      // under a positional readout than under a GRN.
+      devo: evo.devoVersion, devoName: evo.devoName, eggExtent: evo.eggExtent,
       simStaleSince: staleSince || null,
       onDisk: await codeStamp(),
       // The resource field is what creatures chase and it drifts and morphs.

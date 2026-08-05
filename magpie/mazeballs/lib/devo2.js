@@ -73,6 +73,15 @@ export const NGENE = 64;
 /** Regulators per gene. The brain uses 12 incoming edges; genes need fewer. */
 export const K = 6;
 
+/**
+ * Egg radius, in world units. MUCH larger than a compact body of maxCells, and
+ * that is the whole point — Dev 1.0's egg was the size of the body it contained,
+ * so growth filled the shell and every animal was a disc. The egg has to afford
+ * a shape before a genome can choose one. `evolve.js` reads this rather than
+ * carrying its own default, so the two cannot disagree.
+ */
+export const DEFAULT_EXTENT = 12;
+
 // --- reserved gene indices -------------------------------------------------
 // Maternal. These are BOUNDARY CONDITIONS: clamped from geometry every step,
 // never integrated, so they cannot be regulated away. The sketch's "000".
@@ -619,7 +628,7 @@ export function randomGenome(rnd = Math.random, opts = {}) {
  * property is its topology — which gene regulates which — and a mutation
  * operator that only perturbs weights explores a fixed graph forever.
  */
-export function mutate(genome, { rate = 0.12, size = 0.3, structural = 0.02, rnd = Math.random } = {}) {
+export function mutate(genome, rnd = Math.random, { rate = 0.12, size = 0.3, structural = 0.02 } = {}) {
   const g = Float32Array.from(genome);
   for (let i = 0; i < NGENE; i++) {
     const b = i * GENE_STRIDE;

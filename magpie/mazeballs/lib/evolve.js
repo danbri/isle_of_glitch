@@ -22,14 +22,20 @@
  * all of it, and only the changed organisms' slices are written back. The
  * per-step loop still never leaves the GPU.
  *
- * EVO-DEVO, HONESTLY SCOPED. The genome carries the brain (per-neuron tau and
- * bias, the full edge table) and the body's cell TYPES — so what a cell becomes
- * is heritable and mutable, and the sensor/muscle/interneuron mix is evolved
- * rather than fixed at a third each. What it does NOT yet carry is a
- * developmental program that grows the body plan: offspring inherit the parent's
- * cell count and ring topology. Type differentiation is heritable; morphogenesis
- * is not. lib/evodevo.js has the real developmental machinery and merging it is
- * the next step, not something this file pretends to have done.
+ * EVO-DEVO. A body is what a genome DEVELOPS into, never a copy of its parent's
+ * body, so morphology is heritable and mutable rather than fixed at birth. Two
+ * encodings are selectable (`devoVersion`, see ENCODINGS below):
+ *
+ *   1  devo.js  — a positional readout. Cell properties are a weighted sum of
+ *                 nine fixed basis functions of two maternal coordinates,
+ *                 sampled on a hex disc. No time, no signalling, no division.
+ *   2  devo2.js — a sparse gene regulatory network running in time inside an
+ *                 egg, with diffusion between neighbours, that GROWS a body by
+ *                 division. The default. See DEVELOPMENT-2.md.
+ *
+ * The earlier note here — that offspring inherit the parent's cell count and
+ * ring topology, and that morphogenesis is not heritable — described the state
+ * before either encoding landed, and is withdrawn.
  */
 
 /** Deterministic PRNG so a run is a pure function of its seed. */
@@ -39,9 +45,29 @@ function rng(seed) {
 }
 
 import {
-  GENOME_SIZE, randomGenome, mutate as mutateGenome, develop, bond as bondCells,
-  synapse, morphology, largestPiece,
+  bond as bondCells, morphology, largestPiece,
 } from './devo.js';
+import * as DEVO1 from './devo.js';
+import * as DEVO2 from './devo2.js';
+
+/**
+ * The developmental encodings, selectable per world.
+ *
+ * `bond()`, `morphology()` and `largestPiece()` are NOT part of this — they are
+ * shared by both and imported once above. What differs between encodings is how
+ * a genome becomes a set of cells with properties; how those cells are wired
+ * into a skeleton, and how that skeleton is measured, is common ground.
+ *
+ * Both modules expose the same five names with the same signatures, which is a
+ * constraint on any future encoding rather than a coincidence: `develop`,
+ * `randomGenome`, `mutate`, `synapse`, `GENOME_SIZE`, plus a `DEFAULT_EXTENT`
+ * saying how big an egg it needs. Dev 1.0 wants 3.0 and Dev 2.0 wants 12, and
+ * getting that wrong is the difference between an animal and a disc.
+ */
+const ENCODINGS = {
+  1: { lib: DEVO1, extent: 3.0, name: 'devo1-positional' },
+  2: { lib: DEVO2, extent: DEVO2.DEFAULT_EXTENT, name: 'devo2-grn' },
+};
 
 /**
  * A cell's TYPE is a description of its properties, not a stored fact. Whichever
@@ -75,7 +101,8 @@ export class Evolver {
     birthEnergy = 9, deathEnergy = 0, mutRate = 0.14, mutSize = 0.32,
     sizeMutRate = 0.25, minCells = 5, maxCells = 40, topoMutRate = 0.30,
     birthOrder = 'lottery',
-    devo = true, yolkFrac = 0.55, cellCost = 0.55, eggExtent = 3.0, birthMargin = 1.15,
+    devo = true, yolkFrac = 0.55, cellCost = 0.55, eggExtent = null, birthMargin = 1.15,
+    devoVersion = 2, devoOpts = {},
   }) {
     this.arena = arena; this.world = world; this.cells = cells;
     this.birthEnergy = birthEnergy; this.deathEnergy = deathEnergy;
@@ -87,9 +114,19 @@ export class Evolver {
     // EVO-DEVO. Each organism carries a genome; a body is what that genome
     // develops into, never a copy of its parent's body.
     this.devo = devo;
+    // The developmental encoding. `eggExtent` defaults to whatever the chosen
+    // encoding asks for rather than to a constant, because the right egg size is
+    // a property of how the encoding builds a body — Dev 1.0 samples a fixed
+    // disc and wants 3.0; Dev 2.0 grows into open space and wants 12, and giving
+    // it 3.0 reproduces the exact disc-shaped bodies it exists to escape.
+    const enc = ENCODINGS[devoVersion] ?? ENCODINGS[2];
+    this.devoVersion = devoVersion;
+    this.devoName = enc.name;
+    this.D = enc.lib;
+    this.devoOpts = devoOpts;
     this.yolkFrac = yolkFrac;
     this.cellCost = cellCost;
-    this.eggExtent = eggExtent;
+    this.eggExtent = eggExtent ?? enc.extent;
     this.birthMargin = birthMargin;
     this.genome = new Array(arena.P).fill(null);
     this.failedEggs = 0;
@@ -263,7 +300,7 @@ export class Evolver {
    */
   divide(p, px, py, step, livePos = null) {
     if (this.devo) {
-      if (!this.genome[p]) this.genome[p] = randomGenome(this.rnd);
+      if (!this.genome[p]) this.genome[p] = this.D.randomGenome(this.rnd);
       return this.divideDevo(p, px, py, step);
     }
     return this.divideCopy(p, px, py, step, livePos);
@@ -287,14 +324,15 @@ export class Evolver {
     const r = this.rnd;
     const bK = cells.bondK, K = arena.K;
 
-    const g = mutateGenome(this.genome[p], r,
+    const g = this.D.mutate(this.genome[p], r,
       { rate: this.mutRate, size: this.mutSize });
 
     // The yolk is a fixed share of what the parent has managed to accumulate.
     // A poor parent lays a small egg and may lay one that cannot finish.
     const yolk = this.yolkFrac * Math.max(0, this.lastEnergy?.[p] ?? this.birthEnergy);
-    const grown = develop(g, {
+    const grown = this.D.develop(g, {
       extent: this.eggExtent, yolk, cellCost: this.cellCost,
+      maxCells: this.maxCells, ...this.devoOpts,
     });
     let body = grown.cells;
     if (body.length > this.maxCells) body = body.slice(0, this.maxCells);
@@ -378,7 +416,7 @@ export class Evolver {
       for (const j of adj[i]) {
         if (k >= K) break;
         arena.esrc[(dst + i) * K + k] = dst + j;
-        arena.ew[(dst + i) * K + k] = synapse(g, body[j], body[i]);
+        arena.ew[(dst + i) * K + k] = this.D.synapse(g, body[j], body[i]);
         k++;
       }
     }

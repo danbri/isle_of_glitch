@@ -167,6 +167,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   <span>fps <b id="hFps">–</b></span>
   <span>zoom <b id="hZoom">–</b></span>
   <span>gpu <b id="hGpu">–</b></span>
+  <span>devo <b id="hDevo">–</b></span>
 </div>
 <div class="hud hud2">
   <span>alive <b id="hAlive">–</b></span>
@@ -761,7 +762,12 @@ const view = { field: true, bonds: true, paused: false, spf: 4, evolve: true,
 // instead of a simulation of its own. Without it every tab is a separate
 // universe, which is why two browsers never agreed about anything.
 const WATCH = new URLSearchParams(location.search).has('watch');
+// Developmental encoding for this page's OWN sim: 2 = the GRN-in-an-egg
+// (DEVELOPMENT-2.md), 1 = the old positional readout. ?devo=1 to compare.
+// In watch mode the server owns development and this is only a label.
+const DEVO_VERSION = Number(new URLSearchParams(location.search).get('devo') ?? 2);
 let remoteMaxCells = null, remoteBound = null, remoteMotes = null, resyncing = false;
+let remoteDevo = null;
 let serverPaused = false;
 let myPageVersion = null;
 let myBootId = null;
@@ -865,6 +871,9 @@ async function rebuild() {
       beasts = st.beasts; cellsPer = st.cellsPerBeast;
       remoteMaxCells = st.maxCells; remoteBound = st.bound; remoteMotes = st.nMotes;
       serverPaused = !!st.paused;
+      // The encoding the SERVER is running. In watch mode this page's own
+      // DEVO_VERSION is irrelevant — the bodies on screen were grown there.
+      remoteDevo = st.devoName ?? (st.devo != null ? `devo${st.devo}` : null);
       // Remember what the page was when it loaded, so a later edit to world.html
       // is detectable without the page having to know its own contents.
       if (myPageVersion === null) myPageVersion = st.onDisk?.pageVersion ?? st.pageVersion ?? null;
@@ -888,6 +897,7 @@ async function rebuild() {
   const bound = (WATCH && remoteBound) ? remoteBound
               : Math.max(40, Math.sqrt(beasts * cellsPer) * 0.62);
 
+  const maxCells = WATCH ? (remoteMaxCells ?? 40) : 20;
   const built = buildBodies({
     beasts, cells: cellsPer, degree: 12, bondK: 4,
     radius: 1.1, bound, seed: (Math.random() * 1e6) | 0,
@@ -895,7 +905,7 @@ async function rebuild() {
     // multiplies the whole world's buffers. A local sandbox does not need the
     // headroom a long server run does, and at maxCells 40 a 2000-beast page
     // silently became 80,000 cells — enough to exceed a smaller GPU's limits.
-    maxCells: WATCH ? (remoteMaxCells ?? 40) : 20,
+    maxCells,
   });
   const brains = await BrainArenaGPU.create(built.arena, dev);
   const world = new WorldGPU(brains, built.cells, {
@@ -1007,6 +1017,10 @@ async function rebuild() {
   const evo = new Evolver({
     arena: built.arena, world, cells: built.cells,
     seed: (Math.random() * 1e5) | 0, birthEnergy: 18, deathEnergy: 0,
+    // Stated rather than inherited from the Evolver default. Which encoding
+    // grew a body changes what every other number on this page means, and a
+    // page that picks it up implicitly cannot tell you it changed.
+    devoVersion: DEVO_VERSION, maxCells,
   });
   // Start well under capacity so births have somewhere to go and the population
   // can find its own carrying capacity instead of being pinned by the arena.
@@ -1052,6 +1066,7 @@ async function rebuild() {
   $('hCells').textContent = built.meta.nCells.toLocaleString();
   $('hNeurons').textContent = built.arena.N.toLocaleString();
   $('hSyn').textContent = syn.toLocaleString();
+  $('hDevo').textContent = WATCH ? (remoteDevo ?? 'server') : (DEVO_VERSION === 2 ? 'devo2-grn' : 'devo1-positional');
   fitAll();
 }
 
@@ -1739,7 +1754,8 @@ on('bFlag', 'onclick', flagThis);
 on('bCopyStats', 'onclick', async (e) => {
   const st = await (await fetch('/status', { cache: 'no-store' })).json();
   const keys = ['steps','alive','births','deaths','generation','lineages','meanEnergy',
-                'cellsLiveTyped','nCells','maxCells','bound','nMotes','spf','simVersion'];
+                'cellsLiveTyped','nCells','maxCells','bound','nMotes','spf','simVersion',
+                'devo','devoName','eggExtent'];
   const lines = keys.filter(k => st[k] !== undefined).map(k => `${k}\t${st[k]}`);
   const e2 = scopeStore.get(sel.uid);
   if (sel.uid >= 0 && e2) {
