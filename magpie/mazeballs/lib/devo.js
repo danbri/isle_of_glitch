@@ -174,7 +174,30 @@ export const SYN_OFF = PROPS.length * NB;
  * buys nothing. Still reachable-not-imposed — a genome remains free to specify a
  * quiet brain, and most will.
  */
-export let SYN_RANGE = 64;
+// 32, LOWERED from 64 — and the reasoning that set it to 64 is retracted.
+//
+// That sweep concluded drive was too weak and higher was strictly better. It
+// was measured when the tau floor was 0.018 s against dt 0.015, i.e. when
+// every fast neuron was a comparator rather than an integrator. Under those
+// dynamics more gain really did buy more activity, because the only thing on
+// offer was how often a square wave flipped.
+//
+// Re-measured at the corrected tau range (0.126-1.26 s), sampling every step:
+//
+//     syn    |state|  graded%  jumpy  medHz  inBand%  selfProp
+//      16      24.6      10    0.033   0.00      36    0.0003
+//      32      38.1      23    0.048   1.14      40    0.0023
+//      64      49.0      43    1.000  33.31      21    0.0019
+//     128      47.6      54    1.000  33.31      11    0.0045
+//
+// At 64 and above the traces go back to jumpy 1.000 and flip at the sample
+// rate: the drive is large enough to re-saturate the network whatever tau
+// says, because tau sets how fast a neuron approaches its input and not how
+// big that input is. 32 is where smoothness, a rhythm inside the body's
+// 0.3-3 Hz band, and median self-propulsion coincide.
+//
+// Still reachable-not-imposed: a genome remains free to specify a quiet brain.
+export let SYN_RANGE = 32;
 
 /**
  * Override the synapse weight scale. An experiment knob, not a world parameter:
