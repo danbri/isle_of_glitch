@@ -5721,3 +5721,151 @@ backtick and still holds an entry point, while the real file is unparseable
 JavaScript. Every textual check passed on a file that could not be imported. The
 suite now imports each module, which is the only check that cannot be fooled by
 where a string happens to end.
+
+
+### LOCOMOTION — bodies move, and the controls are clean
+
+Traction was ISOTROPIC. `dec = grip * fricK * dt` removed speed equally in every
+direction, which cancels an undulation exactly. The scallop theorem was not a
+thing evolution had failed to solve; it was enforced by the kernel, and no brain
+could ever have escaped it.
+
+Replaced with anisotropic drag about the body axis, taken between two bonded
+neighbours — the construction the verified reference (`tools/swim-verify.js`,
+from the other session) uses. Sideways slip is resisted harder than sliding along
+your own length, and that asymmetry converts deformation into travel.
+
+48 developed bodies from random genomes, isolated by 10 body-lengths, no flow, no
+food, nothing born or dying, 30,000 steps. Mean centroid displacement:
+
+    grip anisotropy + muscle     0.794      max 9.3
+    isotropic (gripAniso 0)      0.005      max 0.1
+    muscle OFF                   0.0001     max 0.0
+    no grabbiness (gripBase 0)   0.005      max 0.1
+
+151x over isotropic, and the muscle-off control is at the 1e-4 noise floor rather
+than the 28 units that produced the retracted result. Every control fails in its
+own diagnostic direction: no muscle means nothing drives it, no anisotropy means
+the gait cancels, no grabbiness means the anisotropy was never earned.
+
+Median is ~0: most random genomes have no useful gait. That is the correct shape
+for the result — locomotion is REACHABLE and RARE, which is what gives selection
+something to find. It is not yet shown that selection finds it.
+
+Two bugs found on the way, both worth recording:
+
+`gripBase` was 0.06, tuned when it was a velocity DECREMENT under the old Coulomb
+rule. As a multiplier on sideways drag it bought 1.36x anisotropy where the
+reference needs ~6x, and measured as no advantage whatsoever. Re-tuned to 0.55.
+
+And the first attempt at the rewrite silently did not apply — the search text was
+stale after an earlier edit to the same block, so the old isotropic code was still
+running while every parameter I added sat unused in the uniform. It presented as
+"anisotropy makes no difference", identical to three decimals across a 200x sweep
+of the coefficient. Caught by testing whether ANY new parameter changed anything:
+`slipBase 20` should have crushed all movement and did nothing, while `fricK 0`
+(which the old code also read) did. A parameter that provably does nothing is
+evidence about the code path, not about the physics.
+
+
+### Moving did not pay, and the Conway fix works but not yet at population density
+
+Whether locomotion is worth having is a property of the ECONOMY, not the physics.
+Measured on 64 bodies over 30,000 steps, correlating each body's displacement with
+its energy change, and comparing the top and bottom quartile of movers:
+
+    settings                    corr    movers   sitters
+    baseline                   -0.36      -9.5      +3.1
+    contract 1.2               -0.23      -5.5      -0.2
+    contract 2.5               -0.06      -7.3      -5.1
+    contract 2.5 + contest     -0.06      -4.0      -2.1
+
+Moving was strictly punished. Muscle being selected away was never a mystery or a
+bug: it was the correct response to an incentive that said sit still. Raising
+muscle authority only makes bodies lose energy faster, and enabling contact
+transfer did not help either.
+
+The cause is that a grazed patch refilled faster than leaving it was worth.
+
+CROWDING-SUPPRESSED REGROWTH (the human's Conway suggestion) flips it. Regrowth is
+divided by local crowding, reusing the demander count the offer pass already
+computes, so it costs nothing. Friction-law clean: it can only REDUCE the sun's
+delivery, never raise it, total inflow stays bounded, and it is blind to what the
+crowding cells are or do — a property of the ground, identical for everyone.
+
+    crowdK 0     movers -7.9   sitters -0.1   corr -0.39
+    crowdK 0.6   movers +0.6   sitters -2.5   corr -0.20
+    crowdK 2.0   movers +1.9   sitters -4.8   corr -0.00
+    crowdK 6.0   movers +0.3   sitters -1.2   corr +0.10
+
+At 2.0 the sign is reversed: movers gain, sitters lose, a 6.7-unit swing.
+
+BUT IT DOES NOT SURVIVE POPULATION DENSITY, and this is the honest limit. Run with
+births and deaths at 600 bodies, population after 22,500 steps:
+
+    crowdK 0     348 -> 278 alive, 136 lineages, gen 9
+    crowdK 0.02  344 -> 187
+    crowdK 0.05  336 -> 146
+    crowdK 0.1   315 ->  72
+    crowdK 0.2   286 ->  34
+    crowdK 2.0   157 ->   8   (collapse)
+
+The suppression term is 1/(1 + k*demanders), and `demanders` is a raw count of
+cells in reach. In the sparse assay that is 1-3; in a living population it is ten
+to thirty times larger, so the same k that gave a healthy mover advantage
+extinguishes regrowth everywhere and starves the world. The coefficient was tuned
+at a density the world does not actually run at.
+
+Parked at 0 rather than shipped at a value that kills the population. The fix is
+to make suppression density-relative — a free allowance before it bites, or
+normalisation by a reference density — so that one coefficient means the same
+thing in an empty world and a crowded one. Until then the mechanism is present,
+measured, and off.
+
+
+### 29.4M steps, 261 generations: selection REMOVED locomotion
+
+An overnight run, the deepest this project has done and 20x past anything
+previously measured. Live world at the end, and the same genomes measured against
+random ones in the isolated self-propulsion assay:
+
+    cell types        anchor 79.8%   sensor 10.9%   neuron 8.5%   MUSCLE 0.7%
+
+                        evolved (gen ~200)      random
+    cells per body            6.0               33.9
+    muscle fraction          19.4%              42.8%
+    grippy fraction          83.7%              45.8%
+    segments                  0.4                2.2
+    self-propulsion           0.008              0.692
+
+Evolution shrank bodies to the 5-cell floor, halved muscle, doubled grip, and made
+its descendants EIGHTY-SEVEN TIMES worse at moving than random genomes.
+
+This is not a failure of the locomotion primitive, which works and is 151x above
+its isotropic control. It is a clean, deep-time, controlled demonstration that the
+ECONOMY decides. The world was paying creatures to be small, sessile and grippy,
+and 261 generations obliged. It is also the null that makes the crowding
+experiment interpretable: we now know what this world produces when moving does
+not pay, measured rather than assumed.
+
+Snapshot kept at runs/world-gen261-sessile-endpoint-29.4M.snapshot.
+
+### Crowding suppression made density-relative
+
+The first version divided regrowth by a raw demander count, which is 1-3 in a
+sparse assay and ten to thirty times that in a living population — so a
+coefficient tuned in the assay starved the world (348 -> 8 alive).
+
+Now it suppresses on DRAW versus REFILL: how much was taken this step against what
+the sun would put back, which is dimensionless and means the same thing at any
+density. Viability at 600 cap over 22,500 steps:
+
+    k 0     249 alive, 135 lineages
+    k 0.5   197 alive, 123 lineages
+    k 1.5   156 alive, 108 lineages
+    k 4      83 alive,  69 lineages
+    k 10     42 alive,  41 lineages
+
+Shipped at 1.5. Whether it reverses the sessile outcome over deep time is NOT yet
+measured — the 29.4M-step run above is the control it needs to be compared with,
+and that comparison has not been run.

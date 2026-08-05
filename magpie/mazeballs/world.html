@@ -60,10 +60,91 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
   border:1px solid #6B2F2A;border-radius:4px;font-family:var(--mono);font-size:.74rem;
   color:#F0C7C2;display:none;white-space:pre-wrap;max-height:40vh;overflow:auto;
 }
+
+#scope { position: fixed; left: 0; right: 0; bottom: 0; background: #0b1211ee;
+  border-top: 1px solid #24403a; backdrop-filter: blur(6px); z-index: 40;
+  font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #9fb8b0; }
+#scopeHead { display: flex; align-items: center; gap: .5rem; padding: .3rem .5rem; }
+#scopeHead .sp { flex: 1; }
+#scopeHead input[type=range] { width: 180px; vertical-align: middle; }
+#scopeC { display: block; width: 100%; height: 200px; }
+#scopeFoot { padding: .25rem .5rem .4rem; color: #6d8880; }
+#inspPanel .note { color: #6d8880; }
+.selRing { pointer-events: none; }
+@media (max-width: 700px) { #scopeC { height: 190px; } #scopeHead input[type=range] { width: 90px; } }
+
+#genomeBox { margin-top:.4rem; font:10px/1.35 ui-monospace,monospace; color:#8fa9a2; }
+#genomeBox table { border-collapse: collapse; width: 100%; }
+#genomeBox th { text-align:left; font-weight:normal; color:#5f7a73; padding-right:.3rem; }
+#genomeBox td { text-align:center; width:1.6em; }
+#genomeBox .hd { color:#5f7a73; font-size:9px; }
+#genomeBox h4 { margin:.5rem 0 .2rem; color:#9fb8b0; font-size:10px; font-weight:normal; }
+
+#linkBox { position: fixed; top: .5rem; left: .5rem; z-index: 45;
+  font: 11px/1.4 ui-monospace, monospace; color: #9fb8b0;
+  background: #0b1211cc; border: 1px solid #24403a; border-radius: 3px;
+  padding: .2rem .45rem; display: flex; align-items: center; gap: .35rem; }
+#linkDot { width: 8px; height: 8px; border-radius: 50%; background: #6d8880; }
+#linkBox.live #linkDot { background: #4ade80; }
+#linkBox.stale #linkDot { background: #fbbf24; }
+#linkBox.dead #linkDot { background: #ef4444; }
+#linkBox.paused #linkDot { background: #60a5fa; }
+button.on::before { content: '\25CF\00a0'; opacity: .85; }
+
+#codeWarn { position: fixed; top: .5rem; left: 50%; transform: translateX(-50%);
+  z-index: 50; font: 11px/1.5 ui-monospace, monospace; color: #ffd9a0;
+  background: #2a1c0bee; border: 1px solid #7a5320; border-radius: 3px;
+  padding: .35rem .6rem; text-align: center; max-width: 70vw; }
+#codeWarn b { color: #ffb84d; }
+
+/* The HUD sat directly on the world and was unreadable wherever a body passed
+   under it — worst on mobile where it wraps to two lines. */
+/* .hud, not #hud — it is a CLASS, and the id selector silently matched nothing,
+   which is why the background never appeared and the text stayed unreadable over
+   moving bodies. Also given its own line box so wrapped rows cannot collide. */
+.hud { background: linear-gradient(#050908f5, #050908e0 65%, #05090800);
+  padding: .4rem .7rem 1rem; row-gap: .25rem; line-height: 1.5;
+  max-width: 100%; pointer-events: none; }
+.hud > * { pointer-events: auto; }
+@media (max-width: 700px) {
+  .hud { font-size: 10px; gap: .55rem; }
+}
+#scope { resize: none; }
+#scopeGrip { height: 10px; cursor: ns-resize; background: #0e1a17;
+  border-top: 1px solid #24403a; display: flex; align-items: center;
+  justify-content: center; gap: 3px; }
+#scopeGrip i { width: 18px; height: 2px; background: #3d5a52; border-radius: 1px; }
+#scopeGrip:hover i { background: #6fbfae; }
+#scopeToggle { position: fixed; right: .5rem; z-index: 46; }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
+
+<!-- CTRNN scope. Rows are the selected animal's neurons, x is time. Lives over
+     the canvas rather than in the sidebar because it needs the width: reading a
+     gait means seeing whether bands are in phase, and that is a wide picture. -->
+<div id="scope" style="display:none">
+  <div id="scopeGrip" title="drag to resize"><i></i><i></i><i></i></div>
+  <div id="scopeHead">
+    <span id="scopeTitle">CTRNN &mdash;</span>
+    <span class="sp"></span>
+    <label>scroll <input id="scopeScroll" type="range" min="0" max="0" value="0"></label>
+    <button id="scopeMode" class="on">overlay</button>
+    <label>gain <input id="scopeGain" type="range" min="1" max="8" step="0.5" value="1"></label>
+    <button id="scopeHide" class="on">hide silent</button>
+    <button id="scopeLive" class="on">live</button>
+    <button id="scopeMin">minimise</button>
+    <button id="scopeClose">close</button>
+  </div>
+  <canvas id="scopeC"></canvas>
+  <div id="scopeFoot">
+    rows are neurons, ordered head&rarr;tail along the body axis; colour is
+    activation (blue &minus;1, dark 0, amber +1). A flat row is a silent neuron,
+    a striped row oscillates, diagonal stripes across rows are a travelling wave
+    &mdash; which is what a gait looks like.
+  </div>
+</div>
 <button id="toggle" title="panel">☰</button>
 
 <div class="hud">
@@ -127,6 +208,25 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
   </div>
 
   <!-- Only meaningful when watching a server; hidden in local sandbox mode. -->
+  <div id="codeWarn" style="display:none"></div>
+
+  <div id="linkBox">
+    <span id="linkDot"></span><span id="linkTxt">connecting…</span>
+  </div>
+
+  <div id="inspPanel">
+    <h2>Creature</h2>
+    <div class="row">
+      <button id="bPick" class="on">click to select</button>
+      <button id="bClearSel">clear</button>
+      <button id="bFollow">follow</button>
+    </div>
+    <p class="note" id="selInfo">Nothing selected. Click a cell in the world.</p>
+    <div class="row"><button id="bGenome">show genome</button>
+      <button id="bFlag" title="mark this moment for review">flag this ⚑</button></div>
+    <div id="genomeBox" style="display:none"></div>
+  </div>
+
   <div id="srvPanel" style="display:none">
     <h2>Server</h2>
     <div class="row">
@@ -137,6 +237,9 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
       <button id="bSrvRestart">restart (keep world)</button>
       <button id="bSrvReseed">new world</button>
     </div>
+    <div class="sl"><div class="lab"><span>world speed (steps/loop)</span>
+      <span class="v" id="vSrvSpf">6</span></div>
+      <input id="sSrvSpf" type="range" min="1" max="128" value="6"></div>
     <p class="note" id="srvNote">
       These act on the shared simulation, not on this page. <b>restart</b> saves,
       relaunches the server process so it picks up new code, and resumes the same
@@ -186,6 +289,22 @@ import { WorldGPU, WGSL_FIELD } from './lib/world_gpu.js';
 import { Evolver } from './lib/evolve.js';
 
 const $ = id => document.getElementById(id);
+/**
+ * Bind a handler, tolerating a missing element.
+ *
+ * DECLARED EARLY, ON PURPOSE. It used to live down in the wiring block, and
+ * later edits added `on(...)` calls above that point — which is a temporal dead
+ * zone error on a const, thrown at module scope, which aborts the entire module.
+ * The symptom is a black page and one console line naming the helper, nowhere
+ * near the renderer it killed. Everything it guards is a debug control, so it
+ * must be available before any of them.
+ */
+const on = (id, ev, fn) => {
+  const el = document.getElementById(id);
+  if (!el) { console.warn(`[mazeballs] missing control #${id}`); return; }
+  el[ev] = fn;
+};
+
 const fail = (msg) => { $('err').style.display = 'block'; $('err').textContent = msg; };
 /** A transient notice: something is being handled, not something that broke. */
 const note = (msg) => {
@@ -595,6 +714,9 @@ const view = { field: true, bonds: true, paused: false, spf: 4, evolve: true,
 // universe, which is why two browsers never agreed about anything.
 const WATCH = new URLSearchParams(location.search).has('watch');
 let remoteMaxCells = null, remoteBound = null, remoteMotes = null, resyncing = false;
+let serverPaused = false;
+let myPageVersion = null;
+let myBootId = null;
 
 const canvas = $('c');
 
@@ -629,7 +751,7 @@ async function boot() {
       // layout fails validation, the pipeline is invalid, and every submit
       // reports "Invalid CommandBuffer" with no hint as to why.
       maxStorageBuffersPerShaderStage:
-        Math.min(adapter.limits.maxStorageBuffersPerShaderStage, 12),
+        Math.min(adapter.limits.maxStorageBuffersPerShaderStage, 10),
     },
   });
   // Keep the FIRST error. WebGPU reports the root fault and then a cascade of
@@ -693,6 +815,16 @@ async function rebuild() {
       const st = await (await fetch('/status', { cache: 'no-store' })).json();
       beasts = st.beasts; cellsPer = st.cellsPerBeast;
       remoteMaxCells = st.maxCells; remoteBound = st.bound; remoteMotes = st.nMotes;
+      serverPaused = !!st.paused;
+      // Remember what the page was when it loaded, so a later edit to world.html
+      // is detectable without the page having to know its own contents.
+      if (myPageVersion === null) myPageVersion = st.pageVersion ?? null;
+      myBootId = st.bootId ?? null;
+      const pb = $('bSrvPause');
+      if (pb) {
+        pb.textContent = st.paused ? '\u25B6 paused — resume' : '\u23F8 running — pause';
+        pb.classList.toggle('on', !!st.paused);
+      }
       remoteParams = st;                       // the field the server is using
       $('sBeasts').value = beasts; $('vBeasts').textContent = beasts.toLocaleString();
       $('sCpb').value = cellsPer; $('vCpb').textContent = cellsPer;
@@ -914,6 +1046,449 @@ async function refreshMotes() {
   }
 }
 
+
+/* ===================== creature inspector + CTRNN scope =====================
+ *
+ * Debugging motion means watching a BRAIN over time, not a snapshot. A gait is a
+ * relationship between neurons across time — bands in phase, a wave travelling
+ * head to tail — and none of that is visible in an instantaneous colour.
+ *
+ * Identity is the assembly uid, minted at the birth event, never reused. Cell
+ * indices cannot be used: arena slots are recycled, so "cell 4211" is a different
+ * animal a minute later, and tracking one made 99% of a displacement measurement
+ * turn out to be slot reuse. The uid also survives a body being torn apart, so a
+ * creature that fragments is still one row-set here rather than two.
+ */
+const SCOPE_COLS = 6000;          // ~10 screens of scrollback
+const SCOPE_ROWS = 64;            // max neurons plotted for one animal
+const SCOPE_KEEP = 12;            // animals whose history we retain
+
+/**
+ * Per-animal histories, kept in a Map and NOT thrown away when the selection
+ * changes. Clicking between creatures used to clear the buffer and restart the
+ * trace from nothing, so comparing two animals was impossible and every click
+ * looked like a crash. Now the world keeps sampling whatever it has seen
+ * recently, the time axis is the world's own step counter shared by every trace,
+ * and switching back to an animal you looked at a minute ago shows its past.
+ */
+const scopeStore = new Map();     // uid -> { hist, head, filled, order, types, t0 }
+const sel = { uid: -1, follow: false, picking: true, lastStep: -1 };
+
+function storeFor(uid) {
+  let e = scopeStore.get(uid);
+  if (!e) {
+    e = { hist: new Float32Array(SCOPE_COLS * SCOPE_ROWS), head: 0, filled: 0,
+          order: [], types: new Int32Array(SCOPE_ROWS).fill(-1), steps: new Int32Array(SCOPE_COLS) };
+    scopeStore.set(uid, e);
+    // Bounded: a long session must not accumulate every creature ever clicked.
+    while (scopeStore.size > SCOPE_KEEP) {
+      const oldest = scopeStore.keys().next().value;
+      if (oldest === uid) break;
+      scopeStore.delete(oldest);
+    }
+  } else {
+    scopeStore.delete(uid); scopeStore.set(uid, e);   // touch for LRU
+  }
+  return e;
+}
+
+/** Order a body's cells head->tail so a travelling wave reads as a phase ramp. */
+function orderAlongAxis(idx, pos) {
+  if (idx.length < 3) return idx.slice();
+  let a = idx[0], b = idx[1], best = -1;
+  for (const i of idx) for (const j of idx) {
+    const d = (pos[i * 2] - pos[j * 2]) ** 2 + (pos[i * 2 + 1] - pos[j * 2 + 1]) ** 2;
+    if (d > best) { best = d; a = i; b = j; }
+  }
+  const ax = pos[b * 2] - pos[a * 2], ay = pos[b * 2 + 1] - pos[a * 2 + 1];
+  const L = Math.hypot(ax, ay) || 1;
+  return idx.slice().sort((i, j) =>
+    ((pos[i * 2] - pos[a * 2]) * ax + (pos[i * 2 + 1] - pos[a * 2 + 1]) * ay) / L -
+    ((pos[j * 2] - pos[a * 2]) * ax + (pos[j * 2 + 1] - pos[a * 2 + 1]) * ay) / L);
+}
+
+function selectUid(uid, pos, type, uidArr, n) {
+  sel.uid = uid;
+  if (uid >= 0) {
+    const e = storeFor(uid);
+    // Re-resolve which cells this animal currently has, but KEEP its history.
+    const idx = [];
+    for (let i = 0; i < n && idx.length < SCOPE_ROWS; i++) {
+      if (uidArr[i] === uid && type[i] >= 0) idx.push(i);
+    }
+    if (idx.length) {
+      e.order = orderAlongAxis(idx, pos);
+      e.types.fill(-1);
+      e.order.forEach((i, r) => { if (r < SCOPE_ROWS) e.types[r] = type[i]; });
+    }
+  }
+  const box = $('scope');
+  if (box) box.style.display = uid >= 0 ? '' : 'none';
+  updateSelInfo();
+}
+
+function updateSelInfo() {
+  const el = $('selInfo'), title = $('scopeTitle');
+  if (!el || !title) return;
+  const e = scopeStore.get(sel.uid);
+  if (sel.uid < 0 || !e || !e.order.length) {
+    el.textContent = 'Nothing selected. Click a cell in the world.';
+    title.textContent = 'CTRNN —';
+    return;
+  }
+  const names = ['neuron', 'sensor', 'muscle', 'anchor'];
+  const c = [0, 0, 0, 0];
+  for (let r = 0; r < e.order.length; r++) if (e.types[r] >= 0) c[e.types[r]]++;
+  el.textContent = `animal #${sel.uid} — ${e.order.length} cells: ` +
+    names.map((nm, k) => `${c[k]} ${nm}`).join(', ');
+  title.textContent = `CTRNN — animal #${sel.uid}, ${e.order.length} neurons` +
+    (scopeStore.size > 1 ? ` (${scopeStore.size} tracked)` : '');
+}
+
+/** One column per frame, for every animal we are still tracking. */
+function sampleSelected(pos, act, type, uidArr, n, step) {
+  if (step === sel.lastStep) return;
+  sel.lastStep = step;
+  for (const [uid, e] of scopeStore) {
+    if (!e.order.length) continue;
+    const col = e.head * SCOPE_ROWS;
+    let alive = 0;
+    for (let r = 0; r < SCOPE_ROWS; r++) {
+      const i = e.order[r];
+      const ok = i !== undefined && type[i] >= 0 && uidArr[i] === uid;
+      if (ok) alive++;
+      e.hist[col + r] = ok ? act[i] : NaN;
+    }
+    e.steps[e.head] = step;
+    e.head = (e.head + 1) % SCOPE_COLS;
+    e.filled = Math.min(e.filled + 1, SCOPE_COLS);
+    if (uid === sel.uid && sel.follow && alive) {
+      let sx = 0, sy = 0, k = 0;
+      for (const i of e.order) if (type[i] >= 0) { sx += pos[i * 2]; sy += pos[i * 2 + 1]; k++; }
+      if (k) { cam.cx = sx / k; cam.cy = sy / k; }
+    }
+  }
+}
+
+/** Nearest live cell to a world point, or -1. */
+function pickAt(wx, wy) {
+  if (!sim?.lastPos) return -1;
+  const n = sim.meta.nCells, P = sim.lastPos, T = sim.lastType, B = sim.bound;
+  let best = -1, bestD = (14 / cam.zoom) ** 2;
+  for (let i = 0; i < n; i++) {
+    if (T[i] < 0) continue;
+    let dx = P[i * 2] - wx, dy = P[i * 2 + 1] - wy;
+    if (dx > B) dx -= 2 * B; if (dx < -B) dx += 2 * B;
+    if (dy > B) dy -= 2 * B; if (dy < -B) dy += 2 * B;
+    const d = dx * dx + dy * dy;
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  return best;
+}
+
+/**
+ * Stacked traces, one line per neuron — an oscilloscope, not a table.
+ *
+ * The first version drew a heatmap: a grid of intensity per cell per timestep.
+ * That is dense and unreadable — you cannot see whether a neuron is oscillating,
+ * how fast, or whether two are in phase, which is the entire question when
+ * debugging a gait. A line you can read at a glance; a shaded square you cannot.
+ */
+function drawScope() {
+  const cv = $('scopeC'), box = $('scope');
+  if (!cv || !box || box.style.display === 'none') return;
+  const e = scopeStore.get(sel.uid);
+  if (!e || !e.order.length) return;
+
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = Math.max(1, Math.round(cv.clientWidth * dpr));
+  const h = Math.max(1, Math.round(cv.clientHeight * dpr));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  const g = cv.getContext('2d');
+  g.fillStyle = '#070c0b'; g.fillRect(0, 0, w, h);
+
+  const rows = Math.min(e.order.length, SCOPE_ROWS);
+  const rowH = h / rows;
+  const cols = Math.min(e.filled, Math.max(2, Math.floor(cv.clientWidth)));
+  if (cols < 2) return;
+
+  const maxBack = Math.max(0, e.filled - cols);
+  const scr = $('scopeScroll');
+  if (scr) scr.max = String(maxBack);
+  const live = $('scopeLive')?.classList.contains('on');
+  const back = live ? maxBack : Math.min(+(scr?.value ?? 0), maxBack);
+  if (live && scr) scr.value = String(maxBack);
+
+  const tint = ['#7d8f8a', '#4dd1de', '#ff9433', '#b86bea'];   // neuron/sensor/muscle/anchor
+  const dx = w / (cols - 1);
+  const SMOOTH = 3;                     // light boxcar; the trace is noisy per frame
+  const overlay = $('scopeMode')?.classList.contains('on') ?? true;
+  const gain = +($('scopeGain')?.value ?? 1);
+  const hideSilent = $('scopeHide')?.classList.contains('on') ?? true;
+
+  // Read a row once, smoothed, so we can decide whether it is worth drawing.
+  const readRow = (r) => {
+    const out = new Float32Array(cols).fill(NaN);
+    for (let c = 0; c < cols; c++) {
+      let acc = 0, m = 0;
+      for (let k = -SMOOTH; k <= SMOOTH; k++) {
+        const ci = c + k; if (ci < 0 || ci >= cols) continue;
+        const src = ((e.head - e.filled + back + ci) % SCOPE_COLS + SCOPE_COLS) % SCOPE_COLS;
+        const v = e.hist[src * SCOPE_ROWS + r];
+        if (!Number.isNaN(v)) { acc += v; m++; }
+      }
+      if (m) out[c] = acc / m;
+    }
+    return out;
+  };
+
+  // A neuron pinned at a constant value tells you nothing and costs a lane. In a
+  // saturated brain most rows are exactly that, which is why everything looked
+  // flat: the interesting few were sharing the height with dozens of dead ones.
+  const all = [];
+  for (let r = 0; r < rows; r++) {
+    const d = readRow(r);
+    let lo = Infinity, hi = -Infinity;
+    for (const v of d) if (!Number.isNaN(v)) { if (v < lo) lo = v; if (v > hi) hi = v; }
+    all.push({ r, d, span: hi - lo, lo, hi });
+  }
+  let traces = hideSilent ? all.filter(t => !(t.span < 0.02) || rows <= 6) : all;
+  // An EMPTY panel is the worst possible answer — it looks broken when in fact
+  // the finding is "this brain is flat", which is a real and important thing to
+  // be able to see. Fall back to showing everything and say why.
+  let allFlat = false;
+  if (!traces.length) { traces = all; allFlat = true; }
+  if (!traces.length) return;
+
+  if (overlay) {
+    // SUPERIMPOSED on one shared axis: this is how phase is read. Two neurons in
+    // antiphase are obvious here and invisible when each has its own lane.
+    // AUTO-RANGED. Fixed +/-1 wastes the whole panel when a brain sits in a
+    // narrow band, which is exactly the case we most need to see into: a gait is
+    // a small wiggle on top of a large offset. Gain multiplies on top.
+    let lo = Infinity, hi = -Infinity;
+    for (const t of traces) { if (t.lo < lo) lo = t.lo; if (t.hi > hi) hi = t.hi; }
+    if (!Number.isFinite(lo)) { lo = -1; hi = 1; }
+    let span = Math.max(hi - lo, 1e-4);
+    const mid0 = (lo + hi) / 2;
+    const toY = (v) => h * 0.5 - ((v - mid0) / span) * (h * 0.9 * gain);
+    g.strokeStyle = '#12201d'; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(0, h * 0.5); g.lineTo(w, h * 0.5); g.stroke();
+    g.fillStyle = '#4a625c'; g.font = `${10 * dpr}px ui-monospace, monospace`;
+    g.fillText(`range ${lo.toFixed(3)} .. ${hi.toFixed(3)}` +
+      (allFlat ? '  — every neuron flat (no oscillation)' : ''), 6 * dpr, 12 * dpr);
+    for (const t of traces) {
+      g.strokeStyle = tint[Math.max(0, e.types[t.r])] ?? '#7d8f8a';
+      g.globalAlpha = 0.8;
+      g.lineWidth = 1.4 * dpr;
+      g.beginPath();
+      let started = false;
+      for (let c = 0; c < cols; c++) {
+        const v = t.d[c];
+        if (Number.isNaN(v)) { started = false; continue; }
+        const y = toY(v);
+        if (!started) { g.moveTo(c * dx, y); started = true; } else { g.lineTo(c * dx, y); }
+      }
+      g.stroke();
+    }
+    g.globalAlpha = 1;
+  } else {
+    const lanes = traces.length, lh = h / lanes;
+    g.strokeStyle = '#12201d'; g.lineWidth = 1;
+    for (let i = 1; i < lanes; i++) {
+      g.beginPath(); g.moveTo(0, i * lh); g.lineTo(w, i * lh); g.stroke();
+    }
+    traces.forEach((t, i) => {
+      const yMid = (i + 0.5) * lh, amp = lh * 0.45 * gain;
+      g.strokeStyle = tint[Math.max(0, e.types[t.r])] ?? '#7d8f8a';
+      g.lineWidth = 1.3 * dpr;
+      g.beginPath();
+      let started = false;
+      for (let c = 0; c < cols; c++) {
+        const v = t.d[c];
+        if (Number.isNaN(v)) { started = false; continue; }
+        const y = yMid - Math.max(-1, Math.min(1, v * gain)) * (lh * 0.45);
+        if (!started) { g.moveTo(c * dx, y); started = true; } else { g.lineTo(c * dx, y); }
+      }
+      g.stroke();
+    });
+  }
+
+  // time axis: where we are in the world's own clock
+  const oldest = e.steps[((e.head - e.filled + back) % SCOPE_COLS + SCOPE_COLS) % SCOPE_COLS];
+  const newest = e.steps[((e.head - 1 + SCOPE_COLS) % SCOPE_COLS)];
+  g.fillStyle = '#4a625c'; g.font = `${11 * dpr}px ui-monospace, monospace`;
+  g.fillText(`step ${oldest.toLocaleString()}`, 4 * dpr, h - 4 * dpr);
+  const rt = `step ${newest.toLocaleString()}${live ? ' · live' : ' · scrolled back'}`;
+  g.fillText(rt, w - g.measureText(rt).width - 4 * dpr, h - 4 * dpr);
+}
+
+/**
+ * Genome viewer. A genome here is NOT a body — it is a small table of weights
+ * saying how a cell's properties depend on WHERE IT IS in the egg, read off two
+ * maternal gradients. This shows that table, because otherwise the genetics is
+ * invisible and the bodies look like they come from nowhere.
+ *
+ * Rows are properties (does a cell exist here at all, how hard does it contract,
+ * how well does it grip...). Columns are basis functions of position: `bias` is
+ * uniform, `ap` runs head-to-tail, `|dv|` is symmetric across the midline so a
+ * genome using it CANNOT tell left from right, and `sin*ap` terms are what make
+ * repeated segments.
+ */
+function cellShade(v) {
+  const a = Math.min(1, Math.abs(v) / 3);
+  return v >= 0
+    ? `background:rgb(${Math.round(20+200*a)},${Math.round(24+130*a)},${Math.round(26+40*a)})`
+    : `background:rgb(${Math.round(20+30*a)},${Math.round(24+100*a)},${Math.round(26+170*a)})`;
+}
+
+async function showGenome() {
+  const box = $('genomeBox');
+  if (!box) return;
+  if (sel.uid < 0) { box.style.display = ''; box.textContent = 'Select an animal first.'; return; }
+  box.style.display = '';
+  box.textContent = 'loading…';
+  try {
+    const j = await (await fetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
+    if (!j.ok) { box.textContent = j.error; return; }
+    let html = `<h4>animal #${j.uid} · gen ${j.generation} · ${j.cells} cells</h4>`;
+    html += '<table><tr><th></th>' +
+      j.basis.map(b => `<td class="hd">${b}</td>`).join('') + '</tr>';
+    j.props.forEach((p, pi) => {
+      html += `<tr><th>${p}</th>`;
+      for (let b = 0; b < j.nb; b++) {
+        const v = j.g[pi * j.nb + b];
+        html += `<td style="${cellShade(v)}" title="${p} x ${j.basis[b]} = ${v.toFixed(3)}">` +
+          `${v >= 0 ? '' : '-'}${Math.abs(v) < 0.05 ? '·' : Math.abs(v).toFixed(1).replace('0.', '.')}</td>`;
+      }
+      html += '</tr>';
+    });
+    html += '</table><h4>synapse weights (how wiring is expressed)</h4><table><tr>' +
+      j.synBasis.map(b => `<td class="hd">${b}</td>`).join('') + '</tr><tr>';
+    for (let k = 0; k < j.nsyn; k++) {
+      const v = j.g[j.synOff + k];
+      html += `<td style="${cellShade(v)}" title="${j.synBasis[k]} = ${v.toFixed(3)}">` +
+        `${v >= 0 ? '' : '-'}${Math.abs(v) < 0.05 ? '·' : Math.abs(v).toFixed(1).replace('0.', '.')}</td>`;
+    }
+    html += '</tr></table>';
+    html += '<p class="note">amber positive, blue negative. A row of dots is a ' +
+      'property the genome leaves flat. Weight on <b>|dv|</b> rather than <b>dv</b> ' +
+      'is what makes a body bilaterally symmetric — it cannot tell left from right.</p>';
+    box.innerHTML = html;
+  } catch (e) { box.textContent = 'could not load genome: ' + e.message; }
+}
+
+/* ---- scope geometry: draggable, minimisable ---- */
+let scopeH = 200;
+function applyScopeH() {
+  const cv = $('scopeC');
+  if (cv) cv.style.height = scopeH + 'px';
+}
+on('scopeGrip', 'onpointerdown', e => {
+  const start = e.clientY, h0 = scopeH;
+  e.target.setPointerCapture(e.pointerId);
+  const move = (ev) => {
+    scopeH = Math.max(60, Math.min(innerHeight * 0.8, h0 + (start - ev.clientY)));
+    applyScopeH();
+  };
+  const up = () => {
+    removeEventListener('pointermove', move);
+    removeEventListener('pointerup', up);
+  };
+  addEventListener('pointermove', move);
+  addEventListener('pointerup', up);
+});
+on('scopeMin', 'onclick', e => {
+  const cv = $('scopeC'), foot = $('scopeFoot');
+  const hidden = cv.style.display === 'none';
+  cv.style.display = hidden ? '' : 'none';
+  if (foot) foot.style.display = hidden ? '' : 'none';
+  e.target.textContent = hidden ? 'minimise' : 'expand';
+});
+
+/**
+ * "LOOK AT THIS." A one-click way to tell whoever reads the logs that something
+ * interesting is on screen RIGHT NOW — without pasting a screenshot, which is
+ * expensive to transmit and says less than the numbers do.
+ *
+ * Writes a marked record into runs/observations.jsonl with the world state, the
+ * selected animal, and whatever note is typed, and takes a snapshot so the exact
+ * moment can be replayed rather than described.
+ */
+async function flagThis() {
+  const note_ = prompt('What should we look at? (short note)');
+  if (note_ === null) return;
+  try {
+    const r = await fetch('/control', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'flag', note: note_, uid: sel.uid }),
+    });
+    const j = await r.json();
+    note(j.ok ? `flagged at step ${j.steps.toLocaleString()}` : `flag failed: ${j.error}`);
+  } catch (e) { note('flag failed: ' + e.message); }
+}
+on('bFlag', 'onclick', flagThis);
+
+/* ---- wiring ----
+ *
+ * Bound through a helper that TOLERATES a missing element. These are debug
+ * controls; if one is absent the world should still render. Binding them
+ * directly meant a single markup slip threw at module scope, which aborts the
+ * whole module — and the symptom is a black page with one console line about a
+ * null, nowhere near the renderer it killed.
+ */
+
+
+on('bGenome', 'onclick', showGenome);
+on('bPick', 'onclick', e => {
+  sel.picking = !sel.picking;
+  e.target.classList.toggle('on', sel.picking);
+});
+on('bClearSel', 'onclick', () => selectUid(-1, sim?.lastPos ?? new Float32Array(0),
+  sim?.lastType ?? new Int32Array(0), sim?.lastUid ?? new Int32Array(0), 0));
+on('bFollow', 'onclick', e => {
+  sel.follow = !sel.follow;
+  e.target.classList.toggle('on', sel.follow);
+});
+on('scopeClose', 'onclick', () => { $('scope').style.display = 'none'; });
+on('scopeLive', 'onclick', e => e.target.classList.toggle('on'));
+on('scopeMode', 'onclick', e => {
+  const on_ = e.target.classList.toggle('on');
+  e.target.textContent = on_ ? 'overlay' : 'stacked';
+});
+on('scopeHide', 'onclick', e => e.target.classList.toggle('on'));
+on('scopeScroll', 'oninput', () => $('scopeLive')?.classList.remove('on'));
+
+/**
+ * A HIDDEN TAB SHOULD NOT HOLD A WORLD.
+ *
+ * Every open viewer allocates its own full set of GPU buffers, and hiding a tab
+ * suspends rendering but frees nothing — so old tabs sit there taxing GPU memory
+ * until someone tidies them up by hand. In watch mode the page owns nothing that
+ * cannot be rebuilt from the server in a second, so after a couple of minutes out
+ * of sight it lets the whole thing go and rebuilds on return.
+ *
+ * Not done in local-sim mode: there the buffers ARE the simulation, and dropping
+ * them would throw away the run.
+ */
+let hideTimer = null;
+document.addEventListener('visibilitychange', () => {
+  clearTimeout(hideTimer);
+  if (document.hidden) {
+    if (!WATCH) return;                       // local sim: the buffers are the run
+    hideTimer = setTimeout(() => {
+      if (!document.hidden || !sim) return;
+      sim.world.destroy(); sim.brains.destroy();
+      sim.bBond.destroy(); sim.bCam.destroy();
+      sim.bMoteCam?.destroy(); sim.bMoteData?.destroy();
+      sim = null;
+      console.log('[mazeballs] hidden for 2 minutes — released GPU buffers');
+    }, 120000);
+  } else if (!sim && WATCH) {
+    rebuild().catch(e => fail(String(e)));
+  }
+});
+
 const FRAME_MAGIC = 0x314d5257;
 function applyFrame(ab) {
   const dv = new DataView(ab);
@@ -931,10 +1506,24 @@ function applyFrame(ab) {
     }
     return;
   }
+  // Offsets walked in the SAME ORDER the server writes them, rather than each
+  // hand-computed. They were hand-computed, and uid was read at HEAD + n*16 —
+  // which is where energy lives — so every assembly id was a float reinterpreted
+  // as an integer and nothing could ever be selected. Sequential `at` makes the
+  // layout one statement of fact instead of five chances to be wrong.
   const HEAD = 48;
-  const pos = new Float32Array(ab, HEAD, n * 2);
-  const act = new Float32Array(ab, HEAD + n * 8, n);
-  const type = new Int32Array(ab, HEAD + n * 12, n);
+  let at = HEAD;
+  const pos = new Float32Array(ab, at, n * 2); at += n * 8;
+  const act = new Float32Array(ab, at, n); at += n * 4;
+  const type = new Int32Array(ab, at, n); at += n * 4;
+  const energy = new Float32Array(ab, at, n); at += n * 4;
+  // Assembly uid per cell — which ANIMAL this is, stable across slot recycling
+  // and across a body being torn in half. Everything the inspector does hangs
+  // off this; a cell index would name a different creature a minute later.
+  const uid = new Int32Array(ab, at, n); at += n * 4;
+  sim.lastPos = pos; sim.lastAct = act; sim.lastType = type;
+  sim.lastUid = uid; sim.lastEnergy = energy;
+  sampleSelected(pos, act, type, uid, n, dv.getUint32(8, true));
 
   const q = dev.queue;
   q.writeBuffer(sim.world.bPos, 0, pos);
@@ -954,7 +1543,7 @@ function applyFrame(ab) {
   // Bond pairs ride WITH the frame, so they always describe the same instant as
   // the positions. Fetching them separately let the two drift apart and drew
   // lines between cells that were never bonded.
-  const pairOff = HEAD + n * 8 + n * 4 + n * 4 + n * 4;
+  const pairOff = at;
   const pairCount = dv.getUint32(pairOff, true);
   if (pairCount > 0 && (pairCount * 4) <= sim.bondCapacity) {
     q.writeBuffer(sim.bBond, 0, new Int32Array(ab, pairOff + 4, pairCount));
@@ -1060,10 +1649,27 @@ function writeCam() {
   dev.queue.writeBuffer(sim.bCam, 0, b);
 }
 
+let reviveAt = 0;
 function loop() {
   raf = requestAnimationFrame(loop);
-  if (!sim) return;
   const t = performance.now();
+
+  // SELF-HEAL A DEAD PAGE. If a rebuild failed — a restart that took longer than
+  // expected, a dropped connection mid-build — `sim` is null and every later
+  // frame returned immediately, leaving a black screen and '-' for every stat
+  // until someone reloaded. Nothing retried, which is the actual defect: the
+  // server is usually fine and the page simply gave up.
+  if (!sim) {
+    if (WATCH && !document.hidden && t > reviveAt && !resyncing) {
+      reviveAt = t + 5000;
+      resyncing = true;
+      note('reconnecting…');
+      rebuild()
+        .then(() => { resyncing = false; note('reconnected'); })
+        .catch(() => { resyncing = false; });
+    }
+    return;
+  }
 
   if (WATCH) {
     // Pull frames from the server as fast as they arrive, never faster than one
@@ -1080,6 +1686,7 @@ function loop() {
         .then(r => r.arrayBuffer())
         .then(b => {
           applyFrame(b); sim.fetching = false; sim.misses = 0;
+          sim.lastFrameAt = performance.now();
           if (sim.wasLost) { sim.wasLost = false; note('reconnected'); }
         })
         .catch(e => {
@@ -1121,6 +1728,44 @@ function loop() {
 
   // Standing crop on its own slow clock: it changes at the speed of grazing,
   // not of frames, and it is ~130KB over the link.
+  // CONNECTION STATE, VISIBLE. The page had no way to say "I am showing you a
+  // number from four minutes ago" — it just sat there with a stale step count
+  // while the server was healthy, which is indistinguishable from a frozen world.
+  {
+    const box = $('linkBox'), txt = $('linkTxt');
+    if (box && txt) {
+      const age = sim.lastFrameAt ? (t - sim.lastFrameAt) / 1000 : Infinity;
+      let cls = 'live', msg = 'live';
+      if (serverPaused) { cls = 'paused'; msg = 'world PAUSED on server'; }
+      else if (!Number.isFinite(age)) { cls = 'dead'; msg = 'no frame yet'; }
+      else if (age > 15) { cls = 'dead'; msg = `no data for ${age.toFixed(0)}s — retrying`; }
+      else if (age > 3) { cls = 'stale'; msg = `stale ${age.toFixed(1)}s`; }
+      else { msg = `live · ${sim.serverSteps.toLocaleString()} steps`; }
+      if (box.className !== cls) box.className = cls;
+      if (txt.textContent !== msg) txt.textContent = msg;
+    }
+  }
+
+  // Am I running the latest code? Two answers, because there are two codebases.
+  // Polled slowly — this is a staleness check, not a heartbeat.
+  sim.sinceVer = (sim.sinceVer ?? 0) + (t - last);
+  if (sim.sinceVer > 20000 && !sim.checkingVer) {
+    sim.sinceVer = 0; sim.checkingVer = true;
+    fetch('/status', { cache: 'no-store' }).then(r => r.json()).then(st => {
+      sim.checkingVer = false;
+      if (!st.onDisk) return;                       // older server, no stamps
+      const simStale = st.simVersion !== st.onDisk.simVersion;
+      const pageStale = st.pageVersion !== st.onDisk.pageVersion || st.pageVersion !== myPageVersion;
+      const el = $('codeWarn');
+      if (!el) return;
+      const msgs = [];
+      if (simStale) msgs.push('physics changed on disk — <b>restart the server</b> (Server &rarr; restart)');
+      if (pageStale) msgs.push('viewer changed on disk — <b>reload this page</b>');
+      el.style.display = msgs.length ? '' : 'none';
+      el.innerHTML = msgs.join('<br>');
+    }).catch(() => { sim.checkingVer = false; });
+  }
+
   sim.sinceMotes += t - last;
   if (view.food && sim.sinceMotes > 1500) { sim.sinceMotes = 0; refreshMotes(); }
 
@@ -1166,6 +1811,8 @@ function loop() {
   pass.end();
   dev.queue.submit([enc.finish()]);
 
+  drawScope();
+
   frames++; acc += t - last; last = t;
   if (acc > 400) {
     fps = frames * 1000 / acc; frames = 0; acc = 0;
@@ -1182,16 +1829,33 @@ function loop() {
 
 let drag = null;
 canvas.addEventListener('pointerdown', e => {
-  drag = { x: e.clientX, y: e.clientY };
+  drag = { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, moved: 0 };
   canvas.setPointerCapture(e.pointerId); canvas.classList.add('drag');
 });
 canvas.addEventListener('pointermove', e => {
   if (!drag) return;
   cam.cx -= (e.clientX - drag.x) / cam.zoom;
   cam.cy += (e.clientY - drag.y) / cam.zoom;
-  drag = { x: e.clientX, y: e.clientY };
+  drag.moved += Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y);
+  drag.x = e.clientX; drag.y = e.clientY;
 });
-const endDrag = () => { drag = null; canvas.classList.remove('drag'); };
+const endDrag = (e) => {
+  // A click, not a pan. Screen -> world uses the same numbers writeCam does, so
+  // the point under the cursor is the point that gets picked at any zoom.
+  if (drag && drag.moved < 5 && sel.picking && sim?.lastPos && e) {
+    const r = canvas.getBoundingClientRect();
+    const wx = cam.cx + (e.clientX - r.left - r.width / 2) / cam.zoom;
+    const wy = cam.cy - (e.clientY - r.top - r.height / 2) / cam.zoom;
+    const i = pickAt(wx, wy);
+    if (i >= 0 && sim.lastUid[i] >= 0) {
+      selectUid(sim.lastUid[i], sim.lastPos, sim.lastType, sim.lastUid, sim.meta.nCells);
+      note(`selected animal #${sim.lastUid[i]}`);
+    } else {
+      note('nothing there');
+    }
+  }
+  drag = null; canvas.classList.remove('drag');
+};
 canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 
@@ -1261,16 +1925,44 @@ async function control(action, confirmText) {
     const j = await r.json();
     if (!j.ok) { note(`server refused: ${j.error}`); return; }
     if (action === 'restart' || action === 'reseed') {
-      // The process is going away and coming back on the same port. Give it a
-      // moment, then rebuild — the new world may have a different shape.
+      // WAIT FOR IT TO COME BACK, don't guess. This slept 4.5 seconds and then
+      // rebuilt — but a restart takes ~30s (GPU init, then building 1200 bodies),
+      // so the rebuild hit a dead port, threw, and left a black screen with '-'
+      // for every stat. Poll /status until it answers, then rebuild.
       note(action === 'reseed' ? 'starting a new world…' : 'restarting server…');
-      sim.retryAt = performance.now() + 4000;
-      setTimeout(() => rebuild().catch(e => fail(String(e))), 4500);
+      sim.retryAt = performance.now() + 120000;   // stop the frame loop meanwhile
+      const wasBoot = myBootId;
+      let waited = 0;
+      const poll = async () => {
+        waited += 1500;
+        try {
+          const st = await (await fetch('/status', { cache: 'no-store' })).json();
+          // A DIFFERENT process, not merely any answer. The outgoing server keeps
+          // serving for a moment after agreeing to restart.
+          if (st && st.nCells && st.bootId && st.bootId !== wasBoot) {
+            note('server back — rebuilding viewer');
+            await rebuild();
+            return;
+          }
+        } catch { /* not up yet */ }
+        if (waited > 90000) {
+        // Hand back to the self-heal loop rather than declaring the page dead.
+        note('server slow to return — will keep retrying');
+        return;
+      }
+        note(`waiting for server… ${(waited / 1000) | 0}s`);
+        setTimeout(poll, 1500);
+      };
+      setTimeout(poll, 1500);
     } else if (action === 'save') {
       note(`saved ${(j.bytes / 1048576).toFixed(1)} MB at step ${j.steps.toLocaleString()}`);
     } else {
+      // A button that is a STATE must show the state, not the verb. This said
+      // "pause world" whether the world was running or stopped, so the only way
+      // to know was to press it and see what happened.
+      serverPaused = !!j.paused;
       note(j.paused ? 'world paused' : 'world running');
-      $('bSrvPause').textContent = j.paused ? 'resume world' : 'pause world';
+      $('bSrvPause').textContent = j.paused ? '\u25B6 paused — resume' : '\u23F8 running — pause';
       $('bSrvPause').classList.toggle('on', !!j.paused);
     }
   } catch (e) {
@@ -1283,6 +1975,21 @@ if (WATCH) {
   $('bSrvPause').onclick = () =>
     control($('bSrvPause').textContent.startsWith('pause') ? 'pause' : 'resume');
   $('bSrvSave').onclick = () => control('save');
+  // Debounced: dragging a slider should not fire fifty restarts of the loop.
+  let spfT = null;
+  $('sSrvSpf').oninput = e => {
+    $('vSrvSpf').textContent = e.target.value;
+    clearTimeout(spfT);
+    spfT = setTimeout(async () => {
+      try {
+        const r = await fetch('/control', { method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'speed', spf: +e.target.value }) });
+        const j = await r.json();
+        if (j.ok) note(`world speed ${j.spf} steps/loop`);
+      } catch (err) { note('could not set speed: ' + err.message); }
+    }, 250);
+  };
   $('bSrvRestart').onclick = () =>
     control('restart', 'Restart the server process? The world is saved and resumed.');
   $('bSrvReseed').onclick = () =>

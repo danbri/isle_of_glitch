@@ -55,7 +55,7 @@ export const WORLD_FIELDS = [
   ['contactK', 'f32', 'soft-sphere repulsion stiffness; 0 disables contact'],
 
   ['bucketM', 'u32', 'neighbour slots listed per bucket'],
-  ['predRate', 'f32', 'energy moved per unit of effort difference, per second'],
+  ['contestRate', 'f32', 'energy moved on contact per unit of effort difference, per second'],
   ['contactR', 'f32', 'how close counts as contact'],
   ['sizeScale', 'f32', 'unused; retained so the block layout is stable'],
 
@@ -77,7 +77,12 @@ export const WORLD_FIELDS = [
   ['moteRegrow', 'f32', 'solar inflow: stock a mote regains per second at full fertility'],
   ['moteCap', 'f32', 'the most stock one mote can hold'],
   ['moteHashSize', 'u32', 'buckets in the mote hash'],
-  ['pad0', 'f32', ''],
+  ['gritScale', 'f32', 'spatial frequency of the substrate grit field'],
+
+  ['gritSeed', 'u32', 'grit field seed'],
+  ['slipBase', 'f32', 'drag a cell feels on frictionless ground'],
+  ['gripAniso', 'f32', 'how much harder sideways slip is than along-axis slip'],
+  ['regrowCrowdK', 'f32', 'how sharply local crowding suppresses regrowth'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */

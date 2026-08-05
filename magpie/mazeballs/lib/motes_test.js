@@ -30,7 +30,7 @@ async function closedWorld(params = {}) {
   const brains = await BrainArenaGPU.create(built.arena);
   const world = new WorldGPU(brains, built.cells, {
     bound: B, nMotes: 3000, moteRegrow: 0,
-    brainTax: 0, muscleCost: 0, predRate: 0, eCap: 1e9, eFloor: -1e9,
+    brainTax: 0, muscleCost: 0, contestRate: 0, eCap: 1e9, eFloor: -1e9,
     ...params,
   });
   return { built, brains, world };

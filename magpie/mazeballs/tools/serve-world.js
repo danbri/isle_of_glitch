@@ -50,7 +50,57 @@ const args = (() => {
   return out;
 })();
 
-const BOUND = args.bound || Math.max(40, Math.sqrt(args.beasts * args.cells) * 0.62);
+// Sized for the tissue the world will actually hold, not for the founder rings.
+// This used beasts * cells, i.e. 12 cells a body — but development builds ~34, so
+// the live world was carrying nearly three times the tissue the number was chosen
+// for. That is why crowding suppression tuned in a 600-body test world killed the
+// 1200-body server: the server was already far denser than anything measured.
+/**
+ * Version stamps for the two INDEPENDENT things that can be out of date.
+ *
+ * `pageVersion` is world.html, which is static — a browser reload picks up any
+ * change. `simVersion` is the physics: lib/*.js, loaded into THIS process at
+ * startup, which a reload cannot touch and only a restart replaces.
+ *
+ * Conflating them is easy and was actively confusing: reloading forever will
+ * never pick up a change to traction or grazing, and restarting the server does
+ * nothing for a renderer bug. The page now compares both and says which.
+ */
+const codeStamp = async () => {
+  const here = new URL('.', import.meta.url).pathname;
+  const stat = async (f) => {
+    try { const st = await Deno.stat(f); return `${st.size}:${st.mtime?.getTime() ?? 0}`; }
+    catch { return '0'; }
+  };
+  const sim = [];
+  for await (const e of Deno.readDir(`${here}../lib`)) {
+    if (e.isFile && e.name.endsWith('.js') && !e.name.endsWith('_test.js')) sim.push(e.name);
+  }
+  sim.sort();
+  const simParts = [];
+  for (const f of sim) simParts.push(`${f}=${await stat(`${here}../lib/${f}`)}`);
+  simParts.push(`serve=${await stat(`${here}serve-world.js`)}`);
+  const hash = (x) => {
+    let h = 5381;
+    for (let i = 0; i < x.length; i++) h = ((h * 33) ^ x.charCodeAt(i)) >>> 0;
+    return h.toString(36);
+  };
+  return {
+    simVersion: hash(simParts.join('|')),
+    pageVersion: hash(await stat(`${here}../world.html`)),
+  };
+};
+// Captured at startup: this is what the RUNNING process actually loaded.
+const RUNNING = await codeStamp();
+// Identifies THIS process. A restarting server answers /status for a few hundred
+// milliseconds after it has agreed to die, so a client polling "is it back yet"
+// sees the outgoing process and rebuilds against something about to exit. Waiting
+// for this value to CHANGE is the only reliable "it is a new server now".
+const BOOT_ID = `${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;
+console.log(`code: sim ${RUNNING.simVersion}, page ${RUNNING.pageVersion}`);
+
+const BOUND = args.bound ||
+  Math.max(40, Math.sqrt(args.beasts * Math.max(args.cells, 34) / 0.5) / 2);
 
 console.log(`building ${args.beasts} bodies x ${args.cells} cells, bound ${BOUND.toFixed(0)}`);
 const built = buildBodies({
@@ -134,6 +184,13 @@ async function saveSnapshot(path) {
   // half-file where a good one used to be.
   await Deno.writeFile(path + '.tmp', out);
   await Deno.rename(path + '.tmp', path);
+  // A ROLLING RING beside the live file. Overwriting one snapshot means the only
+  // state you can ever go back to is the most recent — and the most recent is
+  // exactly what you have when you notice something has gone wrong.
+  try {
+    const ring = `${path}.${String(Math.floor(steps / 1e5) % 8)}.ring`;
+    await Deno.writeFile(ring, out);
+  } catch { /* ring is a convenience, never fatal */ }
   return { bytes: total, steps };
 }
 
@@ -202,6 +259,88 @@ if (args.resume) {
 }
 
 let paused = false;
+
+/**
+ * A METRICS LOG, so diagnosing a run does not mean pasting screenshots.
+ *
+ * A screenshot says "it looks static" and costs a great deal to transmit; one
+ * JSONL line says alive 157, muscle 0.7%, median body 6 cells, and costs almost
+ * nothing. The whole history of a run is then a file to read the tail of, rather
+ * than something reconstructed from memory and impressions.
+ *
+ * Cheap enough to keep always: ~200 bytes per sample, so an overnight run at one
+ * sample per 5,000 steps is well under a megabyte.
+ */
+const METRICS = `${new URL('..', import.meta.url).pathname}runs/metrics.jsonl`;
+let sinceMetric = 0;
+const METRIC_EVERY = args.metricEvery ?? 5000;
+
+async function logMetrics() {
+  try {
+    const A = built.arena, C = built.cells;
+    const census = [0, 0, 0, 0];
+    let liveCells = 0;
+    const sizes = [];
+    for (let o = 0; o < A.P; o++) {
+      if (!A.alive[o]) continue;
+      sizes.push(A.cnt[o]);
+      for (let i = A.off[o]; i < A.off[o] + A.cnt[o]; i++) {
+        const t = C.ctype[i];
+        if (t >= 0 && t < 4) { census[t]++; liveCells++; }
+      }
+    }
+    sizes.sort((a, b) => a - b);
+    const rec = {
+      t: new Date().toISOString(), step: steps,
+      alive: last.alive, births: evo.births, deaths: evo.deaths,
+      gen: last.maxGeneration, lineages: last.lineages,
+      meanEnergy: +last.meanEnergy.toFixed(2),
+      liveCells,
+      bodyMin: sizes[0] ?? 0,
+      bodyMed: sizes[sizes.length >> 1] ?? 0,
+      bodyMax: sizes[sizes.length - 1] ?? 0,
+      neuron: census[0], sensor: census[1], muscle: census[2], anchor: census[3],
+      musclePct: liveCells ? +(100 * census[2] / liveCells).toFixed(2) : 0,
+      spf: args.spf, bound: +BOUND.toFixed(1),
+      crowdK: world.params.regrowCrowdK, moteRegrow: world.params.moteRegrow,
+      flowStr: world.params.flowStr, contract: world.params.contract,
+      simVersion: RUNNING.simVersion,
+    };
+    await Deno.writeTextFile(METRICS, JSON.stringify(rec) + '\n', { append: true });
+  } catch (e) { console.error('metrics failed:', e.message); }
+}
+
+/**
+ * WATCH MY OWN CODE. Deno loads lib/*.js once at startup, so a running server
+ * silently keeps executing the physics it booted with however many times the
+ * files change underneath it. That is invisible from the outside and has cost
+ * real confusion — measurements taken against code that had already been fixed.
+ *
+ * Checked on a slow timer; it logs loudly and /status reports it, so both the
+ * terminal and the browser can say "this process is behind". Deliberately does
+ * NOT auto-restart: dropping a long run without being asked is worse than
+ * running slightly old physics, and the Server panel makes restarting one click.
+ */
+let staleSince = 0;
+setInterval(async () => {
+  try {
+    const now = await codeStamp();
+    if (now.simVersion !== RUNNING.simVersion) {
+      if (!staleSince) {
+        staleSince = Date.now();
+        console.warn(
+          `\n*** PHYSICS ON DISK HAS CHANGED ***\n` +
+          `    running sim ${RUNNING.simVersion}, on disk ${now.simVersion}\n` +
+          `    this process is still executing the code it started with.\n` +
+          `    restart to pick it up:  ./tools/world restart   (or Server -> restart in the UI)\n`);
+      }
+    } else if (staleSince) {
+      staleSince = 0;
+      console.log('physics on disk matches this process again');
+    }
+  } catch { /* never fatal */ }
+}, 15000);
+
 let lastSave = Date.now();
 const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
 
@@ -210,6 +349,9 @@ const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
     if (paused) { await new Promise(r => setTimeout(r, 100)); continue; }
     world.step(args.spf);
     steps += args.spf; sinceTick += args.spf;
+
+    sinceMetric += args.spf;
+    if (sinceMetric >= METRIC_EVERY && !ticking) { sinceMetric = 0; await logMetrics(); }
 
     if (sinceTick >= args.tick && !ticking) {
       sinceTick = 0; ticking = true;
@@ -289,7 +431,7 @@ async function buildFrame() {
   }
   const P32 = Int32Array.from(pairs);
 
-  const buf = new ArrayBuffer(HEAD + N * 8 + N * 4 + N * 4 + N * 4 + 4 + P32.byteLength);
+  const buf = new ArrayBuffer(HEAD + N * 8 + N * 4 + N * 4 + N * 4 + N * 4 + 4 + P32.byteLength);
   const dv = new DataView(buf);
   dv.setUint32(0, FRAME_MAGIC, true);
   dv.setUint32(4, N, true);
@@ -324,6 +466,26 @@ async function buildFrame() {
   new Float32Array(buf, at, N).set(cellAct); at += N * 4;
   new Int32Array(buf, at, N).set(cellType); at += N * 4;
   new Float32Array(buf, at, N).set(energy); at += N * 4;
+
+  // ASSEMBLY IDENTITY — which animal a cell belongs to, stable across everything.
+  //
+  // Arena SLOTS are recycled: when a body dies its range is reused, so a cell
+  // index means "whatever occupies these slots now" and nothing more. Tracking a
+  // cell by index across time therefore teleports it across the world the moment
+  // its slot is reused, which silently wrecked a displacement measurement — the
+  // apparent motion was mostly recycling.
+  //
+  // The uid is minted once per BIRTH EVENT and never reused, so it survives slot
+  // recycling, and it is carried by the cell rather than derived from position,
+  // so it survives a body being torn in half: both halves still name the same
+  // animal. Genome identity would not do this — siblings and twins share a
+  // genome and are different animals.
+  const cellUid = new Int32Array(N);
+  for (let i = 0; i < N; i++) {
+    const b = built.cells.body ? built.cells.body[i] : -1;
+    cellUid[i] = (built.cells.ctype[i] >= 0 && b >= 0) ? evo.uid[b] : -1;
+  }
+  new Int32Array(buf, at, N).set(cellUid); at += N * 4;
   new DataView(buf).setUint32(at, P32.length, true); at += 4;
   new Int32Array(buf, at, P32.length).set(P32);
   return new Uint8Array(buf);
@@ -358,6 +520,30 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
   // re-developed outside the run. This is the dataset development actually
   // produces — positions and bonds are only what it produced THIS time — and
   // without it the run is unreadable from outside.
+  // One animal's genome by uid, with the labels needed to read it. The genetics
+  // has never been visible in the UI at all — you could watch bodies without ever
+  // seeing what specifies them.
+  if (path === '/genome') {
+    const want = Number(url.searchParams.get('uid'));
+    let slot = -1;
+    for (let o = 0; o < built.arena.P; o++) {
+      if (built.arena.alive[o] && evo.uid[o] === want) { slot = o; break; }
+    }
+    if (slot < 0 || !evo.genome[slot]) {
+      return new Response(JSON.stringify({ ok: false, error: 'no such living animal' }),
+        { status: 404, headers: { 'content-type': 'application/json' } });
+    }
+    const { PROPS, BASIS, NB, SYN_BASIS, SYN_OFF, NSYN } = await import('../lib/devo.js');
+    return new Response(JSON.stringify({
+      ok: true, uid: want, slot,
+      generation: evo.generation[slot], lineage: evo.lineage[slot],
+      cells: built.arena.cnt[slot],
+      props: PROPS, basis: BASIS.map(b => b[0]), nb: NB,
+      synBasis: SYN_BASIS.map(b => b[0]), synOff: SYN_OFF, nsyn: NSYN,
+      g: Array.from(evo.genome[slot]),
+    }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+  }
+
   if (path === '/genomes') {
     const want = Math.min(64, Number(url.searchParams.get('n') ?? 8) || 8);
     const rows = [];
@@ -409,14 +595,54 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
    * up new code" is already the most powerful verb it should ever have.
    */
   if (path === '/control' && req.method === 'POST') {
-    let action = '';
-    try { action = (await req.json()).action ?? ''; } catch { /* empty body */ }
+    // Read the body ONCE. A request body is a stream: consuming it for `action`
+    // leaves nothing for anyone else, and req.clone() after the fact clones an
+    // already-drained stream — which silently made every parameter arrive as
+    // undefined while the action itself worked fine.
+    let body = {};
+    try { body = await req.json(); } catch { /* empty body */ }
+    const action = body.action ?? '';
     const ok = (extra = {}) =>
       new Response(JSON.stringify({ ok: true, action, steps, ...extra }),
         { headers: { 'content-type': 'application/json' } });
 
     if (action === 'pause')  { paused = true;  return ok({ paused }); }
+    // How many physics steps the server takes per loop iteration — the knob that
+    // decides how fast the world runs in wall-clock, which matters because a good
+    // gait covers two body lengths in ~30,000 steps and that is minutes of
+    // watching at the default.
+    if (action === 'speed') {
+      const v = Number(body.spf);
+      if (Number.isFinite(v) && v >= 1 && v <= 512) args.spf = Math.round(v);
+      return ok({ spf: args.spf });
+    }
     if (action === 'resume') { paused = false; return ok({ paused }); }
+
+    // A marked moment. The point is that "look at this" becomes a durable record
+    // with numbers and a replayable snapshot, instead of a screenshot pasted into
+    // a conversation and lost.
+    if (action === 'flag') {
+      const rec = {
+        t: new Date().toISOString(), step: steps, note: String(body.note ?? '').slice(0, 500),
+        uid: Number(body.uid ?? -1),
+        alive: last.alive, gen: last.maxGeneration, lineages: last.lineages,
+        meanEnergy: +last.meanEnergy.toFixed(2),
+        params: {
+          crowdK: world.params.regrowCrowdK, moteRegrow: world.params.moteRegrow,
+          brainTax: world.params.brainTax, contract: world.params.contract,
+          flowStr: world.params.flowStr, gripAniso: world.params.gripAniso,
+        },
+        simVersion: RUNNING.simVersion,
+      };
+      const snap = `${new URL('..', import.meta.url).pathname}runs/flag-${steps}.snapshot`;
+      try { const r = await saveSnapshot(snap); rec.snapshot = snap; rec.bytes = r.bytes; }
+      catch (e) { rec.snapshotError = e.message; }
+      await Deno.writeTextFile(
+        `${new URL('..', import.meta.url).pathname}runs/observations.jsonl`,
+        JSON.stringify(rec) + '\n', { append: true });
+      console.log(`FLAGGED at step ${steps}: ${rec.note}`);
+      return ok({ flagged: true, snapshot: rec.snapshot });
+    }
 
     if (action === 'save') {
       const r = await saveSnapshot(SNAP);
@@ -492,7 +718,14 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       // failed the size check and the page showed "reload to resync" — which
       // reloading could not fix, because the guess was wrong every time.
       maxCells: args.maxCells, nCells: built.meta.nCells, bound: BOUND,
-      nMotes: world.params.nMotes, paused,
+      nMotes: world.params.nMotes, paused, spf: args.spf,
+      // What this process is RUNNING vs what is on disk NOW. If simVersion
+      // differs the physics has changed and needs a restart; if pageVersion
+      // differs the viewer has changed and needs a reload.
+      bootId: BOOT_ID,
+      simVersion: RUNNING.simVersion, pageVersion: RUNNING.pageVersion,
+      simStaleSince: staleSince || null,
+      onDisk: await codeStamp(),
       // The resource field is what creatures chase and it drifts and morphs.
       // The viewer needs its parameters to draw it; without them it was showing
       // only the flow, which is the least photogenic layer in the world.

@@ -230,16 +230,35 @@ ${wgslStruct('W')}
 // Their positions do not move, which is what makes a patch something you can
 // exhaust and have to leave — the pressure to locomote has to come from
 // somewhere, and a field that refills under your feet is not it.
-@group(0) @binding(9)  var<storage, read>       motePos   : array<vec2<f32>>;
-// (stock, per-cell offer this step, demanders, unused)
-@group(0) @binding(10) var<storage, read_write> moteState : array<vec4<f32>>;
-@group(0) @binding(11) var<storage, read_write> moteHash  : array<atomic<u32>>;
+// ONE buffer, not three: (x, y, stock, demanders). Position is static and rides
+// alongside the state, and the per-cell offer is DERIVED from stock and demanders
+// by the same formula on both sides rather than stored — which is what lets this
+// fit. WebGPU guarantees only 8 storage buffers per stage and real browsers
+// commonly cap at 10; this shader was binding 11 and simply failed to create its
+// bind group layout in Chrome, while the Deno adapter (31) ran it happily. That
+// asymmetry is why it reached a user rather than a test.
+@group(0) @binding(9)  var<storage, read_write> mote      : array<vec4<f32>>;
+@group(0) @binding(10) var<storage, read_write> moteHash  : array<atomic<u32>>;
+
+/** What one cell may take from this mote this step. Derived, never stored. */
+fn moteOfferOf(m: vec4<f32>) -> f32 {
+  if (m.w <= 0.0) { return 0.0; }
+  return min(P.grazeRate * P.dt, max(0.0, m.z) / m.w);
+}
 
 fn moteBucketOf(p: vec2<f32>) -> u32 {
   let gx = i32(floor(p.x / P.moteR));
   let gy = i32(floor(p.y / P.moteR));
   let h = u32(gx * 73856093) ^ u32(gy * 19349663);
   return h % P.moteHashSize;
+}
+
+// SUBSTRATE GRIT: how much purchase the ground offers here. Analytic, like every
+// other field — sampled at a continuous position, never stored, no grid. This is
+// the thing a cell shoves against; where it is zero the world is open water and
+// nothing can push off anything.
+fn gritAt(p: vec2<f32>) -> f32 {
+  return clamp(fbm(p * P.gritScale, P.gritSeed) * 1.6, 0.0, 1.0);
 }
 
 fn flowAt(p: vec2<f32>) -> vec2<f32> {
@@ -362,7 +381,7 @@ fn contact(i: u32, p: vec2<f32>, myR: f32) -> vec2<f32> {
 // negative. Every joule one gains, another loses — the same gather-only trick
 // that makes the bond forces obey Newton's third law.
 fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
-  if (P.predRate <= 0.0) { return 0.0; }
+  if (P.contestRate <= 0.0) { return 0.0; }
   let me = cmeta[i];
   let myE = energy[i];
   var net = 0.0;
@@ -390,7 +409,7 @@ fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
         // from the same pre-step energies, so cell j computes exactly the
         // negative of what cell i computes and no energy is created or lost.
         let theirE = energy[j];
-        let raw = P.predRate * (effort - abs(contractionOf(j))) * P.dt;
+        let raw = P.contestRate * (effort - abs(contractionOf(j))) * P.dt;
         var moved = 0.0;
         if (raw > 0.0) {
           moved = min(raw, min(max(theirE - P.eFloor, 0.0), max(P.eCap - myE, 0.0)));
@@ -452,7 +471,7 @@ fn moteHashClear(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn moteHashBuild(@builtin(global_invocation_id) gid: vec3<u32>) {
   let i = gid.x;
   if (i >= P.nMotes) { return; }
-  let b = moteBucketOf(motePos[i]) * (1u + P.bucketM);
+  let b = moteBucketOf(mote[i].xy) * (1u + P.bucketM);
   let n = atomicAdd(&moteHash[b], 1u);
   if (n < P.bucketM) { atomicStore(&moteHash[b + 1u + n], i); }
 }
@@ -470,8 +489,8 @@ fn moteHashBuild(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
   let i = gid.x;
   if (i >= P.nMotes) { return; }
-  let p = motePos[i];
-  let st = moteState[i];
+  let m0 = mote[i];
+  let p = m0.xy;
   var demanders = 0.0;
   for (var dy = -1; dy <= 1; dy = dy + 1) {
     for (var dx = -1; dx <= 1; dx = dx + 1) {
@@ -485,12 +504,7 @@ fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
       }
     }
   }
-  var offer = 0.0;
-  if (demanders > 0.0) {
-    // What one cell wants, capped by an equal split of what there actually is.
-    offer = min(P.grazeRate * P.dt, max(0.0, st.x) / demanders);
-  }
-  moteState[i] = vec4<f32>(st.x, offer, demanders, 0.0);
+  mote[i] = vec4<f32>(m0.x, m0.y, m0.z, demanders);
 }
 
 // PHASE 3. Subtract what was actually handed out, then let the sun put some
@@ -503,12 +517,49 @@ fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   let i = gid.x;
   if (i >= P.nMotes) { return; }
-  let p = motePos[i];
-  let st = moteState[i];
-  var stock = max(0.0, st.x - st.y * st.z);
+  let m0 = mote[i];
+  let p = m0.xy;
+  var stock = max(0.0, m0.z - moteOfferOf(m0) * m0.w);
   let fert = clamp(resourceAt(p), 0.0, 1.0);
-  stock = stock + P.moteRegrow * fert * (1.0 - stock / P.moteCap) * P.dt;
-  moteState[i] = vec4<f32>(clamp(stock, 0.0, P.moteCap), 0.0, 0.0, 0.0);
+
+  // CROWDING SUPPRESSES REGROWTH — the Conway move, and the reason moving can
+  // pay at all.
+  //
+  // Without it a grazed patch refills faster than leaving it is worth, so sitting
+  // still is optimal and muscle is correctly selected away. Measured: correlation
+  // between a body's displacement and its energy change was -0.36; movers lost
+  // 9.5 while sitters gained 3.1. Evolution deleting its own muscles was not a
+  // bug, it was the right answer to the incentive we had built.
+  //
+  // Ground under a crowd recovers slowly, so the patch you are sitting on stays
+  // poor BECAUSE you are sitting on it. That makes leaving worth something, and
+  // it does it without rewarding movement directly — the pressure is a property
+  // of the ground, identical for everyone, and a body that sits in a rich empty
+  // patch is still perfectly well off. Weak Boids-like separation falls out of it.
+  //
+  // Friction-law clean: this can only REDUCE the sun's delivery, never raise it.
+  // Total inflow stays bounded by nMotes * moteRegrow * moteCap, and no
+  // capability is granted energy — the crowd term is blind to what the crowding
+  // cells are or what they are doing.
+  //
+  // m0.w is the demander count the offer pass already counted this step, so
+  // this costs nothing.
+  // DENSITY-RELATIVE, not a headcount. The first version divided by the raw
+  // demander count, and that count is 1-3 in a sparse assay but ten to thirty
+  // times larger in a living population — so a coefficient tuned in the assay
+  // extinguished regrowth everywhere and starved the world (348 -> 8 alive).
+  //
+  // What should suppress regrowth is not how many mouths are present but how hard
+  // the patch is being WORKED: the draw this step measured against what the sun
+  // would put back. That ratio is dimensionless and means the same thing at any
+  // density, so one coefficient transfers between an empty world and a crowded
+  // one. A patch drawn down faster than it regrows recovers slowly; a patch
+  // barely touched recovers fully however many cells happen to be standing on it.
+  let draw = moteOfferOf(m0) * m0.w;
+  let refill = max(1e-6, P.moteRegrow * P.dt);
+  let suppress = 1.0 / (1.0 + P.regrowCrowdK * (draw / refill));
+  stock = stock + P.moteRegrow * fert * suppress * (1.0 - stock / P.moteCap) * P.dt;
+  mote[i] = vec4<f32>(m0.x, m0.y, clamp(stock, 0.0, P.moteCap), 0.0);
 }
 
 // PHASE 2 lives inside physics(): what cell i can pick up from the motes it is
@@ -521,9 +572,10 @@ fn grazeAt(p: vec2<f32>) -> f32 {
       let b = moteBucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.moteR) * (1u + P.bucketM);
       let n = min(atomicLoad(&moteHash[b]), P.bucketM);
       for (var k = 0u; k < n; k = k + 1u) {
-        let m = atomicLoad(&moteHash[b + 1u + k]);
-        if (length(minImage(motePos[m] - p)) > P.moteR) { continue; }
-        got = got + moteState[m].y;
+        let mi = atomicLoad(&moteHash[b + 1u + k]);
+        let mv = mote[mi];
+        if (length(minImage(mv.xy - p)) > P.moteR) { continue; }
+        got = got + moteOfferOf(mv);
       }
     }
   }
@@ -632,17 +684,59 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     let me2 = cmeta[i];
     // Every cell has a little purchase on the world; an ANCHOR cell has far
     // more, and modulates it with its activation so it can let go.
-    var grip = P.gripBase;
-    if (me2.x == 3) { grip = P.gripAnchor; }
+    var grab = P.gripBase;
+    if (me2.x == 3) { grab = P.gripAnchor; }
+    // ACTIVELY PHASED, which is the whole point. A cell raises and drops its grip
+    // with its activation, so a brain can grip on the power stroke and release on
+    // recovery. Constant grip nets zero however strong it is — the scallop
+    // theorem — and primitives.md is explicit that the world affords while the
+    // brain earns.
     if (me2.y >= 0) {
-    let a = act[u32(me2.y)];
-    grip = grip * (1.0 + P.gripMod * select(0.0, a, abs(a) < 1e6));
-  }
-    grip = max(grip, 0.0);
-    let sp = length(v);
-    if (sp > 1e-6) {
-      let dec = grip * P.fricK * P.dt;
-      v = v * (max(0.0, sp - dec) / sp);
+      let a = act[u32(me2.y)];
+      grab = grab * (1.0 + P.gripMod * select(0.0, a, abs(a) < 1e6));
+    }
+    grab = max(grab, 0.0);
+
+    // THE BODY AXIS, taken between two bonded neighbours — the same construction
+    // the verified reference uses (tools/swim-verify.js). Traction is anisotropic
+    // about it: a cell slides along its own body far more easily than sideways,
+    // and that asymmetry is what converts a deformation into travel. Isotropic
+    // drag, which is what this used to be, cancels it exactly.
+    var axis = vec2<f32>(0.0, 0.0);
+    {
+      let ab = i * P.bondK;
+      var n1 = -1;
+      var n2 = -1;
+      for (var k = 0u; k < P.bondK; k = k + 1u) {
+        let nj = bitcast<i32>(bondD[ab + k].x);
+        if (nj < 0) { continue; }
+        if (n1 < 0) { n1 = nj; } else if (n2 < 0) { n2 = nj; }
+      }
+      if (n1 >= 0 && n2 >= 0) {
+        axis = minImage(pos[u32(n2)] - pos[u32(n1)]);
+      } else if (n1 >= 0) {
+        axis = minImage(pos[u32(n1)] - p);
+      }
+    }
+    let alen = length(axis);
+
+    // Dissipative ONLY: exponential decay cannot add energy whatever the
+    // coefficients, so net motion is still paid for out of muscle fuel.
+    let grit = gritAt(p);
+    if (alen > 1e-5) {
+      let ax = axis / alen;
+      let pxv = vec2<f32>(-ax.y, ax.x);
+      var vA = dot(v, ax);
+      var vP = dot(v, pxv);
+      let kA = P.fricK * (P.slipBase + grit);
+      let kP = P.fricK * (P.slipBase + (1.0 + P.gripAniso * grab) * grit);
+      vA = vA * exp(-kA * P.dt);
+      vP = vP * exp(-kP * P.dt);
+      v = ax * vA + pxv * vP;
+    } else {
+      // A lone cell has no axis so it can only be damped isotropically. It also
+      // cannot swim, which is correct: undulation needs a body.
+      v = v * exp(-P.fricK * (P.slipBase + grit) * P.dt);
     }
   }
 
@@ -797,7 +891,23 @@ export class WorldGPU {
     this.bEnergy = mk(cells.energy ?? new Float32Array(n).fill(1));
 
     this.params = {
-      flowScale: 0.9, flowStr: 1.0, drag: 1.6, springK: 90.0,
+      flowScale: 0.9,
+      // Flow reduced from 1.0 so that swimming beats drifting, but NOT for the
+      // reason first recorded here. That claim — flow carrying cells ten times
+      // faster than they could swim — came from tracking cells by arena index,
+      // and arena slots are recycled, so most of the "movement" was bodies dying
+      // and being replaced. Measured properly, per 30,000 steps on isolated
+      // bodies:
+      //
+      //   flow 1.0   drift alone 1.06, with muscle 1.85   -> swimming buys ~0.75x
+      //   flow 0.3   drift alone ~0.3, with muscle ~0.8   -> swimming buys ~2.7x
+      //   flow 0     pure swim 0.84
+      //
+      // So the real problem is milder: at full strength the current moves a body
+      // about as far as its own muscles do, which leaves swimming with little
+      // selective advantage. 0.3 keeps flow as a genuine force to anchor against
+      // and be swept by, while making self-propulsion clearly worth having.
+      flowStr: 0.3, drag: 1.6, springK: 90.0,
       contract: 0.45, seed: 3, senseGain: 2.0, damp: 0.986, bound: 64.0,
       // Calibrated against the density the world actually runs at. A 3x3 bucket
       // neighbourhood holds ~34 cells at the starting population, so crowdK
@@ -807,7 +917,19 @@ export class WorldGPU {
       // barren ground (res 0.04) is fatal, average ground (0.28) barely pays,
       // and rich ground (0.64) is worth crossing the world for — until enough
       // others arrive to spend it down.
-      harvest: 2.6, brainTax: 0.45, muscleCost: 0.55,
+      harvest: 2.6,
+      // A BODY MUST BE ABLE TO LIVE ON ITS OWN PATCH, or it starves before it can
+      // evolve a way off it. Measured on one isolated 37-cell body with abundant
+      // food: at brainTax 0.45 its energy plateaus at 27 of a 111 cap, and
+      // raising grazeRate FIVEFOLD changes nothing — intake is not the limit, the
+      // tax is. With the tax off the same body settles at 89.
+      //
+      // The local-versus-global picture is the interesting part and it stays:
+      // mean mote stock across the world is 0.97 of cap, so 97% of the food is
+      // untouched while a body lives off the few motes beneath it. That is the
+      // pressure that should make moving pay. Lowering the tax lets a creature
+      // survive long enough to find a gait rather than dying before it can.
+      brainTax: 0.2, muscleCost: 0.55,
       resScale: 0.35, resSeed: 91, eCap: 3.0, eFloor: -2.0,
       // hashCell was 3.2 while contact reaches only ~0.7, so a bucket held ~10
       // cells against a cap of 12 and overflowed constantly. An overflowing
@@ -824,8 +946,17 @@ export class WorldGPU {
       // blown along by the current, little enough that its own muscles can still
       // move it. At the original 0.55 the decrement was 0.05 per step, ten times
       // what the flow supplies, and the world froze solid.
-      gripBase: 0.06, gripMod: 0.9, fricK: 6.0, gripAnchor: 0.9,
-      bucketM: 32, predRate: 0.0, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
+      // GRABBINESS IS NOW A RATIO, NOT A DECREMENT. Under the old Coulomb rule
+      // gripBase was a velocity subtracted per step and 0.06 was the right size.
+      // It now multiplies the sideways drag, where 0.06 buys a 1.36x anisotropy
+      // and the verified reference needs ~6x — measured as no advantage at all.
+      gripBase: 0.55, gripMod: 0.9, fricK: 6.0, gripAnchor: 1.0,
+      // Substrate. gritScale sets how big a patch of purchase is; slipBase is the
+      // drag left on frictionless ground (open water); gripAniso is how much
+      // harder sideways slip is than sliding along your own body, which is the
+      // ratio that converts undulation into travel.
+      gritScale: 0.12, gritSeed: 4242, slipBase: 0.15, gripAniso: 6.0,
+      bucketM: 32, contestRate: 0.0, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
       // Cells are solid. This was silently 1.68e-44 for the life of the code —
       // see lib/uniform.js — so nothing has ever pushed back on anything. Sized
       // against springK so a bond can still hold a body together against the
@@ -849,7 +980,27 @@ export class WorldGPU {
       // grinding down to 8 alive on mean energy -6.4. The inflow's MAGNITUDE is
       // a free parameter; that there is exactly one bounded inflow is not.
       nMotes: null, moteR: 1.2, grazeRate: 2.2, moteRegrow: 6.0, moteCap: 1.0,
-      moteHashSize: 16384, pad0: 0,
+      moteHashSize: 16384,
+      // 2.0 from measurement, not taste. Energy change of the top vs bottom
+      // quartile of movers, 64 bodies over 30,000 steps:
+      //   crowdK 0     movers -7.9   sitters -0.1   corr -0.39
+      //   crowdK 0.6   movers +0.6   sitters -2.5   corr -0.20
+      //   crowdK 2.0   movers +1.9   sitters -4.8   corr -0.00
+      //   crowdK 6.0   movers +0.3   sitters -1.2   corr +0.10
+      // 2.0 gives the widest gap in favour of moving. Higher suppresses regrowth
+      // so hard that everyone is poor and the advantage shrinks again.
+      // Density-relative now (draw vs refill), so this transfers between an empty
+      // world and a crowded one. Viability at 600 cap over 22,500 steps:
+      //   k 0    249 alive, 135 lineages      k 4    83 alive
+      //   k 0.5  197 alive, 123 lineages      k 10   42 alive
+      //   k 1.5  156 alive, 108 lineages
+      // 1.5 keeps a healthy population and a real drawdown penalty.
+      // 0.5, not 1.5. The viability sweep was run at 600 bodies in bound 102;
+      // the live server runs 1200 in bound 74.4, which is roughly four times
+      // denser, and 1.5 there took the population 95 -> 32 and still falling.
+      // Tuning at one density and shipping to another is the same mistake the
+      // raw-headcount version made, one level up.
+      regrowCrowdK: 0.5,
       dt: brains.dt, ...params,
     };
     // Motes. Scattered by a hash of their index rather than laid on a lattice:
@@ -863,17 +1014,16 @@ export class WorldGPU {
       this.params.nMotes = Math.round((2 * this.params.bound) ** 2 / 2);
     }
     const nM = this.params.nMotes | 0;
-    const mpos = new Float32Array(Math.max(1, nM) * 2);
-    const mst = new Float32Array(Math.max(1, nM) * 4);
+    const mv = new Float32Array(Math.max(1, nM) * 4);
     {
       let sd = (this.params.moteSeed ?? 20260803) >>> 0;
       const rnd = () => ((sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296);
       const B = this.params.bound;
       for (let i = 0; i < nM; i++) {
-        mpos[i * 2] = (rnd() * 2 - 1) * B;
-        mpos[i * 2 + 1] = (rnd() * 2 - 1) * B;
+        mv[i * 4] = (rnd() * 2 - 1) * B;
+        mv[i * 4 + 1] = (rnd() * 2 - 1) * B;
         // Start full, so the opening moments are not an artificial famine.
-        mst[i * 4] = this.params.moteCap;
+        mv[i * 4 + 2] = this.params.moteCap;
       }
     }
     const mkS = (a) => {
@@ -884,8 +1034,7 @@ export class WorldGPU {
       device.queue.writeBuffer(b, 0, a);
       return b;
     };
-    this.bMotePos = mkS(mpos);
-    this.bMoteState = mkS(mst);
+    this.bMote = mkS(mv);
     this.bMoteHash = device.createBuffer({
       size: Math.max(16, this.params.moteHashSize * (1 + this.params.bucketM) * 4),
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
@@ -921,9 +1070,8 @@ export class WorldGPU {
         { binding: 6, visibility: C, buffer: ro },   // act, read by physics()
         { binding: 7, visibility: C, buffer: rw },   // energy, per cell
         { binding: 8, visibility: C, buffer: rw },   // spatial-hash occupancy
-        { binding: 9, visibility: C, buffer: ro },   // mote positions (static)
-        { binding: 10, visibility: C, buffer: rw },  // mote stock + offer
-        { binding: 11, visibility: C, buffer: rw },  // mote hash (built once)
+        { binding: 9, visibility: C, buffer: rw },   // motes: x, y, stock, demanders
+        { binding: 10, visibility: C, buffer: rw },  // mote hash (built once)
       ],
     });
     const module = device.createShaderModule({ code: SHADER, label: 'world' });
@@ -950,9 +1098,8 @@ export class WorldGPU {
         { binding: 6, resource: { buffer: brains.bAct } },
         { binding: 7, resource: { buffer: this.bEnergy } },
         { binding: 8, resource: { buffer: this.bHash } },
-        { binding: 9, resource: { buffer: this.bMotePos } },
-        { binding: 10, resource: { buffer: this.bMoteState } },
-        { binding: 11, resource: { buffer: this.bMoteHash } },
+        { binding: 9, resource: { buffer: this.bMote } },
+        { binding: 10, resource: { buffer: this.bMoteHash } },
       ],
     });
     this.groups = Math.ceil(this.n / WORKGROUP);
@@ -984,22 +1131,20 @@ export class WorldGPU {
       this.params.nMotes = Math.round((2 * this.params.bound) ** 2 / 2);
     }
     const nM = this.params.nMotes | 0;
-    const sp = this.device.createBuffer({
-      size: nM * 8, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
-    });
     const ss = this.device.createBuffer({
       size: nM * 16, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     });
     const enc = this.device.createCommandEncoder();
-    enc.copyBufferToBuffer(this.bMotePos, 0, sp, 0, nM * 8);
-    enc.copyBufferToBuffer(this.bMoteState, 0, ss, 0, nM * 16);
+    enc.copyBufferToBuffer(this.bMote, 0, ss, 0, nM * 16);
     this.device.queue.submit([enc.finish()]);
-    await sp.mapAsync(GPUMapMode.READ); await ss.mapAsync(GPUMapMode.READ);
-    const pos = new Float32Array(sp.getMappedRange().slice(0));
+    await ss.mapAsync(GPUMapMode.READ);
     const raw = new Float32Array(ss.getMappedRange().slice(0));
-    sp.unmap(); ss.unmap(); sp.destroy(); ss.destroy();
-    const stock = new Float32Array(nM);
-    for (let i = 0; i < nM; i++) stock[i] = raw[i * 4];
+    ss.unmap(); ss.destroy();
+    const pos = new Float32Array(nM * 2), stock = new Float32Array(nM);
+    for (let i = 0; i < nM; i++) {
+      pos[i * 2] = raw[i * 4]; pos[i * 2 + 1] = raw[i * 4 + 1];
+      stock[i] = raw[i * 4 + 2];
+    }
     return { pos, stock };
   }
 
@@ -1128,7 +1273,7 @@ export class WorldGPU {
   }
 
   destroy() {
-    for (const b of [this.bMotePos, this.bMoteState, this.bMoteHash,
+    for (const b of [this.bMote, this.bMoteHash,
                      this.bPos, this.bVel, this.bMeta, this.bBondD,
       this.bEnergy, this.bHash, this.bParams, this.bRead]) b.destroy();
   }
