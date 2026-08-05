@@ -12,3 +12,12 @@ __pycache__/
 
 # Ephemeral git worktrees created for parallel subagent runs
 .claude/worktrees/
+
+# World state is DATA, not source. A snapshot is 12.4MB and the rolling ring is
+# eight of them, rewritten every couple of minutes — committing those turns every
+# run into permanent repo weight for something reproducible from a seed and a
+# parameter set. The metrics log and observations ARE worth keeping: they are
+# small, append-only, and are the record of what was measured.
+magpie/mazeballs/runs/*.snapshot
+magpie/mazeballs/runs/*.ring
+magpie/mazeballs/runs/*.log

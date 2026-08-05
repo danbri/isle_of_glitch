@@ -138,8 +138,8 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
     <span class="sp"></span>
     <label>scroll <input id="scopeScroll" type="range" min="0" max="0" value="0"></label>
     <button id="scopeMode" class="on">overlay</button>
-    <label>window <input id="scopeWin" type="range" min="1" max="120" step="1" value="10">
-      <span id="scopeWinV">10s</span></label>
+    <label>samples <input id="scopeWin" type="range" min="50" max="2000" step="25" value="200">
+      <span id="scopeWinV">200</span></label>
     <label>gain <input id="scopeGain" type="range" min="1" max="8" step="0.5" value="1"></label>
     <button id="scopeHide" class="on">hide silent</button>
     <button id="scopeLive" class="on">live</button>
@@ -1260,34 +1260,30 @@ function drawScope() {
 
   const rows = Math.min(e.order.length, SCOPE_ROWS);
   const rowH = h / rows;
-  // A FIXED TIME WINDOW, in world seconds.
+  // A FIXED NUMBER OF SAMPLES, newest at the right.
   //
   // The x axis used to be "however many samples we happen to have", so a fresh
-  // selection stretched a handful of columns across the whole panel — every trace
-  // looked flat — and the seconds-per-pixel kept changing as history accumulated,
-  // which makes two moments impossible to compare. Now the width is a duration
-  // you choose, samples are placed by WHEN they happened, and an oscillation has
-  // a period you can actually read off the axis.
-  const winSec = +($('scopeWin')?.value ?? 10);
-  const winSteps = Math.max(1, winSec / Math.max(1e-6, worldDt));
-  const cols = e.filled;
-  if (cols < 2) return;
-
-  const newestIdx = (e.head - 1 + SCOPE_COLS) % SCOPE_COLS;
-  const oldestIdx = ((e.head - e.filled) % SCOPE_COLS + SCOPE_COLS) % SCOPE_COLS;
-  const newestStep = e.steps[newestIdx], oldestStep = e.steps[oldestIdx];
-  const span = Math.max(1, newestStep - oldestStep);
-
+  // selection stretched four columns across the whole panel and every trace
+  // looked flat, and the scale kept changing as history accumulated. A fixed
+  // sample count means the scale NEVER changes: whatever we have is drawn at its
+  // proper place, the right-hand edge is now, and new values scroll in from the
+  // right while old ones fall off the left. Nothing has to be waited for.
+  const winN = Math.max(8, +($('scopeWin')?.value ?? 200));
   const scr = $('scopeScroll');
   const live = $('scopeLive')?.classList.contains('on');
-  // Scroll is expressed in windows-back, so it means the same thing at any zoom.
-  const maxBack = Math.max(0, span - winSteps);
-  if (scr) scr.max = String(Math.round(maxBack));
-  const back = live ? 0 : Math.min(+(scr?.value ?? 0), maxBack);
-  if (live && scr) scr.value = String(Math.round(maxBack));
-  const tEnd = newestStep - (live ? 0 : (maxBack - back));
-  const tStart = tEnd - winSteps;
-  const xOf = (st) => ((st - tStart) / winSteps) * w;
+  const maxBack = Math.max(0, e.filled - winN);
+  if (scr) scr.max = String(maxBack);
+  const back = live ? maxBack : Math.min(+(scr?.value ?? 0), maxBack);
+  if (live && scr) scr.value = String(maxBack);
+
+  // Index into the ring of the leftmost sample we will draw, and how many of the
+  // winN slots are actually populated.
+  const have = Math.min(winN, e.filled - back);
+  const firstK = e.filled - back - have;            // k-th oldest retained sample
+  const dxs = w / (winN - 1);
+  // Newest sits at the right edge; a short history occupies the right and fills
+  // leftward as it grows.
+  const xOfSlot = (j) => w - (have - 1 - j) * dxs;
 
   const tint = ['#7d8f8a', '#4dd1de', '#ff9433', '#b86bea'];   // neuron/sensor/muscle/anchor
   const SMOOTH = 3;                     // light boxcar; the trace is noisy per frame
@@ -1296,21 +1292,19 @@ function drawScope() {
   const hideSilent = $('scopeHide')?.classList.contains('on') ?? true;
 
   // Read a row once, smoothed, so we can decide whether it is worth drawing.
-  // Only the samples inside the window, each carrying the x it belongs at.
   const readRow = (r) => {
     const pts = [];
-    for (let c = 0; c < cols; c++) {
-      const src = ((e.head - e.filled + c) % SCOPE_COLS + SCOPE_COLS) % SCOPE_COLS;
-      const st = e.steps[src];
-      if (st < tStart || st > tEnd) continue;
+    for (let j = 0; j < have; j++) {
+      const k = firstK + j;
       let acc = 0, m = 0;
-      for (let k = -SMOOTH; k <= SMOOTH; k++) {
-        const ci = c + k; if (ci < 0 || ci >= cols) continue;
-        const s2 = ((e.head - e.filled + ci) % SCOPE_COLS + SCOPE_COLS) % SCOPE_COLS;
-        const v = e.hist[s2 * SCOPE_ROWS + r];
+      for (let q = -SMOOTH; q <= SMOOTH; q++) {
+        const kk = k + q;
+        if (kk < 0 || kk >= e.filled) continue;
+        const src = ((e.head - e.filled + kk) % SCOPE_COLS + SCOPE_COLS) % SCOPE_COLS;
+        const v = e.hist[src * SCOPE_ROWS + r];
         if (!Number.isNaN(v)) { acc += v; m++; }
       }
-      pts.push([xOf(st), m ? acc / m : NaN]);
+      pts.push([xOfSlot(j), m ? acc / m : NaN]);
     }
     return pts;
   };
@@ -1386,18 +1380,14 @@ function drawScope() {
   }
 
   // time axis: where we are in the world's own clock
+  const iOld = ((e.head - e.filled + firstK) % SCOPE_COLS + SCOPE_COLS) % SCOPE_COLS;
+  const iNew = ((e.head - e.filled + firstK + have - 1) % SCOPE_COLS + SCOPE_COLS) % SCOPE_COLS;
+  const secs = Math.abs(e.steps[iNew] - e.steps[iOld]) * worldDt;
   g.fillStyle = '#4a625c'; g.font = `${11 * dpr}px ui-monospace, monospace`;
-  g.fillText(`-${winSec}s  (step ${Math.round(tStart).toLocaleString()})`, 4 * dpr, h - 4 * dpr);
-  const rt = `now${live ? '' : ' · scrolled back'}  step ${Math.round(tEnd).toLocaleString()}`;
+  g.fillText(`${have}/${winN} samples · ${secs.toFixed(1)}s of world time`, 4 * dpr, h - 4 * dpr);
+  const rt = live ? `now · step ${e.steps[iNew].toLocaleString()}`
+                  : `scrolled back · step ${e.steps[iNew].toLocaleString()}`;
   g.fillText(rt, w - g.measureText(rt).width - 4 * dpr, h - 4 * dpr);
-  // one gridline per second, so a period can be counted rather than guessed
-  if (winSec <= 40) {
-    g.strokeStyle = '#101c19';
-    for (let sTick = Math.ceil(tStart / (1 / worldDt)) * (1 / worldDt); sTick < tEnd; sTick += 1 / worldDt) {
-      const x = xOf(sTick);
-      g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke();
-    }
-  }
 }
 
 /**
@@ -1758,7 +1748,7 @@ on('scopeMode', 'onclick', e => {
   e.target.textContent = on_ ? 'overlay' : 'stacked';
 });
 on('scopeHide', 'onclick', e => e.target.classList.toggle('on'));
-on('scopeWin', 'oninput', e => { $('scopeWinV').textContent = e.target.value + 's'; });
+on('scopeWin', 'oninput', e => { $('scopeWinV').textContent = e.target.value; });
 on('scopeScroll', 'oninput', () => $('scopeLive')?.classList.remove('on'));
 
 /**
