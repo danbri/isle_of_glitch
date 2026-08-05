@@ -72,10 +72,18 @@ the retraction commits) works; it is *not* yet closed/unattended.
 
 ## Practicalities
 
-- **GitHub Pages deploys ONLY from `claude/fink-authoring-guide-bDtaY`.** Active dev
-  is on `claude/mazeballs-github-pages-o6cog0` and `main`; both are **shared with a
-  laptop Claude session**, so `git fetch` + fast-forward before committing, and
-  expect races.
+- **GitHub Pages deploys from `main`, repo root, no Actions.** Work on `main`.
+  It is **shared with a laptop Claude session**, so `git fetch` + fast-forward
+  before committing, and expect races. Nothing builds server-side: committed
+  HTML is served HTML.
+- **The lab notebook** is an eleventy site: source in `notes/`, built output
+  committed to `lab/`. `./tools/notes build | serve | publish` — `publish` builds,
+  commits and pushes in one step so source and page cannot drift. Live at
+  <https://danbri.github.io/isle_of_glitch/magpie/mazeballs/lab/>.
+- **`./tools/world restart` RESEEDS — it does not resume.** `tools/world` line 114
+  is `cmd_stop; cmd_start "$@"` with no `--resume`, while the HTTP `/control`
+  action of the same name *does* resume. This cost a 970k-step run on 2026-08-05.
+  Use the Server panel, or pass `--resume` yourself.
 - Generated files exist — edit the tool, not the output. `world.html` runs a
   standalone in-browser WebGPU sim by default; `?watch=1` views the Deno server
   (`tools/serve-world.js`).

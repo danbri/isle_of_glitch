@@ -112,3 +112,71 @@ operators were asked for. Those stand.
 The line this document draws is narrower and sharper: **compromise on
 resolution, never on ontology.** Model the cell instead of the quark, and say
 so. Do not model the species at all.
+
+## Open proposal: links should be cells too
+
+**Status: proposed, not built.** Recorded here because it is an ontology question
+and this is the ontology document.
+
+Today a cell is a point with a radius, and everything *between* cells is a
+different kind of thing entirely. There are two such things, and they are
+unrelated in the code:
+
+- **bonds** — a spring with a rest length, a stiffness and a brittleness, stored
+  as `bondD` and integrated in the physics kernel. The bone↔sinew continuum.
+- **synapses** — a weight, stored in the brain arena's edge table, expressed from
+  the properties of the two endpoint cells and integrated in the CTRNN.
+
+Neither is matter. Neither costs energy to build or hold. Neither can be eaten,
+broken by something other than strain, or inherited as an object. Both are
+*relations* the engine maintains, and a relation is exactly the kind of thing
+`predatorSpeed` is — a fact about the world that the world itself does not
+contain.
+
+**The proposal.** A link is a cell whose geometry is a segment rather than a
+point: it has an **orientation** and two position vectors picking out its ends, it
+is **glued to whatever cells those ends touch**, and it carries the properties the
+job needs — **rigidity** and **signal propagation** (with conduction delays later,
+not now).
+
+What this buys, and why it is more than tidying:
+
+- **One ontology.** Sphere-cells and segment-cells, both matter, both with a
+  material vector, both alive or lifeless. Bone, sinew, tendon, axon and nerve
+  tract stop being four mechanisms and become regions of one space — which is what
+  this document already claims for cell types and does not yet deliver for links.
+- **Wiring becomes physical, so it costs.** `METHODS.md` wants modularity to be a
+  consequence of anatomy rather than a designed prior, and `lib/devo.js` already
+  gestures at it ("long-range wiring costs extra bonds to exist at all") — but a
+  synapse presently costs nothing to have. As matter, a long axon is expensive to
+  build, expensive to hold, and vulnerable. Short-range connectivity then wins on
+  economics, and modularity falls out instead of being hoped for.
+- **The connectome gets its own heritable substrate.** A synapse weight is
+  currently *expressed* from its endpoints (`synapse()` in `lib/devo.js`), so two
+  cells of the same kind necessarily connect the same way. A link-cell carries its
+  own properties and can differ from its neighbour, which is a much larger and more
+  biological space.
+- **Links can die.** Severing is currently only bond brittleness. As matter, a link
+  can be broken, digested, or starved — and losing a nerve tract is then a real
+  injury rather than an unrepresentable one.
+
+**The costs, stated honestly.**
+
+- **Entity count roughly triples.** `bondK = 4` with about two live bonds per cell,
+  so making each a cell is a large multiplier on a budget that §on scale in
+  `WORLDS.md` shows is already the binding constraint. This is the main argument
+  for deferring it.
+- **Stiff constraint chains are harder to integrate.** A rigid segment glued at
+  both ends is a constraint, and the physics kernel's existing pathologies
+  (parametric resonance, NaN cascades) live exactly here. The damper on
+  `bondDamp` was hard-won; a rod would need the same care again.
+- **"Glued to whatever it touches" needs a rule.** Attachment cannot be free or
+  bodies fuse on contact. Adhesion by tag match (`primitives.md`, Layer 1) is the
+  lawful version and it is not yet built either.
+
+**Recommendation: right idea, wrong time.** It unifies the ontology and makes
+wiring cost real, both of which this project wants. But it multiplies the entity
+budget at the moment that budget is the limit, and it destabilises the one part of
+the physics with a history of NaNs. Build it after the scale question is settled
+and after `Development 2.0` — which will have to grow these things, and should be
+designed knowing whether it is growing them.

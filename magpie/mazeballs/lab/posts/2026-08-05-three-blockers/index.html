@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three blockers, measured — and only one of them is the development model</title>
+<style>
+  :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fbfbf9; --fg:#1c2530; --dim:#5d6b7c; --acc:#12766e; --line:#e2e5ea; }
+  }
+  body { background:var(--bg); color:var(--fg); margin:0;
+         font:16px/1.65 ui-serif, Georgia, "Iowan Old Style", serif; }
+  .wrap { max-width:46rem; margin:0 auto; padding:3rem 1.25rem 6rem; }
+  a { color:var(--acc); }
+  h1,h2,h3 { font-family:ui-sans-serif, system-ui, sans-serif; line-height:1.25; }
+  h1 { font-size:1.9rem; margin:0 0 .3rem; }
+  h2 { margin-top:2.4rem; border-bottom:1px solid var(--line); padding-bottom:.3rem; }
+  .meta { color:var(--dim); font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size:.8rem; letter-spacing:.02em; }
+  code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.85em; }
+  pre { background:rgba(127,127,127,.1); padding:.9rem 1rem; border-radius:6px;
+        overflow-x:auto; border:1px solid var(--line); }
+  table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; font-size:.9rem; }
+  th,td { border:1px solid var(--line); padding:.35rem .6rem; text-align:left; }
+  th { background:rgba(127,127,127,.08); }
+  blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
+               color:var(--dim); }
+  .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
+  ul.index { list-style:none; padding:0; }
+  ul.index li { margin:.9rem 0; }
+  ul.index .meta { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
+  <article>
+  <h1>Three blockers, measured — and only one of them is the development model</h1>
+  <p class="meta">
+    5 August 2026 · step 924000 · posts, measurement, locomotion, ctrnn, morphology
+  </p>
+  <p>Bodies still do not move. This is what the instruments actually say, at step
+~924,000, generation 22, on the live world.</p>
+<p>First, the good news, because it constrains everything else: <strong>the measurement is
+sound.</strong> Every self-propulsion number below comes with the muscles-off control,
+and the control read <strong>exactly 0.0000</strong> — median, p90 <em>and</em> max — at every setting
+tested. Bodies with muscles move; bodies with <code>contract = 0</code> do not move at all.
+So displacement here is genuinely muscle-driven, not drift and not dismemberment.
+The locomotion primitive works.</p>
+<p>The problem is entirely one of magnitude: median displacement <strong>0.0148 world units
+in 22.5 s</strong>, on bodies about 6 units across. Roughly 0.0025 body-lengths.</p>
+<h2>Blocker 1 — the controller is latched or chattering, almost never rhythmic</h2>
+<p>The live <code>/frame</code> scope reported median muscle peak-to-peak of 0.000, but it
+samples at 1.87 Hz and this project has already published one retraction for a
+scope that aliased the brain by 32×. So I re-measured offline, sampling <strong>every
+step</strong> — 33 Hz Nyquist, far above the 0.018 s tau floor the genome can specify.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>muscle cells whose activation changes at all</td>
+<td><strong>85 / 204 (42%)</strong></td>
+</tr>
+<tr>
+<td>median muscle peak-to-peak</td>
+<td><strong>0.00000</strong></td>
+</tr>
+<tr>
+<td>all cells pinned at a tanh rail (|mean| &gt; 0.999)</td>
+<td><strong>40%</strong></td>
+</tr>
+<tr>
+<td>flip rate of the ones that do move</td>
+<td>p90 <strong>7.2 Hz</strong>, max <strong>19.3 Hz</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Drag relaxation along the body axis is ~0.18 s, so a useful gait is order
+0.3–3 Hz. The population straddles that band without occupying it: over half sit
+at DC, and most of the rest chatter above it, where the body cannot translate
+within a cycle.</p>
+<p>A gain sweep, with a control at every point:</p>
+<pre><code> SYN_RANGE   dead   in-band(0.3-3Hz)   too fast   control
+     4      192/204        0              6        0.0000
+    16      182/204        5             12        0.0000
+    64      114/204       45             15        0.0000
+   128      111/204       54             16        0.0000
+</code></pre>
+<p>This <strong>confirms</strong> the earlier finding that drive was too weak — lowering the gain
+is strictly worse. But even at 128 the ceiling is 54/204 in band. Raising gain
+wakes muscles up; it does not buy a rhythm.</p>
+<p>Caveat stated up front: the self-propulsion medians in that sweep are single runs
+at n = 36, and this project's own house rules warn that single-measurement-per-rung
+trends have turned out to be noise three separate times. The claim here is the
+dead/in-band counts, which aggregate 204 cells — <strong>not</strong> that 64 is optimal.</p>
+<h2>Blocker 2 — the type rule silently deletes half the muscle</h2>
+<p><code>describe()</code> labels a cell by the argmax over three <em>independent continuous</em> props
+(sense, contract, grip), and <code>contractionOf</code> only contracts cells labelled MUSCLE.
+So a cell with contract 0.85 and grip 0.86 contributes <strong>exactly zero</strong>
+contraction. Across 64 living genomes:</p>
+<ul>
+<li>contract capacity in tissue <strong>366.9</strong>; capacity the kernel can use <strong>192.9</strong> —
+<strong>47% discarded</strong></li>
+<li>351 cells have contract &gt; 0.15 and are not muscle; <strong>151 lost by under 0.2</strong></li>
+<li><strong>18 of 64 bodies have no muscle at all</strong></li>
+</ul>
+<p>This is also a First Law smell: the kernel branches on a discrete type where the
+design documents claim a continuum.</p>
+<h2>Blocker 3 — the bodies are round, so anisotropic drag has nothing to bite</h2>
+<p>The only locomotion route this world offers is anisotropic drag, and that needs a
+body axis to be anisotropic <em>about</em>. Measured over 64 living genomes across 44
+lineages:</p>
+<pre><code>elongation   p10 0.96   p50 1.15   p90 1.15   max 1.15
+</code></pre>
+<p>The distribution is <strong>pinned</strong>. Random founder genomes measure 1.155 — identical.
+Elongation has not moved from its founder value in 22 generations.</p>
+<p>It is not a hard cap: hand-made extreme genomes (weights ±6) reach <strong>4.04</strong>. The
+map <em>can</em> make a worm and evolution never finds one. <code>presence</code> is a smooth
+function thresholded on a disc, and the founder genome biases presence positive
+over most of the egg, so the default body is &quot;the whole disc&quot; — aspect 1.155.
+Escaping needs several of nine basis terms to cancel simultaneously. Reachable and
+vanishingly improbable, and evolution measures improbable as impossible.</p>
+<h2>What this implies</h2>
+<p>Two of the three are <strong>downstream of any developmental map</strong> and would survive a
+new encoding untouched. The third is the encoding. So replacing development alone
+fixes one blocker in three — worth knowing before anyone attributes the result of
+that change.</p>
+<p>Also worth recording: a glider translates on <strong>five cells</strong>. Our median body is 33
+and does not. Size is not the explanation.</p>
+
+</article>
+
+</div>
+</body>
+</html>

@@ -18,3 +18,11 @@ runs/world.cmd
 runs/world.log
 runs/*.snapshot
 runs/*.jsonl
+
+# eleventy lab notebook.
+#
+# `lab/` is the BUILT SITE and is deliberately NOT ignored: GitHub Pages serves
+# this repo straight from `main` with no Actions, so the committed HTML is the
+# deployed HTML. Ignoring it would mean publishing nothing.
+notes/node_modules/
+notes/_site/

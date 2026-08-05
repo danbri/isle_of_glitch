@@ -38,9 +38,17 @@ API consumers to the pipeline without flagging it to the human.
 
 ## Repository practicalities
 
-- The GitHub Pages site deploys ONLY from branch
-  `claude/fink-authoring-guide-bDtaY`. Ship chain: feature branch →
-  `main` → deploy branch → verify live.
+- **The GitHub Pages site deploys from `main`, from the repository root, with
+  no Actions.** Work directly on `main`. Nothing is built server-side: whatever
+  HTML is committed is exactly what is served, so any generated page must be
+  built locally and committed alongside its source.
+  - `.github/workflows/static.yml` is **stale** — it still triggers only on the
+    old deploy branch `claude/fink-authoring-guide-bDtaY` and never fires on
+    `main`. Nothing depends on it.
+  - `.nojekyll` at the repo root disables Jekyll. Without it Pages silently
+    refuses to serve any path beginning with an underscore.
+  - `main` is **shared with a laptop Claude session**, so `git fetch` +
+    fast-forward (or `pull --rebase`) before committing, and expect races.
 - `tvp/app/js/channels.js`, `annotations-gen.js`, and `skos-gen.js` are
   GENERATED — edit the tools in `tvp/tools/`, not the outputs.
 - Run the regression suite (scratchpad `test-tvp2.js` harness) before

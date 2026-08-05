@@ -1,0 +1,15 @@
+---
+layout: layouts/base.njk
+title: mazeballs lab notes
+---
+<h1>mazeballs lab notes</h1>
+<p class="meta">a working notebook for the evo-devo world — including the wrong turns</p>
+
+<ul class="index">
+{%- for note in collections.notes %}
+  <li>
+    <a href="{{ note.url | url }}">{{ note.data.title }}</a>
+    <span class="meta">{{ note.date | isoDate }}{% if note.data.tags %} · {{ note.data.tags | join(", ") }}{% endif %}</span>
+  </li>
+{%- endfor %}
+</ul>

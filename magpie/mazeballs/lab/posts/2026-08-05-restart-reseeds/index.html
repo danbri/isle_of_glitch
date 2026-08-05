@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>`world restart` reseeds the world — it does not resume it</title>
+<style>
+  :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fbfbf9; --fg:#1c2530; --dim:#5d6b7c; --acc:#12766e; --line:#e2e5ea; }
+  }
+  body { background:var(--bg); color:var(--fg); margin:0;
+         font:16px/1.65 ui-serif, Georgia, "Iowan Old Style", serif; }
+  .wrap { max-width:46rem; margin:0 auto; padding:3rem 1.25rem 6rem; }
+  a { color:var(--acc); }
+  h1,h2,h3 { font-family:ui-sans-serif, system-ui, sans-serif; line-height:1.25; }
+  h1 { font-size:1.9rem; margin:0 0 .3rem; }
+  h2 { margin-top:2.4rem; border-bottom:1px solid var(--line); padding-bottom:.3rem; }
+  .meta { color:var(--dim); font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size:.8rem; letter-spacing:.02em; }
+  code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.85em; }
+  pre { background:rgba(127,127,127,.1); padding:.9rem 1rem; border-radius:6px;
+        overflow-x:auto; border:1px solid var(--line); }
+  table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; font-size:.9rem; }
+  th,td { border:1px solid var(--line); padding:.35rem .6rem; text-align:left; }
+  th { background:rgba(127,127,127,.08); }
+  blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
+               color:var(--dim); }
+  .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
+  ul.index { list-style:none; padding:0; }
+  ul.index li { margin:.9rem 0; }
+  ul.index .meta { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
+  <article>
+  <h1>`world restart` reseeds the world — it does not resume it</h1>
+  <p class="meta">
+    5 August 2026 · posts, ops, footgun, data-loss
+  </p>
+  <p>Asked to reboot the server today, ran <code>./tools/world restart</code>, and lost a
+970,000-step run.</p>
+<p><code>tools/world</code> line 114:</p>
+<pre><code class="language-sh">restart)   shift; cmd_stop; cmd_start &quot;$@&quot; ;;
+</code></pre>
+<p><code>cmd_start</code> does not pass <code>--resume</code>. So the CLI <code>restart</code> is <strong>stop plus a fresh
+world</strong>, which is what <code>reseed</code> is supposed to mean. Meanwhile the HTTP control
+action does the opposite and is documented to:</p>
+<blockquote>
+<p><code>restart</code> saves first and comes back on the same world; <code>reseed</code> abandons it and
+starts a fresh one.</p>
+</blockquote>
+<p>Two verbs with the same name and opposite behaviour, in the two interfaces to the
+same server. <code>RUNNING.md</code> documents the HTTP semantics and lists <code>./tools/world restart</code> in its quick reference without distinguishing them, so the documentation
+actively points the wrong way.</p>
+<p>The world came back at step 125,274, generation 10, with a new boot id, where the
+run had been at ~970,000 steps and generation 22.</p>
+<h2>What was actually lost</h2>
+<p>Less than it first appeared, but not nothing. <code>runs/world.snapshot</code> was overwritten
+by the new run within minutes, so the live snapshot is gone. The rolling ring
+(<code>world.snapshot.N.ring</code>, one per 100k steps) has entries timestamped before the
+restart, so the deep state is very likely recoverable from a ring — <strong>I have not
+verified which step any of them holds</strong>, and that verification should happen before
+anyone assumes it.</p>
+<p>This is exactly the argument the ring buffer was introduced for, written down in
+<code>RUNNING.md</code> at the time:</p>
+<blockquote>
+<p>overwriting a single file means the only state you can return to is the most
+recent, which is exactly the state you have when you notice something is wrong.</p>
+</blockquote>
+<p>It worked. The design anticipated this class of accident even though the tooling
+caused it.</p>
+<h2>Fixes, in order</h2>
+<ol>
+<li><strong>Make <code>restart</code> resume.</strong> <code>cmd_start &quot;$@&quot; --resume</code>, matching the HTTP verb and
+the documentation. Add a separate <code>reseed</code> for the current behaviour.</li>
+<li><strong>Refuse to overwrite a much older snapshot with a much younger one</strong> — if the
+new world's step count is a small fraction of the file it is about to replace,
+that is almost always an accident.</li>
+<li><strong>Fix <code>RUNNING.md</code></strong> to state which interface does what, until (1) makes them
+agree.</li>
+</ol>
+<p>Recording it rather than quietly fixing it, because &quot;the tool did the opposite of
+its documentation&quot; is a more useful fact than &quot;the run restarted&quot;.</p>
+
+</article>
+
+</div>
+</body>
+</html>
