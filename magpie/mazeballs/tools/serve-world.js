@@ -92,6 +92,11 @@ const codeStamp = async () => {
 };
 // Captured at startup: this is what the RUNNING process actually loaded.
 const RUNNING = await codeStamp();
+// Identifies THIS process. A restarting server answers /status for a few hundred
+// milliseconds after it has agreed to die, so a client polling "is it back yet"
+// sees the outgoing process and rebuilds against something about to exit. Waiting
+// for this value to CHANGE is the only reliable "it is a new server now".
+const BOOT_ID = `${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;
 console.log(`code: sim ${RUNNING.simVersion}, page ${RUNNING.pageVersion}`);
 
 const BOUND = args.bound ||
@@ -717,6 +722,7 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       // What this process is RUNNING vs what is on disk NOW. If simVersion
       // differs the physics has changed and needs a restart; if pageVersion
       // differs the viewer has changed and needs a reload.
+      bootId: BOOT_ID,
       simVersion: RUNNING.simVersion, pageVersion: RUNNING.pageVersion,
       simStaleSince: staleSince || null,
       onDisk: await codeStamp(),

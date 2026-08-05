@@ -692,6 +692,7 @@ const WATCH = new URLSearchParams(location.search).has('watch');
 let remoteMaxCells = null, remoteBound = null, remoteMotes = null, resyncing = false;
 let serverPaused = false;
 let myPageVersion = null;
+let myBootId = null;
 
 const canvas = $('c');
 
@@ -794,6 +795,7 @@ async function rebuild() {
       // Remember what the page was when it loaded, so a later edit to world.html
       // is detectable without the page having to know its own contents.
       if (myPageVersion === null) myPageVersion = st.pageVersion ?? null;
+      myBootId = st.bootId ?? null;
       const pb = $('bSrvPause');
       if (pb) {
         pb.textContent = st.paused ? '\u25B6 paused — resume' : '\u23F8 running — pause';
@@ -1886,11 +1888,31 @@ async function control(action, confirmText) {
     const j = await r.json();
     if (!j.ok) { note(`server refused: ${j.error}`); return; }
     if (action === 'restart' || action === 'reseed') {
-      // The process is going away and coming back on the same port. Give it a
-      // moment, then rebuild — the new world may have a different shape.
+      // WAIT FOR IT TO COME BACK, don't guess. This slept 4.5 seconds and then
+      // rebuilt — but a restart takes ~30s (GPU init, then building 1200 bodies),
+      // so the rebuild hit a dead port, threw, and left a black screen with '-'
+      // for every stat. Poll /status until it answers, then rebuild.
       note(action === 'reseed' ? 'starting a new world…' : 'restarting server…');
-      sim.retryAt = performance.now() + 4000;
-      setTimeout(() => rebuild().catch(e => fail(String(e))), 4500);
+      sim.retryAt = performance.now() + 120000;   // stop the frame loop meanwhile
+      const wasBoot = myBootId;
+      let waited = 0;
+      const poll = async () => {
+        waited += 1500;
+        try {
+          const st = await (await fetch('/status', { cache: 'no-store' })).json();
+          // A DIFFERENT process, not merely any answer. The outgoing server keeps
+          // serving for a moment after agreeing to restart.
+          if (st && st.nCells && st.bootId && st.bootId !== wasBoot) {
+            note('server back — rebuilding viewer');
+            await rebuild();
+            return;
+          }
+        } catch { /* not up yet */ }
+        if (waited > 90000) { fail('server did not come back within 90s'); return; }
+        note(`waiting for server… ${(waited / 1000) | 0}s`);
+        setTimeout(poll, 1500);
+      };
+      setTimeout(poll, 1500);
     } else if (action === 'save') {
       note(`saved ${(j.bytes / 1048576).toFixed(1)} MB at step ${j.steps.toLocaleString()}`);
     } else {
