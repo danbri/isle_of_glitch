@@ -1160,19 +1160,7 @@ function orderAlongAxis(idx, pos) {
 
 function selectUid(uid, pos, type, uidArr, n) {
   sel.uid = uid;
-  if (uid >= 0) {
-    const e = storeFor(uid);
-    // Re-resolve which cells this animal currently has, but KEEP its history.
-    const idx = [];
-    for (let i = 0; i < n && idx.length < SCOPE_ROWS; i++) {
-      if (uidArr[i] === uid && type[i] >= 0) idx.push(i);
-    }
-    if (idx.length) {
-      e.order = orderAlongAxis(idx, pos);
-      e.types.fill(-1);
-      e.order.forEach((i, r) => { if (r < SCOPE_ROWS) e.types[r] = type[i]; });
-    }
-  }
+  if (uid >= 0) { storeFor(uid); refreshTrace(); }
   const box = $('scope');
   if (box) box.style.display = uid >= 0 ? '' : 'none';
   updateSelInfo();
@@ -1196,29 +1184,62 @@ function updateSelInfo() {
     (scopeStore.size > 1 ? ` (${scopeStore.size} tracked)` : '');
 }
 
-/** One column per frame, for every animal we are still tracking. */
+/**
+ * Pull the SERVER's high-rate trace for the selected animal.
+ *
+ * Sampling once per /frame gave 0.56 Hz of world time — a frame is ~2.2MB and
+ * 1.8s apart — while neurons with tau 0.018s run near 9 Hz. That is aliasing by
+ * about thirty-two times, and it is what made the traces look blocky: a fast
+ * signal through a slow shutter. Any gait would have been mangled into noise
+ * before it could be seen.
+ *
+ * The server records at ~11 Hz where the brain actually is, and 64 neurons of
+ * floats is trivial next to a frame.
+ */
+async function refreshTrace() {
+  if (sel.uid < 0 || sim?.tracing) return;
+  sim.tracing = true;
+  try {
+    const want = Math.max(64, +($('scopeWin')?.value ?? 200) * 3);
+    const ab = await (await fetch(`/trace?uid=${sel.uid}&n=${want}`,
+      { cache: 'no-store' })).arrayBuffer();
+    const dv = new DataView(ab);
+    const uid = dv.getUint32(0, true), rows = dv.getUint32(4, true), cols = dv.getUint32(8, true);
+    if (uid !== sel.uid || !rows || !cols) return;
+    let at = 16;
+    const types = new Int32Array(ab, at, rows); at += rows * 4;
+    const steps = new Int32Array(ab, at, cols); at += cols * 4;
+    const vals = new Float32Array(ab, at, cols * rows);
+
+    const e = storeFor(sel.uid);
+    e.order = Array.from({ length: rows }, (_, r) => r);   // server already ordered them
+    e.types.fill(-1);
+    for (let r = 0; r < Math.min(rows, SCOPE_ROWS); r++) e.types[r] = types[r];
+    e.head = 0; e.filled = 0;
+    for (let c = 0; c < cols && c < SCOPE_COLS; c++) {
+      const base = e.head * SCOPE_ROWS;
+      for (let r = 0; r < SCOPE_ROWS; r++) {
+        e.hist[base + r] = r < rows ? vals[c * rows + r] : NaN;
+      }
+      e.steps[e.head] = steps[c];
+      e.head = (e.head + 1) % SCOPE_COLS;
+      e.filled = Math.min(e.filled + 1, SCOPE_COLS);
+    }
+    updateSelInfo();
+  } catch { /* server may not have this endpoint */ }
+  finally { sim.tracing = false; }
+}
+
+/** Camera follow only; the trace itself now comes from the server. */
 function sampleSelected(pos, act, type, uidArr, n, step) {
   if (step === sel.lastStep) return;
   sel.lastStep = step;
-  for (const [uid, e] of scopeStore) {
-    if (!e.order.length) continue;
-    const col = e.head * SCOPE_ROWS;
-    let alive = 0;
-    for (let r = 0; r < SCOPE_ROWS; r++) {
-      const i = e.order[r];
-      const ok = i !== undefined && type[i] >= 0 && uidArr[i] === uid;
-      if (ok) alive++;
-      e.hist[col + r] = ok ? act[i] : NaN;
-    }
-    e.steps[e.head] = step;
-    e.head = (e.head + 1) % SCOPE_COLS;
-    e.filled = Math.min(e.filled + 1, SCOPE_COLS);
-    if (uid === sel.uid && sel.follow && alive) {
-      let sx = 0, sy = 0, k = 0;
-      for (const i of e.order) if (type[i] >= 0) { sx += pos[i * 2]; sy += pos[i * 2 + 1]; k++; }
-      if (k) { cam.cx = sx / k; cam.cy = sy / k; }
-    }
+  if (sel.uid < 0 || !sel.follow) return;
+  let sx = 0, sy = 0, k = 0;
+  for (let i = 0; i < n; i++) {
+    if (uidArr[i] === sel.uid && type[i] >= 0) { sx += pos[i * 2]; sy += pos[i * 2 + 1]; k++; }
   }
+  if (k) { cam.cx = sx / k; cam.cy = sy / k; }
 }
 
 /** Nearest live cell to a world point, or -1. */
@@ -2121,6 +2142,9 @@ function loop() {
       el.innerHTML = msgs.join('<br>');
     }).catch(() => { sim.checkingVer = false; });
   }
+
+  sim.sinceTrace = (sim.sinceTrace ?? 0) + (t - last);
+  if (sel.uid >= 0 && sim.sinceTrace > 700) { sim.sinceTrace = 0; refreshTrace(); }
 
   sim.sinceMotes += t - last;
   if (view.food && sim.sinceMotes > 1500) { sim.sinceMotes = 0; refreshMotes(); }

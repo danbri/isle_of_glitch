@@ -341,6 +341,56 @@ setInterval(async () => {
   } catch { /* never fatal */ }
 }, 15000);
 
+/**
+ * HIGH-RATE BRAIN TRACE for one animal at a time.
+ *
+ * The scope used to take one sample per /frame, and a frame is ~2.2MB and 1.8s
+ * of world time apart — so it sampled at 0.56 Hz while neurons with tau 0.018s
+ * run near 9 Hz. Undersampled by about thirty-two times: the "blocky" traces
+ * were a fast signal seen through a slow shutter, and any gait would have been
+ * aliased into noise long before it was visible.
+ *
+ * Recorded HERE, where the brain is, every few steps, for the one animal being
+ * inspected. 64 neurons x 4 bytes is tiny next to a frame, so the sampling rate
+ * is set by what the dynamics need rather than by what the link can carry.
+ */
+const TRACE_ROWS = 64;
+const TRACE_COLS = 4096;
+const trace = {
+  uid: -1, slot: -1, cells: [],
+  buf: new Float32Array(TRACE_ROWS * TRACE_COLS),
+  step: new Int32Array(TRACE_COLS),
+  head: 0, filled: 0, everyN: 5, since: 0,
+};
+
+function traceAttach(uid) {
+  if (uid === trace.uid) return;
+  trace.uid = uid; trace.head = 0; trace.filled = 0; trace.cells = []; trace.slot = -1;
+  if (uid < 0) return;
+  for (let o = 0; o < built.arena.P; o++) {
+    if (built.arena.alive[o] && evo.uid[o] === uid) { trace.slot = o; break; }
+  }
+  if (trace.slot < 0) { trace.uid = -1; return; }
+  const off = built.arena.off[trace.slot], n = Math.min(built.arena.cnt[trace.slot], TRACE_ROWS);
+  for (let i = 0; i < n; i++) trace.cells.push(off + i);
+}
+
+async function traceSample() {
+  if (trace.uid < 0 || !trace.cells.length) return;
+  // Cheap because it is ONE readback of the act buffer, already needed for
+  // frames; at everyN=5 this is ~13 Hz of world time, comfortably above Nyquist
+  // for the fastest neurons the genome can specify.
+  const { act } = await brains.readState();
+  const col = trace.head * TRACE_ROWS;
+  for (let r = 0; r < TRACE_ROWS; r++) {
+    const i = trace.cells[r];
+    trace.buf[col + r] = (i !== undefined && built.cells.ctype[i] >= 0) ? act[i] : NaN;
+  }
+  trace.step[trace.head] = steps;
+  trace.head = (trace.head + 1) % TRACE_COLS;
+  trace.filled = Math.min(trace.filled + 1, TRACE_COLS);
+}
+
 let lastSave = Date.now();
 const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
 
@@ -349,6 +399,11 @@ const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
     if (paused) { await new Promise(r => setTimeout(r, 100)); continue; }
     world.step(args.spf);
     steps += args.spf; sinceTick += args.spf;
+
+    trace.since += args.spf;
+    if (trace.uid >= 0 && trace.since >= trace.everyN && !ticking) {
+      trace.since = 0; await traceSample();
+    }
 
     sinceMetric += args.spf;
     if (sinceMetric >= METRIC_EVERY && !ticking) { sinceMetric = 0; await logMetrics(); }
@@ -523,6 +578,37 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
   // One animal's genome by uid, with the labels needed to read it. The genetics
   // has never been visible in the UI at all — you could watch bodies without ever
   // seeing what specifies them.
+  // Subscribe to, and read, the high-rate trace. Binary: it is numbers.
+  if (path === '/trace') {
+    const uid = Number(url.searchParams.get('uid') ?? -1);
+    const want = Math.min(TRACE_COLS, Number(url.searchParams.get('n') ?? 600) || 600);
+    traceAttach(uid);
+    if (trace.uid < 0) {
+      return new Response(JSON.stringify({ ok: false, error: 'no such living animal' }),
+        { status: 404, headers: { 'content-type': 'application/json' } });
+    }
+    const rows = trace.cells.length;
+    const cols = Math.min(want, trace.filled);
+    const types = new Int32Array(rows);
+    for (let r = 0; r < rows; r++) types[r] = built.cells.ctype[trace.cells[r]];
+    const buf = new ArrayBuffer(16 + rows * 4 + cols * 4 + cols * rows * 4);
+    const dv2 = new DataView(buf);
+    dv2.setUint32(0, uid, true); dv2.setUint32(4, rows, true);
+    dv2.setUint32(8, cols, true); dv2.setFloat32(12, world.params.dt, true);
+    let at2 = 16;
+    new Int32Array(buf, at2, rows).set(types); at2 += rows * 4;
+    const stepsOut = new Int32Array(buf, at2, cols); at2 += cols * 4;
+    const vals = new Float32Array(buf, at2, cols * rows);
+    for (let c = 0; c < cols; c++) {
+      const src = ((trace.head - cols + c) % TRACE_COLS + TRACE_COLS) % TRACE_COLS;
+      stepsOut[c] = trace.step[src];
+      for (let r = 0; r < rows; r++) vals[c * rows + r] = trace.buf[src * TRACE_ROWS + r];
+    }
+    return new Response(buf, {
+      headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' },
+    });
+  }
+
   if (path === '/genome') {
     const want = Number(url.searchParams.get('uid'));
     let slot = -1;
