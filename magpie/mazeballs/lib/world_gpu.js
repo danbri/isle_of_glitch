@@ -544,7 +544,20 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   //
   // m0.w is the demander count the offer pass already counted this step, so
   // this costs nothing.
-  let suppress = 1.0 / (1.0 + P.regrowCrowdK * max(0.0, m0.w));
+  // DENSITY-RELATIVE, not a headcount. The first version divided by the raw
+  // demander count, and that count is 1-3 in a sparse assay but ten to thirty
+  // times larger in a living population — so a coefficient tuned in the assay
+  // extinguished regrowth everywhere and starved the world (348 -> 8 alive).
+  //
+  // What should suppress regrowth is not how many mouths are present but how hard
+  // the patch is being WORKED: the draw this step measured against what the sun
+  // would put back. That ratio is dimensionless and means the same thing at any
+  // density, so one coefficient transfers between an empty world and a crowded
+  // one. A patch drawn down faster than it regrows recovers slowly; a patch
+  // barely touched recovers fully however many cells happen to be standing on it.
+  let draw = moteOfferOf(m0) * m0.w;
+  let refill = max(1e-6, P.moteRegrow * P.dt);
+  let suppress = 1.0 / (1.0 + P.regrowCrowdK * (draw / refill));
   stock = stock + P.moteRegrow * fert * suppress * (1.0 - stock / P.moteCap) * P.dt;
   mote[i] = vec4<f32>(m0.x, m0.y, clamp(stock, 0.0, P.moteCap), 0.0);
 }
@@ -964,7 +977,13 @@ export class WorldGPU {
       //   crowdK 6.0   movers +0.3   sitters -1.2   corr +0.10
       // 2.0 gives the widest gap in favour of moving. Higher suppresses regrowth
       // so hard that everyone is poor and the advantage shrinks again.
-      regrowCrowdK: 0.0,
+      // Density-relative now (draw vs refill), so this transfers between an empty
+      // world and a crowded one. Viability at 600 cap over 22,500 steps:
+      //   k 0    249 alive, 135 lineages      k 4    83 alive
+      //   k 0.5  197 alive, 123 lineages      k 10   42 alive
+      //   k 1.5  156 alive, 108 lineages
+      // 1.5 keeps a healthy population and a real drawdown penalty.
+      regrowCrowdK: 1.5,
       dt: brains.dt, ...params,
     };
     // Motes. Scattered by a hash of their index rather than laid on a lattice:

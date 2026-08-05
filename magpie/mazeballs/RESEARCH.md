@@ -5821,3 +5821,51 @@ to make suppression density-relative — a free allowance before it bites, or
 normalisation by a reference density — so that one coefficient means the same
 thing in an empty world and a crowded one. Until then the mechanism is present,
 measured, and off.
+
+
+### 29.4M steps, 261 generations: selection REMOVED locomotion
+
+An overnight run, the deepest this project has done and 20x past anything
+previously measured. Live world at the end, and the same genomes measured against
+random ones in the isolated self-propulsion assay:
+
+    cell types        anchor 79.8%   sensor 10.9%   neuron 8.5%   MUSCLE 0.7%
+
+                        evolved (gen ~200)      random
+    cells per body            6.0               33.9
+    muscle fraction          19.4%              42.8%
+    grippy fraction          83.7%              45.8%
+    segments                  0.4                2.2
+    self-propulsion           0.008              0.692
+
+Evolution shrank bodies to the 5-cell floor, halved muscle, doubled grip, and made
+its descendants EIGHTY-SEVEN TIMES worse at moving than random genomes.
+
+This is not a failure of the locomotion primitive, which works and is 151x above
+its isotropic control. It is a clean, deep-time, controlled demonstration that the
+ECONOMY decides. The world was paying creatures to be small, sessile and grippy,
+and 261 generations obliged. It is also the null that makes the crowding
+experiment interpretable: we now know what this world produces when moving does
+not pay, measured rather than assumed.
+
+Snapshot kept at runs/world-gen261-sessile-endpoint-29.4M.snapshot.
+
+### Crowding suppression made density-relative
+
+The first version divided regrowth by a raw demander count, which is 1-3 in a
+sparse assay and ten to thirty times that in a living population — so a
+coefficient tuned in the assay starved the world (348 -> 8 alive).
+
+Now it suppresses on DRAW versus REFILL: how much was taken this step against what
+the sun would put back, which is dimensionless and means the same thing at any
+density. Viability at 600 cap over 22,500 steps:
+
+    k 0     249 alive, 135 lineages
+    k 0.5   197 alive, 123 lineages
+    k 1.5   156 alive, 108 lineages
+    k 4      83 alive,  69 lineages
+    k 10     42 alive,  41 lineages
+
+Shipped at 1.5. Whether it reverses the sessile outcome over deep time is NOT yet
+measured — the 29.4M-step run above is the control it needs to be compared with,
+and that comparison has not been run.

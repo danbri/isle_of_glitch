@@ -72,6 +72,13 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
 #inspPanel .note { color: #6d8880; }
 .selRing { pointer-events: none; }
 @media (max-width: 700px) { #scopeC { height: 130px; } #scopeHead input[type=range] { width: 90px; } }
+
+#genomeBox { margin-top:.4rem; font:10px/1.35 ui-monospace,monospace; color:#8fa9a2; }
+#genomeBox table { border-collapse: collapse; width: 100%; }
+#genomeBox th { text-align:left; font-weight:normal; color:#5f7a73; padding-right:.3rem; }
+#genomeBox td { text-align:center; width:1.6em; }
+#genomeBox .hd { color:#5f7a73; font-size:9px; }
+#genomeBox h4 { margin:.5rem 0 .2rem; color:#9fb8b0; font-size:10px; font-weight:normal; }
 </style>
 </head>
 <body>
@@ -167,6 +174,8 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
       <button id="bFollow">follow</button>
     </div>
     <p class="note" id="selInfo">Nothing selected. Click a cell in the world.</p>
+    <div class="row"><button id="bGenome">show genome</button></div>
+    <div id="genomeBox" style="display:none"></div>
   </div>
 
   <div id="srvPanel" style="display:none">
@@ -972,25 +981,42 @@ async function refreshMotes() {
  * turn out to be slot reuse. The uid also survives a body being torn apart, so a
  * creature that fragments is still one row-set here rather than two.
  */
-const SCOPE_COLS = 6000;          // ~10 screens of scrollback at 600px wide
-const SCOPE_ROWS = 64;            // max cells we plot for one animal
+const SCOPE_COLS = 6000;          // ~10 screens of scrollback
+const SCOPE_ROWS = 64;            // max neurons plotted for one animal
+const SCOPE_KEEP = 12;            // animals whose history we retain
 
-const sel = {
-  uid: -1,
-  order: [],                      // cell indices, head -> tail
-  hist: new Float32Array(SCOPE_COLS * SCOPE_ROWS),
-  types: new Int32Array(SCOPE_ROWS),
-  head: 0,                        // next column to write
-  filled: 0,
-  lastStep: -1,
-  follow: false,
-  picking: true,
-};
+/**
+ * Per-animal histories, kept in a Map and NOT thrown away when the selection
+ * changes. Clicking between creatures used to clear the buffer and restart the
+ * trace from nothing, so comparing two animals was impossible and every click
+ * looked like a crash. Now the world keeps sampling whatever it has seen
+ * recently, the time axis is the world's own step counter shared by every trace,
+ * and switching back to an animal you looked at a minute ago shows its past.
+ */
+const scopeStore = new Map();     // uid -> { hist, head, filled, order, types, t0 }
+const sel = { uid: -1, follow: false, picking: true, lastStep: -1 };
 
-/** Order a body's cells head->tail so a travelling wave reads as a diagonal. */
+function storeFor(uid) {
+  let e = scopeStore.get(uid);
+  if (!e) {
+    e = { hist: new Float32Array(SCOPE_COLS * SCOPE_ROWS), head: 0, filled: 0,
+          order: [], types: new Int32Array(SCOPE_ROWS).fill(-1), steps: new Int32Array(SCOPE_COLS) };
+    scopeStore.set(uid, e);
+    // Bounded: a long session must not accumulate every creature ever clicked.
+    while (scopeStore.size > SCOPE_KEEP) {
+      const oldest = scopeStore.keys().next().value;
+      if (oldest === uid) break;
+      scopeStore.delete(oldest);
+    }
+  } else {
+    scopeStore.delete(uid); scopeStore.set(uid, e);   // touch for LRU
+  }
+  return e;
+}
+
+/** Order a body's cells head->tail so a travelling wave reads as a phase ramp. */
 function orderAlongAxis(idx, pos) {
   if (idx.length < 3) return idx.slice();
-  // Longest chord = the body's main axis. O(n^2) over <=60 cells, once per pick.
   let a = idx[0], b = idx[1], best = -1;
   for (const i of idx) for (const j of idx) {
     const d = (pos[i * 2] - pos[j * 2]) ** 2 + (pos[i * 2 + 1] - pos[j * 2 + 1]) ** 2;
@@ -1005,71 +1031,72 @@ function orderAlongAxis(idx, pos) {
 
 function selectUid(uid, pos, type, uidArr, n) {
   sel.uid = uid;
-  sel.head = 0; sel.filled = 0; sel.hist.fill(0);
-  const idx = [];
-  for (let i = 0; i < n && idx.length < SCOPE_ROWS; i++) {
-    if (uidArr[i] === uid && type[i] >= 0) idx.push(i);
+  if (uid >= 0) {
+    const e = storeFor(uid);
+    // Re-resolve which cells this animal currently has, but KEEP its history.
+    const idx = [];
+    for (let i = 0; i < n && idx.length < SCOPE_ROWS; i++) {
+      if (uidArr[i] === uid && type[i] >= 0) idx.push(i);
+    }
+    if (idx.length) {
+      e.order = orderAlongAxis(idx, pos);
+      e.types.fill(-1);
+      e.order.forEach((i, r) => { if (r < SCOPE_ROWS) e.types[r] = type[i]; });
+    }
   }
-  sel.order = orderAlongAxis(idx, pos);
-  sel.types.fill(-1);
-  sel.order.forEach((i, r) => { if (r < SCOPE_ROWS) sel.types[r] = type[i]; });
   const box = $('scope');
-  if (box) box.style.display = uid >= 0 && sel.order.length ? '' : 'none';
+  if (box) box.style.display = uid >= 0 ? '' : 'none';
   updateSelInfo();
 }
 
 function updateSelInfo() {
   const el = $('selInfo'), title = $('scopeTitle');
   if (!el || !title) return;
-  if (sel.uid < 0 || !sel.order.length) {
+  const e = scopeStore.get(sel.uid);
+  if (sel.uid < 0 || !e || !e.order.length) {
     el.textContent = 'Nothing selected. Click a cell in the world.';
-    $('scopeTitle').textContent = 'CTRNN —';
+    title.textContent = 'CTRNN —';
     return;
   }
   const names = ['neuron', 'sensor', 'muscle', 'anchor'];
   const c = [0, 0, 0, 0];
-  for (let r = 0; r < sel.order.length; r++) if (sel.types[r] >= 0) c[sel.types[r]]++;
-  el.textContent = `animal #${sel.uid} — ${sel.order.length} cells: ` +
+  for (let r = 0; r < e.order.length; r++) if (e.types[r] >= 0) c[e.types[r]]++;
+  el.textContent = `animal #${sel.uid} — ${e.order.length} cells: ` +
     names.map((nm, k) => `${c[k]} ${nm}`).join(', ');
-  $('scopeTitle').textContent = `CTRNN — animal #${sel.uid}, ${sel.order.length} neurons`;
+  title.textContent = `CTRNN — animal #${sel.uid}, ${e.order.length} neurons` +
+    (scopeStore.size > 1 ? ` (${scopeStore.size} tracked)` : '');
 }
 
-/** One column per frame. Called from applyFrame while the data is in hand. */
+/** One column per frame, for every animal we are still tracking. */
 function sampleSelected(pos, act, type, uidArr, n, step) {
-  if (sel.uid < 0) return;
-  if (step === sel.lastStep) return;             // same frame served twice
+  if (step === sel.lastStep) return;
   sel.lastStep = step;
-
-  // The body may have lost or gained cells, or died outright.
-  let alive = 0;
-  for (const i of sel.order) if (type[i] >= 0 && uidArr[i] === sel.uid) alive++;
-  if (alive === 0) {
-    $('scopeTitle').textContent = `CTRNN — animal #${sel.uid} (died)`;
-    return;
-  }
-
-  const col = sel.head * SCOPE_ROWS;
-  for (let r = 0; r < SCOPE_ROWS; r++) {
-    const i = sel.order[r];
-    sel.hist[col + r] = (i !== undefined && type[i] >= 0 && uidArr[i] === sel.uid)
-      ? act[i] : NaN;                            // NaN = not part of the body now
-  }
-  sel.head = (sel.head + 1) % SCOPE_COLS;
-  sel.filled = Math.min(sel.filled + 1, SCOPE_COLS);
-
-  if (sel.follow) {
-    let sx = 0, sy = 0, k = 0;
-    for (const i of sel.order) if (type[i] >= 0) { sx += pos[i * 2]; sy += pos[i * 2 + 1]; k++; }
-    if (k) { cam.cx = sx / k; cam.cy = sy / k; }
+  for (const [uid, e] of scopeStore) {
+    if (!e.order.length) continue;
+    const col = e.head * SCOPE_ROWS;
+    let alive = 0;
+    for (let r = 0; r < SCOPE_ROWS; r++) {
+      const i = e.order[r];
+      const ok = i !== undefined && type[i] >= 0 && uidArr[i] === uid;
+      if (ok) alive++;
+      e.hist[col + r] = ok ? act[i] : NaN;
+    }
+    e.steps[e.head] = step;
+    e.head = (e.head + 1) % SCOPE_COLS;
+    e.filled = Math.min(e.filled + 1, SCOPE_COLS);
+    if (uid === sel.uid && sel.follow && alive) {
+      let sx = 0, sy = 0, k = 0;
+      for (const i of e.order) if (type[i] >= 0) { sx += pos[i * 2]; sy += pos[i * 2 + 1]; k++; }
+      if (k) { cam.cx = sx / k; cam.cy = sy / k; }
+    }
   }
 }
 
 /** Nearest live cell to a world point, or -1. */
 function pickAt(wx, wy) {
   if (!sim?.lastPos) return -1;
-  const n = sim.meta.nCells, P = sim.lastPos, T = sim.lastType;
-  const B = sim.bound;
-  let best = -1, bestD = (12 / cam.zoom) ** 2;   // ~12 screen px of slop
+  const n = sim.meta.nCells, P = sim.lastPos, T = sim.lastType, B = sim.bound;
+  let best = -1, bestD = (14 / cam.zoom) ** 2;
   for (let i = 0; i < n; i++) {
     if (T[i] < 0) continue;
     let dx = P[i * 2] - wx, dy = P[i * 2 + 1] - wy;
@@ -1081,18 +1108,20 @@ function pickAt(wx, wy) {
   return best;
 }
 
-/* Muted crowd, saturated accent — visual-language.md. Silence is near-black so
- * the eye is drawn only to neurons doing something. */
-function actColour(v) {
-  if (Number.isNaN(v)) return '#0a0f0e';
-  const a = Math.min(1, Math.abs(v));
-  if (v >= 0) return `rgb(${Math.round(18 + 224 * a)},${Math.round(22 + 150 * a)},${Math.round(24 + 40 * a)})`;
-  return `rgb(${Math.round(18 + 30 * a)},${Math.round(22 + 110 * a)},${Math.round(24 + 190 * a)})`;
-}
-
+/**
+ * Stacked traces, one line per neuron — an oscilloscope, not a table.
+ *
+ * The first version drew a heatmap: a grid of intensity per cell per timestep.
+ * That is dense and unreadable — you cannot see whether a neuron is oscillating,
+ * how fast, or whether two are in phase, which is the entire question when
+ * debugging a gait. A line you can read at a glance; a shaded square you cannot.
+ */
 function drawScope() {
   const cv = $('scopeC'), box = $('scope');
-  if (!cv || !box || box.style.display === 'none' || !sel.order.length) return;
+  if (!cv || !box || box.style.display === 'none') return;
+  const e = scopeStore.get(sel.uid);
+  if (!e || !e.order.length) return;
+
   const dpr = Math.min(devicePixelRatio || 1, 2);
   const w = Math.max(1, Math.round(cv.clientWidth * dpr));
   const h = Math.max(1, Math.round(cv.clientHeight * dpr));
@@ -1100,36 +1129,111 @@ function drawScope() {
   const g = cv.getContext('2d');
   g.fillStyle = '#070c0b'; g.fillRect(0, 0, w, h);
 
-  const rows = sel.order.length;
+  const rows = Math.min(e.order.length, SCOPE_ROWS);
   const rowH = h / rows;
-  const cols = Math.min(sel.filled, Math.floor(w / dpr));   // one column per CSS px
-  if (!cols) return;
+  const cols = Math.min(e.filled, Math.max(2, Math.floor(cv.clientWidth)));
+  if (cols < 2) return;
 
-  const maxBack = Math.max(0, sel.filled - cols);
-  $('scopeScroll').max = String(maxBack);
-  const back = $('scopeLive').classList.contains('on')
-    ? maxBack : Math.min(+$('scopeScroll').value, maxBack);
-  if ($('scopeLive').classList.contains('on')) $('scopeScroll').value = String(maxBack);
+  const maxBack = Math.max(0, e.filled - cols);
+  const scr = $('scopeScroll');
+  if (scr) scr.max = String(maxBack);
+  const live = $('scopeLive')?.classList.contains('on');
+  const back = live ? maxBack : Math.min(+(scr?.value ?? 0), maxBack);
+  if (live && scr) scr.value = String(maxBack);
 
-  const colW = w / cols;
-  for (let c = 0; c < cols; c++) {
-    // oldest retained column is head - filled
-    const src = ((sel.head - sel.filled + back + c) % SCOPE_COLS + SCOPE_COLS) % SCOPE_COLS;
-    const base = src * SCOPE_ROWS;
-    for (let r = 0; r < rows; r++) {
-      g.fillStyle = actColour(sel.hist[base + r]);
-      g.fillRect(c * colW, r * rowH, colW + 1, rowH + 1);
-    }
+  // muted lane separators — the crowd is quiet, the signal is the line
+  g.strokeStyle = '#12201d'; g.lineWidth = 1;
+  for (let r = 1; r < rows; r++) {
+    g.beginPath(); g.moveTo(0, r * rowH); g.lineTo(w, r * rowH); g.stroke();
   }
 
-  // Type gutter: which rows are muscle / sensor / anchor, so a wave can be read
-  // against what it is driving.
-  const tint = ['#5a6b66', '#4dd1de', '#ff9433', '#b86bea'];
+  const tint = ['#7d8f8a', '#4dd1de', '#ff9433', '#b86bea'];   // neuron/sensor/muscle/anchor
+  const dx = w / (cols - 1);
+  const SMOOTH = 3;                     // light boxcar; the trace is noisy per frame
+
   for (let r = 0; r < rows; r++) {
-    if (sel.types[r] < 0) continue;
-    g.fillStyle = tint[sel.types[r]];
-    g.fillRect(0, r * rowH, 3 * dpr, Math.max(1, rowH - 1));
+    const yMid = (r + 0.5) * rowH, amp = rowH * 0.42;
+    g.strokeStyle = tint[Math.max(0, e.types[r])] ?? '#7d8f8a';
+    g.lineWidth = 1.3 * dpr;
+    g.beginPath();
+    let started = false;
+    for (let c = 0; c < cols; c++) {
+      let acc = 0, m = 0;
+      for (let k = -SMOOTH; k <= SMOOTH; k++) {
+        const ci = c + k; if (ci < 0 || ci >= cols) continue;
+        const src = ((e.head - e.filled + back + ci) % SCOPE_COLS + SCOPE_COLS) % SCOPE_COLS;
+        const v = e.hist[src * SCOPE_ROWS + r];
+        if (!Number.isNaN(v)) { acc += v; m++; }
+      }
+      if (!m) { started = false; continue; }     // gap: cell not in the body then
+      const y = yMid - (acc / m) * amp;
+      if (!started) { g.moveTo(c * dx, y); started = true; } else { g.lineTo(c * dx, y); }
+    }
+    g.stroke();
   }
+
+  // time axis: where we are in the world's own clock
+  const oldest = e.steps[((e.head - e.filled + back) % SCOPE_COLS + SCOPE_COLS) % SCOPE_COLS];
+  const newest = e.steps[((e.head - 1 + SCOPE_COLS) % SCOPE_COLS)];
+  g.fillStyle = '#4a625c'; g.font = `${11 * dpr}px ui-monospace, monospace`;
+  g.fillText(`step ${oldest.toLocaleString()}`, 4 * dpr, h - 4 * dpr);
+  const rt = `step ${newest.toLocaleString()}${live ? ' · live' : ' · scrolled back'}`;
+  g.fillText(rt, w - g.measureText(rt).width - 4 * dpr, h - 4 * dpr);
+}
+
+/**
+ * Genome viewer. A genome here is NOT a body — it is a small table of weights
+ * saying how a cell's properties depend on WHERE IT IS in the egg, read off two
+ * maternal gradients. This shows that table, because otherwise the genetics is
+ * invisible and the bodies look like they come from nowhere.
+ *
+ * Rows are properties (does a cell exist here at all, how hard does it contract,
+ * how well does it grip...). Columns are basis functions of position: `bias` is
+ * uniform, `ap` runs head-to-tail, `|dv|` is symmetric across the midline so a
+ * genome using it CANNOT tell left from right, and `sin*ap` terms are what make
+ * repeated segments.
+ */
+function cellShade(v) {
+  const a = Math.min(1, Math.abs(v) / 3);
+  return v >= 0
+    ? `background:rgb(${Math.round(20+200*a)},${Math.round(24+130*a)},${Math.round(26+40*a)})`
+    : `background:rgb(${Math.round(20+30*a)},${Math.round(24+100*a)},${Math.round(26+170*a)})`;
+}
+
+async function showGenome() {
+  const box = $('genomeBox');
+  if (!box) return;
+  if (sel.uid < 0) { box.style.display = ''; box.textContent = 'Select an animal first.'; return; }
+  box.style.display = '';
+  box.textContent = 'loading…';
+  try {
+    const j = await (await fetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
+    if (!j.ok) { box.textContent = j.error; return; }
+    let html = `<h4>animal #${j.uid} · gen ${j.generation} · ${j.cells} cells</h4>`;
+    html += '<table><tr><th></th>' +
+      j.basis.map(b => `<td class="hd">${b}</td>`).join('') + '</tr>';
+    j.props.forEach((p, pi) => {
+      html += `<tr><th>${p}</th>`;
+      for (let b = 0; b < j.nb; b++) {
+        const v = j.g[pi * j.nb + b];
+        html += `<td style="${cellShade(v)}" title="${p} x ${j.basis[b]} = ${v.toFixed(3)}">` +
+          `${v >= 0 ? '' : '-'}${Math.abs(v) < 0.05 ? '·' : Math.abs(v).toFixed(1).replace('0.', '.')}</td>`;
+      }
+      html += '</tr>';
+    });
+    html += '</table><h4>synapse weights (how wiring is expressed)</h4><table><tr>' +
+      j.synBasis.map(b => `<td class="hd">${b}</td>`).join('') + '</tr><tr>';
+    for (let k = 0; k < j.nsyn; k++) {
+      const v = j.g[j.synOff + k];
+      html += `<td style="${cellShade(v)}" title="${j.synBasis[k]} = ${v.toFixed(3)}">` +
+        `${v >= 0 ? '' : '-'}${Math.abs(v) < 0.05 ? '·' : Math.abs(v).toFixed(1).replace('0.', '.')}</td>`;
+    }
+    html += '</tr></table>';
+    html += '<p class="note">amber positive, blue negative. A row of dots is a ' +
+      'property the genome leaves flat. Weight on <b>|dv|</b> rather than <b>dv</b> ' +
+      'is what makes a body bilaterally symmetric — it cannot tell left from right.</p>';
+    box.innerHTML = html;
+  } catch (e) { box.textContent = 'could not load genome: ' + e.message; }
 }
 
 /* ---- wiring ----
@@ -1146,6 +1250,7 @@ const on = (id, ev, fn) => {
   el[ev] = fn;
 };
 
+on('bGenome', 'onclick', showGenome);
 on('bPick', 'onclick', e => {
   sel.picking = !sel.picking;
   e.target.classList.toggle('on', sel.picking);

@@ -378,6 +378,30 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
   // re-developed outside the run. This is the dataset development actually
   // produces — positions and bonds are only what it produced THIS time — and
   // without it the run is unreadable from outside.
+  // One animal's genome by uid, with the labels needed to read it. The genetics
+  // has never been visible in the UI at all — you could watch bodies without ever
+  // seeing what specifies them.
+  if (path === '/genome') {
+    const want = Number(url.searchParams.get('uid'));
+    let slot = -1;
+    for (let o = 0; o < built.arena.P; o++) {
+      if (built.arena.alive[o] && evo.uid[o] === want) { slot = o; break; }
+    }
+    if (slot < 0 || !evo.genome[slot]) {
+      return new Response(JSON.stringify({ ok: false, error: 'no such living animal' }),
+        { status: 404, headers: { 'content-type': 'application/json' } });
+    }
+    const { PROPS, BASIS, NB, SYN_BASIS, SYN_OFF, NSYN } = await import('../lib/devo.js');
+    return new Response(JSON.stringify({
+      ok: true, uid: want, slot,
+      generation: evo.generation[slot], lineage: evo.lineage[slot],
+      cells: built.arena.cnt[slot],
+      props: PROPS, basis: BASIS.map(b => b[0]), nb: NB,
+      synBasis: SYN_BASIS.map(b => b[0]), synOff: SYN_OFF, nsyn: NSYN,
+      g: Array.from(evo.genome[slot]),
+    }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+  }
+
   if (path === '/genomes') {
     const want = Math.min(64, Number(url.searchParams.get('n') ?? 8) || 8);
     const rows = [];
