@@ -22,6 +22,7 @@ Coined by the human; recorded here so usage stays consistent.
 | **kinmark** | one heritable trait or tag; a readable mark carried by kin (a locus, an adhesion tag) |
 | **tidings** | signalling between lifelings — what is sent, not the sending (chemical, mechanical, neural) |
 | **lifeweb** | the whole ecosystem: everything alive plus what it lives on and off |
+| **lyf-gang** | one cell assembly — the creature-ish thing a uid names, whether or not it is still in one piece |
 
 ## Suggested additions — evo-devo
 

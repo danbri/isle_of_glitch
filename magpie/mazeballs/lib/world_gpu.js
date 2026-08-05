@@ -983,7 +983,12 @@ export class WorldGPU {
       //   k 0.5  197 alive, 123 lineages      k 10   42 alive
       //   k 1.5  156 alive, 108 lineages
       // 1.5 keeps a healthy population and a real drawdown penalty.
-      regrowCrowdK: 1.5,
+      // 0.5, not 1.5. The viability sweep was run at 600 bodies in bound 102;
+      // the live server runs 1200 in bound 74.4, which is roughly four times
+      // denser, and 1.5 there took the population 95 -> 32 and still falling.
+      // Tuning at one density and shipping to another is the same mistake the
+      // raw-headcount version made, one level up.
+      regrowCrowdK: 0.5,
       dt: brains.dt, ...params,
     };
     // Motes. Scattered by a hash of their index rather than laid on a lattice:

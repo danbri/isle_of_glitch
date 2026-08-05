@@ -50,7 +50,13 @@ const args = (() => {
   return out;
 })();
 
-const BOUND = args.bound || Math.max(40, Math.sqrt(args.beasts * args.cells) * 0.62);
+// Sized for the tissue the world will actually hold, not for the founder rings.
+// This used beasts * cells, i.e. 12 cells a body — but development builds ~34, so
+// the live world was carrying nearly three times the tissue the number was chosen
+// for. That is why crowding suppression tuned in a 600-body test world killed the
+// 1200-body server: the server was already far denser than anything measured.
+const BOUND = args.bound ||
+  Math.max(40, Math.sqrt(args.beasts * Math.max(args.cells, 34) / 0.5) / 2);
 
 console.log(`building ${args.beasts} bodies x ${args.cells} cells, bound ${BOUND.toFixed(0)}`);
 const built = buildBodies({
