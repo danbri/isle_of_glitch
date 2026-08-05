@@ -190,6 +190,10 @@ ${wgslStruct('W')}
 @group(0) @binding(1) var<storage, read_write> pos   : array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read_write> vel   : array<vec4<f32>>;  // xy=velocity, z=radius, w=next energy
 @group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=type, y=slot, z=body, w=body size
+// CONTINUOUS MATERIAL PROPERTIES. x=contractility, y=grippiness, zw spare.
+// The discrete 'ctype' above is a LABEL read off these for convenience; the
+// physics scales by the numbers, not by the label.
+@group(0) @binding(11) var<storage, read>      mat   : array<vec4<f32>>;
 // bond index and rest length packed into one vec2 — WebGPU guarantees only 8
 // storage buffers per stage and the crowding hash needs one, so the pair that
 // is always read together shares a binding. .x holds an i32 index bitcast into
@@ -301,8 +305,23 @@ fn resourceAt(p: vec2<f32>) -> f32 {
 // length, so the forces cancel exactly and the muscle can still shorten a bond.
 fn contractionOf(i: u32) -> f32 {
   let m = cmeta[i];
-  if (m.x == 2 && m.y >= 0) { return P.contract * act[u32(m.y)]; }
-  return 0.0;
+  if (m.y < 0) { return 0.0; }
+  // PROPORTIONAL TO THE CAPACITY, not gated on the label.
+  //
+  // This used to read 'if (m.x == 2)' — only cells whose argmax happened to
+  // land on MUSCLE contracted, and every other cell contributed exactly zero
+  // however contractile it was. Measured over 64 living genomes: 366.9 units
+  // of contractility existed in the tissue and 192.9 of it could be used, so
+  // the labelling threw away 47%. 351 cells had contract > 0.15 and were not
+  // muscle; 151 of those lost the argmax by less than 0.2. Eighteen of
+  // sixty-four bodies had no muscle at all and therefore could not move a
+  // bond, despite carrying contractile tissue.
+  //
+  // It is also the First Law violation the design documents keep naming: the
+  // kernel branched on a discrete type where primitives.md claims a
+  // continuum. A cell is now as strong as it is, and "muscle" goes back to
+  // being a description of a region of that continuum.
+  return P.contract * mat[i].x * act[u32(m.y)];
 }
 
 // A spatial hash over CONTINUOUS position. cellSize is a query radius, not a
@@ -877,7 +896,16 @@ export class WorldGPU {
       meta[i * 4 + 2] = bodyOf ? bodyOf[i] : -1;
       meta[i * 4 + 3] = cells.bodySize ? cells.bodySize[i] : 0;
     }
-    this.bPos = mk(pos); this.bVel = mk(vel); this.bMeta = mk(meta);
+    const matv = new Float32Array(n * 4);
+    for (let i = 0; i < n; i++) {
+      // Fall back to the label when an encoding has not supplied the numbers,
+      // so an old snapshot or a caller that predates this still behaves.
+      matv[i * 4] = cells.contractility ? cells.contractility[i]
+                  : (cells.ctype[i] === 2 ? 1 : 0);
+      matv[i * 4 + 1] = cells.grippiness ? cells.grippiness[i]
+                      : (cells.ctype[i] === 3 ? 1 : 0);
+    }
+    this.bPos = mk(pos); this.bVel = mk(vel); this.bMeta = mk(meta); this.bMat = mk(matv);
     // Pack bond index + rest length into the one vec2 buffer the shader binds.
     const bd = new Float32Array(cells.bond.length * 4);
     const bdI = new Int32Array(bd.buffer);
@@ -1072,6 +1100,7 @@ export class WorldGPU {
         { binding: 8, visibility: C, buffer: rw },   // spatial-hash occupancy
         { binding: 9, visibility: C, buffer: rw },   // motes: x, y, stock, demanders
         { binding: 10, visibility: C, buffer: rw },  // mote hash (built once)
+        { binding: 11, visibility: C, buffer: ro },  // per-cell material vector
       ],
     });
     const module = device.createShaderModule({ code: SHADER, label: 'world' });
@@ -1100,6 +1129,7 @@ export class WorldGPU {
         { binding: 8, resource: { buffer: this.bHash } },
         { binding: 9, resource: { buffer: this.bMote } },
         { binding: 10, resource: { buffer: this.bMoteHash } },
+        { binding: 11, resource: { buffer: this.bMat } },
       ],
     });
     this.groups = Math.ceil(this.n / WORKGROUP);
@@ -1253,11 +1283,12 @@ export class WorldGPU {
   }
 
   /** Write one organism's contiguous cell range back after a birth or death. */
-  writeCellRange(from, count, { pos, vel, meta, bond, brest, bstiff, bbrittle, energy }) {
+  writeCellRange(from, count, { pos, vel, meta, mat, bond, brest, bstiff, bbrittle, energy }) {
     const q = this.device.queue;
     if (pos) q.writeBuffer(this.bPos, from * 8, pos);
     if (vel) q.writeBuffer(this.bVel, from * 16, vel);
     if (meta) q.writeBuffer(this.bMeta, from * 16, meta);
+    if (mat) q.writeBuffer(this.bMat, from * 16, mat);
     if (bond || brest) {
       const nb = (bond ?? brest).length;
       const bd = new Float32Array(nb * 4), bdI = new Int32Array(bd.buffer);

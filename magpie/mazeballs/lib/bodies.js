@@ -72,6 +72,14 @@ export function buildBodies({
   // reading the same bytes as i32, sees -1. Two views disagreeing about whether
   // a cell is alive is exactly the kind of bug that hides.
   const ctype = new Int32Array(NC).fill(-1), cslot = new Int32Array(NC).fill(-1);
+  // CONTINUOUS MATERIAL PROPERTIES, alongside the discrete label.
+  //
+  // `ctype` is a description read off the tissue for the kernel's benefit; the
+  // capacities themselves are continuous and a cell has all of them at once.
+  // Founders get 1/0 so they reproduce the old behaviour exactly, but a
+  // developed cell writes its real contractility here and the kernel scales
+  // force by it rather than branching on the label.
+  const contractility = new Float32Array(NC), grippiness = new Float32Array(NC);
   // Which body each cell belongs to. Not a category — an identity, the same
   // fact the bond graph already encodes as a connected component, cached so a
   // cell can tell its own tissue from a stranger's in one comparison.
@@ -113,6 +121,8 @@ export function buildBodies({
       ctype[gi] = i % 4 === 0 ? CELL_SENSOR
                 : i % 4 === 1 ? CELL_MUSCLE
                 : i % 4 === 2 ? CELL_ANCHOR : CELL_NEURON;
+      contractility[gi] = ctype[gi] === CELL_MUSCLE ? 1 : 0;
+      grippiness[gi] = ctype[gi] === CELL_ANCHOR ? 1 : 0;
       body[gi] = o;
       bodySize[gi] = cells;
       cslot[gi] = arena.bindCell(o, i, gi);          // both directions of one relation
@@ -151,7 +161,8 @@ export function buildBodies({
 
   return {
     arena,
-    cells: { px, py, vx, vy, rad, ctype, cslot, body, bodySize, bond, brest, bondK },
+    cells: { px, py, vx, vy, rad, ctype, cslot, body, bodySize, bond, brest, bondK,
+             contractility, grippiness },
     // nCells is the ARENA width — every consumer (GPU buffers, frames, the
     // viewer) must agree on it, and it is no longer beasts*cells.
     meta: { beasts, cellsPerBeast: cells, nCells: NC, degree, bound, maxCells },

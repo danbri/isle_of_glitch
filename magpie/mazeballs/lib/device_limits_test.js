@@ -43,11 +43,11 @@ gpuTest('a world builds on a device capped to browser limits', async () => {
   const cap = (k, v) => Math.min(v, adapter.limits[k]);
   const device = await adapter.requestDevice({
     requiredLimits: {
-      maxStorageBuffersPerShaderStage: cap('maxStorageBuffersPerShaderStage', 10),
+      maxStorageBuffersPerShaderStage: cap('maxStorageBuffersPerShaderStage', 11),
     },
   });
-  assertEquals(device.limits.maxStorageBuffersPerShaderStage, 10,
-    'could not obtain a device capped at 10 storage buffers');
+  assertEquals(device.limits.maxStorageBuffersPerShaderStage, 11,
+    'could not obtain a device capped at 11 storage buffers');
 
   const errors = [];
   device.addEventListener?.('uncapturederror', e => errors.push(String(e.error?.message ?? e.error)));
