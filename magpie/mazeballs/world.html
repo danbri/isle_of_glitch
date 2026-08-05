@@ -79,6 +79,17 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
 #genomeBox td { text-align:center; width:1.6em; }
 #genomeBox .hd { color:#5f7a73; font-size:9px; }
 #genomeBox h4 { margin:.5rem 0 .2rem; color:#9fb8b0; font-size:10px; font-weight:normal; }
+
+#linkBox { position: fixed; top: .5rem; left: .5rem; z-index: 45;
+  font: 11px/1.4 ui-monospace, monospace; color: #9fb8b0;
+  background: #0b1211cc; border: 1px solid #24403a; border-radius: 3px;
+  padding: .2rem .45rem; display: flex; align-items: center; gap: .35rem; }
+#linkDot { width: 8px; height: 8px; border-radius: 50%; background: #6d8880; }
+#linkBox.live #linkDot { background: #4ade80; }
+#linkBox.stale #linkDot { background: #fbbf24; }
+#linkBox.dead #linkDot { background: #ef4444; }
+#linkBox.paused #linkDot { background: #60a5fa; }
+button.on::before { content: '\25CF\00a0'; opacity: .85; }
 </style>
 </head>
 <body>
@@ -169,6 +180,10 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
   </div>
 
   <!-- Only meaningful when watching a server; hidden in local sandbox mode. -->
+  <div id="linkBox">
+    <span id="linkDot"></span><span id="linkTxt">connecting…</span>
+  </div>
+
   <div id="inspPanel">
     <h2>Creature</h2>
     <div class="row">
@@ -652,6 +667,7 @@ const view = { field: true, bonds: true, paused: false, spf: 4, evolve: true,
 // universe, which is why two browsers never agreed about anything.
 const WATCH = new URLSearchParams(location.search).has('watch');
 let remoteMaxCells = null, remoteBound = null, remoteMotes = null, resyncing = false;
+let serverPaused = false;
 
 const canvas = $('c');
 
@@ -750,6 +766,12 @@ async function rebuild() {
       const st = await (await fetch('/status', { cache: 'no-store' })).json();
       beasts = st.beasts; cellsPer = st.cellsPerBeast;
       remoteMaxCells = st.maxCells; remoteBound = st.bound; remoteMotes = st.nMotes;
+      serverPaused = !!st.paused;
+      const pb = $('bSrvPause');
+      if (pb) {
+        pb.textContent = st.paused ? '\u25B6 paused — resume' : '\u23F8 running — pause';
+        pb.classList.toggle('on', !!st.paused);
+      }
       remoteParams = st;                       // the field the server is using
       $('sBeasts').value = beasts; $('vBeasts').textContent = beasts.toLocaleString();
       $('sCpb').value = cellsPer; $('vCpb').textContent = cellsPer;
@@ -1536,6 +1558,7 @@ function loop() {
         .then(r => r.arrayBuffer())
         .then(b => {
           applyFrame(b); sim.fetching = false; sim.misses = 0;
+          sim.lastFrameAt = performance.now();
           if (sim.wasLost) { sim.wasLost = false; note('reconnected'); }
         })
         .catch(e => {
@@ -1577,6 +1600,24 @@ function loop() {
 
   // Standing crop on its own slow clock: it changes at the speed of grazing,
   // not of frames, and it is ~130KB over the link.
+  // CONNECTION STATE, VISIBLE. The page had no way to say "I am showing you a
+  // number from four minutes ago" — it just sat there with a stale step count
+  // while the server was healthy, which is indistinguishable from a frozen world.
+  {
+    const box = $('linkBox'), txt = $('linkTxt');
+    if (box && txt) {
+      const age = sim.lastFrameAt ? (t - sim.lastFrameAt) / 1000 : Infinity;
+      let cls = 'live', msg = 'live';
+      if (serverPaused) { cls = 'paused'; msg = 'world PAUSED on server'; }
+      else if (!Number.isFinite(age)) { cls = 'dead'; msg = 'no frame yet'; }
+      else if (age > 15) { cls = 'dead'; msg = `no data for ${age.toFixed(0)}s — retrying`; }
+      else if (age > 3) { cls = 'stale'; msg = `stale ${age.toFixed(1)}s`; }
+      else { msg = `live · ${sim.serverSteps.toLocaleString()} steps`; }
+      if (box.className !== cls) box.className = cls;
+      if (txt.textContent !== msg) txt.textContent = msg;
+    }
+  }
+
   sim.sinceMotes += t - last;
   if (view.food && sim.sinceMotes > 1500) { sim.sinceMotes = 0; refreshMotes(); }
 
@@ -1744,8 +1785,12 @@ async function control(action, confirmText) {
     } else if (action === 'save') {
       note(`saved ${(j.bytes / 1048576).toFixed(1)} MB at step ${j.steps.toLocaleString()}`);
     } else {
+      // A button that is a STATE must show the state, not the verb. This said
+      // "pause world" whether the world was running or stopped, so the only way
+      // to know was to press it and see what happened.
+      serverPaused = !!j.paused;
       note(j.paused ? 'world paused' : 'world running');
-      $('bSrvPause').textContent = j.paused ? 'resume world' : 'pause world';
+      $('bSrvPause').textContent = j.paused ? '\u25B6 paused — resume' : '\u23F8 running — pause';
       $('bSrvPause').classList.toggle('on', !!j.paused);
     }
   } catch (e) {
