@@ -85,9 +85,33 @@ different scale: behaviour emerges from packed cells under physics, nothing decl
 So render life as a crowded lawful mass and let the viewer *read the machinery
 emerging* — do not label it. Aesthetic and philosophy are the same commitment.
 
-## Status
+## Status — first pass IMPLEMENTED in world.html
 
-Design target for the `world.html` renderer; to be implemented on the main code when
-the edit role is free (not on the reference demos). `swim.html` can host an early
-credited render study to check the grammar reads on moving evolved bodies before it
-touches the main renderer.
+Done:
+
+- **Muted cohesive palette.** Desaturated teal/amber/mauve/grey replacing the
+  previous near-neon. The categorical hue still says what a cell is, quietly.
+- **Soft matte fill + dark thin rim.** The fill shades slightly toward the rim so
+  a cell reads as volume without any specular trick — depth from value, not gloss.
+- **Mute the crowd, colour the story.** Saturation and brightness are held back
+  and spent on the animal under inspection, which lifts out of the field. The
+  renderer knows the selection through the assembly uid carried in the cell meta.
+- **LOD toward silhouette.** Cells grow and soften as you pull back so a body
+  merges into one shape rather than fizzing into specks; detail returns as you
+  descend. Tuned once already — the first attempt over-softened and dissolved the
+  units into haze, losing exactly what the dark rim is for. Goodsell's blobs are
+  soft AND discrete.
+- **Medium as substance.** The field renders as textured broth beneath the
+  bodies rather than a void.
+
+Not yet:
+
+- **True body-as-one-silhouette** (a metaball union of bonded cells with a single
+  outer rim). The LOD above approximates it; it does not compute it.
+- **Lineage as a subtle secondary tint.**
+- **Event accents** — a feeding contact, a division, a gripping foot. These are
+  the "colour the story" cases that most need saturation, and none is drawn yet.
+- **Wiring/bonds as a close-up-only feature.** Bonds still draw at all zooms.
+
+Credit line still to carry when this ships: *"Visual language informed by David S.
+Goodsell's The Machinery of Life."*

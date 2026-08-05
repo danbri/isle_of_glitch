@@ -361,6 +361,8 @@ struct Cam {
   driftY   : f32,
   morphRate: f32,
   showRes  : f32,
+  selUid   : i32,   // the animal being inspected; everything else is crowd
+  zoomPx   : f32,   // screen px per world unit, so detail can follow altitude
 };
 @group(0) @binding(0) var<uniform>       C     : Cam;
 @group(0) @binding(1) var<storage, read> pos   : array<vec2<f32>>;
@@ -492,25 +494,47 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
 
   // Activation swells the cell a little — an active cell reads as active even
   // before colour, which matters when zoomed out past where hue resolves.
-  let r = C.radius * (1.0 + 0.35 * abs(a));
+  // SILHOUETTE AT ALTITUDE. Zoomed out, individual cells are sub-pixel and the
+  // population reads as fizzing dots; grown slightly and softened, the cells of
+  // one body merge into a single shape and you can see how many CREATURES there
+  // are rather than how many specks. Detail returns as you descend.
+  let wide = 1.0 - smoothstep(1.5, 7.0, C.zoomPx);
+  let r = C.radius * (1.0 + 0.35 * abs(a)) * (1.0 + 0.45 * wide);
   let world = pos[ii] + corner * r;
 
   var o: VOut;
   o.p = vec4<f32>((world - C.center) * C.ndc, 0.0, 1.0);
   o.uv = corner;
 
-  let sensor = vec3<f32>(0.30, 0.82, 0.86);
-  let muscle = vec3<f32>(1.00, 0.58, 0.20);
-  let neuron = vec3<f32>(0.62, 0.70, 0.66);
-  let anchor = vec3<f32>(0.72, 0.42, 0.92);      // suckers: the feet
+  // MUTED, COHESIVE PALETTE — visual-language.md, after Goodsell. Hundreds of
+  // thousands of cells cannot all shout: legibility comes from restraint. These
+  // are desaturated earth tones that sit together, and the categorical hue still
+  // says what a cell IS, quietly.
+  let sensor = vec3<f32>(0.44, 0.72, 0.74);
+  let muscle = vec3<f32>(0.85, 0.55, 0.34);
+  let neuron = vec3<f32>(0.56, 0.61, 0.58);
+  let anchor = vec3<f32>(0.64, 0.50, 0.72);      // suckers: the feet
   var base = neuron;
   if (m.x == 1) { base = sensor; }
   if (m.x == 2) { base = muscle; }
   if (m.x == 3) { base = anchor; }
+
+  // COLOUR THE STORY. Saturation and brightness are held back for the animal
+  // under inspection, so one creature reads clearly out of a crowded field
+  // instead of every cell competing at full volume. m.z carries the assembly uid.
+  let picked = (C.selUid >= 0 && m.z == C.selUid);
+  if (picked) {
+    let hot = vec3<f32>(1.00, 0.72, 0.26);
+    base = mix(base * 1.75, hot, 0.30);
+  }
   o.tint = base;
   // Brighter and with more range, so an active cell reads as ALIVE rather than
   // as a slightly paler dot. Activation drives brightness superlinearly.
-  o.glow = clamp(0.42 + 1.5 * abs(a) * abs(a), 0.0, 2.2);
+  // The crowd glows gently; the tracked animal is allowed to be bright. Events
+  // pop against a living grey-green broth rather than a field of neon.
+  var g0 = clamp(0.55 + 0.55 * abs(a) * abs(a), 0.0, 1.35);
+  if (picked) { g0 = clamp(0.85 + 1.4 * abs(a) * abs(a), 0.0, 2.4); }
+  o.glow = g0;
   return o;
 }
 
@@ -531,12 +555,20 @@ fn fs(i: VOut) -> @location(0) vec4<f32> {
   // honest and more legible.
   let d = length(i.uv);
   if (d > 1.0) { discard; }
-  let a = 1.0 - smoothstep(0.86, 1.0, d);
-  // A dark rim, as viewer.html had. Without it a cluster of cells melts into one
-  // blob; with it a body reads as a set of distinct parts, which is what makes
-  // a bodyplan visible at all.
-  let rim = smoothstep(0.62, 0.94, d);
-  let col = mix(i.tint * i.glow, vec3<f32>(0.02, 0.06, 0.05), rim * 0.85);
+  // SOFT MATTE FILL, DARK THIN RIM. Goodsell's grammar: every unit is a soft blob
+  // with an outline, so shapes stay discrete even when packed. The fill is
+  // shaded very slightly toward the rim rather than flat, which reads as volume
+  // without any specular trickery — depth from value, not gloss.
+  let wide = 1.0 - smoothstep(1.5, 7.0, C.zoomPx);
+  // Softened only slightly at altitude. Over-softening dissolves the units into
+  // a haze, which loses the very thing the dark rim is for — Goodsell's blobs are
+  // soft AND discrete, not blurred together.
+  let edge = mix(0.90, 0.74, wide);
+  let a = 1.0 - smoothstep(edge, 1.0, d);
+  let shade = 1.0 - 0.28 * smoothstep(0.0, 1.0, d);
+  let rim = smoothstep(0.58, 0.95, d);
+  var col = i.tint * i.glow * shade;
+  col = mix(col, vec3<f32>(0.015, 0.045, 0.04), rim * mix(0.88, 0.72, wide));
   return vec4<f32>(col * a, a);
 }
 
@@ -865,7 +897,7 @@ async function rebuild() {
   const bBond = dev.createBuffer({ size: bondCapacity, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
   dev.queue.writeBuffer(bBond, 0, idx);
 
-  const bCam = dev.createBuffer({ size: 112, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  const bCam = dev.createBuffer({ size: 128, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
 
   const module = dev.createShaderModule({ code: RENDER, label: 'render' });
 
@@ -1536,7 +1568,7 @@ function applyFrame(ab) {
   for (let i = 0; i < n; i++) {
     meta[i * 4] = type[i];
     meta[i * 4 + 1] = type[i] >= 0 ? i : -1;
-    meta[i * 4 + 2] = 0;
+    meta[i * 4 + 2] = uid[i];
   }
   q.writeBuffer(sim.world.bMeta, 0, meta);
 
@@ -1646,6 +1678,8 @@ function writeCam() {
   dv.setFloat32(84, rp.driftY ?? 0, true);
   dv.setFloat32(88, rp.morphRate ?? 0, true);
   dv.setFloat32(92, view.food ? 1 : 0, true);
+  dv.setInt32(96, sel.uid, true);
+  dv.setFloat32(100, cam.zoom, true);
   dev.queue.writeBuffer(sim.bCam, 0, b);
 }
 
