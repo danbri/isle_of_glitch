@@ -1034,7 +1034,17 @@ async function rebuild() {
   if (WATCH) {
     document.title = 'Mazeballs — watching the shared world';
     $('bEvolve').textContent = 'remote'; $('bEvolve').disabled = true;
-    $('bPause').disabled = true; $('sSpf').disabled = true;
+    $('bPause').disabled = true;
+    // The local steps-per-frame slider drives a simulation this page is not
+    // running. Leaving it live meant dragging it appeared to do nothing, which
+    // reads as a broken control rather than an inapplicable one.
+    const spf = $('sSpf');
+    if (spf) {
+      spf.disabled = true;
+      spf.title = 'not used while watching — the server sets the pace (Server → world speed)';
+      const lab = spf.closest('.sl')?.querySelector('.lab span');
+      if (lab) lab.textContent = 'steps per frame (server-set)';
+    }
   }
   $('hAlive').textContent = evo.alive().toLocaleString();
 
@@ -1856,7 +1866,7 @@ try {
   setTimeout(() => tabChan.postMessage({ k: 'ping', id: myTab }), 2500);
 } catch { /* no BroadcastChannel: not important enough to care */ }
 
-const FRAME_MAGIC = 0x314d5257;
+const FRAME_MAGIC = 0x324d5257;   // 'RWM2' — live-cells-only layout
 function applyFrame(ab) {
   const dv = new DataView(ab);
   if (dv.getUint32(0, true) !== FRAME_MAGIC) return fail('bad frame from server');
@@ -1873,21 +1883,44 @@ function applyFrame(ab) {
     }
     return;
   }
-  // Offsets walked in the SAME ORDER the server writes them, rather than each
-  // hand-computed. They were hand-computed, and uid was read at HEAD + n*16 —
-  // which is where energy lives — so every assembly id was a float reinterpreted
-  // as an integer and nothing could ever be selected. Sequential `at` makes the
-  // layout one statement of fact instead of five chances to be wrong.
+  // LIVE CELLS ONLY, scattered back into full-width arrays.
+  //
+  // The frame used to carry all 72,000 arena slots when ~9,000 are alive, so 87%
+  // of a 2.2MB message was dead space. It now sends an index with each live cell
+  // and we expand here. The renderer still wants full-width buffers — it draws
+  // one instance per slot — so the arrays are allocated ONCE and refilled, with
+  // type reset to -1 first so a slot that died this frame collapses rather than
+  // lingering at its last position.
+  //
+  // Offsets are walked in the same order the server writes them. They were once
+  // hand-computed and uid was read where energy lives, so every assembly id was a
+  // float reinterpreted as an integer and nothing could be selected.
   const HEAD = 48;
   let at = HEAD;
-  const pos = new Float32Array(ab, at, n * 2); at += n * 8;
-  const act = new Float32Array(ab, at, n); at += n * 4;
-  const type = new Int32Array(ab, at, n); at += n * 4;
-  const energy = new Float32Array(ab, at, n); at += n * 4;
-  // Assembly uid per cell — which ANIMAL this is, stable across slot recycling
-  // and across a body being torn in half. Everything the inspector does hangs
-  // off this; a cell index would name a different creature a minute later.
-  const uid = new Int32Array(ab, at, n); at += n * 4;
+  const L = dv.getUint32(at, true); at += 4;
+  const idx = new Int32Array(ab, at, L); at += L * 4;
+  const lpos = new Float32Array(ab, at, L * 2); at += L * 8;
+  const lact = new Float32Array(ab, at, L); at += L * 4;
+  const ltype = new Int32Array(ab, at, L); at += L * 4;
+  const lenergy = new Float32Array(ab, at, L); at += L * 4;
+  const luid = new Int32Array(ab, at, L); at += L * 4;
+
+  if (!sim.expPos || sim.expPos.length !== n * 2) {
+    sim.expPos = new Float32Array(n * 2);
+    sim.expAct = new Float32Array(n);
+    sim.expType = new Int32Array(n);
+    sim.expEnergy = new Float32Array(n);
+    sim.expUid = new Int32Array(n);
+  }
+  const pos = sim.expPos, act = sim.expAct, type = sim.expType,
+        energy = sim.expEnergy, uid = sim.expUid;
+  type.fill(-1); uid.fill(-1); act.fill(0);
+  for (let k = 0; k < L; k++) {
+    const i = idx[k];
+    pos[i * 2] = lpos[k * 2]; pos[i * 2 + 1] = lpos[k * 2 + 1];
+    act[i] = lact[k]; type[i] = ltype[k];
+    energy[i] = lenergy[k]; uid[i] = luid[k];
+  }
   sim.lastPos = pos; sim.lastAct = act; sim.lastType = type;
   sim.lastUid = uid; sim.lastEnergy = energy;
   sampleSelected(pos, act, type, uid, n, dv.getUint32(8, true));

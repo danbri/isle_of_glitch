@@ -428,7 +428,7 @@ const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
 
 /* ----------------------------------------------------------------- framing */
 
-const FRAME_MAGIC = 0x314d5257;         // 'WRM1'
+const FRAME_MAGIC = 0x324d5257;   // 'RWM2' — layout changed to live-cells-only         // 'WRM1'
 const HEAD = 48;
 
 /**
@@ -486,7 +486,22 @@ async function buildFrame() {
   }
   const P32 = Int32Array.from(pairs);
 
-  const buf = new ArrayBuffer(HEAD + N * 8 + N * 4 + N * 4 + N * 4 + N * 4 + 4 + P32.byteLength);
+  // LIVE CELLS ONLY.
+  //
+  // The frame carried every arena slot — 72,000 of them — while typically ~9,000
+  // are alive. 87% of a 2.2MB payload was dead space, and that payload is what
+  // made a frame take 0.7s to build and 1.8s of world time to arrive, which in
+  // turn aliased the brain trace by thirty-two times. Sending an index with each
+  // live cell costs 4 bytes and removes seven eighths of the message.
+  const liveIdx = [];
+  for (let i = 0; i < N; i++) if (built.cells.ctype[i] >= 0) liveIdx.push(i);
+  const L = liveIdx.length;
+  // idx(4) + pos(8) + act(4) + type(4) + energy(4) + uid(4) per live cell.
+  // Sized for five of those six once, which threw only when the bond pairs
+  // overran the end — an error about a typed array length, nowhere near the
+  // arithmetic that caused it.
+  const PER = 4 + 8 + 4 + 4 + 4 + 4;
+  const buf = new ArrayBuffer(HEAD + 4 + L * PER + 4 + P32.byteLength);
   const dv = new DataView(buf);
   dv.setUint32(0, FRAME_MAGIC, true);
   dv.setUint32(4, N, true);
@@ -507,7 +522,13 @@ async function buildFrame() {
   dv.setFloat32(44, world.params.flowScale, true);
 
   let at = HEAD;
-  new Float32Array(buf, at, N * 2).set(pos); at += N * 8;
+  new DataView(buf).setUint32(at, L, true); at += 4;
+  new Int32Array(buf, at, L).set(Int32Array.from(liveIdx)); at += L * 4;
+  {
+    const p2 = new Float32Array(buf, at, L * 2);
+    for (let k = 0; k < L; k++) { const i = liveIdx[k]; p2[k * 2] = pos[i * 2]; p2[k * 2 + 1] = pos[i * 2 + 1]; }
+    at += L * 8;
+  }
   // Per-CELL activation: the browser draws cells, not slots, so resolve the
   // cell -> brain-slot indirection here rather than shipping the slot table.
   const cellAct = new Float32Array(N);
@@ -518,9 +539,17 @@ async function buildFrame() {
     const slot = built.cells.cslot[i];
     cellAct[i] = (t >= 0 && slot >= 0) ? act[slot] : 0;
   }
-  new Float32Array(buf, at, N).set(cellAct); at += N * 4;
-  new Int32Array(buf, at, N).set(cellType); at += N * 4;
-  new Float32Array(buf, at, N).set(energy); at += N * 4;
+  {
+    const a2 = new Float32Array(buf, at, L);
+    for (let k = 0; k < L; k++) a2[k] = cellAct[liveIdx[k]];
+    at += L * 4;
+    const t2 = new Int32Array(buf, at, L);
+    for (let k = 0; k < L; k++) t2[k] = cellType[liveIdx[k]];
+    at += L * 4;
+    const e2 = new Float32Array(buf, at, L);
+    for (let k = 0; k < L; k++) e2[k] = energy[liveIdx[k]];
+    at += L * 4;
+  }
 
   // ASSEMBLY IDENTITY — which animal a cell belongs to, stable across everything.
   //
@@ -535,12 +564,15 @@ async function buildFrame() {
   // so it survives a body being torn in half: both halves still name the same
   // animal. Genome identity would not do this — siblings and twins share a
   // genome and are different animals.
-  const cellUid = new Int32Array(N);
-  for (let i = 0; i < N; i++) {
-    const b = built.cells.body ? built.cells.body[i] : -1;
-    cellUid[i] = (built.cells.ctype[i] >= 0 && b >= 0) ? evo.uid[b] : -1;
+  {
+    const u2 = new Int32Array(buf, at, L);
+    for (let k = 0; k < L; k++) {
+      const i = liveIdx[k];
+      const b = built.cells.body ? built.cells.body[i] : -1;
+      u2[k] = b >= 0 ? evo.uid[b] : -1;
+    }
+    at += L * 4;
   }
-  new Int32Array(buf, at, N).set(cellUid); at += N * 4;
   new DataView(buf).setUint32(at, P32.length, true); at += 4;
   new Int32Array(buf, at, P32.length).set(P32);
   return new Uint8Array(buf);
