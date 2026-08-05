@@ -82,6 +82,46 @@ export const K = 6;
  */
 export const DEFAULT_EXTENT = 12;
 
+/**
+ * NEURON TIME CONSTANTS, and why the fast end matters more than it looks.
+ *
+ * The CTRNN integrates `state += (acc - state) * dt / tau`, so `dt / tau` is the
+ * fraction of the way a neuron moves toward its input each step. With dt = 0.015
+ * and the old floor of tau = 0.018 s that ratio reached **0.83**: the fastest
+ * neurons jumped almost the whole way to their input every step, which is not a
+ * leaky integrator at all — it is a comparator, and it produces square waves
+ * whatever the weights do. The scope showing hard-edged traces was not aliasing
+ * (it samples every step now, 33 Hz Nyquist); the dynamics really are that.
+ *
+ * A smooth curve needs dt/tau well below 1, and a gait usable by the body needs
+ * a period in the 0.3-3 Hz band the drag time constants allow (REGIME.md). Both
+ * point at the same place: keep the fast end near 0.05 s rather than 0.018 s.
+ *
+ * Expressed as centre and half-width in decades so the shape of the distribution
+ * is one decision rather than two magic endpoints.
+ */
+// MEASURED, not guessed. Sweeping the range over 24 developed bodies, sampling
+// every step (33 Hz Nyquist), with jumpiness = mean|step| / range:
+//
+//     0.018-1.80s   jumpy 1.000   med 33.3 Hz   in-band  1-13%
+//     0.063-1.00s   jumpy 1.000   med 33.3 Hz   in-band  1-16%
+//     0.126-1.26s   jumpy 0.065   med  1.72 Hz  in-band    34%
+//     0.239-1.51s   jumpy 0.025   med  0.33 Hz  in-band    49%
+//
+// It is a cliff, not a gradient. Above dt/tau ~ 0.12 every trace is a perfect
+// square wave flipping at the sample rate — the neurons were comparators. Below
+// it they are integrators, and the rhythm drops into the 0.3-3 Hz band the drag
+// time constants can actually convert into travel (REGIME.md).
+//
+// 0.126-1.26s is chosen over the smoother 0.239-1.51s because 1.72 Hz is a more
+// useful gait frequency than 0.33 Hz and it keeps a faster end for reflexes.
+export let TAU_MID = 0.4;
+export let TAU_DECADES = 0.5;        // -> 0.126 s .. 1.26 s, dt/tau 0.012 .. 0.119
+export function tauOf(x) { return TAU_MID * Math.pow(10, x * TAU_DECADES); }
+/** Experiment knob, not a world parameter — the right range is found by
+ *  sweeping it in situ, exactly as devo.js does for the synapse scale. */
+export function setTauRange(mid, decades) { TAU_MID = mid; TAU_DECADES = decades; }
+
 // --- reserved gene indices -------------------------------------------------
 // Maternal. These are BOUNDARY CONDITIONS: clamped from geometry every step,
 // never integrated, so they cannot be regulated away. The sketch's "000".
@@ -528,9 +568,7 @@ export function develop(genome, {
     cells.push({
       x: st.x, y: st.y, ap: st.ap, dv: st.dv,
       contract: out(2), sense: out(3), grip: out(4), stiff: out(5),
-      // tau spans a decade, log-spaced, matching devo.js so the CTRNN is
-      // comparable between the two encodings.
-      tau: 0.18 * Math.pow(10, out(6)),
+      tau: tauOf(out(6)),
       bias: out(7),
     });
   }

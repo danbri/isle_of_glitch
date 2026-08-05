@@ -33,7 +33,7 @@ import { Evolver } from '../lib/evolve.js';
 
 const args = (() => {
   const out = {
-    port: 8899, beasts: 3000, cells: 12, maxCells: 60, start: 0.25, bound: 0, spf: 6, tick: 250,
+    port: 8899, beasts: 3000, cells: 12, maxCells: 60, start: 0.25, bound: 0, spf: 1, tick: 250,
     host: '0.0.0.0',
     // Developmental encoding: 2 is the GRN-in-an-egg (DEVELOPMENT-2.md), 1 is
     // the old positional readout. Kept selectable so the two can be run against
@@ -150,7 +150,13 @@ const N = built.meta.nCells;
  * What it does not carry is the world: positions, velocities, energy, bonds,
  * cell types and the lineage bookkeeping. Those go alongside it.
  */
-const SNAP_MAGIC = 0x314e5257;                  // 'WRN1'
+// 'WRN2'. BUMPED when cmeta.x stopped being a bare cell type and became a
+// packed (type | contractility<<8 | grippiness<<16). A WRN1 snapshot loaded
+// into this build would decode every cell as having zero contractility —
+// bodies that look right, brains that run, and not one muscle in the world.
+// Silent wrong beats loud wrong every time, so refuse it by magic instead.
+const SNAP_MAGIC = 0x324e5257;                  // 'WRN2'
+const SNAP_MAGIC_V1 = 0x314e5257;               // 'WRN1' — pre-packed cmeta
 
 async function saveSnapshot(path) {
   const { pos, energy } = await world.readCells();
@@ -203,7 +209,12 @@ async function saveSnapshot(path) {
 async function loadSnapshot(path) {
   const raw = await Deno.readFile(path);
   const hv = new DataView(raw.buffer, raw.byteOffset);
-  if (hv.getUint32(0, true) !== SNAP_MAGIC) throw new Error('not a world snapshot');
+  const magic = hv.getUint32(0, true);
+  if (magic === SNAP_MAGIC_V1) throw new Error(
+    'this snapshot predates packed cell metadata (WRN1). Resuming it would give ' +
+    'every cell zero contractility — a world of bodies that cannot contract a ' +
+    'single bond, with nothing in the logs to say so. Start a fresh world.');
+  if (magic !== SNAP_MAGIC) throw new Error('not a world snapshot');
   const n = hv.getUint32(8, true);
   if (n !== N) throw new Error(`snapshot has ${n} cell slots, this world has ${N} — start with the same --beasts/--cells`);
   const arenaLen = hv.getUint32(36, true);
@@ -371,7 +382,15 @@ const trace = {
   uid: -1, slot: -1, cells: [],
   buf: new Float32Array(TRACE_ROWS * TRACE_COLS),
   step: new Int32Array(TRACE_COLS),
-  head: 0, filled: 0, everyN: 5, since: 0,
+  // SAMPLE EVERY STEP. At everyN 5 the scope sampled at 13 Hz, and neurons
+  // measured flipping at 7-19 Hz, so the traces were aliased — the jagged
+  // lines were the SCOPE, not the brain. This project has already published
+  // one retraction for a scope that aliased by 32x. Sampling every step gives
+  // 66 Hz, comfortably above the fastest neuron the genome can specify.
+  //
+  // The cost is one act readback per step, and it is paid ONLY while somebody
+  // has a trace attached (trace.uid >= 0), which is the loop's own guard.
+  head: 0, filled: 0, everyN: 1, since: 0,
 };
 
 function traceAttach(uid) {
@@ -857,6 +876,8 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       // later without it: the same world parameters mean different animals
       // under a positional readout than under a GRN.
       devo: evo.devoVersion, devoName: evo.devoName, eggExtent: evo.eggExtent,
+      trace: { uid: trace.uid, slot: trace.slot, cells: trace.cells.length,
+               filled: trace.filled, since: trace.since, everyN: trace.everyN },
       simStaleSince: staleSince || null,
       onDisk: await codeStamp(),
       // The resource field is what creatures chase and it drifts and morphs.

@@ -984,7 +984,28 @@ export class WorldGPU {
       // untouched while a body lives off the few motes beneath it. That is the
       // pressure that should make moving pay. Lowering the tax lets a creature
       // survive long enough to find a gait rather than dying before it can.
-      brainTax: 0.2, muscleCost: 0.55,
+      // BRAIN TAX 0.4, doubled, because the world was too rich for selection to
+      // act. At 0.2 the live world ran 137,610 steps per generation with mean
+      // energy climbing past 41 and essentially nothing starving: births were
+      // pinned to the arena cap so the birth rate could only equal the death
+      // rate, and the death rate was ~2.5 per thousand steps. Evolution needs
+      // differential death and there was barely any death at all.
+      //
+      // Swept over 300 bodies for 30,000 steps, deaths per 1000 steps:
+      //
+      //     baseline (0.2)              3.23   300 alive   gen 5
+      //     brainTax 0.4               39.17   300 alive   gen 9
+      //     brainTax 0.8                8.80    14 alive   collapse
+      //     brainTax 1.5                2.27     8 alive   dead
+      //     moteRegrow 2.5             24.83   231 alive   gen 10
+      //     brainTax 0.8 + regrow 3     2.33     8 alive   dead
+      //
+      // Twelve times the turnover with the population intact. Anything harsher
+      // extinguishes it, and the two levers do NOT compose — starving the world
+      // and taxing it together kills everything. Scarcity via the metabolic
+      // cost rather than via a death threshold: dying should be a consequence
+      // of the books not balancing, not a knob on dying.
+      brainTax: 0.4, muscleCost: 0.55,
       resScale: 0.35, resSeed: 91, eCap: 3.0, eFloor: -2.0,
       // hashCell was 3.2 while contact reaches only ~0.7, so a bucket held ~10
       // cells against a cap of 12 and overflowed constantly. An overflowing
