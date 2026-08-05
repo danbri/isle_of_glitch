@@ -1629,10 +1629,27 @@ function writeCam() {
   dev.queue.writeBuffer(sim.bCam, 0, b);
 }
 
+let reviveAt = 0;
 function loop() {
   raf = requestAnimationFrame(loop);
-  if (!sim) return;
   const t = performance.now();
+
+  // SELF-HEAL A DEAD PAGE. If a rebuild failed — a restart that took longer than
+  // expected, a dropped connection mid-build — `sim` is null and every later
+  // frame returned immediately, leaving a black screen and '-' for every stat
+  // until someone reloaded. Nothing retried, which is the actual defect: the
+  // server is usually fine and the page simply gave up.
+  if (!sim) {
+    if (WATCH && !document.hidden && t > reviveAt && !resyncing) {
+      reviveAt = t + 5000;
+      resyncing = true;
+      note('reconnecting…');
+      rebuild()
+        .then(() => { resyncing = false; note('reconnected'); })
+        .catch(() => { resyncing = false; });
+    }
+    return;
+  }
 
   if (WATCH) {
     // Pull frames from the server as fast as they arrive, never faster than one
@@ -1908,7 +1925,11 @@ async function control(action, confirmText) {
             return;
           }
         } catch { /* not up yet */ }
-        if (waited > 90000) { fail('server did not come back within 90s'); return; }
+        if (waited > 90000) {
+        // Hand back to the self-heal loop rather than declaring the page dead.
+        note('server slow to return — will keep retrying');
+        return;
+      }
         note(`waiting for server… ${(waited / 1000) | 0}s`);
         setTimeout(poll, 1500);
       };
