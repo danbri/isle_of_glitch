@@ -239,7 +239,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
       <button id="bDevo">unfold ▶</button>
       <button id="bDevoStage">stages</button>
     </div>
-    <canvas id="devoC" style="display:none"></canvas>
+    <canvas id="devoC"></canvas>
     <div id="devoInfo" class="note"></div>
     <div id="genomeBox" style="display:none"></div>
   </div>
@@ -1184,11 +1184,16 @@ function orderAlongAxis(idx, pos) {
 }
 
 function selectUid(uid, pos, type, uidArr, n) {
+  const changed = uid !== sel.uid;
   sel.uid = uid;
   if (uid >= 0) { storeFor(uid); refreshTrace(); }
   const box = $('scope');
   if (box) box.style.display = uid >= 0 ? '' : 'none';
   updateSelInfo();
+  // Unfold on selection rather than on a second click. Picking an animal and
+  // then pressing a button to see what built it is a sequencing rule the user
+  // should not have to know; the genome is the thing you selected it FOR.
+  if (changed && uid >= 0) { lastGenome = null; showDevo(); }
 }
 
 function updateSelInfo() {
@@ -1560,19 +1565,28 @@ let devoTimer = null;
 let devoStages = false;
 
 async function ensureDevo() {
-  if (!devo) devo = await import('./lib/devo.js');
+  // THE ENCODING THE WORLD ACTUALLY USES. This imported devo.js and developed
+  // at extent 3.0 — Dev 1.0's egg — while the world has been running Dev 2.0
+  // at extent 12. So the panel was faithfully rendering a body that does not
+  // exist: same genome, different developmental model, and it looked static
+  // across generations because a devo2 genome means nothing to devo1.
+  if (!devo) devo = await import(DEVO_VERSION === 1 ? './lib/devo.js' : './lib/devo2.js');
   return devo;
 }
 
 async function buildDevo(genomeArr) {
   const d = await ensureDevo();
   const g = Float32Array.from(genomeArr);
-  const grown = d.develop(g, { extent: 3.0 });
-  const whole = d.largestPiece(grown.cells, d.bond(grown.cells, { maxDegree: 4 }));
+  // Egg size travels with the encoding, exactly as evolve.js does it — hand
+  // devo2 an extent of 3 and it rebuilds the disc it exists to escape.
+  const grown = d.develop(g, { extent: d.DEFAULT_EXTENT ?? 3.0, maxCells: 60 });
+  // bond()/largestPiece()/morphology() are shared and live in devo.js.
+  const shared = await import('./lib/devo.js');
+  const whole = shared.largestPiece(grown.cells, shared.bond(grown.cells, { maxDegree: 4 }));
   devoRun = {
     g, all: grown.cells, cells: whole.cells, bonds: whole.bonds,
     aborted: grown.aborted, spent: grown.spent,
-    morph: d.morphology(whole.cells, whole.bonds),
+    morph: shared.morphology(whole.cells, whole.bonds),
   };
   return devoRun;
 }
@@ -1682,14 +1696,15 @@ async function showDevo() {
       lastGenome = j;
     } catch (e) { note('could not load genome: ' + e.message); return; }
   }
-  $('devoC').style.display = '';
   await buildDevo(lastGenome.g);
   devoT = 0;
   clearInterval(devoTimer);
   // Step through the laying-down ORDER. Not a clock: development is still
   // instantaneous in the world, and pretending otherwise here would be a lie.
+  // Ten times faster than it was. At 0.02 per 30 ms the unfold took 1.5 s,
+  // which is a long time to wait every time you click a different animal.
   devoTimer = setInterval(() => {
-    devoT = Math.min(1, devoT + 0.02);
+    devoT = Math.min(1, devoT + 0.2);
     drawDevo();
     if (devoT >= 1) clearInterval(devoTimer);
   }, 30);
