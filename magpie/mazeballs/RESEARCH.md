@@ -5869,3 +5869,127 @@ density. Viability at 600 cap over 22,500 steps:
 Shipped at 1.5. Whether it reverses the sessile outcome over deep time is NOT yet
 measured — the 29.4M-step run above is the control it needs to be compared with,
 and that comparison has not been run.
+
+---
+
+## Wave: the sensorimotor loop, priced (2026-08-06/07)
+
+Four hypotheses, three killed by measurement, one bug found. Recorded in the
+order they happened, because the wrong turns are the point.
+
+### 1. "Tidal income is fine." — WRONG, and it was self-inflicted
+
+Tidal income shipped as `tidalYield * grippiness(cell) * drag * |slip|²` —
+energy paid in direct proportion to a named capability. Measured hours later on
+the live world:
+
+```
+                     anchor  muscle  sensor  neuron | one-tissue  sense+move
+tidal income x grip   59.7%   26.2%   10.6%    3.4% |     54.8%       7.3%
+subsidy removed       10.0%   73.0%   12.0%    6.0% |     76.0%       3.9%
+```
+
+The anchor monoculture collapsed and a **muscle** monoculture replaced it. On
+the number that matters — bodies holding both a sensor and a muscle — it got
+worse. **The subsidy was never the disease; it only chose which tissue the world
+would monoculture on.**
+
+### 2. "Specialists starve, so give bodies a circulatory system." — REFUTED
+
+Energy running down the gradient between bonded cells, conserving, lossy, riding
+the existing bond loop. `absorbTradeoff 0.7` throughout the lower rows:
+
+```
+config                  alive   sense+move   one-tissue
+no sap                    472        40.5%          56%
+sap 0.9                   611        24.5%          73%
+no sap  + absorb 0.7        8        62.5%          25%
+sap 0.05 + absorb 0.7       8        12.5%          50%
+sap 0.15 + absorb 0.7     564         0.0%          82%
+sap 0.9  + absorb 0.7     543         0.7%          68%
+```
+
+The mechanism works exactly as designed — a **68× population rescue** at
+`absorb 0.7`, from 8 alive to 543 — and the evolutionary outcome is the opposite
+of the intent. Pooling means a body needs only NET income, so nothing forces it
+to keep uptake tissue either, and it converges on muscle at 93%. No middle rate
+exists. **Default 0**, kept as a switch because the rescue is a reusable fact.
+
+### 3. "The loop is broken at the wiring." — WRONG
+
+```
+bodies with both a sensor and a muscle: 2
+muscle cells in them: 6, incoming edges 34
+  edges arriving FROM a sensor:        11 (32.4%)
+  share of incoming |weight|:              32.5%
+  muscle cells with ANY sensor input:   6/6 (100%)
+```
+
+Connected, and proportionally so. The signal arrives.
+
+### 4. The bug: the world charged everyone for an organ almost nobody had
+
+Direct measurement first — live world, 497k steps, 5,053 bodies:
+
+```
+energy per cell     sensored 2.125 (n=525)  blind 2.293 (n=4528)  -0.168 +-0.067
+activation per cell sensored 0.850          blind 0.860           no difference
+body size           sensored 16.4           blind 14.1            +2.4
+```
+
+Sensored bodies measurably **poorer**, not a size confound, and behaving
+identically. Then the acuity distribution, which no selection process produces:
+
+```
+sensor cells      acuity 0.000   every one of them
+all other cells   acuity 0.682
+```
+
+`senseWork = senseCost * senseAcuity(cell)` was levied on **every** cell, while
+`sense()` computes a reading only for cells typed sensor. The world billed the
+whole population 0.17 energy/s for sharpness they could not use — a 43%
+surcharge on existing, against a `brainTax` of 0.4 — and the cells under the
+most selection to get it right drove acuity to zero, because for them it was a
+cost whose benefit could not cover it.
+
+**Charged where it is used:**
+
+```
+fixed (cost follows use)   sensors 0.97%   sensor acuity 0.869
+senseCost 0 (control)      sensors 0.05%   sensor acuity 0.000
+```
+
+Twenty times more sensors, and sharp. The control is the instructive half:
+making sensing **free** produces *fewer* sensors, because a free organ reading
+pure noise is worse than none — it feeds random numbers to a brain wired to act
+on them. Cheapness was never what sensors needed; affording **sharpness** was.
+Acuity was not evolvable before this.
+
+### Where that leaves it — from punished to neutral
+
+Worlds evolved from scratch under the fix:
+
+```
+fixed: cost follows use   sensors 19.80%  acuity 0.335
+                          sensored 1.605 (n=100)  blind 1.749 (n=343)
+                          diff -0.144 +-0.155   NO DIFFERENCE
+
+control: sensing free     sensors 71.06%  acuity 0.363
+                          sensored 1.673 (n=429)  blind 2.024 (n=102)
+                          diff -0.351 +-0.151   still a loss
+```
+
+**Sensing still does not pay.** The deficit is merely no longer distinguishable
+from noise, where on the live world it was a clear repeatable penalty. That is a
+smaller claim than "the loop works" and a far more useful state: a trait that is
+actively purged can never be improved; a trait at break-even can drift, persist,
+and be selected the moment a lineage finds a use. **The fix does not make
+perception valuable. It makes perception reachable.**
+
+### The standing blocker, stated precisely
+
+Every biotic coefficient in this world prices what happens **on contact** —
+contest rate, toughness, enzyme matching, the proximity radius. Nothing prices
+what happens **before** contact, which is the only place perception can act.
+Until knowing something can turn into eating something, a sensor is at best
+neutral — and organisms cannot be a pressure anything adapts *to*.
