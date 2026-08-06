@@ -1319,10 +1319,83 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   let mine = contractionOf(i);
 
   let base = i * P.bondK;
+  // ---- SAP: energy moves along bonds, and this is why guilds are possible ---
+  //
+  // THE BLOCKER THIS REMOVES. Until now every cell fed itself and nothing else:
+  // energy was gain minus costs, per cell, with the only transfer being contest
+  // BETWEEN bodies. Inside a body, nothing flowed. So a cell that specialised —
+  // committed its capacity to force, or to sensing, and therefore fed badly or
+  // not at all (absorbTradeoff) — simply starved, however useful it was to the
+  // body around it.
+  //
+  // Division of labour was therefore impossible BY CONSTRUCTION, not by tuning.
+  // Every cell had to be a generalist because every cell had to balance its own
+  // books, and the population's answer was the correct one: monoculture on
+  // whichever single self-sufficient strategy paid best. That is why
+  // absorbTradeoff 0.9 produced perfect four-way differentiation in a world of
+  // eight animals at generation zero — the specialists were viable right up
+  // until they had to eat.
+  //
+  // WHAT THIS IS, AND IS NOT. It is transport, not creation: energy runs DOWN
+  // the gradient between two bonded cells, so cell i gains exactly what cell j
+  // loses and total energy is untouched. Both endpoints evaluate the same
+  // expression from the same pre-step energies, so the pair agrees, exactly as
+  // contest does. A fraction is lost to heat, because moving anything costs
+  // something and a free circulatory system is a free lunch.
+  //
+  // It names no roles. Nothing is a "feeder" or a "mouth" — energy simply
+  // diffuses along whatever bonds exist, so a body that grows uptake tissue at
+  // its edge and muscle at its core is one arrangement evolution may find, and
+  // a uniform body is another. The kernel does not know the difference.
+  //
+  // MEASURED, AND IT DOES NOT DO WHAT IT WAS BUILT FOR. Default 0. Same world,
+  // 110 ticks, absorbTradeoff 0.7 throughout the lower rows:
+  //
+  //   config                  alive   sense+move   one-tissue
+  //   no sap                    472        40.5%          56%
+  //   sap 0.9                   611        24.5%          73%
+  //   no sap  + absorb 0.7        8        62.5%          25%
+  //   sap 0.05 + absorb 0.7       8        12.5%          50%
+  //   sap 0.15 + absorb 0.7     564         0.0%          82%
+  //   sap 0.35 + absorb 0.7      26         0.0%          81%
+  //   sap 0.9  + absorb 0.7     543         0.7%          68%
+  //
+  // The mechanism works exactly as claimed: at absorbTradeoff 0.7 the
+  // population goes from 8 alive to 543, a 68x rescue, because specialists stop
+  // starving. The EVOLUTIONARY OUTCOME is the opposite of the intent. Pooling
+  // means the body only needs net income, so nothing forces it to keep uptake
+  // tissue either, and it converges on the single tissue with the best net
+  // return — muscle, at 93%. There is no middle rate: every value tried gives
+  // either a dead world or a monoculture.
+  //
+  // WHAT THIS ACTUALLY SHOWS, and it is sharper than the "contraction is paid
+  // twice" guess it was built on: SENSING HAS NO PAYOFF. A sensor costs
+  // senseCost and, under a tradeoff, costs uptake as well, and returns
+  // information the body cannot convert into energy — motes are grazed by
+  // proximity rather than by being found, and contest fires on contact rather
+  // than on pursuit. So a sensor is pure cost and evolution deletes it, with or
+  // without a circulatory system. No amount of energy plumbing fixes an
+  // incentive that is not there.
+  //
+  // That is also the goal restated: if perceiving another organism cannot help
+  // you eat or avoid being eaten, then organisms are not a pressure anything
+  // can adapt TO, whatever the contest coefficients say.
+  //
+  // FREE, in the sense PHYSICS-2.md cares about: this rides the bond loop that
+  // already runs for springs and dampers. No new neighbourhood walk, no new
+  // buffer, no scattered read that was not already happening.
+  var sap = 0.0;
+
   for (var k = 0u; k < P.bondK; k = k + 1u) {
     let bd = bondD[base + k];
     let j = bitcast<i32>(bd.x);
     if (j < 0) { continue; }
+    if (P.sapRate > 0.0) {
+      // Down the gradient, and bounded by what the richer cell can actually
+      // give up in one step, so a large dt cannot overshoot into oscillation.
+      let dE = energy[u32(j)] - energy[i];
+      sap = sap + P.sapRate * dE;
+    }
     let d = minImage(pos[u32(j)] - p);
     let dist = max(length(d), 1e-3);
     // Symmetric: both endpoints derive the same rest length, so the pair's
@@ -1673,7 +1746,8 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // every step — the other independent reason contact was dead. Between this and
   // contactK being a denormal (see lib/uniform.js), cells have never collided.
   vel[i] = vec4<f32>(v.x, v.y, vel[i].z,
-    clamp(energy[i] + (gain + tidal - P.brainTax - work - senseWork - armourWork - terrainWork + taken) * P.dt, P.eFloor, P.eCap));
+    clamp(energy[i] + (gain + tidal - P.brainTax - work - senseWork - armourWork - terrainWork
+                       + taken + sap - abs(sap) * P.sapLoss) * P.dt, P.eFloor, P.eCap));
 }
 
 // Publish the energy physics computed. One extra dispatch, no extra buffer, and
@@ -1888,6 +1962,14 @@ export class WorldGPU {
       // mud channel earns on the order of what rich ground yields, and a cell
       // in still water earns nothing at all.
       tidalYield: 0.06,
+      // SAP. Rate at which energy runs down the gradient between two bonded
+      // cells, and the fraction lost to heat in doing so. Without this a
+      // specialised cell starves however useful it is, and division of labour
+      // is impossible by construction rather than merely unrewarded.
+      // DEFAULT OFF, because it was built on a hypothesis that measurement
+      // refuted. Kept, because what it DOES do is real and reusable — see the
+      // note at the bond loop.
+      sapRate: 0.0, sapLoss: 0.12,
       // Meander, crags, and riverbanks. warpAmt is in noise units, so 0.55 is
       // rather more than half a feature — enough to fold the field back over
       // itself, which is where the winding comes from.
