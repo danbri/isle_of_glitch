@@ -84,6 +84,30 @@ export function packSize(bodySize, tag, toughness, enzyme = 0.5) {
        | (q(tag) << 8) | (q(toughness) << 16) | (q7(enzyme) << 24);
 }
 export function packMeta(type, contractility, grippiness, apNorm = 0.5, senseTune = 0) {
+  // A SLOT THAT IS NOT A CELL MUST PACK NEGATIVE.
+  //
+  // Every kernel decides whether a slot is real with `cmeta[i].x < 0`, and the
+  // type went in as `type & 3`. For an unallocated slot ctype is -1, and
+  // -1 & 3 is 3 — a perfectly valid "anchor", with bit 31 clear, so the result
+  // was POSITIVE and the test never fired.
+  //
+  // Measured on a fresh 400-body world with maxCells 60: 24,000 slots, 4,800
+  // of them owned by an organism, and 24,000 that the kernel treated as living
+  // cells. EIGHTY PER CENT OF THE SIMULATION WAS PHANTOMS — bodiless anchor
+  // cells sitting in the spatial hash, colliding, grazing, being contested,
+  // and costing their full share of every neighbourhood walk.
+  //
+  // Two things that follow, both of which had been chased elsewhere:
+  //   - the physics was doing five times the work it needed to in any world
+  //     that had not yet filled its arena, which is every world at startup and
+  //     every experiment run at a small cap;
+  //   - any population statistic averaged over the arena was four fifths
+  //     frozen defaults, which is why trait means looked pinned near zero and
+  //     barely moved. The instrument was reading mostly nothing.
+  //
+  // vacate() has always written -1 explicitly, so DYING was handled and being
+  // BORN-INTO-A-FRESH-ARENA was not.
+  if (!(type >= 0)) return -1;
   const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
   // Bits 24-30: the cell's position along its own body axis, 0 head to 1 tail,
   // 7 bits. A travelling wave is a phase GRADIENT along that axis, so without
