@@ -765,7 +765,12 @@ const WATCH = new URLSearchParams(location.search).has('watch');
 // In watch mode the server owns development and this is only a label.
 const DEVO_VERSION = Number(new URLSearchParams(location.search).get('devo') ?? 2);
 let remoteMaxCells = null, remoteBound = null, remoteMotes = null, resyncing = false;
-let remoteDevo = null;
+// Capacities, for the living/capacity HUD readings. Plain module-scope vars and
+// NOT fields on `sim`: the status fetch that learns them runs during boot,
+// before sim is constructed, and assigning through an undefined sim throws
+// inside the boot path — which the page catches and reports as 'reconnected',
+// so it presents as a connection problem rather than as the TypeError it is.
+let remoteDevo = null, beastCap = null, cellCap = null;
 let serverPaused = false;
 let myPageVersion = null;
 let myBootId = null;
@@ -866,7 +871,7 @@ async function rebuild() {
   if (WATCH) {
     try {
       const st = await (await fetch('/status', { cache: 'no-store' })).json();
-      beasts = st.beasts; cellsPer = st.cellsPerBeast; sim.beastCap = st.beasts;
+      beasts = st.beasts; cellsPer = st.cellsPerBeast; beastCap = st.beasts;
       remoteMaxCells = st.maxCells; remoteBound = st.bound; remoteMotes = st.nMotes;
       serverPaused = !!st.paused;
       // The encoding the SERVER is running. In watch mode this page's own
@@ -1078,8 +1083,9 @@ async function rebuild() {
   // different things. There is no separate neuron count to show: every cell is
   // a CTRNN node, which is the whole brain-is-body claim, so a 'neurons' field
   // could only ever repeat 'cells'.
-  sim.cellCap = built.meta.nCells;
+  cellCap = built.meta.nCells;
   $('hCells').textContent = `–/${built.meta.nCells.toLocaleString()}`;
+  if (beastCap == null) beastCap = beasts;
   $('hSyn').textContent = syn.toLocaleString();
   $('hDevo').textContent = WATCH ? (remoteDevo ?? 'server') : (DEVO_VERSION === 2 ? 'devo2-grn' : 'devo1-positional');
   fitAll();
@@ -2022,8 +2028,8 @@ function applyFrame(ab) {
     sim.lastServerAt = now;
   }
   $('hStep').textContent = sim.serverSteps.toLocaleString();
-  $('hCells').textContent = `${L.toLocaleString()}/${(sim.cellCap ?? L).toLocaleString()}`;
-  $('hAlive').textContent = `${dv.getUint32(16, true).toLocaleString()}/${(sim.beastCap ?? '?')}`;
+  $('hCells').textContent = `${L.toLocaleString()}/${(cellCap ?? L).toLocaleString()}`;
+  $('hAlive').textContent = `${dv.getUint32(16, true).toLocaleString()}/${(beastCap ?? '?').toLocaleString?.() ?? beastCap}`;
   $('hBirths').textContent = dv.getUint32(20, true).toLocaleString();
   $('hDeaths').textContent = dv.getUint32(24, true).toLocaleString();
   $('hGen').textContent = dv.getUint32(28, true);
