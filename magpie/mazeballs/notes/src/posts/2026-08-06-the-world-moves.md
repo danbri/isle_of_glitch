@@ -15,6 +15,23 @@ relative to drift  p50 0.979   p90 18.200   max 70.970
 
 This morning the same measurement read p50 0.399, p90 0.919, max 2.1.
 
+<figure>
+  <img src="/isle_of_glitch/magpie/mazeballs/lab/assets/world-trails.svg"
+       alt="Trajectories of 1166 bodies over 64 seconds of world time. Most paths are short dark tangles; a few are long bright arcs crossing the frame.">
+  <figcaption>Every body's path over 64 s, tracked by uid so slot recycling cannot
+  draw a line between two unrelated animals. Brightest and thickest = furthest
+  travelled. The skew is the story: a scatter of long bright arcs against a field
+  of bodies going nowhere.</figcaption>
+</figure>
+
+<figure>
+  <img src="/isle_of_glitch/magpie/mazeballs/lab/assets/world-snapshot.svg"
+       alt="Vector snapshot of a 40-unit window of the world: clusters of cells joined by bonds, almost all of them muscle-coloured.">
+  <figcaption>The same world as a vector snapshot, rendered from the frame format
+  rather than screenshotted. It also shows the problem created by the fix: 94%
+  muscle. Making muscle strong AND cheap left no reason to be anything else.</figcaption>
+</figure>
+
 It is jiggly, not graceful. The median body covers a fifth of its own length in
 283 s; the p90 covers three and a half lengths and the fastest fourteen. That
 skew is the honest headline: **a minority move properly and most still shuffle.**

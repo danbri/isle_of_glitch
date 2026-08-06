@@ -96,6 +96,11 @@ export const WORLD_FIELDS = [
   // How much grip anchors a cell against motion in ANY direction, as opposed
   // to gripAniso which only resists sideways slip. See the traction block.
   ['gripHold', 'f32', 'grip resistance to translation along the body axis too'],
+
+  // How strongly force capacity crowds out feeding capacity. 0 = every cell
+  // eats equally regardless of what else it is; 1 = a cell at full
+  // contractility or grip cannot feed at all.
+  ['absorbTradeoff', 'f32', 'anticorrelation between force capacity and uptake'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */

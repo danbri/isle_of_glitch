@@ -26,6 +26,14 @@
   th { background:rgba(127,127,127,.08); }
   blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
                color:var(--dim); }
+  /* Figures. Plots here are generated as SVG straight from the wire format
+     rather than screenshotted, so they stay sharp at any width and weigh
+     almost nothing. */
+  img, svg.fig { max-width:100%; height:auto; display:block; border-radius:6px;
+                 border:1px solid var(--line); background:#070c0b; }
+  figure { margin:1.6rem 0; }
+  figcaption { color:var(--dim); font-size:.82rem; margin-top:.5rem;
+               font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
   .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
   ul.index { list-style:none; padding:0; }
   ul.index li { margin:.9rem 0; }

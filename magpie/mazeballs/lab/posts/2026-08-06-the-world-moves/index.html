@@ -26,6 +26,14 @@
   th { background:rgba(127,127,127,.08); }
   blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
                color:var(--dim); }
+  /* Figures. Plots here are generated as SVG straight from the wire format
+     rather than screenshotted, so they stay sharp at any width and weigh
+     almost nothing. */
+  img, svg.fig { max-width:100%; height:auto; display:block; border-radius:6px;
+                 border:1px solid var(--line); background:#070c0b; }
+  figure { margin:1.6rem 0; }
+  figcaption { color:var(--dim); font-size:.82rem; margin-top:.5rem;
+               font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
   .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
   ul.index { list-style:none; padding:0; }
   ul.index li { margin:.9rem 0; }
@@ -47,6 +55,21 @@ common drift       0.089            &lt;- the field is not doing it
 relative to drift  p50 0.979   p90 18.200   max 70.970
 </code></pre>
 <p>This morning the same measurement read p50 0.399, p90 0.919, max 2.1.</p>
+<figure>
+  <img src="/isle_of_glitch/magpie/mazeballs/lab/assets/world-trails.svg"
+       alt="Trajectories of 1166 bodies over 64 seconds of world time. Most paths are short dark tangles; a few are long bright arcs crossing the frame.">
+  <figcaption>Every body's path over 64 s, tracked by uid so slot recycling cannot
+  draw a line between two unrelated animals. Brightest and thickest = furthest
+  travelled. The skew is the story: a scatter of long bright arcs against a field
+  of bodies going nowhere.</figcaption>
+</figure>
+<figure>
+  <img src="/isle_of_glitch/magpie/mazeballs/lab/assets/world-snapshot.svg"
+       alt="Vector snapshot of a 40-unit window of the world: clusters of cells joined by bonds, almost all of them muscle-coloured.">
+  <figcaption>The same world as a vector snapshot, rendered from the frame format
+  rather than screenshotted. It also shows the problem created by the fix: 94%
+  muscle. Making muscle strong AND cheap left no reason to be anything else.</figcaption>
+</figure>
 <p>It is jiggly, not graceful. The median body covers a fifth of its own length in
 283 s; the p90 covers three and a half lengths and the fastest fourteen. That
 skew is the honest headline: <strong>a minority move properly and most still shuffle.</strong></p>

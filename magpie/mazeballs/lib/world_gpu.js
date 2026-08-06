@@ -922,11 +922,29 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // crowding discount: share was a stand-in for depletion, and depletion is
   // now real — many cells on one mote each get a smaller offer because the mote
   // divided what it had between them.
+  // FEEDING COMPETES WITH FORCE.
+  //
+  // Every cell used to feed equally whatever else it was, so there was no
+  // reason for a body to be anything but muscle — and once muscle was made
+  // strong and cheap the world became one: 94.2% muscle, 0.1% neuron, 1.5%
+  // sensor by generation 29. A monoculture of one tissue is not a body plan.
+  //
+  // The lawful fix is an ANTICORRELATION, which primitives.md already names as
+  // the mechanism that gives an axis teeth: a cell specialised for producing
+  // force is not also specialised for uptake. It is NOT a gate on cell type —
+  // branching feeding on ctype would be the same First Law violation that was
+  // just removed from contraction. A cell is as good at feeding as it is not
+  // committed elsewhere, continuously.
+  //
+  // What this buys, if it works: division of labour becomes necessary rather
+  // than optional. A body that wants to move must carry tissue that feeds it.
+  let commit = max(contractility(cmeta[i].x), grippiness(cmeta[i].x));
+  let absorb = clamp(1.0 - P.absorbTradeoff * commit, 0.0, 1.0);
   var gain = 0.0;
   if (P.nMotes > 0u) {
-    gain = grazeAt(np) / P.dt;
+    gain = absorb * grazeAt(np) / P.dt;
   } else {
-    gain = P.harvest * resourceAt(np) * share;
+    gain = absorb * P.harvest * resourceAt(np) * share;
   }
   let work = P.muscleCost * abs(mine);
   let taken = contest(i, np, abs(mine));
@@ -1177,6 +1195,19 @@ export class WorldGPU {
       waveAmp: 0.0, waveK: 6.0, waveOmega: 9.0, wavePhase: 1.5707963,
       // 0 keeps the previous behaviour exactly; sweep it before shipping.
       gripHold: 20.0,
+      // 0.4. Swept over 300 bodies for 50,000 steps, tissue census and viability:
+      //
+      //     0     alive 300   neu  2.6  sen  3.6  mus 92.9  anc 1.0
+      //     0.4   alive 300   neu  0.9  sen 29.4  mus 69.7  anc 0.0
+      //     0.7   alive  61   neu 26.2  sen 29.9  mus 37.8  anc 6.1
+      //     0.9   alive   8   dead
+      //
+      // At 0 the world is a muscle monoculture — 93%, with sensors at 3.6% —
+      // because feeding was free and force was cheap, so there was no reason to
+      // be anything else. 0.4 takes sensors to 29% with the population intact.
+      // 0.7 buys genuine four-way differentiation and the world cannot carry it
+      // yet; that is the interesting direction once the economy is richer.
+      absorbTradeoff: 0.4,
       dt: brains.dt, ...params,
     };
     // Motes. Scattered by a hash of their index rather than laid on a lattice:
