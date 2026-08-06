@@ -49,7 +49,7 @@ struct Params {
   n  : u32,          // neuron count
   k  : u32,          // incoming edges per neuron
   dt : f32,
-  pad: f32,
+  fanNorm : f32,       // reuses the slot that was padding — see integrate()
 };
 
 @group(0) @binding(0) var<uniform>             P      : Params;
@@ -82,13 +82,33 @@ fn activate(@builtin(global_invocation_id) gid : vec3<u32>) {
 fn integrate(@builtin(global_invocation_id) gid : vec3<u32>) {
   let i = gid.x;
   if (i >= P.n) { return; }
-  var acc = ext[i];
+  var syn = 0.0;
+  var live = 0.0;
   let base = i * P.k;
   for (var k : u32 = 0u; k < P.k; k = k + 1u) {
     let s = esrc[base + k];
     // -1 marks an unused edge slot: fixed degree, sparse content.
-    if (s >= 0) { acc = acc + ew[base + k] * act[u32(s)]; }
+    if (s >= 0) { syn = syn + ew[base + k] * act[u32(s)]; live = live + 1.0; }
   }
+  // FAN-IN NORMALISATION, off by default.
+  //
+  // synapse() returns SYN_RANGE * tanh(sum), so evolution drives the inner sum
+  // large and every edge ends up pinned at the rail whatever SYN_RANGE is —
+  // lowering the ceiling only lowers the rail. With K edges the summed drive
+  // is then K times that, which is why states measure 16-62 against a tanh
+  // that saturates by 3, and why fixing tau still left 84% of cells railed.
+  //
+  // Dividing by the number of edges that actually contributed makes a
+  // well-connected neuron no more driven than a sparse one by arithmetic
+  // alone. The external input is NOT divided — it is a sense reading, not a
+  // synapse.
+  //
+  // This was tried and rejected once before, on the grounds that it pushed the
+  // network into the convergent regime. That was measured when the tau floor
+  // made every fast neuron a comparator, so it is being re-tested rather than
+  // trusted.
+  if (P.fanNorm > 0.0 && live > 0.0) { syn = syn / live; }
+  let acc = ext[i] + syn;
   var nx = state[i] + (acc - state[i]) * P.dt * invTau[i];
   // SELF-HEALING. NaN is absorbing: once a state is non-finite every neuron
   // downstream of it becomes non-finite too, and the whole arena is dead within
@@ -135,9 +155,16 @@ export async function requestDeviceFor({ neurons, degree }, adapter = null) {
     requiredLimits: {
       maxStorageBufferBindingSize: cap('maxStorageBufferBindingSize', need),
       maxBufferSize: cap('maxBufferSize', need),
-      // The world shader needs 11: the 8 cell buffers plus mote positions,
-      // mote state and the mote hash. 8 is only the guaranteed floor; every
-      // device this runs on reports far more (31 here).
+      // The world shader uses 10 storage buffers (binding 0 is the uniform).
+      // TEN IS A CEILING, NOT A BUDGET TO SPEND: Chrome caps the compute stage
+      // at 10 and the WebGPU floor is 8, so an eleventh binding cannot be
+      // created on the browsers world.html has to run in. device_limits_test
+      // enforces it and says what to do instead — pack two buffers together.
+      //
+      // Worth knowing WHY that test exists: exceeding this does not throw. The
+      // bind group layout is silently invalid, the pipeline becomes a no-op,
+      // the world stops stepping and every activation reads 0 — which presents
+      // as a dead brain, nowhere near the limit that caused it.
       maxStorageBuffersPerShaderStage: cap('maxStorageBuffersPerShaderStage', 10),
     },
   });
@@ -163,6 +190,7 @@ export class BrainArenaGPU {
   constructor(device, arena) {
     this.device = device;
     this.N = arena.N; this.K = arena.K; this.dt = arena.dt;
+    this.fanNorm = arena.fanNorm ?? 0;
     this.steps = arena.steps;
 
     const S = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC;
@@ -183,7 +211,8 @@ export class BrainArenaGPU {
     const params = new ArrayBuffer(16);
     const dv = new DataView(params);
     dv.setUint32(0, this.N, true); dv.setUint32(4, this.K, true);
-    dv.setFloat32(8, this.dt, true); dv.setFloat32(12, 0, true);
+    dv.setFloat32(8, this.dt, true);
+    dv.setFloat32(12, this.fanNorm ?? 0, true);
     this.bParams = device.createBuffer({
       size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });

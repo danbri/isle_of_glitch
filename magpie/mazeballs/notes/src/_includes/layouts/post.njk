@@ -1,0 +1,12 @@
+---
+layout: layouts/base.njk
+---
+<article>
+  <h1>{{ title }}</h1>
+  <p class="meta">
+    {{ page.date | readableDate }}
+    {%- if step %} · step {{ step }}{% endif %}
+    {%- if tags %} · {{ tags | join(", ") }}{% endif %}
+  </p>
+  {{ content | safe }}
+</article>

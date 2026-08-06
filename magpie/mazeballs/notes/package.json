@@ -1,0 +1,13 @@
+{
+  "name": "mazeballs-notes",
+  "version": "1.0.0",
+  "description": "Lab notebook for the mazeballs evo-devo world",
+  "type": "module",
+  "scripts": {
+    "start": "eleventy --serve",
+    "build": "eleventy"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.0.0"
+  }
+}

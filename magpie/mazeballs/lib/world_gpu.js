@@ -60,6 +60,28 @@ const WORKGROUP = 256;
 export const CELL_NEURON = 0;
 export const CELL_SENSOR = 1;
 export const CELL_MUSCLE = 2;
+
+/**
+ * Pack a cell's label and its continuous capacities into one i32.
+ *
+ * Chrome caps a compute stage at 10 storage buffers and the world uses all 10,
+ * so the material vector cannot have a binding of its own — see
+ * device_limits_test.js, which enforces that and tells you to pack instead.
+ * Type in the low 2 bits, contractility and grippiness as 8-bit fixed point.
+ *
+ * The sign bit is never set, so `meta.x < 0` still means "vacated slot"
+ * everywhere in the shader. Dead cells are written as -1 as before.
+ */
+export function packMeta(type, contractility, grippiness, apNorm = 0.5) {
+  const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
+  // Bits 24-30: the cell's position along its own body axis, 0 head to 1 tail,
+  // 7 bits. A travelling wave is a phase GRADIENT along that axis, so without
+  // a per-cell axial coordinate the kernel cannot express one at all. Bit 31
+  // stays clear so the '< 0' vacated-slot checks are untouched.
+  const a = Math.max(0, Math.min(127, Math.round((apNorm || 0) * 127)));
+  return (type & 3) | (q(contractility) << 8) | (q(grippiness) << 16) | (a << 24);
+}
+
 export const CELL_ANCHOR = 3;
 
 /**
@@ -189,7 +211,27 @@ ${wgslStruct('W')}
 @group(0) @binding(0) var<uniform>             P     : W;
 @group(0) @binding(1) var<storage, read_write> pos   : array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read_write> vel   : array<vec4<f32>>;  // xy=velocity, z=radius, w=next energy
-@group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=type, y=slot, z=body, w=body size
+@group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=packed, y=slot, z=body, w=body size
+
+// THE MATERIAL VECTOR, PACKED INTO cmeta.x.
+//
+// A cell's continuous capacities live in the same i32 as its label because
+// there is no room for another binding: Chrome caps the compute stage at 10
+// storage buffers and the world already uses all 10 (device_limits_test
+// enforces it). So: type in the low 2 bits, contractility and grippiness as
+// 8-bit fixed point above them.
+//
+// The sign bit is never set for a live cell, so the '< 0' vacated-slot checks
+// throughout this shader keep working unchanged. Max packed value is
+// 0xFFFF03, comfortably positive.
+//
+// 8 bits is 1/255 resolution on force, which is far finer than anything the
+// physics distinguishes.
+fn cellType(m: i32) -> i32 { return m & 3; }
+fn contractility(m: i32) -> f32 { return f32((m >> 8u) & 255) / 255.0; }
+fn grippiness(m: i32) -> f32 { return f32((m >> 16u) & 255) / 255.0; }
+// Position along the body axis, 0 head to 1 tail. See packMeta.
+fn axialPos(m: i32) -> f32 { return f32((m >> 24u) & 127) / 127.0; }
 // bond index and rest length packed into one vec2 — WebGPU guarantees only 8
 // storage buffers per stage and the crowding hash needs one, so the pair that
 // is always read together shares a binding. .x holds an i32 index bitcast into
@@ -301,8 +343,36 @@ fn resourceAt(p: vec2<f32>) -> f32 {
 // length, so the forces cancel exactly and the muscle can still shorten a bond.
 fn contractionOf(i: u32) -> f32 {
   let m = cmeta[i];
-  if (m.x == 2 && m.y >= 0) { return P.contract * act[u32(m.y)]; }
-  return 0.0;
+  if (m.y < 0) { return 0.0; }
+  // PROPORTIONAL TO THE CAPACITY, not gated on the label.
+  //
+  // This used to read 'if (m.x == 2)' — only cells whose argmax happened to
+  // land on MUSCLE contracted, and every other cell contributed exactly zero
+  // however contractile it was. Measured over 64 living genomes: 366.9 units
+  // of contractility existed in the tissue and 192.9 of it could be used, so
+  // the labelling threw away 47%. 351 cells had contract > 0.15 and were not
+  // muscle; 151 of those lost the argmax by less than 0.2. Eighteen of
+  // sixty-four bodies had no muscle at all and therefore could not move a
+  // bond, despite carrying contractile tissue.
+  //
+  // It is also the First Law violation the design documents keep naming: the
+  // kernel branched on a discrete type where primitives.md claims a
+  // continuum. A cell is now as strong as it is, and "muscle" goes back to
+  // being a description of a region of that continuum.
+  // IMPOSED WAVE, an experiment knob and not a world parameter.
+  //
+  // swim-verify.js moves a chain 36 body-lengths with a travelling wave,
+  // sin(axial*k - omega*t), so the physics can certainly locomote. Driving
+  // REAL developed bodies with the same wave isolates which half is missing:
+  // if they move, the body plan is fine and the brain is the blocker; if they
+  // do not, no controller would have helped.
+  //
+  // waveAmp 0 is off, which is the shipped world.
+  if (P.waveAmp > 0.0) {
+    return P.contract * contractility(m.x) * P.waveAmp *
+           sin(axialPos(m.x) * P.waveK - P.worldTime * P.waveOmega);
+  }
+  return P.contract * contractility(m.x) * act[u32(m.y)];
 }
 
 // A spatial hash over CONTINUOUS position. cellSize is a query radius, not a
@@ -591,7 +661,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   let m = cmeta[i];
   let slot = m.y;
   if (slot < 0 || m.x < 0) { return; }
-  if (m.x != 1) { ext[u32(slot)] = 0.0; return; }
+  if (cellType(m.x) != 1) { ext[u32(slot)] = 0.0; return; }
 
   let p = pos[i];
   // Two things a cell can actually feel locally: how fast the medium is moving
@@ -685,14 +755,24 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     // Every cell has a little purchase on the world; an ANCHOR cell has far
     // more, and modulates it with its activation so it can let go.
     var grab = P.gripBase;
-    if (me2.x == 3) { grab = P.gripAnchor; }
+    // Grip still keys off the LABEL, deliberately: making it continuous too
+    // would change traction and contraction in the same commit and neither
+    // effect could be attributed. grippiness(me2.x) is packed and waiting.
+    if (cellType(me2.x) == 3) { grab = P.gripAnchor; }
     // ACTIVELY PHASED, which is the whole point. A cell raises and drops its grip
     // with its activation, so a brain can grip on the power stroke and release on
     // recovery. Constant grip nets zero however strong it is — the scallop
     // theorem — and primitives.md is explicit that the world affords while the
     // brain earns.
     if (me2.y >= 0) {
-      let a = act[u32(me2.y)];
+      // Under the imposed-wave diagnostic the GRIP is driven by the same wave
+      // as the muscle, offset by wavePhase — grip while contracting, release
+      // while extending. That is the ratchet stated explicitly, so the body
+      // plan can be tested against an ideal gait rather than a hopeful one.
+      var a = act[u32(me2.y)];
+      if (P.waveAmp > 0.0) {
+        a = sin(axialPos(me2.x) * P.waveK - P.worldTime * P.waveOmega + P.wavePhase);
+      }
       grab = grab * (1.0 + P.gripMod * select(0.0, a, abs(a) < 1e6));
     }
     grab = max(grab, 0.0);
@@ -704,18 +784,34 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     // drag, which is what this used to be, cancels it exactly.
     var axis = vec2<f32>(0.0, 0.0);
     {
+      // THE BODY AXIS, taken along the head-tail gradient.
+      //
+      // This used to take the FIRST TWO bonds found in slot order. In a chain
+      // those are the two chain neighbours and it is exactly right — which is
+      // why the standalone swim demo works. In a hex body of degree 4 to 6 the
+      // first two bonds are an arbitrary local lattice direction, so every
+      // cell's drag anisotropy pointed a different, meaningless way and the
+      // anisotropy averaged to nothing across the body. Anisotropic drag can
+      // only convert deformation into travel if it is anisotropic about
+      // something the body agrees on.
+      //
+      // Each cell carries its position along the body's own axis (packMeta), so
+      // the neighbours with the lowest and highest axial position give the
+      // local anterior-posterior direction directly.
       let ab = i * P.bondK;
-      var n1 = -1;
-      var n2 = -1;
+      var loN = -1; var hiN = -1;
+      var loA = 2.0; var hiA = -1.0;
       for (var k = 0u; k < P.bondK; k = k + 1u) {
         let nj = bitcast<i32>(bondD[ab + k].x);
         if (nj < 0) { continue; }
-        if (n1 < 0) { n1 = nj; } else if (n2 < 0) { n2 = nj; }
+        let na = axialPos(cmeta[u32(nj)].x);
+        if (na < loA) { loA = na; loN = nj; }
+        if (na > hiA) { hiA = na; hiN = nj; }
       }
-      if (n1 >= 0 && n2 >= 0) {
-        axis = minImage(pos[u32(n2)] - pos[u32(n1)]);
-      } else if (n1 >= 0) {
-        axis = minImage(pos[u32(n1)] - p);
+      if (loN >= 0 && hiN >= 0 && loN != hiN) {
+        axis = minImage(pos[u32(hiN)] - pos[u32(loN)]);
+      } else if (loN >= 0) {
+        axis = minImage(pos[u32(loN)] - p);
       }
     }
     let alen = length(axis);
@@ -728,8 +824,26 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
       let pxv = vec2<f32>(-ax.y, ax.x);
       var vA = dot(v, ax);
       var vP = dot(v, pxv);
-      let kA = P.fricK * (P.slipBase + grit);
-      let kP = P.fricK * (P.slipBase + (1.0 + P.gripAniso * grab) * grit);
+      // GRIP ANCHORS, it does not merely resist sideways slip.
+      //
+      // grab used to appear ONLY in kP, so a gripping cell slid along its own
+      // axis exactly as freely as a released one. There was therefore nothing
+      // to pull against and no ratchet: anchor-extend-release could not work
+      // however well it was phased. Measured consequence — driving real bodies
+      // with a PERFECT imposed travelling wave moved them p50 0.012 units in
+      // 300 s, no better than noise, at every frequency and wavelength tried.
+      // The controller was never the blocker.
+      //
+      // hold raises drag in BOTH directions with grip, so a gripped cell is
+      // planted and a released one slides. Anisotropy still rides on top, so
+      // undulation keeps working too. Dissipative either way — an exponential
+      // decay cannot add energy whatever the coefficients — and the PASSIVE
+      // case still nets zero, because constant grip is reciprocal and the
+      // scallop theorem eats it. Only actively phased grip ratchets, which is
+      // the affordance-not-forcing rule primitives.md insists on.
+      let hold = 1.0 + P.gripHold * grab;
+      let kA = P.fricK * (P.slipBase + hold * grit);
+      let kP = P.fricK * (P.slipBase + hold * (1.0 + P.gripAniso * grab) * grit);
       vA = vA * exp(-kA * P.dt);
       vP = vP * exp(-kP * P.dt);
       v = ax * vA + pxv * vP;
@@ -808,11 +922,29 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // crowding discount: share was a stand-in for depletion, and depletion is
   // now real — many cells on one mote each get a smaller offer because the mote
   // divided what it had between them.
+  // FEEDING COMPETES WITH FORCE.
+  //
+  // Every cell used to feed equally whatever else it was, so there was no
+  // reason for a body to be anything but muscle — and once muscle was made
+  // strong and cheap the world became one: 94.2% muscle, 0.1% neuron, 1.5%
+  // sensor by generation 29. A monoculture of one tissue is not a body plan.
+  //
+  // The lawful fix is an ANTICORRELATION, which primitives.md already names as
+  // the mechanism that gives an axis teeth: a cell specialised for producing
+  // force is not also specialised for uptake. It is NOT a gate on cell type —
+  // branching feeding on ctype would be the same First Law violation that was
+  // just removed from contraction. A cell is as good at feeding as it is not
+  // committed elsewhere, continuously.
+  //
+  // What this buys, if it works: division of labour becomes necessary rather
+  // than optional. A body that wants to move must carry tissue that feeds it.
+  let commit = max(contractility(cmeta[i].x), grippiness(cmeta[i].x));
+  let absorb = clamp(1.0 - P.absorbTradeoff * commit, 0.0, 1.0);
   var gain = 0.0;
   if (P.nMotes > 0u) {
-    gain = grazeAt(np) / P.dt;
+    gain = absorb * grazeAt(np) / P.dt;
   } else {
-    gain = P.harvest * resourceAt(np) * share;
+    gain = absorb * P.harvest * resourceAt(np) * share;
   }
   let work = P.muscleCost * abs(mine);
   let taken = contest(i, np, abs(mine));
@@ -872,7 +1004,9 @@ export class WorldGPU {
       // was 0 for every cell in every run, and `touch = myR + otherR` was 0 —
       // one of the two independent reasons contact has never done anything.
       vel[i * 4 + 2] = cells.rad ? cells.rad[i] : 0.34;
-      meta[i * 4] = cells.ctype[i];
+      meta[i * 4] = packMeta(cells.ctype[i],
+        cells.contractility ? cells.contractility[i] : (cells.ctype[i] === 2 ? 1 : 0),
+        cells.grippiness ? cells.grippiness[i] : (cells.ctype[i] === 3 ? 1 : 0));
       meta[i * 4 + 1] = cells.cslot[i];
       meta[i * 4 + 2] = bodyOf ? bodyOf[i] : -1;
       meta[i * 4 + 3] = cells.bodySize ? cells.bodySize[i] : 0;
@@ -908,7 +1042,12 @@ export class WorldGPU {
       // selective advantage. 0.3 keeps flow as a genuine force to anchor against
       // and be swept by, while making self-propulsion clearly worth having.
       flowStr: 0.3, drag: 1.6, springK: 90.0,
-      contract: 0.45, seed: 3, senseGain: 2.0, damp: 0.986, bound: 64.0,
+      // MUSCLE FORCE, raised 11x. Measured with an imposed gait over 300 s,
+      // median displacement against contract: 0.45 -> 0.067, 2.5 -> 0.199,
+      // 5 -> 0.490, 10 -> 0.891, 20 -> 1.594. Bodies end at 0.82-0.97 of their
+      // starting span with at most 2 of 30 torn, so this is not the
+      // dismemberment artefact this project has retracted before.
+      contract: 5.0, seed: 3, senseGain: 2.0, damp: 0.986, bound: 64.0,
       // Calibrated against the density the world actually runs at. A 3x3 bucket
       // neighbourhood holds ~34 cells at the starting population, so crowdK
       // 0.012 discounts a shared patch to ~0.79 rather than erasing it: at
@@ -929,7 +1068,38 @@ export class WorldGPU {
       // untouched while a body lives off the few motes beneath it. That is the
       // pressure that should make moving pay. Lowering the tax lets a creature
       // survive long enough to find a gait rather than dying before it can.
-      brainTax: 0.2, muscleCost: 0.55,
+      // BRAIN TAX 0.4, doubled, because the world was too rich for selection to
+      // act. At 0.2 the live world ran 137,610 steps per generation with mean
+      // energy climbing past 41 and essentially nothing starving: births were
+      // pinned to the arena cap so the birth rate could only equal the death
+      // rate, and the death rate was ~2.5 per thousand steps. Evolution needs
+      // differential death and there was barely any death at all.
+      //
+      // Swept over 300 bodies for 30,000 steps, deaths per 1000 steps:
+      //
+      //     baseline (0.2)              3.23   300 alive   gen 5
+      //     brainTax 0.4               39.17   300 alive   gen 9
+      //     brainTax 0.8                8.80    14 alive   collapse
+      //     brainTax 1.5                2.27     8 alive   dead
+      //     moteRegrow 2.5             24.83   231 alive   gen 10
+      //     brainTax 0.8 + regrow 3     2.33     8 alive   dead
+      //
+      // Twelve times the turnover with the population intact. Anything harsher
+      // extinguishes it, and the two levers do NOT compose — starving the world
+      // and taxing it together kills everything. Scarcity via the metabolic
+      // cost rather than via a death threshold: dying should be a consequence
+      // of the books not balancing, not a knob on dying.
+      // MUSCLE COST SCALES WITH MUSCLE FORCE, or the world cannot pay for it.
+      // work = muscleCost * |contraction|, so 11x the force is 11x the bill:
+      // at contract 5 with cost 0.55 the population fell from 300 to 11. With
+      // the rate scaled down in proportion it holds at 300 with generation 17
+      // and 35 deaths per thousand steps.
+      //
+      // Stated plainly, because it is a real choice and not a free lunch: this
+      // makes muscle stronger per unit fuel — a better muscle, not more energy.
+      // Nothing is minted, but the contractility-versus-fuel tradeoff that
+      // primitives.md wants is now weaker than it was, and wants revisiting.
+      brainTax: 0.4, muscleCost: 0.0495,
       resScale: 0.35, resSeed: 91, eCap: 3.0, eFloor: -2.0,
       // hashCell was 3.2 while contact reaches only ~0.7, so a bucket held ~10
       // cells against a cap of 12 and overflowed constantly. An overflowing
@@ -950,13 +1120,31 @@ export class WorldGPU {
       // gripBase was a velocity subtracted per step and 0.06 was the right size.
       // It now multiplies the sideways drag, where 0.06 buys a 1.36x anisotropy
       // and the verified reference needs ~6x — measured as no advantage at all.
-      gripBase: 0.55, gripMod: 0.9, fricK: 6.0, gripAnchor: 1.0,
+      // fricK 2 and gripHold 20: the ratchet needs the released phase to
+      // GLIDE and the gripped phase to HOLD, and at fricK 6 both phases were
+      // overdamped against a 0.7 s gait.
+      gripBase: 0.55, gripMod: 0.9, fricK: 2.0, gripAnchor: 1.0,
       // Substrate. gritScale sets how big a patch of purchase is; slipBase is the
       // drag left on frictionless ground (open water); gripAniso is how much
       // harder sideways slip is than sliding along your own body, which is the
       // ratio that converts undulation into travel.
       gritScale: 0.12, gritSeed: 4242, slipBase: 0.15, gripAniso: 6.0,
-      bucketM: 32, contestRate: 0.0, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
+      // CONTEST ON. This is what makes moving pay, and nothing else measured
+      // does. Over four seeds, correlating each body's displacement with its
+      // energy change and comparing top and bottom quartile of movers:
+      //
+      //     control (crowdK 0)        swing -2.3  sd 2.2  positive 1/4
+      //     crowdK 3 alone            swing -1.7  sd 3.3  positive 1/4
+      //     crowdK 3 + contest 0.6    swing +2.4  sd 2.8  positive 3/4
+      //
+      // Crowding suppression alone does NOT flip the sign — it starves movers
+      // and sitters alike. What pays for locomotion is being able to take
+      // energy from what you reach, which is primitives.md's consumption
+      // primitive: roleless, graded, symmetric, and paid out of the same
+      // conserved pool. Not conclusive at n=4 (separation from control is
+      // ~2.6 SE) but consistent in direction, and it is the first setting in
+      // this project where moving is not strictly punished.
+      bucketM: 32, contestRate: 0.6, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
       // Cells are solid. This was silently 1.68e-44 for the life of the code —
       // see lib/uniform.js — so nothing has ever pushed back on anything. Sized
       // against springK so a bond can still hold a body together against the
@@ -1000,7 +1188,26 @@ export class WorldGPU {
       // denser, and 1.5 there took the population 95 -> 32 and still falling.
       // Tuning at one density and shipping to another is the same mistake the
       // raw-headcount version made, one level up.
-      regrowCrowdK: 0.5,
+      // 3.0, with contest above. Alone this only starves the world; together
+      // they are the regime where movers out-earn sitters. Costs population:
+      // 400-body assays settle near 190-210 alive rather than 400.
+      regrowCrowdK: 3.0,
+      waveAmp: 0.0, waveK: 6.0, waveOmega: 9.0, wavePhase: 1.5707963,
+      // 0 keeps the previous behaviour exactly; sweep it before shipping.
+      gripHold: 20.0,
+      // 0.4. Swept over 300 bodies for 50,000 steps, tissue census and viability:
+      //
+      //     0     alive 300   neu  2.6  sen  3.6  mus 92.9  anc 1.0
+      //     0.4   alive 300   neu  0.9  sen 29.4  mus 69.7  anc 0.0
+      //     0.7   alive  61   neu 26.2  sen 29.9  mus 37.8  anc 6.1
+      //     0.9   alive   8   dead
+      //
+      // At 0 the world is a muscle monoculture — 93%, with sensors at 3.6% —
+      // because feeding was free and force was cheap, so there was no reason to
+      // be anything else. 0.4 takes sensors to 29% with the population intact.
+      // 0.7 buys genuine four-way differentiation and the world cannot carry it
+      // yet; that is the interesting direction once the economy is richer.
+      absorbTradeoff: 0.4,
       dt: brains.dt, ...params,
     };
     // Motes. Scattered by a hash of their index rather than laid on a lattice:
@@ -1173,9 +1380,16 @@ export class WorldGPU {
     // batch, which is fine because it drifts far slower than a batch lasts, but
     // it must advance BETWEEN batches or the world is static again and the
     // whole point of a moving optimum is lost.
-    if (this.params.morphRate !== 0 || this.params.driftX !== 0 || this.params.driftY !== 0) {
-      this.writeParams();
-    }
+    //
+    // UNCONDITIONAL. This used to skip the write when drift and morphRate were
+    // both zero, which is true of every isolated assay in tools/ — so in those
+    // worlds P.worldTime was frozen at 0 forever. Nothing depended on it until
+    // the imposed-wave diagnostic did, and then sin(axial*k - worldTime*omega)
+    // silently became a STATIC deformation: three different frequencies
+    // produced byte-identical displacement, which is what gave it away. A
+    // clock that only ticks when someone else needs it is not a clock. One
+    // uniform write per batch is nothing.
+    this.writeParams();
     const enc = this.device.createCommandEncoder();
     const pass = enc.beginComputePass();
     for (let s = 0; s < n; s++) {

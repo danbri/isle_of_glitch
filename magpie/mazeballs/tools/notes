@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+#
+# Build the lab notebook into the committed, Pages-served directory.
+#
+#   ./tools/notes build     build once into ../lab
+#   ./tools/notes serve     live-reload preview on localhost:8080
+#   ./tools/notes publish   build, stage, commit and push to main
+#
+# WHY THIS EXISTS
+#
+# GitHub Pages serves this repo from the root of `main` with **no Actions**, so
+# nothing is built server-side. Whatever HTML is committed is exactly what is
+# served. That makes the build a thing a human has to remember, and the whole
+# point of this script is that they do not have to: `publish` does the build and
+# the commit together, so the source and the built page cannot drift apart.
+#
+# The stale workflow at .github/workflows/static.yml still names the old deploy
+# branch (claude/fink-authoring-guide-bDtaY) and does not fire on main. It is
+# left alone deliberately — nothing here depends on it.
+set -euo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+NOTES="$HERE/notes"
+OUT="$HERE/lab"
+
+cd "$NOTES"
+
+if [ ! -d node_modules ]; then
+  echo "installing eleventy..."
+  npm install --silent
+fi
+
+case "${1:-build}" in
+  build)
+    npx @11ty/eleventy
+    echo "built -> $OUT"
+    ;;
+
+  serve)
+    # --pathprefix is overridden for local preview: the deployed site lives
+    # under /isle_of_glitch/magpie/mazeballs/lab/ but localhost serves at /.
+    npx @11ty/eleventy --serve --pathprefix=/
+    ;;
+
+  publish)
+    npx @11ty/eleventy
+    cd "$HERE"
+    git add lab notes
+    if git diff --cached --quiet; then
+      echo "nothing to publish; the built site already matches the source."
+      exit 0
+    fi
+    git commit -m "${2:-mazeballs: rebuild the lab notebook}"
+    # Shared with a laptop session, so never force and never assume a
+    # fast-forward is available. --autostash because this repo almost always has
+    # unrelated working-tree changes (world state, scratch edits) and publishing
+    # a note should not require a clean tree it has nothing to do with.
+    git pull --rebase --autostash origin main
+    git push origin main
+    echo
+    echo "published: https://danbri.github.io/isle_of_glitch/magpie/mazeballs/lab/"
+    ;;
+
+  *)
+    echo "usage: ./tools/notes [build|serve|publish]" >&2
+    exit 1
+    ;;
+esac

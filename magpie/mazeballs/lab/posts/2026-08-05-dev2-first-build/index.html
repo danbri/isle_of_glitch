@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Development 2.0, first build: a GRN that grows a body</title>
+<style>
+  :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fbfbf9; --fg:#1c2530; --dim:#5d6b7c; --acc:#12766e; --line:#e2e5ea; }
+  }
+  body { background:var(--bg); color:var(--fg); margin:0;
+         font:16px/1.65 ui-serif, Georgia, "Iowan Old Style", serif; }
+  .wrap { max-width:46rem; margin:0 auto; padding:3rem 1.25rem 6rem; }
+  a { color:var(--acc); }
+  h1,h2,h3 { font-family:ui-sans-serif, system-ui, sans-serif; line-height:1.25; }
+  h1 { font-size:1.9rem; margin:0 0 .3rem; }
+  h2 { margin-top:2.4rem; border-bottom:1px solid var(--line); padding-bottom:.3rem; }
+  .meta { color:var(--dim); font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size:.8rem; letter-spacing:.02em; }
+  code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.85em; }
+  pre { background:rgba(127,127,127,.1); padding:.9rem 1rem; border-radius:6px;
+        overflow-x:auto; border:1px solid var(--line); }
+  table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; font-size:.9rem; }
+  th,td { border:1px solid var(--line); padding:.35rem .6rem; text-align:left; }
+  th { background:rgba(127,127,127,.08); }
+  blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
+               color:var(--dim); }
+  /* Figures. Plots here are generated as SVG straight from the wire format
+     rather than screenshotted, so they stay sharp at any width and weigh
+     almost nothing. */
+  img, svg.fig { max-width:100%; height:auto; display:block; border-radius:6px;
+                 border:1px solid var(--line); background:#070c0b; }
+  figure { margin:1.6rem 0; }
+  figcaption { color:var(--dim); font-size:.82rem; margin-top:.5rem;
+               font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
+  ul.index { list-style:none; padding:0; }
+  ul.index li { margin:.9rem 0; }
+  ul.index .meta { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
+  <article>
+  <h1>Development 2.0, first build: a GRN that grows a body</h1>
+  <p class="meta">
+    5 August 2026 · posts, devo, grn, negative-result, morphology
+  </p>
+  <p>Built <code>lib/devo2.js</code> today — a gene regulatory network that <em>grows</em> a body inside
+an egg, replacing the positional readout that had elongation pinned at 1.15. This
+is the working log, including the two versions that did not work, because those
+are where the information is.</p>
+<p>The design is in <code>DEVELOPMENT-2.md</code>. In short: 64 gene products, sparse (K = 6
+regulators per gene), non-negative concentrations with production, decay and
+per-product diffusion, maternal gradients as clamped boundary conditions, and —
+the load-bearing part — <strong>the body grows from one cell rather than being painted
+onto a disc</strong>.</p>
+<p>This is a build log, not a scorecard. The GRN is the direction the project is
+committed to; what follows is what it took to get the first version standing up,
+and two geometry bugs worth knowing about if you touch it next.</p>
+<p>Elongation appears throughout as <strong>instrumentation</strong> — it was the symptom that
+diagnosed Dev 1.0, so it is a convenient probe for &quot;is the new map producing
+shapes at all&quot;. It is not the goal function, and nothing here grades the encoding
+on it.</p>
+<h2>Attempt 1 — worse than what it replaced</h2>
+<pre><code>DEV 1.0 (positional readout) — random genomes
+  ELONGATION  p10 0.96  p50 1.15  p90 1.15  max 1.15
+     &gt;1.3: 0/200
+
+DEV 2.0 (GRN + growth) — random genomes
+  cells       p10 60  p50 60  p90 60  max 60
+  ELONGATION  p10 0.90  p50 0.90  p90 0.96  max 1.39
+     &gt;1.3: 1/194     segments p50 0
+</code></pre>
+<p>Every single embryo hit the 60-cell cap. Elongation p50 went <em>down</em>.</p>
+<p>The cause was written in the design document before the code was: <em>&quot;if cells
+divide inside a hard circular shell and fill it, the body is a disc again whatever
+the GRN says.&quot;</em> The egg radius was 4.5, which is exactly the radius of a compact
+60-cell blob. The body had no room to be a shape. I predicted this failure and
+then built it anyway, which is worth recording.</p>
+<p>Fix: egg extent 4.5 → 12, and make growth a self-limiting <em>transient</em> (decay 0.25,
+division halves the concentration below threshold) rather than a latch.</p>
+<h2>Attempt 2 — still a disc, so I went looking for the second geometry bug</h2>
+<pre><code>DEV 2.0 — random genomes
+  cells       p50 60  max 60
+  ELONGATION  p50 0.96  p90 1.09  max 1.73
+</code></pre>
+<p>Better tail, same story: bodies still filled to the cap. So I stopped surveying
+random genomes and asked the question that actually matters — <strong>can selection move
+it?</strong> Direct selection on elongation for 30 generations, identical regime for both
+encodings. (Selecting straight on elongation would be reward-shaping as an ecology
+claim; as an <em>instrument test</em> it is exactly right, because it asks whether the
+encoding can move at all, independent of whether the world pays for it.)</p>
+<pre><code>DEV 1.0     gen 0  best 1.15   -&gt;   gen 30  best 1.39   median 1.39
+DEV 2.0     gen 0  best 1.30   -&gt;   gen 30  best 1.30   median 1.09
+</code></pre>
+<p><strong>Dev 2.0 lost.</strong> The old encoding responded to selection; the new one did not
+move at all. Thirty generations, no progress. If I had shipped on &quot;it's a GRN now,
+it must be better&quot;, this is what would have been under it.</p>
+<p>The diagnosis: nothing localised growth. Every cell with a free neighbour and
+enough <code>grow</code> extends, so the body expands isotropically from its seed — and
+isotropic growth is a disc, however sophisticated the network driving it. The
+network was never the constraint. The <em>geometry of growth</em> was.</p>
+<h2>The fix — give the network a signal, not a mechanism</h2>
+<p>A tip is a cell with few occupied neighbours. So expose <strong>crowding</strong> (0 alone, 1
+fully surrounded) as an input gene the network can read, and let a genome grow
+only where it is uncrowded — apical growth, filaments, branches — or weight it to
+zero and stay a blob. Reachable, not imposed.</p>
+<pre><code>DEV 2.0 (GRN + growth + crowding input) — random genomes
+  ELONGATION  p10 0.58  p50 0.92  p90 1.73  max 7.51
+     &gt;1.3: 14/60   &gt;2.0: 2/60
+
+  under direct selection
+    gen  0  best 2.12    gen  5  best 5.20    gen 30  best 2.31
+</code></pre>
+<p><strong>The prior is broken.</strong> Random genomes now reach elongation <strong>7.51</strong>, against a
+Dev 1.0 ceiling of 1.15 that hand-crafted extreme genomes could only push to 4.04.
+Fourteen of sixty random embryos clear 1.3, where Dev 1.0 managed zero of two
+hundred. Bodies can now be worms.</p>
+<h2>What is still wrong, honestly</h2>
+<ul>
+<li><strong>Viability collapsed</strong>: 60 of 200 random embryos are viable, down from 167. Most
+now grow too few cells (p50 10). The founder seeding is tuned for shape at the
+expense of getting off the ground.</li>
+<li><strong>Selection response is noisy, not monotone</strong>: best elongation goes 2.12 → 5.20 →
+2.02 → 2.60 → 1.73 → 2.45 → 2.31. Some of that is real hill-climbing noise, but
+some is that <strong>development itself is stochastic</strong> — the same genome develops
+differently each evaluation, so fitness is noisy and selection is fighting it.
+Real embryos canalise; ours does not yet. Seeding developmental noise per-genome
+would make it reproducible, and that should probably happen before any claim
+about selection response.</li>
+<li><strong>Segments are still ~0.</strong> No banding, no stripes, no clock. The &quot;crap clocks&quot;
+half of the sketch is entirely unrealised — this is growth and shape, not
+patterning.</li>
+<li><strong>Not integrated.</strong> <code>devo2.js</code> is standalone; the live world still runs Dev 1.0.</li>
+</ul>
+<h2>The transferable lesson</h2>
+<p>Both failures were <strong>geometric, not regulatory</strong>. The egg was sized to the body it
+contained, so there was no room for a shape to exist; and growth had no way to be
+local, so expansion was isotropic. A network cannot express a morphology the
+growth geometry cannot represent — and neither bug would have been visible by
+reading the network code, which is where I looked first both times.</p>
+<p>That is the thing to carry forward: when the GRN produces something dull, suspect
+the <strong>substrate it is growing into</strong> before suspecting the regulation. The lattice,
+the egg, the division rule and the signals a cell can read are as much part of the
+developmental map as the weights are.</p>
+<h2>Next</h2>
+<p>Growth and shape work; patterning does not exist yet. Segments are still ~0, and
+the clock-and-wavefront half of the design — coupled oscillators against a receding
+gradient — is entirely unbuilt. That is where the interesting structure lives, and
+it is the next thing to make real.</p>
+<p>Nearer-term and unglamorous: viability needs fixing (60 of 200 random embryos),
+developmental noise should be seeded per genome so the same genome develops the
+same way twice, and <code>devo2.js</code> is still standalone — the live world runs Dev 1.0
+until it is wired into <code>evolve.js</code>.</p>
+
+</article>
+
+</div>
+</body>
+</html>

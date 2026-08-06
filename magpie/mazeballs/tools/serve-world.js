@@ -33,8 +33,12 @@ import { Evolver } from '../lib/evolve.js';
 
 const args = (() => {
   const out = {
-    port: 8899, beasts: 3000, cells: 12, maxCells: 60, start: 0.25, bound: 0, spf: 6, tick: 250,
+    port: 8899, beasts: 3000, cells: 12, maxCells: 60, start: 0.25, bound: 0, spf: 1, tick: 250,
     host: '0.0.0.0',
+    // Developmental encoding: 2 is the GRN-in-an-egg (DEVELOPMENT-2.md), 1 is
+    // the old positional readout. Kept selectable so the two can be run against
+    // the same world rather than compared across worlds.
+    devo: 2,
     // The non-stationary field, which measured far better than a static one:
     // ancestral-tournament shareB 0.970 against 0.864, and body size kept
     // growing (27.6 and rising) where the static world saturated at 19.3.
@@ -119,7 +123,9 @@ const world = new WorldGPU(brains, built.cells, {
 const evo = new Evolver({
   arena: built.arena, world, cells: built.cells,
   seed: 5, birthEnergy: 18, deathEnergy: 0, maxCells: args.maxCells,
+  devoVersion: args.devo,
 });
+console.log(`developmental encoding: ${evo.devoName} (egg extent ${evo.eggExtent})`);
 const startCount = Math.max(60, Math.floor(args.beasts * args.start));
 for (let o = startCount; o < args.beasts; o++) evo.cull(o);
 evo.founders = evo.alive();
@@ -144,7 +150,13 @@ const N = built.meta.nCells;
  * What it does not carry is the world: positions, velocities, energy, bonds,
  * cell types and the lineage bookkeeping. Those go alongside it.
  */
-const SNAP_MAGIC = 0x314e5257;                  // 'WRN1'
+// 'WRN2'. BUMPED when cmeta.x stopped being a bare cell type and became a
+// packed (type | contractility<<8 | grippiness<<16). A WRN1 snapshot loaded
+// into this build would decode every cell as having zero contractility —
+// bodies that look right, brains that run, and not one muscle in the world.
+// Silent wrong beats loud wrong every time, so refuse it by magic instead.
+const SNAP_MAGIC = 0x324e5257;                  // 'WRN2'
+const SNAP_MAGIC_V1 = 0x314e5257;               // 'WRN1' — pre-packed cmeta
 
 async function saveSnapshot(path) {
   const { pos, energy } = await world.readCells();
@@ -197,7 +209,12 @@ async function saveSnapshot(path) {
 async function loadSnapshot(path) {
   const raw = await Deno.readFile(path);
   const hv = new DataView(raw.buffer, raw.byteOffset);
-  if (hv.getUint32(0, true) !== SNAP_MAGIC) throw new Error('not a world snapshot');
+  const magic = hv.getUint32(0, true);
+  if (magic === SNAP_MAGIC_V1) throw new Error(
+    'this snapshot predates packed cell metadata (WRN1). Resuming it would give ' +
+    'every cell zero contractility — a world of bodies that cannot contract a ' +
+    'single bond, with nothing in the logs to say so. Start a fresh world.');
+  if (magic !== SNAP_MAGIC) throw new Error('not a world snapshot');
   const n = hv.getUint32(8, true);
   if (n !== N) throw new Error(`snapshot has ${n} cell slots, this world has ${N} — start with the same --beasts/--cells`);
   const arenaLen = hv.getUint32(36, true);
@@ -304,6 +321,11 @@ async function logMetrics() {
       spf: args.spf, bound: +BOUND.toFixed(1),
       crowdK: world.params.regrowCrowdK, moteRegrow: world.params.moteRegrow,
       flowStr: world.params.flowStr, contract: world.params.contract,
+      // Failed eggs are a Dev 2.0 statistic that did not exist before: a genome
+      // can now specify a body that development never finishes, and the parent
+      // has spent the yolk regardless. A run where this climbs is a run where
+      // reproduction is quietly failing, which no other field here would show.
+      devo: evo.devoVersion, failedEggs: evo.failedEggs,
       simVersion: RUNNING.simVersion,
     };
     await Deno.writeTextFile(METRICS, JSON.stringify(rec) + '\n', { append: true });
@@ -341,6 +363,64 @@ setInterval(async () => {
   } catch { /* never fatal */ }
 }, 15000);
 
+/**
+ * HIGH-RATE BRAIN TRACE for one animal at a time.
+ *
+ * The scope used to take one sample per /frame, and a frame is ~2.2MB and 1.8s
+ * of world time apart — so it sampled at 0.56 Hz while neurons with tau 0.018s
+ * run near 9 Hz. Undersampled by about thirty-two times: the "blocky" traces
+ * were a fast signal seen through a slow shutter, and any gait would have been
+ * aliased into noise long before it was visible.
+ *
+ * Recorded HERE, where the brain is, every few steps, for the one animal being
+ * inspected. 64 neurons x 4 bytes is tiny next to a frame, so the sampling rate
+ * is set by what the dynamics need rather than by what the link can carry.
+ */
+const TRACE_ROWS = 64;
+const TRACE_COLS = 4096;
+const trace = {
+  uid: -1, slot: -1, cells: [],
+  buf: new Float32Array(TRACE_ROWS * TRACE_COLS),
+  step: new Int32Array(TRACE_COLS),
+  // SAMPLE EVERY STEP. At everyN 5 the scope sampled at 13 Hz, and neurons
+  // measured flipping at 7-19 Hz, so the traces were aliased — the jagged
+  // lines were the SCOPE, not the brain. This project has already published
+  // one retraction for a scope that aliased by 32x. Sampling every step gives
+  // 66 Hz, comfortably above the fastest neuron the genome can specify.
+  //
+  // The cost is one act readback per step, and it is paid ONLY while somebody
+  // has a trace attached (trace.uid >= 0), which is the loop's own guard.
+  head: 0, filled: 0, everyN: 1, since: 0,
+};
+
+function traceAttach(uid) {
+  if (uid === trace.uid) return;
+  trace.uid = uid; trace.head = 0; trace.filled = 0; trace.cells = []; trace.slot = -1;
+  if (uid < 0) return;
+  for (let o = 0; o < built.arena.P; o++) {
+    if (built.arena.alive[o] && evo.uid[o] === uid) { trace.slot = o; break; }
+  }
+  if (trace.slot < 0) { trace.uid = -1; return; }
+  const off = built.arena.off[trace.slot], n = Math.min(built.arena.cnt[trace.slot], TRACE_ROWS);
+  for (let i = 0; i < n; i++) trace.cells.push(off + i);
+}
+
+async function traceSample() {
+  if (trace.uid < 0 || !trace.cells.length) return;
+  // Cheap because it is ONE readback of the act buffer, already needed for
+  // frames; at everyN=5 this is ~13 Hz of world time, comfortably above Nyquist
+  // for the fastest neurons the genome can specify.
+  const { act } = await brains.readState();
+  const col = trace.head * TRACE_ROWS;
+  for (let r = 0; r < TRACE_ROWS; r++) {
+    const i = trace.cells[r];
+    trace.buf[col + r] = (i !== undefined && built.cells.ctype[i] >= 0) ? act[i] : NaN;
+  }
+  trace.step[trace.head] = steps;
+  trace.head = (trace.head + 1) % TRACE_COLS;
+  trace.filled = Math.min(trace.filled + 1, TRACE_COLS);
+}
+
 let lastSave = Date.now();
 const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
 
@@ -349,6 +429,11 @@ const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
     if (paused) { await new Promise(r => setTimeout(r, 100)); continue; }
     world.step(args.spf);
     steps += args.spf; sinceTick += args.spf;
+
+    trace.since += args.spf;
+    if (trace.uid >= 0 && trace.since >= trace.everyN && !ticking) {
+      trace.since = 0; await traceSample();
+    }
 
     sinceMetric += args.spf;
     if (sinceMetric >= METRIC_EVERY && !ticking) { sinceMetric = 0; await logMetrics(); }
@@ -373,7 +458,7 @@ const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
 
 /* ----------------------------------------------------------------- framing */
 
-const FRAME_MAGIC = 0x314d5257;         // 'WRM1'
+const FRAME_MAGIC = 0x324d5257;   // 'RWM2' — layout changed to live-cells-only         // 'WRM1'
 const HEAD = 48;
 
 /**
@@ -431,7 +516,22 @@ async function buildFrame() {
   }
   const P32 = Int32Array.from(pairs);
 
-  const buf = new ArrayBuffer(HEAD + N * 8 + N * 4 + N * 4 + N * 4 + N * 4 + 4 + P32.byteLength);
+  // LIVE CELLS ONLY.
+  //
+  // The frame carried every arena slot — 72,000 of them — while typically ~9,000
+  // are alive. 87% of a 2.2MB payload was dead space, and that payload is what
+  // made a frame take 0.7s to build and 1.8s of world time to arrive, which in
+  // turn aliased the brain trace by thirty-two times. Sending an index with each
+  // live cell costs 4 bytes and removes seven eighths of the message.
+  const liveIdx = [];
+  for (let i = 0; i < N; i++) if (built.cells.ctype[i] >= 0) liveIdx.push(i);
+  const L = liveIdx.length;
+  // idx(4) + pos(8) + act(4) + type(4) + energy(4) + uid(4) per live cell.
+  // Sized for five of those six once, which threw only when the bond pairs
+  // overran the end — an error about a typed array length, nowhere near the
+  // arithmetic that caused it.
+  const PER = 4 + 8 + 4 + 4 + 4 + 4;
+  const buf = new ArrayBuffer(HEAD + 4 + L * PER + 4 + P32.byteLength);
   const dv = new DataView(buf);
   dv.setUint32(0, FRAME_MAGIC, true);
   dv.setUint32(4, N, true);
@@ -452,7 +552,13 @@ async function buildFrame() {
   dv.setFloat32(44, world.params.flowScale, true);
 
   let at = HEAD;
-  new Float32Array(buf, at, N * 2).set(pos); at += N * 8;
+  new DataView(buf).setUint32(at, L, true); at += 4;
+  new Int32Array(buf, at, L).set(Int32Array.from(liveIdx)); at += L * 4;
+  {
+    const p2 = new Float32Array(buf, at, L * 2);
+    for (let k = 0; k < L; k++) { const i = liveIdx[k]; p2[k * 2] = pos[i * 2]; p2[k * 2 + 1] = pos[i * 2 + 1]; }
+    at += L * 8;
+  }
   // Per-CELL activation: the browser draws cells, not slots, so resolve the
   // cell -> brain-slot indirection here rather than shipping the slot table.
   const cellAct = new Float32Array(N);
@@ -463,9 +569,17 @@ async function buildFrame() {
     const slot = built.cells.cslot[i];
     cellAct[i] = (t >= 0 && slot >= 0) ? act[slot] : 0;
   }
-  new Float32Array(buf, at, N).set(cellAct); at += N * 4;
-  new Int32Array(buf, at, N).set(cellType); at += N * 4;
-  new Float32Array(buf, at, N).set(energy); at += N * 4;
+  {
+    const a2 = new Float32Array(buf, at, L);
+    for (let k = 0; k < L; k++) a2[k] = cellAct[liveIdx[k]];
+    at += L * 4;
+    const t2 = new Int32Array(buf, at, L);
+    for (let k = 0; k < L; k++) t2[k] = cellType[liveIdx[k]];
+    at += L * 4;
+    const e2 = new Float32Array(buf, at, L);
+    for (let k = 0; k < L; k++) e2[k] = energy[liveIdx[k]];
+    at += L * 4;
+  }
 
   // ASSEMBLY IDENTITY — which animal a cell belongs to, stable across everything.
   //
@@ -480,12 +594,15 @@ async function buildFrame() {
   // so it survives a body being torn in half: both halves still name the same
   // animal. Genome identity would not do this — siblings and twins share a
   // genome and are different animals.
-  const cellUid = new Int32Array(N);
-  for (let i = 0; i < N; i++) {
-    const b = built.cells.body ? built.cells.body[i] : -1;
-    cellUid[i] = (built.cells.ctype[i] >= 0 && b >= 0) ? evo.uid[b] : -1;
+  {
+    const u2 = new Int32Array(buf, at, L);
+    for (let k = 0; k < L; k++) {
+      const i = liveIdx[k];
+      const b = built.cells.body ? built.cells.body[i] : -1;
+      u2[k] = b >= 0 ? evo.uid[b] : -1;
+    }
+    at += L * 4;
   }
-  new Int32Array(buf, at, N).set(cellUid); at += N * 4;
   new DataView(buf).setUint32(at, P32.length, true); at += 4;
   new Int32Array(buf, at, P32.length).set(P32);
   return new Uint8Array(buf);
@@ -523,6 +640,37 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
   // One animal's genome by uid, with the labels needed to read it. The genetics
   // has never been visible in the UI at all — you could watch bodies without ever
   // seeing what specifies them.
+  // Subscribe to, and read, the high-rate trace. Binary: it is numbers.
+  if (path === '/trace') {
+    const uid = Number(url.searchParams.get('uid') ?? -1);
+    const want = Math.min(TRACE_COLS, Number(url.searchParams.get('n') ?? 600) || 600);
+    traceAttach(uid);
+    if (trace.uid < 0) {
+      return new Response(JSON.stringify({ ok: false, error: 'no such living animal' }),
+        { status: 404, headers: { 'content-type': 'application/json' } });
+    }
+    const rows = trace.cells.length;
+    const cols = Math.min(want, trace.filled);
+    const types = new Int32Array(rows);
+    for (let r = 0; r < rows; r++) types[r] = built.cells.ctype[trace.cells[r]];
+    const buf = new ArrayBuffer(16 + rows * 4 + cols * 4 + cols * rows * 4);
+    const dv2 = new DataView(buf);
+    dv2.setUint32(0, uid, true); dv2.setUint32(4, rows, true);
+    dv2.setUint32(8, cols, true); dv2.setFloat32(12, world.params.dt, true);
+    let at2 = 16;
+    new Int32Array(buf, at2, rows).set(types); at2 += rows * 4;
+    const stepsOut = new Int32Array(buf, at2, cols); at2 += cols * 4;
+    const vals = new Float32Array(buf, at2, cols * rows);
+    for (let c = 0; c < cols; c++) {
+      const src = ((trace.head - cols + c) % TRACE_COLS + TRACE_COLS) % TRACE_COLS;
+      stepsOut[c] = trace.step[src];
+      for (let r = 0; r < rows; r++) vals[c * rows + r] = trace.buf[src * TRACE_ROWS + r];
+    }
+    return new Response(buf, {
+      headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' },
+    });
+  }
+
   if (path === '/genome') {
     const want = Number(url.searchParams.get('uid'));
     let slot = -1;
@@ -632,7 +780,7 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
           brainTax: world.params.brainTax, contract: world.params.contract,
           flowStr: world.params.flowStr, gripAniso: world.params.gripAniso,
         },
-        simVersion: RUNNING.simVersion,
+        simVersion: RUNNING.simVersion, devo: evo.devoVersion,
       };
       const snap = `${new URL('..', import.meta.url).pathname}runs/flag-${steps}.snapshot`;
       try { const r = await saveSnapshot(snap); rec.snapshot = snap; rec.bytes = r.bytes; }
@@ -724,6 +872,12 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       // differs the viewer has changed and needs a reload.
       bootId: BOOT_ID,
       simVersion: RUNNING.simVersion, pageVersion: RUNNING.pageVersion,
+      // Which developmental encoding grew these bodies. A run is unreadable
+      // later without it: the same world parameters mean different animals
+      // under a positional readout than under a GRN.
+      devo: evo.devoVersion, devoName: evo.devoName, eggExtent: evo.eggExtent,
+      trace: { uid: trace.uid, slot: trace.slot, cells: trace.cells.length,
+               filled: trace.filled, since: trace.since, everyN: trace.everyN },
       simStaleSince: staleSince || null,
       onDisk: await codeStamp(),
       // The resource field is what creatures chase and it drifts and morphs.

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Development 2.0 is what grows the bodies now</title>
+<style>
+  :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fbfbf9; --fg:#1c2530; --dim:#5d6b7c; --acc:#12766e; --line:#e2e5ea; }
+  }
+  body { background:var(--bg); color:var(--fg); margin:0;
+         font:16px/1.65 ui-serif, Georgia, "Iowan Old Style", serif; }
+  .wrap { max-width:46rem; margin:0 auto; padding:3rem 1.25rem 6rem; }
+  a { color:var(--acc); }
+  h1,h2,h3 { font-family:ui-sans-serif, system-ui, sans-serif; line-height:1.25; }
+  h1 { font-size:1.9rem; margin:0 0 .3rem; }
+  h2 { margin-top:2.4rem; border-bottom:1px solid var(--line); padding-bottom:.3rem; }
+  .meta { color:var(--dim); font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size:.8rem; letter-spacing:.02em; }
+  code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.85em; }
+  pre { background:rgba(127,127,127,.1); padding:.9rem 1rem; border-radius:6px;
+        overflow-x:auto; border:1px solid var(--line); }
+  table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; font-size:.9rem; }
+  th,td { border:1px solid var(--line); padding:.35rem .6rem; text-align:left; }
+  th { background:rgba(127,127,127,.08); }
+  blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
+               color:var(--dim); }
+  /* Figures. Plots here are generated as SVG straight from the wire format
+     rather than screenshotted, so they stay sharp at any width and weigh
+     almost nothing. */
+  img, svg.fig { max-width:100%; height:auto; display:block; border-radius:6px;
+                 border:1px solid var(--line); background:#070c0b; }
+  figure { margin:1.6rem 0; }
+  figcaption { color:var(--dim); font-size:.82rem; margin-top:.5rem;
+               font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
+  ul.index { list-style:none; padding:0; }
+  ul.index li { margin:.9rem 0; }
+  ul.index .meta { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
+  <article>
+  <h1>Development 2.0 is what grows the bodies now</h1>
+  <p class="meta">
+    6 August 2026 · posts, devo, grn, integration, live
+  </p>
+  <p>The GRN-in-an-egg is wired into the live world. <code>world.html</code> is running on it,
+verified in a browser rather than inferred from a passing test.</p>
+<pre><code>devo 2  devo2-grn  eggExtent 12
+steps 126,504   alive 1,200   births 1,554   deaths 654
+generation 7    lineages 267  bodies 5/21/60
+failedEggs 43 (plateaued)     NaN 0   errors 0
+</code></pre>
+<h2>What had to be true first</h2>
+<p><strong>The brain nearly came out dead.</strong> <code>evolve.js</code> wires every synapse with
+<code>synapse(genome, cellA, cellB)</code>, reading a block of coefficients Dev 2.0 genomes
+simply did not have — the function would have read past the GRN into zeros and
+returned <code>SYN_RANGE * tanh(0)</code> for every edge in the population. This repo has a
+commit named <em>&quot;the brains were dead&quot;</em>, so that failure mode is not hypothetical.
+Dev 2.0 now carries the block, seeded and mutated at the same magnitudes Dev 1.0
+uses, and imports <code>SYN_BASIS</code> and <code>SPACING</code> from <code>devo.js</code> rather than restating
+them. A duplicated <code>SPACING</code> has already cost this codebase every bond in every
+body once; twice would be a choice.</p>
+<p><strong>The egg size had to travel with the encoding.</strong> <code>evolve.js</code> had <code>eggExtent = 3.0</code> hardcoded, which is right for Dev 1.0 — it samples a fixed disc — and
+catastrophic for Dev 2.0, which grows into open space and needs 12. Handing it
+3.0 rebuilds the disc-shaped bodies the whole encoding exists to escape, and it
+does so silently: bodies still appear, they are just all round. So the extent is
+now a property the encoding declares, not a constant the caller remembers.</p>
+<h2>Division became a rate</h2>
+<p>Growth was polled every fifth integrator step against a threshold. That is a
+timescale nobody chose, and it divided the whole embryo on the same tick because
+the loop said so.</p>
+<p>Now each cell accumulates readiness at a rate set by its own <code>grow</code> output and
+divides when it crosses 1, then resets. Division is a rate — a cell expressing
+grow twice as hard divides twice as often — and cells fall out of phase with each
+other on their own.</p>
+<p>founder viability   92%  -&gt;  100%
+median body          25  -&gt;  51 cells
+segments (max)        0  -&gt;  6</p>
+<p>Segments appearing at all is the first sign of patterning in this encoding.</p>
+<h2>Cleave mode: built, measured, and currently worse</h2>
+<p>Prompted by a good question — do we fill the egg with pluripotent cells, or add
+them by division as development runs?</p>
+<p>Real embryos mostly do the first, and it matters more than it sounds. Drosophila
+patterns a syncytial blastoderm of ~6000 nuclei that already exist; the gap-gene
+network reads gradients <strong>across a field</strong>. A body extruded one cell at a time
+from a tip never has a field, which is the leading suspect for why segments sat
+at zero under pure tip growth.</p>
+<p>So cleave mode fills the egg, patterns it, then sculpts with a <code>survive</code> gene —
+apoptosis, the way a hand is made rather than grown.</p>
+<p>It produces discs.</p>
+<pre><code>mode                       viable  satur  elP90  elMax  segMax
+grow                         100%    15%   1.15   2.31       6
+cleave (any cleaveFrac)       97%    96%   1.15   1.23       0
+</code></pre>
+<p>96% saturate the cell cap. The cause is mundane: <code>survive</code> settles at
+<code>sigmoid(bias)/decay</code>, which sits above threshold for every cell, so nothing is
+ever culled and the sculpting step is a no-op. That is a tuning problem, not a
+refutation — the field-for-patterning argument stands untouched. Left in the
+codebase, off by default, with the failure written next to the switch rather than
+the mode quietly deleted.</p>
+<h2>A HUD that was lying</h2>
+<p>While verifying, the page read <code>sim 0.0×realtime</code> — which <code>RUNNING.md</code> lists as
+the signature of a faulted GPU device. The sim was fine. <code>simRate</code> was computed
+from the <em>local</em> world's steps-per-frame, and in watch mode the local world never
+steps, so the healthy case was permanently displaying the symptom of the failure
+case.</p>
+<p>It now derives the rate from the server's step counter over wall time. Checked
+against the server rather than merely made non-zero: HUD 3.7 against a measured
+3.41×.</p>
+<p>Incidentally the Dev 2.0 world runs <em>faster</em> — 3.41× realtime against 1.22× for
+Dev 1.0 — because its bodies are smaller in aggregate (26.9k live cells against
+37.8k). Nothing was optimised; there is just less world to step.</p>
+<h2>Still open</h2>
+<ul>
+<li><strong>Patterning.</strong> Segments reach 6 but there is no clock and no wavefront. This is
+the next substantial piece, and cleave mode is probably a prerequisite for the
+interesting version of it.</li>
+<li><strong>Muscle is being selected away again</strong> — 13.8% down to 7.6% over 126k steps.
+That is the economy, not the encoding, and it is the same result the 29.4M-step
+run reported. A new developmental map does not change what the world pays for.</li>
+<li><strong>Selection response.</strong> Canalisation fixed heritability outright (h² 0.093 →
+1.000, within-genome variance to exactly zero), but directed selection on
+morphology still did not climb in the test harness. The remaining suspects are
+the harness itself — it never preserved the best genome unmutated — and a
+mutation operator perturbing ~115 of 960 weights per child. Unfinished.</li>
+</ul>
+
+</article>
+
+</div>
+</body>
+</html>

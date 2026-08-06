@@ -150,11 +150,62 @@ export const SYN_OFF = PROPS.length * NB;
  * stop saturation — pushed the network further INTO the convergent regime and
  * made things worse at every scale. It is gone.
  *
- * 16 puts a majority of random genomes in reach of oscillation without pinning
- * activations at the rails. Reachable, not imposed: a genome is free to specify
- * a quiet brain, and most of the interesting ones will be neither extreme.
+ * 16 was chosen from that isolated free-running sweep, and it was too low. The
+ * isolated answer is not the living answer: with sensory drive, births and deaths,
+ * measured over 400 bodies in a real world —
+ *
+ *   SYN_RANGE   neurons CHANGING   mean act-std   displacement mean / p90
+ *        8            7.0%            0.035           0.50 / 1.00
+ *       16           11.2%            0.060           0.66 / 1.50
+ *       32           21.1%            0.120           1.01 / 2.06
+ *       64           32.1%            0.188           0.99 / 2.41
+ *      128           30.7%            0.167           1.05 / 2.31
+ *
+ * A WRONG HYPOTHESIS DIED HERE, and it is worth keeping. 83% of neurons sat
+ * railed at +/-1, so the obvious diagnosis was saturation: too much drive,
+ * turn it down. The sweep says the opposite — displacement RISES as the
+ * mid-range band shrinks. A neuron pinned at +1 that SWITCHES to -1 drives a
+ * muscle harder than one drifting gently mid-scale; bang-bang control moves a
+ * body perfectly well. "Fraction in the dynamic band" measured the wrong thing
+ * entirely. What matters is whether an activation CHANGES OVER TIME, and by
+ * that measure the drive was far too weak rather than too strong.
+ *
+ * 64 sits at the knee: both variability and displacement plateau there and 128
+ * buys nothing. Still reachable-not-imposed — a genome remains free to specify a
+ * quiet brain, and most will.
  */
-export const SYN_RANGE = 16;
+// 32, LOWERED from 64 — and the reasoning that set it to 64 is retracted.
+//
+// That sweep concluded drive was too weak and higher was strictly better. It
+// was measured when the tau floor was 0.018 s against dt 0.015, i.e. when
+// every fast neuron was a comparator rather than an integrator. Under those
+// dynamics more gain really did buy more activity, because the only thing on
+// offer was how often a square wave flipped.
+//
+// Re-measured at the corrected tau range (0.126-1.26 s), sampling every step:
+//
+//     syn    |state|  graded%  jumpy  medHz  inBand%  selfProp
+//      16      24.6      10    0.033   0.00      36    0.0003
+//      32      38.1      23    0.048   1.14      40    0.0023
+//      64      49.0      43    1.000  33.31      21    0.0019
+//     128      47.6      54    1.000  33.31      11    0.0045
+//
+// At 64 and above the traces go back to jumpy 1.000 and flip at the sample
+// rate: the drive is large enough to re-saturate the network whatever tau
+// says, because tau sets how fast a neuron approaches its input and not how
+// big that input is. 32 is where smoothness, a rhythm inside the body's
+// 0.3-3 Hz band, and median self-propulsion coincide.
+//
+// Still reachable-not-imposed: a genome remains free to specify a quiet brain.
+export let SYN_RANGE = 32;
+
+/**
+ * Override the synapse weight scale. An experiment knob, not a world parameter:
+ * the value that maximises oscillation in an ISOLATED free-running brain is not
+ * the value that does so in a living world with sensory drive, and finding the
+ * second requires sweeping it in situ.
+ */
+export function setSynRange(v) { SYN_RANGE = v; }
 
 /**
  * Stiffness spans STIFF_BASE^-1 to STIFF_BASE^+1 around the baseline spring.
