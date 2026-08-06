@@ -115,7 +115,18 @@ function traits(meta, n) {
 
 async function runArm(arm, rep) {
   const seed = 11 + rep * 101;
-  const built = buildBodies({ beasts: CAP, cells: 12, bound: BOUND, seed, maxCells: 60 });
+  // BODY SLOTS, SIZED SEPARATELY FROM CELL ISLANDS — the exact bug this project
+  // has already paid for once. Without bodySlots the organism table is the same
+  // size as the island count, so the population hits an ALLOCATION ceiling with
+  // most of the cell memory still free: measured here as alive == CAP == 193
+  // while 9,675 cell slots sat empty across 17 holes. Births then equal deaths
+  // because the allocator says so, not because the economy does, and every
+  // selection measurement taken in that regime is measuring the allocator.
+  //
+  // The live server uses budget/maxCells islands against budget/8 slots — about
+  // seven and a half times as many slots as islands. Same ratio here.
+  const built = buildBodies({ beasts: CAP, cells: 12, bound: BOUND, seed,
+                              maxCells: 60, bodySlots: CAP * 8 });
   const brains = await BrainArenaGPU.create(built.arena);
   const world = new WorldGPU(brains, built.cells, { bound: BOUND, ...arm.params });
   const evo = new Evolver({
