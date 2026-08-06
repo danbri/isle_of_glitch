@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The world moves — how four wrong scales added up to a static world</title>
+<style>
+  :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fbfbf9; --fg:#1c2530; --dim:#5d6b7c; --acc:#12766e; --line:#e2e5ea; }
+  }
+  body { background:var(--bg); color:var(--fg); margin:0;
+         font:16px/1.65 ui-serif, Georgia, "Iowan Old Style", serif; }
+  .wrap { max-width:46rem; margin:0 auto; padding:3rem 1.25rem 6rem; }
+  a { color:var(--acc); }
+  h1,h2,h3 { font-family:ui-sans-serif, system-ui, sans-serif; line-height:1.25; }
+  h1 { font-size:1.9rem; margin:0 0 .3rem; }
+  h2 { margin-top:2.4rem; border-bottom:1px solid var(--line); padding-bottom:.3rem; }
+  .meta { color:var(--dim); font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size:.8rem; letter-spacing:.02em; }
+  code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.85em; }
+  pre { background:rgba(127,127,127,.1); padding:.9rem 1rem; border-radius:6px;
+        overflow-x:auto; border:1px solid var(--line); }
+  table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; font-size:.9rem; }
+  th,td { border:1px solid var(--line); padding:.35rem .6rem; text-align:left; }
+  th { background:rgba(127,127,127,.08); }
+  blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
+               color:var(--dim); }
+  .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
+  ul.index { list-style:none; padding:0; }
+  ul.index li { margin:.9rem 0; }
+  ul.index .meta { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
+  <article>
+  <h1>The world moves — how four wrong scales added up to a static world</h1>
+  <p class="meta">
+    6 August 2026 · posts, locomotion, milestone, physics, ctrnn, retraction
+  </p>
+  <p>Bodies locomote under their own brains, with the muscles-off control clean at
+zero. Live, 673 bodies tracked by uid over 283 seconds of world time:</p>
+<pre><code>displacement       p50 0.953   p90 18.268   max 71.008 world units
+common drift       0.089            &lt;- the field is not doing it
+relative to drift  p50 0.979   p90 18.200   max 70.970
+</code></pre>
+<p>This morning the same measurement read p50 0.399, p90 0.919, max 2.1.</p>
+<p>It is jiggly, not graceful. The median body covers a fifth of its own length in
+283 s; the p90 covers three and a half lengths and the fastest fourteen. That
+skew is the honest headline: <strong>a minority move properly and most still shuffle.</strong></p>
+<h2>Why it was hard to find</h2>
+<p>Nothing moved, and every plausible cause was true at once. Four independent
+scales were wrong, each individually sufficient to prevent locomotion, so fixing
+any one of them changed nothing measurable and looked like a dead end. The only
+way through was an instrument that could separate them.</p>
+<h2>The instrument that broke the deadlock</h2>
+<p>Drive the muscles from an <strong>imposed travelling wave</strong> — <code>sin(axial·k − ωt)</code> —
+instead of from the brain. That splits one unanswerable question into two
+answerable ones:</p>
+<ul>
+<li>bodies move under an imposed gait → the body plan is fine, the <strong>controller</strong> is
+the blocker</li>
+<li>bodies do not move even then → no controller would have helped, the <strong>body and
+physics</strong> are the blocker</li>
+</ul>
+<p>Building it needed each cell to know its position along its own body axis, which
+development already computes as <code>ap</code> and the kernel had no way to see. It is now
+packed into spare bits of the cell's metadata word.</p>
+<p>The first run of this diagnostic was itself broken, and the way it broke was
+lucky: three different frequencies produced <strong>byte-identical</strong> displacement. A
+travelling wave whose frequency does not matter is not travelling. The world
+clock was frozen — <code>step()</code> only republished the uniform block when drift or
+morphRate were non-zero, which is true of every isolated assay in <code>tools/</code>, so
+<code>worldTime</code> had sat at 0 forever and the wave was a static deformation. A clock
+that only ticks when someone else needs it is not a clock.</p>
+<p>With that fixed, the answer came back: <strong>bodies did not move even under a perfect
+gait.</strong> p50 0.012 units in 300 s at every frequency and wavelength tried. The
+controller had never been the blocker.</p>
+<h2>The three things that were wrong</h2>
+<p><strong>1. Muscle was ten to twenty times too weak.</strong> Displacement against <code>contract</code>,
+under an imposed gait:</p>
+<pre><code>0.45  p50 0.067   span x0.97  torn 0/30
+2.5   p50 0.199   span x0.82  torn 0/30
+5     p50 0.490   span x0.82  torn 1/30
+10    p50 0.891   span x0.86  torn 1/30
+20    p50 1.594   span x0.95  torn 2/30
+</code></pre>
+<p>Twenty-four times the displacement. The span column is the guard against this
+project's classic false positive — displacement from a body flying apart is not
+locomotion — and bodies end slightly <em>contracted</em>, not scattered.</p>
+<p><code>muscleCost</code> had to scale down with it. Work is <code>muscleCost × |contraction|</code>, so
+eleven times the force is eleven times the metabolic bill: at contract 5 with the
+old rate the population fell from 300 to 11. Scaled, it holds at 300. Said
+plainly because it is a real choice and not a free lunch — this makes muscle
+stronger per unit fuel. Nothing is minted, but the contractility-versus-fuel
+tradeoff <code>primitives.md</code> asks for is weaker than it was.</p>
+<p><strong>2. Grip did not anchor.</strong> In the traction kernel, <code>grab</code> appeared only in the
+<em>perpendicular</em> drag term:</p>
+<pre><code class="language-wgsl">let kA = P.fricK * (P.slipBase + grit);                              // along axis
+let kP = P.fricK * (P.slipBase + (1.0 + P.gripAniso * grab) * grit); // sideways
+</code></pre>
+<p>A gripping cell therefore slid along its own axis exactly as freely as a released
+one. There was nothing to pull against, and anchor-extend-release — the
+caterpillar, the tube foot, walking through buttery snow — could not work however
+well it was phased. <code>gripHold</code> now raises drag in <em>both</em> directions with grip, so
+a gripped cell is planted and a released one slides. Still dissipative, and the
+passive case still nets zero: constant grip is reciprocal and the scallop theorem
+eats it. Only phased grip ratchets.</p>
+<p><code>fricK</code> came down 6 → 2 at the same time. The ratchet needs contrast, and at 6 the
+released phase had a drag time constant of 0.14 s against a 0.7 s gait — both
+halves of the cycle were overdamped, so the body never glided when it let go.</p>
+<p><strong>3. Nothing was driving it.</strong> <code>SYN_BASIS</code> has carried an antisymmetric <code>axial</code>
+term, <code>(b.ap − a.ap)</code>, since it was written — with a comment saying it exists so a
+genome can excite down the body and inhibit back up it, which is exactly the
+asymmetry a travelling wave needs. It was never seeded. Founders drew it near
+zero along with everything else, so a central pattern generator had to be
+invented from nothing.</p>
+<p>Seeded, with random sign per founder because neither direction is privileged:</p>
+<pre><code>fresh founders, brain-driven   p50 0.744   p90 9.122   max 56.360
+CONTROL muscles off            p50 0.000   p90 0.000   max  0.000
+same bodies, imposed gait      p50 0.409   p90 2.444   max 15.528
+</code></pre>
+<p>The brains now <strong>out-run the hand-written travelling wave</strong>. Against evolved
+genomes before the seed, p50 0.018, it is 41×.</p>
+<p>This is the same argument as seeding contractility earlier: evolution cannot
+select for a capacity that is not in the population. It is variation, not
+outcome — mutation can weight it to zero, and the economy still decides whether a
+gait is worth its fuel.</p>
+<h2>Two things I had wrong</h2>
+<p><strong><code>swim-verify.js</code> was never a control on our physics.</strong> I had been citing its 36
+body-lengths as proof the locomotion primitive works. It is a <em>separate CPU
+model</em>: a hand-placed 9-node chain, driven by transverse force rather than
+rest-length change, with its own drag constants and a body thirty times smaller.
+It shares no code with the GPU kernel. It proves an anisotropic-drag ratchet can
+move a chain in a different model, and nothing about ours.</p>
+<p><strong>The body axis was arbitrary, and fixing it changed nothing.</strong> Traction took the
+first two bonds in slot order as the body axis — correct for a chain, meaningless
+for a hex body of degree 4–6, where it is a random local lattice direction. It
+now follows the head-tail gradient. Displacement moved 0.110 → 0.095: no effect.
+Recorded because a correct fix that buys nothing is worth knowing, and because I
+would otherwise have claimed it.</p>
+<h2>What is still wrong</h2>
+<ul>
+<li><strong>The distribution is badly skewed.</strong> p90 is 18× the median. Most bodies shuffle.</li>
+<li><strong>The economy has not voted yet.</strong> It deleted contractility once already, over
+deep time, after a promising 900k steps. Whether gaits survive is unmeasured and
+the honest expectation is that they are on trial.</li>
+<li><strong>Muscle is cheaper per unit force than it was</strong>, which weakens a tradeoff the
+design documents want to be real.</li>
+<li><strong>Sensors are scarce</strong>, so this is open-loop locomotion — rhythm, not navigation.
+Nothing yet moves <em>toward</em> anything.</li>
+</ul>
+
+</article>
+
+</div>
+</body>
+</html>
