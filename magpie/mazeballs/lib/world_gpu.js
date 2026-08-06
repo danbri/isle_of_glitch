@@ -72,6 +72,14 @@ export const CELL_MUSCLE = 2;
  * The sign bit is never set, so `meta.x < 0` still means "vacated slot"
  * everywhere in the shader. Dead cells are written as -1 as before.
  */
+
+/** Body size plus the two consumption axes, into cmeta.w. Size lives in the low
+ *  byte (bodies never approach 255 cells), nutrition and toughness above it. */
+export function packSize(bodySize, nutrition, toughness) {
+  const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
+  return (Math.max(0, Math.min(255, bodySize | 0)))
+       | (q(nutrition) << 8) | (q(toughness) << 16);
+}
 export function packMeta(type, contractility, grippiness, apNorm = 0.5, senseTune = 0) {
   const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
   // Bits 24-30: the cell's position along its own body axis, 0 head to 1 tail,
@@ -219,7 +227,7 @@ ${wgslStruct('W')}
 @group(0) @binding(0) var<uniform>             P     : W;
 @group(0) @binding(1) var<storage, read_write> pos   : array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read_write> vel   : array<vec4<f32>>;  // xy=velocity, z=radius, w=next energy
-@group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=packed, y=slot, z=body, w=body size
+@group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=packed, y=slot, z=body, w=packed
 
 // THE MATERIAL VECTOR, PACKED INTO cmeta.x.
 //
@@ -240,6 +248,13 @@ fn contractility(m: i32) -> f32 { return f32((m >> 8u) & 255) / 255.0; }
 fn grippiness(m: i32) -> f32 { return f32((m >> 16u) & 255) / 255.0; }
 // Position along the body axis, 0 head to 1 tail. See packMeta.
 fn axialPos(m: i32) -> f32 { return f32((m >> 24u) & 127) / 127.0; }
+// cmeta.w carries body size in the low byte and two material axes above it.
+// NUTRITION is what a cell is worth to whatever eats it; TOUGHNESS is how hard
+// it is to take. Both are continuous capacities, not labels — 'armour' and
+// 'meat' are regions of this space, never types the kernel branches on.
+fn bodySizeOf(w: i32) -> f32 { return f32(max(w & 255, 1)); }
+fn nutritionOf(w: i32) -> f32 { return f32((w >> 8u) & 255) / 255.0; }
+fn toughnessOf(w: i32) -> f32 { return f32((w >> 16u) & 255) / 255.0; }
 // Sensor tuning: acuity 0..1, and which world axis this cell reads.
 fn senseAcuity(m: i32) -> f32 { return f32((m >> 2u) & 31) / 31.0; }
 fn senseNorth(m: i32) -> bool { return ((m >> 7u) & 1) == 1; }
@@ -490,7 +505,23 @@ fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
         // from the same pre-step energies, so cell j computes exactly the
         // negative of what cell i computes and no energy is created or lost.
         let theirE = energy[j];
-        let raw = P.contestRate * (effort - abs(contractionOf(j))) * P.dt;
+        // CONSUMPTION, not a wrestling match.
+        //
+        // primitives.md: energy A<-B at max(0, capability - toughness_B) x
+        // nutrition_B. You must both OVERPOWER the thing and it must be worth
+        // taking. The capability is the attacker's own contraction — pressing is
+        // what a muscle does, it is already commanded by the CTRNN and already
+        // paid for in muscleCost, so biting costs exactly what pressing costs and
+        // no new verb enters the world.
+        //
+        // Nothing here is a predator or prey. Both cells run the same expression
+        // in both directions; who gains is decided by which of them is pressing
+        // harder and which is tougher, moment to moment. A tough cell is bad
+        // food, a nutritious one is worth attacking, and "armour" and "meat" are
+        // regions of that space rather than roles.
+        let take  = max(0.0, effort            - toughnessOf(cmeta[j].w)) * nutritionOf(cmeta[j].w);
+        let given = max(0.0, abs(contractionOf(j)) - toughnessOf(cmeta[i].w)) * nutritionOf(cmeta[i].w);
+        let raw = P.contestRate * (take - given) * P.dt;
         var moved = 0.0;
         if (raw > 0.0) {
           moved = min(raw, min(max(theirE - P.eFloor, 0.0), max(P.eCap - myE, 0.0)));
@@ -1025,7 +1056,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // body's own size. Using a fixed constant was fine while every body had the
   // same cell count; the moment size became heritable it silently taxed large
   // bodies for their own cells and made growth look worse than it is.
-  let mySize = f32(max(cmeta[i].w, 1));
+  let mySize = bodySizeOf(cmeta[i].w);
   let crowd = crowdingAt(np);
   let share = 1.0 / (1.0 + P.crowdK * max(0.0, crowd - mySize));
 
@@ -1078,6 +1109,11 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // cheap noisy sense stays a live option. primitives.md: an axis without a
   // cost has no teeth.
   let senseWork = P.senseCost * senseAcuity(cmeta[i].x);
+  // ARMOUR IS EXPENSIVE TO HOLD. Without a cost, toughness is a free defence
+  // and evolution takes it to the ceiling in every lineage — the same failure
+  // as feeding being independent of what a cell is, which produced a 94%
+  // muscle monoculture. primitives.md: an axis with no cost has no teeth.
+  let armourWork = P.toughCost * toughnessOf(cmeta[i].w);
   let taken = contest(i, np, abs(mine));
   // Written to scratch, not to energy[]: contest() READS energy[j] for other
   // cells, and if physics also wrote energy[j] in the same dispatch the result
@@ -1087,7 +1123,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // every step — the other independent reason contact was dead. Between this and
   // contactK being a denormal (see lib/uniform.js), cells have never collided.
   vel[i] = vec4<f32>(v.x, v.y, vel[i].z,
-    clamp(energy[i] + (gain - P.brainTax - work - senseWork + taken) * P.dt, P.eFloor, P.eCap));
+    clamp(energy[i] + (gain - P.brainTax - work - senseWork - armourWork + taken) * P.dt, P.eFloor, P.eCap));
 }
 
 // Publish the energy physics computed. One extra dispatch, no extra buffer, and
@@ -1140,7 +1176,10 @@ export class WorldGPU {
         cells.grippiness ? cells.grippiness[i] : (cells.ctype[i] === 3 ? 1 : 0));
       meta[i * 4 + 1] = cells.cslot[i];
       meta[i * 4 + 2] = bodyOf ? bodyOf[i] : -1;
-      meta[i * 4 + 3] = cells.bodySize ? cells.bodySize[i] : 0;
+      // Founders: middling meat, no armour. They have no developed tissue to
+      // read these from, and a founder that was inedible would be a boundary
+      // condition with teeth.
+      meta[i * 4 + 3] = packSize(cells.bodySize ? cells.bodySize[i] : 0, 0.5, 0.0);
     }
     this.bPos = mk(pos); this.bVel = mk(vel); this.bMeta = mk(meta);
     // Pack bond index + rest length into the one vec2 buffer the shader binds.
@@ -1275,7 +1314,7 @@ export class WorldGPU {
       // conserved pool. Not conclusive at n=4 (separation from control is
       // ~2.6 SE) but consistent in direction, and it is the first setting in
       // this project where moving is not strictly punished.
-      bucketM: 32, contestRate: 0.6, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
+      bucketM: 32, contestRate: 0.6, toughCost: 0.30, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
       // Cells are solid. This was silently 1.68e-44 for the life of the code —
       // see lib/uniform.js — so nothing has ever pushed back on anything. Sized
       // against springK so a bond can still hold a body together against the

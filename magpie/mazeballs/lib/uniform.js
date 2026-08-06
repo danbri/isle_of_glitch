@@ -113,6 +113,7 @@ export const WORLD_FIELDS = [
   ['senseOther', 'f32', 'weight of the neighbour sense; 0 disables it'],
   ['senseRange', 'f32', 'gaussian sigma of the receptive field, world units'],
   ['senseBuckets', 'f32', 'hash buckets walked each way by a sensor; 1 = the 3x3 walk'],
+  ['toughCost', 'f32', 'energy per second per unit of toughness — armour is not free'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */

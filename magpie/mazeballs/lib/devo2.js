@@ -151,7 +151,8 @@ export const N_MATERNAL = 5;
 // swapped in without touching the arena.
 export const OUT_BASE = 8;
 export const OUTPUTS = ['grow', 'survive', 'contract', 'sense', 'grip', 'stiff', 'tau', 'bias',
-                        'senseTune', 'divideAngle', 'spacing', 'dispersal'];
+                        'senseTune', 'divideAngle', 'spacing', 'dispersal',
+                        'nutrition', 'toughness'];
 export const G_GROW    = OUT_BASE + 0;
 /**
  * SURVIVE — whether this cell is still part of the body when the egg hatches.
@@ -500,6 +501,11 @@ export function develop(genome, {
       // unknown ground, near keeps known-good ground but competes with your
       // own offspring — so it is evolved, not chosen. It was a hardcoded 9.
       dispersal: out(i, 11),
+      // What this cell is worth to whatever eats it, and how hard it is to
+      // take. primitives.md wants these ANTICORRELATED — tough is low-value
+      // food — and that is left to selection rather than imposed here.
+      nutrition: out(i, 12),
+      toughness: out(i, 13),
     });
   }
   return { cells, spent, aborted, steps: nStep, culled, laid: n };
@@ -571,6 +577,23 @@ export const SEED_DEFAULTS = {
   // This is variation, not outcome — mutation is free to weight it to zero,
   // and whether a gait survives is still the economy's decision.
   axialSyn: 2.5,
+  // BEING EDIBLE IS THE DEFAULT; BEING INEDIBLE IS THE INVESTMENT.
+  //
+  // Measured before this: nutrition was exactly 0.000 across every living
+  // genome — mean, sd and p90 all zero — because an unseeded output gene sits at
+  // concentration ~0, maps to -1, and clamps to nothing. Consumption was
+  // therefore a no-op: take = max(0, effort - toughness) * nutrition is always
+  // zero when nothing is worth eating. The same failure as contractility, which
+  // took 49 of 64 bodies having no muscle to notice.
+  //
+  // The default is also backwards if left at zero. Living tissue IS energy-rich;
+  // an animal is made of the same stuff it eats. So nutrition starts HIGH and
+  // toughness starts at nothing, which puts the population in the state that has
+  // something to escalate FROM: everything edible, nothing armoured.
+  nutritionBias: 0.7,
+  nutritionDecay: 0.0,
+  toughnessBias: -0.8,
+  toughnessDecay: 0.0,
 };
 
 export function randomGenome(rnd = Math.random, opts = {}) {
@@ -614,6 +637,13 @@ export function randomGenome(rnd = Math.random, opts = {}) {
   g[cb + OFF_BIAS] = o.contractBias;
   g[cb + OFF_DECAY] = o.contractDecay;
   g[cb + OFF_DIFF] = o.contractDiff;
+
+  const nb = (OUT_BASE + 12) * GENE_STRIDE;    // nutrition
+  g[nb + OFF_BIAS] = o.nutritionBias;
+  g[nb + OFF_DECAY] = o.nutritionDecay;
+  const tb = (OUT_BASE + 13) * GENE_STRIDE;    // toughness
+  g[tb + OFF_BIAS] = o.toughnessBias;
+  g[tb + OFF_DECAY] = o.toughnessDecay;
 
   // SYNAPSE COEFFICIENTS. Not optional and not zero-able: `synapse()` returns
   // SYN_RANGE * tanh(sum), so an all-zero block gives every edge weight exactly

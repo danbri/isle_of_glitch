@@ -47,7 +47,7 @@ function rng(seed) {
 import {
   bond as bondCells, morphology, largestPiece,
 } from './devo.js';
-import { packMeta } from './world_gpu.js';
+import { packMeta, packSize } from './world_gpu.js';
 import { Lineage, CELLZERO } from './lineage.js';
 import * as DEVO1 from './devo.js';
 import * as DEVO2 from './devo2.js';
@@ -456,7 +456,8 @@ export class Evolver {
       }
       meta[i * 4] = packMeta(type, con, gri, apN, c.senseTune ?? 0);
       meta[i * 4 + 1] = dst + i;
-      meta[i * 4 + 2] = child; meta[i * 4 + 3] = n;
+      meta[i * 4 + 2] = child;
+      meta[i * 4 + 3] = packSize(n, Math.max(0, c.nutrition ?? 0), Math.max(0, c.toughness ?? 0));
       if (cells.contractility) cells.contractility[dst + i] = con;
       if (cells.grippiness) cells.grippiness[dst + i] = gri;
       cells.ctype[dst + i] = type;
@@ -791,7 +792,8 @@ export class Evolver {
       meta[i * 4] = packMeta(type, type === 2 ? 1 : 0, type === 3 ? 1 : 0);
       meta[i * 4 + 1] = dst + i;
       meta[i * 4 + 2] = child;
-      meta[i * 4 + 3] = n;
+      // The copy path has no developed properties: middling meat, no armour.
+      meta[i * 4 + 3] = packSize(n, 0.5, 0.0);
       // This path has no developed properties to read, so the label IS the
       // capacity here. Writing it explicitly matters: arena slots are
       // recycled, and without this a newborn would inherit whatever
