@@ -150,7 +150,8 @@ export const N_MATERNAL = 5;
 // pipeline (describe(), bond(), synapse()) is unchanged, so this module can be
 // swapped in without touching the arena.
 export const OUT_BASE = 8;
-export const OUTPUTS = ['grow', 'survive', 'contract', 'sense', 'grip', 'stiff', 'tau', 'bias', 'senseTune'];
+export const OUTPUTS = ['grow', 'survive', 'contract', 'sense', 'grip', 'stiff', 'tau', 'bias',
+                        'senseTune', 'divideAngle', 'spacing'];
 export const G_GROW    = OUT_BASE + 0;
 /**
  * SURVIVE — whether this cell is still part of the body when the egg hatches.
@@ -273,146 +274,70 @@ function srcOf(genome, i, k) {
 }
 
 /**
- * The hex lattice inside a circular egg, with neighbour lists.
- *
- * Precomputed once per egg geometry and shared by every embryo of that size, so
- * the per-birth cost is the network, not the geometry.
- */
-export function eggLattice(extent) {
-  const sites = [];
-  const spacing = SPACING;
-  const R = Math.ceil(extent / spacing) + 1;
-  for (let row = -R; row <= R; row++) {
-    const y = row * spacing * 0.866;
-    const off = (row & 1) ? spacing * 0.5 : 0;
-    for (let col = -R; col <= R; col++) {
-      const x = col * spacing + off;
-      const r = Math.hypot(x, y);
-      if (r > extent) continue;
-      sites.push({ x, y, r, ap: x / extent, dv: y / extent, rad: r / extent, nb: [] });
-    }
-  }
-  // Neighbours: within 1.35 spacings, the same reach bond() uses, so the
-  // diffusion graph and the mechanical graph are the same graph.
-  const lim = spacing * 1.35;
-  for (let i = 0; i < sites.length; i++) {
-    for (let j = i + 1; j < sites.length; j++) {
-      const d = Math.hypot(sites[i].x - sites[j].x, sites[i].y - sites[j].y);
-      if (d <= lim) { sites[i].nb.push(j); sites[j].nb.push(i); }
-    }
-  }
-  // Start from the site nearest the centre — one cell, as the sketch asks.
-  let seed = 0;
-  for (let i = 1; i < sites.length; i++) if (sites[i].r < sites[seed].r) seed = i;
-  return { sites, seed, extent };
-}
-
-const latticeCache = new Map();
-export function latticeFor(extent) {
-  const key = extent.toFixed(3);
-  let l = latticeCache.get(key);
-  if (!l) { l = eggLattice(extent); latticeCache.set(key, l); }
-  return l;
-}
-
 /**
- * Run development: genome -> body.
+ * Development on CONTINUOUS space. There is no lattice.
  *
- * @param {Float32Array} genome
- * @param {object} o
- * @param {number} [o.yolk]        energy available; growth stops when spent
- * @param {number} [o.cellCost]    energy per cell built
- * @param {number} [o.extent]      egg radius in world units. MUST BE MUCH LARGER
- *   than a compact body of maxCells, or the body fills the shell and is a disc
- *   again whatever the network says. Measured: at extent 4.5 — which is exactly
- *   the radius of a compact 60-cell blob — every one of 200 random embryos hit
- *   the cell cap and elongation came out at p50 0.90, worse than Dev 1.0. The
- *   egg has to afford a shape before the genome can choose one.
- * @param {number} [o.ms]          developmental time in milliseconds
- * @param {number} [o.dtMs]        integration step in milliseconds
- * @param {number} [o.maxCells]
- * @param {() => number} [o.rnd]   entropy for developmental noise
- * @returns {{cells: Array, spent: number, aborted: boolean, steps: number}}
+ * Both encodings used to lay cells on a hex lattice inside the egg and hand the
+ * result to continuous physics. It looked tidy and it was a lie: a hex lattice
+ * fixes every cell's neighbour count at four to six by construction, so every
+ * body came out a triangulated truss. Measured consequence — bodies deformed
+ * 3.4% of their own length under muscle, because contracting one bond is
+ * resisted by the other five, and the "body axis" taken from two arbitrary
+ * lattice neighbours pointed a meaningless direction per cell.
+ *
+ * Nothing in the biology asks for that. A daughter cell goes where the mother
+ * puts it, at a distance the mother's chemistry sets, and the tissue is as
+ * regular or as ragged as that chemistry makes it. Connectivity then FOLLOWS
+ * from where cells actually are, so a strung-out filament has degree two and
+ * deforms freely while a packed sheet has degree six and holds its shape —
+ * both reachable, neither imposed.
  */
+
+/** Nominal cell separation, and the unit `spacing` expression varies around.
+ *  Shared with bond() in devo.js, which connects by DISTANCE — so a body whose
+ *  cells sit further apart than the bond reach is genuinely less connected, and
+ *  that is the point rather than a bug. */
+export { SPACING as NOMINAL_SPACING };
+
 export function develop(genome, {
   yolk = 1e9, cellCost = 1.0, extent = 12,
   ms = 12000, dtMs = 40, maxCells = 60, rnd = Math.random,
   canalised = true,
-  // 'grow'   — one cell, extended by division where the network says to grow.
-  //            Morphology is the record of where growth happened.
-  // 'cleave' — the egg is first partitioned into a field of pluripotent cells,
-  //            then patterned, then SCULPTED by the survive gene. This is the
-  //            arrangement fly patterning actually uses, and the one that gives
-  //            a gradient something to be read across.
-  //
-  //            EXPERIMENTAL AND CURRENTLY WORSE. Measured over 200 founders:
-  //            96% saturate the cell cap and elongation sits at 1.15 with
-  //            segments flat at 0 — i.e. it makes discs. The cause is that
-  //            `survive` reaches a steady state of sigmoid(bias)/decay well
-  //            above threshold for every cell, so nothing is ever culled and
-  //            the sculpting step is a no-op. Fixing it means making survival a
-  //            REGULATED quantity sitting near its threshold rather than pinned
-  //            by its bias, which is a tuning problem, not a design flaw — the
-  //            field-for-patterning argument still stands. Left in, off by
-  //            default, with the failure recorded rather than the mode quietly
-  //            deleted.
   mode = 'grow',
-  cleaveFrac = 0.35,          // fraction of developmental time spent cleaving
-  divRate = 1.6,              // division readiness gained per unit grow per second
+  cleaveFrac = 0.35,
+  divRate = 1.6,
   surviveThresh = 0.5,
 } = {}) {
-  const lat = latticeFor(extent);
-  const sites = lat.sites;
-  const nS = sites.length;
   const dt = dtMs / 1000;
   const nStep = Math.max(1, Math.round(ms / dtMs));
+  const cap = Math.max(4, maxCells);
 
-  const conc = new Float32Array(nS * NGENE);
-  const next = new Float32Array(nS * NGENE);
-  const occupied = new Uint8Array(nS);
+  // Per-cell continuous state. Parallel arrays rather than objects: this is the
+  // hot loop of every birth in the world.
+  const X = new Float32Array(cap), Y = new Float32Array(cap);
+  const conc = new Float32Array(cap * NGENE);
+  const next = new Float32Array(cap * NGENE);
+  const ready = new Float32Array(cap);
+  const noise = new Float32Array(cap);
+  let n = 0;
 
-  // CANALISATION — the developmental noise is derived from the GENOME, so the
-  // same genome develops the same body every time.
-  //
-  // This is not a cosmetic determinism. With per-development noise, measured
-  // over 39 genomes developed 12 times each:
-  //
-  //     within-genome sd (same genome, fresh noise)  0.264
-  //     between-genome sd (genome means)             0.084
-  //     heritability h^2                             0.093
-  //
-  // Nine tenths of the variance in any morphology measure was developmental
-  // noise rather than genome, and one genome ranged 0.63 to 2.31 across twelve
-  // developments — a spread wider than the entire genetic range. Elite selection
-  // on a signal like that picks lucky DEVELOPMENTS, which regress in their
-  // offspring, so directed selection on elongation drove it DOWNWARDS (3.66 at
-  // founding to 1.30 by generation 25). Selection was chasing noise.
-  //
-  // The noise still exists and still does its job: it is spatially structured
-  // across sites, so a Turing instability can still choose a phase from it. It
-  // is simply a fixed prepattern per genome rather than a fresh coin flip — which
-  // is what canalisation means, and real embryos work hard for it.
-  //
-  // Pass `canalised: false` to restore stochastic development, which is how the
-  // heritability above is measured.
-  const noise = new Float32Array(nS);
+  // CANALISATION — developmental noise derived from the genome, so the same
+  // genome develops the same body every time. Measured before this: within-genome
+  // sd 0.264 against between-genome 0.084, i.e. heritability 0.093, and directed
+  // selection on morphology ran DOWNHILL because it was chasing lucky
+  // developments. See the note this replaces.
+  let rndDev = rnd;
   if (canalised) {
-    // Cheap deterministic hash of the genome -> a seeded stream for the sites.
     let h = 2166136261 >>> 0;
     for (let i = 0; i < genome.length; i++) {
       h ^= Math.imul(Math.round(genome[i] * 4096) | 0, 16777619);
       h = Math.imul(h ^ (h >>> 13), 2654435761) >>> 0;
     }
     let st = (h || 1) >>> 0;
-    for (let s = 0; s < nS; s++) {
-      st = (Math.imul(st, 1664525) + 1013904223) >>> 0;
-      noise[s] = st / 4294967296;
-    }
-  } else {
-    for (let s = 0; s < nS; s++) noise[s] = rnd();
+    rndDev = () => { st = (Math.imul(st, 1664525) + 1013904223) >>> 0; return st / 4294967296; };
   }
 
-  // Precompute per-gene constants once rather than per cell per step.
+  // Per-gene constants, hoisted out of the per-cell loop.
   const decay = new Float32Array(NGENE), diff = new Float32Array(NGENE);
   const bias = new Float32Array(NGENE);
   const src = new Int32Array(NGENE * K), w = new Float32Array(NGENE * K);
@@ -426,157 +351,144 @@ export function develop(genome, {
     }
   }
 
-  const setMaternal = (s) => {
-    const b = s * NGENE, st = sites[s];
-    conc[b + G_AP] = 0.5 * (st.ap + 1);
-    conc[b + G_DV] = 0.5 * (st.dv + 1);
-    conc[b + G_RAD] = st.rad;
-    conc[b + G_NOISE] = noise[s];
-    const nb = st.nb;
+  // Signalling reach. Diffusion and crowding are both PROXIMITY questions now,
+  // not adjacency-on-a-lattice questions.
+  const REACH = SPACING * 1.6, REACH2 = REACH * REACH;
+  const out = (i, k) => 2 * Math.tanh(conc[i * NGENE + OUT_BASE + k]) - 1;
+
+  const setMaternal = (i) => {
+    const b = i * NGENE;
+    conc[b + G_AP] = 0.5 * (X[i] / extent + 1);
+    conc[b + G_DV] = 0.5 * (Y[i] / extent + 1);
+    conc[b + G_RAD] = Math.min(1, Math.hypot(X[i], Y[i]) / extent);
+    conc[b + G_NOISE] = noise[i];
     let occ = 0;
-    for (let q = 0; q < nb.length; q++) if (occupied[nb[q]]) occ++;
-    conc[b + G_CROWD] = nb.length ? occ / nb.length : 0;
+    for (let j = 0; j < n; j++) {
+      if (j === i) continue;
+      const dx = X[j] - X[i], dy = Y[j] - Y[i];
+      if (dx * dx + dy * dy < REACH2) occ++;
+    }
+    // Six neighbours within reach is a packed sheet; that is the reference.
+    conc[b + G_CROWD] = Math.min(1, occ / 6);
   };
 
-  let live = [lat.seed];
-  occupied[lat.seed] = 1;
-  setMaternal(lat.seed);
+  X[0] = 0; Y[0] = 0; noise[0] = rndDev(); n = 1;
+  setMaternal(0);
   let spent = cellCost, aborted = false;
-
-  // Per-cell division readiness: accumulates at a rate set by `grow`, fires at 1.
-  const ready = new Float32Array(nS);
   const cleaveSteps = Math.round(nStep * cleaveFrac);
 
-  for (let t = 0; t < nStep; t++) {
-    // ---- regulatory update, gather-style, out of place
-    for (let li = 0; li < live.length; li++) {
-      const s = live[li], b = s * NGENE;
-      const nb = sites[s].nb;
-      // mean of occupied neighbours, for the diffusion term
-      let nOcc = 0;
-      for (let q = 0; q < nb.length; q++) if (occupied[nb[q]]) nOcc++;
+  for (let t = 0; t < nStep && !aborted; t++) {
+    // ---- regulation, gather-style, out of place
+    for (let i = 0; i < n; i++) {
+      const b = i * NGENE;
       for (let g = N_MATERNAL; g < NGENE; g++) {
         let net = bias[g];
         const wb = g * K;
         for (let k = 0; k < K; k++) {
           const sg = src[wb + k];
-          if (sg < 0) continue;
-          net += w[wb + k] * conc[b + sg];
+          if (sg >= 0) net += w[wb + k] * conc[b + sg];
         }
         let lap = 0;
-        if (nOcc > 0 && diff[g] > 0) {
-          let acc = 0;
-          for (let q = 0; q < nb.length; q++) {
-            const nn = nb[q];
-            if (occupied[nn]) acc += conc[nn * NGENE + g];
+        if (diff[g] > 0) {
+          let acc = 0, cnt = 0;
+          for (let j = 0; j < n; j++) {
+            if (j === i) continue;
+            const dx = X[j] - X[i], dy = Y[j] - Y[i];
+            const d2 = dx * dx + dy * dy;
+            if (d2 >= REACH2) continue;
+            // Weighted by proximity: a cell twice as far away signals less. On a
+            // lattice every neighbour was equidistant and this was a plain mean.
+            const wgt = 1 - Math.sqrt(d2) / REACH;
+            acc += conc[j * NGENE + g] * wgt; cnt += wgt;
           }
-          lap = diff[g] * (acc / nOcc - conc[b + g]);
+          if (cnt > 0) lap = diff[g] * (acc / cnt - conc[b + g]);
         }
         const c = conc[b + g] + dt * (sigmoid(net) - decay[g] * conc[b + g] + lap);
-        next[b + g] = c > 0 ? (c < 40 ? c : 40) : 0;          // non-negative, bounded
+        next[b + g] = c > 0 ? (c < 40 ? c : 40) : 0;
       }
     }
-    for (let li = 0; li < live.length; li++) {
-      const s = live[li], b = s * NGENE;
+    for (let i = 0; i < n; i++) {
+      const b = i * NGENE;
       for (let g = N_MATERNAL; g < NGENE; g++) conc[b + g] = next[b + g];
-      setMaternal(s);                                          // clamped, every step
+      setMaternal(i);
     }
 
-    // ---- division
-    //
-    // WHEN DOES A CELL DIVIDE? Not on a synchronous poll. Each cell accumulates
-    // readiness at a rate set by its own `grow` output, and divides when that
-    // accumulator crosses 1, then resets. Division is therefore a RATE — a cell
-    // expressing grow twice as hard divides twice as often — and cells fall out
-    // of phase with each other naturally, instead of the whole embryo dividing
-    // on the same tick because the loop said so.
-    //
-    // The old form (`t % 5 === 0` and a threshold) made division a property of
-    // the integrator's step count, which is exactly the kind of thing that
-    // silently sets a timescale nobody chose.
-    //
-    // During CLEAVAGE the accumulator is bypassed: cleavage in a real embryo is
-    // not growth, it is the zygote's cytoplasm being partitioned, and it runs
-    // fast and largely independent of patterning. Its job is to produce a FIELD
-    // for the gradients to be read across.
+    // ---- division, in continuous space
     const cleaving = mode === 'cleave' && t < cleaveSteps;
-    if (live.length < maxCells) {
-      const added = [];
-      for (let li = 0; li < live.length; li++) {
-        const s = live[li];
-        if (cleaving) {
-          // partition, unconditionally, as fast as free neighbours allow
-        } else {
-          ready[s] += dt * conc[s * NGENE + G_GROW] * divRate;
-          if (ready[s] < 1) continue;
-          ready[s] -= 1;
-        }
-        const nb = sites[s].nb;
-        // Grow into the free neighbour the gradient points hardest at, so
-        // direction is a property of the chemistry rather than of iteration
-        // order. Ties break toward the site the mother's axis favours.
-        let best = -1, bestScore = -Infinity;
-        for (let q = 0; q < nb.length; q++) {
-          const nn = nb[q];
-          if (occupied[nn]) continue;
-          // Cleavage fills; it does not steer. Giving it the same polarity bias
-          // as tip growth would make the "field" a lopsided crescent, which is
-          // not a field.
-          const score = cleaving
-            ? (0.5 - sites[nn].rad) + 0.1 * noise[nn]
-            : sites[nn].ap * conc[s * NGENE + G_AP]
-              + sites[nn].dv * conc[s * NGENE + G_DV]
-              + 0.05 * noise[nn];
-          if (score > bestScore) { bestScore = score; best = nn; }
-        }
-        if (best < 0) continue;
-        if (spent + cellCost > yolk) { aborted = true; break; }
-        if (live.length + added.length >= maxCells) break;
-        occupied[best] = 1;
-        spent += cellCost;
-        // The daughter inherits the mother's chemistry. Cytoplasm is divided,
-        // not created: halving it means a growing tip carries a decaying memory
-        // of where it came from rather than a perfect copy, which is what lets
-        // a travelling front exist at all.
-        const bs = s * NGENE, bd = best * NGENE;
-        for (let g = N_MATERNAL; g < NGENE; g++) {
-          const half = conc[bs + g] * 0.5;
-          conc[bd + g] = half; conc[bs + g] = half;
-        }
-        ready[best] = 0;
-        setMaternal(best);
-        added.push(best);
+    const born = n;
+    for (let i = 0; i < born && n < cap; i++) {
+      if (!cleaving) {
+        ready[i] += dt * conc[i * NGENE + G_GROW] * divRate;
+        if (ready[i] < 1) continue;
+        ready[i] -= 1;
       }
-      if (added.length) live = live.concat(added);
-      if (aborted) break;
+      if (spent + cellCost > yolk) { aborted = true; break; }
+
+      // WHERE THE DAUGHTER GOES. Outward from the local crowd — a cell divides
+      // into the space available — rotated by an angle the chemistry sets, so a
+      // genome can grow straight filaments, curl, or branch. Distance is set by
+      // the mother too, so tissue can be packed or strung out; that is what
+      // decides connectivity, and therefore whether the body is a stiff truss or
+      // a deformable chain.
+      let cx = 0, cy = 0, cnt = 0;
+      for (let j = 0; j < n; j++) {
+        if (j === i) continue;
+        const dx = X[j] - X[i], dy = Y[j] - Y[i];
+        const d2 = dx * dx + dy * dy;
+        if (d2 < REACH2 * 4) { cx += dx; cy += dy; cnt++; }
+      }
+      let ax, ay;
+      if (cnt > 0 && (cx || cy)) {
+        const L = Math.hypot(cx, cy) || 1;
+        ax = -cx / L; ay = -cy / L;                      // away from the crowd
+      } else {
+        const a0 = noise[i] * Math.PI * 2;
+        ax = Math.cos(a0); ay = Math.sin(a0);
+      }
+      const turn = out(i, 9) * Math.PI;                  // divideAngle gene
+      const jitter = (rndDev() - 0.5) * 0.35;
+      const th = Math.atan2(ay, ax) + turn + jitter;
+      const sp = SPACING * (0.62 + 0.55 * (out(i, 10) + 1));   // spacing gene
+      const nx = X[i] + Math.cos(th) * sp, ny = Y[i] + Math.sin(th) * sp;
+
+      if (Math.hypot(nx, ny) > extent) continue;         // the shell
+      // Refuse to place a cell inside another. Physics would push them apart at
+      // birth, but a body that starts interpenetrating explodes on step one.
+      let clash = false;
+      for (let j = 0; j < n; j++) {
+        const dx = X[j] - nx, dy = Y[j] - ny;
+        if (dx * dx + dy * dy < (SPACING * 0.55) ** 2) { clash = true; break; }
+      }
+      if (clash) continue;
+
+      const d = n++;
+      X[d] = nx; Y[d] = ny; noise[d] = rndDev(); ready[d] = 0;
+      spent += cellCost;
+      // Cytoplasm is divided, not created.
+      const bs = i * NGENE, bd = d * NGENE;
+      for (let g = N_MATERNAL; g < NGENE; g++) {
+        const half = conc[bs + g] * 0.5;
+        conc[bd + g] = half; conc[bs + g] = half;
+      }
+      setMaternal(d);
     }
   }
 
   // ---- read the body off the finished chemistry
-  //
-  // In cleave mode the egg is full and `survive` carves the shape out of it —
-  // apoptosis, the way a hand is made. In grow mode the body is already only
-  // where growth reached, so culling on top of that would delete a shape that
-  // was built rather than sculpt one that was filled; survival is not applied.
   const sculpt = mode === 'cleave';
   const cells = [];
   let culled = 0;
-  for (let li = 0; li < live.length; li++) {
-    const s = live[li], b = s * NGENE, st = sites[s];
-    const out = (n) => {
-      const c = conc[b + OUT_BASE + n];
-      return 2 * Math.tanh(c) - 1;                             // [0,inf) -> [-1,1)
-    };
-    if (sculpt && out(1) < 2 * surviveThresh - 1) { culled++; continue; }
+  for (let i = 0; i < n; i++) {
+    if (sculpt && out(i, 1) < 2 * surviveThresh - 1) { culled++; continue; }
     cells.push({
-      x: st.x, y: st.y, ap: st.ap, dv: st.dv,
-      contract: out(2), sense: out(3), grip: out(4), stiff: out(5),
-      tau: tauOf(out(6)),
-      bias: out(7),
-      senseTune: out(8),
+      x: X[i], y: Y[i], ap: X[i] / extent, dv: Y[i] / extent,
+      contract: out(i, 2), sense: out(i, 3), grip: out(i, 4), stiff: out(i, 5),
+      tau: tauOf(out(i, 6)),
+      bias: out(i, 7),
+      senseTune: out(i, 8),
     });
   }
-  return { cells, spent, aborted, steps: nStep, culled, laid: live.length };
+  return { cells, spent, aborted, steps: nStep, culled, laid: n };
 }
 
 /**
