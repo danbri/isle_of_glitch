@@ -75,10 +75,12 @@ export const CELL_MUSCLE = 2;
 
 /** Body size plus the two consumption axes, into cmeta.w. Size lives in the low
  *  byte (bodies never approach 255 cells), nutrition and toughness above it. */
-export function packSize(bodySize, nutrition, toughness) {
+export function packSize(bodySize, _unusedNutrition, toughness) {
+  // Nutrition is no longer stored: it is read from the cell's own energy at use
+  // time. The argument is kept so callers do not silently shift their toughness
+  // into the wrong byte.
   const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
-  return (Math.max(0, Math.min(255, bodySize | 0)))
-       | (q(nutrition) << 8) | (q(toughness) << 16);
+  return (Math.max(0, Math.min(255, bodySize | 0))) | (q(toughness) << 16);
 }
 export function packMeta(type, contractility, grippiness, apNorm = 0.5, senseTune = 0) {
   const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
@@ -253,7 +255,17 @@ fn axialPos(m: i32) -> f32 { return f32((m >> 24u) & 127) / 127.0; }
 // it is to take. Both are continuous capacities, not labels — 'armour' and
 // 'meat' are regions of this space, never types the kernel branches on.
 fn bodySizeOf(w: i32) -> f32 { return f32(max(w & 255, 1)); }
-fn nutritionOf(w: i32) -> f32 { return f32((w >> 8u) & 255) / 255.0; }
+// NUTRITION IS NOT A CHOICE. It was an evolved output, and selection removed it
+// in thirty generations flat — seeded at 0.396, measured at 0.006 by generation
+// 33 — because being edible is a pure liability with no upside. A free parameter
+// for "how much am I worth eating" has exactly one evolutionary answer.
+//
+// It is a CONSEQUENCE. A cell is worth eating in proportion to what it is
+// carrying: you cannot be simultaneously energy-rich enough to live and worthless
+// as a meal, because it is the same energy. That closes the loophole and creates
+// the tradeoff the arms race needs — reserves make you viable AND make you a
+// target, and toughness becomes the way to hold reserves safely.
+fn nutritionOf(idx: u32) -> f32 { return clamp(energy[idx] / max(0.001, P.eCap), 0.0, 1.0); }
 fn toughnessOf(w: i32) -> f32 { return f32((w >> 16u) & 255) / 255.0; }
 // Sensor tuning: acuity 0..1, and which world axis this cell reads.
 fn senseAcuity(m: i32) -> f32 { return f32((m >> 2u) & 31) / 31.0; }
@@ -519,8 +531,8 @@ fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
         // harder and which is tougher, moment to moment. A tough cell is bad
         // food, a nutritious one is worth attacking, and "armour" and "meat" are
         // regions of that space rather than roles.
-        let take  = max(0.0, effort            - toughnessOf(cmeta[j].w)) * nutritionOf(cmeta[j].w);
-        let given = max(0.0, abs(contractionOf(j)) - toughnessOf(cmeta[i].w)) * nutritionOf(cmeta[i].w);
+        let take  = max(0.0, effort                 - toughnessOf(cmeta[j].w)) * nutritionOf(j);
+        let given = max(0.0, abs(contractionOf(j)) - toughnessOf(cmeta[i].w)) * nutritionOf(i);
         let raw = P.contestRate * (take - given) * P.dt;
         var moved = 0.0;
         if (raw > 0.0) {

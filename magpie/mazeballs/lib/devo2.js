@@ -152,7 +152,7 @@ export const N_MATERNAL = 5;
 export const OUT_BASE = 8;
 export const OUTPUTS = ['grow', 'survive', 'contract', 'sense', 'grip', 'stiff', 'tau', 'bias',
                         'senseTune', 'divideAngle', 'spacing', 'dispersal',
-                        'nutrition', 'toughness'];
+                        'toughness'];
 export const G_GROW    = OUT_BASE + 0;
 /**
  * SURVIVE — whether this cell is still part of the body when the egg hatches.
@@ -501,11 +501,10 @@ export function develop(genome, {
       // unknown ground, near keeps known-good ground but competes with your
       // own offspring — so it is evolved, not chosen. It was a hardcoded 9.
       dispersal: out(i, 11),
-      // What this cell is worth to whatever eats it, and how hard it is to
-      // take. primitives.md wants these ANTICORRELATED — tough is low-value
-      // food — and that is left to selection rather than imposed here.
-      nutrition: out(i, 12),
-      toughness: out(i, 13),
+      // How hard this cell is to take. Nutrition is NOT here: it is read
+      // from the cell's own energy, because being worth eating is a
+      // consequence of carrying energy and not a trait to opt out of.
+      toughness: out(i, 12),
     });
   }
   return { cells, spent, aborted, steps: nStep, culled, laid: n };
@@ -590,8 +589,6 @@ export const SEED_DEFAULTS = {
   // an animal is made of the same stuff it eats. So nutrition starts HIGH and
   // toughness starts at nothing, which puts the population in the state that has
   // something to escalate FROM: everything edible, nothing armoured.
-  nutritionBias: 0.7,
-  nutritionDecay: 0.0,
   toughnessBias: -0.8,
   toughnessDecay: 0.0,
 };
@@ -638,10 +635,7 @@ export function randomGenome(rnd = Math.random, opts = {}) {
   g[cb + OFF_DECAY] = o.contractDecay;
   g[cb + OFF_DIFF] = o.contractDiff;
 
-  const nb = (OUT_BASE + 12) * GENE_STRIDE;    // nutrition
-  g[nb + OFF_BIAS] = o.nutritionBias;
-  g[nb + OFF_DECAY] = o.nutritionDecay;
-  const tb = (OUT_BASE + 13) * GENE_STRIDE;    // toughness
+  const tb = (OUT_BASE + 12) * GENE_STRIDE;    // toughness
   g[tb + OFF_BIAS] = o.toughnessBias;
   g[tb + OFF_DECAY] = o.toughnessDecay;
 
