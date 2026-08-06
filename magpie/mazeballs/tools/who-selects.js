@@ -160,10 +160,36 @@ async function armStep(a, n, total, series) {
 
     const m = await a.world.readMeta();
     const tr = traits(m, a.built.cells.ctype.length);
+    // WEALTH, because armour is a LUXURY GOOD and the contrast is confounded
+    // without it. toughCost is charged every second, so how much armour a
+    // population carries depends on what it can afford — and the arms differ in
+    // exactly that. Measured on the two-replicate run:
+    //
+    //   arm         mean alive   mean toughness
+    //   nobiotic          1121           0.1241
+    //   full               830           0.0582
+    //   noabiotic          514           0.0345
+    //
+    // Monotonic across arms AND within them. So |full - nobiotic| on toughness
+    // conflates "other organisms select for armour" with "switching off contest
+    // makes the world richer, and rich populations buy more armour" — which is
+    // not the question. Logged so the confound is visible and can be divided
+    // out, rather than discovered after a claim has been made.
+    const { energy } = await a.world.readCells();
+    let eSum = 0, eN = 0;
+    for (let i = 0; i < a.built.cells.ctype.length; i++) {
+      if (a.built.cells.ctype[i] < 0) continue;
+      eSum += energy[i]; eN++;
+    }
+    const meanE = eN ? eSum / eN : 0;
     const row = {
       kind: 'checkpoint', arm: a.arm.name, rep: a.rep, tick: a.tick,
       horizon: a.tick <= TICKS ? 'first' : 'deep',
       alive: a.evo.alive(), lineages: a.evo.countLineages(),
+      meanEnergy: +meanE.toFixed(4),
+      // Armour per unit of what the population can afford. A level that rises
+      // only because everyone got richer is not escalation.
+      toughPerE: +(tr.tough / Math.max(0.05, meanE)).toFixed(5),
       generation: a.evo.maxGeneration(), births: a.evo.births, deaths: a.evo.deaths,
       ...Object.fromEntries(Object.entries(tr).map(([kk, v]) =>
         [kk, typeof v === 'number' ? +v.toFixed(4) : v])),
@@ -221,7 +247,9 @@ const at = (armName, horizon, field) => {
 };
 
 for (const horizon of ['first', 'deep']) {
-  for (const field of ['tough', 'enzSd', 'tagSd', 'lineages']) {
+  // toughPerE alongside tough: if the biotic effect survives dividing out
+  // wealth it is about predation, and if it does not it was about wealth.
+  for (const field of ['tough', 'toughPerE', 'enzSd', 'tagSd', 'meanEnergy', 'lineages']) {
     const full = at('full', horizon, field);
     const nb = at('nobiotic', horizon, field);
     const na = at('noabiotic', horizon, field);

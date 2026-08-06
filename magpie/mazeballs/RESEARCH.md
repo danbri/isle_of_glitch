@@ -6038,3 +6038,40 @@ What the numbers do say, stated carefully:
 Next: the same design at five replicates. That is the only change that can move
 this from suggestive to demonstrated or kill it outright, and running it is
 cheaper than arguing about it.
+
+#### A confound in the instrument, found before the claim was made
+
+The verdict above reports toughness as biotic-dominated at the first horizon.
+That reading is **not trustworthy**, and the reason is visible in the same data:
+
+```
+arm         mean alive   mean toughness
+nobiotic          1121           0.1241
+full               830           0.0582
+noabiotic          514           0.0345
+```
+
+Toughness tracks population size monotonically across the three arms — and
+within them too (nobiotic 914→0.0767 against 1328→0.1715; full 765→0.0144
+against 896→0.1020). **Armour is a luxury good.** `toughCost` is charged every
+second, so how much of it a population carries depends on what it can afford,
+and the arms differ in exactly that: switching off contest makes the world
+richer and more populous.
+
+So `|full − nobiotic|` on toughness conflates *"other organisms select for
+armour"* with *"removing contest makes everyone richer, and rich populations buy
+more armour"*. Those are different claims and only one is the goal.
+
+Two consequences:
+
+- **The toughness verdict is withdrawn**, at both horizons, in both directions.
+  It was the trait chosen precisely because armour has no use except against
+  other organisms — which remains true of its BENEFIT and says nothing about its
+  affordability.
+- **`tagSd` is the more trustworthy signal.** It is a *spread*, not a *level*, so
+  it is far less sensitive to how rich the population is: a wealthy monoculture
+  and a poor one can both have narrow tag diversity.
+
+`meanEnergy` and `toughPerE` are now logged per checkpoint so this is divided
+out rather than discovered afterwards. The five-replicate run already in flight
+started before that change and will not carry them; the run after it will.
