@@ -52,10 +52,19 @@ async function readFrame() {
   return { L, pos, type, uid, bound, steps };
 }
 
-/** Contact range. Matches the kernel: two cells touch at the sum of their radii. */
-const R = 0.34 * 2;
+/**
+ * Two radii to report, because the biotic channel no longer requires collision.
+ *
+ * TOUCH is the sum of two cell radii — physically pressed together.
+ * REACH is contestR, how far consumption and contest actually act now that the
+ * channel is proximity rather than contact. The gap between the two numbers is
+ * exactly what widening the radius bought, which is worth seeing rather than
+ * assuming.
+ */
+const TOUCH = 0.34 * 2;
+const REACH = Number(args.reach ?? 1.5);
 
-function encounter(f) {
+function encounter(f, R) {
   const { L, pos, uid, bound } = f;
   // A hash with cell size R, so a 3x3 walk covers exactly the contact radius —
   // the same structure the kernel uses, for the same reason: anything else is
@@ -102,7 +111,9 @@ function encounter(f) {
 const rows = [];
 for (let s = 0; s < SAMPLES; s++) {
   const f = await readFrame();
-  const e = encounter(f);
+  const e = encounter(f, REACH);
+  const t = encounter(f, TOUCH);
+  e.touchReach = t.reach; e.touchContacts = t.contacts;
   rows.push(e);
   console.log(JSON.stringify({ step: f.steps, ...e }));
   if (s < SAMPLES - 1) await new Promise(r => setTimeout(r, 2500));
@@ -110,8 +121,9 @@ for (let s = 0; s < SAMPLES; s++) {
 
 const mean = (k) => rows.reduce((s, r) => s + r[k], 0) / rows.length;
 console.log('');
-console.log(`reach     ${(100 * mean('reach')).toFixed(1)}%  of live cells have a foreign cell in contact range`);
-console.log(`contacts  ${mean('contacts').toFixed(2)}  foreign cells in range, on average`);
+console.log(`reach     ${(100 * mean('reach')).toFixed(1)}%  of live cells have a stranger within contestR ${REACH}`);
+console.log(`  (touch  ${(100 * mean('touchReach')).toFixed(1)}%  within ${TOUCH.toFixed(2)} — what it was before proximity)`);
+console.log(`contacts  ${mean('contacts').toFixed(2)}  strangers in reach, on average (${mean('touchContacts').toFixed(2)} touching)`);
 console.log(`selfNbrs  ${mean('selfNbrs').toFixed(2)}  own-body cells in range, for scale`);
 console.log(`clumping  ${(100 * mean('clumping')).toFixed(1)}%  of a cell's neighbours are strangers`);
 console.log('');

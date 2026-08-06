@@ -868,7 +868,25 @@ fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
   let me = cmeta[i];
   let myE = energy[i];
   var net = 0.0;
-  let r2 = P.contactR * P.contactR;
+  // PROXIMITY, NOT TOUCH.
+  //
+  // Contest fired at contactR — the sum of two radii, about 0.68 world units —
+  // so the entire biotic economy required organisms to be physically pressed
+  // together. Touch is the strictest possible reading of "interacting", and it
+  // is not the only real one: exudates, wounds, leaked contents and simple
+  // interference all act across a gap, and every one of them is a way organisms
+  // impose on each other without collision.
+  //
+  // This costs NOTHING extra structurally, which is what makes it the right
+  // move rather than merely a bigger number: it is the same 3x3 walk over the
+  // same hash, with a wider acceptance test inside it. PHYSICS-2.md's rule is
+  // no NEW neighbourhood walk, and there is none. The reach is capped at what
+  // the walk can actually see (3 x hashCell, minus a margin) — a radius larger
+  // than the walk is a radius that silently sees only part of its own
+  // neighbourhood, which is how the compass sense was truncated tenfold once
+  // already.
+  let reach = min(P.contestR, P.hashCell * 1.4);
+  let r2 = reach * reach;
   for (var dy = -1; dy <= 1; dy = dy + 1) {
     for (var dx = -1; dx <= 1; dx = dx + 1) {
       let b = bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM);
@@ -1060,6 +1078,39 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   let refill = max(1e-6, P.moteRegrow * P.dt);
   let suppress = 1.0 / (1.0 + P.regrowCrowdK * (draw / refill));
   stock = stock + P.moteRegrow * fert * suppress * (1.0 - stock / P.moteCap) * P.dt;
+
+  // ---- FOOD GOES WHERE THE WATER GOES ---------------------------------------
+  //
+  // Motes were nailed to their coordinates, on the argument that a patch you
+  // cannot exhaust and have to leave is no pressure at all. That argument is
+  // about DEPLETION and it survives drift intact: a patch you are working still
+  // runs down under you, it simply also moves.
+  //
+  // What being nailed down cost was coherence. The world now says that mud is a
+  // transport system carrying anything not holding on — and the most obvious
+  // thing to be carried, silt and detritus and everything dissolved in it, sat
+  // still while the water went past it. A river with a stationary riverbed of
+  // food is not a river; it is a picture of one.
+  //
+  // With drift the shores GENERATE (fertility is highest just dry of the water)
+  // and the channels CARRY, so food produced on a coast washes into a current
+  // and is delivered somewhere else. That is a conveyor, and a conveyor is a
+  // thing worth positioning yourself on — which is a reason to be near the
+  // water that is not simply "the ground is better here".
+  //
+  // Motes drift at moteDrift x the flow: they are heavier than a swimming cell
+  // and lag it, so a creature can still outrun its own food.
+  if (P.moteDrift > 0.0) {
+    let v = flowAt(p) * P.moteDrift;
+    var np = p + v * P.dt;
+    let B = P.bound;
+    if (np.x >  B) { np.x = np.x - 2.0 * B; }
+    if (np.x < -B) { np.x = np.x + 2.0 * B; }
+    if (np.y >  B) { np.y = np.y - 2.0 * B; }
+    if (np.y < -B) { np.y = np.y + 2.0 * B; }
+    mote[i] = vec4<f32>(np.x, np.y, clamp(stock, 0.0, P.moteCap), 0.0);
+    return;
+  }
   mote[i] = vec4<f32>(m0.x, m0.y, clamp(stock, 0.0, P.moteCap), 0.0);
 }
 
@@ -1812,6 +1863,11 @@ export class WorldGPU {
       heightScale: 0.018, heightSeed: 5150, gravity: 0.55, highSap: 0.35,
       mudScale: 0.014, mudSeed: 8801, mudSlip: 0.85, mudFlow: 1.15, mudFog: 0.8, flowDry: 0.07, shoreWidth: 0.30,
       lowLush: 0.75,
+      // How far the biotic channel reaches, and how fast food goes downstream.
+      // contestR against contactR 1.0: proximity rather than collision, capped
+      // by what the neighbour walk can see. moteDrift below 1 so food lags the
+      // water and a creature can outrun its own dinner.
+      contestR: 1.5, moteDrift: 0.55,
       // Tidal income. Sized so a fully-gripping cell holding station in a fast
       // mud channel earns on the order of what rich ground yields, and a cell
       // in still water earns nothing at all.

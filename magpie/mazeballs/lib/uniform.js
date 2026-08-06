@@ -140,6 +140,8 @@ export const WORLD_FIELDS = [
   ['senseTerrain', 'f32', 'weight of the wet-and-slope sense; 0 disables it'],
   ['flowDry', 'f32', 'how much current there is away from the mud; the land is still'],
   ['shoreWidth', 'f32', 'how far inland the living shore reaches, in ridge units'],
+  ['contestR', 'f32', 'how far the biotic channel reaches — proximity, not touch'],
+  ['moteDrift', 'f32', 'how much of the current the standing crop is carried by'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */
