@@ -5993,3 +5993,48 @@ contest rate, toughness, enzyme matching, the proximity radius. Nothing prices
 what happens **before** contact, which is the only place perception can act.
 Until knowing something can turn into eating something, a sensor is at best
 neutral — and organisms cannot be a pressure anything adapts *to*.
+
+### The goal, measured — and NOT demonstrated (2026-08-07)
+
+`tools/who-selects.js`, three arms from one seed, six arm-replicates stepped
+round-robin so all stay at the same tick. First horizon 45 ticks (11k steps),
+deep time 450 ticks (112k steps) — a true 10×. Bar set before the run: the claim
+holds only if `biotic > abiotic` **and** the gap clears the pooled SE.
+
+```
+horizon trait         full  nobiotic  noabiotic |  biotic  abiotic      se  verdict
+first  tough       0.0343    0.1075     0.0348 |  0.0731   0.0004  0.0427  DOMINATES
+first  tagSd       0.2924    0.1955     0.2984 |  0.0970   0.0059  0.0416  DOMINATES
+first  enzSd       0.1064    0.2444     0.1658 |  0.1381   0.0595  0.1326  —
+first  lineages    6.5000    6.5000     7.0000 |  0.0000   0.5000  2.9155  —
+deep   tough       0.0582    0.1241     0.0345 |  0.0659   0.0237  0.0686  —
+deep   tagSd       0.3095    0.1982     0.2398 |  0.1113   0.0697  0.0614  —
+deep   enzSd       0.1170    0.2301     0.2256 |  0.1130   0.1086  0.1086  —
+deep   lineages    2.0000    3.0000     2.0000 |  1.0000   0.0000  1.7321  —
+```
+
+**Two traits clear the bar at the first horizon. Neither survives deep time.**
+The goal is not demonstrated, and by this project's own rules the first-horizon
+result is retracted rather than reported.
+
+What the numbers do say, stated carefully:
+
+- **The sign is consistent everywhere.** `biotic > abiotic` on toughness, tag
+  spread and enzyme spread, at BOTH horizons. Nothing reverses; the direction is
+  the same at 11k steps and at 112k.
+- **The failure is power, not reversal.** The effects barely move between
+  horizons (tagSd biotic 0.0970 → 0.1113; toughness 0.0731 → 0.0659) while the
+  standard error grows (tagSd se 0.0416 → 0.0614) as two replicates diverge over
+  ten times the runtime. Two replicates cannot resolve an effect this size at
+  this variance.
+- **Toughness is the trait that should decide it** and it behaves as designed:
+  armour is *higher* with the biotic channel switched off, which is the wrong
+  sign for "armour is a response to being eaten" and deserves its own
+  investigation rather than a story.
+- **Lineage count says nothing**, as expected — it can only fall (coalescence,
+  not extinction), which this document already records as the wrong diversity
+  measure.
+
+Next: the same design at five replicates. That is the only change that can move
+this from suggestive to demonstrated or kill it outright, and running it is
+cheaper than arguing about it.
