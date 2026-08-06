@@ -151,7 +151,7 @@ export const N_MATERNAL = 5;
 // swapped in without touching the arena.
 export const OUT_BASE = 8;
 export const OUTPUTS = ['grow', 'survive', 'contract', 'sense', 'grip', 'stiff', 'tau', 'bias',
-                        'senseTune', 'divideAngle', 'spacing'];
+                        'senseTune', 'divideAngle', 'spacing', 'dispersal'];
 export const G_GROW    = OUT_BASE + 0;
 /**
  * SURVIVE — whether this cell is still part of the body when the egg hatches.
@@ -495,6 +495,11 @@ export function develop(genome, {
       tau: tauOf(out(i, 6)),
       bias: out(i, 7),
       senseTune: out(i, 8),
+      // How far this cell's lineage throws its eggs. A life-history trait
+      // with a real tradeoff — far escapes kin competition but lands on
+      // unknown ground, near keeps known-good ground but competes with your
+      // own offspring — so it is evolved, not chosen. It was a hardcoded 9.
+      dispersal: out(i, 11),
     });
   }
   return { cells, spent, aborted, steps: nStep, culled, laid: n };

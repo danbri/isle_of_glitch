@@ -131,6 +131,8 @@ export class Evolver {
     this.eggExtent = eggExtent ?? enc.extent;
     this.birthMargin = birthMargin;
     this.dispersal = dispersal;
+    // Mean expressed dispersal per body, read off the developed tissue.
+    this.dispersalOf = new Float32Array(arena.P);
     this.genome = new Array(arena.P).fill(null);
     this.failedEggs = 0;
     // Cell identity and descent. Nothing appears from nowhere; see lineage.js.
@@ -276,7 +278,29 @@ export class Evolver {
       // direction the parent does not choose. This is not a behaviour and not
       // parental care — it is where an egg ends up when it is not glued on.
       const dAng = this.rnd() * Math.PI * 2;
-      const dR = this.dispersal * (0.6 + 0.8 * this.rnd());
+      // HOW FAR, IN UNITS OF A REAL LENGTH. This was a constant 9 that I picked
+      // by sweeping until a bootstrap worked — a knob nobody chose wearing the
+      // name of a trait.
+      //
+      // The base is ten average cell widths of THIS parent, which is a length
+      // the world actually contains rather than one I invented. On top of that a
+      // gene scales it, because how far to throw your eggs is a life-history
+      // trait with a real tradeoff — far escapes kin competition but lands on
+      // unknown ground, near keeps known-good ground but competes with your own
+      // offspring. Noise is gaussian, not uniform: a spread of landing places
+      // with a mode, which is what scattering looks like.
+      let wsum = 0, wn = 0;
+      for (let i = 0; i < arena.cnt[p]; i++) {
+        const r = cells.rad ? cells.rad[arena.off[p] + i] : 0.34;
+        if (r > 0) { wsum += r * 2; wn++; }
+      }
+      const cellW = wn ? wsum / wn : 0.68;
+      const gene = this.dispersalOf ? (this.dispersalOf[p] ?? 0) : 0;
+      // Box-Muller, clamped so a tail draw cannot fling an egg across the world.
+      const u1 = Math.max(1e-9, this.rnd()), u2 = this.rnd();
+      const gauss = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+      const dR = Math.max(cellW,
+        cellW * 10 * (0.5 + 1.5 * (0.5 * (gene + 1))) * (1 + 0.3 * Math.max(-2, Math.min(2, gauss))));
       const bnd = this.world?.params?.bound ?? 64;
       const wrapc = (v) => v > bnd ? v - 2 * bnd : (v < -bnd ? v + 2 * bnd : v);
       const child = this.divide(
@@ -508,6 +532,10 @@ export class Evolver {
       pos, vel, meta, bond: bnd, brest, bstiff, bbrittle: bbrit, energy,
     });
 
+    // Carry the child's expressed dispersal, so ITS offspring travel the
+    // distance its own tissue specifies.
+    { let dsum = 0; for (const c of body) dsum += (c.dispersal ?? 0);
+      this.dispersalOf[child] = body.length ? dsum / body.length : 0; }
     this.genome[child] = g;
     this.bookkeep(child, p, step);
     return child;

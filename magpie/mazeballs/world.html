@@ -224,6 +224,9 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 
   <div id="inspPanel">
     <h2>Creature</h2>
+    <div class="row"><button id="bGallery">gallery ⟳</button>
+      <span class="note" style="margin-left:.4rem">pick a body without hunting for a cell</span></div>
+    <div id="galleryBox"></div>
     <div class="row">
       <button id="bPick" class="on">click to select</button>
       <button id="bClearSel">clear</button>
@@ -235,7 +238,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
       <button id="bCopyStats" title="copy world + creature stats">⧉ stats</button></div>
     <div class="row" style="margin-top:.3rem">
       <button id="bDevo">unfold ▶</button>
-      <button id="bDevoStage">stages</button>
+      <button id="bDevoStage" title="show which cell budded from which — the division tree">division tree</button>
     </div>
     <canvas id="devoC"></canvas>
     <div id="devoInfo" class="note"></div>
@@ -539,10 +542,22 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // COLOUR THE STORY. Saturation and brightness are held back for the animal
   // under inspection, so one creature reads clearly out of a crowded field
   // instead of every cell competing at full volume. m.z carries the assembly uid.
-  let picked = (C.selUid >= 0 && m.z == C.selUid);
-  if (picked) {
-    let hot = vec3<f32>(1.00, 0.72, 0.26);
-    base = mix(base * 1.75, hot, 0.30);
+  // FADE THE CROWD, DO NOT BLEACH THE SUBJECT.
+  //
+  // This pushed the picked animal toward white, which destroyed the very thing
+  // selection is for: cell types are told apart BY COLOUR, so the moment you
+  // picked a creature you could no longer see what its cells were. Contrast now
+  // comes from dimming everything else — the subject keeps its own colours at
+  // full strength and simply stops competing with a thousand neighbours.
+  let anyPicked = (C.selUid >= 0);
+  let picked = (anyPicked && m.z == C.selUid);
+  if (anyPicked && !picked) {
+    // Toward the background, desaturated. Still legible as context, no longer
+    // shouting over the subject.
+    let grey = vec3<f32>(dot(base, vec3<f32>(0.33, 0.34, 0.33)));
+    base = mix(mix(base, grey, 0.75) * 0.30, vec3<f32>(0.04, 0.07, 0.07), 0.35);
+  } else if (picked) {
+    base = base * 1.25;                 // a lift, not a bleach
   }
   o.tint = base;
   // Brighter and with more range, so an active cell reads as ALIVE rather than
@@ -551,6 +566,7 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // pop against a living grey-green broth rather than a field of neon.
   var g0 = clamp(0.55 + 0.55 * abs(a) * abs(a), 0.0, 1.35);
   if (picked) { g0 = clamp(0.85 + 1.4 * abs(a) * abs(a), 0.0, 2.4); }
+  if (anyPicked && !picked) { g0 = g0 * 0.35; }
   o.glow = g0;
   return o;
 }
@@ -1542,17 +1558,56 @@ async function showGenome() {
     lastGenome = j;
     let html = `<h4>animal #${j.uid} · gen ${j.generation} · ${j.cells} cells ` +
       `<button id="bCopyGenome" class="mini" title="copy genome as TSV">⧉ copy</button></h4>`;
-    html += '<table><tr><th></th>' +
-      j.basis.map(b => `<td class="hd">${b}</td>`).join('') + '</tr>';
-    j.props.forEach((p, pi) => {
-      html += `<tr><th>${p}</th>`;
-      for (let b = 0; b < j.nb; b++) {
-        const v = j.g[pi * j.nb + b];
-        html += `<td style="${cellShade(v)}" title="${p} x ${j.basis[b]} = ${v.toFixed(3)}">` +
-          `${v >= 0 ? '' : '-'}${Math.abs(v) < 0.05 ? '·' : Math.abs(v).toFixed(1).replace('0.', '.')}</td>`;
+    if (j.grn) {
+      // A REGULATORY NETWORK reads as rows of "who regulates me", not as a grid
+      // of basis coefficients. Only genes that DO something are shown: the named
+      // outputs, plus any gene with a live regulator. Sixty-four rows of mostly
+      // silenced edges is not a genome viewer, it is a hex dump.
+      const G = j.grn, name = (i) =>
+        i < G.maternal.length ? G.maternal[i]
+        : (i >= G.outBase && i - G.outBase < G.outputs.length) ? G.outputs[i - G.outBase]
+        : `g${i}`;
+      html += `<p class="note">${j.encoding} · ${G.nGene} gene products, ` +
+        `${G.k} regulators each. Rows are genes that do something.</p>`;
+      html += '<table><tr><th>gene</th><td class="hd">bias</td><td class="hd">decay</td>' +
+        '<td class="hd">diff</td><td class="hd" colspan="' + G.k + '">regulated by</td></tr>';
+      for (let i = 0; i < G.nGene; i++) {
+        const b = i * G.stride;
+        const regs = [];
+        for (let k = 0; k < G.k; k++) {
+          const sIdx = j.g[b + G.offSrc + k];
+          if (!(sIdx >= 0)) continue;
+          regs.push([Math.floor(sIdx) % G.nGene, j.g[b + G.offW + k]]);
+        }
+        const isOut = i >= G.outBase && i - G.outBase < G.outputs.length;
+        if (!regs.length && !isOut) continue;
+        const bias = j.g[b + G.offBias], dec = j.g[b + G.offDecay], dif = j.g[b + G.offDiff];
+        html += `<tr><th>${name(i)}</th>` +
+          `<td style="${cellShade(bias)}">${bias.toFixed(1)}</td>` +
+          `<td>${(0.6 * Math.pow(10, Math.max(-1.2, Math.min(1.2, dec)))).toFixed(2)}</td>` +
+          `<td>${(0.02 * Math.pow(10, Math.max(-1, Math.min(2, dif)))).toFixed(3)}</td>`;
+        for (let k = 0; k < G.k; k++) {
+          const r = regs[k];
+          html += r
+            ? `<td style="${cellShade(r[1])}" title="${name(r[0])} -> ${name(i)} = ${r[1].toFixed(3)}">` +
+              `${name(r[0])}<sub>${r[1] >= 0 ? '+' : '−'}</sub></td>`
+            : '<td>·</td>';
+        }
+        html += '</tr>';
       }
-      html += '</tr>';
-    });
+    } else {
+      html += '<table><tr><th></th>' +
+        j.basis.map(b => `<td class="hd">${b}</td>`).join('') + '</tr>';
+      j.props.forEach((p, pi) => {
+        html += `<tr><th>${p}</th>`;
+        for (let b = 0; b < j.nb; b++) {
+          const v = j.g[pi * j.nb + b];
+          html += `<td style="${cellShade(v)}" title="${p} x ${j.basis[b]} = ${v.toFixed(3)}">` +
+            `${v >= 0 ? '' : '-'}${Math.abs(v) < 0.05 ? '·' : Math.abs(v).toFixed(1).replace('0.', '.')}</td>`;
+        }
+        html += '</tr>';
+      });
+    }
     html += '</table><h4>synapse weights (how wiring is expressed)</h4><table><tr>' +
       j.synBasis.map(b => `<td class="hd">${b}</td>`).join('') + '</tr><tr>';
     for (let k = 0; k < j.nsyn; k++) {
@@ -1650,16 +1705,28 @@ function drawDevo() {
 
   const built = Math.max(1, Math.round(cells.length * devoT));
 
-  // MATERNAL GRADIENT behind the body — the thing the genome is reading.
+  // THE DIVISION TREE — which cell budded from which.
+  //
+  // This is the development PROCESS rather than its outcome: every cell but the
+  // zygote came from a specific mother, devo2 records it, and drawing those
+  // links shows the body growing as a lineage instead of as a set of dots
+  // appearing in order. Where the tree is a path, the tissue is a filament;
+  // where it fans, the body branched.
+  //
+  // (This slot used to draw a maternal `presence` field via devo.express, which
+  // is a Dev 1.0 function. devo2 has neither, so it would have thrown the moment
+  // anyone pressed "stages".)
   if (devoStages) {
-    const N = 26;
-    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
-      const ap = (i / (N - 1)) * 2 - 1, dv = (j / (N - 1)) * 2 - 1;
-      const v = devo.express(devoRun.g, 'presence', ap, dv);
-      g2.fillStyle = v > 0 ? `rgba(90,150,130,${0.06 + 0.10 * v})`
-                           : `rgba(120,80,90,${0.05 + 0.08 * -v})`;
-      const x0 = pad + ((ap + 1) / 2) * (hi - lo) * sc, y0 = pad + ((dv + 1) / 2) * (yhi - ylo) * sc;
-      g2.fillRect(x0 - 3, y0 - 3, 7, 7);
+    for (let i = 0; i < built; i++) {
+      const m = cells[i].mother;
+      if (m === undefined || m < 0 || m >= built) continue;
+      const age = 1 - i / Math.max(1, built);
+      g2.strokeStyle = `rgba(255,190,120,${(0.20 + 0.55 * age).toFixed(3)})`;
+      g2.lineWidth = 2.2 * dpr;
+      g2.beginPath();
+      g2.moveTo(cx(cells[m].x), cy(cells[m].y));
+      g2.lineTo(cx(cells[i].x), cy(cells[i].y));
+      g2.stroke();
     }
   }
 
@@ -1697,7 +1764,7 @@ function drawDevo() {
   });
 
   g2.fillStyle = '#4a625c'; g2.font = `${10 * dpr}px ui-monospace, monospace`;
-  g2.fillText('head', 4 * dpr, h - 4 * dpr);
+  g2.fillText(`${built}/${cells.length} divisions`, 4 * dpr, h - 4 * dpr);
   const rt = 'tail';
   g2.fillText(rt, w - g2.measureText(rt).width - 4 * dpr, h - 4 * dpr);
 
@@ -1739,6 +1806,67 @@ async function showDevo() {
     if (devoT >= 1) clearInterval(devoTimer);
   }, 30);
 }
+/**
+ * A GALLERY OF BODIES, because clicking one cell in a crowd of twenty thousand
+ * is not a way to choose an animal. Each tile develops a living genome with the
+ * same encoding the world uses and draws the result; clicking one selects that
+ * animal properly, scope and all.
+ */
+async function showGallery() {
+  const box = $('galleryBox');
+  if (!box) return;
+  box.textContent = 'developing…';
+  try {
+    const j = await (await fetch('/genomes?n=12', { cache: 'no-store' })).json();
+    const d = await ensureDevo();
+    const shared = await import('./lib/devo.js');
+    box.textContent = '';
+    for (const row of j.rows) {
+      const g = Float32Array.from(row.g);
+      const grown = d.develop(g, { extent: d.DEFAULT_EXTENT ?? 3.0, maxCells: 60 });
+      const whole = shared.largestPiece(grown.cells, shared.bond(grown.cells, { maxDegree: 6 }));
+      const cv = document.createElement('canvas');
+      cv.width = 132; cv.height = 132;
+      cv.title = `#${row.uid} · gen ${row.generation} · ${whole.cells.length} cells`;
+      if (row.uid === sel.uid) cv.className = 'sel';
+      const x = cv.getContext('2d');
+      x.fillStyle = '#070c0b'; x.fillRect(0, 0, 132, 132);
+      const cs = whole.cells;
+      if (cs.length) {
+        let lo = Infinity, hi = -Infinity, ylo = Infinity, yhi = -Infinity;
+        for (const c of cs) { lo = Math.min(lo, c.x); hi = Math.max(hi, c.x);
+          ylo = Math.min(ylo, c.y); yhi = Math.max(yhi, c.y); }
+        const sc = Math.min(112 / Math.max(0.6, hi - lo), 112 / Math.max(0.6, yhi - ylo));
+        const px = (v) => 10 + (v - lo) * sc, py = (v) => 10 + (v - ylo) * sc;
+        x.strokeStyle = '#24443f'; x.lineWidth = 1.4;
+        for (const b of whole.bonds) {
+          x.beginPath(); x.moveTo(px(cs[b.i].x), py(cs[b.i].y));
+          x.lineTo(px(cs[b.j].x), py(cs[b.j].y)); x.stroke();
+        }
+        const tint = ['#8f9c97', '#70b8bd', '#d98f57', '#a37cb8'];
+        const kind = (c) => { let best = 0, v = 0.15;
+          if (c.sense > v) { best = 1; v = c.sense; }
+          if (c.contract > v) { best = 2; v = c.contract; }
+          if (c.grip > v) { best = 3; v = c.grip; } return best; };
+        for (const c of cs) {
+          x.beginPath(); x.arc(px(c.x), py(c.y), 3.2, 0, Math.PI * 2);
+          x.fillStyle = tint[kind(c)]; x.fill();
+        }
+      } else {
+        x.fillStyle = '#5a4a42'; x.font = '11px ui-monospace, monospace';
+        x.fillText('builds nothing', 8, 68);
+      }
+      cv.onclick = () => {
+        selectUid(row.uid);
+        for (const o of box.querySelectorAll('canvas')) o.className = '';
+        cv.className = 'sel';
+      };
+      box.appendChild(cv);
+    }
+    if (!j.rows.length) box.textContent = 'no living genomes yet';
+  } catch (e) { box.textContent = 'gallery failed: ' + e.message; }
+}
+on('bGallery', 'onclick', showGallery);
 on('bDevo', 'onclick', showDevo);
 on('bDevoStage', 'onclick', (e) => {
   devoStages = !devoStages;

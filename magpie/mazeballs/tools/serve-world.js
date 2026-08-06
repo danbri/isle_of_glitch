@@ -755,13 +755,32 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       return new Response(JSON.stringify({ ok: false, error: 'no such living animal' }),
         { status: 404, headers: { 'content-type': 'application/json' } });
     }
-    const { PROPS, BASIS, NB, SYN_BASIS, SYN_OFF, NSYN } = await import('../lib/devo.js');
+    // DESCRIBE THE ENCODING THAT ACTUALLY RAN. This imported devo.js's PROPS and
+    // BASIS and handed them back for a devo2 genome, so the viewer drew a grid of
+    // Dev 1.0 basis functions — ap, dv, |dv|, sin2ap — over numbers that mean
+    // nothing of the sort. Headings for an encoding the world stopped using.
+    const D = evo.devoVersion === 1
+      ? await import('../lib/devo.js') : await import('../lib/devo2.js');
     return new Response(JSON.stringify({
       ok: true, uid: want, slot,
       generation: evo.generation[slot], lineage: evo.lineage[slot],
       cells: built.arena.cnt[slot],
-      props: PROPS, basis: BASIS.map(b => b[0]), nb: NB,
-      synBasis: SYN_BASIS.map(b => b[0]), synOff: SYN_OFF, nsyn: NSYN,
+      encoding: evo.devoName,
+      ...(evo.devoVersion === 1 ? {
+        props: D.PROPS, basis: D.BASIS.map(b => b[0]), nb: D.NB,
+        synBasis: D.SYN_BASIS.map(b => b[0]), synOff: D.SYN_OFF, nsyn: D.NSYN,
+      } : {
+        // A regulatory network, not a basis expansion: per gene, K regulators
+        // (source gene + weight), a bias, a decay and a diffusion rate.
+        grn: {
+          nGene: D.NGENE, k: D.K, stride: D.GENE_STRIDE,
+          offSrc: D.OFF_SRC, offW: D.OFF_W, offBias: D.OFF_BIAS,
+          offDecay: D.OFF_DECAY, offDiff: D.OFF_DIFF,
+          outBase: D.OUT_BASE, outputs: D.OUTPUTS,
+          maternal: ['AP', 'DV', 'RAD', 'NOISE', 'CROWD'],
+          synOff: D.SYN_OFF, nsyn: D.NSYN,
+        },
+      }),
       g: Array.from(evo.genome[slot]),
     }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
   }
