@@ -128,6 +128,16 @@ export const WORLD_FIELDS = [
   ['mudSlip', 'f32', 'how much mud removes purchase, 0..1'],
   ['mudFlow', 'f32', 'how much harder the medium pushes in mud — the mud rivers'],
   ['mudFog', 'f32', 'how much mud degrades sensing'],
+  ['lowLush', 'f32', 'how much fertility follows the valleys downhill'],
+  ['tidalYield', 'f32', 'share of drag dissipation a gripping cell can take'],
+  // Shape of the terrain, as opposed to its scale. warpAmt is how far the field
+  // drags its own coordinates — the meander. ridgeAmt is how craggy the uplands
+  // get. mudBank is where a watercourse has a bank: high = narrow threads.
+  ['warpAmt', 'f32', 'domain-warp strength; 0 = blobby fbm, high = meandering'],
+  ['ridgeAmt', 'f32', 'ridged-noise crests added to high ground'],
+  ['mudBank', 'f32', 'threshold that turns wet ground into narrow channels'],
+  ['flowTerrain', 'f32', 'share of the current that circulates along the terrain'],
+  ['senseTerrain', 'f32', 'weight of the wet-and-slope sense; 0 disables it'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */

@@ -988,6 +988,14 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       morphRate: world.params.morphRate, dt: world.params.dt,
       flowScale: world.params.flowScale, flowStr: world.params.flowStr,
       worldSeed: world.params.seed,
+      // Geography, so the viewer draws THIS world's coastline rather than a
+      // default one. A viewer guessing the seed would render a plausible island
+      // in the wrong place, which is worse than rendering nothing.
+      heightScale: world.params.heightScale, heightSeed: world.params.heightSeed,
+      mudScale: world.params.mudScale, mudSeed: world.params.mudSeed,
+      lowLush: world.params.lowLush, gravity: world.params.gravity,
+      warpAmt: world.params.warpAmt, ridgeAmt: world.params.ridgeAmt,
+      mudBank: world.params.mudBank, flowTerrain: world.params.flowTerrain,
       // Ground truth for cell ownership. cellsOwned sums the arena's own
       // organism table; cellsLiveTyped counts cells the world still treats as
       // present. They must match — any excess is orphan cells that no organism

@@ -1,5 +1,8 @@
 # Worlds — the medium, the scale, and a library of starter worlds
 
+> **Still current.** The medium, the scale budget, and the starter-world library — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
+> sits in the world as a whole, and for the measurements behind it.
+
 What the physics currently *is*, what it therefore cannot represent, and the
 decisions upstream of `DEVELOPMENT-2.md`. Companion to `REGIME.md`, which
 establishes the locomotion regime, and `primitives.md`, which is the schema any

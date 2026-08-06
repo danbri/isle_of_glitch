@@ -1,5 +1,14 @@
 # Mission
 
+> ### ⚠ SUPERSEDED — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md)
+>
+> This document is **history**. It describes the ambition, and carries a '17x locomotion' headline that is RETRACTED, and parts of it are no
+> longer true of the code. It is kept because the ambition itself still stands, not as a description of the
+> world.
+>
+> **For what the world actually is and does now, read `WORLD-MANUAL.md`.** Where
+> this file disagrees with the manual, the manual is right.
+
 The ideal is the Cambrian explosion: an infinite ascent, an arms race that
 starts itself.
 

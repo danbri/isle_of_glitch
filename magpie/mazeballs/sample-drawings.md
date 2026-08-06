@@ -1,5 +1,14 @@
 # Sample drawings: what genomes develop into
 
+> ### ⚠ SUPERSEDED — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md)
+>
+> This document is **history**. It describes sketches from before the visual language settled, and parts of it are no
+> longer true of the code. It is kept because they show what was being aimed at, not as a description of the
+> world.
+>
+> **For what the world actually is and does now, read `WORLD-MANUAL.md`.** Where
+> this file disagrees with the manual, the manual is right.
+
 Output of `deno run --allow-all util/draw.mjs`, committed so the shapes can be
 seen without a GPU or a run. Regenerate with that command; it is deterministic.
 

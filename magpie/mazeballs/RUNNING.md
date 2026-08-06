@@ -1,5 +1,8 @@
 # Running the world server
 
+> **Still current.** How to run the world — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
+> sits in the world as a whole, and for the measurements behind it.
+
 Everything here is one command. Nothing needs an agent, an editor, or a
 half-remembered `nohup` line — if this file is all you have, it is enough.
 

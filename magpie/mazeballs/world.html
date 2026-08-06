@@ -215,6 +215,9 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
     <h2>View</h2>
     <div class="row">
       <button id="bField" class="on">field</button>
+      <button id="bTerrain" class="on">land</button>
+      <button id="bArrows" class="on" title="the current that carries anything not holding on — the transport system, and the thing an active creature has to beat">arrows</button>
+      <button id="bCrescent" title="where it pays to be: the fertile band, out of the mud and below the heights">crescent</button>
       <button id="bFood" class="on">food</button>
       <button id="bBonds" class="on">bonds</button>
       <button id="bPause">pause</button>
@@ -394,6 +397,28 @@ struct Cam {
   showRes  : f32,
   selUid   : i32,   // the animal being inspected; everything else is crowd
   zoomPx   : f32,   // screen px per world unit, so detail can follow altitude
+  // Geography. Same numbers the physics uses, so the picture is the world and
+  // not an illustration of it — if these ever drift from lib/world_gpu.js, the
+  // shoreline you can see stops being the shoreline things fall into.
+  hScale   : f32,
+  hSeed    : u32,
+  mScale   : f32,
+  mSeed    : u32,
+  lowLush  : f32,
+  octT     : f32,   // terrain LOD, separate because terrain is far coarser
+  showTerr : f32,
+  warpAmt  : f32,
+  ridgeAmt : f32,
+  mudBank  : f32,
+  showArrows: f32,
+  arrowSpace: f32,   // world units between arrows, world-fixed so they hold still
+  arrowRef  : f32,   // the speed a full-length arrow means
+  arrowInk  : f32,   // fades them out rather than popping them off
+  gravity   : f32,
+  mudFlow   : f32,
+  pxWorld   : f32,
+  flowTerrain : f32,
+  showCrescent : f32,  // world units per DEVICE pixel — see the arrow block
 };
 @group(0) @binding(0) var<uniform>       C     : Cam;
 @group(0) @binding(1) var<storage, read> pos   : array<vec2<f32>>;
@@ -415,6 +440,40 @@ fn bgVs(@builtin(vertex_index) vi: u32) -> BgOut {
   return o;
 }
 
+/* ---- the ground itself ---------------------------------------------------
+ *
+ * These are the physics' own fields at the physics' own seeds, band-limited for
+ * a screen. Height below zero is water and above it is land, so the sea has no
+ * separate existence: it is where the ground happens to be lower than the level
+ * everything settles to. Mud is wet ground.
+ *
+ * Shading is a single fixed sun against the field's world-space gradient. That
+ * gradient is taken at a WORLD epsilon rather than a pixel one, because a
+ * screen-space derivative makes the relief change as you zoom — the hills would
+ * flatten as you approached them, which is exactly the discontinuity the
+ * fractional-octave LOD exists to avoid.
+ */
+fn warpR(p: vec2<f32>, seed: u32, amt: f32) -> vec2<f32> {
+  let a = fbmOct(p, seed, C.octT) - 0.5;
+  let b = fbmOct(p + vec2<f32>(5.2, 1.3), seed + 3701u, C.octT) - 0.5;
+  return p + amt * vec2<f32>(a, b);
+}
+fn ridgeR(p: vec2<f32>, seed: u32) -> f32 {
+  let f = clamp((fbmOct(p, seed, min(C.octT, 2.4)) - 0.5) * 2.6 + 0.5, 0.0, 1.0);
+  return 1.0 - abs(2.0 * f - 1.0);
+}
+fn hgtR(p: vec2<f32>) -> f32 {
+  let q = warpR(p * C.hScale, C.hSeed, C.warpAmt);
+  let base = fbmOct(q, C.hSeed, C.octT) * 2.0 - 1.0;
+  if (C.ridgeAmt <= 0.0) { return base; }
+  let r = ridgeR(q * 2.3, C.hSeed + 911u);
+  return base + C.ridgeAmt * r * r * smoothstep(-0.05, 0.55, base);
+}
+fn mudR(p: vec2<f32>) -> f32 {
+  let q = warpR(p * C.mScale, C.mSeed, C.warpAmt * 1.4);
+  return clamp(smoothstep(C.mudBank, 1.0, ridgeR(q, C.mSeed)), 0.0, 1.0);
+}
+
 @fragment
 fn bgFs(i: BgOut) -> @location(0) vec4<f32> {
   let base = vec3<f32>(0.039, 0.063, 0.059);
@@ -423,7 +482,12 @@ fn bgFs(i: BgOut) -> @location(0) vec4<f32> {
   // Every noise evaluation here is LOD-limited. Summing octaves finer than a
   // pixel does not draw detail, it draws aliasing — which is precisely what
   // made this render as television snow before.
-  let pot = fbmOct(i.w * C.flowScale, C.seed, C.octaves);
+  // Streamlines are iso-contours of the flow POTENTIAL, so this must be the
+  // same potential the current is actually made of or the lines and the arrows
+  // describe two different worlds — which they did.
+  let potF = fbmOct(i.w * C.flowScale, C.seed, C.octaves);
+  let potC = fbmOct(i.w * C.hScale, C.hSeed, C.octT);
+  let pot = mix(potF, potC * (C.flowScale / max(1e-5, C.hScale)), C.flowTerrain);
 
   let e = 0.5 / C.flowScale;
   let dx = fbmOct((i.w + vec2<f32>(e, 0.0)) * C.flowScale, C.seed, C.octaves)
@@ -449,7 +513,179 @@ fn bgFs(i: BgOut) -> @location(0) vec4<f32> {
   // Kept dim on purpose: the field is the setting, not the subject. If the
   // background competes with the cells, the population stops being readable.
   var col = base + mix(cool, warm, mixv) * m * 0.30;
-  col = col + vec3<f32>(0.05, 0.08, 0.07) * streak * (0.25 + 0.75 * m);
+  var streakW = 1.0;
+
+  /* ---- LAND, WATER, MUD ------------------------------------------------- */
+  var h = 0.0;
+  var mud = 0.0;
+  var land = 0.0;
+  if (C.showTerr > 0.5) {
+    h = hgtR(i.w);
+    mud = mudR(i.w);
+
+    // World-space slope. Two extra taps at the same epsilon the physics uses
+    // for gravity, so what is drawn as downhill is what things roll down.
+    let e = 0.6 / max(1e-4, C.hScale);
+    let gx = (hgtR(i.w + vec2<f32>(e, 0.0)) - h) / e;
+    let gy = (hgtR(i.w + vec2<f32>(0.0, e)) - h) / e;
+
+    // Vertical exaggeration. The field spans ~2 units of height over ~55 world
+    // units, so true slopes are a couple of degrees and lighting them honestly
+    // gives a flat grey sheet. Relief is a drawing decision and is allowed to
+    // be one; the GRADIENT it scales is the real one.
+    let relief = 26.0;
+    let n = normalize(vec3<f32>(-gx * relief, -gy * relief, 1.0));
+    let sunD = normalize(vec3<f32>(-0.55, 0.42, 0.72));
+    let diff = clamp(dot(n, sunD), 0.0, 1.0);
+    let slope = clamp(length(vec2<f32>(gx, gy)) * relief, 0.0, 1.0);
+
+    // Three lights, which is the whole trick to ground looking like ground: a
+    // warm sun, a cool sky filling the shadows, and a dim bounce off the terrain
+    // itself lighting what faces away. One white lamp gives grey mud whatever
+    // the albedo; the temperature difference between the lit and unlit sides is
+    // what the eye reads as shape.
+    let sunCol = vec3<f32>(1.00, 0.82, 0.55) * (0.30 + 0.95 * diff);
+    let skyCol = vec3<f32>(0.32, 0.50, 0.68) * (0.30 + 0.40 * n.z);
+    let bncCol = vec3<f32>(0.34, 0.26, 0.15) * clamp(dot(n, -sunD) * 0.5 + 0.5, 0.0, 1.0) * 0.30;
+    let lightR = sunCol + skyCol + bncCol;
+
+    land = smoothstep(-0.012, 0.012, h);           // the coastline, antialiased
+
+    /* water: colour is depth, and depth alone */
+    let depth = clamp(-h, 0.0, 1.0);
+    let shallow = vec3<f32>(0.075, 0.205, 0.210);
+    let deep    = vec3<f32>(0.010, 0.038, 0.072);
+    var wcol = mix(shallow, deep, smoothstep(0.01, 0.38, depth));
+    // Shallow water is transparent, so the bed under it is lit like ground and
+    // then drowned by depth. Without this the coast is a hard colour step and
+    // the sea reads as a painted region rather than as water lying on a slope.
+    let bed = vec3<f32>(0.14, 0.125, 0.090) * lightR;
+    wcol = mix(bed * 0.85, wcol, smoothstep(0.0, 0.16, depth));
+    // A sun glint off the ripples. The bands ARE the streamlines, so the
+    // highlight sits on the actual flow rather than on a texture pretending to.
+    wcol = wcol + vec3<f32>(0.10, 0.13, 0.12) * streak * 0.55;
+
+    /* land: low and green, high and bare, steep and rocky */
+    let lush  = vec3<f32>(0.075, 0.165, 0.085);
+    let dry   = vec3<f32>(0.225, 0.185, 0.105);
+    let rock  = vec3<f32>(0.195, 0.175, 0.155);
+    let crag  = vec3<f32>(0.330, 0.335, 0.345);
+    var lcol = mix(lush, dry, smoothstep(0.04, 0.52, h));
+    lcol = mix(lcol, rock, smoothstep(0.30, 0.85, slope));
+    lcol = mix(lcol, crag, smoothstep(0.62, 0.95, h) * smoothstep(0.15, 0.6, slope));
+    lcol = lcol * lightR;
+
+    // Mud: takes the light back (wet, dark), pulls the colour brown, and holds
+    // a sheen. All three are what the physics says mud is — no grip, more flow,
+    // no visibility — rendered as the one thing that reads as all of them.
+    let wet = mix(vec3<f32>(0.075, 0.058, 0.040), lcol * 0.55, 0.35);
+    lcol = mix(lcol, wet, mud * 0.85);
+    lcol = lcol + vec3<f32>(0.09, 0.075, 0.045) * streak * mud * 0.9;
+
+    var t = mix(wcol, lcol, land);
+
+    // Foam. A thin bright band exactly at the waterline, which is the single
+    // most useful line on the whole picture: it is where the ground stops.
+    let shore = 1.0 - smoothstep(0.0, 0.030, abs(h));
+    t = t + vec3<f32>(0.115, 0.150, 0.140) * shore * shore * (0.45 + 0.55 * streak);
+
+    // Contours, at a fixed height interval. fwidth fades them out on their own
+    // as soon as the spacing closes on a pixel, so they never alias and never
+    // need a zoom rule — the same principle as the fractional octaves.
+    let cs = h * 14.0;
+    let cw = fwidth(cs);
+    let cl = (1.0 - smoothstep(0.0, cw * 1.6, abs(fract(cs) - 0.5)))
+           * (1.0 - smoothstep(0.35, 0.9, cw));
+    t = t + vec3<f32>(0.030, 0.036, 0.034) * cl * (0.35 + 0.65 * land);
+
+    col = t;
+    // Streamlines belong to the MEDIUM. On dry high ground there is no medium
+    // to draw, and drawing it there was most of why the old background read as
+    // weather rather than as a place.
+    streakW = mix(1.0, 0.22 + 0.78 * mud, land);
+  }
+
+  col = col + vec3<f32>(0.05, 0.08, 0.07) * streak * (0.25 + 0.75 * m) * streakW;
+
+  /* ---- ARROWS: what steers anything that is not holding on ---------------
+   *
+   * The flow field is the reason an egg ends up somewhere its parent did not
+   * choose, and it has until now been legible only as streamlines, which show
+   * the ROUTE but not the DIRECTION or the STRENGTH. An arrow shows both, and
+   * a field of them is the difference between "there is weather" and "it is
+   * blowing that way, that hard, here".
+   *
+   * Drawn as a signed-distance shaft-plus-head evaluated per pixel against the
+   * nearest sample point of a world-fixed lattice, so arrows sit still while
+   * the camera moves — the same reasoning as the streamlines being fixed in
+   * world units. Spacing steps in powers of two with zoom so the density on
+   * screen stays roughly constant from whole-world to single-creature.
+   *
+   * The arrow is the SUM of what actually pushes a passive thing: the medium,
+   * plus gravity down the slope. That matters — a mud channel running across a
+   * hillside points somewhere neither of them does alone, and reading either
+   * one on its own would tell you the wrong place.
+   */
+  if (C.showArrows > 0.5) {
+    let sp = C.arrowSpace;
+    let cellIx = floor(i.w / sp) + vec2<f32>(0.5, 0.5);
+    let ctr = cellIx * sp;
+    let mudA = select(0.0, mud, C.showTerr > 0.5);
+    let sA = C.flowStr * (1.0 + C.mudFlow * mudA);
+    // The SAME two-scale current the physics uses. The fine turbulent component
+    // is deliberately under-sampled here — an arrow every 20 units cannot show
+    // an eddy one unit across, and pretending otherwise is what made the old
+    // arrows look like they belonged to a different picture. What an arrow can
+    // honestly report is the net push over its own patch, which is the coarse
+    // circulation, so that is what it is weighted toward.
+    var vfl = mix(flowField(ctr, C.flowScale, sA, C.seed),
+                  flowField(ctr, C.hScale, sA * (C.flowScale / max(1e-5, C.hScale)), C.hSeed),
+                  clamp(C.flowTerrain + 0.25, 0.0, 1.0));
+    if (C.showTerr > 0.5 && C.gravity != 0.0) {
+      let eA = 0.6 / max(1e-4, C.hScale);
+      vfl = vfl - vec2<f32>(hgtR(ctr + vec2<f32>(eA, 0.0)) - hgtR(ctr - vec2<f32>(eA, 0.0)),
+                            hgtR(ctr + vec2<f32>(0.0, eA)) - hgtR(ctr - vec2<f32>(0.0, eA)))
+                  / (2.0 * eA) * C.gravity;
+    }
+    let spd = length(vfl);
+    if (spd > 1e-4) {
+      // LENGTH IS SPEED. Long arrows where the current runs, short stubs where
+      // it barely moves — otherwise every arrow claims the same authority and
+      // the picture says the world is uniformly windy, which it is not.
+      // Minimum length 0.34, not 0.12. This is the instrument for a balance —
+      // passive things being carried against active things beating the current
+      // — that cannot be tuned without seeing it. A slow arrow must still read
+      // as an arrow pointing somewhere, not as a speck.
+      let L = sp * 0.42 * clamp(spd / max(1e-4, C.arrowRef), 0.34, 1.0);
+      let dir = vfl / spd;
+      let per = vec2<f32>(-dir.y, dir.x);
+      let q = i.w - ctr;
+      let along = dot(q, dir);
+      let across = dot(q, per);
+      // shaft: a capsule from -L to +L*0.55, head: a wedge closing to the tip
+      // Shaft to 0.62 of the way, then a head that tapers LINEARLY to a point.
+      // The previous version widened over the head and only narrowed in the
+      // last tenth, which draws a mallet — legible as "something is here" and
+      // not at all as "it is going that way".
+      let t = clamp((along + L) / max(1e-5, 1.55 * L), 0.0, 1.0);
+      let hw = L * 0.035;
+      let halfw = select(hw, L * 0.20 * (1.0 - (t - 0.62) / 0.38), t > 0.62);
+      let inShaft = f32(along > -L && along < L * 0.55 + 1e-4);
+      let d = abs(across) - max(halfw, 1e-5);
+      // NOT fwidth. A screen-space derivative may only be taken in uniform
+      // control flow, and this block is entered per-pixel on a condition that
+      // depends on the field — so the compiler rejects it outright, which cost
+      // an entirely silent invalid pipeline until compilationInfo was read.
+      // The pixel footprint is a property of the CAMERA, which is uniform, so
+      // it comes in on the uniform block and works anywhere.
+      let aa = max(C.pxWorld, 1e-5);
+      var ink = (1.0 - smoothstep(0.0, aa * 1.4, d)) * inShaft;
+      ink = ink * smoothstep(0.0, aa * 2.0, along + L);
+      col = mix(col, mix(vec3<f32>(0.36, 0.52, 0.55), vec3<f32>(0.86, 0.80, 0.58),
+                         clamp(spd / max(1e-4, C.arrowRef), 0.0, 1.0)),
+                ink * C.arrowInk);
+    }
+  }
 
   // THE FOOD. Drawn at last: it is the thing every creature is chasing, it
   // drifts and morphs under them, and it was invisible — so the world looked
@@ -462,20 +698,56 @@ fn bgFs(i: BgOut) -> @location(0) vec4<f32> {
     // when zoomed out is both cheaper and correct, since the fine ones are below
     // a pixel anyway.
     let rq = i.w * C.resScale + C.worldTime * vec2<f32>(C.driftX, C.driftY);
-    let ra = fbmOct(rq, C.resSeed, C.octaves);
-    let rb = fbmOct(rq, C.resSeed + 7777u, C.octaves);
+    let ro = max(1.0, C.octaves - 1.6);
+    let ra = fbmOct(rq, C.resSeed, ro);
+    let rb = fbmOct(rq, C.resSeed + 7777u, ro);
     let rw = 0.5 + 0.5 * sin(C.worldTime * C.morphRate);
     let rr = mix(ra, rb, rw);
-    let r = rr * rr;
+    var r = rr * rr;
+
+    // Lush lowlands. The physics multiplies fertility by exactly this, so the
+    // green really is where the food regrows fastest, and the bare uplands
+    // really are poor rather than merely painted pale.
+    if (C.showTerr > 0.5 && C.lowLush > 0.0) {
+      r = r * mix(1.0, smoothstep(-0.10, 0.28, h) * smoothstep(0.92, 0.34, h) * (1.0 - mud) / 0.2682, C.lowLush);
+    }
 
     // Only the RICHEST ground glows. The mean of this field is around 0.28, and
     // lighting that produced a bright wash the creatures disappeared into —
     // the layer that matters most on screen should be the one that is alive, not
     // the ground. smoothstep keeps almost everything dark and lets the good
     // patches read as light coming off something.
-    let g = smoothstep(0.30, 0.85, r);
-    col = col + vec3<f32>(0.20, 0.115, 0.035) * g
-              + vec3<f32>(0.07, 0.05, 0.015) * g * g;
+    // BAND-LIMIT IT HARDER THAN THE TERRAIN. Fertility is drawn at a finer
+    // scale than the ground, and at full octave depth it is a dense mottle that
+    // the eye reads as static — it buried the landscape it is supposed to sit
+    // on. Two octaves fewer keeps the PATCHES, which is the information (where
+    // is it worth being), and drops the speckle, which is not.
+    let g = smoothstep(0.34, 0.88, r);
+    col = col + vec3<f32>(0.155, 0.092, 0.028) * g
+              + vec3<f32>(0.055, 0.038, 0.012) * g * g;
+  }
+
+  /* ---- THE FERTILE BAND, made loud ---------------------------------------
+   *
+   * The same expression the physics multiplies fertility by, drawn as heat.
+   * It is deliberately garish: this is not scenery, it is the answer to "where
+   * does it pay to be", and it was previously inferable only by squinting at
+   * where the food glow happened to be brightest.
+   *
+   * It shimmers because the band is not a fixed place — the fertility field
+   * drifts and morphs under it — and a still picture of a moving optimum is the
+   * exact misreading this world has been retracted for before.
+   */
+  if (C.showCrescent > 0.5 && C.showTerr > 0.5) {
+    let band = smoothstep(-0.10, 0.28, h) * smoothstep(0.92, 0.34, h) * (1.0 - mud);
+    let sh = 0.72 + 0.28 * sin(C.worldTime * 1.7 + h * 9.0 - mud * 5.0);
+    let hot = smoothstep(0.20, 0.95, band);
+    col = mix(col, vec3<f32>(0.95, 0.13, 0.10), hot * 0.55 * sh);
+    col = col + vec3<f32>(0.35, 0.05, 0.02) * hot * hot * sh;
+    // The edges of the band matter more than its middle: they are the two
+    // frontiers, and they are where a lineage gets pushed out.
+    let edge = smoothstep(0.10, 0.30, band) * (1.0 - smoothstep(0.55, 0.80, band));
+    col = col + vec3<f32>(1.00, 0.55, 0.15) * edge * 0.45 * sh;
   }
 
   // The field is analytic and therefore unbounded, but the world bodies live in
@@ -785,7 +1057,7 @@ fn mfs(i: MOut) -> @location(0) vec4<f32> {
 let dev, ctx, fmt, sim = null, raf = 0;
 const cam = { cx: 0, cy: 0, zoom: 6 };     // zoom = pixels per world unit
 const view = { field: true, bonds: true, paused: false, spf: 1, evolve: true,
-               cells: true, strain: false, solo: -1, food: true };
+               cells: true, strain: false, solo: -1, food: true, terrain: true, arrows: true, crescent: false };
 // ?watch=1 turns this page into a VIEWPORT on the shared run in tools/serve-world.js
 // instead of a simulation of its own. Without it every tab is a separate
 // universe, which is why two browsers never agreed about anything.
@@ -975,9 +1247,21 @@ async function rebuild() {
   const bBond = dev.createBuffer({ size: bondCapacity, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
   dev.queue.writeBuffer(bBond, 0, idx);
 
-  const bCam = dev.createBuffer({ size: 128, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  const bCam = dev.createBuffer({ size: 192, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
 
   const module = dev.createShaderModule({ code: RENDER, label: 'render' });
+  // SAY WHAT IS WRONG WITH THE SHADER. A WGSL compile failure does not throw:
+  // createShaderModule succeeds, the pipeline built from it is quietly invalid,
+  // and every frame thereafter logs "invalid due to a previous error" without
+  // ever naming the previous error. That is hundreds of useless lines and no
+  // line number. compilationInfo has the message the whole time.
+  module.getCompilationInfo?.().then(info => {
+    for (const m of info.messages) {
+      if (m.type !== 'error' && m.type !== 'warning') continue;
+      const line = RENDER.split('\n')[m.lineNum - 1] ?? '';
+      console.error(`[render wgsl ${m.type}] ${m.lineNum}:${m.linePos} ${m.message}\n  ${line.trim()}`);
+    }
+  });
 
   const ro = { type: 'read-only-storage' };
   const V = GPUShaderStage.VERTEX, F = GPUShaderStage.FRAGMENT;
@@ -2348,7 +2632,7 @@ function writeCam() {
   // looking at it.
   const rWorld = Math.max(0.34, 1.15 / cam.zoom);
 
-  const b = new ArrayBuffer(112), dv = new DataView(b);
+  const b = new ArrayBuffer(192), dv = new DataView(b);
   dv.setFloat32(0, cam.cx, true); dv.setFloat32(4, cam.cy, true);
   dv.setFloat32(8, nx, true); dv.setFloat32(12, ny, true);
   dv.setFloat32(16, rWorld, true);
@@ -2381,7 +2665,7 @@ function writeCam() {
   const bandPx = bandWorld * pxPerWorld;
   dv.setFloat32(60, Math.min(1, Math.max(0, (bandPx - 2.5) / 5.5)), true);
   dv.setFloat32(64, 0.62, true);            // rest length, for strain colouring
-  const rp = sim.remote ?? {};
+  const rp = sim.remote ?? sim.world?.params ?? {};
   dv.setFloat32(68, rp.resScale ?? 0.35, true);
   dv.setUint32(72, rp.resSeed ?? 91, true);
   dv.setFloat32(76, (sim.serverSteps ?? 0) * (rp.dt ?? 0.015), true);
@@ -2391,6 +2675,50 @@ function writeCam() {
   dv.setFloat32(92, view.food ? 1 : 0, true);
   dv.setInt32(96, sel.uid, true);
   dv.setFloat32(100, cam.zoom, true);
+
+  // Geography, straight from the running parameters. Defaults here match
+  // lib/world_gpu.js only as a fallback for a server that predates them; the
+  // live values win, so a swept terrain is drawn as swept.
+  const hs = rp.heightScale ?? 0.018, ms = rp.mudScale ?? 0.026;
+  dv.setFloat32(104, hs, true);
+  dv.setUint32(108, rp.heightSeed ?? 5150, true);
+  dv.setFloat32(112, ms, true);
+  dv.setUint32(116, rp.mudSeed ?? 8801, true);
+  dv.setFloat32(120, rp.lowLush ?? 0.75, true);
+  // Terrain has its own LOD because it is ~20x coarser than the flow field:
+  // sharing the flow's octave count either aliased the ground or left the
+  // hills as smooth blobs at every zoom a body is actually watched at.
+  const tScale = Math.max(hs, ms);
+  dv.setFloat32(124, Math.max(1, Math.min(5, 1 + Math.log2(Math.max(1, tScale * pxPerWorld * 3)))), true);
+  dv.setFloat32(128, view.terrain ? 1 : 0, true);
+  dv.setFloat32(132, rp.warpAmt ?? 0.55, true);
+  dv.setFloat32(136, rp.ridgeAmt ?? 0.42, true);
+  dv.setFloat32(140, rp.mudBank ?? 0.52, true);
+
+  // ARROWS. Spacing snaps to powers of two of a world-unit base so it is fixed
+  // in the WORLD, not on the screen: arrows stay nailed to their patch of
+  // ground as the camera moves, and thin out by halving rather than sliding.
+  // Sliding arrows read as the field itself moving, which is a lie about a
+  // field that is stationary in space.
+  const wantPx = 96;                          // desired on-screen spacing
+  const rawSp = wantPx / Math.max(1e-4, pxPerWorld);
+  const arrowSp = Math.pow(2, Math.round(Math.log2(Math.max(0.5, rawSp))));
+  const spPx = arrowSp * pxPerWorld;
+  dv.setFloat32(144, view.arrows ? 1 : 0, true);
+  dv.setFloat32(148, arrowSp, true);
+  // Reference speed: what counts as "fast" here. Taken from the flow strength
+  // the world is actually running, so the arrows recalibrate when it is swept
+  // rather than saturating or vanishing.
+  dv.setFloat32(152, Math.max(1e-3, (rp.flowStr ?? 1) * 0.9 + (rp.gravity ?? 0) * 0.5), true);
+  // Fade out when they get too small to read, instead of drawing a grey haze.
+  // Full ink. The only fade left is when arrows would be smaller than a glyph,
+  // and even then it bottoms out visible rather than at nothing.
+  dv.setFloat32(156, 0.35 + 0.6 * Math.min(1, Math.max(0, (spPx - 12) / 22)), true);
+  dv.setFloat32(160, rp.gravity ?? 0.55, true);
+  dv.setFloat32(164, rp.mudFlow ?? 3.0, true);
+  dv.setFloat32(168, 1 / Math.max(1e-4, pxPerWorld), true);
+  dv.setFloat32(172, rp.flowTerrain ?? 0.62, true);
+  dv.setFloat32(176, view.crescent ? 1 : 0, true);
   dev.queue.writeBuffer(sim.bCam, 0, b);
 }
 
@@ -2666,6 +2994,9 @@ $('sSpf').addEventListener('input', e => { view.spf = +e.target.value; $('vSpf')
 $('sBudget').addEventListener('input', e => $('vBudget').textContent = (+e.target.value).toLocaleString());
 
 $('bField').onclick = e => { view.field = !view.field; e.target.classList.toggle('on', view.field); };
+$('bTerrain').onclick = e => { view.terrain = !view.terrain; e.target.classList.toggle('on', view.terrain); };
+$('bArrows').onclick = e => { view.arrows = !view.arrows; e.target.classList.toggle('on', view.arrows); };
+$('bCrescent').onclick = e => { view.crescent = !view.crescent; e.target.classList.toggle('on', view.crescent); };
 $('bFood').onclick = e => { view.food = !view.food; e.target.classList.toggle('on', view.food); };
 
 /**

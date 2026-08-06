@@ -1,5 +1,8 @@
 # Development 2.0 — a gene regulatory network in an egg
 
+> **Still current.** The specification for the developmental encoding that is running — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
+> sits in the world as a whole, and for the measurements behind it.
+
 The developmental encoding this project is built on: a sparse GRN, running in time
 inside a contained egg, **growing** a body rather than painting one. This document
 is the spec and the reasoning behind it.

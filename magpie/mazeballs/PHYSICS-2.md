@@ -1,5 +1,8 @@
 # Physics 2.0 — richer world, same machine
 
+> **Still current.** The engine: where the time actually goes, and what any new physics must obey — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
+> sits in the world as a whole, and for the measurements behind it.
+
 A design doc for the physics upgrades argued in `WORLDS.md` — per-cell mass,
 tag-mediated adhesion, a height field and gravity, real open water, and
 (conditionally) a medium with state — **together with the engineering that keeps

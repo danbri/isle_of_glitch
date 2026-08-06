@@ -1,5 +1,8 @@
 # Eggs, and reproduction as a process in time and space
 
+> **Still current.** Reproduction in time and space. Still the programme; still unbuilt — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
+> sits in the world as a whole, and for the measurements behind it.
+
 Design notes on making reproduction physical instead of a point-event — and on
 eggs, which turn out to be more foundational than they look. Companion to
 `energy-speculative-friction.md` (the conservation law these all obey) and

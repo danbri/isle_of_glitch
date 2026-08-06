@@ -402,22 +402,41 @@ measurement once), trajectory plots, vector snapshots, the imposed-wave drive.
 
 ---
 
-## 12. The older documents
+## 12. The other documents
 
-Kept as history. Where they disagree with this manual, they are wrong.
+Every design document in this directory now carries a banner under its title
+saying which of these two it is. **Where any of them disagrees with this manual,
+this manual is right** — that is the whole point of there being one.
 
-| document | status |
+**Still current** — this manual summarises them; they hold the detail and the
+argument, and they are maintained.
+
+| document | what it is for |
 |---|---|
-| `primitives.md` | **still the schema.** Six of nine material axes now built |
-| `energy-speculative-friction.md` | still law |
-| `CELLS.md` | still the ontology ruling; its "not a grid" line is now true everywhere |
-| `CambrianConditions.md` | current — the goal and the ranked gaps |
-| `DEVELOPMENT-2.md` | current spec for the encoding |
-| `WORLDS.md`, `PHYSICS-2.md` | current — the medium, and the engine budget |
-| `REGIME.md` | current — what the physics can reward |
-| `eggs.md` | still the programme; unbuilt |
-| `METHODS.md`, `ASCENT.md`, `AUTORESEARCH.md` | method and history |
-| `MISSION.md` | ambition; its "17× locomotion" headline is retracted |
-| `RESEARCH.md`, `LAB-NOTES.md` | the ledger. Long, and where retractions live |
-| `WORLD.md`, `ARCHITECTURE.md` | largely superseded by this manual |
-| `AUDIT.md` | superseded; its cell-type finding was withdrawn by `CELLS.md` |
+| `primitives.md` | the schema everything hangs off. Six of nine material axes now built |
+| `energy-speculative-friction.md` | the conservation law, in full |
+| `CELLS.md` | the ontology ruling — why a cell is a legitimate atom and a species is not |
+| `CambrianConditions.md` | the standing goal, and the ranked list of what is missing |
+| `DEVELOPMENT-2.md` | the spec for the encoding that is running |
+| `WORLDS.md` | the medium, the scale budget, the starter-world library |
+| `PHYSICS-2.md` | the engine: where the time goes, what new physics must obey |
+| `REGIME.md` | what this world's physics can and cannot reward |
+| `eggs.md` | reproduction in time and space. Still the programme; unbuilt |
+| `METHODS.md` | autoresearch over primitives; the brain-is-body argument |
+| `ASCENT.md` | the category-free ascent instrument |
+| `AUTORESEARCH.md` | closing the loop, and the anti-reward-hacking guards |
+| `RUNNING.md` | how to run the world |
+| `visual-language.md` | how the world is drawn, and why |
+| `RESEARCH.md`, `LAB-NOTES.md` | the ledger. Long, and where the retractions live |
+
+**Superseded** — history. Read them for how the reasoning was arrived at, never
+as a description of what the code does.
+
+| document | why it is history |
+|---|---|
+| `WORLD.md` | the world as designed before development, perception, consumption and geography existed |
+| `ARCHITECTURE.md` | a code arrangement since rebuilt around cells and descent |
+| `AUDIT.md` | its central finding — cell types violate the First Law — was **withdrawn** by `CELLS.md` |
+| `MISSION.md` | the ambition still stands; its "17× locomotion" headline is **retracted** |
+| `CELLWISE.md` | a cellwise redesign that has since been built, differently |
+| `sample-drawings.md` | sketches from before the visual language settled |

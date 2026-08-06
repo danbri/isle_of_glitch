@@ -1,5 +1,8 @@
 # The cell is our atom, and that is a different thing from `predatorSpeed`
 
+> **Still current.** The ontology ruling: why a cell is a legitimate atom and a species is not — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
+> sits in the world as a whole, and for the measurements behind it.
+
 A design ruling, recorded because an audit in this repo got it wrong and the
 reasoning is worth keeping.
 

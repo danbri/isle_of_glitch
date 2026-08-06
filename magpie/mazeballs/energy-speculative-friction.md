@@ -1,5 +1,8 @@
 # Energy as speculative friction
 
+> **Still current.** The conservation law, in full. Still binding — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
+> sits in the world as a whole, and for the measurements behind it.
+
 The point of taking energy seriously is not realism. It is **friction** — a law
 that *resists* arbitrary invention, so that not every construct we can imagine can
 be paid for. Energy is the thing that can tell a design **no**. This note is the

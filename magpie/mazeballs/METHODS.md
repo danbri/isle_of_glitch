@@ -1,5 +1,8 @@
 # Methods — refining evo-devo primitives with autoresearch, at AI-infra scale
 
+> **Still current.** Autoresearch over primitives, and the brain-is-body argument — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
+> sits in the world as a whole, and for the measurements behind it.
+
 A concise working discussion: how to use an autoresearch loop (Karpathy-style) to
 evolve the *toolkit of primitives* our worlds expose to evolution, and what modern
 compute actually buys. Grounded in this repo's results and the alife / evo-devo /

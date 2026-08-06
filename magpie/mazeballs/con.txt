@@ -1,0 +1,688 @@
+Total messages: 196 (Errors: 196, Warnings: 0)
+
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid RenderPipeline (unlabeled)] is invalid due to a previous error.
+ - While encoding [RenderPassEncoder (unlabeled)].SetPipeline([Invalid RenderPipeline (unlabeled)]).
+ - While finishing [CommandEncoder (unlabeled)].
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230
+[ERROR] [webgpu] [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/world.html?watch=1:1064
+[ERROR] [brainarena_gpu] WebGPU error: [Invalid CommandBuffer] is invalid due to a previous error.
+ - While calling [Queue].Submit([[Invalid CommandBuffer]])
+ @ http://127.0.0.1:8899/lib/brainarena_gpu.js:230

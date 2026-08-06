@@ -1,5 +1,14 @@
 # Audit: the GPU world against the design notes
 
+> ### ⚠ SUPERSEDED — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md)
+>
+> This document is **history**. It describes an audit whose central finding — that cell types are a First Law violation — was WITHDRAWN by CELLS.md, and parts of it are no
+> longer true of the code. It is kept because the withdrawal is worth reading alongside the claim, not as a description of the
+> world.
+>
+> **For what the world actually is and does now, read `WORLD-MANUAL.md`.** Where
+> this file disagrees with the manual, the manual is right.
+
 Written after merging the two lines, reading ASCENT.md, METHODS.md, eggs.md and
 energy-speculative-friction.md, and checking each claim against what the code
 actually does. The question asked was whether the spec's author would be pleased

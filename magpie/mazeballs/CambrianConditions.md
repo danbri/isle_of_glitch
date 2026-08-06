@@ -1,5 +1,8 @@
 # Cambrian conditions — what is actually missing
 
+> **Still current.** The standing goal, and the ranked list of what is still missing — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
+> sits in the world as a whole, and for the measurements behind it.
+
 An audit of the possibility space, written after getting the world to move.
 Movement was the hard-won thing; it is also the smallest of the things needed.
 

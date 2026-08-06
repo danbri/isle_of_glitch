@@ -1,5 +1,14 @@
 # World design — conditions for an infinite-ascent arms race
 
+> ### ⚠ SUPERSEDED — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md)
+>
+> This document is **history**. It describes the world as designed before development, perception, consumption and geography existed, and parts of it are no
+> longer true of the code. It is kept because it is where much of the reasoning was first worked out, not as a description of the
+> world.
+>
+> **For what the world actually is and does now, read `WORLD-MANUAL.md`.** Where
+> this file disagrees with the manual, the manual is right.
+
 Companion to `MISSION.md` (the goal) and `RESEARCH.md` (what has been measured).
 This is the world we are trying to build and *why* — the god's-eye design brief.
 Captured from the design conversation; treat it as binding intent, to be built

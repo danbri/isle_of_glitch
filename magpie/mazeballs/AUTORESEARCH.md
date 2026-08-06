@@ -1,5 +1,8 @@
 # Autoresearch — closing the loop, and leaving it cranking
 
+> **Still current.** Closing the by-hand loop, and the anti-reward-hacking guards — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
+> sits in the world as a whole, and for the measurements behind it.
+
 How to turn the by-hand research loop into an unattended one that runs across
 laptop(s). Companion to `METHODS.md` (what the loop mutates + brain-is-body),
 `energy-speculative-friction.md` (the conservation law any proposed mechanism must

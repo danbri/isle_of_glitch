@@ -123,13 +123,48 @@ fn hash2(ix: i32, iy: i32, seed: u32) -> f32 {
 
 fn smooth3(t: f32) -> f32 { return t * t * (3.0 - 2.0 * t); }
 
+// GRADIENT (Perlin) noise, not value noise.
+//
+// This was value noise — interpolate a random VALUE at each lattice corner —
+// and value noise has a defect you can see: its extrema are pinned to the
+// integer lattice, so the field is full of blobs sitting on a square grid and
+// the artifacts line up with the axes. Zoomed out that reads as visible
+// squares, which is exactly what the world's background looked like, and no
+// amount of octaves removes it because every octave has it.
+//
+// Perlin noise instead puts a random unit GRADIENT at each corner and
+// interpolates the ramps. The value at every lattice point is then zero, the
+// features sit BETWEEN the corners rather than on them, and the result has no
+// preferred direction. It is the difference between a landscape and a
+// tablecloth.
+//
+// The fade is Perlin's improved quintic 6t^5-15t^4+10t^3, whose second
+// derivative also vanishes at the ends — the cubic smoothstep leaves a
+// curvature discontinuity across every cell edge, which shows up as faint
+// creases exactly where the grid is.
+fn grad2(ix: i32, iy: i32, seed: u32) -> vec2<f32> {
+  let a = hash2(ix, iy, seed) * 2.0 - 1.0;
+  let b = hash2(ix, iy, seed ^ 2654435769u) * 2.0 - 1.0;
+  let g = vec2<f32>(a, b);
+  return g * inverseSqrt(max(1e-6, dot(g, g)));
+}
+
 fn vnoise(p: vec2<f32>, seed: u32) -> f32 {
   let i = floor(p);
   let f = p - i;
   let ix = i32(i.x); let iy = i32(i.y);
-  let u = smooth3(f.x); let v = smooth3(f.y);
-  return mix(mix(hash2(ix, iy, seed),     hash2(ix + 1, iy, seed),     u),
-             mix(hash2(ix, iy + 1, seed), hash2(ix + 1, iy + 1, seed), u), v);
+  let u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+  let n00 = dot(grad2(ix,     iy,     seed), f);
+  let n10 = dot(grad2(ix + 1, iy,     seed), f - vec2<f32>(1.0, 0.0));
+  let n01 = dot(grad2(ix,     iy + 1, seed), f - vec2<f32>(0.0, 1.0));
+  let n11 = dot(grad2(ix + 1, iy + 1, seed), f - vec2<f32>(1.0, 1.0));
+  let n = mix(mix(n00, n10, u.x), mix(n01, n11, u.x), u.y);
+  // Perlin is signed and centred; every caller here expects 0..1. The scale
+  // brings the practical range up to about full width — 2D gradient noise peaks
+  // near 0.7, and octave sums cancel further, so without this the whole world
+  // would be a narrow band around 0.5 and every field calibrated against the
+  // old noise would go slack.
+  return clamp(n * 1.36 + 0.5, 0.0, 1.0);
 }
 
 // Band-limited fbm: the caller says how many octaves to sum.
@@ -383,8 +418,56 @@ fn gritAt(p: vec2<f32>) -> f32 {
 // Gravity is the in-plane force -grad(height), which is a TILTED PLANE and needs
 // no side view: things roll downhill, matter pools in basins, and ridges divide
 // the world into places.
+// DOMAIN WARP — why the landscape winds instead of blobbing.
+//
+// Plain fbm makes lumps. Every feature is a rounded patch, coastlines are
+// scalloped circles, and nothing meanders, because the function has no
+// mechanism for bending: it is a sum of isotropic octaves and isotropic is
+// exactly what a river is not. Warping the COORDINATE before sampling —
+// f(p + w*f(p)) — feeds the field's own structure back into where it is read,
+// which drags features sideways along other features. That is what produces
+// the winding, folded, delta-like shapes; it is one extra pair of evaluations
+// and it changes the character of the world completely.
+fn warp2(p: vec2<f32>, seed: u32, amt: f32) -> vec2<f32> {
+  let a = fbm(p, seed) - 0.5;
+  let b = fbm(p + vec2<f32>(5.2, 1.3), seed + 3701u) - 0.5;
+  return p + amt * vec2<f32>(a, b);
+}
+
+// RIDGES — the sharp crest lines. 1 - |2f-1| is v-shaped about f = 0.5, so its
+// maximum is the CONTOUR f = 0.5, which is a winding curve rather than a patch.
+// Raised to a power that curve narrows into a thread. Used one way up it is a
+// mountain crest; used with the terrain sunk around it, it is a watercourse.
+fn ridge(p: vec2<f32>, seed: u32) -> f32 {
+  // TWO THINGS THIS NEEDS, both learned by looking at the result.
+  //
+  // A SMOOTH BASE. Ridging a full six-octave fbm shatters the crest: every fine
+  // octave crosses the 0.5 level set somewhere else, so instead of one winding
+  // line you get a scatter of disconnected fragments. Measured that way, 10% of
+  // the world was "channel" and none of it went anywhere. A few octaves give a
+  // crest that is continuous, which is the entire point — a river that is not
+  // connected is a puddle.
+  //
+  // CONTRAST FIRST. Perlin fbm clusters tightly about 0.5, so |2f-1| is small
+  // and 1-|2f-1| is near 1 nearly everywhere — the "ridge" would be the whole
+  // map. Widening the distribution before ridging is what makes the crest a
+  // crest. (Value noise did not need this, which is why it only showed up after
+  // the switch.)
+  let f = clamp((fbmOct(p, seed, 2.4) - 0.5) * 2.6 + 0.5, 0.0, 1.0);
+  return 1.0 - abs(2.0 * f - 1.0);
+}
+
 fn heightAt(p: vec2<f32>) -> f32 {
-  return fbm(p * P.heightScale, P.heightSeed) * 2.0 - 1.0;   // -1 deep .. +1 peak
+  let q = warp2(p * P.heightScale, P.heightSeed, P.warpAmt);
+  let base = fbm(q, P.heightSeed) * 2.0 - 1.0;                 // -1 deep .. +1 peak
+  if (P.ridgeAmt <= 0.0) { return base; }
+  // Crests, and only up high. Adding ridges everywhere corrugates the sea bed
+  // and the plains too, which reads as noise; gating on the base height means
+  // the lowlands stay smooth and open and the uplands turn craggy, which is
+  // both the shape real terrain has and the shape this world's economics
+  // describe (highSap makes the heights the hard country).
+  let r = ridge(q * 2.3, P.heightSeed + 911u);
+  return base + P.ridgeAmt * r * r * smoothstep(-0.05, 0.55, base);
 }
 fn heightGrad(p: vec2<f32>) -> vec2<f32> {
   let e = 0.6 / max(1e-4, P.heightScale);
@@ -394,15 +477,55 @@ fn heightGrad(p: vec2<f32>) -> vec2<f32> {
 // MUD is wet ground: it takes away purchase, it flows, and it fouls the senses.
 // A mud river is therefore transport you cannot steer and cannot see out of —
 // fast, free, and it puts you somewhere you did not choose.
+//
+// The field is RIDGED and warped, so mud is not scattered wet patches but a
+// branching network of narrow winding channels — which is what wet ground
+// actually looks like, and much more importantly is what makes it USEFUL: a
+// broad damp region is somewhere to avoid, while a channel is somewhere that
+// goes from one place to another. Transport needs a route.
 fn mudAt(p: vec2<f32>) -> f32 {
-  return clamp(fbm(p * P.mudScale, P.mudSeed) * 1.7 - 0.25, 0.0, 1.0);
+  let q = warp2(p * P.mudScale, P.mudSeed, P.warpAmt * 1.4);
+  let r = ridge(q, P.mudSeed);
+  // pow narrows the thread; the smoothstep is the bank.
+  return clamp(smoothstep(P.mudBank, 1.0, r), 0.0, 1.0);
 }
 
 fn flowAt(p: vec2<f32>) -> vec2<f32> {
   // The medium pushes harder where the ground is wet. Same analytic curl field,
   // scaled locally, so a mud channel becomes a current without any new machinery.
   let m = mudAt(p);
-  return flowField(p, P.flowScale, P.flowStr * (1.0 + P.mudFlow * m), P.seed);
+  let s = P.flowStr * (1.0 + P.mudFlow * m);
+
+  // TWO SCALES, AND THE COARSE ONE IS THE LANDSCAPE.
+  //
+  // The flow was one curl field at flowScale 0.9, which means eddies about ONE
+  // WORLD UNIT across — roughly a cell and a half. That is turbulence, not
+  // weather: it has no large-scale direction at all, so a body is jostled but
+  // never carried anywhere, and drawn as arrows on any lattice coarser than an
+  // eddy it aliases into pure noise. Which is exactly how it looked: a vector
+  // field with no visible relationship to the world it runs over.
+  //
+  // The coarse component is the curl of the HEIGHT field's own base — the same
+  // function, the same seed. Curl means perpendicular to the gradient, so this
+  // current runs ALONG the contours: around the islands, down the length of the
+  // valleys, hugging the coast. Which is what water in a landscape does, and it
+  // is why it now looks like it belongs to the terrain — it is made of it.
+  //
+  // Cheap, because it reuses flowField rather than differencing the full warped
+  // and ridged heightAt: the ridges are a detail of the tops, and the shape a
+  // current follows is the shape of the land underneath them.
+  let fine = flowField(p, P.flowScale, s, P.seed);
+  if (P.flowTerrain <= 0.0) { return fine; }
+  // NORMALISE THE COARSE COMPONENT'S SPEED. A curl is a gradient, so the same
+  // potential spread over fifty times the distance gives a fiftieth of the
+  // velocity: mixing the two raw made the world's current SIXTY PER CENT
+  // WEAKER and drew arrows that had all but disappeared. What is wanted here is
+  // the same speed organised on a different scale, not a slower medium, so the
+  // strength is scaled by the ratio of the two scales — after which the mix is a
+  // genuine blend of two currents rather than a fade toward nothing.
+  let coarse = flowField(p, P.heightScale,
+                         s * (P.flowScale / max(1e-5, P.heightScale)), P.heightSeed);
+  return mix(fine, coarse, P.flowTerrain);
 }
 
 // Shortest displacement on a torus (minimum image). A body straddling the wrap
@@ -423,9 +546,64 @@ fn minImage(d: vec2<f32>) -> vec2<f32> {
   return r;
 }
 
+// LUSH LOWLANDS, CRAGGY HEIGHTS.
+//
+// Fertility was independent of terrain, which made height a pure tax: the
+// uplands cost more to occupy (highSap) and offered nothing, so the only
+// rational strategy was to be low, and a frontier nobody has a reason to cross
+// is not a frontier. The coupling that makes height a real choice is that
+// what runs downhill — water, silt, everything dissolved in them — is what
+// makes ground rich. Lowlands are fertile BECAUSE they are low.
+//
+// So the heights become genuinely poor as well as genuinely expensive. That
+// looks like it closes the frontier rather than opening it, and it is the
+// opposite: poor, costly ground is ground with no competition on it. A lineage
+// that can live thin has the uplands to itself, and one that cannot has to
+// fight for the valleys. That is two ways of making a living, which is what a
+// guild is, and it is the thing this world has so far failed to produce.
 fn resourceAt(p: vec2<f32>) -> f32 {
-  return resourceField(p, P.resScale, P.resSeed, P.worldTime,
-                       vec2<f32>(P.driftX, P.driftY), P.morphRate);
+  let r = resourceField(p, P.resScale, P.resSeed, P.worldTime,
+                        vec2<f32>(P.driftX, P.driftY), P.morphRate);
+  if (P.lowLush <= 0.0) { return r; }
+  // REDISTRIBUTES, does not reduce. The divisor is the measured mean of this
+  // factor over height and mud together (0.268 — see the note below), so the world's
+  // total inflow is unchanged and only its DISTRIBUTION moves: the valleys gain
+  // exactly what the ridges lose.
+  //
+  // That is a design decision about what is being tested, not tidiness. The
+  // hypothesis is that spatial HETEROGENEITY maintains diversity. An uncorrected
+  // multiplier also made the world 37% poorer, so a geography-on/geography-off
+  // comparison would have measured carrying capacity and heterogeneity at once
+  // and been unable to say which did the work. It is also the truer picture:
+  // the same sun falls on the whole world, and terrain decides where what it
+  // grows ends up.
+  // THE FERTILE CRESCENT.
+  //
+  // Three regions, and the good one is in the middle of the other two.
+  //
+  // THE SEA IS MUD. It is not a fertile deep — it is wet ground that moves in a
+  // river form: fast transport, and expensive, because you cannot get purchase
+  // in it and cannot see out of it. Nothing grows there worth the trip. (This
+  // was written the other way round at first, as a single downhill ramp, which
+  // made the deepest water the richest ground in the world and carpeted the
+  // ocean in food. It also removed any reason to be on land.)
+  //
+  // THE HIGHLANDS ARE POOR. High in two dimensions means dense and hard going;
+  // highSap already charges rent there, and there is little to eat on top of it.
+  //
+  // BETWEEN THEM is the arable band: out of the mud, not yet into the heights.
+  // Rich, narrow, and — this is the point — a place a lineage can be pushed OUT
+  // of in EITHER direction. A half-plane has one frontier; a band has two, and
+  // the two are nothing like each other. Being driven downhill and being driven
+  // uphill are different problems demanding different animals, which is how a
+  // single crowded optimum turns into more than one way of making a living.
+  //
+  // Plenty of ground is neither, and lineages will end up on it. That is fine
+  // and expected: the world does not owe anyone a good address.
+  let h = heightAt(p);
+  let band = smoothstep(-0.10, 0.28, h) * smoothstep(0.92, 0.34, h);
+  let dry = 1.0 - mudAt(p);
+  return r * mix(1.0, band * dry / 0.2682, P.lowLush);
 }
 
 // How much cell i is currently contracting, 0 for anything that is not a muscle.
@@ -826,6 +1004,43 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     let grit2 = fbm(p * 3.1 + vec2<f32>(f32(i) * 0.017, 0.0), P.seed + 913u) * 2.0 - 1.0;
     e = e + P.compass * mix(P.senseNoise * grit2, bearing, acu);
   }
+  // FEELING THE GROUND — wet, and which way is down.
+  //
+  // Without this, being in the fertile band is LUCK. The band is worth being in,
+  // but nothing in the world could tell it was in one, so no lineage could ever
+  // steer toward it or hold station on it; drifting into good ground and
+  // drifting out again are the same event to a creature that cannot feel the
+  // difference. A reward nobody can perceive selects for nothing.
+  //
+  // TWO READINGS, BOTH STRICTLY LOCAL — the cell samples the fields under
+  // ITSELF and nothing else, which is the whole "think global, act local"
+  // constraint. Nothing is queried at a distance and nothing is told where the
+  // good ground is; the world is merely made legible where the cell is standing.
+  //
+  //   WET is a scalar, so every sensor on a body reads the same offset: the
+  //   creature knows it is in the channel, but not from which side it entered.
+  //   That is the correct amount of information — the mud fouls the senses
+  //   (mudFog) precisely so that being in it is disorienting.
+  //
+  //   LEAN is the downhill direction projected on the CELL'S OWN heading, so
+  //   two sensors pointing different ways read different values and the
+  //   difference between them IS the gradient direction. This is the same
+  //   population code the compass already uses, and it means uphill/downhill is
+  //   decodable by a brain without any cell being given a vector.
+  //
+  // Both fade into noise as acuity falls, and acuity is already charged for by
+  // senseCost — so a creature that can find the good ground is paying to.
+  if (P.senseTerrain > 0.0) {
+    let acuT = senseAcuity(m.x);
+    let wet = mudAt(p) * 2.0 - 1.0;
+    var lean = 0.0;
+    if (alen > 1e-5) {
+      lean = clamp(dot(-heightGrad(p), ax / alen) * 3.0, -1.0, 1.0);
+    }
+    let nzT = fbm(p * 2.7 + vec2<f32>(f32(i) * 0.023, 0.0), P.seed + 521u) * 2.0 - 1.0;
+    e = e + P.senseTerrain * mix(P.senseNoise * nzT, 0.55 * wet + lean, acuT);
+  }
+
   // PERCEIVING OTHER CREATURES.
   //
   // Until now a sensor read the medium and a noise field and nothing else: no
@@ -1198,6 +1413,37 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // heights a frontier only some lineages can afford rather than just another
   // place. Only the upper half of the range charges anything.
   let terrainWork = P.highSap * max(0.0, heightAt(p));
+
+  // ---------------------------------------------------------- TIDAL INCOME
+  //
+  // A SECOND STAR, declared as one. Planetary dynamics deliver kinetic energy
+  // the same way the sun delivers light: a fixed, external, global inflow that
+  // nothing here can increase. Under the friction law that is legitimate —
+  // global-uniform inflow is not minting, local-targeted grants are — but it is
+  // a second drink, not a second straw into the first, so it is written down
+  // plainly rather than smuggled in as a coefficient.
+  //
+  // WHAT IS ACTUALLY HARVESTED is the power already being dissipated in the
+  // drag coupling, |flow - v|^2 * drag, which the world was throwing away as
+  // heat every step. A cell that grips takes a share of it; the medium loses
+  // exactly what it would have lost anyway. Nothing is created.
+  //
+  // AND THE PASSIVE CASE NETS ZERO, which is the affordance test in
+  // primitives.md and the reason this is not the global-drift bug returning.
+  // A cell that lets go accelerates until it matches the flow; relative
+  // velocity goes to zero and so does the income. You cannot be paid for
+  // drifting. You are paid for HOLDING STATION IN A CURRENT — which costs grip,
+  // which costs uptake (absorbTradeoff), and which is a way of making a living
+  // that the still water cannot offer at any price.
+  //
+  // That is the point of building it: a mud river stops being purely a hazard
+  // and becomes somewhere worth being for a lineage shaped to exploit it, while
+  // remaining lethal for one that is not. Two ways to eat is what a guild is.
+  var tidal = 0.0;
+  if (P.tidalYield > 0.0) {
+    let slip = flowAt(p) - v;
+    tidal = P.tidalYield * grippiness(cmeta[i].x) * P.drag * dot(slip, slip);
+  }
   let taken = contest(i, np, abs(mine));
   // Written to scratch, not to energy[]: contest() READS energy[j] for other
   // cells, and if physics also wrote energy[j] in the same dispatch the result
@@ -1207,7 +1453,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // every step — the other independent reason contact was dead. Between this and
   // contactK being a denormal (see lib/uniform.js), cells have never collided.
   vel[i] = vec4<f32>(v.x, v.y, vel[i].z,
-    clamp(energy[i] + (gain - P.brainTax - work - senseWork - armourWork - terrainWork + taken) * P.dt, P.eFloor, P.eCap));
+    clamp(energy[i] + (gain + tidal - P.brainTax - work - senseWork - armourWork - terrainWork + taken) * P.dt, P.eFloor, P.eCap));
 }
 
 // Publish the energy physics computed. One extra dispatch, no extra buffer, and
@@ -1411,7 +1657,23 @@ export class WorldGPU {
       // Geography. Scales chosen so a world of bound ~132 holds a handful of
       // basins and ridges rather than one hill or a thousand.
       heightScale: 0.018, heightSeed: 5150, gravity: 0.55, highSap: 0.35,
-      mudScale: 0.026, mudSeed: 8801, mudSlip: 0.85, mudFlow: 3.0, mudFog: 0.8, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
+      mudScale: 0.014, mudSeed: 8801, mudSlip: 0.85, mudFlow: 3.0, mudFog: 0.8,
+      lowLush: 0.75,
+      // Tidal income. Sized so a fully-gripping cell holding station in a fast
+      // mud channel earns on the order of what rich ground yields, and a cell
+      // in still water earns nothing at all.
+      tidalYield: 0.06,
+      // Meander, crags, and riverbanks. warpAmt is in noise units, so 0.55 is
+      // rather more than half a feature — enough to fold the field back over
+      // itself, which is where the winding comes from.
+      // How much of the current is the landscape's own circulation rather than
+      // free turbulence. Not 1.0: eddies are real and a world where the medium
+      // is a pure function of the ground has no weather in it.
+      flowTerrain: 0.62,
+      // Feeling the ground. Same weight as the neighbour sense: real, but not
+      // so loud that it drowns out everything else a sensor reads.
+      senseTerrain: 0.45,
+      warpAmt: 0.55, ridgeAmt: 0.42, mudBank: 0.52, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
       // Cells are solid. This was silently 1.68e-44 for the life of the code —
       // see lib/uniform.js — so nothing has ever pushed back on anything. Sized
       // against springK so a bond can still hold a body together against the
@@ -1508,6 +1770,21 @@ export class WorldGPU {
       senseOther: 0.35, senseRange: 1.6, senseBuckets: 4.0,
       dt: brains.dt, ...params,
     };
+
+    // TERRAIN SCALES WITH THE WORLD, because a geography is a number of PLACES,
+    // not a number of world units. The defaults above were chosen against
+    // bound 132; at a quarter of the cell budget the world is half as wide, and
+    // fixed frequencies would leave it with one hill and one bay — no ridges to
+    // separate anything, so the whole point of building it is gone. Expressed
+    // as "how many features across the world", it holds at any size.
+    //
+    // An explicit heightScale/mudScale in params still wins: this fills in a
+    // default, it does not override a decision.
+    {
+      const B = this.params.bound;
+      if (params.heightScale == null) this.params.heightScale = 2.40 / B;
+      if (params.mudScale == null)    this.params.mudScale    = 1.85 / B;
+    }
     // Motes. Scattered by a hash of their index rather than laid on a lattice:
     // a lattice would put the world's food on a grid, which is the thing we do
     // not do, and would also give every patch the same size and spacing. Random
