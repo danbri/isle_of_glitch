@@ -1024,7 +1024,12 @@ export class WorldGPU {
       // selective advantage. 0.3 keeps flow as a genuine force to anchor against
       // and be swept by, while making self-propulsion clearly worth having.
       flowStr: 0.3, drag: 1.6, springK: 90.0,
-      contract: 0.45, seed: 3, senseGain: 2.0, damp: 0.986, bound: 64.0,
+      // MUSCLE FORCE, raised 11x. Measured with an imposed gait over 300 s,
+      // median displacement against contract: 0.45 -> 0.067, 2.5 -> 0.199,
+      // 5 -> 0.490, 10 -> 0.891, 20 -> 1.594. Bodies end at 0.82-0.97 of their
+      // starting span with at most 2 of 30 torn, so this is not the
+      // dismemberment artefact this project has retracted before.
+      contract: 5.0, seed: 3, senseGain: 2.0, damp: 0.986, bound: 64.0,
       // Calibrated against the density the world actually runs at. A 3x3 bucket
       // neighbourhood holds ~34 cells at the starting population, so crowdK
       // 0.012 discounts a shared patch to ~0.79 rather than erasing it: at
@@ -1066,7 +1071,17 @@ export class WorldGPU {
       // and taxing it together kills everything. Scarcity via the metabolic
       // cost rather than via a death threshold: dying should be a consequence
       // of the books not balancing, not a knob on dying.
-      brainTax: 0.4, muscleCost: 0.55,
+      // MUSCLE COST SCALES WITH MUSCLE FORCE, or the world cannot pay for it.
+      // work = muscleCost * |contraction|, so 11x the force is 11x the bill:
+      // at contract 5 with cost 0.55 the population fell from 300 to 11. With
+      // the rate scaled down in proportion it holds at 300 with generation 17
+      // and 35 deaths per thousand steps.
+      //
+      // Stated plainly, because it is a real choice and not a free lunch: this
+      // makes muscle stronger per unit fuel — a better muscle, not more energy.
+      // Nothing is minted, but the contractility-versus-fuel tradeoff that
+      // primitives.md wants is now weaker than it was, and wants revisiting.
+      brainTax: 0.4, muscleCost: 0.0495,
       resScale: 0.35, resSeed: 91, eCap: 3.0, eFloor: -2.0,
       // hashCell was 3.2 while contact reaches only ~0.7, so a bucket held ~10
       // cells against a cap of 12 and overflowed constantly. An overflowing
@@ -1087,7 +1102,10 @@ export class WorldGPU {
       // gripBase was a velocity subtracted per step and 0.06 was the right size.
       // It now multiplies the sideways drag, where 0.06 buys a 1.36x anisotropy
       // and the verified reference needs ~6x — measured as no advantage at all.
-      gripBase: 0.55, gripMod: 0.9, fricK: 6.0, gripAnchor: 1.0,
+      // fricK 2 and gripHold 20: the ratchet needs the released phase to
+      // GLIDE and the gripped phase to HOLD, and at fricK 6 both phases were
+      // overdamped against a 0.7 s gait.
+      gripBase: 0.55, gripMod: 0.9, fricK: 2.0, gripAnchor: 1.0,
       // Substrate. gritScale sets how big a patch of purchase is; slipBase is the
       // drag left on frictionless ground (open water); gripAniso is how much
       // harder sideways slip is than sliding along your own body, which is the
@@ -1158,7 +1176,7 @@ export class WorldGPU {
       regrowCrowdK: 3.0,
       waveAmp: 0.0, waveK: 6.0, waveOmega: 9.0, wavePhase: 1.5707963,
       // 0 keeps the previous behaviour exactly; sweep it before shipping.
-      gripHold: 0.0,
+      gripHold: 20.0,
       dt: brains.dt, ...params,
     };
     // Motes. Scattered by a hash of their index rather than laid on a lattice:

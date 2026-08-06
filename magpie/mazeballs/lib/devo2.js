@@ -626,6 +626,21 @@ export const SEED_DEFAULTS = {
   contractBias: 0.6,
   contractDecay: 0.0,
   contractDiff: -0.4,
+  // A PROTO-CENTRAL-PATTERN-GENERATOR, on the same argument as contractBias.
+  //
+  // SYN_BASIS carries an antisymmetric 'axial' term, (b.ap - a.ap), which
+  // exists so a genome can excite down the body and inhibit back up it — the
+  // asymmetry a travelling wave needs, and the note in devo.js says so
+  // explicitly. It has never been seeded, so founders draw it near zero along
+  // with everything else, and a CPG has to be invented from nothing.
+  //
+  // Measured motivation: the same bodies move 69x further under an imposed
+  // travelling wave (p50 1.249) than under their own brains (p50 0.018). The
+  // body plan and the physics can locomote; nothing is driving them.
+  //
+  // This is variation, not outcome — mutation is free to weight it to zero,
+  // and whether a gait survives is still the economy's decision.
+  axialSyn: 2.5,
 };
 
 export function randomGenome(rnd = Math.random, opts = {}) {
@@ -676,6 +691,9 @@ export function randomGenome(rnd = Math.random, opts = {}) {
   // named "the brains were dead"; same magnitude as devo.js so the two encodings
   // start their connectomes on equal terms.
   for (let k = 0; k < NSYN; k++) g[SYN_OFF + k] = (rnd() * 2 - 1) * 0.9;
+  // SYN_BASIS index 8 is 'axial'. Sign is random per founder: a wave has to
+  // travel one way or the other and neither is privileged.
+  g[SYN_OFF + 8] = (rnd() < 0.5 ? -1 : 1) * o.axialSyn;
   return g;
 }
 
