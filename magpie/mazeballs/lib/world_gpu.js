@@ -359,11 +359,50 @@ fn moteBucketOf(p: vec2<f32>) -> u32 {
 // the thing a cell shoves against; where it is zero the world is open water and
 // nothing can push off anything.
 fn gritAt(p: vec2<f32>) -> f32 {
-  return clamp(fbm(p * P.gritScale, P.gritSeed) * 1.6, 0.0, 1.0);
+  // Mud is slippery: purchase is what it takes away, so the anchor-extend-release
+  // ratchet simply fails there and a creature is at the mercy of the flow.
+  let g = clamp(fbm(p * P.gritScale, P.gritSeed) * 1.6, 0.0, 1.0);
+  return g * (1.0 - P.mudSlip * mudAt(p));
+}
+
+// ---------------------------------------------------------------- GEOGRAPHY
+//
+// Two analytic scalar fields, and everything below is sampled at a cell's OWN
+// position. Nothing consults anything remote — a cell feels the ground under
+// itself and the medium against its own skin. Think global, act local: the
+// pattern is worldwide, the interaction is entirely here.
+//
+// Analytic rather than a grid because they are FREE that way. An fbm evaluation
+// is a few dozen ALU ops against a budget we use a fraction of a percent of,
+// while a grid is bandwidth, which is the thing the kernel is actually short of
+// (PHYSICS-2.md). There is also no resolution to zoom past.
+//
+// HEIGHT is read as elevation on a plane seen from above. Below zero is under
+// water, above zero is land, and the "high" ground is high in the sense that
+// matters in two dimensions: dense, hard to cross, and expensive to be in.
+// Gravity is the in-plane force -grad(height), which is a TILTED PLANE and needs
+// no side view: things roll downhill, matter pools in basins, and ridges divide
+// the world into places.
+fn heightAt(p: vec2<f32>) -> f32 {
+  return fbm(p * P.heightScale, P.heightSeed) * 2.0 - 1.0;   // -1 deep .. +1 peak
+}
+fn heightGrad(p: vec2<f32>) -> vec2<f32> {
+  let e = 0.6 / max(1e-4, P.heightScale);
+  return vec2<f32>(heightAt(p + vec2<f32>(e, 0.0)) - heightAt(p - vec2<f32>(e, 0.0)),
+                   heightAt(p + vec2<f32>(0.0, e)) - heightAt(p - vec2<f32>(0.0, e))) / (2.0 * e);
+}
+// MUD is wet ground: it takes away purchase, it flows, and it fouls the senses.
+// A mud river is therefore transport you cannot steer and cannot see out of —
+// fast, free, and it puts you somewhere you did not choose.
+fn mudAt(p: vec2<f32>) -> f32 {
+  return clamp(fbm(p * P.mudScale, P.mudSeed) * 1.7 - 0.25, 0.0, 1.0);
 }
 
 fn flowAt(p: vec2<f32>) -> vec2<f32> {
-  return flowField(p, P.flowScale, P.flowStr, P.seed);
+  // The medium pushes harder where the ground is wet. Same analytic curl field,
+  // scaled locally, so a mud channel becomes a current without any new machinery.
+  let m = mudAt(p);
+  return flowField(p, P.flowScale, P.flowStr * (1.0 + P.mudFlow * m), P.seed);
 }
 
 // Shortest displacement on a torus (minimum image). A body straddling the wrap
@@ -910,6 +949,11 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // Contact with everything nearby, living or not.
   force = force + contact(i, p, vel[i].z);
 
+  // GRAVITY, in the plane. -grad(height) is a tilted plane: things roll
+  // downhill, matter gathers in basins, ridges separate the world into
+  // places. Every cell has mass 1 for now, so this is an acceleration.
+  if (P.gravity != 0.0) { force = force - heightGrad(p) * P.gravity; }
+
   // The medium drags the cell toward the local flow velocity. This is the
   // "stickiness to the aether" every particle has, inert or alive.
   force = force + (flowAt(p) - v) * P.drag;
@@ -1149,6 +1193,11 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // as feeding being independent of what a cell is, which produced a 94%
   // muscle monoculture. primitives.md: an axis with no cost has no teeth.
   let armourWork = P.toughCost * toughnessOf(cmeta[i].w);
+  // THE HIGH GROUND IS EXPENSIVE TO OCCUPY. In two dimensions "high" means
+  // dense and hard going, so it costs to be there — which is what makes the
+  // heights a frontier only some lineages can afford rather than just another
+  // place. Only the upper half of the range charges anything.
+  let terrainWork = P.highSap * max(0.0, heightAt(p));
   let taken = contest(i, np, abs(mine));
   // Written to scratch, not to energy[]: contest() READS energy[j] for other
   // cells, and if physics also wrote energy[j] in the same dispatch the result
@@ -1158,7 +1207,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // every step — the other independent reason contact was dead. Between this and
   // contactK being a denormal (see lib/uniform.js), cells have never collided.
   vel[i] = vec4<f32>(v.x, v.y, vel[i].z,
-    clamp(energy[i] + (gain - P.brainTax - work - senseWork - armourWork + taken) * P.dt, P.eFloor, P.eCap));
+    clamp(energy[i] + (gain - P.brainTax - work - senseWork - armourWork - terrainWork + taken) * P.dt, P.eFloor, P.eCap));
 }
 
 // Publish the energy physics computed. One extra dispatch, no extra buffer, and
@@ -1358,7 +1407,11 @@ export class WorldGPU {
       // live option rather than a trap.
       bucketM: 32, contestRate: 0.6, toughCost: 0.05,
       // Width of the digestive match. Swept, not chosen.
-      dietWidth: 0.35, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
+      dietWidth: 0.35,
+      // Geography. Scales chosen so a world of bound ~132 holds a handful of
+      // basins and ridges rather than one hill or a thousand.
+      heightScale: 0.018, heightSeed: 5150, gravity: 0.55, highSap: 0.35,
+      mudScale: 0.026, mudSeed: 8801, mudSlip: 0.85, mudFlow: 3.0, mudFog: 0.8, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
       // Cells are solid. This was silently 1.68e-44 for the life of the code —
       // see lib/uniform.js — so nothing has ever pushed back on anything. Sized
       // against springK so a bond can still hold a body together against the

@@ -115,6 +115,19 @@ export const WORLD_FIELDS = [
   ['senseBuckets', 'f32', 'hash buckets walked each way by a sensor; 1 = the 3x3 walk'],
   ['toughCost', 'f32', 'energy per second per unit of toughness — armour is not free'],
   ['dietWidth', 'f32', 'gaussian width of enzyme-tag matching; narrow = specialists'],
+
+  // GEOGRAPHY. Two analytic scalar fields, sampled at a cell's own position.
+  // Nothing queries anything remote: a cell feels the ground under itself and
+  // the medium against its own skin, and that is the whole coupling.
+  ['heightScale', 'f32', 'spatial frequency of the height field'],
+  ['heightSeed', 'u32', 'height field seed'],
+  ['gravity', 'f32', 'in-plane force per unit height gradient; a tilted plane'],
+  ['highSap', 'f32', 'extra metabolic cost per unit height — the thin cold air'],
+  ['mudScale', 'f32', 'spatial frequency of the mud field'],
+  ['mudSeed', 'u32', 'mud field seed'],
+  ['mudSlip', 'f32', 'how much mud removes purchase, 0..1'],
+  ['mudFlow', 'f32', 'how much harder the medium pushes in mud — the mud rivers'],
+  ['mudFog', 'f32', 'how much mud degrades sensing'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */
