@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The world started paying for muscle</title>
+<title>The world started paying for muscle — RETRACTED at generation 210</title>
 <style>
   :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
   @media (prefers-color-scheme: light) {
@@ -36,11 +36,40 @@
 <div class="wrap">
   <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
   <article>
-  <h1>The world started paying for muscle</h1>
+  <h1>The world started paying for muscle — RETRACTED at generation 210</h1>
   <p class="meta">
-    6 August 2026 · posts, economy, locomotion, ctrnn, milestone
+    6 August 2026 · posts, economy, locomotion, ctrnn, retracted
   </p>
-  <p>For the first time in this project's measurements, selection is <em>increasing</em>
+  <blockquote>
+<p><strong>RETRACTED, 2026-08-06.</strong> Everything below was measured at generation 42, and
+it did not survive deep time. The same world at <strong>generation 210</strong> (7.27M steps,
+unattended overnight) has gone straight back to the sessile endpoint:</p>
+<pre><code>                gen 42      gen 210
+contractility    0.532       0.027     (20x down, below founder 0.314)
+grip             0.105       0.251     (2.4x up)
+bodies w/ zero   12/64       59/64
+lineages           59           2      (near-monoculture)
+meanEnergy       11.5        26.5      (the world got rich again)
+steps/generation  6,875      35,788
+</code></pre>
+<p>Muscle rose to 54% around 900k steps and then collapsed to 3.2%. The economic
+fix was a TRANSIENT, not a new regime.</p>
+<p>The diagnosis, which is the useful part: I tuned a <strong>static</strong> cost against an
+<strong>adapting</strong> population. Raising brainTax and enabling contest made the world
+scarce, and the population responded by evolving to be cheap — small, gripped,
+barely any muscle, minimal brain. Once it was cheap enough, the fixed solar
+inflow exceeded what it needed, mean energy climbed from 12 back to 26.5, the
+population re-pinned against the arena cap, deaths fell, and muscle went back to
+being a pure cost. The tax was outrun.</p>
+<p>Scarcity has to be a moving target — a cost that scales with what the population
+has become — or any fixed setting is a hill the population walks down. That is a
+different and harder design problem than the one I thought I had solved, and it
+is the honest state of this thread.</p>
+<p>The four scale fixes below (tau, continuous contraction, founder muscle,
+turnover) all stand on their own measurements. Only the headline conclusion —
+that the world now selects for muscle — is withdrawn.</p>
+</blockquote>
+<p>For the first time in this project's measurements, selection is <em>increasing</em>
 contractility instead of deleting it. Overnight, four scales turned out to be
 wrong, and each was wrong by roughly the same factor.</p>
 <h2>1. The neurons were comparators, not integrators</h2>

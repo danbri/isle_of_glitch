@@ -1,8 +1,42 @@
 ---
-title: "The world started paying for muscle"
+title: "The world started paying for muscle — RETRACTED at generation 210"
 date: 2026-08-06T05:00:00Z
-tags: [economy, locomotion, ctrnn, milestone]
+tags: [economy, locomotion, ctrnn, retracted]
 ---
+
+> **RETRACTED, 2026-08-06.** Everything below was measured at generation 42, and
+> it did not survive deep time. The same world at **generation 210** (7.27M steps,
+> unattended overnight) has gone straight back to the sessile endpoint:
+>
+> ```
+>                 gen 42      gen 210
+> contractility    0.532       0.027     (20x down, below founder 0.314)
+> grip             0.105       0.251     (2.4x up)
+> bodies w/ zero   12/64       59/64
+> lineages           59           2      (near-monoculture)
+> meanEnergy       11.5        26.5      (the world got rich again)
+> steps/generation  6,875      35,788
+> ```
+>
+> Muscle rose to 54% around 900k steps and then collapsed to 3.2%. The economic
+> fix was a TRANSIENT, not a new regime.
+>
+> The diagnosis, which is the useful part: I tuned a **static** cost against an
+> **adapting** population. Raising brainTax and enabling contest made the world
+> scarce, and the population responded by evolving to be cheap — small, gripped,
+> barely any muscle, minimal brain. Once it was cheap enough, the fixed solar
+> inflow exceeded what it needed, mean energy climbed from 12 back to 26.5, the
+> population re-pinned against the arena cap, deaths fell, and muscle went back to
+> being a pure cost. The tax was outrun.
+>
+> Scarcity has to be a moving target — a cost that scales with what the population
+> has become — or any fixed setting is a hill the population walks down. That is a
+> different and harder design problem than the one I thought I had solved, and it
+> is the honest state of this thread.
+>
+> The four scale fixes below (tau, continuous contraction, founder muscle,
+> turnover) all stand on their own measurements. Only the headline conclusion —
+> that the world now selects for muscle — is withdrawn.
 
 For the first time in this project's measurements, selection is *increasing*
 contractility instead of deleting it. Overnight, four scales turned out to be
