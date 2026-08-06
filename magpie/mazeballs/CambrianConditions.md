@@ -7,6 +7,40 @@ Companion to `primitives.md` (which specifies most of what is missing here and
 was never built), `WORLDS.md` (the medium), `eggs.md` (reproduction in time),
 `DEVELOPMENT-2.md` (the encoding).
 
+## 0. The standing goal
+
+**Make organisms each other's dominant selective pressure — and show it survives
+deep time.**
+
+Every economic fix so far has worked and then reverted. brainTax gave twelve
+times the turnover and was outrun. contest and crowding made movers out-earn
+sitters for 900k steps, then muscle fell from 54% to 3.2%. absorbTradeoff
+measured 29% sensors over 50k steps and reads 3.8% live. The pattern does not
+change: **a fixed cost against an adapting population is a hill the population
+walks down.** The Cambrian's engine is not a harsher constant, it is that what
+you must beat changes when you change.
+
+**Success is three measurements, each of which must survive TEN TIMES the
+runtime that first produced it:**
+
+1. **Disparity rises and does not collapse.** Morphological spread across living
+   lineages increasing, rather than the monoculture that keeps returning.
+2. **At least two guilds, found and not declared.** Persistent clusters in trait
+   space that differ in how they make a living — discovered by measurement, never
+   by a flag on a cell.
+3. **Escalation.** The value of a trait depends on what other lineages carry: a
+   measurable arms race rather than a static optimum.
+
+**Rules, because the failure mode is self-deception:**
+
+- Every claim carries its control. No control means retracted.
+- Nothing high-level enters the kernel. Guild, species and organism are QUERIES
+  over the tree of life, never types the world branches on.
+- **A result that does not survive 10x longer runtime is retracted, loudly.**
+  Two have been already.
+- No metric becomes a target. If tuning is aimed at a number, that number is
+  thereafter suspect as a measure.
+
 ## 1. How to assess movement — the instruments
 
 Recorded first because every claim below depends on being able to measure, and
