@@ -142,10 +142,22 @@ fn smooth3(t: f32) -> f32 { return t * t * (3.0 - 2.0 * t); }
 // derivative also vanishes at the ends — the cubic smoothstep leaves a
 // curvature discontinuity across every cell edge, which shows up as faint
 // creases exactly where the grid is.
+// ONE HASH, TWO COMPONENTS. The obvious way to get a random 2D gradient is two
+// hashes, and that DOUBLED the cost of every noise evaluation the moment the
+// noise became Perlin — against a background that had grown to ~26 fbm per cell
+// per step, which is where the headless rate went.
+//
+// A hash produces 32 bits and a gradient direction needs far fewer than 32 bits
+// of entropy, so the two halves of one hash are plenty: they are independent
+// enough for a direction nobody can predict by eye, and the normalisation
+// removes any bias in their joint distribution. Same visual result, half the
+// hashing, on the single hottest function in the whole system.
 fn grad2(ix: i32, iy: i32, seed: u32) -> vec2<f32> {
-  let a = hash2(ix, iy, seed) * 2.0 - 1.0;
-  let b = hash2(ix, iy, seed ^ 2654435769u) * 2.0 - 1.0;
-  let g = vec2<f32>(a, b);
+  var h : u32 = (u32(ix) * 374761393u) ^ (u32(iy) * 668265263u) ^ (seed * 1274126177u);
+  h = (h ^ (h >> 13u)) * 1274126177u;
+  h = h ^ (h >> 16u);
+  let g = vec2<f32>(f32(h & 0xffffu) * (2.0 / 65536.0) - 1.0,
+                    f32(h >> 16u)    * (2.0 / 65536.0) - 1.0);
   return g * inverseSqrt(max(1e-6, dot(g, g)));
 }
 
@@ -212,7 +224,12 @@ fn fbmOct(p: vec2<f32>, seed: u32, octF: f32) -> f32 {
 
 // The simulation always wants full detail: a cell samples the field at a POINT,
 // so there is no pixel to alias against and nothing to band-limit.
-fn fbm(p: vec2<f32>, seed: u32) -> f32 { return fbmOct(p, seed, 4.0); }
+// THREE OCTAVES, NOT FOUR. Cheap and cheerful: the fourth octave has features
+// about seven world units across against a terrain whose basins are fifty, and
+// nothing in the physics can tell it is gone — gravity reads a gradient, grit
+// reads a scalar, wetness reads a threshold, and none of them resolve detail at
+// that scale. It was costing a quarter of every noise evaluation in the world.
+fn fbm(p: vec2<f32>, seed: u32) -> f32 { return fbmOct(p, seed, 3.0); }
 
 // Flow = curl of a scalar potential => divergence-free with no projection solve,
 // and defined at EVERY real coordinate rather than on a lattice. There is no
@@ -406,12 +423,13 @@ fn moteBucketOf(p: vec2<f32>) -> u32 {
 // other field — sampled at a continuous position, never stored, no grid. This is
 // the thing a cell shoves against; where it is zero the world is open water and
 // nothing can push off anything.
-fn gritAt(p: vec2<f32>) -> f32 {
+fn gritAtM(p: vec2<f32>, m: f32) -> f32 {
   // Mud is slippery: purchase is what it takes away, so the anchor-extend-release
   // ratchet simply fails there and a creature is at the mercy of the flow.
   let g = clamp(fbm(p * P.gritScale, P.gritSeed) * 1.6, 0.0, 1.0);
-  return g * (1.0 - P.mudSlip * mudAt(p));
+  return g * (1.0 - P.mudSlip * m);
 }
+fn gritAt(p: vec2<f32>) -> f32 { return gritAtM(p, mudAt(p)); }
 
 // ---------------------------------------------------------------- GEOGRAPHY
 //
@@ -442,8 +460,13 @@ fn gritAt(p: vec2<f32>) -> f32 {
 // the winding, folded, delta-like shapes; it is one extra pair of evaluations
 // and it changes the character of the world completely.
 fn warp2(p: vec2<f32>, seed: u32, amt: f32) -> vec2<f32> {
-  let a = fbm(p, seed) - 0.5;
-  let b = fbm(p + vec2<f32>(5.2, 1.3), seed + 3701u) - 0.5;
+  // ONE AND A HALF OCTAVES, not four. The warp's job is to bend the coordinate
+  // on a large scale; fine detail in the OFFSET is invisible, because it is
+  // immediately swallowed by the detail of the field being sampled at the
+  // offset position. Two full fbm evaluations here were most of heightAt's cost
+  // and bought nothing you can see.
+  let a = fbmOct(p, seed, 1.5) - 0.5;
+  let b = fbmOct(p + vec2<f32>(5.2, 1.3), seed + 3701u, 1.5) - 0.5;
   return p + amt * vec2<f32>(a, b);
 }
 
@@ -466,7 +489,7 @@ fn ridge(p: vec2<f32>, seed: u32) -> f32 {
   // map. Widening the distribution before ridging is what makes the crest a
   // crest. (Value noise did not need this, which is why it only showed up after
   // the switch.)
-  let f = clamp((fbmOct(p, seed, 2.4) - 0.5) * 2.6 + 0.5, 0.0, 1.0);
+  let f = clamp((fbmOct(p, seed, 2.0) - 0.5) * 2.6 + 0.5, 0.0, 1.0);
   return 1.0 - abs(2.0 * f - 1.0);
 }
 
@@ -487,6 +510,16 @@ fn heightGrad(p: vec2<f32>) -> vec2<f32> {
   return vec2<f32>(heightAt(p + vec2<f32>(e, 0.0)) - heightAt(p - vec2<f32>(e, 0.0)),
                    heightAt(p + vec2<f32>(0.0, e)) - heightAt(p - vec2<f32>(0.0, e))) / (2.0 * e);
 }
+// FORWARD DIFFERENCE, REUSING THE CENTRE. The central version costs four height
+// evaluations and heightAt is four fbm each, so gravity alone was sixteen fbm
+// per cell per step. Given h at p — which the caller already needs for other
+// reasons — two more samples give the same gradient to first order at half the
+// price. The asymmetry is a fraction of a cell wide and nothing can feel it.
+fn heightGradFrom(p: vec2<f32>, h: f32) -> vec2<f32> {
+  let e = 0.6 / max(1e-4, P.heightScale);
+  return vec2<f32>(heightAt(p + vec2<f32>(e, 0.0)) - h,
+                   heightAt(p + vec2<f32>(0.0, e)) - h) / e;
+}
 // MUD is wet ground: it takes away purchase, it flows, and it fouls the senses.
 // A mud river is therefore transport you cannot steer and cannot see out of —
 // fast, free, and it puts you somewhere you did not choose.
@@ -496,18 +529,82 @@ fn heightGrad(p: vec2<f32>) -> vec2<f32> {
 // actually looks like, and much more importantly is what makes it USEFUL: a
 // broad damp region is somewhere to avoid, while a channel is somewhere that
 // goes from one place to another. Transport needs a route.
-fn mudAt(p: vec2<f32>) -> f32 {
-  let q = warp2(p * P.mudScale, P.mudSeed, P.warpAmt * 1.4);
-  let r = ridge(q, P.mudSeed);
-  // pow narrows the thread; the smoothstep is the bank.
-  return clamp(smoothstep(P.mudBank, 1.0, r), 0.0, 1.0);
+// The raw ridge value, before any threshold. This is the useful quantity and
+// both mud and shore are cut out of it: r peaks at 1 along the channel's
+// centre-line and falls away outward, so it is a cheap analytic PROXY FOR
+// DISTANCE TO WATER. Everything downstream is a band in r.
+fn wetRidge(p: vec2<f32>) -> f32 {
+  return ridge(warp2(p * P.mudScale, P.mudSeed, P.warpAmt * 1.4), P.mudSeed);
 }
 
-fn flowAt(p: vec2<f32>) -> vec2<f32> {
+// ONE WETNESS SCALE, because THE SEA IS MUD.
+//
+// Mud was the channel field alone, and height was a separate story, so the open
+// water was not mud: the big bays sat perfectly still while narrow ribbons of
+// channel ran across dry land. That is two geographies pretending to be one,
+// and it showed — the transport system was invisible exactly where the water is.
+//
+// Both are now the same quantity, mapped onto a common scale where 0.5 is the
+// waterline: a channel approaching its bank and ground approaching sea level
+// arrive at the same number, and wetness is whichever is wetter. Everything
+// downstream — what moves, what grips, what you can see out of, and where
+// anything grows — is a band in this one scalar.
+// The wetness maths, separated from the sampling, so a caller that already has
+// the height and the channel ridge in hand does not pay for them twice. Both of
+// these were being recomputed five or six times per cell per step — heightAt
+// alone is four fbm, and it was reached through gravity, grit, flow, the
+// metabolic terrain cost and fertility, independently, every step.
+fn wetnessFrom(h: f32, r: f32) -> f32 {
+  return max(smoothstep(P.mudBank - P.shoreWidth, P.mudBank + P.shoreWidth, r),
+             smoothstep(0.45, -0.45, h));
+}
+fn mudFrom(w: f32) -> f32 { return smoothstep(0.50, 0.76, w); }
+fn shoreFrom(w: f32) -> f32 {
+  return smoothstep(0.17, 0.40, w) * (1.0 - smoothstep(0.44, 0.63, w));
+}
+
+fn wetnessAt(p: vec2<f32>) -> f32 {
+  // Both ramps are CENTRED ON THEIR OWN WATERLINE — the channel's midpoint is
+  // exactly mudBank, the sea's is exactly height zero — so 0.5 means the same
+  // thing in both and taking the max of them is meaningful rather than a
+  // coincidence of two arbitrary scales.
+  return wetnessFrom(heightAt(p), wetRidge(p));
+}
+
+fn mudAt(p: vec2<f32>) -> f32 { return mudFrom(wetnessAt(p)); }
+
+// THE SHORE — a band hugging the OUTSIDE of the channel, and the only place
+// worth living.
+//
+// The fertile region was "everything that is not mud and not very high", which
+// is most of the world: a half-continent of arable land with a river through
+// it. That is not the intent and it is not a pressure. What is meant is
+// narrower and entirely about distance to water — jungle and life on the
+// shores, just inland of the mud; and the further inland you go the more it
+// becomes rock: fixed, empty, lifeless.
+//
+// So it is a band in r rather than a band in height. It rises as you approach
+// the channel from the dry side, and collapses the moment you are actually IN
+// it — because in the mud you cannot grip, cannot see, and are going wherever
+// the current takes you. Height only trims the top: a beach halfway up a
+// mountain is still a beach, but the high country is poor wherever it is.
+// A band just DRY of the waterline: rises as you come down to the water, and
+// collapses the moment you are in it.
+fn shoreAt(p: vec2<f32>) -> f32 { return shoreFrom(wetnessAt(p)); }
+
+fn flowAt(p: vec2<f32>) -> vec2<f32> { return flowAtM(p, mudAt(p)); }
+
+fn flowAtM(p: vec2<f32>, m: f32) -> vec2<f32> {
   // The medium pushes harder where the ground is wet. Same analytic curl field,
   // scaled locally, so a mud channel becomes a current without any new machinery.
-  let m = mudAt(p);
-  let s = P.flowStr * (1.0 + P.mudFlow * m);
+  // THE MUD IS THE THING THAT MOVES. The current used to run everywhere at full
+  // strength with mud merely amplifying it, so the whole world was a river and
+  // the dry land was being swept along with the channels. That is backwards:
+  // away from the water the ground is fixed, and increasingly rocky and empty
+  // the further inland you get. flowDry is what little stirring remains out
+  // there — enough that the air is not perfectly dead, not enough to carry
+  // anything anywhere.
+  let s = P.flowStr * (P.flowDry + P.mudFlow * m);
 
   // TWO SCALES, AND THE COARSE ONE IS THE LANDSCAPE.
   //
@@ -574,14 +671,17 @@ fn minImage(d: vec2<f32>) -> vec2<f32> {
 // that can live thin has the uplands to itself, and one that cannot has to
 // fight for the valleys. That is two ways of making a living, which is what a
 // guild is, and it is the thing this world has so far failed to produce.
-fn resourceAt(p: vec2<f32>) -> f32 {
+fn resourceAt(p: vec2<f32>) -> f32 { return resourceAtS(p, shoreAt(p)); }
+
+fn resourceAtS(p: vec2<f32>, shore: f32) -> f32 {
   let r = resourceField(p, P.resScale, P.resSeed, P.worldTime,
                         vec2<f32>(P.driftX, P.driftY), P.morphRate);
   if (P.lowLush <= 0.0) { return r; }
-  // REDISTRIBUTES, does not reduce. The divisor is the measured mean of this
-  // factor over height and mud together (0.268 — see the note below), so the world's
-  // total inflow is unchanged and only its DISTRIBUTION moves: the valleys gain
-  // exactly what the ridges lose.
+  // REDISTRIBUTES, does not reduce. The divisor is the measured mean of the
+  // shore factor over the whole world (0.117), so total inflow is unchanged and
+  // only its DISTRIBUTION moves. That mean is also the headline number: the
+  // living shore is about 13% of the world and roughly EIGHT TIMES richer than
+  // the average acre, against 67% moving water and 21% dead interior.
   //
   // That is a design decision about what is being tested, not tidiness. The
   // hypothesis is that spatial HETEROGENEITY maintains diversity. An uncorrected
@@ -1177,14 +1277,30 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // Contact with everything nearby, living or not.
   force = force + contact(i, p, vel[i].z);
 
+  // ---- THE GROUND UNDER THIS CELL, SAMPLED ONCE ---------------------------
+  //
+  // Height and the channel ridge were being reached independently by gravity,
+  // by the flow, by traction, by the metabolic terrain cost and by fertility —
+  // five or six times a cell a step, at four fbm each for height alone. That is
+  // roughly fifty noise evaluations per cell per step spent recomputing two
+  // numbers that cannot have changed in between, and it took the headless rate
+  // from 179 steps a second to 51.
+  //
+  // Everything below reads these. It is the same physics; it is arithmetic
+  // that is no longer done six times.
+  let hHere = heightAt(p);
+  let rHere = wetRidge(p);
+  let wHere = wetnessFrom(hHere, rHere);
+  let mudHere = mudFrom(wHere);
+
   // GRAVITY, in the plane. -grad(height) is a tilted plane: things roll
   // downhill, matter gathers in basins, ridges separate the world into
   // places. Every cell has mass 1 for now, so this is an acceleration.
-  if (P.gravity != 0.0) { force = force - heightGrad(p) * P.gravity; }
+  if (P.gravity != 0.0) { force = force - heightGradFrom(p, hHere) * P.gravity; }
 
   // The medium drags the cell toward the local flow velocity. This is the
   // "stickiness to the aether" every particle has, inert or alive.
-  force = force + (flowAt(p) - v) * P.drag;
+  force = force + (flowAtM(p, mudHere) - v) * P.drag;
 
   // Terminal velocity — the one guard that keeps explicit Euler bounded when
   // the stiffness slider outruns dt < 2/sqrt(k). Without it a large force gives
@@ -1280,7 +1396,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
 
     // Dissipative ONLY: exponential decay cannot add energy whatever the
     // coefficients, so net motion is still paid for out of muscle fuel.
-    let grit = gritAt(p);
+    let grit = gritAtM(p, mudHere);
     if (alen > 1e-5) {
       let ax = axis / alen;
       let pxv = vec2<f32>(-ax.y, ax.x);
@@ -1406,7 +1522,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   if (P.nMotes > 0u) {
     gain = absorb * grazeAt(np) / P.dt;
   } else {
-    gain = absorb * P.harvest * resourceAt(np) * share;
+    gain = absorb * P.harvest * resourceAtS(np, shoreFrom(wHere)) * share;
   }
   let work = P.muscleCost * abs(mine);
   // ACUITY COSTS. A sense organ that reads the world perfectly for free is a
@@ -1425,7 +1541,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // dense and hard going, so it costs to be there — which is what makes the
   // heights a frontier only some lineages can afford rather than just another
   // place. Only the upper half of the range charges anything.
-  let terrainWork = P.highSap * max(0.0, heightAt(p));
+  let terrainWork = P.highSap * max(0.0, hHere);
 
   // ---------------------------------------------------------- TIDAL INCOME
   //
@@ -1454,7 +1570,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // remaining lethal for one that is not. Two ways to eat is what a guild is.
   var tidal = 0.0;
   if (P.tidalYield > 0.0) {
-    let slip = flowAt(p) - v;
+    let slip = flowAtM(p, mudHere) - v;
     tidal = P.tidalYield * grippiness(cmeta[i].x) * P.drag * dot(slip, slip);
   }
   let taken = contest(i, np, abs(mine));
@@ -1670,7 +1786,7 @@ export class WorldGPU {
       // Geography. Scales chosen so a world of bound ~132 holds a handful of
       // basins and ridges rather than one hill or a thousand.
       heightScale: 0.018, heightSeed: 5150, gravity: 0.55, highSap: 0.35,
-      mudScale: 0.014, mudSeed: 8801, mudSlip: 0.85, mudFlow: 3.0, mudFog: 0.8,
+      mudScale: 0.014, mudSeed: 8801, mudSlip: 0.85, mudFlow: 1.15, mudFog: 0.8, flowDry: 0.07, shoreWidth: 0.30,
       lowLush: 0.75,
       // Tidal income. Sized so a fully-gripping cell holding station in a fast
       // mud channel earns on the order of what rich ground yields, and a cell

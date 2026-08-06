@@ -440,3 +440,8 @@ as a description of what the code does.
 | `MISSION.md` | the ambition still stands; its "17× locomotion" headline is **retracted** |
 | `CELLWISE.md` | a cellwise redesign that has since been built, differently |
 | `sample-drawings.md` | sketches from before the visual language settled |
+
+## 13. See also
+
+- Chancellor, G. & Keynes, R. D., *Darwin and the Galapagos*, Darwin Online.
+  <https://darwin-online.org.uk/EditorialIntroductions/Chancellor_Keynes_Galapagos.html>

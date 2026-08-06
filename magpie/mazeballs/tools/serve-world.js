@@ -921,6 +921,39 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       return ok(r);
     }
 
+    // A PHYSICS KNOB, applied to the shared world. Whitelisted: this is a live
+    // control surface on a running experiment, and an arbitrary key would let a
+    // stray field name land somewhere in the uniform block with no complaint.
+    if (action === 'tune') {
+      const ALLOW = new Set([
+        'flowStr', 'flowScale', 'drag', 'springK', 'contract', 'damp', 'bondDamp',
+        'mudFlow', 'mudSlip', 'mudFog', 'flowDry', 'flowTerrain', 'gravity',
+        'highSap', 'lowLush', 'tidalYield', 'senseTerrain', 'harvest', 'brainTax',
+        'muscleCost', 'gripBase', 'gripMod', 'gripHold', 'gripAniso', 'fricK',
+        'contestRate', 'toughCost', 'dietWidth', 'absorbTradeoff', 'crowdK',
+        'regrowCrowdK', 'moteRegrow', 'senseOther', 'senseRange', 'compass',
+      ]);
+      const patch = {}, rejected = [];
+      for (const [k, v] of Object.entries(body.params ?? {})) {
+        if (!ALLOW.has(k)) { rejected.push(k); continue; }
+        const n = Number(v);
+        if (Number.isFinite(n)) patch[k] = n;
+      }
+      if (Object.keys(patch).length) world.writeParams(patch);
+      // Tuning is an intervention in the same sense implant is — a run whose
+      // parameters moved under it is not a run at one setting — so it goes in
+      // the log rather than only into memory.
+      if (Object.keys(patch).length) {
+        try {
+          await Deno.writeTextFile(
+            `${new URL('..', import.meta.url).pathname}runs/observations.jsonl`,
+            JSON.stringify({ t: new Date().toISOString(), kind: 'tune', step: steps, patch }) + '\n',
+            { append: true });
+        } catch { /* logging must not break the control */ }
+      }
+      return ok({ applied: patch, rejected });
+    }
+
     if (action === 'save') {
       const r = await saveSnapshot(SNAP);
       return ok({ saved: SNAP, bytes: r.bytes });
