@@ -319,6 +319,11 @@ export function develop(genome, {
   const next = new Float32Array(cap * NGENE);
   const ready = new Float32Array(cap);
   const noise = new Float32Array(cap);
+  // WHICH CELL EACH CELL CAME FROM. Nothing appears from nowhere: every cell
+  // but the zygote budded from a specific mother, and that is a fact about the
+  // world worth keeping rather than an implementation detail. Local indices
+  // here; evolve.js maps them onto durable 64-bit ids.
+  const mother = new Int32Array(cap).fill(-1);
   let n = 0;
 
   // CANALISATION — developmental noise derived from the genome, so the same
@@ -463,6 +468,7 @@ export function develop(genome, {
 
       const d = n++;
       X[d] = nx; Y[d] = ny; noise[d] = rndDev(); ready[d] = 0;
+      mother[d] = i;
       spent += cellCost;
       // Cytoplasm is divided, not created.
       const bs = i * NGENE, bd = d * NGENE;
@@ -481,6 +487,9 @@ export function develop(genome, {
   for (let i = 0; i < n; i++) {
     if (sculpt && out(i, 1) < 2 * surviveThresh - 1) { culled++; continue; }
     cells.push({
+      // -1 marks the zygote: the one cell in a body that did not bud from
+      // another cell in that body. Its own parent is in the PARENT body.
+      mother: mother[i], localIndex: i,
       x: X[i], y: Y[i], ap: X[i] / extent, dv: Y[i] / extent,
       contract: out(i, 2), sense: out(i, 3), grip: out(i, 4), stiff: out(i, 5),
       tau: tauOf(out(i, 6)),

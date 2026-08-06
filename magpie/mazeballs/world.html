@@ -279,11 +279,13 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   </div>
 
   <div>
-    <h2>Population</h2>
-    <div class="sl"><div class="lab"><span>beasts</span><span class="v" id="vBeasts">2000</span></div>
-      <input type="range" id="sBeasts" min="100" max="20000" step="100" value="2000"></div>
-    <div class="sl"><div class="lab"><span>cells per beast</span><span class="v" id="vCpb">12</span></div>
-      <input type="range" id="sCpb" min="6" max="32" step="1" value="12"></div>
+    <h2>Universe</h2>
+    <div class="sl"><div class="lab"><span>cell budget</span><span class="v" id="vBudget">100,000</span></div>
+      <input type="range" id="sBudget" min="10000" max="300000" step="10000" value="100000"></div>
+    <p class="note" style="margin:.3rem 0 0">
+      The only resource. How many bodies there are, and how big they get, are
+      outcomes of development and the economy — not settings.
+    </p>
     <div class="row" style="margin-top:.4rem"><button id="bRebuild">rebuild</button></div>
   </div>
 
@@ -860,8 +862,10 @@ async function rebuild() {
     sim.moteCount = 0;
   }
 
-  let beasts = +$('sBeasts').value;
-  let cellsPer = +$('sCpb').value;
+  // Derived from the one knob, exactly as the server does it.
+  let budget = +($('sBudget')?.value ?? 100000);
+  let cellsPer = 12;
+  let beasts = Math.max(16, Math.ceil(budget / 60));
   let remoteParams = null;
 
   // In watch mode the SERVER decides the shape. Asking the viewer to be
@@ -871,7 +875,11 @@ async function rebuild() {
   if (WATCH) {
     try {
       const st = await (await fetch('/status', { cache: 'no-store' })).json();
-      beasts = st.beasts; cellsPer = st.cellsPerBeast; beastCap = st.beasts;
+      beasts = st.beasts; cellsPer = st.cellsPerBeast;
+      // Bodies are limited by ENERGY, not by allocation. bodySlots is the
+      // allocation ceiling and is deliberately far above any real population;
+      // showing the arena width here implied a cap that no longer exists.
+      beastCap = st.bodySlots ?? st.beasts;
       remoteMaxCells = st.maxCells; remoteBound = st.bound; remoteMotes = st.nMotes;
       serverPaused = !!st.paused;
       // The encoding the SERVER is running. In watch mode this page's own
@@ -898,8 +906,9 @@ async function rebuild() {
         pb.classList.toggle('on', !!st.paused);
       }
       remoteParams = st;                       // the field the server is using
-      $('sBeasts').value = beasts; $('vBeasts').textContent = beasts.toLocaleString();
-      $('sCpb').value = cellsPer; $('vCpb').textContent = cellsPer;
+      if (st.cellBudget) { const b = $('sBudget'), v = $('vBudget');
+        if (b && document.activeElement !== b) b.value = st.cellBudget;
+        if (v) v.textContent = st.cellBudget.toLocaleString(); }
     } catch (e) {
       return fail('cannot reach the world server: ' + e.message +
                   '\nDrop ?watch=1 to run a local simulation instead.');
@@ -2393,8 +2402,7 @@ bindSlider('sDrag', 'vDrag', v => v / 100, v => sim?.world.writeParams({ drag: v
 bindSlider('sSpring', 'vSpring', v => v, v => sim?.world.writeParams({ springK: v }));
 bindSlider('sCon', 'vCon', v => v / 100, v => sim?.world.writeParams({ contract: v }));
 $('sSpf').addEventListener('input', e => { view.spf = +e.target.value; $('vSpf').textContent = view.spf; });
-$('sBeasts').addEventListener('input', e => $('vBeasts').textContent = (+e.target.value).toLocaleString());
-$('sCpb').addEventListener('input', e => $('vCpb').textContent = e.target.value);
+$('sBudget').addEventListener('input', e => $('vBudget').textContent = (+e.target.value).toLocaleString());
 
 $('bField').onclick = e => { view.field = !view.field; e.target.classList.toggle('on', view.field); };
 $('bFood').onclick = e => { view.food = !view.food; e.target.classList.toggle('on', view.food); };

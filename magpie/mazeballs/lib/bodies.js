@@ -102,6 +102,22 @@ export function buildBodies({
   // developed cell writes its real contractility here and the kernel scales
   // force by it rather than branching on the label.
   const contractility = new Float32Array(NC), grippiness = new Float32Array(NC);
+  // CELL IDENTITY AND DESCENT.
+  //
+  // Float64Array, not BigInt64Array: a double holds exact integers to 2^53,
+  // which at the observed rate of roughly four cell-creations per step is over
+  // a hundred thousand years of continuous running. BigInt would be exact
+  // forever and far slower in every hot path that touches it, for a headroom
+  // nothing will ever use.
+  //
+  // Array position is the GPU's index; THIS is the cell's identity. A slot is
+  // recycled, an id never is — which is what makes 'is this the same cell'
+  // answerable, and what stops a synapse silently rewiring to a stranger when
+  // a slot changes hands.
+  const uid = new Float64Array(NC).fill(-1);
+  const parentA = new Float64Array(NC).fill(-1);
+  const parentB = new Float64Array(NC).fill(-1);   // two-parent creation, when it exists
+  const lifebook = new Float64Array(NC).fill(-1);  // which genome this cell carries
   // Which body each cell belongs to. Not a category — an identity, the same
   // fact the bond graph already encodes as a connected component, cached so a
   // cell can tell its own tissue from a stranger's in one comparison.
@@ -184,7 +200,7 @@ export function buildBodies({
   return {
     arena,
     cells: { px, py, vx, vy, rad, ctype, cslot, body, bodySize, bond, brest, bondK,
-             contractility, grippiness },
+             contractility, grippiness, uid, parentA, parentB, lifebook },
     // nCells is the ARENA width — every consumer (GPU buffers, frames, the
     // viewer) must agree on it, and it is no longer beasts*cells.
     meta: { beasts, cellsPerBeast: cells, nCells: NC, degree, bound, maxCells },
