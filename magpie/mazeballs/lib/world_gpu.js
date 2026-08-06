@@ -1646,7 +1646,23 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   var tidal = 0.0;
   if (P.tidalYield > 0.0) {
     let slip = flowAtM(p, mudHere) - v;
-    tidal = P.tidalYield * grippiness(cmeta[i].x) * P.drag * dot(slip, slip);
+    // NO TRAIT FACTOR. This was multiplied by grippiness — energy paid in
+    // direct proportion to a named capability, which is the reward-shaping the
+    // First Law exists to forbid, and it worked exactly as such things do:
+    // measured a few hours after it shipped, 59.7% of all cells were anchors,
+    // 54.8% of bodies were a single tissue, and only 7.3% had both a sensor and
+    // a muscle — i.e. could close a sensorimotor loop even in principle. A world
+    // that pays for grip gets grip and nothing else.
+    //
+    // The slip term ALREADY encodes the behaviour. A cell that lets go
+    // accelerates until it matches the flow and its slip goes to zero; slip
+    // stays high only while something is holding it against the medium. So
+    // paying for the power actually being dissipated pays for HOLDING STATION,
+    // however that is achieved — by grip, by bonds to something that grips, by
+    // being wedged in a crevice — and names no organ at all. It also makes
+    // anchoring a BODY-level strategy rather than a per-cell subsidy, which is
+    // the difference between division of labour and a monoculture.
+    tidal = P.tidalYield * P.drag * dot(slip, slip);
   }
   let taken = contest(i, np, abs(mine));
   // Written to scratch, not to energy[]: contest() READS energy[j] for other

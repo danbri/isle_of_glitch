@@ -788,6 +788,19 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
     }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
   }
 
+  // The designed-creature library. Static, small, and read by the Extras panel.
+  if (path === '/creatures') {
+    try {
+      const txt = await Deno.readTextFile(
+        `${new URL('..', import.meta.url).pathname}lib/creatures.json`);
+      return new Response(txt, {
+        headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+    } catch {
+      return new Response(JSON.stringify({ creatures: [] }),
+        { headers: { 'content-type': 'application/json' } });
+    }
+  }
+
   if (path === '/genomes') {
     const want = Math.min(64, Number(url.searchParams.get('n') ?? 8) || 8);
     const rows = [];
@@ -902,7 +915,21 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       }
       const copies = Math.max(1, Math.min(400, Math.round(Number(body.copies ?? 100))));
       const mutate = Math.max(0, Math.min(6, Number(body.mutate ?? 1)));
-      const r = evo.implant(slot, { copies, mutate, step: steps });
+      // A designed genome, if one was sent. Length-checked against the running
+      // encoding: a genome from a different devo version would develop into
+      // nonsense or throw, and the message would name neither.
+      let designed = null;
+      if (Array.isArray(body.genome)) {
+        const want = evo.genome[slot]?.length ?? 0;
+        if (body.genome.length !== want) {
+          return new Response(JSON.stringify({ ok: false,
+            error: `genome is ${body.genome.length} floats, this world runs ${want}` }),
+            { status: 400, headers: { 'content-type': 'application/json' } });
+        }
+        designed = body.genome;
+      }
+      const r = evo.implant(slot, { copies, mutate, step: steps, genome: designed });
+      r.designed = body.designName ?? null;
       // ON THE RECORD. A run that has been intervened in is not a clean
       // observation of evolution, and the only thing that keeps that from being
       // forgotten a week later is that it is written down at the time.
@@ -911,7 +938,7 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
           `${new URL('..', import.meta.url).pathname}runs/observations.jsonl`,
           JSON.stringify({
             t: new Date().toISOString(), kind: 'intervention', what: 'implant',
-            step: steps, uid: want, copies, mutate,
+            step: steps, uid: want, copies, mutate, designed: body.designName ?? null,
             made: r.made, noRoom: r.noRoom, failedEgg: r.failedEgg,
             mintedEnergy: r.mintedEnergy,
             note: 'hand of god: genome copied into the world with yolk nobody paid for',

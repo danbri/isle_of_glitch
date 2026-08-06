@@ -342,6 +342,16 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
       <input type="range" id="sIdM" min="0" max="400" step="5" value="100"></div>
     <div class="row"><button id="bImplant">seed the world ✥</button></div>
     <p class="note" id="idResult"></p>
+    <h2 style="margin-top:.6rem">Designed creatures</h2>
+    <p class="note" style="margin:0 0 .35rem">
+      Ten bodies designed by <b>specification and search</b>: a name, a sentence
+      saying what it is for, and a score over the body that develops. You cannot
+      hand-write a regulatory network — a weight has no local meaning and no gene
+      is a limb — so the intent is stated in the phenotype's own terms and the
+      search finds a genome that grows into it. Ordinary genomes; nothing here is
+      a new type or a role the kernel knows about.
+    </p>
+    <div id="designList"></div>
     <p class="note">
       A <b>hand of god</b>: it hands out yolk nobody paid for, so it mints
       energy — the one thing the world may not do on its own. Every use is
@@ -3465,6 +3475,58 @@ $('bArrows').onclick = e => { view.arrows = !view.arrows; e.target.classList.tog
       names.map((nm, k) => `${c[k]} ${nm}`).join(', ');
     $('bImplant').disabled = false;
   }, 900);
+
+    // The designed library. Rendered from the server so the page and the file
+  // cannot disagree about what a creature is.
+  (async () => {
+    const box = $('designList'); if (!box) return;
+    let lib;
+    try { lib = await (await fetch('/creatures', { cache: 'no-store' })).json(); }
+    catch { box.textContent = 'library unavailable'; return; }
+    const list = lib.creatures ?? [];
+    if (!list.length) { box.innerHTML = '<p class="note">no library built yet — run tools/design-creatures.js</p>'; return; }
+    box.innerHTML = '';
+    for (const c of list) {
+      const s = c.stats ?? {};
+      const el = document.createElement('div');
+      el.style.cssText = 'border:1px solid var(--rule);border-radius:3px;padding:.4rem .5rem;margin-bottom:.35rem';
+      el.innerHTML =
+        `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:.4rem">` +
+        `<b style="font-size:.82rem">${c.name}</b>` +
+        `<span class="note" style="font-family:var(--mono);font-size:.66rem">` +
+        `${s.cells} cells · elong ${s.elongation} · sym ${s.symmetry}</span></div>` +
+        `<p class="note" style="margin:.2rem 0 .3rem;font-size:.72rem">${c.about}</p>` +
+        `<div class="note" style="font-family:var(--mono);font-size:.66rem;margin-bottom:.3rem">` +
+        `n ${(100*s.neuron).toFixed(0)}% · s ${(100*s.sensor).toFixed(0)}% · ` +
+        `m ${(100*s.muscle).toFixed(0)}% · a ${(100*s.anchor).toFixed(0)}% · ` +
+        `tough ${s.toughness}</div>`;
+      const btn = document.createElement('button');
+      btn.textContent = 'seed the world with this ✥';
+      btn.onclick = async () => {
+        btn.disabled = true;
+        const was = btn.textContent; btn.textContent = 'seeding…';
+        try {
+          // Needs SOME living creature as a slot to stand in; the occupant is
+          // untouched, its genome is swapped back immediately.
+          const gs = await (await fetch('/genomes?n=1', { cache: 'no-store' })).json();
+          const host = Array.isArray(gs) ? gs[0]?.uid : gs?.rows?.[0]?.uid;
+          if (host == null) throw new Error('no living creature to seed from');
+          const r = await (await fetch('/control', {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ action: 'implant', uid: host,
+              copies: Number($('sIdN').value), mutate: Number($('sIdM').value) / 100,
+              genome: c.genome, designName: c.name }),
+          })).json();
+          $('idResult').textContent = r.ok
+            ? `${c.name}: placed ${r.made} of ${$('sIdN').value}`
+            : `${c.name} failed: ${r.error}`;
+        } catch (e) { $('idResult').textContent = `${c.name} failed: ${e.message}`; }
+        btn.textContent = was; btn.disabled = false;
+      };
+      el.appendChild(btn);
+      box.appendChild(el);
+    }
+  })();
 
   $('bImplant').onclick = async () => {
     if (sel.uid < 0) return;
