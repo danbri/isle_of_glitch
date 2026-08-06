@@ -52,6 +52,12 @@ the retraction commits) works; it is *not* yet closed/unattended.
 
 ## The map (reading order)
 
+- **`WORLD-MANUAL.md` — READ THIS FIRST.** The single current description of what
+  the world is and how it works, with the measurement behind each choice and the
+  retractions kept in place. Where any other document disagrees with it, the
+  manual is right and the other is history.
+
+
 - **`MISSION.md`** — the ambition (Cambrian, self-starting arms race). NB: its "17×
   locomotion" headline is **retracted** by `RESEARCH.md` — reconcile before citing.
 - **`primitives.md`** — the configurable kernel: material vectors, contact + substrate

@@ -779,6 +779,9 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
           outBase: D.OUT_BASE, outputs: D.OUTPUTS,
           maternal: ['AP', 'DV', 'RAD', 'NOISE', 'CROWD'],
           synOff: D.SYN_OFF, nsyn: D.NSYN,
+          // The synapse basis is SHARED with devo.js — devo2 imports it rather
+          // than restating it — so the viewer can name those columns either way.
+          synBasis: D.SYN_BASIS.map(b => b[0]),
         },
       }),
       g: Array.from(evo.genome[slot]),

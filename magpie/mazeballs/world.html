@@ -1583,6 +1583,23 @@ async function copyText(label, text, btn) {
 /** The selected animal's genome as TSV: pastes into a sheet or a message. */
 function genomeAsText(j) {
   const lines = [`# animal ${j.uid}  gen ${j.generation}  ${j.cells} cells  lineage ${j.lineage}`];
+  if (j.grn) {
+    // A regulatory network has no property x basis grid to flatten.
+    const G = j.grn;
+    lines.push(['gene', 'bias', 'decay', 'diff', ...Array.from({length: G.k}, (_, k) => `src${k}/w${k}`)].join('\t'));
+    for (let i = 0; i < G.nGene; i++) {
+      const b = i * G.stride, row = [String(i), j.g[b + G.offBias].toFixed(4),
+        j.g[b + G.offDecay].toFixed(4), j.g[b + G.offDiff].toFixed(4)];
+      for (let k = 0; k < G.k; k++) row.push(`${j.g[b + G.offSrc + k]}/${j.g[b + G.offW + k].toFixed(4)}`);
+      lines.push(row.join('\t'));
+    }
+    lines.push('');
+    lines.push(['synapse', ...G.synBasis].join('\t'));
+    const sy = [];
+    for (let k = 0; k < G.nsyn; k++) sy.push(j.g[G.synOff + k].toFixed(4));
+    lines.push(sy.join('\t'));
+    return lines.join('\n');
+  }
   lines.push(['property', ...j.basis].join('\t'));
   j.props.forEach((p, pi) => {
     const row = [p];
@@ -1609,6 +1626,12 @@ async function showGenome() {
     const j = await (await fetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
     if (!j.ok) { box.textContent = j.error; return; }
     lastGenome = j;
+    // The synapse block lives in different places depending on the encoding,
+    // and reading devo1's field names off a devo2 reply is what broke genome
+    // loading with "Cannot read properties of undefined (reading 'map')".
+    const SB = j.grn ? j.grn.synBasis : j.synBasis;
+    const NSY = j.grn ? j.grn.nsyn : j.nsyn;
+    const SOFF = j.grn ? j.grn.synOff : j.synOff;
     let html = `<h4>animal #${j.uid} · gen ${j.generation} · ${j.cells} cells ` +
       `<button id="bCopyGenome" class="mini" title="copy genome as TSV">⧉ copy</button></h4>`;
     if (j.grn) {
@@ -1662,10 +1685,10 @@ async function showGenome() {
       });
     }
     html += '</table><h4>synapse weights (how wiring is expressed)</h4><table><tr>' +
-      j.synBasis.map(b => `<td class="hd">${b}</td>`).join('') + '</tr><tr>';
-    for (let k = 0; k < j.nsyn; k++) {
-      const v = j.g[j.synOff + k];
-      html += `<td style="${cellShade(v)}" title="${j.synBasis[k]} = ${v.toFixed(3)}">` +
+      SB.map(b => `<td class="hd">${b}</td>`).join('') + '</tr><tr>';
+    for (let k = 0; k < NSY; k++) {
+      const v = j.g[SOFF + k];
+      html += `<td style="${cellShade(v)}" title="${SB[k]} = ${v.toFixed(3)}">` +
         `${v >= 0 ? '' : '-'}${Math.abs(v) < 0.05 ? '·' : Math.abs(v).toFixed(1).replace('0.', '.')}</td>`;
     }
     html += '</tr></table>';
