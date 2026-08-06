@@ -6075,3 +6075,57 @@ Two consequences:
 `meanEnergy` and `toughPerE` are now logged per checkpoint so this is divided
 out rather than discovered afterwards. The five-replicate run already in flight
 started before that change and will not carry them; the run after it will.
+
+### The link upstream of all of it: moving does not pay
+
+Sensing can only ever pay THROUGH movement — knowing where the food is buys
+nothing if going there is not worth the trip. Measured on the live world,
+1,896 bodies tracked by uid (never by slot; slots are recycled and a recycled
+slot reads as a body teleporting, which cost this project a retracted locomotion
+result once already), with the population's median displacement subtracted as
+common drift:
+
+```
+common drift subtracted    0.010 world units
+displacement after drift   p50 2.026   p90 14.462
+correlation, displacement vs energy change   -0.063
+top-quartile movers    dEnergy -0.0315 (n=474)
+bottom-quartile sitters dEnergy +0.0269 (n=474)
+difference -0.0584 +-0.0541
+```
+
+**Movers end poorer than sitters.** Not by much, and far less than the -0.36
+correlation this ledger records from before crowding suppression was added — but
+still the wrong sign, and it explains everything downstream. If locomotion is
+selected against, a sense organ that steers it is worse than useless, which is
+precisely what the sensor economics showed.
+
+#### And the cause is a change made in this session
+
+The mote buffer carries an explicit warning: *"their positions do not move,
+which is what makes a patch something you can exhaust and have to leave — the
+pressure to locomote has to come from somewhere, and a field that refills under
+your feet is not it."* Drift was added anyway, for visual coherence, on the
+argument that the warning is about DEPLETION and survives drift intact. That
+argument is wrong: food you did not exhaust arriving on the current is a patch
+refilling under your feet by another route.
+
+```
+moteDrift 0.55   movers -0.1468   sitters -0.1031   diff -0.0437 +-0.1595
+moteDrift 0      movers +0.1066   sitters -0.0572   diff +0.1638 +-0.1689
+```
+
+Neither difference clears two SE at one replicate each, so this is directional
+rather than demonstrated — but **the sign flips**, and it flips the way the
+warning said it would. With static food, movers gain and sitters lose. With
+drifting food, both lose and movers lose more.
+
+`moteDrift` is back to 0, which is the value with evidence behind it. A small
+drift may be recoverable — enough to read as a current without outrunning a body
+— and that is its own measurement.
+
+**The lesson worth keeping is not about motes.** A code comment stated the
+mechanism, the reason, and the failure mode; it was read, argued with, and
+overridden on aesthetic grounds; and the thing it predicted happened within a
+day and took most of a session to trace back. The comment was the cheaper
+experiment.

@@ -1977,7 +1977,34 @@ export class WorldGPU {
       // contestR against contactR 1.0: proximity rather than collision, capped
       // by what the neighbour walk can see. moteDrift below 1 so food lags the
       // water and a creature can outrun its own dinner.
-      contestR: 1.5, moteDrift: 0.55,
+      // moteDrift BACK TO 0, and the reason is worth the space.
+      //
+      // The comment on the mote buffer warned: "their positions do not move,
+      // which is what makes a patch something you can exhaust and have to leave
+      // — the pressure to locomote has to come from somewhere, and a field that
+      // refills under your feet is not it." Drift was added anyway, for visual
+      // coherence (a river with a stationary riverbed of food is not a river),
+      // on the argument that the warning is about DEPLETION and survives drift
+      // intact. That argument is wrong: food you did NOT exhaust arriving on the
+      // current is a patch refilling under your feet by another route.
+      //
+      // Measured, movers against sitters, energy change over the same window:
+      //
+      //   moteDrift 0.55   movers -0.1468   sitters -0.1031   diff -0.0437
+      //   moteDrift 0      movers +0.1066   sitters -0.0572   diff +0.1638
+      //
+      // Neither difference clears two standard errors at one replicate each, so
+      // this is directional rather than demonstrated — but the SIGN FLIPS, and
+      // it flips the way the warning said it would. With static food movers gain
+      // and sitters lose; with drifting food both lose and movers lose more.
+      //
+      // That matters because it is upstream of everything else measured this
+      // session. If moving does not pay, a sense organ that steers movement is
+      // worse than useless, which is exactly what the sensor economics showed.
+      // A small drift may well be recoverable — enough to read as a current
+      // without outrunning a body — but that is its own measurement and 0 is
+      // the value with evidence behind it.
+      contestR: 1.5, moteDrift: 0.0,
       // Tidal income. Sized so a fully-gripping cell holding station in a fast
       // mud channel earns on the order of what rich ground yields, and a cell
       // in still water earns nothing at all.
