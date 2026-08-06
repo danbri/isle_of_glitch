@@ -348,6 +348,52 @@ diversity effect is unmeasured.
 **Deep time — not shown for anything.** Measurements are at 75k steps. The muscle
 result that looked solid at 900k reversed by generation 210.
 
+### What is actually blocking it (2026-08-06)
+
+**The world monocultures on whatever the economy pays for, and it always pays
+for one thing.** Two measurements in one evening, same world, one parameter
+apart:
+
+```
+                     anchor  muscle  sensor  neuron | one-tissue  sense+move
+tidal income x grip   59.7%   26.2%   10.6%    3.4% |     54.8%       7.3%
+same, subsidy removed 10.0%   73.0%   12.0%    6.0% |     76.0%       3.9%
+```
+
+The first was an own goal: tidal income was multiplied by `grippiness`, i.e.
+energy paid in direct proportion to a named capability, which is the
+reward-shaping the First Law forbids. Removing it collapsed the anchor
+monoculture — and produced a **muscle** monoculture instead, the 94%-muscle
+failure recorded before. On the number that matters it got *worse*: bodies
+holding both a sensor and a muscle, the minimum parts list for a sensorimotor
+loop, fell from 7.3% to 3.9%.
+
+**The suspected structural cause: contraction is paid twice.** It moves the
+body, and it is also the effort a cell brings to taking energy from another,
+since the attack capability in contest is the attacker's own contraction.
+Nothing else has two uses — a sensor costs `senseCost` and returns nothing
+directly, a neuron is pure `brainTax`. Under those terms a body of pure muscle
+is the correct answer and evolution keeps finding it.
+
+Without division of labour there are no guilds, and without guilds organisms
+cannot be each other's dominant pressure in more than one way. `absorbTradeoff`
+is the lawful counterweight (force capacity crowding out uptake) and is being
+swept by `tools/labour-sweep.js`, which requires a value to improve
+`senseAndMove` *without collapsing the population* — 0.9 scores a perfect 1.00
+with eight animals alive at generation zero.
+
+**A measurement is only about the economy if the allocator is not the
+constraint.** Both experiment harnesses passed `beasts` without `bodySlots`, so
+the organism table was the same size as the island count and the population
+pinned at exactly CAP with most of the cell memory free. Sized as the live
+server sizes it, the same configuration holds 832 alive against a ceiling of
+193 — the 4.3× this document already records from the last time.
+
+**Instruments built for this, all reading live frames at zero cost to the sim:**
+`tools/encounter.js` (is the biotic channel open — 78% of cells have a stranger
+within reach), `tools/composition-log.js` (division of labour over time),
+`tools/who-selects.js` (the goal itself), `tools/labour-sweep.js`.
+
 A correction to my own framing: **lineage count is the wrong diversity measure.**
 It counts surviving founder lines, and since no new founders are created it can
 only fall — coalescence, not extinction. In a real Cambrian every lineage also

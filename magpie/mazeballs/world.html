@@ -2362,6 +2362,25 @@ async function buildDevo(genomeArr) {
   // bond()/largestPiece()/morphology() are shared and live in devo.js.
   const shared = await import('./lib/devo.js');
   const whole = shared.largestPiece(grown.cells, shared.bond(grown.cells, { maxDegree: 4 }));
+  // REMAP THE DIVISION TREE ONTO THE SURVIVING PIECE.
+  //
+  // `mother` is a local index into the FULL developed set, and what is drawn is
+  // `whole.cells` — the largest connected piece, re-indexed from zero. Using one
+  // index in the other array points at a different cell entirely, so the tree
+  // was drawing links between unrelated cells or, where the index fell out of
+  // range, drawing nothing. Both look like "the division tree is broken", and
+  // neither is a rendering problem.
+  //
+  // devo2 stamps each cell with its own localIndex, so the remap is exact. A
+  // cell whose mother did not make it into this piece has no line to draw,
+  // which is correct: its mother is not in the picture.
+  {
+    const pos = new Map();
+    whole.cells.forEach((c, i) => { if (c.localIndex !== undefined) pos.set(c.localIndex, i); });
+    for (const c of whole.cells) {
+      c.motherIdx = (c.mother !== undefined && pos.has(c.mother)) ? pos.get(c.mother) : -1;
+    }
+  }
   devoRun = {
     g, all: grown.cells, cells: whole.cells, bonds: whole.bonds,
     aborted: grown.aborted, spent: grown.spent,
@@ -2412,7 +2431,8 @@ function drawDevo() {
   // anyone pressed "stages".)
   if (devoStages) {
     for (let i = 0; i < built; i++) {
-      const m = cells[i].mother;
+      // motherIdx, not mother — see the remap in buildDevo.
+      const m = cells[i].motherIdx;
       if (m === undefined || m < 0 || m >= built) continue;
       const age = 1 - i / Math.max(1, built);
       g2.strokeStyle = `rgba(255,190,120,${(0.20 + 0.55 * age).toFixed(3)})`;
