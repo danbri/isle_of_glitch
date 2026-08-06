@@ -107,6 +107,12 @@ export const WORLD_FIELDS = [
   ['compass', 'f32', 'weight of the objective-bearing sense, 0 disables it'],
   ['senseNoise', 'f32', 'amplitude of the noise an inaccurate sensor reads'],
   ['senseCost', 'f32', 'energy per second burned per unit of compass acuity'],
+
+  // Perceiving other creatures. Sources are OTHER CELLS, and what they emit is
+  // their motion relative to the sensor — see the note in sense().
+  ['senseOther', 'f32', 'weight of the neighbour sense; 0 disables it'],
+  ['senseRange', 'f32', 'gaussian sigma of the receptive field, world units'],
+  ['senseBuckets', 'f32', 'hash buckets walked each way by a sensor; 1 = the 3x3 walk'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */

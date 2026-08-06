@@ -697,8 +697,10 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   // rather than as zero. A blind compass returning 0 would be a confident
   // claim of due east; returning noise is honest ignorance, and it means
   // evolving accuracy has something to climb from.
-  if (P.compass > 0.0) {
-    var ax = vec2<f32>(0.0, 0.0);
+  // The cell's own bearing, computed once: both the compass and the neighbour
+  // sense are questions about direction and both need it.
+  var ax = vec2<f32>(0.0, 0.0);
+  {
     let ab = i * P.bondK;
     var loN = -1; var hiN = -1; var loA = 2.0; var hiA = -1.0;
     for (var k = 0u; k < P.bondK; k = k + 1u) {
@@ -710,14 +712,84 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     if (loN >= 0 && hiN >= 0 && loN != hiN) { ax = minImage(pos[u32(hiN)] - pos[u32(loN)]); }
     else if (loN >= 0) { ax = minImage(pos[u32(loN)] - p); }
-    let alen = length(ax);
-    if (alen > 1e-5) {
-      let u = ax / alen;
-      let bearing = select(u.x, u.y, senseNorth(m.x));   // eastness or northness
-      let acu = senseAcuity(m.x);
-      let grit2 = fbm(p * 3.1 + vec2<f32>(f32(i) * 0.017, 0.0), P.seed + 913u) * 2.0 - 1.0;
-      e = e + P.compass * mix(P.senseNoise * grit2, bearing, acu);
+  }
+  let alen = length(ax);
+  if (P.compass > 0.0 && alen > 1e-5) {
+    let u = ax / alen;
+    let bearing = select(u.x, u.y, senseNorth(m.x));   // eastness or northness
+    let acu = senseAcuity(m.x);
+    let grit2 = fbm(p * 3.1 + vec2<f32>(f32(i) * 0.017, 0.0), P.seed + 913u) * 2.0 - 1.0;
+    e = e + P.compass * mix(P.senseNoise * grit2, bearing, acu);
+  }
+  // PERCEIVING OTHER CREATURES.
+  //
+  // Until now a sensor read the medium and a noise field and nothing else: no
+  // creature in this world could perceive another creature, so predator, prey,
+  // mate and rival were not merely absent but unreachable. This is the smallest
+  // honest fix.
+  //
+  // WHAT IS EMITTED IS RELATIVE MOTION. Every cell radiates in proportion to how
+  // fast it is moving PAST the sensor. That choice does the work of a self/other
+  // rule without one existing: a creature's own cells travel with it, so their
+  // relative speed is near zero and its own body is naturally almost invisible
+  // to it, while something else swimming past is loud. No cell is labelled kin
+  // or stranger anywhere.
+  //
+  // The receptive field is a gaussian in distance and a cosine in bearing, which
+  // is the standard construction — a sum of gaussians is what a diffusing signal
+  // from several sources actually looks like, and they superpose for free.
+  // Directionality rides on the SAME acuity the compass uses: a sharp sensor is
+  // sharp about where things are, a vague one just knows something is near.
+  //
+  // Cost: this walks the neighbour hash, which PHYSICS-2.md warns is the
+  // expensive thing. It walks it ONLY for sensor cells, so the cost scales with
+  // how much of the world has chosen to see.
+  if (P.senseOther > 0.0) {
+    var acc = 0.0;
+    let sig2 = max(1e-4, P.senseRange * P.senseRange);
+    let myV = vel[i].xy;
+    // A WIDER WALK, FOR SENSORS ONLY. The contact walk is 3x3 buckets and reaches
+    // 1.8 world units; bodies are 4-6 across and land about seven apart, so at
+    // that radius a sensor can only ever see its own tissue. Perception of other
+    // creatures needs more reach, and it is affordable here precisely because
+    // only sensor cells pay for it — the cost scales with how much of the world
+    // has chosen to see.
+    let R = i32(max(1.0, P.senseBuckets));
+    for (var dy = -R; dy <= R; dy = dy + 1) {
+      for (var dx = -R; dx <= R; dx = dx + 1) {
+        let b = bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM);
+        let cnt = min(atomicLoad(&hashData[b]), P.bucketM);
+        for (var k = 0u; k < cnt; k = k + 1u) {
+          let j = atomicLoad(&hashData[b + 1u + k]);
+          if (j == i) { continue; }
+          if (cmeta[j].x < 0) { continue; }
+          // OTHER BODIES ONLY. Relative motion was supposed to make a cell's
+          // own tissue invisible to it, and it does not: a body that deforms
+          // moves its own cells past each other, so a sensor heard mostly
+          // itself — measured, the reading was identical alone and in a
+          // crowd. Own-body cells are excluded by BODY ID, which is a
+          // property the kernel already carries for the contest and is not a
+          // new concept. Proprioception is a real sense and a separate one.
+          if (cmeta[j].z == cmeta[i].z) { continue; }
+          let d = minImage(pos[j] - p);
+          let d2 = dot(d, d);
+          if (d2 > sig2 * 9.0) { continue; }
+          let rel = length(vel[j].xy - myV);
+          if (rel < 1e-4) { continue; }
+          let fall = exp(-d2 / (2.0 * sig2));
+          var w = 1.0;
+          if (alen > 1e-5) {
+            let u = ax / alen;
+            let dirTo = d / max(1e-4, sqrt(d2));
+            let cosT = dot(u, dirTo);
+            let sharp = senseAcuity(m.x);
+            w = mix(1.0, max(0.0, cosT), sharp);
+          }
+          acc = acc + rel * fall * w;
+        }
+      }
     }
+    e = e + P.senseOther * tanh(acc);
   }
   ext[u32(slot)] = clamp(e, -4.0, 4.0);
 }
@@ -1269,6 +1341,35 @@ export class WorldGPU {
       absorbTradeoff: 0.4,
       // Compass on. Acuity is per-cell and evolved; this is only the weight.
       compass: 1.0, senseNoise: 1.0, senseCost: 0.25,
+      // Perceiving other creatures. Range is a few body-lengths.
+      // SHORT RANGE, AND THAT IS A REAL LIMIT, not a tuning choice.
+      //
+      // The neighbour walk is 3x3 buckets of hashCell 1.2, so it can only ever
+      // reach 1.8 world units — about two and a half cell diameters. A sigma of
+      // 6.0 was set first and silently truncated to a tenth of itself: the maths
+      // looked like vision and the walk delivered touch.
+      //
+      // 0.6 puts three sigma at the edge of what the walk actually sees, so the
+      // receptive field is the shape it claims to be. This is therefore a
+      // PROXIMITY sense — something big moving right beside me — and long-range
+      // perception needs a different structure (a coarse field, or a second
+      // hash), not a bigger number here. PHYSICS-2.md is the argument for why
+      // that must not simply become another neighbourhood walk.
+      // MATCHED, and costed. The walk reaches senseBuckets * hashCell, so three
+      // sigma must fit inside it or the receptive field is silently truncated —
+      // which happened once already at sigma 6.0 against a reach of 1.8, where
+      // the maths described vision and the walk delivered touch.
+      //
+      //   buckets 1 (reach 1.2)   105 steps/s
+      //   buckets 2 (reach 2.4)    95
+      //   buckets 4 (reach 4.8)    77      <- shipped
+      //   buckets 6 (reach 7.2)    63
+      //   off                     115
+      //
+      // Perception costs a third of the world's throughput. That is the price of
+      // any creature being able to perceive any other at all, and it is paid only
+      // by cells that are sensors.
+      senseOther: 0.35, senseRange: 1.6, senseBuckets: 4.0,
       dt: brains.dt, ...params,
     };
     // Motes. Scattered by a hash of their index rather than laid on a lattice:
