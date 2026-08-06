@@ -184,12 +184,25 @@ fn vnoise(p: vec2<f32>, seed: u32) -> f32 {
 // same sense position is — there is no level to cross, only a smooth increase
 // in how much of the same function is being resolved.
 //
-// The loop bound is fixed so every invocation costs the same; octaves past the
-// requested depth contribute with weight zero rather than being skipped.
+// STOPS AT THE REQUESTED DEPTH. This used to run all six octaves regardless,
+// weighting the unwanted ones to zero, on the reasoning that a fixed bound
+// costs the same for every invocation and cannot diverge. That reasoning was
+// right about divergence and wrong about cost: octF comes from the UNIFORM
+// block, so it is identical for every lane in flight and an early exit is
+// perfectly uniform — there is no divergence to avoid and the zero-weight
+// octaves were pure waste.
+//
+// It stopped being free when the noise became Perlin (eight hashes a lattice
+// cell rather than four) and the terrain grew a domain warp and a ridge term:
+// the background went to roughly thirty fbm evaluations a pixel, the browser
+// ate the GPU, and the simulation sharing it fell to a third of the rate it
+// runs at headless. Zoomed out, where octF is near 2, this is a 3x saving on
+// every single evaluation in the renderer AND in the physics.
 fn fbmOct(p: vec2<f32>, seed: u32, octF: f32) -> f32 {
   var f = 0.0; var amp = 1.0; var norm = 0.0; var q = p;
   for (var o = 0u; o < 6u; o = o + 1u) {
     let w = clamp(octF - f32(o), 0.0, 1.0);
+    if (w <= 0.0) { break; }
     f = f + amp * w * vnoise(q, seed + o * 1013u);
     norm = norm + amp * w;
     amp = amp * 0.5; q = q * 2.0;

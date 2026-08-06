@@ -960,6 +960,67 @@ export class Evolver {
     return book;
   }
 
+  /**
+   * INTELLIGENT DESIGN — stamp copies of one creature's genome across the world.
+   *
+   * This is a HAND OF GOD and is not pretending otherwise. It hands out yolk
+   * that no parent paid for, so it MINTS ENERGY, which is the one thing
+   * energy-speculative-friction.md forbids the world to do on its own. That is
+   * the price of the tool and the reason every use of it is written to the
+   * observation log and counted in `interventions`: any measurement taken from
+   * a run that has been intervened in is not a measurement of evolution, and
+   * has to say so or be retracted.
+   *
+   * Why have it at all: a genome that dies out because it landed badly is not
+   * the same as a genome that cannot make a living, and there is no way to tell
+   * those apart by watching. Replaying one design into a hundred different
+   * addresses — the same body against mud, coast, upland and open water at once
+   * — separates the design from its luck in one step. It is a controlled
+   * transplant, and the control is that all hundred are the same genome.
+   *
+   * @param {number} p        arena slot of the creature to copy
+   * @param {object} o
+   * @param {number} o.copies how many to scatter
+   * @param {number} o.mutate multiplier on the usual mutation rate; 0 = clones
+   * @param {number} o.step   world step, for the lineage record
+   */
+  implant(p, { copies = 100, mutate = 1, step = 0 } = {}) {
+    const { arena } = this;
+    if (!arena.alive[p] || !this.genome[p]) {
+      return { ok: false, error: 'that creature is no longer in the world' };
+    }
+    const keepRate = this.mutRate, keepSize = this.mutSize;
+    const keepE = this.lastEnergy ? this.lastEnergy[p] : null;
+    // mutate 0 gives literal clones — a hundred identical bodies in a hundred
+    // places, which is the cleanest form of the question "was it the design or
+    // the address?"
+    this.mutRate = Math.min(1, this.mutRate * mutate);
+    this.mutSize = this.mutSize * mutate;
+    // Each copy gets a standard egg's worth of yolk instead of a share of the
+    // donor's savings, so a poor donor is not punished for being copied and the
+    // hundred are comparable to each other.
+    if (this.lastEnergy) this.lastEnergy[p] = this.birthEnergy / Math.max(0.05, this.yolkFrac);
+
+    const B = this.world.params.bound;
+    let made = 0, noRoom = 0, failedEgg = 0;
+    for (let k = 0; k < copies; k++) {
+      const x = (this.rnd() * 2 - 1) * B, y = (this.rnd() * 2 - 1) * B;
+      const c = this.divideDevo(p, x, y, step);
+      if (c >= 0) made++;
+      else if (c === -1) noRoom++;
+      else failedEgg++;
+    }
+
+    this.mutRate = keepRate; this.mutSize = keepSize;
+    if (this.lastEnergy) this.lastEnergy[p] = keepE;
+    this.interventions = (this.interventions ?? 0) + 1;
+    // Energy conjured, stated in the world's own units so the size of the lie
+    // is on the record rather than merely its existence.
+    this.mintedEnergy = (this.mintedEnergy ?? 0) + made * this.birthEnergy;
+    return { ok: true, made, noRoom, failedEgg,
+             interventions: this.interventions, mintedEnergy: this.mintedEnergy };
+  }
+
   /** Lineage bookkeeping, shared by both reproduction paths. */
   bookkeep(child, p, step) {
     const uid = this.nextUid++;

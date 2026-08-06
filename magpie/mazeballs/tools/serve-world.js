@@ -888,6 +888,39 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       return ok({ flagged: true, snapshot: rec.snapshot });
     }
 
+    // INTELLIGENT DESIGN. Scatter copies of one creature's genome across the
+    // world, optionally mutated. Logged as an intervention, because it is one.
+    if (action === 'implant') {
+      const want = Number(body.uid ?? -1);
+      let slot = -1;
+      for (let o = 0; o < built.arena.P; o++) {
+        if (built.arena.alive[o] && evo.uid[o] === want) { slot = o; break; }
+      }
+      if (slot < 0) {
+        return new Response(JSON.stringify({ ok: false, error: `no living creature #${want}` }),
+          { status: 404, headers: { 'content-type': 'application/json' } });
+      }
+      const copies = Math.max(1, Math.min(400, Math.round(Number(body.copies ?? 100))));
+      const mutate = Math.max(0, Math.min(6, Number(body.mutate ?? 1)));
+      const r = evo.implant(slot, { copies, mutate, step: steps });
+      // ON THE RECORD. A run that has been intervened in is not a clean
+      // observation of evolution, and the only thing that keeps that from being
+      // forgotten a week later is that it is written down at the time.
+      try {
+        await Deno.writeTextFile(
+          `${new URL('..', import.meta.url).pathname}runs/observations.jsonl`,
+          JSON.stringify({
+            t: new Date().toISOString(), kind: 'intervention', what: 'implant',
+            step: steps, uid: want, copies, mutate,
+            made: r.made, noRoom: r.noRoom, failedEgg: r.failedEgg,
+            mintedEnergy: r.mintedEnergy,
+            note: 'hand of god: genome copied into the world with yolk nobody paid for',
+          }) + '\n', { append: true });
+      } catch (e) { r.logError = e.message; }
+      console.log(`IMPLANT #${want} x${copies} (mutate ${mutate}) -> ${r.made} placed at step ${steps}`);
+      return ok(r);
+    }
+
     if (action === 'save') {
       const r = await saveSnapshot(SNAP);
       return ok({ saved: SNAP, bytes: r.bytes });
@@ -967,6 +1000,8 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       // reloading could not fix, because the guess was wrong every time.
       maxCells: args.maxCells, nCells: built.meta.nCells, bound: BOUND,
       nMotes: world.params.nMotes, paused, spf: args.spf,
+      // Non-zero means this world has been meddled with; see evolve.implant.
+      interventions: evo.interventions ?? 0, mintedEnergy: evo.mintedEnergy ?? 0,
       // What this process is RUNNING vs what is on disk NOW. If simVersion
       // differs the physics has changed and needs a restart; if pageVersion
       // differs the viewer has changed and needs a reload.
