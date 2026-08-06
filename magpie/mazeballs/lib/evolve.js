@@ -47,7 +47,8 @@ function rng(seed) {
 import {
   bond as bondCells, morphology, largestPiece,
 } from './devo.js';
-import { packMeta } from './world_gpu.js';
+import { packMeta, packSize } from './world_gpu.js';
+import { Lineage, CELLZERO } from './lineage.js';
 import * as DEVO1 from './devo.js';
 import * as DEVO2 from './devo2.js';
 
@@ -103,7 +104,7 @@ export class Evolver {
     sizeMutRate = 0.25, minCells = 5, maxCells = 40, topoMutRate = 0.30,
     birthOrder = 'lottery',
     devo = true, yolkFrac = 0.55, cellCost = 0.55, eggExtent = null, birthMargin = 1.15,
-    devoVersion = 2, devoOpts = {},
+    devoVersion = 2, devoOpts = {}, lineageLog = null, dispersal = 9,
   }) {
     this.arena = arena; this.world = world; this.cells = cells;
     this.birthEnergy = birthEnergy; this.deathEnergy = deathEnergy;
@@ -129,8 +130,14 @@ export class Evolver {
     this.cellCost = cellCost;
     this.eggExtent = eggExtent ?? enc.extent;
     this.birthMargin = birthMargin;
+    this.dispersal = dispersal;
+    // Mean expressed dispersal per body, read off the developed tissue.
+    this.dispersalOf = new Float32Array(arena.P);
     this.genome = new Array(arena.P).fill(null);
     this.failedEggs = 0;
+    // Cell identity and descent. Nothing appears from nowhere; see lineage.js.
+    this.lineageLog = lineageLog ?? new Lineage();
+    this.bookOf = new Float64Array(arena.P).fill(-1);   // which lifebook a body carries
 
     const P = arena.P;
     // Lineage. parent[-1] means a founder; these are the substrate for the
@@ -261,7 +268,43 @@ export class Evolver {
 
     let born = 0, blocked = 0;
     for (const p of rich) {
-      const child = this.divide(p, cx[p], cy[p], step, pos);
+      // DISPERSAL. An offspring laid on top of its parent competes with it for
+      // the same patch immediately, and with crowding suppression that is a
+      // shared starvation rather than a shared meal. Measured at the extreme: a
+      // world bootstrapped from one cell divides once and then both bodies sit
+      // at equilibrium forever, never reaching the birth threshold again.
+      //
+      // Offspring are therefore placed a body-scale distance away, in a
+      // direction the parent does not choose. This is not a behaviour and not
+      // parental care — it is where an egg ends up when it is not glued on.
+      const dAng = this.rnd() * Math.PI * 2;
+      // HOW FAR, IN UNITS OF A REAL LENGTH. This was a constant 9 that I picked
+      // by sweeping until a bootstrap worked — a knob nobody chose wearing the
+      // name of a trait.
+      //
+      // The base is ten average cell widths of THIS parent, which is a length
+      // the world actually contains rather than one I invented. On top of that a
+      // gene scales it, because how far to throw your eggs is a life-history
+      // trait with a real tradeoff — far escapes kin competition but lands on
+      // unknown ground, near keeps known-good ground but competes with your own
+      // offspring. Noise is gaussian, not uniform: a spread of landing places
+      // with a mode, which is what scattering looks like.
+      let wsum = 0, wn = 0;
+      for (let i = 0; i < arena.cnt[p]; i++) {
+        const r = cells.rad ? cells.rad[arena.off[p] + i] : 0.34;
+        if (r > 0) { wsum += r * 2; wn++; }
+      }
+      const cellW = wn ? wsum / wn : 0.68;
+      const gene = this.dispersalOf ? (this.dispersalOf[p] ?? 0) : 0;
+      // Box-Muller, clamped so a tail draw cannot fling an egg across the world.
+      const u1 = Math.max(1e-9, this.rnd()), u2 = this.rnd();
+      const gauss = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+      const dR = Math.max(cellW,
+        cellW * 10 * (0.5 + 1.5 * (0.5 * (gene + 1))) * (1 + 0.3 * Math.max(-2, Math.min(2, gauss))));
+      const bnd = this.world?.params?.bound ?? 64;
+      const wrapc = (v) => v > bnd ? v - 2 * bnd : (v < -bnd ? v + 2 * bnd : v);
+      const child = this.divide(
+        p, wrapc(cx[p] + Math.cos(dAng) * dR), wrapc(cy[p] + Math.sin(dAng) * dR), step, pos);
       // -2 is a failed egg: development ran out of yolk or specified a body too
       // small to live. That is a normal outcome and the parent simply lost the
       // investment. -1 is the arena refusing room, which is a real failure and
@@ -373,6 +416,17 @@ export class Evolver {
     let apLo = Infinity, apHi = -Infinity;
     for (let i = 0; i < n; i++) { const a = body[i].ap; if (a < apLo) apLo = a; if (a > apHi) apHi = a; }
     const apSpan = Math.max(1e-6, apHi - apLo);
+
+    // A NEW CHAPTER. The egg copies its parent's lifebook with variation, and
+    // that is where a line divides. Cells inside a body share it and are
+    // therefore clonal.
+    const book = this.lineageLog.book(this.bookOf[p] ?? -1, step);
+    this.bookOf[child] = book;
+    // The zygote's parent is a cell in the PARENT body, not in this one — that
+    // is what makes the egg continuous with its mother rather than spontaneous.
+    const parentSeed = (cells.uid && arena.alive[p] && arena.cnt[p] > 0)
+      ? cells.uid[arena.off[p]] : CELLZERO;
+    const localId = new Float64Array(n).fill(-1);
     for (let i = 0; i < n; i++) {
       const c = body[i];
       const wx = wrap(px + c.x * ct - c.y * st);
@@ -388,8 +442,22 @@ export class Evolver {
       // kernel needs it per cell; c.ap is already what development laid the
       // cell out against, so this is a re-encoding, not a new fact.
       const apN = (c.ap - apLo) / apSpan;
-      meta[i * 4] = packMeta(type, con, gri, apN); meta[i * 4 + 1] = dst + i;
-      meta[i * 4 + 2] = child; meta[i * 4 + 3] = n;
+      // Mint identity. devo2 hands back which cell each cell budded from as a
+      // LOCAL index; cells are emitted in creation order, so a mother always
+      // already has its id by the time its daughter is minted.
+      const mom = (c.mother >= 0 && localId[c.mother] >= 0) ? localId[c.mother] : parentSeed;
+      const cid = this.lineageLog.cell(mom, -1, book, step);
+      localId[i] = cid;
+      if (cells.uid) {
+        cells.uid[dst + i] = cid;
+        cells.parentA[dst + i] = mom;
+        cells.parentB[dst + i] = -1;
+        cells.lifebook[dst + i] = book;
+      }
+      meta[i * 4] = packMeta(type, con, gri, apN, c.senseTune ?? 0);
+      meta[i * 4 + 1] = dst + i;
+      meta[i * 4 + 2] = child;
+      meta[i * 4 + 3] = packSize(n, c.tag ?? 0.5, Math.max(0, c.toughness ?? 0), c.enzyme ?? 0.5);
       if (cells.contractility) cells.contractility[dst + i] = con;
       if (cells.grippiness) cells.grippiness[dst + i] = gri;
       cells.ctype[dst + i] = type;
@@ -465,6 +533,10 @@ export class Evolver {
       pos, vel, meta, bond: bnd, brest, bstiff, bbrittle: bbrit, energy,
     });
 
+    // Carry the child's expressed dispersal, so ITS offspring travel the
+    // distance its own tissue specifies.
+    { let dsum = 0; for (const c of body) dsum += (c.dispersal ?? 0);
+      this.dispersalOf[child] = body.length ? dsum / body.length : 0; }
     this.genome[child] = g;
     this.bookkeep(child, p, step);
     return child;
@@ -720,7 +792,8 @@ export class Evolver {
       meta[i * 4] = packMeta(type, type === 2 ? 1 : 0, type === 3 ? 1 : 0);
       meta[i * 4 + 1] = dst + i;
       meta[i * 4 + 2] = child;
-      meta[i * 4 + 3] = n;
+      // The copy path has no developed properties: middling meat, no armour.
+      meta[i * 4 + 3] = packSize(n, 0.5, 0.0, 0.5);
       // This path has no developed properties to read, so the label IS the
       // capacity here. Writing it explicitly matters: arena slots are
       // recycled, and without this a newborn would inherit whatever
@@ -786,6 +859,166 @@ export class Evolver {
 
     this.bookkeep(child, p, step);
     return child;
+  }
+
+  /**
+   * CELLZERO. The one self-creating cell, and the root every id traces back to.
+   *
+   * A fresh world starts from a single founder whose cells are all descendants
+   * of it. Development is already division from a zygote, so "everything
+   * descends from one cell" is true from the first step without needing
+   * in-world division to exist yet.
+   *
+   * A RESUMED world does not call this: it inherits whatever ancestry its
+   * snapshot carries, which may be none. History lost is a fact about that run,
+   * recorded as parent -1, and is preferable to inventing a lineage that did
+   * not happen.
+   */
+  async seedOrigin(o, step = 0, { place = true } = {}) {
+    const { arena, cells } = this;
+    if (!arena.alive[o] || !cells.uid) return null;
+
+    // WHERE LIFE STARTS. The resource field is patchy, so a founder dropped at a
+    // fixed point is a lottery on the ground beneath it — measured, one founder
+    // starves (mean energy -18.8) while four hundred scattered ones thrive
+    // (+10.2), because some of the four hundred happen to land somewhere fed.
+    //
+    // Placing the first cell where the world can support it is a boundary
+    // condition, not a thumb on the scale: it says life began somewhere
+    // favourable, which is not a controversial claim. Everything after it has to
+    // earn its own ground.
+    if (place && this.world?.readMotes) {
+      try {
+        const m = await this.world.readMotes();
+        const nM = m.stock.length;
+        let bx = 0, by = 0, best = -1;
+        for (let t = 0; t < 64 && nM > 0; t++) {
+          const c = (Math.floor(this.rnd() * nM)) % nM;
+          const px = m.pos[c * 2], py = m.pos[c * 2 + 1];
+          let sum = 0;
+          for (let j = 0; j < nM; j += Math.max(1, (nM / 400) | 0)) {
+            const dx = m.pos[j * 2] - px, dy = m.pos[j * 2 + 1] - py;
+            if (dx * dx + dy * dy < 36) sum += m.stock[j];
+          }
+          if (sum > best) { best = sum; bx = px; by = py; }
+        }
+        if (best > 0) {
+          const off0 = arena.off[o], n0 = arena.cnt[o];
+          let cx = 0, cy = 0;
+          for (let i = 0; i < n0; i++) { cx += cells.px[off0 + i]; cy += cells.py[off0 + i]; }
+          cx /= n0; cy /= n0;
+          const pos = new Float32Array(n0 * 2);
+          for (let i = 0; i < n0; i++) {
+            cells.px[off0 + i] += bx - cx; cells.py[off0 + i] += by - cy;
+            pos[i * 2] = cells.px[off0 + i]; pos[i * 2 + 1] = cells.py[off0 + i];
+          }
+          this.world.writeCellRange(off0, n0, { pos });
+        }
+      } catch { /* no motes in this world; leave it where it is */ }
+    }
+    // ONE ROOT. Founder 0 is cellzero and makes itself; any others are its
+    // children, seeded at step 0 rather than grown. That keeps the claim intact:
+    // exactly one cell in this world's history was self-created. A populated
+    // start is a statement about where the recording begins, not about anything
+    // else creating itself.
+    const root = this.originRoot ?? null;
+    const book = this.lineageLog.book(root ? root.book : -1, step);
+    this.bookOf[o] = book;
+    const off = arena.off[o], n = arena.cnt[o];
+    // The first cell makes itself; every other cell in the founding body is its
+    // descendant. That is a claim about this body, not a claim that a 12-cell
+    // ring is a plausible zygote — see the note in serve-world about founders.
+    let seed;
+    if (!root) {
+      this.lineageLog.cell(-1, -1, book, step);      // cellzero, self-created
+      seed = CELLZERO;
+      this.originRoot = { book, cell: CELLZERO };
+    } else {
+      seed = root.cell;
+    }
+    for (let i = 0; i < n; i++) {
+      const id = (!root && i === 0) ? CELLZERO : this.lineageLog.cell(seed, -1, book, step);
+      cells.uid[off + i] = id;
+      cells.parentA[off + i] = (!root && i === 0) ? -1 : seed;
+      cells.parentB[off + i] = -1;
+      cells.lifebook[off + i] = book;
+    }
+    // CELLZERO IS ENDOWED. A lone founder has no margin: it must feed itself up
+    // past the birth threshold before anything else can exist, and at cap 3.0 a
+    // cell of energy against a per-body threshold of 18 that is a slow climb
+    // from a standing start — measured, it simply sat at 6.0 and never divided.
+    //
+    // This is a BOUNDARY CONDITION, not a mint. The world already has one: a sun
+    // of fixed inflow. Giving the first cell a packed lunch is the same kind of
+    // statement — energy that entered at the edge of the model, once, and
+    // dissipates like all the rest. Every joule after this traces to the sun.
+    if (!root && this.world?.writeCellRange) {
+      const e = new Float32Array(n).fill(this.world.params?.eCap ?? 3.0);
+      this.world.writeCellRange(off, n, { energy: e });
+      if (this.lastEnergy) this.lastEnergy[o] = (this.world.params?.eCap ?? 3.0) * n;
+    }
+    return book;
+  }
+
+  /**
+   * INTELLIGENT DESIGN — stamp copies of one creature's genome across the world.
+   *
+   * This is a HAND OF GOD and is not pretending otherwise. It hands out yolk
+   * that no parent paid for, so it MINTS ENERGY, which is the one thing
+   * energy-speculative-friction.md forbids the world to do on its own. That is
+   * the price of the tool and the reason every use of it is written to the
+   * observation log and counted in `interventions`: any measurement taken from
+   * a run that has been intervened in is not a measurement of evolution, and
+   * has to say so or be retracted.
+   *
+   * Why have it at all: a genome that dies out because it landed badly is not
+   * the same as a genome that cannot make a living, and there is no way to tell
+   * those apart by watching. Replaying one design into a hundred different
+   * addresses — the same body against mud, coast, upland and open water at once
+   * — separates the design from its luck in one step. It is a controlled
+   * transplant, and the control is that all hundred are the same genome.
+   *
+   * @param {number} p        arena slot of the creature to copy
+   * @param {object} o
+   * @param {number} o.copies how many to scatter
+   * @param {number} o.mutate multiplier on the usual mutation rate; 0 = clones
+   * @param {number} o.step   world step, for the lineage record
+   */
+  implant(p, { copies = 100, mutate = 1, step = 0 } = {}) {
+    const { arena } = this;
+    if (!arena.alive[p] || !this.genome[p]) {
+      return { ok: false, error: 'that creature is no longer in the world' };
+    }
+    const keepRate = this.mutRate, keepSize = this.mutSize;
+    const keepE = this.lastEnergy ? this.lastEnergy[p] : null;
+    // mutate 0 gives literal clones — a hundred identical bodies in a hundred
+    // places, which is the cleanest form of the question "was it the design or
+    // the address?"
+    this.mutRate = Math.min(1, this.mutRate * mutate);
+    this.mutSize = this.mutSize * mutate;
+    // Each copy gets a standard egg's worth of yolk instead of a share of the
+    // donor's savings, so a poor donor is not punished for being copied and the
+    // hundred are comparable to each other.
+    if (this.lastEnergy) this.lastEnergy[p] = this.birthEnergy / Math.max(0.05, this.yolkFrac);
+
+    const B = this.world.params.bound;
+    let made = 0, noRoom = 0, failedEgg = 0;
+    for (let k = 0; k < copies; k++) {
+      const x = (this.rnd() * 2 - 1) * B, y = (this.rnd() * 2 - 1) * B;
+      const c = this.divideDevo(p, x, y, step);
+      if (c >= 0) made++;
+      else if (c === -1) noRoom++;
+      else failedEgg++;
+    }
+
+    this.mutRate = keepRate; this.mutSize = keepSize;
+    if (this.lastEnergy) this.lastEnergy[p] = keepE;
+    this.interventions = (this.interventions ?? 0) + 1;
+    // Energy conjured, stated in the world's own units so the size of the lie
+    // is on the record rather than merely its existence.
+    this.mintedEnergy = (this.mintedEnergy ?? 0) + made * this.birthEnergy;
+    return { ok: true, made, noRoom, failedEgg,
+             interventions: this.interventions, mintedEnergy: this.mintedEnergy };
   }
 
   /** Lineage bookkeeping, shared by both reproduction paths. */

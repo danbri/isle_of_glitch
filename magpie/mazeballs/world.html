@@ -29,12 +29,24 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-fo
 .hud .t{font-family:var(--sans);font-size:.82rem;font-weight:600;letter-spacing:-.01em;margin-right:.4rem}
 
 aside{
-  position:fixed;top:0;right:0;bottom:0;width:264px;background:rgba(17,26,25,.94);
-  border-left:1px solid var(--rule);padding:3rem 1rem 1rem;overflow-y:auto;
+  position:fixed;top:0;right:0;bottom:0;width:var(--panelw,300px);background:rgba(17,26,25,.94);
+  border-left:1px solid var(--rule);padding:3rem 1rem 1rem;overflow-y:auto;overflow-x:hidden;
   display:flex;flex-direction:column;gap:.95rem;backdrop-filter:blur(8px);
   transition:transform .22s ease;
+  /* Fixed at 264px this clipped its own contents on any narrow window, with no
+     way to see what was cut off. Width is now a variable, dragged from the left
+     edge and remembered, and it never grows past half the viewport. */
+  min-width:200px;max-width:min(620px, 60vw);
 }
 aside.hidden{transform:translateX(100%)}
+/* The drag handle: a strip along the panel's left edge. Wide enough to hit
+   without hunting, invisible until pointed at. */
+#panelGrip{
+  position:fixed;top:0;bottom:0;width:9px;cursor:ew-resize;z-index:40;
+  background:transparent;transition:background .12s ease;
+}
+#panelGrip:hover,#panelGrip.drag{background:linear-gradient(90deg,rgba(0,0,0,0),var(--sensor))}
+aside.hidden ~ #panelGrip{display:none}
 h2{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;
    color:var(--ink-soft);margin:0 0 .1rem;font-weight:500}
 .sl{display:flex;flex-direction:column;gap:.22rem;font-size:.74rem;color:var(--ink-soft)}
@@ -97,6 +109,17 @@ button.on::before { content: '\25CF\00a0'; opacity: .85; }
   padding: .35rem .6rem; text-align: center; max-width: 70vw; }
 #codeWarn b { color: #ffb84d; }
 
+/* THE CREATURE CAROUSEL. A scroll strip rather than a grid, because the tiles
+   are RANKED — the order carries meaning, so the best movers stay first and
+   visible instead of being spread over a block. */
+#galleryBox { display:flex; gap:5px; margin:.4rem 0; overflow-x:auto; overflow-y:hidden;
+  scroll-snap-type:x proximity; padding-bottom:5px; scrollbar-width:thin; }
+#galleryBox canvas { flex:0 0 auto; width:74px; height:74px; background:#070c0b;
+  border:1px solid #1d2a27; border-radius:4px; cursor:pointer; display:block;
+  scroll-snap-align:start; }
+#galleryBox canvas:hover { border-color:#5fc9c0; }
+#galleryBox canvas.sel { border-color:#ffd08a; }
+
 /* The HUD sat directly on the world and was unreadable wherever a body passed
    under it — worst on mobile where it wraps to two lines. */
 /* .hud, not #hud — it is a CLASS, and the id selector silently matched nothing,
@@ -158,10 +181,8 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 
 <div class="hud">
   <span class="t">Mazeballs</span>
-  <span>beasts <b id="hBeasts">–</b></span>
-  <span>cells <b id="hCells">–</b></span>
-  <span>neurons <b id="hNeurons">–</b></span>
-  <span>synapses <b id="hSyn">–</b></span>
+  <span title="living cells / arena slots. Every cell is a CTRNN node, so there is no separate neuron count.">cells <b id="hCells">–</b></span>
+  <span title="wired synapses across all living brains">synapses <b id="hSyn">–</b></span>
   <span>step <b id="hStep">0</b></span>
   <span>sim <b id="hRate">–</b>×realtime</span>
   <span>fps <b id="hFps">–</b></span>
@@ -170,7 +191,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   <span>devo <b id="hDevo">–</b></span>
 </div>
 <div class="hud hud2">
-  <span>alive <b id="hAlive">–</b></span>
+  <span title="living bodies / arena capacity">alive <b id="hAlive">–</b></span>
   <span>births <b id="hBirths">0</b></span>
   <span>deaths <b id="hDeaths">0</b></span>
   <span>generation <b id="hGen">0</b></span>
@@ -182,10 +203,10 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   <div>
     <h2>World</h2>
     <div class="legend">
-      <span><i style="background:#41ADB2"></i>sensor</span>
-      <span><i style="background:#E28C3E"></i>muscle</span>
-      <span><i style="background:#6E8079"></i>neuron</span>
-      <span><i style="background:#B76BEB"></i>anchor</span>
+      <span><i style="background:#66a8a1"></i>sensor</span>
+      <span><i style="background:#c77352"></i>muscle</span>
+      <span><i style="background:#99998c"></i>neuron</span>
+      <span><i style="background:#8f709e"></i>anchor</span>
     </div>
   </div>
 
@@ -195,18 +216,36 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
     <input type="range" id="sScale" min="10" max="400" value="90"></div>
   <div class="sl"><div class="lab"><span>drag</span><span class="v" id="vDrag">1.60</span></div>
     <input type="range" id="sDrag" min="0" max="800" value="160"></div>
+  <div class="sl"><div class="lab"><span>current in the mud</span><span class="v" id="vMudFlow">1.15</span></div>
+    <input type="range" id="sMudFlow" min="0" max="800" step="5" value="115"></div>
   <div class="sl"><div class="lab"><span>bond stiffness</span><span class="v" id="vSpring">90</span></div>
     <input type="range" id="sSpring" min="1" max="300" value="90"></div>
   <div class="sl"><div class="lab"><span>muscle contraction</span><span class="v" id="vCon">0.45</span></div>
     <input type="range" id="sCon" min="0" max="100" value="45"></div>
   <div class="sl"><div class="lab"><span>steps per frame</span><span class="v" id="vSpf">1</span></div>
     <input type="range" id="sSpf" min="0" max="40" value="1"></div>
+  <div class="sl"><div class="lab"><span>render scale</span><span class="v" id="vRScale">0.70</span></div>
+    <input type="range" id="sRScale" min="30" max="100" step="5" value="70"></div>
+  <div class="sl"><div class="lab"><span>cell brightness</span><span class="v" id="vCellInk">1.00</span></div>
+    <input type="range" id="sCellInk" min="0" max="100" step="5" value="100"></div>
 
   <div>
     <h2>View</h2>
+    <p class="note" style="margin:.1rem 0 .2rem;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;opacity:.7">the current</p>
     <div class="row">
+      <button id="bStreams" class="on" title="traced streamlines — where a thing released here ends up. The fieldsim.html look.">lines</button>
+      <button id="bGlitter" class="on" title="motes of light riding the current, so you can see it move">motes</button>
+      <button id="bArrows" title="one arrow per patch of ground: direction and strength, for debugging the balance">arrows</button>
+    </div>
+    <p class="note" style="margin:.45rem 0 .2rem;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;opacity:.7">the ground</p>
+    <div class="row">
+      <button id="bTerrain" class="on" title="height, mud and the living shore">land</button>
       <button id="bField" class="on">field</button>
       <button id="bFood" class="on">food</button>
+      <button id="bCrescent" title="where it pays to be: the fertile band, out of the mud and below the heights">crescent</button>
+    </div>
+    <p class="note" style="margin:.45rem 0 .2rem;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;opacity:.7">the living</p>
+    <div class="row">
       <button id="bBonds" class="on">bonds</button>
       <button id="bPause">pause</button>
       <button id="bEvolve" class="on">evolve</button>
@@ -225,7 +264,10 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   </div>
 
   <div id="inspPanel">
-    <h2>Creature</h2>
+    <h2>Multicellular Creatures</h2>
+    <div class="row"><button id="bGallery">refresh ⟳</button>
+      <span class="note" style="margin-left:.4rem">ranked by how much they move</span></div>
+    <div id="galleryBox"></div>
     <div class="row">
       <button id="bPick" class="on">click to select</button>
       <button id="bClearSel">clear</button>
@@ -237,7 +279,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
       <button id="bCopyStats" title="copy world + creature stats">⧉ stats</button></div>
     <div class="row" style="margin-top:.3rem">
       <button id="bDevo">unfold ▶</button>
-      <button id="bDevoStage">stages</button>
+      <button id="bDevoStage" title="show which cell budded from which — the division tree">division tree</button>
     </div>
     <canvas id="devoC"></canvas>
     <div id="devoInfo" class="note"></div>
@@ -281,12 +323,38 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   </div>
 
   <div>
-    <h2>Population</h2>
-    <div class="sl"><div class="lab"><span>beasts</span><span class="v" id="vBeasts">2000</span></div>
-      <input type="range" id="sBeasts" min="100" max="20000" step="100" value="2000"></div>
-    <div class="sl"><div class="lab"><span>cells per beast</span><span class="v" id="vCpb">12</span></div>
-      <input type="range" id="sCpb" min="6" max="32" step="1" value="12"></div>
+    <h2>Universe</h2>
+    <div class="sl"><div class="lab"><span>cell budget</span><span class="v" id="vBudget">100,000</span></div>
+      <input type="range" id="sBudget" min="10000" max="300000" step="10000" value="100000"></div>
+    <p class="note" style="margin:.3rem 0 0">
+      The only resource. How many bodies there are, and how big they get, are
+      outcomes of development and the economy — not settings.
+    </p>
     <div class="row" style="margin-top:.4rem"><button id="bRebuild">rebuild</button></div>
+  </div>
+
+  <div id="extrasPanel">
+    <h2>Extras — intelligent design</h2>
+    <p class="note" id="idTarget">Select a creature first, then stamp it across the world.</p>
+    <div class="sl"><div class="lab"><span>copies</span><span class="v" id="vIdN">100</span></div>
+      <input type="range" id="sIdN" min="1" max="300" step="1" value="100"></div>
+    <div class="sl"><div class="lab"><span>mutation</span><span class="v" id="vIdM">1.0x</span></div>
+      <input type="range" id="sIdM" min="0" max="400" step="5" value="100"></div>
+    <div class="row"><button id="bImplant">seed the world ✥</button></div>
+    <p class="note" id="idResult"></p>
+    <p class="note">
+      A <b>hand of god</b>: it hands out yolk nobody paid for, so it mints
+      energy — the one thing the world may not do on its own. Every use is
+      written to the observation log and counted, because a run that has been
+      meddled with is not a clean observation of evolution and has to say so.
+      <br><br>
+      It earns its keep by separating a <b>design</b> from its <b>luck</b>. A
+      genome that dies out because it landed in the mud is not the same as one
+      that cannot make a living, and watching cannot tell those apart. A hundred
+      copies of the same body against coast, upland, channel and open water at
+      once can. At mutation 0 they are literal clones, which is the cleanest
+      form of the question.
+    </p>
   </div>
 
   <p class="note">
@@ -297,6 +365,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   </p>
 </aside>
 
+<div id="panelGrip" title="drag to resize the panel"></div>
 <div id="err"></div>
 
 <script type="module">
@@ -380,6 +449,39 @@ struct Cam {
   showRes  : f32,
   selUid   : i32,   // the animal being inspected; everything else is crowd
   zoomPx   : f32,   // screen px per world unit, so detail can follow altitude
+  // Geography. Same numbers the physics uses, so the picture is the world and
+  // not an illustration of it — if these ever drift from lib/world_gpu.js, the
+  // shoreline you can see stops being the shoreline things fall into.
+  hScale   : f32,
+  hSeed    : u32,
+  mScale   : f32,
+  mSeed    : u32,
+  lowLush  : f32,
+  octT     : f32,   // terrain LOD, separate because terrain is far coarser
+  showTerr : f32,
+  warpAmt  : f32,
+  ridgeAmt : f32,
+  mudBank  : f32,
+  showArrows: f32,
+  arrowSpace: f32,   // world units between arrows, world-fixed so they hold still
+  arrowRef  : f32,   // the speed a full-length arrow means
+  arrowInk  : f32,   // fades them out rather than popping them off
+  gravity   : f32,
+  mudFlow   : f32,
+  pxWorld   : f32,     // world units per DEVICE pixel — see the arrow block
+  flowTerrain : f32,   // how much of the current is the landscape's circulation
+  showCrescent : f32,
+  showGlitter : f32,
+  glitCell    : f32,   // world units between motes of light
+  glitSpeed   : f32,
+  shoreWidth  : f32,
+  flowDry     : f32,
+  streamSpace : f32,   // world units between streamline seeds
+  streamSteps : f32,   // segments per line
+  streamSide  : f32,   // lines across, so side*side lines are drawn
+  streamInk   : f32,
+  cellInk     : f32,   // how loud the population is drawn, 0..1
+  padB0       : f32,
 };
 @group(0) @binding(0) var<uniform>       C     : Cam;
 @group(0) @binding(1) var<storage, read> pos   : array<vec2<f32>>;
@@ -401,15 +503,136 @@ fn bgVs(@builtin(vertex_index) vi: u32) -> BgOut {
   return o;
 }
 
+/* ---- the ground itself ---------------------------------------------------
+ *
+ * These are the physics' own fields at the physics' own seeds, band-limited for
+ * a screen. Height below zero is water and above it is land, so the sea has no
+ * separate existence: it is where the ground happens to be lower than the level
+ * everything settles to. Mud is wet ground.
+ *
+ * Shading is a single fixed sun against the field's world-space gradient. That
+ * gradient is taken at a WORLD epsilon rather than a pixel one, because a
+ * screen-space derivative makes the relief change as you zoom — the hills would
+ * flatten as you approached them, which is exactly the discontinuity the
+ * fractional-octave LOD exists to avoid.
+ */
+// THE TERRAIN IS NOT LEVEL-OF-DETAILED. It used the camera's octave count, and
+// that is a category error with a very visible symptom: fewer octaves is a
+// DIFFERENT FUNCTION, not a blurrier one, so the h = 0 contour — the coastline —
+// sat somewhere else at every zoom. Flying in, the shape of the beach and the
+// water's edge changed radically as you approached, like a map redrawing itself
+// under you. Worse, the shoreline being drawn was then not the shoreline things
+// actually fall into, because the physics evaluates at a fixed depth.
+//
+// So these match the simulation exactly: fbm() in lib/world_gpu.js is
+// fbmOct(p, seed, 4.0), and so is this. The picture is now the world at every
+// zoom, and the coast stays where it is.
+//
+// LOD remains correct for the FLOW and FERTILITY layers below, because those
+// are texture — no threshold in them is a boundary anything can stand on, so
+// dropping sub-pixel octaves removes aliasing and nothing else.
+const TERRAIN_OCT : f32 = 3.0;   // matches fbm() in lib/world_gpu.js
+
+fn warpR(p: vec2<f32>, seed: u32, amt: f32) -> vec2<f32> {
+  let a = fbmOct(p, seed, TERRAIN_OCT) - 0.5;
+  let b = fbmOct(p + vec2<f32>(5.2, 1.3), seed + 3701u, TERRAIN_OCT) - 0.5;
+  return p + amt * vec2<f32>(a, b);
+}
+fn ridgeR(p: vec2<f32>, seed: u32) -> f32 {
+  let f = clamp((fbmOct(p, seed, 2.0) - 0.5) * 2.6 + 0.5, 0.0, 1.0);
+  return 1.0 - abs(2.0 * f - 1.0);
+}
+fn hgtR(p: vec2<f32>) -> f32 {
+  let q = warpR(p * C.hScale, C.hSeed, C.warpAmt);
+  let base = fbmOct(q, C.hSeed, TERRAIN_OCT) * 2.0 - 1.0;
+  if (C.ridgeAmt <= 0.0) { return base; }
+  let r = ridgeR(q * 2.3, C.hSeed + 911u);
+  return base + C.ridgeAmt * r * r * smoothstep(-0.05, 0.55, base);
+}
+fn wetRidgeR(p: vec2<f32>) -> f32 {
+  return ridgeR(warpR(p * C.mScale, C.mSeed, C.warpAmt * 1.4), C.mSeed);
+}
+// The same single wetness scale the physics uses: the sea IS mud.
+fn wetnessR(p: vec2<f32>, h: f32) -> f32 {
+  return max(smoothstep(C.mudBank - C.shoreWidth, C.mudBank + C.shoreWidth, wetRidgeR(p)),
+             smoothstep(0.45, -0.45, h));
+}
+fn mudR(p: vec2<f32>) -> f32 {
+  return smoothstep(0.50, 0.76, wetnessR(p, hgtR(p)));
+}
+// The living shore, from the same expression the physics uses. r is a proxy for
+// distance to water: a band just outside the channel is jungle, and everything
+// further in is rock.
+fn shoreR(p: vec2<f32>, h: f32) -> f32 {
+  let w = wetnessR(p, h);
+  return smoothstep(0.17, 0.40, w) * (1.0 - smoothstep(0.44, 0.63, w));
+}
+
+/* ---- GLITTER: the current, shown as things being carried by it ------------
+ *
+ * Arrows tell you the field at the points they are drawn and say nothing about
+ * what happens between them. Motes of light that MOVE tell you the whole field,
+ * continuously, and they tell you the thing that actually matters here — that
+ * this current is a transport system, and anything not holding on is on it.
+ *
+ * ADVECTION BY DOMAIN OFFSET, not by simulation. There are no particles and no
+ * buffer: a static field of dots is sampled at a coordinate pushed backwards
+ * along the local flow, so the dots appear to ride it. That would drift out of
+ * true over a long enough offset (local velocity is not an integrated path), so
+ * it runs in two half-cycle-offset copies cross-faded against each other, and
+ * neither ever gets far from the truth. One flow evaluation per pixel, which is
+ * what makes it affordable at all.
+ */
+fn glitterAt(q: vec2<f32>, cell: f32, t: f32) -> f32 {
+  let g = q / cell;
+  let ip = floor(g);
+  var acc = 0.0;
+  // 3x3 so a dot near a cell edge is not clipped in half. Hashes only — no
+  // noise, no fbm; this is the cheap part on purpose.
+  for (var dy = -1; dy <= 1; dy = dy + 1) {
+    for (var dx = -1; dx <= 1; dx = dx + 1) {
+      let c = ip + vec2<f32>(f32(dx), f32(dy));
+      let ix = i32(c.x); let iy = i32(c.y);
+      let ox = hash2(ix, iy, 7717u);
+      let oy = hash2(ix, iy, 3313u);
+      let br = hash2(ix, iy, 5153u);
+      if (br < 0.55) { continue; }              // sparse: most cells are empty
+      let d = g - (c + vec2<f32>(ox, oy));
+      let r2 = dot(d, d);
+      if (r2 > 0.09) { continue; }
+      // Twinkle. Each mote has its own phase, so the field shimmers rather
+      // than pulsing as one sheet.
+      let tw = 0.55 + 0.45 * sin(t * 2.3 + br * 43.0);
+      acc = acc + exp(-r2 * 130.0) * (br - 0.55) * 2.2 * tw;
+    }
+  }
+  return acc;
+}
+
 @fragment
 fn bgFs(i: BgOut) -> @location(0) vec4<f32> {
   let base = vec3<f32>(0.039, 0.063, 0.059);
   if (C.showField < 0.5) { return vec4<f32>(base, 1.0); }
 
+  // NOTHING LIVES OUT HERE, SO NOTHING IS DRAWN OUT HERE. The fields are
+  // analytic and unbounded but the world is a torus of half-extent 'bound', and
+  // the region past it was being fully shaded — terrain, mud, glitter, the lot —
+  // and then dimmed to near black. On a typical view that is a third of the
+  // frame rendered at full cost and thrown away, which is a third of the GPU the
+  // simulation could have had.
+  let dEdge = max(abs(i.w.x), abs(i.w.y)) - C.bound;
+  let fade = max(C.bound * 0.06, 1.0);
+  if (dEdge > fade * 1.2) { return vec4<f32>(base * 0.45, 1.0); }
+
   // Every noise evaluation here is LOD-limited. Summing octaves finer than a
   // pixel does not draw detail, it draws aliasing — which is precisely what
   // made this render as television snow before.
-  let pot = fbmOct(i.w * C.flowScale, C.seed, C.octaves);
+  // Streamlines are iso-contours of the flow POTENTIAL, so this must be the
+  // same potential the current is actually made of or the lines and the arrows
+  // describe two different worlds — which they did.
+  let potF = fbmOct(i.w * C.flowScale, C.seed, C.octaves);
+  let potC = fbmOct(i.w * C.hScale, C.hSeed, 3.0);
+  let pot = mix(potF, potC * (C.flowScale / max(1e-5, C.hScale)), C.flowTerrain);
 
   let e = 0.5 / C.flowScale;
   let dx = fbmOct((i.w + vec2<f32>(e, 0.0)) * C.flowScale, C.seed, C.octaves)
@@ -435,7 +658,212 @@ fn bgFs(i: BgOut) -> @location(0) vec4<f32> {
   // Kept dim on purpose: the field is the setting, not the subject. If the
   // background competes with the cells, the population stops being readable.
   var col = base + mix(cool, warm, mixv) * m * 0.30;
-  col = col + vec3<f32>(0.05, 0.08, 0.07) * streak * (0.25 + 0.75 * m);
+  var streakW = 1.0;
+
+  /* ---- LAND, WATER, MUD ------------------------------------------------- */
+  var h = 0.0;
+  var mud = 0.0;
+  var land = 0.0;
+  if (C.showTerr > 0.5) {
+    h = hgtR(i.w);
+    // hgtR is four fbm evaluations; mudR would repeat all of them to get the
+    // same h. Pass it the one already in hand.
+    mud = smoothstep(0.50, 0.76, wetnessR(i.w, h));
+
+    // World-space slope. Two extra taps at the same epsilon the physics uses
+    // for gravity, so what is drawn as downhill is what things roll down.
+    let e = 0.6 / max(1e-4, C.hScale);
+    let gx = (hgtR(i.w + vec2<f32>(e, 0.0)) - h) / e;
+    let gy = (hgtR(i.w + vec2<f32>(0.0, e)) - h) / e;
+
+    // Vertical exaggeration. The field spans ~2 units of height over ~55 world
+    // units, so true slopes are a couple of degrees and lighting them honestly
+    // gives a flat grey sheet. Relief is a drawing decision and is allowed to
+    // be one; the GRADIENT it scales is the real one.
+    let relief = 26.0;
+    let n = normalize(vec3<f32>(-gx * relief, -gy * relief, 1.0));
+    let sunD = normalize(vec3<f32>(-0.55, 0.42, 0.72));
+    let diff = clamp(dot(n, sunD), 0.0, 1.0);
+    let slope = clamp(length(vec2<f32>(gx, gy)) * relief, 0.0, 1.0);
+
+    // Three lights, which is the whole trick to ground looking like ground: a
+    // warm sun, a cool sky filling the shadows, and a dim bounce off the terrain
+    // itself lighting what faces away. One white lamp gives grey mud whatever
+    // the albedo; the temperature difference between the lit and unlit sides is
+    // what the eye reads as shape.
+    let sunCol = vec3<f32>(1.00, 0.82, 0.55) * (0.30 + 0.95 * diff);
+    let skyCol = vec3<f32>(0.32, 0.50, 0.68) * (0.30 + 0.40 * n.z);
+    let bncCol = vec3<f32>(0.34, 0.26, 0.15) * clamp(dot(n, -sunD) * 0.5 + 0.5, 0.0, 1.0) * 0.30;
+    let lightR = sunCol + skyCol + bncCol;
+
+    land = smoothstep(-0.012, 0.012, h);           // the coastline, antialiased
+
+    /* water: colour is depth, and depth alone */
+    let depth = clamp(-h, 0.0, 1.0);
+    let shallow = vec3<f32>(0.075, 0.205, 0.210);
+    let deep    = vec3<f32>(0.010, 0.038, 0.072);
+    var wcol = mix(shallow, deep, smoothstep(0.01, 0.38, depth));
+    // Shallow water is transparent, so the bed under it is lit like ground and
+    // then drowned by depth. Without this the coast is a hard colour step and
+    // the sea reads as a painted region rather than as water lying on a slope.
+    let bed = vec3<f32>(0.14, 0.125, 0.090) * lightR;
+    wcol = mix(bed * 0.85, wcol, smoothstep(0.0, 0.16, depth));
+    // A sun glint off the ripples. The bands ARE the streamlines, so the
+    // highlight sits on the actual flow rather than on a texture pretending to.
+    wcol = wcol + vec3<f32>(0.10, 0.13, 0.12) * streak * 0.55;
+
+    /* land: low and green, high and bare, steep and rocky */
+    let lush  = vec3<f32>(0.075, 0.165, 0.085);
+    let dry   = vec3<f32>(0.225, 0.185, 0.105);
+    let rock  = vec3<f32>(0.195, 0.175, 0.155);
+    let crag  = vec3<f32>(0.330, 0.335, 0.345);
+    // GREEN ONLY WHERE THINGS GROW. Colour by the SHORE, not by height: the
+    // living ribbon beside the water is jungle and everything away from it is
+    // stone, which is what the economy now says and what the picture must show
+    // or the two are describing different worlds.
+    let liv = shoreR(i.w, h);
+    var lcol = mix(dry, lush, smoothstep(0.10, 0.65, liv));
+    lcol = mix(lcol, rock, smoothstep(0.30, 0.85, slope) * (1.0 - liv * 0.7));
+    lcol = mix(lcol, crag, smoothstep(0.62, 0.95, h) * smoothstep(0.15, 0.6, slope));
+    lcol = lcol * lightR;
+
+    // Mud: takes the light back (wet, dark), pulls the colour brown, and holds
+    // a sheen. All three are what the physics says mud is — no grip, more flow,
+    // no visibility — rendered as the one thing that reads as all of them.
+    let wet = mix(vec3<f32>(0.075, 0.058, 0.040), lcol * 0.55, 0.35);
+    lcol = mix(lcol, wet, mud * 0.85);
+    lcol = lcol + vec3<f32>(0.09, 0.075, 0.045) * streak * mud * 0.9;
+
+    var t = mix(wcol, lcol, land);
+
+    // Foam. A thin bright band exactly at the waterline, which is the single
+    // most useful line on the whole picture: it is where the ground stops.
+    let shore = 1.0 - smoothstep(0.0, 0.030, abs(h));
+    t = t + vec3<f32>(0.115, 0.150, 0.140) * shore * shore * (0.45 + 0.55 * streak);
+
+    // Contours, at a fixed height interval. They fade out on their own
+    // as soon as the spacing closes on a pixel, so they never alias and never
+    // need a zoom rule — the same principle as the fractional octaves.
+    let cs = h * 14.0;
+    // The contour's on-screen width, computed rather than sampled. fwidth is
+    // illegal here — the off-world early return above makes this branch
+    // non-uniform — and it is also unnecessary: the world-space gradient is
+    // already in hand, so how fast the contour variable changes per device
+    // pixel is exactly |grad| * (world units per pixel). Same number, no
+    // derivative, and it still fades the lines out on its own the moment their
+    // spacing closes on a pixel.
+    let cw = 14.0 * length(vec2<f32>(gx, gy)) * C.pxWorld;
+    let cl = (1.0 - smoothstep(0.0, cw * 1.6, abs(fract(cs) - 0.5)))
+           * (1.0 - smoothstep(0.35, 0.9, cw));
+    t = t + vec3<f32>(0.030, 0.036, 0.034) * cl * (0.35 + 0.65 * land);
+
+    col = t;
+    // Streamlines belong to the MEDIUM. On dry high ground there is no medium
+    // to draw, and drawing it there was most of why the old background read as
+    // weather rather than as a place.
+    streakW = mix(1.0, 0.22 + 0.78 * mud, land);
+  }
+
+  col = col + vec3<f32>(0.05, 0.08, 0.07) * streak * (0.25 + 0.75 * m) * streakW;
+
+  /* ---- THE CURRENT, AS MOVING LIGHT -------------------------------------- */
+  if (C.showGlitter > 0.5) {
+    // The current is already in hand: f is the curl of the same potential the
+    // streamlines are contours of, mud-scaled the same way. Recomputing it here
+    // cost ten fbm evaluations a pixel to arrive at a number two dozen lines
+    // above.
+    let vG = f * (C.flowDry + C.mudFlow * select(1.0, mud, C.showTerr > 0.5));
+    let ph = fract(C.worldTime * C.glitSpeed);
+    let k = C.glitCell * 2.2;                      // how far a mote travels per cycle
+    let a = glitterAt(i.w - vG * ph * k, C.glitCell, C.worldTime);
+    let b = glitterAt(i.w - vG * (ph - 1.0) * k, C.glitCell, C.worldTime + 3.7);
+    let glit = mix(a, b, abs(2.0 * ph - 1.0));
+    // Faster water sparkles harder, so speed is legible without a legend, and
+    // the still corners of the world stay dark instead of glittering uselessly.
+    let hot = clamp(length(vG) / max(1e-4, C.arrowRef), 0.15, 1.4);
+    col = col + vec3<f32>(0.55, 0.80, 0.92) * glit * hot * 0.55
+              + vec3<f32>(0.25, 0.32, 0.42) * glit * glit * hot;
+  }
+
+  /* ---- ARROWS: what steers anything that is not holding on ---------------
+   *
+   * The flow field is the reason an egg ends up somewhere its parent did not
+   * choose, and it has until now been legible only as streamlines, which show
+   * the ROUTE but not the DIRECTION or the STRENGTH. An arrow shows both, and
+   * a field of them is the difference between "there is weather" and "it is
+   * blowing that way, that hard, here".
+   *
+   * Drawn as a signed-distance shaft-plus-head evaluated per pixel against the
+   * nearest sample point of a world-fixed lattice, so arrows sit still while
+   * the camera moves — the same reasoning as the streamlines being fixed in
+   * world units. Spacing steps in powers of two with zoom so the density on
+   * screen stays roughly constant from whole-world to single-creature.
+   *
+   * The arrow is the SUM of what actually pushes a passive thing: the medium,
+   * plus gravity down the slope. That matters — a mud channel running across a
+   * hillside points somewhere neither of them does alone, and reading either
+   * one on its own would tell you the wrong place.
+   */
+  if (C.showArrows > 0.5) {
+    let sp = C.arrowSpace;
+    let cellIx = floor(i.w / sp) + vec2<f32>(0.5, 0.5);
+    let ctr = cellIx * sp;
+    let mudA = select(0.0, mud, C.showTerr > 0.5);
+    let sA = C.flowStr * (C.flowDry + C.mudFlow * mudA);
+    // The SAME two-scale current the physics uses. The fine turbulent component
+    // is deliberately under-sampled here — an arrow every 20 units cannot show
+    // an eddy one unit across, and pretending otherwise is what made the old
+    // arrows look like they belonged to a different picture. What an arrow can
+    // honestly report is the net push over its own patch, which is the coarse
+    // circulation, so that is what it is weighted toward.
+    var vfl = mix(flowField(ctr, C.flowScale, sA, C.seed),
+                  flowField(ctr, C.hScale, sA * (C.flowScale / max(1e-5, C.hScale)), C.hSeed),
+                  clamp(C.flowTerrain + 0.25, 0.0, 1.0));
+    if (C.showTerr > 0.5 && C.gravity != 0.0) {
+      let eA = 0.6 / max(1e-4, C.hScale);
+      vfl = vfl - vec2<f32>(hgtR(ctr + vec2<f32>(eA, 0.0)) - hgtR(ctr - vec2<f32>(eA, 0.0)),
+                            hgtR(ctr + vec2<f32>(0.0, eA)) - hgtR(ctr - vec2<f32>(0.0, eA)))
+                  / (2.0 * eA) * C.gravity;
+    }
+    let spd = length(vfl);
+    if (spd > 1e-4) {
+      // LENGTH IS SPEED. Long arrows where the current runs, short stubs where
+      // it barely moves — otherwise every arrow claims the same authority and
+      // the picture says the world is uniformly windy, which it is not.
+      // Minimum length 0.34, not 0.12. This is the instrument for a balance —
+      // passive things being carried against active things beating the current
+      // — that cannot be tuned without seeing it. A slow arrow must still read
+      // as an arrow pointing somewhere, not as a speck.
+      let L = sp * 0.42 * clamp(spd / max(1e-4, C.arrowRef), 0.34, 1.0);
+      let dir = vfl / spd;
+      let per = vec2<f32>(-dir.y, dir.x);
+      let q = i.w - ctr;
+      let along = dot(q, dir);
+      let across = dot(q, per);
+      // shaft: a capsule from -L to +L*0.55, head: a wedge closing to the tip
+      // Shaft to 0.62 of the way, then a head that tapers LINEARLY to a point.
+      // The previous version widened over the head and only narrowed in the
+      // last tenth, which draws a mallet — legible as "something is here" and
+      // not at all as "it is going that way".
+      let t = clamp((along + L) / max(1e-5, 1.55 * L), 0.0, 1.0);
+      let hw = L * 0.035;
+      let halfw = select(hw, L * 0.20 * (1.0 - (t - 0.62) / 0.38), t > 0.62);
+      let inShaft = f32(along > -L && along < L * 0.55 + 1e-4);
+      let d = abs(across) - max(halfw, 1e-5);
+      // NOT fwidth. A screen-space derivative may only be taken in uniform
+      // control flow, and this block is entered per-pixel on a condition that
+      // depends on the field — so the compiler rejects it outright, which cost
+      // an entirely silent invalid pipeline until compilationInfo was read.
+      // The pixel footprint is a property of the CAMERA, which is uniform, so
+      // it comes in on the uniform block and works anywhere.
+      let aa = max(C.pxWorld, 1e-5);
+      var ink = (1.0 - smoothstep(0.0, aa * 1.4, d)) * inShaft;
+      ink = ink * smoothstep(0.0, aa * 2.0, along + L);
+      col = mix(col, mix(vec3<f32>(0.36, 0.52, 0.55), vec3<f32>(0.86, 0.80, 0.58),
+                         clamp(spd / max(1e-4, C.arrowRef), 0.0, 1.0)),
+                ink * C.arrowInk);
+    }
+  }
 
   // THE FOOD. Drawn at last: it is the thing every creature is chasing, it
   // drifts and morphs under them, and it was invisible — so the world looked
@@ -448,20 +876,66 @@ fn bgFs(i: BgOut) -> @location(0) vec4<f32> {
     // when zoomed out is both cheaper and correct, since the fine ones are below
     // a pixel anyway.
     let rq = i.w * C.resScale + C.worldTime * vec2<f32>(C.driftX, C.driftY);
-    let ra = fbmOct(rq, C.resSeed, C.octaves);
-    let rb = fbmOct(rq, C.resSeed + 7777u, C.octaves);
+    let ro = max(1.0, C.octaves - 1.6);
+    let ra = fbmOct(rq, C.resSeed, ro);
+    let rb = fbmOct(rq, C.resSeed + 7777u, ro);
     let rw = 0.5 + 0.5 * sin(C.worldTime * C.morphRate);
     let rr = mix(ra, rb, rw);
-    let r = rr * rr;
+    var r = rr * rr;
+
+    // Lush lowlands. The physics multiplies fertility by exactly this, so the
+    // green really is where the food regrows fastest, and the bare uplands
+    // really are poor rather than merely painted pale.
+    if (C.showTerr > 0.5 && C.lowLush > 0.0) {
+      r = r * mix(1.0, shoreR(i.w, h) / 0.1189, C.lowLush);
+    }
 
     // Only the RICHEST ground glows. The mean of this field is around 0.28, and
     // lighting that produced a bright wash the creatures disappeared into —
     // the layer that matters most on screen should be the one that is alive, not
     // the ground. smoothstep keeps almost everything dark and lets the good
     // patches read as light coming off something.
-    let g = smoothstep(0.30, 0.85, r);
-    col = col + vec3<f32>(0.20, 0.115, 0.035) * g
-              + vec3<f32>(0.07, 0.05, 0.015) * g * g;
+    // BAND-LIMIT IT HARDER THAN THE TERRAIN. Fertility is drawn at a finer
+    // scale than the ground, and at full octave depth it is a dense mottle that
+    // the eye reads as static — it buried the landscape it is supposed to sit
+    // on. Two octaves fewer keeps the PATCHES, which is the information (where
+    // is it worth being), and drops the speckle, which is not.
+    let g = smoothstep(0.34, 0.88, r);
+    col = col + vec3<f32>(0.155, 0.092, 0.028) * g
+              + vec3<f32>(0.055, 0.038, 0.012) * g * g;
+  }
+
+  /* ---- THE FERTILE BAND, made loud ---------------------------------------
+   *
+   * The same expression the physics multiplies fertility by, drawn as heat.
+   * It is deliberately garish: this is not scenery, it is the answer to "where
+   * does it pay to be", and it was previously inferable only by squinting at
+   * where the food glow happened to be brightest.
+   *
+   * It shimmers because the band is not a fixed place — the fertility field
+   * drifts and morphs under it — and a still picture of a moving optimum is the
+   * exact misreading this world has been retracted for before.
+   */
+  if (C.showCrescent > 0.5 && C.showTerr > 0.5) {
+    let band = shoreR(i.w, h);
+    // DIM EVERYTHING FIRST, then draw one thing in neon. Painting hot colour on
+    // top of a fully-lit world drowns it: the landscape is still there at full
+    // strength underneath and the two fight. Pulling the scene down to a dark
+    // monochrome ghost first means the neon is the only thing with colour in
+    // it, so it reads instantly and the terrain is still legible behind it as
+    // shape. This is a MOMENTARY view — press, look, release — not a skin.
+    let ghost = dot(col, vec3<f32>(0.30, 0.59, 0.11));
+    col = mix(col, vec3<f32>(ghost * 0.42, ghost * 0.50, ghost * 0.55), 0.86);
+
+    let sh = 0.80 + 0.20 * sin(C.worldTime * 2.1 + h * 11.0 - mud * 6.0);
+    // Two neons rather than one: the interior of the band, and its EDGES —
+    // which are the two frontiers, and are where a lineage actually gets
+    // pushed out of the good country.
+    let core = smoothstep(0.45, 0.95, band);
+    let edge = smoothstep(0.12, 0.34, band) * (1.0 - smoothstep(0.50, 0.78, band));
+    col = col + vec3<f32>(1.00, 0.10, 0.32) * core * 0.60 * sh
+              + vec3<f32>(0.20, 0.95, 0.85) * edge * 0.55 * sh
+              + vec3<f32>(1.00, 0.45, 0.55) * core * core * 0.30 * sh;
   }
 
   // The field is analytic and therefore unbounded, but the world bodies live in
@@ -473,6 +947,103 @@ fn bgFs(i: BgOut) -> @location(0) vec4<f32> {
   let outside = clamp(d / max(C.bound * 0.06, 1.0), 0.0, 1.0);
   col = mix(col, base * 0.45, outside * 0.85);
   return vec4<f32>(col, 1.0);
+}
+
+
+/* ---- STREAMLINES: the current traced, not sampled --------------------------
+ *
+ * Arrows report the field at the points they are drawn and say nothing about
+ * what happens between them; a lattice of them describes a world of disconnected
+ * gusts. What a current actually is, is a set of PATHS — where a thing released
+ * here will end up — and the only honest picture of that is the path itself,
+ * integrated and drawn.
+ *
+ * NO BUFFERS AND NO CPU COPY OF THE PHYSICS. Each vertex derives which line it
+ * is on and how far along, then integrates forward from that line's seed using
+ * flowField — the same function, from the same shared block, that the
+ * simulation moves cells with. There is no second implementation to drift out
+ * of agreement with the world, which is the failure the whole file is arranged
+ * to avoid.
+ *
+ * Cost is O(step) per vertex, so O(steps^2 / 2) per line, which sounds alarming
+ * and is not: a few hundred lines of forty segments is on the order of a couple
+ * of thousand shaded pixels' worth of noise evaluation.
+ *
+ * SEEDS SIT ON A WORLD-FIXED LATTICE with a hashed offset inside each cell, for
+ * the same reason the arrows and the motes do — lines pinned to the screen slide
+ * under the camera and read as the water moving when it is the eye that moved.
+ */
+struct SOut { @builtin(position) p: vec4<f32>, @location(0) a: f32, @location(1) spd: f32 };
+
+fn streamFlow(p: vec2<f32>) -> vec2<f32> {
+  let m = mudR(p);
+  let s = C.flowStr * (C.flowDry + C.mudFlow * m);
+  return mix(flowField(p, C.flowScale, s, C.seed),
+             flowField(p, C.hScale, s * (C.flowScale / max(1e-5, C.hScale)), C.hSeed),
+             C.flowTerrain);
+}
+
+@vertex
+fn streamVs(@builtin(vertex_index) vi: u32) -> SOut {
+  let SEG = u32(max(2.0, C.streamSteps));
+  let per = SEG * 2u;                       // line-list: two vertices a segment
+  let line = vi / per;
+  let k = ((vi % per) + 1u) / 2u;           // 0,1,1,2,2,3... so segments join
+
+  // Which lattice cell this line seeds in, laid out around the camera.
+  let side = u32(max(1.0, C.streamSide));
+  let gx = i32(line % side) - i32(side / 2u);
+  let gy = i32(line / side) - i32(side / 2u);
+  let sp = C.streamSpace;
+  let anchor = floor(C.center / sp) + vec2<f32>(f32(gx), f32(gy));
+  var p = (anchor + vec2<f32>(hash2(i32(anchor.x), i32(anchor.y), 4441u),
+                              hash2(i32(anchor.x), i32(anchor.y), 9887u))) * sp;
+
+  // Integrate. Fixed ARC LENGTH per step rather than fixed time, so a line is
+  // the same length wherever it is drawn and slow water does not collapse into
+  // a dot — the picture is about the shape of the path, and speed is carried by
+  // colour instead.
+  let ds = sp * 0.16;
+  var spd = 0.0;
+  for (var i = 0u; i < k; i = i + 1u) {
+    let v = streamFlow(p);
+    let L = length(v);
+    spd = L;
+    if (L < 1e-5) { break; }
+    p = p + (v / L) * ds;
+  }
+
+  var o: SOut;
+  o.p = vec4<f32>((p - C.center) * C.ndc, 0.0, 1.0);
+  // Fade both ends: a line that stops dead reads as an object, and a field has
+  // no objects in it.
+  let t = f32(k) / f32(SEG);
+  var a = smoothstep(0.0, 0.14, t) * (1.0 - smoothstep(0.72, 1.0, t));
+
+  // FADE WHERE THE WATER IS DEAD. Lines are integrated at fixed ARC LENGTH so
+  // that their shape is readable everywhere, which has a cost: dry ground got
+  // full-length lines describing a current that is barely there, and the
+  // picture said the whole world flows. It does not — away from the mud the
+  // ground is fixed, and that has to be visible or the transport system is not
+  // legible as a system. Opacity carries the speed that length no longer does.
+  a = a * smoothstep(0.02, 0.35, spd / max(1e-4, C.arrowRef));
+
+  // Stop at the edge of the world. The fields are analytic and unbounded but
+  // nothing can be carried past the wrap, so a line drawn out there is
+  // describing transport to somewhere that does not exist.
+  let outw = max(abs(p.x), abs(p.y)) - C.bound;
+  a = a * (1.0 - smoothstep(0.0, max(C.bound * 0.02, 0.5), outw));
+
+  o.a = a;
+  o.spd = spd;
+  return o;
+}
+
+@fragment
+fn streamFs(i: SOut) -> @location(0) vec4<f32> {
+  let hot = clamp(i.spd / max(1e-4, C.arrowRef), 0.0, 1.0);
+  let c = mix(vec3<f32>(0.30, 0.44, 0.46), vec3<f32>(0.85, 0.80, 0.62), hot);
+  return vec4<f32>(c * i.a * C.streamInk, i.a * C.streamInk * 0.9);
 }
 
 /* ------------------------------- cells: one soft anisotropic quad per cell -- */
@@ -527,10 +1098,17 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // thousands of cells cannot all shout: legibility comes from restraint. These
   // are desaturated earth tones that sit together, and the categorical hue still
   // says what a cell IS, quietly.
-  let sensor = vec3<f32>(0.44, 0.72, 0.74);
-  let muscle = vec3<f32>(0.85, 0.55, 0.34);
-  let neuron = vec3<f32>(0.56, 0.61, 0.58);
-  let anchor = vec3<f32>(0.64, 0.50, 0.72);      // suckers: the feet
+  // Retuned against the naturalistic map. The old muscle orange (0.85, 0.55,
+  // 0.34) was the brightest, most saturated thing on screen and read as
+  // fluorescent against a landscape of jade shore, ochre rock and slate water —
+  // a thousand of them turned the world into a rash. These sit INSIDE the map's
+  // own range: still four unmistakable hues, none of them louder than the
+  // ground they stand on. The categorical distinction is carried by hue, which
+  // survives desaturation; it never needed to be carried by brightness.
+  let sensor = vec3<f32>(0.40, 0.66, 0.63);      // pale jade
+  let muscle = vec3<f32>(0.78, 0.45, 0.32);      // terracotta, not tangerine
+  let neuron = vec3<f32>(0.60, 0.60, 0.55);      // warm stone
+  let anchor = vec3<f32>(0.56, 0.44, 0.62);      // muted plum — suckers, the feet
   var base = neuron;
   if (m.x == 1) { base = sensor; }
   if (m.x == 2) { base = muscle; }
@@ -539,18 +1117,36 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // COLOUR THE STORY. Saturation and brightness are held back for the animal
   // under inspection, so one creature reads clearly out of a crowded field
   // instead of every cell competing at full volume. m.z carries the assembly uid.
-  let picked = (C.selUid >= 0 && m.z == C.selUid);
-  if (picked) {
-    let hot = vec3<f32>(1.00, 0.72, 0.26);
-    base = mix(base * 1.75, hot, 0.30);
+  // FADE THE CROWD, DO NOT BLEACH THE SUBJECT.
+  //
+  // This pushed the picked animal toward white, which destroyed the very thing
+  // selection is for: cell types are told apart BY COLOUR, so the moment you
+  // picked a creature you could no longer see what its cells were. Contrast now
+  // comes from dimming everything else — the subject keeps its own colours at
+  // full strength and simply stops competing with a thousand neighbours.
+  let anyPicked = (C.selUid >= 0);
+  let picked = (anyPicked && m.z == C.selUid);
+  if (anyPicked && !picked) {
+    // A step back, not a blackout. The crowd stays readable as a living context —
+    // you still want to see what the subject is swimming through — it simply
+    // stops competing. Desaturate a little, dim a little.
+    let grey = vec3<f32>(dot(base, vec3<f32>(0.33, 0.34, 0.33)));
+    base = mix(base, grey, 0.35) * 0.62;
+  } else if (picked) {
+    base = base * 1.25;                 // a lift, not a bleach
   }
-  o.tint = base;
+  // HOW LOUD THE POPULATION IS. At full density the map is a carpet of dots with
+  // the landscape and the current invisible underneath, and both of those are
+  // things you need to see to understand what the population is doing. This is
+  // not a toggle between all and nothing — a faint population is still context.
+  o.tint = base * C.cellInk;
   // Brighter and with more range, so an active cell reads as ALIVE rather than
   // as a slightly paler dot. Activation drives brightness superlinearly.
   // The crowd glows gently; the tracked animal is allowed to be bright. Events
   // pop against a living grey-green broth rather than a field of neon.
   var g0 = clamp(0.55 + 0.55 * abs(a) * abs(a), 0.0, 1.35);
   if (picked) { g0 = clamp(0.85 + 1.4 * abs(a) * abs(a), 0.0, 2.4); }
+  if (anyPicked && !picked) { g0 = g0 * 0.66; }
   o.glow = g0;
   return o;
 }
@@ -757,7 +1353,7 @@ fn mfs(i: MOut) -> @location(0) vec4<f32> {
 let dev, ctx, fmt, sim = null, raf = 0;
 const cam = { cx: 0, cy: 0, zoom: 6 };     // zoom = pixels per world unit
 const view = { field: true, bonds: true, paused: false, spf: 1, evolve: true,
-               cells: true, strain: false, solo: -1, food: true };
+               cells: true, strain: false, solo: -1, food: true, terrain: true, arrows: false, crescent: false, glitter: true, streams: true, cellInk: 1 };
 // ?watch=1 turns this page into a VIEWPORT on the shared run in tools/serve-world.js
 // instead of a simulation of its own. Without it every tab is a separate
 // universe, which is why two browsers never agreed about anything.
@@ -767,7 +1363,12 @@ const WATCH = new URLSearchParams(location.search).has('watch');
 // In watch mode the server owns development and this is only a label.
 const DEVO_VERSION = Number(new URLSearchParams(location.search).get('devo') ?? 2);
 let remoteMaxCells = null, remoteBound = null, remoteMotes = null, resyncing = false;
-let remoteDevo = null;
+// Capacities, for the living/capacity HUD readings. Plain module-scope vars and
+// NOT fields on `sim`: the status fetch that learns them runs during boot,
+// before sim is constructed, and assigning through an undefined sim throws
+// inside the boot path — which the page catches and reports as 'reconnected',
+// so it presents as a connection problem rather than as the TypeError it is.
+let remoteDevo = null, beastCap = null, cellCap = null;
 let serverPaused = false;
 let myPageVersion = null;
 let myBootId = null;
@@ -857,8 +1458,10 @@ async function rebuild() {
     sim.moteCount = 0;
   }
 
-  let beasts = +$('sBeasts').value;
-  let cellsPer = +$('sCpb').value;
+  // Derived from the one knob, exactly as the server does it.
+  let budget = +($('sBudget')?.value ?? 100000);
+  let cellsPer = 12;
+  let beasts = Math.max(16, Math.ceil(budget / 60));
   let remoteParams = null;
 
   // In watch mode the SERVER decides the shape. Asking the viewer to be
@@ -869,6 +1472,10 @@ async function rebuild() {
     try {
       const st = await (await fetch('/status', { cache: 'no-store' })).json();
       beasts = st.beasts; cellsPer = st.cellsPerBeast;
+      // Bodies are limited by ENERGY, not by allocation. bodySlots is the
+      // allocation ceiling and is deliberately far above any real population;
+      // showing the arena width here implied a cap that no longer exists.
+      beastCap = st.bodySlots ?? st.beasts;
       remoteMaxCells = st.maxCells; remoteBound = st.bound; remoteMotes = st.nMotes;
       serverPaused = !!st.paused;
       // The encoding the SERVER is running. In watch mode this page's own
@@ -895,8 +1502,9 @@ async function rebuild() {
         pb.classList.toggle('on', !!st.paused);
       }
       remoteParams = st;                       // the field the server is using
-      $('sBeasts').value = beasts; $('vBeasts').textContent = beasts.toLocaleString();
-      $('sCpb').value = cellsPer; $('vCpb').textContent = cellsPer;
+      if (st.cellBudget) { const b = $('sBudget'), v = $('vBudget');
+        if (b && document.activeElement !== b) b.value = st.cellBudget;
+        if (v) v.textContent = st.cellBudget.toLocaleString(); }
     } catch (e) {
       return fail('cannot reach the world server: ' + e.message +
                   '\nDrop ?watch=1 to run a local simulation instead.');
@@ -935,9 +1543,21 @@ async function rebuild() {
   const bBond = dev.createBuffer({ size: bondCapacity, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
   dev.queue.writeBuffer(bBond, 0, idx);
 
-  const bCam = dev.createBuffer({ size: 128, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  const bCam = dev.createBuffer({ size: 224, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
 
   const module = dev.createShaderModule({ code: RENDER, label: 'render' });
+  // SAY WHAT IS WRONG WITH THE SHADER. A WGSL compile failure does not throw:
+  // createShaderModule succeeds, the pipeline built from it is quietly invalid,
+  // and every frame thereafter logs "invalid due to a previous error" without
+  // ever naming the previous error. That is hundreds of useless lines and no
+  // line number. compilationInfo has the message the whole time.
+  module.getCompilationInfo?.().then(info => {
+    for (const m of info.messages) {
+      if (m.type !== 'error' && m.type !== 'warning') continue;
+      const line = RENDER.split('\n')[m.lineNum - 1] ?? '';
+      console.error(`[render wgsl ${m.type}] ${m.lineNum}:${m.linePos} ${m.message}\n  ${line.trim()}`);
+    }
+  });
 
   const ro = { type: 'read-only-storage' };
   const V = GPUShaderStage.VERTEX, F = GPUShaderStage.FRAGMENT;
@@ -966,6 +1586,11 @@ async function rebuild() {
     fragment: { module, entryPoint: 'fs', targets: [{ format: fmt, blend }] },
     primitive: { topology: 'triangle-list' },
   });
+  const pipeStream = dev.createRenderPipeline({
+    layout: pl, vertex: { module, entryPoint: 'streamVs' },
+    fragment: { module, entryPoint: 'streamFs', targets: [{ format: fmt, blend }] },
+    primitive: { topology: 'line-list' },
+  });
   const pipeBonds = dev.createRenderPipeline({
     layout: pl, vertex: { module, entryPoint: 'lineVs' },
     fragment: { module, entryPoint: 'lineFs', targets: [{ format: fmt, blend }] },
@@ -975,6 +1600,13 @@ async function rebuild() {
   // The standing-crop pass, with its own layout and uniform. Additive blend and
   // no depth: it is a glow under the creatures, not geometry among them.
   const moteMod = dev.createShaderModule({ code: MOTE_WGSL, label: 'motes' });
+  moteMod.getCompilationInfo?.().then(info => {
+    for (const m of info.messages) {
+      if (m.type !== 'error' && m.type !== 'warning') continue;
+      console.error(`[motes wgsl ${m.type}] ${m.lineNum}:${m.linePos} ${m.message}\n  ` +
+                    (MOTE_WGSL.split('\n')[m.lineNum - 1] ?? '').trim());
+    }
+  });
   const moteLayout = dev.createBindGroupLayout({
     entries: [
       { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: 'uniform' } },
@@ -1043,7 +1675,7 @@ async function rebuild() {
   }
 
   sim = {
-    ...built, brains, world, bBond, bCam, bind, evo,
+    ...built, brains, world, bBond, bCam, bind, evo, pipeStream,
     pipeBg, pipeCells, pipeBonds, bondVerts: idx.length, bound, syn,
     pipeMotes, moteLayout, bMoteCam, bMoteData, moteBind, moteCount: nMotes,
     fetchingMotes: false, sinceMotes: 1e9,
@@ -1072,9 +1704,17 @@ async function rebuild() {
   }
   $('hAlive').textContent = evo.alive().toLocaleString();
 
-  $('hBeasts').textContent = beasts.toLocaleString();
-  $('hCells').textContent = built.meta.nCells.toLocaleString();
-  $('hNeurons').textContent = built.arena.N.toLocaleString();
+  // CELLS: living / capacity, not capacity twice.
+  //
+  // This read 'cells 72,000  neurons 72,000' and both were ARENA SLOTS —
+  // beasts x maxCells — while the living population was nearer 25,000. Two
+  // fields showing the same constant, labelled as though they were counts of
+  // different things. There is no separate neuron count to show: every cell is
+  // a CTRNN node, which is the whole brain-is-body claim, so a 'neurons' field
+  // could only ever repeat 'cells'.
+  cellCap = built.meta.nCells;
+  $('hCells').textContent = `–/${built.meta.nCells.toLocaleString()}`;
+  if (beastCap == null) beastCap = beasts;
   $('hSyn').textContent = syn.toLocaleString();
   $('hDevo').textContent = WATCH ? (remoteDevo ?? 'server') : (DEVO_VERSION === 2 ? 'devo2-grn' : 'devo1-positional');
   fitAll();
@@ -1203,7 +1843,7 @@ function selectUid(uid, pos, type, uidArr, n) {
   // Unfold on selection rather than on a second click. Picking an animal and
   // then pressing a button to see what built it is a sequencing rule the user
   // should not have to know; the genome is the thing you selected it FOR.
-  if (changed && uid >= 0) { lastGenome = null; showDevo(); }
+  if (changed && uid >= 0) { lastGenome = null; showDevo(); frameCreature(uid); }
 }
 
 function updateSelInfo() {
@@ -1268,6 +1908,47 @@ async function refreshTrace() {
     updateSelInfo();
   } catch { /* server may not have this endpoint */ }
   finally { sim.tracing = false; }
+}
+
+/**
+ * HOW MUCH EACH CREATURE MOVES, measured from the frames this page already
+ * receives. No new request and no server work: centres per uid, differenced
+ * against the last sample, accumulated as a decaying average so a body that
+ * moved once does not outrank one that keeps moving.
+ *
+ * Used to RANK the creature carousel. "Interestingness" has no measure, so this
+ * uses the one honest proxy available — distance actually covered — and says so.
+ */
+const motion = new Map();          // uid -> { x, y, speed }
+function sampleMotion(pos, type, uidArr, n, step) {
+  if (step === motion.lastStep) return;
+  const dt = Math.max(1, step - (motion.lastStep ?? step));
+  motion.lastStep = step;
+  const sum = new Map();
+  for (let i = 0; i < n; i++) {
+    const u = uidArr[i];
+    if (u < 0 || type[i] < 0) continue;
+    let g = sum.get(u);
+    if (!g) { g = [0, 0, 0]; sum.set(u, g); }
+    g[0] += pos[i * 2]; g[1] += pos[i * 2 + 1]; g[2]++;
+  }
+  const B = sim?.bound ?? 1e9;
+  for (const [u, g] of sum) {
+    const x = g[0] / g[2], y = g[1] / g[2];
+    const prev = motion.get(u);
+    if (prev) {
+      let dx = x - prev.x, dy = y - prev.y;
+      // Ignore a toroidal wrap; it is not travel.
+      if (Math.abs(dx) < B && Math.abs(dy) < B) {
+        const v = Math.hypot(dx, dy) / dt * 1000;
+        prev.speed = prev.speed * 0.9 + v * 0.1;
+      }
+      prev.x = x; prev.y = y;
+    } else {
+      motion.set(u, { x, y, speed: 0 });
+    }
+  }
+  if (motion.size > 20000) motion.clear();      // slots recycle; do not leak
 }
 
 /** Camera follow only; the trace itself now comes from the server. */
@@ -1494,6 +2175,23 @@ async function copyText(label, text, btn) {
 /** The selected animal's genome as TSV: pastes into a sheet or a message. */
 function genomeAsText(j) {
   const lines = [`# animal ${j.uid}  gen ${j.generation}  ${j.cells} cells  lineage ${j.lineage}`];
+  if (j.grn) {
+    // A regulatory network has no property x basis grid to flatten.
+    const G = j.grn;
+    lines.push(['gene', 'bias', 'decay', 'diff', ...Array.from({length: G.k}, (_, k) => `src${k}/w${k}`)].join('\t'));
+    for (let i = 0; i < G.nGene; i++) {
+      const b = i * G.stride, row = [String(i), j.g[b + G.offBias].toFixed(4),
+        j.g[b + G.offDecay].toFixed(4), j.g[b + G.offDiff].toFixed(4)];
+      for (let k = 0; k < G.k; k++) row.push(`${j.g[b + G.offSrc + k]}/${j.g[b + G.offW + k].toFixed(4)}`);
+      lines.push(row.join('\t'));
+    }
+    lines.push('');
+    lines.push(['synapse', ...G.synBasis].join('\t'));
+    const sy = [];
+    for (let k = 0; k < G.nsyn; k++) sy.push(j.g[G.synOff + k].toFixed(4));
+    lines.push(sy.join('\t'));
+    return lines.join('\n');
+  }
   lines.push(['property', ...j.basis].join('\t'));
   j.props.forEach((p, pi) => {
     const row = [p];
@@ -1520,24 +2218,69 @@ async function showGenome() {
     const j = await (await fetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
     if (!j.ok) { box.textContent = j.error; return; }
     lastGenome = j;
+    // The synapse block lives in different places depending on the encoding,
+    // and reading devo1's field names off a devo2 reply is what broke genome
+    // loading with "Cannot read properties of undefined (reading 'map')".
+    const SB = j.grn ? j.grn.synBasis : j.synBasis;
+    const NSY = j.grn ? j.grn.nsyn : j.nsyn;
+    const SOFF = j.grn ? j.grn.synOff : j.synOff;
     let html = `<h4>animal #${j.uid} · gen ${j.generation} · ${j.cells} cells ` +
       `<button id="bCopyGenome" class="mini" title="copy genome as TSV">⧉ copy</button></h4>`;
-    html += '<table><tr><th></th>' +
-      j.basis.map(b => `<td class="hd">${b}</td>`).join('') + '</tr>';
-    j.props.forEach((p, pi) => {
-      html += `<tr><th>${p}</th>`;
-      for (let b = 0; b < j.nb; b++) {
-        const v = j.g[pi * j.nb + b];
-        html += `<td style="${cellShade(v)}" title="${p} x ${j.basis[b]} = ${v.toFixed(3)}">` +
-          `${v >= 0 ? '' : '-'}${Math.abs(v) < 0.05 ? '·' : Math.abs(v).toFixed(1).replace('0.', '.')}</td>`;
+    if (j.grn) {
+      // A REGULATORY NETWORK reads as rows of "who regulates me", not as a grid
+      // of basis coefficients. Only genes that DO something are shown: the named
+      // outputs, plus any gene with a live regulator. Sixty-four rows of mostly
+      // silenced edges is not a genome viewer, it is a hex dump.
+      const G = j.grn, name = (i) =>
+        i < G.maternal.length ? G.maternal[i]
+        : (i >= G.outBase && i - G.outBase < G.outputs.length) ? G.outputs[i - G.outBase]
+        : `g${i}`;
+      html += `<p class="note">${j.encoding} · ${G.nGene} gene products, ` +
+        `${G.k} regulators each. Rows are genes that do something.</p>`;
+      html += '<table><tr><th>gene</th><td class="hd">bias</td><td class="hd">decay</td>' +
+        '<td class="hd">diff</td><td class="hd" colspan="' + G.k + '">regulated by</td></tr>';
+      for (let i = 0; i < G.nGene; i++) {
+        const b = i * G.stride;
+        const regs = [];
+        for (let k = 0; k < G.k; k++) {
+          const sIdx = j.g[b + G.offSrc + k];
+          if (!(sIdx >= 0)) continue;
+          regs.push([Math.floor(sIdx) % G.nGene, j.g[b + G.offW + k]]);
+        }
+        const isOut = i >= G.outBase && i - G.outBase < G.outputs.length;
+        if (!regs.length && !isOut) continue;
+        const bias = j.g[b + G.offBias], dec = j.g[b + G.offDecay], dif = j.g[b + G.offDiff];
+        html += `<tr><th>${name(i)}</th>` +
+          `<td style="${cellShade(bias)}">${bias.toFixed(1)}</td>` +
+          `<td>${(0.6 * Math.pow(10, Math.max(-1.2, Math.min(1.2, dec)))).toFixed(2)}</td>` +
+          `<td>${(0.02 * Math.pow(10, Math.max(-1, Math.min(2, dif)))).toFixed(3)}</td>`;
+        for (let k = 0; k < G.k; k++) {
+          const r = regs[k];
+          html += r
+            ? `<td style="${cellShade(r[1])}" title="${name(r[0])} -> ${name(i)} = ${r[1].toFixed(3)}">` +
+              `${name(r[0])}<sub>${r[1] >= 0 ? '+' : '−'}</sub></td>`
+            : '<td>·</td>';
+        }
+        html += '</tr>';
       }
-      html += '</tr>';
-    });
+    } else {
+      html += '<table><tr><th></th>' +
+        j.basis.map(b => `<td class="hd">${b}</td>`).join('') + '</tr>';
+      j.props.forEach((p, pi) => {
+        html += `<tr><th>${p}</th>`;
+        for (let b = 0; b < j.nb; b++) {
+          const v = j.g[pi * j.nb + b];
+          html += `<td style="${cellShade(v)}" title="${p} x ${j.basis[b]} = ${v.toFixed(3)}">` +
+            `${v >= 0 ? '' : '-'}${Math.abs(v) < 0.05 ? '·' : Math.abs(v).toFixed(1).replace('0.', '.')}</td>`;
+        }
+        html += '</tr>';
+      });
+    }
     html += '</table><h4>synapse weights (how wiring is expressed)</h4><table><tr>' +
-      j.synBasis.map(b => `<td class="hd">${b}</td>`).join('') + '</tr><tr>';
-    for (let k = 0; k < j.nsyn; k++) {
-      const v = j.g[j.synOff + k];
-      html += `<td style="${cellShade(v)}" title="${j.synBasis[k]} = ${v.toFixed(3)}">` +
+      SB.map(b => `<td class="hd">${b}</td>`).join('') + '</tr><tr>';
+    for (let k = 0; k < NSY; k++) {
+      const v = j.g[SOFF + k];
+      html += `<td style="${cellShade(v)}" title="${SB[k]} = ${v.toFixed(3)}">` +
         `${v >= 0 ? '' : '-'}${Math.abs(v) < 0.05 ? '·' : Math.abs(v).toFixed(1).replace('0.', '.')}</td>`;
     }
     html += '</tr></table>';
@@ -1630,16 +2373,28 @@ function drawDevo() {
 
   const built = Math.max(1, Math.round(cells.length * devoT));
 
-  // MATERNAL GRADIENT behind the body — the thing the genome is reading.
+  // THE DIVISION TREE — which cell budded from which.
+  //
+  // This is the development PROCESS rather than its outcome: every cell but the
+  // zygote came from a specific mother, devo2 records it, and drawing those
+  // links shows the body growing as a lineage instead of as a set of dots
+  // appearing in order. Where the tree is a path, the tissue is a filament;
+  // where it fans, the body branched.
+  //
+  // (This slot used to draw a maternal `presence` field via devo.express, which
+  // is a Dev 1.0 function. devo2 has neither, so it would have thrown the moment
+  // anyone pressed "stages".)
   if (devoStages) {
-    const N = 26;
-    for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
-      const ap = (i / (N - 1)) * 2 - 1, dv = (j / (N - 1)) * 2 - 1;
-      const v = devo.express(devoRun.g, 'presence', ap, dv);
-      g2.fillStyle = v > 0 ? `rgba(90,150,130,${0.06 + 0.10 * v})`
-                           : `rgba(120,80,90,${0.05 + 0.08 * -v})`;
-      const x0 = pad + ((ap + 1) / 2) * (hi - lo) * sc, y0 = pad + ((dv + 1) / 2) * (yhi - ylo) * sc;
-      g2.fillRect(x0 - 3, y0 - 3, 7, 7);
+    for (let i = 0; i < built; i++) {
+      const m = cells[i].mother;
+      if (m === undefined || m < 0 || m >= built) continue;
+      const age = 1 - i / Math.max(1, built);
+      g2.strokeStyle = `rgba(255,190,120,${(0.20 + 0.55 * age).toFixed(3)})`;
+      g2.lineWidth = 2.2 * dpr;
+      g2.beginPath();
+      g2.moveTo(cx(cells[m].x), cy(cells[m].y));
+      g2.lineTo(cx(cells[i].x), cy(cells[i].y));
+      g2.stroke();
     }
   }
 
@@ -1677,7 +2432,7 @@ function drawDevo() {
   });
 
   g2.fillStyle = '#4a625c'; g2.font = `${10 * dpr}px ui-monospace, monospace`;
-  g2.fillText('head', 4 * dpr, h - 4 * dpr);
+  g2.fillText(`${built}/${cells.length} divisions`, 4 * dpr, h - 4 * dpr);
   const rt = 'tail';
   g2.fillText(rt, w - g2.measureText(rt).width - 4 * dpr, h - 4 * dpr);
 
@@ -1719,6 +2474,75 @@ async function showDevo() {
     if (devoT >= 1) clearInterval(devoTimer);
   }, 30);
 }
+/**
+ * A GALLERY OF BODIES, because clicking one cell in a crowd of twenty thousand
+ * is not a way to choose an animal. Each tile develops a living genome with the
+ * same encoding the world uses and draws the result; clicking one selects that
+ * animal properly, scope and all.
+ */
+async function showGallery() {
+  const box = $('galleryBox');
+  if (!box) return;
+  box.textContent = 'developing…';
+  try {
+    const j = await (await fetch('/genomes?n=48', { cache: 'no-store' })).json();
+    // RANKED BY MOVEMENT. 'Interestingness' has no measure; distance actually
+    // covered is the honest proxy and is already being sampled from frames.
+    // Ties and unseen animals fall back on generation, so a fresh gallery is
+    // not arbitrary before any motion has been observed.
+    j.rows.sort((a, b) => ((motion.get(b.uid)?.speed ?? 0) - (motion.get(a.uid)?.speed ?? 0))
+                       || (b.generation - a.generation));
+    j.rows = j.rows.slice(0, 16);
+    const d = await ensureDevo();
+    const shared = await import('./lib/devo.js');
+    box.textContent = '';
+    for (const row of j.rows) {
+      const g = Float32Array.from(row.g);
+      const grown = d.develop(g, { extent: d.DEFAULT_EXTENT ?? 3.0, maxCells: 60 });
+      const whole = shared.largestPiece(grown.cells, shared.bond(grown.cells, { maxDegree: 6 }));
+      const cv = document.createElement('canvas');
+      cv.width = 132; cv.height = 132;
+      const sp = motion.get(row.uid)?.speed ?? 0;
+      cv.title = `#${row.uid} · gen ${row.generation} · ${whole.cells.length} cells · speed ${sp.toFixed(2)}`;
+      if (row.uid === sel.uid) cv.className = 'sel';
+      const x = cv.getContext('2d');
+      x.fillStyle = '#070c0b'; x.fillRect(0, 0, 132, 132);
+      const cs = whole.cells;
+      if (cs.length) {
+        let lo = Infinity, hi = -Infinity, ylo = Infinity, yhi = -Infinity;
+        for (const c of cs) { lo = Math.min(lo, c.x); hi = Math.max(hi, c.x);
+          ylo = Math.min(ylo, c.y); yhi = Math.max(yhi, c.y); }
+        const sc = Math.min(112 / Math.max(0.6, hi - lo), 112 / Math.max(0.6, yhi - ylo));
+        const px = (v) => 10 + (v - lo) * sc, py = (v) => 10 + (v - ylo) * sc;
+        x.strokeStyle = '#24443f'; x.lineWidth = 1.4;
+        for (const b of whole.bonds) {
+          x.beginPath(); x.moveTo(px(cs[b.i].x), py(cs[b.i].y));
+          x.lineTo(px(cs[b.j].x), py(cs[b.j].y)); x.stroke();
+        }
+        const tint = ['#8f9c97', '#70b8bd', '#d98f57', '#a37cb8'];
+        const kind = (c) => { let best = 0, v = 0.15;
+          if (c.sense > v) { best = 1; v = c.sense; }
+          if (c.contract > v) { best = 2; v = c.contract; }
+          if (c.grip > v) { best = 3; v = c.grip; } return best; };
+        for (const c of cs) {
+          x.beginPath(); x.arc(px(c.x), py(c.y), 3.2, 0, Math.PI * 2);
+          x.fillStyle = tint[kind(c)]; x.fill();
+        }
+      } else {
+        x.fillStyle = '#5a4a42'; x.font = '11px ui-monospace, monospace';
+        x.fillText('builds nothing', 8, 68);
+      }
+      cv.onclick = () => {
+        selectUid(row.uid);
+        for (const o of box.querySelectorAll('canvas')) o.className = '';
+        cv.className = 'sel';
+      };
+      box.appendChild(cv);
+    }
+    if (!j.rows.length) box.textContent = 'no living genomes yet';
+  } catch (e) { box.textContent = 'gallery failed: ' + e.message; }
+}
+on('bGallery', 'onclick', showGallery);
 on('bDevo', 'onclick', showDevo);
 on('bDevoStage', 'onclick', (e) => {
   devoStages = !devoStages;
@@ -1965,6 +2789,7 @@ function applyFrame(ab) {
   sim.lastPos = pos; sim.lastAct = act; sim.lastType = type;
   sim.lastUid = uid; sim.lastEnergy = energy;
   sampleSelected(pos, act, type, uid, n, dv.getUint32(8, true));
+  sampleMotion(pos, type, uid, n, dv.getUint32(8, true));
 
   const q = dev.queue;
   q.writeBuffer(sim.world.bPos, 0, pos);
@@ -2017,7 +2842,8 @@ function applyFrame(ab) {
     sim.lastServerAt = now;
   }
   $('hStep').textContent = sim.serverSteps.toLocaleString();
-  $('hAlive').textContent = dv.getUint32(16, true).toLocaleString();
+  $('hCells').textContent = `${L.toLocaleString()}/${(cellCap ?? L).toLocaleString()}`;
+  $('hAlive').textContent = `${dv.getUint32(16, true).toLocaleString()}/${(beastCap ?? '?').toLocaleString?.() ?? beastCap}`;
   $('hBirths').textContent = dv.getUint32(20, true).toLocaleString();
   $('hDeaths').textContent = dv.getUint32(24, true).toLocaleString();
   $('hGen').textContent = dv.getUint32(28, true);
@@ -2025,10 +2851,74 @@ function applyFrame(ab) {
   $('hEnergy').textContent = dv.getFloat32(36, true).toFixed(1);
 }
 
+// RENDER SCALE — the single biggest performance knob there is.
+//
+// Fragment cost is quadratic in this. At dpr 2 a full window is ~5 megapixels,
+// every one of which was running the terrain, the mud, the flow and the glitter;
+// the browser ate the GPU and the simulation sharing it fell from 100 steps a
+// second to 47. Two-thirds scale is a little over TWICE as cheap and the world
+// is a smooth field drawn with antialiased quads, so the difference is hard to
+// see and the difference in how fast evolution runs is not.
+//
+// Exposed rather than hardcoded because it is a genuine trade — a still to look
+// at wants 1.0, a long unattended run wants 0.5 — and because the right value
+// depends on the machine.
+let renderScale = Number(localStorage.getItem('mz.rscale')) || 0.7;
+// How many streamlines, and how long. side*side lines of STREAM_STEPS segments.
+// Integration is O(steps^2/2) per line, so these two multiply — 26x26 lines of
+// 34 segments is about 480k flow evaluations a frame, which is small beside a
+// single megapixel of background.
+const STREAM_SIDE = 26, STREAM_STEPS = 34;
 function resize() {
-  const dpr = Math.min(devicePixelRatio || 1, 2);
-  canvas.width = Math.floor(innerWidth * dpr);
-  canvas.height = Math.floor(innerHeight * dpr);
+  const dpr = Math.min(devicePixelRatio || 1, 2) * renderScale;
+  canvas.width = Math.max(1, Math.floor(innerWidth * dpr));
+  canvas.height = Math.max(1, Math.floor(innerHeight * dpr));
+}
+
+/**
+ * FRAME THE CHOSEN CREATURE, smoothly.
+ *
+ * Jumping the camera is disorienting — you lose track of where the animal was in
+ * the world, which is most of what selection is for. This eases centre and zoom
+ * together on a cubic in-out curve so the eye can follow the move.
+ *
+ * Target: the body fills about a fifth of the shorter screen dimension. Big
+ * enough to read its cells, small enough to keep its surroundings on screen,
+ * because a creature with no context is just a diagram.
+ */
+let camAnim = null;
+function frameCreature(uid, frac = 0.2) {
+  if (!sim?.lastPos || uid < 0) return;
+  const n = sim.meta.nCells, P = sim.lastPos, T = sim.lastType, U = sim.lastUid;
+  let sx = 0, sy = 0, k = 0, lo = Infinity, hi = -Infinity, ylo = Infinity, yhi = -Infinity;
+  for (let i = 0; i < n; i++) {
+    if (U[i] !== uid || T[i] < 0) continue;
+    const x = P[i * 2], y = P[i * 2 + 1];
+    sx += x; sy += y; k++;
+    lo = Math.min(lo, x); hi = Math.max(hi, x);
+    ylo = Math.min(ylo, y); yhi = Math.max(yhi, y);
+  }
+  if (!k) return;
+  const span = Math.max(1.2, Math.max(hi - lo, yhi - ylo));
+  const target = (Math.min(innerWidth, innerHeight) * frac) / span;
+  camAnim = {
+    t0: performance.now(), ms: 700,
+    x0: cam.cx, y0: cam.cy, z0: cam.zoom,
+    x1: sx / k, y1: sy / k,
+    z1: Math.max(2, Math.min(400, target)),
+  };
+}
+function stepCamAnim(now) {
+  if (!camAnim) return;
+  const u = Math.min(1, (now - camAnim.t0) / camAnim.ms);
+  // Cubic in-out: slow to leave, slow to arrive, quick through the middle.
+  const e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+  cam.cx = camAnim.x0 + (camAnim.x1 - camAnim.x0) * e;
+  cam.cy = camAnim.y0 + (camAnim.y1 - camAnim.y0) * e;
+  // Zoom in LOG space, or the first half of the move covers most of the change.
+  cam.zoom = Math.exp(Math.log(camAnim.z0) + (Math.log(camAnim.z1) - Math.log(camAnim.z0)) * e);
+  $('hZoom').textContent = cam.zoom.toFixed(2);
+  if (u >= 1) camAnim = null;
 }
 
 function fitAll() {
@@ -2043,7 +2933,13 @@ function fitAll() {
 let last = performance.now(), fps = 0, simRate = 0, acc = 0, frames = 0;
 
 function writeCam() {
-  const dpr = Math.min(devicePixelRatio || 1, 2);
+  // THE RENDER DPR, not the display dpr. resize() sizes the backing store by
+  // renderScale as well, so anything converting world units to device pixels
+  // must use the same product or the two disagree — which drew the world
+  // 1/renderScale too large and, because picking works in CSS pixels from
+  // cam.zoom, put every click that fraction away from where the cell appeared.
+  // "Nothing there" while clicking directly on a creature.
+  const dpr = Math.min(devicePixelRatio || 1, 2) * renderScale;
   const w = canvas.width, h = canvas.height;
   // NDC units per world unit. zoom is CSS px per world unit, so multiply by dpr
   // to get device px, then 2/size to reach NDC.
@@ -2052,9 +2948,17 @@ function writeCam() {
   // rather than recomputing, or the two layers drift apart under zoom.
   if (sim?.bMoteCam) {
     const mc = new Float32Array(8);
-    mc[0] = cam.x; mc[1] = cam.y; mc[2] = nx; mc[3] = ny;
-    mc[4] = 0.6;                 // world-unit radius of a full mote
-    mc[5] = 0.85;                // overall brightness
+    // cam.cx/cy, not cam.x/y — the camera has never had x or y, so this was
+    // writing undefined into a Float32Array, i.e. NaN, and the motes were being
+    // drawn at a position that is not a position.
+    mc[0] = cam.cx; mc[1] = cam.cy; mc[2] = nx; mc[3] = ny;
+    // Sized and dimmed for a layer that is now VISIBLE FOR THE FIRST TIME.
+    // With the camera reading NaN these never drew at all, so nothing had ever
+    // been tuned against what they actually look like — at 0.6/0.85 the standing
+    // crop is a carpet that buries the landscape underneath it. Food should read
+    // as specks on ground you can still see.
+    mc[4] = 0.42;                // world-unit radius of a full mote
+    mc[5] = 0.40;                // overall brightness
     dev.queue.writeBuffer(sim.bMoteCam, 0, mc);
   }
   // Cells keep a physical size in world units, with a floor so the population
@@ -2068,7 +2972,7 @@ function writeCam() {
   // looking at it.
   const rWorld = Math.max(0.34, 1.15 / cam.zoom);
 
-  const b = new ArrayBuffer(112), dv = new DataView(b);
+  const b = new ArrayBuffer(224), dv = new DataView(b);
   dv.setFloat32(0, cam.cx, true); dv.setFloat32(4, cam.cy, true);
   dv.setFloat32(8, nx, true); dv.setFloat32(12, ny, true);
   dv.setFloat32(16, rWorld, true);
@@ -2085,7 +2989,7 @@ function writeCam() {
   // across; resolve only those still ~2 device pixels wide or wider. Left as a
   // FRACTION rather than floored: the shader fades the finest octave in by
   // weight, so zooming reveals detail smoothly instead of stepping.
-  const pxPerWorld = cam.zoom * dpr;
+  const pxPerWorld = cam.zoom * dpr;   // dpr here is the RENDER dpr, below
   const fs = sim.world.params.flowScale;
   const oct = Math.max(1, Math.min(5, 1 + Math.log2(Math.max(1, fs * pxPerWorld / 2))));
   dv.setFloat32(52, oct, true);
@@ -2101,7 +3005,7 @@ function writeCam() {
   const bandPx = bandWorld * pxPerWorld;
   dv.setFloat32(60, Math.min(1, Math.max(0, (bandPx - 2.5) / 5.5)), true);
   dv.setFloat32(64, 0.62, true);            // rest length, for strain colouring
-  const rp = sim.remote ?? {};
+  const rp = sim.remote ?? sim.world?.params ?? {};
   dv.setFloat32(68, rp.resScale ?? 0.35, true);
   dv.setUint32(72, rp.resSeed ?? 91, true);
   dv.setFloat32(76, (sim.serverSteps ?? 0) * (rp.dt ?? 0.015), true);
@@ -2111,6 +3015,68 @@ function writeCam() {
   dv.setFloat32(92, view.food ? 1 : 0, true);
   dv.setInt32(96, sel.uid, true);
   dv.setFloat32(100, cam.zoom, true);
+
+  // Geography, straight from the running parameters. Defaults here match
+  // lib/world_gpu.js only as a fallback for a server that predates them; the
+  // live values win, so a swept terrain is drawn as swept.
+  const hs = rp.heightScale ?? 0.018, ms = rp.mudScale ?? 0.026;
+  dv.setFloat32(104, hs, true);
+  dv.setUint32(108, rp.heightSeed ?? 5150, true);
+  dv.setFloat32(112, ms, true);
+  dv.setUint32(116, rp.mudSeed ?? 8801, true);
+  dv.setFloat32(120, rp.lowLush ?? 0.75, true);
+  // Terrain has its own LOD because it is ~20x coarser than the flow field:
+  // sharing the flow's octave count either aliased the ground or left the
+  // hills as smooth blobs at every zoom a body is actually watched at.
+  const tScale = Math.max(hs, ms);
+  dv.setFloat32(124, Math.max(1, Math.min(5, 1 + Math.log2(Math.max(1, tScale * pxPerWorld * 3)))), true);
+  dv.setFloat32(128, view.terrain ? 1 : 0, true);
+  dv.setFloat32(132, rp.warpAmt ?? 0.55, true);
+  dv.setFloat32(136, rp.ridgeAmt ?? 0.42, true);
+  dv.setFloat32(140, rp.mudBank ?? 0.52, true);
+
+  // ARROWS. Spacing snaps to powers of two of a world-unit base so it is fixed
+  // in the WORLD, not on the screen: arrows stay nailed to their patch of
+  // ground as the camera moves, and thin out by halving rather than sliding.
+  // Sliding arrows read as the field itself moving, which is a lie about a
+  // field that is stationary in space.
+  const wantPx = 96;                          // desired on-screen spacing
+  const rawSp = wantPx / Math.max(1e-4, pxPerWorld);
+  const arrowSp = Math.pow(2, Math.round(Math.log2(Math.max(0.5, rawSp))));
+  const spPx = arrowSp * pxPerWorld;
+  dv.setFloat32(144, view.arrows ? 1 : 0, true);
+  dv.setFloat32(148, arrowSp, true);
+  // Reference speed: what counts as "fast" here. Taken from the flow strength
+  // the world is actually running, so the arrows recalibrate when it is swept
+  // rather than saturating or vanishing.
+  dv.setFloat32(152, Math.max(1e-3, (rp.flowStr ?? 1) * 0.9 + (rp.gravity ?? 0) * 0.5), true);
+  // Fade out when they get too small to read, instead of drawing a grey haze.
+  // Full ink. The only fade left is when arrows would be smaller than a glyph,
+  // and even then it bottoms out visible rather than at nothing.
+  dv.setFloat32(156, 0.35 + 0.6 * Math.min(1, Math.max(0, (spPx - 12) / 22)), true);
+  dv.setFloat32(160, rp.gravity ?? 0.55, true);
+  dv.setFloat32(164, rp.mudFlow ?? 3.0, true);
+  dv.setFloat32(168, 1 / Math.max(1e-4, pxPerWorld), true);
+  dv.setFloat32(172, rp.flowTerrain ?? 0.62, true);
+  dv.setFloat32(176, view.crescent ? 1 : 0, true);
+  dv.setFloat32(180, view.glitter ? 1 : 0, true);
+  // Mote spacing is fixed in WORLD units and snaps by powers of two with zoom,
+  // for the same reason the arrows do: motes nailed to the ground read as the
+  // water moving, motes nailed to the screen read as the camera moving.
+  const glitSp = Math.pow(2, Math.round(Math.log2(Math.max(0.25, 30 / Math.max(1e-4, pxPerWorld)))));
+  dv.setFloat32(184, glitSp, true);
+  dv.setFloat32(188, 0.16, true);
+  dv.setFloat32(192, rp.shoreWidth ?? 0.30, true);
+  dv.setFloat32(196, rp.flowDry ?? 0.07, true);
+  // Seed spacing snaps by powers of two in WORLD units so the lines hold still
+  // as the camera moves; the lattice is sized so the visible area is covered
+  // whatever the zoom.
+  const streamSp = Math.pow(2, Math.round(Math.log2(Math.max(0.5, 46 / Math.max(1e-4, pxPerWorld)))));
+  dv.setFloat32(200, streamSp, true);
+  dv.setFloat32(204, STREAM_STEPS, true);
+  dv.setFloat32(208, STREAM_SIDE, true);
+  dv.setFloat32(212, 0.62, true);
+  dv.setFloat32(216, view.cellInk, true);
   dev.queue.writeBuffer(sim.bCam, 0, b);
 }
 
@@ -2275,6 +3241,15 @@ function loop() {
     pass.draw(6, sim.moteCount);
   }
 
+  // Streamlines above the ground and below the creatures: they are the setting.
+  // Note the bind group is set again after setPipeline — see the block above;
+  // the mote pass has a different layout and invalidates whatever was bound.
+  if (view.streams && sim.pipeStream) {
+    pass.setPipeline(sim.pipeStream);
+    pass.setBindGroup(0, sim.bind);
+    pass.draw(STREAM_SIDE * STREAM_SIDE * STREAM_STEPS * 2);
+  }
+
   if (view.bonds && sim.bondVerts) {
     pass.setPipeline(sim.pipeBonds);
     pass.setBindGroup(0, sim.bind);
@@ -2290,6 +3265,7 @@ function loop() {
   drawScope();
   drawDevo();
 
+  stepCamAnim(t);
   frames++; acc += t - last; last = t;
   if (acc > 400) {
     fps = frames * 1000 / acc; frames = 0; acc = 0;
@@ -2344,6 +3320,7 @@ canvas.addEventListener('wheel', e => {
   const mx = e.clientX - rect.width / 2, my = e.clientY - rect.height / 2;
   const wx = cam.cx + mx / cam.zoom, wy = cam.cy - my / cam.zoom;
   cam.zoom = Math.min(400, Math.max(0.05, cam.zoom * Math.exp(-e.deltaY * 0.0016)));
+  camAnim = null;                     // the user has taken the camera
   cam.cx = wx - mx / cam.zoom; cam.cy = wy + my / cam.zoom;
 }, { passive: false });
 
@@ -2367,6 +3344,38 @@ canvas.addEventListener('pointercancel', clearTouch);
 
 /* ---------------------------------------------------------------- controls */
 
+/**
+ * A WORLD KNOB, WHEREVER THE WORLD IS.
+ *
+ * These wrote to sim.world — the page's OWN simulation — which in watch mode is
+ * not the world on screen. Every physics slider therefore did nothing at all
+ * while watching the server, silently: the number moved, the label updated, and
+ * the shared world carried on exactly as before. That is worse than a disabled
+ * control, because it reads as "the current has no effect on the creatures"
+ * when what it means is "this slider is not connected to anything".
+ *
+ * Sends are coalesced on a short timer, because a drag emits an event per pixel
+ * and the server should not take a hundred POSTs to move one slider.
+ */
+const pendingTune = {};
+let tuneTimer = 0;
+function tune(patch) {
+  if (!WATCH) { sim?.world?.writeParams(patch); return; }
+  Object.assign(pendingTune, patch);
+  if (tuneTimer) return;
+  tuneTimer = setTimeout(async () => {
+    tuneTimer = 0;
+    const send = { ...pendingTune };
+    for (const k of Object.keys(pendingTune)) delete pendingTune[k];
+    try {
+      await fetch('/control', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'tune', params: send }),
+      });
+    } catch { /* the link box already reports a dead server */ }
+  }, 120);
+}
+
 const bindSlider = (id, vid, fmtFn, apply) => {
   const el = $(id);
   el.addEventListener('input', () => {
@@ -2375,16 +3384,121 @@ const bindSlider = (id, vid, fmtFn, apply) => {
     apply(typeof v === 'number' ? v : +el.value);
   });
 };
-bindSlider('sStr', 'vStr', v => v / 100, v => sim?.world.writeParams({ flowStr: v }));
-bindSlider('sScale', 'vScale', v => v / 100, v => sim?.world.writeParams({ flowScale: v }));
-bindSlider('sDrag', 'vDrag', v => v / 100, v => sim?.world.writeParams({ drag: v }));
-bindSlider('sSpring', 'vSpring', v => v, v => sim?.world.writeParams({ springK: v }));
-bindSlider('sCon', 'vCon', v => v / 100, v => sim?.world.writeParams({ contract: v }));
+bindSlider('sStr', 'vStr', v => v / 100, v => tune({ flowStr: v }));
+bindSlider('sScale', 'vScale', v => v / 100, v => tune({ flowScale: v }));
+bindSlider('sDrag', 'vDrag', v => v / 100, v => tune({ drag: v }));
+bindSlider('sSpring', 'vSpring', v => v, v => tune({ springK: v }));
+bindSlider('sCon', 'vCon', v => v / 100, v => tune({ contract: v }));
+bindSlider('sMudFlow', 'vMudFlow', v => v / 100, v => tune({ mudFlow: v }));
 $('sSpf').addEventListener('input', e => { view.spf = +e.target.value; $('vSpf').textContent = view.spf; });
-$('sBeasts').addEventListener('input', e => $('vBeasts').textContent = (+e.target.value).toLocaleString());
-$('sCpb').addEventListener('input', e => $('vCpb').textContent = e.target.value);
+$('sBudget').addEventListener('input', e => $('vBudget').textContent = (+e.target.value).toLocaleString());
 
 $('bField').onclick = e => { view.field = !view.field; e.target.classList.toggle('on', view.field); };
+$('bTerrain').onclick = e => { view.terrain = !view.terrain; e.target.classList.toggle('on', view.terrain); };
+// PANEL WIDTH. Dragged, clamped, and remembered — a fixed width that clips its
+// own controls is a control you cannot reach.
+(() => {
+  const grip = $('panelGrip'), panel = document.querySelector('aside');
+  const setW = (w) => {
+    const lo = 200, hi = Math.min(620, innerWidth * 0.6);
+    const v = Math.max(lo, Math.min(hi, w));
+    document.documentElement.style.setProperty('--panelw', v + 'px');
+    grip.style.right = v + 'px';
+    try { localStorage.setItem('mz.panelw', String(v)); } catch { /* private mode */ }
+    return v;
+  };
+  let w = setW(Number(localStorage.getItem('mz.panelw')) || 300);
+  let drag = false;
+  grip.addEventListener('pointerdown', e => {
+    drag = true; grip.classList.add('drag'); grip.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  addEventListener('pointermove', e => { if (drag) w = setW(innerWidth - e.clientX); });
+  addEventListener('pointerup', () => { drag = false; grip.classList.remove('drag'); });
+  addEventListener('resize', () => setW(w));
+  // Double-click the grip to snap back to a width that fits everything.
+  grip.addEventListener('dblclick', () => { w = setW(320); });
+})();
+
+$('bArrows').onclick = e => { view.arrows = !view.arrows; e.target.classList.toggle('on', view.arrows); };
+// EXTRAS — intelligent design. Copy the selected creature into the world.
+(() => {
+  const nEl = $('sIdN'), mEl = $('sIdM');
+  const mutOf = () => Number(mEl.value) / 100;
+  const show = () => {
+    $('vIdN').textContent = nEl.value;
+    const m = mutOf();
+    $('vIdM').textContent = m === 0 ? 'clones' : m.toFixed(2) + 'x';
+  };
+  nEl.oninput = show; mEl.oninput = show; show();
+
+  // Keep the target line in step with whatever is selected, using the same
+  // composition the inspector already computes — no second source of truth.
+  setInterval(() => {
+    const e = scopeStore.get(sel.uid);
+    const el = $('idTarget');
+    if (sel.uid < 0 || !e || !e.order.length) {
+      el.textContent = 'Select a creature first, then stamp it across the world.';
+      $('bImplant').disabled = true;
+      return;
+    }
+    const names = ['neuron', 'sensor', 'muscle', 'anchor'];
+    const c = [0, 0, 0, 0];
+    for (let r = 0; r < e.order.length; r++) if (e.types[r] >= 0) c[e.types[r]]++;
+    el.innerHTML = `Your animal <b>#${sel.uid}</b> — ${e.order.length} cells, ` +
+      names.map((nm, k) => `${c[k]} ${nm}`).join(', ');
+    $('bImplant').disabled = false;
+  }, 900);
+
+  $('bImplant').onclick = async () => {
+    if (sel.uid < 0) return;
+    const btn = $('bImplant'), out = $('idResult');
+    btn.disabled = true; out.textContent = 'seeding…';
+    try {
+      const r = await (await fetch('/control', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'implant', uid: sel.uid,
+                               copies: Number(nEl.value), mutate: mutOf() }),
+      })).json();
+      out.textContent = r.ok
+        ? `placed ${r.made} of ${nEl.value}` +
+          (r.noRoom ? `, ${r.noRoom} found no room` : '') +
+          (r.failedEgg ? `, ${r.failedEgg} eggs failed to develop` : '') +
+          ` — intervention #${r.interventions}, ${r.mintedEnergy.toFixed(0)} energy minted so far`
+        : `failed: ${r.error}`;
+    } catch (e) { out.textContent = 'failed: ' + e.message; }
+    btn.disabled = false;
+  };
+})();
+
+// RENDER SCALE. Costs nothing but sharpness and buys back simulation speed on
+// a shared GPU, so it is worth being able to reach without editing anything.
+(() => {
+  const el = $('sRScale'); if (!el) return;
+  el.value = String(Math.round(renderScale * 100));
+  $('vRScale').textContent = renderScale.toFixed(2);
+  el.oninput = () => {
+    renderScale = Number(el.value) / 100;
+    $('vRScale').textContent = renderScale.toFixed(2);
+    try { localStorage.setItem('mz.rscale', String(renderScale)); } catch { /* private mode */ }
+    resize();
+  };
+})();
+
+$('bGlitter').onclick = e => { view.glitter = !view.glitter; e.target.classList.toggle('on', view.glitter); };
+// CELL BRIGHTNESS. The population is usually the loudest layer and often the
+// least informative one — what a creature is doing is mostly a fact about where
+// it is, and where it is is the map underneath.
+(() => {
+  const el = $('sCellInk'); if (!el) return;
+  el.oninput = () => {
+    view.cellInk = Number(el.value) / 100;
+    $('vCellInk').textContent = view.cellInk.toFixed(2);
+  };
+})();
+
+$('bStreams').onclick = e => { view.streams = !view.streams; e.target.classList.toggle('on', view.streams); };
+$('bCrescent').onclick = e => { view.crescent = !view.crescent; e.target.classList.toggle('on', view.crescent); };
 $('bFood').onclick = e => { view.food = !view.food; e.target.classList.toggle('on', view.food); };
 
 /**

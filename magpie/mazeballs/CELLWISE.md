@@ -1,5 +1,14 @@
 # The organism is a global variable, and it should not exist
 
+> ### ⚠ SUPERSEDED — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md)
+>
+> This document is **history**. It describes a cellwise redesign that has since been built, differently, and parts of it are no
+> longer true of the code. It is kept because it named the problem before the solution existed, not as a description of the
+> world.
+>
+> **For what the world actually is and does now, read `WORLD-MANUAL.md`.** Where
+> this file disagrees with the manual, the manual is right.
+
 A First Law violation sitting at the centre of the code, named here so it is not
 glossed. Raised by the human: *"even operating at a cell-assembly level is a form
 of globality unjustified by raw physics."* Correct, and `CLAUDE.md` already says

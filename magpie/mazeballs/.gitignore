@@ -27,3 +27,4 @@ runs/*.jsonl
 # deployed HTML. Ignoring it would mean publishing nothing.
 notes/node_modules/
 notes/_site/
+runs/lineage.csv

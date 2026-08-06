@@ -72,14 +72,57 @@ export const CELL_MUSCLE = 2;
  * The sign bit is never set, so `meta.x < 0` still means "vacated slot"
  * everywhere in the shader. Dead cells are written as -1 as before.
  */
-export function packMeta(type, contractility, grippiness, apNorm = 0.5) {
+
+/** Body size plus the two consumption axes, into cmeta.w. Size lives in the low
+ *  byte (bodies never approach 255 cells), nutrition and toughness above it. */
+export function packSize(bodySize, tag, toughness, enzyme = 0.5) {
+  // Nutrition is not stored — it is read from the cell's own energy at use
+  // time. That byte now carries the surface TAG instead.
+  const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
+  const q7 = (v) => Math.max(0, Math.min(127, Math.round((v || 0) * 127)));
+  return (Math.max(0, Math.min(255, bodySize | 0)))
+       | (q(tag) << 8) | (q(toughness) << 16) | (q7(enzyme) << 24);
+}
+export function packMeta(type, contractility, grippiness, apNorm = 0.5, senseTune = 0) {
+  // A SLOT THAT IS NOT A CELL MUST PACK NEGATIVE.
+  //
+  // Every kernel decides whether a slot is real with `cmeta[i].x < 0`, and the
+  // type went in as `type & 3`. For an unallocated slot ctype is -1, and
+  // -1 & 3 is 3 — a perfectly valid "anchor", with bit 31 clear, so the result
+  // was POSITIVE and the test never fired.
+  //
+  // Measured on a fresh 400-body world with maxCells 60: 24,000 slots, 4,800
+  // of them owned by an organism, and 24,000 that the kernel treated as living
+  // cells. EIGHTY PER CENT OF THE SIMULATION WAS PHANTOMS — bodiless anchor
+  // cells sitting in the spatial hash, colliding, grazing, being contested,
+  // and costing their full share of every neighbourhood walk.
+  //
+  // Two things that follow, both of which had been chased elsewhere:
+  //   - the physics was doing five times the work it needed to in any world
+  //     that had not yet filled its arena, which is every world at startup and
+  //     every experiment run at a small cap;
+  //   - any population statistic averaged over the arena was four fifths
+  //     frozen defaults, which is why trait means looked pinned near zero and
+  //     barely moved. The instrument was reading mostly nothing.
+  //
+  // vacate() has always written -1 explicitly, so DYING was handled and being
+  // BORN-INTO-A-FRESH-ARENA was not.
+  if (!(type >= 0)) return -1;
   const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
   // Bits 24-30: the cell's position along its own body axis, 0 head to 1 tail,
   // 7 bits. A travelling wave is a phase GRADIENT along that axis, so without
   // a per-cell axial coordinate the kernel cannot express one at all. Bit 31
   // stays clear so the '< 0' vacated-slot checks are untouched.
   const a = Math.max(0, Math.min(127, Math.round((apNorm || 0) * 127)));
-  return (type & 3) | (q(contractility) << 8) | (q(grippiness) << 16) | (a << 24);
+  // Bits 2-7: the sensor's tuning. Magnitude is ACUITY (how much of the true
+  // bearing it gets, the rest being noise); bit 7 selects which world axis it
+  // reads. A cell is a north-detector or an east-detector, and how good a one
+  // is a matter of degree.
+  const t = senseTune || 0;
+  const acu = Math.max(0, Math.min(31, Math.round(Math.abs(t) * 31)));
+  const axisBit = t < 0 ? 0 : 1;
+  return (type & 3) | (acu << 2) | (axisBit << 7)
+       | (q(contractility) << 8) | (q(grippiness) << 16) | (a << 24);
 }
 
 export const CELL_ANCHOR = 3;
@@ -104,13 +147,60 @@ fn hash2(ix: i32, iy: i32, seed: u32) -> f32 {
 
 fn smooth3(t: f32) -> f32 { return t * t * (3.0 - 2.0 * t); }
 
+// GRADIENT (Perlin) noise, not value noise.
+//
+// This was value noise — interpolate a random VALUE at each lattice corner —
+// and value noise has a defect you can see: its extrema are pinned to the
+// integer lattice, so the field is full of blobs sitting on a square grid and
+// the artifacts line up with the axes. Zoomed out that reads as visible
+// squares, which is exactly what the world's background looked like, and no
+// amount of octaves removes it because every octave has it.
+//
+// Perlin noise instead puts a random unit GRADIENT at each corner and
+// interpolates the ramps. The value at every lattice point is then zero, the
+// features sit BETWEEN the corners rather than on them, and the result has no
+// preferred direction. It is the difference between a landscape and a
+// tablecloth.
+//
+// The fade is Perlin's improved quintic 6t^5-15t^4+10t^3, whose second
+// derivative also vanishes at the ends — the cubic smoothstep leaves a
+// curvature discontinuity across every cell edge, which shows up as faint
+// creases exactly where the grid is.
+// ONE HASH, TWO COMPONENTS. The obvious way to get a random 2D gradient is two
+// hashes, and that DOUBLED the cost of every noise evaluation the moment the
+// noise became Perlin — against a background that had grown to ~26 fbm per cell
+// per step, which is where the headless rate went.
+//
+// A hash produces 32 bits and a gradient direction needs far fewer than 32 bits
+// of entropy, so the two halves of one hash are plenty: they are independent
+// enough for a direction nobody can predict by eye, and the normalisation
+// removes any bias in their joint distribution. Same visual result, half the
+// hashing, on the single hottest function in the whole system.
+fn grad2(ix: i32, iy: i32, seed: u32) -> vec2<f32> {
+  var h : u32 = (u32(ix) * 374761393u) ^ (u32(iy) * 668265263u) ^ (seed * 1274126177u);
+  h = (h ^ (h >> 13u)) * 1274126177u;
+  h = h ^ (h >> 16u);
+  let g = vec2<f32>(f32(h & 0xffffu) * (2.0 / 65536.0) - 1.0,
+                    f32(h >> 16u)    * (2.0 / 65536.0) - 1.0);
+  return g * inverseSqrt(max(1e-6, dot(g, g)));
+}
+
 fn vnoise(p: vec2<f32>, seed: u32) -> f32 {
   let i = floor(p);
   let f = p - i;
   let ix = i32(i.x); let iy = i32(i.y);
-  let u = smooth3(f.x); let v = smooth3(f.y);
-  return mix(mix(hash2(ix, iy, seed),     hash2(ix + 1, iy, seed),     u),
-             mix(hash2(ix, iy + 1, seed), hash2(ix + 1, iy + 1, seed), u), v);
+  let u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+  let n00 = dot(grad2(ix,     iy,     seed), f);
+  let n10 = dot(grad2(ix + 1, iy,     seed), f - vec2<f32>(1.0, 0.0));
+  let n01 = dot(grad2(ix,     iy + 1, seed), f - vec2<f32>(0.0, 1.0));
+  let n11 = dot(grad2(ix + 1, iy + 1, seed), f - vec2<f32>(1.0, 1.0));
+  let n = mix(mix(n00, n10, u.x), mix(n01, n11, u.x), u.y);
+  // Perlin is signed and centred; every caller here expects 0..1. The scale
+  // brings the practical range up to about full width — 2D gradient noise peaks
+  // near 0.7, and octave sums cancel further, so without this the whole world
+  // would be a narrow band around 0.5 and every field calibrated against the
+  // old noise would go slack.
+  return clamp(n * 1.36 + 0.5, 0.0, 1.0);
 }
 
 // Band-limited fbm: the caller says how many octaves to sum.
@@ -130,12 +220,25 @@ fn vnoise(p: vec2<f32>, seed: u32) -> f32 {
 // same sense position is — there is no level to cross, only a smooth increase
 // in how much of the same function is being resolved.
 //
-// The loop bound is fixed so every invocation costs the same; octaves past the
-// requested depth contribute with weight zero rather than being skipped.
+// STOPS AT THE REQUESTED DEPTH. This used to run all six octaves regardless,
+// weighting the unwanted ones to zero, on the reasoning that a fixed bound
+// costs the same for every invocation and cannot diverge. That reasoning was
+// right about divergence and wrong about cost: octF comes from the UNIFORM
+// block, so it is identical for every lane in flight and an early exit is
+// perfectly uniform — there is no divergence to avoid and the zero-weight
+// octaves were pure waste.
+//
+// It stopped being free when the noise became Perlin (eight hashes a lattice
+// cell rather than four) and the terrain grew a domain warp and a ridge term:
+// the background went to roughly thirty fbm evaluations a pixel, the browser
+// ate the GPU, and the simulation sharing it fell to a third of the rate it
+// runs at headless. Zoomed out, where octF is near 2, this is a 3x saving on
+// every single evaluation in the renderer AND in the physics.
 fn fbmOct(p: vec2<f32>, seed: u32, octF: f32) -> f32 {
   var f = 0.0; var amp = 1.0; var norm = 0.0; var q = p;
   for (var o = 0u; o < 6u; o = o + 1u) {
     let w = clamp(octF - f32(o), 0.0, 1.0);
+    if (w <= 0.0) { break; }
     f = f + amp * w * vnoise(q, seed + o * 1013u);
     norm = norm + amp * w;
     amp = amp * 0.5; q = q * 2.0;
@@ -145,7 +248,12 @@ fn fbmOct(p: vec2<f32>, seed: u32, octF: f32) -> f32 {
 
 // The simulation always wants full detail: a cell samples the field at a POINT,
 // so there is no pixel to alias against and nothing to band-limit.
-fn fbm(p: vec2<f32>, seed: u32) -> f32 { return fbmOct(p, seed, 4.0); }
+// THREE OCTAVES, NOT FOUR. Cheap and cheerful: the fourth octave has features
+// about seven world units across against a terrain whose basins are fifty, and
+// nothing in the physics can tell it is gone — gravity reads a gradient, grit
+// reads a scalar, wetness reads a threshold, and none of them resolve detail at
+// that scale. It was costing a quarter of every noise evaluation in the world.
+fn fbm(p: vec2<f32>, seed: u32) -> f32 { return fbmOct(p, seed, 3.0); }
 
 // Flow = curl of a scalar potential => divergence-free with no projection solve,
 // and defined at EVERY real coordinate rather than on a lattice. There is no
@@ -211,7 +319,7 @@ ${wgslStruct('W')}
 @group(0) @binding(0) var<uniform>             P     : W;
 @group(0) @binding(1) var<storage, read_write> pos   : array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read_write> vel   : array<vec4<f32>>;  // xy=velocity, z=radius, w=next energy
-@group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=packed, y=slot, z=body, w=body size
+@group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=packed, y=slot, z=body, w=packed
 
 // THE MATERIAL VECTOR, PACKED INTO cmeta.x.
 //
@@ -232,6 +340,46 @@ fn contractility(m: i32) -> f32 { return f32((m >> 8u) & 255) / 255.0; }
 fn grippiness(m: i32) -> f32 { return f32((m >> 16u) & 255) / 255.0; }
 // Position along the body axis, 0 head to 1 tail. See packMeta.
 fn axialPos(m: i32) -> f32 { return f32((m >> 24u) & 127) / 127.0; }
+// cmeta.w carries body size in the low byte and two material axes above it.
+// NUTRITION is what a cell is worth to whatever eats it; TOUGHNESS is how hard
+// it is to take. Both are continuous capacities, not labels — 'armour' and
+// 'meat' are regions of this space, never types the kernel branches on.
+fn bodySizeOf(w: i32) -> f32 { return f32(max(w & 255, 1)); }
+// NUTRITION IS NOT A CHOICE. It was an evolved output, and selection removed it
+// in thirty generations flat — seeded at 0.396, measured at 0.006 by generation
+// 33 — because being edible is a pure liability with no upside. A free parameter
+// for "how much am I worth eating" has exactly one evolutionary answer.
+//
+// It is a CONSEQUENCE. A cell is worth eating in proportion to what it is
+// carrying: you cannot be simultaneously energy-rich enough to live and worthless
+// as a meal, because it is the same energy. That closes the loophole and creates
+// the tradeoff the arms race needs — reserves make you viable AND make you a
+// target, and toughness becomes the way to hold reserves safely.
+fn nutritionOf(idx: u32) -> f32 { return clamp(energy[idx] / max(0.001, P.eCap), 0.0, 1.0); }
+fn toughnessOf(w: i32) -> f32 { return f32((w >> 16u) & 255) / 255.0; }
+// SURFACE IDENTITY and DIGESTIVE REACH, the pair that makes diets differ.
+//
+// tag is what you are made of; enzyme is what you can break down. You can only
+// eat what your enzyme MATCHES, so eating one thing well means eating another
+// badly, and a specialist and a generalist become genuinely different livings
+// rather than the same living done harder.
+//
+// The point of this is not variety for its own sake. A predator tuned to the
+// COMMON tag leaves the rare tag alone, so being unusual is an advantage that
+// grows as you become rarer — negative frequency-dependent selection, which is
+// the standard force that MAINTAINS diversity rather than eroding it. Lineages
+// collapsed from 245 to 3 in every arm of the last experiment; this is the
+// mechanism that should stop that, and whether it does is a measurement.
+fn tagOf(w: i32) -> f32 { return f32((w >> 8u) & 255) / 255.0; }
+fn enzymeOf(w: i32) -> f32 { return f32((w >> 24u) & 127) / 127.0; }
+// Gaussian in tag space. Narrow = a world of specialists, wide = generalists.
+fn digestMatch(eater: i32, eaten: i32) -> f32 {
+  let d = enzymeOf(eater) - tagOf(eaten);
+  return exp(-(d * d) / max(1e-5, 2.0 * P.dietWidth * P.dietWidth));
+}
+// Sensor tuning: acuity 0..1, and which world axis this cell reads.
+fn senseAcuity(m: i32) -> f32 { return f32((m >> 2u) & 31) / 31.0; }
+fn senseNorth(m: i32) -> bool { return ((m >> 7u) & 1) == 1; }
 // bond index and rest length packed into one vec2 — WebGPU guarantees only 8
 // storage buffers per stage and the crowding hash needs one, so the pair that
 // is always read together shares a binding. .x holds an i32 index bitcast into
@@ -299,12 +447,219 @@ fn moteBucketOf(p: vec2<f32>) -> u32 {
 // other field — sampled at a continuous position, never stored, no grid. This is
 // the thing a cell shoves against; where it is zero the world is open water and
 // nothing can push off anything.
-fn gritAt(p: vec2<f32>) -> f32 {
-  return clamp(fbm(p * P.gritScale, P.gritSeed) * 1.6, 0.0, 1.0);
+fn gritAtM(p: vec2<f32>, m: f32) -> f32 {
+  // Mud is slippery: purchase is what it takes away, so the anchor-extend-release
+  // ratchet simply fails there and a creature is at the mercy of the flow.
+  let g = clamp(fbm(p * P.gritScale, P.gritSeed) * 1.6, 0.0, 1.0);
+  return g * (1.0 - P.mudSlip * m);
+}
+fn gritAt(p: vec2<f32>) -> f32 { return gritAtM(p, mudAt(p)); }
+
+// ---------------------------------------------------------------- GEOGRAPHY
+//
+// Two analytic scalar fields, and everything below is sampled at a cell's OWN
+// position. Nothing consults anything remote — a cell feels the ground under
+// itself and the medium against its own skin. Think global, act local: the
+// pattern is worldwide, the interaction is entirely here.
+//
+// Analytic rather than a grid because they are FREE that way. An fbm evaluation
+// is a few dozen ALU ops against a budget we use a fraction of a percent of,
+// while a grid is bandwidth, which is the thing the kernel is actually short of
+// (PHYSICS-2.md). There is also no resolution to zoom past.
+//
+// HEIGHT is read as elevation on a plane seen from above. Below zero is under
+// water, above zero is land, and the "high" ground is high in the sense that
+// matters in two dimensions: dense, hard to cross, and expensive to be in.
+// Gravity is the in-plane force -grad(height), which is a TILTED PLANE and needs
+// no side view: things roll downhill, matter pools in basins, and ridges divide
+// the world into places.
+// DOMAIN WARP — why the landscape winds instead of blobbing.
+//
+// Plain fbm makes lumps. Every feature is a rounded patch, coastlines are
+// scalloped circles, and nothing meanders, because the function has no
+// mechanism for bending: it is a sum of isotropic octaves and isotropic is
+// exactly what a river is not. Warping the COORDINATE before sampling —
+// f(p + w*f(p)) — feeds the field's own structure back into where it is read,
+// which drags features sideways along other features. That is what produces
+// the winding, folded, delta-like shapes; it is one extra pair of evaluations
+// and it changes the character of the world completely.
+fn warp2(p: vec2<f32>, seed: u32, amt: f32) -> vec2<f32> {
+  // ONE AND A HALF OCTAVES, not four. The warp's job is to bend the coordinate
+  // on a large scale; fine detail in the OFFSET is invisible, because it is
+  // immediately swallowed by the detail of the field being sampled at the
+  // offset position. Two full fbm evaluations here were most of heightAt's cost
+  // and bought nothing you can see.
+  let a = fbmOct(p, seed, 1.5) - 0.5;
+  let b = fbmOct(p + vec2<f32>(5.2, 1.3), seed + 3701u, 1.5) - 0.5;
+  return p + amt * vec2<f32>(a, b);
 }
 
-fn flowAt(p: vec2<f32>) -> vec2<f32> {
-  return flowField(p, P.flowScale, P.flowStr, P.seed);
+// RIDGES — the sharp crest lines. 1 - |2f-1| is v-shaped about f = 0.5, so its
+// maximum is the CONTOUR f = 0.5, which is a winding curve rather than a patch.
+// Raised to a power that curve narrows into a thread. Used one way up it is a
+// mountain crest; used with the terrain sunk around it, it is a watercourse.
+fn ridge(p: vec2<f32>, seed: u32) -> f32 {
+  // TWO THINGS THIS NEEDS, both learned by looking at the result.
+  //
+  // A SMOOTH BASE. Ridging a full six-octave fbm shatters the crest: every fine
+  // octave crosses the 0.5 level set somewhere else, so instead of one winding
+  // line you get a scatter of disconnected fragments. Measured that way, 10% of
+  // the world was "channel" and none of it went anywhere. A few octaves give a
+  // crest that is continuous, which is the entire point — a river that is not
+  // connected is a puddle.
+  //
+  // CONTRAST FIRST. Perlin fbm clusters tightly about 0.5, so |2f-1| is small
+  // and 1-|2f-1| is near 1 nearly everywhere — the "ridge" would be the whole
+  // map. Widening the distribution before ridging is what makes the crest a
+  // crest. (Value noise did not need this, which is why it only showed up after
+  // the switch.)
+  let f = clamp((fbmOct(p, seed, 2.0) - 0.5) * 2.6 + 0.5, 0.0, 1.0);
+  return 1.0 - abs(2.0 * f - 1.0);
+}
+
+fn heightAt(p: vec2<f32>) -> f32 {
+  let q = warp2(p * P.heightScale, P.heightSeed, P.warpAmt);
+  let base = fbm(q, P.heightSeed) * 2.0 - 1.0;                 // -1 deep .. +1 peak
+  if (P.ridgeAmt <= 0.0) { return base; }
+  // Crests, and only up high. Adding ridges everywhere corrugates the sea bed
+  // and the plains too, which reads as noise; gating on the base height means
+  // the lowlands stay smooth and open and the uplands turn craggy, which is
+  // both the shape real terrain has and the shape this world's economics
+  // describe (highSap makes the heights the hard country).
+  let r = ridge(q * 2.3, P.heightSeed + 911u);
+  return base + P.ridgeAmt * r * r * smoothstep(-0.05, 0.55, base);
+}
+fn heightGrad(p: vec2<f32>) -> vec2<f32> {
+  let e = 0.6 / max(1e-4, P.heightScale);
+  return vec2<f32>(heightAt(p + vec2<f32>(e, 0.0)) - heightAt(p - vec2<f32>(e, 0.0)),
+                   heightAt(p + vec2<f32>(0.0, e)) - heightAt(p - vec2<f32>(0.0, e))) / (2.0 * e);
+}
+// FORWARD DIFFERENCE, REUSING THE CENTRE. The central version costs four height
+// evaluations and heightAt is four fbm each, so gravity alone was sixteen fbm
+// per cell per step. Given h at p — which the caller already needs for other
+// reasons — two more samples give the same gradient to first order at half the
+// price. The asymmetry is a fraction of a cell wide and nothing can feel it.
+fn heightGradFrom(p: vec2<f32>, h: f32) -> vec2<f32> {
+  let e = 0.6 / max(1e-4, P.heightScale);
+  return vec2<f32>(heightAt(p + vec2<f32>(e, 0.0)) - h,
+                   heightAt(p + vec2<f32>(0.0, e)) - h) / e;
+}
+// MUD is wet ground: it takes away purchase, it flows, and it fouls the senses.
+// A mud river is therefore transport you cannot steer and cannot see out of —
+// fast, free, and it puts you somewhere you did not choose.
+//
+// The field is RIDGED and warped, so mud is not scattered wet patches but a
+// branching network of narrow winding channels — which is what wet ground
+// actually looks like, and much more importantly is what makes it USEFUL: a
+// broad damp region is somewhere to avoid, while a channel is somewhere that
+// goes from one place to another. Transport needs a route.
+// The raw ridge value, before any threshold. This is the useful quantity and
+// both mud and shore are cut out of it: r peaks at 1 along the channel's
+// centre-line and falls away outward, so it is a cheap analytic PROXY FOR
+// DISTANCE TO WATER. Everything downstream is a band in r.
+fn wetRidge(p: vec2<f32>) -> f32 {
+  return ridge(warp2(p * P.mudScale, P.mudSeed, P.warpAmt * 1.4), P.mudSeed);
+}
+
+// ONE WETNESS SCALE, because THE SEA IS MUD.
+//
+// Mud was the channel field alone, and height was a separate story, so the open
+// water was not mud: the big bays sat perfectly still while narrow ribbons of
+// channel ran across dry land. That is two geographies pretending to be one,
+// and it showed — the transport system was invisible exactly where the water is.
+//
+// Both are now the same quantity, mapped onto a common scale where 0.5 is the
+// waterline: a channel approaching its bank and ground approaching sea level
+// arrive at the same number, and wetness is whichever is wetter. Everything
+// downstream — what moves, what grips, what you can see out of, and where
+// anything grows — is a band in this one scalar.
+// The wetness maths, separated from the sampling, so a caller that already has
+// the height and the channel ridge in hand does not pay for them twice. Both of
+// these were being recomputed five or six times per cell per step — heightAt
+// alone is four fbm, and it was reached through gravity, grit, flow, the
+// metabolic terrain cost and fertility, independently, every step.
+fn wetnessFrom(h: f32, r: f32) -> f32 {
+  return max(smoothstep(P.mudBank - P.shoreWidth, P.mudBank + P.shoreWidth, r),
+             smoothstep(0.45, -0.45, h));
+}
+fn mudFrom(w: f32) -> f32 { return smoothstep(0.50, 0.76, w); }
+fn shoreFrom(w: f32) -> f32 {
+  return smoothstep(0.17, 0.40, w) * (1.0 - smoothstep(0.44, 0.63, w));
+}
+
+fn wetnessAt(p: vec2<f32>) -> f32 {
+  // Both ramps are CENTRED ON THEIR OWN WATERLINE — the channel's midpoint is
+  // exactly mudBank, the sea's is exactly height zero — so 0.5 means the same
+  // thing in both and taking the max of them is meaningful rather than a
+  // coincidence of two arbitrary scales.
+  return wetnessFrom(heightAt(p), wetRidge(p));
+}
+
+fn mudAt(p: vec2<f32>) -> f32 { return mudFrom(wetnessAt(p)); }
+
+// THE SHORE — a band hugging the OUTSIDE of the channel, and the only place
+// worth living.
+//
+// The fertile region was "everything that is not mud and not very high", which
+// is most of the world: a half-continent of arable land with a river through
+// it. That is not the intent and it is not a pressure. What is meant is
+// narrower and entirely about distance to water — jungle and life on the
+// shores, just inland of the mud; and the further inland you go the more it
+// becomes rock: fixed, empty, lifeless.
+//
+// So it is a band in r rather than a band in height. It rises as you approach
+// the channel from the dry side, and collapses the moment you are actually IN
+// it — because in the mud you cannot grip, cannot see, and are going wherever
+// the current takes you. Height only trims the top: a beach halfway up a
+// mountain is still a beach, but the high country is poor wherever it is.
+// A band just DRY of the waterline: rises as you come down to the water, and
+// collapses the moment you are in it.
+fn shoreAt(p: vec2<f32>) -> f32 { return shoreFrom(wetnessAt(p)); }
+
+fn flowAt(p: vec2<f32>) -> vec2<f32> { return flowAtM(p, mudAt(p)); }
+
+fn flowAtM(p: vec2<f32>, m: f32) -> vec2<f32> {
+  // The medium pushes harder where the ground is wet. Same analytic curl field,
+  // scaled locally, so a mud channel becomes a current without any new machinery.
+  // THE MUD IS THE THING THAT MOVES. The current used to run everywhere at full
+  // strength with mud merely amplifying it, so the whole world was a river and
+  // the dry land was being swept along with the channels. That is backwards:
+  // away from the water the ground is fixed, and increasingly rocky and empty
+  // the further inland you get. flowDry is what little stirring remains out
+  // there — enough that the air is not perfectly dead, not enough to carry
+  // anything anywhere.
+  let s = P.flowStr * (P.flowDry + P.mudFlow * m);
+
+  // TWO SCALES, AND THE COARSE ONE IS THE LANDSCAPE.
+  //
+  // The flow was one curl field at flowScale 0.9, which means eddies about ONE
+  // WORLD UNIT across — roughly a cell and a half. That is turbulence, not
+  // weather: it has no large-scale direction at all, so a body is jostled but
+  // never carried anywhere, and drawn as arrows on any lattice coarser than an
+  // eddy it aliases into pure noise. Which is exactly how it looked: a vector
+  // field with no visible relationship to the world it runs over.
+  //
+  // The coarse component is the curl of the HEIGHT field's own base — the same
+  // function, the same seed. Curl means perpendicular to the gradient, so this
+  // current runs ALONG the contours: around the islands, down the length of the
+  // valleys, hugging the coast. Which is what water in a landscape does, and it
+  // is why it now looks like it belongs to the terrain — it is made of it.
+  //
+  // Cheap, because it reuses flowField rather than differencing the full warped
+  // and ridged heightAt: the ridges are a detail of the tops, and the shape a
+  // current follows is the shape of the land underneath them.
+  let fine = flowField(p, P.flowScale, s, P.seed);
+  if (P.flowTerrain <= 0.0) { return fine; }
+  // NORMALISE THE COARSE COMPONENT'S SPEED. A curl is a gradient, so the same
+  // potential spread over fifty times the distance gives a fiftieth of the
+  // velocity: mixing the two raw made the world's current SIXTY PER CENT
+  // WEAKER and drew arrows that had all but disappeared. What is wanted here is
+  // the same speed organised on a different scale, not a slower medium, so the
+  // strength is scaled by the ratio of the two scales — after which the mix is a
+  // genuine blend of two currents rather than a fade toward nothing.
+  let coarse = flowField(p, P.heightScale,
+                         s * (P.flowScale / max(1e-5, P.heightScale)), P.heightSeed);
+  return mix(fine, coarse, P.flowTerrain);
 }
 
 // Shortest displacement on a torus (minimum image). A body straddling the wrap
@@ -325,9 +680,67 @@ fn minImage(d: vec2<f32>) -> vec2<f32> {
   return r;
 }
 
-fn resourceAt(p: vec2<f32>) -> f32 {
-  return resourceField(p, P.resScale, P.resSeed, P.worldTime,
-                       vec2<f32>(P.driftX, P.driftY), P.morphRate);
+// LUSH LOWLANDS, CRAGGY HEIGHTS.
+//
+// Fertility was independent of terrain, which made height a pure tax: the
+// uplands cost more to occupy (highSap) and offered nothing, so the only
+// rational strategy was to be low, and a frontier nobody has a reason to cross
+// is not a frontier. The coupling that makes height a real choice is that
+// what runs downhill — water, silt, everything dissolved in them — is what
+// makes ground rich. Lowlands are fertile BECAUSE they are low.
+//
+// So the heights become genuinely poor as well as genuinely expensive. That
+// looks like it closes the frontier rather than opening it, and it is the
+// opposite: poor, costly ground is ground with no competition on it. A lineage
+// that can live thin has the uplands to itself, and one that cannot has to
+// fight for the valleys. That is two ways of making a living, which is what a
+// guild is, and it is the thing this world has so far failed to produce.
+fn resourceAt(p: vec2<f32>) -> f32 { return resourceAtS(p, shoreAt(p)); }
+
+fn resourceAtS(p: vec2<f32>, shore: f32) -> f32 {
+  let r = resourceField(p, P.resScale, P.resSeed, P.worldTime,
+                        vec2<f32>(P.driftX, P.driftY), P.morphRate);
+  if (P.lowLush <= 0.0) { return r; }
+  // REDISTRIBUTES, does not reduce. The divisor is the measured mean of the
+  // shore factor over the whole world (0.117), so total inflow is unchanged and
+  // only its DISTRIBUTION moves. That mean is also the headline number: the
+  // living shore is about 13% of the world and roughly EIGHT TIMES richer than
+  // the average acre, against 67% moving water and 21% dead interior.
+  //
+  // That is a design decision about what is being tested, not tidiness. The
+  // hypothesis is that spatial HETEROGENEITY maintains diversity. An uncorrected
+  // multiplier also made the world 37% poorer, so a geography-on/geography-off
+  // comparison would have measured carrying capacity and heterogeneity at once
+  // and been unable to say which did the work. It is also the truer picture:
+  // the same sun falls on the whole world, and terrain decides where what it
+  // grows ends up.
+  // THE FERTILE CRESCENT.
+  //
+  // Three regions, and the good one is in the middle of the other two.
+  //
+  // THE SEA IS MUD. It is not a fertile deep — it is wet ground that moves in a
+  // river form: fast transport, and expensive, because you cannot get purchase
+  // in it and cannot see out of it. Nothing grows there worth the trip. (This
+  // was written the other way round at first, as a single downhill ramp, which
+  // made the deepest water the richest ground in the world and carpeted the
+  // ocean in food. It also removed any reason to be on land.)
+  //
+  // THE HIGHLANDS ARE POOR. High in two dimensions means dense and hard going;
+  // highSap already charges rent there, and there is little to eat on top of it.
+  //
+  // BETWEEN THEM is the arable band: out of the mud, not yet into the heights.
+  // Rich, narrow, and — this is the point — a place a lineage can be pushed OUT
+  // of in EITHER direction. A half-plane has one frontier; a band has two, and
+  // the two are nothing like each other. Being driven downhill and being driven
+  // uphill are different problems demanding different animals, which is how a
+  // single crowded optimum turns into more than one way of making a living.
+  //
+  // Plenty of ground is neither, and lineages will end up on it. That is fine
+  // and expected: the world does not owe anyone a good address.
+  let h = heightAt(p);
+  let band = smoothstep(-0.10, 0.28, h) * smoothstep(0.92, 0.34, h);
+  let dry = 1.0 - mudAt(p);
+  return r * mix(1.0, band * dry / 0.2682, P.lowLush);
 }
 
 // How much cell i is currently contracting, 0 for anything that is not a muscle.
@@ -455,7 +868,25 @@ fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
   let me = cmeta[i];
   let myE = energy[i];
   var net = 0.0;
-  let r2 = P.contactR * P.contactR;
+  // PROXIMITY, NOT TOUCH.
+  //
+  // Contest fired at contactR — the sum of two radii, about 0.68 world units —
+  // so the entire biotic economy required organisms to be physically pressed
+  // together. Touch is the strictest possible reading of "interacting", and it
+  // is not the only real one: exudates, wounds, leaked contents and simple
+  // interference all act across a gap, and every one of them is a way organisms
+  // impose on each other without collision.
+  //
+  // This costs NOTHING extra structurally, which is what makes it the right
+  // move rather than merely a bigger number: it is the same 3x3 walk over the
+  // same hash, with a wider acceptance test inside it. PHYSICS-2.md's rule is
+  // no NEW neighbourhood walk, and there is none. The reach is capped at what
+  // the walk can actually see (3 x hashCell, minus a margin) — a radius larger
+  // than the walk is a radius that silently sees only part of its own
+  // neighbourhood, which is how the compass sense was truncated tenfold once
+  // already.
+  let reach = min(P.contestR, P.hashCell * 1.4);
+  let r2 = reach * reach;
   for (var dy = -1; dy <= 1; dy = dy + 1) {
     for (var dx = -1; dx <= 1; dx = dx + 1) {
       let b = bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM);
@@ -479,7 +910,25 @@ fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
         // from the same pre-step energies, so cell j computes exactly the
         // negative of what cell i computes and no energy is created or lost.
         let theirE = energy[j];
-        let raw = P.contestRate * (effort - abs(contractionOf(j))) * P.dt;
+        // CONSUMPTION, not a wrestling match.
+        //
+        // primitives.md: energy A<-B at max(0, capability - toughness_B) x
+        // nutrition_B. You must both OVERPOWER the thing and it must be worth
+        // taking. The capability is the attacker's own contraction — pressing is
+        // what a muscle does, it is already commanded by the CTRNN and already
+        // paid for in muscleCost, so biting costs exactly what pressing costs and
+        // no new verb enters the world.
+        //
+        // Nothing here is a predator or prey. Both cells run the same expression
+        // in both directions; who gains is decided by which of them is pressing
+        // harder and which is tougher, moment to moment. A tough cell is bad
+        // food, a nutritious one is worth attacking, and "armour" and "meat" are
+        // regions of that space rather than roles.
+        let take  = max(0.0, effort                 - toughnessOf(cmeta[j].w)) * nutritionOf(j)
+                  * digestMatch(cmeta[i].w, cmeta[j].w);
+        let given = max(0.0, abs(contractionOf(j)) - toughnessOf(cmeta[i].w)) * nutritionOf(i)
+                  * digestMatch(cmeta[j].w, cmeta[i].w);
+        let raw = P.contestRate * (take - given) * P.dt;
         var moved = 0.0;
         if (raw > 0.0) {
           moved = min(raw, min(max(theirE - P.eFloor, 0.0), max(P.eCap - myE, 0.0)));
@@ -629,6 +1078,39 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   let refill = max(1e-6, P.moteRegrow * P.dt);
   let suppress = 1.0 / (1.0 + P.regrowCrowdK * (draw / refill));
   stock = stock + P.moteRegrow * fert * suppress * (1.0 - stock / P.moteCap) * P.dt;
+
+  // ---- FOOD GOES WHERE THE WATER GOES ---------------------------------------
+  //
+  // Motes were nailed to their coordinates, on the argument that a patch you
+  // cannot exhaust and have to leave is no pressure at all. That argument is
+  // about DEPLETION and it survives drift intact: a patch you are working still
+  // runs down under you, it simply also moves.
+  //
+  // What being nailed down cost was coherence. The world now says that mud is a
+  // transport system carrying anything not holding on — and the most obvious
+  // thing to be carried, silt and detritus and everything dissolved in it, sat
+  // still while the water went past it. A river with a stationary riverbed of
+  // food is not a river; it is a picture of one.
+  //
+  // With drift the shores GENERATE (fertility is highest just dry of the water)
+  // and the channels CARRY, so food produced on a coast washes into a current
+  // and is delivered somewhere else. That is a conveyor, and a conveyor is a
+  // thing worth positioning yourself on — which is a reason to be near the
+  // water that is not simply "the ground is better here".
+  //
+  // Motes drift at moteDrift x the flow: they are heavier than a swimming cell
+  // and lag it, so a creature can still outrun its own food.
+  if (P.moteDrift > 0.0) {
+    let v = flowAt(p) * P.moteDrift;
+    var np = p + v * P.dt;
+    let B = P.bound;
+    if (np.x >  B) { np.x = np.x - 2.0 * B; }
+    if (np.x < -B) { np.x = np.x + 2.0 * B; }
+    if (np.y >  B) { np.y = np.y - 2.0 * B; }
+    if (np.y < -B) { np.y = np.y + 2.0 * B; }
+    mote[i] = vec4<f32>(np.x, np.y, clamp(stock, 0.0, P.moteCap), 0.0);
+    return;
+  }
   mote[i] = vec4<f32>(m0.x, m0.y, clamp(stock, 0.0, P.moteCap), 0.0);
 }
 
@@ -667,7 +1149,157 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   // Two things a cell can actually feel locally: how fast the medium is moving
   // past it, and a scalar gradient it sits in. Both are analytic at p.
   let rel = flowAt(p) - vel[i].xy;
-  ext[u32(slot)] = tanh((length(rel) + fbm(p * P.flowScale * 0.5, P.seed + 77u) - 0.5) * P.senseGain);
+  var e = tanh((length(rel) + fbm(p * P.flowScale * 0.5, P.seed + 77u) - 0.5) * P.senseGain);
+
+  // A COMPASS: the cell's own bearing against the world's basis vectors.
+  //
+  // Every other sense here is scalar and local, so nothing in this world has
+  // ever had access to a DIRECTION. A creature could not tell which way it was
+  // pointing, let alone which way anything else was, which is why a gait could
+  // never become navigation and why sensors were being selected away — a sense
+  // organ reporting the weather is correctly deleted.
+  //
+  // northness and eastness are components of the cell's orientation on the
+  // world plane. Orientation is the cell's own axial direction, the same
+  // vector traction uses, so it is a fact about the body rather than a new
+  // quantity: rotate the animal and the reading changes.
+  //
+  // ACUITY IS GRADED, 0 to 1, and what it does NOT know it reads as noise
+  // rather than as zero. A blind compass returning 0 would be a confident
+  // claim of due east; returning noise is honest ignorance, and it means
+  // evolving accuracy has something to climb from.
+  // The cell's own bearing, computed once: both the compass and the neighbour
+  // sense are questions about direction and both need it.
+  var ax = vec2<f32>(0.0, 0.0);
+  {
+    let ab = i * P.bondK;
+    var loN = -1; var hiN = -1; var loA = 2.0; var hiA = -1.0;
+    for (var k = 0u; k < P.bondK; k = k + 1u) {
+      let nj = bitcast<i32>(bondD[ab + k].x);
+      if (nj < 0) { continue; }
+      let na = axialPos(cmeta[u32(nj)].x);
+      if (na < loA) { loA = na; loN = nj; }
+      if (na > hiA) { hiA = na; hiN = nj; }
+    }
+    if (loN >= 0 && hiN >= 0 && loN != hiN) { ax = minImage(pos[u32(hiN)] - pos[u32(loN)]); }
+    else if (loN >= 0) { ax = minImage(pos[u32(loN)] - p); }
+  }
+  let alen = length(ax);
+  if (P.compass > 0.0 && alen > 1e-5) {
+    let u = ax / alen;
+    let bearing = select(u.x, u.y, senseNorth(m.x));   // eastness or northness
+    let acu = senseAcuity(m.x);
+    let grit2 = fbm(p * 3.1 + vec2<f32>(f32(i) * 0.017, 0.0), P.seed + 913u) * 2.0 - 1.0;
+    e = e + P.compass * mix(P.senseNoise * grit2, bearing, acu);
+  }
+  // FEELING THE GROUND — wet, and which way is down.
+  //
+  // Without this, being in the fertile band is LUCK. The band is worth being in,
+  // but nothing in the world could tell it was in one, so no lineage could ever
+  // steer toward it or hold station on it; drifting into good ground and
+  // drifting out again are the same event to a creature that cannot feel the
+  // difference. A reward nobody can perceive selects for nothing.
+  //
+  // TWO READINGS, BOTH STRICTLY LOCAL — the cell samples the fields under
+  // ITSELF and nothing else, which is the whole "think global, act local"
+  // constraint. Nothing is queried at a distance and nothing is told where the
+  // good ground is; the world is merely made legible where the cell is standing.
+  //
+  //   WET is a scalar, so every sensor on a body reads the same offset: the
+  //   creature knows it is in the channel, but not from which side it entered.
+  //   That is the correct amount of information — the mud fouls the senses
+  //   (mudFog) precisely so that being in it is disorienting.
+  //
+  //   LEAN is the downhill direction projected on the CELL'S OWN heading, so
+  //   two sensors pointing different ways read different values and the
+  //   difference between them IS the gradient direction. This is the same
+  //   population code the compass already uses, and it means uphill/downhill is
+  //   decodable by a brain without any cell being given a vector.
+  //
+  // Both fade into noise as acuity falls, and acuity is already charged for by
+  // senseCost — so a creature that can find the good ground is paying to.
+  if (P.senseTerrain > 0.0) {
+    let acuT = senseAcuity(m.x);
+    let wet = mudAt(p) * 2.0 - 1.0;
+    var lean = 0.0;
+    if (alen > 1e-5) {
+      lean = clamp(dot(-heightGrad(p), ax / alen) * 3.0, -1.0, 1.0);
+    }
+    let nzT = fbm(p * 2.7 + vec2<f32>(f32(i) * 0.023, 0.0), P.seed + 521u) * 2.0 - 1.0;
+    e = e + P.senseTerrain * mix(P.senseNoise * nzT, 0.55 * wet + lean, acuT);
+  }
+
+  // PERCEIVING OTHER CREATURES.
+  //
+  // Until now a sensor read the medium and a noise field and nothing else: no
+  // creature in this world could perceive another creature, so predator, prey,
+  // mate and rival were not merely absent but unreachable. This is the smallest
+  // honest fix.
+  //
+  // WHAT IS EMITTED IS RELATIVE MOTION. Every cell radiates in proportion to how
+  // fast it is moving PAST the sensor. That choice does the work of a self/other
+  // rule without one existing: a creature's own cells travel with it, so their
+  // relative speed is near zero and its own body is naturally almost invisible
+  // to it, while something else swimming past is loud. No cell is labelled kin
+  // or stranger anywhere.
+  //
+  // The receptive field is a gaussian in distance and a cosine in bearing, which
+  // is the standard construction — a sum of gaussians is what a diffusing signal
+  // from several sources actually looks like, and they superpose for free.
+  // Directionality rides on the SAME acuity the compass uses: a sharp sensor is
+  // sharp about where things are, a vague one just knows something is near.
+  //
+  // Cost: this walks the neighbour hash, which PHYSICS-2.md warns is the
+  // expensive thing. It walks it ONLY for sensor cells, so the cost scales with
+  // how much of the world has chosen to see.
+  if (P.senseOther > 0.0) {
+    var acc = 0.0;
+    let sig2 = max(1e-4, P.senseRange * P.senseRange);
+    let myV = vel[i].xy;
+    // A WIDER WALK, FOR SENSORS ONLY. The contact walk is 3x3 buckets and reaches
+    // 1.8 world units; bodies are 4-6 across and land about seven apart, so at
+    // that radius a sensor can only ever see its own tissue. Perception of other
+    // creatures needs more reach, and it is affordable here precisely because
+    // only sensor cells pay for it — the cost scales with how much of the world
+    // has chosen to see.
+    let R = i32(max(1.0, P.senseBuckets));
+    for (var dy = -R; dy <= R; dy = dy + 1) {
+      for (var dx = -R; dx <= R; dx = dx + 1) {
+        let b = bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM);
+        let cnt = min(atomicLoad(&hashData[b]), P.bucketM);
+        for (var k = 0u; k < cnt; k = k + 1u) {
+          let j = atomicLoad(&hashData[b + 1u + k]);
+          if (j == i) { continue; }
+          if (cmeta[j].x < 0) { continue; }
+          // OTHER BODIES ONLY. Relative motion was supposed to make a cell's
+          // own tissue invisible to it, and it does not: a body that deforms
+          // moves its own cells past each other, so a sensor heard mostly
+          // itself — measured, the reading was identical alone and in a
+          // crowd. Own-body cells are excluded by BODY ID, which is a
+          // property the kernel already carries for the contest and is not a
+          // new concept. Proprioception is a real sense and a separate one.
+          if (cmeta[j].z == cmeta[i].z) { continue; }
+          let d = minImage(pos[j] - p);
+          let d2 = dot(d, d);
+          if (d2 > sig2 * 9.0) { continue; }
+          let rel = length(vel[j].xy - myV);
+          if (rel < 1e-4) { continue; }
+          let fall = exp(-d2 / (2.0 * sig2));
+          var w = 1.0;
+          if (alen > 1e-5) {
+            let u = ax / alen;
+            let dirTo = d / max(1e-4, sqrt(d2));
+            let cosT = dot(u, dirTo);
+            let sharp = senseAcuity(m.x);
+            w = mix(1.0, max(0.0, cosT), sharp);
+          }
+          acc = acc + rel * fall * w;
+        }
+      }
+    }
+    e = e + P.senseOther * tanh(acc);
+  }
+  ext[u32(slot)] = clamp(e, -4.0, 4.0);
 }
 
 // 2. Physics: bond springs (muscles contract theirs), flow drag, integrate.
@@ -720,9 +1352,30 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // Contact with everything nearby, living or not.
   force = force + contact(i, p, vel[i].z);
 
+  // ---- THE GROUND UNDER THIS CELL, SAMPLED ONCE ---------------------------
+  //
+  // Height and the channel ridge were being reached independently by gravity,
+  // by the flow, by traction, by the metabolic terrain cost and by fertility —
+  // five or six times a cell a step, at four fbm each for height alone. That is
+  // roughly fifty noise evaluations per cell per step spent recomputing two
+  // numbers that cannot have changed in between, and it took the headless rate
+  // from 179 steps a second to 51.
+  //
+  // Everything below reads these. It is the same physics; it is arithmetic
+  // that is no longer done six times.
+  let hHere = heightAt(p);
+  let rHere = wetRidge(p);
+  let wHere = wetnessFrom(hHere, rHere);
+  let mudHere = mudFrom(wHere);
+
+  // GRAVITY, in the plane. -grad(height) is a tilted plane: things roll
+  // downhill, matter gathers in basins, ridges separate the world into
+  // places. Every cell has mass 1 for now, so this is an acceleration.
+  if (P.gravity != 0.0) { force = force - heightGradFrom(p, hHere) * P.gravity; }
+
   // The medium drags the cell toward the local flow velocity. This is the
   // "stickiness to the aether" every particle has, inert or alive.
-  force = force + (flowAt(p) - v) * P.drag;
+  force = force + (flowAtM(p, mudHere) - v) * P.drag;
 
   // Terminal velocity — the one guard that keeps explicit Euler bounded when
   // the stiffness slider outruns dt < 2/sqrt(k). Without it a large force gives
@@ -818,7 +1471,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
 
     // Dissipative ONLY: exponential decay cannot add energy whatever the
     // coefficients, so net motion is still paid for out of muscle fuel.
-    let grit = gritAt(p);
+    let grit = gritAtM(p, mudHere);
     if (alen > 1e-5) {
       let ax = axis / alen;
       let pxv = vec2<f32>(-ax.y, ax.x);
@@ -901,7 +1554,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // body's own size. Using a fixed constant was fine while every body had the
   // same cell count; the moment size became heritable it silently taxed large
   // bodies for their own cells and made growth look worse than it is.
-  let mySize = f32(max(cmeta[i].w, 1));
+  let mySize = bodySizeOf(cmeta[i].w);
   let crowd = crowdingAt(np);
   let share = 1.0 / (1.0 + P.crowdK * max(0.0, crowd - mySize));
 
@@ -944,9 +1597,57 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   if (P.nMotes > 0u) {
     gain = absorb * grazeAt(np) / P.dt;
   } else {
-    gain = absorb * P.harvest * resourceAt(np) * share;
+    gain = absorb * P.harvest * resourceAtS(np, shoreFrom(wHere)) * share;
   }
   let work = P.muscleCost * abs(mine);
+  // ACUITY COSTS. A sense organ that reads the world perfectly for free is a
+  // free lunch, and evolution would take it every time — the same mistake as
+  // feeding being independent of what a cell is. A sharp compass burns fuel in
+  // proportion to how sharp it is, so accuracy has to be worth its keep and a
+  // cheap noisy sense stays a live option. primitives.md: an axis without a
+  // cost has no teeth.
+  let senseWork = P.senseCost * senseAcuity(cmeta[i].x);
+  // ARMOUR IS EXPENSIVE TO HOLD. Without a cost, toughness is a free defence
+  // and evolution takes it to the ceiling in every lineage — the same failure
+  // as feeding being independent of what a cell is, which produced a 94%
+  // muscle monoculture. primitives.md: an axis with no cost has no teeth.
+  let armourWork = P.toughCost * toughnessOf(cmeta[i].w);
+  // THE HIGH GROUND IS EXPENSIVE TO OCCUPY. In two dimensions "high" means
+  // dense and hard going, so it costs to be there — which is what makes the
+  // heights a frontier only some lineages can afford rather than just another
+  // place. Only the upper half of the range charges anything.
+  let terrainWork = P.highSap * max(0.0, hHere);
+
+  // ---------------------------------------------------------- TIDAL INCOME
+  //
+  // A SECOND STAR, declared as one. Planetary dynamics deliver kinetic energy
+  // the same way the sun delivers light: a fixed, external, global inflow that
+  // nothing here can increase. Under the friction law that is legitimate —
+  // global-uniform inflow is not minting, local-targeted grants are — but it is
+  // a second drink, not a second straw into the first, so it is written down
+  // plainly rather than smuggled in as a coefficient.
+  //
+  // WHAT IS ACTUALLY HARVESTED is the power already being dissipated in the
+  // drag coupling, |flow - v|^2 * drag, which the world was throwing away as
+  // heat every step. A cell that grips takes a share of it; the medium loses
+  // exactly what it would have lost anyway. Nothing is created.
+  //
+  // AND THE PASSIVE CASE NETS ZERO, which is the affordance test in
+  // primitives.md and the reason this is not the global-drift bug returning.
+  // A cell that lets go accelerates until it matches the flow; relative
+  // velocity goes to zero and so does the income. You cannot be paid for
+  // drifting. You are paid for HOLDING STATION IN A CURRENT — which costs grip,
+  // which costs uptake (absorbTradeoff), and which is a way of making a living
+  // that the still water cannot offer at any price.
+  //
+  // That is the point of building it: a mud river stops being purely a hazard
+  // and becomes somewhere worth being for a lineage shaped to exploit it, while
+  // remaining lethal for one that is not. Two ways to eat is what a guild is.
+  var tidal = 0.0;
+  if (P.tidalYield > 0.0) {
+    let slip = flowAtM(p, mudHere) - v;
+    tidal = P.tidalYield * grippiness(cmeta[i].x) * P.drag * dot(slip, slip);
+  }
   let taken = contest(i, np, abs(mine));
   // Written to scratch, not to energy[]: contest() READS energy[j] for other
   // cells, and if physics also wrote energy[j] in the same dispatch the result
@@ -956,7 +1657,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // every step — the other independent reason contact was dead. Between this and
   // contactK being a denormal (see lib/uniform.js), cells have never collided.
   vel[i] = vec4<f32>(v.x, v.y, vel[i].z,
-    clamp(energy[i] + (gain - P.brainTax - work + taken) * P.dt, P.eFloor, P.eCap));
+    clamp(energy[i] + (gain + tidal - P.brainTax - work - senseWork - armourWork - terrainWork + taken) * P.dt, P.eFloor, P.eCap));
 }
 
 // Publish the energy physics computed. One extra dispatch, no extra buffer, and
@@ -1009,7 +1710,10 @@ export class WorldGPU {
         cells.grippiness ? cells.grippiness[i] : (cells.ctype[i] === 3 ? 1 : 0));
       meta[i * 4 + 1] = cells.cslot[i];
       meta[i * 4 + 2] = bodyOf ? bodyOf[i] : -1;
-      meta[i * 4 + 3] = cells.bodySize ? cells.bodySize[i] : 0;
+      // Founders: middling meat, no armour. They have no developed tissue to
+      // read these from, and a founder that was inedible would be a boundary
+      // condition with teeth.
+      meta[i * 4 + 3] = packSize(cells.bodySize ? cells.bodySize[i] : 0, 0.5, 0.0, 0.5);
     }
     this.bPos = mk(pos); this.bVel = mk(vel); this.bMeta = mk(meta);
     // Pack bond index + rest length into the one vec2 buffer the shader binds.
@@ -1144,7 +1848,41 @@ export class WorldGPU {
       // conserved pool. Not conclusive at n=4 (separation from control is
       // ~2.6 SE) but consistent in direction, and it is the first setting in
       // this project where moving is not strictly punished.
-      bucketM: 32, contestRate: 0.6, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
+      // ARMOUR MUST BE ABLE TO PAY. At 0.30 it broke even only against 3.3
+      // SIMULTANEOUS attackers — upkeep is paid every second whether or not
+      // anything is biting, while an attack costs contestRate * effort *
+      // nutrition, about 0.09/s per attacker. Toughness duly collapsed from
+      // 0.149 to 0.019 under consumption, which is selection pricing a defence
+      // nobody could afford. 0.05 breaks even below one attacker, so armour is a
+      // live option rather than a trap.
+      bucketM: 32, contestRate: 0.6, toughCost: 0.05,
+      // Width of the digestive match. Swept, not chosen.
+      dietWidth: 0.35,
+      // Geography. Scales chosen so a world of bound ~132 holds a handful of
+      // basins and ridges rather than one hill or a thousand.
+      heightScale: 0.018, heightSeed: 5150, gravity: 0.55, highSap: 0.35,
+      mudScale: 0.014, mudSeed: 8801, mudSlip: 0.85, mudFlow: 1.15, mudFog: 0.8, flowDry: 0.07, shoreWidth: 0.30,
+      lowLush: 0.75,
+      // How far the biotic channel reaches, and how fast food goes downstream.
+      // contestR against contactR 1.0: proximity rather than collision, capped
+      // by what the neighbour walk can see. moteDrift below 1 so food lags the
+      // water and a creature can outrun its own dinner.
+      contestR: 1.5, moteDrift: 0.55,
+      // Tidal income. Sized so a fully-gripping cell holding station in a fast
+      // mud channel earns on the order of what rich ground yields, and a cell
+      // in still water earns nothing at all.
+      tidalYield: 0.06,
+      // Meander, crags, and riverbanks. warpAmt is in noise units, so 0.55 is
+      // rather more than half a feature — enough to fold the field back over
+      // itself, which is where the winding comes from.
+      // How much of the current is the landscape's own circulation rather than
+      // free turbulence. Not 1.0: eddies are real and a world where the medium
+      // is a pure function of the ground has no weather in it.
+      flowTerrain: 0.62,
+      // Feeling the ground. Same weight as the neighbour sense: real, but not
+      // so loud that it drowns out everything else a sensor reads.
+      senseTerrain: 0.45,
+      warpAmt: 0.55, ridgeAmt: 0.42, mudBank: 0.52, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
       // Cells are solid. This was silently 1.68e-44 for the life of the code —
       // see lib/uniform.js — so nothing has ever pushed back on anything. Sized
       // against springK so a bond can still hold a body together against the
@@ -1208,8 +1946,54 @@ export class WorldGPU {
       // 0.7 buys genuine four-way differentiation and the world cannot carry it
       // yet; that is the interesting direction once the economy is richer.
       absorbTradeoff: 0.4,
+      // Compass on. Acuity is per-cell and evolved; this is only the weight.
+      compass: 1.0, senseNoise: 1.0, senseCost: 0.25,
+      // Perceiving other creatures. Range is a few body-lengths.
+      // SHORT RANGE, AND THAT IS A REAL LIMIT, not a tuning choice.
+      //
+      // The neighbour walk is 3x3 buckets of hashCell 1.2, so it can only ever
+      // reach 1.8 world units — about two and a half cell diameters. A sigma of
+      // 6.0 was set first and silently truncated to a tenth of itself: the maths
+      // looked like vision and the walk delivered touch.
+      //
+      // 0.6 puts three sigma at the edge of what the walk actually sees, so the
+      // receptive field is the shape it claims to be. This is therefore a
+      // PROXIMITY sense — something big moving right beside me — and long-range
+      // perception needs a different structure (a coarse field, or a second
+      // hash), not a bigger number here. PHYSICS-2.md is the argument for why
+      // that must not simply become another neighbourhood walk.
+      // MATCHED, and costed. The walk reaches senseBuckets * hashCell, so three
+      // sigma must fit inside it or the receptive field is silently truncated —
+      // which happened once already at sigma 6.0 against a reach of 1.8, where
+      // the maths described vision and the walk delivered touch.
+      //
+      //   buckets 1 (reach 1.2)   105 steps/s
+      //   buckets 2 (reach 2.4)    95
+      //   buckets 4 (reach 4.8)    77      <- shipped
+      //   buckets 6 (reach 7.2)    63
+      //   off                     115
+      //
+      // Perception costs a third of the world's throughput. That is the price of
+      // any creature being able to perceive any other at all, and it is paid only
+      // by cells that are sensors.
+      senseOther: 0.35, senseRange: 1.6, senseBuckets: 4.0,
       dt: brains.dt, ...params,
     };
+
+    // TERRAIN SCALES WITH THE WORLD, because a geography is a number of PLACES,
+    // not a number of world units. The defaults above were chosen against
+    // bound 132; at a quarter of the cell budget the world is half as wide, and
+    // fixed frequencies would leave it with one hill and one bay — no ridges to
+    // separate anything, so the whole point of building it is gone. Expressed
+    // as "how many features across the world", it holds at any size.
+    //
+    // An explicit heightScale/mudScale in params still wins: this fills in a
+    // default, it does not override a decision.
+    {
+      const B = this.params.bound;
+      if (params.heightScale == null) this.params.heightScale = 2.40 / B;
+      if (params.mudScale == null)    this.params.mudScale    = 1.85 / B;
+    }
     // Motes. Scattered by a hash of their index rather than laid on a lattice:
     // a lattice would put the world's food on a grid, which is the thing we do
     // not do, and would also give every patch the same size and spacing. Random
@@ -1449,6 +2233,33 @@ export class WorldGPU {
    * death are structural events (allocation, mutation, lineage bookkeeping) and
    * belong on the CPU; the per-step simulation does not.
    */
+  /**
+   * Read the packed per-cell material vector back.
+   *
+   * The traits that matter for "who is selecting whom" — toughness, surface
+   * tag, digestive enzyme — exist ONLY in cmeta.w on the GPU. They are written
+   * at birth and never read back, so no experiment could see them move, which
+   * is why every claim about escalation so far has been about contractility
+   * (which happens to have a CPU mirror) rather than about armour, which is the
+   * trait that only makes sense as a response to other organisms.
+   *
+   * Returns the raw i32 vec4 per cell; unpack with the same shifts packMeta and
+   * packSize use.
+   */
+  async readMeta() {
+    const n = this.n;
+    const staging = this.device.createBuffer({
+      size: n * 16, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    });
+    const enc = this.device.createCommandEncoder();
+    enc.copyBufferToBuffer(this.bMeta, 0, staging, 0, n * 16);
+    this.device.queue.submit([enc.finish()]);
+    await staging.mapAsync(GPUMapMode.READ);
+    const out = new Int32Array(staging.getMappedRange().slice(0));
+    staging.unmap(); staging.destroy();
+    return out;
+  }
+
   async readCells() {
     const n = this.n;
     const staging = this.device.createBuffer({

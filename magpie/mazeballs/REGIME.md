@@ -1,5 +1,8 @@
 # Physical regime: what our world can and cannot represent
 
+> **Still current.** What this world's physics can and cannot reward — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
+> sits in the world as a whole, and for the measurements behind it.
+
 Prompted by an observation about the scallop theorem, LBM simulation and wake
 vortex capture. The underlying question is a good one and the answer bounds what
 locomotion can ever look like here, so it is worth writing down rather than

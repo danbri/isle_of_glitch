@@ -30,26 +30,61 @@ import { buildBodies } from '../lib/bodies.js';
 import { BrainArenaGPU } from '../lib/brainarena_gpu.js';
 import { WorldGPU } from '../lib/world_gpu.js';
 import { Evolver } from '../lib/evolve.js';
+import { Lineage } from '../lib/lineage.js';
 
+/**
+ * ONE RESOURCE KNOB: --cells, the universe's total cell budget.
+ *
+ * Everything else is derived, because everything else was never a design choice.
+ * Body count and body size are OUTCOMES of development and the economy; a flag
+ * that appears to set them is lying about what this world is.
+ *
+ * What the old flags actually were, and why they are gone from the surface:
+ *
+ *   --beasts   was two different things wearing one name: the cell-arena size
+ *              AND the body-slot count. Because they were the same number the
+ *              population jammed against a bookkeeping ceiling at 23% cell
+ *              occupancy, which is a bug that cost days of chasing the economy.
+ *   --cells    was the FOUNDER RING SIZE, which applies to nothing after the
+ *              first division. It now means the universe budget, which is what
+ *              anyone reading it assumed it meant.
+ *   --maxCells is a development ceiling, not a universe knob. Still overridable
+ *              because the arena needs a contiguous-island bound, but it has no
+ *              business on the front of the command line.
+ *
+ * Derived from the budget:
+ *   body slots   budget / 8   — bodies measure 11-20 cells, and a slot is a few
+ *                scalars against maxCells cells, so be generous and let ENERGY
+ *                decide the population rather than allocation.
+ *   arena width  budget / maxCells, which is what makes the cell slots add up.
+ *   bound        sized so the LIVE fraction (measured near 0.35) sits at the
+ *                areal density the world was tuned for.
+ */
 const args = (() => {
   const out = {
-    port: 8899, beasts: 3000, cells: 12, maxCells: 60, start: 0.25, bound: 0, spf: 1, tick: 250,
+    port: 8899, cells: 100000, maxCells: 60, start: 0.25, bound: 0, spf: 1, tick: 250,
+    founderCells: 12,
     host: '0.0.0.0',
     // Developmental encoding: 2 is the GRN-in-an-egg (DEVELOPMENT-2.md), 1 is
     // the old positional readout. Kept selectable so the two can be run against
     // the same world rather than compared across worlds.
-    devo: 2,
+    devo: 2, founders: 300,
     // The non-stationary field, which measured far better than a static one:
     // ancestral-tournament shareB 0.970 against 0.864, and body size kept
     // growing (27.6 and rising) where the static world saturated at 19.3.
     drift: 1,
   };
+  // Aliases that say what the flag actually controls. The old names still
+  // work; nothing that exists is broken to rename it.
+  // --budget reads better than --cells for what it is. --bodyCap is the
+  // development ceiling the arena needs; it is not a body-size setting.
+  const ALIAS = { budget: 'cells', bodyCap: 'maxCells' };
   const a = Deno.args;
   for (let i = 0; i < a.length; i++) {
     if (!a[i].startsWith('--')) continue;
     const k = a[i].slice(2);
     const v = a[i + 1] !== undefined && !a[i + 1].startsWith('--') ? a[++i] : 'true';
-    out[k] = /^[\d.]+$/.test(v) ? +v : v;
+    out[ALIAS[k] ?? k] = /^[\d.]+$/.test(v) ? +v : v;
   }
   return out;
 })();
@@ -103,31 +138,60 @@ const RUNNING = await codeStamp();
 const BOOT_ID = `${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;
 console.log(`code: sim ${RUNNING.simVersion}, page ${RUNNING.pageVersion}`);
 
+// Derived, not configured. See the note on the argument block.
+const CELL_BUDGET = args.cells;
+// NOT a distance. This is how many contiguous organism ISLANDS the brain
+// arena is divided into — the thing historically called 'beasts'. The world's
+// spatial extent is BOUND, below, in world units.
+const ARENA_ISLANDS = Math.max(16, Math.ceil(CELL_BUDGET / args.maxCells));
+const BODY_SLOTS  = Math.max(64, Math.ceil(CELL_BUDGET / 8));
+// About 35% of slots are live in practice; size the world so THAT sits at the
+// areal density the physics was tuned against, rather than sizing for slots
+// that are mostly empty.
+const LIVE_FRAC = 0.35;
 const BOUND = args.bound ||
-  Math.max(40, Math.sqrt(args.beasts * Math.max(args.cells, 34) / 0.5) / 2);
+  Math.max(40, Math.sqrt(CELL_BUDGET * LIVE_FRAC / 0.5) / 2);
 
-console.log(`building ${args.beasts} bodies x ${args.cells} cells, bound ${BOUND.toFixed(0)}`);
+console.log(`universe: ${CELL_BUDGET.toLocaleString()} cell budget, ` +
+  `${BODY_SLOTS.toLocaleString()} body slots, bodies up to ${args.maxCells} cells, ` +
+  `bound ${BOUND.toFixed(0)} (derived)`);
 const built = buildBodies({
-  beasts: args.beasts, cells: args.cells, bound: BOUND, seed: (Date.now() & 0xffff) || 7,
+  beasts: ARENA_ISLANDS, cells: args.founderCells, bound: BOUND, seed: (Date.now() & 0xffff) || 7,
   // Sized for the bodies DEVELOPMENT can reach, not for the founder rings.
   // A genome decides its own body size, so the arena has to hold the largest
   // one evolution might specify; sized for 12 it fragments and births start
   // failing for lack of contiguous room while every other number looks healthy.
   maxCells: args.maxCells,
+  bodySlots: BODY_SLOTS,
 });
 const brains = await BrainArenaGPU.create(built.arena);
 const world = new WorldGPU(brains, built.cells, {
   bound: BOUND,
   ...(args.drift ? { driftX: 0.06, driftY: 0.037, morphRate: 0.0075 } : {}),
 });
+const LINEAGE = new Lineage({ path: `${new URL('..', import.meta.url).pathname}runs/lineage.csv` });
 const evo = new Evolver({
-  arena: built.arena, world, cells: built.cells,
+  arena: built.arena, world, cells: built.cells, lineageLog: LINEAGE,
   seed: 5, birthEnergy: 18, deathEnergy: 0, maxCells: args.maxCells,
   devoVersion: args.devo,
 });
 console.log(`developmental encoding: ${evo.devoName} (egg extent ${evo.eggExtent})`);
-const startCount = Math.max(60, Math.floor(args.beasts * args.start));
-for (let o = startCount; o < args.beasts; o++) evo.cull(o);
+// ONE ROOT. Founder 0 is cellzero and makes itself; the rest are its children,
+// seeded rather than grown. Exactly one cell in this world's history was
+// self-created, which is the claim; a populated start is a statement about
+// where the recording begins, not about anything creating itself.
+//
+// --founders 1 is a literal single-cell origin. It currently STALLS: the pair
+// settles at mean energy 8.3 against a birth threshold of 18 and never divides
+// again. Measured, not assumed, and the reason this is not the default.
+//
+// The founder is a hand-built ring rather than a developed body, which is the
+// one honest wart here: a 12-cell ring is not a plausible zygote. It is the
+// world's boundary condition, like the sun, and it is marked as such in the
+// lineage rather than pretended away.
+const startCount = Math.max(1, Math.floor(args.founders ?? 1));
+for (let o = startCount; o < BODY_SLOTS; o++) evo.cull(o);
+for (let o = 0; o < startCount; o++) await evo.seedOrigin(o, 0);
 evo.founders = evo.alive();
 console.log(`founders ${evo.alive()}, arena ${built.arena.N} neuron slots`);
 
@@ -183,8 +247,8 @@ async function saveSnapshot(path) {
   hv.setUint32(28, evo.deaths, true);
   hv.setUint32(32, evo.nextUid, true);
   hv.setUint32(36, arenaBlob.byteLength, true);
-  hv.setUint32(40, args.beasts, true);
-  hv.setUint32(44, args.cells, true);
+  hv.setUint32(40, ARENA_ISLANDS, true);
+  hv.setUint32(44, args.founderCells, true);
 
   const bytes = [new Uint8Array(head), arenaBlob];
   for (const [, a] of parts) bytes.push(new Uint8Array(a.buffer, a.byteOffset, a.byteLength));
@@ -410,11 +474,16 @@ async function traceSample() {
   // Cheap because it is ONE readback of the act buffer, already needed for
   // frames; at everyN=5 this is ~13 Hz of world time, comfortably above Nyquist
   // for the fastest neurons the genome can specify.
-  const { act } = await brains.readState();
+  // ONE ORGANISM'S SLICE, not the whole arena. See readStateRange: this used
+  // to copy 800 KB every step and the world ran at 23 steps/s in visible
+  // bursts because of it.
+  const from = trace.cells[0], count = trace.cells.length;
+  const { act } = await brains.readStateRange(from, count);
   const col = trace.head * TRACE_ROWS;
   for (let r = 0; r < TRACE_ROWS; r++) {
     const i = trace.cells[r];
-    trace.buf[col + r] = (i !== undefined && built.cells.ctype[i] >= 0) ? act[i] : NaN;
+    trace.buf[col + r] = (i !== undefined && built.cells.ctype[i] >= 0)
+      ? act[i - from] : NaN;
   }
   trace.step[trace.head] = steps;
   trace.head = (trace.head + 1) % TRACE_COLS;
@@ -436,7 +505,12 @@ const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
     }
 
     sinceMetric += args.spf;
-    if (sinceMetric >= METRIC_EVERY && !ticking) { sinceMetric = 0; await logMetrics(); }
+    if (sinceMetric >= METRIC_EVERY && !ticking) {
+      sinceMetric = 0; await logMetrics();
+      // The tree of life is only durable once written. Flush on the metrics
+      // cadence so a crash costs seconds of ancestry rather than all of it.
+      LINEAGE.flush();
+    }
 
     if (sinceTick >= args.tick && !ticking) {
       sinceTick = 0; ticking = true;
@@ -681,13 +755,35 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       return new Response(JSON.stringify({ ok: false, error: 'no such living animal' }),
         { status: 404, headers: { 'content-type': 'application/json' } });
     }
-    const { PROPS, BASIS, NB, SYN_BASIS, SYN_OFF, NSYN } = await import('../lib/devo.js');
+    // DESCRIBE THE ENCODING THAT ACTUALLY RAN. This imported devo.js's PROPS and
+    // BASIS and handed them back for a devo2 genome, so the viewer drew a grid of
+    // Dev 1.0 basis functions — ap, dv, |dv|, sin2ap — over numbers that mean
+    // nothing of the sort. Headings for an encoding the world stopped using.
+    const D = evo.devoVersion === 1
+      ? await import('../lib/devo.js') : await import('../lib/devo2.js');
     return new Response(JSON.stringify({
       ok: true, uid: want, slot,
       generation: evo.generation[slot], lineage: evo.lineage[slot],
       cells: built.arena.cnt[slot],
-      props: PROPS, basis: BASIS.map(b => b[0]), nb: NB,
-      synBasis: SYN_BASIS.map(b => b[0]), synOff: SYN_OFF, nsyn: NSYN,
+      encoding: evo.devoName,
+      ...(evo.devoVersion === 1 ? {
+        props: D.PROPS, basis: D.BASIS.map(b => b[0]), nb: D.NB,
+        synBasis: D.SYN_BASIS.map(b => b[0]), synOff: D.SYN_OFF, nsyn: D.NSYN,
+      } : {
+        // A regulatory network, not a basis expansion: per gene, K regulators
+        // (source gene + weight), a bias, a decay and a diffusion rate.
+        grn: {
+          nGene: D.NGENE, k: D.K, stride: D.GENE_STRIDE,
+          offSrc: D.OFF_SRC, offW: D.OFF_W, offBias: D.OFF_BIAS,
+          offDecay: D.OFF_DECAY, offDiff: D.OFF_DIFF,
+          outBase: D.OUT_BASE, outputs: D.OUTPUTS,
+          maternal: ['AP', 'DV', 'RAD', 'NOISE', 'CROWD'],
+          synOff: D.SYN_OFF, nsyn: D.NSYN,
+          // The synapse basis is SHARED with devo.js — devo2 imports it rather
+          // than restating it — so the viewer can name those columns either way.
+          synBasis: D.SYN_BASIS.map(b => b[0]),
+        },
+      }),
       g: Array.from(evo.genome[slot]),
     }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
   }
@@ -792,6 +888,72 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       return ok({ flagged: true, snapshot: rec.snapshot });
     }
 
+    // INTELLIGENT DESIGN. Scatter copies of one creature's genome across the
+    // world, optionally mutated. Logged as an intervention, because it is one.
+    if (action === 'implant') {
+      const want = Number(body.uid ?? -1);
+      let slot = -1;
+      for (let o = 0; o < built.arena.P; o++) {
+        if (built.arena.alive[o] && evo.uid[o] === want) { slot = o; break; }
+      }
+      if (slot < 0) {
+        return new Response(JSON.stringify({ ok: false, error: `no living creature #${want}` }),
+          { status: 404, headers: { 'content-type': 'application/json' } });
+      }
+      const copies = Math.max(1, Math.min(400, Math.round(Number(body.copies ?? 100))));
+      const mutate = Math.max(0, Math.min(6, Number(body.mutate ?? 1)));
+      const r = evo.implant(slot, { copies, mutate, step: steps });
+      // ON THE RECORD. A run that has been intervened in is not a clean
+      // observation of evolution, and the only thing that keeps that from being
+      // forgotten a week later is that it is written down at the time.
+      try {
+        await Deno.writeTextFile(
+          `${new URL('..', import.meta.url).pathname}runs/observations.jsonl`,
+          JSON.stringify({
+            t: new Date().toISOString(), kind: 'intervention', what: 'implant',
+            step: steps, uid: want, copies, mutate,
+            made: r.made, noRoom: r.noRoom, failedEgg: r.failedEgg,
+            mintedEnergy: r.mintedEnergy,
+            note: 'hand of god: genome copied into the world with yolk nobody paid for',
+          }) + '\n', { append: true });
+      } catch (e) { r.logError = e.message; }
+      console.log(`IMPLANT #${want} x${copies} (mutate ${mutate}) -> ${r.made} placed at step ${steps}`);
+      return ok(r);
+    }
+
+    // A PHYSICS KNOB, applied to the shared world. Whitelisted: this is a live
+    // control surface on a running experiment, and an arbitrary key would let a
+    // stray field name land somewhere in the uniform block with no complaint.
+    if (action === 'tune') {
+      const ALLOW = new Set([
+        'flowStr', 'flowScale', 'drag', 'springK', 'contract', 'damp', 'bondDamp',
+        'mudFlow', 'mudSlip', 'mudFog', 'flowDry', 'flowTerrain', 'gravity',
+        'highSap', 'lowLush', 'tidalYield', 'senseTerrain', 'harvest', 'brainTax',
+        'muscleCost', 'gripBase', 'gripMod', 'gripHold', 'gripAniso', 'fricK',
+        'contestRate', 'toughCost', 'dietWidth', 'absorbTradeoff', 'crowdK',
+        'regrowCrowdK', 'moteRegrow', 'senseOther', 'senseRange', 'compass',
+      ]);
+      const patch = {}, rejected = [];
+      for (const [k, v] of Object.entries(body.params ?? {})) {
+        if (!ALLOW.has(k)) { rejected.push(k); continue; }
+        const n = Number(v);
+        if (Number.isFinite(n)) patch[k] = n;
+      }
+      if (Object.keys(patch).length) world.writeParams(patch);
+      // Tuning is an intervention in the same sense implant is — a run whose
+      // parameters moved under it is not a run at one setting — so it goes in
+      // the log rather than only into memory.
+      if (Object.keys(patch).length) {
+        try {
+          await Deno.writeTextFile(
+            `${new URL('..', import.meta.url).pathname}runs/observations.jsonl`,
+            JSON.stringify({ t: new Date().toISOString(), kind: 'tune', step: steps, patch }) + '\n',
+            { append: true });
+        } catch { /* logging must not break the control */ }
+      }
+      return ok({ applied: patch, rejected });
+    }
+
     if (action === 'save') {
       const r = await saveSnapshot(SNAP);
       return ok({ saved: SNAP, bytes: r.bytes });
@@ -860,13 +1022,19 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       // The viewer builds its buffers from these, so it does not have to be
       // configured to match by hand — a mismatch is not a user error, it is
       // just a page that has not been told the shape yet.
-      beasts: args.beasts, cellsPerBeast: args.cells,
+      // 'beasts' is the ARENA WIDTH the viewer must build buffers to match,
+      // not a population target — the population is whatever energy allows,
+      // and bodySlots is deliberately far larger.
+      beasts: ARENA_ISLANDS, cellsPerBeast: args.founderCells,
+      cellBudget: CELL_BUDGET, bodySlots: BODY_SLOTS,
       // The viewer must be TOLD the arena width, not left to guess it. It had a
       // hardcoded maxCells of 40 while the server moved to 60, so every frame
       // failed the size check and the page showed "reload to resync" — which
       // reloading could not fix, because the guess was wrong every time.
       maxCells: args.maxCells, nCells: built.meta.nCells, bound: BOUND,
       nMotes: world.params.nMotes, paused, spf: args.spf,
+      // Non-zero means this world has been meddled with; see evolve.implant.
+      interventions: evo.interventions ?? 0, mintedEnergy: evo.mintedEnergy ?? 0,
       // What this process is RUNNING vs what is on disk NOW. If simVersion
       // differs the physics has changed and needs a restart; if pageVersion
       // differs the viewer has changed and needs a reload.
@@ -888,6 +1056,14 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       morphRate: world.params.morphRate, dt: world.params.dt,
       flowScale: world.params.flowScale, flowStr: world.params.flowStr,
       worldSeed: world.params.seed,
+      // Geography, so the viewer draws THIS world's coastline rather than a
+      // default one. A viewer guessing the seed would render a plausible island
+      // in the wrong place, which is worse than rendering nothing.
+      heightScale: world.params.heightScale, heightSeed: world.params.heightSeed,
+      mudScale: world.params.mudScale, mudSeed: world.params.mudSeed,
+      lowLush: world.params.lowLush, gravity: world.params.gravity,
+      warpAmt: world.params.warpAmt, ridgeAmt: world.params.ridgeAmt,
+      mudBank: world.params.mudBank, flowTerrain: world.params.flowTerrain,
       // Ground truth for cell ownership. cellsOwned sums the arena's own
       // organism table; cellsLiveTyped counts cells the world still treats as
       // present. They must match — any excess is orphan cells that no organism

@@ -101,6 +101,47 @@ export const WORLD_FIELDS = [
   // eats equally regardless of what else it is; 1 = a cell at full
   // contractility or grip cannot feed at all.
   ['absorbTradeoff', 'f32', 'anticorrelation between force capacity and uptake'],
+
+  // Compass sensing. senseNoise is what fills the gap left by imperfect
+  // acuity, so a blind sensor reads pure noise rather than zero.
+  ['compass', 'f32', 'weight of the objective-bearing sense, 0 disables it'],
+  ['senseNoise', 'f32', 'amplitude of the noise an inaccurate sensor reads'],
+  ['senseCost', 'f32', 'energy per second burned per unit of compass acuity'],
+
+  // Perceiving other creatures. Sources are OTHER CELLS, and what they emit is
+  // their motion relative to the sensor — see the note in sense().
+  ['senseOther', 'f32', 'weight of the neighbour sense; 0 disables it'],
+  ['senseRange', 'f32', 'gaussian sigma of the receptive field, world units'],
+  ['senseBuckets', 'f32', 'hash buckets walked each way by a sensor; 1 = the 3x3 walk'],
+  ['toughCost', 'f32', 'energy per second per unit of toughness — armour is not free'],
+  ['dietWidth', 'f32', 'gaussian width of enzyme-tag matching; narrow = specialists'],
+
+  // GEOGRAPHY. Two analytic scalar fields, sampled at a cell's own position.
+  // Nothing queries anything remote: a cell feels the ground under itself and
+  // the medium against its own skin, and that is the whole coupling.
+  ['heightScale', 'f32', 'spatial frequency of the height field'],
+  ['heightSeed', 'u32', 'height field seed'],
+  ['gravity', 'f32', 'in-plane force per unit height gradient; a tilted plane'],
+  ['highSap', 'f32', 'extra metabolic cost per unit height — the thin cold air'],
+  ['mudScale', 'f32', 'spatial frequency of the mud field'],
+  ['mudSeed', 'u32', 'mud field seed'],
+  ['mudSlip', 'f32', 'how much mud removes purchase, 0..1'],
+  ['mudFlow', 'f32', 'how much harder the medium pushes in mud — the mud rivers'],
+  ['mudFog', 'f32', 'how much mud degrades sensing'],
+  ['lowLush', 'f32', 'how much fertility follows the valleys downhill'],
+  ['tidalYield', 'f32', 'share of drag dissipation a gripping cell can take'],
+  // Shape of the terrain, as opposed to its scale. warpAmt is how far the field
+  // drags its own coordinates — the meander. ridgeAmt is how craggy the uplands
+  // get. mudBank is where a watercourse has a bank: high = narrow threads.
+  ['warpAmt', 'f32', 'domain-warp strength; 0 = blobby fbm, high = meandering'],
+  ['ridgeAmt', 'f32', 'ridged-noise crests added to high ground'],
+  ['mudBank', 'f32', 'threshold that turns wet ground into narrow channels'],
+  ['flowTerrain', 'f32', 'share of the current that circulates along the terrain'],
+  ['senseTerrain', 'f32', 'weight of the wet-and-slope sense; 0 disables it'],
+  ['flowDry', 'f32', 'how much current there is away from the mud; the land is still'],
+  ['shoreWidth', 'f32', 'how far inland the living shore reaches, in ridge units'],
+  ['contestR', 'f32', 'how far the biotic channel reaches — proximity, not touch'],
+  ['moteDrift', 'f32', 'how much of the current the standing crop is carried by'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */

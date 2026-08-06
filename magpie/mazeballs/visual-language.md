@@ -1,5 +1,8 @@
 # Visual language — how the world should read
 
+> **Still current.** How the world is drawn, and why — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
+> sits in the world as a whole, and for the measurements behind it.
+
 Rendering rules for the alife viewer (`world.html` and the demos): how to make a
 crowded, evolving, moving world *legible and alive* rather than fizzing dots, a
 scratchy tangle, or a void. Companion to `primitives.md` (the material vector that

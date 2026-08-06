@@ -313,6 +313,34 @@ export class BrainArenaGPU {
    * @param {BrainArena} [into]  written in place when given, so a CPU arena can
    *                             snapshot a GPU run.
    */
+  /**
+   * Read back ONE organism's slice of state and act.
+   *
+   * readState copies the whole arena — at a 100,000-cell budget that is 800 KB
+   * and a pipeline stall, and the CTRNN scope was asking for it EVERY STEP once
+   * the sample rate was raised to stop the traces aliasing. The measured cost
+   * was the world dropping to 23 steps/s and the viewer animating in visible
+   * bursts, which read as a rendering problem and was a readback problem.
+   *
+   * An organism's slots are contiguous by construction (that is what makes it an
+   * island), so watching one animal needs a copy of a few hundred bytes.
+   */
+  async readStateRange(from, count) {
+    const staging = this.device.createBuffer({
+      size: count * 4 * 2, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    });
+    const enc = this.device.createCommandEncoder();
+    enc.copyBufferToBuffer(this.bState, from * 4, staging, 0, count * 4);
+    enc.copyBufferToBuffer(this.bAct, from * 4, staging, count * 4, count * 4);
+    this.device.queue.submit([enc.finish()]);
+    await staging.mapAsync(GPUMapMode.READ);
+    const src = staging.getMappedRange();
+    const state = new Float32Array(src.slice(0, count * 4));
+    const act = new Float32Array(src.slice(count * 4, count * 8));
+    staging.unmap(); staging.destroy();
+    return { state, act, from };
+  }
+
   async readState(into = null) {
     // A staging buffer PER CALL, not one shared for the object's lifetime.
     // mapAsync is asynchronous, so two overlapping readbacks both reach for the

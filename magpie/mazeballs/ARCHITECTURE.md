@@ -1,5 +1,14 @@
 # Where the work happens, and why
 
+> ### ⚠ SUPERSEDED — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md)
+>
+> This document is **history**. It describes an arrangement of code that has since been rebuilt around cells and descent, and parts of it are no
+> longer true of the code. It is kept because the reasons for the original split are still instructive, not as a description of the
+> world.
+>
+> **For what the world actually is and does now, read `WORLD-MANUAL.md`.** Where
+> this file disagrees with the manual, the manual is right.
+
 Three surfaces can run this world, and the differences are not preferences.
 
 | | zero readback | survives tab close | many viewers | exists |

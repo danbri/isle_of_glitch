@@ -1,5 +1,8 @@
 # Ascent — what's proven, what "infinite" means here, and the next experiment
 
+> **Still current.** The category-free ascent instrument — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
+> sits in the world as a whole, and for the measurements behind it.
+
 Read-first synthesis of the ascent investigation. Detail and history are in
 `LAB-NOTES.md`; the tools are `tools/soup-ascent.js` (instrument),
 `tools/bodies-proto.js` (rung 1), `tools/differentiate-proto.js` (rung 3).

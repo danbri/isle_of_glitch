@@ -1,5 +1,8 @@
 # Primitives — the configurable kernel life is built from
 
+> **Still current.** The schema everything hangs off. Six of its nine material axes are now built — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
+> sits in the world as a whole, and for the measurements behind it.
+
 The catalog of low-level primitives every ecosystem story projects onto. Our job
 (the mission, the First Law) is never to implement "predator," "eating," "armor,"
 or "locomotion" — it is to choose the minimal set of **cell material properties,

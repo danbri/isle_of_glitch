@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nothing can see anything — the Cambrian audit</title>
+<style>
+  :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fbfbf9; --fg:#1c2530; --dim:#5d6b7c; --acc:#12766e; --line:#e2e5ea; }
+  }
+  body { background:var(--bg); color:var(--fg); margin:0;
+         font:16px/1.65 ui-serif, Georgia, "Iowan Old Style", serif; }
+  .wrap { max-width:46rem; margin:0 auto; padding:3rem 1.25rem 6rem; }
+  a { color:var(--acc); }
+  h1,h2,h3 { font-family:ui-sans-serif, system-ui, sans-serif; line-height:1.25; }
+  h1 { font-size:1.9rem; margin:0 0 .3rem; }
+  h2 { margin-top:2.4rem; border-bottom:1px solid var(--line); padding-bottom:.3rem; }
+  .meta { color:var(--dim); font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size:.8rem; letter-spacing:.02em; }
+  code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.85em; }
+  pre { background:rgba(127,127,127,.1); padding:.9rem 1rem; border-radius:6px;
+        overflow-x:auto; border:1px solid var(--line); }
+  table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; font-size:.9rem; }
+  th,td { border:1px solid var(--line); padding:.35rem .6rem; text-align:left; }
+  th { background:rgba(127,127,127,.08); }
+  blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
+               color:var(--dim); }
+  /* Figures. Plots here are generated as SVG straight from the wire format
+     rather than screenshotted, so they stay sharp at any width and weigh
+     almost nothing. */
+  img, svg.fig { max-width:100%; height:auto; display:block; border-radius:6px;
+                 border:1px solid var(--line); background:#070c0b; }
+  figure { margin:1.6rem 0; }
+  figcaption { color:var(--dim); font-size:.82rem; margin-top:.5rem;
+               font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
+  ul.index { list-style:none; padding:0; }
+  ul.index li { margin:.9rem 0; }
+  ul.index .meta { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
+  <article>
+  <h1>Nothing can see anything — the Cambrian audit</h1>
+  <p class="meta">
+    6 August 2026 · posts, cambrian, sensing, predation, primitives, audit
+  </p>
+  <p>The world moves now. Having got there, the useful thing was to ask what else
+stands between here and an arms race — and the answer turned out to be much
+larger and much simpler than expected.</p>
+<figure>
+  <img src="/isle_of_glitch/magpie/mazeballs/lab/assets/run2-trails-early.svg"
+       alt="Trajectories of 78 bodies over 326 seconds. Most are short tangles; a handful are long bright arcs.">
+  <figcaption>78 bodies over 326 s of world time, tracked by uid. p50 0.73, p90
+  1.51, max 55.67 units. The distribution is the point: a handful travel properly
+  and the rest shuffle in place.</figcaption>
+</figure>
+<h2>A sensor senses the weather</h2>
+<pre><code class="language-wgsl">fn sense(...) {
+  let rel = flowAt(p) - vel[i].xy;
+  ext[slot] = tanh((length(rel) + fbm(p * P.flowScale * 0.5, seed) - 0.5) * senseGain);
+}
+</code></pre>
+<p>That is the whole of perception in this world: <strong>the speed of the medium past the
+cell, plus a noise field.</strong> It does not sense food. It does not sense other
+creatures. It does not sense the body it belongs to. And it is a <strong>scalar</strong>, so it
+carries no direction even in principle.</p>
+<p>The consequences are total rather than partial:</p>
+<ul>
+<li><strong>No creature can perceive another creature.</strong> Predator, prey, mate, rival,
+swarm — all unreachable by construction, not merely absent.</li>
+<li><strong>Nothing can move <em>toward</em> anything.</strong> What we built this week is open-loop
+rhythm. A perfect gait cannot become foraging without a gradient to climb.</li>
+<li><strong>Sensing is nearly useless, so selection deletes it.</strong> Sensors sit at 3.8% of
+cells, which is the correct response to a sense organ that reports weather.</li>
+</ul>
+<p>Months of work on brains, and the brains have had nothing to think about.</p>
+<h2>The pattern behind every failed fix</h2>
+<p>Three economic interventions, all measured, all of which worked and then reverted:</p>
+<pre><code>brainTax 0.4        12x turnover  -&gt;  population evolved cheap, energy
+                                      climbed 12 -&gt; 26.5, deaths collapsed
+contest + crowding  movers out-earned sitters for 900k steps
+                                  -&gt;  muscle 54% -&gt; 3.2% by generation 210
+absorbTradeoff 0.4  sensors 29% at 50k steps
+                                  -&gt;  3.8% live at generation 32
+</code></pre>
+<p><strong>A fixed cost against an adapting population is a hill the population walks
+down.</strong> Tuning harder does not fix this; it changes which hill. This is the same
+shape of error each time and it took three repetitions to see it.</p>
+<p>What would fix it is scarcity that scales with what the population <em>has become</em> —
+supplied by other organisms rather than by a constant.</p>
+<h2>Six of nine material axes are unbuilt</h2>
+<p><code>primitives.md</code> specifies what a cell should carry. Actually implemented:
+contractility, grabbiness, stiffness. Missing: <strong>tag, enzyme, toughness,
+nutrition, density, store</strong> — which are precisely the six that make an ecology
+rather than a physics demo.</p>
+<p>Scales, leather hides, armour, food absorbers, flesh in different flavours: none
+of these are new primitives. They are those six, already written down and skipped.
+Armour is <code>toughness</code> anticorrelated with <code>nutrition</code> (tough is low-value food)
+and paid for in <code>density</code> → mass → slower. A creature covered in absorptive
+tissue is nutritious, and therefore a target — but only once something can be
+eaten at all.</p>
+<h2>Predation is the keystone</h2>
+<p>There is a <code>contest</code> term, and it is what finally made moving pay. But nothing is
+<strong>eaten</strong>: no body becomes food, and death leaves no matter behind.</p>
+<p>The full primitive is already specified:</p>
+<pre><code>consume:  energy A&lt;-B  at  max(0, enzyme_A · tag_B − toughness_B) × nutrition_B
+</code></pre>
+<p>Roleless and graded — you must both <em>match</em> and <em>overpower</em>. &quot;Predator&quot; and
+&quot;prey&quot; are regions of that space, never types. One function plus <code>nutrition</code> and
+<code>toughness</code> gives grazing, predation, scavenging, armour, camouflage-by-tag, and
+specialist versus generalist diets, without naming any of them.</p>
+<p><strong>Why it is the keystone</strong>: it is the only proposed pressure whose difficulty
+<em>scales with what the population evolved into</em>. A fixed metabolic tax gets
+outrun. A world where the other organisms are both your food and your problem
+cannot be, because the target moves when you do. That is the answer to the
+section above.</p>
+<p>And it closes the matter loop. Death currently vacates a slot and the matter
+vanishes; a corpse that is still nutritious funds scavengers, which is another
+niche that costs nothing to specify.</p>
+<h2>Ranked</h2>
+<ol>
+<li><strong>Directional sensing of bodies and food.</strong> Nothing else is reachable without
+it, and it is why sensors are being deleted.</li>
+<li><strong>Consumption, nutrition, toughness, corpses.</strong> The only pressure that adapts
+as fast as the population.</li>
+<li><strong><code>density</code> → mass.</strong> Armour that costs speed needs mass to exist; one division
+in the integrator.</li>
+<li><strong>Eggs as physical objects</strong> — a vulnerable stage is what makes guarding,
+hiding, dispersal and timing worth evolving.</li>
+<li><strong>tag/enzyme matching</strong> — diet specialisation, adhesion, multicellularity.</li>
+<li><strong>A medium with state</strong> — wakes and drafting. Large, and not on the path.</li>
+</ol>
+<p>The honest summary: <strong>movement works and is the least of it.</strong> What stands between
+here and a Cambrian is that nothing can see anything, and nothing is food.</p>
+<p>Full audit in <code>CambrianConditions.md</code>.</p>
+
+</article>
+
+</div>
+</body>
+</html>

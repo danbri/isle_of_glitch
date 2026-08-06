@@ -36,7 +36,7 @@ import { CELL_NEURON, CELL_SENSOR, CELL_MUSCLE, CELL_ANCHOR } from './world_gpu.
 export function buildBodies({
   beasts = 2000, cells = 12, degree = 12, bondK = 4,
   radius = 1.1, cellR = 0.34, bound = 64, seed = 1, dt = 0.015,
-  maxCells = 40,
+  maxCells = 40, bodySlots = null,
 } = {}) {
   let s = seed >>> 0;
   const rnd = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
@@ -54,8 +54,30 @@ export function buildBodies({
   // sits there looking healthy. It is silent, and it invalidated every ascent
   // measurement in this wave once bodies outgrew their starting size.
   const nCells = beasts * cells;
+  // CELLS ARE THE RESOURCE; BODY SLOTS ARE BOOKKEEPING.
+  //
+  // These were the same number and it silently capped the world. Cell memory is
+  // sized for the largest body evolution could build (maxCells), but bodies
+  // evolved small — measured at 13.9 cells against a maxCells of 60 — so the
+  // population hit the BODY-slot ceiling at 23% cell occupancy:
+  //
+  //     bodies  1200/1200   100% used
+  //     cells  16646/72000   23% used
+  //
+  // The same memory would have held about 5,200 bodies of the size they
+  // actually were, so the population was capped over four times below what the
+  // world could carry. A population pinned against a bookkeeping wall has its
+  // birth rate forced to equal its death rate, which is exactly the "nothing
+  // dies, selection cannot act" symptom that was repeatedly blamed on the
+  // economy and repeatedly not fixed by tuning it.
+  //
+  // Body slots are cheap — a handful of scalars each, against maxCells cells —
+  // so allocate generously and let ENERGY decide the population. Births still
+  // fail when the cell arena is genuinely full, which is a lawful density
+  // limit rather than an arbitrary one.
+  const P = bodySlots ?? beasts;
   const arena = new BrainArena({
-    neurons: beasts * Math.max(cells, maxCells), degree, organisms: beasts, dt,
+    neurons: beasts * Math.max(cells, maxCells), degree, organisms: P, dt,
   });
 
   // Every per-cell array spans the ARENA, not the starting population. The
@@ -80,6 +102,22 @@ export function buildBodies({
   // developed cell writes its real contractility here and the kernel scales
   // force by it rather than branching on the label.
   const contractility = new Float32Array(NC), grippiness = new Float32Array(NC);
+  // CELL IDENTITY AND DESCENT.
+  //
+  // Float64Array, not BigInt64Array: a double holds exact integers to 2^53,
+  // which at the observed rate of roughly four cell-creations per step is over
+  // a hundred thousand years of continuous running. BigInt would be exact
+  // forever and far slower in every hot path that touches it, for a headroom
+  // nothing will ever use.
+  //
+  // Array position is the GPU's index; THIS is the cell's identity. A slot is
+  // recycled, an id never is — which is what makes 'is this the same cell'
+  // answerable, and what stops a synapse silently rewiring to a stranger when
+  // a slot changes hands.
+  const uid = new Float64Array(NC).fill(-1);
+  const parentA = new Float64Array(NC).fill(-1);
+  const parentB = new Float64Array(NC).fill(-1);   // two-parent creation, when it exists
+  const lifebook = new Float64Array(NC).fill(-1);  // which genome this cell carries
   // Which body each cell belongs to. Not a category — an identity, the same
   // fact the bond graph already encodes as a connected component, cached so a
   // cell can tell its own tissue from a stranger's in one comparison.
@@ -162,7 +200,7 @@ export function buildBodies({
   return {
     arena,
     cells: { px, py, vx, vy, rad, ctype, cslot, body, bodySize, bond, brest, bondK,
-             contractility, grippiness },
+             contractility, grippiness, uid, parentA, parentB, lifebook },
     // nCells is the ARENA width — every consumer (GPU buffers, frames, the
     // viewer) must agree on it, and it is no longer beasts*cells.
     meta: { beasts, cellsPerBeast: cells, nCells: NC, degree, bound, maxCells },
