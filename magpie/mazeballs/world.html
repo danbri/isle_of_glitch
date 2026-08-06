@@ -231,14 +231,21 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 
   <div>
     <h2>View</h2>
+    <p class="note" style="margin:.1rem 0 .2rem;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;opacity:.7">the current</p>
     <div class="row">
+      <button id="bStreams" class="on" title="traced streamlines — where a thing released here ends up. The fieldsim.html look.">lines</button>
+      <button id="bGlitter" class="on" title="motes of light riding the current, so you can see it move">motes</button>
+      <button id="bArrows" title="one arrow per patch of ground: direction and strength, for debugging the balance">arrows</button>
+    </div>
+    <p class="note" style="margin:.45rem 0 .2rem;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;opacity:.7">the ground</p>
+    <div class="row">
+      <button id="bTerrain" class="on" title="height, mud and the living shore">land</button>
       <button id="bField" class="on">field</button>
-      <button id="bTerrain" class="on">land</button>
-      <button id="bStreams" class="on" title="the current traced as paths — where a thing released here ends up">streams</button>
-      <button id="bGlitter" class="on" title="the current, shown as motes of light riding it — this is the transport system">current</button>
-      <button id="bArrows" title="the current that carries anything not holding on — the transport system, and the thing an active creature has to beat">arrows</button>
-      <button id="bCrescent" title="where it pays to be: the fertile band, out of the mud and below the heights">crescent</button>
       <button id="bFood" class="on">food</button>
+      <button id="bCrescent" title="where it pays to be: the fertile band, out of the mud and below the heights">crescent</button>
+    </div>
+    <p class="note" style="margin:.45rem 0 .2rem;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;opacity:.7">the living</p>
+    <div class="row">
       <button id="bBonds" class="on">bonds</button>
       <button id="bPause">pause</button>
       <button id="bEvolve" class="on">evolve</button>
