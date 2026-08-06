@@ -6129,3 +6129,43 @@ mechanism, the reason, and the failure mode; it was read, argued with, and
 overridden on aesthetic grounds; and the thing it predicted happened within a
 day and took most of a session to trace back. The comment was the cheaper
 experiment.
+
+#### Replicated — and the drift hypothesis does NOT survive
+
+`tools/moving-pays.js`, four replicates per arm:
+
+```
+moteDrift 0      mean(movers - sitters)  +0.0350 +-0.0673   (2 reps usable)
+moteDrift 0.55   mean(movers - sitters)  -0.0198 +-0.0103   (3 reps usable)
+gap                                      +0.0548 +-0.0681   NOT significant
+```
+
+**The one-replicate sign flip did not survive replication.** The direction is
+still consistent — static food gives a positive difference, drifting food a
+negative one — but the gap does not clear two standard errors, so *"drifting
+food removes the pressure to move"* is **not demonstrated**. The previous
+entry's confidence was too high and is corrected here.
+
+Two things are worse than that, and both matter more:
+
+- **Moving does not pay in EITHER arm.** `movingPays` is false at moteDrift 0 as
+  well: +0.0350 ± 0.0673 is indistinguishable from zero. Reverting drift did not
+  restore a positive incentive to locomote; it removed a possible negative one at
+  best. The problem is upstream of mote drift.
+- **Three of eight replicates were unusable** for too few surviving bodies. The
+  test world at CAP 110 / bound 58 is too fragile to power this comparison, which
+  is a limitation of the instrument and not a fact about the world.
+
+`moteDrift` stays at 0 — it is the historically tested value and the direction of
+the evidence, weak as it is, points that way — but it is no longer claimed as the
+cause. **What is established is narrower and more important: movers do not
+out-earn sitters, with or without drifting food.** Until that changes, locomotion
+has no return to capture and perception has nothing to steer toward, which is a
+complete account of why sense organs are at best neutral.
+
+The next question is therefore not about motes. It is why crowding suppression,
+which this ledger records as having been tuned specifically to make movers
+out-earn sitters (`crowdK 2.0`: movers +1.9 against sitters -4.8), no longer
+does so in a world that has since gained geography, a narrow fertile shore,
+tidal income and a proximity-range biotic channel. Any of those could have
+restored the value of sitting still.
