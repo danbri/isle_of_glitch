@@ -1679,7 +1679,27 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // proportion to how sharp it is, so accuracy has to be worth its keep and a
   // cheap noisy sense stays a live option. primitives.md: an axis without a
   // cost has no teeth.
-  let senseWork = P.senseCost * senseAcuity(cmeta[i].x);
+  //
+  // AND IT IS CHARGED WHERE IT IS USED. This was levied on EVERY cell, while
+  // sense() computes a reading only for cells whose type is sensor — so the
+  // world charged the whole population for an organ almost none of them had.
+  // Measured before the fix: mean acuity 0.682 across all live cells against a
+  // senseCost of 0.25, i.e. 0.17 energy per second of pure tax, on a brainTax
+  // of 0.4. A 43% surcharge on existing, for nothing.
+  //
+  // It also explains the shape of the population. Sensor cells sat at acuity
+  // 0.000 — every one of them — while non-sensors averaged 0.682: the bits are
+  // near-neutral where they are not charged against a benefit, and the cells
+  // that could have used them had been driven to zero. A sensor was an organ
+  // that reads pure noise and a non-sensor was paying for one.
+  //
+  // Gating a COST on type is uncomfortable next to the First Law, and it is the
+  // honest reading here: the kernel ALREADY decides who senses by exactly this
+  // test, so making the bill follow the benefit is consistency rather than a
+  // new branch. The alternative — charging by continuous sense capacity — needs
+  // that capacity in cmeta, where there is no room for it.
+  let senseWork = P.senseCost * senseAcuity(cmeta[i].x)
+                * select(0.0, 1.0, cellType(cmeta[i].x) == 1);
   // ARMOUR IS EXPENSIVE TO HOLD. Without a cost, toughness is a free defence
   // and evolution takes it to the ceiling in every lineage — the same failure
   // as feeding being independent of what a cell is, which produced a 94%
