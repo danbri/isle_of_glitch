@@ -2153,6 +2153,33 @@ export class WorldGPU {
    * death are structural events (allocation, mutation, lineage bookkeeping) and
    * belong on the CPU; the per-step simulation does not.
    */
+  /**
+   * Read the packed per-cell material vector back.
+   *
+   * The traits that matter for "who is selecting whom" — toughness, surface
+   * tag, digestive enzyme — exist ONLY in cmeta.w on the GPU. They are written
+   * at birth and never read back, so no experiment could see them move, which
+   * is why every claim about escalation so far has been about contractility
+   * (which happens to have a CPU mirror) rather than about armour, which is the
+   * trait that only makes sense as a response to other organisms.
+   *
+   * Returns the raw i32 vec4 per cell; unpack with the same shifts packMeta and
+   * packSize use.
+   */
+  async readMeta() {
+    const n = this.n;
+    const staging = this.device.createBuffer({
+      size: n * 16, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    });
+    const enc = this.device.createCommandEncoder();
+    enc.copyBufferToBuffer(this.bMeta, 0, staging, 0, n * 16);
+    this.device.queue.submit([enc.finish()]);
+    await staging.mapAsync(GPUMapMode.READ);
+    const out = new Int32Array(staging.getMappedRange().slice(0));
+    staging.unmap(); staging.destroy();
+    return out;
+  }
+
   async readCells() {
     const n = this.n;
     const staging = this.device.createBuffer({
