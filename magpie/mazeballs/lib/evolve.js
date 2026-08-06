@@ -457,7 +457,7 @@ export class Evolver {
       meta[i * 4] = packMeta(type, con, gri, apN, c.senseTune ?? 0);
       meta[i * 4 + 1] = dst + i;
       meta[i * 4 + 2] = child;
-      meta[i * 4 + 3] = packSize(n, 0, Math.max(0, c.toughness ?? 0));
+      meta[i * 4 + 3] = packSize(n, c.tag ?? 0.5, Math.max(0, c.toughness ?? 0), c.enzyme ?? 0.5);
       if (cells.contractility) cells.contractility[dst + i] = con;
       if (cells.grippiness) cells.grippiness[dst + i] = gri;
       cells.ctype[dst + i] = type;
@@ -793,7 +793,7 @@ export class Evolver {
       meta[i * 4 + 1] = dst + i;
       meta[i * 4 + 2] = child;
       // The copy path has no developed properties: middling meat, no armour.
-      meta[i * 4 + 3] = packSize(n, 0.5, 0.0);
+      meta[i * 4 + 3] = packSize(n, 0.5, 0.0, 0.5);
       // This path has no developed properties to read, so the label IS the
       // capacity here. Writing it explicitly matters: arena slots are
       // recycled, and without this a newborn would inherit whatever

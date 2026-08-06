@@ -75,12 +75,13 @@ export const CELL_MUSCLE = 2;
 
 /** Body size plus the two consumption axes, into cmeta.w. Size lives in the low
  *  byte (bodies never approach 255 cells), nutrition and toughness above it. */
-export function packSize(bodySize, _unusedNutrition, toughness) {
-  // Nutrition is no longer stored: it is read from the cell's own energy at use
-  // time. The argument is kept so callers do not silently shift their toughness
-  // into the wrong byte.
+export function packSize(bodySize, tag, toughness, enzyme = 0.5) {
+  // Nutrition is not stored — it is read from the cell's own energy at use
+  // time. That byte now carries the surface TAG instead.
   const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
-  return (Math.max(0, Math.min(255, bodySize | 0))) | (q(toughness) << 16);
+  const q7 = (v) => Math.max(0, Math.min(127, Math.round((v || 0) * 127)));
+  return (Math.max(0, Math.min(255, bodySize | 0)))
+       | (q(tag) << 8) | (q(toughness) << 16) | (q7(enzyme) << 24);
 }
 export function packMeta(type, contractility, grippiness, apNorm = 0.5, senseTune = 0) {
   const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
@@ -267,6 +268,26 @@ fn bodySizeOf(w: i32) -> f32 { return f32(max(w & 255, 1)); }
 // target, and toughness becomes the way to hold reserves safely.
 fn nutritionOf(idx: u32) -> f32 { return clamp(energy[idx] / max(0.001, P.eCap), 0.0, 1.0); }
 fn toughnessOf(w: i32) -> f32 { return f32((w >> 16u) & 255) / 255.0; }
+// SURFACE IDENTITY and DIGESTIVE REACH, the pair that makes diets differ.
+//
+// tag is what you are made of; enzyme is what you can break down. You can only
+// eat what your enzyme MATCHES, so eating one thing well means eating another
+// badly, and a specialist and a generalist become genuinely different livings
+// rather than the same living done harder.
+//
+// The point of this is not variety for its own sake. A predator tuned to the
+// COMMON tag leaves the rare tag alone, so being unusual is an advantage that
+// grows as you become rarer — negative frequency-dependent selection, which is
+// the standard force that MAINTAINS diversity rather than eroding it. Lineages
+// collapsed from 245 to 3 in every arm of the last experiment; this is the
+// mechanism that should stop that, and whether it does is a measurement.
+fn tagOf(w: i32) -> f32 { return f32((w >> 8u) & 255) / 255.0; }
+fn enzymeOf(w: i32) -> f32 { return f32((w >> 24u) & 127) / 127.0; }
+// Gaussian in tag space. Narrow = a world of specialists, wide = generalists.
+fn digestMatch(eater: i32, eaten: i32) -> f32 {
+  let d = enzymeOf(eater) - tagOf(eaten);
+  return exp(-(d * d) / max(1e-5, 2.0 * P.dietWidth * P.dietWidth));
+}
 // Sensor tuning: acuity 0..1, and which world axis this cell reads.
 fn senseAcuity(m: i32) -> f32 { return f32((m >> 2u) & 31) / 31.0; }
 fn senseNorth(m: i32) -> bool { return ((m >> 7u) & 1) == 1; }
@@ -531,8 +552,10 @@ fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
         // harder and which is tougher, moment to moment. A tough cell is bad
         // food, a nutritious one is worth attacking, and "armour" and "meat" are
         // regions of that space rather than roles.
-        let take  = max(0.0, effort                 - toughnessOf(cmeta[j].w)) * nutritionOf(j);
-        let given = max(0.0, abs(contractionOf(j)) - toughnessOf(cmeta[i].w)) * nutritionOf(i);
+        let take  = max(0.0, effort                 - toughnessOf(cmeta[j].w)) * nutritionOf(j)
+                  * digestMatch(cmeta[i].w, cmeta[j].w);
+        let given = max(0.0, abs(contractionOf(j)) - toughnessOf(cmeta[i].w)) * nutritionOf(i)
+                  * digestMatch(cmeta[j].w, cmeta[i].w);
         let raw = P.contestRate * (take - given) * P.dt;
         var moved = 0.0;
         if (raw > 0.0) {
@@ -1191,7 +1214,7 @@ export class WorldGPU {
       // Founders: middling meat, no armour. They have no developed tissue to
       // read these from, and a founder that was inedible would be a boundary
       // condition with teeth.
-      meta[i * 4 + 3] = packSize(cells.bodySize ? cells.bodySize[i] : 0, 0.5, 0.0);
+      meta[i * 4 + 3] = packSize(cells.bodySize ? cells.bodySize[i] : 0, 0.5, 0.0, 0.5);
     }
     this.bPos = mk(pos); this.bVel = mk(vel); this.bMeta = mk(meta);
     // Pack bond index + rest length into the one vec2 buffer the shader binds.
@@ -1333,7 +1356,9 @@ export class WorldGPU {
       // 0.149 to 0.019 under consumption, which is selection pricing a defence
       // nobody could afford. 0.05 breaks even below one attacker, so armour is a
       // live option rather than a trap.
-      bucketM: 32, contestRate: 0.6, toughCost: 0.05, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
+      bucketM: 32, contestRate: 0.6, toughCost: 0.05,
+      // Width of the digestive match. Swept, not chosen.
+      dietWidth: 0.35, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
       // Cells are solid. This was silently 1.68e-44 for the life of the code —
       // see lib/uniform.js — so nothing has ever pushed back on anything. Sized
       // against springK so a bond can still hold a body together against the

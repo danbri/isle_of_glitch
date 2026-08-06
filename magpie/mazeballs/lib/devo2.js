@@ -152,7 +152,7 @@ export const N_MATERNAL = 5;
 export const OUT_BASE = 8;
 export const OUTPUTS = ['grow', 'survive', 'contract', 'sense', 'grip', 'stiff', 'tau', 'bias',
                         'senseTune', 'divideAngle', 'spacing', 'dispersal',
-                        'toughness'];
+                        'toughness', 'tag', 'enzyme'];
 export const G_GROW    = OUT_BASE + 0;
 /**
  * SURVIVE — whether this cell is still part of the body when the egg hatches.
@@ -505,6 +505,11 @@ export function develop(genome, {
       // from the cell's own energy, because being worth eating is a
       // consequence of carrying energy and not a trait to opt out of.
       toughness: out(i, 12),
+      // What this cell is made of, and what it can break down. Mapped to
+      // 0..1 rather than -1..1 because they are positions on a shared axis,
+      // and a match is a distance along it.
+      tag: 0.5 * (out(i, 13) + 1),
+      enzyme: 0.5 * (out(i, 14) + 1),
     });
   }
   return { cells, spent, aborted, steps: nStep, culled, laid: n };
