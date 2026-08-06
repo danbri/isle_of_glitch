@@ -31,6 +31,23 @@ import { BrainArenaGPU } from '../lib/brainarena_gpu.js';
 import { WorldGPU } from '../lib/world_gpu.js';
 import { Evolver } from '../lib/evolve.js';
 
+/**
+ * A NOTE ON --beasts AND --cells, because both names promise more than they mean.
+ *
+ * Neither sets what an animal IS. Body size, cell count and tissue mix are
+ * outcomes of development (DEVELOPMENT-2.md) and no flag can set them.
+ *
+ *   --beasts   ARENA CAPACITY: how many bodies the world has room for. It is a
+ *              memory budget, and it doubles as the population ceiling, which is
+ *              a real design smell — a world pinned against its cap has its birth
+ *              rate forced to equal its death rate. Better named --room.
+ *   --cells    FOUNDER RING SIZE only: how many cells the hand-built starting
+ *              bodies have before anything has developed. Once the first genome
+ *              divides, this number never applies to anything again.
+ *   --maxCells the largest body development may build. A ceiling, not a size.
+ *              Memory is beasts x maxCells, which is where 72,000 slots comes
+ *              from, and that number is CAPACITY not population.
+ */
 const args = (() => {
   const out = {
     port: 8899, beasts: 3000, cells: 12, maxCells: 60, start: 0.25, bound: 0, spf: 1, tick: 250,
@@ -44,12 +61,15 @@ const args = (() => {
     // growing (27.6 and rising) where the static world saturated at 19.3.
     drift: 1,
   };
+  // Aliases that say what the flag actually controls. The old names still
+  // work; nothing that exists is broken to rename it.
+  const ALIAS = { room: 'beasts', founderCells: 'cells', bodyCap: 'maxCells' };
   const a = Deno.args;
   for (let i = 0; i < a.length; i++) {
     if (!a[i].startsWith('--')) continue;
     const k = a[i].slice(2);
     const v = a[i + 1] !== undefined && !a[i + 1].startsWith('--') ? a[++i] : 'true';
-    out[k] = /^[\d.]+$/.test(v) ? +v : v;
+    out[ALIAS[k] ?? k] = /^[\d.]+$/.test(v) ? +v : v;
   }
   return out;
 })();
@@ -106,7 +126,8 @@ console.log(`code: sim ${RUNNING.simVersion}, page ${RUNNING.pageVersion}`);
 const BOUND = args.bound ||
   Math.max(40, Math.sqrt(args.beasts * Math.max(args.cells, 34) / 0.5) / 2);
 
-console.log(`building ${args.beasts} bodies x ${args.cells} cells, bound ${BOUND.toFixed(0)}`);
+console.log(`arena: room for ${args.beasts} bodies of up to ${args.maxCells} cells ` +
+  `(${(args.beasts*args.maxCells).toLocaleString()} slots), founders start as ${args.cells}-cell rings, bound ${BOUND.toFixed(0)}`);
 const built = buildBodies({
   beasts: args.beasts, cells: args.cells, bound: BOUND, seed: (Date.now() & 0xffff) || 7,
   // Sized for the bodies DEVELOPMENT can reach, not for the founder rings.

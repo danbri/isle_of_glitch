@@ -72,14 +72,22 @@ export const CELL_MUSCLE = 2;
  * The sign bit is never set, so `meta.x < 0` still means "vacated slot"
  * everywhere in the shader. Dead cells are written as -1 as before.
  */
-export function packMeta(type, contractility, grippiness, apNorm = 0.5) {
+export function packMeta(type, contractility, grippiness, apNorm = 0.5, senseTune = 0) {
   const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
   // Bits 24-30: the cell's position along its own body axis, 0 head to 1 tail,
   // 7 bits. A travelling wave is a phase GRADIENT along that axis, so without
   // a per-cell axial coordinate the kernel cannot express one at all. Bit 31
   // stays clear so the '< 0' vacated-slot checks are untouched.
   const a = Math.max(0, Math.min(127, Math.round((apNorm || 0) * 127)));
-  return (type & 3) | (q(contractility) << 8) | (q(grippiness) << 16) | (a << 24);
+  // Bits 2-7: the sensor's tuning. Magnitude is ACUITY (how much of the true
+  // bearing it gets, the rest being noise); bit 7 selects which world axis it
+  // reads. A cell is a north-detector or an east-detector, and how good a one
+  // is a matter of degree.
+  const t = senseTune || 0;
+  const acu = Math.max(0, Math.min(31, Math.round(Math.abs(t) * 31)));
+  const axisBit = t < 0 ? 0 : 1;
+  return (type & 3) | (acu << 2) | (axisBit << 7)
+       | (q(contractility) << 8) | (q(grippiness) << 16) | (a << 24);
 }
 
 export const CELL_ANCHOR = 3;
@@ -232,6 +240,9 @@ fn contractility(m: i32) -> f32 { return f32((m >> 8u) & 255) / 255.0; }
 fn grippiness(m: i32) -> f32 { return f32((m >> 16u) & 255) / 255.0; }
 // Position along the body axis, 0 head to 1 tail. See packMeta.
 fn axialPos(m: i32) -> f32 { return f32((m >> 24u) & 127) / 127.0; }
+// Sensor tuning: acuity 0..1, and which world axis this cell reads.
+fn senseAcuity(m: i32) -> f32 { return f32((m >> 2u) & 31) / 31.0; }
+fn senseNorth(m: i32) -> bool { return ((m >> 7u) & 1) == 1; }
 // bond index and rest length packed into one vec2 — WebGPU guarantees only 8
 // storage buffers per stage and the crowding hash needs one, so the pair that
 // is always read together shares a binding. .x holds an i32 index bitcast into
@@ -667,7 +678,48 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   // Two things a cell can actually feel locally: how fast the medium is moving
   // past it, and a scalar gradient it sits in. Both are analytic at p.
   let rel = flowAt(p) - vel[i].xy;
-  ext[u32(slot)] = tanh((length(rel) + fbm(p * P.flowScale * 0.5, P.seed + 77u) - 0.5) * P.senseGain);
+  var e = tanh((length(rel) + fbm(p * P.flowScale * 0.5, P.seed + 77u) - 0.5) * P.senseGain);
+
+  // A COMPASS: the cell's own bearing against the world's basis vectors.
+  //
+  // Every other sense here is scalar and local, so nothing in this world has
+  // ever had access to a DIRECTION. A creature could not tell which way it was
+  // pointing, let alone which way anything else was, which is why a gait could
+  // never become navigation and why sensors were being selected away — a sense
+  // organ reporting the weather is correctly deleted.
+  //
+  // northness and eastness are components of the cell's orientation on the
+  // world plane. Orientation is the cell's own axial direction, the same
+  // vector traction uses, so it is a fact about the body rather than a new
+  // quantity: rotate the animal and the reading changes.
+  //
+  // ACUITY IS GRADED, 0 to 1, and what it does NOT know it reads as noise
+  // rather than as zero. A blind compass returning 0 would be a confident
+  // claim of due east; returning noise is honest ignorance, and it means
+  // evolving accuracy has something to climb from.
+  if (P.compass > 0.0) {
+    var ax = vec2<f32>(0.0, 0.0);
+    let ab = i * P.bondK;
+    var loN = -1; var hiN = -1; var loA = 2.0; var hiA = -1.0;
+    for (var k = 0u; k < P.bondK; k = k + 1u) {
+      let nj = bitcast<i32>(bondD[ab + k].x);
+      if (nj < 0) { continue; }
+      let na = axialPos(cmeta[u32(nj)].x);
+      if (na < loA) { loA = na; loN = nj; }
+      if (na > hiA) { hiA = na; hiN = nj; }
+    }
+    if (loN >= 0 && hiN >= 0 && loN != hiN) { ax = minImage(pos[u32(hiN)] - pos[u32(loN)]); }
+    else if (loN >= 0) { ax = minImage(pos[u32(loN)] - p); }
+    let alen = length(ax);
+    if (alen > 1e-5) {
+      let u = ax / alen;
+      let bearing = select(u.x, u.y, senseNorth(m.x));   // eastness or northness
+      let acu = senseAcuity(m.x);
+      let grit2 = fbm(p * 3.1 + vec2<f32>(f32(i) * 0.017, 0.0), P.seed + 913u) * 2.0 - 1.0;
+      e = e + P.compass * mix(P.senseNoise * grit2, bearing, acu);
+    }
+  }
+  ext[u32(slot)] = clamp(e, -4.0, 4.0);
 }
 
 // 2. Physics: bond springs (muscles contract theirs), flow drag, integrate.
@@ -947,6 +999,13 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     gain = absorb * P.harvest * resourceAt(np) * share;
   }
   let work = P.muscleCost * abs(mine);
+  // ACUITY COSTS. A sense organ that reads the world perfectly for free is a
+  // free lunch, and evolution would take it every time — the same mistake as
+  // feeding being independent of what a cell is. A sharp compass burns fuel in
+  // proportion to how sharp it is, so accuracy has to be worth its keep and a
+  // cheap noisy sense stays a live option. primitives.md: an axis without a
+  // cost has no teeth.
+  let senseWork = P.senseCost * senseAcuity(cmeta[i].x);
   let taken = contest(i, np, abs(mine));
   // Written to scratch, not to energy[]: contest() READS energy[j] for other
   // cells, and if physics also wrote energy[j] in the same dispatch the result
@@ -956,7 +1015,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // every step — the other independent reason contact was dead. Between this and
   // contactK being a denormal (see lib/uniform.js), cells have never collided.
   vel[i] = vec4<f32>(v.x, v.y, vel[i].z,
-    clamp(energy[i] + (gain - P.brainTax - work + taken) * P.dt, P.eFloor, P.eCap));
+    clamp(energy[i] + (gain - P.brainTax - work - senseWork + taken) * P.dt, P.eFloor, P.eCap));
 }
 
 // Publish the energy physics computed. One extra dispatch, no extra buffer, and
@@ -1208,6 +1267,8 @@ export class WorldGPU {
       // 0.7 buys genuine four-way differentiation and the world cannot carry it
       // yet; that is the interesting direction once the economy is richer.
       absorbTradeoff: 0.4,
+      // Compass on. Acuity is per-cell and evolved; this is only the weight.
+      compass: 1.0, senseNoise: 1.0, senseCost: 0.25,
       dt: brains.dt, ...params,
     };
     // Motes. Scattered by a hash of their index rather than laid on a lattice:

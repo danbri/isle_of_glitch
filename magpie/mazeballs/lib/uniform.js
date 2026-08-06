@@ -101,6 +101,12 @@ export const WORLD_FIELDS = [
   // eats equally regardless of what else it is; 1 = a cell at full
   // contractility or grip cannot feed at all.
   ['absorbTradeoff', 'f32', 'anticorrelation between force capacity and uptake'],
+
+  // Compass sensing. senseNoise is what fills the gap left by imperfect
+  // acuity, so a blind sensor reads pure noise rather than zero.
+  ['compass', 'f32', 'weight of the objective-bearing sense, 0 disables it'],
+  ['senseNoise', 'f32', 'amplitude of the noise an inaccurate sensor reads'],
+  ['senseCost', 'f32', 'energy per second burned per unit of compass acuity'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */

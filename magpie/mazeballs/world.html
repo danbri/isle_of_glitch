@@ -158,10 +158,8 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 
 <div class="hud">
   <span class="t">Mazeballs</span>
-  <span>beasts <b id="hBeasts">–</b></span>
-  <span>cells <b id="hCells">–</b></span>
-  <span>neurons <b id="hNeurons">–</b></span>
-  <span>synapses <b id="hSyn">–</b></span>
+  <span title="living cells / arena slots. Every cell is a CTRNN node, so there is no separate neuron count.">cells <b id="hCells">–</b></span>
+  <span title="wired synapses across all living brains">synapses <b id="hSyn">–</b></span>
   <span>step <b id="hStep">0</b></span>
   <span>sim <b id="hRate">–</b>×realtime</span>
   <span>fps <b id="hFps">–</b></span>
@@ -170,7 +168,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   <span>devo <b id="hDevo">–</b></span>
 </div>
 <div class="hud hud2">
-  <span>alive <b id="hAlive">–</b></span>
+  <span title="living bodies / arena capacity">alive <b id="hAlive">–</b></span>
   <span>births <b id="hBirths">0</b></span>
   <span>deaths <b id="hDeaths">0</b></span>
   <span>generation <b id="hGen">0</b></span>
@@ -868,7 +866,7 @@ async function rebuild() {
   if (WATCH) {
     try {
       const st = await (await fetch('/status', { cache: 'no-store' })).json();
-      beasts = st.beasts; cellsPer = st.cellsPerBeast;
+      beasts = st.beasts; cellsPer = st.cellsPerBeast; sim.beastCap = st.beasts;
       remoteMaxCells = st.maxCells; remoteBound = st.bound; remoteMotes = st.nMotes;
       serverPaused = !!st.paused;
       // The encoding the SERVER is running. In watch mode this page's own
@@ -1072,9 +1070,16 @@ async function rebuild() {
   }
   $('hAlive').textContent = evo.alive().toLocaleString();
 
-  $('hBeasts').textContent = beasts.toLocaleString();
-  $('hCells').textContent = built.meta.nCells.toLocaleString();
-  $('hNeurons').textContent = built.arena.N.toLocaleString();
+  // CELLS: living / capacity, not capacity twice.
+  //
+  // This read 'cells 72,000  neurons 72,000' and both were ARENA SLOTS —
+  // beasts x maxCells — while the living population was nearer 25,000. Two
+  // fields showing the same constant, labelled as though they were counts of
+  // different things. There is no separate neuron count to show: every cell is
+  // a CTRNN node, which is the whole brain-is-body claim, so a 'neurons' field
+  // could only ever repeat 'cells'.
+  sim.cellCap = built.meta.nCells;
+  $('hCells').textContent = `–/${built.meta.nCells.toLocaleString()}`;
   $('hSyn').textContent = syn.toLocaleString();
   $('hDevo').textContent = WATCH ? (remoteDevo ?? 'server') : (DEVO_VERSION === 2 ? 'devo2-grn' : 'devo1-positional');
   fitAll();
@@ -2017,7 +2022,8 @@ function applyFrame(ab) {
     sim.lastServerAt = now;
   }
   $('hStep').textContent = sim.serverSteps.toLocaleString();
-  $('hAlive').textContent = dv.getUint32(16, true).toLocaleString();
+  $('hCells').textContent = `${L.toLocaleString()}/${(sim.cellCap ?? L).toLocaleString()}`;
+  $('hAlive').textContent = `${dv.getUint32(16, true).toLocaleString()}/${(sim.beastCap ?? '?')}`;
   $('hBirths').textContent = dv.getUint32(20, true).toLocaleString();
   $('hDeaths').textContent = dv.getUint32(24, true).toLocaleString();
   $('hGen').textContent = dv.getUint32(28, true);

@@ -163,6 +163,54 @@ your offspring matters, which requires the world to be spatially structured in a
 way creatures can perceive and reach. Movement + sensing + eggs are one feature,
 not three.
 
+## 6b. Sensors as receptive fields — the design
+
+A sensor is not a type. It is a **receptive field**: a kernel integrated over a
+field, evaluated at the cell's position and orientation. One formula covers every
+modality:
+
+```
+ext = SUM_sources  A_i * exp(-|d_i|^2 / 2 sigma^2) * (1 - dir + dir * max(0, cos theta_i))
+                   ^amplitude   ^range               ^directionality
+```
+
+The gaussian sum is the natural representation for "several sources nearby":
+they compose into one scalar with no special casing, which is what a smell or a
+warmth actually is.
+
+Four evolvable numbers per sensor cell — modality, range, directionality,
+acuity — and the named organs are regions of that space rather than types:
+
+| range | directionality | what we would call it |
+|---|---|---|
+| large | ~0 | smell |
+| large | ~1 | vision |
+| small | ~0 | touch, warmth |
+| medium | ~0.5 | lateral line, vibration |
+
+**Vector representation: do not give one cell a vector.** Each cell has a
+preferred direction already — its axial orientation, which the compass uses — and
+the POPULATION encodes the vector. That is population coding, it is what nervous
+systems do, and it needs no change to the one-scalar-per-neuron arena.
+
+**What emits.** Every cell radiates without anything being declared: heat in
+proportion to its energy burn, chemical in proportion to its tag, motion in
+proportion to its speed. Creatures become sources automatically, which is what
+makes predator and prey perceivable without either being named.
+
+**Cost.** One neighbourhood walk, and PHYSICS-2.md is emphatic that walks are the
+expensive thing — the existing ones are 78% of the step. It must therefore FOLD
+INTO the contact walk that already runs, as a branch inside a loop already paid
+for, not as a new traversal.
+
+**Already built, as the first instance of this:** a compass. Each cell reads its
+own bearing against the world basis — northness or eastness, selected per cell —
+with graded acuity, and what it does not know it reads as NOISE rather than as
+zero. A blind compass returning 0 would be a confident claim of due east;
+returning noise is honest ignorance, and it gives accuracy something to climb
+from. Acuity costs energy in proportion to its sharpness, so a perfect sense is
+not free and a cheap noisy one stays a live option.
+
 ## 7. What is missing, ranked
 
 1. **Directional sensing of other bodies and of food** (§3). Nothing else on this

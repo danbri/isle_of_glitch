@@ -150,7 +150,7 @@ export const N_MATERNAL = 5;
 // pipeline (describe(), bond(), synapse()) is unchanged, so this module can be
 // swapped in without touching the arena.
 export const OUT_BASE = 8;
-export const OUTPUTS = ['grow', 'survive', 'contract', 'sense', 'grip', 'stiff', 'tau', 'bias'];
+export const OUTPUTS = ['grow', 'survive', 'contract', 'sense', 'grip', 'stiff', 'tau', 'bias', 'senseTune'];
 export const G_GROW    = OUT_BASE + 0;
 /**
  * SURVIVE — whether this cell is still part of the body when the egg hatches.
@@ -168,6 +168,9 @@ export const G_GROW    = OUT_BASE + 0;
  * rather than a disc.
  */
 export const G_SURVIVE = OUT_BASE + 1;
+/** Compass tuning: magnitude is acuity, sign picks northness vs eastness. One
+ *  gene for both because a sensor that knows nothing has no axis to choose. */
+export const G_SENSETUNE = OUT_BASE + 8;
 
 /** Top of the range is reserved for environmental signals (the sketch's 201-255).
  *  Nothing writes these yet; they exist so the numbering is stable when they do. */
@@ -570,6 +573,7 @@ export function develop(genome, {
       contract: out(2), sense: out(3), grip: out(4), stiff: out(5),
       tau: tauOf(out(6)),
       bias: out(7),
+      senseTune: out(8),
     });
   }
   return { cells, spent, aborted, steps: nStep, culled, laid: live.length };

@@ -388,7 +388,8 @@ export class Evolver {
       // kernel needs it per cell; c.ap is already what development laid the
       // cell out against, so this is a re-encoding, not a new fact.
       const apN = (c.ap - apLo) / apSpan;
-      meta[i * 4] = packMeta(type, con, gri, apN); meta[i * 4 + 1] = dst + i;
+      meta[i * 4] = packMeta(type, con, gri, apN, c.senseTune ?? 0);
+      meta[i * 4 + 1] = dst + i;
       meta[i * 4 + 2] = child; meta[i * 4 + 3] = n;
       if (cells.contractility) cells.contractility[dst + i] = con;
       if (cells.grippiness) cells.grippiness[dst + i] = gri;
