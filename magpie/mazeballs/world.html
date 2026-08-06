@@ -199,8 +199,8 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
     <input type="range" id="sSpring" min="1" max="300" value="90"></div>
   <div class="sl"><div class="lab"><span>muscle contraction</span><span class="v" id="vCon">0.45</span></div>
     <input type="range" id="sCon" min="0" max="100" value="45"></div>
-  <div class="sl"><div class="lab"><span>steps per frame</span><span class="v" id="vSpf">4</span></div>
-    <input type="range" id="sSpf" min="0" max="40" value="4"></div>
+  <div class="sl"><div class="lab"><span>steps per frame</span><span class="v" id="vSpf">1</span></div>
+    <input type="range" id="sSpf" min="0" max="40" value="1"></div>
 
   <div>
     <h2>View</h2>
@@ -255,8 +255,8 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
       <button id="bSrvReseed">new world</button>
     </div>
     <div class="sl"><div class="lab"><span>world speed (steps/loop)</span>
-      <span class="v" id="vSrvSpf">6</span></div>
-      <input id="sSrvSpf" type="range" min="1" max="128" value="6"></div>
+      <span class="v" id="vSrvSpf">1</span></div>
+      <input id="sSrvSpf" type="range" min="1" max="128" value="1"></div>
     <p class="note" id="srvNote">
       These act on the shared simulation, not on this page. <b>restart</b> saves,
       relaunches the server process so it picks up new code, and resumes the same
@@ -756,7 +756,7 @@ fn mfs(i: MOut) -> @location(0) vec4<f32> {
 
 let dev, ctx, fmt, sim = null, raf = 0;
 const cam = { cx: 0, cy: 0, zoom: 6 };     // zoom = pixels per world unit
-const view = { field: true, bonds: true, paused: false, spf: 4, evolve: true,
+const view = { field: true, bonds: true, paused: false, spf: 1, evolve: true,
                cells: true, strain: false, solo: -1, food: true };
 // ?watch=1 turns this page into a VIEWPORT on the shared run in tools/serve-world.js
 // instead of a simulation of its own. Without it every tab is a separate
@@ -874,6 +874,16 @@ async function rebuild() {
       // The encoding the SERVER is running. In watch mode this page's own
       // DEVO_VERSION is irrelevant — the bodies on screen were grown there.
       remoteDevo = st.devoName ?? (st.devo != null ? `devo${st.devo}` : null);
+      // Show the server's ACTUAL pace. The slider was hardcoded at 6 and never
+      // read back, so opening the panel displayed 6 whatever the server was
+      // doing and the first touch pushed 6 to it. That also silently coarsened
+      // the CTRNN scope: the trace advances by spf per loop, so at 6 it samples
+      // every sixth step and a 1.7 Hz gait aliases into hash.
+      if (st.spf != null) {
+        const sl = $('sSrvSpf'), lb = $('vSrvSpf');
+        if (sl && document.activeElement !== sl) sl.value = st.spf;
+        if (lb) lb.textContent = st.spf;
+      }
       // Remember what the page was when it loaded, so a later edit to world.html
       // is detectable without the page having to know its own contents.
       if (myPageVersion === null) myPageVersion = st.onDisk?.pageVersion ?? st.pageVersion ?? null;

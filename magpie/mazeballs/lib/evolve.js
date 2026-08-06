@@ -367,6 +367,12 @@ export class Evolver {
     // grip), but contraction is proportional to THIS, so a cell that narrowly
     // lost the argmax still pulls its bonds in proportion to how contractile
     // it is. Negative expression means no capacity, not reverse capacity.
+    // Normalise ap over the body that actually developed, not over the egg —
+    // a body occupying one end of a large egg would otherwise get a phase
+    // gradient compressed into a fraction of a cycle.
+    let apLo = Infinity, apHi = -Infinity;
+    for (let i = 0; i < n; i++) { const a = body[i].ap; if (a < apLo) apLo = a; if (a > apHi) apHi = a; }
+    const apSpan = Math.max(1e-6, apHi - apLo);
     for (let i = 0; i < n; i++) {
       const c = body[i];
       const wx = wrap(px + c.x * ct - c.y * st);
@@ -377,7 +383,12 @@ export class Evolver {
       const type = describe(c);
       // Negative expression is no capacity, not reverse capacity.
       const con = Math.max(0, c.contract), gri = Math.max(0, c.grip);
-      meta[i * 4] = packMeta(type, con, gri); meta[i * 4 + 1] = dst + i;
+      // The cell's position along the body axis, normalised 0..1 over THIS
+      // body. A travelling wave is a phase gradient along that axis, so the
+      // kernel needs it per cell; c.ap is already what development laid the
+      // cell out against, so this is a re-encoding, not a new fact.
+      const apN = (c.ap - apLo) / apSpan;
+      meta[i * 4] = packMeta(type, con, gri, apN); meta[i * 4 + 1] = dst + i;
       meta[i * 4 + 2] = child; meta[i * 4 + 3] = n;
       if (cells.contractility) cells.contractility[dst + i] = con;
       if (cells.grippiness) cells.grippiness[dst + i] = gri;

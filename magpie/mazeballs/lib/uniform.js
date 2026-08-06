@@ -83,6 +83,19 @@ export const WORLD_FIELDS = [
   ['slipBase', 'f32', 'drag a cell feels on frictionless ground'],
   ['gripAniso', 'f32', 'how much harder sideways slip is than along-axis slip'],
   ['regrowCrowdK', 'f32', 'how sharply local crowding suppresses regrowth'],
+
+  // Imposed travelling wave. A DIAGNOSTIC, not a world parameter: it drives
+  // muscles from sin(axial*k - omega*t) instead of from the brain, so a body
+  // plan can be tested for whether it CAN locomote independently of whether
+  // its controller does. waveAmp 0 is off and is the shipped world.
+  ['waveAmp', 'f32', 'imposed-wave drive amplitude; 0 = off (brain drives)'],
+  ['waveK', 'f32', 'imposed-wave spatial frequency along the body axis'],
+  ['waveOmega', 'f32', 'imposed-wave angular frequency, rad/s'],
+  ['wavePhase', 'f32', 'phase offset of the GRIP wave against the muscle wave'],
+
+  // How much grip anchors a cell against motion in ANY direction, as opposed
+  // to gripAniso which only resists sideways slip. See the traction block.
+  ['gripHold', 'f32', 'grip resistance to translation along the body axis too'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */

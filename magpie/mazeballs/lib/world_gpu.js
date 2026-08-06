@@ -72,9 +72,14 @@ export const CELL_MUSCLE = 2;
  * The sign bit is never set, so `meta.x < 0` still means "vacated slot"
  * everywhere in the shader. Dead cells are written as -1 as before.
  */
-export function packMeta(type, contractility, grippiness) {
+export function packMeta(type, contractility, grippiness, apNorm = 0.5) {
   const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
-  return (type & 3) | (q(contractility) << 8) | (q(grippiness) << 16);
+  // Bits 24-30: the cell's position along its own body axis, 0 head to 1 tail,
+  // 7 bits. A travelling wave is a phase GRADIENT along that axis, so without
+  // a per-cell axial coordinate the kernel cannot express one at all. Bit 31
+  // stays clear so the '< 0' vacated-slot checks are untouched.
+  const a = Math.max(0, Math.min(127, Math.round((apNorm || 0) * 127)));
+  return (type & 3) | (q(contractility) << 8) | (q(grippiness) << 16) | (a << 24);
 }
 
 export const CELL_ANCHOR = 3;
@@ -225,6 +230,8 @@ ${wgslStruct('W')}
 fn cellType(m: i32) -> i32 { return m & 3; }
 fn contractility(m: i32) -> f32 { return f32((m >> 8u) & 255) / 255.0; }
 fn grippiness(m: i32) -> f32 { return f32((m >> 16u) & 255) / 255.0; }
+// Position along the body axis, 0 head to 1 tail. See packMeta.
+fn axialPos(m: i32) -> f32 { return f32((m >> 24u) & 127) / 127.0; }
 // bond index and rest length packed into one vec2 — WebGPU guarantees only 8
 // storage buffers per stage and the crowding hash needs one, so the pair that
 // is always read together shares a binding. .x holds an i32 index bitcast into
@@ -352,6 +359,19 @@ fn contractionOf(i: u32) -> f32 {
   // kernel branched on a discrete type where primitives.md claims a
   // continuum. A cell is now as strong as it is, and "muscle" goes back to
   // being a description of a region of that continuum.
+  // IMPOSED WAVE, an experiment knob and not a world parameter.
+  //
+  // swim-verify.js moves a chain 36 body-lengths with a travelling wave,
+  // sin(axial*k - omega*t), so the physics can certainly locomote. Driving
+  // REAL developed bodies with the same wave isolates which half is missing:
+  // if they move, the body plan is fine and the brain is the blocker; if they
+  // do not, no controller would have helped.
+  //
+  // waveAmp 0 is off, which is the shipped world.
+  if (P.waveAmp > 0.0) {
+    return P.contract * contractility(m.x) * P.waveAmp *
+           sin(axialPos(m.x) * P.waveK - P.worldTime * P.waveOmega);
+  }
   return P.contract * contractility(m.x) * act[u32(m.y)];
 }
 
@@ -745,7 +765,14 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     // theorem — and primitives.md is explicit that the world affords while the
     // brain earns.
     if (me2.y >= 0) {
-      let a = act[u32(me2.y)];
+      // Under the imposed-wave diagnostic the GRIP is driven by the same wave
+      // as the muscle, offset by wavePhase — grip while contracting, release
+      // while extending. That is the ratchet stated explicitly, so the body
+      // plan can be tested against an ideal gait rather than a hopeful one.
+      var a = act[u32(me2.y)];
+      if (P.waveAmp > 0.0) {
+        a = sin(axialPos(me2.x) * P.waveK - P.worldTime * P.waveOmega + P.wavePhase);
+      }
       grab = grab * (1.0 + P.gripMod * select(0.0, a, abs(a) < 1e6));
     }
     grab = max(grab, 0.0);
@@ -757,18 +784,34 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     // drag, which is what this used to be, cancels it exactly.
     var axis = vec2<f32>(0.0, 0.0);
     {
+      // THE BODY AXIS, taken along the head-tail gradient.
+      //
+      // This used to take the FIRST TWO bonds found in slot order. In a chain
+      // those are the two chain neighbours and it is exactly right — which is
+      // why the standalone swim demo works. In a hex body of degree 4 to 6 the
+      // first two bonds are an arbitrary local lattice direction, so every
+      // cell's drag anisotropy pointed a different, meaningless way and the
+      // anisotropy averaged to nothing across the body. Anisotropic drag can
+      // only convert deformation into travel if it is anisotropic about
+      // something the body agrees on.
+      //
+      // Each cell carries its position along the body's own axis (packMeta), so
+      // the neighbours with the lowest and highest axial position give the
+      // local anterior-posterior direction directly.
       let ab = i * P.bondK;
-      var n1 = -1;
-      var n2 = -1;
+      var loN = -1; var hiN = -1;
+      var loA = 2.0; var hiA = -1.0;
       for (var k = 0u; k < P.bondK; k = k + 1u) {
         let nj = bitcast<i32>(bondD[ab + k].x);
         if (nj < 0) { continue; }
-        if (n1 < 0) { n1 = nj; } else if (n2 < 0) { n2 = nj; }
+        let na = axialPos(cmeta[u32(nj)].x);
+        if (na < loA) { loA = na; loN = nj; }
+        if (na > hiA) { hiA = na; hiN = nj; }
       }
-      if (n1 >= 0 && n2 >= 0) {
-        axis = minImage(pos[u32(n2)] - pos[u32(n1)]);
-      } else if (n1 >= 0) {
-        axis = minImage(pos[u32(n1)] - p);
+      if (loN >= 0 && hiN >= 0 && loN != hiN) {
+        axis = minImage(pos[u32(hiN)] - pos[u32(loN)]);
+      } else if (loN >= 0) {
+        axis = minImage(pos[u32(loN)] - p);
       }
     }
     let alen = length(axis);
@@ -781,8 +824,26 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
       let pxv = vec2<f32>(-ax.y, ax.x);
       var vA = dot(v, ax);
       var vP = dot(v, pxv);
-      let kA = P.fricK * (P.slipBase + grit);
-      let kP = P.fricK * (P.slipBase + (1.0 + P.gripAniso * grab) * grit);
+      // GRIP ANCHORS, it does not merely resist sideways slip.
+      //
+      // grab used to appear ONLY in kP, so a gripping cell slid along its own
+      // axis exactly as freely as a released one. There was therefore nothing
+      // to pull against and no ratchet: anchor-extend-release could not work
+      // however well it was phased. Measured consequence — driving real bodies
+      // with a PERFECT imposed travelling wave moved them p50 0.012 units in
+      // 300 s, no better than noise, at every frequency and wavelength tried.
+      // The controller was never the blocker.
+      //
+      // hold raises drag in BOTH directions with grip, so a gripped cell is
+      // planted and a released one slides. Anisotropy still rides on top, so
+      // undulation keeps working too. Dissipative either way — an exponential
+      // decay cannot add energy whatever the coefficients — and the PASSIVE
+      // case still nets zero, because constant grip is reciprocal and the
+      // scallop theorem eats it. Only actively phased grip ratchets, which is
+      // the affordance-not-forcing rule primitives.md insists on.
+      let hold = 1.0 + P.gripHold * grab;
+      let kA = P.fricK * (P.slipBase + hold * grit);
+      let kP = P.fricK * (P.slipBase + hold * (1.0 + P.gripAniso * grab) * grit);
       vA = vA * exp(-kA * P.dt);
       vP = vP * exp(-kP * P.dt);
       v = ax * vA + pxv * vP;
@@ -1095,6 +1156,9 @@ export class WorldGPU {
       // they are the regime where movers out-earn sitters. Costs population:
       // 400-body assays settle near 190-210 alive rather than 400.
       regrowCrowdK: 3.0,
+      waveAmp: 0.0, waveK: 6.0, waveOmega: 9.0, wavePhase: 1.5707963,
+      // 0 keeps the previous behaviour exactly; sweep it before shipping.
+      gripHold: 0.0,
       dt: brains.dt, ...params,
     };
     // Motes. Scattered by a hash of their index rather than laid on a lattice:
@@ -1267,9 +1331,16 @@ export class WorldGPU {
     // batch, which is fine because it drifts far slower than a batch lasts, but
     // it must advance BETWEEN batches or the world is static again and the
     // whole point of a moving optimum is lost.
-    if (this.params.morphRate !== 0 || this.params.driftX !== 0 || this.params.driftY !== 0) {
-      this.writeParams();
-    }
+    //
+    // UNCONDITIONAL. This used to skip the write when drift and morphRate were
+    // both zero, which is true of every isolated assay in tools/ — so in those
+    // worlds P.worldTime was frozen at 0 forever. Nothing depended on it until
+    // the imposed-wave diagnostic did, and then sin(axial*k - worldTime*omega)
+    // silently became a STATIC deformation: three different frequencies
+    // produced byte-identical displacement, which is what gave it away. A
+    // clock that only ticks when someone else needs it is not a clock. One
+    // uniform write per batch is nothing.
+    this.writeParams();
     const enc = this.device.createCommandEncoder();
     const pass = enc.beginComputePass();
     for (let s = 0; s < n; s++) {
