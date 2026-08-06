@@ -1326,7 +1326,14 @@ export class WorldGPU {
       // conserved pool. Not conclusive at n=4 (separation from control is
       // ~2.6 SE) but consistent in direction, and it is the first setting in
       // this project where moving is not strictly punished.
-      bucketM: 32, contestRate: 0.6, toughCost: 0.30, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
+      // ARMOUR MUST BE ABLE TO PAY. At 0.30 it broke even only against 3.3
+      // SIMULTANEOUS attackers — upkeep is paid every second whether or not
+      // anything is biting, while an attack costs contestRate * effort *
+      // nutrition, about 0.09/s per attacker. Toughness duly collapsed from
+      // 0.149 to 0.019 under consumption, which is selection pricing a defence
+      // nobody could afford. 0.05 breaks even below one attacker, so armour is a
+      // live option rather than a trap.
+      bucketM: 32, contestRate: 0.6, toughCost: 0.05, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
       // Cells are solid. This was silently 1.68e-44 for the life of the code —
       // see lib/uniform.js — so nothing has ever pushed back on anything. Sized
       // against springK so a bond can still hold a body together against the
