@@ -64,6 +64,9 @@ const args = (() => {
   // Aliases that say what the flag actually controls. The old names still
   // work; nothing that exists is broken to rename it.
   const ALIAS = { room: 'beasts', founderCells: 'cells', bodyCap: 'maxCells' };
+  // bodySlots defaults to 4x beasts: cell memory is the real resource and
+  // bodies evolve far smaller than maxCells, so a 1:1 body-slot budget caps
+  // the population well below what the cells can carry.
   const a = Deno.args;
   for (let i = 0; i < a.length; i++) {
     if (!a[i].startsWith('--')) continue;
@@ -126,8 +129,9 @@ console.log(`code: sim ${RUNNING.simVersion}, page ${RUNNING.pageVersion}`);
 const BOUND = args.bound ||
   Math.max(40, Math.sqrt(args.beasts * Math.max(args.cells, 34) / 0.5) / 2);
 
-console.log(`arena: room for ${args.beasts} bodies of up to ${args.maxCells} cells ` +
-  `(${(args.beasts*args.maxCells).toLocaleString()} slots), founders start as ${args.cells}-cell rings, bound ${BOUND.toFixed(0)}`);
+console.log(`arena: ${(args.bodySlots||args.beasts*4).toLocaleString()} body slots over ` +
+  `${args.beasts} x ${args.maxCells} cell slots ` +
+  `(${(args.beasts*args.maxCells).toLocaleString()}), founders start as ${args.cells}-cell rings, bound ${BOUND.toFixed(0)}`);
 const built = buildBodies({
   beasts: args.beasts, cells: args.cells, bound: BOUND, seed: (Date.now() & 0xffff) || 7,
   // Sized for the bodies DEVELOPMENT can reach, not for the founder rings.
@@ -135,6 +139,7 @@ const built = buildBodies({
   // one evolution might specify; sized for 12 it fragments and births start
   // failing for lack of contiguous room while every other number looks healthy.
   maxCells: args.maxCells,
+  bodySlots: args.bodySlots || args.beasts * 4,
 });
 const brains = await BrainArenaGPU.create(built.arena);
 const world = new WorldGPU(brains, built.cells, {

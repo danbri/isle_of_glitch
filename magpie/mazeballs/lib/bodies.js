@@ -36,7 +36,7 @@ import { CELL_NEURON, CELL_SENSOR, CELL_MUSCLE, CELL_ANCHOR } from './world_gpu.
 export function buildBodies({
   beasts = 2000, cells = 12, degree = 12, bondK = 4,
   radius = 1.1, cellR = 0.34, bound = 64, seed = 1, dt = 0.015,
-  maxCells = 40,
+  maxCells = 40, bodySlots = null,
 } = {}) {
   let s = seed >>> 0;
   const rnd = () => ((s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296);
@@ -54,8 +54,30 @@ export function buildBodies({
   // sits there looking healthy. It is silent, and it invalidated every ascent
   // measurement in this wave once bodies outgrew their starting size.
   const nCells = beasts * cells;
+  // CELLS ARE THE RESOURCE; BODY SLOTS ARE BOOKKEEPING.
+  //
+  // These were the same number and it silently capped the world. Cell memory is
+  // sized for the largest body evolution could build (maxCells), but bodies
+  // evolved small — measured at 13.9 cells against a maxCells of 60 — so the
+  // population hit the BODY-slot ceiling at 23% cell occupancy:
+  //
+  //     bodies  1200/1200   100% used
+  //     cells  16646/72000   23% used
+  //
+  // The same memory would have held about 5,200 bodies of the size they
+  // actually were, so the population was capped over four times below what the
+  // world could carry. A population pinned against a bookkeeping wall has its
+  // birth rate forced to equal its death rate, which is exactly the "nothing
+  // dies, selection cannot act" symptom that was repeatedly blamed on the
+  // economy and repeatedly not fixed by tuning it.
+  //
+  // Body slots are cheap — a handful of scalars each, against maxCells cells —
+  // so allocate generously and let ENERGY decide the population. Births still
+  // fail when the cell arena is genuinely full, which is a lawful density
+  // limit rather than an arbitrary one.
+  const P = bodySlots ?? beasts;
   const arena = new BrainArena({
-    neurons: beasts * Math.max(cells, maxCells), degree, organisms: beasts, dt,
+    neurons: beasts * Math.max(cells, maxCells), degree, organisms: P, dt,
   });
 
   // Every per-cell array spans the ARENA, not the starting population. The
