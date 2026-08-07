@@ -6669,3 +6669,55 @@ Not done here, deliberately. It is a buffer-layout change, and the most expensiv
 bug in this project's history was a uniform-block offset that silently made every
 contact force a denormal for the life of the code. Layout changes get made
 rested, with `device_limits_test` run.
+
+### The friction law now runs as a test — and the first two things it caught were mine
+
+`energy-speculative-friction.md` is one of two laws and had no test. Minting is
+silent: energy from nowhere does not throw, it shows up as a population that
+thrives for reasons nobody can name.
+
+**The first version was worthless.** It bounded the gain by what regrowth could
+deliver at full rate, and that ceiling came out at 2.6 million against real
+movements of ~1,600. A tolerance a thousand times the signal detects nothing and
+is worse than no test, because it prints "ok".
+
+**Second version: switch the sun off.** With `moteRegrow = 0` there is no inflow,
+so every remaining mechanism is a transfer (nets to zero) or a sink (removes),
+and the total must never rise. Exact, no bound to estimate — and it reported sap
+minting 151 energy.
+
+**That was a false positive, and it took two wrong fixes to find out.** Bounding
+the flow by what the pair can afford: no change (151.2 → 148.9). Requiring
+reciprocated bonds, on the theory that truncated bond lists make one-way edges:
+no change (→ 169.2). The diagnosis was wrong twice because the test was wrong
+once.
+
+**The clamps were the answer.** `eCap` and `eFloor` DESTROY energy — a cell at
+the ceiling silently drops what it cannot take. A transfer that spreads energy
+out leaves fewer cells at the ceiling and therefore wastes less, which reads as
+a positive contribution without anything being created. With the bounds pushed
+outside the range any cell reaches, clamping can neither destroy nor create, and
+a transfer must contribute exactly zero.
+
+**Final, paired, each mechanism on minus off, same seed, sun off, clamps out of
+range:**
+
+```
+mechanism            contributed   against a metabolic loss of ~41,200
+contest                     59.9   ok
+sap                       -612.3   ok  (loses, exactly as sapLoss intends)
+shelter                    -48.2   ok
+body-share grazing         -34.5   ok
+tidal income            15,614.2   SOURCE, as declared — the control fires
+```
+
+Every transfer conserves. And the positive control matters as much as the passes:
+tidal income is a declared second star, so it MUST register as a source, and it
+does — which is the evidence that the other five "ok"s mean something rather than
+being a test that cannot fail. Both earlier versions of this test would have
+passed everything.
+
+The reciprocity check was reverted — added on a false diagnosis, pure cost. The
+affordability bound was kept and re-documented honestly: it went in for a wrong
+reason and stays for a right one, since contest bounds itself the same way and a
+comment describing a safeguard that is not implemented is worse than no comment.

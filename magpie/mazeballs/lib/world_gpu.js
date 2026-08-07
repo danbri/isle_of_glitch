@@ -1450,10 +1450,31 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     let j = bitcast<i32>(bd.x);
     if (j < 0) { continue; }
     if (P.sapRate > 0.0) {
-      // Down the gradient, and bounded by what the richer cell can actually
-      // give up in one step, so a large dt cannot overshoot into oscillation.
-      let dE = energy[u32(j)] - energy[i];
-      sap = sap + P.sapRate * dE;
+      // DOWN THE GRADIENT, AND ACTUALLY BOUNDED — which the previous comment
+      // here claimed and the code did not do.
+      //
+      // Kept for the right reason, after being added for a wrong one. It went in
+      // to fix an apparent mint that tools/conservation_test.js reported, and
+      // that mint did not exist: the test was measuring energy the CLAMPS
+      // destroy, and a transfer that spreads energy out leaves fewer cells at
+      // the ceiling and therefore wastes less. With eCap and eFloor pushed out
+      // of range, sap contributes -654 against a metabolic loss of 41,190 — it
+      // loses, exactly as sapLoss intends.
+      //
+      // It stays because contest bounds itself the same way and for a real
+      // reason: an unbounded flow can overshoot at large dt, and a comment
+      // describing a safeguard that is not implemented is worse than no comment.
+      // Both endpoints evaluate this with their roles swapped, from the same
+      // pre-step energies, so the pair still agrees exactly.
+      let eJ = energy[u32(j)];
+      let eI = energy[i];
+      var flow = P.sapRate * (eJ - eI);          // positive: i gains from j
+      if (flow > 0.0) {
+        flow = min(flow, min(max(eJ - P.eFloor, 0.0), max(P.eCap - eI, 0.0)) / P.dt);
+      } else {
+        flow = -min(-flow, min(max(eI - P.eFloor, 0.0), max(P.eCap - eJ, 0.0)) / P.dt);
+      }
+      sap = sap + flow;
     }
     let d = minImage(pos[u32(j)] - p);
     let dist = max(length(d), 1e-3);
