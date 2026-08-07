@@ -1381,19 +1381,30 @@ fn mvs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> MOut
   // An exhausted mote collapses rather than drawing a dark dot: absence should
   // read as absence, and a grid of black dots would be a grid, which this world
   // does not have.
+  // SIZE IS CAPACITY, BRIGHTNESS IS FILL.
+  //
+  // Both used to come from the stock, which worked while every mote had the same
+  // ceiling of 1.0. Motes now differ in capacity by up to fifty times and stock
+  // runs to the hundreds, so reading the radius off the stock would put a few
+  // motes across half the screen and make a drained megamote indistinguishable
+  // from a full ordinary one.
+  //
+  // Area, not radius, is proportional to capacity — hence the square root. A
+  // mote holding fifty times the energy is about seven times across, which is
+  // the honest way to draw a quantity as an area and keeps the biggest ones from
+  // swallowing the map.
+  let cap = max(1e-4, m.w);
+  let fill = clamp(m.z / cap, 0.0, 1.0);
   if (m.z <= 0.004) {
     o.p = vec4<f32>(0.0, 0.0, 0.0, 0.0);
     o.uv = vec2<f32>(9.0, 9.0); o.v = 0.0;
     return o;
   }
-  // Radius grows with stock, so a well-fed patch reads as a bloom and a grazed
-  // one as a scatter of specks — the shape of the depletion is visible without
-  // needing to resolve individual values.
-  let r = MC.radius * (0.45 + 0.55 * m.z);
+  let r = MC.radius * sqrt(cap) * (0.45 + 0.55 * fill);
   let world = m.xy + corner * r;
   o.p = vec4<f32>((world - MC.center) * MC.ndc, 0.0, 1.0);
   o.uv = corner;
-  o.v = m.z;
+  o.v = fill;
   return o;
 }
 
@@ -1893,21 +1904,26 @@ async function refreshMotes() {
   if (sim.fetchingMotes) return;
   sim.fetchingMotes = true;
   try {
-    let xy, stock, n;
+    let xy, stock, n, cap = null;
     if (WATCH) {
       const ab = await (await srvFetch('/motes', { cache: 'no-store' })).arrayBuffer();
       n = new Uint32Array(ab, 0, 1)[0];
-      const f = new Float32Array(ab, 8, n * 3);
-      xy = f; stock = null;                       // interleaved x,y,stock
+      const f = new Float32Array(ab, 8, n * 4);
+      xy = f; stock = null;                       // interleaved x,y,stock,cap
     } else {
       const m = await sim.world.readMotes();
-      n = m.stock.length; xy = m.pos; stock = m.stock;
+      n = m.stock.length; xy = m.pos; stock = m.stock; cap = m.cap;
     }
     if (!n) { sim.moteCount = 0; return; }
     const packed = new Float32Array(n * 4);       // vec4 per mote: x, y, stock, pad
     for (let i = 0; i < n; i++) {
-      if (stock) { packed[i * 4] = xy[i * 2]; packed[i * 4 + 1] = xy[i * 2 + 1]; packed[i * 4 + 2] = stock[i]; }
-      else { packed[i * 4] = xy[i * 3]; packed[i * 4 + 1] = xy[i * 3 + 1]; packed[i * 4 + 2] = xy[i * 3 + 2]; }
+      if (stock) {
+        packed[i * 4] = xy[i * 2]; packed[i * 4 + 1] = xy[i * 2 + 1];
+        packed[i * 4 + 2] = stock[i]; packed[i * 4 + 3] = cap ? cap[i] : 1;
+      } else {
+        packed[i * 4] = xy[i * 4]; packed[i * 4 + 1] = xy[i * 4 + 1];
+        packed[i * 4 + 2] = xy[i * 4 + 2]; packed[i * 4 + 3] = xy[i * 4 + 3];
+      }
     }
     // Never reallocated mid-run. If the server somehow has more motes than the
     // buffer holds, draw the ones that fit rather than swapping a buffer out

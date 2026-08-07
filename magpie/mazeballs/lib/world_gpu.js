@@ -1095,7 +1095,12 @@ fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
   }
   mote[i * 2u] = vec4<f32>(m0.x, m0.y, m0.z, demanders);
-  mote[i * 2u + 1u] = vec4<f32>(rivals, 0.0, 0.0, 0.0);
+  // .y IS THE MOTE'S CAPACITY and must survive this write. It is seeded once and
+  // never recomputed, so blanking it here — which the old vec4(rivals,0,0,0)
+  // did — would set every capacity to zero on the first step, the logistic term
+  // would divide by it, and the entire crop would stop regrowing. Read it back
+  // and write it through.
+  mote[i * 2u + 1u] = vec4<f32>(rivals, mote[i * 2u + 1u].y, 0.0, 0.0);
 }
 
 // PHASE 3. Subtract what was actually handed out, then let the sun put some
@@ -1153,7 +1158,18 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   let draw = moteOfferOf(m0) * rivals;
   let refill = max(1e-6, P.moteRegrow * P.dt);
   let suppress = 1.0 / (1.0 + P.regrowCrowdK * (draw / refill));
-  stock = stock + P.moteRegrow * fert * suppress * (1.0 - stock / P.moteCap) * P.dt;
+  // PER-MOTE CAPACITY, in the spare float beside the rival count. The world used
+  // one cap for every mote, so the only way to hold a fixed amount of food was to
+  // spread it evenly — which is a world where every patch is worth the same and
+  // there is nothing to search FOR. Capacity now varies mote to mote and the
+  // logistic ceiling is the mote's own.
+  //
+  // CONSERVATION IS BY CONSTRUCTION, not by hoping: the seeder normalises the
+  // capacities so their SUM equals the old nMotes * moteCap exactly. The inflow
+  // bound in the note above is unchanged in total — it is the same sun, arriving
+  // through a tenth as many straws of very unequal width.
+  let cap = max(1e-4, mote[i * 2u + 1u].y);
+  stock = stock + P.moteRegrow * fert * suppress * (1.0 - stock / cap) * P.dt;
 
   // ---- FOOD GOES WHERE THE WATER GOES ---------------------------------------
   //
@@ -1184,10 +1200,10 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (np.x < -B) { np.x = np.x + 2.0 * B; }
     if (np.y >  B) { np.y = np.y - 2.0 * B; }
     if (np.y < -B) { np.y = np.y + 2.0 * B; }
-    mote[i * 2u] = vec4<f32>(np.x, np.y, clamp(stock, 0.0, P.moteCap), 0.0);
+    mote[i * 2u] = vec4<f32>(np.x, np.y, clamp(stock, 0.0, cap), 0.0);
     return;
   }
-  mote[i * 2u] = vec4<f32>(m0.x, m0.y, clamp(stock, 0.0, P.moteCap), 0.0);
+  mote[i * 2u] = vec4<f32>(m0.x, m0.y, clamp(stock, 0.0, cap), 0.0);
 }
 
 // PHASE 2 lives inside physics(): what cell i can pick up from the motes it is
@@ -2340,11 +2356,23 @@ export class WorldGPU {
     // a lattice would put the world's food on a grid, which is the thing we do
     // not do, and would also give every patch the same size and spacing. Random
     // scatter clumps and thins the way real ground does, for free.
+    // FEWER, BIGGER, AND VERY UNEQUAL.
+    //
+    // The world used one mote per two square units, all with the same cap. Two
+    // problems with that. It was half the cost of a step — 34,848 of them
+    // running offer-and-graze every step for a crop that changes on the
+    // timescale of grazing. And a world where every patch is worth the same is a
+    // world with nothing to search FOR: finding food is not a skill if food is
+    // uniform, so nothing selects for finding it.
+    //
+    // So: a tenth as many motes, carrying the same total energy, distributed
+    // lognormally. A few megamotes are worth crossing the world for and most are
+    // not. No cell can yet TELL them apart at a distance — that would need a
+    // sense channel — so what this selects for is covering ground and being
+    // where the good ones are, which is the honest first step.
+    const denser = this.params.moteDensity ?? 0.1;
     if (this.params.nMotes == null) {
-      // One mote per two square units: with moteR 1.2 a cell has about two in
-      // reach, so ground is granular enough to be exhausted patch by patch
-      // rather than all at once.
-      this.params.nMotes = Math.round((2 * this.params.bound) ** 2 / 2);
+      this.params.nMotes = Math.round(((2 * this.params.bound) ** 2 / 2) * denser);
     }
     const nM = this.params.nMotes | 0;
     // Stride 2: eight floats a mote, not four. See the note in moteOffer.
@@ -2353,14 +2381,32 @@ export class WorldGPU {
       let sd = (this.params.moteSeed ?? 20260803) >>> 0;
       const rnd = () => ((sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296);
       const B = this.params.bound;
+      // Lognormal, because the tail is the point: sigma 1.15 puts the richest
+      // motes tens of times above the median while most sit below it. The draws
+      // are then RESCALED so their sum is exactly what the old uniform field
+      // held — nMotesOld * moteCap — which is what keeps the inflow bound in
+      // moteCommit true. Conservation here is arithmetic, not intention.
+      const target = ((2 * B) ** 2 / 2) * this.params.moteCap;
+      const caps = new Float64Array(nM);
+      let sum = 0;
       for (let i = 0; i < nM; i++) {
-        // STRIDE 2 — see the note in moteOffer. Slot 0 is (x, y, stock,
-        // cellDemanders); slot 1 carries the rival count and three spares.
+        // Box-Muller from the same stream, so the whole field is reproducible
+        // from moteSeed alone.
+        const u1 = Math.max(1e-12, rnd()), u2 = rnd();
+        const g = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        caps[i] = Math.exp(1.15 * g);
+        sum += caps[i];
+      }
+      const k = sum > 0 ? target / sum : 1;
+      for (let i = 0; i < nM; i++) {
         mv[i * 8] = (rnd() * 2 - 1) * B;
         mv[i * 8 + 1] = (rnd() * 2 - 1) * B;
+        const cap = caps[i] * k;
         // Start full, so the opening moments are not an artificial famine.
-        mv[i * 8 + 2] = this.params.moteCap;
+        mv[i * 8 + 2] = cap;          // stock
+        mv[i * 8 + 5] = cap;          // slot 1 .y — the capacity itself
       }
+      this.moteCapTotal = target;
     }
     const mkS = (a) => {
       const b = device.createBuffer({
@@ -2459,7 +2505,7 @@ export class WorldGPU {
 
   /** Mote stock, for the viewer and for conservation checks. */
   async readMotes() {
-    if (!this.moteGroups) return { pos: new Float32Array(0), stock: new Float32Array(0) };
+    if (!this.moteGroups) return { pos: new Float32Array(0), stock: new Float32Array(0), cap: new Float32Array(0) };
     if (this.params.nMotes == null) {
       // One mote per two square units: with moteR 1.2 a cell has about two in
       // reach, so ground is granular enough to be exhausted patch by patch
@@ -2477,14 +2523,19 @@ export class WorldGPU {
     const raw = new Float32Array(ss.getMappedRange().slice(0));
     ss.unmap(); ss.destroy();
     const pos = new Float32Array(nM * 2), stock = new Float32Array(nM);
+    // Capacity travels with the mote now: it is what decides how big it is
+    // drawn, and a viewer that only knows the stock cannot tell a drained
+    // megamote from a full ordinary one.
+    const cap = new Float32Array(nM);
     for (let i = 0; i < nM; i++) {
       // Stride 8 floats — the mote is two vec4s. Reading at 4 here would return
       // every other mote's position interleaved with rival counts, which looks
       // like plausible data and is not.
       pos[i * 2] = raw[i * 8]; pos[i * 2 + 1] = raw[i * 8 + 1];
       stock[i] = raw[i * 8 + 2];
+      cap[i] = raw[i * 8 + 5];
     }
-    return { pos, stock };
+    return { pos, stock, cap };
   }
 
   writeParams(patch = {}) {

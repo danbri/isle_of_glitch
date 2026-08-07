@@ -1091,13 +1091,18 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
   if (path === '/motes') {
     const m = await world.readMotes();
     const n = m.stock.length;
-    const buf = new ArrayBuffer(8 + n * 12);
+    // Four floats a mote now, not three. Capacity has to travel with the mote:
+    // motes differ in size by up to fifty times, so a viewer holding only the
+    // stock cannot tell a drained megamote from a full ordinary one, and would
+    // draw them identically.
+    const buf = new ArrayBuffer(8 + n * 16);
     new Uint32Array(buf, 0, 2).set([n, 0]);
     const f = new Float32Array(buf, 8);
     for (let i = 0; i < n; i++) {
-      f[i * 3] = m.pos[i * 2];
-      f[i * 3 + 1] = m.pos[i * 2 + 1];
-      f[i * 3 + 2] = m.stock[i];
+      f[i * 4] = m.pos[i * 2];
+      f[i * 4 + 1] = m.pos[i * 2 + 1];
+      f[i * 4 + 2] = m.stock[i];
+      f[i * 4 + 3] = m.cap[i];
     }
     return new Response(buf, {
       headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' },
