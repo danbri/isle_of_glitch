@@ -2079,10 +2079,40 @@ export class WorldGPU {
       // The mechanism added to make movers out-earn sitters is the leading
       // suspect for taxing multicellularity.
       shelterK: 0.0,
-      // COUNT COMPETITORS, NOT MOUTHS. 0 is the world as measured, where a body
-      // suppresses the ground under itself once per cell. 1 makes a patch shared
-      // among the BODIES on it, each dividing its share internally. Conserving
-      // at any value — see the note in moteOffer.
+      // COUNT COMPETITORS, NOT MOUTHS — and this implementation of it is WRONG,
+      // which is why it defaults to 0 and is kept only as evidence.
+      //
+      // It uses ONE counter for two jobs, and the two want opposite treatments.
+      // Worked through with numbers, one big body among three small ones,
+      // stock 100:
+      //
+      //   body size   share 0 intake   share 1 intake
+      //          40            86.96            25.00
+      //           2             4.35            25.00
+      //
+      // Share 1 hands every body an EQUAL cut regardless of size. So it removes
+      // the foraging ADVANTAGE of being big at the same moment as it removes the
+      // suppression PENALTY — two opposing effects, which is exactly why the
+      // size tax it was built to lift did not move (+0.1547 +-0.1868, failing its
+      // own test), and why it starves the many-small-founders phase every world
+      // begins in. When all bodies are the same size the two settings are
+      // arithmetically identical and it does nothing at all.
+      //
+      // THE CORRECT DESIGN: suppression counts BODIES, sharing keeps counting
+      // CELLS. Then a large body keeps its proportional share of the patch and
+      // stops suppressing the ground under itself once per cell — the penalty
+      // goes, the advantage stays. That needs two accumulators, and the mote is
+      // a full vec4, so it needs the mote widened.
+      //
+      // Which is now affordable: the food walk was re-measured at 11% of the
+      // step, not the 58% in PHYSICS-2.md, because that figure was taken on a
+      // build that was 80% phantom cells. Doubling an 11% walk is a worst case
+      // near +11%.
+      //
+      // Not done here. It is a buffer-layout change, and this project's most
+      // expensive bug was a uniform-block offset that made every contact force a
+      // denormal for the life of the code. Layout changes get made rested, with
+      // device_limits_test run.
       grazeBodyShare: 0.0,
       contestR: 1.5, moteDrift: 0.0,
       // Tidal income. Sized so a fully-gripping cell holding station in a fast

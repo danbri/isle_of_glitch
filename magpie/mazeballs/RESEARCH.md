@@ -6632,3 +6632,40 @@ before any body is large enough for the weighting to pay.
 That is the next experiment, and it is the same shape as every other one that
 worked this session: more replicates, both horizons, and the viability veto
 stated before the numbers are read.
+
+#### Why it did not lift the tax: the mechanism conflates two things
+
+Worked out afterwards, with numbers. One big body among three small, stock 100:
+
+```
+body size   share 0 intake   share 1 intake
+       40            86.96            25.00
+        2             4.35            25.00
+```
+
+**Share 1 hands every body an equal cut regardless of size.** It removes the
+foraging ADVANTAGE of being big at the same moment as it removes the suppression
+PENALTY — two opposing effects. That is precisely why the size tax it was built
+to lift did not move (+0.1547 ± 0.1868, failing its own test), and why it starves
+the many-small-founders phase every world begins in. When all bodies happen to be
+the same size the two settings are arithmetically identical and it does nothing
+whatsoever.
+
+The one-counter implementation was chosen an hour earlier because it avoided a
+buffer change, and the elegance was the error: **`mote.w` does two jobs — sharing
+and suppression — and they want opposite treatments.**
+
+**The correct design.** Suppression counts BODIES; sharing keeps counting CELLS.
+A large body then keeps its proportional share of the patch and stops suppressing
+the ground under itself once per cell — the penalty goes, the advantage stays.
+That needs two accumulators and the mote is a full `vec4`, so it needs the mote
+widened.
+
+**Which is now affordable**, by the re-measurement above: the food walk is 11% of
+the step, not 58%, so doubling it is a worst case near +11%. The blocker written
+down two entries ago was real; the reason it was insurmountable was not.
+
+Not done here, deliberately. It is a buffer-layout change, and the most expensive
+bug in this project's history was a uniform-block offset that silently made every
+contact force a denormal for the life of the code. Layout changes get made
+rested, with `device_limits_test` run.
