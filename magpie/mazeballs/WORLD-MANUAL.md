@@ -431,10 +431,52 @@ measurement once), trajectory plots, vector snapshots, the imposed-wave drive.
 
 ## 11. What is missing, ranked
 
-1. **Geography** — a height field and a mud field, giving islands, water, lush
-   lowlands, impassable heights and mud-rivers that carry things. Spatial
-   heterogeneity is the strongest diversity-maintaining force there is, and
-   diversity is exactly what is failing.
+**0. A biotic channel that prices APPROACH, not only contact.** New head of the
+list, and it displaces everything below it — including geography, which is now
+built and measured at 22× less influence on whether moving pays than contest is
+(`RESEARCH.md`, 2026-08-07).
+
+The measured problem: contest is symmetric and fires on contact, so moving raises
+your encounter rate with things that eat you exactly as much as with things you
+eat. Movement therefore carries a predation cost that cancels its foraging gain,
+and as a world fills, that cost grows. Locomotion stops paying, perception —
+which can only pay *through* locomotion — stops paying, and bodies shed
+everything that costs anything. The world descends.
+
+**Every biotic coefficient prices what happens ON CONTACT.** `contestRate`,
+`toughCost`, `dietWidth`, `contestR`. Nothing prices what happens *before*
+contact, which is the only place an arms race can live, and the only place
+perception can act.
+
+**The proposal, unbuilt and unmeasured: make the transfer depend on CLOSING
+SPEED.** Today the attacker's capability is its own contraction. Add the
+relative velocity along the line between the two cells:
+
+```
+effort  =  |contraction|  *  (1 + impact * closingSpeed)
+```
+
+where `closingSpeed` is positive when the two are converging and negative when
+separating. One term, and it prices both halves of the thing that is missing:
+
+- **approach pays** — a cell moving *at* another takes more than one drifting
+  into it, so steering toward something is worth more than bumping into it,
+  which is exactly what a sense organ is for;
+- **avoidance pays** — separating reduces what can be taken from you, so fleeing
+  is a defence that is not armour, and it is a defence that *requires*
+  perception rather than material.
+
+Why it is lawful: it is an impulse, not a behaviour. It names no predator, no
+prey, no chase and no escape — both cells evaluate the same expression, in both
+directions, from the same relative velocity, and who gains is decided by which
+of them is closing. It is continuous, it is symmetric in form, and it conserves.
+It also costs nothing: relative velocity is already in registers in the contest
+loop, which already reads both positions and both velocities.
+
+Risks to measure before believing it: it may simply make fast cells win, which
+is a new monoculture rather than an arms race; and it interacts with the
+scallop-theorem problem, since a body that cannot control its direction cannot
+exploit either half.
 2. **Corpses** — death vacates a slot and the matter vanishes. A body that dies
    still-nutritious funds scavengers, and closes the matter loop.
 3. **`density` → mass** — armour that costs speed needs mass to exist. One
