@@ -348,6 +348,52 @@ diversity effect is unmeasured.
 **Deep time — not shown for anything.** Measurements are at 75k steps. The muscle
 result that looked solid at 900k reversed by generation 210.
 
+### What is actually blocking it (2026-08-06)
+
+**The world monocultures on whatever the economy pays for, and it always pays
+for one thing.** Two measurements in one evening, same world, one parameter
+apart:
+
+```
+                     anchor  muscle  sensor  neuron | one-tissue  sense+move
+tidal income x grip   59.7%   26.2%   10.6%    3.4% |     54.8%       7.3%
+same, subsidy removed 10.0%   73.0%   12.0%    6.0% |     76.0%       3.9%
+```
+
+The first was an own goal: tidal income was multiplied by `grippiness`, i.e.
+energy paid in direct proportion to a named capability, which is the
+reward-shaping the First Law forbids. Removing it collapsed the anchor
+monoculture — and produced a **muscle** monoculture instead, the 94%-muscle
+failure recorded before. On the number that matters it got *worse*: bodies
+holding both a sensor and a muscle, the minimum parts list for a sensorimotor
+loop, fell from 7.3% to 3.9%.
+
+**The suspected structural cause: contraction is paid twice.** It moves the
+body, and it is also the effort a cell brings to taking energy from another,
+since the attack capability in contest is the attacker's own contraction.
+Nothing else has two uses — a sensor costs `senseCost` and returns nothing
+directly, a neuron is pure `brainTax`. Under those terms a body of pure muscle
+is the correct answer and evolution keeps finding it.
+
+Without division of labour there are no guilds, and without guilds organisms
+cannot be each other's dominant pressure in more than one way. `absorbTradeoff`
+is the lawful counterweight (force capacity crowding out uptake) and is being
+swept by `tools/labour-sweep.js`, which requires a value to improve
+`senseAndMove` *without collapsing the population* — 0.9 scores a perfect 1.00
+with eight animals alive at generation zero.
+
+**A measurement is only about the economy if the allocator is not the
+constraint.** Both experiment harnesses passed `beasts` without `bodySlots`, so
+the organism table was the same size as the island count and the population
+pinned at exactly CAP with most of the cell memory free. Sized as the live
+server sizes it, the same configuration holds 832 alive against a ceiling of
+193 — the 4.3× this document already records from the last time.
+
+**Instruments built for this, all reading live frames at zero cost to the sim:**
+`tools/encounter.js` (is the biotic channel open — 78% of cells have a stranger
+within reach), `tools/composition-log.js` (division of labour over time),
+`tools/who-selects.js` (the goal itself), `tools/labour-sweep.js`.
+
 A correction to my own framing: **lineage count is the wrong diversity measure.**
 It counts surviving founder lines, and since no new founders are created it can
 only fall — coalescence, not extinction. In a real Cambrian every lineage also
@@ -385,10 +431,119 @@ measurement once), trajectory plots, vector snapshots, the imposed-wave drive.
 
 ## 11. What is missing, ranked
 
-1. **Geography** — a height field and a mud field, giving islands, water, lush
-   lowlands, impassable heights and mud-rivers that carry things. Spatial
-   heterogeneity is the strongest diversity-maintaining force there is, and
-   diversity is exactly what is failing.
+**0. Crowding that counts COMPETITORS, not mouths.** Head of the list, measured,
+and it displaces the approach-pricing proposal below it — which is still a good
+idea and is downstream of this one, because steering needs cells to spare and
+this is what makes cells affordable.
+
+THE BIND, measured at deep time (`RESEARCH.md`, 2026-08-07):
+
+```
+                    sizeTax    sense+move
+as shipped          -0.4160          8.4%
+no crowding         -0.2012          0.9%
+                    +0.2148 +-0.1092  IMPLICATED
+```
+
+Crowding suppression causes about half the tax on being multicellular — and
+removing it collapses the sensorimotor fraction nine-fold, because it is also
+what makes sitting on a patch costly and therefore what makes moving pay. Stated
+plainly:
+
+> To make moving pay, a patch must be punished for being worked.
+> A body is a thing that works a patch.
+> So the mechanism that makes moving pay punishes being a body.
+
+THE FIX, and the arithmetic is exact. Suppression counts cells drawing on a
+patch. It should count independent COMPETITORS. Each drawing cell contributes
+`1 / bodySize` instead of `1`:
+
+```
+                                 cells   sum(1/size)   distinct bodies
+one body of 20 cells                20          1.00                 1
+twenty single-cell bodies           20         20.00                20
+four bodies of 5                    20          4.00                 4
+one of 20 plus five of 1            25          6.00                 6
+half of a 20-cell body              10          0.50                 1 (partly present)
+```
+
+Exact when a whole body is on the patch, and gracefully partial when only some of
+it is — which is the physically sensible answer, not an approximation to
+apologise for. A crowd of competitors still punishes sitting still, so the
+mechanism keeps doing the job it was added for; a body stops suppressing the
+ground under itself twenty times over.
+
+THE BLOCKER, which is real and is why this is written down rather than built.
+`mote.w` is used for TWO things: sharing (`offer = stock / demanders`) and
+suppression (`draw = offer * demanders`). Sharing must keep counting CELLS or a
+20-cell body takes twenty times its share; suppression wants the weighted count.
+So two accumulators are needed, and the mote is a full `vec4<f32>` — (x, y,
+stock, demanders). The options, none free:
+
+- **Widen the mote to two vec4s.** Simplest and hits the worst place: the mote
+  walk is 58% of the step (`PHYSICS-2.md`) and this doubles its bandwidth.
+- **Bit-pack two counters into one word.** 16+16 does not have the range —
+  a single-cell body needs the full scale factor and twenty of them overflow.
+- **Move the correction to the cell side.** A grazing cell knows its own body
+  size but cannot see who else is drawing, so this needs the information the
+  mote has.
+
+Recommended: measure the widened mote against the 58% figure before assuming it
+is too expensive. That number is from a build with 80% phantom cells and has not
+been re-measured since they were removed.
+
+**And it must clear the 10× test.** The crowding effect itself is invisible at
+the first horizon and only appears at ten times it, so any fix evaluated cheaply
+will report nothing.
+
+---
+
+**1. A biotic channel that prices APPROACH, not only contact.** Was head of the
+list, and it displaces everything below it — including geography, which is now
+built and measured at 22× less influence on whether moving pays than contest is
+(`RESEARCH.md`, 2026-08-07).
+
+The measured problem: contest is symmetric and fires on contact, so moving raises
+your encounter rate with things that eat you exactly as much as with things you
+eat. Movement therefore carries a predation cost that cancels its foraging gain,
+and as a world fills, that cost grows. Locomotion stops paying, perception —
+which can only pay *through* locomotion — stops paying, and bodies shed
+everything that costs anything. The world descends.
+
+**Every biotic coefficient prices what happens ON CONTACT.** `contestRate`,
+`toughCost`, `dietWidth`, `contestR`. Nothing prices what happens *before*
+contact, which is the only place an arms race can live, and the only place
+perception can act.
+
+**The proposal, unbuilt and unmeasured: make the transfer depend on CLOSING
+SPEED.** Today the attacker's capability is its own contraction. Add the
+relative velocity along the line between the two cells:
+
+```
+effort  =  |contraction|  *  (1 + impact * closingSpeed)
+```
+
+where `closingSpeed` is positive when the two are converging and negative when
+separating. One term, and it prices both halves of the thing that is missing:
+
+- **approach pays** — a cell moving *at* another takes more than one drifting
+  into it, so steering toward something is worth more than bumping into it,
+  which is exactly what a sense organ is for;
+- **avoidance pays** — separating reduces what can be taken from you, so fleeing
+  is a defence that is not armour, and it is a defence that *requires*
+  perception rather than material.
+
+Why it is lawful: it is an impulse, not a behaviour. It names no predator, no
+prey, no chase and no escape — both cells evaluate the same expression, in both
+directions, from the same relative velocity, and who gains is decided by which
+of them is closing. It is continuous, it is symmetric in form, and it conserves.
+It also costs nothing: relative velocity is already in registers in the contest
+loop, which already reads both positions and both velocities.
+
+Risks to measure before believing it: it may simply make fast cells win, which
+is a new monoculture rather than an arms race; and it interacts with the
+scallop-theorem problem, since a body that cannot control its direction cannot
+exploit either half.
 2. **Corpses** — death vacates a slot and the matter vanishes. A body that dies
    still-nutritious funds scavengers, and closes the matter loop.
 3. **`density` → mass** — armour that costs speed needs mass to exist. One

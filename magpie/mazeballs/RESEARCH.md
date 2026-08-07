@@ -5869,3 +5869,803 @@ density. Viability at 600 cap over 22,500 steps:
 Shipped at 1.5. Whether it reverses the sessile outcome over deep time is NOT yet
 measured — the 29.4M-step run above is the control it needs to be compared with,
 and that comparison has not been run.
+
+---
+
+## Wave: the sensorimotor loop, priced (2026-08-06/07)
+
+Four hypotheses, three killed by measurement, one bug found. Recorded in the
+order they happened, because the wrong turns are the point.
+
+### 1. "Tidal income is fine." — WRONG, and it was self-inflicted
+
+Tidal income shipped as `tidalYield * grippiness(cell) * drag * |slip|²` —
+energy paid in direct proportion to a named capability. Measured hours later on
+the live world:
+
+```
+                     anchor  muscle  sensor  neuron | one-tissue  sense+move
+tidal income x grip   59.7%   26.2%   10.6%    3.4% |     54.8%       7.3%
+subsidy removed       10.0%   73.0%   12.0%    6.0% |     76.0%       3.9%
+```
+
+The anchor monoculture collapsed and a **muscle** monoculture replaced it. On
+the number that matters — bodies holding both a sensor and a muscle — it got
+worse. **The subsidy was never the disease; it only chose which tissue the world
+would monoculture on.**
+
+### 2. "Specialists starve, so give bodies a circulatory system." — REFUTED
+
+Energy running down the gradient between bonded cells, conserving, lossy, riding
+the existing bond loop. `absorbTradeoff 0.7` throughout the lower rows:
+
+```
+config                  alive   sense+move   one-tissue
+no sap                    472        40.5%          56%
+sap 0.9                   611        24.5%          73%
+no sap  + absorb 0.7        8        62.5%          25%
+sap 0.05 + absorb 0.7       8        12.5%          50%
+sap 0.15 + absorb 0.7     564         0.0%          82%
+sap 0.9  + absorb 0.7     543         0.7%          68%
+```
+
+The mechanism works exactly as designed — a **68× population rescue** at
+`absorb 0.7`, from 8 alive to 543 — and the evolutionary outcome is the opposite
+of the intent. Pooling means a body needs only NET income, so nothing forces it
+to keep uptake tissue either, and it converges on muscle at 93%. No middle rate
+exists. **Default 0**, kept as a switch because the rescue is a reusable fact.
+
+### 3. "The loop is broken at the wiring." — WRONG
+
+```
+bodies with both a sensor and a muscle: 2
+muscle cells in them: 6, incoming edges 34
+  edges arriving FROM a sensor:        11 (32.4%)
+  share of incoming |weight|:              32.5%
+  muscle cells with ANY sensor input:   6/6 (100%)
+```
+
+Connected, and proportionally so. The signal arrives.
+
+### 4. The bug: the world charged everyone for an organ almost nobody had
+
+Direct measurement first — live world, 497k steps, 5,053 bodies:
+
+```
+energy per cell     sensored 2.125 (n=525)  blind 2.293 (n=4528)  -0.168 +-0.067
+activation per cell sensored 0.850          blind 0.860           no difference
+body size           sensored 16.4           blind 14.1            +2.4
+```
+
+Sensored bodies measurably **poorer**, not a size confound, and behaving
+identically. Then the acuity distribution, which no selection process produces:
+
+```
+sensor cells      acuity 0.000   every one of them
+all other cells   acuity 0.682
+```
+
+`senseWork = senseCost * senseAcuity(cell)` was levied on **every** cell, while
+`sense()` computes a reading only for cells typed sensor. The world billed the
+whole population 0.17 energy/s for sharpness they could not use — a 43%
+surcharge on existing, against a `brainTax` of 0.4 — and the cells under the
+most selection to get it right drove acuity to zero, because for them it was a
+cost whose benefit could not cover it.
+
+**Charged where it is used:**
+
+```
+fixed (cost follows use)   sensors 0.97%   sensor acuity 0.869
+senseCost 0 (control)      sensors 0.05%   sensor acuity 0.000
+```
+
+Twenty times more sensors, and sharp. The control is the instructive half:
+making sensing **free** produces *fewer* sensors, because a free organ reading
+pure noise is worse than none — it feeds random numbers to a brain wired to act
+on them. Cheapness was never what sensors needed; affording **sharpness** was.
+Acuity was not evolvable before this.
+
+### Where that leaves it — from punished to neutral
+
+Worlds evolved from scratch under the fix:
+
+```
+fixed: cost follows use   sensors 19.80%  acuity 0.335
+                          sensored 1.605 (n=100)  blind 1.749 (n=343)
+                          diff -0.144 +-0.155   NO DIFFERENCE
+
+control: sensing free     sensors 71.06%  acuity 0.363
+                          sensored 1.673 (n=429)  blind 2.024 (n=102)
+                          diff -0.351 +-0.151   still a loss
+```
+
+**Sensing still does not pay.** The deficit is merely no longer distinguishable
+from noise, where on the live world it was a clear repeatable penalty. That is a
+smaller claim than "the loop works" and a far more useful state: a trait that is
+actively purged can never be improved; a trait at break-even can drift, persist,
+and be selected the moment a lineage finds a use. **The fix does not make
+perception valuable. It makes perception reachable.**
+
+### The standing blocker, stated precisely
+
+Every biotic coefficient in this world prices what happens **on contact** —
+contest rate, toughness, enzyme matching, the proximity radius. Nothing prices
+what happens **before** contact, which is the only place perception can act.
+Until knowing something can turn into eating something, a sensor is at best
+neutral — and organisms cannot be a pressure anything adapts *to*.
+
+### The goal, measured — and NOT demonstrated (2026-08-07)
+
+`tools/who-selects.js`, three arms from one seed, six arm-replicates stepped
+round-robin so all stay at the same tick. First horizon 45 ticks (11k steps),
+deep time 450 ticks (112k steps) — a true 10×. Bar set before the run: the claim
+holds only if `biotic > abiotic` **and** the gap clears the pooled SE.
+
+```
+horizon trait         full  nobiotic  noabiotic |  biotic  abiotic      se  verdict
+first  tough       0.0343    0.1075     0.0348 |  0.0731   0.0004  0.0427  DOMINATES
+first  tagSd       0.2924    0.1955     0.2984 |  0.0970   0.0059  0.0416  DOMINATES
+first  enzSd       0.1064    0.2444     0.1658 |  0.1381   0.0595  0.1326  —
+first  lineages    6.5000    6.5000     7.0000 |  0.0000   0.5000  2.9155  —
+deep   tough       0.0582    0.1241     0.0345 |  0.0659   0.0237  0.0686  —
+deep   tagSd       0.3095    0.1982     0.2398 |  0.1113   0.0697  0.0614  —
+deep   enzSd       0.1170    0.2301     0.2256 |  0.1130   0.1086  0.1086  —
+deep   lineages    2.0000    3.0000     2.0000 |  1.0000   0.0000  1.7321  —
+```
+
+**Two traits clear the bar at the first horizon. Neither survives deep time.**
+The goal is not demonstrated, and by this project's own rules the first-horizon
+result is retracted rather than reported.
+
+What the numbers do say, stated carefully:
+
+- **The sign is consistent everywhere.** `biotic > abiotic` on toughness, tag
+  spread and enzyme spread, at BOTH horizons. Nothing reverses; the direction is
+  the same at 11k steps and at 112k.
+- **The failure is power, not reversal.** The effects barely move between
+  horizons (tagSd biotic 0.0970 → 0.1113; toughness 0.0731 → 0.0659) while the
+  standard error grows (tagSd se 0.0416 → 0.0614) as two replicates diverge over
+  ten times the runtime. Two replicates cannot resolve an effect this size at
+  this variance.
+- **Toughness is the trait that should decide it** and it behaves as designed:
+  armour is *higher* with the biotic channel switched off, which is the wrong
+  sign for "armour is a response to being eaten" and deserves its own
+  investigation rather than a story.
+- **Lineage count says nothing**, as expected — it can only fall (coalescence,
+  not extinction), which this document already records as the wrong diversity
+  measure.
+
+Next: the same design at five replicates. That is the only change that can move
+this from suggestive to demonstrated or kill it outright, and running it is
+cheaper than arguing about it.
+
+#### A confound in the instrument, found before the claim was made
+
+The verdict above reports toughness as biotic-dominated at the first horizon.
+That reading is **not trustworthy**, and the reason is visible in the same data:
+
+```
+arm         mean alive   mean toughness
+nobiotic          1121           0.1241
+full               830           0.0582
+noabiotic          514           0.0345
+```
+
+Toughness tracks population size monotonically across the three arms — and
+within them too (nobiotic 914→0.0767 against 1328→0.1715; full 765→0.0144
+against 896→0.1020). **Armour is a luxury good.** `toughCost` is charged every
+second, so how much of it a population carries depends on what it can afford,
+and the arms differ in exactly that: switching off contest makes the world
+richer and more populous.
+
+So `|full − nobiotic|` on toughness conflates *"other organisms select for
+armour"* with *"removing contest makes everyone richer, and rich populations buy
+more armour"*. Those are different claims and only one is the goal.
+
+Two consequences:
+
+- **The toughness verdict is withdrawn**, at both horizons, in both directions.
+  It was the trait chosen precisely because armour has no use except against
+  other organisms — which remains true of its BENEFIT and says nothing about its
+  affordability.
+- **`tagSd` is the more trustworthy signal.** It is a *spread*, not a *level*, so
+  it is far less sensitive to how rich the population is: a wealthy monoculture
+  and a poor one can both have narrow tag diversity.
+
+`meanEnergy` and `toughPerE` are now logged per checkpoint so this is divided
+out rather than discovered afterwards. The five-replicate run already in flight
+started before that change and will not carry them; the run after it will.
+
+### The link upstream of all of it: moving does not pay
+
+Sensing can only ever pay THROUGH movement — knowing where the food is buys
+nothing if going there is not worth the trip. Measured on the live world,
+1,896 bodies tracked by uid (never by slot; slots are recycled and a recycled
+slot reads as a body teleporting, which cost this project a retracted locomotion
+result once already), with the population's median displacement subtracted as
+common drift:
+
+```
+common drift subtracted    0.010 world units
+displacement after drift   p50 2.026   p90 14.462
+correlation, displacement vs energy change   -0.063
+top-quartile movers    dEnergy -0.0315 (n=474)
+bottom-quartile sitters dEnergy +0.0269 (n=474)
+difference -0.0584 +-0.0541
+```
+
+**Movers end poorer than sitters.** Not by much, and far less than the -0.36
+correlation this ledger records from before crowding suppression was added — but
+still the wrong sign, and it explains everything downstream. If locomotion is
+selected against, a sense organ that steers it is worse than useless, which is
+precisely what the sensor economics showed.
+
+#### And the cause is a change made in this session
+
+The mote buffer carries an explicit warning: *"their positions do not move,
+which is what makes a patch something you can exhaust and have to leave — the
+pressure to locomote has to come from somewhere, and a field that refills under
+your feet is not it."* Drift was added anyway, for visual coherence, on the
+argument that the warning is about DEPLETION and survives drift intact. That
+argument is wrong: food you did not exhaust arriving on the current is a patch
+refilling under your feet by another route.
+
+```
+moteDrift 0.55   movers -0.1468   sitters -0.1031   diff -0.0437 +-0.1595
+moteDrift 0      movers +0.1066   sitters -0.0572   diff +0.1638 +-0.1689
+```
+
+Neither difference clears two SE at one replicate each, so this is directional
+rather than demonstrated — but **the sign flips**, and it flips the way the
+warning said it would. With static food, movers gain and sitters lose. With
+drifting food, both lose and movers lose more.
+
+`moteDrift` is back to 0, which is the value with evidence behind it. A small
+drift may be recoverable — enough to read as a current without outrunning a body
+— and that is its own measurement.
+
+**The lesson worth keeping is not about motes.** A code comment stated the
+mechanism, the reason, and the failure mode; it was read, argued with, and
+overridden on aesthetic grounds; and the thing it predicted happened within a
+day and took most of a session to trace back. The comment was the cheaper
+experiment.
+
+#### Replicated — and the drift hypothesis does NOT survive
+
+`tools/moving-pays.js`, four replicates per arm:
+
+```
+moteDrift 0      mean(movers - sitters)  +0.0350 +-0.0673   (2 reps usable)
+moteDrift 0.55   mean(movers - sitters)  -0.0198 +-0.0103   (3 reps usable)
+gap                                      +0.0548 +-0.0681   NOT significant
+```
+
+**The one-replicate sign flip did not survive replication.** The direction is
+still consistent — static food gives a positive difference, drifting food a
+negative one — but the gap does not clear two standard errors, so *"drifting
+food removes the pressure to move"* is **not demonstrated**. The previous
+entry's confidence was too high and is corrected here.
+
+Two things are worse than that, and both matter more:
+
+- **Moving does not pay in EITHER arm.** `movingPays` is false at moteDrift 0 as
+  well: +0.0350 ± 0.0673 is indistinguishable from zero. Reverting drift did not
+  restore a positive incentive to locomote; it removed a possible negative one at
+  best. The problem is upstream of mote drift.
+- **Three of eight replicates were unusable** for too few surviving bodies. The
+  test world at CAP 110 / bound 58 is too fragile to power this comparison, which
+  is a limitation of the instrument and not a fact about the world.
+
+`moteDrift` stays at 0 — it is the historically tested value and the direction of
+the evidence, weak as it is, points that way — but it is no longer claimed as the
+cause. **What is established is narrower and more important: movers do not
+out-earn sitters, with or without drifting food.** Until that changes, locomotion
+has no return to capture and perception has nothing to steer toward, which is a
+complete account of why sense organs are at best neutral.
+
+The next question is therefore not about motes. It is why crowding suppression,
+which this ledger records as having been tuned specifically to make movers
+out-earn sitters (`crowdK 2.0`: movers +1.9 against sitters -4.8), no longer
+does so in a world that has since gained geography, a narrow fertile shore,
+tidal income and a proximity-range biotic channel. Any of those could have
+restored the value of sitting still.
+
+### Moving DOES pay — in a young world. The live world has aged out of it.
+
+The previous entry concluded movers do not out-earn sitters. That was measured in
+a world too small to power it (CAP 110 / bound 58, three of eight replicates
+unusable) and on the live world at ~900k steps. Repeated at CAP 150 / bound 70
+with four replicates:
+
+```
+as shipped        movers - sitters  +0.0555 +-0.0157  (4 reps)   MOVING PAYS
+no tidal income                     -0.0418 +-0.1182  (3 reps)   —
+```
+
+**Moving pays, clearing two standard errors.** And removing tidal income makes
+it *worse*, not better — so the suspicion that "paid for holding station" is an
+anti-locomotion subsidy is **wrong**, and is withdrawn.
+
+That leaves a genuine tension: a fresh 80-tick world says movers gain, the live
+world at 900k steps says they lose. Same physics. The live world's own history
+resolves it:
+
+```
+step        bodies  median body  one-tissue  sense+move
+  274,143     1390           12         76%        3.9%
+  540,641     1702           11         84%        3.5%
+  872,370     1964           10         82%        1.7%
+1,046,188     1806           11         75%        1.6%
+```
+
+Over 772,045 steps the world gets **fuller, smaller and simpler**: more bodies,
+each nearer the minimum viable size, and the fraction holding both a sensor and a
+muscle more than halves. A young world has ungrazed ground and moving finds it; a
+mature crowded one is grazed everywhere at once and moving finds nothing.
+
+**This is the anti-Cambrian, and it is the most important thing measured this
+session.** The world does not plateau — it *descends*. Bodies converge on the
+smallest single-tissue form that can pay its own way, and every capability that
+costs something is shed on the way down. "Infinite ascent" is not merely absent;
+the gradient points the other way, and it points that way harder the longer a
+world runs.
+
+It also explains why every economic knob turned this session moved the tissue mix
+without moving the outcome. They were adjusting which single strategy the
+population converges on, not whether it converges.
+
+The question that follows is sharp and is not about any of the parameters swept
+so far: **what would make a mature, crowded world contain ungrazed ground?**
+Crowding suppression makes a worked patch recover slowly, which is a local
+effect; at high density every patch is worked. That is the condition under which
+moving stops paying, sensing stops paying, and complexity is shed.
+
+### What suppresses the reward for moving: other organisms. By 22×.
+
+Four arms, four replicates, movers minus sitters in energy per cell:
+
+```
+arm                    diff        se   reps   moving pays
+as shipped          +0.0555    0.0157      4   yes
+no tidal income     -0.0418    0.1182      3   —
+no geography        +0.0599    0.0255      4   yes
+no contest          +0.1520    0.0439      3   yes
+
+remove geography   gap +0.0044 +-0.0300   implicated = NO
+remove contest     gap +0.0965 +-0.0466   implicated = YES
+```
+
+**Switching off the biotic channel makes moving 2.7× more rewarding.** Switching
+off the entire geography — gravity, altitude cost, mud, the fertile shore, the
+terrain-following current, the terrain sense — changes it by 0.0044, which is
+nothing.
+
+Set against each other in the goal's own terms: the biotic effect on whether
+movement pays is **0.0965 against an abiotic effect of 0.0044**, a factor of 22,
+and only the biotic one clears its standard error.
+
+**The mechanism.** Contest is symmetric and fires on contact, so moving raises
+your encounter rate with things that eat you exactly as much as with things you
+eat. A mover pays a predation cost that cancels most of its foraging gain. That
+is a real ecological effect and it is not a bug — it is what a world full of
+mouths does to a traveller.
+
+#### What this means for the goal, stated carefully
+
+This is direct evidence that **organisms are the dominant selective pressure**,
+on a behavioural trait, against a fully-built abiotic world — which is the first
+half of the standing goal. Two honest limits: it is a single-window measurement
+of the selective ENVIRONMENT rather than of an evolved response, and it is in
+young worlds at the first horizon. Deep time is not shown here.
+
+And it closes the loop with the descent measured above, which is the part that
+matters most:
+
+> Organisms are each other's dominant selective pressure, and what that pressure
+> currently selects for is **stillness and simplicity**.
+
+As a world fills, contest encounters rise, movement is penalised harder,
+locomotion and then perception stop paying, and bodies shed everything that costs
+something — 3.9% → 1.6% able to close a sensorimotor loop over 772k steps, median
+body 12 → 11. The biotic channel is not failing to dominate. It is dominating,
+and driving the descent.
+
+That reframes the whole programme. The goal has been read as "make the biotic
+channel strong enough". It is already strong enough. The unsolved problem is that
+a symmetric, contact-based biotic channel rewards being small, still and cheap —
+so what needs to change is not the STRENGTH of organism-organism interaction but
+its SHAPE: something that makes moving toward or away from another organism pay
+better than ignoring it. Every biotic coefficient in this world prices what
+happens on contact; nothing prices approach or avoidance, which is the only place
+an arms race can live.
+
+### The deep-time test kills it too — and that is now a pattern, not an accident
+
+The contest ablation, re-run after 800 ticks (200k steps) of warm-up instead of
+80 (20k) — the same 10× the goal demands:
+
+```
+                 movers - sitters       se   reps   moving pays
+as shipped              +0.0424    0.0505      3    no
+no contest              +0.0375    0.0163      3    yes
+gap                     -0.0048    0.0531           implicated = NO
+```
+
+At the first horizon the gap was **+0.0965 ± 0.0466** and contest was clearly
+implicated. At ten times the runtime it is **−0.0048 ± 0.0531** — gone, and if
+anything reversed.
+
+**That is the third independent measurement this session to do exactly this:**
+
+```
+measurement                    first horizon        deep time (10x)
+who-selects, toughness         clears the bar       fails  (and later withdrawn)
+who-selects, tagSd             clears the bar       fails
+moving-pays, contest ablation  +0.0965 +-0.0466     -0.0048 +-0.0531
+```
+
+Three different instruments, three different traits, one pattern: **everything
+this world differentiates at the first horizon is erased by ten times the
+runtime.** The "survives deep time" clause of the standing goal turns out not to
+be a formality bolted onto a result — it is the clause that fails, every time,
+and it is the only one that has ever mattered.
+
+#### What that means, and it is not "the effects were noise"
+
+The effects are real when measured; they stop existing later. Put beside the
+descent measurement — bodies smaller, simpler and less able to close a
+sensorimotor loop the longer a world runs — a coherent account falls out:
+
+> The selective pressure is real, and it **exhausts itself**. It drives the
+> population into a state that is *insensitive to it*.
+
+Early on, contest suppresses the reward for moving by a factor of 22 over the
+entire abiotic world. Late on, contest changes the movement incentive by nothing
+measurable — because by then nothing moves much, bodies are at minimum size, and
+the population has already shed everything the pressure was acting on. There is
+no differential left to measure because there is no variation left to differ.
+
+This is the anti-Cambrian stated exactly. Not "the arms race has not started
+yet" and not "the biotic channel is too weak", both of which were working
+hypotheses this session and both of which are now contradicted by measurement.
+The pressure is dominant, and it consumes the raw material it would need in
+order to keep acting.
+
+#### The consequence for what to try next
+
+Any change evaluated at a first horizon will look like it works. All three
+measurements above did. **A change is only interesting here if it still shows an
+effect at 10×**, which makes the cheap experiment the misleading one and forces
+every future claim through the expensive test. That is a real cost and it should
+be paid deliberately rather than discovered again.
+
+And it sharpens the requirement on the closing-speed proposal in
+`WORLD-MANUAL.md` §11.0. It is not enough for it to make approach pay. It has to
+still make approach pay in a world that has already been running for 200,000
+steps — that is, it has to create variation faster than convergence destroys it.
+Nothing measured this session does that.
+
+### The structural finding: multicellularity is taxed
+
+Live world, 2,046 bodies, energy per cell against body size:
+
+```
+size    bodies   energy/cell   tissues
+ 5-8       795         2.746      1.09
+ 9-14      784         2.643      1.21
+15-24      365         2.369      1.35
+25-60      102         2.244      1.46
+
+correlation  -0.263
+big (>=15) minus small (<=8):  -0.4041 +-0.0669
+```
+
+**Monotonic, large, and in the wrong direction.** A bigger body is poorer per
+cell at every step of the range. The economy is paying cells to come apart.
+
+Read the last column beside it: **differentiation requires size.** Bodies of 5–8
+cells carry 1.09 tissues — they are effectively monocultures by arithmetic, not
+by strategy. Only at 25–60 cells does the average body carry 1.46. So the world
+taxes exactly the thing that differentiation is made of.
+
+**Why, structurally.** Every cost in this world is per-cell — `brainTax`,
+`muscleCost`, `senseCost`, `toughCost`, `terrainWork`. Every benefit is per-cell
+— grazing, tidal income, contest. And two mechanisms actively penalise being a
+clump: crowding suppresses regrowth under a dense patch, and `absorbTradeoff`
+makes committed tissue feed badly. **There is no economy of scale anywhere in
+the world.** N cells bonded together are strictly worse off than the same N cells
+apart, so a body is a liability its cells tolerate rather than a strategy they
+benefit from.
+
+That is a complete account of everything else measured this session, and it
+subsumes them:
+
+- bodies shrink toward minimum viable size (median 12 → 11 over 772k steps);
+- one-tissue bodies dominate, because differentiation needs cells to spare;
+- `sense+move` falls 3.9% → 1.6%, because that combination needs at least two
+  tissues and therefore size;
+- the biotic pressure "exhausts itself", because it drives bodies to the floor
+  where there is no variation left for it to act on.
+
+**It also raises the bar on the closing-speed proposal (`WORLD-MANUAL.md` §11.0)
+and probably disqualifies it.** Pricing approach would reward steering, but
+steering needs muscle and sensors, which need cells to spare, which the economy
+charges for. A reward that can only be collected by paying a tax that exceeds it
+is not a reward.
+
+**The question this displaces everything else with: what can a body of N cells do
+that N solitary cells cannot?** Today the honest answer is "contract a bond",
+and locomotion barely pays. Until that answer is worth more than the per-cell
+costs of being N cells, evolution here is correct to disassemble, and nothing
+downstream of it can be fixed by tuning.
+
+Not proposed, not built, and deliberately not chosen at the end of a long
+session: the candidate mechanisms are shielding (interior cells being harder to
+reach through exterior ones), shared energy (`sapRate`, already built and already
+measured to rescue populations 68× while collapsing differentiation), and
+anything that makes uptake super-linear in coordinated tissue. Each needs the
+10× test that killed the last three results.
+
+### The goal at five replicates, with the wealth covariate — NOT demonstrated
+
+The definitive run: 15 arm-replicates stepped round-robin, `meanEnergy` and
+`toughPerE` logged so the luxury-good confound is divided out rather than
+discovered afterwards.
+
+```
+horizon trait            full  nobiotic  noabiotic |  biotic  abiotic      se
+first   tough          0.0955    0.1447     0.0330 |  0.0492   0.0625  0.0571   -
+first   toughPerE      0.0565    0.0942     0.0450 |  0.0377   0.0115  0.0435   -
+first   enzSd          0.2059    0.2651     0.1689 |  0.0592   0.0370  0.0587   -
+first   tagSd          0.2054    0.1696     0.2284 |  0.0357   0.0230  0.0647   -
+first   meanEnergy     1.7901    1.6119     0.7193 |  0.1782   1.0708  0.2815   -
+first   lineages       7.4000    7.0000    11.4000 |  0.4000   4.0000  1.6793   -
+deep    tough          0.1075    0.1552     0.0523 |  0.0477   0.0552  0.0611   -
+deep    toughPerE      0.0538    0.0965     0.0749 |  0.0428   0.0212  0.0487   -
+deep    enzSd          0.1795    0.2699     0.2209 |  0.0905   0.0415  0.0414   CLEARS
+deep    tagSd          0.2062    0.1776     0.3060 |  0.0286   0.0998  0.0703   -
+deep    meanEnergy     2.0668    1.6837     0.6883 |  0.3831   1.3785  0.2518   -
+deep    lineages       2.8000    3.0000     1.8000 |  0.2000   1.0000  0.9899   -
+```
+
+**One test of twelve clears the bar.** Enzyme diversity, at deep time.
+
+**And that is not enough, for a stated reason.** Twelve comparisons at a
+two-standard-error bar will produce roughly one pass by chance alone. One pass is
+exactly the null expectation. It is recorded because it is the right *kind* of
+signal — an enzyme's value depends entirely on what other organisms are made of,
+so it is meaningless in a world of one — and because a signal that appears at
+deep time rather than dying there is the opposite of this session's pattern. But
+one of twelve is not a result, and calling it one would be the thing this
+project retracts.
+
+**The first-horizon results from the two-replicate run did not replicate.**
+Toughness and `tagSd` both cleared at two replicates; at five, neither does, and
+toughness now has a *larger abiotic than biotic* effect. Adding power removed
+them, which is what power is for and what makes the earlier verdict correctly
+withdrawn rather than merely unlucky.
+
+**Geography is partly rehabilitated, on a different axis.** It has almost no
+effect on whether moving pays (0.0044 ± 0.0300, measured separately) and an
+enormous one on wealth: mean energy 1.79 with geography against 0.72 without, an
+abiotic effect of 1.0708 ± 0.2815 at the first horizon and 1.3785 ± 0.2518 at
+depth — the largest single effect anywhere in this table. The fertile shore is
+doing a great deal; it is simply not doing it to the movement incentive.
+
+#### Verdict on the standing goal
+
+**Not demonstrated.** Neither half. No trait shows biotic dominance at both
+horizons; the one that clears at depth is within chance for the number of tests
+run; and the accompanying measurements say the world descends rather than
+ascends, because multicellularity is taxed and the selective pressure exhausts
+the variation it needs in order to keep acting.
+
+### Shelter: built against the diagnosis, measured at both horizons, does nothing
+
+The first change made directly against the multicellularity tax. Being part of a
+larger body reduces what can be taken from you — symmetric, so both cells compute
+the same transfer from each other's packed body size and conservation holds.
+Tested at both horizons from the start, because three results this session
+cleared the first and died at 10×.
+
+```
+sizeTax = energy/cell of bodies >=15 cells minus bodies <=8. Negative = taxed.
+
+first horizon (22k steps)   shelterK 0: -0.5806 +-0.0808   0.04: -0.3175 +-0.6622
+deep time    (225k steps)   shelterK 0: -0.5866 +-0.0259   0.04: -0.5412 +-0.0666
+
+change   first  +0.2631 +-0.6671   no effect
+         deep   +0.0454 +-0.0715   no effect
+```
+
+**No effect at either horizon.** Ships at 0.
+
+**And the failure is worth more than the mechanism was.** If shielding a body
+from CONTEST does not move the tax on being a body, then the tax is not on the
+predation side at all. That eliminates the whole family of defensive answers —
+shielding, armour scaling, occlusion — in one measurement.
+
+What it leaves is the foraging side, and one mechanism in particular. **A body of
+N cells is by construction a dense draw on a single patch**, and crowding
+suppression cuts a patch's regrowth in proportion to how hard it is being worked.
+That mechanism was added to make movers out-earn sitters, and it may be paying
+for that with a tax on being multicellular at all — the same tissue, standing in
+the same place, competing with itself for the ground beneath it.
+
+Being measured now: the size tax with `regrowCrowdK` and `absorbTradeoff`
+removed, at both horizons.
+
+### What taxes multicellularity: crowding suppression — and it is a genuine bind
+
+```
+                        sizeTax            medBody  tissues  sense+move  alive
+first, as shipped       -0.3730 +-0.4619      16.3     1.21       10.2%    548
+first, no crowding      -0.3116 +-0.2224      13.7     1.16        1.7%    584
+first, no absorb        -0.2837 +-0.2302      21.7     1.14        3.6%    523
+deep,  as shipped       -0.4160 +-0.0510      10.0     1.11        8.4%    791
+deep,  no crowding      -0.2012 +-0.0965       9.5     1.16        0.9%    760
+
+first: removing crowding       +0.0614 +-0.5126   not implicated
+first: removing absorbTradeoff +0.0893 +-0.5161   not implicated
+deep:  removing crowding       +0.2148 +-0.1092   IMPLICATED
+```
+
+**Crowding suppression accounts for about half the tax on being multicellular**
+— the tax halves from −0.4160 to −0.2012 — and it shows at **deep time**, the
+horizon that has killed everything else this session. Like the `enzSd` result, it
+is absent at the first horizon and present at ten times it: an effect that needs
+time to accumulate, and one that a cheap experiment would have reported as
+nothing.
+
+**But this is not a bug to remove, and the same table says why.** Turning
+crowding off collapses `sense+move` from 8.4% to 0.9% — a nine-fold fall in the
+one metric that matters most. Crowding suppression is what makes sitting on a
+patch costly; that is what makes moving pay; that is what gives perception
+anything to steer toward. It is load-bearing for exactly the thing the goal
+needs.
+
+#### The structural bind, stated exactly
+
+> To make moving pay, a patch must be punished for being worked.
+> A body is a thing that works a patch.
+> So the mechanism that makes moving pay punishes being a body.
+
+That is the bind, and every knob turned this session was somewhere on this
+trade-off without naming it. It explains why the tissue mix kept moving while the
+outcome did not: crowding up favours movement and small bodies, crowding down
+favours large bodies that do not move. Neither end produces a differentiated,
+mobile creature, because the mechanism cannot tell those two cases apart.
+
+#### The resolution it points to, unbuilt
+
+**Crowding should count FOREIGN draw, not total draw.** Today a patch's regrowth
+is suppressed in proportion to how hard it is being worked, full stop — so a body
+of twenty cells suppresses the ground under itself twenty times over, competing
+with itself. If suppression counted only draw from OTHER bodies, then:
+
+- a crowd of competitors still punishes sitting still, so moving still pays and
+  the mechanism keeps doing the job it was added for;
+- a body no longer punishes itself for having cells, so the tax on
+  multicellularity from this source disappears.
+
+It resolves the trade-off rather than choosing an end of it, and it is lawful —
+"other body" is the same `cmeta.z` test contest already uses, and the mote
+offer pass already counts demanders. The implementation is not trivial: the
+demander count is per-mote and global, so distinguishing own from foreign draw
+needs the count to become per-body-per-mote or to be approximated in the grazing
+walk. That is a real design task and is not being attempted at the end of this
+session.
+
+**It also has to clear the 10× test.** Everything here now does.
+
+### The 58% that blocked the fix was 80% phantoms
+
+`PHYSICS-2.md` measures the food system at 58% of the step and neighbourhood
+walks at 78%, and derives from it a prime directive — *spend ALU, never add a
+neighbourhood walk* — that has been used to reject designs since. That
+measurement was taken on a build where **80% of the simulated cells were
+phantoms**, unallocated arena slots that `packMeta` had marked alive, all of them
+sitting in the hashes and grazing. Re-measured after the fix:
+
+```
+baseline                    8.20 ms/step
+nMotes 0 (no food walk)     7.30        food system = 11%   (was 58%)
+contactK 0 (no contact)     7.65        contact     =  7%   (was 18%)
+```
+
+**Walks are 18% of the step together, not 78%.** The directive is retired as law
+and kept as advice.
+
+This directly unblocks the multicellularity fix. It needs a second per-mote
+accumulator, and the only clean way to get one is to widen the mote from one
+`vec4` to two — which doubles the bandwidth of a walk that now costs 11%, i.e. a
+worst case of about +11% step time. Against a mechanism that accounts for half
+the tax on being multicellular, that is cheap.
+
+Not implemented here. It is a buffer-layout change touching the mote buffer, both
+mote passes and the renderer's mote pipeline, and this project's most expensive
+bug to date was a uniform-block offset that silently made every contact force a
+denormal for the life of the code. Layout changes get made rested, with the
+device-limits test run, not at the end of a long session.
+
+### Counting competitors instead of mouths: promising, and not established
+
+Two lines, no layout change — the widened-mote blocker written up an hour earlier
+was imaginary, because the demander count is a plain float in the mote's own loop
+rather than an atomic. Each drawing cell contributes `size^-share` and the
+grazing side is weighted by the same factor; conservation holds at any share.
+
+```
+first horizon (22k steps)
+share 0            sizeTax -0.4443 +-0.2619  tissues 1.23  sense+move  3.9%  alive 563
+share 0.5          sizeTax -0.4229 +-0.3290  tissues 1.13  sense+move  6.8%  alive 598
+share 1            NO USABLE REPLICATES
+
+deep time (225k steps)
+share 0            sizeTax -0.6772 +-0.1868  tissues 1.07  sense+move  4.4%  alive 772
+share 1            sizeTax -0.5225 +-0.0000  tissues 1.23  sense+move 13.3%  alive 615
+
+first: share 0.5 changes the size tax by +0.0214 +-0.4205   not implicated
+deep:  share 1   changes the size tax by +0.1547 +-0.1868   not implicated
+```
+
+**On the metric that matters most it is the largest movement of the session:**
+`sense+move` 4.4% → 13.3% at deep time, a threefold rise in the fraction of
+bodies that can close a sensorimotor loop, with average tissues per body rising
+1.07 → 1.23 alongside it.
+
+**And it is not a result.** Three reasons, all disqualifying on their own:
+
+- **n = 1.** The standard error on the deep share-1 arm is 0.0000 because only a
+  single replicate produced a usable population. There is no error bar.
+- **The size tax it was built to fix does not move measurably.** +0.1547 ± 0.1868
+  fails its own test, so even the mechanism's stated purpose is unsupported.
+- **Share 1 has a viability problem at the first horizon** — every replicate
+  failed to produce enough surviving bodies to measure. A mechanism that kills
+  young worlds and helps old ones is not obviously a mechanism that helps.
+
+Defaults to 0. What it needs is five replicates at both horizons and a look at
+why early worlds die under it — most likely that sharing a patch per-BODY rather
+than per-cell starves the many-small-founders phase that every world begins in,
+before any body is large enough for the weighting to pay.
+
+That is the next experiment, and it is the same shape as every other one that
+worked this session: more replicates, both horizons, and the viability veto
+stated before the numbers are read.
+
+#### Why it did not lift the tax: the mechanism conflates two things
+
+Worked out afterwards, with numbers. One big body among three small, stock 100:
+
+```
+body size   share 0 intake   share 1 intake
+       40            86.96            25.00
+        2             4.35            25.00
+```
+
+**Share 1 hands every body an equal cut regardless of size.** It removes the
+foraging ADVANTAGE of being big at the same moment as it removes the suppression
+PENALTY — two opposing effects. That is precisely why the size tax it was built
+to lift did not move (+0.1547 ± 0.1868, failing its own test), and why it starves
+the many-small-founders phase every world begins in. When all bodies happen to be
+the same size the two settings are arithmetically identical and it does nothing
+whatsoever.
+
+The one-counter implementation was chosen an hour earlier because it avoided a
+buffer change, and the elegance was the error: **`mote.w` does two jobs — sharing
+and suppression — and they want opposite treatments.**
+
+**The correct design.** Suppression counts BODIES; sharing keeps counting CELLS.
+A large body then keeps its proportional share of the patch and stops suppressing
+the ground under itself once per cell — the penalty goes, the advantage stays.
+That needs two accumulators and the mote is a full `vec4`, so it needs the mote
+widened.
+
+**Which is now affordable**, by the re-measurement above: the food walk is 11% of
+the step, not 58%, so doubling it is a worst case near +11%. The blocker written
+down two entries ago was real; the reason it was insurmountable was not.
+
+Not done here, deliberately. It is a buffer-layout change, and the most expensive
+bug in this project's history was a uniform-block offset that silently made every
+contact force a denormal for the life of the code. Layout changes get made
+rested, with `device_limits_test` run.

@@ -63,7 +63,13 @@
 // (bond() looked for neighbours closer than the lattice actually placed them, so
 // every developed body came out with zero bonds — no skeleton, no brain).
 import { SPACING, SYN_BASIS, NSYN, SYN_RANGE } from './devo.js';
-export { SPACING };
+// RE-EXPORTED, not just imported. The genome viewer reads the encoding's shape
+// off whichever module actually ran — D.SYN_BASIS, D.NSYN — and devo2 imported
+// these for its own use without passing them on, so the endpoint threw
+// "Cannot read properties of undefined (reading 'map')" and the browser showed
+// a 500 as "could not load genome". The synapse basis genuinely IS shared with
+// devo.js; sharing it means re-exporting it, not hiding it.
+export { SPACING, SYN_BASIS, NSYN, SYN_RANGE };
 
 /** Gene products. The sketch numbers them 0-255; 64 is what actually evolves in
  *  a reasonable number of generations, and every reserved index below is defined

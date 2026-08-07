@@ -924,10 +924,38 @@ fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
         // harder and which is tougher, moment to moment. A tough cell is bad
         // food, a nutritious one is worth attacking, and "armour" and "meat" are
         // regions of that space rather than roles.
+        // SHELTER — what a body of N cells can do that N solitary cells cannot.
+        //
+        // THE PROBLEM IT ADDRESSES, measured on the live world: a bigger body is
+        // POORER PER CELL at every step of the range (correlation -0.263; bodies
+        // of 15+ cells against 8-, -0.4041 +-0.0669). Every cost here is
+        // per-cell and every benefit is per-cell, while crowding and
+        // absorbTradeoff both penalise being a clump — so N cells bonded are
+        // strictly worse off than N cells apart. The economy pays cells to come
+        // apart. And differentiation needs cells to spare, so it taxes exactly
+        // what differentiation is made of: bodies of 5-8 cells carry 1.09
+        // tissues, bodies of 25-60 carry 1.46.
+        //
+        // A cell with its own tissue around it is harder to get at. That is the
+        // missing economy of scale, it is available only to a body, and it
+        // cannot be had by standing near strangers.
+        //
+        // WHY BODY SIZE AND NOT A NEIGHBOUR COUNT. Counting own-body cells in
+        // this walk would be the truer geometry, and it breaks conservation:
+        // cell i cannot see how many neighbours cell j has, so the two would
+        // compute different transfers and energy would appear from nowhere. The
+        // packed body size is readable by BOTH cells from the other's cmeta, so
+        // both evaluate the same expression and the pair still agrees exactly —
+        // the same discipline contest already follows.
+        //
+        // It names no predator and no defence. It is how much of you is behind
+        // something else.
+        let shieldJ = 1.0 / (1.0 + P.shelterK * bodySizeOf(cmeta[j].w));
+        let shieldI = 1.0 / (1.0 + P.shelterK * bodySizeOf(cmeta[i].w));
         let take  = max(0.0, effort                 - toughnessOf(cmeta[j].w)) * nutritionOf(j)
-                  * digestMatch(cmeta[i].w, cmeta[j].w);
+                  * digestMatch(cmeta[i].w, cmeta[j].w) * shieldJ;
         let given = max(0.0, abs(contractionOf(j)) - toughnessOf(cmeta[i].w)) * nutritionOf(i)
-                  * digestMatch(cmeta[j].w, cmeta[i].w);
+                  * digestMatch(cmeta[j].w, cmeta[i].w) * shieldI;
         let raw = P.contestRate * (take - given) * P.dt;
         var moved = 0.0;
         if (raw > 0.0) {
@@ -1019,7 +1047,35 @@ fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
         let j = atomicLoad(&hashData[b + 1u + k]);
         if (cmeta[j].x < 0) { continue; }
         if (length(minImage(pos[j] - p)) > P.moteR) { continue; }
-        demanders = demanders + 1.0;
+        // COUNT COMPETITORS, NOT MOUTHS.
+        //
+        // Measured at deep time: crowding suppression accounts for about half
+        // the tax on being multicellular (size tax -0.4160 -> -0.2012 with it
+        // removed, +0.2148 +-0.1092, implicated) — because a body of N cells is
+        // by construction a dense draw on one patch and therefore suppresses the
+        // ground under itself N times over. It competes with itself.
+        //
+        // But it cannot simply be removed: doing so collapses the fraction of
+        // bodies holding both a sensor and a muscle from 8.4% to 0.9%, because
+        // crowding is also what makes sitting on a patch costly, which is what
+        // makes moving pay. The bind:
+        //
+        //   to make moving pay, a patch must be punished for being worked;
+        //   a body is a thing that works a patch;
+        //   so the mechanism that makes moving pay punishes being a body.
+        //
+        // Weighting each drawing cell by size^-share resolves it rather than
+        // choosing an end of it. At share 1 a body of twenty counts as ONE
+        // competitor and twenty single-cell bodies count as twenty, so a crowd
+        // still punishes sitting still while a body stops punishing itself.
+        // Verified: the weights sum to the distinct-body count when a whole body
+        // is present, and to a sensible fraction when only part of it is.
+        //
+        // CONSERVATION HOLDS AT ANY SHARE, which is what makes this safe. Body b
+        // contributes n_b * n_b^-s to the count, and takes offer * n_b^(1-s), so
+        // the total taken is offer * sum(n_b^(1-s)) = offer * W <= stock. The
+        // grazing side is weighted by the same factor — see grazeAt.
+        demanders = demanders + pow(bodySizeOf(cmeta[j].w), -P.grazeBodyShare);
       }
     }
   }
@@ -1116,7 +1172,10 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
 
 // PHASE 2 lives inside physics(): what cell i can pick up from the motes it is
 // standing on, at the rate each of them already committed to.
-fn grazeAt(p: vec2<f32>) -> f32 {
+// The share argument is this cell's weight, size^-grazeBodyShare, matching what
+// the offer pass counted for it. Passing it in rather than recomputing keeps both
+// sides of the conservation argument as literally the same expression.
+fn grazeAt(p: vec2<f32>, share: f32) -> f32 {
   if (P.nMotes == 0u) { return 0.0; }
   var got = 0.0;
   for (var dy = -1; dy <= 1; dy = dy + 1) {
@@ -1127,7 +1186,7 @@ fn grazeAt(p: vec2<f32>) -> f32 {
         let mi = atomicLoad(&moteHash[b + 1u + k]);
         let mv = mote[mi];
         if (length(minImage(mv.xy - p)) > P.moteR) { continue; }
-        got = got + moteOfferOf(mv);
+        got = got + moteOfferOf(mv) * share;
       }
     }
   }
@@ -1319,10 +1378,83 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   let mine = contractionOf(i);
 
   let base = i * P.bondK;
+  // ---- SAP: energy moves along bonds, and this is why guilds are possible ---
+  //
+  // THE BLOCKER THIS REMOVES. Until now every cell fed itself and nothing else:
+  // energy was gain minus costs, per cell, with the only transfer being contest
+  // BETWEEN bodies. Inside a body, nothing flowed. So a cell that specialised —
+  // committed its capacity to force, or to sensing, and therefore fed badly or
+  // not at all (absorbTradeoff) — simply starved, however useful it was to the
+  // body around it.
+  //
+  // Division of labour was therefore impossible BY CONSTRUCTION, not by tuning.
+  // Every cell had to be a generalist because every cell had to balance its own
+  // books, and the population's answer was the correct one: monoculture on
+  // whichever single self-sufficient strategy paid best. That is why
+  // absorbTradeoff 0.9 produced perfect four-way differentiation in a world of
+  // eight animals at generation zero — the specialists were viable right up
+  // until they had to eat.
+  //
+  // WHAT THIS IS, AND IS NOT. It is transport, not creation: energy runs DOWN
+  // the gradient between two bonded cells, so cell i gains exactly what cell j
+  // loses and total energy is untouched. Both endpoints evaluate the same
+  // expression from the same pre-step energies, so the pair agrees, exactly as
+  // contest does. A fraction is lost to heat, because moving anything costs
+  // something and a free circulatory system is a free lunch.
+  //
+  // It names no roles. Nothing is a "feeder" or a "mouth" — energy simply
+  // diffuses along whatever bonds exist, so a body that grows uptake tissue at
+  // its edge and muscle at its core is one arrangement evolution may find, and
+  // a uniform body is another. The kernel does not know the difference.
+  //
+  // MEASURED, AND IT DOES NOT DO WHAT IT WAS BUILT FOR. Default 0. Same world,
+  // 110 ticks, absorbTradeoff 0.7 throughout the lower rows:
+  //
+  //   config                  alive   sense+move   one-tissue
+  //   no sap                    472        40.5%          56%
+  //   sap 0.9                   611        24.5%          73%
+  //   no sap  + absorb 0.7        8        62.5%          25%
+  //   sap 0.05 + absorb 0.7       8        12.5%          50%
+  //   sap 0.15 + absorb 0.7     564         0.0%          82%
+  //   sap 0.35 + absorb 0.7      26         0.0%          81%
+  //   sap 0.9  + absorb 0.7     543         0.7%          68%
+  //
+  // The mechanism works exactly as claimed: at absorbTradeoff 0.7 the
+  // population goes from 8 alive to 543, a 68x rescue, because specialists stop
+  // starving. The EVOLUTIONARY OUTCOME is the opposite of the intent. Pooling
+  // means the body only needs net income, so nothing forces it to keep uptake
+  // tissue either, and it converges on the single tissue with the best net
+  // return — muscle, at 93%. There is no middle rate: every value tried gives
+  // either a dead world or a monoculture.
+  //
+  // WHAT THIS ACTUALLY SHOWS, and it is sharper than the "contraction is paid
+  // twice" guess it was built on: SENSING HAS NO PAYOFF. A sensor costs
+  // senseCost and, under a tradeoff, costs uptake as well, and returns
+  // information the body cannot convert into energy — motes are grazed by
+  // proximity rather than by being found, and contest fires on contact rather
+  // than on pursuit. So a sensor is pure cost and evolution deletes it, with or
+  // without a circulatory system. No amount of energy plumbing fixes an
+  // incentive that is not there.
+  //
+  // That is also the goal restated: if perceiving another organism cannot help
+  // you eat or avoid being eaten, then organisms are not a pressure anything
+  // can adapt TO, whatever the contest coefficients say.
+  //
+  // FREE, in the sense PHYSICS-2.md cares about: this rides the bond loop that
+  // already runs for springs and dampers. No new neighbourhood walk, no new
+  // buffer, no scattered read that was not already happening.
+  var sap = 0.0;
+
   for (var k = 0u; k < P.bondK; k = k + 1u) {
     let bd = bondD[base + k];
     let j = bitcast<i32>(bd.x);
     if (j < 0) { continue; }
+    if (P.sapRate > 0.0) {
+      // Down the gradient, and bounded by what the richer cell can actually
+      // give up in one step, so a large dt cannot overshoot into oscillation.
+      let dE = energy[u32(j)] - energy[i];
+      sap = sap + P.sapRate * dE;
+    }
     let d = minImage(pos[u32(j)] - p);
     let dist = max(length(d), 1e-3);
     // Symmetric: both endpoints derive the same rest length, so the pair's
@@ -1595,7 +1727,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   let absorb = clamp(1.0 - P.absorbTradeoff * commit, 0.0, 1.0);
   var gain = 0.0;
   if (P.nMotes > 0u) {
-    gain = absorb * grazeAt(np) / P.dt;
+    gain = absorb * grazeAt(np, pow(bodySizeOf(cmeta[i].w), -P.grazeBodyShare)) / P.dt;
   } else {
     gain = absorb * P.harvest * resourceAtS(np, shoreFrom(wHere)) * share;
   }
@@ -1606,7 +1738,27 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // proportion to how sharp it is, so accuracy has to be worth its keep and a
   // cheap noisy sense stays a live option. primitives.md: an axis without a
   // cost has no teeth.
-  let senseWork = P.senseCost * senseAcuity(cmeta[i].x);
+  //
+  // AND IT IS CHARGED WHERE IT IS USED. This was levied on EVERY cell, while
+  // sense() computes a reading only for cells whose type is sensor — so the
+  // world charged the whole population for an organ almost none of them had.
+  // Measured before the fix: mean acuity 0.682 across all live cells against a
+  // senseCost of 0.25, i.e. 0.17 energy per second of pure tax, on a brainTax
+  // of 0.4. A 43% surcharge on existing, for nothing.
+  //
+  // It also explains the shape of the population. Sensor cells sat at acuity
+  // 0.000 — every one of them — while non-sensors averaged 0.682: the bits are
+  // near-neutral where they are not charged against a benefit, and the cells
+  // that could have used them had been driven to zero. A sensor was an organ
+  // that reads pure noise and a non-sensor was paying for one.
+  //
+  // Gating a COST on type is uncomfortable next to the First Law, and it is the
+  // honest reading here: the kernel ALREADY decides who senses by exactly this
+  // test, so making the bill follow the benefit is consistency rather than a
+  // new branch. The alternative — charging by continuous sense capacity — needs
+  // that capacity in cmeta, where there is no room for it.
+  let senseWork = P.senseCost * senseAcuity(cmeta[i].x)
+                * select(0.0, 1.0, cellType(cmeta[i].x) == 1);
   // ARMOUR IS EXPENSIVE TO HOLD. Without a cost, toughness is a free defence
   // and evolution takes it to the ceiling in every lineage — the same failure
   // as feeding being independent of what a cell is, which produced a 94%
@@ -1646,7 +1798,23 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   var tidal = 0.0;
   if (P.tidalYield > 0.0) {
     let slip = flowAtM(p, mudHere) - v;
-    tidal = P.tidalYield * grippiness(cmeta[i].x) * P.drag * dot(slip, slip);
+    // NO TRAIT FACTOR. This was multiplied by grippiness — energy paid in
+    // direct proportion to a named capability, which is the reward-shaping the
+    // First Law exists to forbid, and it worked exactly as such things do:
+    // measured a few hours after it shipped, 59.7% of all cells were anchors,
+    // 54.8% of bodies were a single tissue, and only 7.3% had both a sensor and
+    // a muscle — i.e. could close a sensorimotor loop even in principle. A world
+    // that pays for grip gets grip and nothing else.
+    //
+    // The slip term ALREADY encodes the behaviour. A cell that lets go
+    // accelerates until it matches the flow and its slip goes to zero; slip
+    // stays high only while something is holding it against the medium. So
+    // paying for the power actually being dissipated pays for HOLDING STATION,
+    // however that is achieved — by grip, by bonds to something that grips, by
+    // being wedged in a crevice — and names no organ at all. It also makes
+    // anchoring a BODY-level strategy rather than a per-cell subsidy, which is
+    // the difference between division of labour and a monoculture.
+    tidal = P.tidalYield * P.drag * dot(slip, slip);
   }
   let taken = contest(i, np, abs(mine));
   // Written to scratch, not to energy[]: contest() READS energy[j] for other
@@ -1657,7 +1825,8 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // every step — the other independent reason contact was dead. Between this and
   // contactK being a denormal (see lib/uniform.js), cells have never collided.
   vel[i] = vec4<f32>(v.x, v.y, vel[i].z,
-    clamp(energy[i] + (gain + tidal - P.brainTax - work - senseWork - armourWork - terrainWork + taken) * P.dt, P.eFloor, P.eCap));
+    clamp(energy[i] + (gain + tidal - P.brainTax - work - senseWork - armourWork - terrainWork
+                       + taken + sap - abs(sap) * P.sapLoss) * P.dt, P.eFloor, P.eCap));
 }
 
 // Publish the energy physics computed. One extra dispatch, no extra buffer, and
@@ -1867,11 +2036,97 @@ export class WorldGPU {
       // contestR against contactR 1.0: proximity rather than collision, capped
       // by what the neighbour walk can see. moteDrift below 1 so food lags the
       // water and a creature can outrun its own dinner.
-      contestR: 1.5, moteDrift: 0.55,
+      // moteDrift BACK TO 0, and the reason is worth the space.
+      //
+      // The comment on the mote buffer warned: "their positions do not move,
+      // which is what makes a patch something you can exhaust and have to leave
+      // — the pressure to locomote has to come from somewhere, and a field that
+      // refills under your feet is not it." Drift was added anyway, for visual
+      // coherence (a river with a stationary riverbed of food is not a river),
+      // on the argument that the warning is about DEPLETION and survives drift
+      // intact. That argument is wrong: food you did NOT exhaust arriving on the
+      // current is a patch refilling under your feet by another route.
+      //
+      // Measured, movers against sitters, energy change over the same window:
+      //
+      //   moteDrift 0.55   movers -0.1468   sitters -0.1031   diff -0.0437
+      //   moteDrift 0      movers +0.1066   sitters -0.0572   diff +0.1638
+      //
+      // Neither difference clears two standard errors at one replicate each, so
+      // this is directional rather than demonstrated — but the SIGN FLIPS, and
+      // it flips the way the warning said it would. With static food movers gain
+      // and sitters lose; with drifting food both lose and movers lose more.
+      //
+      // That matters because it is upstream of everything else measured this
+      // session. If moving does not pay, a sense organ that steers movement is
+      // worse than useless, which is exactly what the sensor economics showed.
+      // A small drift may well be recoverable — enough to read as a current
+      // without outrunning a body — but that is its own measurement and 0 is
+      // the value with evidence behind it.
+      // SHELTER. Built against the measured tax on multicellularity, and
+      // MEASURED TO DO NOTHING — so it ships off.
+      //
+      //   sizeTax = energy/cell of bodies >=15 cells minus bodies <=8
+      //   first horizon (22k steps)   k 0: -0.5806   k 0.04: -0.3175
+      //   deep time    (225k steps)   k 0: -0.5866   k 0.04: -0.5412
+      //   change: +0.2631 +-0.6671 first, +0.0454 +-0.0715 deep. Neither clears.
+      //
+      // The failure is informative and worth more than the mechanism was. If
+      // shielding a body from CONTEST does not move the tax on being a body,
+      // then the tax is not predation — it is on the foraging side. A body of N
+      // cells is by construction a dense draw on one patch, and crowding
+      // suppression cuts regrowth in proportion to how hard a patch is worked.
+      // The mechanism added to make movers out-earn sitters is the leading
+      // suspect for taxing multicellularity.
+      shelterK: 0.0,
+      // COUNT COMPETITORS, NOT MOUTHS — and this implementation of it is WRONG,
+      // which is why it defaults to 0 and is kept only as evidence.
+      //
+      // It uses ONE counter for two jobs, and the two want opposite treatments.
+      // Worked through with numbers, one big body among three small ones,
+      // stock 100:
+      //
+      //   body size   share 0 intake   share 1 intake
+      //          40            86.96            25.00
+      //           2             4.35            25.00
+      //
+      // Share 1 hands every body an EQUAL cut regardless of size. So it removes
+      // the foraging ADVANTAGE of being big at the same moment as it removes the
+      // suppression PENALTY — two opposing effects, which is exactly why the
+      // size tax it was built to lift did not move (+0.1547 +-0.1868, failing its
+      // own test), and why it starves the many-small-founders phase every world
+      // begins in. When all bodies are the same size the two settings are
+      // arithmetically identical and it does nothing at all.
+      //
+      // THE CORRECT DESIGN: suppression counts BODIES, sharing keeps counting
+      // CELLS. Then a large body keeps its proportional share of the patch and
+      // stops suppressing the ground under itself once per cell — the penalty
+      // goes, the advantage stays. That needs two accumulators, and the mote is
+      // a full vec4, so it needs the mote widened.
+      //
+      // Which is now affordable: the food walk was re-measured at 11% of the
+      // step, not the 58% in PHYSICS-2.md, because that figure was taken on a
+      // build that was 80% phantom cells. Doubling an 11% walk is a worst case
+      // near +11%.
+      //
+      // Not done here. It is a buffer-layout change, and this project's most
+      // expensive bug was a uniform-block offset that made every contact force a
+      // denormal for the life of the code. Layout changes get made rested, with
+      // device_limits_test run.
+      grazeBodyShare: 0.0,
+      contestR: 1.5, moteDrift: 0.0,
       // Tidal income. Sized so a fully-gripping cell holding station in a fast
       // mud channel earns on the order of what rich ground yields, and a cell
       // in still water earns nothing at all.
       tidalYield: 0.06,
+      // SAP. Rate at which energy runs down the gradient between two bonded
+      // cells, and the fraction lost to heat in doing so. Without this a
+      // specialised cell starves however useful it is, and division of labour
+      // is impossible by construction rather than merely unrewarded.
+      // DEFAULT OFF, because it was built on a hypothesis that measurement
+      // refuted. Kept, because what it DOES do is real and reusable — see the
+      // note at the bond loop.
+      sapRate: 0.0, sapLoss: 0.12,
       // Meander, crags, and riverbanks. warpAmt is in noise units, so 0.55 is
       // rather more than half a feature — enough to fold the field back over
       // itself, which is where the winding comes from.

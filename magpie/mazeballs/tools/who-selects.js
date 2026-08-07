@@ -113,46 +113,101 @@ function traits(meta, n) {
   };
 }
 
-async function runArm(arm, rep) {
+/**
+ * Build one arm's world and hand back something that can be stepped a bit at a
+ * time. Arms are then advanced ROUND-ROBIN rather than one after another.
+ *
+ * That is not a tidiness preference, it is what makes a time-boxed run usable.
+ * Run sequentially, a night that ends early leaves `full` complete and
+ * `noabiotic` never started — and the verdict is a CONTRAST between arms, so
+ * two complete arms and one missing is worth exactly nothing. Interleaved,
+ * stopping at any moment leaves all three arms at the same tick, which is a
+ * result.
+ */
+function makeArm(arm, rep) {
   const seed = 11 + rep * 101;
-  const built = buildBodies({ beasts: CAP, cells: 12, bound: BOUND, seed, maxCells: 60 });
-  const brains = await BrainArenaGPU.create(built.arena);
-  const world = new WorldGPU(brains, built.cells, { bound: BOUND, ...arm.params });
-  const evo = new Evolver({
-    arena: built.arena, world, cells: built.cells, seed: 3 + rep,
+  return { arm, rep, seed, world: null, brains: null, evo: null, built: null,
+           tick: 0, dead: false };
+}
+
+async function armInit(a) {
+  // BODY SLOTS, SIZED SEPARATELY FROM CELL ISLANDS — the exact bug this project
+  // has already paid for once. Without bodySlots the organism table is the same
+  // size as the island count, so the population hits an ALLOCATION ceiling with
+  // most of the cell memory still free: measured as alive == CAP == 193 while
+  // 9,675 cell slots sat empty. Births then equal deaths because the allocator
+  // says so, not because the economy does, and every selection measurement
+  // taken in that regime is measuring the allocator.
+  a.built = buildBodies({ beasts: CAP, cells: 12, bound: BOUND, seed: a.seed,
+                          maxCells: 60, bodySlots: CAP * 8 });
+  a.brains = await BrainArenaGPU.create(a.built.arena);
+  a.world = new WorldGPU(a.brains, a.built.cells, { bound: BOUND, ...a.arm.params });
+  a.evo = new Evolver({
+    arena: a.built.arena, world: a.world, cells: a.built.cells, seed: 3 + a.rep,
     birthEnergy: 18, deathEnergy: 0,
   });
-  for (let o = START; o < CAP; o++) evo.cull(o);
+  for (let o = START; o < CAP; o++) a.evo.cull(o);
+}
 
-  const total = TICKS * DEEP;
-  const series = [];
-  for (let t = 1; t <= total; t++) {
-    world.step(STEPS_PER_TICK);
-    await evo.tick(t * STEPS_PER_TICK);
-    if (t % CHECK_EVERY !== 0) continue;
+/** Advance one arm by `n` ticks. Returns false once it is finished or extinct. */
+async function armStep(a, n, total, series) {
+  if (a.dead) return false;
+  for (let k = 0; k < n && a.tick < total; k++) {
+    a.tick++;
+    a.world.step(STEPS_PER_TICK);
+    await a.evo.tick(a.tick * STEPS_PER_TICK);
+    if (a.tick % CHECK_EVERY !== 0) continue;
 
-    const m = await world.readMeta();
-    const tr = traits(m, built.meta?.nCells ?? built.cells.ctype.length);
+    const m = await a.world.readMeta();
+    const tr = traits(m, a.built.cells.ctype.length);
+    // WEALTH, because armour is a LUXURY GOOD and the contrast is confounded
+    // without it. toughCost is charged every second, so how much armour a
+    // population carries depends on what it can afford — and the arms differ in
+    // exactly that. Measured on the two-replicate run:
+    //
+    //   arm         mean alive   mean toughness
+    //   nobiotic          1121           0.1241
+    //   full               830           0.0582
+    //   noabiotic          514           0.0345
+    //
+    // Monotonic across arms AND within them. So |full - nobiotic| on toughness
+    // conflates "other organisms select for armour" with "switching off contest
+    // makes the world richer, and rich populations buy more armour" — which is
+    // not the question. Logged so the confound is visible and can be divided
+    // out, rather than discovered after a claim has been made.
+    const { energy } = await a.world.readCells();
+    let eSum = 0, eN = 0;
+    for (let i = 0; i < a.built.cells.ctype.length; i++) {
+      if (a.built.cells.ctype[i] < 0) continue;
+      eSum += energy[i]; eN++;
+    }
+    const meanE = eN ? eSum / eN : 0;
     const row = {
-      kind: 'checkpoint', arm: arm.name, rep, tick: t,
-      horizon: t <= TICKS ? 'first' : 'deep',
-      alive: evo.alive(), lineages: evo.countLineages(),
-      generation: evo.maxGeneration(), births: evo.births, deaths: evo.deaths,
-      ...Object.fromEntries(Object.entries(tr).map(([k, v]) =>
-        [k, typeof v === 'number' ? +v.toFixed(4) : v])),
+      kind: 'checkpoint', arm: a.arm.name, rep: a.rep, tick: a.tick,
+      horizon: a.tick <= TICKS ? 'first' : 'deep',
+      alive: a.evo.alive(), lineages: a.evo.countLineages(),
+      meanEnergy: +meanE.toFixed(4),
+      // Armour per unit of what the population can afford. A level that rises
+      // only because everyone got richer is not escalation.
+      toughPerE: +(tr.tough / Math.max(0.05, meanE)).toFixed(5),
+      generation: a.evo.maxGeneration(), births: a.evo.births, deaths: a.evo.deaths,
+      ...Object.fromEntries(Object.entries(tr).map(([kk, v]) =>
+        [kk, typeof v === 'number' ? +v.toFixed(4) : v])),
     };
     series.push(row);
     await say(row);
     // An arm whose population is gone tells us nothing further, and continuing
     // to spend hours on it is how a run produces a confident number about an
     // empty world.
-    if (evo.alive() === 0) {
-      await say({ kind: 'extinct', arm: arm.name, rep, tick: t });
-      break;
+    if (a.evo.alive() === 0) {
+      await say({ kind: 'extinct', arm: a.arm.name, rep: a.rep, tick: a.tick });
+      a.dead = true;
+      a.world.destroy(); a.brains.destroy();
+      return false;
     }
   }
-  world.destroy(); brains.destroy();
-  return series;
+  if (a.tick >= total) { a.world.destroy(); a.brains.destroy(); a.dead = true; return false; }
+  return true;
 }
 
 await say({
@@ -164,9 +219,17 @@ await say({
 });
 
 const all = [];
-for (const arm of ARMS) {
-  for (let r = 0; r < REPS; r++) {
-    all.push(...await runArm(arm, r));
+const arms = [];
+for (const arm of ARMS) for (let r = 0; r < REPS; r++) arms.push(makeArm(arm, r));
+for (const a of arms) await armInit(a);
+await say({ kind: 'armed', arms: arms.length, note: 'stepped round-robin so all arms stay at the same tick' });
+
+const total = TICKS * DEEP;
+const SLICE = Math.max(1, Math.round(CHECK_EVERY));
+for (let live = true; live;) {
+  live = false;
+  for (const a of arms) {
+    if (await armStep(a, SLICE, total, all)) live = true;
   }
 }
 
@@ -184,7 +247,9 @@ const at = (armName, horizon, field) => {
 };
 
 for (const horizon of ['first', 'deep']) {
-  for (const field of ['tough', 'enzSd', 'tagSd', 'lineages']) {
+  // toughPerE alongside tough: if the biotic effect survives dividing out
+  // wealth it is about predation, and if it does not it was about wealth.
+  for (const field of ['tough', 'toughPerE', 'enzSd', 'tagSd', 'meanEnergy', 'lineages']) {
     const full = at('full', horizon, field);
     const nb = at('nobiotic', horizon, field);
     const na = at('noabiotic', horizon, field);

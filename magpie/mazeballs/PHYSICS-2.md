@@ -1,7 +1,23 @@
 # Physics 2.0 — richer world, same machine
 
-> **Still current.** The engine: where the time actually goes, and what any new physics must obey — see [`WORLD-MANUAL.md`](WORLD-MANUAL.md) for how it
-> sits in the world as a whole, and for the measurements behind it.
+> **Partly superseded (2026-08-07).** Its central measurement — the food system
+> at 58% of the step and neighbourhood walks at 78% — was taken on a build where
+> **80% of the simulated cells were phantoms**: unallocated arena slots that
+> `packMeta` had accidentally marked alive, all of them sitting in the hashes and
+> grazing. Re-measured after that fix:
+>
+> ```
+> baseline                    8.20 ms/step
+> nMotes 0 (no food walk)     7.30      food system = 11% of the step  (was 58%)
+> contactK 0 (no contact)     7.65      contact     =  7%              (was 18%)
+> ```
+>
+> **The prime directive below — "never add a neighbourhood walk" — rests on the
+> old number and should not be applied as law.** Walks are now 18% of the step
+> together, not 78%. The reasoning in this document is still worth reading and
+> the access-pattern advice is still correct; the budget it argues from is not.
+> See `WORLD-MANUAL.md` §11.0, which was blocked by the old figure and is not
+> blocked by the new one.
 
 A design doc for the physics upgrades argued in `WORLDS.md` — per-cell mass,
 tag-mediated adhesion, a height field and gravity, real open water, and

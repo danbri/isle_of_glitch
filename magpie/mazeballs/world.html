@@ -342,6 +342,16 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
       <input type="range" id="sIdM" min="0" max="400" step="5" value="100"></div>
     <div class="row"><button id="bImplant">seed the world ✥</button></div>
     <p class="note" id="idResult"></p>
+    <h2 style="margin-top:.6rem">Designed creatures</h2>
+    <p class="note" style="margin:0 0 .35rem">
+      Ten bodies designed by <b>specification and search</b>: a name, a sentence
+      saying what it is for, and a score over the body that develops. You cannot
+      hand-write a regulatory network — a weight has no local meaning and no gene
+      is a limb — so the intent is stated in the phenotype's own terms and the
+      search finds a genome that grows into it. Ordinary genomes; nothing here is
+      a new type or a role the kernel knows about.
+    </p>
+    <div id="designList"></div>
     <p class="note">
       A <b>hand of god</b>: it hands out yolk nobody paid for, so it mints
       energy — the one thing the world may not do on its own. Every use is
@@ -1027,6 +1037,22 @@ fn streamVs(@builtin(vertex_index) vi: u32) -> SOut {
   // ground is fixed, and that has to be visible or the transport system is not
   // legible as a system. Opacity carries the speed that length no longer does.
   a = a * smoothstep(0.02, 0.35, spd / max(1e-4, C.arrowRef));
+
+  // SHIMMER — a pulse travelling ALONG each line, in the flow direction.
+  //
+  // A static line says where the water goes. It does not say which WAY, or how
+  // fast, and those are the two things that matter about a transport system. A
+  // bright band running down the line says both without adding any geometry:
+  // the direction is which way it moves, the speed is how fast, and it is the
+  // same information the arrows carried, delivered continuously instead of at
+  // one point per patch of ground.
+  //
+  // The phase offset is hashed per line so they do not pulse in lockstep, which
+  // would read as the whole field flashing rather than as water moving.
+  let jitter = hash2(i32(anchor.x), i32(anchor.y), 6247u);
+  let travel = fract(t * 1.6 - C.worldTime * 0.30 + jitter);
+  let pulse = pow(1.0 - abs(2.0 * travel - 1.0), 5.0);
+  a = a * (0.30 + 1.05 * pulse);
 
   // Stop at the edge of the world. The fields are analytic and unbounded but
   // nothing can be carried past the wrap, so a line drawn out there is
@@ -2336,6 +2362,25 @@ async function buildDevo(genomeArr) {
   // bond()/largestPiece()/morphology() are shared and live in devo.js.
   const shared = await import('./lib/devo.js');
   const whole = shared.largestPiece(grown.cells, shared.bond(grown.cells, { maxDegree: 4 }));
+  // REMAP THE DIVISION TREE ONTO THE SURVIVING PIECE.
+  //
+  // `mother` is a local index into the FULL developed set, and what is drawn is
+  // `whole.cells` — the largest connected piece, re-indexed from zero. Using one
+  // index in the other array points at a different cell entirely, so the tree
+  // was drawing links between unrelated cells or, where the index fell out of
+  // range, drawing nothing. Both look like "the division tree is broken", and
+  // neither is a rendering problem.
+  //
+  // devo2 stamps each cell with its own localIndex, so the remap is exact. A
+  // cell whose mother did not make it into this piece has no line to draw,
+  // which is correct: its mother is not in the picture.
+  {
+    const pos = new Map();
+    whole.cells.forEach((c, i) => { if (c.localIndex !== undefined) pos.set(c.localIndex, i); });
+    for (const c of whole.cells) {
+      c.motherIdx = (c.mother !== undefined && pos.has(c.mother)) ? pos.get(c.mother) : -1;
+    }
+  }
   devoRun = {
     g, all: grown.cells, cells: whole.cells, bonds: whole.bonds,
     aborted: grown.aborted, spent: grown.spent,
@@ -2386,7 +2431,8 @@ function drawDevo() {
   // anyone pressed "stages".)
   if (devoStages) {
     for (let i = 0; i < built; i++) {
-      const m = cells[i].mother;
+      // motherIdx, not mother — see the remap in buildDevo.
+      const m = cells[i].motherIdx;
       if (m === undefined || m < 0 || m >= built) continue;
       const age = 1 - i / Math.max(1, built);
       g2.strokeStyle = `rgba(255,190,120,${(0.20 + 0.55 * age).toFixed(3)})`;
@@ -3449,6 +3495,58 @@ $('bArrows').onclick = e => { view.arrows = !view.arrows; e.target.classList.tog
       names.map((nm, k) => `${c[k]} ${nm}`).join(', ');
     $('bImplant').disabled = false;
   }, 900);
+
+    // The designed library. Rendered from the server so the page and the file
+  // cannot disagree about what a creature is.
+  (async () => {
+    const box = $('designList'); if (!box) return;
+    let lib;
+    try { lib = await (await fetch('/creatures', { cache: 'no-store' })).json(); }
+    catch { box.textContent = 'library unavailable'; return; }
+    const list = lib.creatures ?? [];
+    if (!list.length) { box.innerHTML = '<p class="note">no library built yet — run tools/design-creatures.js</p>'; return; }
+    box.innerHTML = '';
+    for (const c of list) {
+      const s = c.stats ?? {};
+      const el = document.createElement('div');
+      el.style.cssText = 'border:1px solid var(--rule);border-radius:3px;padding:.4rem .5rem;margin-bottom:.35rem';
+      el.innerHTML =
+        `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:.4rem">` +
+        `<b style="font-size:.82rem">${c.name}</b>` +
+        `<span class="note" style="font-family:var(--mono);font-size:.66rem">` +
+        `${s.cells} cells · elong ${s.elongation} · sym ${s.symmetry}</span></div>` +
+        `<p class="note" style="margin:.2rem 0 .3rem;font-size:.72rem">${c.about}</p>` +
+        `<div class="note" style="font-family:var(--mono);font-size:.66rem;margin-bottom:.3rem">` +
+        `n ${(100*s.neuron).toFixed(0)}% · s ${(100*s.sensor).toFixed(0)}% · ` +
+        `m ${(100*s.muscle).toFixed(0)}% · a ${(100*s.anchor).toFixed(0)}% · ` +
+        `tough ${s.toughness}</div>`;
+      const btn = document.createElement('button');
+      btn.textContent = 'seed the world with this ✥';
+      btn.onclick = async () => {
+        btn.disabled = true;
+        const was = btn.textContent; btn.textContent = 'seeding…';
+        try {
+          // Needs SOME living creature as a slot to stand in; the occupant is
+          // untouched, its genome is swapped back immediately.
+          const gs = await (await fetch('/genomes?n=1', { cache: 'no-store' })).json();
+          const host = Array.isArray(gs) ? gs[0]?.uid : gs?.rows?.[0]?.uid;
+          if (host == null) throw new Error('no living creature to seed from');
+          const r = await (await fetch('/control', {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ action: 'implant', uid: host,
+              copies: Number($('sIdN').value), mutate: Number($('sIdM').value) / 100,
+              genome: c.genome, designName: c.name }),
+          })).json();
+          $('idResult').textContent = r.ok
+            ? `${c.name}: placed ${r.made} of ${$('sIdN').value}`
+            : `${c.name} failed: ${r.error}`;
+        } catch (e) { $('idResult').textContent = `${c.name} failed: ${e.message}`; }
+        btn.textContent = was; btn.disabled = false;
+      };
+      el.appendChild(btn);
+      box.appendChild(el);
+    }
+  })();
 
   $('bImplant').onclick = async () => {
     if (sel.uid < 0) return;

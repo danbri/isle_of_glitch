@@ -78,7 +78,12 @@ const ENCODINGS = {
  * label we read off the tissue for the physics kernel's benefit, and the genome
  * never writes one.
  */
-function describe(c) {
+// EXPORTED, because anything that needs to know what a cell IS must use THIS
+// rule and not a copy of it. The type is read off the capacities, so a second
+// implementation with a slightly different threshold would silently disagree
+// with the world about what a body is made of — and disagreements between two
+// copies of one rule are the most expensive class of bug in this codebase.
+export function describe(c) {
   const CELL_NEURON = 0, CELL_SENSOR = 1, CELL_MUSCLE = 2, CELL_ANCHOR = 3;
   let best = CELL_NEURON, v = 0.15;                   // below this it is just tissue
   if (c.sense > v) { best = CELL_SENSOR; v = c.sense; }
@@ -984,13 +989,22 @@ export class Evolver {
    * @param {number} o.mutate multiplier on the usual mutation rate; 0 = clones
    * @param {number} o.step   world step, for the lineage record
    */
-  implant(p, { copies = 100, mutate = 1, step = 0 } = {}) {
+  implant(p, { copies = 100, mutate = 1, step = 0, genome = null } = {}) {
     const { arena } = this;
     if (!arena.alive[p] || !this.genome[p]) {
       return { ok: false, error: 'that creature is no longer in the world' };
     }
     const keepRate = this.mutRate, keepSize = this.mutSize;
     const keepE = this.lastEnergy ? this.lastEnergy[p] : null;
+    // A DESIGNED genome, borrowing a living slot as its donor. The slot is only
+    // ever a place to stand: divideDevo reads the genome from it, so swapping
+    // one in and putting the original back is the whole mechanism, and the
+    // occupant is untouched either way. Restored in the same synchronous block
+    // as the swap, so nothing can observe the world mid-substitution.
+    const keepG = this.genome[p];
+    if (genome && genome.length === keepG.length) {
+      this.genome[p] = Float32Array.from(genome);
+    }
     // mutate 0 gives literal clones — a hundred identical bodies in a hundred
     // places, which is the cleanest form of the question "was it the design or
     // the address?"
@@ -1012,6 +1026,7 @@ export class Evolver {
     }
 
     this.mutRate = keepRate; this.mutSize = keepSize;
+    this.genome[p] = keepG;
     if (this.lastEnergy) this.lastEnergy[p] = keepE;
     this.interventions = (this.interventions ?? 0) + 1;
     // Energy conjured, stated in the world's own units so the size of the lie
