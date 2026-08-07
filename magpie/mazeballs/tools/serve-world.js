@@ -739,7 +739,10 @@ async function frame(have = -1) {
 
 async function buildFrame() {
   const { pos, energy } = await world.readCells();
-  const { act } = await brains.readState();
+  // readAct, not readState: this uses only the activations, and readState also
+  // copies the whole neuron-state buffer — 100 KB a frame across the bus, on the
+  // readback that gates how often the world can be watched. (Codex spotted this.)
+  const { act } = await brains.readAct();
 
   // Live bond pairs, computed HERE so they describe the same instant as the
   // positions above. Sending them out-of-band (the /bonds endpoint) meant the

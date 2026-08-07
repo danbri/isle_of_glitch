@@ -341,6 +341,32 @@ export class BrainArenaGPU {
     return { state, act, from };
   }
 
+  /**
+   * Activations only.
+   *
+   * readState copies bState AND bAct, because most callers restore a whole
+   * brain. The frame builder is not one of them: it destructures `act` and
+   * discards the rest, so every frame was pulling N floats of neuron state
+   * across the bus for nothing — and that readback is on the path that decides
+   * how often the world can be watched. At 25,020 slots it is 100 KB a frame.
+   *
+   * Same per-call staging buffer as readState, for the same reason: two
+   * overlapping mapAsync calls on one buffer is a device error, and a device
+   * error poisons every command buffer submitted after it.
+   */
+  async readAct() {
+    const staging = this.device.createBuffer({
+      size: this.N * 4, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    });
+    const enc = this.device.createCommandEncoder();
+    enc.copyBufferToBuffer(this.bAct, 0, staging, 0, this.N * 4);
+    this.device.queue.submit([enc.finish()]);
+    await staging.mapAsync(GPUMapMode.READ);
+    const act = new Float32Array(staging.getMappedRange().slice(0, this.N * 4));
+    staging.unmap(); staging.destroy();
+    return { act };
+  }
+
   async readState(into = null) {
     // A staging buffer PER CALL, not one shared for the object's lifetime.
     // mapAsync is asynchronous, so two overlapping readbacks both reach for the
