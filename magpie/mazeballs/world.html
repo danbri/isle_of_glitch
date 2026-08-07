@@ -1355,7 +1355,7 @@ fn lineFs(i: LOut) -> @location(0) vec4<f32> {
 const MOTE_WGSL = /* wgsl */`
 // Its own uniform rather than the main camera's: this pass needs four numbers,
 // and sharing a struct would couple it to a layout it does not care about.
-struct MoteCam { center: vec2<f32>, ndc: vec2<f32>, radius: f32, dim: f32 };
+struct MoteCam { center: vec2<f32>, ndc: vec2<f32>, radius: f32, dim: f32, capNorm: f32, pad: f32 };
 @group(0) @binding(0) var<uniform> MC : MoteCam;
 // STRIDE 1 HERE, deliberately, and not the same layout as the simulation.
 // The page builds this buffer itself from readMotes() and the /motes endpoint,
@@ -1400,7 +1400,13 @@ fn mvs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> MOut
     o.uv = vec2<f32>(9.0, 9.0); o.v = 0.0;
     return o;
   }
-  let r = MC.radius * sqrt(cap) * (0.45 + 0.55 * fill);
+  // NORMALISED BY THE MEAN CAPACITY. sqrt(cap) alone was tuned against a world
+  // where every cap was 1.0; with capacities running to 248 it drew the biggest
+  // motes six world units across, which at bound 66 is a tenth of everything and
+  // reads as a bloom of fog rather than a rich patch. Dividing by the mean first
+  // keeps a TYPICAL mote about the size the old uniform ones were, and lets the
+  // tail be conspicuous without being the scenery.
+  let r = MC.radius * sqrt(cap / max(1e-4, MC.capNorm)) * (0.45 + 0.55 * fill);
   let world = m.xy + corner * r;
   o.p = vec4<f32>((world - MC.center) * MC.ndc, 0.0, 1.0);
   o.uv = corner;
@@ -1932,6 +1938,11 @@ async function refreshMotes() {
     if (fits <= 0) { sim.moteCount = 0; return; }
     dev.queue.writeBuffer(sim.bMoteData, 0, packed.subarray(0, fits * 4));
     sim.moteCount = fits;
+    {
+      let s2 = 0;
+      for (let i = 0; i < fits; i++) s2 += packed[i * 4 + 3];
+      sim.moteCapMean = fits ? s2 / fits : 1;
+    }
     // The crop is part of the cached setting, and new stock values change it
     // without changing the mote COUNT — so the count alone cannot key the cache.
     sim.moteGen = (sim.moteGen ?? 0) + 1;
@@ -3219,8 +3230,19 @@ function writeCam() {
     // been tuned against what they actually look like — at 0.6/0.85 the standing
     // crop is a carpet that buries the landscape underneath it. Food should read
     // as specks on ground you can still see.
-    mc[4] = 0.42;                // world-unit radius of a full mote
-    mc[5] = 0.40;                // overall brightness
+    // A MOTE OF MEAN CAPACITY, in world units. Raised from 0.42 because there
+    // are now a tenth as many motes: at the old size the crop nearly vanished
+    // from the map, and the food economy is the most consequential thing in the
+    // world to be able to see. Area is proportional to capacity, so the richest
+    // motes come out around 7 world units across against a bound of 66 —
+    // conspicuous, which is the point of them, without being the scenery.
+    mc[4] = 0.75;
+    mc[5] = 0.52;                // overall brightness, likewise lifted
+    // Mean capacity, so the shader can size a mote relative to a typical one
+    // rather than absolutely. Measured from the field itself: it depends on the
+    // mote density and the lognormal spread, and hardcoding it here would go
+    // stale the moment either changes.
+    mc[6] = sim.moteCapMean ?? 1;
     dev.queue.writeBuffer(sim.bMoteCam, 0, mc);
   }
   // Cells keep a physical size in world units, with a floor so the population
