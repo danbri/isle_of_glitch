@@ -31,6 +31,7 @@ import { BrainArenaGPU } from '../lib/brainarena_gpu.js';
 import { WorldGPU } from '../lib/world_gpu.js';
 import { Evolver } from '../lib/evolve.js';
 import { Lineage } from '../lib/lineage.js';
+import { encodeWorld, decodeHeader, decodeBody } from '../lib/snapshot.js';
 
 /**
  * ONE RESOURCE KNOB: --cells, the universe's total cell budget.
@@ -255,42 +256,19 @@ const N = built.meta.nCells;
 // into this build would decode every cell as having zero contractility —
 // bodies that look right, brains that run, and not one muscle in the world.
 // Silent wrong beats loud wrong every time, so refuse it by magic instead.
+// The format lives in lib/snapshot.js so the browser can write the same bytes.
+// See the note there: two implementations of one binary format drift silently.
 const SNAP_MAGIC = 0x324e5257;                  // 'WRN2'
 const SNAP_MAGIC_V1 = 0x314e5257;               // 'WRN1' — pre-packed cmeta
 
 async function saveSnapshot(path) {
   const { pos, energy } = await world.readCells();
   await brains.readState(built.arena);          // pull GPU state into the arena
-  const arenaBlob = built.arena.snapshot();
-  const c = built.cells;
-
-  const parts = [
-    ['pos', pos], ['energy', energy],
-    ['ctype', c.ctype], ['cslot', c.cslot], ['body', c.body], ['bodySize', c.bodySize],
-    ['bond', c.bond], ['brest', c.brest],
-    ['uid', evo.uid], ['parentUid', evo.parentUid], ['generation', evo.generation],
-    ['lineage', evo.lineage], ['birthStep', evo.birthStep],
-  ];
-  const head = new ArrayBuffer(64);
-  const hv = new DataView(head);
-  hv.setUint32(0, SNAP_MAGIC, true);
-  hv.setUint32(4, 1, true);                     // version
-  hv.setUint32(8, N, true);
-  hv.setUint32(12, c.bondK, true);
-  hv.setUint32(16, steps, true);
-  hv.setFloat32(20, BOUND, true);
-  hv.setUint32(24, evo.births, true);
-  hv.setUint32(28, evo.deaths, true);
-  hv.setUint32(32, evo.nextUid, true);
-  hv.setUint32(36, arenaBlob.byteLength, true);
-  hv.setUint32(40, ARENA_ISLANDS, true);
-  hv.setUint32(44, args.founderCells, true);
-
-  const bytes = [new Uint8Array(head), arenaBlob];
-  for (const [, a] of parts) bytes.push(new Uint8Array(a.buffer, a.byteOffset, a.byteLength));
-  let total = 0; for (const b of bytes) total += b.byteLength;
-  const out = new Uint8Array(total);
-  let at = 0; for (const b of bytes) { out.set(b, at); at += b.byteLength; }
+  const out = encodeWorld({
+    pos, energy, arenaBlob: built.arena.snapshot(),
+    cells: built.cells, evo, n: N, bondK: built.cells.bondK,
+    steps, bound: BOUND, arenaIslands: ARENA_ISLANDS, founderCells: args.founderCells,
+  });
 
   // Write beside the target then rename, so a crash mid-write cannot leave a
   // half-file where a good one used to be.
@@ -303,49 +281,32 @@ async function saveSnapshot(path) {
     const ring = `${path}.${String(Math.floor(steps / 1e5) % 8)}.ring`;
     await Deno.writeFile(ring, out);
   } catch { /* ring is a convenience, never fatal */ }
-  return { bytes: total, steps };
+  return { bytes: out.byteLength, steps };
 }
 
 async function loadSnapshot(path) {
   const raw = await Deno.readFile(path);
-  const hv = new DataView(raw.buffer, raw.byteOffset);
-  const magic = hv.getUint32(0, true);
-  if (magic === SNAP_MAGIC_V1) throw new Error(
-    'this snapshot predates packed cell metadata (WRN1). Resuming it would give ' +
-    'every cell zero contractility — a world of bodies that cannot contract a ' +
-    'single bond, with nothing in the logs to say so. Start a fresh world.');
-  if (magic !== SNAP_MAGIC) throw new Error('not a world snapshot');
-  const n = hv.getUint32(8, true);
-  if (n !== N) throw new Error(`snapshot has ${n} cell slots, this world has ${N} — start with the same --beasts/--cells`);
-  const arenaLen = hv.getUint32(36, true);
+  const h = decodeHeader(raw);
+  if (h.n !== N) {
+    throw new Error(`snapshot has ${h.n} cell slots, this world has ${N} — start with the same --beasts/--cells`);
+  }
 
   const { BrainArena } = await import('../lib/brainarena.js');
-  const restored = BrainArena.restore(raw.subarray(64, 64 + arenaLen));
+  const restored = BrainArena.restore(h.arenaBlob);
   built.arena.state.set(restored.state); built.arena.bias.set(restored.bias);
   built.arena.invTau.set(restored.invTau); built.arena.act.set(restored.act);
   built.arena.esrc.set(restored.esrc); built.arena.ew.set(restored.ew);
   built.arena.off.set(restored.off); built.arena.cnt.set(restored.cnt);
   built.arena.alive.set(restored.alive); built.arena.cell.set(restored.cell);
-  built.arena.free = restored.free.map(h => [h[0], h[1]]);
+  built.arena.free = restored.free.map(hh => [hh[0], hh[1]]);
 
-  let at = 64 + arenaLen;
-  const take = (arr) => {
-    new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength)
-      .set(raw.subarray(at, at + arr.byteLength));
-    at += arr.byteLength;
-  };
   const c = built.cells;
-  const pos = new Float32Array(N * 2), energy = new Float32Array(N);
-  take(pos); take(energy);
-  take(c.ctype); take(c.cslot); take(c.body); take(c.bodySize);
-  take(c.bond); take(c.brest);
-  take(evo.uid); take(evo.parentUid); take(evo.generation);
-  take(evo.lineage); take(evo.birthStep);
+  const { pos, energy } = decodeBody(raw, h.bodyOffset, c, evo, N);
 
-  steps = hv.getUint32(16, true);
-  evo.births = hv.getUint32(24, true);
-  evo.deaths = hv.getUint32(28, true);
-  evo.nextUid = hv.getUint32(32, true);
+  steps = h.steps;
+  evo.births = h.births;
+  evo.deaths = h.deaths;
+  evo.nextUid = h.nextUid;
 
   // Push everything back to the GPU.
   const vel = new Float32Array(N * 4);

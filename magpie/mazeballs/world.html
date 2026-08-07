@@ -1421,6 +1421,30 @@ const view = { field: true, bonds: true, paused: false, spf: 1, evolve: true,
 // instead of a simulation of its own. Without it every tab is a separate
 // universe, which is why two browsers never agreed about anything.
 const WATCH = new URLSearchParams(location.search).has('watch');
+/**
+ * EVERY SERVER ENDPOINT GOES THROUGH HERE.
+ *
+ * These paths (`/status`, `/genomes`, `/genome`, `/trace`, `/control`, ...) exist
+ * only under tools/serve-world.js. On GitHub Pages there is no server, so the
+ * host answers with its own 404 *page* — status 404, body `<!DOCTYPE html>`. Code
+ * that called .json() on that got `Unexpected token '<'`, which reads as a parse
+ * bug and is actually a missing server.
+ *
+ * Worse than the confusing message: a `/status` poll sat in the render loop and
+ * fired forever on a page that could never have a server.
+ *
+ * So: refuse before the request, with a sentence saying what is actually wrong.
+ * Callers already have try/catch that shows e.message, so they need no changes
+ * beyond using this instead of fetch.
+ */
+function srvFetch(path, opts) {
+  if (!WATCH) {
+    return Promise.reject(new Error(
+      'needs the local world server — this page is running its own simulation. ' +
+      'Start tools/serve-world.js and open it with ?watch=1.'));
+  }
+  return fetch(path, opts);
+}
 // Developmental encoding for this page's OWN sim: 2 = the GRN-in-an-egg
 // (DEVELOPMENT-2.md), 1 = the old positional readout. ?devo=1 to compare.
 // In watch mode the server owns development and this is only a label.
@@ -1533,7 +1557,7 @@ async function rebuild() {
   // rather than as the trivially fixable thing it is.
   if (WATCH) {
     try {
-      const st = await (await fetch('/status', { cache: 'no-store' })).json();
+      const st = await (await srvFetch('/status', { cache: 'no-store' })).json();
       beasts = st.beasts; cellsPer = st.cellsPerBeast;
       // Bodies are limited by ENERGY, not by allocation. bodySlots is the
       // allocation ceiling and is deliberately far above any real population;
@@ -1750,6 +1774,11 @@ async function rebuild() {
     },
     bondCapacity, topoVersion: -1, fetchingBonds: false,
   };
+  // A DELIBERATE HANDLE ON MODULE STATE, for the console and for Playwright.
+  // Everything in this file is module-scoped, so from outside the module the
+  // world is unreachable and any question about it has to be answered by
+  // guessing at the source. Two wrong guesses in a row is enough.
+  window.mazeballs = { get sim() { return sim; }, localGenomes, view, sel };
   if (WATCH) {
     document.title = 'Mazeballs — watching the shared world';
     $('bEvolve').textContent = 'remote'; $('bEvolve').disabled = true;
@@ -1805,7 +1834,7 @@ async function refreshMotes() {
   try {
     let xy, stock, n;
     if (WATCH) {
-      const ab = await (await fetch('/motes', { cache: 'no-store' })).arrayBuffer();
+      const ab = await (await srvFetch('/motes', { cache: 'no-store' })).arrayBuffer();
       n = new Uint32Array(ab, 0, 1)[0];
       const f = new Float32Array(ab, 8, n * 3);
       xy = f; stock = null;                       // interleaved x,y,stock
@@ -1944,7 +1973,7 @@ async function refreshTrace() {
   sim.tracing = true;
   try {
     const want = Math.max(64, +($('scopeWin')?.value ?? 200) * 3);
-    const ab = await (await fetch(`/trace?uid=${sel.uid}&n=${want}`,
+    const ab = await (await srvFetch(`/trace?uid=${sel.uid}&n=${want}`,
       { cache: 'no-store' })).arrayBuffer();
     const dv = new DataView(ab);
     const uid = dv.getUint32(0, true), rows = dv.getUint32(4, true), cols = dv.getUint32(8, true);
@@ -2278,7 +2307,7 @@ async function showGenome() {
   box.style.display = '';
   box.textContent = 'loading…';
   try {
-    const j = await (await fetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
+    const j = await (await srvFetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
     if (!j.ok) { box.textContent = j.error; return; }
     lastGenome = j;
     // The synapse block lives in different places depending on the encoding,
@@ -2539,7 +2568,7 @@ async function showDevo() {
   if (!lastGenome || lastGenome.uid !== sel.uid) {
     if (sel.uid < 0) { note('select an animal first — click one in the world'); return; }
     try {
-      const j = await (await fetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
+      const j = await (await srvFetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
       if (!j.ok) { note(j.error); return; }
       lastGenome = j;
     } catch (e) { note('could not load genome: ' + e.message); return; }
@@ -2563,12 +2592,47 @@ async function showDevo() {
  * same encoding the world uses and draws the result; clicking one selects that
  * animal properly, scope and all.
  */
+/**
+ * The living genomes of THIS page's own simulation, in the shape `/genomes`
+ * returns.
+ *
+ * Without a server the gallery was fetching an endpoint that does not exist, but
+ * the genomes it wanted were in this tab the whole time — a page not in watch
+ * mode is running the world, not observing one. Reading them locally is also
+ * strictly better than the alternative of shipping a canned set: these are the
+ * animals actually alive on screen, so clicking a tile can select a real one.
+ *
+ * Deliberately mirrors the server's loop, including the deepest-first sort, so
+ * the gallery cannot mean two different things depending on the URL.
+ */
+function localGenomes(want) {
+  const rows = [];
+  const arena = sim?.arena, evo = sim?.evo;
+  if (!arena || !evo) return { steps: 0, count: 0, rows, why: 'no arena/evo on sim' };
+  for (let o = 0; o < arena.P && rows.length < want; o++) {
+    if (!arena.alive[o] || !evo.genome[o]) continue;
+    rows.push({
+      slot: o, uid: evo.uid[o], generation: evo.generation[o],
+      lineage: evo.lineage[o], cells: arena.cnt[o],
+      g: Array.from(evo.genome[o]),
+    });
+  }
+  rows.sort((a, b) => b.generation - a.generation);
+  return { steps: sim.world?.steps ?? 0, count: rows.length, rows };
+}
+
 async function showGallery() {
   const box = $('galleryBox');
   if (!box) return;
   box.textContent = 'developing…';
   try {
-    const j = await (await fetch('/genomes?n=48', { cache: 'no-store' })).json();
+    // TWO SOURCES, same reasoning as the creature library. The live world's
+    // genomes are the point in watch mode; without a server there is still a
+    // committed set to develop, and developing is done entirely in this page —
+    // the server was only ever supplying the genome vectors.
+    const j = WATCH
+      ? await (await srvFetch('/genomes?n=48', { cache: 'no-store' })).json()
+      : localGenomes(48);
     // RANKED BY MOVEMENT. 'Interestingness' has no measure; distance actually
     // covered is the honest proxy and is already being sampled from frames.
     // Ties and unseen animals fall back on generation, so a fresh gallery is
@@ -2674,7 +2738,7 @@ async function flagThis() {
   const note_ = prompt('What should we look at? (short note)');
   if (note_ === null) return;
   try {
-    const r = await fetch('/control', {
+    const r = await srvFetch('/control', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ action: 'flag', note: note_, uid: sel.uid }),
     });
@@ -2684,7 +2748,7 @@ async function flagThis() {
 }
 on('bFlag', 'onclick', flagThis);
 on('bCopyStats', 'onclick', async (e) => {
-  const st = await (await fetch('/status', { cache: 'no-store' })).json();
+  const st = await (await srvFetch('/status', { cache: 'no-store' })).json();
   const keys = ['steps','alive','births','deaths','generation','lineages','meanEnergy',
                 'cellsLiveTyped','nCells','maxCells','bound','nMotes','spf','simVersion',
                 'devo','devoName','eggExtent'];
@@ -3196,7 +3260,7 @@ function loop() {
     // frame, which is the whole reason hiding the tab is free.
     if (!document.hidden && !sim.fetching && t >= (sim.retryAt ?? 0)) {
       sim.fetching = true;
-      fetch('/frame', { cache: 'no-store' })
+      srvFetch('/frame', { cache: 'no-store' })
         .then(r => r.arrayBuffer())
         .then(b => {
           applyFrame(b); sim.fetching = false; sim.misses = 0;
@@ -3262,10 +3326,15 @@ function loop() {
 
   // Am I running the latest code? Two answers, because there are two codebases.
   // Polled slowly — this is a staleness check, not a heartbeat.
+  //
+  // WATCH-ONLY, and the guard belongs here rather than inside srvFetch: this
+  // sits in the render loop, so on a serverless page it was a rejected promise
+  // every twenty seconds, forever, for a question that has no answer without a
+  // server. A page serving its own simulation cannot be stale relative to one.
   sim.sinceVer = (sim.sinceVer ?? 0) + (t - last);
-  if (sim.sinceVer > 20000 && !sim.checkingVer) {
+  if (WATCH && sim.sinceVer > 20000 && !sim.checkingVer) {
     sim.sinceVer = 0; sim.checkingVer = true;
-    fetch('/status', { cache: 'no-store' }).then(r => r.json()).then(st => {
+    srvFetch('/status', { cache: 'no-store' }).then(r => r.json()).then(st => {
       sim.checkingVer = false;
       if (!st.onDisk) return;                       // older server, no stamps
       const simStale = st.simVersion !== st.onDisk.simVersion;
@@ -3451,7 +3520,7 @@ function tune(patch) {
     const send = { ...pendingTune };
     for (const k of Object.keys(pendingTune)) delete pendingTune[k];
     try {
-      await fetch('/control', {
+      await srvFetch('/control', {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ action: 'tune', params: send }),
       });
@@ -3609,10 +3678,10 @@ $('bArrows').onclick = e => { view.arrows = !view.arrows; e.target.classList.tog
         try {
           // Needs SOME living creature as a slot to stand in; the occupant is
           // untouched, its genome is swapped back immediately.
-          const gs = await (await fetch('/genomes?n=1', { cache: 'no-store' })).json();
+          const gs = await (await srvFetch('/genomes?n=1', { cache: 'no-store' })).json();
           const host = Array.isArray(gs) ? gs[0]?.uid : gs?.rows?.[0]?.uid;
           if (host == null) throw new Error('no living creature to seed from');
-          const r = await (await fetch('/control', {
+          const r = await (await srvFetch('/control', {
             method: 'POST', headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ action: 'implant', uid: host,
               copies: Number($('sIdN').value), mutate: Number($('sIdM').value) / 100,
@@ -3634,7 +3703,7 @@ $('bArrows').onclick = e => { view.arrows = !view.arrows; e.target.classList.tog
     const btn = $('bImplant'), out = $('idResult');
     btn.disabled = true; out.textContent = 'seeding…';
     try {
-      const r = await (await fetch('/control', {
+      const r = await (await srvFetch('/control', {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ action: 'implant', uid: sel.uid,
                                copies: Number(nEl.value), mutate: mutOf() }),
@@ -3688,7 +3757,7 @@ $('bFood').onclick = e => { view.food = !view.food; e.target.classList.toggle('o
 async function control(action, confirmText) {
   if (confirmText && !confirm(confirmText)) return;
   try {
-    const r = await fetch('/control', {
+    const r = await srvFetch('/control', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ action }),
     });
@@ -3706,7 +3775,7 @@ async function control(action, confirmText) {
       const poll = async () => {
         waited += 1500;
         try {
-          const st = await (await fetch('/status', { cache: 'no-store' })).json();
+          const st = await (await srvFetch('/status', { cache: 'no-store' })).json();
           // A DIFFERENT process, not merely any answer. The outgoing server keeps
           // serving for a moment after agreeing to restart.
           if (st && st.nCells && st.bootId && st.bootId !== wasBoot) {
@@ -3752,7 +3821,7 @@ if (WATCH) {
     clearTimeout(spfT);
     spfT = setTimeout(async () => {
       try {
-        const r = await fetch('/control', { method: 'POST',
+        const r = await srvFetch('/control', { method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ action: 'speed', spf: +e.target.value }) });
         const j = await r.json();
