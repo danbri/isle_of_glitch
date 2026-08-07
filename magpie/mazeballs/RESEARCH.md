@@ -6587,3 +6587,48 @@ mote passes and the renderer's mote pipeline, and this project's most expensive
 bug to date was a uniform-block offset that silently made every contact force a
 denormal for the life of the code. Layout changes get made rested, with the
 device-limits test run, not at the end of a long session.
+
+### Counting competitors instead of mouths: promising, and not established
+
+Two lines, no layout change — the widened-mote blocker written up an hour earlier
+was imaginary, because the demander count is a plain float in the mote's own loop
+rather than an atomic. Each drawing cell contributes `size^-share` and the
+grazing side is weighted by the same factor; conservation holds at any share.
+
+```
+first horizon (22k steps)
+share 0            sizeTax -0.4443 +-0.2619  tissues 1.23  sense+move  3.9%  alive 563
+share 0.5          sizeTax -0.4229 +-0.3290  tissues 1.13  sense+move  6.8%  alive 598
+share 1            NO USABLE REPLICATES
+
+deep time (225k steps)
+share 0            sizeTax -0.6772 +-0.1868  tissues 1.07  sense+move  4.4%  alive 772
+share 1            sizeTax -0.5225 +-0.0000  tissues 1.23  sense+move 13.3%  alive 615
+
+first: share 0.5 changes the size tax by +0.0214 +-0.4205   not implicated
+deep:  share 1   changes the size tax by +0.1547 +-0.1868   not implicated
+```
+
+**On the metric that matters most it is the largest movement of the session:**
+`sense+move` 4.4% → 13.3% at deep time, a threefold rise in the fraction of
+bodies that can close a sensorimotor loop, with average tissues per body rising
+1.07 → 1.23 alongside it.
+
+**And it is not a result.** Three reasons, all disqualifying on their own:
+
+- **n = 1.** The standard error on the deep share-1 arm is 0.0000 because only a
+  single replicate produced a usable population. There is no error bar.
+- **The size tax it was built to fix does not move measurably.** +0.1547 ± 0.1868
+  fails its own test, so even the mechanism's stated purpose is unsupported.
+- **Share 1 has a viability problem at the first horizon** — every replicate
+  failed to produce enough surviving bodies to measure. A mechanism that kills
+  young worlds and helps old ones is not obviously a mechanism that helps.
+
+Defaults to 0. What it needs is five replicates at both horizons and a look at
+why early worlds die under it — most likely that sharing a patch per-BODY rather
+than per-cell starves the many-small-founders phase that every world begins in,
+before any body is large enough for the weighting to pay.
+
+That is the next experiment, and it is the same shape as every other one that
+worked this session: more replicates, both horizons, and the viability veto
+stated before the numbers are read.
