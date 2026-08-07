@@ -1223,7 +1223,23 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   let m = cmeta[i];
   let slot = m.y;
   if (slot < 0 || m.x < 0) { return; }
-  if (cellType(m.x) != 1) { ext[u32(slot)] = 0.0; return; }
+  // PROPORTIONAL TO THE CAPACITY, not gated on the label — the same First Law
+  // repair already made to contraction, for the same reason and with the same
+  // arithmetic behind it.
+  //
+  // This tested cellType(m.x) != 1, so only cells whose argmax happened to
+  // land on SENSOR received any input at all. Measured over 64 living genomes
+  // developed at world values: 1253.9 units of sensing capacity existed in the
+  // tissue and 718.1 of it could be used — the labelling discarded 42.7%. 424
+  // cells lost the argmax by less than 0.10. Twenty-four of sixty-four bodies
+  // had no usable sensor, and sixteen of those were carrying real sensory
+  // tissue while being functionally blind. One specimen (#12009) had cells with
+  // sense 0.992 that were labelled anchor because grip came out at 1.000.
+  //
+  // A cell now senses as well as it is able to, and "sensor" goes back to being
+  // a description of a region of that continuum rather than a permit.
+  let acuity = senseAcuity(m.x);
+  if (acuity <= 0.0) { ext[u32(slot)] = 0.0; return; }
 
   let p = pos[i];
   // Two things a cell can actually feel locally: how fast the medium is moving
@@ -1804,13 +1820,17 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // that could have used them had been driven to zero. A sensor was an organ
   // that reads pure noise and a non-sensor was paying for one.
   //
-  // Gating a COST on type is uncomfortable next to the First Law, and it is the
-  // honest reading here: the kernel ALREADY decides who senses by exactly this
-  // test, so making the bill follow the benefit is consistency rather than a
-  // new branch. The alternative — charging by continuous sense capacity — needs
-  // that capacity in cmeta, where there is no room for it.
-  let senseWork = P.senseCost * senseAcuity(cmeta[i].x)
-                * select(0.0, 1.0, cellType(cmeta[i].x) == 1);
+  // The type gate is gone, and with it the discomfort recorded above. That note
+  // said charging by continuous sense capacity "needs that capacity in cmeta,
+  // where there is no room for it" — but it was already there, as senseAcuity in
+  // bits 2-6. It only looked absent because nothing ever wrote it: senseTune was
+  // never derived from the sense gene, so acuity read 0 for every cell and the
+  // field was indistinguishable from an unused one.
+  //
+  // Now that it carries the gene, the bill follows the benefit exactly: a cell
+  // pays in proportion to how sharply it senses, and a cell that does not sense
+  // pays nothing without anyone testing what it is called.
+  let senseWork = P.senseCost * senseAcuity(cmeta[i].x);
   // ARMOUR IS EXPENSIVE TO HOLD. Without a cost, toughness is a free defence
   // and evolution takes it to the ceiling in every lineage — the same failure
   // as feeding being independent of what a cell is, which produced a 94%

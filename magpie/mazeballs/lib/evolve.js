@@ -494,7 +494,21 @@ export class Evolver {
         cells.parentB[dst + i] = -1;
         cells.lifebook[dst + i] = book;
       }
-      meta[i * 4] = packMeta(type, con, gri, apN, c.senseTune ?? 0);
+      // senseTune IS the cell's sense gene. packMeta documents it as a signed
+      // value whose MAGNITUDE is acuity and whose SIGN picks the world axis —
+      // which is exactly the shape of `c.sense`. Nobody ever wired the two
+      // together, so `c.senseTune ?? 0` was 0 for every cell ever developed, and
+      // therefore senseAcuity() was 0 everywhere in the world.
+      //
+      // That is not a small miscalibration. All three sense channels read
+      //   mix(noise, signal, acuity)
+      // so at acuity 0 every sensor in the world has been reading PURE NOISE —
+      // the compass, the terrain channel and creature perception alike — while
+      // senseCost, which is also scaled by acuity, charged nothing for it.
+      // Sensing was free, universal, and informationless. It is the best
+      // available explanation for why no closed sense->decide->move loop has
+      // ever appeared here.
+      meta[i * 4] = packMeta(type, con, gri, apN, c.senseTune ?? c.sense ?? 0);
       meta[i * 4 + 1] = dst + i;
       meta[i * 4 + 2] = child;
       meta[i * 4 + 3] = packSize(n, c.tag ?? 0.5, Math.max(0, c.toughness ?? 0), c.enzyme ?? 0.5);
