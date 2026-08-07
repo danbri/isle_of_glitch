@@ -3868,10 +3868,30 @@ function loop() {
     view.crescent ? 1 : 0, view.glitter ? 1 : 0, view.field ? 1 : 0,
     sim.moteCount, sim.moteGen ?? 0,
   ].join(',');
-  const drifting = (sim.world?.params?.driftX || sim.world?.params?.driftY ||
-                    sim.world?.params?.morphRate);
+  // THE PARAMETERS THE SHADER IS ACTUALLY USING. This read the LOCAL world's
+  // params, which in watch mode are all zero — the server's are in sim.remote,
+  // and writeCam has always taken the drift and morph rates from there. So the
+  // timer below never fired on a watching page while the field it is meant to
+  // track drifted on screen, and the only thing refreshing the cached setting
+  // was the standing crop bumping its generation every 1.5s. With food off,
+  // nothing refreshed it at all.
+  const rp = sim.remote ?? sim.world?.params ?? {};
+  const drifting = (rp.driftX || rp.driftY || rp.morphRate);
   // A moving field must be redrawn on a clock; a still one never needs to be.
-  const bgStale = drifting ? (t - sim.bgAt > 400) : false;
+  //
+  // 1800ms, not the 400ms this was. Two reasons, both measured. A rebuild costs
+  // 40 ms, so every one of these is a dropped frame you can see, and at 400ms
+  // that is one hitch every 24 frames for no visible gain: at the running
+  // driftX 0.06 / driftY 0.037 the field moves 0.05 world units in 1.5s, across
+  // a world 132 units wide.
+  //
+  // And it is deliberately LONGER than the standing crop's 1.5s refresh, which
+  // rebuilds the layer anyway and resets this clock. Set equal to it the two
+  // raced: measured as pairs of rebuilds 17 ms apart, an 80 ms hitch instead of
+  // a 40 ms one, because the crop generation bumps a moment after the async
+  // fetch that carried it. With 300 ms of margin the crop always wins while food
+  // is on, and this drives the refresh on its own when food is off.
+  const bgStale = drifting ? (t - sim.bgAt > 1800) : false;
   // A MOVING CAMERA IS NOT A REASON TO REDRAW SIXTY TIMES A SECOND.
   //
   // The key includes the camera, so dragging or wheel-zooming invalidated the
