@@ -6405,3 +6405,57 @@ reach through exterior ones), shared energy (`sapRate`, already built and alread
 measured to rescue populations 68× while collapsing differentiation), and
 anything that makes uptake super-linear in coordinated tissue. Each needs the
 10× test that killed the last three results.
+
+### The goal at five replicates, with the wealth covariate — NOT demonstrated
+
+The definitive run: 15 arm-replicates stepped round-robin, `meanEnergy` and
+`toughPerE` logged so the luxury-good confound is divided out rather than
+discovered afterwards.
+
+```
+horizon trait            full  nobiotic  noabiotic |  biotic  abiotic      se
+first   tough          0.0955    0.1447     0.0330 |  0.0492   0.0625  0.0571   -
+first   toughPerE      0.0565    0.0942     0.0450 |  0.0377   0.0115  0.0435   -
+first   enzSd          0.2059    0.2651     0.1689 |  0.0592   0.0370  0.0587   -
+first   tagSd          0.2054    0.1696     0.2284 |  0.0357   0.0230  0.0647   -
+first   meanEnergy     1.7901    1.6119     0.7193 |  0.1782   1.0708  0.2815   -
+first   lineages       7.4000    7.0000    11.4000 |  0.4000   4.0000  1.6793   -
+deep    tough          0.1075    0.1552     0.0523 |  0.0477   0.0552  0.0611   -
+deep    toughPerE      0.0538    0.0965     0.0749 |  0.0428   0.0212  0.0487   -
+deep    enzSd          0.1795    0.2699     0.2209 |  0.0905   0.0415  0.0414   CLEARS
+deep    tagSd          0.2062    0.1776     0.3060 |  0.0286   0.0998  0.0703   -
+deep    meanEnergy     2.0668    1.6837     0.6883 |  0.3831   1.3785  0.2518   -
+deep    lineages       2.8000    3.0000     1.8000 |  0.2000   1.0000  0.9899   -
+```
+
+**One test of twelve clears the bar.** Enzyme diversity, at deep time.
+
+**And that is not enough, for a stated reason.** Twelve comparisons at a
+two-standard-error bar will produce roughly one pass by chance alone. One pass is
+exactly the null expectation. It is recorded because it is the right *kind* of
+signal — an enzyme's value depends entirely on what other organisms are made of,
+so it is meaningless in a world of one — and because a signal that appears at
+deep time rather than dying there is the opposite of this session's pattern. But
+one of twelve is not a result, and calling it one would be the thing this
+project retracts.
+
+**The first-horizon results from the two-replicate run did not replicate.**
+Toughness and `tagSd` both cleared at two replicates; at five, neither does, and
+toughness now has a *larger abiotic than biotic* effect. Adding power removed
+them, which is what power is for and what makes the earlier verdict correctly
+withdrawn rather than merely unlucky.
+
+**Geography is partly rehabilitated, on a different axis.** It has almost no
+effect on whether moving pays (0.0044 ± 0.0300, measured separately) and an
+enormous one on wealth: mean energy 1.79 with geography against 0.72 without, an
+abiotic effect of 1.0708 ± 0.2815 at the first horizon and 1.3785 ± 0.2518 at
+depth — the largest single effect anywhere in this table. The fertile shore is
+doing a great deal; it is simply not doing it to the movement incentive.
+
+#### Verdict on the standing goal
+
+**Not demonstrated.** Neither half. No trait shows biotic dominance at both
+horizons; the one that clears at depth is within chance for the number of tests
+run; and the accompanying measurements say the world descends rather than
+ascends, because multicellularity is taxed and the selective pressure exhausts
+the variation it needs in order to keep acting.

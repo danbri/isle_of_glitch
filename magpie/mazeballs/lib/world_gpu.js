@@ -924,10 +924,38 @@ fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
         // harder and which is tougher, moment to moment. A tough cell is bad
         // food, a nutritious one is worth attacking, and "armour" and "meat" are
         // regions of that space rather than roles.
+        // SHELTER — what a body of N cells can do that N solitary cells cannot.
+        //
+        // THE PROBLEM IT ADDRESSES, measured on the live world: a bigger body is
+        // POORER PER CELL at every step of the range (correlation -0.263; bodies
+        // of 15+ cells against 8-, -0.4041 +-0.0669). Every cost here is
+        // per-cell and every benefit is per-cell, while crowding and
+        // absorbTradeoff both penalise being a clump — so N cells bonded are
+        // strictly worse off than N cells apart. The economy pays cells to come
+        // apart. And differentiation needs cells to spare, so it taxes exactly
+        // what differentiation is made of: bodies of 5-8 cells carry 1.09
+        // tissues, bodies of 25-60 carry 1.46.
+        //
+        // A cell with its own tissue around it is harder to get at. That is the
+        // missing economy of scale, it is available only to a body, and it
+        // cannot be had by standing near strangers.
+        //
+        // WHY BODY SIZE AND NOT A NEIGHBOUR COUNT. Counting own-body cells in
+        // this walk would be the truer geometry, and it breaks conservation:
+        // cell i cannot see how many neighbours cell j has, so the two would
+        // compute different transfers and energy would appear from nowhere. The
+        // packed body size is readable by BOTH cells from the other's cmeta, so
+        // both evaluate the same expression and the pair still agrees exactly —
+        // the same discipline contest already follows.
+        //
+        // It names no predator and no defence. It is how much of you is behind
+        // something else.
+        let shieldJ = 1.0 / (1.0 + P.shelterK * bodySizeOf(cmeta[j].w));
+        let shieldI = 1.0 / (1.0 + P.shelterK * bodySizeOf(cmeta[i].w));
         let take  = max(0.0, effort                 - toughnessOf(cmeta[j].w)) * nutritionOf(j)
-                  * digestMatch(cmeta[i].w, cmeta[j].w);
+                  * digestMatch(cmeta[i].w, cmeta[j].w) * shieldJ;
         let given = max(0.0, abs(contractionOf(j)) - toughnessOf(cmeta[i].w)) * nutritionOf(i)
-                  * digestMatch(cmeta[j].w, cmeta[i].w);
+                  * digestMatch(cmeta[j].w, cmeta[i].w) * shieldI;
         let raw = P.contestRate * (take - given) * P.dt;
         var moved = 0.0;
         if (raw > 0.0) {
@@ -2004,6 +2032,12 @@ export class WorldGPU {
       // A small drift may well be recoverable — enough to read as a current
       // without outrunning a body — but that is its own measurement and 0 is
       // the value with evidence behind it.
+      // SHELTER. How much being part of a larger body reduces what can be taken
+      // from you. 0 is the world as measured, where multicellularity is a pure
+      // tax. Sized so a 12-cell body keeps about two thirds of what a lone cell
+      // loses and a 40-cell body about a third — a real advantage, well short of
+      // immunity.
+      shelterK: 0.04,
       contestR: 1.5, moteDrift: 0.0,
       // Tidal income. Sized so a fully-gripping cell holding station in a fast
       // mud channel earns on the order of what rich ground yields, and a cell

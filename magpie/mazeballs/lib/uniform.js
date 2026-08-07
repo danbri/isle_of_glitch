@@ -144,6 +144,7 @@ export const WORLD_FIELDS = [
   ['moteDrift', 'f32', 'how much of the current the standing crop is carried by'],
   ['sapRate', 'f32', 'energy flow along a bond, per unit gradient per second'],
   ['sapLoss', 'f32', 'fraction of moved energy lost to heat — transport is not free'],
+  ['shelterK', 'f32', 'how much a larger body shields its cells from being taken from'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */
