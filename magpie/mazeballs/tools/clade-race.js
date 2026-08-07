@@ -77,10 +77,14 @@ if (!poolA.length || !poolB.length) {
  * side — rather than by relabelling, because a slot is recycled and a label on a
  * slot is a lie the moment somebody dies in it.
  */
+// Seeds offset so a replication batch is an independent sample, not the same
+// worlds run twice — the mistake caught before the enzSd replication.
+const SEEDBASE = Number(Deno.env.get('SEEDBASE') ?? 700);
+
 async function race(poolLeft, poolRight, steps, rep, tag) {
   const N = PERSIDE * 2;
   const built = buildBodies({ beasts: Math.max(64, N * 4), cells: 12, bound: BOUND,
-                              seed: 700 + rep * 37, maxCells: 60,
+                              seed: SEEDBASE + rep * 37, maxCells: 60,
                               bodySlots: Math.max(256, N * 12) });
   const brains = await BrainArenaGPU.create(built.arena);
   const world = new WorldGPU(brains, built.cells, { bound: BOUND });

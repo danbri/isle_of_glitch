@@ -17,16 +17,41 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-fo
 #c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 #c.drag{cursor:grabbing}
 
+/* THE READOUT IS A COLUMN, not two rows across the top.
+   Across the top it ran into the world and wrapped unpredictably at narrow
+   widths; down the left each figure has its own line, the labels align, and it
+   collapses to a strip when the world matters more than the numbers. */
 .hud{
-  position:fixed;top:0;left:0;right:0;padding:.6rem .9rem;
-  display:flex;gap:1.2rem;align-items:baseline;flex-wrap:wrap;
-  background:linear-gradient(to bottom,rgba(10,16,15,.92),rgba(10,16,15,0));
-  pointer-events:none;font-family:var(--mono);font-size:.72rem;letter-spacing:.03em;
+  position:fixed;top:0;left:0;bottom:0;width:var(--hudw,168px);
+  padding:.55rem .7rem;display:flex;flex-direction:column;gap:.18rem;
+  align-items:stretch;overflow-y:auto;overflow-x:hidden;
+  background:linear-gradient(to right,rgba(10,16,15,.90),rgba(10,16,15,.55) 70%,rgba(10,16,15,0));
+  pointer-events:none;font-family:var(--mono);font-size:.7rem;letter-spacing:.02em;
+  transition:width .18s ease;
 }
 .hud b{font-weight:600;color:var(--ink)}
-.hud span{color:var(--ink-soft)}
-.hud2{top:1.9rem;background:none}
-.hud .t{font-family:var(--sans);font-size:.82rem;font-weight:600;letter-spacing:-.01em;margin-right:.4rem}
+.hud span{
+  color:var(--ink-soft);display:flex;justify-content:space-between;gap:.5rem;
+  white-space:nowrap;
+}
+/* Collapsed: the column narrows to a spine and only the toggle shows. */
+.hud.min{--hudw:22px}
+.hud.min span,.hud.min .t{display:none}
+.hud .t{
+  font-family:var(--sans);font-size:.8rem;font-weight:600;letter-spacing:-.01em;
+  display:block;margin-bottom:.3rem;color:var(--ink);
+}
+/* Section rule between the world figures and the population figures. */
+.hud .rule{
+  display:block;height:1px;background:var(--rule);margin:.35rem 0 .3rem;opacity:.7;
+}
+#hudGrip{
+  position:fixed;top:0;bottom:0;width:14px;z-index:41;cursor:pointer;
+  pointer-events:auto;display:flex;align-items:center;justify-content:center;
+  color:#6d8880;font-family:var(--mono);font-size:.7rem;background:transparent;
+  border:0;padding:0;transition:color .12s ease,background .12s ease;
+}
+#hudGrip:hover{color:var(--sensor);background:rgba(255,255,255,.04)}
 
 aside{
   position:fixed;top:0;right:0;bottom:0;width:var(--panelw,300px);background:rgba(17,26,25,.94);
@@ -179,25 +204,27 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 </div>
 <button id="toggle" title="panel">☰</button>
 
-<div class="hud">
+<div class="hud" id="hud">
   <span class="t">Mazeballs</span>
+  <span title="living bodies / arena capacity">alive <b id="hAlive">–</b></span>
+  <span>generation <b id="hGen">0</b></span>
+  <span>lineages <b id="hLin">–</b></span>
+  <span>births <b id="hBirths">0</b></span>
+  <span>deaths <b id="hDeaths">0</b></span>
+  <span>mean energy <b id="hEnergy">–</b></span>
+  <i class="rule"></i>
   <span title="living cells / arena slots. Every cell is a CTRNN node, so there is no separate neuron count.">cells <b id="hCells">–</b></span>
   <span title="wired synapses across all living brains">synapses <b id="hSyn">–</b></span>
   <span>step <b id="hStep">0</b></span>
-  <span>sim <b id="hRate">–</b>×realtime</span>
+  <i class="rule"></i>
+  <span>sim <b id="hRate">–</b>×</span>
   <span>fps <b id="hFps">–</b></span>
   <span>zoom <b id="hZoom">–</b></span>
   <span>gpu <b id="hGpu">–</b></span>
   <span>devo <b id="hDevo">–</b></span>
 </div>
-<div class="hud hud2">
-  <span title="living bodies / arena capacity">alive <b id="hAlive">–</b></span>
-  <span>births <b id="hBirths">0</b></span>
-  <span>deaths <b id="hDeaths">0</b></span>
-  <span>generation <b id="hGen">0</b></span>
-  <span>lineages <b id="hLin">–</b></span>
-  <span>mean energy <b id="hEnergy">–</b></span>
-</div>
+<button id="hudGrip" title="collapse the readout">‹</button>
+
 
 <aside id="panel">
   <div>
@@ -3451,6 +3478,27 @@ $('sBudget').addEventListener('input', e => $('vBudget').textContent = (+e.targe
 
 $('bField').onclick = e => { view.field = !view.field; e.target.classList.toggle('on', view.field); };
 $('bTerrain').onclick = e => { view.terrain = !view.terrain; e.target.classList.toggle('on', view.terrain); };
+// THE READOUT COLUMN. Collapses to a spine so the world can be watched without
+// numbers over it, and remembers which way it was left.
+(() => {
+  const hud = $('hud'), grip = $('hudGrip');
+  if (!hud || !grip) return;
+  const place = () => {
+    const w = hud.classList.contains('min') ? 22 : 168;
+    grip.style.left = w + 'px';
+    grip.textContent = hud.classList.contains('min') ? '›' : '‹';
+    grip.title = hud.classList.contains('min') ? 'show the readout' : 'collapse the readout';
+  };
+  if (localStorage.getItem('mz.hudmin') === '1') hud.classList.add('min');
+  place();
+  grip.onclick = () => {
+    hud.classList.toggle('min');
+    try { localStorage.setItem('mz.hudmin', hud.classList.contains('min') ? '1' : '0'); }
+    catch { /* private mode */ }
+    place();
+  };
+})();
+
 // PANEL WIDTH. Dragged, clamped, and remembered — a fixed width that clips its
 // own controls is a control you cannot reach.
 (() => {
@@ -3510,9 +3558,20 @@ $('bArrows').onclick = e => { view.arrows = !view.arrows; e.target.classList.tog
   // cannot disagree about what a creature is.
   (async () => {
     const box = $('designList'); if (!box) return;
-    let lib;
-    try { lib = await (await fetch('/creatures', { cache: 'no-store' })).json(); }
-    catch { box.textContent = 'library unavailable'; return; }
+    // TWO SOURCES, because this page is served two ways. Against a live server
+    // /creatures reads the file fresh, so a genome captured a minute ago is
+    // there. On GitHub Pages there is no server at all and that path 404s, so
+    // fall back to the committed file, which is the same data one build behind.
+    let lib = null;
+    for (const url of ['/creatures', 'lib/creatures.json']) {
+      try {
+        const r = await fetch(url, { cache: 'no-store' });
+        if (!r.ok) continue;
+        lib = await r.json();
+        break;
+      } catch { /* try the next */ }
+    }
+    if (!lib) { box.textContent = 'creature library unavailable'; return; }
     const list = lib.creatures ?? [];
     if (!list.length) { box.innerHTML = '<p class="note">no library built yet — run tools/design-creatures.js</p>'; return; }
     box.innerHTML = '';

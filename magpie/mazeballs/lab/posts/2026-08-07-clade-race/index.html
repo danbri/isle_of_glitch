@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The clade race: method</title>
+<style>
+  :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fbfbf9; --fg:#1c2530; --dim:#5d6b7c; --acc:#12766e; --line:#e2e5ea; }
+  }
+  body { background:var(--bg); color:var(--fg); margin:0;
+         font:16px/1.65 ui-serif, Georgia, "Iowan Old Style", serif; }
+  .wrap { max-width:46rem; margin:0 auto; padding:3rem 1.25rem 6rem; }
+  a { color:var(--acc); }
+  h1,h2,h3 { font-family:ui-sans-serif, system-ui, sans-serif; line-height:1.25; }
+  h1 { font-size:1.9rem; margin:0 0 .3rem; }
+  h2 { margin-top:2.4rem; border-bottom:1px solid var(--line); padding-bottom:.3rem; }
+  .meta { color:var(--dim); font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size:.8rem; letter-spacing:.02em; }
+  code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.85em; }
+  pre { background:rgba(127,127,127,.1); padding:.9rem 1rem; border-radius:6px;
+        overflow-x:auto; border:1px solid var(--line); }
+  table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; font-size:.9rem; }
+  th,td { border:1px solid var(--line); padding:.35rem .6rem; text-align:left; }
+  th { background:rgba(127,127,127,.08); }
+  blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
+               color:var(--dim); }
+  /* Figures. Plots here are generated as SVG straight from the wire format
+     rather than screenshotted, so they stay sharp at any width and weigh
+     almost nothing. */
+  img, svg.fig { max-width:100%; height:auto; display:block; border-radius:6px;
+                 border:1px solid var(--line); background:#070c0b; }
+  figure { margin:1.6rem 0; }
+  figcaption { color:var(--dim); font-size:.82rem; margin-top:.5rem;
+               font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
+  ul.index { list-style:none; padding:0; }
+  ul.index li { margin:.9rem 0; }
+  ul.index .meta { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
+  <article>
+  <h1>The clade race: method</h1>
+  <p class="meta">
+    7 August 2026 · posts, method, measurement, coevolution
+  </p>
+  <p>A clade race asks whether one lineage's fate depends on which other lineage is
+present, as distinct from depending on the world. This note describes the method
+and the first result.</p>
+<h2>Why not measure a trait</h2>
+<p>Earlier attempts at the same question went through traits: does the biotic
+channel move toughness, or tag spread, or enzyme diversity, more than the abiotic
+world does? Three problems with that.</p>
+<ul>
+<li>A trait can move for reasons unrelated to the question. Toughness turned out to
+track population size, because armour costs energy every second and a richer
+world buys more of it. That contrast was measuring wealth.</li>
+<li>It requires choosing a trait in advance, and testing several invites the
+multiple-comparison problem. Six traits at two horizons produced one pass,
+which is the null expectation for twelve tests.</li>
+<li>It is indirect. The question is about survival, and survival is measurable
+directly.</li>
+</ul>
+<h2>The design</h2>
+<p>Two lineages, taken as genomes from a live world. Equal founders of each, placed
+alternately into a fresh world so neither side gets better ground. Run to a fixed
+horizon, then count how many living bodies descend from each side.</p>
+<p>Side is carried by descent: a newborn inherits its parent's side. It is never a
+label attached to an arena slot, because slots are recycled — a label on a slot
+becomes wrong the moment its occupant dies and is replaced.</p>
+<h2>The control</h2>
+<p>Winning a shared world is not evidence on its own. A lineage that holds 55% may
+simply be the fitter one in this world, and would have grown faster alone.</p>
+<p>So each race is run three times per replicate:</p>
+<pre><code>MIXED    A and B, equal founders
+ALONE-A  A against itself, same world, same seed, same founder count
+ALONE-B  B against itself, likewise
+</code></pre>
+<p>The monoculture arms give each lineage's growth in this world with no rival. From
+those, the share A would be expected to hold if the mixed outcome were only the
+two growth rates competing:</p>
+<pre><code>soloRatio = aliveAlone(A) / aliveAlone(B)
+expected  = soloRatio / (1 + soloRatio)
+</code></pre>
+<p>The claim is the difference between the observed mixed share and that expectation.
+If they agree, the rival was irrelevant and the world decided the outcome. If they
+differ, the rival changed it.</p>
+<h2>Both horizons</h2>
+<p>The race is run at a first horizon and at ten times it. In this world every effect
+that has cleared a significance bar at a first horizon has failed at ten times it,
+so a single-horizon result is not evidence. Running both is cheap relative to the
+cost of a retraction.</p>
+<h2>First result</h2>
+<p>Lineage 284 (8 captured genomes, sensor-carrying) against lineage 192 (5 genomes,
+predominantly muscle). Four replicates, 50 founders per side, bound 46.</p>
+<pre><code>first  284 holds 0.4957 ±0.0232   expected 0.4647   excess +0.0310   inside 2 SE
+deep   284 holds 0.5491 ±0.0220   expected 0.4646   excess +0.0845   clears 2 SE
+</code></pre>
+<p>284 is the weaker lineage in monoculture — 1,041 bodies against 192's 1,200 — so
+solo growth predicts it holds 46.5% of a shared world. At the deep horizon it
+holds 54.9%.</p>
+<p>The effect is absent at the first horizon and present at ten times it. That is the
+opposite of the pattern every other measurement in this world has shown, and is
+consistent with an interaction needing time to accumulate.</p>
+<h2>What is not claimed</h2>
+<p>This is one discovery run. The equivalent single result for enzyme diversity
+cleared its bar and then failed a pre-registered replication on independent seeds.
+A replication of this result is running under <code>runs/PREREGISTERED-clade.md</code>, with
+the bar and the falsifiers written before the run and the discovery batch excluded
+from it.</p>
+<p>Separately, &quot;the rival changed the outcome&quot; is not the same claim as &quot;the rival
+mattered more than the world did&quot;. The monoculture control isolates the biotic
+effect but does not weigh it against an abiotic one. A second arm with the
+geography flattened supplies that comparison and is pre-registered alongside.</p>
+<h2>Files</h2>
+<ul>
+<li><code>tools/clade-race.js</code> — the method above.</li>
+<li><code>tools/zoo-capture.js</code> — pulls live genomes into <code>lib/creatures.json</code> with the
+step, generation and lineage they came from.</li>
+<li><code>runs/archive/</code> — one representative per lineage every 5 generations, with a
+world snapshot and the full parameter set, which is what makes a race between
+eras possible rather than only between contemporaries.</li>
+</ul>
+
+</article>
+
+</div>
+</body>
+</html>
