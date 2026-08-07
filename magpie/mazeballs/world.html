@@ -538,10 +538,20 @@ struct Cam {
   flowDry     : f32,
   streamSpace : f32,   // world units between streamline seeds
   streamSteps : f32,   // segments per line
-  topPass     : f32,   // 1 = draw ONLY the inspected animal, over everything
   streamSide  : f32,   // lines across, so side*side lines are drawn
   streamInk   : f32,
   cellInk     : f32,   // how loud the population is drawn, 0..1
+  // APPENDED, NOT INSERTED. This field was declared between streamSteps and
+  // streamSide, while writeCam() writes it last — so the final four fields all
+  // read one slot early and the picture was wrong in three visible ways at once:
+  // the crowd got cellInk = topPass = 0 and every cell drew BLACK; streamSide
+  // read 0.62, so u32(max(1.0, 0.62)) = 1 and all 676 streamlines seeded in a
+  // single column off to one side, i.e. the current vanished; and topPass read
+  // STREAM_SIDE = 26, so selecting an animal made the whole crowd disappear
+  // instead of dimming. A uniform struct has no names on the wire, only offsets,
+  // and nothing checks that the two ends agree — so new fields go on the END,
+  // next to the write that fills them.
+  topPass     : f32,   // 1 = draw ONLY the inspected animal, over everything
   padB0       : f32,
 };
 @group(0) @binding(0) var<uniform>       C     : Cam;
