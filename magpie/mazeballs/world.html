@@ -3311,7 +3311,13 @@ function loop() {
   // while the server was healthy, which is indistinguishable from a frozen world.
   {
     const box = $('linkBox'), txt = $('linkTxt');
-    if (box && txt) {
+    // WATCH ONLY. This reports the health of the link to the server, and a page
+    // running its own simulation has no link — it sat there reading "no frame
+    // yet" forever, in red, which is precisely how a working world announces
+    // itself as broken. The badge is hidden rather than reworded because there
+    // is no connection to describe.
+    if (box && !WATCH) box.style.display = 'none';
+    else if (box && txt) {
       const age = sim.lastFrameAt ? (t - sim.lastFrameAt) / 1000 : Infinity;
       let cls = 'live', msg = 'live';
       if (serverPaused) { cls = 'paused'; msg = 'world PAUSED on server'; }
