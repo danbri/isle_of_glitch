@@ -261,6 +261,29 @@
     </div>
   </div>
 
+  <div class="card" style="margin-top:.8rem">
+    <h3>grow the selected one much larger</h3>
+    <p style="font-size:.85rem;margin:.2rem 0 .5rem">The world stops development at 12,000&nbsp;ms
+    with a 60-cell cap. Nothing about the encoding requires that. Pick a size and watch the
+    same genome keep going.</p>
+    <div class="transport" style="flex-wrap:wrap">
+      <button class="act" data-big="0">~1,000 cells &middot; 3s</button>
+      <button class="act" data-big="1">~4,000 cells &middot; 25s</button>
+      <button class="act" data-big="2">~6,000 cells &middot; 2min</button>
+    </div>
+    <canvas id="cvBig" width="420" height="420" style="margin-top:.6rem;width:100%;height:auto;aspect-ratio:1"></canvas>
+    <div id="bigStats" style="font-family:var(--mono);font-size:.76rem;margin-top:.4rem"></div>
+    <p class="note warn">The page will not respond while this runs — development is
+    single-threaded and synchronous. The time estimates are measured, not guessed.</p>
+    <p class="note"><b>The egg is the mould.</b> At the world's egg size a body saturates
+    around a thousand cells however long it develops — 936 at 48,000&nbsp;ms against 1,004 at
+    96,000. Bigger bodies need a bigger EGG, not more time: 3,907 cells at twice the radius,
+    6,200 at two and a half times, 11,131 at over three. Growth expands until it meets the
+    shell and can then only fill in, which is also why these bodies come out round. An
+    elongated animal may be unreachable here not because the genome cannot express one, but
+    because a circular egg has no long axis to grow along.</p>
+  </div>
+
   <p class="note">Every egg is drawn at the same scale, so what you are watching is size
   changing, not an arrangement changing. Development is <em>canalised</em> — the noise is
   derived from the genome — so each of these is one fixed process being replayed, not a
@@ -796,6 +819,61 @@ $('bNewDna').onclick = async () => {
   $('prep').textContent = 'developing…';
   await precompute();
 };
+
+// MEASURED, not estimated. Egg radius is what decides the ceiling; developmental
+// time only decides how close to it you get. See the note in the card.
+const BIG_PRESETS = [
+  { ms: 48000,  extent: 12, label: '~1,000 cells' },
+  { ms: 96000,  extent: 24, label: '~4,000 cells' },
+  { ms: 150000, extent: 30, label: '~6,000 cells' },
+];
+document.querySelectorAll('[data-big]').forEach(btn => {
+  btn.onclick = () => {
+    if (playing) $('bPlay').click();
+    const pre = BIG_PRESETS[+btn.dataset.big];
+    const all = [...document.querySelectorAll('[data-big]')];
+    all.forEach(b => b.disabled = true);
+    $('bigStats').textContent = `developing embryo ${galSel + 1} at egg radius ${pre.extent}…`;
+    setTimeout(() => {
+      const t0 = performance.now();
+      let r;
+      try {
+        r = D.develop(galGenomes[galSel], { ms: pre.ms, dtMs: GAL_DT,
+          extent: pre.extent, maxCells: 40000, yolk: 1e9 });
+      } catch (e) {
+        $('bigStats').textContent = 'development failed: ' + e.message;
+        all.forEach(b => b.disabled = false); return;
+      }
+      const secs = ((performance.now() - t0) / 1000).toFixed(1);
+      const cells = r.cells.map(c => ({ x: c.x, y: c.y, t: describe(c) }));
+      paintTileExtent($('cvBig'), cells, pre.extent);
+      const hist = [0,0,0,0];
+      for (const c of cells) hist[c.t]++;
+      $('bigStats').innerHTML =
+        `<b>${cells.length} cells</b> in ${secs}s &nbsp; ` +
+        `(the world would have stopped at 60)<br>` +
+        `neuron ${hist[0]} sensor ${hist[1]} muscle ${hist[2]} anchor ${hist[3]}`;
+      all.forEach(b => b.disabled = false);
+    }, 30);
+  };
+});
+
+/** Same as paintTile but with the egg radius supplied, since these are not 12. */
+function paintTileExtent(cv, cells, extent) {
+  const x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.fillStyle = '#070c0b'; x.fillRect(0, 0, W, H);
+  const eggPx = Math.min(W, H) * 0.46;
+  let reach = extent;
+  for (const c of cells) reach = Math.max(reach, Math.hypot(c.x, c.y) + 0.5);
+  const sc = eggPx / reach;
+  x.strokeStyle = '#1b2a27'; x.beginPath();
+  x.arc(W/2, H/2, extent * sc, 0, Math.PI * 2); x.stroke();
+  const r = Math.max(0.7, sc * 0.34);
+  for (const c of cells) {
+    x.fillStyle = TYPE_COL[c.t];
+    x.beginPath(); x.arc(W/2 + c.x*sc, H/2 + c.y*sc, r, 0, Math.PI*2); x.fill();
+  }
+}
 
 let galleryReady = false;
 async function ensureGallery() {
