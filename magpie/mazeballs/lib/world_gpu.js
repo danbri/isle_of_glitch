@@ -2035,7 +2035,7 @@ export class WorldGPU {
       // the medium, so it raises transport AND damps a body's own locomotion.
       // Worth separating later; kept together here because this is the
       // combination with a measurement behind it.
-      flowScale: 4.0,
+      flowScale: 12.0,
       // Flow reduced from 1.0 so that swimming beats drifting, but NOT for the
       // reason first recorded here. That claim — flow carrying cells ten times
       // faster than they could swim — came from tracking cells by arena index,
@@ -2051,13 +2051,13 @@ export class WorldGPU {
       // about as far as its own muscles do, which leaves swimming with little
       // selective advantage. 0.3 keeps flow as a genuine force to anchor against
       // and be swept by, while making self-propulsion clearly worth having.
-      flowStr: 3.0, drag: 8.0, springK: 90.0,
+      flowStr: 8.0, drag: 24.0, springK: 90.0,
       // MUSCLE FORCE, raised 11x. Measured with an imposed gait over 300 s,
       // median displacement against contract: 0.45 -> 0.067, 2.5 -> 0.199,
       // 5 -> 0.490, 10 -> 0.891, 20 -> 1.594. Bodies end at 0.82-0.97 of their
       // starting span with at most 2 of 30 torn, so this is not the
       // dismemberment artefact this project has retracted before.
-      contract: 5.0, seed: 3, senseGain: 2.0, damp: 0.986, bound: 64.0,
+      contract: 15.0, seed: 3, senseGain: 2.0, damp: 0.986, bound: 64.0,
       // Calibrated against the density the world actually runs at. A 3x3 bucket
       // neighbourhood holds ~34 cells at the starting population, so crowdK
       // 0.012 discounts a shared patch to ~0.79 rather than erasing it: at
@@ -2167,7 +2167,7 @@ export class WorldGPU {
       // Geography. Scales chosen so a world of bound ~132 holds a handful of
       // basins and ridges rather than one hill or a thousand.
       heightScale: 0.018, heightSeed: 5150, gravity: 0.55, highSap: 0.35,
-      mudScale: 0.014, mudSeed: 8801, mudSlip: 0.85, mudFlow: 1.15, mudFog: 0.8, flowDry: 0.07, shoreWidth: 0.30,
+      mudScale: 0.014, mudSeed: 8801, mudSlip: 0.85, mudFlow: 8.0, mudFog: 0.8, flowDry: 0.07, shoreWidth: 0.30,
       lowLush: 0.75,
       // How far the biotic channel reaches, and how fast food goes downstream.
       // contestR against contactR 1.0: proximity rather than collision, capped

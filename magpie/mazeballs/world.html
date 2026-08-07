@@ -78,6 +78,20 @@ h2{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:
 .sl .lab{display:flex;justify-content:space-between}
 .sl .v{font-family:var(--mono);color:var(--ink)}
 input[type=range]{width:100%;accent-color:var(--sensor);margin:0}
+/* THIS VIEWER ONLY. Everything else in the panel edits the world on the server
+   and every watcher sees it; these change nothing but your own window. The two
+   were interleaved with no way to tell them apart, so a slider that alters the
+   physics for everyone looked exactly like one that dims some dots. */
+#localOnly{
+  border:1px solid #2c4a52; border-radius:5px; padding:.5rem .55rem .55rem;
+  margin:.55rem 0 .2rem; background:rgba(80,140,160,.05);
+}
+#localOnly > .cap{
+  font-size:.63rem; letter-spacing:.09em; text-transform:uppercase;
+  color:#7fb3c4; opacity:.95; margin:0 0 .4rem;
+}
+#localOnly input[type=range]{accent-color:#7fb3c4}
+#localOnly h2{color:#7fb3c4}
 .row{display:flex;gap:.4rem;flex-wrap:wrap}
 button{
   font:inherit;font-size:.76rem;color:var(--ink);background:#16211F;border:1px solid var(--rule);
@@ -238,20 +252,22 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
     </div>
   </div>
 
-  <div class="sl"><div class="lab"><span>flow strength</span><span class="v" id="vStr">3.00</span></div>
-    <input type="range" id="sStr" min="0" max="800" value="300"></div>
-  <div class="sl"><div class="lab"><span>eddy scale</span><span class="v" id="vScale">4.00</span></div>
-    <input type="range" id="sScale" min="10" max="1200" value="400"></div>
-  <div class="sl"><div class="lab"><span>drag</span><span class="v" id="vDrag">8.00</span></div>
-    <input type="range" id="sDrag" min="0" max="2400" value="800"></div>
-  <div class="sl"><div class="lab"><span>current in the mud</span><span class="v" id="vMudFlow">1.15</span></div>
-    <input type="range" id="sMudFlow" min="0" max="800" step="5" value="115"></div>
+  <div class="sl"><div class="lab"><span>flow strength</span><span class="v" id="vStr">8.00</span></div>
+    <input type="range" id="sStr" min="0" max="2000" value="800"></div>
+  <div class="sl"><div class="lab"><span>eddy scale</span><span class="v" id="vScale">12.00</span></div>
+    <input type="range" id="sScale" min="10" max="3000" value="1200"></div>
+  <div class="sl"><div class="lab"><span>drag</span><span class="v" id="vDrag">24.00</span></div>
+    <input type="range" id="sDrag" min="0" max="6000" value="2400"></div>
+  <div class="sl"><div class="lab"><span>current in the mud</span><span class="v" id="vMudFlow">8.00</span></div>
+    <input type="range" id="sMudFlow" min="0" max="2000" step="5" value="800"></div>
   <div class="sl"><div class="lab"><span>bond stiffness</span><span class="v" id="vSpring">90</span></div>
     <input type="range" id="sSpring" min="1" max="300" value="90"></div>
-  <div class="sl"><div class="lab"><span>muscle contraction</span><span class="v" id="vCon">5.00</span></div>
-    <input type="range" id="sCon" min="0" max="1500" value="500"></div>
+  <div class="sl"><div class="lab"><span>muscle contraction</span><span class="v" id="vCon">15.00</span></div>
+    <input type="range" id="sCon" min="0" max="4000" value="1500"></div>
   <div class="sl"><div class="lab"><span>steps per frame</span><span class="v" id="vSpf">1</span></div>
     <input type="range" id="sSpf" min="0" max="40" value="1"></div>
+  <div id="localOnly">
+  <p class="cap">this viewer only &middot; changes nothing in the world</p>
   <div class="sl"><div class="lab"><span>render scale</span><span class="v" id="vRScale">0.70</span></div>
     <input type="range" id="sRScale" min="30" max="100" step="5" value="70"></div>
   <div class="sl"><div class="lab"><span>cell brightness</span><span class="v" id="vCellInk">1.00</span></div>
@@ -283,6 +299,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
       <button id="bReseed">reseed</button>
     </div>
   </div>
+  </div><!-- /localOnly -->
 
   <!-- Only meaningful when watching a server; hidden in local sandbox mode. -->
   <div id="codeWarn" style="display:none"></div>
