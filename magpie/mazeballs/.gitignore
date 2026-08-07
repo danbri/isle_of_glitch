@@ -36,3 +36,11 @@ runs/archive/*.ring
 runs/archive/*.snapshot.*
 
 .DS_Store
+
+# Session transcripts rendered by tools/export-conversation.js. This repo
+# publishes to GitHub Pages, so conversations must never be committed.
+conversations/
+
+# Preserved worlds. The rule above only covers runs/*.snapshot — the ones kept
+# deliberately live in runs/keep/ and are the same 4.4MB of state, which is DATA.
+runs/keep/

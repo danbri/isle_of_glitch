@@ -389,10 +389,64 @@ export function develop(genome, {
   let spent = cellCost, aborted = false;
   const cleaveSteps = Math.round(nStep * cleaveFrac);
 
+  // NEIGHBOUR LISTS, BUILT ONCE PER TIMESTEP.
+  //
+  // The diffusion term below used to scan all n cells for every cell AND for
+  // every one of the 64 genes, so a step cost n * n * NGENE distance tests for a
+  // neighbour set that does not depend on the gene at all. That is why
+  // development was quadratic with a large constant, why the world can only
+  // afford 12,000 ms and 60 cells at a birth, and why a 588-cell body took 41
+  // seconds.
+  //
+  // Two changes, neither of which alters a result. The neighbour set is hoisted
+  // out of the gene loop, which alone removes a factor of NGENE. And it is found
+  // through a uniform grid of REACH-sized bins instead of a full scan, which
+  // removes the factor of n.
+  //
+  // IDENTICAL OUTPUT IS THE REQUIREMENT, not merely similar. Floating-point
+  // addition is not associative, so the accumulation order has to be preserved
+  // exactly — the bins are walked and the resulting indices SORTED ASCENDING, so
+  // each cell sums its neighbours in the same order the full scan did.
+  const nbrIdx = [], nbrWgt = [];
+  const bin = new Map();
+  const rebuildNeighbours = () => {
+    bin.clear();
+    const cell = REACH;
+    for (let i = 0; i < n; i++) {
+      const key = (Math.floor(X[i] / cell) << 16) ^ (Math.floor(Y[i] / cell) & 0xffff);
+      let a = bin.get(key);
+      if (!a) { a = []; bin.set(key, a); }
+      a.push(i);
+    }
+    for (let i = 0; i < n; i++) {
+      const gx = Math.floor(X[i] / cell), gy = Math.floor(Y[i] / cell);
+      const idx = [], wgt = [];
+      for (let ox = -1; ox <= 1; ox++) for (let oy = -1; oy <= 1; oy++) {
+        const a = bin.get(((gx + ox) << 16) ^ ((gy + oy) & 0xffff));
+        if (!a) continue;
+        for (const j of a) {
+          if (j === i) continue;
+          const dx = X[j] - X[i], dy = Y[j] - Y[i];
+          const d2 = dx * dx + dy * dy;
+          if (d2 >= REACH2) continue;
+          idx.push(j);
+        }
+      }
+      idx.sort((p, q) => p - q);            // the full scan's order, restored
+      for (const j of idx) {
+        const dx = X[j] - X[i], dy = Y[j] - Y[i];
+        wgt.push(1 - Math.sqrt(dx * dx + dy * dy) / REACH);
+      }
+      nbrIdx[i] = idx; nbrWgt[i] = wgt;
+    }
+  };
+
   for (let t = 0; t < nStep && !aborted; t++) {
+    rebuildNeighbours();
     // ---- regulation, gather-style, out of place
     for (let i = 0; i < n; i++) {
       const b = i * NGENE;
+      const ni = nbrIdx[i], nw = nbrWgt[i], nn = ni.length;
       for (let g = N_MATERNAL; g < NGENE; g++) {
         let net = bias[g];
         const wb = g * K;
@@ -402,16 +456,14 @@ export function develop(genome, {
         }
         let lap = 0;
         if (diff[g] > 0) {
+          // Weighted by proximity: a cell twice as far away signals less. On a
+          // lattice every neighbour was equidistant and this was a plain mean.
+          // The set and the weights are the same for every gene, so they are
+          // computed once per step above rather than 64 times per cell here.
           let acc = 0, cnt = 0;
-          for (let j = 0; j < n; j++) {
-            if (j === i) continue;
-            const dx = X[j] - X[i], dy = Y[j] - Y[i];
-            const d2 = dx * dx + dy * dy;
-            if (d2 >= REACH2) continue;
-            // Weighted by proximity: a cell twice as far away signals less. On a
-            // lattice every neighbour was equidistant and this was a plain mean.
-            const wgt = 1 - Math.sqrt(d2) / REACH;
-            acc += conc[j * NGENE + g] * wgt; cnt += wgt;
+          for (let q = 0; q < nn; q++) {
+            const wgt = nw[q];
+            acc += conc[ni[q] * NGENE + g] * wgt; cnt += wgt;
           }
           if (cnt > 0) lap = diff[g] * (acc / cnt - conc[b + g]);
         }

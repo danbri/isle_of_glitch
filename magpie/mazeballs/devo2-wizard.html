@@ -1,0 +1,973 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Development 2 — how a genome becomes a body</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!--
+  A guided tour of lib/devo2.js.
+
+  IT IMPORTS THE REAL MODULE. Every body drawn here is produced by the same
+  develop() the world calls at every birth, with the same constants, so nothing
+  on this page can drift from what actually runs. Where a step needs to isolate
+  one mechanism — a single gene relaxing, two genes competing, diffusion making a
+  pattern — it integrates the equation quoted from devo2.js beside it, so the
+  demonstration and the source can be read against each other.
+
+  The developmental time series is obtained by calling develop() with increasing
+  `ms`. Development is canalised: the same genome grows the same body every time,
+  so re-developing to a shorter horizon is a snapshot rather than a re-roll.
+-->
+<style>
+  :root{
+    --bg:#0b0f0e; --panel:#121a18; --ink:#dfe9e4; --soft:#8ba39b; --rule:#22322e;
+    --sensor:#66a89e; --muscle:#c7734f; --neuron:#99998c; --anchor:#8f709e;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6}
+  header{border-bottom:1px solid var(--rule);padding:1rem 1.2rem;position:sticky;top:0;background:var(--bg);z-index:9}
+  header h1{margin:0;font-size:1rem;font-weight:600;letter-spacing:.01em}
+  header p{margin:.25rem 0 0;color:var(--soft);font-size:.82rem}
+  nav{display:flex;gap:.3rem;margin-top:.6rem;overflow-x:auto;padding-bottom:.2rem;
+      scrollbar-width:thin}
+  nav button{flex:0 0 auto}
+  nav button{
+    font:inherit;font-size:.74rem;padding:.25rem .55rem;background:var(--panel);
+    color:var(--soft);border:1px solid var(--rule);border-radius:4px;cursor:pointer;
+  }
+  nav button.on{background:var(--sensor);border-color:var(--sensor);color:#06110f;font-weight:600}
+  main{max-width:56rem;margin:0 auto;padding:1.2rem}
+  section{display:none}
+  section.on{display:block}
+  h2{font-size:1.05rem;margin:.2rem 0 .5rem}
+  .lede{color:var(--soft);font-size:.92rem}
+  pre,code{font-family:var(--mono)}
+  pre{
+    background:var(--panel);border:1px solid var(--rule);border-radius:5px;
+    padding:.6rem .7rem;overflow-x:auto;font-size:.76rem;line-height:1.5;color:#bcd4cc;
+  }
+  .row{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-start;margin:.8rem 0}
+  .card{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:.7rem .8rem;flex:1;min-width:16rem}
+  .card h3{margin:0 0 .4rem;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--soft);font-weight:600}
+  canvas{display:block;background:#070c0b;border:1px solid var(--rule);border-radius:5px;max-width:100%}
+  label.sl{display:block;font-size:.78rem;color:var(--soft);margin:.45rem 0 0}
+  label.sl b{color:var(--ink);font-family:var(--mono);float:right}
+  input[type=range]{width:100%;accent-color:var(--sensor);margin:.15rem 0 0}
+  .note{font-size:.8rem;color:var(--soft);border-left:2px solid var(--rule);padding-left:.7rem;margin:.7rem 0}
+  .warn{border-left-color:var(--muscle);color:#d3a894}
+  table{border-collapse:collapse;font-size:.78rem;width:100%}
+  td,th{border-bottom:1px solid var(--rule);padding:.25rem .4rem;text-align:left}
+  th{color:var(--soft);font-weight:600}
+  .legend span{display:inline-flex;align-items:center;gap:.3rem;margin-right:.8rem;font-size:.76rem;color:var(--soft)}
+  .legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  button.act{font:inherit;font-size:.78rem;padding:.3rem .7rem;background:var(--panel);color:var(--ink);
+             border:1px solid var(--rule);border-radius:4px;cursor:pointer;margin:.4rem .3rem .1rem 0}
+  button.act:hover{border-color:var(--sensor)}
+  button.act:disabled{opacity:.35;cursor:default;border-color:var(--rule)}
+  /* The central affordance of the growth card. It inherited the same outlined
+     chip style as the secondary controls and read as another passive label. */
+  button.act.primary{
+    background:var(--sensor); border-color:var(--sensor); color:#06110f;
+    font-weight:600; width:100%; padding:.45rem .7rem; margin-top:.5rem;
+  }
+  button.act.primary:hover{filter:brightness(1.08)}
+  button.act.primary:disabled{background:var(--rule);border-color:var(--rule);color:var(--soft)}
+  .pager{display:flex;justify-content:space-between;margin:1.6rem 0 3rem;gap:.5rem}
+  .gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem}
+  .gallery canvas{width:100%;height:auto;aspect-ratio:1;cursor:pointer}
+  .gallery canvas.sel{border-color:var(--sensor);box-shadow:0 0 0 1px var(--sensor)}
+  .transport{display:flex;gap:.6rem;align-items:center}
+  @media (max-width:560px){ .gallery{grid-template-columns:repeat(2,1fr)} }
+  /* The same two controls at the top. The step chips tell you where you are but
+     make you aim; these are where the hand already is after reading a section. */
+  .toppager{display:flex;gap:.4rem;align-items:center;margin-top:.55rem}
+  .toppager button{margin:0}
+  #stepWhere{font-size:.74rem;color:var(--soft);font-family:var(--mono);margin-left:.3rem}
+</style>
+
+<header>
+  <h1>Development 2 — how a genome becomes a body</h1>
+  <p>A guided read of <code>lib/devo2.js</code>. Every body on this page is grown by the
+     same <code>develop()</code> the world calls at each birth.</p>
+  <div class="toppager">
+    <button class="act" id="bPrevTop">&larr; back</button>
+    <button class="act" id="bNextTop">next &rarr;</button>
+    <span id="stepWhere"></span>
+  </div>
+  <nav id="nav"></nav>
+</header>
+
+<main>
+
+<section data-step="0">
+  <h2>0. What a genome is here</h2>
+  <p class="lede">Not a body, and not a wiring diagram. A genome is a small
+  <strong>gene regulatory network</strong>: a recipe for a process that runs inside an egg
+  and leaves a body behind.</p>
+
+  <div class="row">
+    <div class="card">
+      <h3>the numbers</h3>
+      <table id="tblConst"></table>
+    </div>
+    <div class="card">
+      <h3>one gene's share of the genome</h3>
+      <pre id="preLayout"></pre>
+      <p class="note">Sparse on purpose. A dense 64-gene network would be 4,096 weights
+      and evolution would explore none of it, so each gene listens to just
+      <code id="kk"></code> others and structural mutation moves those edges around.</p>
+    </div>
+  </div>
+
+  <p class="note">The previous encoding (<code>devo.js</code>) painted each cell's properties
+  as a weighted sum of nine fixed functions of position. It had no time, no signalling and
+  no growth — and measured over 64 living genomes it produced bodies of elongation
+  p50 = p90 = max = 1.15, identical to random founders. The map <em>could</em> reach
+  elongation 4.0 with hand-made genomes; evolution never found it. That failure is why
+  this model exists.</p>
+</section>
+
+<section data-step="1">
+  <h2>1. The egg, and what the mother provides</h2>
+  <p class="lede">A cell cannot know where it is unless something tells it. The mother lays
+  down gradients in the egg; every cell reads them as the first few gene concentrations,
+  which it cannot change.</p>
+
+  <div class="row">
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvMaternal" width="300" height="300"></canvas>
+      <div style="margin-top:.4rem">
+        <button class="act" data-mat="0">ap — head to tail</button>
+        <button class="act" data-mat="1">dv — across</button>
+        <button class="act" data-mat="2">rad — centre to shell</button>
+        <button class="act" data-mat="3">noise — the seed of asymmetry</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>why these four</h3>
+      <p style="font-size:.85rem"><code>ap</code> and <code>dv</code> give an axis and a
+      side. <code>rad</code> tells a cell whether it is in the interior or at the surface.
+      <code>noise</code> is fixed per site and is the only thing that distinguishes two
+      otherwise identical positions.</p>
+      <p class="note">Noise matters more than it looks. A perfectly symmetric network in a
+      perfectly symmetric egg stays symmetric forever — there is nothing to break the tie.
+      Real embryos have the same problem and solve it the same way.</p>
+      <p class="note warn">There is also <code>crowd</code>, which is not maternal: it is
+      how many neighbours a cell currently has. That is the one input that changes as the
+      body grows, and it is what lets the network know it has finished.</p>
+    </div>
+  </div>
+</section>
+
+<section data-step="2">
+  <h2>2. One gene, on its own</h2>
+  <p class="lede">Every gene product is a concentration that is produced and decays. This is
+  the whole dynamical law, quoted from the module:</p>
+
+  <pre>dc_g/dt = P * sigmoid(bias_g + SUM_k w_gk * c_src(g,k))  -  decay_g * c_g
+                                                          +  D_g * laplacian</pre>
+
+  <p class="lede">CTRNN-shaped — the same gather-and-squash — but concentrations cannot go
+  negative, and decay is what oscillators are built from. Move the sliders and watch a
+  single gene with no regulators find its equilibrium.</p>
+
+  <div class="row">
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvOne" width="420" height="200"></canvas>
+    </div>
+    <div class="card">
+      <label class="sl">bias <b id="vBias">0.00</b>
+        <input type="range" id="sBias" min="-600" max="600" value="0"></label>
+      <label class="sl">decay <b id="vDecay">1.00</b>
+        <input type="range" id="sDecay" min="5" max="400" value="100"></label>
+      <p class="note">Equilibrium is where production balances decay:
+      <code>c* = sigmoid(bias) / decay</code>. A strongly negative bias switches the gene
+      off; a large decay makes it fast and faint. Neither is a mode — both are just
+      numbers in the genome.</p>
+    </div>
+  </div>
+</section>
+
+<section data-step="3">
+  <h2>3. Two genes that hate each other</h2>
+  <p class="lede">Mutual inhibition is the motif that breaks symmetry, and it is not a
+  special case in the code — it is simply <code>w_ab &lt; 0</code> and <code>w_ba &lt; 0</code>.
+  Two cells starting almost identically end up committed to opposite states.</p>
+
+  <div class="row">
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvTwo" width="420" height="200"></canvas>
+    </div>
+    <div class="card">
+      <label class="sl">mutual inhibition <b id="vInh">-4.0</b>
+        <input type="range" id="sInh" min="-1200" max="0" value="-400"></label>
+      <label class="sl">starting difference <b id="vSkew">0.02</b>
+        <input type="range" id="sSkew" min="0" max="200" value="20"></label>
+      <p class="note">With weak inhibition both settle to the same middling value and the
+      cells stay interchangeable. Past a threshold the tie breaks and the tiny initial
+      difference — in the real model, <code>noise</code> — decides which gene wins.</p>
+    </div>
+  </div>
+</section>
+
+<section data-step="4">
+  <h2>4. Diffusion, and why the rates differ</h2>
+  <p class="lede">Without transport each cell runs its network alone and the only spatial
+  information is the maternal gradient — the old model with extra steps. Patterns need a
+  <strong>slow activator against a fast inhibitor</strong>, so diffusion is per-product and
+  evolved, spanning two decades.</p>
+
+  <div class="row">
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvTuring" width="420" height="200"></canvas>
+    </div>
+    <div class="card">
+      <label class="sl">inhibitor diffusion ÷ activator <b id="vRatio">12</b>
+        <input type="range" id="sRatio" min="1" max="40" value="12"></label>
+      <p class="note">At a ratio near 1 the two spread together and smooth each other into a
+      flat field. Raise it and bands appear at a spacing the ratio sets — nobody wrote a
+      stripe count anywhere.</p>
+      <p class="note warn">This is the mechanism <em>available</em> for segmentation. Whether
+      evolution in this world has actually used it is a separate question, and the honest
+      answer measured so far is mostly no.</p>
+    </div>
+  </div>
+</section>
+
+<section data-step="5">
+  <h2>5. Sixteen eggs, one clock</h2>
+  <p class="lede">Sixteen different genomes, each starting as a single cell at the centre of
+  its own egg. Press play and watch them all develop together. Nothing here needs tuning —
+  the only control is time.</p>
+
+  <div class="gallery" id="gallery"></div>
+
+  <div class="card" style="margin-top:.8rem">
+    <div class="transport">
+      <button class="act primary" id="bPlay" style="width:auto;margin:0">&#9654;&nbsp; play</button>
+      <input type="range" id="sScrub" min="0" max="19" step="1" value="19" style="flex:1">
+      <span id="vClock" style="font-family:var(--mono);font-size:.78rem;color:var(--soft);min-width:8.5rem;text-align:right"></span>
+    </div>
+    <div id="prep" style="font-family:var(--mono);font-size:.76rem;color:var(--soft);margin-top:.5rem"></div>
+    <div class="legend" style="margin-top:.5rem">
+      <span><i style="background:var(--sensor)"></i>sensor</span>
+      <span><i style="background:var(--muscle)"></i>muscle</span>
+      <span><i style="background:var(--neuron)"></i>neuron</span>
+      <span><i style="background:var(--anchor)"></i>anchor</span>
+    </div>
+    <div style="margin-top:.5rem">
+      <button class="act" id="bNewDna">sixteen new genomes</button>
+      <span style="font-size:.78rem;color:var(--soft)">click any embryo to carry it into the next steps</span>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:.8rem">
+    <h3>grow the selected one much larger</h3>
+    <p style="font-size:.85rem;margin:.2rem 0 .5rem">The world stops development at 12,000&nbsp;ms
+    with a 60-cell cap. Nothing about the encoding requires that. Pick a size and watch the
+    same genome keep going.</p>
+    <div class="transport" style="flex-wrap:wrap">
+      <button class="act" data-big="0">~1,000 cells &middot; 3s</button>
+      <button class="act" data-big="1">~4,000 cells &middot; 25s</button>
+      <button class="act" data-big="2">~6,000 cells &middot; 2min</button>
+    </div>
+    <canvas id="cvBig" width="420" height="420" style="margin-top:.6rem;width:100%;height:auto;aspect-ratio:1"></canvas>
+    <div id="bigStats" style="font-family:var(--mono);font-size:.76rem;margin-top:.4rem"></div>
+    <p class="note warn">The page will not respond while this runs — development is
+    single-threaded and synchronous. The time estimates are measured, not guessed.</p>
+    <p class="note"><b>The egg is the mould.</b> At the world's egg size a body saturates
+    around a thousand cells however long it develops — 936 at 48,000&nbsp;ms against 1,004 at
+    96,000. Bigger bodies need a bigger EGG, not more time: 3,907 cells at twice the radius,
+    6,200 at two and a half times, 11,131 at over three. Growth expands until it meets the
+    shell and can then only fill in, which is also why these bodies come out round. An
+    elongated animal may be unreachable here not because the genome cannot express one, but
+    because a circular egg has no long axis to grow along.</p>
+  </div>
+
+  <p class="note">Every egg is drawn at the same scale, so what you are watching is size
+  changing, not an arrangement changing. Development is <em>canalised</em> — the noise is
+  derived from the genome — so each of these is one fixed process being replayed, not a
+  fresh roll each time you scrub.</p>
+
+  <p class="note warn">The world only ever runs the first 12,000&nbsp;ms of this, with a
+  60-cell cap. These bodies keep going to about 18,000 and reach a mean of 156 cells. The
+  animals in the live world are early stages of a process that was stopped, not finished
+  organisms — and the reason is cost, not biology: every cell diffuses to its neighbours
+  each tick, so development is quadratic in cells.</p>
+
+  <p class="note warn"><b>Watch for stripes. There mostly are not any.</b> Measured across 40
+  random genomes, counting sign changes in contractility along the long axis: mean 1.0 bands
+  at 12,000&nbsp;ms, 0.9 at 30,000, 0.27 at 60,000, one genome in forty reaching seven. One
+  band is head-and-tail polarity, not segmentation. Elongation FALLS as they grow — 1.58,
+  1.23, 1.09 — so they get bigger and rounder, filling a circular egg rather than extending
+  along an axis. The mechanism for banding exists and step 4 shows it working in isolation.
+  Evolution in this world has not used it.</p>
+</section>
+
+<section data-step="6">
+  <h2>6. Carving, not only building</h2>
+  <p class="lede">Shape does not have to come only from where growth happened. The
+  <code>survive</code> gene decides whether a cell is still part of the body when the egg
+  hatches — embryos remove as much as they add, and interdigital webbing is deleted rather
+  than never grown.</p>
+
+  <p class="note">There is a specific reason this exists. Patterning across a field — stripes,
+  bands, gap-gene domains — needs a field to pattern: a fly reads its gradients across
+  thousands of nuclei that already exist. A body extruded one cell at a time from a growing
+  tip never has that field, which is the leading suspect for why segmentation measures near
+  zero under pure tip growth. Cleavage fills the egg so a field exists, and
+  <code>survive</code> is what turns a filled egg into a shape rather than a disc.</p>
+
+  <div class="row">
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvCarve" width="300" height="300"></canvas>
+    </div>
+    <div class="card">
+      <label class="sl">survive threshold <b id="vThr">0.50</b>
+        <input type="range" id="sThr" min="0" max="100" value="50"></label>
+      <div id="carveStats" style="font-family:var(--mono);font-size:.76rem"></div>
+      <p class="note">Low threshold keeps almost everything and you get the disc back. High
+      threshold carves too hard and the body falls below the minimum size to live. The
+      interesting shapes are in between, which is where evolution has to find them.</p>
+    </div>
+  </div>
+</section>
+
+<section data-step="7">
+  <h2>7. What a cell ends up being</h2>
+  <p class="lede">Fifteen of the sixty-four gene products are read out as the cell's
+  properties. These are <strong>continuous capacities</strong>, and the kernel uses them
+  directly.</p>
+
+  <div class="row">
+    <div class="card"><h3>the readout genes</h3><pre id="preOut"></pre></div>
+    <div class="card">
+      <h3>label versus capability</h3>
+      <p style="font-size:.85rem">A cell is <em>labelled</em> by whichever of
+      <code>sense</code>, <code>contract</code> and <code>grip</code> is largest, with a
+      floor below which it is "just tissue". That label is a summary for humans.</p>
+      <p class="note warn">It used to be more than that. The kernel branched on it, so a
+      cell whose <code>grip</code> beat its <code>sense</code> by 0.008 could not sense at
+      all. Measured over 64 living genomes, the labelling was discarding 47% of the
+      contractility in the tissue and 42.7% of the sensing, and sixteen of sixty-four
+      bodies were functionally blind while carrying sensory tissue. All three gates are
+      gone; a cell now senses, contracts and grips in proportion to what it has.</p>
+      <div id="capStats" style="font-family:var(--mono);font-size:.76rem;margin-top:.5rem"></div>
+    </div>
+  </div>
+</section>
+
+<section data-step="8">
+  <h2>8. Mutation, and what it does to a body</h2>
+  <p class="lede">Perturb the genome and re-grow it. Small changes to weights usually shift a
+  body; changes to which gene listens to which can restructure it.</p>
+
+  <div class="row">
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvMutA" width="230" height="230"></canvas>
+      <p style="font-size:.76rem;color:var(--soft);margin:.3rem 0 0;text-align:center">parent</p>
+    </div>
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvMutB" width="230" height="230"></canvas>
+      <p style="font-size:.76rem;color:var(--soft);margin:.3rem 0 0;text-align:center">mutant</p>
+    </div>
+    <div class="card">
+      <label class="sl">weight mutation size <b id="vMut">0.32</b>
+        <input type="range" id="sMut" min="0" max="150" value="32"></label>
+      <button class="act" id="bMutate">mutate again</button>
+      <div id="mutStats" style="font-family:var(--mono);font-size:.76rem;margin-top:.5rem"></div>
+      <p class="note">Watch how often a mutation produces no body at all. Development can
+      fail — run out of yolk, or specify something too small to live — and the parent simply
+      loses the investment. That is a normal outcome, not an error.</p>
+    </div>
+  </div>
+</section>
+
+<section data-step="9">
+  <h2>9. Expert topics</h2>
+  <p class="lede">The parts that are easy to get wrong, and the measurements behind them.</p>
+
+  <div class="row">
+    <div class="card">
+      <h3>canalisation</h3>
+      <p style="font-size:.85rem">Developmental noise is derived from the genome, so one
+      genome grows one body every time. Before that, within-genome sd was 0.264 against
+      between-genome 0.084 — heritability 0.093 — and directed selection on morphology ran
+      <em>downhill</em>, because it was chasing lucky rolls rather than heritable shape.</p>
+    </div>
+    <div class="card">
+      <h3>synapses are expressed, not inherited</h3>
+      <p style="font-size:.85rem">A synapse's weight is not stored per edge. It is computed
+      from what its two endpoint cells are made of and where they sit. Copying a parent's
+      edge table instead would mean the brain is inherited as a literal wiring diagram while
+      the body develops — so a child whose body came out different would be wearing its
+      parent's connectome.</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h3>why the label is not the capability</h3>
+      <p style="font-size:.85rem">A cell is labelled by whichever of sense, contract and grip
+      is largest. The kernel used to branch on that label, and the cost was measured: 47% of
+      the contractility in the tissue unusable, 42.7% of the sensing discarded, 424 cells
+      losing the argmax by under 0.10, and sixteen of sixty-four bodies functionally blind
+      while carrying sensory tissue. One specimen had cells with sense 0.992 labelled anchor
+      because grip came out at 1.000 — a margin of 0.008 deciding that an animal could not
+      see. All three gates are gone.</p>
+    </div>
+    <div class="card">
+      <h3>a whole world of sensors reading noise</h3>
+      <p style="font-size:.85rem">All three sense channels are written as
+      <code>mix(noise, signal, acuity)</code>, and acuity comes from the gene
+      <code>senseTune</code>. Nothing ever wired <code>senseTune</code> to the sense gene, so
+      acuity was <strong>zero for every cell in the entire history of this world</strong> —
+      every sensor read pure noise, and since the energy cost also scales with acuity,
+      sensing was free at the same time. Free, universal and informationless.</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h3>what is deliberately absent</h3>
+      <p style="font-size:.85rem">No segment count. No limb primitive. No symmetry flag. The
+      structures worth having are meant to be <em>reachable</em> through the operator, never
+      arranged by it — the difference between making an outcome possible and imposing it,
+      which is the mistake this codebase has repeatedly had to undo.</p>
+    </div>
+    <div class="card">
+      <h3>the honest state</h3>
+      <p style="font-size:.85rem">Bodies of ~13 cells with about 1.8 distinct cell types.
+      Multicellularity is taxed: energy per cell falls monotonically with body size, measured
+      at &minus;0.4041 &plusmn; 0.0669. Differentiation needs spare cells, so until size pays
+      there is nothing to differentiate with. That is the blocker, and it is economic rather
+      than developmental.</p>
+    </div>
+  </div>
+</section>
+
+<div class="pager">
+  <button class="act" id="bPrev">&larr; back</button>
+  <button class="act" id="bNext">next &rarr;</button>
+</div>
+</main>
+
+<script type="module">
+import * as D from './lib/devo2.js';
+import { describe } from './lib/evolve.js';
+
+const $ = (id) => document.getElementById(id);
+const TYPE_COL = ['#99998c', '#66a89e', '#c7734f', '#8f709e'];
+
+/* ------------------------------------------------------------------ chrome */
+const sections = [...document.querySelectorAll('section')];
+const nav = $('nav');
+const TITLES = ['genome', 'the egg', 'one gene', 'two genes', 'diffusion',
+                'growth', 'carving', 'readout', 'mutation', 'expert'];
+let step = 0;
+TITLES.forEach((t, i) => {
+  const b = document.createElement('button');
+  b.textContent = `${i}. ${t}`;
+  b.onclick = () => show(i);
+  nav.appendChild(b);
+});
+function show(i) {
+  step = Math.max(0, Math.min(sections.length - 1, i));
+  sections.forEach((s, k) => s.classList.toggle('on', k === step));
+  [...nav.children].forEach((b, k) => b.classList.toggle('on', k === step));
+  $('stepWhere').textContent = `${step + 1} of ${sections.length}`;
+  for (const b of [$('bPrev'), $('bPrevTop')]) b.disabled = step === 0;
+  for (const b of [$('bNext'), $('bNextTop')]) b.disabled = step === sections.length - 1;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (step === 5) ensureGallery();
+  if (step === 6) drawCarve();
+  if (step === 7) fillReadout();
+  if (step === 8) drawMutants();
+}
+$('bPrev').onclick = $('bPrevTop').onclick = () => show(step - 1);
+$('bNext').onclick = $('bNextTop').onclick = () => show(step + 1);
+
+/* --------------------------------------------------------------- step 0 */
+$('tblConst').innerHTML = `
+  <tr><th>gene products</th><td>${D.NGENE}</td></tr>
+  <tr><th>regulators per gene</th><td>${D.K}</td></tr>
+  <tr><th>floats per gene</th><td>${D.GENE_STRIDE}</td></tr>
+  <tr><th>whole genome</th><td>${D.GENOME_SIZE} floats</td></tr>
+  <tr><th>egg extent</th><td>${D.DEFAULT_EXTENT}</td></tr>`;
+$('kk').textContent = D.K;
+$('preLayout').textContent =
+  `${D.K} source indices   which genes this one listens to (-1 = silent)\n` +
+  `${D.K} weights          how much, and with what sign\n` +
+  `1 bias             the gene's own tendency\n` +
+  `1 log-decay        how fast the product disappears\n` +
+  `1 log-diffusion    how far it spreads\n` +
+  `--\n${D.GENE_STRIDE} floats x ${D.NGENE} genes = ${D.NGENE * D.GENE_STRIDE}, ` +
+  `plus ${D.GENOME_SIZE - D.NGENE * D.GENE_STRIDE} synapse coefficients`;
+
+/* --------------------------------------------------------------- step 1 */
+let matWhich = 0;
+function drawMaternal() {
+  const cv = $('cvMaternal'), x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.clearRect(0, 0, W, H);
+  const R = W * 0.44, cx = W / 2, cy = H / 2;
+  const img = x.createImageData(W, H);
+  for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
+    const dx = (px - cx) / R, dy = (py - cy) / R;
+    const r = Math.hypot(dx, dy);
+    const o = (py * W + px) * 4;
+    if (r > 1) { img.data[o + 3] = 0; continue; }
+    let v;
+    if (matWhich === 0) v = (dx + 1) / 2;
+    else if (matWhich === 1) v = (dy + 1) / 2;
+    else if (matWhich === 2) v = r;
+    else { const h = Math.sin(px * 12.9898 + py * 78.233) * 43758.5453; v = h - Math.floor(h); }
+    img.data[o] = 40 + v * 150; img.data[o + 1] = 90 + v * 120; img.data[o + 2] = 90 + v * 60;
+    img.data[o + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+}
+document.querySelectorAll('[data-mat]').forEach(b => {
+  b.onclick = () => { matWhich = +b.dataset.mat; drawMaternal(); };
+});
+drawMaternal();
+
+/* --------------------------------------------------------------- step 2 */
+const sig = (z) => 1 / (1 + Math.exp(-z));
+function drawOne() {
+  const bias = +$('sBias').value / 100, decay = +$('sDecay').value / 100;
+  $('vBias').textContent = bias.toFixed(2);
+  $('vDecay').textContent = decay.toFixed(2);
+  const cv = $('cvOne'), x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.fillStyle = '#070c0b'; x.fillRect(0, 0, W, H);
+  const dt = 0.04, N = 300;
+  let c = 0; const pts = [];
+  for (let i = 0; i < N; i++) { c += (sig(bias) - decay * c) * dt; pts.push(c); }
+  const eq = sig(bias) / decay;
+  const top = Math.max(0.4, eq * 1.4);
+  x.strokeStyle = '#22322e'; x.beginPath();
+  x.moveTo(0, H - (eq / top) * H); x.lineTo(W, H - (eq / top) * H); x.stroke();
+  x.strokeStyle = '#66a89e'; x.lineWidth = 2; x.beginPath();
+  pts.forEach((v, i) => { const px = i / N * W, py = H - (v / top) * H;
+    i ? x.lineTo(px, py) : x.moveTo(px, py); });
+  x.stroke();
+  x.fillStyle = '#8ba39b'; x.font = '11px ui-monospace,monospace';
+  x.fillText(`equilibrium c* = sigmoid(bias)/decay = ${eq.toFixed(3)}`, 8, 14);
+}
+$('sBias').oninput = $('sDecay').oninput = drawOne;
+drawOne();
+
+/* --------------------------------------------------------------- step 3 */
+function drawTwo() {
+  const w = +$('sInh').value / 100, skew = +$('sSkew').value / 1000;
+  $('vInh').textContent = w.toFixed(1);
+  $('vSkew').textContent = skew.toFixed(3);
+  const cv = $('cvTwo'), x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.fillStyle = '#070c0b'; x.fillRect(0, 0, W, H);
+  const dt = 0.04, N = 300, decay = 1;
+  let a = 0.5 + skew, b = 0.5 - skew;
+  const A = [], B = [];
+  for (let i = 0; i < N; i++) {
+    const na = a + (sig(w * b) - decay * a) * dt;
+    const nb = b + (sig(w * a) - decay * b) * dt;
+    a = na; b = nb; A.push(a); B.push(b);
+  }
+  const top = Math.max(0.3, Math.max(...A, ...B) * 1.25);
+  const line = (arr, col) => { x.strokeStyle = col; x.lineWidth = 2; x.beginPath();
+    arr.forEach((v, i) => { const px = i / N * W, py = H - (v / top) * H;
+      i ? x.lineTo(px, py) : x.moveTo(px, py); }); x.stroke(); };
+  line(A, '#66a89e'); line(B, '#c7734f');
+  x.fillStyle = '#8ba39b'; x.font = '11px ui-monospace,monospace';
+  const sep = Math.abs(A[N - 1] - B[N - 1]);
+  x.fillText(sep > 0.05 ? `symmetry BROKEN — separation ${sep.toFixed(3)}`
+                        : `still symmetric — separation ${sep.toFixed(3)}`, 8, 14);
+}
+$('sInh').oninput = $('sSkew').oninput = drawTwo;
+drawTwo();
+
+/* --------------------------------------------------------------- step 4 */
+function drawTuring() {
+  const ratio = +$('sRatio').value;
+  $('vRatio').textContent = ratio;
+  const cv = $('cvTuring'), x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.fillStyle = '#070c0b'; x.fillRect(0, 0, W, H);
+  const N = 120, Da = 0.4, Db = 0.4 * ratio, dt = 0.02;
+  let a = new Float64Array(N), b = new Float64Array(N);
+  for (let i = 0; i < N; i++) { a[i] = 1 + (Math.sin(i * 3.3) * 0.5 + 0.5) * 0.06; b[i] = 1; }
+  const lap = (u, i) => u[(i - 1 + N) % N] - 2 * u[i] + u[(i + 1) % N];
+  for (let s = 0; s < 4000; s++) {
+    const na = new Float64Array(N), nb = new Float64Array(N);
+    for (let i = 0; i < N; i++) {
+      const f = a[i] * a[i] / Math.max(0.05, b[i]);
+      na[i] = a[i] + dt * (f - a[i] + Da * lap(a, i));
+      nb[i] = b[i] + dt * (a[i] * a[i] - b[i] + Db * lap(b, i));
+      na[i] = Math.max(0, na[i]); nb[i] = Math.max(0, nb[i]);
+    }
+    a = na; b = nb;
+  }
+  const hi = Math.max(...a) || 1;
+  for (let i = 0; i < N; i++) {
+    const v = a[i] / hi, px = i / N * W;
+    x.fillStyle = `rgb(${40 + v * 160},${90 + v * 110},${88 + v * 50})`;
+    x.fillRect(px, 0, W / N + 1, H);
+  }
+  let bands = 0;
+  for (let i = 0; i < N; i++) if (a[i] > hi * 0.6 && a[(i - 1 + N) % N] <= hi * 0.6) bands++;
+  x.fillStyle = '#0b0f0e'; x.fillRect(0, 0, 150, 20);
+  x.fillStyle = '#8ba39b'; x.font = '11px ui-monospace,monospace';
+  x.fillText(`${bands} band${bands === 1 ? '' : 's'}`, 8, 14);
+}
+$('sRatio').oninput = drawTuring;
+drawTuring();
+
+/* ------------------------------------------------------- shared body draw */
+/**
+ * FIXED SCALE, SET BY THE EGG — not autoscaled to the body.
+ *
+ * This used to fit each body to the canvas. Every embryo then filled the frame
+ * whatever its size, so dragging the developmental-time slider showed cells
+ * REARRANGING rather than a body growing, which is the one thing step 5 exists to
+ * teach. The egg circle stayed put while the scale moved under it, so the circle
+ * was not a reference for anything. (Codex caught this reviewing the page.)
+ *
+ * The egg is now the ruler: `extent` maps to a fixed radius, cells sit at their
+ * true coordinates inside it, and a two-cell embryo is genuinely small. A body
+ * that outgrows the egg — which happens at long developmental times — zooms out
+ * to fit and says so, rather than silently changing what the picture means.
+ */
+function drawBody(cv, cells, extent = D.DEFAULT_EXTENT) {
+  const x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.fillStyle = '#070c0b'; x.fillRect(0, 0, W, H);
+  const eggPx = Math.min(W, H) * 0.44;
+  let reach = extent;
+  if (cells && cells.length) {
+    for (const c of cells) reach = Math.max(reach, Math.hypot(c.x, c.y) + 0.5);
+  }
+  const zoomedOut = reach > extent * 1.02;
+  const sc = eggPx / reach;                    // world units -> pixels
+  // the egg, at its true size under this scale
+  x.strokeStyle = zoomedOut ? '#2b3d38' : '#1b2a27';
+  x.beginPath(); x.arc(W / 2, H / 2, extent * sc, 0, Math.PI * 2); x.stroke();
+  if (!cells || !cells.length) {
+    x.fillStyle = '#6b7d78'; x.font = '12px ui-monospace,monospace';
+    x.fillText('no body — development failed', 14, H / 2);
+    return;
+  }
+  const r = Math.max(1.2, sc * 0.34);
+  for (const c of cells) {
+    x.fillStyle = TYPE_COL[describe(c)];
+    x.beginPath();
+    x.arc(W / 2 + c.x * sc, H / 2 + c.y * sc, r, 0, Math.PI * 2);
+    x.fill();
+  }
+  if (zoomedOut) {
+    x.fillStyle = '#8ba39b'; x.font = '10px ui-monospace,monospace';
+    x.fillText(`zoomed out ${(reach / extent).toFixed(1)}x — body has outgrown the egg`, 8, H - 8);
+  }
+}
+
+/* --------------------------------------------------------------- step 5 */
+/**
+ * SIXTEEN EGGS ON ONE CLOCK.
+ *
+ * The previous version of this step was a single body and a row of sliders —
+ * developmental time, cell budget, a blocking "grow" button — which asked the
+ * reader to guess values for controls whose meaning is the thing being taught.
+ * Nobody should have to tune a demo to see the point of it.
+ *
+ * PRECOMPUTED, because scrubbing has to be instant. develop() is called FRAMES
+ * times per genome at increasing horizons, which is legitimate rather than a
+ * shortcut: development is canalised, so a shorter horizon is a snapshot of one
+ * fixed process rather than a different roll. Measured: 16 genomes x 20 frames =
+ * 320 develops in 6.3 s at dtMs 160, mean final body 156 cells, largest 356. The
+ * work is chunked so the page keeps painting and can say how far along it is.
+ *
+ * Only x, y and the type label are kept per cell. The full cell objects would be
+ * about ten times the memory for nothing — drawing needs a position and a colour.
+ */
+// Both of these lived in the single-genome growth block this step replaced, and
+// the later steps (carving, readout, mutation) still depend on `genome` being the
+// one the reader picked here.
+function seeded(sd) {
+  let v = sd >>> 0;
+  return () => ((v = (Math.imul(v, 1664525) + 1013904223) >>> 0) / 4294967296);
+}
+let genome = null;
+
+/**
+ * Develop the genome the reader picked in the gallery. Steps 6 to 8 all go
+ * through here.
+ *
+ * Falls back to the first gallery seed if the reader jumped straight to a later
+ * step without visiting step 5 — those steps are about one body and should not
+ * be blank just because the tour was taken out of order.
+ */
+function grow(ms, extra = {}) {
+  if (!genome) genome = D.randomGenome(seeded(GAL_SEEDS[0]));
+  try {
+    return D.develop(genome, { ms, dtMs: GAL_DT, extent: D.DEFAULT_EXTENT,
+                               maxCells: 400, yolk: 1e9, ...extra });
+  } catch { return { cells: [] }; }
+}
+
+const GAL = 16, FRAMES = 20, GAL_MS = 18000, GAL_DT = 160;
+// Seeds chosen by scanning 600 for bodies over 45 cells, ranked by how many
+// distinct cell types they end up with. Hand-picked so the grid shows variety
+// rather than sixteen versions of the same blob.
+const GAL_SEEDS = [208, 229, 181, 49, 217, 143, 16, 97,
+                   226, 69, 193, 168, 104, 269, 80, 177];
+let galGenomes = [], galFilm = [], galSel = 0, playing = false, playRAF = 0;
+
+function seedsToGenomes(seeds) {
+  return seeds.map(sd => D.randomGenome(seeded(sd)));
+}
+function randomGenomes(n) {
+  return Array.from({ length: n }, () => D.randomGenome(Math.random));
+}
+
+function buildGallery() {
+  const g = $('gallery');
+  g.innerHTML = '';
+  for (let i = 0; i < GAL; i++) {
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 200;
+    cv.title = `embryo ${i + 1}`;
+    cv.onclick = () => { galSel = i; genome = galGenomes[i]; paintGallery(); };
+    g.appendChild(cv);
+  }
+}
+
+/** Develop every genome at every horizon, yielding so the page stays alive. */
+async function precompute() {
+  galFilm = galGenomes.map(() => []);
+  const total = GAL * FRAMES;
+  let done = 0;
+  for (let f = 1; f <= FRAMES; f++) {
+    const ms = Math.round(GAL_MS * f / FRAMES);
+    for (let i = 0; i < GAL; i++) {
+      let cells = [];
+      try {
+        const r = D.develop(galGenomes[i], { ms, dtMs: GAL_DT,
+          extent: D.DEFAULT_EXTENT, maxCells: 400, yolk: 1e9 });
+        cells = r.cells.map(c => ({ x: c.x, y: c.y, t: describe(c) }));
+      } catch { /* a failed development is a normal outcome; leave it empty */ }
+      galFilm[i][f - 1] = cells;
+      done++;
+    }
+    $('prep').textContent = `developing… ${Math.round(100 * done / total)}%`;
+    paintGallery(f - 1);
+    await new Promise(r => setTimeout(r, 0));
+  }
+  $('prep').textContent =
+    `${GAL} genomes x ${FRAMES} snapshots, precomputed — scrubbing is instant from here`;
+}
+
+/** Cells here are {x,y,t}, so this cannot reuse drawBody's describe() path. */
+function paintTile(cv, cells) {
+  const x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.fillStyle = '#070c0b'; x.fillRect(0, 0, W, H);
+  const eggPx = Math.min(W, H) * 0.44, extent = D.DEFAULT_EXTENT;
+  let reach = extent;
+  for (const c of cells) reach = Math.max(reach, Math.hypot(c.x, c.y) + 0.5);
+  const sc = eggPx / reach;
+  x.strokeStyle = '#1b2a27'; x.beginPath();
+  x.arc(W / 2, H / 2, extent * sc, 0, Math.PI * 2); x.stroke();
+  const r = Math.max(1, sc * 0.34);
+  for (const c of cells) {
+    x.fillStyle = TYPE_COL[c.t];
+    x.beginPath(); x.arc(W / 2 + c.x * sc, H / 2 + c.y * sc, r, 0, Math.PI * 2); x.fill();
+  }
+}
+
+function paintGallery(frame = +$('sScrub').value) {
+  const tiles = $('gallery').children;
+  let cells = 0;
+  for (let i = 0; i < GAL; i++) {
+    const film = galFilm[i] || [];
+    const snap = film[Math.min(frame, film.length - 1)] || [];
+    cells += snap.length;
+    paintTile(tiles[i], snap);
+    tiles[i].classList.toggle('sel', i === galSel);
+  }
+  const ms = Math.round(GAL_MS * (frame + 1) / FRAMES);
+  $('vClock').textContent = `${ms} ms · ${cells} cells`;
+}
+
+$('sScrub').oninput = () => paintGallery();
+$('bPlay').onclick = () => {
+  playing = !playing;
+  $('bPlay').innerHTML = playing ? '&#10073;&#10073;&nbsp; pause' : '&#9654;&nbsp; play';
+  if (!playing) { cancelAnimationFrame(playRAF); return; }
+  let last = performance.now(), acc = 0;
+  const tick = (t) => {
+    if (!playing) return;
+    acc += t - last; last = t;
+    if (acc > 90) {                       // ~11 frames a second reads as growth
+      acc = 0;
+      const sl = $('sScrub');
+      let f = +sl.value + 1;
+      if (f > FRAMES - 1) f = 0;          // loop, so it can be left running
+      sl.value = f; paintGallery(f);
+    }
+    playRAF = requestAnimationFrame(tick);
+  };
+  playRAF = requestAnimationFrame(tick);
+};
+$('bNewDna').onclick = async () => {
+  if (playing) $('bPlay').click();
+  galGenomes = randomGenomes(GAL);
+  genome = galGenomes[galSel];
+  $('prep').textContent = 'developing…';
+  await precompute();
+};
+
+// MEASURED, not estimated. Egg radius is what decides the ceiling; developmental
+// time only decides how close to it you get. See the note in the card.
+const BIG_PRESETS = [
+  { ms: 48000,  extent: 12, label: '~1,000 cells' },
+  { ms: 96000,  extent: 24, label: '~4,000 cells' },
+  { ms: 150000, extent: 30, label: '~6,000 cells' },
+];
+document.querySelectorAll('[data-big]').forEach(btn => {
+  btn.onclick = () => {
+    if (playing) $('bPlay').click();
+    const pre = BIG_PRESETS[+btn.dataset.big];
+    const all = [...document.querySelectorAll('[data-big]')];
+    all.forEach(b => b.disabled = true);
+    $('bigStats').textContent = `developing embryo ${galSel + 1} at egg radius ${pre.extent}…`;
+    setTimeout(() => {
+      const t0 = performance.now();
+      let r;
+      try {
+        r = D.develop(galGenomes[galSel], { ms: pre.ms, dtMs: GAL_DT,
+          extent: pre.extent, maxCells: 40000, yolk: 1e9 });
+      } catch (e) {
+        $('bigStats').textContent = 'development failed: ' + e.message;
+        all.forEach(b => b.disabled = false); return;
+      }
+      const secs = ((performance.now() - t0) / 1000).toFixed(1);
+      const cells = r.cells.map(c => ({ x: c.x, y: c.y, t: describe(c) }));
+      paintTileExtent($('cvBig'), cells, pre.extent);
+      const hist = [0,0,0,0];
+      for (const c of cells) hist[c.t]++;
+      $('bigStats').innerHTML =
+        `<b>${cells.length} cells</b> in ${secs}s &nbsp; ` +
+        `(the world would have stopped at 60)<br>` +
+        `neuron ${hist[0]} sensor ${hist[1]} muscle ${hist[2]} anchor ${hist[3]}`;
+      all.forEach(b => b.disabled = false);
+    }, 30);
+  };
+});
+
+/** Same as paintTile but with the egg radius supplied, since these are not 12. */
+function paintTileExtent(cv, cells, extent) {
+  const x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.fillStyle = '#070c0b'; x.fillRect(0, 0, W, H);
+  const eggPx = Math.min(W, H) * 0.46;
+  let reach = extent;
+  for (const c of cells) reach = Math.max(reach, Math.hypot(c.x, c.y) + 0.5);
+  const sc = eggPx / reach;
+  x.strokeStyle = '#1b2a27'; x.beginPath();
+  x.arc(W/2, H/2, extent * sc, 0, Math.PI * 2); x.stroke();
+  const r = Math.max(0.7, sc * 0.34);
+  for (const c of cells) {
+    x.fillStyle = TYPE_COL[c.t];
+    x.beginPath(); x.arc(W/2 + c.x*sc, H/2 + c.y*sc, r, 0, Math.PI*2); x.fill();
+  }
+}
+
+let galleryReady = false;
+async function ensureGallery() {
+  if (galleryReady) return;
+  galleryReady = true;
+  galGenomes = seedsToGenomes(GAL_SEEDS);
+  genome = galGenomes[0];
+  buildGallery();
+  await precompute();
+}
+
+/**
+ * BANDS ALONG THE BODY'S LONG AXIS — sign changes in mean contractility, the
+ * same measure devo.js calls `segments`, but binned along whichever axis is
+ * longer rather than always along x, since a body that grew across the egg would
+ * otherwise report its stripes as noise.
+ *
+ * One flip is head-and-tail polarity, not segmentation. Real banding starts at
+ * three or four.
+ */
+function banding(cells, B = 16) {
+  if (!cells || cells.length < 8) return { flips: 0, elong: 1 };
+  let lo=Infinity, hi=-Infinity, ylo=Infinity, yhi=-Infinity;
+  for (const c of cells) { lo=Math.min(lo,c.x); hi=Math.max(hi,c.x);
+                           ylo=Math.min(ylo,c.y); yhi=Math.max(yhi,c.y); }
+  const spanX = Math.max(1e-6, hi-lo), spanY = Math.max(1e-6, yhi-ylo);
+  const alongX = spanX >= spanY;
+  const a0 = alongX ? lo : ylo, span = alongX ? spanX : spanY;
+  const acc = new Float64Array(B), cnt = new Float64Array(B);
+  for (const c of cells) {
+    const v = alongX ? c.x : c.y;
+    const b = Math.min(B-1, Math.floor((v-a0)/span*B));
+    acc[b] += c.contract; cnt[b]++;
+  }
+  let flips = 0, prev = 0;
+  for (let b = 0; b < B; b++) {
+    if (!cnt[b]) continue;
+    const m = acc[b]/cnt[b];
+    if (prev !== 0 && Math.sign(m) !== Math.sign(prev)) flips++;
+    if (m !== 0) prev = m;
+  }
+  return { flips, elong: Math.max(spanX,spanY)/Math.min(spanX,spanY) };
+}
+
+/* --------------------------------------------------------------- step 6 */
+function drawCarve() {
+  const thr = +$('sThr').value / 100;
+  $('vThr').textContent = thr.toFixed(2);
+  const g = grow(12000, { surviveThresh: thr });
+  drawBody($('cvCarve'), g.cells);
+  $('carveStats').innerHTML = `cells kept &nbsp;${(g.cells || []).length}`;
+}
+$('sThr').oninput = drawCarve;
+
+/* --------------------------------------------------------------- step 7 */
+function fillReadout() {
+  $('preOut').textContent = D.OUTPUTS
+    .map((o, i) => `${String(D.OUT_BASE + i).padStart(2)}  ${o}`).join('\n');
+  const g = grow(12000);
+  const cells = g.cells || [];
+  if (!cells.length) { $('capStats').textContent = 'no body'; return; }
+  let sense = 0, con = 0, grip = 0, canSense = 0, canGrip = 0;
+  for (const c of cells) {
+    sense += Math.max(0, c.sense); con += Math.abs(c.contract); grip += Math.max(0, c.grip);
+    if (c.sense > 0.15) canSense++;
+    if (c.grip > 0.15) canGrip++;
+  }
+  const n = cells.length, hist = [0, 0, 0, 0];
+  for (const c of cells) hist[describe(c)]++;
+  $('capStats').innerHTML =
+    `by label &nbsp; neuron ${hist[0]} sensor ${hist[1]} muscle ${hist[2]} anchor ${hist[3]}<br>` +
+    `by capacity &nbsp; can sense ${canSense}/${n} &nbsp; can grip ${canGrip}/${n}<br>` +
+    `mean |contract| ${(con / n).toFixed(2)}`;
+}
+
+/* --------------------------------------------------------------- step 8 */
+function drawMutants() {
+  const size = +$('sMut').value / 100;
+  $('vMut').textContent = size.toFixed(2);
+  const parent = grow(12000);
+  drawBody($('cvMutA'), parent.cells);
+  let mutant = { cells: [] }, mg = genome;
+  try {
+    mg = D.mutate(genome, Math.random, { rate: 0.14, size });
+    mutant = D.develop(mg, { ms: 12000, extent: D.DEFAULT_EXTENT, maxCells: 60 });
+  } catch { /* a failed development is a normal outcome */ }
+  drawBody($('cvMutB'), mutant.cells);
+  const a = (parent.cells || []).length, b = (mutant.cells || []).length;
+  $('mutStats').innerHTML =
+    `parent ${a} cells &rarr; mutant ${b} cells` +
+    (b === 0 ? '<br><span style="color:#c7734f">development failed — the parent lost the yolk</span>' : '');
+}
+$('sMut').oninput = drawMutants;
+$('bMutate').onclick = drawMutants;
+
+show(0);
+</script>

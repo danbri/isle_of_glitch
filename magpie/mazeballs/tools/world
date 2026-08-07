@@ -33,7 +33,13 @@ cmd_start() {
     cmd_stop
   fi
   local args=("$@")
-  [ ${#args[@]} -eq 0 ] && args=(--beasts 1200 --cells 12 --port "$PORT_DEFAULT")
+  # These defaults were three renames out of date and produced a world nobody
+  # would want. --beasts no longer exists (it was two quantities under one name
+  # and was removed), and --cells stopped meaning the founder ring size: it is
+  # now the TOTAL cell budget. So `./tools/world start` with no arguments asked
+  # for a universe of twelve cells, and passed a flag that is gone.
+  [ ${#args[@]} -eq 0 ] && args=(--cells 25000 --bound 132 --port "$PORT_DEFAULT" \
+                                 --maxAge 25000 --ageSpread 0.35)
   echo "${args[*]}" > "$HERE/runs/world.cmd"
 
   ( cd "$HERE" && nohup deno run -A tools/serve-world.js "${args[@]}" \
@@ -111,7 +117,14 @@ cmd_tailscale() {
 case "${1:-}" in
   start)     shift; cmd_start "$@" ;;
   stop)      cmd_stop ;;
-  restart)   shift; cmd_stop; cmd_start "$@" ;;
+  # RESTART RESUMES. It used to reseed — stop, then start with no --resume —
+  # while the HTTP /control action of the same name resumed, so the same word
+  # meant opposite things depending on where you typed it. That destroyed a
+  # 970,000-step run on 2026-08-05. Pass --no-resume for the old behaviour.
+  restart)
+    shift
+    if [ "${1:-}" = "--no-resume" ]; then shift; cmd_stop; cmd_start "$@"
+    else cmd_stop; cmd_start "$@" --resume; fi ;;
   status)    cmd_status ;;
   log)       tail -f "$LOGFILE" ;;
   tailscale) shift; cmd_tailscale "${1:-status}" ;;

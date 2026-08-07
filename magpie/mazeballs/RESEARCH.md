@@ -6824,3 +6824,89 @@ chosen, and how many worlds a comparison costs.
 It also reframes every null above. "Not implicated" was reported as "does not
 matter". It should have been reported as "does not suffice alone", which is a
 much weaker claim and leaves those mechanisms in play as conjuncts.
+
+## 2026-08-07 — the green-light test, run for the first time, and failed
+
+`AUTORESEARCH.md` §8 gates the whole autoresearch programme on one criterion:
+*"Green light = a config scored twice gives the same `net` within SE."* Nobody had
+run it. `tools/green-light.js` runs it.
+
+Same config, same seed, 6,000 steps, twice:
+
+```
+alive            416            416   same
+births            76             86   DIFFER
+deaths            76             86   DIFFER
+lineages         351            347   DIFFER
+liveCells       5068           5162   DIFFER
+eSum        13405.39       13651.23   DIFFER
+pSum       -96287.11      -70961.27   DIFFER
+non-finite                 0 / 0
+```
+
+Noise floor at the same config across six seeds: births cv 7.1%, lineages 1.2%,
+meanEnergy 1.7%. So births differ run-to-run by 10 against an across-seed SE of
+2.36 — **4.2 SE, a clear fail of the stated criterion.**
+
+**The world is not reproducible.** The likely cause is the atomics-based spatial
+hash: bucket insertion order races between invocations, neighbour iteration order
+follows it, floating-point summation order follows that, and a chaotic system
+amplifies the last bit into a 13% difference in births over 6,000 steps. Nothing
+here is a NaN or a crash; every individual force is correct.
+
+**A correction to my own reporting.** The same run showed `alive` with sd 0.000
+across all six seeds, which I first read as remarkable stability. It is not a
+measurement at all: 416 is the body-slot ceiling (5,000 cells / 12 per founder),
+so the population is saturated against bookkeeping and cannot vary. A statistic
+that cannot move is not evidence that the thing it measures is stable.
+
+**What follows.** Every measurement in this project is a sample from a
+distribution, not a repeatable observation, and "run it again to check" does not
+work here. Effects must be established across seeds with the noise floor above in
+hand. This does not invalidate the large measured effects — the multicellularity
+tax at −0.4041 is far outside this — but it does mean no experiment should ever
+again be reported from a single run, and it means the autoresearch loop cannot be
+closed on the criterion as written. Either the hash is made deterministic, or the
+criterion changes from "same answer" to "same answer within a measured noise
+floor", which is a different and weaker claim than §8 intends.
+
+## 2026-08-07 — H4 falsified: counting competitors does not make size pay
+
+Pre-registered in `runs/PREREGISTERED-size-pays.md`. The hypothesis, from Codex,
+was structural rather than statistical:
+
+> To make movement pay, a patch must be punished for being worked.
+> A body is a thing that works a patch.
+> So the rule that makes movement pay also punishes being a body.
+
+The kernel already had the fix and had it switched off: regrowth suppression is
+driven by `rivals = sum_j bodySize_j ^ (-grazeBodyShare)`, and at
+`grazeBodyShare = 0` a rival is a mouth, so an N-cell body suppresses its own
+ground N times over. At 1.0 a body counts once however large. Paired worlds,
+identical seeds and founders, 4 replicates, both horizons.
+
+```
+                contrast at 0.0     contrast at 1.0     change
+first  (8k)     -0.2141 +-0.0721    -0.0242 +-0.0777    +0.190  +-0.106
+deep  (80k)     -0.0869 +-0.0408    -0.1123 +-0.0214    -0.026  +-0.046
+```
+
+**Both horizons fail the pre-registered 2 SE bar, and the deep horizon reverses
+direction.** The falsifier was written before the run and is met. H4 is rejected.
+
+Two things worth keeping from a negative result.
+
+The first-horizon effect was large, consistent in 4 of 4 replicates, and in the
+predicted direction. It would have been entirely persuasive on its own. Adding
+replicates until it cleared 2 SE was available and tempting; the deep horizon
+says it would have been wrong. That is the sixth effect in this project to clear
+or approach a bar at a first horizon and fail at ten times it.
+
+The tax itself weakens with time regardless of the parameter: −0.2141 at 8k
+against −0.0869 at 80k in the control arm. So the multicellularity tax is partly
+a transient of young worlds, and any measurement of it at a short horizon
+overstates it. The published −0.4041 was taken from a live world of unknown age
+and inherits that.
+
+The crowding argument remains a good reading of the design. It is simply not what
+is binding.

@@ -78,6 +78,20 @@ h2{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:
 .sl .lab{display:flex;justify-content:space-between}
 .sl .v{font-family:var(--mono);color:var(--ink)}
 input[type=range]{width:100%;accent-color:var(--sensor);margin:0}
+/* THIS VIEWER ONLY. Everything else in the panel edits the world on the server
+   and every watcher sees it; these change nothing but your own window. The two
+   were interleaved with no way to tell them apart, so a slider that alters the
+   physics for everyone looked exactly like one that dims some dots. */
+#localOnly{
+  border:1px solid #2c4a52; border-radius:5px; padding:.5rem .55rem .55rem;
+  margin:.55rem 0 .2rem; background:rgba(80,140,160,.05);
+}
+#localOnly > .cap{
+  font-size:.63rem; letter-spacing:.09em; text-transform:uppercase;
+  color:#7fb3c4; opacity:.95; margin:0 0 .4rem;
+}
+#localOnly input[type=range]{accent-color:#7fb3c4}
+#localOnly h2{color:#7fb3c4}
 .row{display:flex;gap:.4rem;flex-wrap:wrap}
 button{
   font:inherit;font-size:.76rem;color:var(--ink);background:#16211F;border:1px solid var(--rule);
@@ -134,6 +148,19 @@ button.on::before { content: '\25CF\00a0'; opacity: .85; }
   padding: .35rem .6rem; text-align: center; max-width: 70vw; }
 #codeWarn b { color: #ffb84d; }
 
+/* A SELECTION IS A STATE OF THE PICTURE, so it is announced in the picture.
+   Selecting an animal dims every other cell, and the dimming lasts until it is
+   cleared — which can be minutes after the click, or a selection made from the
+   gallery rather than by clicking the world. With nothing on screen saying so,
+   a dimmed world is indistinguishable from a broken one. */
+#selBadge { position: fixed; top: .5rem; left: 50%; transform: translateX(-50%);
+  z-index: 46; font: 11px/1.5 ui-monospace, monospace; color: #cfe3dc;
+  background: #11201cee; border: 1px solid #2f5b50; border-radius: 3px;
+  padding: .2rem .25rem .2rem .55rem; display: none; align-items: center; gap: .5rem;
+  white-space: nowrap; max-width: 96vw; }
+#selBadge.on { display: flex; }
+#selBadge b { color: #eaf5f0; }
+
 /* THE CREATURE CAROUSEL. A scroll strip rather than a grid, because the tiles
    are RANKED — the order carries meaning, so the best movers stay first and
    visible instead of being spread over a block. */
@@ -179,6 +206,16 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 <!-- CTRNN scope. Rows are the selected animal's neurons, x is time. Lives over
      the canvas rather than in the sidebar because it needs the width: reading a
      gait means seeing whether bands are in phase, and that is a wide picture. -->
+<!-- OUTSIDE THE PANEL, deliberately. The right-hand aside has a
+     backdrop-filter, and a filter makes an element the containing block for its
+     fixed-position descendants — so a badge placed in there is positioned and
+     width-constrained by the panel rather than by the window, which is where it
+     needs to be. -->
+<div id="selBadge">
+  <span>watching <b id="selBadgeId">#0</b> · the rest of the world is dimmed</span>
+  <button id="bShowAll">show all</button>
+</div>
+
 <div id="scope" style="display:none">
   <div id="scopeGrip" title="drag to resize"><i></i><i></i><i></i></div>
   <div id="scopeHead">
@@ -219,6 +256,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   <i class="rule"></i>
   <span>sim <b id="hRate">–</b>×</span>
   <span>fps <b id="hFps">–</b></span>
+  <span>seen <b id="hSeen">–</b></span>
   <span>zoom <b id="hZoom">–</b></span>
   <span>gpu <b id="hGpu">–</b></span>
   <span>devo <b id="hDevo">–</b></span>
@@ -237,20 +275,22 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
     </div>
   </div>
 
-  <div class="sl"><div class="lab"><span>flow strength</span><span class="v" id="vStr">1.00</span></div>
-    <input type="range" id="sStr" min="0" max="300" value="100"></div>
-  <div class="sl"><div class="lab"><span>eddy scale</span><span class="v" id="vScale">0.90</span></div>
-    <input type="range" id="sScale" min="10" max="400" value="90"></div>
-  <div class="sl"><div class="lab"><span>drag</span><span class="v" id="vDrag">1.60</span></div>
-    <input type="range" id="sDrag" min="0" max="800" value="160"></div>
-  <div class="sl"><div class="lab"><span>current in the mud</span><span class="v" id="vMudFlow">1.15</span></div>
-    <input type="range" id="sMudFlow" min="0" max="800" step="5" value="115"></div>
-  <div class="sl"><div class="lab"><span>bond stiffness</span><span class="v" id="vSpring">90</span></div>
-    <input type="range" id="sSpring" min="1" max="300" value="90"></div>
-  <div class="sl"><div class="lab"><span>muscle contraction</span><span class="v" id="vCon">0.45</span></div>
-    <input type="range" id="sCon" min="0" max="100" value="45"></div>
+  <div class="sl"><div class="lab"><span>flow strength</span><span class="v" id="vStr">4.00</span></div>
+    <input type="range" id="sStr" min="0" max="2000" value="400"></div>
+  <div class="sl"><div class="lab"><span>eddy scale</span><span class="v" id="vScale">6.00</span></div>
+    <input type="range" id="sScale" min="10" max="3000" value="600"></div>
+  <div class="sl"><div class="lab"><span>drag</span><span class="v" id="vDrag">24.00</span></div>
+    <input type="range" id="sDrag" min="0" max="6000" value="2400"></div>
+  <div class="sl"><div class="lab"><span>current in the mud</span><span class="v" id="vMudFlow">2.00</span></div>
+    <input type="range" id="sMudFlow" min="0" max="2000" step="5" value="200"></div>
+  <div class="sl"><div class="lab"><span>bond stiffness</span><span class="v" id="vSpring">300</span></div>
+    <input type="range" id="sSpring" min="1" max="1500" value="300"></div>
+  <div class="sl"><div class="lab"><span>muscle contraction</span><span class="v" id="vCon">8.00</span></div>
+    <input type="range" id="sCon" min="0" max="4000" value="800"></div>
   <div class="sl"><div class="lab"><span>steps per frame</span><span class="v" id="vSpf">1</span></div>
     <input type="range" id="sSpf" min="0" max="40" value="1"></div>
+  <div id="localOnly">
+  <p class="cap">this viewer only &middot; changes nothing in the world</p>
   <div class="sl"><div class="lab"><span>render scale</span><span class="v" id="vRScale">0.70</span></div>
     <input type="range" id="sRScale" min="30" max="100" step="5" value="70"></div>
   <div class="sl"><div class="lab"><span>cell brightness</span><span class="v" id="vCellInk">1.00</span></div>
@@ -282,6 +322,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
       <button id="bReseed">reseed</button>
     </div>
   </div>
+  </div><!-- /localOnly -->
 
   <!-- Only meaningful when watching a server; hidden in local sandbox mode. -->
   <div id="codeWarn" style="display:none"></div>
@@ -523,13 +564,67 @@ struct Cam {
   streamSide  : f32,   // lines across, so side*side lines are drawn
   streamInk   : f32,
   cellInk     : f32,   // how loud the population is drawn, 0..1
-  padB0       : f32,
+  // APPENDED, NOT INSERTED. This field was declared between streamSteps and
+  // streamSide, while writeCam() writes it last — so the final four fields all
+  // read one slot early and the picture was wrong in three visible ways at once:
+  // the crowd got cellInk = topPass = 0 and every cell drew BLACK; streamSide
+  // read 0.62, so u32(max(1.0, 0.62)) = 1 and all 676 streamlines seeded in a
+  // single column off to one side, i.e. the current vanished; and topPass read
+  // STREAM_SIDE = 26, so selecting an animal made the whole crowd disappear
+  // instead of dimming. A uniform struct has no names on the wire, only offsets,
+  // and nothing checks that the two ends agree — so new fields go on the END,
+  // next to the write that fills them.
+  topPass     : f32,   // 1 = draw ONLY the inspected animal, over everything
+  lerp        : f32,   // 0 draws the previous server frame, 1 the newest — see drawPos
 };
 @group(0) @binding(0) var<uniform>       C     : Cam;
 @group(0) @binding(1) var<storage, read> pos   : array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read> act   : array<f32>;
 @group(0) @binding(3) var<storage, read> cmeta   : array<vec4<i32>>;
 @group(0) @binding(4) var<storage, read> bondIdx : array<i32>;
+// The frame BEFORE the one in pos/act. Only watch mode fills these; a page
+// running its own simulation binds the live buffers here and never tweens.
+@group(0) @binding(5) var<storage, read> prevPos : array<vec2<f32>>;
+@group(0) @binding(6) var<storage, read> prevAct : array<f32>;
+
+/* ---- drawing between two frames, without touching the simulation ---------- */
+//
+// In watch mode the page is shown roughly one server step in twenty-five, and
+// those arrive when the server has a frame and the network delivers it, not on
+// a regular beat. Drawing each one the instant it lands puts every cell through
+// a visible jump: the world moves in discrete kicks at whatever cadence the link
+// happens to have, which reads as a stuttering simulation rather than as a
+// sampled one. Nothing about the physics is irregular — only the sampling is.
+//
+// So the last two frames are both on the GPU and the renderer draws between
+// them. C.lerp is the fraction of the observed inter-frame interval that has
+// passed, so at lerp 0 the picture is the older frame and at 1 the newer. This
+// costs one frame of latency, which at the measured interval is a few tens of
+// milliseconds, and buys continuous motion.
+//
+// The exact-1 case returns pos untouched rather than mixing, because b + (a-b)
+// is not bit-identical to a and because a page with no previous frame binds the
+// live buffer twice — this makes that a guaranteed no-op instead of an almost.
+fn drawPos(i: u32) -> vec2<f32> {
+  if (C.lerp >= 1.0) { return pos[i]; }
+  let b = prevPos[i];
+  var d = pos[i] - b;
+  // Minimum image, as in lineVs: a cell that crossed the wrap seam between the
+  // two frames moved a short way in the world, and mixing the raw coordinates
+  // would instead slide it right across the map.
+  if (d.x >  C.bound) { d.x = d.x - 2.0 * C.bound; }
+  if (d.x < -C.bound) { d.x = d.x + 2.0 * C.bound; }
+  if (d.y >  C.bound) { d.y = d.y - 2.0 * C.bound; }
+  if (d.y < -C.bound) { d.y = d.y + 2.0 * C.bound; }
+  return b + d * C.lerp;
+}
+
+fn drawAct(slot: i32) -> f32 {
+  if (slot < 0) { return 0.0; }
+  let i = u32(slot);
+  if (C.lerp >= 1.0) { return act[i]; }
+  return mix(prevAct[i], act[i], C.lerp);
+}
 
 /* ---- background: the field the cells actually swim in, same definition ---- */
 
@@ -1120,17 +1215,33 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
     vec2(-1.0,  1.0), vec2(1.0, -1.0), vec2( 1.0, 1.0));
   let corner = q[vi];
   let m = cmeta[ii];
-  var a = 0.0;
-  if (m.y >= 0) { a = act[u32(m.y)]; }
+  var a = drawAct(m.y);
   // A non-finite activation must not silently erase the cell. It used to: the
   // radius is scaled by activation, so NaN produced a degenerate quad and the
   // creature simply was not drawn — which reads as "no creatures here" rather
   // than "something is wrong", and cost several diagnoses.
   if (a != a) { a = 0.0; }
+  // WHO IS BEING INSPECTED — needed here rather than further down, because it
+  // now decides which PASS draws this cell.
+  //
+  // The cells are one draw call with alpha blending and no depth buffer, so the
+  // painting order is instance order and nothing else. A selected creature
+  // living at a low index was simply painted over by every cell above it, and
+  // in a crowded patch — exactly where you most want to watch one animal — it
+  // vanished under the neighbours it was competing with.
+  //
+  // So the crowd is drawn without it, and it is drawn again on top. Two passes
+  // over the same instances: the wasted ones collapse to a degenerate point,
+  // which costs a vertex and no fragments.
+  let anyPicked = (C.selUid >= 0);
+  let picked = (anyPicked && m.z == C.selUid);
+  let wrongPass = select(picked, !picked, C.topPass > 0.5);
+
   // A vacated slot is not in the world and must not be on screen either.
   // Collapsing the quad to a degenerate point is cheaper than a branch that
   // still rasterises, and keeps the instance count fixed.
-  if (m.x < 0 || (C.soloBody >= 0 && m.z != C.soloBody) || C.cellsOn < 0.5) {
+  if (m.x < 0 || (C.soloBody >= 0 && m.z != C.soloBody) || C.cellsOn < 0.5
+      || (anyPicked && wrongPass)) {
     var dead: VOut;
     dead.p = vec4<f32>(0.0, 0.0, 0.0, 0.0);
     dead.uv = vec2<f32>(9.0, 9.0);
@@ -1146,7 +1257,7 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // are rather than how many specks. Detail returns as you descend.
   let wide = 1.0 - smoothstep(1.5, 7.0, C.zoomPx);
   let r = C.radius * (1.0 + 0.35 * abs(a)) * (1.0 + 0.45 * wide);
-  let world = pos[ii] + corner * r;
+  let world = drawPos(ii) + corner * r;
 
   var o: VOut;
   o.p = vec4<f32>((world - C.center) * C.ndc, 0.0, 1.0);
@@ -1182,14 +1293,24 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // picked a creature you could no longer see what its cells were. Contrast now
   // comes from dimming everything else — the subject keeps its own colours at
   // full strength and simply stops competing with a thousand neighbours.
-  let anyPicked = (C.selUid >= 0);
-  let picked = (anyPicked && m.z == C.selUid);
   if (anyPicked && !picked) {
-    // A step back, not a blackout. The crowd stays readable as a living context —
-    // you still want to see what the subject is swimming through — it simply
-    // stops competing. Desaturate a little, dim a little.
+    // A STEP BACK, NOT A BLACKOUT — and much smaller a step than it was.
+    //
+    // This was mix(base, grey, 0.35) * 0.62 with a further 0.66 on the glow,
+    // leaving the crowd at 41% of its normal brightness. That was set before the
+    // subject got a pass of its own drawn over everything else; with that pass
+    // in place the subject is already unmistakable and the crowd does not need
+    // suppressing anywhere near this hard. What it produced instead was a world
+    // that looked broken to anyone who did not know a selection was in force —
+    // reported as "things seem too dark, like a few nodes got highlighted
+    // somehow", which is the symptom described exactly.
+    //
+    // 0.85 on the colour and 0.90 on the glow leaves the crowd at 77%: still a
+    // visible recession, no longer a dimmer switch on the whole world. The
+    // desaturation is down to a trace for the same reason — cell type is told
+    // apart by hue, including in the crowd.
     let grey = vec3<f32>(dot(base, vec3<f32>(0.33, 0.34, 0.33)));
-    base = mix(base, grey, 0.35) * 0.62;
+    base = mix(base, grey, 0.12) * 0.85;
   } else if (picked) {
     base = base * 1.25;                 // a lift, not a bleach
   }
@@ -1204,7 +1325,7 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // pop against a living grey-green broth rather than a field of neon.
   var g0 = clamp(0.55 + 0.55 * abs(a) * abs(a), 0.0, 1.35);
   if (picked) { g0 = clamp(0.85 + 1.4 * abs(a) * abs(a), 0.0, 2.4); }
-  if (anyPicked && !picked) { g0 = g0 * 0.66; }
+  if (anyPicked && !picked) { g0 = g0 * 0.90; }
   o.glow = g0;
   return o;
 }
@@ -1281,7 +1402,11 @@ fn lineVs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> L
   // — not dead cells, and not moving much because the bodies straddling the
   // seam are simply sitting there. Suppress the segment rather than fake it;
   // the cells themselves still draw in both places, which is the truth.
-  var d = pos[ib] - pos[ia];
+  // The SAME tweened positions the cells are drawn at, or the sinews come away
+  // from the cells they connect for as long as a frame lasts on screen.
+  let pa = drawPos(ia);
+  let pb = drawPos(ib);
+  var d = pb - pa;
   // Minimum image, matching the physics: a bond across the wrap seam is SHORT
   // in the world however far apart the raw coordinates are.
   if (d.x >  C.bound) { d.x = d.x - 2.0 * C.bound; }
@@ -1291,8 +1416,8 @@ fn lineVs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> L
   // A settled bond sits near its rest length. Beyond a few multiples of it the
   // pair is not holding a body together in any meaningful sense, and drawing a
   // fat slab across the world says the opposite of what is true.
-  if (length(d) > C.restLen * 4.0 || abs(pos[ib].x - pos[ia].x) > C.bound
-                                  || abs(pos[ib].y - pos[ia].y) > C.bound) {
+  if (length(d) > C.restLen * 4.0 || abs(pb.x - pa.x) > C.bound
+                                  || abs(pb.y - pa.y) > C.bound) {
     o.p = vec4<f32>(0.0, 0.0, 0.0, 0.0); o.tint = vec3<f32>(0.0); o.edge = 0.0; return o;
   }
 
@@ -1312,7 +1437,7 @@ fn lineVs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> L
     vec2(0.0, -1.0), vec2(1.0, -1.0), vec2(0.0, 1.0),
     vec2(0.0,  1.0), vec2(1.0, -1.0), vec2(1.0, 1.0));
   let c = q[vi];
-  let world = pos[ia] + dir * (c.x * len) + nrm * (c.y * w);
+  let world = pa + dir * (c.x * len) + nrm * (c.y * w);
   o.p = vec4<f32>((world - C.center) * C.ndc, 0.0, 1.0);
   o.edge = c.y;
 
@@ -1320,10 +1445,8 @@ fn lineVs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> L
   // warm; a slack one stays cool and dark. This is what makes a body legible as
   // something working rather than as a static diagram, and it is the single
   // thing viewer.html had that this renderer did not.
-  var aa = 0.0;
-  var bb = 0.0;
-  if (cmeta[ia].y >= 0) { aa = act[u32(cmeta[ia].y)]; }
-  if (cmeta[ib].y >= 0) { bb = act[u32(cmeta[ib].y)]; }
+  let aa = drawAct(cmeta[ia].y);
+  let bb = drawAct(cmeta[ib].y);
   let pull = clamp(0.5 * (abs(aa) + abs(bb)), 0.0, 1.0);
   let slack = vec3<f32>(0.10, 0.22, 0.21);
   let taut  = vec3<f32>(0.95, 0.52, 0.16);
@@ -1355,7 +1478,7 @@ fn lineFs(i: LOut) -> @location(0) vec4<f32> {
 const MOTE_WGSL = /* wgsl */`
 // Its own uniform rather than the main camera's: this pass needs four numbers,
 // and sharing a struct would couple it to a layout it does not care about.
-struct MoteCam { center: vec2<f32>, ndc: vec2<f32>, radius: f32, dim: f32 };
+struct MoteCam { center: vec2<f32>, ndc: vec2<f32>, radius: f32, dim: f32, capNorm: f32, pad: f32 };
 @group(0) @binding(0) var<uniform> MC : MoteCam;
 // STRIDE 1 HERE, deliberately, and not the same layout as the simulation.
 // The page builds this buffer itself from readMotes() and the /motes endpoint,
@@ -1381,19 +1504,36 @@ fn mvs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> MOut
   // An exhausted mote collapses rather than drawing a dark dot: absence should
   // read as absence, and a grid of black dots would be a grid, which this world
   // does not have.
+  // SIZE IS CAPACITY, BRIGHTNESS IS FILL.
+  //
+  // Both used to come from the stock, which worked while every mote had the same
+  // ceiling of 1.0. Motes now differ in capacity by up to fifty times and stock
+  // runs to the hundreds, so reading the radius off the stock would put a few
+  // motes across half the screen and make a drained megamote indistinguishable
+  // from a full ordinary one.
+  //
+  // Area, not radius, is proportional to capacity — hence the square root. A
+  // mote holding fifty times the energy is about seven times across, which is
+  // the honest way to draw a quantity as an area and keeps the biggest ones from
+  // swallowing the map.
+  let cap = max(1e-4, m.w);
+  let fill = clamp(m.z / cap, 0.0, 1.0);
   if (m.z <= 0.004) {
     o.p = vec4<f32>(0.0, 0.0, 0.0, 0.0);
     o.uv = vec2<f32>(9.0, 9.0); o.v = 0.0;
     return o;
   }
-  // Radius grows with stock, so a well-fed patch reads as a bloom and a grazed
-  // one as a scatter of specks — the shape of the depletion is visible without
-  // needing to resolve individual values.
-  let r = MC.radius * (0.45 + 0.55 * m.z);
+  // NORMALISED BY THE MEAN CAPACITY. sqrt(cap) alone was tuned against a world
+  // where every cap was 1.0; with capacities running to 248 it drew the biggest
+  // motes six world units across, which at bound 66 is a tenth of everything and
+  // reads as a bloom of fog rather than a rich patch. Dividing by the mean first
+  // keeps a TYPICAL mote about the size the old uniform ones were, and lets the
+  // tail be conspicuous without being the scenery.
+  let r = MC.radius * sqrt(cap / max(1e-4, MC.capNorm)) * (0.45 + 0.55 * fill);
   let world = m.xy + corner * r;
   o.p = vec4<f32>((world - MC.center) * MC.ndc, 0.0, 1.0);
   o.uv = corner;
-  o.v = m.z;
+  o.v = fill;
   return o;
 }
 
@@ -1409,6 +1549,48 @@ fn mfs(i: MOut) -> @location(0) vec4<f32> {
   return vec4<f32>(mix(lean, rich, i.v) * a, a);
 }`;
 
+/**
+ * THE SETTING, CACHED.
+ *
+ * Terrain, crop and streamlines are all slow: the fields drift over seconds and
+ * the crop is refetched every 1.5s. They were nonetheless recomputed every
+ * frame, and they are the two most expensive passes by a wide margin — measured
+ * on the live viewer by stripping passes one at a time:
+ *
+ *   all on 12 fps | terrain off 14 | terrain+streamlines off 34 | ground only 39
+ *
+ * Streamlines alone cost ~20 fps and terrain ~13, while the cells and bonds —
+ * the things that actually move — cost about 5 between them. The reason is that
+ * both sample the same four-octave fbm: the terrain once per PIXEL, and the
+ * streamlines O(steps^2) per line, roughly 390,000 full flow evaluations a
+ * frame.
+ *
+ * So the setting is drawn into an offscreen texture and reused until something
+ * it depends on changes — the camera, the canvas size, a view toggle, the crop,
+ * or simply enough time for the drift to show. This blit is what puts it back.
+ */
+const BLIT_WGSL = /* wgsl */`
+@group(0) @binding(0) var samp : sampler;
+@group(0) @binding(1) var tex  : texture_2d<f32>;
+
+struct BOut { @builtin(position) p : vec4<f32>, @location(0) uv : vec2<f32> };
+
+@vertex
+fn blitVs(@builtin(vertex_index) vi : u32) -> BOut {
+  // One oversized triangle rather than two triangles: no seam down the middle,
+  // and the same three vertices the background pass already uses.
+  let x = f32((vi << 1u) & 2u);
+  let y = f32(vi & 2u);
+  var o : BOut;
+  o.p  = vec4<f32>(x * 2.0 - 1.0, 1.0 - y * 2.0, 0.0, 1.0);
+  o.uv = vec2<f32>(x, y);
+  return o;
+}
+
+@fragment
+fn blitFs(i : BOut) -> @location(0) vec4<f32> {
+  return textureSample(tex, samp, i.uv);
+}`;
 
 
 /* ------------------------------------------------------------------- setup */
@@ -1421,6 +1603,30 @@ const view = { field: true, bonds: true, paused: false, spf: 1, evolve: true,
 // instead of a simulation of its own. Without it every tab is a separate
 // universe, which is why two browsers never agreed about anything.
 const WATCH = new URLSearchParams(location.search).has('watch');
+/**
+ * EVERY SERVER ENDPOINT GOES THROUGH HERE.
+ *
+ * These paths (`/status`, `/genomes`, `/genome`, `/trace`, `/control`, ...) exist
+ * only under tools/serve-world.js. On GitHub Pages there is no server, so the
+ * host answers with its own 404 *page* — status 404, body `<!DOCTYPE html>`. Code
+ * that called .json() on that got `Unexpected token '<'`, which reads as a parse
+ * bug and is actually a missing server.
+ *
+ * Worse than the confusing message: a `/status` poll sat in the render loop and
+ * fired forever on a page that could never have a server.
+ *
+ * So: refuse before the request, with a sentence saying what is actually wrong.
+ * Callers already have try/catch that shows e.message, so they need no changes
+ * beyond using this instead of fetch.
+ */
+function srvFetch(path, opts) {
+  if (!WATCH) {
+    return Promise.reject(new Error(
+      'needs the local world server — this page is running its own simulation. ' +
+      'Start tools/serve-world.js and open it with ?watch=1.'));
+  }
+  return fetch(path, opts);
+}
 // Developmental encoding for this page's OWN sim: 2 = the GRN-in-an-egg
 // (DEVELOPMENT-2.md), 1 = the old positional readout. ?devo=1 to compare.
 // In watch mode the server owns development and this is only a label.
@@ -1533,7 +1739,7 @@ async function rebuild() {
   // rather than as the trivially fixable thing it is.
   if (WATCH) {
     try {
-      const st = await (await fetch('/status', { cache: 'no-store' })).json();
+      const st = await (await srvFetch('/status', { cache: 'no-store' })).json();
       beasts = st.beasts; cellsPer = st.cellsPerBeast;
       // Bodies are limited by ENERGY, not by allocation. bodySlots is the
       // allocation ceiling and is deliberately far above any real population;
@@ -1606,7 +1812,23 @@ async function rebuild() {
   const bBond = dev.createBuffer({ size: bondCapacity, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
   dev.queue.writeBuffer(bBond, 0, idx);
 
-  const bCam = dev.createBuffer({ size: 224, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  const bCam = dev.createBuffer({ size: 240, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  // The same camera with topPass = 1, for the second cell pass that puts the
+  // inspected animal over the crowd. A whole second uniform rather than a
+  // dynamic offset because it is 224 bytes and this is not the expensive part.
+  const bCamTop = dev.createBuffer({ size: 240, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  // And the same camera again for the cached setting, whose target is BG_SCALE
+  // of the canvas — same world region, fewer pixels, so every field that counts
+  // pixels holds a different number. See writeCam.
+  const bCamBg = dev.createBuffer({ size: 240, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+
+  // THE FRAME BEFORE THIS ONE, for the tween in drawPos. Watch mode gets its own
+  // pair of buffers; a page running its own simulation binds the live ones here
+  // instead, which costs nothing, allocates nothing, and — with C.lerp pinned at
+  // 1 — is read by a branch that never runs.
+  const st = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST;
+  const bPrevPos = WATCH ? dev.createBuffer({ size: world.bPos.size, usage: st }) : world.bPos;
+  const bPrevAct = WATCH ? dev.createBuffer({ size: brains.bAct.size, usage: st }) : brains.bAct;
 
   const module = dev.createShaderModule({ code: RENDER, label: 'render' });
   // SAY WHAT IS WRONG WITH THE SHADER. A WGSL compile failure does not throw:
@@ -1631,6 +1853,8 @@ async function rebuild() {
       { binding: 2, visibility: V, buffer: ro },
       { binding: 3, visibility: V, buffer: ro },
       { binding: 4, visibility: V, buffer: ro },
+      { binding: 5, visibility: V, buffer: ro },
+      { binding: 6, visibility: V, buffer: ro },
     ],
   });
   const pl = dev.createPipelineLayout({ bindGroupLayouts: [layout] });
@@ -1705,16 +1929,39 @@ async function rebuild() {
     ],
   });
 
-  const bind = dev.createBindGroup({
+  // The blit that puts the cached setting back on screen — see BLIT_WGSL.
+  const blitMod = dev.createShaderModule({ code: BLIT_WGSL, label: 'blit' });
+  const blitLayout = dev.createBindGroupLayout({
+    entries: [
+      { binding: 0, visibility: GPUShaderStage.FRAGMENT, sampler: { type: 'filtering' } },
+      { binding: 1, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'float' } },
+    ],
+  });
+  const pipeBlit = dev.createRenderPipeline({
+    layout: dev.createPipelineLayout({ bindGroupLayouts: [blitLayout] }),
+    vertex: { module: blitMod, entryPoint: 'blitVs' },
+    fragment: { module: blitMod, entryPoint: 'blitFs', targets: [{ format: fmt }] },
+    primitive: { topology: 'triangle-list' },
+  });
+  // Linear, so that a cached layer surviving a sub-pixel camera nudge does not
+  // shimmer; the setting is smooth and has no detail that nearest would protect.
+  const blitSampler = dev.createSampler({ magFilter: 'linear', minFilter: 'linear' });
+
+  const mkBind = (camBuf) => dev.createBindGroup({
     layout,
     entries: [
-      { binding: 0, resource: { buffer: bCam } },
+      { binding: 0, resource: { buffer: camBuf } },
       { binding: 1, resource: { buffer: world.bPos } },
       { binding: 2, resource: { buffer: brains.bAct } },
       { binding: 3, resource: { buffer: world.bMeta } },
       { binding: 4, resource: { buffer: bBond } },
+      { binding: 5, resource: { buffer: bPrevPos } },
+      { binding: 6, resource: { buffer: bPrevAct } },
     ],
   });
+  const bind = mkBind(bCam);
+  const bindTop = mkBind(bCamTop);
+  const bindBg = mkBind(bCamBg);
 
   let syn = 0;
   for (let i = 0; i < built.arena.esrc.length; i++) if (built.arena.esrc[i] >= 0) syn++;
@@ -1749,7 +1996,14 @@ async function rebuild() {
       morphRate: world.params.morphRate, dt: world.params.dt,
     },
     bondCapacity, topoVersion: -1, fetchingBonds: false,
+    pipeBlit, blitLayout, blitSampler, bgKey: null, bgAt: 0,
+    bCamTop, bindTop, bCamBg, bindBg, bPrevPos, bPrevAct,
   };
+  // A DELIBERATE HANDLE ON MODULE STATE, for the console and for Playwright.
+  // Everything in this file is module-scoped, so from outside the module the
+  // world is unreachable and any question about it has to be answered by
+  // guessing at the source. Two wrong guesses in a row is enough.
+  window.mazeballs = { get sim() { return sim; }, localGenomes, view, sel, cam };
   if (WATCH) {
     document.title = 'Mazeballs — watching the shared world';
     $('bEvolve').textContent = 'remote'; $('bEvolve').disabled = true;
@@ -1803,21 +2057,26 @@ async function refreshMotes() {
   if (sim.fetchingMotes) return;
   sim.fetchingMotes = true;
   try {
-    let xy, stock, n;
+    let xy, stock, n, cap = null;
     if (WATCH) {
-      const ab = await (await fetch('/motes', { cache: 'no-store' })).arrayBuffer();
+      const ab = await (await srvFetch('/motes', { cache: 'no-store' })).arrayBuffer();
       n = new Uint32Array(ab, 0, 1)[0];
-      const f = new Float32Array(ab, 8, n * 3);
-      xy = f; stock = null;                       // interleaved x,y,stock
+      const f = new Float32Array(ab, 8, n * 4);
+      xy = f; stock = null;                       // interleaved x,y,stock,cap
     } else {
       const m = await sim.world.readMotes();
-      n = m.stock.length; xy = m.pos; stock = m.stock;
+      n = m.stock.length; xy = m.pos; stock = m.stock; cap = m.cap;
     }
     if (!n) { sim.moteCount = 0; return; }
     const packed = new Float32Array(n * 4);       // vec4 per mote: x, y, stock, pad
     for (let i = 0; i < n; i++) {
-      if (stock) { packed[i * 4] = xy[i * 2]; packed[i * 4 + 1] = xy[i * 2 + 1]; packed[i * 4 + 2] = stock[i]; }
-      else { packed[i * 4] = xy[i * 3]; packed[i * 4 + 1] = xy[i * 3 + 1]; packed[i * 4 + 2] = xy[i * 3 + 2]; }
+      if (stock) {
+        packed[i * 4] = xy[i * 2]; packed[i * 4 + 1] = xy[i * 2 + 1];
+        packed[i * 4 + 2] = stock[i]; packed[i * 4 + 3] = cap ? cap[i] : 1;
+      } else {
+        packed[i * 4] = xy[i * 4]; packed[i * 4 + 1] = xy[i * 4 + 1];
+        packed[i * 4 + 2] = xy[i * 4 + 2]; packed[i * 4 + 3] = xy[i * 4 + 3];
+      }
     }
     // Never reallocated mid-run. If the server somehow has more motes than the
     // buffer holds, draw the ones that fit rather than swapping a buffer out
@@ -1826,6 +2085,14 @@ async function refreshMotes() {
     if (fits <= 0) { sim.moteCount = 0; return; }
     dev.queue.writeBuffer(sim.bMoteData, 0, packed.subarray(0, fits * 4));
     sim.moteCount = fits;
+    {
+      let s2 = 0;
+      for (let i = 0; i < fits; i++) s2 += packed[i * 4 + 3];
+      sim.moteCapMean = fits ? s2 / fits : 1;
+    }
+    // The crop is part of the cached setting, and new stock values change it
+    // without changing the mote COUNT — so the count alone cannot key the cache.
+    sim.moteGen = (sim.moteGen ?? 0) + 1;
   } catch (e) {
     // A missing /motes is not fatal: an older server simply has no crop to show.
     sim.moteCount = 0;
@@ -1902,11 +2169,19 @@ function selectUid(uid, pos, type, uidArr, n) {
   if (uid >= 0) { storeFor(uid); refreshTrace(); }
   const box = $('scope');
   if (box) box.style.display = uid >= 0 ? '' : 'none';
+  updateSelBadge();
   updateSelInfo();
   // Unfold on selection rather than on a second click. Picking an animal and
   // then pressing a button to see what built it is a sequencing rule the user
   // should not have to know; the genome is the thing you selected it FOR.
   if (changed && uid >= 0) { lastGenome = null; showDevo(); frameCreature(uid); }
+}
+
+function updateSelBadge() {
+  const b = $('selBadge');
+  if (!b) return;
+  b.classList.toggle('on', sel.uid >= 0);
+  if (sel.uid >= 0) $('selBadgeId').textContent = '#' + sel.uid;
 }
 
 function updateSelInfo() {
@@ -1921,8 +2196,27 @@ function updateSelInfo() {
   const names = ['neuron', 'sensor', 'muscle', 'anchor'];
   const c = [0, 0, 0, 0];
   for (let r = 0; r < e.order.length; r++) if (e.types[r] >= 0) c[e.types[r]]++;
-  el.textContent = `animal #${sel.uid} — ${e.order.length} cells: ` +
+  // LABELS, NOT CAPABILITIES — and the difference stopped being cosmetic.
+  //
+  // These counts are describe()'s argmax over each cell's sense/contract/grip.
+  // Until the three label gates came out of the kernel, that argmax DECIDED what
+  // a cell could do, so counting it was counting capability. It no longer does:
+  // sensing, contraction and grip are all read from the continuous capacities
+  // now, and the label is only a summary of which one happened to be largest.
+  //
+  // A real specimen, #9252: reported as 28 muscle and 0 sensor, while every cell
+  // in its genome carries acuity 1.000 and a third of them can grip. Reporting
+  // the argmax as though it were the composition is the panel asserting
+  // something the world stopped believing this afternoon.
+  //
+  // The capacities are packed in cmeta on the GPU and are not on this side of
+  // the bus — the frame carries the label and nothing else — so the honest move
+  // is to say what this number IS rather than to imply what it is not.
+  el.textContent = `animal #${sel.uid} — ${e.order.length} cells, by strongest trait: ` +
     names.map((nm, k) => `${c[k]} ${nm}`).join(', ');
+  el.title = 'Cells are labelled by whichever of sense/contract/grip is largest. ' +
+    'Since the kernel reads those capacities directly, a cell labelled "muscle" ' +
+    'may also sense and grip. These are labels, not capabilities.';
   title.textContent = `CTRNN — animal #${sel.uid}, ${e.order.length} neurons` +
     (scopeStore.size > 1 ? ` (${scopeStore.size} tracked)` : '');
 }
@@ -1944,7 +2238,7 @@ async function refreshTrace() {
   sim.tracing = true;
   try {
     const want = Math.max(64, +($('scopeWin')?.value ?? 200) * 3);
-    const ab = await (await fetch(`/trace?uid=${sel.uid}&n=${want}`,
+    const ab = await (await srvFetch(`/trace?uid=${sel.uid}&n=${want}`,
       { cache: 'no-store' })).arrayBuffer();
     const dv = new DataView(ab);
     const uid = dv.getUint32(0, true), rows = dv.getUint32(4, true), cols = dv.getUint32(8, true);
@@ -2023,7 +2317,9 @@ function sampleSelected(pos, act, type, uidArr, n, step) {
   for (let i = 0; i < n; i++) {
     if (uidArr[i] === sel.uid && type[i] >= 0) { sx += pos[i * 2]; sy += pos[i * 2 + 1]; k++; }
   }
-  if (k) { cam.cx = sx / k; cam.cy = sy / k; }
+  // Held at the middle of what is visible, not of the window — otherwise follow
+  // parks the animal it is following under the right-hand panel.
+  if (k) { const c = camForPoint(sx / k, sy / k, cam.zoom); cam.cx = c.cx; cam.cy = c.cy; }
 }
 
 /** Nearest live cell to a world point, or -1. */
@@ -2278,7 +2574,7 @@ async function showGenome() {
   box.style.display = '';
   box.textContent = 'loading…';
   try {
-    const j = await (await fetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
+    const j = await (await srvFetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
     if (!j.ok) { box.textContent = j.error; return; }
     lastGenome = j;
     // The synapse block lives in different places depending on the encoding,
@@ -2539,7 +2835,7 @@ async function showDevo() {
   if (!lastGenome || lastGenome.uid !== sel.uid) {
     if (sel.uid < 0) { note('select an animal first — click one in the world'); return; }
     try {
-      const j = await (await fetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
+      const j = await (await srvFetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
       if (!j.ok) { note(j.error); return; }
       lastGenome = j;
     } catch (e) { note('could not load genome: ' + e.message); return; }
@@ -2563,12 +2859,47 @@ async function showDevo() {
  * same encoding the world uses and draws the result; clicking one selects that
  * animal properly, scope and all.
  */
+/**
+ * The living genomes of THIS page's own simulation, in the shape `/genomes`
+ * returns.
+ *
+ * Without a server the gallery was fetching an endpoint that does not exist, but
+ * the genomes it wanted were in this tab the whole time — a page not in watch
+ * mode is running the world, not observing one. Reading them locally is also
+ * strictly better than the alternative of shipping a canned set: these are the
+ * animals actually alive on screen, so clicking a tile can select a real one.
+ *
+ * Deliberately mirrors the server's loop, including the deepest-first sort, so
+ * the gallery cannot mean two different things depending on the URL.
+ */
+function localGenomes(want) {
+  const rows = [];
+  const arena = sim?.arena, evo = sim?.evo;
+  if (!arena || !evo) return { steps: 0, count: 0, rows, why: 'no arena/evo on sim' };
+  for (let o = 0; o < arena.P && rows.length < want; o++) {
+    if (!arena.alive[o] || !evo.genome[o]) continue;
+    rows.push({
+      slot: o, uid: evo.uid[o], generation: evo.generation[o],
+      lineage: evo.lineage[o], cells: arena.cnt[o],
+      g: Array.from(evo.genome[o]),
+    });
+  }
+  rows.sort((a, b) => b.generation - a.generation);
+  return { steps: sim.world?.steps ?? 0, count: rows.length, rows };
+}
+
 async function showGallery() {
   const box = $('galleryBox');
   if (!box) return;
   box.textContent = 'developing…';
   try {
-    const j = await (await fetch('/genomes?n=48', { cache: 'no-store' })).json();
+    // TWO SOURCES, same reasoning as the creature library. The live world's
+    // genomes are the point in watch mode; without a server there is still a
+    // committed set to develop, and developing is done entirely in this page —
+    // the server was only ever supplying the genome vectors.
+    const j = WATCH
+      ? await (await srvFetch('/genomes?n=48', { cache: 'no-store' })).json()
+      : localGenomes(48);
     // RANKED BY MOVEMENT. 'Interestingness' has no measure; distance actually
     // covered is the honest proxy and is already being sampled from frames.
     // Ties and unseen animals fall back on generation, so a fresh gallery is
@@ -2674,7 +3005,7 @@ async function flagThis() {
   const note_ = prompt('What should we look at? (short note)');
   if (note_ === null) return;
   try {
-    const r = await fetch('/control', {
+    const r = await srvFetch('/control', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ action: 'flag', note: note_, uid: sel.uid }),
     });
@@ -2684,7 +3015,7 @@ async function flagThis() {
 }
 on('bFlag', 'onclick', flagThis);
 on('bCopyStats', 'onclick', async (e) => {
-  const st = await (await fetch('/status', { cache: 'no-store' })).json();
+  const st = await (await srvFetch('/status', { cache: 'no-store' })).json();
   const keys = ['steps','alive','births','deaths','generation','lineages','meanEnergy',
                 'cellsLiveTyped','nCells','maxCells','bound','nMotes','spf','simVersion',
                 'devo','devoName','eggExtent'];
@@ -2692,6 +3023,10 @@ on('bCopyStats', 'onclick', async (e) => {
   const e2 = scopeStore.get(sel.uid);
   if (sel.uid >= 0 && e2) {
     lines.push('', `selected\tanimal #${sel.uid}`, `neurons\t${e2.order.length}`);
+    // See the note in the panel: these are argmax LABELS, and the kernel reads
+    // continuous capacities. Pasting them into a report without the caveat is
+    // how a stale summary becomes a quoted number.
+    lines.push('cell labels are the strongest trait per cell, not capabilities');
     const names = ['neuron','sensor','muscle','anchor'], c = [0,0,0,0];
     for (let r = 0; r < e2.order.length; r++) if (e2.types[r] >= 0) c[e2.types[r]]++;
     names.forEach((nm, k) => lines.push(`${nm}\t${c[k]}`));
@@ -2714,8 +3049,12 @@ on('bPick', 'onclick', e => {
   sel.picking = !sel.picking;
   e.target.classList.toggle('on', sel.picking);
 });
-on('bClearSel', 'onclick', () => selectUid(-1, sim?.lastPos ?? new Float32Array(0),
-  sim?.lastType ?? new Int32Array(0), sim?.lastUid ?? new Int32Array(0), 0));
+const clearSel = () => selectUid(-1, sim?.lastPos ?? new Float32Array(0),
+  sim?.lastType ?? new Int32Array(0), sim?.lastUid ?? new Int32Array(0), 0);
+on('bClearSel', 'onclick', clearSel);
+// The same thing, reachable from the world view rather than from a panel the
+// user may never have opened.
+on('bShowAll', 'onclick', clearSel);
 on('bFollow', 'onclick', e => {
   sel.follow = !sel.follow;
   e.target.classList.toggle('on', sel.follow);
@@ -2814,7 +3153,7 @@ try {
   setTimeout(() => tabChan.postMessage({ k: 'ping', id: myTab }), 2500);
 } catch { /* no BroadcastChannel: not important enough to care */ }
 
-const FRAME_MAGIC = 0x324d5257;   // 'RWM2' — live-cells-only layout
+const FRAME_MAGIC = 0x334d5257;   // 'RWM3' — dynamic and static split by epoch
 function applyFrame(ab) {
   const dv = new DataView(ab);
   if (dv.getUint32(0, true) !== FRAME_MAGIC) return fail('bad frame from server');
@@ -2843,32 +3182,97 @@ function applyFrame(ab) {
   // Offsets are walked in the same order the server writes them. They were once
   // hand-computed and uid was read where energy lives, so every assembly id was a
   // float reinterpreted as an integer and nothing could be selected.
-  const HEAD = 48;
+  const HEAD = 56;
+  const epoch = dv.getUint32(40, true);
+  const hasStatic = dv.getUint32(48, true) === 1;
   let at = HEAD;
   const L = dv.getUint32(at, true); at += 4;
-  const idx = new Int32Array(ab, at, L); at += L * 4;
   const lpos = new Float32Array(ab, at, L * 2); at += L * 8;
   const lact = new Float32Array(ab, at, L); at += L * 4;
-  const ltype = new Int32Array(ab, at, L); at += L * 4;
   const lenergy = new Float32Array(ab, at, L); at += L * 4;
-  const luid = new Int32Array(ab, at, L); at += L * 4;
 
+  // THE STATIC BLOCK — index list, types, uids — arrives only when the
+  // population has changed. Same epoch means the same cells are alive in the
+  // same order, so the copy held here is not a stale approximation of the
+  // server's: it is the same bytes it would have sent.
+  let idx, ltype, luid;
+  if (hasStatic) {
+    idx = new Int32Array(ab, at, L); at += L * 4;
+    ltype = new Int32Array(ab, at, L); at += L * 4;
+    luid = new Int32Array(ab, at, L); at += L * 4;
+    // Copied out of the frame buffer, which is about to be garbage.
+    sim.topo = { epoch, idx: idx.slice(), type: ltype.slice(), uid: luid.slice() };
+  } else if (sim.topo?.epoch === epoch && sim.topo.idx.length === L) {
+    ({ idx, type: ltype, uid: luid } = sim.topo);
+  } else {
+    // The server elided a block we cannot reconstruct — only possible if it
+    // restarted under us. Ask for a whole one next time rather than drawing
+    // something assembled from a mismatched index list.
+    sim.topo = null;
+    return;
+  }
+
+  let fresh = false;
   if (!sim.expPos || sim.expPos.length !== n * 2) {
     sim.expPos = new Float32Array(n * 2);
     sim.expAct = new Float32Array(n);
     sim.expType = new Int32Array(n);
     sim.expEnergy = new Float32Array(n);
     sim.expUid = new Int32Array(n);
+    fresh = true;                    // nothing to carry over into these
   }
   const pos = sim.expPos, act = sim.expAct, type = sim.expType,
         energy = sim.expEnergy, uid = sim.expUid;
-  type.fill(-1); uid.fill(-1); act.fill(0);
+  // Rebuild the per-slot type/uid scatter only when it can have changed. On an
+  // unchanged epoch the arrays already hold exactly this, so refilling them with
+  // -1 and scattering the same values back is pure work.
+  const restatic = hasStatic || fresh;
+
+  // KEEP THE FRAME THAT IS ABOUT TO BE OVERWRITTEN. Right now these arrays hold
+  // the previous frame, which is exactly what drawPos needs to tween from, so
+  // the copy has to happen before the scatter below — and before act.fill(0),
+  // which is the first thing that destroys it.
+  let prevFresh = false;
+  if (!sim.prevPos || sim.prevPos.length !== n * 2) {
+    sim.prevPos = new Float32Array(n * 2);
+    sim.prevAct = new Float32Array(n);
+    sim.prevUid = new Int32Array(n);
+    prevFresh = true;
+  }
+  const carry = !fresh && !prevFresh;
+  if (carry) {
+    sim.prevPos.set(pos); sim.prevAct.set(act);
+    // uid only moves with the static block, so on every other frame the copy
+    // kept here already matches the one about to be scattered.
+    if (restatic) sim.prevUid.set(uid);
+  }
+
+  act.fill(0);
+  if (restatic) { type.fill(-1); uid.fill(-1); }
   for (let k = 0; k < L; k++) {
     const i = idx[k];
     pos[i * 2] = lpos[k * 2]; pos[i * 2 + 1] = lpos[k * 2 + 1];
-    act[i] = lact[k]; type[i] = ltype[k];
-    energy[i] = lenergy[k]; uid[i] = luid[k];
+    act[i] = lact[k]; energy[i] = lenergy[k];
+    if (restatic) { type[i] = ltype[k]; uid[i] = luid[k]; }
   }
+  // A SLOT THAT CHANGED HANDS MUST NOT BE TWEENED. The arena recycles slots: a
+  // cell that died frees its index and a newborn somewhere else in the world
+  // takes it. Interpolating across that draws a streak between two unrelated
+  // animals — silently, and only on the frames where something was born, which
+  // is the hardest kind of artefact to catch. So wherever the uid at a slot is
+  // not the uid that was there last frame, the previous frame is set equal to
+  // this one and that slot simply appears where it is.
+  if (!carry) {
+    sim.prevPos.set(pos); sim.prevAct.set(act); sim.prevUid.set(uid);
+  } else if (restatic) {
+    const pu = sim.prevUid;
+    for (let i = 0; i < n; i++) {
+      if (pu[i] === uid[i]) continue;
+      sim.prevPos[i * 2] = pos[i * 2]; sim.prevPos[i * 2 + 1] = pos[i * 2 + 1];
+      sim.prevAct[i] = act[i]; pu[i] = uid[i];
+    }
+  }
+
   sim.lastPos = pos; sim.lastAct = act; sim.lastType = type;
   sim.lastUid = uid; sim.lastEnergy = energy;
   sampleSelected(pos, act, type, uid, n, dv.getUint32(8, true));
@@ -2881,28 +3285,70 @@ function applyFrame(ab) {
   // straight into the act buffer at the slot the cell points to. Cell i's slot
   // is i in this builder, which keeps the mapping trivial.
   q.writeBuffer(sim.brains.bAct, 0, act);
-  const meta = new Int32Array(n * 4);
-  for (let i = 0; i < n; i++) {
-    meta[i * 4] = type[i];
-    meta[i * 4 + 1] = type[i] >= 0 ? i : -1;
-    meta[i * 4 + 2] = uid[i];
+  // The frame to tween FROM. This doubles the per-frame upload — 300 KB at the
+  // 25,020 cells the server is running, about 18 MB/s at 60 fps. Not measurable
+  // on the machine this was written on, where the viewer sits on the vsync cap
+  // at 60 fps both with and without it; it is a real cost on a slower bus and
+  // the number is here so the next person knows what to weigh.
+  q.writeBuffer(sim.bPrevPos, 0, sim.prevPos);
+  q.writeBuffer(sim.bPrevAct, 0, sim.prevAct);
+  // The cell-meta buffer is a function of type and uid alone, so it only needs
+  // rewriting when those changed — 400 KB of upload per frame, for bytes that
+  // were identical.
+  if (restatic) {
+    const meta = new Int32Array(n * 4);
+    for (let i = 0; i < n; i++) {
+      meta[i * 4] = type[i];
+      meta[i * 4 + 1] = type[i] >= 0 ? i : -1;
+      meta[i * 4 + 2] = uid[i];
+    }
+    q.writeBuffer(sim.world.bMeta, 0, meta);
   }
-  q.writeBuffer(sim.world.bMeta, 0, meta);
 
   // Bond pairs ride WITH the frame, so they always describe the same instant as
   // the positions. Fetching them separately let the two drift apart and drew
-  // lines between cells that were never bonded.
-  const pairOff = at;
-  const pairCount = dv.getUint32(pairOff, true);
-  if (pairCount > 0 && (pairCount * 4) <= sim.bondCapacity) {
-    q.writeBuffer(sim.bBond, 0, new Int32Array(ab, pairOff + 4, pairCount));
-    sim.bondVerts = pairCount;
-  } else if (pairCount * 4 > sim.bondCapacity) {
-    sim.bondVerts = 0;                      // never draw a truncated graph
+  // lines between cells that were never bonded. They are part of the static
+  // block: an unchanged epoch means the graph on the GPU is still correct.
+  if (hasStatic) {
+    const pairOff = at;
+    const pairCount = dv.getUint32(pairOff, true);
+    if (pairCount > 0 && (pairCount * 4) <= sim.bondCapacity) {
+      q.writeBuffer(sim.bBond, 0, new Int32Array(ab, pairOff + 4, pairCount));
+      sim.bondVerts = pairCount;
+    } else if (pairCount * 4 > sim.bondCapacity) {
+      sim.bondVerts = 0;                    // never draw a truncated graph
+    }
+  }
+
+  // HOW LONG THIS FRAME WILL BE ON SCREEN, which is what drawPos tweens across.
+  // Taken from the gap between arrivals rather than from the server's step rate,
+  // because the thing being smoothed over is the arrival cadence: a request in
+  // flight, a slow round trip, a frame the server had not finished. Smoothed
+  // hard, since one late frame should not stretch the tween for the next ten.
+  {
+    const now = performance.now();
+    if (sim.frameAt) {
+      const gap = now - sim.frameAt;
+      sim.framePeriod = sim.framePeriod ? sim.framePeriod * 0.85 + gap * 0.15 : gap;
+    }
+    sim.frameAt = now;
   }
 
   const prevServerSteps = sim.serverSteps ?? 0;
   sim.serverSteps = dv.getUint32(8, true);
+  // HOW MUCH OF THE WORLD THIS PAGE IS ACTUALLY SEEING.
+  //
+  // The display is capped at the monitor's refresh by requestAnimationFrame and
+  // the simulation is not, so as the server gets faster a viewer sees a smaller
+  // fraction of what happens. That is sampling, not lag: /frame always returns
+  // the NEWEST frame and there is no queue, so nothing accumulates and there is
+  // nothing to catch up on. What does change is the stride between the frames
+  // you are shown, and that is worth being told rather than left to infer from
+  // a step counter jumping.
+  {
+    const d = sim.serverSteps - prevServerSteps;
+    if (d > 0) sim.seenStride = sim.seenStride ? sim.seenStride * 0.8 + d * 0.2 : d;
+  }
   // SIM RATE IN WATCH MODE. `simRate` is computed from the LOCAL world's spf,
   // and in watch mode the local world never steps — so it sat at exactly 0 and
   // the HUD read `sim 0.0xrealtime` forever. RUNNING.md lists that precise
@@ -2952,6 +3398,23 @@ let renderScale = Number(localStorage.getItem('mz.rscale')) || 0.7;
 // 34 segments is about 480k flow evaluations a frame, which is small beside a
 // single megapixel of background.
 const STREAM_SIDE = 26, STREAM_STEPS = 34;
+// THE CACHED SETTING IS DRAWN SMALLER THAN THE SCREEN, and stretched back up.
+//
+// Cells and bonds need every pixel they can get — they are small, they move, and
+// a soft edge on a cell reads as a different cell. The setting does not: it is
+// hills, mud, standing crop and streamlines, all of which are smooth at the
+// scale of a pixel, and it is already being blitted through a linear sampler.
+//
+// Measured by forcing a rebuild on every frame at a canvas of 2286x914 and
+// reading fps, with the passes turned off one at a time. At full size a rebuild
+// took 55.6 ms, of which terrain was 29.3 ms and the streamlines 22.3 ms; at 0.6
+// it took 40.0 ms. So 15.6 ms back, all of it terrain — the streamline cost is
+// O(steps^2) integration in the vertex shader and does not care how large the
+// target is, and no amount of shrinking this will touch it.
+//
+// 0.6 rather than lower because the streamlines ARE drawn into this texture, and
+// they are thin: below about this they start to break up.
+const BG_SCALE = 0.6;
 function resize() {
   const dpr = Math.min(devicePixelRatio || 1, 2) * renderScale;
   canvas.width = Math.max(1, Math.floor(innerWidth * dpr));
@@ -2969,6 +3432,50 @@ function resize() {
  * enough to read its cells, small enough to keep its surroundings on screen,
  * because a creature with no context is just a diagram.
  */
+/**
+ * WHERE THE WORLD IS ACTUALLY VISIBLE.
+ *
+ * The canvas is the whole window and the panels are drawn OVER it: the HUD down
+ * the left, the controls down the right, and — when an animal is selected — the
+ * CTRNN scope across the bottom, which is tall. So the centre of the window is
+ * not the centre of anything the user can see, and framing a creature there put
+ * it under a panel; with the scope open it put it behind the scope, which is the
+ * one moment you most want to see the animal and the trace together.
+ *
+ * Measured from the DOM every time rather than from constants, because all three
+ * move: the HUD collapses to a spine, the panel slides off to the right and is
+ * drag-resizable, and the scope opens and closes with the selection.
+ */
+function viewRect() {
+  const shown = (el) => el && getComputedStyle(el).display !== 'none';
+  let l = 0, r = innerWidth, t = 0, b = innerHeight;
+  const hud = $('hud'), panel = $('panel'), scope = $('scope');
+  // Each only counts on the side it is actually on. A panel translated off
+  // screen reports a rect outside the window, which these comparisons ignore
+  // without needing to know how it was hidden.
+  if (shown(hud))   { const q = hud.getBoundingClientRect();
+                      if (q.right > l && q.right < innerWidth * 0.5) l = q.right; }
+  if (shown(panel)) { const q = panel.getBoundingClientRect();
+                      if (q.left < r && q.left > innerWidth * 0.5) r = q.left; }
+  if (shown(scope)) { const q = scope.getBoundingClientRect();
+                      if (q.top < b && q.top > innerHeight * 0.4) b = q.top; }
+  // A window narrow or short enough that the panels have eaten it: fall back to
+  // the whole thing rather than to a rectangle nothing fits in.
+  if (r - l < 120 || b - t < 120) return { x: innerWidth / 2, y: innerHeight / 2, w: innerWidth, h: innerHeight };
+  return { x: (l + r) / 2, y: (t + b) / 2, w: r - l, h: b - t };
+}
+
+/**
+ * The camera centre that puts a world point at the middle of the VISIBLE
+ * rectangle. The projection puts cam.cx/cy at the middle of the canvas, so the
+ * correction is the gap between the two centres, in world units. Same arithmetic
+ * as the click handler, in the other direction.
+ */
+function camForPoint(wx, wy, zoom) {
+  const v = viewRect();
+  return { cx: wx - (v.x - innerWidth / 2) / zoom, cy: wy + (v.y - innerHeight / 2) / zoom };
+}
+
 let camAnim = null;
 function frameCreature(uid, frac = 0.2) {
   if (!sim?.lastPos || uid < 0) return;
@@ -2983,12 +3490,18 @@ function frameCreature(uid, frac = 0.2) {
   }
   if (!k) return;
   const span = Math.max(1.2, Math.max(hi - lo, yhi - ylo));
-  const target = (Math.min(innerWidth, innerHeight) * frac) / span;
+  // Sized against the UNOCCLUDED rectangle, so the fraction of it the creature
+  // fills is the fraction of what can be seen — with the scope open that box is
+  // much shorter, and taking the window's height instead drew the animal larger
+  // than the space left for it.
+  const v = viewRect();
+  const target = (Math.min(v.w, v.h) * frac) / span;
+  const z1 = Math.max(2, Math.min(400, target));
+  const c = camForPoint(sx / k, sy / k, z1);
   camAnim = {
     t0: performance.now(), ms: 700,
     x0: cam.cx, y0: cam.cy, z0: cam.zoom,
-    x1: sx / k, y1: sy / k,
-    z1: Math.max(2, Math.min(400, target)),
+    x1: c.cx, y1: c.cy, z1,
   };
 }
 function stepCamAnim(now) {
@@ -3006,8 +3519,12 @@ function stepCamAnim(now) {
 
 function fitAll() {
   if (!sim) return;
-  cam.cx = 0; cam.cy = 0;
-  cam.zoom = Math.min(innerWidth, innerHeight) / (sim.bound * 2.15);
+  // Same correction as frameCreature: fit the world into what is not covered by
+  // a panel, and put its middle in the middle of that.
+  const v = viewRect();
+  cam.zoom = Math.min(v.w, v.h) / (sim.bound * 2.15);
+  const c = camForPoint(0, 0, cam.zoom);
+  cam.cx = c.cx; cam.cy = c.cy;
   $('hZoom').textContent = cam.zoom.toFixed(2);
 }
 
@@ -3015,7 +3532,18 @@ function fitAll() {
 
 let last = performance.now(), fps = 0, simRate = 0, acc = 0, frames = 0;
 
-function writeCam() {
+// pxScale says how large the TARGET is against the canvas — 1 for the screen,
+// BG_SCALE for the cached setting, which is drawn into a smaller texture. It
+// changes nothing about which world region is drawn, because NDC is a fraction
+// of the target and a fraction does not know how many pixels it covers; it
+// changes only the numbers that count device pixels, which is the terrain and
+// flow LOD, the streamline and arrow fades, and pxWorld itself. Getting those
+// from the canvas while drawing into a smaller texture would resolve detail the
+// texture cannot hold and then throw it away, which costs exactly what the
+// smaller texture was meant to save.
+//
+// target, when given, is the buffer to write instead of the two screen cameras.
+function writeCam(t0, pxScale = 1, target = null) {
   // THE RENDER DPR, not the display dpr. resize() sizes the backing store by
   // renderScale as well, so anything converting world units to device pixels
   // must use the same product or the two disagree — which drew the world
@@ -3028,8 +3556,10 @@ function writeCam() {
   // to get device px, then 2/size to reach NDC.
   const nx = cam.zoom * dpr * 2 / w, ny = cam.zoom * dpr * 2 / h;
   // The crop pass has its own small uniform; fill it from the SAME numbers
-  // rather than recomputing, or the two layers drift apart under zoom.
-  if (sim?.bMoteCam) {
+  // rather than recomputing, or the two layers drift apart under zoom. It holds
+  // nothing that counts pixels, so the smaller background target does not
+  // change it and it is written once, on the screen pass.
+  if (sim?.bMoteCam && !target) {
     const mc = new Float32Array(8);
     // cam.cx/cy, not cam.x/y — the camera has never had x or y, so this was
     // writing undefined into a Float32Array, i.e. NaN, and the motes were being
@@ -3040,8 +3570,19 @@ function writeCam() {
     // been tuned against what they actually look like — at 0.6/0.85 the standing
     // crop is a carpet that buries the landscape underneath it. Food should read
     // as specks on ground you can still see.
-    mc[4] = 0.42;                // world-unit radius of a full mote
-    mc[5] = 0.40;                // overall brightness
+    // A MOTE OF MEAN CAPACITY, in world units. Raised from 0.42 because there
+    // are now a tenth as many motes: at the old size the crop nearly vanished
+    // from the map, and the food economy is the most consequential thing in the
+    // world to be able to see. Area is proportional to capacity, so the richest
+    // motes come out around 7 world units across against a bound of 66 —
+    // conspicuous, which is the point of them, without being the scenery.
+    mc[4] = 0.75;
+    mc[5] = 0.52;                // overall brightness, likewise lifted
+    // Mean capacity, so the shader can size a mote relative to a typical one
+    // rather than absolutely. Measured from the field itself: it depends on the
+    // mote density and the lognormal spread, and hardcoding it here would go
+    // stale the moment either changes.
+    mc[6] = sim.moteCapMean ?? 1;
     dev.queue.writeBuffer(sim.bMoteCam, 0, mc);
   }
   // Cells keep a physical size in world units, with a floor so the population
@@ -3055,7 +3596,10 @@ function writeCam() {
   // looking at it.
   const rWorld = Math.max(0.34, 1.15 / cam.zoom);
 
-  const b = new ArrayBuffer(224), dv = new DataView(b);
+  // 240, not 224: adding topPass pushed the struct past the old size, and WebGPU
+  // pads a uniform binding up to a multiple of 16, so it demanded 232 and the
+  // next legal size is 240.
+  const b = new ArrayBuffer(240), dv = new DataView(b);
   dv.setFloat32(0, cam.cx, true); dv.setFloat32(4, cam.cy, true);
   dv.setFloat32(8, nx, true); dv.setFloat32(12, ny, true);
   dv.setFloat32(16, rWorld, true);
@@ -3072,7 +3616,9 @@ function writeCam() {
   // across; resolve only those still ~2 device pixels wide or wider. Left as a
   // FRACTION rather than floored: the shader fades the finest octave in by
   // weight, so zooming reveals detail smoothly instead of stepping.
-  const pxPerWorld = cam.zoom * dpr;   // dpr here is the RENDER dpr, below
+  // Device pixels per world unit ON THE TARGET, which is the canvas scaled by
+  // pxScale. dpr here is the RENDER dpr, above.
+  const pxPerWorld = cam.zoom * dpr * pxScale;
   const fs = sim.world.params.flowScale;
   const oct = Math.max(1, Math.min(5, 1 + Math.log2(Math.max(1, fs * pxPerWorld / 2))));
   dv.setFloat32(52, oct, true);
@@ -3160,7 +3706,27 @@ function writeCam() {
   dv.setFloat32(208, STREAM_SIDE, true);
   dv.setFloat32(212, 0.62, true);
   dv.setFloat32(216, view.cellInk, true);
+
+  // WHERE BETWEEN THE LAST TWO SERVER FRAMES TO DRAW — see drawPos. Held at
+  // exactly 1 whenever there is nothing to tween from: a page running its own
+  // simulation, and the first frame after a reconnect or a reshape.
+  //
+  // A period this has not seen enough of yet, or one long enough that the link
+  // is plainly stalling, would stretch a tween across seconds of guesswork. The
+  // ceiling stops that: past it the picture holds at the newest frame, which is
+  // the truth, rather than creeping toward it.
+  let lerp = 1;
+  if (WATCH && sim.framePeriod > 0 && sim.framePeriod < 1000) {
+    lerp = Math.min(1, (t0 - sim.frameAt) / sim.framePeriod);
+  }
+  dv.setFloat32(224, lerp, true);
+
+  // The cached setting draws no cells, so topPass has nothing to say about it.
+  if (target) { dev.queue.writeBuffer(target, 0, b); return; }
+  dv.setFloat32(220, 0, true);                 // crowd pass
   dev.queue.writeBuffer(sim.bCam, 0, b);
+  dv.setFloat32(220, 1, true);                 // the inspected animal, on top
+  if (sim.bCamTop) dev.queue.writeBuffer(sim.bCamTop, 0, b);
 }
 
 let reviveAt = 0;
@@ -3196,7 +3762,9 @@ function loop() {
     // frame, which is the whole reason hiding the tab is free.
     if (!document.hidden && !sim.fetching && t >= (sim.retryAt ?? 0)) {
       sim.fetching = true;
-      fetch('/frame', { cache: 'no-store' })
+      // Tell the server which topology we already hold, so it can leave the
+      // static half out. -1 asks for everything.
+      srvFetch(`/frame?have=${sim.topo?.epoch ?? -1}`, { cache: 'no-store' })
         .then(r => r.arrayBuffer())
         .then(b => {
           applyFrame(b); sim.fetching = false; sim.misses = 0;
@@ -3247,7 +3815,13 @@ function loop() {
   // while the server was healthy, which is indistinguishable from a frozen world.
   {
     const box = $('linkBox'), txt = $('linkTxt');
-    if (box && txt) {
+    // WATCH ONLY. This reports the health of the link to the server, and a page
+    // running its own simulation has no link — it sat there reading "no frame
+    // yet" forever, in red, which is precisely how a working world announces
+    // itself as broken. The badge is hidden rather than reworded because there
+    // is no connection to describe.
+    if (box && !WATCH) box.style.display = 'none';
+    else if (box && txt) {
       const age = sim.lastFrameAt ? (t - sim.lastFrameAt) / 1000 : Infinity;
       let cls = 'live', msg = 'live';
       if (serverPaused) { cls = 'paused'; msg = 'world PAUSED on server'; }
@@ -3262,10 +3836,15 @@ function loop() {
 
   // Am I running the latest code? Two answers, because there are two codebases.
   // Polled slowly — this is a staleness check, not a heartbeat.
+  //
+  // WATCH-ONLY, and the guard belongs here rather than inside srvFetch: this
+  // sits in the render loop, so on a serverless page it was a rejected promise
+  // every twenty seconds, forever, for a question that has no answer without a
+  // server. A page serving its own simulation cannot be stale relative to one.
   sim.sinceVer = (sim.sinceVer ?? 0) + (t - last);
-  if (sim.sinceVer > 20000 && !sim.checkingVer) {
+  if (WATCH && sim.sinceVer > 20000 && !sim.checkingVer) {
     sim.sinceVer = 0; sim.checkingVer = true;
-    fetch('/status', { cache: 'no-store' }).then(r => r.json()).then(st => {
+    srvFetch('/status', { cache: 'no-store' }).then(r => r.json()).then(st => {
       sim.checkingVer = false;
       if (!st.onDisk) return;                       // older server, no stamps
       const simStale = st.simVersion !== st.onDisk.simVersion;
@@ -3294,8 +3873,107 @@ function loop() {
   sim.sinceMotes += t - last;
   if (view.food && sim.sinceMotes > 1500) { sim.sinceMotes = 0; refreshMotes(); }
 
-  writeCam();
+  writeCam(t);
+  writeCam(t, BG_SCALE, sim.bCamBg);
   const enc = dev.createCommandEncoder();
+
+  // ---- the cached setting: terrain, crop, streamlines. See BLIT_WGSL.
+  //
+  // The key is everything the layer depends on. Anything not in it must not be
+  // able to change the picture, or the cache shows a stale world — so the view
+  // toggles and the crop generation are in here alongside the camera, and the
+  // timer covers the field drift that no discrete key can capture.
+  const camKeyOnly = cam.cx.toFixed(4) + ',' + cam.cy.toFixed(4) + ',' + cam.zoom.toFixed(4);
+  const bgKey = [
+    canvas.width, canvas.height,
+    cam.cx.toFixed(4), cam.cy.toFixed(4), cam.zoom.toFixed(4),
+    view.terrain ? 1 : 0, view.streams ? 1 : 0, view.food ? 1 : 0,
+    view.crescent ? 1 : 0, view.glitter ? 1 : 0, view.field ? 1 : 0,
+    sim.moteCount, sim.moteGen ?? 0,
+  ].join(',');
+  // THE PARAMETERS THE SHADER IS ACTUALLY USING. This read the LOCAL world's
+  // params, which in watch mode are all zero — the server's are in sim.remote,
+  // and writeCam has always taken the drift and morph rates from there. So the
+  // timer below never fired on a watching page while the field it is meant to
+  // track drifted on screen, and the only thing refreshing the cached setting
+  // was the standing crop bumping its generation every 1.5s. With food off,
+  // nothing refreshed it at all.
+  const rp = sim.remote ?? sim.world?.params ?? {};
+  const drifting = (rp.driftX || rp.driftY || rp.morphRate);
+  // A moving field must be redrawn on a clock; a still one never needs to be.
+  //
+  // 1800ms, not the 400ms this was. Two reasons, both measured. A rebuild costs
+  // 40 ms, so every one of these is a dropped frame you can see, and at 400ms
+  // that is one hitch every 24 frames for no visible gain: at the running
+  // driftX 0.06 / driftY 0.037 the field moves 0.05 world units in 1.5s, across
+  // a world 132 units wide.
+  //
+  // And it is deliberately LONGER than the standing crop's 1.5s refresh, which
+  // rebuilds the layer anyway and resets this clock. Set equal to it the two
+  // raced: measured as pairs of rebuilds 17 ms apart, an 80 ms hitch instead of
+  // a 40 ms one, because the crop generation bumps a moment after the async
+  // fetch that carried it. With 300 ms of margin the crop always wins while food
+  // is on, and this drives the refresh on its own when food is off.
+  const bgStale = drifting ? (t - sim.bgAt > 1800) : false;
+  // A MOVING CAMERA IS NOT A REASON TO REDRAW SIXTY TIMES A SECOND.
+  //
+  // The key includes the camera, so dragging or wheel-zooming invalidated the
+  // cache every frame and paid the full terrain-plus-streamlines cost on each
+  // one — measured at 54 fps holding still against 13 fps while panning, which
+  // is the whole saving handed back precisely when the interface should feel
+  // most responsive. (Codex spotted this in the source.)
+  //
+  // While the camera is actually moving the setting is rebuilt at most every
+  // 90ms and the previous one is blitted in between. It lags the cells by up to
+  // that long during a drag, which reads as the ground settling a beat behind
+  // the hand; stopping still snaps it exact within a frame.
+  const camMoved = sim.bgCamKey !== undefined && sim.bgCamKey !== camKeyOnly;
+  const movingNow = camMoved && (t - (sim.camMovedAt ?? 0) < 250);
+  if (camMoved) sim.camMovedAt = t;
+  sim.bgCamKey = camKeyOnly;
+  const holdBg = movingNow && (t - sim.bgAt < 90);
+  // The setting has its own, smaller target — see BG_SCALE.
+  const bgW = Math.max(1, Math.floor(canvas.width * BG_SCALE));
+  const bgH = Math.max(1, Math.floor(canvas.height * BG_SCALE));
+  if (!sim.bgTex || sim.bgW !== bgW || sim.bgH !== bgH) {
+    sim.bgTex?.destroy?.();
+    sim.bgTex = dev.createTexture({
+      size: [bgW, bgH], format: fmt,
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+    });
+    sim.bgW = bgW; sim.bgH = bgH;
+    sim.bgBind = dev.createBindGroup({
+      layout: sim.blitLayout,
+      entries: [
+        { binding: 0, resource: sim.blitSampler },
+        { binding: 1, resource: sim.bgTex.createView() },
+      ],
+    });
+    sim.bgKey = null;
+  }
+  if ((sim.bgKey !== bgKey || bgStale) && !holdBg) {
+    sim.bgKey = bgKey; sim.bgAt = t;
+    const bg = enc.beginRenderPass({
+      colorAttachments: [{
+        view: sim.bgTex.createView(),
+        clearValue: { r: 0.039, g: 0.063, b: 0.059, a: 1 },
+        loadOp: 'clear', storeOp: 'store',
+      }],
+    });
+    // sim.bindBg, not sim.bind: the same camera, but with the pixel counts of
+    // the smaller target it is being drawn into. See writeCam.
+    if (view.terrain) { bg.setPipeline(sim.pipeBg); bg.setBindGroup(0, sim.bindBg); bg.draw(3); }
+    if (view.food && sim.moteCount > 0) {
+      bg.setPipeline(sim.pipeMotes); bg.setBindGroup(0, sim.moteBind);
+      bg.draw(6, sim.moteCount);
+    }
+    if (view.streams && sim.pipeStream) {
+      bg.setPipeline(sim.pipeStream); bg.setBindGroup(0, sim.bindBg);
+      bg.draw(STREAM_SIDE * STREAM_SIDE * STREAM_STEPS * 2);
+    }
+    bg.end();
+  }
+
   const pass = enc.beginRenderPass({
     colorAttachments: [{
       view: ctx.getCurrentTexture().createView(),
@@ -3303,6 +3981,10 @@ function loop() {
       loadOp: 'clear', storeOp: 'store',
     }],
   });
+  // The setting, as of whenever it last changed.
+  pass.setPipeline(sim.pipeBlit);
+  pass.setBindGroup(0, sim.bgBind);
+  pass.draw(3);
   // BIND GROUP AFTER PIPELINE, EVERY TIME.
   //
   // Setting a pipeline whose layout is incompatible with the previous one
@@ -3313,26 +3995,8 @@ function loop() {
   // unset. That is the "previous error" behind the bare
   // "[Invalid CommandBuffer] is invalid due to a previous error" on submit,
   // which names nothing and appears only when food is on and motes exist.
-  pass.setPipeline(sim.pipeBg);
-  pass.setBindGroup(0, sim.bind);
-  pass.draw(3);
-
-  // Crop first: it is ground, and everything else stands on it.
-  if (view.food && sim.moteCount > 0) {
-    pass.setPipeline(sim.pipeMotes);
-    pass.setBindGroup(0, sim.moteBind);
-    pass.draw(6, sim.moteCount);
-  }
-
-  // Streamlines above the ground and below the creatures: they are the setting.
-  // Note the bind group is set again after setPipeline — see the block above;
-  // the mote pass has a different layout and invalidates whatever was bound.
-  if (view.streams && sim.pipeStream) {
-    pass.setPipeline(sim.pipeStream);
-    pass.setBindGroup(0, sim.bind);
-    pass.draw(STREAM_SIDE * STREAM_SIDE * STREAM_STEPS * 2);
-  }
-
+  // Terrain, crop and streamlines are NOT drawn here any more — they are the
+  // cached setting, blitted above. Only the things that move are below.
   if (view.bonds && sim.bondVerts) {
     pass.setPipeline(sim.pipeBonds);
     pass.setBindGroup(0, sim.bind);
@@ -3342,6 +4006,15 @@ function loop() {
   pass.setPipeline(sim.pipeCells);
   pass.setBindGroup(0, sim.bind);
   pass.draw(6, sim.meta.nCells);
+  // THE INSPECTED ANIMAL, LAST. Same pipeline and instances, a camera whose
+  // topPass is 1, so every cell that is not the subject collapses. Without this
+  // the one creature you are watching is painted over by whichever neighbours
+  // happen to sit at higher instance indices — worst exactly in a crowded patch,
+  // which is where you are watching.
+  if (sel.uid >= 0 && sim.bindTop) {
+    pass.setBindGroup(0, sim.bindTop);
+    pass.draw(6, sim.meta.nCells);
+  }
   pass.end();
   dev.queue.submit([enc.finish()]);
 
@@ -3353,6 +4026,15 @@ function loop() {
   if (acc > 400) {
     fps = frames * 1000 / acc; frames = 0; acc = 0;
     $('hFps').textContent = fps.toFixed(0);
+    // "1 in N" — the stride between the frames this page is shown. 1 means you
+    // are seeing every step the server takes; 20 means the world is running
+    // twenty times faster than you can look at it, which is the good case.
+    if (WATCH) {
+      const st = sim.seenStride;
+      $('hSeen').textContent = st ? '1 in ' + Math.max(1, Math.round(st)) : '–';
+    } else {
+      $('hSeen').textContent = view.spf > 1 ? '1 in ' + view.spf : 'every step';
+    }
     // In watch mode the step counter belongs to the server; the local world is
     // never advanced, so writing its 0 here would overwrite the real clock.
     if (!WATCH) $('hStep').textContent = (sim.world.steps ?? 0).toLocaleString();
@@ -3451,7 +4133,7 @@ function tune(patch) {
     const send = { ...pendingTune };
     for (const k of Object.keys(pendingTune)) delete pendingTune[k];
     try {
-      await fetch('/control', {
+      await srvFetch('/control', {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ action: 'tune', params: send }),
       });
@@ -3558,12 +4240,17 @@ $('bArrows').onclick = e => { view.arrows = !view.arrows; e.target.classList.tog
   // cannot disagree about what a creature is.
   (async () => {
     const box = $('designList'); if (!box) return;
-    // TWO SOURCES, because this page is served two ways. Against a live server
-    // /creatures reads the file fresh, so a genome captured a minute ago is
-    // there. On GitHub Pages there is no server at all and that path 404s, so
-    // fall back to the committed file, which is the same data one build behind.
+    // TWO SOURCES, and the committed file is tried FIRST on purpose.
+    //
+    // /creatures reads the library fresh from disk, so a genome captured a
+    // minute ago appears without a rebuild — but that endpoint only exists when
+    // a server is serving this page. On GitHub Pages there is none, and probing
+    // it logs a 404 in the console of every visitor even though the fallback
+    // works. Static file first means the page never 404s; the live endpoint is
+    // consulted only in watch mode, where a server certainly exists and
+    // freshness is the point.
     let lib = null;
-    for (const url of ['/creatures', 'lib/creatures.json']) {
+    for (const url of WATCH ? ['/creatures', 'lib/creatures.json'] : ['lib/creatures.json']) {
       try {
         const r = await fetch(url, { cache: 'no-store' });
         if (!r.ok) continue;
@@ -3604,10 +4291,10 @@ $('bArrows').onclick = e => { view.arrows = !view.arrows; e.target.classList.tog
         try {
           // Needs SOME living creature as a slot to stand in; the occupant is
           // untouched, its genome is swapped back immediately.
-          const gs = await (await fetch('/genomes?n=1', { cache: 'no-store' })).json();
+          const gs = await (await srvFetch('/genomes?n=1', { cache: 'no-store' })).json();
           const host = Array.isArray(gs) ? gs[0]?.uid : gs?.rows?.[0]?.uid;
           if (host == null) throw new Error('no living creature to seed from');
-          const r = await (await fetch('/control', {
+          const r = await (await srvFetch('/control', {
             method: 'POST', headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ action: 'implant', uid: host,
               copies: Number($('sIdN').value), mutate: Number($('sIdM').value) / 100,
@@ -3629,7 +4316,7 @@ $('bArrows').onclick = e => { view.arrows = !view.arrows; e.target.classList.tog
     const btn = $('bImplant'), out = $('idResult');
     btn.disabled = true; out.textContent = 'seeding…';
     try {
-      const r = await (await fetch('/control', {
+      const r = await (await srvFetch('/control', {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ action: 'implant', uid: sel.uid,
                                copies: Number(nEl.value), mutate: mutOf() }),
@@ -3683,7 +4370,7 @@ $('bFood').onclick = e => { view.food = !view.food; e.target.classList.toggle('o
 async function control(action, confirmText) {
   if (confirmText && !confirm(confirmText)) return;
   try {
-    const r = await fetch('/control', {
+    const r = await srvFetch('/control', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ action }),
     });
@@ -3701,7 +4388,7 @@ async function control(action, confirmText) {
       const poll = async () => {
         waited += 1500;
         try {
-          const st = await (await fetch('/status', { cache: 'no-store' })).json();
+          const st = await (await srvFetch('/status', { cache: 'no-store' })).json();
           // A DIFFERENT process, not merely any answer. The outgoing server keeps
           // serving for a moment after agreeing to restart.
           if (st && st.nCells && st.bootId && st.bootId !== wasBoot) {
@@ -3747,7 +4434,7 @@ if (WATCH) {
     clearTimeout(spfT);
     spfT = setTimeout(async () => {
       try {
-        const r = await fetch('/control', { method: 'POST',
+        const r = await srvFetch('/control', { method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ action: 'speed', spf: +e.target.value }) });
         const j = await r.json();

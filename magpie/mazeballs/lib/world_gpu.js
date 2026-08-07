@@ -413,7 +413,9 @@ fn senseNorth(m: i32) -> bool { return ((m >> 7u) & 1) == 1; }
 // cell grazes what is near it, the stock goes down, and it regrows from a
 // bounded solar inflow. Grazing is a TRANSFER — what the cell gains, the mote
 // loses — so harvest no longer creates anything. Total energy in the world is
-// bounded by nMotes * moteCap plus what is standing in tissue.
+// bounded by sum(cap_i) plus what is standing in tissue. Capacities vary per
+// mote now, and the seeder holds their SUM at ((2*bound)^2/2) * moteCap, so the
+// bound no longer depends on how many motes there are.
 //
 // Motes are particles, not a grid: positions are continuous, they are found
 // through a hash exactly as cells are, and nothing is ever addressed by bucket.
@@ -437,8 +439,15 @@ fn moteOfferOf(m: vec4<f32>) -> f32 {
 }
 
 fn moteBucketOf(p: vec2<f32>) -> u32 {
-  let gx = i32(floor(p.x / P.moteR));
-  let gy = i32(floor(p.y / P.moteR));
+  // Toroidal, for the same reason as bucketOf: grazing probes neighbouring
+  // buckets, and an unwrapped probe at the seam looks somewhere the food is not.
+  let b = P.bound;
+  let span = 2.0 * b;
+  var q = p;
+  q.x = q.x - span * floor((q.x + b) / span);
+  q.y = q.y - span * floor((q.y + b) / span);
+  let gx = i32(floor(q.x / P.moteR));
+  let gy = i32(floor(q.y / P.moteR));
   let h = u32(gx * 73856093) ^ u32(gy * 19349663);
   return h % P.moteHashSize;
 }
@@ -793,8 +802,28 @@ fn contractionOf(i: u32) -> f32 {
 // moving half a bucket changes nothing about what the body is. Nothing is ever
 // snapped to it.
 fn bucketOf(p: vec2<f32>) -> u32 {
-  let gx = i32(floor(p.x / P.hashCell));
-  let gy = i32(floor(p.y / P.hashCell));
+  // WRAP BEFORE HASHING. The world is a torus and this lookup was not.
+  //
+  // Neighbour search probes bucketOf(p + offset*hashCell), so a cell sitting
+  // near +bound probes past the edge. Those coordinates hashed as if the world
+  // were infinite, landing in buckets unrelated to where the true neighbours —
+  // the cells just across the seam at -bound — actually are. minImage corrects
+  // the DISTANCE once a pair is found, which is why this survived: every force
+  // that was computed was right, and the ones that were missing left no trace.
+  //
+  // A cell on the seam therefore felt contact repulsion from the inside only,
+  // and packed against the boundary. Measured on the live world: the outermost
+  // |x| bin held 3.68x its share of cells, drawn as a hard line down both edges.
+  //
+  // Insertion is unaffected — stored positions are already inside the domain —
+  // so wrapping here makes probe and insert agree rather than changing the table.
+  let b = P.bound;
+  let span = 2.0 * b;
+  var q = p;
+  q.x = q.x - span * floor((q.x + b) / span);
+  q.y = q.y - span * floor((q.y + b) / span);
+  let gx = i32(floor(q.x / P.hashCell));
+  let gy = i32(floor(q.y / P.hashCell));
   var h : u32 = (u32(gx) * 73856093u) ^ (u32(gy) * 19349663u);
   return h % P.hashSize;
 }
@@ -1095,14 +1124,20 @@ fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
   }
   mote[i * 2u] = vec4<f32>(m0.x, m0.y, m0.z, demanders);
-  mote[i * 2u + 1u] = vec4<f32>(rivals, 0.0, 0.0, 0.0);
+  // .y IS THE MOTE'S CAPACITY and must survive this write. It is seeded once and
+  // never recomputed, so blanking it here — which the old vec4(rivals,0,0,0)
+  // did — would set every capacity to zero on the first step, the logistic term
+  // would divide by it, and the entire crop would stop regrowing. Read it back
+  // and write it through.
+  mote[i * 2u + 1u] = vec4<f32>(rivals, mote[i * 2u + 1u].y, 0.0, 0.0);
 }
 
 // PHASE 3. Subtract what was actually handed out, then let the sun put some
 // back. Regrowth is logistic toward moteCap and scaled by local fertility, so
 // the analytic field still decides WHERE the world is rich — it just no longer
 // decides how much there is. The inflow is bounded: at most
-// nMotes * moteRegrow * moteCap per second enters the world, whatever lives in
+// moteRegrow * sum(cap_i)/moteCap per second enters the world — equivalently
+// moteRegrow * ((2*bound)^2/2), independent of mote count — whatever lives in
 // it and however hungry they are. That is the one boundary inflow.
 @compute @workgroup_size(${WORKGROUP})
 fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
@@ -1130,7 +1165,7 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   // patch is still perfectly well off. Weak Boids-like separation falls out of it.
   //
   // Friction-law clean: this can only REDUCE the sun's delivery, never raise it.
-  // Total inflow stays bounded by nMotes * moteRegrow * moteCap, and no
+  // Total inflow stays bounded by moteRegrow * sum(cap_i)/moteCap, and no
   // capability is granted energy — the crowd term is blind to what the crowding
   // cells are or what they are doing.
   //
@@ -1150,10 +1185,50 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   // SUPPRESSION USES THE RIVAL COUNT, sharing used the cell count. This is the
   // whole point of the second slot: what a patch is worth is divided among
   // mouths, and how hard it is being WORKED is measured in competitors.
+  // This mote's capacity, needed by both the refill rate below and the logistic
+  // ceiling further down.
+  let cap = max(1e-4, mote[i * 2u + 1u].y);
   let draw = moteOfferOf(m0) * rivals;
-  let refill = max(1e-6, P.moteRegrow * P.dt);
+  // REFILL MUST BE THIS MOTE'S REFILL. The ratio below is draw against what the
+  // sun puts back HERE, and once regrowth started scaling with capacity — to keep
+  // total inflow invariant to mote density — this line was still quoting the
+  // unscaled base rate. A megamote refills many times faster than the reference
+  // and was being told it refilled at the reference, so draw/refill came out far
+  // too large and suppression punished exactly the rich patches the sparse-mote
+  // design exists to create. Introduced by the inflow fix two commits ago.
+  let refill = max(1e-6, P.moteRegrow * (cap / max(1e-4, P.moteCap)) * P.dt);
   let suppress = 1.0 / (1.0 + P.regrowCrowdK * (draw / refill));
-  stock = stock + P.moteRegrow * fert * suppress * (1.0 - stock / P.moteCap) * P.dt;
+  // PER-MOTE CAPACITY, in the spare float beside the rival count. The world used
+  // one cap for every mote, so the only way to hold a fixed amount of food was to
+  // spread it evenly — which is a world where every patch is worth the same and
+  // there is nothing to search FOR. Capacity now varies mote to mote and the
+  // logistic ceiling is the mote's own.
+  //
+  // TWO QUANTITIES, AND ONLY ONE OF THEM WAS CONSERVED.
+  //
+  // The seeder normalises the capacities so their sum equals the old
+  // nMotes * moteCap exactly, and an earlier version of this comment claimed
+  // that made the whole change conservative. It did not. Capacity is the
+  // standing-crop CEILING; the friction law is about INFLOW, and inflow here is
+  //
+  //     sum_i moteRegrow * (1 - stock_i/cap_i)
+  //
+  // which is an absolute rate per mote and does not mention capacity at all. A
+  // tenth as many motes was therefore a tenth of the world's income — the sun
+  // dimmed by 10x, silently, while the ceiling stayed put. Exactly the class of
+  // error energy-speculative-friction.md exists to prevent, committed by the
+  // person who wrote the conservation check.
+  //
+  // Scaling the rate by the mote's share of the reference capacity restores it:
+  // sum_i moteRegrow * cap_i/moteCap = moteRegrow * (sum_i cap_i)/moteCap, and
+  // the seeder guarantees sum_i cap_i = nMotesOld * moteCap, so the total is
+  // moteRegrow * nMotesOld — what it was before. A megamote refills faster in
+  // absolute terms and at the same fractional rate, which is what "a bigger
+  // patch of the same ground" should mean.
+  //
+  // (Found by Codex from the source, not from a symptom.)
+  let rate = P.moteRegrow * (cap / max(1e-4, P.moteCap));
+  stock = stock + rate * fert * suppress * (1.0 - stock / cap) * P.dt;
 
   // ---- FOOD GOES WHERE THE WATER GOES ---------------------------------------
   //
@@ -1184,10 +1259,10 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (np.x < -B) { np.x = np.x + 2.0 * B; }
     if (np.y >  B) { np.y = np.y - 2.0 * B; }
     if (np.y < -B) { np.y = np.y + 2.0 * B; }
-    mote[i * 2u] = vec4<f32>(np.x, np.y, clamp(stock, 0.0, P.moteCap), 0.0);
+    mote[i * 2u] = vec4<f32>(np.x, np.y, clamp(stock, 0.0, cap), 0.0);
     return;
   }
-  mote[i * 2u] = vec4<f32>(m0.x, m0.y, clamp(stock, 0.0, P.moteCap), 0.0);
+  mote[i * 2u] = vec4<f32>(m0.x, m0.y, clamp(stock, 0.0, cap), 0.0);
 }
 
 // PHASE 2 lives inside physics(): what cell i can pick up from the motes it is
@@ -1223,7 +1298,23 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   let m = cmeta[i];
   let slot = m.y;
   if (slot < 0 || m.x < 0) { return; }
-  if (cellType(m.x) != 1) { ext[u32(slot)] = 0.0; return; }
+  // PROPORTIONAL TO THE CAPACITY, not gated on the label — the same First Law
+  // repair already made to contraction, for the same reason and with the same
+  // arithmetic behind it.
+  //
+  // This tested cellType(m.x) != 1, so only cells whose argmax happened to
+  // land on SENSOR received any input at all. Measured over 64 living genomes
+  // developed at world values: 1253.9 units of sensing capacity existed in the
+  // tissue and 718.1 of it could be used — the labelling discarded 42.7%. 424
+  // cells lost the argmax by less than 0.10. Twenty-four of sixty-four bodies
+  // had no usable sensor, and sixteen of those were carrying real sensory
+  // tissue while being functionally blind. One specimen (#12009) had cells with
+  // sense 0.992 that were labelled anchor because grip came out at 1.000.
+  //
+  // A cell now senses as well as it is able to, and "sensor" goes back to being
+  // a description of a region of that continuum rather than a permit.
+  let acuity = senseAcuity(m.x);
+  if (acuity <= 0.0) { ext[u32(slot)] = 0.0; return; }
 
   let p = pos[i];
   // Two things a cell can actually feel locally: how fast the medium is moving
@@ -1581,11 +1672,25 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     let me2 = cmeta[i];
     // Every cell has a little purchase on the world; an ANCHOR cell has far
     // more, and modulates it with its activation so it can let go.
-    var grab = P.gripBase;
-    // Grip still keys off the LABEL, deliberately: making it continuous too
-    // would change traction and contraction in the same commit and neither
-    // effect could be attributed. grippiness(me2.x) is packed and waiting.
-    if (cellType(me2.x) == 3) { grab = P.gripAnchor; }
+    // PROPORTIONAL TO THE CAPACITY — the last of the three label gates, and the
+    // one that was always going to matter most.
+    //
+    // The note here said grip keyed off the label "deliberately: making it
+    // continuous too would change traction and contraction in the same commit
+    // and neither effect could be attributed", and that grippiness(me2.x) was
+    // packed and waiting. That was right at the time. Contraction was made
+    // continuous long since and sensing today, so the confound it was guarding
+    // against is gone and the reason to wait has expired.
+    //
+    // It matters because grip is what converts oscillation into travel. The
+    // brains ARE oscillating — the scope shows sustained phase-offset rhythm,
+    // which is a central pattern generator — and a contract-relax cycle without
+    // varying grip is reciprocal, returns where it started, and is the scallop
+    // theorem. Measured over 48 living genomes: mean grip capacity 0.660 per
+    // cell, yet only 31% of bodies had a cell where grip won the argmax. Roughly
+    // two thirds of the population was carrying the means to anchor and being
+    // told it could not, on a tie-break against contract.
+    var grab = mix(P.gripBase, P.gripAnchor, grippiness(me2.x));
     // ACTIVELY PHASED, which is the whole point. A cell raises and drops its grip
     // with its activation, so a brain can grip on the power stroke and release on
     // recovery. Constant grip nets zero however strong it is — the scallop
@@ -1769,9 +1874,37 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   let absorb = clamp(1.0 - P.absorbTradeoff * commit, 0.0, 1.0);
   var gain = 0.0;
   if (P.nMotes > 0u) {
-    gain = absorb * grazeAt(np) / P.dt;
+    // GRAZE WHERE THE OFFER WAS COUNTED, which is the OLD position.
+    //
+    // moteOffer counts its demanders from the cell hash, and that hash is built
+    // at the start of the step from pos[j]. This then grazed at np, the position
+    // after motion. A cell that crossed INTO a mote during the step took an
+    // offer it was never counted in — energy minted — and one that crossed out
+    // was charged in the mote's commit without taking it — energy destroyed.
+    // Neither is large per event and both are invisible in aggregate, which is
+    // exactly the profile of the errors this project keeps having to retract.
+    //
+    // At dt 0.015 with the current drag and flow defaults, boundary crossings
+    // are common rather than exotic.
+    //
+    // p is also the convention already used by the analytic fallback below,
+    // after the same mixed-position defect was fixed there — that one was
+    // dormant, since nMotes > 0 sends every real world down this branch instead.
+    // So the fix landed in the path nobody runs and missed the path everybody
+    // runs. (Found by Codex, reviewing the grazing path against HEAD.)
+    gain = absorb * grazeAt(p) / P.dt;
   } else {
-    gain = absorb * P.harvest * resourceAtS(np, shoreFrom(wHere)) * share;
+    // ONE POSITION, NOT TWO. This read the resource field at the NEW position
+    // while taking the shore multiplier from wHere, which is the wetness at the
+    // OLD one — so a cell leaving the shore carried its shore bonus one step
+    // into the mud, and a cell entering it was taxed one step longer than it
+    // should have been. The displacement per step is small, so the error is
+    // small; it is also systematic and in the direction of the thing this world
+    // is built to measure, which is the kind of bias that gets a result
+    // retracted. Harvesting where the cell started is a consistent convention
+    // and costs nothing, where recomputing wetness at np would be four more fbm.
+    // (Codex found this reading the physics cold.)
+    gain = absorb * P.harvest * resourceAtS(p, shoreFrom(wHere)) * share;
   }
   let work = P.muscleCost * abs(mine);
   // ACUITY COSTS. A sense organ that reads the world perfectly for free is a
@@ -1794,13 +1927,17 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // that could have used them had been driven to zero. A sensor was an organ
   // that reads pure noise and a non-sensor was paying for one.
   //
-  // Gating a COST on type is uncomfortable next to the First Law, and it is the
-  // honest reading here: the kernel ALREADY decides who senses by exactly this
-  // test, so making the bill follow the benefit is consistency rather than a
-  // new branch. The alternative — charging by continuous sense capacity — needs
-  // that capacity in cmeta, where there is no room for it.
-  let senseWork = P.senseCost * senseAcuity(cmeta[i].x)
-                * select(0.0, 1.0, cellType(cmeta[i].x) == 1);
+  // The type gate is gone, and with it the discomfort recorded above. That note
+  // said charging by continuous sense capacity "needs that capacity in cmeta,
+  // where there is no room for it" — but it was already there, as senseAcuity in
+  // bits 2-6. It only looked absent because nothing ever wrote it: senseTune was
+  // never derived from the sense gene, so acuity read 0 for every cell and the
+  // field was indistinguishable from an unused one.
+  //
+  // Now that it carries the gene, the bill follows the benefit exactly: a cell
+  // pays in proportion to how sharply it senses, and a cell that does not sense
+  // pays nothing without anyone testing what it is called.
+  let senseWork = P.senseCost * senseAcuity(cmeta[i].x);
   // ARMOUR IS EXPENSIVE TO HOLD. Without a cost, toughness is a free defence
   // and evolution takes it to the ceiling in every lineage — the same failure
   // as feeding being independent of what a cell is, which produced a 94%
@@ -1955,7 +2092,7 @@ export class WorldGPU {
       // the medium, so it raises transport AND damps a body's own locomotion.
       // Worth separating later; kept together here because this is the
       // combination with a measurement behind it.
-      flowScale: 4.0,
+      flowScale: 6.0,
       // Flow reduced from 1.0 so that swimming beats drifting, but NOT for the
       // reason first recorded here. That claim — flow carrying cells ten times
       // faster than they could swim — came from tracking cells by arena index,
@@ -1971,13 +2108,13 @@ export class WorldGPU {
       // about as far as its own muscles do, which leaves swimming with little
       // selective advantage. 0.3 keeps flow as a genuine force to anchor against
       // and be swept by, while making self-propulsion clearly worth having.
-      flowStr: 3.0, drag: 8.0, springK: 90.0,
+      flowStr: 4.0, drag: 24.0, springK: 300.0,
       // MUSCLE FORCE, raised 11x. Measured with an imposed gait over 300 s,
       // median displacement against contract: 0.45 -> 0.067, 2.5 -> 0.199,
       // 5 -> 0.490, 10 -> 0.891, 20 -> 1.594. Bodies end at 0.82-0.97 of their
       // starting span with at most 2 of 30 torn, so this is not the
       // dismemberment artefact this project has retracted before.
-      contract: 5.0, seed: 3, senseGain: 2.0, damp: 0.986, bound: 64.0,
+      contract: 8.0, seed: 3, senseGain: 2.0, damp: 0.986, bound: 64.0,
       // Calibrated against the density the world actually runs at. A 3x3 bucket
       // neighbourhood holds ~34 cells at the starting population, so crowdK
       // 0.012 discounts a shared patch to ~0.79 rather than erasing it: at
@@ -2087,7 +2224,7 @@ export class WorldGPU {
       // Geography. Scales chosen so a world of bound ~132 holds a handful of
       // basins and ridges rather than one hill or a thousand.
       heightScale: 0.018, heightSeed: 5150, gravity: 0.55, highSap: 0.35,
-      mudScale: 0.014, mudSeed: 8801, mudSlip: 0.85, mudFlow: 1.15, mudFog: 0.8, flowDry: 0.07, shoreWidth: 0.30,
+      mudScale: 0.014, mudSeed: 8801, mudSlip: 0.85, mudFlow: 2.0, mudFog: 0.8, flowDry: 0.07, shoreWidth: 0.30,
       lowLush: 0.75,
       // How far the biotic channel reaches, and how fast food goes downstream.
       // contestR against contactR 1.0: proximity rather than collision, capped
@@ -2310,11 +2447,23 @@ export class WorldGPU {
     // a lattice would put the world's food on a grid, which is the thing we do
     // not do, and would also give every patch the same size and spacing. Random
     // scatter clumps and thins the way real ground does, for free.
+    // FEWER, BIGGER, AND VERY UNEQUAL.
+    //
+    // The world used one mote per two square units, all with the same cap. Two
+    // problems with that. It was half the cost of a step — 34,848 of them
+    // running offer-and-graze every step for a crop that changes on the
+    // timescale of grazing. And a world where every patch is worth the same is a
+    // world with nothing to search FOR: finding food is not a skill if food is
+    // uniform, so nothing selects for finding it.
+    //
+    // So: a tenth as many motes, carrying the same total energy, distributed
+    // lognormally. A few megamotes are worth crossing the world for and most are
+    // not. No cell can yet TELL them apart at a distance — that would need a
+    // sense channel — so what this selects for is covering ground and being
+    // where the good ones are, which is the honest first step.
+    const denser = this.params.moteDensity ?? 0.1;
     if (this.params.nMotes == null) {
-      // One mote per two square units: with moteR 1.2 a cell has about two in
-      // reach, so ground is granular enough to be exhausted patch by patch
-      // rather than all at once.
-      this.params.nMotes = Math.round((2 * this.params.bound) ** 2 / 2);
+      this.params.nMotes = Math.round(((2 * this.params.bound) ** 2 / 2) * denser);
     }
     const nM = this.params.nMotes | 0;
     // Stride 2: eight floats a mote, not four. See the note in moteOffer.
@@ -2323,14 +2472,32 @@ export class WorldGPU {
       let sd = (this.params.moteSeed ?? 20260803) >>> 0;
       const rnd = () => ((sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296);
       const B = this.params.bound;
+      // Lognormal, because the tail is the point: sigma 1.15 puts the richest
+      // motes tens of times above the median while most sit below it. The draws
+      // are then RESCALED so their sum is exactly what the old uniform field
+      // held — nMotesOld * moteCap — which is what keeps the inflow bound in
+      // moteCommit true. Conservation here is arithmetic, not intention.
+      const target = ((2 * B) ** 2 / 2) * this.params.moteCap;
+      const caps = new Float64Array(nM);
+      let sum = 0;
       for (let i = 0; i < nM; i++) {
-        // STRIDE 2 — see the note in moteOffer. Slot 0 is (x, y, stock,
-        // cellDemanders); slot 1 carries the rival count and three spares.
+        // Box-Muller from the same stream, so the whole field is reproducible
+        // from moteSeed alone.
+        const u1 = Math.max(1e-12, rnd()), u2 = rnd();
+        const g = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        caps[i] = Math.exp(1.15 * g);
+        sum += caps[i];
+      }
+      const k = sum > 0 ? target / sum : 1;
+      for (let i = 0; i < nM; i++) {
         mv[i * 8] = (rnd() * 2 - 1) * B;
         mv[i * 8 + 1] = (rnd() * 2 - 1) * B;
+        const cap = caps[i] * k;
         // Start full, so the opening moments are not an artificial famine.
-        mv[i * 8 + 2] = this.params.moteCap;
+        mv[i * 8 + 2] = cap;          // stock
+        mv[i * 8 + 5] = cap;          // slot 1 .y — the capacity itself
       }
+      this.moteCapTotal = target;
     }
     const mkS = (a) => {
       const b = device.createBuffer({
@@ -2429,7 +2596,7 @@ export class WorldGPU {
 
   /** Mote stock, for the viewer and for conservation checks. */
   async readMotes() {
-    if (!this.moteGroups) return { pos: new Float32Array(0), stock: new Float32Array(0) };
+    if (!this.moteGroups) return { pos: new Float32Array(0), stock: new Float32Array(0), cap: new Float32Array(0) };
     if (this.params.nMotes == null) {
       // One mote per two square units: with moteR 1.2 a cell has about two in
       // reach, so ground is granular enough to be exhausted patch by patch
@@ -2447,14 +2614,19 @@ export class WorldGPU {
     const raw = new Float32Array(ss.getMappedRange().slice(0));
     ss.unmap(); ss.destroy();
     const pos = new Float32Array(nM * 2), stock = new Float32Array(nM);
+    // Capacity travels with the mote now: it is what decides how big it is
+    // drawn, and a viewer that only knows the stock cannot tell a drained
+    // megamote from a full ordinary one.
+    const cap = new Float32Array(nM);
     for (let i = 0; i < nM; i++) {
       // Stride 8 floats — the mote is two vec4s. Reading at 4 here would return
       // every other mote's position interleaved with rival counts, which looks
       // like plausible data and is not.
       pos[i * 2] = raw[i * 8]; pos[i * 2 + 1] = raw[i * 8 + 1];
       stock[i] = raw[i * 8 + 2];
+      cap[i] = raw[i * 8 + 5];
     }
-    return { pos, stock };
+    return { pos, stock, cap };
   }
 
   writeParams(patch = {}) {
