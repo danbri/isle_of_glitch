@@ -6344,3 +6344,64 @@ And it sharpens the requirement on the closing-speed proposal in
 still make approach pay in a world that has already been running for 200,000
 steps — that is, it has to create variation faster than convergence destroys it.
 Nothing measured this session does that.
+
+### The structural finding: multicellularity is taxed
+
+Live world, 2,046 bodies, energy per cell against body size:
+
+```
+size    bodies   energy/cell   tissues
+ 5-8       795         2.746      1.09
+ 9-14      784         2.643      1.21
+15-24      365         2.369      1.35
+25-60      102         2.244      1.46
+
+correlation  -0.263
+big (>=15) minus small (<=8):  -0.4041 +-0.0669
+```
+
+**Monotonic, large, and in the wrong direction.** A bigger body is poorer per
+cell at every step of the range. The economy is paying cells to come apart.
+
+Read the last column beside it: **differentiation requires size.** Bodies of 5–8
+cells carry 1.09 tissues — they are effectively monocultures by arithmetic, not
+by strategy. Only at 25–60 cells does the average body carry 1.46. So the world
+taxes exactly the thing that differentiation is made of.
+
+**Why, structurally.** Every cost in this world is per-cell — `brainTax`,
+`muscleCost`, `senseCost`, `toughCost`, `terrainWork`. Every benefit is per-cell
+— grazing, tidal income, contest. And two mechanisms actively penalise being a
+clump: crowding suppresses regrowth under a dense patch, and `absorbTradeoff`
+makes committed tissue feed badly. **There is no economy of scale anywhere in
+the world.** N cells bonded together are strictly worse off than the same N cells
+apart, so a body is a liability its cells tolerate rather than a strategy they
+benefit from.
+
+That is a complete account of everything else measured this session, and it
+subsumes them:
+
+- bodies shrink toward minimum viable size (median 12 → 11 over 772k steps);
+- one-tissue bodies dominate, because differentiation needs cells to spare;
+- `sense+move` falls 3.9% → 1.6%, because that combination needs at least two
+  tissues and therefore size;
+- the biotic pressure "exhausts itself", because it drives bodies to the floor
+  where there is no variation left for it to act on.
+
+**It also raises the bar on the closing-speed proposal (`WORLD-MANUAL.md` §11.0)
+and probably disqualifies it.** Pricing approach would reward steering, but
+steering needs muscle and sensors, which need cells to spare, which the economy
+charges for. A reward that can only be collected by paying a tax that exceeds it
+is not a reward.
+
+**The question this displaces everything else with: what can a body of N cells do
+that N solitary cells cannot?** Today the honest answer is "contract a bond",
+and locomotion barely pays. Until that answer is worth more than the per-cell
+costs of being N cells, evolution here is correct to disassemble, and nothing
+downstream of it can be fixed by tuning.
+
+Not proposed, not built, and deliberately not chosen at the end of a long
+session: the candidate mechanisms are shielding (interior cells being harder to
+reach through exterior ones), shared energy (`sapRate`, already built and already
+measured to rescue populations 68× while collapsing differentiation), and
+anything that makes uptake super-linear in coordinated tissue. Each needs the
+10× test that killed the last three results.
