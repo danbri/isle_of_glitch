@@ -34,3 +34,5 @@ runs/lineage.csv
 runs/archive/*.snapshot
 runs/archive/*.ring
 runs/archive/*.snapshot.*
+
+.DS_Store

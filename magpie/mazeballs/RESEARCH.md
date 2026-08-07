@@ -6767,3 +6767,37 @@ The pre-registration is the part worth keeping. It converted "one of twelve, so
 probably chance" from a judgement call into a test with a stated bar, and the
 test came back negative. That is a cheaper and more honest outcome than a
 plausible number defended after the fact.
+
+### A flaw in the method, not only in the hypotheses (2026-08-07)
+
+Every ablation this session was single-factor: remove one mechanism, see whether
+the outcome moves. Five ran — geography, contest at depth, tidal income, shelter,
+body-share grazing — five came back "not implicated", and they were written up as
+five dead ends.
+
+**Single-factor ablation is blind to conjunctive requirements.**
+
+```
+if the outcome needs A AND B:
+  remove A  ->  no effect   (B alone was already insufficient)
+  remove B  ->  no effect   (A alone was already insufficient)
+  read as:      "neither matters"
+  truth:        "both necessary, neither sufficient"
+```
+
+That is the exact shape of the results, and geography is the clearest case.
+Removing all of it moves the movement incentive by 0.0044 ± 0.0300 while having
+the largest single effect in the who-selects table on wealth, 1.3785 ± 0.2518. A
+factor that triples the world's energy and does not move the outcome is not
+irrelevant — it is **insufficient**. The two findings look identical to a
+one-factor ablation and require different next steps.
+
+**The correction is to the method.** Experiments from here are factorial:
+combinations held together, testing whether two or three mechanisms jointly do
+what none does alone. The `moving-pays` harness already accepts arbitrary
+parameter sets as arms, so the tooling does not change — only which arms are
+chosen, and how many worlds a comparison costs.
+
+It also reframes every null above. "Not implicated" was reported as "does not
+matter". It should have been reported as "does not suffice alone", which is a
+much weaker claim and leaves those mechanisms in play as conjuncts.

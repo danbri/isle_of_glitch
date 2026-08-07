@@ -498,10 +498,42 @@ will report nothing.
 
 ---
 
+**0b. A CORRECTION TO THE METHOD, which outranks every item below it.**
+
+Everything ablated this session was tested one factor at a time, and five came
+back "not implicated": geography, contest at depth, tidal income, shelter, and
+body-share grazing. They were reported as five dead ends. **Single-factor
+ablation cannot see a conjunction.** If an outcome needs A *and* B:
+
+```
+remove A  ->  no effect   (B alone was already insufficient)
+remove B  ->  no effect   (A alone was already insufficient)
+read as:      "neither matters"
+truth:        "both necessary, neither sufficient"
+```
+
+Geography is the clearest case and was mis-filed here as "not supported".
+Removing all of it changes the movement incentive by 0.0044 ± 0.0300 — nothing —
+while it simultaneously has the LARGEST single effect in the who-selects table
+on wealth: mean energy 1.79 with it against 0.72 without, 1.3785 ± 0.2518 at
+depth. **A factor that triples the world's energy and does not move the outcome
+is not irrelevant. It is insufficient**, and those two findings demand different
+next steps.
+
+So the next experiments are FACTORIAL — combinations held together, asking
+whether two or three mechanisms jointly do what none does alone. A one-factor
+sweep over a conjunctive requirement returns nulls indefinitely, and a session
+has now been spent demonstrating that it does. The `moving-pays` harness already
+takes arbitrary parameter sets as arms, so this costs nothing but the choice of
+arms.
+
+---
+
 **1. A biotic channel that prices APPROACH, not only contact.** Was head of the
-list, and it displaces everything below it — including geography, which is now
-built and measured at 22× less influence on whether moving pays than contest is
-(`RESEARCH.md`, 2026-08-07).
+list. Note it is a candidate CONJUNCT, not a replacement: pricing approach
+rewards steering, steering needs cells to spare, and cells to spare is what the
+multicellularity tax denies — so it may well need §11.0 to be in place before it
+can show anything at all.
 
 The measured problem: contest is symmetric and fires on contact, so moving raises
 your encounter rate with things that eat you exactly as much as with things you
