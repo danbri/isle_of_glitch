@@ -1771,7 +1771,17 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   if (P.nMotes > 0u) {
     gain = absorb * grazeAt(np) / P.dt;
   } else {
-    gain = absorb * P.harvest * resourceAtS(np, shoreFrom(wHere)) * share;
+    // ONE POSITION, NOT TWO. This read the resource field at the NEW position
+    // while taking the shore multiplier from wHere, which is the wetness at the
+    // OLD one — so a cell leaving the shore carried its shore bonus one step
+    // into the mud, and a cell entering it was taxed one step longer than it
+    // should have been. The displacement per step is small, so the error is
+    // small; it is also systematic and in the direction of the thing this world
+    // is built to measure, which is the kind of bias that gets a result
+    // retracted. Harvesting where the cell started is a consistent convention
+    // and costs nothing, where recomputing wetness at np would be four more fbm.
+    // (Codex found this reading the physics cold.)
+    gain = absorb * P.harvest * resourceAtS(p, shoreFrom(wHere)) * share;
   }
   let work = P.muscleCost * abs(mine);
   // ACUITY COSTS. A sense organ that reads the world perfectly for free is a

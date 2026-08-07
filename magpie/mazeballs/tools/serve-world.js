@@ -1387,6 +1387,14 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       drift: !!args.drift,
       alive: last.alive, births: evo.births, deaths: evo.deaths,
       generation: last.maxGeneration, lineages: last.lineages,
+      // BIRTHS THE ARENA REFUSED. Tracked since fragmentation once stopped
+      // evolution for thousands of ticks while every other number looked
+      // healthy — but only ever reported through a console warning that fires
+      // ONCE per process, so a run could be strangling and say nothing. It is a
+      // headline number: it is the difference between a population limited by
+      // energy, which is the design, and one limited by bookkeeping, which is a
+      // bug wearing the same clothes.
+      blockedBirths: last.blockedBirths ?? 0,
       meanEnergy: last.meanEnergy, organisms: evo.nextUid,
     }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
   }
