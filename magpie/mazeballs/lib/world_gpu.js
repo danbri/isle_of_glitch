@@ -413,7 +413,9 @@ fn senseNorth(m: i32) -> bool { return ((m >> 7u) & 1) == 1; }
 // cell grazes what is near it, the stock goes down, and it regrows from a
 // bounded solar inflow. Grazing is a TRANSFER — what the cell gains, the mote
 // loses — so harvest no longer creates anything. Total energy in the world is
-// bounded by nMotes * moteCap plus what is standing in tissue.
+// bounded by sum(cap_i) plus what is standing in tissue. Capacities vary per
+// mote now, and the seeder holds their SUM at ((2*bound)^2/2) * moteCap, so the
+// bound no longer depends on how many motes there are.
 //
 // Motes are particles, not a grid: positions are continuous, they are found
 // through a hash exactly as cells are, and nothing is ever addressed by bucket.
@@ -1134,7 +1136,8 @@ fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
 // back. Regrowth is logistic toward moteCap and scaled by local fertility, so
 // the analytic field still decides WHERE the world is rich — it just no longer
 // decides how much there is. The inflow is bounded: at most
-// nMotes * moteRegrow * moteCap per second enters the world, whatever lives in
+// moteRegrow * sum(cap_i)/moteCap per second enters the world — equivalently
+// moteRegrow * ((2*bound)^2/2), independent of mote count — whatever lives in
 // it and however hungry they are. That is the one boundary inflow.
 @compute @workgroup_size(${WORKGROUP})
 fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
@@ -1162,7 +1165,7 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   // patch is still perfectly well off. Weak Boids-like separation falls out of it.
   //
   // Friction-law clean: this can only REDUCE the sun's delivery, never raise it.
-  // Total inflow stays bounded by nMotes * moteRegrow * moteCap, and no
+  // Total inflow stays bounded by moteRegrow * sum(cap_i)/moteCap, and no
   // capability is granted energy — the crowd term is blind to what the crowding
   // cells are or what they are doing.
   //
@@ -1871,7 +1874,25 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   let absorb = clamp(1.0 - P.absorbTradeoff * commit, 0.0, 1.0);
   var gain = 0.0;
   if (P.nMotes > 0u) {
-    gain = absorb * grazeAt(np) / P.dt;
+    // GRAZE WHERE THE OFFER WAS COUNTED, which is the OLD position.
+    //
+    // moteOffer counts its demanders from the cell hash, and that hash is built
+    // at the start of the step from pos[j]. This then grazed at np, the position
+    // after motion. A cell that crossed INTO a mote during the step took an
+    // offer it was never counted in — energy minted — and one that crossed out
+    // was charged in the mote's commit without taking it — energy destroyed.
+    // Neither is large per event and both are invisible in aggregate, which is
+    // exactly the profile of the errors this project keeps having to retract.
+    //
+    // At dt 0.015 with the current drag and flow defaults, boundary crossings
+    // are common rather than exotic.
+    //
+    // p is also the convention already used by the analytic fallback below,
+    // after the same mixed-position defect was fixed there — that one was
+    // dormant, since nMotes > 0 sends every real world down this branch instead.
+    // So the fix landed in the path nobody runs and missed the path everybody
+    // runs. (Found by Codex, reviewing the grazing path against HEAD.)
+    gain = absorb * grazeAt(p) / P.dt;
   } else {
     // ONE POSITION, NOT TWO. This read the resource field at the NEW position
     // while taking the shore multiplier from wHere, which is the wetness at the
