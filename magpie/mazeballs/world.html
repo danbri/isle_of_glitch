@@ -237,18 +237,18 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
     </div>
   </div>
 
-  <div class="sl"><div class="lab"><span>flow strength</span><span class="v" id="vStr">1.00</span></div>
-    <input type="range" id="sStr" min="0" max="300" value="100"></div>
-  <div class="sl"><div class="lab"><span>eddy scale</span><span class="v" id="vScale">0.90</span></div>
-    <input type="range" id="sScale" min="10" max="400" value="90"></div>
-  <div class="sl"><div class="lab"><span>drag</span><span class="v" id="vDrag">1.60</span></div>
-    <input type="range" id="sDrag" min="0" max="800" value="160"></div>
+  <div class="sl"><div class="lab"><span>flow strength</span><span class="v" id="vStr">3.00</span></div>
+    <input type="range" id="sStr" min="0" max="800" value="300"></div>
+  <div class="sl"><div class="lab"><span>eddy scale</span><span class="v" id="vScale">4.00</span></div>
+    <input type="range" id="sScale" min="10" max="1200" value="400"></div>
+  <div class="sl"><div class="lab"><span>drag</span><span class="v" id="vDrag">8.00</span></div>
+    <input type="range" id="sDrag" min="0" max="2400" value="800"></div>
   <div class="sl"><div class="lab"><span>current in the mud</span><span class="v" id="vMudFlow">1.15</span></div>
     <input type="range" id="sMudFlow" min="0" max="800" step="5" value="115"></div>
   <div class="sl"><div class="lab"><span>bond stiffness</span><span class="v" id="vSpring">90</span></div>
     <input type="range" id="sSpring" min="1" max="300" value="90"></div>
-  <div class="sl"><div class="lab"><span>muscle contraction</span><span class="v" id="vCon">0.45</span></div>
-    <input type="range" id="sCon" min="0" max="100" value="45"></div>
+  <div class="sl"><div class="lab"><span>muscle contraction</span><span class="v" id="vCon">5.00</span></div>
+    <input type="range" id="sCon" min="0" max="1500" value="500"></div>
   <div class="sl"><div class="lab"><span>steps per frame</span><span class="v" id="vSpf">1</span></div>
     <input type="range" id="sSpf" min="0" max="40" value="1"></div>
   <div class="sl"><div class="lab"><span>render scale</span><span class="v" id="vRScale">0.70</span></div>
@@ -3558,12 +3558,17 @@ $('bArrows').onclick = e => { view.arrows = !view.arrows; e.target.classList.tog
   // cannot disagree about what a creature is.
   (async () => {
     const box = $('designList'); if (!box) return;
-    // TWO SOURCES, because this page is served two ways. Against a live server
-    // /creatures reads the file fresh, so a genome captured a minute ago is
-    // there. On GitHub Pages there is no server at all and that path 404s, so
-    // fall back to the committed file, which is the same data one build behind.
+    // TWO SOURCES, and the committed file is tried FIRST on purpose.
+    //
+    // /creatures reads the library fresh from disk, so a genome captured a
+    // minute ago appears without a rebuild — but that endpoint only exists when
+    // a server is serving this page. On GitHub Pages there is none, and probing
+    // it logs a 404 in the console of every visitor even though the fallback
+    // works. Static file first means the page never 404s; the live endpoint is
+    // consulted only in watch mode, where a server certainly exists and
+    // freshness is the point.
     let lib = null;
-    for (const url of ['/creatures', 'lib/creatures.json']) {
+    for (const url of WATCH ? ['/creatures', 'lib/creatures.json'] : ['lib/creatures.json']) {
       try {
         const r = await fetch(url, { cache: 'no-store' });
         if (!r.ok) continue;

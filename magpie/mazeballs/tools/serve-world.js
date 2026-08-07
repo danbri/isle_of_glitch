@@ -131,6 +131,42 @@ const codeStamp = async () => {
 };
 // Captured at startup: this is what the RUNNING process actually loaded.
 const RUNNING = await codeStamp();
+
+/**
+ * THE REGIME LOG — where the physics changed under a world that kept running.
+ *
+ * `--resume` restores cells, genomes, energies and lineages, and the code that
+ * moves them is whatever is on disk at boot. So a long-lived world's history is
+ * a sequence of different physics with no record of the boundaries: a body at
+ * step 5.6M evolved under rules that a body at step 2M never met, and nothing
+ * says where one ended.
+ *
+ * That is acceptable while the world is being balanced and end-to-end progress
+ * is the question — it is not acceptable silently. Every boot appends the step
+ * it resumed at, the simVersion it is running, and the full parameter set. The
+ * history then reads as a list of regimes rather than one undifferentiated run,
+ * and any measurement can be checked against which regimes it spans.
+ *
+ * runs/archive/ already stamps each manifest with simVersion and all 82
+ * parameters, so an archived genome knows its own physics. This supplies the
+ * boundaries between them.
+ */
+async function logRegime() {
+  try {
+    const rec = {
+      t: new Date().toISOString(), event: 'boot',
+      step: steps, simVersion: RUNNING.simVersion, bootId: BOOT_ID,
+      resumed: Deno.args.includes('--resume'),
+      args: { cells: args.cells, bound: args.bound, maxAge: args.maxAge,
+              ageSpread: args.ageSpread, spf: args.spf },
+      params: { ...world.params },
+    };
+    await Deno.writeTextFile(
+      `${new URL('..', import.meta.url).pathname}runs/regimes.jsonl`,
+      JSON.stringify(rec) + '\n', { append: true });
+    console.log(`regime logged: sim ${RUNNING.simVersion} from step ${steps.toLocaleString()}`);
+  } catch (e) { console.error('regime log failed:', e.message); }
+}
 // Identifies THIS process. A restarting server answers /status for a few hundred
 // milliseconds after it has agreed to die, so a client polling "is it back yet"
 // sees the outgoing process and rebuilds against something about to exit. Waiting
@@ -807,6 +843,8 @@ const ROOT = new URL('..', import.meta.url).pathname;
 // Bound to all interfaces so a tailnet peer can reach it. That also exposes it
 // to anything else routable to this host, which is the trade being made — pass
 // --host 127.0.0.1 to keep it local only.
+await logRegime();
+
 const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) => {
   const url = new URL(req.url);
   // Bare / watches the shared world. Serving the plain page there made every
@@ -903,6 +941,39 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
   }
 
   // The designed-creature library. Static, small, and read by the Extras panel.
+  // SAVED WORLDS, for the load UI. Lists what can be resumed from: the live
+  // autosave, the pruned archive snapshots, and anything deliberately kept.
+  if (path === '/saves') {
+    const root = `${new URL('..', import.meta.url).pathname}runs`;
+    const out = [];
+    const scan = async (dir, kind) => {
+      try {
+        for await (const e of Deno.readDir(dir)) {
+          if (!e.isFile || !e.name.endsWith('.snapshot')) continue;
+          const p = `${dir}/${e.name}`;
+          const st = await Deno.stat(p);
+          out.push({ kind, name: e.name, path: p, bytes: st.size,
+                     mtime: st.mtime?.toISOString() ?? null });
+        }
+      } catch { /* directory may not exist yet */ }
+    };
+    await scan(root, 'autosave');
+    await scan(`${root}/archive`, 'archive');
+    await scan(`${root}/keep`, 'kept');
+    // Manifests carry the genomes and the parameters and are never pruned, so
+    // they are listed even where the snapshot beside them has been.
+    const manifests = [];
+    try {
+      for await (const e of Deno.readDir(`${root}/archive`)) {
+        if (e.isFile && e.name.endsWith('.json')) manifests.push(e.name);
+      }
+    } catch { /* none yet */ }
+    manifests.sort();
+    out.sort((a, b) => (b.mtime ?? '').localeCompare(a.mtime ?? ''));
+    return new Response(JSON.stringify({ saves: out, manifests, current: SNAP }),
+      { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+  }
+
   if (path === '/creatures') {
     try {
       const txt = await Deno.readTextFile(
@@ -1103,6 +1174,43 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
     // Both of these replace this process, which is how new code gets picked up
     // without a shell. `restart` saves first and comes back on the same world;
     // `reseed` abandons it and starts a fresh one.
+    // LOAD A SAVED WORLD. Re-execs against a chosen snapshot rather than the
+    // live autosave, so an experiment can be rewound without losing what is
+    // running: the current world is saved under runs/keep first, always, because
+    // "load that other one" should never be a way to destroy this one.
+    if (action === 'load') {
+      const want = String(body.path ?? '');
+      const root = `${new URL('..', import.meta.url).pathname}runs`;
+      if (!want.startsWith(root) || !want.endsWith('.snapshot')) {
+        return new Response(JSON.stringify({ ok: false, error: 'path must be a snapshot under runs/' }),
+          { status: 400, headers: { 'content-type': 'application/json' } });
+      }
+      try { await Deno.stat(want); }
+      catch { return new Response(JSON.stringify({ ok: false, error: 'no such snapshot' }),
+        { status: 404, headers: { 'content-type': 'application/json' } }); }
+
+      let kept = null;
+      try {
+        await Deno.mkdir(`${root}/keep`, { recursive: true });
+        kept = `${root}/keep/before-load-step${steps}.snapshot`;
+        await saveSnapshot(kept);
+      } catch (e) { console.error('pre-load save failed:', e.message); }
+
+      queueMicrotask(async () => {
+        await new Promise((r) => setTimeout(r, 250));
+        const script = new URL(import.meta.url).pathname;
+        const rest = Deno.args.filter((a) => a !== '--resume' && a !== '--snapshot');
+        console.log(`load: re-exec from ${want}`);
+        try { await server.shutdown(); } catch { /* already closing */ }
+        new Deno.Command(Deno.execPath(), {
+          args: ['run', '-A', script, ...rest, '--snapshot', want, '--resume'],
+          cwd: Deno.cwd(), stdout: 'inherit', stderr: 'inherit',
+        }).spawn().unref();
+        setTimeout(() => Deno.exit(0), 150);
+      });
+      return ok({ loading: want, currentSavedTo: kept });
+    }
+
     if (action === 'restart' || action === 'reseed') {
       const keep = action === 'restart';
       if (keep) { try { await saveSnapshot(SNAP); } catch (e) { console.error('save failed:', e.message); } }
