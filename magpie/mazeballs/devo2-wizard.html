@@ -28,7 +28,9 @@
   header{border-bottom:1px solid var(--rule);padding:1rem 1.2rem;position:sticky;top:0;background:var(--bg);z-index:9}
   header h1{margin:0;font-size:1rem;font-weight:600;letter-spacing:.01em}
   header p{margin:.25rem 0 0;color:var(--soft);font-size:.82rem}
-  nav{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.6rem}
+  nav{display:flex;gap:.3rem;margin-top:.6rem;overflow-x:auto;padding-bottom:.2rem;
+      scrollbar-width:thin}
+  nav button{flex:0 0 auto}
   nav button{
     font:inherit;font-size:.74rem;padding:.25rem .55rem;background:var(--panel);
     color:var(--soft);border:1px solid var(--rule);border-radius:4px;cursor:pointer;
@@ -62,6 +64,14 @@
              border:1px solid var(--rule);border-radius:4px;cursor:pointer;margin:.4rem .3rem .1rem 0}
   button.act:hover{border-color:var(--sensor)}
   button.act:disabled{opacity:.35;cursor:default;border-color:var(--rule)}
+  /* The central affordance of the growth card. It inherited the same outlined
+     chip style as the secondary controls and read as another passive label. */
+  button.act.primary{
+    background:var(--sensor); border-color:var(--sensor); color:#06110f;
+    font-weight:600; width:100%; padding:.45rem .7rem; margin-top:.5rem;
+  }
+  button.act.primary:hover{filter:brightness(1.08)}
+  button.act.primary:disabled{background:var(--rule);border-color:var(--rule);color:var(--soft)}
   .pager{display:flex;justify-content:space-between;margin:1.6rem 0 3rem;gap:.5rem}
   /* The same two controls at the top. The step chips tell you where you are but
      make you aim; these are where the hand already is after reading a section. */
@@ -249,7 +259,7 @@
         <input type="range" id="sCap" min="0" max="4" step="1" value="0"></label>
       <label class="sl">developmental time <b id="vBig">12000 ms</b>
         <input type="range" id="sBig" min="12000" max="60000" step="6000" value="12000"></label>
-      <button class="act" id="bBig">grow (slow above 24000 ms)</button>
+      <button class="act primary" id="bBig">run long growth</button>
       <div id="bigStats" style="font-family:var(--mono);font-size:.76rem;margin-top:.4rem"></div>
       <p class="note warn">The world develops for 12,000&nbsp;ms with a 60-cell cap, and this
       genome self-limits at 51 — so the cap is not what is binding. Developmental TIME is.
@@ -591,28 +601,48 @@ $('sRatio').oninput = drawTuring;
 drawTuring();
 
 /* ------------------------------------------------------- shared body draw */
+/**
+ * FIXED SCALE, SET BY THE EGG — not autoscaled to the body.
+ *
+ * This used to fit each body to the canvas. Every embryo then filled the frame
+ * whatever its size, so dragging the developmental-time slider showed cells
+ * REARRANGING rather than a body growing, which is the one thing step 5 exists to
+ * teach. The egg circle stayed put while the scale moved under it, so the circle
+ * was not a reference for anything. (Codex caught this reviewing the page.)
+ *
+ * The egg is now the ruler: `extent` maps to a fixed radius, cells sit at their
+ * true coordinates inside it, and a two-cell embryo is genuinely small. A body
+ * that outgrows the egg — which happens at long developmental times — zooms out
+ * to fit and says so, rather than silently changing what the picture means.
+ */
 function drawBody(cv, cells, extent = D.DEFAULT_EXTENT) {
   const x = cv.getContext('2d'), W = cv.width, H = cv.height;
   x.fillStyle = '#070c0b'; x.fillRect(0, 0, W, H);
-  // the egg
-  x.strokeStyle = '#1b2a27'; x.beginPath();
-  x.arc(W / 2, H / 2, Math.min(W, H) * 0.46, 0, Math.PI * 2); x.stroke();
+  const eggPx = Math.min(W, H) * 0.44;
+  let reach = extent;
+  if (cells && cells.length) {
+    for (const c of cells) reach = Math.max(reach, Math.hypot(c.x, c.y) + 0.5);
+  }
+  const zoomedOut = reach > extent * 1.02;
+  const sc = eggPx / reach;                    // world units -> pixels
+  // the egg, at its true size under this scale
+  x.strokeStyle = zoomedOut ? '#2b3d38' : '#1b2a27';
+  x.beginPath(); x.arc(W / 2, H / 2, extent * sc, 0, Math.PI * 2); x.stroke();
   if (!cells || !cells.length) {
     x.fillStyle = '#6b7d78'; x.font = '12px ui-monospace,monospace';
     x.fillText('no body — development failed', 14, H / 2);
     return;
   }
-  let lo = Infinity, hi = -Infinity, ylo = Infinity, yhi = -Infinity;
-  for (const c of cells) { lo = Math.min(lo, c.x); hi = Math.max(hi, c.x);
-    ylo = Math.min(ylo, c.y); yhi = Math.max(yhi, c.y); }
-  const span = Math.max(1.5, Math.max(hi - lo, yhi - ylo));
-  const sc = Math.min(W, H) * 0.8 / span;
-  const ox = W / 2 - ((lo + hi) / 2) * sc, oy = H / 2 - ((ylo + yhi) / 2) * sc;
+  const r = Math.max(1.2, sc * 0.34);
   for (const c of cells) {
     x.fillStyle = TYPE_COL[describe(c)];
     x.beginPath();
-    x.arc(ox + c.x * sc, oy + c.y * sc, Math.max(2, sc * 0.34), 0, Math.PI * 2);
+    x.arc(W / 2 + c.x * sc, H / 2 + c.y * sc, r, 0, Math.PI * 2);
     x.fill();
+  }
+  if (zoomedOut) {
+    x.fillStyle = '#8ba39b'; x.font = '10px ui-monospace,monospace';
+    x.fillText(`zoomed out ${(reach / extent).toFixed(1)}x — body has outgrown the egg`, 8, H - 8);
   }
 }
 
@@ -652,7 +682,9 @@ $('sCap').oninput = () => { $('vCap').textContent = capNow(); };
 $('sBig').oninput = () => { $('vBig').textContent = $('sBig').value + ' ms'; };
 $('bBig').onclick = () => {
   const ms = +$('sBig').value, cap = capNow();
-  $('bigStats').textContent = `growing to ${ms} ms, cap ${cap}...`;
+  $('bigStats').textContent = `growing to ${ms} ms, cap ${cap}… the page will not respond until this finishes`;
+  $('bBig').disabled = true;
+  $('bBig').textContent = 'growing…';
   // Yield first, or the page freezes with no explanation of why.
   setTimeout(() => {
     const t0 = performance.now();
@@ -665,7 +697,8 @@ $('bBig').onclick = () => {
     // a coarser integration and is stated as such rather than hidden.
     try { g = D.develop(genome, { ms, dtMs: ms > 18000 ? 320 : 40,
                                   extent: D.DEFAULT_EXTENT, maxCells: cap, yolk: 1e9 }); }
-    catch (e) { $('bigStats').textContent = 'development failed: ' + e.message; return; }
+    catch (e) { $('bigStats').textContent = 'development failed: ' + e.message;
+                $('bBig').disabled = false; $('bBig').textContent = 'run long growth'; return; }
     const dt = Math.round(performance.now() - t0);
     drawBody($('cvGrow'), g.cells);
     const hist = [0,0,0,0];
@@ -678,6 +711,7 @@ $('bBig').onclick = () => {
       `bands ${bd.flips} &nbsp; elongation ${bd.elong.toFixed(2)}<br>` +
       (g.cells.length >= cap ? '<span style="color:#c7734f">hit the cell budget</span>'
                              : 'self-limited below the budget');
+    $('bBig').disabled = false; $('bBig').textContent = 'run long growth';
   }, 30);
 };
 $('bRandom').onclick = () => { genome = D.randomGenome(Math.random); drawGrow(); };
