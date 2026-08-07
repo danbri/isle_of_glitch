@@ -148,6 +148,19 @@ button.on::before { content: '\25CF\00a0'; opacity: .85; }
   padding: .35rem .6rem; text-align: center; max-width: 70vw; }
 #codeWarn b { color: #ffb84d; }
 
+/* A SELECTION IS A STATE OF THE PICTURE, so it is announced in the picture.
+   Selecting an animal dims every other cell, and the dimming lasts until it is
+   cleared — which can be minutes after the click, or a selection made from the
+   gallery rather than by clicking the world. With nothing on screen saying so,
+   a dimmed world is indistinguishable from a broken one. */
+#selBadge { position: fixed; top: .5rem; left: 50%; transform: translateX(-50%);
+  z-index: 46; font: 11px/1.5 ui-monospace, monospace; color: #cfe3dc;
+  background: #11201cee; border: 1px solid #2f5b50; border-radius: 3px;
+  padding: .2rem .25rem .2rem .55rem; display: none; align-items: center; gap: .5rem;
+  white-space: nowrap; max-width: 96vw; }
+#selBadge.on { display: flex; }
+#selBadge b { color: #eaf5f0; }
+
 /* THE CREATURE CAROUSEL. A scroll strip rather than a grid, because the tiles
    are RANKED — the order carries meaning, so the best movers stay first and
    visible instead of being spread over a block. */
@@ -193,6 +206,16 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 <!-- CTRNN scope. Rows are the selected animal's neurons, x is time. Lives over
      the canvas rather than in the sidebar because it needs the width: reading a
      gait means seeing whether bands are in phase, and that is a wide picture. -->
+<!-- OUTSIDE THE PANEL, deliberately. The right-hand aside has a
+     backdrop-filter, and a filter makes an element the containing block for its
+     fixed-position descendants — so a badge placed in there is positioned and
+     width-constrained by the panel rather than by the window, which is where it
+     needs to be. -->
+<div id="selBadge">
+  <span>watching <b id="selBadgeId">#0</b> · the rest of the world is dimmed</span>
+  <button id="bShowAll">show all</button>
+</div>
+
 <div id="scope" style="display:none">
   <div id="scopeGrip" title="drag to resize"><i></i><i></i><i></i></div>
   <div id="scopeHead">
@@ -1271,11 +1294,23 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // comes from dimming everything else — the subject keeps its own colours at
   // full strength and simply stops competing with a thousand neighbours.
   if (anyPicked && !picked) {
-    // A step back, not a blackout. The crowd stays readable as a living context —
-    // you still want to see what the subject is swimming through — it simply
-    // stops competing. Desaturate a little, dim a little.
+    // A STEP BACK, NOT A BLACKOUT — and much smaller a step than it was.
+    //
+    // This was mix(base, grey, 0.35) * 0.62 with a further 0.66 on the glow,
+    // leaving the crowd at 41% of its normal brightness. That was set before the
+    // subject got a pass of its own drawn over everything else; with that pass
+    // in place the subject is already unmistakable and the crowd does not need
+    // suppressing anywhere near this hard. What it produced instead was a world
+    // that looked broken to anyone who did not know a selection was in force —
+    // reported as "things seem too dark, like a few nodes got highlighted
+    // somehow", which is the symptom described exactly.
+    //
+    // 0.85 on the colour and 0.90 on the glow leaves the crowd at 77%: still a
+    // visible recession, no longer a dimmer switch on the whole world. The
+    // desaturation is down to a trace for the same reason — cell type is told
+    // apart by hue, including in the crowd.
     let grey = vec3<f32>(dot(base, vec3<f32>(0.33, 0.34, 0.33)));
-    base = mix(base, grey, 0.35) * 0.62;
+    base = mix(base, grey, 0.12) * 0.85;
   } else if (picked) {
     base = base * 1.25;                 // a lift, not a bleach
   }
@@ -1290,7 +1325,7 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // pop against a living grey-green broth rather than a field of neon.
   var g0 = clamp(0.55 + 0.55 * abs(a) * abs(a), 0.0, 1.35);
   if (picked) { g0 = clamp(0.85 + 1.4 * abs(a) * abs(a), 0.0, 2.4); }
-  if (anyPicked && !picked) { g0 = g0 * 0.66; }
+  if (anyPicked && !picked) { g0 = g0 * 0.90; }
   o.glow = g0;
   return o;
 }
@@ -2134,11 +2169,19 @@ function selectUid(uid, pos, type, uidArr, n) {
   if (uid >= 0) { storeFor(uid); refreshTrace(); }
   const box = $('scope');
   if (box) box.style.display = uid >= 0 ? '' : 'none';
+  updateSelBadge();
   updateSelInfo();
   // Unfold on selection rather than on a second click. Picking an animal and
   // then pressing a button to see what built it is a sequencing rule the user
   // should not have to know; the genome is the thing you selected it FOR.
   if (changed && uid >= 0) { lastGenome = null; showDevo(); frameCreature(uid); }
+}
+
+function updateSelBadge() {
+  const b = $('selBadge');
+  if (!b) return;
+  b.classList.toggle('on', sel.uid >= 0);
+  if (sel.uid >= 0) $('selBadgeId').textContent = '#' + sel.uid;
 }
 
 function updateSelInfo() {
@@ -2981,8 +3024,12 @@ on('bPick', 'onclick', e => {
   sel.picking = !sel.picking;
   e.target.classList.toggle('on', sel.picking);
 });
-on('bClearSel', 'onclick', () => selectUid(-1, sim?.lastPos ?? new Float32Array(0),
-  sim?.lastType ?? new Int32Array(0), sim?.lastUid ?? new Int32Array(0), 0));
+const clearSel = () => selectUid(-1, sim?.lastPos ?? new Float32Array(0),
+  sim?.lastType ?? new Int32Array(0), sim?.lastUid ?? new Int32Array(0), 0);
+on('bClearSel', 'onclick', clearSel);
+// The same thing, reachable from the world view rather than from a panel the
+// user may never have opened.
+on('bShowAll', 'onclick', clearSel);
 on('bFollow', 'onclick', e => {
   sel.follow = !sel.follow;
   e.target.classList.toggle('on', sel.follow);
