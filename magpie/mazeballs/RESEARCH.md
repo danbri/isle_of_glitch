@@ -6494,3 +6494,66 @@ the same place, competing with itself for the ground beneath it.
 
 Being measured now: the size tax with `regrowCrowdK` and `absorbTradeoff`
 removed, at both horizons.
+
+### What taxes multicellularity: crowding suppression — and it is a genuine bind
+
+```
+                        sizeTax            medBody  tissues  sense+move  alive
+first, as shipped       -0.3730 +-0.4619      16.3     1.21       10.2%    548
+first, no crowding      -0.3116 +-0.2224      13.7     1.16        1.7%    584
+first, no absorb        -0.2837 +-0.2302      21.7     1.14        3.6%    523
+deep,  as shipped       -0.4160 +-0.0510      10.0     1.11        8.4%    791
+deep,  no crowding      -0.2012 +-0.0965       9.5     1.16        0.9%    760
+
+first: removing crowding       +0.0614 +-0.5126   not implicated
+first: removing absorbTradeoff +0.0893 +-0.5161   not implicated
+deep:  removing crowding       +0.2148 +-0.1092   IMPLICATED
+```
+
+**Crowding suppression accounts for about half the tax on being multicellular**
+— the tax halves from −0.4160 to −0.2012 — and it shows at **deep time**, the
+horizon that has killed everything else this session. Like the `enzSd` result, it
+is absent at the first horizon and present at ten times it: an effect that needs
+time to accumulate, and one that a cheap experiment would have reported as
+nothing.
+
+**But this is not a bug to remove, and the same table says why.** Turning
+crowding off collapses `sense+move` from 8.4% to 0.9% — a nine-fold fall in the
+one metric that matters most. Crowding suppression is what makes sitting on a
+patch costly; that is what makes moving pay; that is what gives perception
+anything to steer toward. It is load-bearing for exactly the thing the goal
+needs.
+
+#### The structural bind, stated exactly
+
+> To make moving pay, a patch must be punished for being worked.
+> A body is a thing that works a patch.
+> So the mechanism that makes moving pay punishes being a body.
+
+That is the bind, and every knob turned this session was somewhere on this
+trade-off without naming it. It explains why the tissue mix kept moving while the
+outcome did not: crowding up favours movement and small bodies, crowding down
+favours large bodies that do not move. Neither end produces a differentiated,
+mobile creature, because the mechanism cannot tell those two cases apart.
+
+#### The resolution it points to, unbuilt
+
+**Crowding should count FOREIGN draw, not total draw.** Today a patch's regrowth
+is suppressed in proportion to how hard it is being worked, full stop — so a body
+of twenty cells suppresses the ground under itself twenty times over, competing
+with itself. If suppression counted only draw from OTHER bodies, then:
+
+- a crowd of competitors still punishes sitting still, so moving still pays and
+  the mechanism keeps doing the job it was added for;
+- a body no longer punishes itself for having cells, so the tax on
+  multicellularity from this source disappears.
+
+It resolves the trade-off rather than choosing an end of it, and it is lawful —
+"other body" is the same `cmeta.z` test contest already uses, and the mote
+offer pass already counts demanders. The implementation is not trivial: the
+demander count is per-mote and global, so distinguishing own from foreign draw
+needs the count to become per-body-per-mote or to be approximated in the grazing
+walk. That is a real design task and is not being attempted at the end of this
+session.
+
+**It also has to clear the 10× test.** Everything here now does.
