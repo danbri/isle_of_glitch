@@ -903,10 +903,11 @@ async function buildFrame() {
   // static tail cut off and the flag cleared, so the two cannot describe
   // different instants — there is only one instant here.
   const full = new Uint8Array(buf);
+  full.atStep = steps;
   const dyn = new Uint8Array(statAt);
   dyn.set(full.subarray(0, statAt));
   new DataView(dyn.buffer).setUint32(48, 0, true);
-  return { full, dyn, epoch };
+  return { full, dyn, epoch, atStep: steps };
 }
 
 /* ------------------------------------------------------------------ server */
@@ -1415,6 +1416,17 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       // energy, which is the design, and one limited by bookkeeping, which is a
       // bug wearing the same clothes.
       blockedBirths: last.blockedBirths ?? 0,
+      // FRAME PUBLISHING, OBSERVABLE. Codex's point, and a fair one: without
+      // these you can infer the frame contract from timing but not verify it,
+      // because a cached frame can be older than the request that receives it.
+      // frameAgeMs is how stale the cached frame is right now; cachedFrameStep
+      // is the world step it actually depicts; frameEveryMs is the cadence the
+      // background builder is aiming at. A viewer or an auditor can then say
+      // exactly which step it is looking at rather than which step it asked at.
+      frameEveryMs: FRAME_MS,
+      cachedFrameStep: cached?.atStep ?? null,
+      frameAgeMs: cached ? Math.round(performance.now() - cachedAt) : null,
+      framing: (performance.now() - lastFrameWant) < 2000,
       meanEnergy: last.meanEnergy, organisms: evo.nextUid,
     }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
   }
