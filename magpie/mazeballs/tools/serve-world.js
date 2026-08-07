@@ -692,6 +692,9 @@ let cached = null, cachedAt = -1, inFlight = null;
 // The live-cell index list and the bond pairs, held for as long as the epoch
 // they describe. See buildFrame.
 let topoCache = null;
+// When a viewer last asked for a frame. Framing is skipped when nothing is
+// watching — see frameLoop.
+let lastFrameWant = -1e9;
 const FRAME_MS = 40;
 
 /**
@@ -700,6 +703,7 @@ const FRAME_MS = 40;
  *   layout note above buildFrame.
  */
 async function frame(have = -1) {
+  lastFrameWant = performance.now();
   const pick = (f) => (have >= 0 && have === f.epoch ? f.dyn : f.full);
   // ANSWER FROM THE CACHE, ALWAYS, IF THERE IS ONE.
   //
@@ -726,7 +730,18 @@ async function frame(have = -1) {
 // one of them slower.
 (async function frameLoop() {
   while (running) {
-    if (!paused && !inFlight) {
+    // NOBODY WATCHING, NOBODY PAYS.
+    //
+    // Framing is two GPU readbacks, and a readback stalls the pipeline the
+    // simulation is trying to fill. Running it unconditionally meant a headless
+    // evolution run — the whole point of which is steps per second — spent a
+    // fraction of every second serving a viewer that did not exist.
+    //
+    // Display rate and simulation rate are different numbers with different
+    // targets: 60/s is plenty for a screen, while evolution wants thousands.
+    // Chaining them is the mistake; this unchains the idle case.
+    const watched = (performance.now() - lastFrameWant) < 2000;
+    if (!paused && !inFlight && watched) {
       inFlight = buildFrame().then(f => {
         cached = f; cachedAt = performance.now(); inFlight = null;
         return f;
