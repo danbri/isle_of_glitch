@@ -6219,3 +6219,62 @@ so far: **what would make a mature, crowded world contain ungrazed ground?**
 Crowding suppression makes a worked patch recover slowly, which is a local
 effect; at high density every patch is worked. That is the condition under which
 moving stops paying, sensing stops paying, and complexity is shed.
+
+### What suppresses the reward for moving: other organisms. By 22×.
+
+Four arms, four replicates, movers minus sitters in energy per cell:
+
+```
+arm                    diff        se   reps   moving pays
+as shipped          +0.0555    0.0157      4   yes
+no tidal income     -0.0418    0.1182      3   —
+no geography        +0.0599    0.0255      4   yes
+no contest          +0.1520    0.0439      3   yes
+
+remove geography   gap +0.0044 +-0.0300   implicated = NO
+remove contest     gap +0.0965 +-0.0466   implicated = YES
+```
+
+**Switching off the biotic channel makes moving 2.7× more rewarding.** Switching
+off the entire geography — gravity, altitude cost, mud, the fertile shore, the
+terrain-following current, the terrain sense — changes it by 0.0044, which is
+nothing.
+
+Set against each other in the goal's own terms: the biotic effect on whether
+movement pays is **0.0965 against an abiotic effect of 0.0044**, a factor of 22,
+and only the biotic one clears its standard error.
+
+**The mechanism.** Contest is symmetric and fires on contact, so moving raises
+your encounter rate with things that eat you exactly as much as with things you
+eat. A mover pays a predation cost that cancels most of its foraging gain. That
+is a real ecological effect and it is not a bug — it is what a world full of
+mouths does to a traveller.
+
+#### What this means for the goal, stated carefully
+
+This is direct evidence that **organisms are the dominant selective pressure**,
+on a behavioural trait, against a fully-built abiotic world — which is the first
+half of the standing goal. Two honest limits: it is a single-window measurement
+of the selective ENVIRONMENT rather than of an evolved response, and it is in
+young worlds at the first horizon. Deep time is not shown here.
+
+And it closes the loop with the descent measured above, which is the part that
+matters most:
+
+> Organisms are each other's dominant selective pressure, and what that pressure
+> currently selects for is **stillness and simplicity**.
+
+As a world fills, contest encounters rise, movement is penalised harder,
+locomotion and then perception stop paying, and bodies shed everything that costs
+something — 3.9% → 1.6% able to close a sensorimotor loop over 772k steps, median
+body 12 → 11. The biotic channel is not failing to dominate. It is dominating,
+and driving the descent.
+
+That reframes the whole programme. The goal has been read as "make the biotic
+channel strong enough". It is already strong enough. The unsolved problem is that
+a symmetric, contact-based biotic channel rewards being small, still and cheap —
+so what needs to change is not the STRENGTH of organism-organism interaction but
+its SHAPE: something that makes moving toward or away from another organism pay
+better than ignoring it. Every biotic coefficient in this world prices what
+happens on contact; nothing prices approach or avoidance, which is the only place
+an arms race can live.
