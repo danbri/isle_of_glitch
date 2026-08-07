@@ -1,0 +1,607 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Development 2 — how a genome becomes a body</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!--
+  A guided tour of lib/devo2.js.
+
+  IT IMPORTS THE REAL MODULE. Every body drawn here is produced by the same
+  develop() the world calls at every birth, with the same constants, so nothing
+  on this page can drift from what actually runs. Where a step needs to isolate
+  one mechanism — a single gene relaxing, two genes competing, diffusion making a
+  pattern — it integrates the equation quoted from devo2.js beside it, so the
+  demonstration and the source can be read against each other.
+
+  The developmental time series is obtained by calling develop() with increasing
+  `ms`. Development is canalised: the same genome grows the same body every time,
+  so re-developing to a shorter horizon is a snapshot rather than a re-roll.
+-->
+<style>
+  :root{
+    --bg:#0b0f0e; --panel:#121a18; --ink:#dfe9e4; --soft:#8ba39b; --rule:#22322e;
+    --sensor:#66a89e; --muscle:#c7734f; --neuron:#99998c; --anchor:#8f709e;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.6}
+  header{border-bottom:1px solid var(--rule);padding:1rem 1.2rem;position:sticky;top:0;background:var(--bg);z-index:9}
+  header h1{margin:0;font-size:1rem;font-weight:600;letter-spacing:.01em}
+  header p{margin:.25rem 0 0;color:var(--soft);font-size:.82rem}
+  nav{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.6rem}
+  nav button{
+    font:inherit;font-size:.74rem;padding:.25rem .55rem;background:var(--panel);
+    color:var(--soft);border:1px solid var(--rule);border-radius:4px;cursor:pointer;
+  }
+  nav button.on{background:var(--sensor);border-color:var(--sensor);color:#06110f;font-weight:600}
+  main{max-width:56rem;margin:0 auto;padding:1.2rem}
+  section{display:none}
+  section.on{display:block}
+  h2{font-size:1.05rem;margin:.2rem 0 .5rem}
+  .lede{color:var(--soft);font-size:.92rem}
+  pre,code{font-family:var(--mono)}
+  pre{
+    background:var(--panel);border:1px solid var(--rule);border-radius:5px;
+    padding:.6rem .7rem;overflow-x:auto;font-size:.76rem;line-height:1.5;color:#bcd4cc;
+  }
+  .row{display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-start;margin:.8rem 0}
+  .card{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:.7rem .8rem;flex:1;min-width:16rem}
+  .card h3{margin:0 0 .4rem;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--soft);font-weight:600}
+  canvas{display:block;background:#070c0b;border:1px solid var(--rule);border-radius:5px;max-width:100%}
+  label.sl{display:block;font-size:.78rem;color:var(--soft);margin:.45rem 0 0}
+  label.sl b{color:var(--ink);font-family:var(--mono);float:right}
+  input[type=range]{width:100%;accent-color:var(--sensor);margin:.15rem 0 0}
+  .note{font-size:.8rem;color:var(--soft);border-left:2px solid var(--rule);padding-left:.7rem;margin:.7rem 0}
+  .warn{border-left-color:var(--muscle);color:#d3a894}
+  table{border-collapse:collapse;font-size:.78rem;width:100%}
+  td,th{border-bottom:1px solid var(--rule);padding:.25rem .4rem;text-align:left}
+  th{color:var(--soft);font-weight:600}
+  .legend span{display:inline-flex;align-items:center;gap:.3rem;margin-right:.8rem;font-size:.76rem;color:var(--soft)}
+  .legend i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  button.act{font:inherit;font-size:.78rem;padding:.3rem .7rem;background:var(--panel);color:var(--ink);
+             border:1px solid var(--rule);border-radius:4px;cursor:pointer;margin:.4rem .3rem .1rem 0}
+  button.act:hover{border-color:var(--sensor)}
+  .pager{display:flex;justify-content:space-between;margin:1.6rem 0 3rem;gap:.5rem}
+</style>
+
+<header>
+  <h1>Development 2 — how a genome becomes a body</h1>
+  <p>A guided read of <code>lib/devo2.js</code>. Every body on this page is grown by the
+     same <code>develop()</code> the world calls at each birth.</p>
+  <nav id="nav"></nav>
+</header>
+
+<main>
+
+<section data-step="0">
+  <h2>0. What a genome is here</h2>
+  <p class="lede">Not a body, and not a wiring diagram. A genome is a small
+  <strong>gene regulatory network</strong>: a recipe for a process that runs inside an egg
+  and leaves a body behind.</p>
+
+  <div class="row">
+    <div class="card">
+      <h3>the numbers</h3>
+      <table id="tblConst"></table>
+    </div>
+    <div class="card">
+      <h3>one gene's share of the genome</h3>
+      <pre id="preLayout"></pre>
+      <p class="note">Sparse on purpose. A dense 64-gene network would be 4,096 weights
+      and evolution would explore none of it, so each gene listens to just
+      <code id="kk"></code> others and structural mutation moves those edges around.</p>
+    </div>
+  </div>
+
+  <p class="note">The previous encoding (<code>devo.js</code>) painted each cell's properties
+  as a weighted sum of nine fixed functions of position. It had no time, no signalling and
+  no growth — and measured over 64 living genomes it produced bodies of elongation
+  p50 = p90 = max = 1.15, identical to random founders. The map <em>could</em> reach
+  elongation 4.0 with hand-made genomes; evolution never found it. That failure is why
+  this model exists.</p>
+</section>
+
+<section data-step="1">
+  <h2>1. The egg, and what the mother provides</h2>
+  <p class="lede">A cell cannot know where it is unless something tells it. The mother lays
+  down gradients in the egg; every cell reads them as the first few gene concentrations,
+  which it cannot change.</p>
+
+  <div class="row">
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvMaternal" width="300" height="300"></canvas>
+      <div style="margin-top:.4rem">
+        <button class="act" data-mat="0">ap — head to tail</button>
+        <button class="act" data-mat="1">dv — across</button>
+        <button class="act" data-mat="2">rad — centre to shell</button>
+        <button class="act" data-mat="3">noise — the seed of asymmetry</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>why these four</h3>
+      <p style="font-size:.85rem"><code>ap</code> and <code>dv</code> give an axis and a
+      side. <code>rad</code> tells a cell whether it is in the interior or at the surface.
+      <code>noise</code> is fixed per site and is the only thing that distinguishes two
+      otherwise identical positions.</p>
+      <p class="note">Noise matters more than it looks. A perfectly symmetric network in a
+      perfectly symmetric egg stays symmetric forever — there is nothing to break the tie.
+      Real embryos have the same problem and solve it the same way.</p>
+      <p class="note warn">There is also <code>crowd</code>, which is not maternal: it is
+      how many neighbours a cell currently has. That is the one input that changes as the
+      body grows, and it is what lets the network know it has finished.</p>
+    </div>
+  </div>
+</section>
+
+<section data-step="2">
+  <h2>2. One gene, on its own</h2>
+  <p class="lede">Every gene product is a concentration that is produced and decays. This is
+  the whole dynamical law, quoted from the module:</p>
+
+  <pre>dc_g/dt = P * sigmoid(bias_g + SUM_k w_gk * c_src(g,k))  -  decay_g * c_g
+                                                          +  D_g * laplacian</pre>
+
+  <p class="lede">CTRNN-shaped — the same gather-and-squash — but concentrations cannot go
+  negative, and decay is what oscillators are built from. Move the sliders and watch a
+  single gene with no regulators find its equilibrium.</p>
+
+  <div class="row">
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvOne" width="420" height="200"></canvas>
+    </div>
+    <div class="card">
+      <label class="sl">bias <b id="vBias">0.00</b>
+        <input type="range" id="sBias" min="-600" max="600" value="0"></label>
+      <label class="sl">decay <b id="vDecay">1.00</b>
+        <input type="range" id="sDecay" min="5" max="400" value="100"></label>
+      <p class="note">Equilibrium is where production balances decay:
+      <code>c* = sigmoid(bias) / decay</code>. A strongly negative bias switches the gene
+      off; a large decay makes it fast and faint. Neither is a mode — both are just
+      numbers in the genome.</p>
+    </div>
+  </div>
+</section>
+
+<section data-step="3">
+  <h2>3. Two genes that hate each other</h2>
+  <p class="lede">Mutual inhibition is the motif that breaks symmetry, and it is not a
+  special case in the code — it is simply <code>w_ab &lt; 0</code> and <code>w_ba &lt; 0</code>.
+  Two cells starting almost identically end up committed to opposite states.</p>
+
+  <div class="row">
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvTwo" width="420" height="200"></canvas>
+    </div>
+    <div class="card">
+      <label class="sl">mutual inhibition <b id="vInh">-4.0</b>
+        <input type="range" id="sInh" min="-1200" max="0" value="-400"></label>
+      <label class="sl">starting difference <b id="vSkew">0.02</b>
+        <input type="range" id="sSkew" min="0" max="200" value="20"></label>
+      <p class="note">With weak inhibition both settle to the same middling value and the
+      cells stay interchangeable. Past a threshold the tie breaks and the tiny initial
+      difference — in the real model, <code>noise</code> — decides which gene wins.</p>
+    </div>
+  </div>
+</section>
+
+<section data-step="4">
+  <h2>4. Diffusion, and why the rates differ</h2>
+  <p class="lede">Without transport each cell runs its network alone and the only spatial
+  information is the maternal gradient — the old model with extra steps. Patterns need a
+  <strong>slow activator against a fast inhibitor</strong>, so diffusion is per-product and
+  evolved, spanning two decades.</p>
+
+  <div class="row">
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvTuring" width="420" height="200"></canvas>
+    </div>
+    <div class="card">
+      <label class="sl">inhibitor diffusion ÷ activator <b id="vRatio">12</b>
+        <input type="range" id="sRatio" min="1" max="40" value="12"></label>
+      <p class="note">At a ratio near 1 the two spread together and smooth each other into a
+      flat field. Raise it and bands appear at a spacing the ratio sets — nobody wrote a
+      stripe count anywhere.</p>
+      <p class="note warn">This is the mechanism <em>available</em> for segmentation. Whether
+      evolution in this world has actually used it is a separate question, and the honest
+      answer measured so far is mostly no.</p>
+    </div>
+  </div>
+</section>
+
+<section data-step="5">
+  <h2>5. The body grows</h2>
+  <p class="lede">Development starts from one cell at the centre of the egg and adds cells
+  where the <code>grow</code> gene says to. Morphology is therefore <strong>the record of a
+  process</strong>, not a function evaluated on a disc — an elongated body is what you get by
+  growing preferentially along an axis.</p>
+
+  <div class="row">
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvGrow" width="300" height="300"></canvas>
+      <label class="sl">developmental time <b id="vMs">12000 ms</b>
+        <input type="range" id="sMs" min="200" max="12000" step="200" value="12000"></label>
+      <div class="legend" style="margin-top:.4rem">
+        <span><i style="background:var(--sensor)"></i>sensor</span>
+        <span><i style="background:var(--muscle)"></i>muscle</span>
+        <span><i style="background:var(--neuron)"></i>neuron</span>
+        <span><i style="background:var(--anchor)"></i>anchor</span>
+      </div>
+    </div>
+    <div class="card">
+      <h3>this genome</h3>
+      <div id="growStats" style="font-family:var(--mono);font-size:.76rem"></div>
+      <button class="act" id="bRandom">another random genome</button>
+      <button class="act" id="bLive">fetch one from the live world</button>
+      <p class="note">Dragging the slider re-develops from scratch to a shorter horizon.
+      Development is <em>canalised</em> — noise is derived from the genome — so the same
+      genome grows the same body every time, and these really are snapshots of one process
+      rather than separate rolls.</p>
+    </div>
+  </div>
+</section>
+
+<section data-step="6">
+  <h2>6. Carving, not only building</h2>
+  <p class="lede">Shape does not have to come only from where growth happened. The
+  <code>survive</code> gene decides whether a cell is still part of the body when the egg
+  hatches — embryos remove as much as they add, and interdigital webbing is deleted rather
+  than never grown.</p>
+
+  <p class="note">There is a specific reason this exists. Patterning across a field — stripes,
+  bands, gap-gene domains — needs a field to pattern: a fly reads its gradients across
+  thousands of nuclei that already exist. A body extruded one cell at a time from a growing
+  tip never has that field, which is the leading suspect for why segmentation measures near
+  zero under pure tip growth. Cleavage fills the egg so a field exists, and
+  <code>survive</code> is what turns a filled egg into a shape rather than a disc.</p>
+
+  <div class="row">
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvCarve" width="300" height="300"></canvas>
+    </div>
+    <div class="card">
+      <label class="sl">survive threshold <b id="vThr">0.50</b>
+        <input type="range" id="sThr" min="0" max="100" value="50"></label>
+      <div id="carveStats" style="font-family:var(--mono);font-size:.76rem"></div>
+      <p class="note">Low threshold keeps almost everything and you get the disc back. High
+      threshold carves too hard and the body falls below the minimum size to live. The
+      interesting shapes are in between, which is where evolution has to find them.</p>
+    </div>
+  </div>
+</section>
+
+<section data-step="7">
+  <h2>7. What a cell ends up being</h2>
+  <p class="lede">Fifteen of the sixty-four gene products are read out as the cell's
+  properties. These are <strong>continuous capacities</strong>, and the kernel uses them
+  directly.</p>
+
+  <div class="row">
+    <div class="card"><h3>the readout genes</h3><pre id="preOut"></pre></div>
+    <div class="card">
+      <h3>label versus capability</h3>
+      <p style="font-size:.85rem">A cell is <em>labelled</em> by whichever of
+      <code>sense</code>, <code>contract</code> and <code>grip</code> is largest, with a
+      floor below which it is "just tissue". That label is a summary for humans.</p>
+      <p class="note warn">It used to be more than that. The kernel branched on it, so a
+      cell whose <code>grip</code> beat its <code>sense</code> by 0.008 could not sense at
+      all. Measured over 64 living genomes, the labelling was discarding 47% of the
+      contractility in the tissue and 42.7% of the sensing, and sixteen of sixty-four
+      bodies were functionally blind while carrying sensory tissue. All three gates are
+      gone; a cell now senses, contracts and grips in proportion to what it has.</p>
+      <div id="capStats" style="font-family:var(--mono);font-size:.76rem;margin-top:.5rem"></div>
+    </div>
+  </div>
+</section>
+
+<section data-step="8">
+  <h2>8. Mutation, and what it does to a body</h2>
+  <p class="lede">Perturb the genome and re-grow it. Small changes to weights usually shift a
+  body; changes to which gene listens to which can restructure it.</p>
+
+  <div class="row">
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvMutA" width="230" height="230"></canvas>
+      <p style="font-size:.76rem;color:var(--soft);margin:.3rem 0 0;text-align:center">parent</p>
+    </div>
+    <div class="card" style="flex:0 0 auto">
+      <canvas id="cvMutB" width="230" height="230"></canvas>
+      <p style="font-size:.76rem;color:var(--soft);margin:.3rem 0 0;text-align:center">mutant</p>
+    </div>
+    <div class="card">
+      <label class="sl">weight mutation size <b id="vMut">0.32</b>
+        <input type="range" id="sMut" min="0" max="150" value="32"></label>
+      <button class="act" id="bMutate">mutate again</button>
+      <div id="mutStats" style="font-family:var(--mono);font-size:.76rem;margin-top:.5rem"></div>
+      <p class="note">Watch how often a mutation produces no body at all. Development can
+      fail — run out of yolk, or specify something too small to live — and the parent simply
+      loses the investment. That is a normal outcome, not an error.</p>
+    </div>
+  </div>
+</section>
+
+<div class="pager">
+  <button class="act" id="bPrev">&larr; back</button>
+  <button class="act" id="bNext">next &rarr;</button>
+</div>
+</main>
+
+<script type="module">
+import * as D from './lib/devo2.js';
+import { describe } from './lib/evolve.js';
+
+const $ = (id) => document.getElementById(id);
+const TYPE_COL = ['#99998c', '#66a89e', '#c7734f', '#8f709e'];
+
+/* ------------------------------------------------------------------ chrome */
+const sections = [...document.querySelectorAll('section')];
+const nav = $('nav');
+const TITLES = ['genome', 'the egg', 'one gene', 'two genes', 'diffusion',
+                'growth', 'carving', 'readout', 'mutation'];
+let step = 0;
+TITLES.forEach((t, i) => {
+  const b = document.createElement('button');
+  b.textContent = `${i}. ${t}`;
+  b.onclick = () => show(i);
+  nav.appendChild(b);
+});
+function show(i) {
+  step = Math.max(0, Math.min(sections.length - 1, i));
+  sections.forEach((s, k) => s.classList.toggle('on', k === step));
+  [...nav.children].forEach((b, k) => b.classList.toggle('on', k === step));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (step === 5) drawGrow();
+  if (step === 6) drawCarve();
+  if (step === 7) fillReadout();
+  if (step === 8) drawMutants();
+}
+$('bPrev').onclick = () => show(step - 1);
+$('bNext').onclick = () => show(step + 1);
+
+/* --------------------------------------------------------------- step 0 */
+$('tblConst').innerHTML = `
+  <tr><th>gene products</th><td>${D.NGENE}</td></tr>
+  <tr><th>regulators per gene</th><td>${D.K}</td></tr>
+  <tr><th>floats per gene</th><td>${D.GENE_STRIDE}</td></tr>
+  <tr><th>whole genome</th><td>${D.GENOME_SIZE} floats</td></tr>
+  <tr><th>egg extent</th><td>${D.DEFAULT_EXTENT}</td></tr>`;
+$('kk').textContent = D.K;
+$('preLayout').textContent =
+  `${D.K} source indices   which genes this one listens to (-1 = silent)\n` +
+  `${D.K} weights          how much, and with what sign\n` +
+  `1 bias             the gene's own tendency\n` +
+  `1 log-decay        how fast the product disappears\n` +
+  `1 log-diffusion    how far it spreads\n` +
+  `--\n${D.GENE_STRIDE} floats x ${D.NGENE} genes = ${D.NGENE * D.GENE_STRIDE}, ` +
+  `plus ${D.GENOME_SIZE - D.NGENE * D.GENE_STRIDE} synapse coefficients`;
+
+/* --------------------------------------------------------------- step 1 */
+let matWhich = 0;
+function drawMaternal() {
+  const cv = $('cvMaternal'), x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.clearRect(0, 0, W, H);
+  const R = W * 0.44, cx = W / 2, cy = H / 2;
+  const img = x.createImageData(W, H);
+  for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
+    const dx = (px - cx) / R, dy = (py - cy) / R;
+    const r = Math.hypot(dx, dy);
+    const o = (py * W + px) * 4;
+    if (r > 1) { img.data[o + 3] = 0; continue; }
+    let v;
+    if (matWhich === 0) v = (dx + 1) / 2;
+    else if (matWhich === 1) v = (dy + 1) / 2;
+    else if (matWhich === 2) v = r;
+    else { const h = Math.sin(px * 12.9898 + py * 78.233) * 43758.5453; v = h - Math.floor(h); }
+    img.data[o] = 40 + v * 150; img.data[o + 1] = 90 + v * 120; img.data[o + 2] = 90 + v * 60;
+    img.data[o + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+}
+document.querySelectorAll('[data-mat]').forEach(b => {
+  b.onclick = () => { matWhich = +b.dataset.mat; drawMaternal(); };
+});
+drawMaternal();
+
+/* --------------------------------------------------------------- step 2 */
+const sig = (z) => 1 / (1 + Math.exp(-z));
+function drawOne() {
+  const bias = +$('sBias').value / 100, decay = +$('sDecay').value / 100;
+  $('vBias').textContent = bias.toFixed(2);
+  $('vDecay').textContent = decay.toFixed(2);
+  const cv = $('cvOne'), x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.fillStyle = '#070c0b'; x.fillRect(0, 0, W, H);
+  const dt = 0.04, N = 300;
+  let c = 0; const pts = [];
+  for (let i = 0; i < N; i++) { c += (sig(bias) - decay * c) * dt; pts.push(c); }
+  const eq = sig(bias) / decay;
+  const top = Math.max(0.4, eq * 1.4);
+  x.strokeStyle = '#22322e'; x.beginPath();
+  x.moveTo(0, H - (eq / top) * H); x.lineTo(W, H - (eq / top) * H); x.stroke();
+  x.strokeStyle = '#66a89e'; x.lineWidth = 2; x.beginPath();
+  pts.forEach((v, i) => { const px = i / N * W, py = H - (v / top) * H;
+    i ? x.lineTo(px, py) : x.moveTo(px, py); });
+  x.stroke();
+  x.fillStyle = '#8ba39b'; x.font = '11px ui-monospace,monospace';
+  x.fillText(`equilibrium c* = sigmoid(bias)/decay = ${eq.toFixed(3)}`, 8, 14);
+}
+$('sBias').oninput = $('sDecay').oninput = drawOne;
+drawOne();
+
+/* --------------------------------------------------------------- step 3 */
+function drawTwo() {
+  const w = +$('sInh').value / 100, skew = +$('sSkew').value / 1000;
+  $('vInh').textContent = w.toFixed(1);
+  $('vSkew').textContent = skew.toFixed(3);
+  const cv = $('cvTwo'), x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.fillStyle = '#070c0b'; x.fillRect(0, 0, W, H);
+  const dt = 0.04, N = 300, decay = 1;
+  let a = 0.5 + skew, b = 0.5 - skew;
+  const A = [], B = [];
+  for (let i = 0; i < N; i++) {
+    const na = a + (sig(w * b) - decay * a) * dt;
+    const nb = b + (sig(w * a) - decay * b) * dt;
+    a = na; b = nb; A.push(a); B.push(b);
+  }
+  const top = Math.max(0.3, Math.max(...A, ...B) * 1.25);
+  const line = (arr, col) => { x.strokeStyle = col; x.lineWidth = 2; x.beginPath();
+    arr.forEach((v, i) => { const px = i / N * W, py = H - (v / top) * H;
+      i ? x.lineTo(px, py) : x.moveTo(px, py); }); x.stroke(); };
+  line(A, '#66a89e'); line(B, '#c7734f');
+  x.fillStyle = '#8ba39b'; x.font = '11px ui-monospace,monospace';
+  const sep = Math.abs(A[N - 1] - B[N - 1]);
+  x.fillText(sep > 0.05 ? `symmetry BROKEN — separation ${sep.toFixed(3)}`
+                        : `still symmetric — separation ${sep.toFixed(3)}`, 8, 14);
+}
+$('sInh').oninput = $('sSkew').oninput = drawTwo;
+drawTwo();
+
+/* --------------------------------------------------------------- step 4 */
+function drawTuring() {
+  const ratio = +$('sRatio').value;
+  $('vRatio').textContent = ratio;
+  const cv = $('cvTuring'), x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.fillStyle = '#070c0b'; x.fillRect(0, 0, W, H);
+  const N = 120, Da = 0.4, Db = 0.4 * ratio, dt = 0.02;
+  let a = new Float64Array(N), b = new Float64Array(N);
+  for (let i = 0; i < N; i++) { a[i] = 1 + (Math.sin(i * 3.3) * 0.5 + 0.5) * 0.06; b[i] = 1; }
+  const lap = (u, i) => u[(i - 1 + N) % N] - 2 * u[i] + u[(i + 1) % N];
+  for (let s = 0; s < 4000; s++) {
+    const na = new Float64Array(N), nb = new Float64Array(N);
+    for (let i = 0; i < N; i++) {
+      const f = a[i] * a[i] / Math.max(0.05, b[i]);
+      na[i] = a[i] + dt * (f - a[i] + Da * lap(a, i));
+      nb[i] = b[i] + dt * (a[i] * a[i] - b[i] + Db * lap(b, i));
+      na[i] = Math.max(0, na[i]); nb[i] = Math.max(0, nb[i]);
+    }
+    a = na; b = nb;
+  }
+  const hi = Math.max(...a) || 1;
+  for (let i = 0; i < N; i++) {
+    const v = a[i] / hi, px = i / N * W;
+    x.fillStyle = `rgb(${40 + v * 160},${90 + v * 110},${88 + v * 50})`;
+    x.fillRect(px, 0, W / N + 1, H);
+  }
+  let bands = 0;
+  for (let i = 0; i < N; i++) if (a[i] > hi * 0.6 && a[(i - 1 + N) % N] <= hi * 0.6) bands++;
+  x.fillStyle = '#0b0f0e'; x.fillRect(0, 0, 150, 20);
+  x.fillStyle = '#8ba39b'; x.font = '11px ui-monospace,monospace';
+  x.fillText(`${bands} band${bands === 1 ? '' : 's'}`, 8, 14);
+}
+$('sRatio').oninput = drawTuring;
+drawTuring();
+
+/* ------------------------------------------------------- shared body draw */
+function drawBody(cv, cells, extent = D.DEFAULT_EXTENT) {
+  const x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.fillStyle = '#070c0b'; x.fillRect(0, 0, W, H);
+  // the egg
+  x.strokeStyle = '#1b2a27'; x.beginPath();
+  x.arc(W / 2, H / 2, Math.min(W, H) * 0.46, 0, Math.PI * 2); x.stroke();
+  if (!cells || !cells.length) {
+    x.fillStyle = '#6b7d78'; x.font = '12px ui-monospace,monospace';
+    x.fillText('no body — development failed', 14, H / 2);
+    return;
+  }
+  let lo = Infinity, hi = -Infinity, ylo = Infinity, yhi = -Infinity;
+  for (const c of cells) { lo = Math.min(lo, c.x); hi = Math.max(hi, c.x);
+    ylo = Math.min(ylo, c.y); yhi = Math.max(yhi, c.y); }
+  const span = Math.max(1.5, Math.max(hi - lo, yhi - ylo));
+  const sc = Math.min(W, H) * 0.8 / span;
+  const ox = W / 2 - ((lo + hi) / 2) * sc, oy = H / 2 - ((ylo + yhi) / 2) * sc;
+  for (const c of cells) {
+    x.fillStyle = TYPE_COL[describe(c)];
+    x.beginPath();
+    x.arc(ox + c.x * sc, oy + c.y * sc, Math.max(2, sc * 0.34), 0, Math.PI * 2);
+    x.fill();
+  }
+}
+
+/* --------------------------------------------------------------- step 5 */
+// A seed that actually grows something worth looking at. Most random genomes
+// produce two cells or none — which is honest about the search problem but makes
+// a poor first impression of a model whose whole point is that bodies GROW.
+// Seed 193 develops 51 cells and shows tissue variety; 97/208/226 hit the
+// 60-cell cap, which hides the growth curve behind the ceiling.
+let genome = D.randomGenome(seeded(193));
+function seeded(s) { let v = s >>> 0; return () => ((v = (Math.imul(v, 1664525) + 1013904223) >>> 0) / 4294967296); }
+
+function grow(ms, extra = {}) {
+  try { return D.develop(genome, { ms, extent: D.DEFAULT_EXTENT, maxCells: 60, ...extra }); }
+  catch { return { cells: [] }; }
+}
+function drawGrow() {
+  const ms = +$('sMs').value;
+  $('vMs').textContent = ms + ' ms';
+  const g = grow(ms);
+  drawBody($('cvGrow'), g.cells);
+  const hist = [0, 0, 0, 0];
+  for (const c of (g.cells || [])) hist[describe(c)]++;
+  $('growStats').innerHTML =
+    `cells &nbsp;${(g.cells || []).length}<br>` +
+    `neuron ${hist[0]} &nbsp; sensor ${hist[1]}<br>` +
+    `muscle ${hist[2]} &nbsp; anchor ${hist[3]}`;
+}
+$('sMs').oninput = drawGrow;
+$('bRandom').onclick = () => { genome = D.randomGenome(Math.random); drawGrow(); };
+$('bLive').onclick = async () => {
+  try {
+    const r = await fetch('/genomes?n=1', { cache: 'no-store' });
+    const j = await r.json();
+    if (j.rows && j.rows[0]) { genome = Float32Array.from(j.rows[0].g); drawGrow(); }
+  } catch {
+    $('growStats').innerHTML += '<br><span style="color:#c7734f">no live server on this origin</span>';
+  }
+};
+
+/* --------------------------------------------------------------- step 6 */
+function drawCarve() {
+  const thr = +$('sThr').value / 100;
+  $('vThr').textContent = thr.toFixed(2);
+  const g = grow(12000, { surviveThresh: thr });
+  drawBody($('cvCarve'), g.cells);
+  $('carveStats').innerHTML = `cells kept &nbsp;${(g.cells || []).length}`;
+}
+$('sThr').oninput = drawCarve;
+
+/* --------------------------------------------------------------- step 7 */
+function fillReadout() {
+  $('preOut').textContent = D.OUTPUTS
+    .map((o, i) => `${String(D.OUT_BASE + i).padStart(2)}  ${o}`).join('\n');
+  const g = grow(12000);
+  const cells = g.cells || [];
+  if (!cells.length) { $('capStats').textContent = 'no body'; return; }
+  let sense = 0, con = 0, grip = 0, canSense = 0, canGrip = 0;
+  for (const c of cells) {
+    sense += Math.max(0, c.sense); con += Math.abs(c.contract); grip += Math.max(0, c.grip);
+    if (c.sense > 0.15) canSense++;
+    if (c.grip > 0.15) canGrip++;
+  }
+  const n = cells.length, hist = [0, 0, 0, 0];
+  for (const c of cells) hist[describe(c)]++;
+  $('capStats').innerHTML =
+    `by label &nbsp; neuron ${hist[0]} sensor ${hist[1]} muscle ${hist[2]} anchor ${hist[3]}<br>` +
+    `by capacity &nbsp; can sense ${canSense}/${n} &nbsp; can grip ${canGrip}/${n}<br>` +
+    `mean |contract| ${(con / n).toFixed(2)}`;
+}
+
+/* --------------------------------------------------------------- step 8 */
+function drawMutants() {
+  const size = +$('sMut').value / 100;
+  $('vMut').textContent = size.toFixed(2);
+  const parent = grow(12000);
+  drawBody($('cvMutA'), parent.cells);
+  let mutant = { cells: [] }, mg = genome;
+  try {
+    mg = D.mutate(genome, Math.random, { rate: 0.14, size });
+    mutant = D.develop(mg, { ms: 12000, extent: D.DEFAULT_EXTENT, maxCells: 60 });
+  } catch { /* a failed development is a normal outcome */ }
+  drawBody($('cvMutB'), mutant.cells);
+  const a = (parent.cells || []).length, b = (mutant.cells || []).length;
+  $('mutStats').innerHTML =
+    `parent ${a} cells &rarr; mutant ${b} cells` +
+    (b === 0 ? '<br><span style="color:#c7734f">development failed — the parent lost the yolk</span>' : '');
+}
+$('sMut').oninput = drawMutants;
+$('bMutate').onclick = drawMutants;
+
+show(0);
+</script>

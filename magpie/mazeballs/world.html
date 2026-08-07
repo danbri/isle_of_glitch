@@ -2196,8 +2196,27 @@ function updateSelInfo() {
   const names = ['neuron', 'sensor', 'muscle', 'anchor'];
   const c = [0, 0, 0, 0];
   for (let r = 0; r < e.order.length; r++) if (e.types[r] >= 0) c[e.types[r]]++;
-  el.textContent = `animal #${sel.uid} — ${e.order.length} cells: ` +
+  // LABELS, NOT CAPABILITIES — and the difference stopped being cosmetic.
+  //
+  // These counts are describe()'s argmax over each cell's sense/contract/grip.
+  // Until the three label gates came out of the kernel, that argmax DECIDED what
+  // a cell could do, so counting it was counting capability. It no longer does:
+  // sensing, contraction and grip are all read from the continuous capacities
+  // now, and the label is only a summary of which one happened to be largest.
+  //
+  // A real specimen, #9252: reported as 28 muscle and 0 sensor, while every cell
+  // in its genome carries acuity 1.000 and a third of them can grip. Reporting
+  // the argmax as though it were the composition is the panel asserting
+  // something the world stopped believing this afternoon.
+  //
+  // The capacities are packed in cmeta on the GPU and are not on this side of
+  // the bus — the frame carries the label and nothing else — so the honest move
+  // is to say what this number IS rather than to imply what it is not.
+  el.textContent = `animal #${sel.uid} — ${e.order.length} cells, by strongest trait: ` +
     names.map((nm, k) => `${c[k]} ${nm}`).join(', ');
+  el.title = 'Cells are labelled by whichever of sense/contract/grip is largest. ' +
+    'Since the kernel reads those capacities directly, a cell labelled "muscle" ' +
+    'may also sense and grip. These are labels, not capabilities.';
   title.textContent = `CTRNN — animal #${sel.uid}, ${e.order.length} neurons` +
     (scopeStore.size > 1 ? ` (${scopeStore.size} tracked)` : '');
 }
@@ -3004,6 +3023,10 @@ on('bCopyStats', 'onclick', async (e) => {
   const e2 = scopeStore.get(sel.uid);
   if (sel.uid >= 0 && e2) {
     lines.push('', `selected\tanimal #${sel.uid}`, `neurons\t${e2.order.length}`);
+    // See the note in the panel: these are argmax LABELS, and the kernel reads
+    // continuous capacities. Pasting them into a report without the caveat is
+    // how a stale summary becomes a quoted number.
+    lines.push('cell labels are the strongest trait per cell, not capabilities');
     const names = ['neuron','sensor','muscle','anchor'], c = [0,0,0,0];
     for (let r = 0; r < e2.order.length; r++) if (e2.types[r] >= 0) c[e2.types[r]]++;
     names.forEach((nm, k) => lines.push(`${nm}\t${c[k]}`));
