@@ -145,6 +145,7 @@ export const WORLD_FIELDS = [
   ['sapRate', 'f32', 'energy flow along a bond, per unit gradient per second'],
   ['sapLoss', 'f32', 'fraction of moved energy lost to heat — transport is not free'],
   ['shelterK', 'f32', 'how much a larger body shields its cells from being taken from'],
+  ['grazeBodyShare', 'f32', 'crowding counts competitors not mouths; 0 = as before, 1 = per body'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */

@@ -1047,7 +1047,35 @@ fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
         let j = atomicLoad(&hashData[b + 1u + k]);
         if (cmeta[j].x < 0) { continue; }
         if (length(minImage(pos[j] - p)) > P.moteR) { continue; }
-        demanders = demanders + 1.0;
+        // COUNT COMPETITORS, NOT MOUTHS.
+        //
+        // Measured at deep time: crowding suppression accounts for about half
+        // the tax on being multicellular (size tax -0.4160 -> -0.2012 with it
+        // removed, +0.2148 +-0.1092, implicated) — because a body of N cells is
+        // by construction a dense draw on one patch and therefore suppresses the
+        // ground under itself N times over. It competes with itself.
+        //
+        // But it cannot simply be removed: doing so collapses the fraction of
+        // bodies holding both a sensor and a muscle from 8.4% to 0.9%, because
+        // crowding is also what makes sitting on a patch costly, which is what
+        // makes moving pay. The bind:
+        //
+        //   to make moving pay, a patch must be punished for being worked;
+        //   a body is a thing that works a patch;
+        //   so the mechanism that makes moving pay punishes being a body.
+        //
+        // Weighting each drawing cell by size^-share resolves it rather than
+        // choosing an end of it. At share 1 a body of twenty counts as ONE
+        // competitor and twenty single-cell bodies count as twenty, so a crowd
+        // still punishes sitting still while a body stops punishing itself.
+        // Verified: the weights sum to the distinct-body count when a whole body
+        // is present, and to a sensible fraction when only part of it is.
+        //
+        // CONSERVATION HOLDS AT ANY SHARE, which is what makes this safe. Body b
+        // contributes n_b * n_b^-s to the count, and takes offer * n_b^(1-s), so
+        // the total taken is offer * sum(n_b^(1-s)) = offer * W <= stock. The
+        // grazing side is weighted by the same factor — see grazeAt.
+        demanders = demanders + pow(bodySizeOf(cmeta[j].w), -P.grazeBodyShare);
       }
     }
   }
@@ -1144,7 +1172,10 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
 
 // PHASE 2 lives inside physics(): what cell i can pick up from the motes it is
 // standing on, at the rate each of them already committed to.
-fn grazeAt(p: vec2<f32>) -> f32 {
+// The share argument is this cell's weight, size^-grazeBodyShare, matching what
+// the offer pass counted for it. Passing it in rather than recomputing keeps both
+// sides of the conservation argument as literally the same expression.
+fn grazeAt(p: vec2<f32>, share: f32) -> f32 {
   if (P.nMotes == 0u) { return 0.0; }
   var got = 0.0;
   for (var dy = -1; dy <= 1; dy = dy + 1) {
@@ -1155,7 +1186,7 @@ fn grazeAt(p: vec2<f32>) -> f32 {
         let mi = atomicLoad(&moteHash[b + 1u + k]);
         let mv = mote[mi];
         if (length(minImage(mv.xy - p)) > P.moteR) { continue; }
-        got = got + moteOfferOf(mv);
+        got = got + moteOfferOf(mv) * share;
       }
     }
   }
@@ -1696,7 +1727,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   let absorb = clamp(1.0 - P.absorbTradeoff * commit, 0.0, 1.0);
   var gain = 0.0;
   if (P.nMotes > 0u) {
-    gain = absorb * grazeAt(np) / P.dt;
+    gain = absorb * grazeAt(np, pow(bodySizeOf(cmeta[i].w), -P.grazeBodyShare)) / P.dt;
   } else {
     gain = absorb * P.harvest * resourceAtS(np, shoreFrom(wHere)) * share;
   }
@@ -2048,6 +2079,11 @@ export class WorldGPU {
       // The mechanism added to make movers out-earn sitters is the leading
       // suspect for taxing multicellularity.
       shelterK: 0.0,
+      // COUNT COMPETITORS, NOT MOUTHS. 0 is the world as measured, where a body
+      // suppresses the ground under itself once per cell. 1 makes a patch shared
+      // among the BODIES on it, each dividing its share internally. Conserving
+      // at any value — see the note in moteOffer.
+      grazeBodyShare: 0.0,
       contestR: 1.5, moteDrift: 0.0,
       // Tidal income. Sized so a fully-gripping cell holding station in a fast
       // mud channel earns on the order of what rich ground yields, and a cell
