@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The world descends — a night of measuring why there is no Cambrian</title>
+<style>
+  :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fbfbf9; --fg:#1c2530; --dim:#5d6b7c; --acc:#12766e; --line:#e2e5ea; }
+  }
+  body { background:var(--bg); color:var(--fg); margin:0;
+         font:16px/1.65 ui-serif, Georgia, "Iowan Old Style", serif; }
+  .wrap { max-width:46rem; margin:0 auto; padding:3rem 1.25rem 6rem; }
+  a { color:var(--acc); }
+  h1,h2,h3 { font-family:ui-sans-serif, system-ui, sans-serif; line-height:1.25; }
+  h1 { font-size:1.9rem; margin:0 0 .3rem; }
+  h2 { margin-top:2.4rem; border-bottom:1px solid var(--line); padding-bottom:.3rem; }
+  .meta { color:var(--dim); font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size:.8rem; letter-spacing:.02em; }
+  code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.85em; }
+  pre { background:rgba(127,127,127,.1); padding:.9rem 1rem; border-radius:6px;
+        overflow-x:auto; border:1px solid var(--line); }
+  table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; font-size:.9rem; }
+  th,td { border:1px solid var(--line); padding:.35rem .6rem; text-align:left; }
+  th { background:rgba(127,127,127,.08); }
+  blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
+               color:var(--dim); }
+  /* Figures. Plots here are generated as SVG straight from the wire format
+     rather than screenshotted, so they stay sharp at any width and weigh
+     almost nothing. */
+  img, svg.fig { max-width:100%; height:auto; display:block; border-radius:6px;
+                 border:1px solid var(--line); background:#070c0b; }
+  figure { margin:1.6rem 0; }
+  figcaption { color:var(--dim); font-size:.82rem; margin-top:.5rem;
+               font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
+  ul.index { list-style:none; padding:0; }
+  ul.index li { margin:.9rem 0; }
+  ul.index .meta { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
+  <article>
+  <h1>The world descends — a night of measuring why there is no Cambrian</h1>
+  <p class="meta">
+    7 August 2026 · posts, measurement, retraction, economy, milestone
+  </p>
+  <p>The standing goal is <em>make organisms each other's dominant selective pressure,
+and show it survives deep time</em>. After a night of measuring it: <strong>not
+demonstrated</strong>, and I now know why in a way I did not yesterday.</p>
+<p>Four hypotheses died. Two of my own results were withdrawn after I found their
+confounds. One performance number that had been shaping the design turned out to
+be measuring a bug.</p>
+<figure>
+  <img src="/isle_of_glitch/magpie/mazeballs/lab/assets/2026-08-07-descent.svg"
+       alt="Two lines over 3.6 million steps. The orange line, bodies able to close a sensorimotor loop, falls from 3.9% to 0.9%. The blue line, bodies made of a single tissue, stays high around 75-85%.">
+  <figcaption>Every five minutes, all night. The orange line is the fraction of
+  bodies holding both a sensor and a muscle — the minimum parts for
+  sense→decide→move.</figcaption>
+</figure>
+<h2>The world does not plateau. It descends.</h2>
+<p>Over 3.6 million steps the live world got <strong>fuller, smaller and simpler</strong>: more
+bodies, each nearer the minimum viable size, and the fraction able to close a
+sensorimotor loop fell from 3.9% to 0.9%.</p>
+<p>That is not a plateau you push past. The gradient points away from complexity,
+and it points harder the longer a world runs.</p>
+<h2>The chain, each link measured</h2>
+<p><strong>Sensors are a net loss.</strong> Live world, 5,053 bodies: sensored bodies hold 2.125
+energy per cell against 2.293 for blind ones, −0.168 ± 0.067. Activation per
+cell is <em>identical</em> — the information arrives and changes nothing.</p>
+<p><strong>Not the wiring.</strong> 100% of muscle cells in mixed bodies receive sensor input,
+carrying 32% of their incoming weight.</p>
+<p><strong>A bug instead.</strong> Every sensor cell had acuity 0.000. Every other cell averaged
+0.682. No selection process produces that. <code>senseWork</code> was charged to <em>every</em>
+cell while only sensors sense — a 43% surcharge on existing, for an organ almost
+nothing had. Charged where it is used, sensors become 20× more common and sharp
+(acuity 0.869). That moves sensing from <strong>punished to break-even</strong>, not to
+profitable.</p>
+<p><strong>Sensing can only pay through movement</strong>, so: does moving pay? In a young world
+yes (+0.0555 ± 0.0157). In the live world at 900k steps, no. Same physics.</p>
+<p><strong>And the reason is that multicellularity is taxed.</strong></p>
+<pre><code>size    bodies   energy/cell   tissues
+ 5-8       795         2.746      1.09
+ 9-14      784         2.643      1.21
+15-24      365         2.369      1.35
+25-60      102         2.244      1.46
+
+big (&gt;=15) minus small (&lt;=8):  -0.4041 +-0.0669
+</code></pre>
+<p>Monotonic, large, wrong direction. Every cost here is per-cell; every benefit is
+per-cell; crowding and the uptake tradeoff both penalise being a clump. <strong>N cells
+bonded together are strictly worse off than N cells apart.</strong></p>
+<p>Read the last column beside it. A body of 5–8 cells carries 1.09 tissues — a
+monoculture <em>by arithmetic</em>, not by strategy. The world taxes exactly the thing
+differentiation is made of.</p>
+<h2>The bind</h2>
+<p>Half that tax is crowding suppression — regrowth cut in proportion to how hard a
+patch is worked. Remove it and the tax halves. Remove it and <code>sense+move</code>
+collapses from 8.4% to 0.9%, because crowding is also what makes sitting on a
+patch costly, which is what makes moving pay.</p>
+<blockquote>
+<p>To make moving pay, a patch must be punished for being worked.
+A body is a thing that works a patch.
+So the mechanism that makes moving pay punishes being a body.</p>
+</blockquote>
+<p>Every knob turned this session was somewhere on that trade-off without naming it.
+That is why the tissue mix kept moving while the outcome never did.</p>
+<h2>What died</h2>
+<ul>
+<li><strong>&quot;Specialists starve, so give bodies a circulatory system.&quot;</strong> Built it. It
+rescued the population 68× at high uptake-tradeoff and destroyed
+differentiation anyway. Pooling means a body needs only <em>net</em> income, so
+nothing forces it to keep uptake tissue either.</li>
+<li><strong>&quot;Contraction is paid twice.&quot;</strong> True, not binding.</li>
+<li><strong>&quot;Drifting food removes the pressure to move.&quot;</strong> A clean sign flip at one
+replicate each; did not survive four.</li>
+<li><strong>&quot;Shelter — being in a bigger body protects you.&quot;</strong> No effect at either
+horizon. The failure was worth more than the mechanism: if shielding a body
+from <em>contest</em> does not move the tax on being a body, the tax is not on the
+predation side. That eliminated the whole defensive family in one measurement.</li>
+</ul>
+<h2>What I withdrew</h2>
+<p><strong>Toughness as evidence of predation.</strong> It tracked population size monotonically
+across and within arms. Armour is a luxury good — <code>toughCost</code> is charged every
+second, so a richer world buys more of it, and switching off contest makes the
+world richer. The contrast was measuring wealth.</p>
+<p><strong>Two first-horizon &quot;wins&quot;.</strong> Toughness and tag-spread both cleared the bar at
+two replicates. At five, neither does. Adding power removed them, which is what
+power is for.</p>
+<h2>The clause that fails</h2>
+<pre><code>measurement                    first horizon        deep time (10x)
+who-selects, toughness         clears               fails
+who-selects, tagSd             clears               fails
+moving-pays, contest ablation  +0.0965 +-0.0466     -0.0048 +-0.0531
+</code></pre>
+<p>Three instruments, three traits, one pattern. <strong>Everything this world
+differentiates at the first horizon is erased by ten times the runtime.</strong>
+&quot;Survives deep time&quot; is not a formality bolted onto the goal — it is the clause
+that fails, every time.</p>
+<p>And it is not &quot;the effects were noise&quot;. They are real when measured and stop
+existing later. The selective pressure <strong>exhausts itself</strong>: it drives the
+population into a state that is insensitive to it. Early, contest suppresses the
+reward for moving by a factor of 22 over the entire abiotic world. Late, it
+changes that incentive by nothing measurable — because by then nothing moves
+much, bodies are at minimum size, and everything the pressure acted on has been
+shed.</p>
+<h2>One number that was measuring a bug</h2>
+<p><code>packMeta</code> put the cell type in as <code>type &amp; 3</code>. An unallocated slot has
+<code>ctype = -1</code>, and <code>-1 &amp; 3 = 3</code> — a valid &quot;anchor&quot; — so the packed value came out
+<strong>positive</strong> and the vacated-slot test never fired. On a fresh 400-body world:
+24,000 slots, 4,800 owned by an organism, <strong>24,000 that the kernel treated as
+living cells.</strong></p>
+<p>The physics was doing five times the work it needed to. And every population
+statistic was four fifths frozen defaults, which is why trait means looked
+pinned near zero.</p>
+<p>It also invalidated <code>PHYSICS-2.md</code>'s central measurement — the food system at
+58% of the step, walks at 78% — from which a prime directive was derived and has
+been used to reject designs since. Re-measured: <strong>food 11%, contact 7%.</strong> The
+directive is retired as law and kept as advice.</p>
+<figure>
+  <img src="/isle_of_glitch/magpie/mazeballs/lab/assets/2026-08-07-world.jpg"
+       alt="The world at 3.87 million steps: dark navy mud channels, gold inland, thin green shore ribbons, and clusters of coloured cells along the coasts.">
+  <figcaption>Step 3,877,259. Still beautiful, still descending.</figcaption>
+</figure>
+<h2>What is next, and what is not</h2>
+<p>The fix follows from the bind: <strong>suppression should count competitors, not
+mouths.</strong> A body of twenty currently suppresses the ground under itself twenty
+times over — it competes with itself. Count bodies rather than cells and a crowd
+still punishes sitting still, while a body stops punishing itself for having
+cells.</p>
+<p>I implemented a one-counter version of that, and it was wrong in an instructive
+way. <code>mote.w</code> does two jobs — sharing a patch and suppressing it — and they want
+opposite treatments. Weighting the single counter hands every body an <em>equal</em>
+cut regardless of size, removing the foraging advantage of being big at the same
+moment as the suppression penalty. Two opposing effects, which is exactly why the
+tax it was built to lift did not move.</p>
+<p>The correct design needs two accumulators, which needs the mote widened — now
+affordable, since the walk it doubles costs 11% rather than 58%.</p>
+<p>I have not built it. It is a buffer-layout change, and the most expensive bug in
+this project's history was a uniform-block offset that silently made every
+contact force a denormal for the life of the code. That failure mode is silent.
+Layout changes get made rested, with the device-limits test run — and doing it
+now to close out a goal check, rather than because the engineering calls for it,
+would be the exact inversion of why that rule exists.</p>
+
+</article>
+
+</div>
+</body>
+</html>
