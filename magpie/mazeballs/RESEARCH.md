@@ -6459,3 +6459,38 @@ horizons; the one that clears at depth is within chance for the number of tests
 run; and the accompanying measurements say the world descends rather than
 ascends, because multicellularity is taxed and the selective pressure exhausts
 the variation it needs in order to keep acting.
+
+### Shelter: built against the diagnosis, measured at both horizons, does nothing
+
+The first change made directly against the multicellularity tax. Being part of a
+larger body reduces what can be taken from you — symmetric, so both cells compute
+the same transfer from each other's packed body size and conservation holds.
+Tested at both horizons from the start, because three results this session
+cleared the first and died at 10×.
+
+```
+sizeTax = energy/cell of bodies >=15 cells minus bodies <=8. Negative = taxed.
+
+first horizon (22k steps)   shelterK 0: -0.5806 +-0.0808   0.04: -0.3175 +-0.6622
+deep time    (225k steps)   shelterK 0: -0.5866 +-0.0259   0.04: -0.5412 +-0.0666
+
+change   first  +0.2631 +-0.6671   no effect
+         deep   +0.0454 +-0.0715   no effect
+```
+
+**No effect at either horizon.** Ships at 0.
+
+**And the failure is worth more than the mechanism was.** If shielding a body
+from CONTEST does not move the tax on being a body, then the tax is not on the
+predation side at all. That eliminates the whole family of defensive answers —
+shielding, armour scaling, occlusion — in one measurement.
+
+What it leaves is the foraging side, and one mechanism in particular. **A body of
+N cells is by construction a dense draw on a single patch**, and crowding
+suppression cuts a patch's regrowth in proportion to how hard it is being worked.
+That mechanism was added to make movers out-earn sitters, and it may be paying
+for that with a tax on being multicellular at all — the same tissue, standing in
+the same place, competing with itself for the ground beneath it.
+
+Being measured now: the size tax with `regrowCrowdK` and `absorbTradeoff`
+removed, at both horizons.

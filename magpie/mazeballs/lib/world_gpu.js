@@ -2032,12 +2032,22 @@ export class WorldGPU {
       // A small drift may well be recoverable — enough to read as a current
       // without outrunning a body — but that is its own measurement and 0 is
       // the value with evidence behind it.
-      // SHELTER. How much being part of a larger body reduces what can be taken
-      // from you. 0 is the world as measured, where multicellularity is a pure
-      // tax. Sized so a 12-cell body keeps about two thirds of what a lone cell
-      // loses and a 40-cell body about a third — a real advantage, well short of
-      // immunity.
-      shelterK: 0.04,
+      // SHELTER. Built against the measured tax on multicellularity, and
+      // MEASURED TO DO NOTHING — so it ships off.
+      //
+      //   sizeTax = energy/cell of bodies >=15 cells minus bodies <=8
+      //   first horizon (22k steps)   k 0: -0.5806   k 0.04: -0.3175
+      //   deep time    (225k steps)   k 0: -0.5866   k 0.04: -0.5412
+      //   change: +0.2631 +-0.6671 first, +0.0454 +-0.0715 deep. Neither clears.
+      //
+      // The failure is informative and worth more than the mechanism was. If
+      // shielding a body from CONTEST does not move the tax on being a body,
+      // then the tax is not predation — it is on the foraging side. A body of N
+      // cells is by construction a dense draw on one patch, and crowding
+      // suppression cuts regrowth in proportion to how hard a patch is worked.
+      // The mechanism added to make movers out-earn sitters is the leading
+      // suspect for taxing multicellularity.
+      shelterK: 0.0,
       contestR: 1.5, moteDrift: 0.0,
       // Tidal income. Sized so a fully-gripping cell holding station in a fast
       // mud channel earns on the order of what rich ground yields, and a cell
