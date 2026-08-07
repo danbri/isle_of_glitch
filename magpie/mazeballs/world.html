@@ -1782,6 +1782,10 @@ async function rebuild() {
   // inspected animal over the crowd. A whole second uniform rather than a
   // dynamic offset because it is 224 bytes and this is not the expensive part.
   const bCamTop = dev.createBuffer({ size: 240, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  // And the same camera again for the cached setting, whose target is BG_SCALE
+  // of the canvas — same world region, fewer pixels, so every field that counts
+  // pixels holds a different number. See writeCam.
+  const bCamBg = dev.createBuffer({ size: 240, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
 
   // THE FRAME BEFORE THIS ONE, for the tween in drawPos. Watch mode gets its own
   // pair of buffers; a page running its own simulation binds the live ones here
@@ -1922,6 +1926,7 @@ async function rebuild() {
   });
   const bind = mkBind(bCam);
   const bindTop = mkBind(bCamTop);
+  const bindBg = mkBind(bCamBg);
 
   let syn = 0;
   for (let i = 0; i < built.arena.esrc.length; i++) if (built.arena.esrc[i] >= 0) syn++;
@@ -1957,7 +1962,7 @@ async function rebuild() {
     },
     bondCapacity, topoVersion: -1, fetchingBonds: false,
     pipeBlit, blitLayout, blitSampler, bgKey: null, bgAt: 0,
-    bCamTop, bindTop, bPrevPos, bPrevAct,
+    bCamTop, bindTop, bCamBg, bindBg, bPrevPos, bPrevAct,
   };
   // A DELIBERATE HANDLE ON MODULE STATE, for the console and for Playwright.
   // Everything in this file is module-scoped, so from outside the module the
@@ -3321,6 +3326,23 @@ let renderScale = Number(localStorage.getItem('mz.rscale')) || 0.7;
 // 34 segments is about 480k flow evaluations a frame, which is small beside a
 // single megapixel of background.
 const STREAM_SIDE = 26, STREAM_STEPS = 34;
+// THE CACHED SETTING IS DRAWN SMALLER THAN THE SCREEN, and stretched back up.
+//
+// Cells and bonds need every pixel they can get — they are small, they move, and
+// a soft edge on a cell reads as a different cell. The setting does not: it is
+// hills, mud, standing crop and streamlines, all of which are smooth at the
+// scale of a pixel, and it is already being blitted through a linear sampler.
+//
+// Measured by forcing a rebuild on every frame at a canvas of 2286x914 and
+// reading fps, with the passes turned off one at a time. At full size a rebuild
+// took 55.6 ms, of which terrain was 29.3 ms and the streamlines 22.3 ms; at 0.6
+// it took 40.0 ms. So 15.6 ms back, all of it terrain — the streamline cost is
+// O(steps^2) integration in the vertex shader and does not care how large the
+// target is, and no amount of shrinking this will touch it.
+//
+// 0.6 rather than lower because the streamlines ARE drawn into this texture, and
+// they are thin: below about this they start to break up.
+const BG_SCALE = 0.6;
 function resize() {
   const dpr = Math.min(devicePixelRatio || 1, 2) * renderScale;
   canvas.width = Math.max(1, Math.floor(innerWidth * dpr));
@@ -3384,7 +3406,18 @@ function fitAll() {
 
 let last = performance.now(), fps = 0, simRate = 0, acc = 0, frames = 0;
 
-function writeCam(t0) {
+// pxScale says how large the TARGET is against the canvas — 1 for the screen,
+// BG_SCALE for the cached setting, which is drawn into a smaller texture. It
+// changes nothing about which world region is drawn, because NDC is a fraction
+// of the target and a fraction does not know how many pixels it covers; it
+// changes only the numbers that count device pixels, which is the terrain and
+// flow LOD, the streamline and arrow fades, and pxWorld itself. Getting those
+// from the canvas while drawing into a smaller texture would resolve detail the
+// texture cannot hold and then throw it away, which costs exactly what the
+// smaller texture was meant to save.
+//
+// target, when given, is the buffer to write instead of the two screen cameras.
+function writeCam(t0, pxScale = 1, target = null) {
   // THE RENDER DPR, not the display dpr. resize() sizes the backing store by
   // renderScale as well, so anything converting world units to device pixels
   // must use the same product or the two disagree — which drew the world
@@ -3397,8 +3430,10 @@ function writeCam(t0) {
   // to get device px, then 2/size to reach NDC.
   const nx = cam.zoom * dpr * 2 / w, ny = cam.zoom * dpr * 2 / h;
   // The crop pass has its own small uniform; fill it from the SAME numbers
-  // rather than recomputing, or the two layers drift apart under zoom.
-  if (sim?.bMoteCam) {
+  // rather than recomputing, or the two layers drift apart under zoom. It holds
+  // nothing that counts pixels, so the smaller background target does not
+  // change it and it is written once, on the screen pass.
+  if (sim?.bMoteCam && !target) {
     const mc = new Float32Array(8);
     // cam.cx/cy, not cam.x/y — the camera has never had x or y, so this was
     // writing undefined into a Float32Array, i.e. NaN, and the motes were being
@@ -3455,7 +3490,9 @@ function writeCam(t0) {
   // across; resolve only those still ~2 device pixels wide or wider. Left as a
   // FRACTION rather than floored: the shader fades the finest octave in by
   // weight, so zooming reveals detail smoothly instead of stepping.
-  const pxPerWorld = cam.zoom * dpr;   // dpr here is the RENDER dpr, below
+  // Device pixels per world unit ON THE TARGET, which is the canvas scaled by
+  // pxScale. dpr here is the RENDER dpr, above.
+  const pxPerWorld = cam.zoom * dpr * pxScale;
   const fs = sim.world.params.flowScale;
   const oct = Math.max(1, Math.min(5, 1 + Math.log2(Math.max(1, fs * pxPerWorld / 2))));
   dv.setFloat32(52, oct, true);
@@ -3558,6 +3595,8 @@ function writeCam(t0) {
   }
   dv.setFloat32(224, lerp, true);
 
+  // The cached setting draws no cells, so topPass has nothing to say about it.
+  if (target) { dev.queue.writeBuffer(target, 0, b); return; }
   dv.setFloat32(220, 0, true);                 // crowd pass
   dev.queue.writeBuffer(sim.bCam, 0, b);
   dv.setFloat32(220, 1, true);                 // the inspected animal, on top
@@ -3709,6 +3748,7 @@ function loop() {
   if (view.food && sim.sinceMotes > 1500) { sim.sinceMotes = 0; refreshMotes(); }
 
   writeCam(t);
+  writeCam(t, BG_SCALE, sim.bCamBg);
   const enc = dev.createCommandEncoder();
 
   // ---- the cached setting: terrain, crop, streamlines. See BLIT_WGSL.
@@ -3746,13 +3786,16 @@ function loop() {
   if (camMoved) sim.camMovedAt = t;
   sim.bgCamKey = camKeyOnly;
   const holdBg = movingNow && (t - sim.bgAt < 90);
-  if (!sim.bgTex || sim.bgW !== canvas.width || sim.bgH !== canvas.height) {
+  // The setting has its own, smaller target — see BG_SCALE.
+  const bgW = Math.max(1, Math.floor(canvas.width * BG_SCALE));
+  const bgH = Math.max(1, Math.floor(canvas.height * BG_SCALE));
+  if (!sim.bgTex || sim.bgW !== bgW || sim.bgH !== bgH) {
     sim.bgTex?.destroy?.();
     sim.bgTex = dev.createTexture({
-      size: [canvas.width, canvas.height], format: fmt,
+      size: [bgW, bgH], format: fmt,
       usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
     });
-    sim.bgW = canvas.width; sim.bgH = canvas.height;
+    sim.bgW = bgW; sim.bgH = bgH;
     sim.bgBind = dev.createBindGroup({
       layout: sim.blitLayout,
       entries: [
@@ -3771,13 +3814,15 @@ function loop() {
         loadOp: 'clear', storeOp: 'store',
       }],
     });
-    if (view.terrain) { bg.setPipeline(sim.pipeBg); bg.setBindGroup(0, sim.bind); bg.draw(3); }
+    // sim.bindBg, not sim.bind: the same camera, but with the pixel counts of
+    // the smaller target it is being drawn into. See writeCam.
+    if (view.terrain) { bg.setPipeline(sim.pipeBg); bg.setBindGroup(0, sim.bindBg); bg.draw(3); }
     if (view.food && sim.moteCount > 0) {
       bg.setPipeline(sim.pipeMotes); bg.setBindGroup(0, sim.moteBind);
       bg.draw(6, sim.moteCount);
     }
     if (view.streams && sim.pipeStream) {
-      bg.setPipeline(sim.pipeStream); bg.setBindGroup(0, sim.bind);
+      bg.setPipeline(sim.pipeStream); bg.setBindGroup(0, sim.bindBg);
       bg.draw(STREAM_SIDE * STREAM_SIDE * STREAM_STEPS * 2);
     }
     bg.end();
