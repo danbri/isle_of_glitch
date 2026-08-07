@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why 5.4 million steps produced 65 generations</title>
+<style>
+  :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fbfbf9; --fg:#1c2530; --dim:#5d6b7c; --acc:#12766e; --line:#e2e5ea; }
+  }
+  body { background:var(--bg); color:var(--fg); margin:0;
+         font:16px/1.65 ui-serif, Georgia, "Iowan Old Style", serif; }
+  .wrap { max-width:46rem; margin:0 auto; padding:3rem 1.25rem 6rem; }
+  a { color:var(--acc); }
+  h1,h2,h3 { font-family:ui-sans-serif, system-ui, sans-serif; line-height:1.25; }
+  h1 { font-size:1.9rem; margin:0 0 .3rem; }
+  h2 { margin-top:2.4rem; border-bottom:1px solid var(--line); padding-bottom:.3rem; }
+  .meta { color:var(--dim); font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size:.8rem; letter-spacing:.02em; }
+  code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.85em; }
+  pre { background:rgba(127,127,127,.1); padding:.9rem 1rem; border-radius:6px;
+        overflow-x:auto; border:1px solid var(--line); }
+  table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; font-size:.9rem; }
+  th,td { border:1px solid var(--line); padding:.35rem .6rem; text-align:left; }
+  th { background:rgba(127,127,127,.08); }
+  blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
+               color:var(--dim); }
+  /* Figures. Plots here are generated as SVG straight from the wire format
+     rather than screenshotted, so they stay sharp at any width and weigh
+     almost nothing. */
+  img, svg.fig { max-width:100%; height:auto; display:block; border-radius:6px;
+                 border:1px solid var(--line); background:#070c0b; }
+  figure { margin:1.6rem 0; }
+  figcaption { color:var(--dim); font-size:.82rem; margin-top:.5rem;
+               font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
+  ul.index { list-style:none; padding:0; }
+  ul.index li { margin:.9rem 0; }
+  ul.index .meta { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
+  <article>
+  <h1>Why 5.4 million steps produced 65 generations</h1>
+  <p class="meta">
+    7 August 2026 · posts, economy, measurement, throughput
+  </p>
+  <p>A run reached step 5,428,589 at generation 65. That is 83,517 steps per
+generation. This note records where that number comes from and what would change
+it.</p>
+<h2>The measurement</h2>
+<pre><code>cells             23,998 of 25,020        95.9% of the arena occupied
+births            56,486
+deaths            54,723                  net +1,763
+alive             2,204
+mean energy       27.7 per body           eCap 3.0/cell, so ~92% of the ceiling
+birth threshold   18                      max(birthEnergy, yolk requirement)
+</code></pre>
+<p>Deaths per step: one per 100. Across 2,204 bodies that is a mean lifetime of
+<strong>218,640 steps</strong>.</p>
+<h2>The mechanism</h2>
+<p>Three facts compose:</p>
+<ol>
+<li><strong>The arena is full.</strong> At 95.9% occupancy a birth usually fails to find a
+contiguous range, and the birth loop breaks when it does.</li>
+<li><strong>A slot only frees on death.</strong> So the birth rate is the death rate. Births
+(56,486) and deaths (54,723) track each other, as they must at carrying
+capacity.</li>
+<li><strong>The only cause of death is starvation.</strong> In <code>lib/evolve.js</code> the death
+condition is <code>total[o] &lt;= deathEnergy</code>, with <code>deathEnergy = 0</code>. There is no
+ageing, no maximum lifespan, and no lethal interaction — <code>contest</code> transfers
+energy between cells but does not kill.</li>
+</ol>
+<p>Bodies sit at 92% of their energy ceiling, so starvation is rare. Nothing else
+removes them. Generation time is therefore set by how infrequently a body
+happens to run its energy down to zero, which in this economy is once per
+~219,000 steps.</p>
+<p>The birth threshold is not the constraint. Mean energy is 27.7 against a
+threshold of 18, so most bodies qualify to reproduce on most ticks and are
+prevented by the absence of free slots rather than by the absence of energy.</p>
+<h2>What it predicts</h2>
+<p>At 14 hours of wall clock:</p>
+<table>
+<thead>
+<tr>
+<th>steps/s</th>
+<th>steps</th>
+<th>generations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>70</td>
+<td>3,528,000</td>
+<td>42</td>
+</tr>
+<tr>
+<td>170</td>
+<td>8,568,000</td>
+<td>103</td>
+</tr>
+<tr>
+<td>400</td>
+<td>20,160,000</td>
+<td>241</td>
+</tr>
+<tr>
+<td>1000</td>
+<td>50,400,000</td>
+<td>603</td>
+</tr>
+</tbody>
+</table>
+<p>70 steps/s is the measured rate with a browser tab attached; 170 is headless on
+the same machine. The observed 65 generations over roughly 14 hours, with a
+viewer open for part of it, falls in that range.</p>
+<h2>The two levers are not equal</h2>
+<ul>
+<li>Throughput 170 → 400 steps/s is 2.4×, giving ~241 generations in 14 hours.</li>
+<li>Generation time 83,517 → 10,000 steps is 8.4×, giving ~857.</li>
+<li>Both together: ~2,000.</li>
+</ul>
+<p>Throughput work is bounded by what the GPU does. Generation time is bounded by
+nothing currently — it is an unset parameter rather than an optimised one.</p>
+<p>Two throughput facts, for completeness. Batching more steps per server loop
+(<code>spf</code>) measured 19 → 24 steps/s from <code>spf 1</code> to <code>spf 8</code>, a 1.26× gain, so the
+per-loop readback in <code>evo.tick</code> is not the dominant cost. Closing the browser is
+worth about 2.3×, since the viewer and the simulation share one GPU.</p>
+<h2>Candidate: senescence</h2>
+<p>The world has no mechanism by which anything dies of anything other than running
+out of energy. Adding one — accumulated damage, or a maximum age per cell —
+would set generation time directly.</p>
+<p>It is a material property of a cell over time, not a role or a behaviour, so it
+does not conflict with the First Law. It also changes the selective regime: where
+bodies are effectively immortal, hoarding energy is viable indefinitely; where
+everything dies on a clock, a lineage that reproduces sooner is favoured over one
+that accumulates.</p>
+<p>That second effect is the reason to be careful with it. Four economic changes
+made in the preceding session each produced a measurable result that later
+measurement contradicted, and the failure mode in each case was a mechanism that
+worked as designed and selected for something unintended. Senescence should ship
+behind a default-off parameter, be measured at both a first horizon and ten times
+it, and be checked against <code>tools/conservation_test.js</code> before any claim is made
+about it.</p>
+<h2>Related</h2>
+<ul>
+<li><code>tools/conservation_test.js</code> — the friction law as a test, with a positive
+control.</li>
+<li><code>runs/archive/</code> — lineage representatives and a world snapshot every 5
+generations, which is what makes a comparison across generations possible at
+all.</li>
+</ul>
+
+</article>
+
+</div>
+</body>
+</html>

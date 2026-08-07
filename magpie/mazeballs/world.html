@@ -344,12 +344,17 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
     <p class="note" id="idResult"></p>
     <h2 style="margin-top:.6rem">Designed creatures</h2>
     <p class="note" style="margin:0 0 .35rem">
-      Ten bodies designed by <b>specification and search</b>: a name, a sentence
-      saying what it is for, and a score over the body that develops. You cannot
-      hand-write a regulatory network — a weight has no local meaning and no gene
-      is a limb — so the intent is stated in the phenotype's own terms and the
-      search finds a genome that grows into it. Ordinary genomes; nothing here is
-      a new type or a role the kernel knows about.
+      Two kinds. <b>Designed</b> ones come from stating an intent in the
+      phenotype's own terms — a name, a sentence, a score over the body that
+      develops — and letting a search find a genome that grows into it. You
+      cannot hand-write a regulatory network: a weight has no local meaning and
+      no gene is a limb.
+      <br><br>
+      <b>WILD</b> ones were not designed at all. They are genomes a world
+      actually produced, captured live with the step, generation and lineage they
+      came from. A designed genome is a guess about what is reachable; an evolved
+      one is proof. Both are ordinary genomes — nothing here is a new type or a
+      role the kernel knows about.
     </p>
     <div id="designList"></div>
     <p class="note">
@@ -1325,6 +1330,11 @@ const MOTE_WGSL = /* wgsl */`
 // and sharing a struct would couple it to a layout it does not care about.
 struct MoteCam { center: vec2<f32>, ndc: vec2<f32>, radius: f32, dim: f32 };
 @group(0) @binding(0) var<uniform> MC : MoteCam;
+// STRIDE 1 HERE, deliberately, and not the same layout as the simulation.
+// The page builds this buffer itself from readMotes() and the /motes endpoint,
+// which already unpack the sim's stride-2 motes into plain (x, y, stock) — so
+// the widening in lib/world_gpu.js never reaches this shader and must not be
+// mirrored into it.
 @group(0) @binding(1) var<storage, read> motes : array<vec4<f32>>;  // xy, stock
 
 struct MOut {
@@ -3510,9 +3520,16 @@ $('bArrows').onclick = e => { view.arrows = !view.arrows; e.target.classList.tog
       const s = c.stats ?? {};
       const el = document.createElement('div');
       el.style.cssText = 'border:1px solid var(--rule);border-radius:3px;padding:.4rem .5rem;margin-bottom:.35rem';
+      // WILD ones carry a uid and a provenance block: they are genomes a world
+      // actually produced, not ones a search went looking for. Worth marking,
+      // because "this is reachable" and "this happened" are different claims.
+      const wild = !!c.uid;
       el.innerHTML =
         `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:.4rem">` +
-        `<b style="font-size:.82rem">${c.name}</b>` +
+        `<b style="font-size:.82rem">${c.name}` +
+        (wild ? ` <span style="font-weight:400;font-size:.62rem;letter-spacing:.08em;` +
+                `color:#e8a33f;border:1px solid #7a5320;border-radius:2px;padding:0 .25rem">WILD</span>` : '') +
+        `</b>` +
         `<span class="note" style="font-family:var(--mono);font-size:.66rem">` +
         `${s.cells} cells · elong ${s.elongation} · sym ${s.symmetry}</span></div>` +
         `<p class="note" style="margin:.2rem 0 .3rem;font-size:.72rem">${c.about}</p>` +

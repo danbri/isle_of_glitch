@@ -1018,7 +1018,7 @@ fn moteHashClear(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn moteHashBuild(@builtin(global_invocation_id) gid: vec3<u32>) {
   let i = gid.x;
   if (i >= P.nMotes) { return; }
-  let b = moteBucketOf(mote[i].xy) * (1u + P.bucketM);
+  let b = moteBucketOf(mote[i * 2u].xy) * (1u + P.bucketM);
   let n = atomicAdd(&moteHash[b], 1u);
   if (n < P.bucketM) { atomicStore(&moteHash[b + 1u + n], i); }
 }
@@ -1036,9 +1036,23 @@ fn moteHashBuild(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
   let i = gid.x;
   if (i >= P.nMotes) { return; }
-  let m0 = mote[i];
+  let m0 = mote[i * 2u];
   let p = m0.xy;
+  // TWO COUNTS, because sharing and suppression want opposite treatments.
+  //
+  //   demanders  — CELLS drawing. Divides the patch, so a body of twenty keeps
+  //                its proportional share and does not lose out for being big.
+  //   rivals     — COMPETITORS drawing, each cell weighted by size^-share. At
+  //                share 1 a body of twenty counts once and twenty single-cell
+  //                bodies count twenty times. Suppresses regrowth, so a body
+  //                stops suppressing the ground under itself once per cell.
+  //
+  // One counter could not do both: weighting it hands every body an equal cut
+  // regardless of size, removing the foraging ADVANTAGE of being big at the same
+  // moment as the suppression PENALTY. Measured, that cancelled out exactly —
+  // the size tax did not move (+0.1547 +-0.1868) and young worlds starved.
   var demanders = 0.0;
+  var rivals = 0.0;
   for (var dy = -1; dy <= 1; dy = dy + 1) {
     for (var dx = -1; dx <= 1; dx = dx + 1) {
       let b = bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM);
@@ -1075,11 +1089,13 @@ fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
         // contributes n_b * n_b^-s to the count, and takes offer * n_b^(1-s), so
         // the total taken is offer * sum(n_b^(1-s)) = offer * W <= stock. The
         // grazing side is weighted by the same factor — see grazeAt.
-        demanders = demanders + pow(bodySizeOf(cmeta[j].w), -P.grazeBodyShare);
+        demanders = demanders + 1.0;
+        rivals = rivals + pow(bodySizeOf(cmeta[j].w), -P.grazeBodyShare);
       }
     }
   }
-  mote[i] = vec4<f32>(m0.x, m0.y, m0.z, demanders);
+  mote[i * 2u] = vec4<f32>(m0.x, m0.y, m0.z, demanders);
+  mote[i * 2u + 1u] = vec4<f32>(rivals, 0.0, 0.0, 0.0);
 }
 
 // PHASE 3. Subtract what was actually handed out, then let the sun put some
@@ -1092,7 +1108,8 @@ fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   let i = gid.x;
   if (i >= P.nMotes) { return; }
-  let m0 = mote[i];
+  let m0 = mote[i * 2u];
+  let rivals = mote[i * 2u + 1u].x;
   let p = m0.xy;
   var stock = max(0.0, m0.z - moteOfferOf(m0) * m0.w);
   let fert = clamp(resourceAt(p), 0.0, 1.0);
@@ -1130,7 +1147,10 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   // density, so one coefficient transfers between an empty world and a crowded
   // one. A patch drawn down faster than it regrows recovers slowly; a patch
   // barely touched recovers fully however many cells happen to be standing on it.
-  let draw = moteOfferOf(m0) * m0.w;
+  // SUPPRESSION USES THE RIVAL COUNT, sharing used the cell count. This is the
+  // whole point of the second slot: what a patch is worth is divided among
+  // mouths, and how hard it is being WORKED is measured in competitors.
+  let draw = moteOfferOf(m0) * rivals;
   let refill = max(1e-6, P.moteRegrow * P.dt);
   let suppress = 1.0 / (1.0 + P.regrowCrowdK * (draw / refill));
   stock = stock + P.moteRegrow * fert * suppress * (1.0 - stock / P.moteCap) * P.dt;
@@ -1164,18 +1184,19 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (np.x < -B) { np.x = np.x + 2.0 * B; }
     if (np.y >  B) { np.y = np.y - 2.0 * B; }
     if (np.y < -B) { np.y = np.y + 2.0 * B; }
-    mote[i] = vec4<f32>(np.x, np.y, clamp(stock, 0.0, P.moteCap), 0.0);
+    mote[i * 2u] = vec4<f32>(np.x, np.y, clamp(stock, 0.0, P.moteCap), 0.0);
     return;
   }
-  mote[i] = vec4<f32>(m0.x, m0.y, clamp(stock, 0.0, P.moteCap), 0.0);
+  mote[i * 2u] = vec4<f32>(m0.x, m0.y, clamp(stock, 0.0, P.moteCap), 0.0);
 }
 
 // PHASE 2 lives inside physics(): what cell i can pick up from the motes it is
 // standing on, at the rate each of them already committed to.
-// The share argument is this cell's weight, size^-grazeBodyShare, matching what
-// the offer pass counted for it. Passing it in rather than recomputing keeps both
-// sides of the conservation argument as literally the same expression.
-fn grazeAt(p: vec2<f32>, share: f32) -> f32 {
+// No share argument any more. Sharing counts CELLS — each cell takes the offer,
+// so a body of twenty takes twenty times what a single cell does and keeps its
+// proportional claim on the patch. Only SUPPRESSION counts competitors, and that
+// happens in moteCommit against the second mote slot.
+fn grazeAt(p: vec2<f32>) -> f32 {
   if (P.nMotes == 0u) { return 0.0; }
   var got = 0.0;
   for (var dy = -1; dy <= 1; dy = dy + 1) {
@@ -1184,9 +1205,9 @@ fn grazeAt(p: vec2<f32>, share: f32) -> f32 {
       let n = min(atomicLoad(&moteHash[b]), P.bucketM);
       for (var k = 0u; k < n; k = k + 1u) {
         let mi = atomicLoad(&moteHash[b + 1u + k]);
-        let mv = mote[mi];
+        let mv = mote[mi * 2u];
         if (length(minImage(mv.xy - p)) > P.moteR) { continue; }
-        got = got + moteOfferOf(mv) * share;
+        got = got + moteOfferOf(mv);
       }
     }
   }
@@ -1450,10 +1471,31 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     let j = bitcast<i32>(bd.x);
     if (j < 0) { continue; }
     if (P.sapRate > 0.0) {
-      // Down the gradient, and bounded by what the richer cell can actually
-      // give up in one step, so a large dt cannot overshoot into oscillation.
-      let dE = energy[u32(j)] - energy[i];
-      sap = sap + P.sapRate * dE;
+      // DOWN THE GRADIENT, AND ACTUALLY BOUNDED — which the previous comment
+      // here claimed and the code did not do.
+      //
+      // Kept for the right reason, after being added for a wrong one. It went in
+      // to fix an apparent mint that tools/conservation_test.js reported, and
+      // that mint did not exist: the test was measuring energy the CLAMPS
+      // destroy, and a transfer that spreads energy out leaves fewer cells at
+      // the ceiling and therefore wastes less. With eCap and eFloor pushed out
+      // of range, sap contributes -654 against a metabolic loss of 41,190 — it
+      // loses, exactly as sapLoss intends.
+      //
+      // It stays because contest bounds itself the same way and for a real
+      // reason: an unbounded flow can overshoot at large dt, and a comment
+      // describing a safeguard that is not implemented is worse than no comment.
+      // Both endpoints evaluate this with their roles swapped, from the same
+      // pre-step energies, so the pair still agrees exactly.
+      let eJ = energy[u32(j)];
+      let eI = energy[i];
+      var flow = P.sapRate * (eJ - eI);          // positive: i gains from j
+      if (flow > 0.0) {
+        flow = min(flow, min(max(eJ - P.eFloor, 0.0), max(P.eCap - eI, 0.0)) / P.dt);
+      } else {
+        flow = -min(-flow, min(max(eI - P.eFloor, 0.0), max(P.eCap - eJ, 0.0)) / P.dt);
+      }
+      sap = sap + flow;
     }
     let d = minImage(pos[u32(j)] - p);
     let dist = max(length(d), 1e-3);
@@ -1727,7 +1769,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   let absorb = clamp(1.0 - P.absorbTradeoff * commit, 0.0, 1.0);
   var gain = 0.0;
   if (P.nMotes > 0u) {
-    gain = absorb * grazeAt(np, pow(bodySizeOf(cmeta[i].w), -P.grazeBodyShare)) / P.dt;
+    gain = absorb * grazeAt(np) / P.dt;
   } else {
     gain = absorb * P.harvest * resourceAtS(np, shoreFrom(wHere)) * share;
   }
@@ -2260,16 +2302,19 @@ export class WorldGPU {
       this.params.nMotes = Math.round((2 * this.params.bound) ** 2 / 2);
     }
     const nM = this.params.nMotes | 0;
-    const mv = new Float32Array(Math.max(1, nM) * 4);
+    // Stride 2: eight floats a mote, not four. See the note in moteOffer.
+    const mv = new Float32Array(Math.max(1, nM) * 8);
     {
       let sd = (this.params.moteSeed ?? 20260803) >>> 0;
       const rnd = () => ((sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296);
       const B = this.params.bound;
       for (let i = 0; i < nM; i++) {
-        mv[i * 4] = (rnd() * 2 - 1) * B;
-        mv[i * 4 + 1] = (rnd() * 2 - 1) * B;
+        // STRIDE 2 — see the note in moteOffer. Slot 0 is (x, y, stock,
+        // cellDemanders); slot 1 carries the rival count and three spares.
+        mv[i * 8] = (rnd() * 2 - 1) * B;
+        mv[i * 8 + 1] = (rnd() * 2 - 1) * B;
         // Start full, so the opening moments are not an artificial famine.
-        mv[i * 4 + 2] = this.params.moteCap;
+        mv[i * 8 + 2] = this.params.moteCap;
       }
     }
     const mkS = (a) => {
@@ -2378,18 +2423,21 @@ export class WorldGPU {
     }
     const nM = this.params.nMotes | 0;
     const ss = this.device.createBuffer({
-      size: nM * 16, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+      size: nM * 32, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     });
     const enc = this.device.createCommandEncoder();
-    enc.copyBufferToBuffer(this.bMote, 0, ss, 0, nM * 16);
+    enc.copyBufferToBuffer(this.bMote, 0, ss, 0, nM * 32);
     this.device.queue.submit([enc.finish()]);
     await ss.mapAsync(GPUMapMode.READ);
     const raw = new Float32Array(ss.getMappedRange().slice(0));
     ss.unmap(); ss.destroy();
     const pos = new Float32Array(nM * 2), stock = new Float32Array(nM);
     for (let i = 0; i < nM; i++) {
-      pos[i * 2] = raw[i * 4]; pos[i * 2 + 1] = raw[i * 4 + 1];
-      stock[i] = raw[i * 4 + 2];
+      // Stride 8 floats — the mote is two vec4s. Reading at 4 here would return
+      // every other mote's position interleaved with rival counts, which looks
+      // like plausible data and is not.
+      pos[i * 2] = raw[i * 8]; pos[i * 2 + 1] = raw[i * 8 + 1];
+      stock[i] = raw[i * 8 + 2];
     }
     return { pos, stock };
   }

@@ -393,7 +393,120 @@ async function logMetrics() {
       simVersion: RUNNING.simVersion,
     };
     await Deno.writeTextFile(METRICS, JSON.stringify(rec) + '\n', { append: true });
+    await archiveIfDue(last.maxGeneration);
   } catch (e) { console.error('metrics failed:', e.message); }
+}
+
+/**
+ * THE ARCHIVE — genomes every N generations, and the world they lived in.
+ *
+ * A long run currently leaves nothing behind but numbers. The genomes that
+ * produced them are overwritten as slots recycle, so a lineage that was
+ * interesting at generation 30 is unrecoverable at generation 60 — and this
+ * project's own preferred instrument is an ANCESTRAL TOURNAMENT, which needs
+ * exactly that: the same lineage from two points in time, raced against itself.
+ * Without an archive, ascent cannot be measured at all, only asserted.
+ *
+ * WHAT IS KEPT, and why not "the best".
+ *
+ * Ranking by energy would archive whatever is currently winning, and this world
+ * has been measured descending toward small still monocultures — so "best" by
+ * that measure is the least interesting thing in it. Instead one REPRESENTATIVE
+ * PER LINEAGE is kept, chosen for what is scarce: tissue count first, then
+ * whether the body can close a sensorimotor loop, then size. That preserves the
+ * shape of the population rather than its winner, and it is what a tournament
+ * between eras needs.
+ *
+ * THE WORLD GOES WITH IT. A genome is only meaningful against the physics and
+ * the terrain it evolved in — the same genome in a world with different
+ * geography is a different animal — so a snapshot is written alongside, and the
+ * parameters are recorded in the manifest.
+ *
+ * SNAPSHOTS ARE PRUNED, genomes are not. A snapshot is ~4.4 MB and a manifest is
+ * kilobytes, so every archive keeps its genomes forever and only the most recent
+ * few keep their world, plus every tenth generation permanently as a coarse
+ * backbone.
+ */
+const ARCHIVE_EVERY = Number(args.archiveEvery ?? 5);
+const ARCHIVE_KEEP_WORLDS = Number(args.archiveKeepWorlds ?? 6);
+const ARCHIVE_DIR = `${new URL('..', import.meta.url).pathname}runs/archive`;
+let lastArchivedGen = -1;
+
+async function archiveIfDue(gen) {
+  if (!Number.isFinite(gen) || gen < 0) return;
+  if (lastArchivedGen >= 0 && gen < lastArchivedGen + ARCHIVE_EVERY) return;
+  lastArchivedGen = gen;
+  try {
+    await Deno.mkdir(ARCHIVE_DIR, { recursive: true });
+
+    // One representative per lineage, chosen for what is RARE. See the note.
+    const A = built.arena, C = built.cells;
+    const best = new Map();
+    for (let o = 0; o < A.P; o++) {
+      if (!A.alive[o] || !evo.genome[o]) continue;
+      const k = [0, 0, 0, 0];
+      let n = 0;
+      for (let i = A.off[o]; i < A.off[o] + A.cnt[o]; i++) {
+        const t = C.ctype[i];
+        if (t >= 0 && t < 4) { k[t]++; n++; }
+      }
+      if (!n) continue;
+      const tissues = k.filter((v) => v > 0).length;
+      const score = tissues * 1000 + (k[1] > 0 && k[2] > 0 ? 500 : 0) + n;
+      const lin = evo.lineage[o];
+      const cur = best.get(lin);
+      if (!cur || score > cur.score) {
+        best.set(lin, { score, slot: o, uid: evo.uid[o], generation: evo.generation[o],
+                        lineage: lin, cells: n, tissues,
+                        mix: { neuron: k[0], sensor: k[1], muscle: k[2], anchor: k[3] },
+                        senseAndMove: k[1] > 0 && k[2] > 0 });
+      }
+    }
+    if (!best.size) return;
+
+    const tag = `gen-${String(gen).padStart(4, '0')}`;
+    const manifest = {
+      t: new Date().toISOString(), step: steps, generation: gen,
+      alive: last.alive, lineages: last.lineages, meanEnergy: +last.meanEnergy.toFixed(3),
+      simVersion: RUNNING.simVersion, devo: evo.devoVersion, encoding: evo.devoName ?? 'devo2-grn',
+      // The physics a genome evolved under. Without it an archived genome is a
+      // string of floats with no world to mean anything in.
+      params: { ...world.params },
+      creatures: [...best.values()].map((b) => ({
+        uid: b.uid, generation: b.generation, lineage: b.lineage,
+        cells: b.cells, tissues: b.tissues, senseAndMove: b.senseAndMove, mix: b.mix,
+        genome: Array.from(evo.genome[b.slot]).map((v) => +v.toFixed(5)),
+      })),
+    };
+    await Deno.writeTextFile(`${ARCHIVE_DIR}/${tag}.json`, JSON.stringify(manifest));
+
+    // The world it lived in. Pruned below; the genomes above never are.
+    const snap = `${ARCHIVE_DIR}/${tag}.snapshot`;
+    try { await saveSnapshot(snap); } catch (e) { console.error('archive snapshot:', e.message); }
+
+    // Keep the most recent few worlds, plus every tenth generation as a coarse
+    // backbone so the deep past is still replayable at lower resolution.
+    const snaps = [];
+    for await (const e of Deno.readDir(ARCHIVE_DIR)) {
+      if (e.isFile && e.name.endsWith('.snapshot')) snaps.push(e.name);
+    }
+    snaps.sort();
+    const keep = new Set(snaps.slice(-ARCHIVE_KEEP_WORLDS));
+    for (const nm of snaps) {
+      const g = Number(nm.match(/gen-(\d+)/)?.[1] ?? -1);
+      if (keep.has(nm) || (g >= 0 && g % 10 === 0)) continue;
+      try { await Deno.remove(`${ARCHIVE_DIR}/${nm}`); } catch { /* already gone */ }
+      // AND ITS RING. saveSnapshot writes a companion trace ring of the same
+      // size beside every snapshot, so pruning only the .snapshot files halves
+      // nothing — the directory still grows at the full rate, quietly.
+      for await (const e2 of Deno.readDir(ARCHIVE_DIR)) {
+        if (e2.isFile && e2.name.startsWith(nm) && e2.name !== nm) {
+          try { await Deno.remove(`${ARCHIVE_DIR}/${e2.name}`); } catch { /* gone */ }
+        }
+      }
+    }
+    console.log(`archived ${tag}: ${manifest.creatures.length} lineage representatives at step ${steps}`);
+  } catch (e) { console.error('archive failed:', e.message); }
 }
 
 /**

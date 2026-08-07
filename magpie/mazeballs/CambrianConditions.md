@@ -23,6 +23,52 @@ change: **a fixed cost against an adapting population is a hill the population
 walks down.** The Cambrian's engine is not a harsher constant, it is that what
 you must beat changes when you change.
 
+### Measured, 2026-08-07: the world does not plateau. It descends.
+
+The pattern above was read as "fixes revert" — a plateau, something to push
+past. It is worse and more specific than that. Over 3.6 million steps of live
+world, sampled every five minutes:
+
+```
+bodies able to close a sensorimotor loop   3.9%  ->  0.9%
+median body size                             12  ->    11
+bodies of a single tissue                   ~76%  ->  ~80%
+```
+
+**Fuller, smaller, simpler.** The gradient points away from complexity, and
+points harder the longer a world runs.
+
+The cause is measured and is not a tuning failure. **Multicellularity is taxed**:
+a bigger body is poorer per cell at every step of the range (correlation −0.263;
+bodies of 15+ cells against 8−, −0.4041 ± 0.0669). Every cost here is per-cell
+and every benefit is per-cell, while crowding and the uptake tradeoff both
+penalise being a clump — so N cells bonded are strictly worse off than N cells
+apart. And a body of 5–8 cells carries 1.09 tissues against 1.46 at 25–60, so
+the world taxes exactly the thing differentiation is made of.
+
+**Half that tax is crowding suppression**, which cannot simply be removed:
+turning it off halves the tax and collapses the sensorimotor fraction from 8.4%
+to 0.9%, because crowding is also what makes sitting on a patch costly, which is
+what makes moving pay. The bind:
+
+> To make moving pay, a patch must be punished for being worked.
+> A body is a thing that works a patch.
+> So the mechanism that makes moving pay punishes being a body.
+
+**And the selective pressure exhausts itself.** Early, contest suppresses the
+reward for moving by a factor of 22 over the entire abiotic world (biotic 0.0965
+± 0.0466 against abiotic 0.0044 ± 0.0300). At ten times the runtime it changes
+that incentive by nothing measurable (−0.0048 ± 0.0531) — because by then
+nothing moves much, bodies are at minimum size, and everything the pressure
+acted on has been shed. **The pressure is dominant, and it consumes the raw
+material it needs in order to keep acting.**
+
+Which rewrites what this document is asking for. The goal has been read as *make
+the biotic channel strong enough*. It is already strong enough. What is missing
+is an economy of scale — something N cells can do that N solitary cells cannot —
+without which every biotic coefficient is acting on a population that is busy
+disassembling itself. See `WORLD-MANUAL.md` §11.0 and `RESEARCH.md`.
+
 **Success is three measurements, each of which must survive TEN TIMES the
 runtime that first produced it:**
 

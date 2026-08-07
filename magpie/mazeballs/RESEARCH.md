@@ -6669,3 +6669,135 @@ Not done here, deliberately. It is a buffer-layout change, and the most expensiv
 bug in this project's history was a uniform-block offset that silently made every
 contact force a denormal for the life of the code. Layout changes get made
 rested, with `device_limits_test` run.
+
+### The friction law now runs as a test — and the first two things it caught were mine
+
+`energy-speculative-friction.md` is one of two laws and had no test. Minting is
+silent: energy from nowhere does not throw, it shows up as a population that
+thrives for reasons nobody can name.
+
+**The first version was worthless.** It bounded the gain by what regrowth could
+deliver at full rate, and that ceiling came out at 2.6 million against real
+movements of ~1,600. A tolerance a thousand times the signal detects nothing and
+is worse than no test, because it prints "ok".
+
+**Second version: switch the sun off.** With `moteRegrow = 0` there is no inflow,
+so every remaining mechanism is a transfer (nets to zero) or a sink (removes),
+and the total must never rise. Exact, no bound to estimate — and it reported sap
+minting 151 energy.
+
+**That was a false positive, and it took two wrong fixes to find out.** Bounding
+the flow by what the pair can afford: no change (151.2 → 148.9). Requiring
+reciprocated bonds, on the theory that truncated bond lists make one-way edges:
+no change (→ 169.2). The diagnosis was wrong twice because the test was wrong
+once.
+
+**The clamps were the answer.** `eCap` and `eFloor` DESTROY energy — a cell at
+the ceiling silently drops what it cannot take. A transfer that spreads energy
+out leaves fewer cells at the ceiling and therefore wastes less, which reads as
+a positive contribution without anything being created. With the bounds pushed
+outside the range any cell reaches, clamping can neither destroy nor create, and
+a transfer must contribute exactly zero.
+
+**Final, paired, each mechanism on minus off, same seed, sun off, clamps out of
+range:**
+
+```
+mechanism            contributed   against a metabolic loss of ~41,200
+contest                     59.9   ok
+sap                       -612.3   ok  (loses, exactly as sapLoss intends)
+shelter                    -48.2   ok
+body-share grazing         -34.5   ok
+tidal income            15,614.2   SOURCE, as declared — the control fires
+```
+
+Every transfer conserves. And the positive control matters as much as the passes:
+tidal income is a declared second star, so it MUST register as a source, and it
+does — which is the evidence that the other five "ok"s mean something rather than
+being a test that cannot fail. Both earlier versions of this test would have
+passed everything.
+
+The reciprocity check was reverted — added on a false diagnosis, pure cost. The
+affordability bound was kept and re-documented honestly: it went in for a wrong
+reason and stays for a right one, since contest bounds itself the same way and a
+comment describing a safeguard that is not implemented is worse than no comment.
+
+### H1 falsified. The pre-registered replication does not confirm it.
+
+Batch 1 tested six traits at two horizons and enzyme diversity at deep time was
+the single pass — the null expectation for twelve comparisons. It was reported as
+chance and then tested properly: one hypothesis, fixed in advance in
+`runs/PREREGISTERED.md`, on five fresh replicates at seeds disjoint from batch 1.
+
+```
+                biotic   abiotic      se     gap   verdict
+batch 1  first  0.0592    0.0370  0.0587  0.0222   fails
+batch 1  deep   0.0905    0.0415  0.0414  0.0490   clears   <- generated H1
+batch 2  first  0.0562    0.0251  0.0581  0.0311   fails
+batch 2  deep   0.0637    0.0345  0.0584  0.0292   FAILS    <- tested H1
+```
+
+**H1 is not supported.** The deep-time gap is 0.0292 against a pooled SE of
+0.0584 — inside one standard error, and by the criterion written down before the
+run, that is a falsification rather than a "trend".
+
+**The direction is consistent and that is not enough.** Biotic exceeds abiotic in
+all four cells above, in both batches and at both horizons, and never reverses.
+It is tempting to pool the batches and report the combined effect. That is not
+legitimate: batch 1 generated the hypothesis and cannot also test it, which is
+exactly why the pre-registration said so in advance and excluded it. A consistent
+sign across two under-powered samples is what a real weak effect looks like AND
+what noise looks like, and nothing here distinguishes them.
+
+**What it would take.** The gap is around 0.03 with a per-batch SE near 0.058, so
+roughly four times the replicates — twenty per arm — to resolve it at two SE if
+it is real at this size. That is a day of compute for a single trait, and it
+should only be spent if something makes enzyme diversity worth that much more
+than the alternatives.
+
+**Where this leaves the standing goal.** Not demonstrated, and now the last
+candidate has been examined rather than merely doubted. Every trait that cleared
+at a first horizon failed at ten times the runtime; the one that cleared at deep
+time failed to replicate. Set against the descent — sense+move 3.9% → 0.9%,
+median body 12 → 9 over 4.5 million steps — the coherent reading remains that the
+biotic pressure is dominant early and exhausts the variation it needs to keep
+acting.
+
+The pre-registration is the part worth keeping. It converted "one of twelve, so
+probably chance" from a judgement call into a test with a stated bar, and the
+test came back negative. That is a cheaper and more honest outcome than a
+plausible number defended after the fact.
+
+### A flaw in the method, not only in the hypotheses (2026-08-07)
+
+Every ablation this session was single-factor: remove one mechanism, see whether
+the outcome moves. Five ran — geography, contest at depth, tidal income, shelter,
+body-share grazing — five came back "not implicated", and they were written up as
+five dead ends.
+
+**Single-factor ablation is blind to conjunctive requirements.**
+
+```
+if the outcome needs A AND B:
+  remove A  ->  no effect   (B alone was already insufficient)
+  remove B  ->  no effect   (A alone was already insufficient)
+  read as:      "neither matters"
+  truth:        "both necessary, neither sufficient"
+```
+
+That is the exact shape of the results, and geography is the clearest case.
+Removing all of it moves the movement incentive by 0.0044 ± 0.0300 while having
+the largest single effect in the who-selects table on wealth, 1.3785 ± 0.2518. A
+factor that triples the world's energy and does not move the outcome is not
+irrelevant — it is **insufficient**. The two findings look identical to a
+one-factor ablation and require different next steps.
+
+**The correction is to the method.** Experiments from here are factorial:
+combinations held together, testing whether two or three mechanisms jointly do
+what none does alone. The `moving-pays` harness already accepts arbitrary
+parameter sets as arms, so the tooling does not change — only which arms are
+chosen, and how many worlds a comparison costs.
+
+It also reframes every null above. "Not implicated" was reported as "does not
+matter". It should have been reported as "does not suffice alone", which is a
+much weaker claim and leaves those mechanisms in play as conjuncts.

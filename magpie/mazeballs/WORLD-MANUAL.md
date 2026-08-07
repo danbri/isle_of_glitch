@@ -498,10 +498,42 @@ will report nothing.
 
 ---
 
+**0b. A CORRECTION TO THE METHOD, which outranks every item below it.**
+
+Everything ablated this session was tested one factor at a time, and five came
+back "not implicated": geography, contest at depth, tidal income, shelter, and
+body-share grazing. They were reported as five dead ends. **Single-factor
+ablation cannot see a conjunction.** If an outcome needs A *and* B:
+
+```
+remove A  ->  no effect   (B alone was already insufficient)
+remove B  ->  no effect   (A alone was already insufficient)
+read as:      "neither matters"
+truth:        "both necessary, neither sufficient"
+```
+
+Geography is the clearest case and was mis-filed here as "not supported".
+Removing all of it changes the movement incentive by 0.0044 ± 0.0300 — nothing —
+while it simultaneously has the LARGEST single effect in the who-selects table
+on wealth: mean energy 1.79 with it against 0.72 without, 1.3785 ± 0.2518 at
+depth. **A factor that triples the world's energy and does not move the outcome
+is not irrelevant. It is insufficient**, and those two findings demand different
+next steps.
+
+So the next experiments are FACTORIAL — combinations held together, asking
+whether two or three mechanisms jointly do what none does alone. A one-factor
+sweep over a conjunctive requirement returns nulls indefinitely, and a session
+has now been spent demonstrating that it does. The `moving-pays` harness already
+takes arbitrary parameter sets as arms, so this costs nothing but the choice of
+arms.
+
+---
+
 **1. A biotic channel that prices APPROACH, not only contact.** Was head of the
-list, and it displaces everything below it — including geography, which is now
-built and measured at 22× less influence on whether moving pays than contest is
-(`RESEARCH.md`, 2026-08-07).
+list. Note it is a candidate CONJUNCT, not a replacement: pricing approach
+rewards steering, steering needs cells to spare, and cells to spare is what the
+multicellularity tax denies — so it may well need §11.0 to be in place before it
+can show anything at all.
 
 The measured problem: contest is symmetric and fires on contact, so moving raises
 your encounter rate with things that eat you exactly as much as with things you
@@ -554,6 +586,38 @@ exploit either half.
 5. **Syngamy** — `parentB` is reserved and unused.
 6. **A medium with state** — wakes, drafting, jellyfish. Large, needs a grid, and
    `CELLS.md` would need amending rather than ignoring.
+
+---
+
+## 11b. What the shipped defaults rest on (2026-08-07)
+
+A session that changed this much, on several diagnoses that later collapsed,
+should not leave anyone guessing which defaults are supported and which are
+merely surviving.
+
+| parameter | value | evidence | status |
+|---|---|---|---|
+| `heightScale`/`mudScale` | derived from `bound` | geography built; **wealth** effect 1.38 ± 0.25, **movement** effect 0.004 ± 0.030 | keep |
+| `gravity` | 0.55 | in-plane `−∇height`; places measured (p50/max 0.231) | keep |
+| `lowLush` | 0.75 | fertile crescent; redistributes, total inflow unchanged | keep |
+| `flowTerrain` | 0.62 | the current follows the contours | keep |
+| `flowDry` | 0.07 | the mud is what moves | keep |
+| `contestR` | 1.5 | proximity not touch: 78% have a stranger in reach against 45% | keep |
+| `senseCost` gating | cost follows use | sensors 20× more common **and** sharp (acuity 0.869 against 0.000) | **best-supported change of the session** |
+| `tidalYield` | 0.06, no trait factor | the trait factor produced a 59.7% anchor monoculture and was removed | keep |
+| `moteDrift` | 0.0 | **directional only** — the sign flip did not survive replication | **weak** |
+| `sapRate` | 0.0 | rescues population 68×, destroys differentiation; conserving | off, correctly |
+| `shelterK` | 0.0 | no effect at either horizon | off, correctly |
+| `grazeBodyShare` | 0.0 | conflates sharing with suppression; kills young worlds | off, correctly |
+
+**`moteDrift` is the one to re-examine first.** It is at 0 on the strength of a
+sign flip that four replicates failed to confirm, plus a code comment's prior.
+That is weaker evidence than anything else in this table, and food that moves
+with the current is a real part of what makes a river a river.
+
+The three at 0 are not failures to delete — each is a mechanism that works
+mechanically and does the wrong thing evolutionarily, and each is documented at
+its definition with the measurement that put it there.
 
 ---
 

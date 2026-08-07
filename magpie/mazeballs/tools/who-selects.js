@@ -124,8 +124,14 @@ function traits(meta, n) {
  * stopping at any moment leaves all three arms at the same tick, which is a
  * result.
  */
+// SEED OFFSET, so a replication batch is a genuinely independent sample rather
+// than the same worlds run twice. Batch 1 used SEEDBASE 11; a batch testing a
+// hypothesis batch 1 generated must not reuse its seeds, or it is checking
+// arithmetic rather than replicating a result.
+const SEEDBASE = Number(Deno.env.get('SEEDBASE') ?? 11);
+
 function makeArm(arm, rep) {
-  const seed = 11 + rep * 101;
+  const seed = SEEDBASE + rep * 101;
   return { arm, rep, seed, world: null, brains: null, evo: null, built: null,
            tick: 0, dead: false };
 }
