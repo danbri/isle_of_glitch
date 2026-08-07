@@ -1155,8 +1155,18 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   // SUPPRESSION USES THE RIVAL COUNT, sharing used the cell count. This is the
   // whole point of the second slot: what a patch is worth is divided among
   // mouths, and how hard it is being WORKED is measured in competitors.
+  // This mote's capacity, needed by both the refill rate below and the logistic
+  // ceiling further down.
+  let cap = max(1e-4, mote[i * 2u + 1u].y);
   let draw = moteOfferOf(m0) * rivals;
-  let refill = max(1e-6, P.moteRegrow * P.dt);
+  // REFILL MUST BE THIS MOTE'S REFILL. The ratio below is draw against what the
+  // sun puts back HERE, and once regrowth started scaling with capacity — to keep
+  // total inflow invariant to mote density — this line was still quoting the
+  // unscaled base rate. A megamote refills many times faster than the reference
+  // and was being told it refilled at the reference, so draw/refill came out far
+  // too large and suppression punished exactly the rich patches the sparse-mote
+  // design exists to create. Introduced by the inflow fix two commits ago.
+  let refill = max(1e-6, P.moteRegrow * (cap / max(1e-4, P.moteCap)) * P.dt);
   let suppress = 1.0 / (1.0 + P.regrowCrowdK * (draw / refill));
   // PER-MOTE CAPACITY, in the spare float beside the rival count. The world used
   // one cap for every mote, so the only way to hold a fixed amount of food was to
@@ -1187,7 +1197,6 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   // patch of the same ground" should mean.
   //
   // (Found by Codex from the source, not from a symptom.)
-  let cap = max(1e-4, mote[i * 2u + 1u].y);
   let rate = P.moteRegrow * (cap / max(1e-4, P.moteCap));
   stock = stock + rate * fert * suppress * (1.0 - stock / cap) * P.dt;
 
