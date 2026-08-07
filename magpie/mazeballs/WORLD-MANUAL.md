@@ -431,7 +431,74 @@ measurement once), trajectory plots, vector snapshots, the imposed-wave drive.
 
 ## 11. What is missing, ranked
 
-**0. A biotic channel that prices APPROACH, not only contact.** New head of the
+**0. Crowding that counts COMPETITORS, not mouths.** Head of the list, measured,
+and it displaces the approach-pricing proposal below it — which is still a good
+idea and is downstream of this one, because steering needs cells to spare and
+this is what makes cells affordable.
+
+THE BIND, measured at deep time (`RESEARCH.md`, 2026-08-07):
+
+```
+                    sizeTax    sense+move
+as shipped          -0.4160          8.4%
+no crowding         -0.2012          0.9%
+                    +0.2148 +-0.1092  IMPLICATED
+```
+
+Crowding suppression causes about half the tax on being multicellular — and
+removing it collapses the sensorimotor fraction nine-fold, because it is also
+what makes sitting on a patch costly and therefore what makes moving pay. Stated
+plainly:
+
+> To make moving pay, a patch must be punished for being worked.
+> A body is a thing that works a patch.
+> So the mechanism that makes moving pay punishes being a body.
+
+THE FIX, and the arithmetic is exact. Suppression counts cells drawing on a
+patch. It should count independent COMPETITORS. Each drawing cell contributes
+`1 / bodySize` instead of `1`:
+
+```
+                                 cells   sum(1/size)   distinct bodies
+one body of 20 cells                20          1.00                 1
+twenty single-cell bodies           20         20.00                20
+four bodies of 5                    20          4.00                 4
+one of 20 plus five of 1            25          6.00                 6
+half of a 20-cell body              10          0.50                 1 (partly present)
+```
+
+Exact when a whole body is on the patch, and gracefully partial when only some of
+it is — which is the physically sensible answer, not an approximation to
+apologise for. A crowd of competitors still punishes sitting still, so the
+mechanism keeps doing the job it was added for; a body stops suppressing the
+ground under itself twenty times over.
+
+THE BLOCKER, which is real and is why this is written down rather than built.
+`mote.w` is used for TWO things: sharing (`offer = stock / demanders`) and
+suppression (`draw = offer * demanders`). Sharing must keep counting CELLS or a
+20-cell body takes twenty times its share; suppression wants the weighted count.
+So two accumulators are needed, and the mote is a full `vec4<f32>` — (x, y,
+stock, demanders). The options, none free:
+
+- **Widen the mote to two vec4s.** Simplest and hits the worst place: the mote
+  walk is 58% of the step (`PHYSICS-2.md`) and this doubles its bandwidth.
+- **Bit-pack two counters into one word.** 16+16 does not have the range —
+  a single-cell body needs the full scale factor and twenty of them overflow.
+- **Move the correction to the cell side.** A grazing cell knows its own body
+  size but cannot see who else is drawing, so this needs the information the
+  mote has.
+
+Recommended: measure the widened mote against the 58% figure before assuming it
+is too expensive. That number is from a build with 80% phantom cells and has not
+been re-measured since they were removed.
+
+**And it must clear the 10× test.** The crowding effect itself is invisible at
+the first horizon and only appears at ten times it, so any fix evaluated cheaply
+will report nothing.
+
+---
+
+**1. A biotic channel that prices APPROACH, not only contact.** Was head of the
 list, and it displaces everything below it — including geography, which is now
 built and measured at 22× less influence on whether moving pays than contest is
 (`RESEARCH.md`, 2026-08-07).
