@@ -6278,3 +6278,69 @@ its SHAPE: something that makes moving toward or away from another organism pay
 better than ignoring it. Every biotic coefficient in this world prices what
 happens on contact; nothing prices approach or avoidance, which is the only place
 an arms race can live.
+
+### The deep-time test kills it too — and that is now a pattern, not an accident
+
+The contest ablation, re-run after 800 ticks (200k steps) of warm-up instead of
+80 (20k) — the same 10× the goal demands:
+
+```
+                 movers - sitters       se   reps   moving pays
+as shipped              +0.0424    0.0505      3    no
+no contest              +0.0375    0.0163      3    yes
+gap                     -0.0048    0.0531           implicated = NO
+```
+
+At the first horizon the gap was **+0.0965 ± 0.0466** and contest was clearly
+implicated. At ten times the runtime it is **−0.0048 ± 0.0531** — gone, and if
+anything reversed.
+
+**That is the third independent measurement this session to do exactly this:**
+
+```
+measurement                    first horizon        deep time (10x)
+who-selects, toughness         clears the bar       fails  (and later withdrawn)
+who-selects, tagSd             clears the bar       fails
+moving-pays, contest ablation  +0.0965 +-0.0466     -0.0048 +-0.0531
+```
+
+Three different instruments, three different traits, one pattern: **everything
+this world differentiates at the first horizon is erased by ten times the
+runtime.** The "survives deep time" clause of the standing goal turns out not to
+be a formality bolted onto a result — it is the clause that fails, every time,
+and it is the only one that has ever mattered.
+
+#### What that means, and it is not "the effects were noise"
+
+The effects are real when measured; they stop existing later. Put beside the
+descent measurement — bodies smaller, simpler and less able to close a
+sensorimotor loop the longer a world runs — a coherent account falls out:
+
+> The selective pressure is real, and it **exhausts itself**. It drives the
+> population into a state that is *insensitive to it*.
+
+Early on, contest suppresses the reward for moving by a factor of 22 over the
+entire abiotic world. Late on, contest changes the movement incentive by nothing
+measurable — because by then nothing moves much, bodies are at minimum size, and
+the population has already shed everything the pressure was acting on. There is
+no differential left to measure because there is no variation left to differ.
+
+This is the anti-Cambrian stated exactly. Not "the arms race has not started
+yet" and not "the biotic channel is too weak", both of which were working
+hypotheses this session and both of which are now contradicted by measurement.
+The pressure is dominant, and it consumes the raw material it would need in
+order to keep acting.
+
+#### The consequence for what to try next
+
+Any change evaluated at a first horizon will look like it works. All three
+measurements above did. **A change is only interesting here if it still shows an
+effect at 10×**, which makes the cheap experiment the misleading one and forces
+every future claim through the expensive test. That is a real cost and it should
+be paid deliberately rather than discovered again.
+
+And it sharpens the requirement on the closing-speed proposal in
+`WORLD-MANUAL.md` §11.0. It is not enough for it to make approach pay. It has to
+still make approach pay in a world that has already been running for 200,000
+steps — that is, it has to create variation faster than convergence destroys it.
+Nothing measured this session does that.
