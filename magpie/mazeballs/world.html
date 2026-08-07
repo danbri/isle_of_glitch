@@ -3577,6 +3577,7 @@ function loop() {
   // able to change the picture, or the cache shows a stale world — so the view
   // toggles and the crop generation are in here alongside the camera, and the
   // timer covers the field drift that no discrete key can capture.
+  const camKeyOnly = cam.cx.toFixed(4) + ',' + cam.cy.toFixed(4) + ',' + cam.zoom.toFixed(4);
   const bgKey = [
     canvas.width, canvas.height,
     cam.cx.toFixed(4), cam.cy.toFixed(4), cam.zoom.toFixed(4),
@@ -3588,6 +3589,23 @@ function loop() {
                     sim.world?.params?.morphRate);
   // A moving field must be redrawn on a clock; a still one never needs to be.
   const bgStale = drifting ? (t - sim.bgAt > 400) : false;
+  // A MOVING CAMERA IS NOT A REASON TO REDRAW SIXTY TIMES A SECOND.
+  //
+  // The key includes the camera, so dragging or wheel-zooming invalidated the
+  // cache every frame and paid the full terrain-plus-streamlines cost on each
+  // one — measured at 54 fps holding still against 13 fps while panning, which
+  // is the whole saving handed back precisely when the interface should feel
+  // most responsive. (Codex spotted this in the source.)
+  //
+  // While the camera is actually moving the setting is rebuilt at most every
+  // 90ms and the previous one is blitted in between. It lags the cells by up to
+  // that long during a drag, which reads as the ground settling a beat behind
+  // the hand; stopping still snaps it exact within a frame.
+  const camMoved = sim.bgCamKey !== undefined && sim.bgCamKey !== camKeyOnly;
+  const movingNow = camMoved && (t - (sim.camMovedAt ?? 0) < 250);
+  if (camMoved) sim.camMovedAt = t;
+  sim.bgCamKey = camKeyOnly;
+  const holdBg = movingNow && (t - sim.bgAt < 90);
   if (!sim.bgTex || sim.bgW !== canvas.width || sim.bgH !== canvas.height) {
     sim.bgTex?.destroy?.();
     sim.bgTex = dev.createTexture({
@@ -3604,7 +3622,7 @@ function loop() {
     });
     sim.bgKey = null;
   }
-  if (sim.bgKey !== bgKey || bgStale) {
+  if ((sim.bgKey !== bgKey || bgStale) && !holdBg) {
     sim.bgKey = bgKey; sim.bgAt = t;
     const bg = enc.beginRenderPass({
       colorAttachments: [{
