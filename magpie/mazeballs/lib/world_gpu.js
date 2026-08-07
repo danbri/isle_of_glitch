@@ -437,8 +437,15 @@ fn moteOfferOf(m: vec4<f32>) -> f32 {
 }
 
 fn moteBucketOf(p: vec2<f32>) -> u32 {
-  let gx = i32(floor(p.x / P.moteR));
-  let gy = i32(floor(p.y / P.moteR));
+  // Toroidal, for the same reason as bucketOf: grazing probes neighbouring
+  // buckets, and an unwrapped probe at the seam looks somewhere the food is not.
+  let b = P.bound;
+  let span = 2.0 * b;
+  var q = p;
+  q.x = q.x - span * floor((q.x + b) / span);
+  q.y = q.y - span * floor((q.y + b) / span);
+  let gx = i32(floor(q.x / P.moteR));
+  let gy = i32(floor(q.y / P.moteR));
   let h = u32(gx * 73856093) ^ u32(gy * 19349663);
   return h % P.moteHashSize;
 }
@@ -793,8 +800,28 @@ fn contractionOf(i: u32) -> f32 {
 // moving half a bucket changes nothing about what the body is. Nothing is ever
 // snapped to it.
 fn bucketOf(p: vec2<f32>) -> u32 {
-  let gx = i32(floor(p.x / P.hashCell));
-  let gy = i32(floor(p.y / P.hashCell));
+  // WRAP BEFORE HASHING. The world is a torus and this lookup was not.
+  //
+  // Neighbour search probes bucketOf(p + offset*hashCell), so a cell sitting
+  // near +bound probes past the edge. Those coordinates hashed as if the world
+  // were infinite, landing in buckets unrelated to where the true neighbours —
+  // the cells just across the seam at -bound — actually are. minImage corrects
+  // the DISTANCE once a pair is found, which is why this survived: every force
+  // that was computed was right, and the ones that were missing left no trace.
+  //
+  // A cell on the seam therefore felt contact repulsion from the inside only,
+  // and packed against the boundary. Measured on the live world: the outermost
+  // |x| bin held 3.68x its share of cells, drawn as a hard line down both edges.
+  //
+  // Insertion is unaffected — stored positions are already inside the domain —
+  // so wrapping here makes probe and insert agree rather than changing the table.
+  let b = P.bound;
+  let span = 2.0 * b;
+  var q = p;
+  q.x = q.x - span * floor((q.x + b) / span);
+  q.y = q.y - span * floor((q.y + b) / span);
+  let gx = i32(floor(q.x / P.hashCell));
+  let gy = i32(floor(q.y / P.hashCell));
   var h : u32 = (u32(gx) * 73856093u) ^ (u32(gy) * 19349663u);
   return h % P.hashSize;
 }
