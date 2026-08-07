@@ -40,7 +40,21 @@ const WARM = Number(Deno.env.get('WARM') ?? 70);
 const WIN = Number(Deno.env.get('WIN') ?? 60);
 const CAP = Number(Deno.env.get('CAP') ?? 110);
 const BOUND = Number(Deno.env.get('BOUND') ?? 58);
-const VALUES = (Deno.env.get('VALUES') ?? '0,0.55').split(',').map(Number);
+// ARMS AS WORLD FEATURES, not just as a mote-drift number.
+//
+// The question sharpened: crowding suppression was tuned specifically to make
+// movers out-earn sitters (this project's ledger: crowdK 2.0, movers +1.9
+// against sitters -4.8) and no longer does. The world has since gained several
+// things that could each have restored the value of sitting still, and one of
+// them was written to do exactly that — TIDAL INCOME PAYS FOR HOLDING STATION
+// AGAINST THE CURRENT. That is an anti-locomotion subsidy in plain sight.
+const ARMS = JSON.parse(Deno.env.get('ARMS') ?? JSON.stringify([
+  { name: 'as shipped', params: {} },
+  { name: 'no tidal income', params: { tidalYield: 0 } },
+  { name: 'no geography', params: { gravity: 0, highSap: 0, lowLush: 0, mudSlip: 0,
+                                    mudFlow: 0, flowDry: 1, flowTerrain: 0, senseTerrain: 0 } },
+  { name: 'no contest', params: { contestRate: 0 } },
+]));
 const OUT = Deno.env.get('OUT') ?? './runs/moving-pays.jsonl';
 
 const say = async (o) => {
@@ -55,11 +69,11 @@ const sd = (a) => {
 };
 const med = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[s.length >> 1] : 0; };
 
-async function one(drift, rep) {
+async function one(arm, rep) {
   const built = buildBodies({ beasts: CAP, cells: 12, bound: BOUND, seed: 11 + rep * 101,
                               maxCells: 60, bodySlots: CAP * 8 });
   const brains = await BrainArenaGPU.create(built.arena);
-  const world = new WorldGPU(brains, built.cells, { bound: BOUND, moteDrift: drift });
+  const world = new WorldGPU(brains, built.cells, { bound: BOUND, ...arm.params });
   const evo = new Evolver({ arena: built.arena, world, cells: built.cells,
                             seed: 3 + rep, birthEnergy: 18, deathEnergy: 0 });
   for (let o = Math.round(CAP / 4); o < CAP; o++) evo.cull(o);
@@ -106,38 +120,39 @@ async function one(drift, rep) {
            diff: mean(mv) - mean(st), drift: Math.hypot(mx, my), alive: evo.alive() };
 }
 
-await say({ kind: 'start', values: VALUES, reps: REPS, warm: WARM, win: WIN,
-  question: 'do movers end richer than sitters, and does drifting food remove the difference' });
+await say({ kind: 'start', arms: ARMS.map((a) => a.name), reps: REPS, warm: WARM, win: WIN,
+  question: 'which addition restored the value of sitting still' });
 
 const summary = [];
-for (const v of VALUES) {
+for (const arm of ARMS) {
   const diffs = [];
   for (let r = 0; r < REPS; r++) {
-    const res = await one(v, r);
-    if (!res) { await say({ kind: 'skip', moteDrift: v, rep: r, why: 'too few surviving bodies' }); continue; }
+    const res = await one(arm, r);
+    if (!res) { await say({ kind: 'skip', arm: arm.name, rep: r, why: 'too few surviving bodies' }); continue; }
     diffs.push(res.diff);
-    await say({ kind: 'run', moteDrift: v, rep: r,
+    await say({ kind: 'run', arm: arm.name, rep: r,
       ...Object.fromEntries(Object.entries(res).map(([k, x]) => [k, +x.toFixed(4)])) });
   }
   const m = mean(diffs), se = sd(diffs) / Math.sqrt(Math.max(1, diffs.length));
-  summary.push({ v, m, se, n: diffs.length });
-  await say({ kind: 'summary', moteDrift: v, reps: diffs.length,
+  summary.push({ name: arm.name, m, se, n: diffs.length });
+  await say({ kind: 'summary', arm: arm.name, reps: diffs.length,
     meanDiff: +m.toFixed(4), se: +se.toFixed(4),
     // Positive means movers end richer, which is the incentive locomotion — and
     // therefore perception — needs in order to be worth anything.
     movingPays: m > 2 * se });
 }
 
-if (summary.length === 2) {
-  const [a, b] = summary;
-  const gap = a.m - b.m;
-  const se = Math.sqrt(a.se ** 2 + b.se ** 2);
-  await say({ kind: 'verdict',
-    lower: { moteDrift: a.v, meanDiff: +a.m.toFixed(4) },
-    higher: { moteDrift: b.v, meanDiff: +b.m.toFixed(4) },
+// Each arm against the shipped world. A feature is implicated if removing it
+// makes moving measurably more rewarding than it is with the feature present.
+const base = summary[0];
+for (const s of summary.slice(1)) {
+  const gap = s.m - base.m;
+  const se = Math.sqrt(s.se ** 2 + base.se ** 2);
+  await say({ kind: 'verdict', removed: s.name,
+    withFeature: +base.m.toFixed(4), without: +s.m.toFixed(4),
     gap: +gap.toFixed(4), se: +se.toFixed(4),
-    driftRemovesTheIncentive: gap > 2 * se,
-    note: 'gap > 2 SE means the food moving with the current measurably removes '
-        + 'the reward for moving yourself — the mote comment was right.' });
+    implicated: gap > 2 * se,
+    note: 'implicated = removing this makes moving measurably more rewarding, '
+        + 'i.e. the feature is part of why sitting still pays' });
 }
 await say({ kind: 'done' });

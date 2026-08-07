@@ -6169,3 +6169,53 @@ out-earn sitters (`crowdK 2.0`: movers +1.9 against sitters -4.8), no longer
 does so in a world that has since gained geography, a narrow fertile shore,
 tidal income and a proximity-range biotic channel. Any of those could have
 restored the value of sitting still.
+
+### Moving DOES pay — in a young world. The live world has aged out of it.
+
+The previous entry concluded movers do not out-earn sitters. That was measured in
+a world too small to power it (CAP 110 / bound 58, three of eight replicates
+unusable) and on the live world at ~900k steps. Repeated at CAP 150 / bound 70
+with four replicates:
+
+```
+as shipped        movers - sitters  +0.0555 +-0.0157  (4 reps)   MOVING PAYS
+no tidal income                     -0.0418 +-0.1182  (3 reps)   —
+```
+
+**Moving pays, clearing two standard errors.** And removing tidal income makes
+it *worse*, not better — so the suspicion that "paid for holding station" is an
+anti-locomotion subsidy is **wrong**, and is withdrawn.
+
+That leaves a genuine tension: a fresh 80-tick world says movers gain, the live
+world at 900k steps says they lose. Same physics. The live world's own history
+resolves it:
+
+```
+step        bodies  median body  one-tissue  sense+move
+  274,143     1390           12         76%        3.9%
+  540,641     1702           11         84%        3.5%
+  872,370     1964           10         82%        1.7%
+1,046,188     1806           11         75%        1.6%
+```
+
+Over 772,045 steps the world gets **fuller, smaller and simpler**: more bodies,
+each nearer the minimum viable size, and the fraction holding both a sensor and a
+muscle more than halves. A young world has ungrazed ground and moving finds it; a
+mature crowded one is grazed everywhere at once and moving finds nothing.
+
+**This is the anti-Cambrian, and it is the most important thing measured this
+session.** The world does not plateau — it *descends*. Bodies converge on the
+smallest single-tissue form that can pay its own way, and every capability that
+costs something is shed on the way down. "Infinite ascent" is not merely absent;
+the gradient points the other way, and it points that way harder the longer a
+world runs.
+
+It also explains why every economic knob turned this session moved the tissue mix
+without moving the outcome. They were adjusting which single strategy the
+population converges on, not whether it converges.
+
+The question that follows is sharp and is not about any of the parameters swept
+so far: **what would make a mature, crowded world contain ungrazed ground?**
+Crowding suppression makes a worked patch recover slowly, which is a local
+effect; at high density every patch is worked. That is the condition under which
+moving stops paying, sensing stops paying, and complexity is shed.
