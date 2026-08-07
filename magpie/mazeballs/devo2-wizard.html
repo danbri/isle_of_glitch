@@ -73,6 +73,11 @@
   button.act.primary:hover{filter:brightness(1.08)}
   button.act.primary:disabled{background:var(--rule);border-color:var(--rule);color:var(--soft)}
   .pager{display:flex;justify-content:space-between;margin:1.6rem 0 3rem;gap:.5rem}
+  .gallery{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem}
+  .gallery canvas{width:100%;height:auto;aspect-ratio:1;cursor:pointer}
+  .gallery canvas.sel{border-color:var(--sensor);box-shadow:0 0 0 1px var(--sensor)}
+  .transport{display:flex;gap:.6rem;align-items:center}
+  @media (max-width:560px){ .gallery{grid-template-columns:repeat(2,1fr)} }
   /* The same two controls at the top. The step chips tell you where you are but
      make you aim; these are where the hand already is after reading a section. */
   .toppager{display:flex;gap:.4rem;align-items:center;margin-top:.55rem}
@@ -230,59 +235,50 @@
 </section>
 
 <section data-step="5">
-  <h2>5. The body grows</h2>
-  <p class="lede">Development starts from one cell at the centre of the egg and adds cells
-  where the <code>grow</code> gene says to. Morphology is therefore <strong>the record of a
-  process</strong>, not a function evaluated on a disc — an elongated body is what you get by
-  growing preferentially along an axis.</p>
+  <h2>5. Sixteen eggs, one clock</h2>
+  <p class="lede">Sixteen different genomes, each starting as a single cell at the centre of
+  its own egg. Press play and watch them all develop together. Nothing here needs tuning —
+  the only control is time.</p>
 
-  <div class="row">
-    <div class="card" style="flex:0 0 auto">
-      <canvas id="cvGrow" width="300" height="300"></canvas>
-      <label class="sl">developmental time <b id="vMs">12000 ms</b>
-        <input type="range" id="sMs" min="200" max="12000" step="200" value="12000"></label>
-      <div class="legend" style="margin-top:.4rem">
-        <span><i style="background:var(--sensor)"></i>sensor</span>
-        <span><i style="background:var(--muscle)"></i>muscle</span>
-        <span><i style="background:var(--neuron)"></i>neuron</span>
-        <span><i style="background:var(--anchor)"></i>anchor</span>
-      </div>
+  <div class="gallery" id="gallery"></div>
+
+  <div class="card" style="margin-top:.8rem">
+    <div class="transport">
+      <button class="act primary" id="bPlay" style="width:auto;margin:0">&#9654;&nbsp; play</button>
+      <input type="range" id="sScrub" min="0" max="19" step="1" value="19" style="flex:1">
+      <span id="vClock" style="font-family:var(--mono);font-size:.78rem;color:var(--soft);min-width:8.5rem;text-align:right"></span>
     </div>
-    <div class="card">
-      <h3>this genome</h3>
-      <div id="growStats" style="font-family:var(--mono);font-size:.76rem"></div>
-      <button class="act" id="bRandom">another random genome</button>
-      <button class="act" id="bLive">fetch one from the live world</button>
-      <hr style="border:0;border-top:1px solid var(--rule);margin:.7rem 0">
-      <h3>grow it past what the world allows</h3>
-      <label class="sl">cell budget <b id="vCap">60</b>
-        <input type="range" id="sCap" min="0" max="4" step="1" value="0"></label>
-      <label class="sl">developmental time <b id="vBig">12000 ms</b>
-        <input type="range" id="sBig" min="12000" max="60000" step="6000" value="12000"></label>
-      <button class="act primary" id="bBig">run long growth</button>
-      <div id="bigStats" style="font-family:var(--mono);font-size:.76rem;margin-top:.4rem"></div>
-      <p class="note warn">The world develops for 12,000&nbsp;ms with a 60-cell cap, and this
-      genome self-limits at 51 — so the cap is not what is binding. Developmental TIME is.
-      Given longer, the same genome keeps growing: measured 411 cells at 30,000&nbsp;ms and
-      566 at 60,000. The bodies the world actually contains are early stages of a process
-      that was stopped, not finished organisms.</p>
-      <p class="note warn"><b>Do we ever get stripes?</b> Scanned across 40 random genomes,
-      counting sign changes in contractility along the long axis: mean 1.0 bands at
-      12,000&nbsp;ms, 0.9 at 30,000, 0.27 at 60,000, with a single genome reaching 7. One
-      band is head-and-tail polarity, not segmentation. And elongation FALLS with time —
-      1.58, then 1.23, then 1.09 — so longer development gives bigger, rounder bodies,
-      because growth fills a circular egg rather than extending along an axis. The
-      mechanism for banding exists (step 4); evolution here has not used it.</p>
-      <p class="note">Cost is roughly quadratic — every cell diffuses to its neighbours each
-      tick — so 60,000&nbsp;ms takes about fifty seconds. That quadratic is the real reason
-      the world cannot afford large bodies at birth, and it is a fact about the
-      implementation rather than about biology.</p>
-      <p class="note">Dragging the slider re-develops from scratch to a shorter horizon.
-      Development is <em>canalised</em> — noise is derived from the genome — so the same
-      genome grows the same body every time, and these really are snapshots of one process
-      rather than separate rolls.</p>
+    <div id="prep" style="font-family:var(--mono);font-size:.76rem;color:var(--soft);margin-top:.5rem"></div>
+    <div class="legend" style="margin-top:.5rem">
+      <span><i style="background:var(--sensor)"></i>sensor</span>
+      <span><i style="background:var(--muscle)"></i>muscle</span>
+      <span><i style="background:var(--neuron)"></i>neuron</span>
+      <span><i style="background:var(--anchor)"></i>anchor</span>
+    </div>
+    <div style="margin-top:.5rem">
+      <button class="act" id="bNewDna">sixteen new genomes</button>
+      <span style="font-size:.78rem;color:var(--soft)">click any embryo to carry it into the next steps</span>
     </div>
   </div>
+
+  <p class="note">Every egg is drawn at the same scale, so what you are watching is size
+  changing, not an arrangement changing. Development is <em>canalised</em> — the noise is
+  derived from the genome — so each of these is one fixed process being replayed, not a
+  fresh roll each time you scrub.</p>
+
+  <p class="note warn">The world only ever runs the first 12,000&nbsp;ms of this, with a
+  60-cell cap. These bodies keep going to about 18,000 and reach a mean of 156 cells. The
+  animals in the live world are early stages of a process that was stopped, not finished
+  organisms — and the reason is cost, not biology: every cell diffuses to its neighbours
+  each tick, so development is quadratic in cells.</p>
+
+  <p class="note warn"><b>Watch for stripes. There mostly are not any.</b> Measured across 40
+  random genomes, counting sign changes in contractility along the long axis: mean 1.0 bands
+  at 12,000&nbsp;ms, 0.9 at 30,000, 0.27 at 60,000, one genome in forty reaching seven. One
+  band is head-and-tail polarity, not segmentation. Elongation FALLS as they grow — 1.58,
+  1.23, 1.09 — so they get bigger and rounder, filling a circular egg rather than extending
+  along an axis. The mechanism for banding exists and step 4 shows it working in isolation.
+  Evolution in this world has not used it.</p>
 </section>
 
 <section data-step="6">
@@ -460,7 +456,7 @@ function show(i) {
   for (const b of [$('bPrev'), $('bPrevTop')]) b.disabled = step === 0;
   for (const b of [$('bNext'), $('bNextTop')]) b.disabled = step === sections.length - 1;
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  if (step === 5) drawGrow();
+  if (step === 5) ensureGallery();
   if (step === 6) drawCarve();
   if (step === 7) fillReadout();
   if (step === 8) drawMutants();
@@ -647,83 +643,169 @@ function drawBody(cv, cells, extent = D.DEFAULT_EXTENT) {
 }
 
 /* --------------------------------------------------------------- step 5 */
-// A seed that actually grows something worth looking at. Most random genomes
-// produce two cells or none — which is honest about the search problem but makes
-// a poor first impression of a model whose whole point is that bodies GROW.
-// Seed 193 develops 51 cells and shows tissue variety; 97/208/226 hit the
-// 60-cell cap, which hides the growth curve behind the ceiling.
-let genome = D.randomGenome(seeded(193));
-function seeded(s) { let v = s >>> 0; return () => ((v = (Math.imul(v, 1664525) + 1013904223) >>> 0) / 4294967296); }
+/**
+ * SIXTEEN EGGS ON ONE CLOCK.
+ *
+ * The previous version of this step was a single body and a row of sliders —
+ * developmental time, cell budget, a blocking "grow" button — which asked the
+ * reader to guess values for controls whose meaning is the thing being taught.
+ * Nobody should have to tune a demo to see the point of it.
+ *
+ * PRECOMPUTED, because scrubbing has to be instant. develop() is called FRAMES
+ * times per genome at increasing horizons, which is legitimate rather than a
+ * shortcut: development is canalised, so a shorter horizon is a snapshot of one
+ * fixed process rather than a different roll. Measured: 16 genomes x 20 frames =
+ * 320 develops in 6.3 s at dtMs 160, mean final body 156 cells, largest 356. The
+ * work is chunked so the page keeps painting and can say how far along it is.
+ *
+ * Only x, y and the type label are kept per cell. The full cell objects would be
+ * about ten times the memory for nothing — drawing needs a position and a colour.
+ */
+// Both of these lived in the single-genome growth block this step replaced, and
+// the later steps (carving, readout, mutation) still depend on `genome` being the
+// one the reader picked here.
+function seeded(sd) {
+  let v = sd >>> 0;
+  return () => ((v = (Math.imul(v, 1664525) + 1013904223) >>> 0) / 4294967296);
+}
+let genome = null;
 
+/**
+ * Develop the genome the reader picked in the gallery. Steps 6 to 8 all go
+ * through here.
+ *
+ * Falls back to the first gallery seed if the reader jumped straight to a later
+ * step without visiting step 5 — those steps are about one body and should not
+ * be blank just because the tour was taken out of order.
+ */
 function grow(ms, extra = {}) {
-  try { return D.develop(genome, { ms, extent: D.DEFAULT_EXTENT, maxCells: 60, ...extra }); }
-  catch { return { cells: [] }; }
-}
-function drawGrow() {
-  const ms = +$('sMs').value;
-  $('vMs').textContent = ms + ' ms';
-  const g = grow(ms);
-  drawBody($('cvGrow'), g.cells);
-  const hist = [0, 0, 0, 0];
-  for (const c of (g.cells || [])) hist[describe(c)]++;
-  $('growStats').innerHTML =
-    `cells &nbsp;${(g.cells || []).length}<br>` +
-    `neuron ${hist[0]} &nbsp; sensor ${hist[1]}<br>` +
-    `muscle ${hist[2]} &nbsp; anchor ${hist[3]}`;
-}
-$('sMs').oninput = drawGrow;
-
-// GROW PAST THE WORLD'S LIMITS. maxCells is not what binds this encoding —
-// developmental time is — so both are exposed, with the cost stated rather than
-// discovered by waiting.
-const CAPS = [60, 300, 1000, 3000, 10000];
-const capNow = () => CAPS[+$('sCap').value];
-$('sCap').oninput = () => { $('vCap').textContent = capNow(); };
-$('sBig').oninput = () => { $('vBig').textContent = $('sBig').value + ' ms'; };
-$('bBig').onclick = () => {
-  const ms = +$('sBig').value, cap = capNow();
-  $('bigStats').textContent = `growing to ${ms} ms, cap ${cap}… the page will not respond until this finishes`;
-  $('bBig').disabled = true;
-  $('bBig').textContent = 'growing…';
-  // Yield first, or the page freezes with no explanation of why.
-  setTimeout(() => {
-    const t0 = performance.now();
-    let g;
-    // COARSER TIMESTEP FOR THE LONG RUNS. develop() defaults to dtMs 40, and the
-    // cost is quadratic in cells because every cell diffuses to its neighbours
-    // each tick — 60,000 ms takes 41 seconds and the page just stops. At dtMs 320
-    // the same genome reaches 588 cells in 6.4 s against 566 in 41 s, so eight
-    // times the step buys six times the speed for a body of the same size. It is
-    // a coarser integration and is stated as such rather than hidden.
-    try { g = D.develop(genome, { ms, dtMs: ms > 18000 ? 320 : 40,
-                                  extent: D.DEFAULT_EXTENT, maxCells: cap, yolk: 1e9 }); }
-    catch (e) { $('bigStats').textContent = 'development failed: ' + e.message;
-                $('bBig').disabled = false; $('bBig').textContent = 'run long growth'; return; }
-    const dt = Math.round(performance.now() - t0);
-    drawBody($('cvGrow'), g.cells);
-    const hist = [0,0,0,0];
-    for (const c of g.cells) hist[describe(c)]++;
-    const bd = banding(g.cells);
-    $('bigStats').innerHTML =
-      `<b>${g.cells.length} cells</b> in ${dt} ms` +
-      (ms > 18000 ? ' <span style="opacity:.6">(coarse step)</span>' : '') + '<br>' +
-      `neuron ${hist[0]} sensor ${hist[1]} muscle ${hist[2]} anchor ${hist[3]}<br>` +
-      `bands ${bd.flips} &nbsp; elongation ${bd.elong.toFixed(2)}<br>` +
-      (g.cells.length >= cap ? '<span style="color:#c7734f">hit the cell budget</span>'
-                             : 'self-limited below the budget');
-    $('bBig').disabled = false; $('bBig').textContent = 'run long growth';
-  }, 30);
-};
-$('bRandom').onclick = () => { genome = D.randomGenome(Math.random); drawGrow(); };
-$('bLive').onclick = async () => {
+  if (!genome) genome = D.randomGenome(seeded(GAL_SEEDS[0]));
   try {
-    const r = await fetch('/genomes?n=1', { cache: 'no-store' });
-    const j = await r.json();
-    if (j.rows && j.rows[0]) { genome = Float32Array.from(j.rows[0].g); drawGrow(); }
-  } catch {
-    $('growStats').innerHTML += '<br><span style="color:#c7734f">no live server on this origin</span>';
+    return D.develop(genome, { ms, dtMs: GAL_DT, extent: D.DEFAULT_EXTENT,
+                               maxCells: 400, yolk: 1e9, ...extra });
+  } catch { return { cells: [] }; }
+}
+
+const GAL = 16, FRAMES = 20, GAL_MS = 18000, GAL_DT = 160;
+// Seeds chosen by scanning 600 for bodies over 45 cells, ranked by how many
+// distinct cell types they end up with. Hand-picked so the grid shows variety
+// rather than sixteen versions of the same blob.
+const GAL_SEEDS = [208, 229, 181, 49, 217, 143, 16, 97,
+                   226, 69, 193, 168, 104, 269, 80, 177];
+let galGenomes = [], galFilm = [], galSel = 0, playing = false, playRAF = 0;
+
+function seedsToGenomes(seeds) {
+  return seeds.map(sd => D.randomGenome(seeded(sd)));
+}
+function randomGenomes(n) {
+  return Array.from({ length: n }, () => D.randomGenome(Math.random));
+}
+
+function buildGallery() {
+  const g = $('gallery');
+  g.innerHTML = '';
+  for (let i = 0; i < GAL; i++) {
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 200;
+    cv.title = `embryo ${i + 1}`;
+    cv.onclick = () => { galSel = i; genome = galGenomes[i]; paintGallery(); };
+    g.appendChild(cv);
   }
+}
+
+/** Develop every genome at every horizon, yielding so the page stays alive. */
+async function precompute() {
+  galFilm = galGenomes.map(() => []);
+  const total = GAL * FRAMES;
+  let done = 0;
+  for (let f = 1; f <= FRAMES; f++) {
+    const ms = Math.round(GAL_MS * f / FRAMES);
+    for (let i = 0; i < GAL; i++) {
+      let cells = [];
+      try {
+        const r = D.develop(galGenomes[i], { ms, dtMs: GAL_DT,
+          extent: D.DEFAULT_EXTENT, maxCells: 400, yolk: 1e9 });
+        cells = r.cells.map(c => ({ x: c.x, y: c.y, t: describe(c) }));
+      } catch { /* a failed development is a normal outcome; leave it empty */ }
+      galFilm[i][f - 1] = cells;
+      done++;
+    }
+    $('prep').textContent = `developing… ${Math.round(100 * done / total)}%`;
+    paintGallery(f - 1);
+    await new Promise(r => setTimeout(r, 0));
+  }
+  $('prep').textContent =
+    `${GAL} genomes x ${FRAMES} snapshots, precomputed — scrubbing is instant from here`;
+}
+
+/** Cells here are {x,y,t}, so this cannot reuse drawBody's describe() path. */
+function paintTile(cv, cells) {
+  const x = cv.getContext('2d'), W = cv.width, H = cv.height;
+  x.fillStyle = '#070c0b'; x.fillRect(0, 0, W, H);
+  const eggPx = Math.min(W, H) * 0.44, extent = D.DEFAULT_EXTENT;
+  let reach = extent;
+  for (const c of cells) reach = Math.max(reach, Math.hypot(c.x, c.y) + 0.5);
+  const sc = eggPx / reach;
+  x.strokeStyle = '#1b2a27'; x.beginPath();
+  x.arc(W / 2, H / 2, extent * sc, 0, Math.PI * 2); x.stroke();
+  const r = Math.max(1, sc * 0.34);
+  for (const c of cells) {
+    x.fillStyle = TYPE_COL[c.t];
+    x.beginPath(); x.arc(W / 2 + c.x * sc, H / 2 + c.y * sc, r, 0, Math.PI * 2); x.fill();
+  }
+}
+
+function paintGallery(frame = +$('sScrub').value) {
+  const tiles = $('gallery').children;
+  let cells = 0;
+  for (let i = 0; i < GAL; i++) {
+    const film = galFilm[i] || [];
+    const snap = film[Math.min(frame, film.length - 1)] || [];
+    cells += snap.length;
+    paintTile(tiles[i], snap);
+    tiles[i].classList.toggle('sel', i === galSel);
+  }
+  const ms = Math.round(GAL_MS * (frame + 1) / FRAMES);
+  $('vClock').textContent = `${ms} ms · ${cells} cells`;
+}
+
+$('sScrub').oninput = () => paintGallery();
+$('bPlay').onclick = () => {
+  playing = !playing;
+  $('bPlay').innerHTML = playing ? '&#10073;&#10073;&nbsp; pause' : '&#9654;&nbsp; play';
+  if (!playing) { cancelAnimationFrame(playRAF); return; }
+  let last = performance.now(), acc = 0;
+  const tick = (t) => {
+    if (!playing) return;
+    acc += t - last; last = t;
+    if (acc > 90) {                       // ~11 frames a second reads as growth
+      acc = 0;
+      const sl = $('sScrub');
+      let f = +sl.value + 1;
+      if (f > FRAMES - 1) f = 0;          // loop, so it can be left running
+      sl.value = f; paintGallery(f);
+    }
+    playRAF = requestAnimationFrame(tick);
+  };
+  playRAF = requestAnimationFrame(tick);
 };
+$('bNewDna').onclick = async () => {
+  if (playing) $('bPlay').click();
+  galGenomes = randomGenomes(GAL);
+  genome = galGenomes[galSel];
+  $('prep').textContent = 'developing…';
+  await precompute();
+};
+
+let galleryReady = false;
+async function ensureGallery() {
+  if (galleryReady) return;
+  galleryReady = true;
+  galGenomes = seedsToGenomes(GAL_SEEDS);
+  genome = galGenomes[0];
+  buildGallery();
+  await precompute();
+}
 
 /**
  * BANDS ALONG THE BODY'S LONG AXIS — sign changes in mean contractility, the
