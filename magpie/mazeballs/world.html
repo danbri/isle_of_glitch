@@ -2298,7 +2298,9 @@ function sampleSelected(pos, act, type, uidArr, n, step) {
   for (let i = 0; i < n; i++) {
     if (uidArr[i] === sel.uid && type[i] >= 0) { sx += pos[i * 2]; sy += pos[i * 2 + 1]; k++; }
   }
-  if (k) { cam.cx = sx / k; cam.cy = sy / k; }
+  // Held at the middle of what is visible, not of the window — otherwise follow
+  // parks the animal it is following under the right-hand panel.
+  if (k) { const c = camForPoint(sx / k, sy / k, cam.zoom); cam.cx = c.cx; cam.cy = c.cy; }
 }
 
 /** Nearest live cell to a world point, or -1. */
@@ -3407,6 +3409,50 @@ function resize() {
  * enough to read its cells, small enough to keep its surroundings on screen,
  * because a creature with no context is just a diagram.
  */
+/**
+ * WHERE THE WORLD IS ACTUALLY VISIBLE.
+ *
+ * The canvas is the whole window and the panels are drawn OVER it: the HUD down
+ * the left, the controls down the right, and — when an animal is selected — the
+ * CTRNN scope across the bottom, which is tall. So the centre of the window is
+ * not the centre of anything the user can see, and framing a creature there put
+ * it under a panel; with the scope open it put it behind the scope, which is the
+ * one moment you most want to see the animal and the trace together.
+ *
+ * Measured from the DOM every time rather than from constants, because all three
+ * move: the HUD collapses to a spine, the panel slides off to the right and is
+ * drag-resizable, and the scope opens and closes with the selection.
+ */
+function viewRect() {
+  const shown = (el) => el && getComputedStyle(el).display !== 'none';
+  let l = 0, r = innerWidth, t = 0, b = innerHeight;
+  const hud = $('hud'), panel = $('panel'), scope = $('scope');
+  // Each only counts on the side it is actually on. A panel translated off
+  // screen reports a rect outside the window, which these comparisons ignore
+  // without needing to know how it was hidden.
+  if (shown(hud))   { const q = hud.getBoundingClientRect();
+                      if (q.right > l && q.right < innerWidth * 0.5) l = q.right; }
+  if (shown(panel)) { const q = panel.getBoundingClientRect();
+                      if (q.left < r && q.left > innerWidth * 0.5) r = q.left; }
+  if (shown(scope)) { const q = scope.getBoundingClientRect();
+                      if (q.top < b && q.top > innerHeight * 0.4) b = q.top; }
+  // A window narrow or short enough that the panels have eaten it: fall back to
+  // the whole thing rather than to a rectangle nothing fits in.
+  if (r - l < 120 || b - t < 120) return { x: innerWidth / 2, y: innerHeight / 2, w: innerWidth, h: innerHeight };
+  return { x: (l + r) / 2, y: (t + b) / 2, w: r - l, h: b - t };
+}
+
+/**
+ * The camera centre that puts a world point at the middle of the VISIBLE
+ * rectangle. The projection puts cam.cx/cy at the middle of the canvas, so the
+ * correction is the gap between the two centres, in world units. Same arithmetic
+ * as the click handler, in the other direction.
+ */
+function camForPoint(wx, wy, zoom) {
+  const v = viewRect();
+  return { cx: wx - (v.x - innerWidth / 2) / zoom, cy: wy + (v.y - innerHeight / 2) / zoom };
+}
+
 let camAnim = null;
 function frameCreature(uid, frac = 0.2) {
   if (!sim?.lastPos || uid < 0) return;
@@ -3421,12 +3467,18 @@ function frameCreature(uid, frac = 0.2) {
   }
   if (!k) return;
   const span = Math.max(1.2, Math.max(hi - lo, yhi - ylo));
-  const target = (Math.min(innerWidth, innerHeight) * frac) / span;
+  // Sized against the UNOCCLUDED rectangle, so the fraction of it the creature
+  // fills is the fraction of what can be seen — with the scope open that box is
+  // much shorter, and taking the window's height instead drew the animal larger
+  // than the space left for it.
+  const v = viewRect();
+  const target = (Math.min(v.w, v.h) * frac) / span;
+  const z1 = Math.max(2, Math.min(400, target));
+  const c = camForPoint(sx / k, sy / k, z1);
   camAnim = {
     t0: performance.now(), ms: 700,
     x0: cam.cx, y0: cam.cy, z0: cam.zoom,
-    x1: sx / k, y1: sy / k,
-    z1: Math.max(2, Math.min(400, target)),
+    x1: c.cx, y1: c.cy, z1,
   };
 }
 function stepCamAnim(now) {
@@ -3444,8 +3496,12 @@ function stepCamAnim(now) {
 
 function fitAll() {
   if (!sim) return;
-  cam.cx = 0; cam.cy = 0;
-  cam.zoom = Math.min(innerWidth, innerHeight) / (sim.bound * 2.15);
+  // Same correction as frameCreature: fit the world into what is not covered by
+  // a panel, and put its middle in the middle of that.
+  const v = viewRect();
+  cam.zoom = Math.min(v.w, v.h) / (sim.bound * 2.15);
+  const c = camForPoint(0, 0, cam.zoom);
+  cam.cx = c.cx; cam.cy = c.cy;
   $('hZoom').textContent = cam.zoom.toFixed(2);
 }
 
