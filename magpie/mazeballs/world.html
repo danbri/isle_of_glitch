@@ -538,6 +538,7 @@ struct Cam {
   flowDry     : f32,
   streamSpace : f32,   // world units between streamline seeds
   streamSteps : f32,   // segments per line
+  topPass     : f32,   // 1 = draw ONLY the inspected animal, over everything
   streamSide  : f32,   // lines across, so side*side lines are drawn
   streamInk   : f32,
   cellInk     : f32,   // how loud the population is drawn, 0..1
@@ -1145,10 +1146,27 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // creature simply was not drawn — which reads as "no creatures here" rather
   // than "something is wrong", and cost several diagnoses.
   if (a != a) { a = 0.0; }
+  // WHO IS BEING INSPECTED — needed here rather than further down, because it
+  // now decides which PASS draws this cell.
+  //
+  // The cells are one draw call with alpha blending and no depth buffer, so the
+  // painting order is instance order and nothing else. A selected creature
+  // living at a low index was simply painted over by every cell above it, and
+  // in a crowded patch — exactly where you most want to watch one animal — it
+  // vanished under the neighbours it was competing with.
+  //
+  // So the crowd is drawn without it, and it is drawn again on top. Two passes
+  // over the same instances: the wasted ones collapse to a degenerate point,
+  // which costs a vertex and no fragments.
+  let anyPicked = (C.selUid >= 0);
+  let picked = (anyPicked && m.z == C.selUid);
+  let wrongPass = select(picked, !picked, C.topPass > 0.5);
+
   // A vacated slot is not in the world and must not be on screen either.
   // Collapsing the quad to a degenerate point is cheaper than a branch that
   // still rasterises, and keeps the instance count fixed.
-  if (m.x < 0 || (C.soloBody >= 0 && m.z != C.soloBody) || C.cellsOn < 0.5) {
+  if (m.x < 0 || (C.soloBody >= 0 && m.z != C.soloBody) || C.cellsOn < 0.5
+      || (anyPicked && wrongPass)) {
     var dead: VOut;
     dead.p = vec4<f32>(0.0, 0.0, 0.0, 0.0);
     dead.uv = vec2<f32>(9.0, 9.0);
@@ -1200,8 +1218,6 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // picked a creature you could no longer see what its cells were. Contrast now
   // comes from dimming everything else — the subject keeps its own colours at
   // full strength and simply stops competing with a thousand neighbours.
-  let anyPicked = (C.selUid >= 0);
-  let picked = (anyPicked && m.z == C.selUid);
   if (anyPicked && !picked) {
     // A step back, not a blackout. The crowd stays readable as a living context —
     // you still want to see what the subject is swimming through — it simply
@@ -1707,7 +1723,11 @@ async function rebuild() {
   const bBond = dev.createBuffer({ size: bondCapacity, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
   dev.queue.writeBuffer(bBond, 0, idx);
 
-  const bCam = dev.createBuffer({ size: 224, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  const bCam = dev.createBuffer({ size: 240, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  // The same camera with topPass = 1, for the second cell pass that puts the
+  // inspected animal over the crowd. A whole second uniform rather than a
+  // dynamic offset because it is 224 bytes and this is not the expensive part.
+  const bCamTop = dev.createBuffer({ size: 240, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
 
   const module = dev.createShaderModule({ code: RENDER, label: 'render' });
   // SAY WHAT IS WRONG WITH THE SHADER. A WGSL compile failure does not throw:
@@ -1824,16 +1844,18 @@ async function rebuild() {
   // shimmer; the setting is smooth and has no detail that nearest would protect.
   const blitSampler = dev.createSampler({ magFilter: 'linear', minFilter: 'linear' });
 
-  const bind = dev.createBindGroup({
+  const mkBind = (camBuf) => dev.createBindGroup({
     layout,
     entries: [
-      { binding: 0, resource: { buffer: bCam } },
+      { binding: 0, resource: { buffer: camBuf } },
       { binding: 1, resource: { buffer: world.bPos } },
       { binding: 2, resource: { buffer: brains.bAct } },
       { binding: 3, resource: { buffer: world.bMeta } },
       { binding: 4, resource: { buffer: bBond } },
     ],
   });
+  const bind = mkBind(bCam);
+  const bindTop = mkBind(bCamTop);
 
   let syn = 0;
   for (let i = 0; i < built.arena.esrc.length; i++) if (built.arena.esrc[i] >= 0) syn++;
@@ -1869,6 +1891,7 @@ async function rebuild() {
     },
     bondCapacity, topoVersion: -1, fetchingBonds: false,
     pipeBlit, blitLayout, blitSampler, bgKey: null, bgAt: 0,
+    bCamTop, bindTop,
   };
   // A DELIBERATE HANDLE ON MODULE STATE, for the console and for Playwright.
   // Everything in this file is module-scoped, so from outside the module the
@@ -3287,7 +3310,10 @@ function writeCam() {
   // looking at it.
   const rWorld = Math.max(0.34, 1.15 / cam.zoom);
 
-  const b = new ArrayBuffer(224), dv = new DataView(b);
+  // 240, not 224: adding topPass pushed the struct past the old size, and WebGPU
+  // pads a uniform binding up to a multiple of 16, so it demanded 232 and the
+  // next legal size is 240.
+  const b = new ArrayBuffer(240), dv = new DataView(b);
   dv.setFloat32(0, cam.cx, true); dv.setFloat32(4, cam.cy, true);
   dv.setFloat32(8, nx, true); dv.setFloat32(12, ny, true);
   dv.setFloat32(16, rWorld, true);
@@ -3392,7 +3418,10 @@ function writeCam() {
   dv.setFloat32(208, STREAM_SIDE, true);
   dv.setFloat32(212, 0.62, true);
   dv.setFloat32(216, view.cellInk, true);
+  dv.setFloat32(220, 0, true);                 // crowd pass
   dev.queue.writeBuffer(sim.bCam, 0, b);
+  dv.setFloat32(220, 1, true);                 // the inspected animal, on top
+  if (sim.bCamTop) dev.queue.writeBuffer(sim.bCamTop, 0, b);
 }
 
 let reviveAt = 0;
@@ -3628,6 +3657,15 @@ function loop() {
   pass.setPipeline(sim.pipeCells);
   pass.setBindGroup(0, sim.bind);
   pass.draw(6, sim.meta.nCells);
+  // THE INSPECTED ANIMAL, LAST. Same pipeline and instances, a camera whose
+  // topPass is 1, so every cell that is not the subject collapses. Without this
+  // the one creature you are watching is painted over by whichever neighbours
+  // happen to sit at higher instance indices — worst exactly in a crowded patch,
+  // which is where you are watching.
+  if (sel.uid >= 0 && sim.bindTop) {
+    pass.setBindGroup(0, sim.bindTop);
+    pass.draw(6, sim.meta.nCells);
+  }
   pass.end();
   dev.queue.submit([enc.finish()]);
 
