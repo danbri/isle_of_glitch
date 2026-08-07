@@ -6557,3 +6557,33 @@ walk. That is a real design task and is not being attempted at the end of this
 session.
 
 **It also has to clear the 10× test.** Everything here now does.
+
+### The 58% that blocked the fix was 80% phantoms
+
+`PHYSICS-2.md` measures the food system at 58% of the step and neighbourhood
+walks at 78%, and derives from it a prime directive — *spend ALU, never add a
+neighbourhood walk* — that has been used to reject designs since. That
+measurement was taken on a build where **80% of the simulated cells were
+phantoms**, unallocated arena slots that `packMeta` had marked alive, all of them
+sitting in the hashes and grazing. Re-measured after the fix:
+
+```
+baseline                    8.20 ms/step
+nMotes 0 (no food walk)     7.30        food system = 11%   (was 58%)
+contactK 0 (no contact)     7.65        contact     =  7%   (was 18%)
+```
+
+**Walks are 18% of the step together, not 78%.** The directive is retired as law
+and kept as advice.
+
+This directly unblocks the multicellularity fix. It needs a second per-mote
+accumulator, and the only clean way to get one is to widen the mote from one
+`vec4` to two — which doubles the bandwidth of a walk that now costs 11%, i.e. a
+worst case of about +11% step time. Against a mechanism that accounts for half
+the tax on being multicellular, that is cheap.
+
+Not implemented here. It is a buffer-layout change touching the mote buffer, both
+mote passes and the renderer's mote pipeline, and this project's most expensive
+bug to date was a uniform-block offset that silently made every contact force a
+denormal for the life of the code. Layout changes get made rested, with the
+device-limits test run, not at the end of a long session.
