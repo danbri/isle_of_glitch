@@ -6869,3 +6869,44 @@ again be reported from a single run, and it means the autoresearch loop cannot b
 closed on the criterion as written. Either the hash is made deterministic, or the
 criterion changes from "same answer" to "same answer within a measured noise
 floor", which is a different and weaker claim than §8 intends.
+
+## 2026-08-07 — H4 falsified: counting competitors does not make size pay
+
+Pre-registered in `runs/PREREGISTERED-size-pays.md`. The hypothesis, from Codex,
+was structural rather than statistical:
+
+> To make movement pay, a patch must be punished for being worked.
+> A body is a thing that works a patch.
+> So the rule that makes movement pay also punishes being a body.
+
+The kernel already had the fix and had it switched off: regrowth suppression is
+driven by `rivals = sum_j bodySize_j ^ (-grazeBodyShare)`, and at
+`grazeBodyShare = 0` a rival is a mouth, so an N-cell body suppresses its own
+ground N times over. At 1.0 a body counts once however large. Paired worlds,
+identical seeds and founders, 4 replicates, both horizons.
+
+```
+                contrast at 0.0     contrast at 1.0     change
+first  (8k)     -0.2141 +-0.0721    -0.0242 +-0.0777    +0.190  +-0.106
+deep  (80k)     -0.0869 +-0.0408    -0.1123 +-0.0214    -0.026  +-0.046
+```
+
+**Both horizons fail the pre-registered 2 SE bar, and the deep horizon reverses
+direction.** The falsifier was written before the run and is met. H4 is rejected.
+
+Two things worth keeping from a negative result.
+
+The first-horizon effect was large, consistent in 4 of 4 replicates, and in the
+predicted direction. It would have been entirely persuasive on its own. Adding
+replicates until it cleared 2 SE was available and tempting; the deep horizon
+says it would have been wrong. That is the sixth effect in this project to clear
+or approach a bar at a first horizon and fail at ten times it.
+
+The tax itself weakens with time regardless of the parameter: −0.2141 at 8k
+against −0.0869 at 80k in the control arm. So the multicellularity tax is partly
+a transient of young worlds, and any measurement of it at a short horizon
+overstates it. The published −0.4041 was taken from a live world of unknown age
+and inherits that.
+
+The crowding argument remains a good reading of the design. It is simply not what
+is binding.
