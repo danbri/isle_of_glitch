@@ -1409,6 +1409,48 @@ fn mfs(i: MOut) -> @location(0) vec4<f32> {
   return vec4<f32>(mix(lean, rich, i.v) * a, a);
 }`;
 
+/**
+ * THE SETTING, CACHED.
+ *
+ * Terrain, crop and streamlines are all slow: the fields drift over seconds and
+ * the crop is refetched every 1.5s. They were nonetheless recomputed every
+ * frame, and they are the two most expensive passes by a wide margin — measured
+ * on the live viewer by stripping passes one at a time:
+ *
+ *   all on 12 fps | terrain off 14 | terrain+streamlines off 34 | ground only 39
+ *
+ * Streamlines alone cost ~20 fps and terrain ~13, while the cells and bonds —
+ * the things that actually move — cost about 5 between them. The reason is that
+ * both sample the same four-octave fbm: the terrain once per PIXEL, and the
+ * streamlines O(steps^2) per line, roughly 390,000 full flow evaluations a
+ * frame.
+ *
+ * So the setting is drawn into an offscreen texture and reused until something
+ * it depends on changes — the camera, the canvas size, a view toggle, the crop,
+ * or simply enough time for the drift to show. This blit is what puts it back.
+ */
+const BLIT_WGSL = /* wgsl */`
+@group(0) @binding(0) var samp : sampler;
+@group(0) @binding(1) var tex  : texture_2d<f32>;
+
+struct BOut { @builtin(position) p : vec4<f32>, @location(0) uv : vec2<f32> };
+
+@vertex
+fn blitVs(@builtin(vertex_index) vi : u32) -> BOut {
+  // One oversized triangle rather than two triangles: no seam down the middle,
+  // and the same three vertices the background pass already uses.
+  let x = f32((vi << 1u) & 2u);
+  let y = f32(vi & 2u);
+  var o : BOut;
+  o.p  = vec4<f32>(x * 2.0 - 1.0, 1.0 - y * 2.0, 0.0, 1.0);
+  o.uv = vec2<f32>(x, y);
+  return o;
+}
+
+@fragment
+fn blitFs(i : BOut) -> @location(0) vec4<f32> {
+  return textureSample(tex, samp, i.uv);
+}`;
 
 
 /* ------------------------------------------------------------------- setup */
@@ -1729,6 +1771,24 @@ async function rebuild() {
     ],
   });
 
+  // The blit that puts the cached setting back on screen — see BLIT_WGSL.
+  const blitMod = dev.createShaderModule({ code: BLIT_WGSL, label: 'blit' });
+  const blitLayout = dev.createBindGroupLayout({
+    entries: [
+      { binding: 0, visibility: GPUShaderStage.FRAGMENT, sampler: { type: 'filtering' } },
+      { binding: 1, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'float' } },
+    ],
+  });
+  const pipeBlit = dev.createRenderPipeline({
+    layout: dev.createPipelineLayout({ bindGroupLayouts: [blitLayout] }),
+    vertex: { module: blitMod, entryPoint: 'blitVs' },
+    fragment: { module: blitMod, entryPoint: 'blitFs', targets: [{ format: fmt }] },
+    primitive: { topology: 'triangle-list' },
+  });
+  // Linear, so that a cached layer surviving a sub-pixel camera nudge does not
+  // shimmer; the setting is smooth and has no detail that nearest would protect.
+  const blitSampler = dev.createSampler({ magFilter: 'linear', minFilter: 'linear' });
+
   const bind = dev.createBindGroup({
     layout,
     entries: [
@@ -1773,12 +1833,13 @@ async function rebuild() {
       morphRate: world.params.morphRate, dt: world.params.dt,
     },
     bondCapacity, topoVersion: -1, fetchingBonds: false,
+    pipeBlit, blitLayout, blitSampler, bgKey: null, bgAt: 0,
   };
   // A DELIBERATE HANDLE ON MODULE STATE, for the console and for Playwright.
   // Everything in this file is module-scoped, so from outside the module the
   // world is unreachable and any question about it has to be answered by
   // guessing at the source. Two wrong guesses in a row is enough.
-  window.mazeballs = { get sim() { return sim; }, localGenomes, view, sel };
+  window.mazeballs = { get sim() { return sim; }, localGenomes, view, sel, cam };
   if (WATCH) {
     document.title = 'Mazeballs — watching the shared world';
     $('bEvolve').textContent = 'remote'; $('bEvolve').disabled = true;
@@ -1855,6 +1916,9 @@ async function refreshMotes() {
     if (fits <= 0) { sim.moteCount = 0; return; }
     dev.queue.writeBuffer(sim.bMoteData, 0, packed.subarray(0, fits * 4));
     sim.moteCount = fits;
+    // The crop is part of the cached setting, and new stock values change it
+    // without changing the mote COUNT — so the count alone cannot key the cache.
+    sim.moteGen = (sim.moteGen ?? 0) + 1;
   } catch (e) {
     // A missing /motes is not fatal: an older server simply has no crop to show.
     sim.moteCount = 0;
@@ -3408,6 +3472,61 @@ function loop() {
 
   writeCam();
   const enc = dev.createCommandEncoder();
+
+  // ---- the cached setting: terrain, crop, streamlines. See BLIT_WGSL.
+  //
+  // The key is everything the layer depends on. Anything not in it must not be
+  // able to change the picture, or the cache shows a stale world — so the view
+  // toggles and the crop generation are in here alongside the camera, and the
+  // timer covers the field drift that no discrete key can capture.
+  const bgKey = [
+    canvas.width, canvas.height,
+    cam.cx.toFixed(4), cam.cy.toFixed(4), cam.zoom.toFixed(4),
+    view.terrain ? 1 : 0, view.streams ? 1 : 0, view.food ? 1 : 0,
+    view.crescent ? 1 : 0, view.glitter ? 1 : 0, view.field ? 1 : 0,
+    sim.moteCount, sim.moteGen ?? 0,
+  ].join(',');
+  const drifting = (sim.world?.params?.driftX || sim.world?.params?.driftY ||
+                    sim.world?.params?.morphRate);
+  // A moving field must be redrawn on a clock; a still one never needs to be.
+  const bgStale = drifting ? (t - sim.bgAt > 400) : false;
+  if (!sim.bgTex || sim.bgW !== canvas.width || sim.bgH !== canvas.height) {
+    sim.bgTex?.destroy?.();
+    sim.bgTex = dev.createTexture({
+      size: [canvas.width, canvas.height], format: fmt,
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+    });
+    sim.bgW = canvas.width; sim.bgH = canvas.height;
+    sim.bgBind = dev.createBindGroup({
+      layout: sim.blitLayout,
+      entries: [
+        { binding: 0, resource: sim.blitSampler },
+        { binding: 1, resource: sim.bgTex.createView() },
+      ],
+    });
+    sim.bgKey = null;
+  }
+  if (sim.bgKey !== bgKey || bgStale) {
+    sim.bgKey = bgKey; sim.bgAt = t;
+    const bg = enc.beginRenderPass({
+      colorAttachments: [{
+        view: sim.bgTex.createView(),
+        clearValue: { r: 0.039, g: 0.063, b: 0.059, a: 1 },
+        loadOp: 'clear', storeOp: 'store',
+      }],
+    });
+    if (view.terrain) { bg.setPipeline(sim.pipeBg); bg.setBindGroup(0, sim.bind); bg.draw(3); }
+    if (view.food && sim.moteCount > 0) {
+      bg.setPipeline(sim.pipeMotes); bg.setBindGroup(0, sim.moteBind);
+      bg.draw(6, sim.moteCount);
+    }
+    if (view.streams && sim.pipeStream) {
+      bg.setPipeline(sim.pipeStream); bg.setBindGroup(0, sim.bind);
+      bg.draw(STREAM_SIDE * STREAM_SIDE * STREAM_STEPS * 2);
+    }
+    bg.end();
+  }
+
   const pass = enc.beginRenderPass({
     colorAttachments: [{
       view: ctx.getCurrentTexture().createView(),
@@ -3415,6 +3534,10 @@ function loop() {
       loadOp: 'clear', storeOp: 'store',
     }],
   });
+  // The setting, as of whenever it last changed.
+  pass.setPipeline(sim.pipeBlit);
+  pass.setBindGroup(0, sim.bgBind);
+  pass.draw(3);
   // BIND GROUP AFTER PIPELINE, EVERY TIME.
   //
   // Setting a pipeline whose layout is incompatible with the previous one
@@ -3425,26 +3548,8 @@ function loop() {
   // unset. That is the "previous error" behind the bare
   // "[Invalid CommandBuffer] is invalid due to a previous error" on submit,
   // which names nothing and appears only when food is on and motes exist.
-  pass.setPipeline(sim.pipeBg);
-  pass.setBindGroup(0, sim.bind);
-  pass.draw(3);
-
-  // Crop first: it is ground, and everything else stands on it.
-  if (view.food && sim.moteCount > 0) {
-    pass.setPipeline(sim.pipeMotes);
-    pass.setBindGroup(0, sim.moteBind);
-    pass.draw(6, sim.moteCount);
-  }
-
-  // Streamlines above the ground and below the creatures: they are the setting.
-  // Note the bind group is set again after setPipeline — see the block above;
-  // the mote pass has a different layout and invalidates whatever was bound.
-  if (view.streams && sim.pipeStream) {
-    pass.setPipeline(sim.pipeStream);
-    pass.setBindGroup(0, sim.bind);
-    pass.draw(STREAM_SIDE * STREAM_SIDE * STREAM_STEPS * 2);
-  }
-
+  // Terrain, crop and streamlines are NOT drawn here any more — they are the
+  // cached setting, blitted above. Only the things that move are below.
   if (view.bonds && sim.bondVerts) {
     pass.setPipeline(sim.pipeBonds);
     pass.setBindGroup(0, sim.bind);
