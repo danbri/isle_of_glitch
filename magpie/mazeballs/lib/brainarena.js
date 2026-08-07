@@ -146,9 +146,32 @@ export class BrainArena {
     for (let i = 0; i < this.P; i++) if (!this.alive[i]) { o = i; break; }
     if (o === EMPTY) return EMPTY;
 
+    // BEST FIT, not first fit.
+    //
+    // This took the first hole large enough and left the remainder behind. With
+    // bodies varying from 2 to 60 cells and constant birth/death churn, that
+    // shreds the arena: every oversized hole a small body lands in leaves a
+    // sliver, and slivers are never reusable by anything but the smallest
+    // bodies. Coalescing does not save you — it can only merge holes that are
+    // ADJACENT, and scattered deaths do not produce adjacent holes.
+    //
+    // Measured on the live world when this was found: 541 cell slots free, room
+    // for roughly 43 more bodies at the observed 12.5 cells each, and births
+    // being refused anyway because no single hole was big enough. The space was
+    // there; it was in the wrong shape.
+    //
+    // Taking the SMALLEST hole that fits keeps the large ones intact for the
+    // large bodies that actually need contiguity, and puts each sliver-producing
+    // allocation where the sliver is smallest.
+    let best = -1, bestC = Infinity;
     for (let h = 0; h < this.free.length; h++) {
-      const [fo, fc] = this.free[h];
-      if (fc < n) continue;
+      const fc = this.free[h][1];
+      if (fc < n || fc >= bestC) continue;
+      best = h; bestC = fc;
+      if (fc === n) break;                // exact fit; nothing can beat it
+    }
+    if (best >= 0) {
+      const h = best, [fo, fc] = this.free[h];
       if (fc === n) this.free.splice(h, 1);
       else this.free[h] = [fo + n, fc - n];
       this.off[o] = fo; this.cnt[o] = n; this.alive[o] = 1;

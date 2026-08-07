@@ -1164,12 +1164,32 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   // there is nothing to search FOR. Capacity now varies mote to mote and the
   // logistic ceiling is the mote's own.
   //
-  // CONSERVATION IS BY CONSTRUCTION, not by hoping: the seeder normalises the
-  // capacities so their SUM equals the old nMotes * moteCap exactly. The inflow
-  // bound in the note above is unchanged in total — it is the same sun, arriving
-  // through a tenth as many straws of very unequal width.
+  // TWO QUANTITIES, AND ONLY ONE OF THEM WAS CONSERVED.
+  //
+  // The seeder normalises the capacities so their sum equals the old
+  // nMotes * moteCap exactly, and an earlier version of this comment claimed
+  // that made the whole change conservative. It did not. Capacity is the
+  // standing-crop CEILING; the friction law is about INFLOW, and inflow here is
+  //
+  //     sum_i moteRegrow * (1 - stock_i/cap_i)
+  //
+  // which is an absolute rate per mote and does not mention capacity at all. A
+  // tenth as many motes was therefore a tenth of the world's income — the sun
+  // dimmed by 10x, silently, while the ceiling stayed put. Exactly the class of
+  // error energy-speculative-friction.md exists to prevent, committed by the
+  // person who wrote the conservation check.
+  //
+  // Scaling the rate by the mote's share of the reference capacity restores it:
+  // sum_i moteRegrow * cap_i/moteCap = moteRegrow * (sum_i cap_i)/moteCap, and
+  // the seeder guarantees sum_i cap_i = nMotesOld * moteCap, so the total is
+  // moteRegrow * nMotesOld — what it was before. A megamote refills faster in
+  // absolute terms and at the same fractional rate, which is what "a bigger
+  // patch of the same ground" should mean.
+  //
+  // (Found by Codex from the source, not from a symptom.)
   let cap = max(1e-4, mote[i * 2u + 1u].y);
-  stock = stock + P.moteRegrow * fert * suppress * (1.0 - stock / cap) * P.dt;
+  let rate = P.moteRegrow * (cap / max(1e-4, P.moteCap));
+  stock = stock + rate * fert * suppress * (1.0 - stock / cap) * P.dt;
 
   // ---- FOOD GOES WHERE THE WATER GOES ---------------------------------------
   //
