@@ -557,6 +557,38 @@ exploit either half.
 
 ---
 
+## 11b. What the shipped defaults rest on (2026-08-07)
+
+A session that changed this much, on several diagnoses that later collapsed,
+should not leave anyone guessing which defaults are supported and which are
+merely surviving.
+
+| parameter | value | evidence | status |
+|---|---|---|---|
+| `heightScale`/`mudScale` | derived from `bound` | geography built; **wealth** effect 1.38 ± 0.25, **movement** effect 0.004 ± 0.030 | keep |
+| `gravity` | 0.55 | in-plane `−∇height`; places measured (p50/max 0.231) | keep |
+| `lowLush` | 0.75 | fertile crescent; redistributes, total inflow unchanged | keep |
+| `flowTerrain` | 0.62 | the current follows the contours | keep |
+| `flowDry` | 0.07 | the mud is what moves | keep |
+| `contestR` | 1.5 | proximity not touch: 78% have a stranger in reach against 45% | keep |
+| `senseCost` gating | cost follows use | sensors 20× more common **and** sharp (acuity 0.869 against 0.000) | **best-supported change of the session** |
+| `tidalYield` | 0.06, no trait factor | the trait factor produced a 59.7% anchor monoculture and was removed | keep |
+| `moteDrift` | 0.0 | **directional only** — the sign flip did not survive replication | **weak** |
+| `sapRate` | 0.0 | rescues population 68×, destroys differentiation; conserving | off, correctly |
+| `shelterK` | 0.0 | no effect at either horizon | off, correctly |
+| `grazeBodyShare` | 0.0 | conflates sharing with suppression; kills young worlds | off, correctly |
+
+**`moteDrift` is the one to re-examine first.** It is at 0 on the strength of a
+sign flip that four replicates failed to confirm, plus a code comment's prior.
+That is weaker evidence than anything else in this table, and food that moves
+with the current is a real part of what makes a river a river.
+
+The three at 0 are not failures to delete — each is a mechanism that works
+mechanically and does the wrong thing evolutionarily, and each is documented at
+its definition with the measurement that put it there.
+
+---
+
 ## 12. The other documents
 
 Every design document in this directory now carries a banner under its title
