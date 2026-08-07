@@ -1330,6 +1330,11 @@ const MOTE_WGSL = /* wgsl */`
 // and sharing a struct would couple it to a layout it does not care about.
 struct MoteCam { center: vec2<f32>, ndc: vec2<f32>, radius: f32, dim: f32 };
 @group(0) @binding(0) var<uniform> MC : MoteCam;
+// STRIDE 1 HERE, deliberately, and not the same layout as the simulation.
+// The page builds this buffer itself from readMotes() and the /motes endpoint,
+// which already unpack the sim's stride-2 motes into plain (x, y, stock) — so
+// the widening in lib/world_gpu.js never reaches this shader and must not be
+// mirrored into it.
 @group(0) @binding(1) var<storage, read> motes : array<vec4<f32>>;  // xy, stock
 
 struct MOut {
