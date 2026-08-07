@@ -2878,7 +2878,7 @@ try {
   setTimeout(() => tabChan.postMessage({ k: 'ping', id: myTab }), 2500);
 } catch { /* no BroadcastChannel: not important enough to care */ }
 
-const FRAME_MAGIC = 0x324d5257;   // 'RWM2' — live-cells-only layout
+const FRAME_MAGIC = 0x334d5257;   // 'RWM3' — dynamic and static split by epoch
 function applyFrame(ab) {
   const dv = new DataView(ab);
   if (dv.getUint32(0, true) !== FRAME_MAGIC) return fail('bad frame from server');
@@ -2907,31 +2907,58 @@ function applyFrame(ab) {
   // Offsets are walked in the same order the server writes them. They were once
   // hand-computed and uid was read where energy lives, so every assembly id was a
   // float reinterpreted as an integer and nothing could be selected.
-  const HEAD = 48;
+  const HEAD = 56;
+  const epoch = dv.getUint32(40, true);
+  const hasStatic = dv.getUint32(48, true) === 1;
   let at = HEAD;
   const L = dv.getUint32(at, true); at += 4;
-  const idx = new Int32Array(ab, at, L); at += L * 4;
   const lpos = new Float32Array(ab, at, L * 2); at += L * 8;
   const lact = new Float32Array(ab, at, L); at += L * 4;
-  const ltype = new Int32Array(ab, at, L); at += L * 4;
   const lenergy = new Float32Array(ab, at, L); at += L * 4;
-  const luid = new Int32Array(ab, at, L); at += L * 4;
 
+  // THE STATIC BLOCK — index list, types, uids — arrives only when the
+  // population has changed. Same epoch means the same cells are alive in the
+  // same order, so the copy held here is not a stale approximation of the
+  // server's: it is the same bytes it would have sent.
+  let idx, ltype, luid;
+  if (hasStatic) {
+    idx = new Int32Array(ab, at, L); at += L * 4;
+    ltype = new Int32Array(ab, at, L); at += L * 4;
+    luid = new Int32Array(ab, at, L); at += L * 4;
+    // Copied out of the frame buffer, which is about to be garbage.
+    sim.topo = { epoch, idx: idx.slice(), type: ltype.slice(), uid: luid.slice() };
+  } else if (sim.topo?.epoch === epoch && sim.topo.idx.length === L) {
+    ({ idx, type: ltype, uid: luid } = sim.topo);
+  } else {
+    // The server elided a block we cannot reconstruct — only possible if it
+    // restarted under us. Ask for a whole one next time rather than drawing
+    // something assembled from a mismatched index list.
+    sim.topo = null;
+    return;
+  }
+
+  let fresh = false;
   if (!sim.expPos || sim.expPos.length !== n * 2) {
     sim.expPos = new Float32Array(n * 2);
     sim.expAct = new Float32Array(n);
     sim.expType = new Int32Array(n);
     sim.expEnergy = new Float32Array(n);
     sim.expUid = new Int32Array(n);
+    fresh = true;                    // nothing to carry over into these
   }
   const pos = sim.expPos, act = sim.expAct, type = sim.expType,
         energy = sim.expEnergy, uid = sim.expUid;
-  type.fill(-1); uid.fill(-1); act.fill(0);
+  // Rebuild the per-slot type/uid scatter only when it can have changed. On an
+  // unchanged epoch the arrays already hold exactly this, so refilling them with
+  // -1 and scattering the same values back is pure work.
+  const restatic = hasStatic || fresh;
+  act.fill(0);
+  if (restatic) { type.fill(-1); uid.fill(-1); }
   for (let k = 0; k < L; k++) {
     const i = idx[k];
     pos[i * 2] = lpos[k * 2]; pos[i * 2 + 1] = lpos[k * 2 + 1];
-    act[i] = lact[k]; type[i] = ltype[k];
-    energy[i] = lenergy[k]; uid[i] = luid[k];
+    act[i] = lact[k]; energy[i] = lenergy[k];
+    if (restatic) { type[i] = ltype[k]; uid[i] = luid[k]; }
   }
   sim.lastPos = pos; sim.lastAct = act; sim.lastType = type;
   sim.lastUid = uid; sim.lastEnergy = energy;
@@ -2945,24 +2972,32 @@ function applyFrame(ab) {
   // straight into the act buffer at the slot the cell points to. Cell i's slot
   // is i in this builder, which keeps the mapping trivial.
   q.writeBuffer(sim.brains.bAct, 0, act);
-  const meta = new Int32Array(n * 4);
-  for (let i = 0; i < n; i++) {
-    meta[i * 4] = type[i];
-    meta[i * 4 + 1] = type[i] >= 0 ? i : -1;
-    meta[i * 4 + 2] = uid[i];
+  // The cell-meta buffer is a function of type and uid alone, so it only needs
+  // rewriting when those changed — 400 KB of upload per frame, for bytes that
+  // were identical.
+  if (restatic) {
+    const meta = new Int32Array(n * 4);
+    for (let i = 0; i < n; i++) {
+      meta[i * 4] = type[i];
+      meta[i * 4 + 1] = type[i] >= 0 ? i : -1;
+      meta[i * 4 + 2] = uid[i];
+    }
+    q.writeBuffer(sim.world.bMeta, 0, meta);
   }
-  q.writeBuffer(sim.world.bMeta, 0, meta);
 
   // Bond pairs ride WITH the frame, so they always describe the same instant as
   // the positions. Fetching them separately let the two drift apart and drew
-  // lines between cells that were never bonded.
-  const pairOff = at;
-  const pairCount = dv.getUint32(pairOff, true);
-  if (pairCount > 0 && (pairCount * 4) <= sim.bondCapacity) {
-    q.writeBuffer(sim.bBond, 0, new Int32Array(ab, pairOff + 4, pairCount));
-    sim.bondVerts = pairCount;
-  } else if (pairCount * 4 > sim.bondCapacity) {
-    sim.bondVerts = 0;                      // never draw a truncated graph
+  // lines between cells that were never bonded. They are part of the static
+  // block: an unchanged epoch means the graph on the GPU is still correct.
+  if (hasStatic) {
+    const pairOff = at;
+    const pairCount = dv.getUint32(pairOff, true);
+    if (pairCount > 0 && (pairCount * 4) <= sim.bondCapacity) {
+      q.writeBuffer(sim.bBond, 0, new Int32Array(ab, pairOff + 4, pairCount));
+      sim.bondVerts = pairCount;
+    } else if (pairCount * 4 > sim.bondCapacity) {
+      sim.bondVerts = 0;                    // never draw a truncated graph
+    }
   }
 
   const prevServerSteps = sim.serverSteps ?? 0;
@@ -3260,7 +3295,9 @@ function loop() {
     // frame, which is the whole reason hiding the tab is free.
     if (!document.hidden && !sim.fetching && t >= (sim.retryAt ?? 0)) {
       sim.fetching = true;
-      srvFetch('/frame', { cache: 'no-store' })
+      // Tell the server which topology we already hold, so it can leave the
+      // static half out. -1 asks for everything.
+      srvFetch(`/frame?have=${sim.topo?.epoch ?? -1}`, { cache: 'no-store' })
         .then(r => r.arrayBuffer())
         .then(b => {
           applyFrame(b); sim.fetching = false; sim.misses = 0;

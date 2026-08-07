@@ -643,16 +643,41 @@ const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
 
 /* ----------------------------------------------------------------- framing */
 
-const FRAME_MAGIC = 0x324d5257;   // 'RWM2' — layout changed to live-cells-only         // 'WRM1'
-const HEAD = 48;
+const FRAME_MAGIC = 0x334d5257;   // 'RWM3' — dynamic and static split by epoch
+const HEAD = 56;
 
 /**
- * A frame is positions, activations and cell types.
+ * A frame is positions, activations and cell types — split into the part that
+ * changes every step and the part that changes only when something is born or
+ * dies.
  *
- * Types change only on birth and death, but they are sent every frame anyway:
- * at these sizes the saving is not worth a second code path that can disagree
- * with itself about which cells are alive. Correctness first; the topologyEpoch
- * machinery in brainarena.js is there when this becomes the bottleneck.
+ * It used to send everything every frame. Measured at 23,403 live cells that is
+ * 898 KB per frame, of which 531 KB — the live-cell index list, the types, the
+ * uids and the bond pairs — is byte-identical to the frame before unless the
+ * population changed. At ~14 frames a second on loopback that is most of the
+ * bandwidth and most of the client's decode, and it was the reason the viewer
+ * sat at 11 fps.
+ *
+ * THE EPOCH IS births + deaths. It is exactly the quantity that changes when the
+ * live SET changes, which is what makes this safe: same epoch means the same
+ * cells are alive, in the same order, so the index list, the types, the uids and
+ * the bond graph are all still correct. The client sends the epoch it holds as
+ * ?have=; if it matches, the static block is omitted.
+ *
+ * WHY NOT AN OUT-OF-BAND ENDPOINT. That was tried, for bonds, and it is recorded
+ * a few lines below: the viewer held a bond list from one instant and positions
+ * from another, and drew lines between cells that were never bonded. The static
+ * block still travels IN the frame and still describes the same instant as the
+ * positions — it is elided only when the client provably already has that exact
+ * block. Nothing is ever assembled from two different moments.
+ *
+ * Layout, v3 ('RWM3'), dynamic first so the static tail can simply be cut off:
+ *
+ *   HEAD 56  ... u32 hasStatic at offset 48
+ *   u32 L
+ *   f32 pos[L*2]     f32 act[L]     f32 energy[L]      <- every frame
+ *   i32 idx[L]       i32 type[L]    i32 uid[L]         <- only when hasStatic
+ *   u32 pairCount    i32 pairs[pairCount]              <- only when hasStatic
  */
 // One readback serves every viewer in the same window.
 //
@@ -664,17 +689,53 @@ const HEAD = 48;
 // but coalescing is still right — the GPU should not do the same work twice
 // because two people are watching.
 let cached = null, cachedAt = -1, inFlight = null;
+// The live-cell index list and the bond pairs, held for as long as the epoch
+// they describe. See buildFrame.
+let topoCache = null;
 const FRAME_MS = 40;
 
-async function frame() {
-  const now = performance.now();
-  if (cached && now - cachedAt < FRAME_MS) return cached;
-  if (inFlight) return inFlight;
+/**
+ * @param {number} have  the topology epoch the caller already holds, or -1.
+ *   When it matches the frame's epoch the static block is omitted — see the
+ *   layout note above buildFrame.
+ */
+async function frame(have = -1) {
+  const pick = (f) => (have >= 0 && have === f.epoch ? f.dyn : f.full);
+  // ANSWER FROM THE CACHE, ALWAYS, IF THERE IS ONE.
+  //
+  // This used to build on demand whenever the cache was older than FRAME_MS.
+  // Building a frame costs two GPU readbacks, measured at 554-1619ms while
+  // other jobs share the device — so a viewer asking for a frame every ~70ms
+  // was really waiting up to 1.6 SECONDS, at random. That variance is the jank:
+  // not a low frame rate but an unpredictable one.
+  //
+  // The cache is now kept warm by the loop below instead, so a request never
+  // waits on the GPU. The frame may be a little old; it arrives on time, and a
+  // steady stream of slightly-late frames reads as smooth motion where an
+  // erratic stream of fresh ones does not.
+  if (cached) return pick(cached);
+  if (inFlight) return inFlight.then(pick);      // only before the first frame
   inFlight = buildFrame().then(f => {
     cached = f; cachedAt = performance.now(); inFlight = null; return f;
   }).catch(e => { inFlight = null; throw e; });
-  return inFlight;
+  return inFlight.then(pick);
 }
+
+// Rebuild continuously, off the request path. One build at a time — the GPU is
+// already the scarce resource and queueing more readbacks against it makes every
+// one of them slower.
+(async function frameLoop() {
+  while (running) {
+    if (!paused && !inFlight) {
+      inFlight = buildFrame().then(f => {
+        cached = f; cachedAt = performance.now(); inFlight = null;
+        return f;
+      }).catch(() => { inFlight = null; return null; });
+      await inFlight;
+    }
+    await new Promise(r => setTimeout(r, FRAME_MS));
+  }
+})();
 
 async function buildFrame() {
   const { pos, energy } = await world.readCells();
@@ -689,17 +750,39 @@ async function buildFrame() {
   // exactly why they ignored the renderer's length cull. Diagnosed twice as
   // something else (dead cells, then over-stretched bodies) before the strain
   // measurement came back clean at 1.00 and ruled the physics out.
-  const pairs = [];
-  const bond = built.cells.bond, bondK = built.cells.bondK;
-  for (let i = 0; i < N; i++) {
-    if (built.cells.ctype[i] < 0) continue;
-    for (let k = 0; k < bondK; k++) {
-      const j = bond[i * bondK + k];
-      if (j < 0 || j <= i || built.cells.ctype[j] < 0) continue;   // each bond once
-      pairs.push(i, j);
+  // BOTH OF THESE ARE FUNCTIONS OF THE EPOCH, so they are computed once per
+  // epoch rather than once per frame. Each was an O(N x bondK) scan building a
+  // plain array with push(), running ~25 times a second, fully synchronous — and
+  // synchronous work here blocks the HTTP handler, which is what put an 800ms
+  // tail on requests that should be served from a cache in a millisecond.
+  const epoch = evo.births + evo.deaths;
+  if (!topoCache || topoCache.epoch !== epoch) {
+    const bond = built.cells.bond, bondK = built.cells.bondK;
+    const ctype = built.cells.ctype;
+    let nLive = 0, nPair = 0;
+    for (let i = 0; i < N; i++) {
+      if (ctype[i] < 0) continue;
+      nLive++;
+      for (let k = 0; k < bondK; k++) {
+        const j = bond[i * bondK + k];
+        if (j < 0 || j <= i || ctype[j] < 0) continue;
+        nPair += 2;
+      }
     }
+    const liveIdx = new Int32Array(nLive), P32 = new Int32Array(nPair);
+    let li = 0, pi = 0;
+    for (let i = 0; i < N; i++) {
+      if (ctype[i] < 0) continue;
+      liveIdx[li++] = i;
+      for (let k = 0; k < bondK; k++) {
+        const j = bond[i * bondK + k];
+        if (j < 0 || j <= i || ctype[j] < 0) continue;
+        P32[pi++] = i; P32[pi++] = j;
+      }
+    }
+    topoCache = { epoch, liveIdx, P32 };
   }
-  const P32 = Int32Array.from(pairs);
+  const { liveIdx, P32 } = topoCache;
 
   // LIVE CELLS ONLY.
   //
@@ -708,15 +791,16 @@ async function buildFrame() {
   // made a frame take 0.7s to build and 1.8s of world time to arrive, which in
   // turn aliased the brain trace by thirty-two times. Sending an index with each
   // live cell costs 4 bytes and removes seven eighths of the message.
-  const liveIdx = [];
-  for (let i = 0; i < N; i++) if (built.cells.ctype[i] >= 0) liveIdx.push(i);
   const L = liveIdx.length;
   // idx(4) + pos(8) + act(4) + type(4) + energy(4) + uid(4) per live cell.
   // Sized for five of those six once, which threw only when the bond pairs
   // overran the end — an error about a typed array length, nowhere near the
   // arithmetic that caused it.
-  const PER = 4 + 8 + 4 + 4 + 4 + 4;
-  const buf = new ArrayBuffer(HEAD + 4 + L * PER + 4 + P32.byteLength);
+  // Dynamic: pos(8) + act(4) + energy(4). Static: idx(4) + type(4) + uid(4),
+  // then the pair count and the pairs.
+  const DYN = 4 + L * (8 + 4 + 4);
+  const STAT = L * (4 + 4 + 4) + 4 + P32.byteLength;
+  const buf = new ArrayBuffer(HEAD + DYN + STAT);
   const dv = new DataView(buf);
   dv.setUint32(0, FRAME_MAGIC, true);
   dv.setUint32(4, N, true);
@@ -733,12 +817,13 @@ async function buildFrame() {
   // moves. Sending them every frame would nearly double the bandwidth for data
   // that is identical 99% of the time — which matters once this is watched over
   // a tailnet rather than loopback.
-  dv.setUint32(40, evo.births + evo.deaths, true);
+  dv.setUint32(40, epoch, true);
   dv.setFloat32(44, world.params.flowScale, true);
+  dv.setUint32(48, 1, true);           // this buffer carries the static block
+  dv.setUint32(52, 0, true);           // reserved
 
   let at = HEAD;
   new DataView(buf).setUint32(at, L, true); at += 4;
-  new Int32Array(buf, at, L).set(Int32Array.from(liveIdx)); at += L * 4;
   {
     const p2 = new Float32Array(buf, at, L * 2);
     for (let k = 0; k < L; k++) { const i = liveIdx[k]; p2[k * 2] = pos[i * 2]; p2[k * 2 + 1] = pos[i * 2 + 1]; }
@@ -758,11 +843,16 @@ async function buildFrame() {
     const a2 = new Float32Array(buf, at, L);
     for (let k = 0; k < L; k++) a2[k] = cellAct[liveIdx[k]];
     at += L * 4;
-    const t2 = new Int32Array(buf, at, L);
-    for (let k = 0; k < L; k++) t2[k] = cellType[liveIdx[k]];
-    at += L * 4;
     const e2 = new Float32Array(buf, at, L);
     for (let k = 0; k < L; k++) e2[k] = energy[liveIdx[k]];
+    at += L * 4;
+  }
+  // ---- end of the dynamic block; everything below is constant for this epoch.
+  const statAt = at;
+  new Int32Array(buf, at, L).set(Int32Array.from(liveIdx)); at += L * 4;
+  {
+    const t2 = new Int32Array(buf, at, L);
+    for (let k = 0; k < L; k++) t2[k] = cellType[liveIdx[k]];
     at += L * 4;
   }
 
@@ -790,7 +880,15 @@ async function buildFrame() {
   }
   new DataView(buf).setUint32(at, P32.length, true); at += 4;
   new Int32Array(buf, at, P32.length).set(P32);
-  return new Uint8Array(buf);
+
+  // Two views of ONE build. The dynamic-only variant is the same bytes with the
+  // static tail cut off and the flag cleared, so the two cannot describe
+  // different instants — there is only one instant here.
+  const full = new Uint8Array(buf);
+  const dyn = new Uint8Array(statAt);
+  dyn.set(full.subarray(0, statAt));
+  new DataView(dyn.buffer).setUint32(48, 0, true);
+  return { full, dyn, epoch };
 }
 
 /* ------------------------------------------------------------------ server */
@@ -1198,7 +1296,8 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
   }
 
   if (path === '/frame') {
-    return new Response(await frame(), {
+    const have = Number(url.searchParams.get('have') ?? -1);
+    return new Response(await frame(Number.isFinite(have) ? have : -1), {
       headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' },
     });
   }
