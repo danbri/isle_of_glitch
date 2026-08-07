@@ -68,7 +68,7 @@ const args = (() => {
     // Developmental encoding: 2 is the GRN-in-an-egg (DEVELOPMENT-2.md), 1 is
     // the old positional readout. Kept selectable so the two can be run against
     // the same world rather than compared across worlds.
-    devo: 2, founders: 300,
+    devo: 2, founders: 300, maxAge: 25000, ageSpread: 0.35,
     // The non-stationary field, which measured far better than a static one:
     // ancestral-tournament shareB 0.970 against 0.864, and body size kept
     // growing (27.6 and rising) where the static world saturated at 19.3.
@@ -390,6 +390,7 @@ async function logMetrics() {
       // has spent the yolk regardless. A run where this climbs is a run where
       // reproduction is quietly failing, which no other field here would show.
       devo: evo.devoVersion, failedEggs: evo.failedEggs,
+      agedOut: evo.agedOut ?? 0, maxAge: evo.maxAge,
       simVersion: RUNNING.simVersion,
     };
     await Deno.writeTextFile(METRICS, JSON.stringify(rec) + '\n', { append: true });
@@ -1173,6 +1174,7 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       // reloading could not fix, because the guess was wrong every time.
       maxCells: args.maxCells, nCells: built.meta.nCells, bound: BOUND,
       nMotes: world.params.nMotes, paused, spf: args.spf,
+      maxAge: evo.maxAge, agedOut: evo.agedOut ?? 0,
       // Non-zero means this world has been meddled with; see evolve.implant.
       interventions: evo.interventions ?? 0, mintedEnergy: evo.mintedEnergy ?? 0,
       // What this process is RUNNING vs what is on disk NOW. If simVersion

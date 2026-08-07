@@ -1940,7 +1940,22 @@ export class WorldGPU {
     this.bEnergy = mk(cells.energy ?? new Float32Array(n).fill(1));
 
     this.params = {
-      flowScale: 0.9,
+      // FLOW, AT VALUES THAT ACTUALLY MOVE THINGS.
+      //
+      // These were flowScale 0.9, flowStr 1.0, drag 1.6, and at those values the
+      // current transported nothing: bodies sitting in mud moved 0.94x as far as
+      // bodies on dry ground, i.e. the mud was not a river. The mechanism was
+      // right and the coefficients were about 3x too small.
+      //
+      // Measured at the values below: bodies in mud move 10.881 against 4.105 on
+      // dry, a ratio of 2.65x. The current is a transport system at these
+      // numbers and was not at the old ones.
+      //
+      // drag 8 is doing much of that and is a real trade: it couples a cell to
+      // the medium, so it raises transport AND damps a body's own locomotion.
+      // Worth separating later; kept together here because this is the
+      // combination with a measurement behind it.
+      flowScale: 4.0,
       // Flow reduced from 1.0 so that swimming beats drifting, but NOT for the
       // reason first recorded here. That claim — flow carrying cells ten times
       // faster than they could swim — came from tracking cells by arena index,
@@ -1956,7 +1971,7 @@ export class WorldGPU {
       // about as far as its own muscles do, which leaves swimming with little
       // selective advantage. 0.3 keeps flow as a genuine force to anchor against
       // and be swept by, while making self-propulsion clearly worth having.
-      flowStr: 0.3, drag: 1.6, springK: 90.0,
+      flowStr: 3.0, drag: 8.0, springK: 90.0,
       // MUSCLE FORCE, raised 11x. Measured with an imposed gait over 300 s,
       // median displacement against contract: 0.45 -> 0.067, 2.5 -> 0.199,
       // 5 -> 0.490, 10 -> 0.891, 20 -> 1.594. Bodies end at 0.82-0.97 of their

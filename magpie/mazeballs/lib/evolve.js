@@ -106,6 +106,9 @@ export class Evolver {
   constructor({
     arena, world, cells, seed = 7,
     birthEnergy = 9, deathEnergy = 0, mutRate = 0.14, mutSize = 0.32,
+    // SENESCENCE. Bodies die at approximately maxAge steps, with variance, and
+    // that is the whole mechanism. See the note above the death block.
+    maxAge = 25000, ageSpread = 0.35,
     sizeMutRate = 0.25, minCells = 5, maxCells = 40, topoMutRate = 0.30,
     birthOrder = 'lottery',
     devo = true, yolkFrac = 0.55, cellCost = 0.55, eggExtent = null, birthMargin = 1.15,
@@ -113,6 +116,7 @@ export class Evolver {
   }) {
     this.arena = arena; this.world = world; this.cells = cells;
     this.birthEnergy = birthEnergy; this.deathEnergy = deathEnergy;
+    this.maxAge = maxAge; this.ageSpread = ageSpread;
     this.mutRate = mutRate; this.mutSize = mutSize;
     this.sizeMutRate = sizeMutRate; this.topoMutRate = topoMutRate;
     this.birthOrder = birthOrder;
@@ -157,6 +161,12 @@ export class Evolver {
     this.parentUid = new Int32Array(P).fill(-1);
     this.parent = new Int32Array(P).fill(-1);  // parent's SLOT at time of birth
     this.birthStep = new Int32Array(P);
+    // How long each body gets. Drawn once at birth so a body has a fate rather
+    // than a per-tick coin flip — the difference matters because a hazard rate
+    // gives an exponential lifetime distribution with many very short lives,
+    // and a drawn lifespan gives a peak at maxAge, which is what "dies at about
+    // n" means.
+    this.lifespan = new Float32Array(P).fill(maxAge);
     this.generation = new Int32Array(P);
     this.lineage = new Int32Array(P);          // founder uid, carried down a line
     this.nextUid = 0;
@@ -210,10 +220,35 @@ export class Evolver {
     }
 
     // ------------------------------------------------------------ death
+    //
+    // TWO WAYS TO DIE, and until now there was one.
+    //
+    // STARVATION was the only cause, and in a world where bodies sit at 92% of
+    // their energy ceiling it almost never fires. Measured: a mean lifetime of
+    // 218,640 steps, an arena 95.9% full, and births exactly tracking deaths
+    // because a birth can only happen when a slot frees. Generation time was
+    // therefore set by how rarely something happened to starve — 83,517 steps
+    // per generation, which is 65 generations in 5.4 million steps.
+    //
+    // SENESCENCE is the second. A body is allotted a span at birth, gaussian
+    // around maxAge, and dies when it runs out. Drawn once rather than rolled
+    // per tick on purpose: a per-tick hazard gives an exponential distribution
+    // with a mass of very short lives, while a drawn span gives a peak at
+    // maxAge, which is what "dies at about n" actually means.
+    //
+    // NOT GENOMIC, and that is deliberate. Every other capacity here is evolved,
+    // but an evolvable lifespan has one optimum — longer — so evolution would
+    // set it to infinity and restore exactly the regime this removes. Tissue
+    // wearing out is a property of the physics, like brainTax, not a strategy a
+    // lineage may opt out of.
     const dead = [];
     for (let o = 0; o < P; o++) {
       if (!arena.alive[o]) continue;
-      if (total[o] <= this.deathEnergy || !Number.isFinite(total[o])) dead.push(o);
+      if (total[o] <= this.deathEnergy || !Number.isFinite(total[o])) { dead.push(o); continue; }
+      if (this.maxAge > 0 && (step - this.birthStep[o]) > this.lifespan[o]) {
+        dead.push(o);
+        this.agedOut = (this.agedOut ?? 0) + 1;
+      }
     }
     // Never let the world empty out: a population of zero cannot recover, and a
     // run that silently ends is worse than one that visibly stagnates.
@@ -941,6 +976,10 @@ export class Evolver {
     } else {
       seed = root.cell;
     }
+    // Founders are not born through divide(), so they never got a span there.
+    // Without this they are immortal and the oldest lineages never turn over.
+    this.lifespan[o] = this.drawLifespan();
+    this.birthStep[o] = step;
     for (let i = 0; i < n; i++) {
       const id = (!root && i === 0) ? CELLZERO : this.lineageLog.cell(seed, -1, book, step);
       cells.uid[off + i] = id;
@@ -1036,6 +1075,18 @@ export class Evolver {
              interventions: this.interventions, mintedEnergy: this.mintedEnergy };
   }
 
+  /**
+   * A body's allotted span, in steps. Gaussian around maxAge, clamped so no
+   * body is born already dead and none is effectively immortal.
+   */
+  drawLifespan() {
+    if (!(this.maxAge > 0)) return Infinity;
+    const u1 = Math.max(1e-9, this.rnd()), u2 = this.rnd();
+    const g = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    const span = this.maxAge * (1 + this.ageSpread * Math.max(-2.5, Math.min(2.5, g)));
+    return Math.max(this.maxAge * 0.15, span);
+  }
+
   /** Lineage bookkeeping, shared by both reproduction paths. */
   bookkeep(child, p, step) {
     const uid = this.nextUid++;
@@ -1043,6 +1094,7 @@ export class Evolver {
     this.parentUid[child] = this.uid[p];
     this.parent[child] = p;
     this.birthStep[child] = step;
+    this.lifespan[child] = this.drawLifespan();
     this.generation[child] = this.generation[p] + 1;
     this.lineage[child] = this.lineage[p];
     if (this.history.length < this.historyCap) {

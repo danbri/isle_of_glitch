@@ -6372,10 +6372,33 @@ taxes exactly the thing that differentiation is made of.
 `muscleCost`, `senseCost`, `toughCost`, `terrainWork`. Every benefit is per-cell
 — grazing, tidal income, contest. And two mechanisms actively penalise being a
 clump: crowding suppresses regrowth under a dense patch, and `absorbTradeoff`
-makes committed tissue feed badly. **There is no economy of scale anywhere in
-the world.** N cells bonded together are strictly worse off than the same N cells
-apart, so a body is a liability its cells tolerate rather than a strategy they
-benefit from.
+makes committed tissue feed badly.
+
+**Correction to an earlier absolute.** This was written as "there is no economy
+of scale anywhere in the world", and that is false. Several exist, and they are
+structural rather than incidental:
+
+- **Locomotion requires a bond.** A muscle shortens a bond; a solitary cell has
+  no bond, so it cannot locomote at all. Movement is only available to a body.
+- **Integration requires neurons to integrate.** A one-cell CTRNN has nothing to
+  connect to, so sensorimotor coupling is only available above some size.
+- **A travelling wave requires an axis**, which requires enough cells to have
+  one. `axialPos` is meaningless in a body of one.
+- **Differentiation requires cells to differentiate into.** A body of 5–8 cells
+  carries 1.09 tissues by arithmetic, not by strategy.
+
+So the accurate claim is narrower and worse: **the economies of scale that exist
+are outweighed by the per-cell costs, so the NET return to size is negative.**
+Measured at −0.4041 ± 0.0669 across the size range.
+
+That is the more interesting statement, because of what it implies: the things
+multicellularity uniquely buys — locomotion, integration, gaits, division of
+labour — are exactly the things this world has separately measured as unrewarded.
+Movement does not pay in a mature world. Sensing pays at best break-even. So the
+economies of scale are real and they purchase goods with no market. A body is
+currently a liability its cells tolerate, not because being many is worthless in
+principle, but because everything being many is *for* has been measured worthless
+here.
 
 That is a complete account of everything else measured this session, and it
 subsumes them:

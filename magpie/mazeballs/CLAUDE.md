@@ -76,6 +76,28 @@ the retraction commits) works; it is *not* yet closed/unattended.
 - **`LAB-NOTES.md` / `WORLD.md` / `ARCHITECTURE.md` / `CELLS.md` / `RUNNING.md`** —
   background, world design, and how to run.
 
+## Tone
+
+Write plainly. This applies to prose, commit messages, code comments and blog
+posts equally.
+
+- **State what was measured and what it means.** No build-up, no reveal, no
+  "it turns out". A result is not a story with a twist.
+- **No absolutes from single measurements.** "There is no economy of scale
+  anywhere in the world" was drawn from one correlation and was false. If a
+  claim is about a default, say so — "the current transports nothing" was true
+  of `flowStr 1.0` and untrue of the mechanism, and the difference is the whole
+  finding.
+- **Report the scope of a claim with the claim.** At which parameters, at which
+  horizon, over how many replicates. A number without those is not a result.
+- **No autobiography.** Nobody needs the sequence of dead ends that led
+  somewhere, except in `RESEARCH.md`, where the retractions ARE the content and
+  belong in the order they happened.
+- **Short.** If a paragraph is restating the previous paragraph with more
+  adjectives, delete it.
+- **Say "not measured" or "I do not know" rather than reaching.** An honest gap
+  is more useful than a confident guess, and much cheaper to correct.
+
 ## Practicalities
 
 - **GitHub Pages deploys from `main`, repo root, no Actions.** Work on `main`.
