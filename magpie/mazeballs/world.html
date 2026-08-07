@@ -552,13 +552,56 @@ struct Cam {
   // and nothing checks that the two ends agree — so new fields go on the END,
   // next to the write that fills them.
   topPass     : f32,   // 1 = draw ONLY the inspected animal, over everything
-  padB0       : f32,
+  lerp        : f32,   // 0 draws the previous server frame, 1 the newest — see drawPos
 };
 @group(0) @binding(0) var<uniform>       C     : Cam;
 @group(0) @binding(1) var<storage, read> pos   : array<vec2<f32>>;
 @group(0) @binding(2) var<storage, read> act   : array<f32>;
 @group(0) @binding(3) var<storage, read> cmeta   : array<vec4<i32>>;
 @group(0) @binding(4) var<storage, read> bondIdx : array<i32>;
+// The frame BEFORE the one in pos/act. Only watch mode fills these; a page
+// running its own simulation binds the live buffers here and never tweens.
+@group(0) @binding(5) var<storage, read> prevPos : array<vec2<f32>>;
+@group(0) @binding(6) var<storage, read> prevAct : array<f32>;
+
+/* ---- drawing between two frames, without touching the simulation ---------- */
+//
+// In watch mode the page is shown roughly one server step in twenty-five, and
+// those arrive when the server has a frame and the network delivers it, not on
+// a regular beat. Drawing each one the instant it lands puts every cell through
+// a visible jump: the world moves in discrete kicks at whatever cadence the link
+// happens to have, which reads as a stuttering simulation rather than as a
+// sampled one. Nothing about the physics is irregular — only the sampling is.
+//
+// So the last two frames are both on the GPU and the renderer draws between
+// them. C.lerp is the fraction of the observed inter-frame interval that has
+// passed, so at lerp 0 the picture is the older frame and at 1 the newer. This
+// costs one frame of latency, which at the measured interval is a few tens of
+// milliseconds, and buys continuous motion.
+//
+// The exact-1 case returns pos untouched rather than mixing, because b + (a-b)
+// is not bit-identical to a and because a page with no previous frame binds the
+// live buffer twice — this makes that a guaranteed no-op instead of an almost.
+fn drawPos(i: u32) -> vec2<f32> {
+  if (C.lerp >= 1.0) { return pos[i]; }
+  let b = prevPos[i];
+  var d = pos[i] - b;
+  // Minimum image, as in lineVs: a cell that crossed the wrap seam between the
+  // two frames moved a short way in the world, and mixing the raw coordinates
+  // would instead slide it right across the map.
+  if (d.x >  C.bound) { d.x = d.x - 2.0 * C.bound; }
+  if (d.x < -C.bound) { d.x = d.x + 2.0 * C.bound; }
+  if (d.y >  C.bound) { d.y = d.y - 2.0 * C.bound; }
+  if (d.y < -C.bound) { d.y = d.y + 2.0 * C.bound; }
+  return b + d * C.lerp;
+}
+
+fn drawAct(slot: i32) -> f32 {
+  if (slot < 0) { return 0.0; }
+  let i = u32(slot);
+  if (C.lerp >= 1.0) { return act[i]; }
+  return mix(prevAct[i], act[i], C.lerp);
+}
 
 /* ---- background: the field the cells actually swim in, same definition ---- */
 
@@ -1149,8 +1192,7 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
     vec2(-1.0,  1.0), vec2(1.0, -1.0), vec2( 1.0, 1.0));
   let corner = q[vi];
   let m = cmeta[ii];
-  var a = 0.0;
-  if (m.y >= 0) { a = act[u32(m.y)]; }
+  var a = drawAct(m.y);
   // A non-finite activation must not silently erase the cell. It used to: the
   // radius is scaled by activation, so NaN produced a degenerate quad and the
   // creature simply was not drawn — which reads as "no creatures here" rather
@@ -1192,7 +1234,7 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // are rather than how many specks. Detail returns as you descend.
   let wide = 1.0 - smoothstep(1.5, 7.0, C.zoomPx);
   let r = C.radius * (1.0 + 0.35 * abs(a)) * (1.0 + 0.45 * wide);
-  let world = pos[ii] + corner * r;
+  let world = drawPos(ii) + corner * r;
 
   var o: VOut;
   o.p = vec4<f32>((world - C.center) * C.ndc, 0.0, 1.0);
@@ -1325,7 +1367,11 @@ fn lineVs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> L
   // — not dead cells, and not moving much because the bodies straddling the
   // seam are simply sitting there. Suppress the segment rather than fake it;
   // the cells themselves still draw in both places, which is the truth.
-  var d = pos[ib] - pos[ia];
+  // The SAME tweened positions the cells are drawn at, or the sinews come away
+  // from the cells they connect for as long as a frame lasts on screen.
+  let pa = drawPos(ia);
+  let pb = drawPos(ib);
+  var d = pb - pa;
   // Minimum image, matching the physics: a bond across the wrap seam is SHORT
   // in the world however far apart the raw coordinates are.
   if (d.x >  C.bound) { d.x = d.x - 2.0 * C.bound; }
@@ -1335,8 +1381,8 @@ fn lineVs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> L
   // A settled bond sits near its rest length. Beyond a few multiples of it the
   // pair is not holding a body together in any meaningful sense, and drawing a
   // fat slab across the world says the opposite of what is true.
-  if (length(d) > C.restLen * 4.0 || abs(pos[ib].x - pos[ia].x) > C.bound
-                                  || abs(pos[ib].y - pos[ia].y) > C.bound) {
+  if (length(d) > C.restLen * 4.0 || abs(pb.x - pa.x) > C.bound
+                                  || abs(pb.y - pa.y) > C.bound) {
     o.p = vec4<f32>(0.0, 0.0, 0.0, 0.0); o.tint = vec3<f32>(0.0); o.edge = 0.0; return o;
   }
 
@@ -1356,7 +1402,7 @@ fn lineVs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> L
     vec2(0.0, -1.0), vec2(1.0, -1.0), vec2(0.0, 1.0),
     vec2(0.0,  1.0), vec2(1.0, -1.0), vec2(1.0, 1.0));
   let c = q[vi];
-  let world = pos[ia] + dir * (c.x * len) + nrm * (c.y * w);
+  let world = pa + dir * (c.x * len) + nrm * (c.y * w);
   o.p = vec4<f32>((world - C.center) * C.ndc, 0.0, 1.0);
   o.edge = c.y;
 
@@ -1364,10 +1410,8 @@ fn lineVs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> L
   // warm; a slack one stays cool and dark. This is what makes a body legible as
   // something working rather than as a static diagram, and it is the single
   // thing viewer.html had that this renderer did not.
-  var aa = 0.0;
-  var bb = 0.0;
-  if (cmeta[ia].y >= 0) { aa = act[u32(cmeta[ia].y)]; }
-  if (cmeta[ib].y >= 0) { bb = act[u32(cmeta[ib].y)]; }
+  let aa = drawAct(cmeta[ia].y);
+  let bb = drawAct(cmeta[ib].y);
   let pull = clamp(0.5 * (abs(aa) + abs(bb)), 0.0, 1.0);
   let slack = vec3<f32>(0.10, 0.22, 0.21);
   let taut  = vec3<f32>(0.95, 0.52, 0.16);
@@ -1739,6 +1783,14 @@ async function rebuild() {
   // dynamic offset because it is 224 bytes and this is not the expensive part.
   const bCamTop = dev.createBuffer({ size: 240, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
 
+  // THE FRAME BEFORE THIS ONE, for the tween in drawPos. Watch mode gets its own
+  // pair of buffers; a page running its own simulation binds the live ones here
+  // instead, which costs nothing, allocates nothing, and — with C.lerp pinned at
+  // 1 — is read by a branch that never runs.
+  const st = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST;
+  const bPrevPos = WATCH ? dev.createBuffer({ size: world.bPos.size, usage: st }) : world.bPos;
+  const bPrevAct = WATCH ? dev.createBuffer({ size: brains.bAct.size, usage: st }) : brains.bAct;
+
   const module = dev.createShaderModule({ code: RENDER, label: 'render' });
   // SAY WHAT IS WRONG WITH THE SHADER. A WGSL compile failure does not throw:
   // createShaderModule succeeds, the pipeline built from it is quietly invalid,
@@ -1762,6 +1814,8 @@ async function rebuild() {
       { binding: 2, visibility: V, buffer: ro },
       { binding: 3, visibility: V, buffer: ro },
       { binding: 4, visibility: V, buffer: ro },
+      { binding: 5, visibility: V, buffer: ro },
+      { binding: 6, visibility: V, buffer: ro },
     ],
   });
   const pl = dev.createPipelineLayout({ bindGroupLayouts: [layout] });
@@ -1862,6 +1916,8 @@ async function rebuild() {
       { binding: 2, resource: { buffer: brains.bAct } },
       { binding: 3, resource: { buffer: world.bMeta } },
       { binding: 4, resource: { buffer: bBond } },
+      { binding: 5, resource: { buffer: bPrevPos } },
+      { binding: 6, resource: { buffer: bPrevAct } },
     ],
   });
   const bind = mkBind(bCam);
@@ -1901,7 +1957,7 @@ async function rebuild() {
     },
     bondCapacity, topoVersion: -1, fetchingBonds: false,
     pipeBlit, blitLayout, blitSampler, bgKey: null, bgAt: 0,
-    bCamTop, bindTop,
+    bCamTop, bindTop, bPrevPos, bPrevAct,
   };
   // A DELIBERATE HANDLE ON MODULE STATE, for the console and for Playwright.
   // Everything in this file is module-scoped, so from outside the module the
@@ -3094,6 +3150,26 @@ function applyFrame(ab) {
   // unchanged epoch the arrays already hold exactly this, so refilling them with
   // -1 and scattering the same values back is pure work.
   const restatic = hasStatic || fresh;
+
+  // KEEP THE FRAME THAT IS ABOUT TO BE OVERWRITTEN. Right now these arrays hold
+  // the previous frame, which is exactly what drawPos needs to tween from, so
+  // the copy has to happen before the scatter below — and before act.fill(0),
+  // which is the first thing that destroys it.
+  let prevFresh = false;
+  if (!sim.prevPos || sim.prevPos.length !== n * 2) {
+    sim.prevPos = new Float32Array(n * 2);
+    sim.prevAct = new Float32Array(n);
+    sim.prevUid = new Int32Array(n);
+    prevFresh = true;
+  }
+  const carry = !fresh && !prevFresh;
+  if (carry) {
+    sim.prevPos.set(pos); sim.prevAct.set(act);
+    // uid only moves with the static block, so on every other frame the copy
+    // kept here already matches the one about to be scattered.
+    if (restatic) sim.prevUid.set(uid);
+  }
+
   act.fill(0);
   if (restatic) { type.fill(-1); uid.fill(-1); }
   for (let k = 0; k < L; k++) {
@@ -3102,6 +3178,24 @@ function applyFrame(ab) {
     act[i] = lact[k]; energy[i] = lenergy[k];
     if (restatic) { type[i] = ltype[k]; uid[i] = luid[k]; }
   }
+  // A SLOT THAT CHANGED HANDS MUST NOT BE TWEENED. The arena recycles slots: a
+  // cell that died frees its index and a newborn somewhere else in the world
+  // takes it. Interpolating across that draws a streak between two unrelated
+  // animals — silently, and only on the frames where something was born, which
+  // is the hardest kind of artefact to catch. So wherever the uid at a slot is
+  // not the uid that was there last frame, the previous frame is set equal to
+  // this one and that slot simply appears where it is.
+  if (!carry) {
+    sim.prevPos.set(pos); sim.prevAct.set(act); sim.prevUid.set(uid);
+  } else if (restatic) {
+    const pu = sim.prevUid;
+    for (let i = 0; i < n; i++) {
+      if (pu[i] === uid[i]) continue;
+      sim.prevPos[i * 2] = pos[i * 2]; sim.prevPos[i * 2 + 1] = pos[i * 2 + 1];
+      sim.prevAct[i] = act[i]; pu[i] = uid[i];
+    }
+  }
+
   sim.lastPos = pos; sim.lastAct = act; sim.lastType = type;
   sim.lastUid = uid; sim.lastEnergy = energy;
   sampleSelected(pos, act, type, uid, n, dv.getUint32(8, true));
@@ -3114,6 +3208,13 @@ function applyFrame(ab) {
   // straight into the act buffer at the slot the cell points to. Cell i's slot
   // is i in this builder, which keeps the mapping trivial.
   q.writeBuffer(sim.brains.bAct, 0, act);
+  // The frame to tween FROM. This doubles the per-frame upload — 300 KB at the
+  // 25,020 cells the server is running, about 18 MB/s at 60 fps. Not measurable
+  // on the machine this was written on, where the viewer sits on the vsync cap
+  // at 60 fps both with and without it; it is a real cost on a slower bus and
+  // the number is here so the next person knows what to weigh.
+  q.writeBuffer(sim.bPrevPos, 0, sim.prevPos);
+  q.writeBuffer(sim.bPrevAct, 0, sim.prevAct);
   // The cell-meta buffer is a function of type and uid alone, so it only needs
   // rewriting when those changed — 400 KB of upload per frame, for bytes that
   // were identical.
@@ -3140,6 +3241,20 @@ function applyFrame(ab) {
     } else if (pairCount * 4 > sim.bondCapacity) {
       sim.bondVerts = 0;                    // never draw a truncated graph
     }
+  }
+
+  // HOW LONG THIS FRAME WILL BE ON SCREEN, which is what drawPos tweens across.
+  // Taken from the gap between arrivals rather than from the server's step rate,
+  // because the thing being smoothed over is the arrival cadence: a request in
+  // flight, a slow round trip, a frame the server had not finished. Smoothed
+  // hard, since one late frame should not stretch the tween for the next ten.
+  {
+    const now = performance.now();
+    if (sim.frameAt) {
+      const gap = now - sim.frameAt;
+      sim.framePeriod = sim.framePeriod ? sim.framePeriod * 0.85 + gap * 0.15 : gap;
+    }
+    sim.frameAt = now;
   }
 
   const prevServerSteps = sim.serverSteps ?? 0;
@@ -3269,7 +3384,7 @@ function fitAll() {
 
 let last = performance.now(), fps = 0, simRate = 0, acc = 0, frames = 0;
 
-function writeCam() {
+function writeCam(t0) {
   // THE RENDER DPR, not the display dpr. resize() sizes the backing store by
   // renderScale as well, so anything converting world units to device pixels
   // must use the same product or the two disagree — which drew the world
@@ -3428,6 +3543,21 @@ function writeCam() {
   dv.setFloat32(208, STREAM_SIDE, true);
   dv.setFloat32(212, 0.62, true);
   dv.setFloat32(216, view.cellInk, true);
+
+  // WHERE BETWEEN THE LAST TWO SERVER FRAMES TO DRAW — see drawPos. Held at
+  // exactly 1 whenever there is nothing to tween from: a page running its own
+  // simulation, and the first frame after a reconnect or a reshape.
+  //
+  // A period this has not seen enough of yet, or one long enough that the link
+  // is plainly stalling, would stretch a tween across seconds of guesswork. The
+  // ceiling stops that: past it the picture holds at the newest frame, which is
+  // the truth, rather than creeping toward it.
+  let lerp = 1;
+  if (WATCH && sim.framePeriod > 0 && sim.framePeriod < 1000) {
+    lerp = Math.min(1, (t0 - sim.frameAt) / sim.framePeriod);
+  }
+  dv.setFloat32(224, lerp, true);
+
   dv.setFloat32(220, 0, true);                 // crowd pass
   dev.queue.writeBuffer(sim.bCam, 0, b);
   dv.setFloat32(220, 1, true);                 // the inspected animal, on top
@@ -3578,7 +3708,7 @@ function loop() {
   sim.sinceMotes += t - last;
   if (view.food && sim.sinceMotes > 1500) { sim.sinceMotes = 0; refreshMotes(); }
 
-  writeCam();
+  writeCam(t);
   const enc = dev.createCommandEncoder();
 
   // ---- the cached setting: terrain, crop, streamlines. See BLIT_WGSL.
