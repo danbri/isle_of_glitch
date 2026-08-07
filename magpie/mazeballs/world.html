@@ -219,6 +219,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   <i class="rule"></i>
   <span>sim <b id="hRate">–</b>×</span>
   <span>fps <b id="hFps">–</b></span>
+  <span>seen <b id="hSeen">–</b></span>
   <span>zoom <b id="hZoom">–</b></span>
   <span>gpu <b id="hGpu">–</b></span>
   <span>devo <b id="hDevo">–</b></span>
@@ -3093,6 +3094,19 @@ function applyFrame(ab) {
 
   const prevServerSteps = sim.serverSteps ?? 0;
   sim.serverSteps = dv.getUint32(8, true);
+  // HOW MUCH OF THE WORLD THIS PAGE IS ACTUALLY SEEING.
+  //
+  // The display is capped at the monitor's refresh by requestAnimationFrame and
+  // the simulation is not, so as the server gets faster a viewer sees a smaller
+  // fraction of what happens. That is sampling, not lag: /frame always returns
+  // the NEWEST frame and there is no queue, so nothing accumulates and there is
+  // nothing to catch up on. What does change is the stride between the frames
+  // you are shown, and that is worth being told rather than left to infer from
+  // a step counter jumping.
+  {
+    const d = sim.serverSteps - prevServerSteps;
+    if (d > 0) sim.seenStride = sim.seenStride ? sim.seenStride * 0.8 + d * 0.2 : d;
+  }
   // SIM RATE IN WATCH MODE. `simRate` is computed from the LOCAL world's spf,
   // and in watch mode the local world never steps — so it sat at exactly 0 and
   // the HUD read `sim 0.0xrealtime` forever. RUNNING.md lists that precise
@@ -3608,6 +3622,15 @@ function loop() {
   if (acc > 400) {
     fps = frames * 1000 / acc; frames = 0; acc = 0;
     $('hFps').textContent = fps.toFixed(0);
+    // "1 in N" — the stride between the frames this page is shown. 1 means you
+    // are seeing every step the server takes; 20 means the world is running
+    // twenty times faster than you can look at it, which is the good case.
+    if (WATCH) {
+      const st = sim.seenStride;
+      $('hSeen').textContent = st ? '1 in ' + Math.max(1, Math.round(st)) : '–';
+    } else {
+      $('hSeen').textContent = view.spf > 1 ? '1 in ' + view.spf : 'every step';
+    }
     // In watch mode the step counter belongs to the server; the local world is
     // never advanced, so writing its 0 here would overwrite the real clock.
     if (!WATCH) $('hStep').textContent = (sim.world.steps ?? 0).toLocaleString();

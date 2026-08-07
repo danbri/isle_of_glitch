@@ -1613,11 +1613,25 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     let me2 = cmeta[i];
     // Every cell has a little purchase on the world; an ANCHOR cell has far
     // more, and modulates it with its activation so it can let go.
-    var grab = P.gripBase;
-    // Grip still keys off the LABEL, deliberately: making it continuous too
-    // would change traction and contraction in the same commit and neither
-    // effect could be attributed. grippiness(me2.x) is packed and waiting.
-    if (cellType(me2.x) == 3) { grab = P.gripAnchor; }
+    // PROPORTIONAL TO THE CAPACITY — the last of the three label gates, and the
+    // one that was always going to matter most.
+    //
+    // The note here said grip keyed off the label "deliberately: making it
+    // continuous too would change traction and contraction in the same commit
+    // and neither effect could be attributed", and that grippiness(me2.x) was
+    // packed and waiting. That was right at the time. Contraction was made
+    // continuous long since and sensing today, so the confound it was guarding
+    // against is gone and the reason to wait has expired.
+    //
+    // It matters because grip is what converts oscillation into travel. The
+    // brains ARE oscillating — the scope shows sustained phase-offset rhythm,
+    // which is a central pattern generator — and a contract-relax cycle without
+    // varying grip is reciprocal, returns where it started, and is the scallop
+    // theorem. Measured over 48 living genomes: mean grip capacity 0.660 per
+    // cell, yet only 31% of bodies had a cell where grip won the argmax. Roughly
+    // two thirds of the population was carrying the means to anchor and being
+    // told it could not, on a tie-break against contract.
+    var grab = mix(P.gripBase, P.gripAnchor, grippiness(me2.x));
     // ACTIVELY PHASED, which is the whole point. A cell raises and drops its grip
     // with its activation, so a brain can grip on the power stroke and release on
     // recovery. Constant grip nets zero however strong it is — the scallop
