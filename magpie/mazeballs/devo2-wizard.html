@@ -61,13 +61,24 @@
   button.act{font:inherit;font-size:.78rem;padding:.3rem .7rem;background:var(--panel);color:var(--ink);
              border:1px solid var(--rule);border-radius:4px;cursor:pointer;margin:.4rem .3rem .1rem 0}
   button.act:hover{border-color:var(--sensor)}
+  button.act:disabled{opacity:.35;cursor:default;border-color:var(--rule)}
   .pager{display:flex;justify-content:space-between;margin:1.6rem 0 3rem;gap:.5rem}
+  /* The same two controls at the top. The step chips tell you where you are but
+     make you aim; these are where the hand already is after reading a section. */
+  .toppager{display:flex;gap:.4rem;align-items:center;margin-top:.55rem}
+  .toppager button{margin:0}
+  #stepWhere{font-size:.74rem;color:var(--soft);font-family:var(--mono);margin-left:.3rem}
 </style>
 
 <header>
   <h1>Development 2 — how a genome becomes a body</h1>
   <p>A guided read of <code>lib/devo2.js</code>. Every body on this page is grown by the
      same <code>develop()</code> the world calls at each birth.</p>
+  <div class="toppager">
+    <button class="act" id="bPrevTop">&larr; back</button>
+    <button class="act" id="bNextTop">next &rarr;</button>
+    <span id="stepWhere"></span>
+  </div>
   <nav id="nav"></nav>
 </header>
 
@@ -245,6 +256,13 @@
       Given longer, the same genome keeps growing: measured 411 cells at 30,000&nbsp;ms and
       566 at 60,000. The bodies the world actually contains are early stages of a process
       that was stopped, not finished organisms.</p>
+      <p class="note warn"><b>Do we ever get stripes?</b> Scanned across 40 random genomes,
+      counting sign changes in contractility along the long axis: mean 1.0 bands at
+      12,000&nbsp;ms, 0.9 at 30,000, 0.27 at 60,000, with a single genome reaching 7. One
+      band is head-and-tail polarity, not segmentation. And elongation FALLS with time —
+      1.58, then 1.23, then 1.09 — so longer development gives bigger, rounder bodies,
+      because growth fills a circular egg rather than extending along an axis. The
+      mechanism for banding exists (step 4); evolution here has not used it.</p>
       <p class="note">Cost is roughly quadratic — every cell diffuses to its neighbours each
       tick — so 60,000&nbsp;ms takes about fifty seconds. That quadratic is the real reason
       the world cannot afford large bodies at birth, and it is a fact about the
@@ -428,14 +446,17 @@ function show(i) {
   step = Math.max(0, Math.min(sections.length - 1, i));
   sections.forEach((s, k) => s.classList.toggle('on', k === step));
   [...nav.children].forEach((b, k) => b.classList.toggle('on', k === step));
+  $('stepWhere').textContent = `${step + 1} of ${sections.length}`;
+  for (const b of [$('bPrev'), $('bPrevTop')]) b.disabled = step === 0;
+  for (const b of [$('bNext'), $('bNextTop')]) b.disabled = step === sections.length - 1;
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (step === 5) drawGrow();
   if (step === 6) drawCarve();
   if (step === 7) fillReadout();
   if (step === 8) drawMutants();
 }
-$('bPrev').onclick = () => show(step - 1);
-$('bNext').onclick = () => show(step + 1);
+$('bPrev').onclick = $('bPrevTop').onclick = () => show(step - 1);
+$('bNext').onclick = $('bNextTop').onclick = () => show(step + 1);
 
 /* --------------------------------------------------------------- step 0 */
 $('tblConst').innerHTML = `
@@ -636,15 +657,25 @@ $('bBig').onclick = () => {
   setTimeout(() => {
     const t0 = performance.now();
     let g;
-    try { g = D.develop(genome, { ms, extent: D.DEFAULT_EXTENT, maxCells: cap, yolk: 1e9 }); }
+    // COARSER TIMESTEP FOR THE LONG RUNS. develop() defaults to dtMs 40, and the
+    // cost is quadratic in cells because every cell diffuses to its neighbours
+    // each tick — 60,000 ms takes 41 seconds and the page just stops. At dtMs 320
+    // the same genome reaches 588 cells in 6.4 s against 566 in 41 s, so eight
+    // times the step buys six times the speed for a body of the same size. It is
+    // a coarser integration and is stated as such rather than hidden.
+    try { g = D.develop(genome, { ms, dtMs: ms > 18000 ? 320 : 40,
+                                  extent: D.DEFAULT_EXTENT, maxCells: cap, yolk: 1e9 }); }
     catch (e) { $('bigStats').textContent = 'development failed: ' + e.message; return; }
     const dt = Math.round(performance.now() - t0);
     drawBody($('cvGrow'), g.cells);
     const hist = [0,0,0,0];
     for (const c of g.cells) hist[describe(c)]++;
+    const bd = banding(g.cells);
     $('bigStats').innerHTML =
-      `<b>${g.cells.length} cells</b> in ${dt} ms<br>` +
+      `<b>${g.cells.length} cells</b> in ${dt} ms` +
+      (ms > 18000 ? ' <span style="opacity:.6">(coarse step)</span>' : '') + '<br>' +
       `neuron ${hist[0]} sensor ${hist[1]} muscle ${hist[2]} anchor ${hist[3]}<br>` +
+      `bands ${bd.flips} &nbsp; elongation ${bd.elong.toFixed(2)}<br>` +
       (g.cells.length >= cap ? '<span style="color:#c7734f">hit the cell budget</span>'
                              : 'self-limited below the budget');
   }, 30);
@@ -659,6 +690,39 @@ $('bLive').onclick = async () => {
     $('growStats').innerHTML += '<br><span style="color:#c7734f">no live server on this origin</span>';
   }
 };
+
+/**
+ * BANDS ALONG THE BODY'S LONG AXIS — sign changes in mean contractility, the
+ * same measure devo.js calls `segments`, but binned along whichever axis is
+ * longer rather than always along x, since a body that grew across the egg would
+ * otherwise report its stripes as noise.
+ *
+ * One flip is head-and-tail polarity, not segmentation. Real banding starts at
+ * three or four.
+ */
+function banding(cells, B = 16) {
+  if (!cells || cells.length < 8) return { flips: 0, elong: 1 };
+  let lo=Infinity, hi=-Infinity, ylo=Infinity, yhi=-Infinity;
+  for (const c of cells) { lo=Math.min(lo,c.x); hi=Math.max(hi,c.x);
+                           ylo=Math.min(ylo,c.y); yhi=Math.max(yhi,c.y); }
+  const spanX = Math.max(1e-6, hi-lo), spanY = Math.max(1e-6, yhi-ylo);
+  const alongX = spanX >= spanY;
+  const a0 = alongX ? lo : ylo, span = alongX ? spanX : spanY;
+  const acc = new Float64Array(B), cnt = new Float64Array(B);
+  for (const c of cells) {
+    const v = alongX ? c.x : c.y;
+    const b = Math.min(B-1, Math.floor((v-a0)/span*B));
+    acc[b] += c.contract; cnt[b]++;
+  }
+  let flips = 0, prev = 0;
+  for (let b = 0; b < B; b++) {
+    if (!cnt[b]) continue;
+    const m = acc[b]/cnt[b];
+    if (prev !== 0 && Math.sign(m) !== Math.sign(prev)) flips++;
+    if (m !== 0) prev = m;
+  }
+  return { flips, elong: Math.max(spanX,spanY)/Math.min(spanX,spanY) };
+}
 
 /* --------------------------------------------------------------- step 6 */
 function drawCarve() {
