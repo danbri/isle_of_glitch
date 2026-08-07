@@ -6824,3 +6824,48 @@ chosen, and how many worlds a comparison costs.
 It also reframes every null above. "Not implicated" was reported as "does not
 matter". It should have been reported as "does not suffice alone", which is a
 much weaker claim and leaves those mechanisms in play as conjuncts.
+
+## 2026-08-07 — the green-light test, run for the first time, and failed
+
+`AUTORESEARCH.md` §8 gates the whole autoresearch programme on one criterion:
+*"Green light = a config scored twice gives the same `net` within SE."* Nobody had
+run it. `tools/green-light.js` runs it.
+
+Same config, same seed, 6,000 steps, twice:
+
+```
+alive            416            416   same
+births            76             86   DIFFER
+deaths            76             86   DIFFER
+lineages         351            347   DIFFER
+liveCells       5068           5162   DIFFER
+eSum        13405.39       13651.23   DIFFER
+pSum       -96287.11      -70961.27   DIFFER
+non-finite                 0 / 0
+```
+
+Noise floor at the same config across six seeds: births cv 7.1%, lineages 1.2%,
+meanEnergy 1.7%. So births differ run-to-run by 10 against an across-seed SE of
+2.36 — **4.2 SE, a clear fail of the stated criterion.**
+
+**The world is not reproducible.** The likely cause is the atomics-based spatial
+hash: bucket insertion order races between invocations, neighbour iteration order
+follows it, floating-point summation order follows that, and a chaotic system
+amplifies the last bit into a 13% difference in births over 6,000 steps. Nothing
+here is a NaN or a crash; every individual force is correct.
+
+**A correction to my own reporting.** The same run showed `alive` with sd 0.000
+across all six seeds, which I first read as remarkable stability. It is not a
+measurement at all: 416 is the body-slot ceiling (5,000 cells / 12 per founder),
+so the population is saturated against bookkeeping and cannot vary. A statistic
+that cannot move is not evidence that the thing it measures is stable.
+
+**What follows.** Every measurement in this project is a sample from a
+distribution, not a repeatable observation, and "run it again to check" does not
+work here. Effects must be established across seeds with the noise floor above in
+hand. This does not invalidate the large measured effects — the multicellularity
+tax at −0.4041 is far outside this — but it does mean no experiment should ever
+again be reported from a single run, and it means the autoresearch loop cannot be
+closed on the criterion as written. Either the hash is made deterministic, or the
+criterion changes from "same answer" to "same answer within a measured noise
+floor", which is a different and weaker claim than §8 intends.

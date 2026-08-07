@@ -232,6 +232,23 @@
       <div id="growStats" style="font-family:var(--mono);font-size:.76rem"></div>
       <button class="act" id="bRandom">another random genome</button>
       <button class="act" id="bLive">fetch one from the live world</button>
+      <hr style="border:0;border-top:1px solid var(--rule);margin:.7rem 0">
+      <h3>grow it past what the world allows</h3>
+      <label class="sl">cell budget <b id="vCap">60</b>
+        <input type="range" id="sCap" min="0" max="4" step="1" value="0"></label>
+      <label class="sl">developmental time <b id="vBig">12000 ms</b>
+        <input type="range" id="sBig" min="12000" max="60000" step="6000" value="12000"></label>
+      <button class="act" id="bBig">grow (slow above 24000 ms)</button>
+      <div id="bigStats" style="font-family:var(--mono);font-size:.76rem;margin-top:.4rem"></div>
+      <p class="note warn">The world develops for 12,000&nbsp;ms with a 60-cell cap, and this
+      genome self-limits at 51 — so the cap is not what is binding. Developmental TIME is.
+      Given longer, the same genome keeps growing: measured 411 cells at 30,000&nbsp;ms and
+      566 at 60,000. The bodies the world actually contains are early stages of a process
+      that was stopped, not finished organisms.</p>
+      <p class="note">Cost is roughly quadratic — every cell diffuses to its neighbours each
+      tick — so 60,000&nbsp;ms takes about fifty seconds. That quadratic is the real reason
+      the world cannot afford large bodies at birth, and it is a fact about the
+      implementation rather than about biology.</p>
       <p class="note">Dragging the slider re-develops from scratch to a shorter horizon.
       Development is <em>canalised</em> — noise is derived from the genome — so the same
       genome grows the same body every time, and these really are snapshots of one process
@@ -319,6 +336,69 @@
   </div>
 </section>
 
+<section data-step="9">
+  <h2>9. Expert topics</h2>
+  <p class="lede">The parts that are easy to get wrong, and the measurements behind them.</p>
+
+  <div class="row">
+    <div class="card">
+      <h3>canalisation</h3>
+      <p style="font-size:.85rem">Developmental noise is derived from the genome, so one
+      genome grows one body every time. Before that, within-genome sd was 0.264 against
+      between-genome 0.084 — heritability 0.093 — and directed selection on morphology ran
+      <em>downhill</em>, because it was chasing lucky rolls rather than heritable shape.</p>
+    </div>
+    <div class="card">
+      <h3>synapses are expressed, not inherited</h3>
+      <p style="font-size:.85rem">A synapse's weight is not stored per edge. It is computed
+      from what its two endpoint cells are made of and where they sit. Copying a parent's
+      edge table instead would mean the brain is inherited as a literal wiring diagram while
+      the body develops — so a child whose body came out different would be wearing its
+      parent's connectome.</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h3>why the label is not the capability</h3>
+      <p style="font-size:.85rem">A cell is labelled by whichever of sense, contract and grip
+      is largest. The kernel used to branch on that label, and the cost was measured: 47% of
+      the contractility in the tissue unusable, 42.7% of the sensing discarded, 424 cells
+      losing the argmax by under 0.10, and sixteen of sixty-four bodies functionally blind
+      while carrying sensory tissue. One specimen had cells with sense 0.992 labelled anchor
+      because grip came out at 1.000 — a margin of 0.008 deciding that an animal could not
+      see. All three gates are gone.</p>
+    </div>
+    <div class="card">
+      <h3>a whole world of sensors reading noise</h3>
+      <p style="font-size:.85rem">All three sense channels are written as
+      <code>mix(noise, signal, acuity)</code>, and acuity comes from the gene
+      <code>senseTune</code>. Nothing ever wired <code>senseTune</code> to the sense gene, so
+      acuity was <strong>zero for every cell in the entire history of this world</strong> —
+      every sensor read pure noise, and since the energy cost also scales with acuity,
+      sensing was free at the same time. Free, universal and informationless.</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <h3>what is deliberately absent</h3>
+      <p style="font-size:.85rem">No segment count. No limb primitive. No symmetry flag. The
+      structures worth having are meant to be <em>reachable</em> through the operator, never
+      arranged by it — the difference between making an outcome possible and imposing it,
+      which is the mistake this codebase has repeatedly had to undo.</p>
+    </div>
+    <div class="card">
+      <h3>the honest state</h3>
+      <p style="font-size:.85rem">Bodies of ~13 cells with about 1.8 distinct cell types.
+      Multicellularity is taxed: energy per cell falls monotonically with body size, measured
+      at &minus;0.4041 &plusmn; 0.0669. Differentiation needs spare cells, so until size pays
+      there is nothing to differentiate with. That is the blocker, and it is economic rather
+      than developmental.</p>
+    </div>
+  </div>
+</section>
+
 <div class="pager">
   <button class="act" id="bPrev">&larr; back</button>
   <button class="act" id="bNext">next &rarr;</button>
@@ -336,7 +416,7 @@ const TYPE_COL = ['#99998c', '#66a89e', '#c7734f', '#8f709e'];
 const sections = [...document.querySelectorAll('section')];
 const nav = $('nav');
 const TITLES = ['genome', 'the egg', 'one gene', 'two genes', 'diffusion',
-                'growth', 'carving', 'readout', 'mutation'];
+                'growth', 'carving', 'readout', 'mutation', 'expert'];
 let step = 0;
 TITLES.forEach((t, i) => {
   const b = document.createElement('button');
@@ -541,6 +621,34 @@ function drawGrow() {
     `muscle ${hist[2]} &nbsp; anchor ${hist[3]}`;
 }
 $('sMs').oninput = drawGrow;
+
+// GROW PAST THE WORLD'S LIMITS. maxCells is not what binds this encoding —
+// developmental time is — so both are exposed, with the cost stated rather than
+// discovered by waiting.
+const CAPS = [60, 300, 1000, 3000, 10000];
+const capNow = () => CAPS[+$('sCap').value];
+$('sCap').oninput = () => { $('vCap').textContent = capNow(); };
+$('sBig').oninput = () => { $('vBig').textContent = $('sBig').value + ' ms'; };
+$('bBig').onclick = () => {
+  const ms = +$('sBig').value, cap = capNow();
+  $('bigStats').textContent = `growing to ${ms} ms, cap ${cap}...`;
+  // Yield first, or the page freezes with no explanation of why.
+  setTimeout(() => {
+    const t0 = performance.now();
+    let g;
+    try { g = D.develop(genome, { ms, extent: D.DEFAULT_EXTENT, maxCells: cap, yolk: 1e9 }); }
+    catch (e) { $('bigStats').textContent = 'development failed: ' + e.message; return; }
+    const dt = Math.round(performance.now() - t0);
+    drawBody($('cvGrow'), g.cells);
+    const hist = [0,0,0,0];
+    for (const c of g.cells) hist[describe(c)]++;
+    $('bigStats').innerHTML =
+      `<b>${g.cells.length} cells</b> in ${dt} ms<br>` +
+      `neuron ${hist[0]} sensor ${hist[1]} muscle ${hist[2]} anchor ${hist[3]}<br>` +
+      (g.cells.length >= cap ? '<span style="color:#c7734f">hit the cell budget</span>'
+                             : 'self-limited below the budget');
+  }, 30);
+};
 $('bRandom').onclick = () => { genome = D.randomGenome(Math.random); drawGrow(); };
 $('bLive').onclick = async () => {
   try {
