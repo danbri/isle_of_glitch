@@ -6721,3 +6721,49 @@ The reciprocity check was reverted — added on a false diagnosis, pure cost. Th
 affordability bound was kept and re-documented honestly: it went in for a wrong
 reason and stays for a right one, since contest bounds itself the same way and a
 comment describing a safeguard that is not implemented is worse than no comment.
+
+### H1 falsified. The pre-registered replication does not confirm it.
+
+Batch 1 tested six traits at two horizons and enzyme diversity at deep time was
+the single pass — the null expectation for twelve comparisons. It was reported as
+chance and then tested properly: one hypothesis, fixed in advance in
+`runs/PREREGISTERED.md`, on five fresh replicates at seeds disjoint from batch 1.
+
+```
+                biotic   abiotic      se     gap   verdict
+batch 1  first  0.0592    0.0370  0.0587  0.0222   fails
+batch 1  deep   0.0905    0.0415  0.0414  0.0490   clears   <- generated H1
+batch 2  first  0.0562    0.0251  0.0581  0.0311   fails
+batch 2  deep   0.0637    0.0345  0.0584  0.0292   FAILS    <- tested H1
+```
+
+**H1 is not supported.** The deep-time gap is 0.0292 against a pooled SE of
+0.0584 — inside one standard error, and by the criterion written down before the
+run, that is a falsification rather than a "trend".
+
+**The direction is consistent and that is not enough.** Biotic exceeds abiotic in
+all four cells above, in both batches and at both horizons, and never reverses.
+It is tempting to pool the batches and report the combined effect. That is not
+legitimate: batch 1 generated the hypothesis and cannot also test it, which is
+exactly why the pre-registration said so in advance and excluded it. A consistent
+sign across two under-powered samples is what a real weak effect looks like AND
+what noise looks like, and nothing here distinguishes them.
+
+**What it would take.** The gap is around 0.03 with a per-batch SE near 0.058, so
+roughly four times the replicates — twenty per arm — to resolve it at two SE if
+it is real at this size. That is a day of compute for a single trait, and it
+should only be spent if something makes enzyme diversity worth that much more
+than the alternatives.
+
+**Where this leaves the standing goal.** Not demonstrated, and now the last
+candidate has been examined rather than merely doubted. Every trait that cleared
+at a first horizon failed at ten times the runtime; the one that cleared at deep
+time failed to replicate. Set against the descent — sense+move 3.9% → 0.9%,
+median body 12 → 9 over 4.5 million steps — the coherent reading remains that the
+biotic pressure is dominant early and exhausts the variation it needs to keep
+acting.
+
+The pre-registration is the part worth keeping. It converted "one of twelve, so
+probably chance" from a judgement call into a test with a stated bar, and the
+test came back negative. That is a cheaper and more honest outcome than a
+plausible number defended after the fact.
