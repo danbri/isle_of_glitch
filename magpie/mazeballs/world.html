@@ -3991,7 +3991,14 @@ function loop() {
   const movingNow = camMoved && (t - (sim.camMovedAt ?? 0) < 250);
   if (camMoved) sim.camMovedAt = t;
   sim.bgCamKey = camKeyOnly;
-  const holdBg = movingNow && (t - sim.bgAt < 90);
+  // HOLD ACROSS PAN, NEVER ACROSS ZOOM. Reusing the cached setting across a pan
+  // only slides it a beat behind the hand — the ground settling late, tolerable.
+  // Reusing it across a zoom blits a bitmap baked at a DIFFERENT scale, so the
+  // ground zooms in steps while the cells zoom smoothly: the "several layers move
+  // differently" bug. So the 90ms hold covers translation only; the instant zoom
+  // differs from the scale the texture was baked at, it rebuilds in lockstep.
+  const zoomDrifted = sim.bgZoomAt !== undefined && sim.bgZoomAt !== cam.zoom;
+  const holdBg = movingNow && (t - sim.bgAt < 90) && !zoomDrifted;
   // The setting has its own, smaller target — see BG_SCALE.
   const bgW = Math.max(1, Math.floor(canvas.width * BG_SCALE));
   const bgH = Math.max(1, Math.floor(canvas.height * BG_SCALE));
@@ -4012,7 +4019,7 @@ function loop() {
     sim.bgKey = null;
   }
   if ((sim.bgKey !== bgKey || bgStale) && !holdBg) {
-    sim.bgKey = bgKey; sim.bgAt = t;
+    sim.bgKey = bgKey; sim.bgAt = t; sim.bgZoomAt = cam.zoom;   // stamp the scale this texture is baked at
     const bg = enc.beginRenderPass({
       colorAttachments: [{
         view: sim.bgTex.createView(),
