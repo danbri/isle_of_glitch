@@ -40,7 +40,14 @@ It now decodes contractility, grippiness and sense acuity straight out of
 
 So a cell that both contracts and grips reads between terracotta and plum, and a
 capacity-less cell stays stone. This is the "continuous, not label buckets" ask,
-and it doubles as the fix for the monochrome crowd. Watch mode keeps the discrete
+and it doubles as the fix for the monochrome crowd.
+
+Hue carries *which* capacities; **total capacity is carried separately as
+saturation and brightness**, because the normalized blend alone made a cell high
+in all three average to a muddy grey indistinguishable from a cell low in all
+three — "does everything" looked like "does nothing". Now low total capacity
+desaturates toward stone and dims, so a committed generalist reads bright and an
+idle cell reads dim whatever their hues share. Watch mode keeps the discrete
 path, gated by `metaPacked`. The gallery and devo thumbnails now use a JS twin,
 `matColor(c)`, so all three views speak the same material language. The old
 `tint[kind(c)]` argmax helpers are gone.

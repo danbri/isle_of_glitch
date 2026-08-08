@@ -75,7 +75,13 @@ because the same page in watch mode looked fine.</p>
 smoothstep(0, 0.5, w))</p>
 <p>So a cell that both contracts and grips reads between terracotta and plum, and a
 capacity-less cell stays stone. This is the &quot;continuous, not label buckets&quot; ask,
-and it doubles as the fix for the monochrome crowd. Watch mode keeps the discrete
+and it doubles as the fix for the monochrome crowd.</p>
+<p>Hue carries <em>which</em> capacities; <strong>total capacity is carried separately as
+saturation and brightness</strong>, because the normalized blend alone made a cell high
+in all three average to a muddy grey indistinguishable from a cell low in all
+three — &quot;does everything&quot; looked like &quot;does nothing&quot;. Now low total capacity
+desaturates toward stone and dims, so a committed generalist reads bright and an
+idle cell reads dim whatever their hues share. Watch mode keeps the discrete
 path, gated by <code>metaPacked</code>. The gallery and devo thumbnails now use a JS twin,
 <code>matColor(c)</code>, so all three views speak the same material language. The old
 <code>tint[kind(c)]</code> argmax helpers are gone.</p>
