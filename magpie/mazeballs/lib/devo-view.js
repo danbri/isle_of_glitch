@@ -28,6 +28,7 @@
  * rewritten per frame. At the sizes this draws — up to a few thousand cells —
  * that is far cheaper than the development producing them.
  */
+import { COLOUR_WGSL } from './cellcolour.js';
 
 const CELL_WGSL = /* wgsl */`
 struct View {
@@ -49,12 +50,11 @@ struct Out {
   @location(2) alpha : f32,
 };
 
-fn hueOf(t : i32) -> vec3<f32> {
-  if (t == 1) { return vec3<f32>(0.40, 0.66, 0.63); }   // sensor, pale jade
-  if (t == 2) { return vec3<f32>(0.78, 0.45, 0.32); }   // muscle, terracotta
-  if (t == 3) { return vec3<f32>(0.56, 0.44, 0.62); }   // anchor, muted plum
-  return vec3<f32>(0.60, 0.60, 0.55);                   // neuron, warm stone
-}
+// Colour comes from lib/cellcolour.js, shared verbatim with every other viewer.
+// The four flat type colours this replaced were an argmax of the same three
+// capacities, so a cell at 0.51 contract and 0.49 grip drew identically to one
+// at 1.0 and 0.0.
+${COLOUR_WGSL}
 
 @vertex
 fn vs(@builtin(vertex_index) vi : u32,
@@ -64,9 +64,15 @@ fn vs(@builtin(vertex_index) vi : u32,
     vec2(-1.0, 1.0), vec2(1.0,-1.0), vec2( 1.0,1.0));
   let corner = q[vi];
   let c = cells[ii];
-  let packed = i32(c.z);
-  let kind = packed & 3;
-  let culled = (packed >> 2) & 1;
+  // Six bits each, packed the way cmeta packs material: capacities, what the
+  // cell is made of, and how big relaxation left it. Bit 31 stays clear.
+  let packed = bitcast<u32>(c.z);
+  let uSense    = f32((packed      ) & 63u) / 63.0;
+  let uContract = f32((packed >>  6u) & 63u) / 63.0;
+  let uGrip     = f32((packed >> 12u) & 63u) / 63.0;
+  let uDensity  = f32((packed >> 18u) & 63u) / 63.0;
+  let uRadius   = f32((packed >> 24u) & 63u) / 63.0 * 1.2;
+  let culled    = i32((packed >> 30u) & 1u);
 
   let age = max(0.0, V.now - c.w);
 
@@ -74,7 +80,10 @@ fn vs(@builtin(vertex_index) vi : u32,
   // second; before that it is a point and the body reads as tissue appearing
   // rather than a list being filled.
   let grow = clamp(age / 0.2, 0.0, 1.0);
-  var r = 0.34 * (0.15 + 0.85 * grow * grow * (3.0 - 2.0 * grow));
+  // Its own size, not everyone's. Development's relaxation phase fuses uniform
+  // tissue into larger nodes, so a body has a range of sizes and the big ones
+  // are where it condensed.
+  var r = max(0.04, uRadius) * (0.15 + 0.85 * grow * grow * (3.0 - 2.0 * grow));
 
   // The carve: culled cells shrink away together at the end.
   var a = 1.0;
@@ -96,7 +105,8 @@ fn vs(@builtin(vertex_index) vi : u32,
   // Bright at birth, settling to the type hue. The growing margin therefore
   // shows as a bright rind on older tissue.
   let fresh = exp(-age * 1.6);
-  o.tint = mix(hueOf(kind), vec3<f32>(1.0, 0.97, 0.88), fresh * 0.85);
+  o.tint = mix(cellColour(uSense, uContract, uGrip, uDensity),
+               vec3<f32>(1.0, 0.97, 0.88), fresh * 0.85);
   o.alpha = a;
   return o;
 }
@@ -105,9 +115,15 @@ fn vs(@builtin(vertex_index) vi : u32,
 fn fs(i : Out) -> @location(0) vec4<f32> {
   let d = length(i.uv);
   if (d > 1.0) { discard; }
-  let edge = 1.0 - smoothstep(0.82, 1.0, d);
-  let shade = 1.0 - 0.3 * smoothstep(0.0, 1.0, d);
-  let col = i.tint * shade;
+  // GOODSELL, not glass. A flat matte fill with a darker rim, no specular and
+  // no interior gradient: in a crowded picture, shading reads as depth and
+  // fights the one thing the colour is there to say. The rim is what keeps
+  // hundreds of touching cells individually countable, and it is a darkening of
+  // the cell's OWN colour rather than a neutral outline, so a pale gaseous cell
+  // is outlined pale and a leaden one dark.
+  let rim = smoothstep(0.72, 0.98, d);
+  let col = i.tint * (1.0 - 0.45 * rim);
+  let edge = 1.0 - smoothstep(0.94, 1.0, d);
   return vec4<f32>(col * edge * i.alpha, edge * i.alpha);
 }`;
 
@@ -257,17 +273,27 @@ export class DevoView {
 
   /**
    * @param {Float32Array} xy      interleaved positions
-   * @param {Int32Array}   kind    0..3 per cell, or null while still growing
+   * @param {Float32Array} caps    sense,contract,grip,density per cell (stride 4),
+   *                                or null while still growing
    * @param {Float32Array} birth   when each cell appeared, in view seconds
    * @param {Uint8Array}   culled  1 for cells the carve removes, or null
+   * @param {Float32Array} radius  per-cell radius, or null for the base size
    */
-  setCells(n, xy, kind, birth, culled) {
+  setCells(n, xy, caps, birth, culled, radius) {
     this.ensure(n);
     const c = this.cells;
+    const ci = new Uint32Array(c.buffer);
+    const q6 = (v) => Math.max(0, Math.min(63, Math.round((v || 0) * 63)));
     for (let i = 0; i < n; i++) {
       c[i * 4]     = xy[i * 2];
       c[i * 4 + 1] = xy[i * 2 + 1];
-      c[i * 4 + 2] = (kind ? kind[i] & 3 : 0) | ((culled && culled[i] ? 1 : 0) << 2);
+      // A cell still growing has no capacities read off it yet; it draws as
+      // undifferentiated stone rather than guessing a type for it.
+      const s = caps ? caps[i * 4] : 0, ct = caps ? caps[i * 4 + 1] : 0;
+      const g = caps ? caps[i * 4 + 2] : 0, d = caps ? caps[i * 4 + 3] : 0.5;
+      ci[i * 4 + 2] = q6(s) | (q6(ct) << 6) | (q6(g) << 12) | (q6(d) << 18)
+                    | (q6((radius ? radius[i] : 0.34) / 1.2) << 24)
+                    | ((culled && culled[i] ? 1 : 0) << 30);
       c[i * 4 + 3] = birth ? birth[i] : 0;
     }
     this.n = n;

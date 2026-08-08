@@ -449,8 +449,12 @@
 import * as D from './lib/devo2.js';
 import { describe } from './lib/evolve.js';
 import * as DevoViewMod from './lib/devo-view.js';
+import { cellCss, COLOUR_LEGEND } from './lib/cellcolour.js';
 
 const $ = (id) => document.getElementById(id);
+// Kept only for the label histogram, where the point IS the discrete label.
+// Everything that draws a CELL now uses cellCss, which reads the capacities
+// themselves - see lib/cellcolour.js for why four flat colours were a lie.
 const TYPE_COL = ['#99998c', '#66a89e', '#c7734f', '#8f709e'];
 
 /* ------------------------------------------------------------------ chrome */
@@ -680,12 +684,21 @@ function drawBody(cv, cells, extent = D.DEFAULT_EXTENT) {
     x.fillText('no body — development failed', 14, H / 2);
     return;
   }
-  const r = Math.max(1.2, sc * 0.34);
   for (const c of cells) {
-    x.fillStyle = TYPE_COL[describe(c)];
+    // Its own size and its own colour. Flat fill, darker rim of the same hue -
+    // the Goodsell reading, where a crowd stays countable because every unit is
+    // outlined and nothing is shaded.
+    const r = Math.max(1.2, sc * (c.radius ?? 0.34));
+    x.fillStyle = cellCss(c.sense, c.contract, c.grip, c.density);
     x.beginPath();
     x.arc(W / 2 + c.x * sc, H / 2 + c.y * sc, r, 0, Math.PI * 2);
     x.fill();
+    if (r > 2.2) {
+      x.strokeStyle = cellCss(c.sense, c.contract, c.grip,
+                              Math.min(1, (c.density ?? 0.5) + 0.35));
+      x.lineWidth = Math.max(0.7, r * 0.16);
+      x.stroke();
+    }
   }
   if (zoomedOut) {
     x.fillStyle = '#8ba39b'; x.font = '10px ui-monospace,monospace';
@@ -788,7 +801,13 @@ async function precompute() {
       try {
         const r = D.develop(galGenomes[i], { ms, dtMs: GAL_DT,
           extent: D.DEFAULT_EXTENT, maxCells: 400, yolk: 1e9, syncytial });
-        cells = r.cells.map(c => ({ x: c.x, y: c.y, t: describe(c) }));
+        // Carry the quantities the colour is made of, not a label. describe()
+        // is still here for the histogram, where a discrete count is the point.
+        cells = r.cells.map(c => ({
+          x: c.x, y: c.y, t: describe(c),
+          sense: c.sense, contract: c.contract, grip: c.grip,
+          density: c.density, radius: c.radius,
+        }));
       } catch { /* a failed development is a normal outcome; leave it empty */ }
       galFilm[i][f - 1] = cells;
       done++;
@@ -828,9 +847,9 @@ function paintTile(cv, cells) {
   const sc = eggPx / reach;
   x.strokeStyle = '#1b2a27'; x.beginPath();
   x.arc(W / 2, H / 2, extent * sc, 0, Math.PI * 2); x.stroke();
-  const r = Math.max(1, sc * 0.34);
   for (const c of cells) {
-    x.fillStyle = TYPE_COL[c.t];
+    const r = Math.max(1, sc * (c.radius ?? 0.34));
+    x.fillStyle = cellCss(c.sense, c.contract, c.grip, c.density);
     x.beginPath(); x.arc(W / 2 + c.x * sc, H / 2 + c.y * sc, r, 0, Math.PI * 2); x.fill();
   }
 }
@@ -1000,8 +1019,8 @@ document.querySelectorAll('[data-big]').forEach(btn => {
         // The finished body: label each cell, and mark which the carve removes.
         const kind = new Int32Array(m.n);
         for (let i = 0; i < m.n; i++) {
-          kind[i] = describe({ sense: m.caps[i * 3], contract: m.caps[i * 3 + 1],
-                               grip: m.caps[i * 3 + 2] });
+          kind[i] = describe({ sense: m.caps[i * 4], contract: m.caps[i * 4 + 1],
+                               grip: m.caps[i * 4 + 2] });
         }
         // Cells present during growth but absent from the final body are what
         // `survive` rejected — the carve.
@@ -1014,9 +1033,21 @@ document.querySelectorAll('[data-big]').forEach(btn => {
           const li = m.idx[i];
           if (li < liveN) { xy[li * 2] = m.xy[i * 2]; xy[li * 2 + 1] = m.xy[i * 2 + 1]; }
         }
-        const allKind = new Int32Array(liveN);
-        for (let i = 0; i < m.n; i++) if (m.idx[i] < liveN) allKind[m.idx[i]] = kind[i];
-        view.setCells(liveN, xy, allKind, liveBirth, culled);
+        // Colour is the cell's actual capacities now, not a label, so the
+        // finished body carries the same continuous reading the physics does.
+        const allCaps = new Float32Array(liveN * 4);
+        const allRad = new Float32Array(liveN).fill(0.34);
+        for (let i = 0; i < liveN; i++) allCaps[i * 4 + 3] = 0.5;
+        for (let i = 0; i < m.n; i++) {
+          const li = m.idx[i];
+          if (li >= liveN) continue;
+          allCaps[li * 4]     = m.caps[i * 4];
+          allCaps[li * 4 + 1] = m.caps[i * 4 + 1];
+          allCaps[li * 4 + 2] = m.caps[i * 4 + 2];
+          allCaps[li * 4 + 3] = m.caps[i * 4 + 3];
+          if (m.radius) allRad[li] = m.radius[i];
+        }
+        view.setCells(liveN, xy, allCaps, liveBirth, culled, allRad);
         liveDone = true;
         const hist = [0, 0, 0, 0];
         for (let i = 0; i < m.n; i++) hist[kind[i]]++;

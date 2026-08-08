@@ -64,11 +64,17 @@ self.onmessage = async (e) => {
     // let one implementation of the labelling rule serve both.
     type[i] = 0;
   }
-  const caps = new Float32Array(n * 3);
+  // Stride 4, not 3: density joins the capacities because it is what the viewer
+  // draws as value, and radius rides alongside because relaxation made it vary.
+  const caps = new Float32Array(n * 4);
+  const radius = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     const c = result.cells[i];
-    caps[i * 3] = c.sense; caps[i * 3 + 1] = c.contract; caps[i * 3 + 2] = c.grip;
+    caps[i * 4] = c.sense; caps[i * 4 + 1] = c.contract;
+    caps[i * 4 + 2] = c.grip; caps[i * 4 + 3] = c.density ?? 0.5;
+    radius[i] = c.radius ?? 0.34;
   }
-  post({ kind: 'done', n, xy, caps, idx, aborted: !!result.aborted },
-       [xy.buffer, caps.buffer, idx.buffer, type.buffer]);
+  post({ kind: 'done', n, xy, caps, idx, radius, merged: result.merged ?? 0,
+         aborted: !!result.aborted },
+       [xy.buffer, caps.buffer, idx.buffer, type.buffer, radius.buffer]);
 };
