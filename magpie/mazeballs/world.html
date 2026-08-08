@@ -120,6 +120,17 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
   background:#16211Fdd;border:1px solid var(--rule);border-radius:8px;
   backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,.4);
 }
+/* The cell-scope launcher: a second canvas button stacked under the hamburger,
+   so the scatter is reachable world-first without opening the right panel. */
+#vizToggle{
+  position:fixed;top:calc(.5rem + env(safe-area-inset-top) + 52px);right:.6rem;
+  width:44px;height:44px;min-width:0;flex:none;
+  z-index:59;padding:0;font-size:1.1rem;line-height:1;color:var(--ink);cursor:pointer;
+  background:#16211Fdd;border:1px solid var(--rule);border-radius:8px;
+  backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,.4);
+}
+#vizToggle:hover{border-color:var(--sensor)}
+#vizToggle.on{background:var(--sensor);border-color:var(--sensor);color:#06110F}
 .legend{display:flex;gap:.7rem;font-size:.68rem;color:var(--ink-soft);font-family:var(--mono)}
 .legend i{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:.25rem}
 .note{font-size:.68rem;line-height:1.5;color:var(--ink-soft)}
@@ -292,6 +303,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   </div>
 </div>
 <button id="toggle" title="panel">☰</button>
+<button id="vizToggle" title="cell scope — scatter cells or creatures by any property">▦</button>
 
 <!-- THE CELL SCOPE. A pop-out scatter with pickable axes; see the module near
      the gallery code. Empty selects are filled in by JS from the property list. -->
@@ -3262,7 +3274,8 @@ on('bGallery', 'onclick', showGallery);
   };
   $('vizModeCell').addEventListener('click', () => switchMode('cell'));
   $('vizModeCrit').addEventListener('click', () => switchMode('crit'));
-  $('vizClose').addEventListener('click', () => box.classList.remove('on'));
+  const setToggleState = (on) => { const vt = $('vizToggle'); if (vt) vt.classList.toggle('on', on); };
+  $('vizClose').addEventListener('click', () => { box.classList.remove('on'); setToggleState(false); });
 
   // Click a population dot to select that creature — the same one-arg selectUid
   // the gallery tiles use.
@@ -3280,11 +3293,14 @@ on('bGallery', 'onclick', showGallery);
     if (best >= 0 && data[best].uid != null) { selectUid(data[best].uid); note('selected #' + data[best].uid); }
   });
 
-  on('bViz', 'onclick', () => {
+  const toggleViz = () => {
     const opening = !box.classList.contains('on');
     box.classList.toggle('on');
+    setToggleState(opening);
     if (opening) refresh();
-  });
+  };
+  on('bViz', 'onclick', toggleViz);
+  on('vizToggle', 'onclick', toggleViz);
 
   addEventListener('resize', () => { if (box.classList.contains('on')) draw(); });
   setMenus();
