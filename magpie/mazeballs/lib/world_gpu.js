@@ -445,7 +445,7 @@ fn moteBucketOf(p: vec2<f32>) -> u32 {
   let span = 2.0 * b;
   var q = p;
   q.x = q.x - span * floor((q.x + b) / span);
-  q.y = q.y - span * floor((q.y + b) / span);
+  if (P.wrapY > 0.5) { q.y = q.y - span * floor((q.y + b) / span); }
   let gx = i32(floor(q.x / P.moteR));
   let gy = i32(floor(q.y / P.moteR));
   let h = u32(gx * 73856093) ^ u32(gy * 19349663);
@@ -606,6 +606,22 @@ fn wetnessAt(p: vec2<f32>) -> f32 {
 
 fn mudAt(p: vec2<f32>) -> f32 { return mudFrom(wetnessAt(p)); }
 
+// CLIMATE. Warm at the equator, cold at the poles, colder with altitude.
+//
+// A field, not a role — nothing here knows what a "polar species" is. What the
+// world provides is a place that costs more to live in, and what a lineage does
+// about that is its own business.
+//
+// Latitude is |y| over the half-width, so the equator is the line y = 0 and both
+// poles are cold. The lapse term makes high ground colder at any latitude, which
+// is what gives mountains their own climate and stops latitude being the only
+// axis a lineage can specialise along.
+fn tempAt(p: vec2<f32>, h: f32) -> f32 {
+  let lat = clamp(abs(p.y) / max(1e-4, P.bound), 0.0, 1.0);
+  let base = mix(P.tempEq, P.tempPole, lat * lat);
+  return base - P.tempLapse * max(0.0, h);
+}
+
 // THE SHORE — a band hugging the OUTSIDE of the channel, and the only place
 // worth living.
 //
@@ -684,8 +700,15 @@ fn minImage(d: vec2<f32>) -> vec2<f32> {
   let b = P.bound;
   if (r.x >  b) { r.x = r.x - 2.0 * b; }
   if (r.x < -b) { r.x = r.x + 2.0 * b; }
-  if (r.y >  b) { r.y = r.y - 2.0 * b; }
-  if (r.y < -b) { r.y = r.y + 2.0 * b; }
+  // Y WRAPS ONLY ON A TORUS. With poles the shortest path between two cells is
+  // the direct one — going "round the top" is not a route that exists, and
+  // wrapping here would have bodies at the north pole exerting forces on bodies
+  // at the south. All four places that wrap y must agree or a body straddling a
+  // pole is torn apart by forces pointing at a neighbour it cannot reach.
+  if (P.wrapY > 0.5) {
+    if (r.y >  b) { r.y = r.y - 2.0 * b; }
+    if (r.y < -b) { r.y = r.y + 2.0 * b; }
+  }
   return r;
 }
 
@@ -821,7 +844,7 @@ fn bucketOf(p: vec2<f32>) -> u32 {
   let span = 2.0 * b;
   var q = p;
   q.x = q.x - span * floor((q.x + b) / span);
-  q.y = q.y - span * floor((q.y + b) / span);
+  if (P.wrapY > 0.5) { q.y = q.y - span * floor((q.y + b) / span); }
   let gx = i32(floor(q.x / P.hashCell));
   let gy = i32(floor(q.y / P.hashCell));
   var h : u32 = (u32(gx) * 73856093u) ^ (u32(gy) * 19349663u);
@@ -1257,8 +1280,12 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
     let B = P.bound;
     if (np.x >  B) { np.x = np.x - 2.0 * B; }
     if (np.x < -B) { np.x = np.x + 2.0 * B; }
-    if (np.y >  B) { np.y = np.y - 2.0 * B; }
-    if (np.y < -B) { np.y = np.y + 2.0 * B; }
+    if (P.wrapY > 0.5) {
+      if (np.y >  B) { np.y = np.y - 2.0 * B; }
+      if (np.y < -B) { np.y = np.y + 2.0 * B; }
+    } else {
+      np.y = clamp(np.y, -B, B);
+    }
     mote[i * 2u] = vec4<f32>(np.x, np.y, clamp(stock, 0.0, cap), 0.0);
     return;
   }
@@ -1794,12 +1821,22 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
 
   var np = p + v * P.dt;
 
-  // Toroidal wrap keeps the world edgeless without a wall to pile up against.
+  // Toroidal wrap keeps the world edgeless without a wall to pile up against —
+  // in x always, and in y only when there are no poles.
   let b = P.bound;
   if (np.x >  b) { np.x = np.x - 2.0 * b; }
   if (np.x < -b) { np.x = np.x + 2.0 * b; }
-  if (np.y >  b) { np.y = np.y - 2.0 * b; }
-  if (np.y < -b) { np.y = np.y + 2.0 * b; }
+  if (P.wrapY > 0.5) {
+    if (np.y >  b) { np.y = np.y - 2.0 * b; }
+    if (np.y < -b) { np.y = np.y + 2.0 * b; }
+  } else {
+    // A POLE IS A WALL, and a wall needs the velocity killed as well as the
+    // position clamped. Clamping alone leaves the cell pressed against it with
+    // its momentum intact, so it stays there paying drag forever and the pole
+    // becomes a trap that collects the population rather than a boundary.
+    if (np.y >  b) { np.y = b; v.y = min(v.y, 0.0); }
+    if (np.y < -b) { np.y = -b; v.y = max(v.y, 0.0); }
+  }
 
   pos[i] = np;
 
@@ -1948,6 +1985,24 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // heights a frontier only some lineages can afford rather than just another
   // place. Only the upper half of the range charges anything.
   let terrainWork = P.highSap * max(0.0, hHere);
+  // THERMOREGULATION. A cell pays to hold itself away from ambient, and only
+  // beyond a tolerance — inside the band it pays nothing, so the passive case
+  // costs nothing extra and the affordance law holds. Outside it, the bill rises
+  // with the square of the excess, because losing heat to a colder world is
+  // roughly proportional to the gradient and the work to replace it rises faster
+  // than linearly.
+  //
+  // It is a COST and never an income. There is no temperature at which a cell
+  // gains energy; the friction law does not permit a place that pays you to
+  // stand in it. Warmth is the absence of a bill.
+  //
+  // tempCost 0 is the world as it has always been, and is the default.
+  var climateWork = 0.0;
+  if (P.tempCost > 0.0) {
+    let dev = abs(tempAt(p, hHere) - P.tempOpt);
+    let excess = max(0.0, dev - P.tempTol);
+    climateWork = P.tempCost * excess * excess;
+  }
 
   // ---------------------------------------------------------- TIDAL INCOME
   //
@@ -2005,6 +2060,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // contactK being a denormal (see lib/uniform.js), cells have never collided.
   vel[i] = vec4<f32>(v.x, v.y, vel[i].z,
     clamp(energy[i] + (gain + tidal - P.brainTax - work - senseWork - armourWork - terrainWork
+                       - climateWork
                        + taken + sap - abs(sap) * P.sapLoss) * P.dt, P.eFloor, P.eCap));
 }
 
@@ -2332,6 +2388,15 @@ export class WorldGPU {
       // so loud that it drowns out everything else a sensor reads.
       senseTerrain: 0.45,
       warpAmt: 0.55, ridgeAmt: 0.42, mudBank: 0.52, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
+      // CLIMATE AND POLES, OFF BY DEFAULT. wrapY 1 is the torus this world has
+      // always been and tempCost 0 charges nothing, so the shipped world is
+      // unchanged until these are turned on deliberately. The band is written in
+      // normalised units where 1.0 is the equator and 0.0 the poles; tempOpt
+      // 0.62 with tolerance 0.18 makes roughly the middle latitudes free and
+      // both the tropics and the poles expensive.
+      wrapY: 1.0,
+      tempPole: 0.0, tempEq: 1.0, tempLapse: 0.35,
+      tempOpt: 0.62, tempTol: 0.18, tempCost: 0.0,
       // Cells are solid. This was silently 1.68e-44 for the life of the code —
       // see lib/uniform.js — so nothing has ever pushed back on anything. Sized
       // against springK so a bond can still hold a body together against the

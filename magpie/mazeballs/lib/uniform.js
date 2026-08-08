@@ -146,6 +146,26 @@ export const WORLD_FIELDS = [
   ['sapLoss', 'f32', 'fraction of moved energy lost to heat — transport is not free'],
   ['shelterK', 'f32', 'how much a larger body shields its cells from being taken from'],
   ['grazeBodyShare', 'f32', 'crowding counts competitors not mouths; 0 = as before, 1 = per body'],
+
+  // CLIMATE AND POLES. Appended at the end so no existing offset moves.
+  //
+  // wrapY 1 is the torus this world has always been. At 0 the y axis stops
+  // wrapping and the world gains two ends — poles — which a lineage cannot walk
+  // round. That is the classic condition for allopatric speciation, and this
+  // world's diversity has been collapsing (277 lineages to 14 over a million
+  // steps), so a barrier is worth testing. x still wraps, so the world is a
+  // cylinder rather than a plane.
+  ['wrapY', 'f32', '1 = toroidal in y as before, 0 = hard poles'],
+  // Temperature is a FIELD, not a role: warm at the equator, cold at the poles,
+  // and colder with altitude. A cell pays to hold itself away from ambient, so
+  // the passive case costs nothing extra and only living somewhere unsuitable
+  // does — affordance, not forcing.
+  ['tempPole', 'f32', 'temperature at the poles, in normalised units'],
+  ['tempEq', 'f32', 'temperature at the equator'],
+  ['tempLapse', 'f32', 'how much colder high ground is'],
+  ['tempOpt', 'f32', 'the temperature a cell is built for'],
+  ['tempTol', 'f32', 'how far it can stray before paying'],
+  ['tempCost', 'f32', 'energy per second per unit of excess deviation; 0 = climate off'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */
