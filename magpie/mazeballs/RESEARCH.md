@@ -6960,3 +6960,68 @@ Not retracted, because it was never claimed: cleave mode is not broken. It does
 what it says. What is missing is a reason for `survive` to vary across the embryo,
 and diffusion-driven patterning (step 4 of the wizard demonstrates it working in
 isolation) is the mechanism that would supply one.
+
+## 2026-08-08 — the embryo is a clock, not a map
+
+danbri observed that every form in the wizard has radial symmetry and tends to a
+circular blob, and that if the maternal gradients were working, limbs should vary
+with depth into a gradient. They are not working, and here is what is.
+
+Correlating each readout against position, over the 16 gallery genomes at
+18,000 ms (absolute correlations, so strength and not direction):
+
+```
+prop        sd across cells   |r| with ap   |r| with dv   |r| with radius
+contract             0.2037         0.134         0.074            0.468
+sense                0.1516         0.078         0.098            0.527
+grip                 0.1482         0.080         0.069            0.490
+stiff                0.0879         0.106         0.104            0.472
+tau                  0.1056         0.094         0.123            0.503
+bias                 0.1553         0.120         0.071            0.513
+```
+
+Expression is NOT flat — sd 0.09 to 0.20 — but it is organised radially, and the
+maternal axes barely register at 0.07 to 0.13. Radial organisation is rotationally
+invariant, which is exactly the radial symmetry observed.
+
+But radius is confounded with age at r = 0.596, because the body grows outward
+from one cell. Separating them:
+
+```
+prop        |r| with radius   |r| with age
+contract              0.468          0.614
+sense                 0.527          0.631
+grip                  0.490          0.601
+tau                   0.503          0.545
+```
+
+**Age wins for every property.** The radial gradient is developmental age wearing
+a spatial costume: cells born early are near the centre and share an expression
+state, cells born late are at the rim and share a different one.
+
+The mechanism is in the division step. Cytoplasm is divided rather than created:
+
+```
+const half = conc[bs + g] * 0.5;
+conc[bd + g] = half; conc[bs + g] = half;
+```
+
+Every division halves every gene product in BOTH cells, so concentration falls as
+2^-(divisions). Against that, the network restores state at its decay rate —
+median 1.04, i.e. about 0.96 s — while divisions arrive every ~0.6 s at full
+`grow`. **Dilution outruns synthesis.** The dominant signal in the embryo is
+therefore how many times a cell has divided, not where it is, and a signal that
+counts divisions is a clock.
+
+Three earlier findings fall out of this one:
+
+- No bands along an axis. Banding needs ap-dependence; ap correlates at 0.08-0.13.
+- The carve is all-or-nothing. `survive` is uniform because it tracks age, and at
+  any instant most cells are of similar age.
+- Bigger bodies are rounder. More growth means more concentric age layers.
+
+Not measured: whether slowing division relative to decay recovers the maternal
+signal. That is the obvious experiment and it is a one-parameter change
+(`divRate`), which makes it cheap and makes it suspect — a result that appears
+only at a hand-tuned ratio is a knob, not a mechanism. It needs a pre-registered
+bar and both horizons.
