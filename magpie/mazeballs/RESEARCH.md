@@ -6910,3 +6910,53 @@ and inherits that.
 
 The crowding argument remains a good reading of the design. It is simply not what
 is binding.
+
+## 2026-08-08 — grow-then-carve does not sculpt, because there is nothing to carve along
+
+danbri proposed growing an egg to thousands of cells and then trimming to a
+manageable body — overproduce and prune, which is how real nervous systems
+develop. `devo2.js` already implements it as `mode: 'cleave'`, and the world does
+not use it: the default is `mode: 'grow'`, and `sculpt` is gated on cleave, so the
+`survive` gene — one of the fifteen readout genes — has never done anything in
+the live world. Same shape of defect as senseTune.
+
+Turning it on, 30 genomes each:
+
+```
+mode / ms / extent   bodies  mean cells  mean bands  mean elong  mean types
+grow    12000 / 12        8          16        0.63        1.54        1.25
+cleave  12000 / 12       16          87        0.00        1.09        1.13
+cleave  30000 / 20       16         486        0.00        1.06        1.13
+```
+
+Cleave gives more viable bodies and much bigger ones, and LESS structure.
+
+Sweeping the carve threshold on a 486-cell field:
+
+```
+thresh  viable  mean kept  mean bands
+   0.5      16        486        0.00
+  0.75      14        522        0.00
+   0.9       5        416        0.00
+  0.96       0          -           -
+  0.99       0          -           -
+```
+
+**The carve is all-or-nothing.** Raising the threshold does not remove more cells
+from a body — it removes whole bodies, 16 viable to 5 to none, while the number
+kept barely moves. `survive` is spatially uniform across the embryo, so it is a
+global switch rather than a chisel, and there is no pattern in it to carve along.
+
+The implication is upstream of the idea. Bands measure 0.00 in every cleave
+condition tested, and 0.63 under grow — which is head-and-tail polarity, not
+segmentation. **The GRN produces shape but not spatial pattern in gene
+expression.** Bodies vary in outline — elongation 2.95 has been measured, and the
+wizard gallery contains stars and spirals — while the tissue inside them does not
+band. That is precisely the differentiation blocker, stated in developmental
+rather than economic terms, and it is a different problem from the
+multicellularity tax.
+
+Not retracted, because it was never claimed: cleave mode is not broken. It does
+what it says. What is missing is a reason for `survive` to vary across the embryo,
+and diffusion-driven patterning (step 4 of the wizard demonstrates it working in
+isolation) is the mechanism that would supply one.
