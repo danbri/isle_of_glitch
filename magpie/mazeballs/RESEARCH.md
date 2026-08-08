@@ -7093,3 +7093,47 @@ It is an option, not the default.
 Not measured: whether a body developed this way is FITTER, or merely more
 patterned. Patterning is the substrate differentiation needs, not differentiation
 itself, and the multicellularity tax is untouched by any of this.
+
+## 2026-08-08 — the ambient medium makes the clock worse, and my syncytial option was not what was asked for
+
+Correction first. danbri proposed, from Jaeger's gap-gene work, that "expression
+at some position affects the ambient chemistry of the other proto-cells", and
+asked whether we need an ambient term and egg-wide fields per protein. What I
+built and reported as "syncytial" was a division-time COPY: the daughter
+duplicates its mother's concentrations. That is not a shared medium — no cell's
+expression reaches any other cell through it — and it is not faithful to a
+syncytium either, since giving each daughter a full copy DOUBLES total gene
+product at every division where a shared cytoplasm conserves it. The measurement
+stands; the interpretation does not. It tests "remove dilution", not "share a
+medium".
+
+The ambient field is now implemented as asked: NGENE layers of a grid over the
+egg, cells exchanging with the bin they occupy, transfer summed per bin so it is
+mass-conserving by construction, and the grid diffusing at each gene's own rate.
+
+Measured over Codex's sixteen demo genomes, with PCA elongation rather than the
+bounding-box ratio Codex correctly called too weak:
+
+```
+            cells   |r| head-tail   |r| across    |r| age     PCA elong
+as-is         132   0.110 +-0.011  0.092 +-0.012 0.645 +-0.020 1.360 +-0.074
+AMBIENT        51   0.118 +-0.013  0.117 +-0.013 0.790 +-0.021 1.183 +-0.030
+syncytial     142   0.255 +-0.046  0.313 +-0.047 0.189 +-0.028 1.660 +-0.138
+```
+
+**The ambient field strengthens the clock.** Age correlation rises by 5.0 SE, PCA
+elongation falls by 2.2 SE, and bodies come out at 51 cells against 132. The
+maternal axes do not move. The likely mechanism is that the medium is a sink:
+cells equilibrate with a mostly-empty field, concentrations fall faster than
+before, and dilution — already the dominant signal — gets stronger.
+
+Caveats that keep this from being a verdict on the idea. ambK 2.0, ambRes 24 and
+ambDiff 1.0 are guesses rather than tuned values. The size difference is large and
+age correlation depends on size, so this needs the same matched comparison the
+plump claim needed. A negative result from an untuned implementation is weak
+evidence about a mechanism.
+
+What it does suggest: the binding constraint is not that products cannot travel
+far enough. Better transport made things worse. The constraint is the dilution
+itself, which is what the copy hack removes and what a genuinely shared cytoplasm
+would also remove — by conserving one pool rather than by duplicating pools.

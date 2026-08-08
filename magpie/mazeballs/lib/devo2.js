@@ -375,6 +375,29 @@ export function develop(genome, {
   // law is untouched. What is relaxed is mass conservation of signalling
   // molecules, which this model never tracked as a budget in the first place.
   syncytial = false,
+  // AN AMBIENT MEDIUM — the thing danbri actually asked for, and which the
+  // syncytial option above does not provide.
+  //
+  // In the fly's blastoderm there are no cell walls yet, so a gene product
+  // expressed at one position enters a shared cytoplasm and changes the
+  // chemistry every other nucleus is reading. Jaeger's gap-gene models are of
+  // exactly that: a field across the embryo, and nuclei reading their position
+  // in it.
+  //
+  // What this model had instead was cell-to-cell exchange between neighbours
+  // within REACH. That is a medium only in the sense that a chain of buckets is
+  // a river: nothing travels further than adjacency allows, and a gradient can
+  // only be built by relay.
+  //
+  // `ambient` adds a real field: a grid over the egg, one layer per gene, that
+  // cells secrete into and draw from, and which diffuses on its own. Transfer is
+  // MASS CONSERVING by construction — what a cell gains the field loses, summed
+  // per bin — so unlike the syncytial copy this creates nothing. The only source
+  // is synthesis and the only sink is decay, exactly as before.
+  ambient = false,
+  ambRes = 24,        // grid cells across the egg
+  ambK = 2.0,         // how fast a cell equilibrates with the medium around it
+  ambDiff = 1.0,      // scales each gene's own diffusion rate on the grid
 } = {}) {
   const dt = dtMs / 1000;
   const nStep = Math.max(1, Math.round(ms / dtMs));
@@ -508,6 +531,17 @@ export function develop(genome, {
   // callback fires rather than each tick — clearing per step dropped every
   // division that happened between reports, which at stepEvery 8 lost seven
   // eighths of them and made a body of 1,169 cells look like 162 divisions.
+  // The medium: NGENE layers of an ambRes x ambRes grid over the egg.
+  const AR = ambient ? Math.max(4, ambRes | 0) : 0;
+  const amb = ambient ? new Float32Array(AR * AR * NGENE) : null;
+  const ambNext = ambient ? new Float32Array(AR * AR * NGENE) : null;
+  const ambFlux = ambient ? new Float32Array(AR * AR * NGENE) : null;
+  const ambBin = (x, y) => {
+    const gx = Math.min(AR - 1, Math.max(0, Math.floor((x / extent + 1) * 0.5 * AR)));
+    const gy = Math.min(AR - 1, Math.max(0, Math.floor((y / extent + 1) * 0.5 * AR)));
+    return gy * AR + gx;
+  };
+
   const bornSinceReport = [];
   for (let t = 0; t < nStep && !aborted; t++) {
     rebuildNeighbours();
@@ -543,6 +577,40 @@ export function develop(genome, {
       const b = i * NGENE;
       for (let g = N_MATERNAL; g < NGENE; g++) conc[b + g] = next[b + g];
       setMaternal(i);
+    }
+
+    if (ambient) {
+      // 1. Exchange, in two passes so it conserves exactly. Each cell computes
+      //    what it would take from the medium; the bins are debited by the sum
+      //    of what their occupants took, so nothing is created or lost.
+      ambFlux.fill(0);
+      for (let i = 0; i < n; i++) {
+        const bin = ambBin(X[i], Y[i]) * NGENE, b = i * NGENE;
+        for (let g = N_MATERNAL; g < NGENE; g++) {
+          const f = ambK * (amb[bin + g] - conc[b + g]) * dt;
+          conc[b + g] = Math.max(0, conc[b + g] + f);
+          ambFlux[bin + g] += f;
+        }
+      }
+      for (let k = 0; k < AR * AR * NGENE; k++) amb[k] = Math.max(0, amb[k] - ambFlux[k]);
+
+      // 2. The medium diffuses on its own, at each gene's own rate. This is what
+      //    makes it a field rather than a set of buckets: a product reaches
+      //    cells its maker never touched.
+      for (let gy = 0; gy < AR; gy++) {
+        for (let gx = 0; gx < AR; gx++) {
+          const c = (gy * AR + gx) * NGENE;
+          const l = (gy * AR + Math.max(0, gx - 1)) * NGENE;
+          const r = (gy * AR + Math.min(AR - 1, gx + 1)) * NGENE;
+          const u = (Math.max(0, gy - 1) * AR + gx) * NGENE;
+          const d = (Math.min(AR - 1, gy + 1) * AR + gx) * NGENE;
+          for (let g = N_MATERNAL; g < NGENE; g++) {
+            const lap = amb[l + g] + amb[r + g] + amb[u + g] + amb[d + g] - 4 * amb[c + g];
+            ambNext[c + g] = Math.max(0, amb[c + g] + ambDiff * diff[g] * lap * dt);
+          }
+        }
+      }
+      amb.set(ambNext);
     }
 
     if (plump) {
