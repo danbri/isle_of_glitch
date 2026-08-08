@@ -2233,6 +2233,10 @@ export class WorldGPU {
       // read these from, and a founder that was inedible would be a boundary
       // condition with teeth.
       meta[i * 4 + 3] = packSize(cells.bodySize ? cells.bodySize[i] : 0, 0.5, 0.0, 0.5);
+      // Founders mirror too, or a fresh world's first generation would draw as
+      // undifferentiated stone until it had bred once.
+      if (cells.metaX) cells.metaX[i] = meta[i * 4];
+      if (cells.metaW) cells.metaW[i] = meta[i * 4 + 3];
     }
     this.bPos = mk(pos); this.bVel = mk(vel); this.bMeta = mk(meta);
     // Pack bond index + rest length into the one vec2 buffer the shader binds.

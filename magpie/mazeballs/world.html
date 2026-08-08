@@ -3832,10 +3832,24 @@ function applyFrame(ab) {
     }
   }
 
-  sim.lastPos = pos; sim.lastAct = act; sim.lastType = type;
+  // THE WIRE CARRIES THE PACKED MATERIAL WORD NOW, not the 0..3 label.
+  //
+  // The renderer wants the packed word - hue from which capacities a cell has,
+  // saturation from how committed it is - and everything else here wants the
+  // label: the type histogram counts into a four-slot array and the scope
+  // strokes by type, both of which would index wildly out of range on a packed
+  // word. So the label is derived once, here, and the two consumers stop
+  // fighting over one field.
+  //
+  // A vacated slot packs negative (packMeta guarantees bit 31 set), so the sign
+  // test still identifies the dead before any masking happens.
+  const label = new Int32Array(type.length);
+  for (let i = 0; i < type.length; i++) label[i] = type[i] < 0 ? -1 : (type[i] & 3);
+  sim.lastMat = type;
+  sim.lastPos = pos; sim.lastAct = act; sim.lastType = label;
   sim.lastUid = uid; sim.lastEnergy = energy;
-  sampleSelected(pos, act, type, uid, n, dv.getUint32(8, true));
-  sampleMotion(pos, type, uid, n, dv.getUint32(8, true));
+  sampleSelected(pos, act, label, uid, n, dv.getUint32(8, true));
+  sampleMotion(pos, label, uid, n, dv.getUint32(8, true));
 
   const q = dev.queue;
   q.writeBuffer(sim.world.bPos, 0, pos);
@@ -3857,6 +3871,8 @@ function applyFrame(ab) {
   if (restatic) {
     const meta = new Int32Array(n * 4);
     for (let i = 0; i < n; i++) {
+      // The packed word, so the shader's continuous path fires in watch mode
+      // exactly as it does for a page running its own simulation.
       meta[i * 4] = type[i];
       meta[i * 4 + 1] = type[i] >= 0 ? i : -1;
       meta[i * 4 + 2] = uid[i];
@@ -4283,7 +4299,13 @@ function writeCam(t0, pxScale = 1, target = null) {
   // 1 = cmeta.x packs the continuous material vector (a page running its own
   // sim, lib/world_gpu.js packMeta); 0 = the server sent a plain 0..3 type
   // bucket. The cell colour decodes capacities only when packed.
-  dv.setFloat32(228, WATCH ? 0 : 1, true);
+  // ALWAYS 1 NOW. This was `WATCH ? 0 : 1` because the frame protocol only
+  // carried a 0..3 argmax label, so a watching page had no material to colour
+  // from and fell back to four flat buckets - which is exactly what "the
+  // palette looks simplistic again" was. The frame carries the packed word
+  // since the material mirror was added server-side, at no extra bytes, so both
+  // paths now draw the same continuous colour.
+  dv.setFloat32(228, 1, true);
 
   // The cached setting draws no cells, so topPass has nothing to say about it.
   if (target) { dev.queue.writeBuffer(target, 0, b); return; }

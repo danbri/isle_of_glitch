@@ -862,9 +862,23 @@ async function buildFrame() {
   // cell -> brain-slot indirection here rather than shipping the slot table.
   const cellAct = new Float32Array(N);
   const cellType = new Int32Array(N);
+  // THE PACKED MATERIAL WORD, not the 0..3 argmax label.
+  //
+  // The viewer has always had a continuous colour path - hue from which
+  // capacities a cell has, saturation from how committed it is - but it was
+  // gated on receiving the packed word, and this frame only ever carried the
+  // label. So every page in watch mode fell through to four flat colours while
+  // a page running its own sim showed the real thing. Reported as the palette
+  // looking simplistic, and it was: the information was on the server the whole
+  // time and the wire dropped it.
+  //
+  // Costs nothing extra: this is the same 4 bytes per cell the label used, in a
+  // block that is only resent when the epoch changes.
+  const cellMat = new Int32Array(N);
   for (let i = 0; i < N; i++) {
     const t = built.cells.ctype[i];
     cellType[i] = t;
+    cellMat[i] = built.cells.metaX ? built.cells.metaX[i] : t;
     const slot = built.cells.cslot[i];
     cellAct[i] = (t >= 0 && slot >= 0) ? act[slot] : 0;
   }
@@ -881,7 +895,7 @@ async function buildFrame() {
   new Int32Array(buf, at, L).set(Int32Array.from(liveIdx)); at += L * 4;
   {
     const t2 = new Int32Array(buf, at, L);
-    for (let k = 0; k < L; k++) t2[k] = cellType[liveIdx[k]];
+    for (let k = 0; k < L; k++) t2[k] = cellMat[liveIdx[k]];
     at += L * 4;
   }
 

@@ -615,6 +615,10 @@ export class Evolver {
                                  c.density ?? 0.5);
       if (cells.contractility) cells.contractility[dst + i] = con;
       if (cells.grippiness) cells.grippiness[dst + i] = gri;
+      // Mirror exactly what went to the GPU, so a viewer reads the cell's real
+      // material rather than the label that won its argmax.
+      if (cells.metaX) cells.metaX[dst + i] = meta[i * 4];
+      if (cells.metaW) cells.metaW[dst + i] = meta[i * 4 + 3];
       cells.ctype[dst + i] = type;
       cells.body[dst + i] = child; cells.bodySize[dst + i] = n;
       cells.cslot[dst + i] = dst + i;
