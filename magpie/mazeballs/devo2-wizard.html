@@ -83,6 +83,8 @@
   .toppager{display:flex;gap:.4rem;align-items:center;margin-top:.55rem}
   .toppager button{margin:0}
   #stepWhere{font-size:.74rem;color:var(--soft);font-family:var(--mono);margin-left:.3rem}
+  #kbdHint{font-size:.7rem;color:var(--soft);opacity:.62;margin-left:.5rem}
+  @media (max-width:560px){ #kbdHint{display:none} }
 </style>
 
 <header>
@@ -93,6 +95,7 @@
     <button class="act" id="bPrevTop">&larr; back</button>
     <button class="act" id="bNextTop">next &rarr;</button>
     <span id="stepWhere"></span>
+    <span id="kbdHint">&larr; &rarr; to move &middot; 0&ndash;9 jump &middot; space plays</span>
   </div>
   <nav id="nav"></nav>
 </header>
@@ -486,6 +489,40 @@ function show(i) {
 }
 $('bPrev').onclick = $('bPrevTop').onclick = () => show(step - 1);
 $('bNext').onclick = $('bNextTop').onclick = () => show(step + 1);
+
+/**
+ * KEYBOARD NAVIGATION.
+ *
+ * Left and right step through, Home and End jump to the ends, and the digits
+ * 0-9 go straight to a step — the same order as the chips, so 5 is the gallery.
+ *
+ * Ignored while the focus is in a control, because this page is full of range
+ * inputs and arrow keys are how you nudge those by one. Stealing them would make
+ * the sliders unusable with a keyboard, which is a worse accessibility outcome
+ * than not having page navigation at all. Space toggles play on the gallery step
+ * for the same reason it is not bound globally: it is the scrub bar's own key
+ * when that has focus.
+ */
+addEventListener('keydown', (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const el = document.activeElement;
+  const inControl = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ||
+                           el.tagName === 'SELECT' || el.isContentEditable);
+  if (inControl) return;
+
+  switch (e.key) {
+    case 'ArrowLeft':  show(step - 1); e.preventDefault(); break;
+    case 'ArrowRight': show(step + 1); e.preventDefault(); break;
+    case 'Home':       show(0); e.preventDefault(); break;
+    case 'End':        show(sections.length - 1); e.preventDefault(); break;
+    case ' ':
+      // Play/pause, but only where there is something to play.
+      if (step === 5 && $('bPlay')) { $('bPlay').click(); e.preventDefault(); }
+      break;
+    default:
+      if (/^[0-9]$/.test(e.key)) { show(+e.key); e.preventDefault(); }
+  }
+});
 
 /* --------------------------------------------------------------- step 0 */
 $('tblConst').innerHTML = `
