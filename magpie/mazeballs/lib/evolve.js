@@ -112,7 +112,11 @@ export class Evolver {
     sizeMutRate = 0.25, minCells = 5, maxCells = 40, topoMutRate = 0.30,
     birthOrder = 'lottery',
     devo = true, yolkFrac = 0.55, cellCost = 0.55, eggExtent = null, birthMargin = 1.15,
-    devoVersion = 2, devoOpts = {}, lineageLog = null, dispersal = 9,
+    // condense: development hands over a body that has SIMPLIFIED. Uniform
+    // tissue fuses into larger nodes and the small cells left along material
+    // boundaries are what articulate. Three passes merges about a quarter of
+    // the cells and yields eight distinct sizes.
+    devoVersion = 2, devoOpts = { condense: 3 }, lineageLog = null, dispersal = 9,
   }) {
     this.arena = arena; this.world = world; this.cells = cells;
     this.birthEnergy = birthEnergy; this.deathEnergy = deathEnergy;
@@ -492,7 +496,7 @@ export class Evolver {
       // pointing a different way. The bond twist coupling maintains it.
       pos[i * 4 + 2] = th;
       pos[i * 4 + 3] = 0;
-      vel[i * 4 + 2] = cells.rad ? cells.rad[dst + i] || 0.34 : 0.34;
+      vel[i * 4 + 2] = c.radius ?? 0.34;
 
       const type = describe(c);
       // Negative expression is no capacity, not reverse capacity.
@@ -540,7 +544,10 @@ export class Evolver {
       cells.cslot[dst + i] = dst + i;
       cells.px[dst + i] = wx; cells.py[dst + i] = wy;
       cells.vx[dst + i] = 0; cells.vy[dst + i] = 0;
-      if (cells.rad) cells.rad[dst + i] = 0.34;
+      // The size relaxation gave this cell. Radius was 0.34 for every cell in
+      // every body until now, which meant mass could not vary with size and the
+      // r^2 and 1/r scalings in the kernel had nothing to bite on.
+      if (cells.rad) cells.rad[dst + i] = c.radius ?? 0.34;
       arena.cell[dst + i] = dst + i;
       arena.bias[dst + i] = c.bias;
       arena.invTau[dst + i] = 1 / Math.max(0.05, c.tau);

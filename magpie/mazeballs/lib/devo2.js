@@ -165,7 +165,13 @@ export const OUTPUTS = ['grow', 'survive', 'contract', 'sense', 'grip', 'stiff',
                         // scale together, so which ways of moving work at all
                         // becomes something a body can be built into rather
                         // than something the kernel decides.
-                        'density'];
+                        'density',
+                        // FUSE — how readily this cell merges with a neighbour
+                        // made of the same stuff, during the relaxation phase
+                        // that ends development. Nothing here names a joint or
+                        // a limb: a joint is what is LEFT where fusion did not
+                        // happen, at the boundary between unlike tissue.
+                        'fuse'];
 export const G_GROW    = OUT_BASE + 0;
 /**
  * SURVIVE — whether this cell is still part of the body when the egg hatches.
@@ -321,6 +327,11 @@ export function develop(genome, {
   cleaveFrac = 0.35,
   divRate = 1.6,
   surviveThresh = 0.5,
+  // How many rounds of fusion end development. 0 hands over the raw grain of
+  // cells, which is what every body before this was.
+  condense = 0,
+  baseRadius = 0.34,
+  maxRadius = 3.0,        // in units of baseRadius
   // WATCHING DEVELOPMENT HAPPEN, rather than being handed the corpse.
   //
   // develop() is one synchronous call that returns a finished body, so anything
@@ -897,9 +908,107 @@ export function develop(genome, {
       // geometric middle and is neutrally buoyant, so an unexpressed gene
       // leaves the cell exactly where the old massless world had it.
       density: 0.5 * (out(i, 15) + 1),
+      fuse: 0.5 * (out(i, 16) + 1),
+      // Every cell leaves development the same size. Relaxation below is what
+      // makes some of them big.
+      radius: baseRadius,
     });
   }
-  return { cells, spent, aborted, steps: nStep, culled, laid: n };
+  // ---- RELAXATION: the embryo simplifies before it has to work -----------
+  //
+  // Development lays down a body one cell at a time and every cell comes out the
+  // same size, so a body was a crowd of identical grains. Real embryos do not
+  // hand over what they built: tissue condenses, like fuses with like, and what
+  // is left between unlike regions is a joint.
+  //
+  // WHAT MERGES. Two bonded cells fuse when they are made of similar stuff AND
+  // both are willing, willingness being the `fuse` gene. Similarity is measured
+  // over the material properties only - density, toughness, tag, stiffness -
+  // not over what the cells DO, because fusing by role would be the kernel
+  // deciding that muscle belongs with muscle. A uniform stretch of tissue
+  // condenses into one large node; a boundary between two materials does not
+  // fuse, and the small cells left along it articulate. Joints are a residue.
+  //
+  // WHAT IS CONSERVED. Area, exactly: a merged cell has radius sqrt(r1^2+r2^2),
+  // so mass is conserved and nothing is minted. Every other property is an
+  // area-weighted mean, so a big node made of ten cells counts as ten cells
+  // worth of whatever they were.
+  const relaxed = condense > 0 ? condenseBody(cells, {
+    condense, maxRadius: maxRadius * baseRadius, extent,
+  }) : cells;
+
+  return { cells: relaxed, spent, aborted, steps: nStep, culled, laid: n,
+           merged: cells.length - relaxed.length };
+}
+
+/**
+ * Greedy area-conserving fusion over the neighbour graph.
+ *
+ * Deliberately NOT iterative-to-convergence: each pass merges the best
+ * available partner for each cell and then stops, so the result is a body with
+ * a range of sizes rather than one that has collapsed to a few blobs. `condense`
+ * sets how many passes run, which is how far the body is allowed to simplify.
+ */
+function condenseBody(cells, { condense, maxRadius, extent }) {
+  let live = cells.map((c) => ({ ...c }));
+  const passes = Math.max(1, Math.round(condense));
+
+  for (let pass = 0; pass < passes; pass++) {
+    const n = live.length;
+    if (n < 2) break;
+    // Material distance. Capacities are deliberately absent - see above.
+    const unlike = (a, b) => Math.hypot(
+      (a.density - b.density) * 1.6,
+      (a.toughness - b.toughness),
+      (a.tag - b.tag),
+      (Math.tanh(a.stiff) - Math.tanh(b.stiff)) * 0.5,
+    );
+    const gone = new Uint8Array(n);
+    const out = [];
+    // Nearest-neighbour pairing in space; a cell only fuses with something it
+    // is touching, so this respects the body's actual geometry.
+    for (let i = 0; i < n; i++) {
+      if (gone[i]) continue;
+      const a = live[i];
+      let best = -1, bestScore = 0;
+      for (let j = i + 1; j < n; j++) {
+        if (gone[j]) continue;
+        const b = live[j];
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d > (a.radius + b.radius) * 1.35) continue;      // not touching
+        const rNew = Math.sqrt(a.radius * a.radius + b.radius * b.radius);
+        if (rNew > maxRadius) continue;                       // a cell has a limit
+        // Willingness is the MEAN of the pair, not the product. A product of
+        // two numbers that both sit near zero by default is a gate that never
+        // opens - measured median fuse was 0.097, so no pair ever cleared the
+        // threshold and 2% of cells merged over three passes.
+        const score = 0.5 * (a.fuse + b.fuse) * Math.exp(-unlike(a, b) * 4);
+        if (score > bestScore) { bestScore = score; best = j; }
+      }
+      if (best < 0 || bestScore < 0.25) { out.push(a); continue; }
+      const b = live[best];
+      gone[i] = 1; gone[best] = 1;
+      const wa = a.radius * a.radius, wb = b.radius * b.radius, wt = wa + wb;
+      const mix = (k) => (a[k] * wa + b[k] * wb) / wt;
+      out.push({
+        ...a,
+        // The merged cell keeps the elder's identity so lineage stays traceable.
+        mother: a.localIndex <= b.localIndex ? a.mother : b.mother,
+        localIndex: Math.min(a.localIndex, b.localIndex),
+        x: mix('x'), y: mix('y'),
+        radius: Math.sqrt(wt),                       // area conserved exactly
+        contract: mix('contract'), sense: mix('sense'), grip: mix('grip'),
+        stiff: mix('stiff'), tau: mix('tau'), bias: mix('bias'),
+        senseTune: mix('senseTune'), dispersal: mix('dispersal'),
+        toughness: mix('toughness'), tag: mix('tag'), enzyme: mix('enzyme'),
+        density: mix('density'), fuse: mix('fuse'),
+      });
+    }
+    if (out.length === n) break;                     // nothing fused; done
+    live = out;
+    for (const c of live) { c.ap = c.x / extent; c.dv = c.y / extent; }
+  }
+  return live;
 }
 
 /**
@@ -936,6 +1045,8 @@ export const SEED_DEFAULTS = {
   // apoptosis should be something regulation REACHES for, not the default state
   // of matter. Mutation is free to carve from here.
   surviveBias: 1.2,
+  fuseBias: 1.0,
+  fuseDecay: 0.0,
   surviveDecay: 0.0,
   surviveDiff: -0.5,
   // CONTRACTILITY MUST EXIST BEFORE IT CAN BE SELECTED ON.
@@ -1009,6 +1120,14 @@ export function randomGenome(rnd = Math.random, opts = {}) {
   // sigmoid(net)/decay, division halves it below threshold, and a tip must
   // actively re-produce to grow again. That turns "grow" from a switch into a
   // rate, which is what lets one end of a body keep growing while another stops.
+  // FUSE defaults ON, for the same reason survival does: a body whose fuse gene
+  // sits at zero hands over the raw grain of cells it developed, which is the
+  // one outcome we already know is uninteresting. Mutation is free to carve
+  // articulation back in, and that is where joints come from.
+  const fb = (OUT_BASE + 16) * GENE_STRIDE;
+  g[fb + OFF_BIAS] = o.fuseBias;
+  g[fb + OFF_DECAY] = o.fuseDecay;
+
   const gb = G_GROW * GENE_STRIDE;
   g[gb + OFF_BIAS] = o.growBias;
   g[gb + OFF_SRC + 0] = G_CROWD; g[gb + OFF_W + 0] = o.growCrowd;  // grow at a TIP
