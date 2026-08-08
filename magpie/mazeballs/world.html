@@ -2622,16 +2622,16 @@ function drawScope() {
 }
 
 /**
- * Genome viewer. A genome here is NOT a body — it is a small table of weights
- * saying how a cell's properties depend on WHERE IT IS in the egg, read off two
- * maternal gradients. This shows that table, because otherwise the genetics is
- * invisible and the bodies look like they come from nowhere.
+ * Genome viewer. A genome here is NOT a body — it is a gene regulatory network
+ * that runs inside the egg. The devo2 genome reads the egg's own gradients
+ * (position along and across it, distance from the centre, a fixed noise seed,
+ * local crowding) as its first few gene products and regulates the rest from
+ * there; the outputs say what a cell is made of. This shows that network, because
+ * otherwise the genetics is invisible and the bodies look like they come from
+ * nowhere.
  *
- * Rows are properties (does a cell exist here at all, how hard does it contract,
- * how well does it grip...). Columns are basis functions of position: `bias` is
- * uniform, `ap` runs head-to-tail, `|dv|` is symmetric across the midline so a
- * genome using it CANNOT tell left from right, and `sin*ap` terms are what make
- * repeated segments.
+ * (The egg's gradients are set by the egg — they are a provisioned environment,
+ * not a signal from a parent. We do not call them maternal.)
  */
 function cellShade(v) {
   const a = Math.min(1, Math.abs(v) / 3);
@@ -2742,7 +2742,7 @@ async function showGenome() {
     if (j.grn) {
       // A REGULATORY NETWORK reads as rows of "who regulates me", not as a grid
       // of basis coefficients. The FULL network is shown — all gene products,
-      // named where they have a role (maternal inputs, the named outputs,
+      // named where they have a role (the egg's gradients, the named outputs,
       // external channels) and by index otherwise — so a silenced gene reads as
       // an empty row rather than being hidden.
       const G = j.grn, extBase = G.nGene - 8, name = (i) =>
@@ -2751,7 +2751,10 @@ async function showGenome() {
         : (i >= extBase) ? `ext${i - extBase}`
         : `g${i}`;
       html += `<p class="note">${j.encoding} · ${G.nGene} gene products, ` +
-        `${G.k} regulators each. Every gene is shown; a row of dots is a silent one.</p>`;
+        `${G.k} regulators each. Genes <b>${G.maternal.join(', ')}</b> are the egg's ` +
+        `gradients (its provisioned environment, not a parent's signal); ` +
+        `<b>${G.outputs.join(', ')}</b> are what a cell is made of. Every gene is shown; ` +
+        `a row of dots is a silent one.</p>`;
       html += '<table><tr><th>gene</th><td class="hd">bias</td><td class="hd">decay</td>' +
         '<td class="hd">diff</td><td class="hd" colspan="' + G.k + '">regulated by</td></tr>';
       for (let i = 0; i < G.nGene; i++) {
@@ -2808,21 +2811,17 @@ async function showGenome() {
 
 /* ============================ development viewer ==========================
  *
- * WHAT DEVELOPMENT IS HERE, honestly. A genome is not a body: it says how a
- * cell's properties depend on WHERE IT SITS in the egg, read off two maternal
- * gradients. `develop()` walks lattice sites outward, asks the genome whether
- * there is a cell there at all (`presence`), and if so what it is made of,
- * spending yolk as it goes and stopping when the yolk runs out.
+ * WHAT DEVELOPMENT IS HERE. A genome is a gene regulatory network that runs
+ * inside the egg. Each cell reads the egg's own gradients — position along and
+ * across it, distance from the centre, a fixed noise seed, local crowding — as
+ * its first gene products, regulates the rest over a series of timesteps, divides
+ * and grows, and the outputs say what each cell is made of. The egg is a
+ * controlled, isolated environment for this rapid first development; the
+ * gradients are provisioned by it, not signals from a parent.
  *
- * WHAT IS MISSING, equally honestly. All of that happens inside ONE TICK, so in
- * the world an adult simply materialises — the point-event `eggs.md` says to
- * remove, and the reason a fully grown creature appears from nowhere when you
- * watch. This viewer therefore shows an UNFOLDING ORDER, not an unfolding in
- * time: the sequence cells are laid down in, which is what would become a
- * temporal process under the cellwise redesign in CELLWISE.md.
- *
- * Runs client-side against the same lib/devo.js the server develops with, so
- * what you see is what the world built, not a reimplementation of it.
+ * The unfold below runs the ACTUAL model (lib/devo2.js) in a worker and draws
+ * the body growing in real developmental time, rather than the old order-only
+ * animation of the finished corpse.
  */
 let devo = null;                       // lazily imported module
 
