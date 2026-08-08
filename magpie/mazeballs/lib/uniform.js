@@ -184,6 +184,13 @@ export const WORLD_FIELDS = [
   ['densLo', 'f32', 'the lightest material a cell can be made of; gaseous'],
   ['densHi', 'f32', 'the heaviest material a cell can be made of; leaden'],
   ['mediumDens', 'f32', 'what the cell is swimming in; equal density means gravity nets zero'],
+
+  // ---- SURFACES AND COLLISIONS -------------------------------------------
+  // Measured: a standoff zone is expensive. 179 steps/s at 1.0, 114 at 1.15,
+  // 90 at 1.45, because the hash cell is sized to the contact radius. Extra
+  // PUSH on pairs already found is free; extra REACH is not.
+  ['foreignReach', 'f32', 'how much further a cell holds off matter from another body; 1 = no zone'],
+  ['foreignPush', 'f32', 'how much harder it pushes on a stranger than on its own tissue'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */

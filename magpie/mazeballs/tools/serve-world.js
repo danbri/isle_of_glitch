@@ -631,6 +631,14 @@ const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
       try { last = await evo.tick(steps); } catch (e) { console.error('tick failed:', e.message); }
       ticking = false;
     }
+    // EGGS DROP CONTINUOUSLY, a couple per pass, instead of a tick emptying the
+    // whole queue at once. Development is ~6 ms of synchronous JS per egg, so
+    // the batch form showed up as the world animating for two seconds and then
+    // hanging for two. This is the same total work laid down flat.
+    if (!ticking) {
+      try { evo.pump(steps, args.eggsPerPass ?? 2); }
+      catch (e) { console.error('pump failed:', e.message); }
+    }
     if (SAVE_EVERY_MS > 0 && Date.now() - lastSave > SAVE_EVERY_MS && !ticking) {
       lastSave = Date.now();
       try {
@@ -1419,6 +1427,8 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       // energy, which is the design, and one limited by bookkeeping, which is a
       // bug wearing the same clothes.
       blockedBirths: last.blockedBirths ?? 0,
+      // Ran out of the per-tick laying budget, not out of arena room.
+      deferredBirths: evo.deferredBirths ?? 0,
       // FRAME PUBLISHING, OBSERVABLE. Codex's point, and a fair one: without
       // these you can infer the frame contract from timing but not verify it,
       // because a cached frame can be older than the request that receives it.

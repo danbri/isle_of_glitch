@@ -111,6 +111,18 @@ export class Evolver {
     maxAge = 25000, ageSpread = 0.35,
     sizeMutRate = 0.25, minCells = 5, maxCells = 40, topoMutRate = 0.30,
     birthOrder = 'lottery',
+    // Milliseconds of egg-laying per tick. Development is synchronous JS at
+    // ~6 ms an egg, so this is the only thing standing between a birth burst
+    // and a visibly frozen world. 0 disables the cap.
+    //
+    // SIZED AGAINST THE TICK INTERVAL, not against a frame. A tick covers a few
+    // hundred steps - seconds of sim - so a budget of 8 ms capped reproduction
+    // at roughly one egg per tick and took a fresh world from 1975 births in
+    // its first 2125 steps down to 21 in 5187. That is not a jank fix, it is a
+    // throttle on evolution. 40 ms lays a handful per tick, which paces a burst
+    // over minutes instead of freezing for seconds, and is a hitch of two or
+    // three frames rather than a stall.
+    birthBudgetMs = 40,
     devo = true, yolkFrac = 0.55, cellCost = 0.55, eggExtent = null, birthMargin = 1.15,
     // condense: development hands over a body that has SIMPLIFIED. Uniform
     // tissue fuses into larger nodes and the small cells left along material
@@ -124,6 +136,7 @@ export class Evolver {
     this.mutRate = mutRate; this.mutSize = mutSize;
     this.sizeMutRate = sizeMutRate; this.topoMutRate = topoMutRate;
     this.birthOrder = birthOrder;
+    this.birthBudgetMs = birthBudgetMs;
     this.minCells = minCells; this.maxCells = maxCells;
     this.rnd = rng(seed);
     // EVO-DEVO. Each organism carries a genome; a body is what that genome
@@ -189,6 +202,9 @@ export class Evolver {
 
     this.births = 0; this.deaths = 0; this.ticks = 0;
     this.blockedBirths = 0; this.warnedBlocked = false;
+    // Parents that have earned a birth and are waiting their turn. A Set beside
+    // the array so requalifying every tick does not enqueue the same body twice.
+    this.eggQueue = []; this.queued = new Set(); this.pendingEggs = 0;
     this.founders = this.alive();
   }
 
@@ -205,6 +221,7 @@ export class Evolver {
    */
   async tick(step) {
     const { arena, world, cells } = this;
+    const bornAtEntry = this.births;
     const { pos, energy } = await world.readCells();
     this.ticks++;
 
@@ -310,8 +327,72 @@ export class Evolver {
     // the parent's actual means rather than a constant.
     this.lastEnergy = total;
 
-    let born = 0, blocked = 0;
+    // A TIME BUDGET ON LAYING, because development is synchronous JS and every
+    // egg costs about 6 ms of it. Uncapped, a burst lays every eligible egg in
+    // one tick: a fresh world had ~1975 births in its first 2125 steps, which
+    // is seconds of blocked main thread and shows up as the world animating for
+    // two seconds and then hanging for two.
+    //
+    // Deferring is FAIR because `rich` is reshuffled every tick under the
+    // lottery, so a body passed over now is not passed over systematically. It
+    // is not fair under birthOrder 'rich', where the sort is stable and the
+    // poor tail would never be reached - so the budget only applies to the
+    // lottery, and 'rich' keeps its old uncapped behaviour rather than silently
+    // acquiring a bias.
+    // THE QUEUE, drained continuously by pump() rather than emptied here.
+    //
+    // Laying every eligible egg at tick time is a burst: a fresh world had 1975
+    // births in its first 2125 steps, each costing about 6 ms of synchronous
+    // development, which is the world animating for two seconds and then
+    // hanging for two. Capping that burst with a time budget was worse - it
+    // deferred 6383 eggs to get 47 births, because a tick covers seconds of sim
+    // and the same bodies simply requalified and were passed over again.
+    //
+    // Eggs go in a queue instead, and a few are laid every step. The CPU cost
+    // is spread flat instead of spiking, and nothing is thrown away.
     for (const p of rich) {
+      if (this.queued.has(p)) continue;
+      this.queued.add(p);
+      this.eggQueue.push(p);
+    }
+    this.pendingEggs = this.eggQueue.length;
+    // Positions and centroids are kept for pump(), which runs between ticks and
+    // has no readback of its own. They go stale by design: an egg laid three
+    // hundred steps after its parent qualified is placed relative to where the
+    // parent was, and that is a scattering, not an error.
+    this.lastPos = pos; this.lastCx = cx; this.lastCy = cy;
+
+    return {
+      alive: this.alive(), born: this.births - bornAtEntry, died: keepAlive,
+      meanEnergy: this.meanOf(total),
+      maxGeneration: this.maxGeneration(),
+      lineages: this.countLineages(),
+      births: this.births, deaths: this.deaths, blockedBirths: this.blockedBirths,
+      pendingEggs: this.pendingEggs,
+    };
+  }
+
+  /**
+   * Lay up to `n` queued eggs. Called from the step loop, not from tick, so the
+   * cost of development lands as a thin slice every step rather than a stall
+   * every few hundred.
+   *
+   * Eligibility is rechecked here because the queue is not instantaneous: a
+   * parent can die, or spend its energy, between qualifying and being served.
+   */
+  pump(step, n = 2) {
+    const { arena, cells } = this;
+    const pos = this.lastPos, cx = this.lastCx, cy = this.lastCy, total = this.lastEnergy;
+    if (!pos || !total) return 0;
+    let born = 0, blocked = 0;
+    while (born < n && this.eggQueue.length) {
+      const p = this.eggQueue.shift();
+      this.queued.delete(p);
+      if (!arena.alive[p]) continue;
+      const need = Math.max(
+        this.birthEnergy,
+        (this.cellCost * arena.cnt[p] / Math.max(0.05, this.yolkFrac)) * this.birthMargin);
+      if (!(total[p] >= need)) continue;
       // DISPERSAL. An offspring laid on top of its parent competes with it for
       // the same patch immediately, and with crowding suppression that is a
       // shared starvation rather than a shared meal. Measured at the extreme: a
@@ -354,9 +435,10 @@ export class Evolver {
       // investment. -1 is the arena refusing room, which is a real failure and
       // must still stop the loop loudly.
       if (child === -2) continue;
-      if (child < 0) { blocked++; break; }
+      if (child < 0) { blocked++; this.eggQueue.unshift(p); this.queued.add(p); break; }
       born++; this.births++;
     }
+    this.pendingEggs = this.eggQueue.length;
     // A birth that cannot find room is not a normal outcome, it is the arena
     // failing, and it must never be silent again. Fragmentation stopped
     // evolution for thousands of ticks while every other number looked healthy.
@@ -369,13 +451,7 @@ export class Evolver {
         `Size the arena with buildBodies({ maxCells }) for the bodies evolution can reach.`);
     }
 
-    return {
-      alive: this.alive(), born, died: keepAlive,
-      meanEnergy: this.meanOf(total),
-      maxGeneration: this.maxGeneration(),
-      lineages: this.countLineages(),
-      births: this.births, deaths: this.deaths, blockedBirths: this.blockedBirths,
-    };
+    return born;
   }
 
   /**

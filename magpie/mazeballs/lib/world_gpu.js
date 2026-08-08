@@ -932,6 +932,7 @@ fn bucketOf(p: vec2<f32>) -> u32 {
 fn contact(i: u32, p: vec2<f32>, myR: f32) -> vec2<f32> {
   if (P.contactK <= 0.0) { return vec2<f32>(0.0, 0.0); }
   var force = vec2<f32>(0.0, 0.0);
+  let myBody = cmeta[i].z;
   for (var dy = -1; dy <= 1; dy = dy + 1) {
     for (var dx = -1; dx <= 1; dx = dx + 1) {
       let b = bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM);
@@ -942,11 +943,26 @@ fn contact(i: u32, p: vec2<f32>, myR: f32) -> vec2<f32> {
         if (cmeta[j].x < 0) { continue; }
         let d = minImage(pos[j].xy - p);
         let dist = max(length(d), 1e-4);
-        let touch = myR + vel[j].z;
+        let otherR = vel[j].z;
+        // KEEPING STRANGERS OUT. A cell reaches further against matter that is
+        // not its own body, so a creature has a zone that other creatures are
+        // pushed out of before they are actually touching it. Free: the body id
+        // is already loaded here for the contest, so this is one comparison.
+        //
+        // Not a behaviour and not recognition - it is a surface. Two cells of
+        // one body are bonded and packed; a foreign cell meets the outside of
+        // that surface and is held off it.
+        let foreign = cmeta[j].z != myBody;
+        let reach = select(1.0, P.foreignReach, foreign);
+        let touch = (myR + otherR) * reach;
         if (dist >= touch) { continue; }
+        let nrm = d / dist;
+        let over = touch - dist;
         // Linear in overlap: cheap, stable, and enough for bodies that are
         // mostly held together by bonds rather than by contact.
-        force = force - (d / dist) * (touch - dist) * P.contactK;
+        let push = select(P.contactK, P.contactK * P.foreignPush, foreign);
+        force = force - nrm * over * push;
+
       }
     }
   }
@@ -1712,7 +1728,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   }
 
   // Contact with everything nearby, living or not.
-  force = force + contact(i, p, vel[i].z);
+  force = force + contact(i, p, myR);
 
   // ---- THE GROUND UNDER THIS CELL, SAMPLED ONCE ---------------------------
   //
@@ -2360,6 +2376,13 @@ export class WorldGPU {
       // span a hundredfold, and mediumDens sits at the geometric middle so the
       // default cell is neutrally buoyant and gravity nets zero on it.
       massRef: 0.34, densLo: 0.1, densHi: 10.0, mediumDens: 1.0,
+      // A creature pushes harder on a stranger than on its own tissue. The
+      // reach stays at 1.0 - a standoff ZONE was measured and is not cheap at
+      // any width, because the spatial hash cell is sized to the contact radius
+      // and widening the test outgrows it: 179 steps/s at reach 1.0, 114 at
+      // 1.15, 90 at 1.45. Extra push is one comparison on pairs already found
+      // and costs nothing.
+      foreignReach: 1.0, foreignPush: 1.6,
       // Substrate. gritScale sets how big a patch of purchase is; slipBase is the
       // drag left on frictionless ground (open water); gripAniso is how much
       // harder sideways slip is than sliding along your own body, which is the
