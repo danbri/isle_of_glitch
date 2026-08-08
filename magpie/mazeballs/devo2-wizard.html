@@ -930,8 +930,19 @@ document.querySelectorAll('[data-big]').forEach(btn => {
         }
         // Anything newly present was born now, for animation purposes.
         for (let i = liveN; i < m.n; i++) liveBirth[i] = nowS;
+        // Mother-daughter pairs for this frame, in world coordinates. The worker
+        // sends the daughter indices and their mothers; positions come from the
+        // same frame, so the line always joins two cells that existed together.
+        const pairs = new Float32Array(m.born.length * 4);
+        for (let k = 0; k < m.born.length; k++) {
+          const d = m.born[k], mo = m.mums[k];
+          if (mo < 0 || mo >= m.n || d >= m.n) continue;
+          pairs[k*4]     = m.xy[mo*2]; pairs[k*4 + 1] = m.xy[mo*2 + 1];
+          pairs[k*4 + 2] = m.xy[d*2];  pairs[k*4 + 3] = m.xy[d*2 + 1];
+        }
         liveN = m.n; liveXY = m.xy;
         view.setCells(m.n, m.xy, null, liveBirth, null);
+        view.setLinks(pairs, nowS);
         $('bigStats').innerHTML =
           `<b>${m.n} cells</b> &nbsp; step ${m.t}/${m.nStep} &nbsp; ` +
           `+${m.born.length} divisions this frame`;

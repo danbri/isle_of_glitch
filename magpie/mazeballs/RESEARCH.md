@@ -7025,3 +7025,33 @@ signal. That is the obvious experiment and it is a one-parameter change
 (`divRate`), which makes it cheap and makes it suspect — a result that appears
 only at a hand-tuned ratio is a knob, not a mechanism. It needs a pre-registered
 bar and both horizons.
+
+## 2026-08-08 — plumping, size-matched: one comparison of four, and it does not survive correction
+
+The plump-before-divide mechanism was reported earlier as moving three quantities
+in the predicted direction. Size-matched, most of that was the size confound.
+
+Plump-on at 18,000 ms gives 111 cells; plump-off reaches the same 111 at
+16,000 ms, so the comparison is at matched size:
+
+```
+              cells   |r| head-tail    |r| across      |r| age      elongation
+plump OFF       111   0.119 +-0.018  0.113 +-0.013  0.611 +-0.022  1.141 +-0.048
+plump ON        111   0.123 +-0.020  0.158 +-0.015  0.561 +-0.025  1.321 +-0.124
+difference                   +0.18 SE      +2.22 SE      -1.53 SE      +1.35 SE
+```
+
+Only the across-axis correlation clears 2 SE. The age reduction and the
+elongation gain, both of which looked convincing unmatched, do not survive once
+body size is held constant.
+
+**And the surviving one does not survive correction either.** Four comparisons
+were made; 2.22 SE is about p = 0.026 uncorrected and about p = 0.10 across four
+tests. This project has been here before — six traits at two horizons produced one
+pass, which was the null expectation for twelve tests.
+
+So: a direction, not a result. The mechanism is worth keeping because it is
+principled — a cell rebuilding before it divides is the G1 phase, where slowing
+the division rate directly would be a number chosen to produce an outcome — but
+the claim that it recovers the maternal signal needs pre-registering on the
+across-axis specifically, with independent seeds and both horizons.
