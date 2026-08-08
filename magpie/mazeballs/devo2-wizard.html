@@ -259,6 +259,7 @@
       <span><i style="background:var(--anchor)"></i>anchor</span>
     </div>
     <div style="margin-top:.5rem">
+      <button class="act" id="bSyn">syncytial: off</button>
       <button class="act" id="bNewDna">sixteen new genomes</button>
       <span style="font-size:.78rem;color:var(--soft)">click any embryo to carry it into the next steps</span>
     </div>
@@ -743,6 +744,7 @@ const GAL = 16, FRAMES = 20, GAL_MS = 18000, GAL_DT = 160;
 const GAL_SEEDS = [208, 229, 181, 49, 217, 143, 16, 97,
                    226, 69, 193, 168, 104, 269, 80, 177];
 let galGenomes = [], galFilm = [], galSel = 0, playing = false, playRAF = 0;
+let syncytial = false;
 
 function seedsToGenomes(seeds) {
   return seeds.map(sd => D.randomGenome(seeded(sd)));
@@ -774,7 +776,7 @@ async function precompute() {
       let cells = [];
       try {
         const r = D.develop(galGenomes[i], { ms, dtMs: GAL_DT,
-          extent: D.DEFAULT_EXTENT, maxCells: 400, yolk: 1e9 });
+          extent: D.DEFAULT_EXTENT, maxCells: 400, yolk: 1e9, syncytial });
         cells = r.cells.map(c => ({ x: c.x, y: c.y, t: describe(c) }));
       } catch { /* a failed development is a normal outcome; leave it empty */ }
       galFilm[i][f - 1] = cells;
@@ -838,6 +840,14 @@ $('bPlay').onclick = () => {
     playRAF = requestAnimationFrame(tick);
   };
   playRAF = requestAnimationFrame(tick);
+};
+$('bSyn').onclick = async () => {
+  if (playing) $('bPlay').click();
+  syncytial = !syncytial;
+  $('bSyn').textContent = 'syncytial: ' + (syncytial ? 'ON' : 'off');
+  $('bSyn').classList.toggle('primary', syncytial);
+  $('prep').textContent = 'redeveloping…';
+  await precompute();
 };
 $('bNewDna').onclick = async () => {
   if (playing) $('bPlay').click();
@@ -980,7 +990,7 @@ document.querySelectorAll('[data-big]').forEach(btn => {
     devoWorker.postMessage({
       genome: Array.from(galGenomes[galSel]),
       opts: { ms: pre.ms, dtMs: GAL_DT, extent: pre.extent,
-              maxCells: 40000, yolk: 1e9, stepEvery: 4 },
+              maxCells: 40000, yolk: 1e9, stepEvery: 4, syncytial },
     });
     cancelAnimationFrame(devoRAF);
     devoRAF = requestAnimationFrame(liveLoop);
