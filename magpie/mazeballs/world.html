@@ -218,6 +218,38 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 #devoC { display: block; width: 100%; height: 210px; background: #070c0b;
   border: 1px solid #1d332e; border-radius: 3px; margin-top: .35rem; }
 #devoInfo { font: 10px/1.4 ui-monospace, monospace; color: #6d8880; }
+
+/* THE CELL SCOPE — a pop-out scatter. Any pair of cell properties on the axes,
+   a third as colour, bounds chosen from the data. Two modes: the cells of one
+   creature (a body's material laid out in property space, not physical space),
+   or one dot per creature over the whole population. A floating panel so it can
+   sit over the world; a bottom sheet on a phone. */
+#vizBox { position: fixed; z-index: 58; left: .6rem; bottom: .6rem;
+  width: min(440px, 92vw); background: #0b1211f2; border: 1px solid #24403a;
+  border-radius: 8px; backdrop-filter: blur(8px); box-shadow: 0 8px 40px rgba(0,0,0,.55);
+  display: none; flex-direction: column; overflow: hidden;
+  font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #9fb8b0; }
+#vizBox.on { display: flex; }
+#vizHead { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .5rem;
+  padding: .45rem .55rem; border-bottom: 1px solid #1a2a27; }
+#vizHead b { color: #cfe3dc; font-weight: 600; margin-right: .2rem; }
+#vizHead .sp { flex: 1 1 auto; }
+#vizHead label { display: inline-flex; align-items: center; gap: .2rem; color: #6d8880; }
+#vizHead select { font: inherit; color: #cfe3dc; background: #16211F;
+  border: 1px solid #24403a; border-radius: 3px; padding: .1rem .2rem; max-width: 8.5rem; }
+#vizBox button { font: inherit; color: #9fb8b0; background: #16211F;
+  border: 1px solid #24403a; border-radius: 3px; padding: .18rem .45rem; cursor: pointer;
+  flex: 0 0 auto; min-width: 0; }
+#vizBox button:hover { border-color: #5fc9c0; }
+#vizBox button.on { background: #2c4a52; border-color: #5fc9c0; color: #eaf5f0; }
+#vizCanvas { display: block; width: 100%; height: 300px; background: #070c0b; }
+#vizFoot { padding: .3rem .55rem .45rem; color: #6d8880; min-height: 1.2em; }
+@media (max-width: 700px) {
+  #vizBox { left: 0; right: 0; bottom: 0; width: 100%;
+    border-radius: 12px 12px 0 0; border-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom); }
+  #vizCanvas { height: 46vh; }
+}
 </style>
 </head>
 <body>
@@ -260,6 +292,23 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   </div>
 </div>
 <button id="toggle" title="panel">☰</button>
+
+<!-- THE CELL SCOPE. A pop-out scatter with pickable axes; see the module near
+     the gallery code. Empty selects are filled in by JS from the property list. -->
+<div id="vizBox">
+  <div id="vizHead">
+    <b>cell scope</b>
+    <button id="vizModeCell" class="on" title="the cells of the selected creature, in property space">this creature</button>
+    <button id="vizModeCrit" title="one dot per creature across the population">population</button>
+    <span class="sp"></span>
+    <label>x&nbsp;<select id="vizX"></select></label>
+    <label>y&nbsp;<select id="vizY"></select></label>
+    <label>colour&nbsp;<select id="vizColor"></select></label>
+    <button id="vizClose" title="close">✕</button>
+  </div>
+  <canvas id="vizCanvas"></canvas>
+  <div id="vizFoot"></div>
+</div>
 
 <div class="hud" id="hud">
   <span class="t">Mazeballs</span>
@@ -368,6 +417,9 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
     <div class="row" style="margin-top:.3rem">
       <button id="bDevo">unfold ▶</button>
       <button id="bDevoStage" title="show which cell budded from which — the division tree">division tree</button>
+    </div>
+    <div class="row" style="margin-top:.3rem">
+      <button id="bViz" title="scatter cells or creatures by any pair of properties, coloured by a third">cell scope ▦</button>
     </div>
     <canvas id="devoC"></canvas>
     <div id="devoInfo" class="note"></div>
@@ -3015,6 +3067,235 @@ on('bGallery', 'onclick', showGallery);
     if (box.textContent === 'developing…') return;          // a rescan is already running
     showGallery();
   }, 15000);
+})();
+
+/* ------------------------------------------------------------ the cell scope
+ * A pop-out scatter (see #vizBox). Any two cell properties on the axes, a third
+ * as colour, bounds read from the data. Two modes:
+ *   this creature — the selected animal's cells laid out in PROPERTY space, not
+ *     physical space, so you read its material composition rather than its shape.
+ *     Every prop develop() gives a cell is on the menu: contractility, sense,
+ *     grip, stiffness, τ, bias, and the developmental coordinates ap/dv.
+ *   population — one dot per creature over the gallery's genome set, each a mean
+ *     of its cells, so "counts of creatures vs cell count" reads off the density
+ *     along the cell-count axis, coloured by real cell state (not a type bucket).
+ * It reuses develop()/ensureDevo()/localGenomes — the same machinery the gallery
+ * runs — and touches no render or frame code. */
+(() => {
+  const box = $('vizBox'), cv = $('vizCanvas'), foot = $('vizFoot');
+  if (!box || !cv) return;
+  const selX = $('vizX'), selY = $('vizY'), selColor = $('vizColor');
+
+  const CELL_PROPS = [
+    ['contract', 'contractility'], ['sense', 'sensitivity'], ['grip', 'grip'],
+    ['stiff', 'stiffness'], ['tau', 'time constant τ'], ['bias', 'bias'],
+    ['ap', 'apical–basal'], ['dv', 'dorsal–ventral'], ['x', 'x position'], ['y', 'y position'],
+  ];
+  const CRIT_PROPS = [
+    ['cells', 'cell count'], ['contract', 'mean contractility'], ['sense', 'mean sensitivity'],
+    ['grip', 'mean grip'], ['stiff', 'mean stiffness'], ['tau', 'mean τ'],
+    ['gen', 'generation'], ['speed', 'speed (observed)'],
+  ];
+
+  let mode = 'cell';        // 'cell' | 'crit'
+  let data = [];            // records with the prop keys
+  let dataKey = null;       // guards redundant recompute
+  let building = false;
+  let lastMap = null;       // {px, py, xk, yk} from the last draw, for click-to-select
+
+  const propList = () => mode === 'cell' ? CELL_PROPS : CRIT_PROPS;
+  const labelOf = (k) => (propList().find(p => p[0] === k) || [k, k])[1];
+  const fmt = (v) => Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 1 ? v.toFixed(1) : v.toFixed(2);
+
+  const fillSel = (sel, chosen) => {
+    sel.innerHTML = '';
+    for (const [k, label] of propList()) {
+      const o = document.createElement('option');
+      o.value = k; o.textContent = label; if (k === chosen) o.selected = true;
+      sel.appendChild(o);
+    }
+  };
+  const setMenus = () => {
+    const def = mode === 'cell'
+      ? { x: 'contract', y: 'grip', c: 'stiff' }
+      : { x: 'cells', y: 'contract', c: 'grip' };
+    fillSel(selX, def.x); fillSel(selY, def.y); fillSel(selColor, def.c);
+  };
+
+  // Muted teal → warm amber, matching the palette: cool/quiet low, warm accent high.
+  const ramp = (u) => {
+    u = Math.max(0, Math.min(1, Number.isFinite(u) ? u : 0));
+    const lo = [65, 173, 178], hi = [226, 140, 62];
+    return `rgb(${Math.round(lo[0] + (hi[0] - lo[0]) * u)},${Math.round(lo[1] + (hi[1] - lo[1]) * u)},${Math.round(lo[2] + (hi[2] - lo[2]) * u)})`;
+  };
+  const extent = (key) => {
+    let lo = Infinity, hi = -Infinity;
+    for (const d of data) { const v = d[key]; if (Number.isFinite(v)) { if (v < lo) lo = v; if (v > hi) hi = v; } }
+    if (!Number.isFinite(lo)) { lo = 0; hi = 1; }
+    if (hi - lo < 1e-9) { lo -= 1; hi += 1; }
+    const pad = (hi - lo) * 0.05; return [lo - pad, hi + pad];
+  };
+
+  const draw = () => {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const W = cv.clientWidth || 400, H = cv.clientHeight || 300;
+    cv.width = Math.max(1, Math.floor(W * dpr)); cv.height = Math.max(1, Math.floor(H * dpr));
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = '#070c0b'; g.fillRect(0, 0, W, H);
+
+    const m = { l: 48, r: 12, t: 12, b: 26 };
+    const pw = W - m.l - m.r, ph = H - m.t - m.b;
+
+    if (!data.length) {
+      g.fillStyle = '#5f7a73'; g.font = '12px ui-monospace, monospace'; g.textAlign = 'left';
+      g.fillText(building ? 'developing…'
+        : mode === 'cell' ? 'select a creature — a gallery tile, or click one in the world'
+        : 'no creatures yet', m.l, m.t + 22);
+      lastMap = null; return;
+    }
+
+    const xk = selX.value, yk = selY.value, ck = selColor.value;
+    const [xlo, xhi] = extent(xk), [ylo, yhi] = extent(yk), [clo, chi] = extent(ck);
+    const px = (v) => m.l + (v - xlo) / (xhi - xlo) * pw;
+    const py = (v) => m.t + ph - (v - ylo) / (yhi - ylo) * ph;
+    lastMap = { px, py, xk, yk };
+
+    g.strokeStyle = '#1d332e'; g.lineWidth = 1; g.strokeRect(m.l, m.t, pw, ph);
+    g.fillStyle = '#6d8880'; g.font = '10px ui-monospace, monospace';
+    const tick = (lo, hi, n, fn) => { for (let i = 0; i <= n; i++) fn(lo + (hi - lo) * i / n); };
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    tick(xlo, xhi, 4, (v) => { const X = px(v); g.strokeStyle = '#12211d'; g.beginPath(); g.moveTo(X, m.t); g.lineTo(X, m.t + ph); g.stroke(); g.fillStyle = '#6d8880'; g.fillText(fmt(v), X, m.t + ph + 4); });
+    g.textAlign = 'right'; g.textBaseline = 'middle';
+    tick(ylo, yhi, 4, (v) => { const Y = py(v); g.strokeStyle = '#12211d'; g.beginPath(); g.moveTo(m.l, Y); g.lineTo(m.l + pw, Y); g.stroke(); g.fillStyle = '#6d8880'; g.fillText(fmt(v), m.l - 5, Y); });
+
+    const rad = mode === 'cell' ? 3.4 : 4.4;
+    for (const d of data) {
+      const xv = d[xk], yv = d[yk];
+      if (!Number.isFinite(xv) || !Number.isFinite(yv)) continue;
+      const X = px(xv), Y = py(yv);
+      g.beginPath(); g.arc(X, Y, rad, 0, Math.PI * 2);
+      g.fillStyle = ramp((d[ck] - clo) / (chi - clo)); g.fill();
+      g.lineWidth = 1; g.strokeStyle = 'rgba(4,8,7,.85)'; g.stroke();
+    }
+
+    // colour legend
+    const lw = 84, lx = m.l + pw - lw, ly = m.t + 3;
+    for (let i = 0; i < lw; i++) { g.fillStyle = ramp(i / lw); g.fillRect(lx + i, ly, 1, 5); }
+    g.fillStyle = '#9fb8b0'; g.textAlign = 'right'; g.textBaseline = 'top';
+    g.fillText(labelOf(ck), lx + lw, ly + 7);
+  };
+
+  const updateFoot = () => {
+    foot.textContent = data.length
+      ? `${data.length} ${mode === 'cell' ? 'cells' : 'creatures'} · x ${labelOf(selX.value)} · y ${labelOf(selY.value)} · colour ${labelOf(selColor.value)}`
+      : '';
+  };
+
+  async function genomeForSel() {
+    if (lastGenome && lastGenome.uid === sel.uid) return lastGenome.g;
+    if (WATCH) {
+      const j = await (await srvFetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
+      if (j.ok) { lastGenome = j; return j.g; }
+      return null;
+    }
+    const row = localGenomes(400).rows.find(r => r.uid === sel.uid);
+    return row ? row.g : null;
+  }
+
+  async function buildCells() {
+    const key = 'cell:' + sel.uid;
+    if (dataKey === key && data.length) return;
+    if (sel.uid < 0) { data = []; dataKey = key; return; }
+    building = true; draw();
+    try {
+      const gvec = await genomeForSel();
+      if (!gvec) { data = []; dataKey = key; return; }
+      const d = await ensureDevo();
+      const grown = d.develop(Float32Array.from(gvec), { extent: d.DEFAULT_EXTENT ?? 3.0, maxCells: 200 });
+      data = grown.cells.map(c => ({ ...c }));
+      dataKey = key;
+    } catch (e) { foot.textContent = 'cell scope failed: ' + e.message; data = []; }
+    finally { building = false; }
+  }
+
+  async function buildCrit() {
+    building = true; draw();
+    try {
+      const j = WATCH
+        ? await (await srvFetch('/genomes?n=48', { cache: 'no-store' })).json()
+        : localGenomes(48);
+      const d = await ensureDevo();
+      const out = [];
+      for (const row of j.rows) {
+        const grown = d.develop(Float32Array.from(row.g), { extent: d.DEFAULT_EXTENT ?? 3.0, maxCells: 120 });
+        const cs = grown.cells; if (!cs.length) continue;
+        const mean = (k) => cs.reduce((s, c) => s + c[k], 0) / cs.length;
+        out.push({
+          uid: row.uid, cells: cs.length,
+          contract: mean('contract'), sense: mean('sense'), grip: mean('grip'),
+          stiff: mean('stiff'), tau: mean('tau'),
+          gen: row.generation ?? 0, speed: motion.get(row.uid)?.speed ?? 0,
+        });
+      }
+      data = out; dataKey = 'crit';
+    } catch (e) { foot.textContent = 'cell scope failed: ' + e.message; data = []; }
+    finally { building = false; }
+  }
+
+  async function refresh() {
+    if (!box.classList.contains('on')) return;
+    if (mode === 'cell') await buildCells(); else await buildCrit();
+    draw(); updateFoot();
+  }
+
+  const redraw = () => { draw(); updateFoot(); };
+  selX.addEventListener('change', redraw);
+  selY.addEventListener('change', redraw);
+  selColor.addEventListener('change', redraw);
+
+  const switchMode = (next) => {
+    if (mode === next) return;
+    mode = next;
+    $('vizModeCell').classList.toggle('on', mode === 'cell');
+    $('vizModeCrit').classList.toggle('on', mode === 'crit');
+    setMenus(); dataKey = null; refresh();
+  };
+  $('vizModeCell').addEventListener('click', () => switchMode('cell'));
+  $('vizModeCrit').addEventListener('click', () => switchMode('crit'));
+  $('vizClose').addEventListener('click', () => box.classList.remove('on'));
+
+  // Click a population dot to select that creature — the same one-arg selectUid
+  // the gallery tiles use.
+  cv.addEventListener('click', (e) => {
+    if (mode !== 'crit' || !data.length || !lastMap) return;
+    const r = cv.getBoundingClientRect();
+    const mx = e.clientX - r.left, my = e.clientY - r.top;
+    let best = -1, bestD = 20 * 20;
+    for (let i = 0; i < data.length; i++) {
+      const d = data[i];
+      const dx = lastMap.px(d[lastMap.xk]) - mx, dy = lastMap.py(d[lastMap.yk]) - my;
+      const dd = dx * dx + dy * dy;
+      if (dd < bestD) { bestD = dd; best = i; }
+    }
+    if (best >= 0 && data[best].uid != null) { selectUid(data[best].uid); note('selected #' + data[best].uid); }
+  });
+
+  on('bViz', 'onclick', () => {
+    const opening = !box.classList.contains('on');
+    box.classList.toggle('on');
+    if (opening) refresh();
+  });
+
+  addEventListener('resize', () => { if (box.classList.contains('on')) draw(); });
+  setMenus();
+  // Follow a changed selection in cell mode, and keep the population fresh, both
+  // only while the scope is open. buildCells guards on the uid so an unchanged
+  // selection costs nothing.
+  setInterval(() => {
+    if (!box.classList.contains('on')) return;
+    if (mode === 'cell') { if (dataKey !== 'cell:' + sel.uid) refresh(); }
+    else if (!building) refresh();
+  }, 4000);
 })();
 
 on('bDevo', 'onclick', showDevo);
