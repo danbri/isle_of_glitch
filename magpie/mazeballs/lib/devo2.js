@@ -331,6 +331,28 @@ export function develop(genome, {
   // which is verified against the previous implementation across ten genomes.
   onStep = null,
   stepEvery = 8,
+  // PLUMPING UP AFTER DIVISION — the G1 phase, and the fix for the clock.
+  //
+  // Cytoplasm is divided rather than created, so every division halves every
+  // gene product in both cells and concentration falls as 2^-divisions. Measured
+  // against that, the network restores state at a median decay of about 1.04,
+  // i.e. ~0.96 s, while divisions arrive every ~0.6 s at full grow. Dilution
+  // outruns synthesis, so the dominant signal in the embryo is how many times a
+  // cell has divided — a clock — and the maternal gradients are swamped: they
+  // correlate with expression at 0.07-0.13 where age correlates at 0.60-0.63.
+  //
+  // A real cell grows back to size before dividing again. `mass` halves at
+  // division and recovers toward 1 by feeding on a nutrient soup assumed
+  // abundant inside the egg — this is about VOLUME, not energy, and the energy
+  // cost of a cell is still charged against the yolk exactly as before. A cell
+  // cannot divide until it has plumped up.
+  //
+  // This is deliberately not a rate knob. Slowing divRate would also slow
+  // dilution and would be a number chosen to produce a result; gating on
+  // recovery is a mechanism, and the division rate that falls out of it is
+  // whatever the chemistry can sustain.
+  plump = false,
+  plumpRate = 1.2,
 } = {}) {
   const dt = dtMs / 1000;
   const nStep = Math.max(1, Math.round(ms / dtMs));
@@ -348,6 +370,8 @@ export function develop(genome, {
   // world worth keeping rather than an implementation detail. Local indices
   // here; evolve.js maps them onto durable 64-bit ids.
   const mother = new Int32Array(cap).fill(-1);
+  // Cell volume, 1 = fully grown. Only consulted when `plump` is on.
+  const mass = new Float32Array(cap).fill(1);
   let n = 0;
 
   // CANALISATION — developmental noise derived from the genome, so the same
@@ -499,6 +523,12 @@ export function develop(genome, {
       setMaternal(i);
     }
 
+    if (plump) {
+      for (let i = 0; i < n; i++) {
+        if (mass[i] < 1) mass[i] = Math.min(1, mass[i] + dt * plumpRate);
+      }
+    }
+
     // ---- division, in continuous space
     const cleaving = mode === 'cleave' && t < cleaveSteps;
     const born = n;
@@ -506,6 +536,19 @@ export function develop(genome, {
       if (!cleaving) {
         ready[i] += dt * conc[i * NGENE + G_GROW] * divRate;
         if (ready[i] < 1) continue;
+        // NOT YET BACK TO FULL SIZE: hold the readiness and wait.
+        //
+        // Gated on the CONCENTRATION the cell actually lost, not on an abstract
+        // volume. A first version tracked a separate `mass` that halved and
+        // recovered on its own clock, and it changed nothing at all — recovery
+        // took 0.375 s against a division interval of 0.6 s, so the gate never
+        // fired, and mass was not what dilution had damaged in any case.
+        if (plump) {
+          let tot = 0;
+          const bb = i * NGENE;
+          for (let g = N_MATERNAL; g < NGENE; g++) tot += conc[bb + g];
+          if (tot < mass[i]) continue;          // mass[i] holds the pre-division total
+        }
         ready[i] -= 1;
       }
       if (spent + cellCost > yolk) { aborted = true; break; }
@@ -548,6 +591,13 @@ export function develop(genome, {
       if (clash) continue;
 
       const d = n++;
+      if (plump) {
+        // Remember what this lineage had before the split: both cells must
+        // rebuild to it before either divides again.
+        let tot = 0; const bb = i * NGENE;
+        for (let g = N_MATERNAL; g < NGENE; g++) tot += conc[bb + g];
+        mass[i] = tot; mass[d] = tot;
+      }
       if (onStep) bornSinceReport.push(d);
       X[d] = nx; Y[d] = ny; noise[d] = rndDev(); ready[d] = 0;
       mother[d] = i;
