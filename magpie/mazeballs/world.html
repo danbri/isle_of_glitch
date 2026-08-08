@@ -4543,7 +4543,12 @@ $('bTerrain').onclick = e => { view.terrain = !view.terrain; e.target.classList.
     grip.textContent = hud.classList.contains('min') ? '›' : '‹';
     grip.title = hud.classList.contains('min') ? 'show the readout' : 'collapse the readout';
   };
-  if (localStorage.getItem('mz.hudmin') === '1') hud.classList.add('min');
+  // On a phone the readout is ~40% of the screen, so it starts collapsed to a
+  // spine and the world gets the width — the numbers are one tap away on the `›`
+  // and the choice is remembered. On a wide screen it starts open as before.
+  // An explicit saved preference always wins over the width default.
+  const savedHud = localStorage.getItem('mz.hudmin');
+  if (savedHud === '1' || (savedHud === null && innerWidth <= 700)) hud.classList.add('min');
   place();
   grip.onclick = () => {
     hud.classList.toggle('min');
