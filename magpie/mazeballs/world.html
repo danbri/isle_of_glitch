@@ -415,8 +415,8 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
       <button id="bFlag" title="mark this moment for review">flag this ⚑</button>
       <button id="bCopyStats" title="copy world + creature stats">⧉ stats</button></div>
     <div class="row" style="margin-top:.3rem">
-      <button id="bDevo">unfold ▶</button>
-      <button id="bDevoStage" title="show which cell budded from which — the division tree">division tree</button>
+      <button id="bDevo" title="watch this genome grow into a body, cell by cell, in a worker">unfold ▶</button>
+      <button id="bDevoStop" title="stop the unfold">stop</button>
     </div>
     <div class="row" style="margin-top:.3rem">
       <button id="bViz" title="scatter cells or creatures by any pair of properties, coloured by a third">cell scope ▦</button>
@@ -527,7 +527,8 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 import { buildBodies } from './lib/bodies.js';
 import { BrainArenaGPU } from './lib/brainarena_gpu.js';
 import { WorldGPU, WGSL_FIELD } from './lib/world_gpu.js';
-import { Evolver } from './lib/evolve.js';
+import { Evolver, describe } from './lib/evolve.js';
+import { DevoView } from './lib/devo-view.js';
 
 const $ = id => document.getElementById(id);
 /**
@@ -2303,7 +2304,7 @@ function selectUid(uid, pos, type, uidArr, n) {
   // Unfold on selection rather than on a second click. Picking an animal and
   // then pressing a button to see what built it is a sequencing rule the user
   // should not have to know; the genome is the thing you selected it FOR.
-  if (changed && uid >= 0) { lastGenome = null; showDevo(); frameCreature(uid); }
+  if (changed && uid >= 0) { lastGenome = null; if (devoActive) startUnfold(); frameCreature(uid); }
 }
 
 function updateSelBadge() {
@@ -2703,8 +2704,32 @@ async function showGenome() {
   box.style.display = '';
   box.textContent = 'loading…';
   try {
-    const j = await (await srvFetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
-    if (!j.ok) { box.textContent = j.error; return; }
+    // WATCH mode gets the genome AND its layout descriptor from the server; a
+    // page running its own sim has neither endpoint, so the genome comes from
+    // this tab's living set and the devo2 layout is read straight off the module
+    // constants. Either way `j` ends up in the same shape the renderer wants.
+    let j;
+    if (WATCH) {
+      j = await (await srvFetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
+      if (!j.ok) { box.textContent = j.error; return; }
+    } else {
+      const gj = await selGenome();
+      if (!gj) { box.textContent = 'no genome for #' + sel.uid; return; }
+      const d = await import('./lib/devo2.js');
+      j = {
+        ok: true, uid: gj.uid, generation: gj.generation ?? 0,
+        cells: gj.cells ?? '?', lineage: gj.lineage ?? '', encoding: 'devo2-grn', g: gj.g,
+        grn: {
+          nGene: d.NGENE, k: d.K, stride: d.GENE_STRIDE,
+          offSrc: d.OFF_SRC, offW: d.OFF_W, offBias: d.OFF_BIAS,
+          offDecay: d.OFF_DECAY, offDiff: d.OFF_DIFF,
+          maternal: ['ap', 'dv', 'rad', 'noise', 'crowd'].slice(0, d.N_MATERNAL),
+          outputs: d.OUTPUTS, outBase: d.OUT_BASE,
+          synBasis: d.SYN_BASIS.map(x => Array.isArray(x) ? x[0] : x),
+          nsyn: d.NSYN, synOff: d.SYN_OFF,
+        },
+      };
+    }
     lastGenome = j;
     // The synapse block lives in different places depending on the encoding,
     // and reading devo1's field names off a devo2 reply is what broke genome
@@ -2716,15 +2741,17 @@ async function showGenome() {
       `<button id="bCopyGenome" class="mini" title="copy genome as TSV">⧉ copy</button></h4>`;
     if (j.grn) {
       // A REGULATORY NETWORK reads as rows of "who regulates me", not as a grid
-      // of basis coefficients. Only genes that DO something are shown: the named
-      // outputs, plus any gene with a live regulator. Sixty-four rows of mostly
-      // silenced edges is not a genome viewer, it is a hex dump.
-      const G = j.grn, name = (i) =>
+      // of basis coefficients. The FULL network is shown — all gene products,
+      // named where they have a role (maternal inputs, the named outputs,
+      // external channels) and by index otherwise — so a silenced gene reads as
+      // an empty row rather than being hidden.
+      const G = j.grn, extBase = G.nGene - 8, name = (i) =>
         i < G.maternal.length ? G.maternal[i]
         : (i >= G.outBase && i - G.outBase < G.outputs.length) ? G.outputs[i - G.outBase]
+        : (i >= extBase) ? `ext${i - extBase}`
         : `g${i}`;
       html += `<p class="note">${j.encoding} · ${G.nGene} gene products, ` +
-        `${G.k} regulators each. Rows are genes that do something.</p>`;
+        `${G.k} regulators each. Every gene is shown; a row of dots is a silent one.</p>`;
       html += '<table><tr><th>gene</th><td class="hd">bias</td><td class="hd">decay</td>' +
         '<td class="hd">diff</td><td class="hd" colspan="' + G.k + '">regulated by</td></tr>';
       for (let i = 0; i < G.nGene; i++) {
@@ -2732,11 +2759,9 @@ async function showGenome() {
         const regs = [];
         for (let k = 0; k < G.k; k++) {
           const sIdx = j.g[b + G.offSrc + k];
-          if (!(sIdx >= 0)) continue;
+          if (!(sIdx >= 0)) { regs.push(null); continue; }
           regs.push([Math.floor(sIdx) % G.nGene, j.g[b + G.offW + k]]);
         }
-        const isOut = i >= G.outBase && i - G.outBase < G.outputs.length;
-        if (!regs.length && !isOut) continue;
         const bias = j.g[b + G.offBias], dec = j.g[b + G.offDecay], dif = j.g[b + G.offDiff];
         html += `<tr><th>${name(i)}</th>` +
           `<td style="${cellShade(bias)}">${bias.toFixed(1)}</td>` +
@@ -2800,10 +2825,15 @@ async function showGenome() {
  * what you see is what the world built, not a reimplementation of it.
  */
 let devo = null;                       // lazily imported module
-let devoRun = null;                    // { cells, bonds, full }
-let devoT = 1;                         // 0..1 how far through the unfolding
-let devoTimer = null;
-let devoStages = false;
+
+/* THE LIVE UNFOLD. The selected genome developed in a worker (lib/devo-worker.js)
+ * and drawn by DevoView (lib/devo-view.js) as it grows — cells swelling in as
+ * they are born, the survive-carve drawn once at hatching. This is the
+ * construction devo2-wizard.html uses, driven off the creature you selected. It
+ * has its own rAF and its own WebGPU device on #devoC; if that device cannot be
+ * had the panel says so and nothing else on the page is affected. */
+let devoView = null, devoWorker = null, devoRAF = 0, devoActive = false;
+let liveBirth = null, liveXY = null, liveN = 0, liveT0 = 0, liveCarve = 0, liveDone = false;
 
 async function ensureDevo() {
   // THE ENCODING THE WORLD ACTUALLY USES. This imported devo.js and developed
@@ -2815,165 +2845,137 @@ async function ensureDevo() {
   return devo;
 }
 
-async function buildDevo(genomeArr) {
-  const d = await ensureDevo();
-  const g = Float32Array.from(genomeArr);
-  // Egg size travels with the encoding, exactly as evolve.js does it — hand
-  // devo2 an extent of 3 and it rebuilds the disc it exists to escape.
-  const grown = d.develop(g, { extent: d.DEFAULT_EXTENT ?? 3.0, maxCells: 60 });
-  // bond()/largestPiece()/morphology() are shared and live in devo.js.
-  const shared = await import('./lib/devo.js');
-  const whole = shared.largestPiece(grown.cells, shared.bond(grown.cells, { maxDegree: 4 }));
-  // REMAP THE DIVISION TREE ONTO THE SURVIVING PIECE.
-  //
-  // `mother` is a local index into the FULL developed set, and what is drawn is
-  // `whole.cells` — the largest connected piece, re-indexed from zero. Using one
-  // index in the other array points at a different cell entirely, so the tree
-  // was drawing links between unrelated cells or, where the index fell out of
-  // range, drawing nothing. Both look like "the division tree is broken", and
-  // neither is a rendering problem.
-  //
-  // devo2 stamps each cell with its own localIndex, so the remap is exact. A
-  // cell whose mother did not make it into this piece has no line to draw,
-  // which is correct: its mother is not in the picture.
-  {
-    const pos = new Map();
-    whole.cells.forEach((c, i) => { if (c.localIndex !== undefined) pos.set(c.localIndex, i); });
-    for (const c of whole.cells) {
-      c.motherIdx = (c.mother !== undefined && pos.has(c.mother)) ? pos.get(c.mother) : -1;
-    }
-  }
-  devoRun = {
-    g, all: grown.cells, cells: whole.cells, bonds: whole.bonds,
-    aborted: grown.aborted, spent: grown.spent,
-    morph: shared.morphology(whole.cells, whole.bonds),
-  };
-  return devoRun;
-}
-
-function drawDevo() {
-  const cv = $('devoC');
-  if (!cv || cv.style.display === 'none' || !devoRun) return;
-  const dpr = Math.min(devicePixelRatio || 1, 2);
-  const w = Math.max(1, Math.round(cv.clientWidth * dpr));
-  const h = Math.max(1, Math.round(cv.clientHeight * dpr));
-  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
-  const g2 = cv.getContext('2d');
-  g2.fillStyle = '#070c0b'; g2.fillRect(0, 0, w, h);
-
-  const cells = devoRun.cells, bonds = devoRun.bonds;
-  if (!cells.length) {
-    g2.fillStyle = '#7a5a4a'; g2.font = `${12 * dpr}px ui-monospace, monospace`;
-    g2.fillText('this genome builds nothing — a viable egg that never becomes a body',
-      8 * dpr, h / 2);
-    return;
-  }
-
-  // fit the body
-  let lo = Infinity, hi = -Infinity, ylo = Infinity, yhi = -Infinity;
-  for (const c of cells) { lo = Math.min(lo, c.x); hi = Math.max(hi, c.x);
-    ylo = Math.min(ylo, c.y); yhi = Math.max(yhi, c.y); }
-  const pad = 14 * dpr;
-  const sc = Math.min((w - 2 * pad) / Math.max(0.4, hi - lo),
-                      (h - 2 * pad) / Math.max(0.4, yhi - ylo));
-  const cx = (x) => pad + (x - lo) * sc, cy = (y) => pad + (y - ylo) * sc;
-
-  const built = Math.max(1, Math.round(cells.length * devoT));
-
-  // THE DIVISION TREE — which cell budded from which.
-  //
-  // This is the development PROCESS rather than its outcome: every cell but the
-  // zygote came from a specific mother, devo2 records it, and drawing those
-  // links shows the body growing as a lineage instead of as a set of dots
-  // appearing in order. Where the tree is a path, the tissue is a filament;
-  // where it fans, the body branched.
-  //
-  // (This slot used to draw a maternal `presence` field via devo.express, which
-  // is a Dev 1.0 function. devo2 has neither, so it would have thrown the moment
-  // anyone pressed "stages".)
-  if (devoStages) {
-    for (let i = 0; i < built; i++) {
-      // motherIdx, not mother — see the remap in buildDevo.
-      const m = cells[i].motherIdx;
-      if (m === undefined || m < 0 || m >= built) continue;
-      const age = 1 - i / Math.max(1, built);
-      g2.strokeStyle = `rgba(255,190,120,${(0.20 + 0.55 * age).toFixed(3)})`;
-      g2.lineWidth = 2.2 * dpr;
-      g2.beginPath();
-      g2.moveTo(cx(cells[m].x), cy(cells[m].y));
-      g2.lineTo(cx(cells[i].x), cy(cells[i].y));
-      g2.stroke();
-    }
-  }
-
-  // holdfasts first
-  g2.strokeStyle = '#2a4a42'; g2.lineWidth = 1.2 * dpr;
-  for (const b of bonds) {
-    if (b.i >= built || b.j >= built) continue;
-    g2.beginPath();
-    g2.moveTo(cx(cells[b.i].x), cy(cells[b.i].y));
-    g2.lineTo(cx(cells[b.j].x), cy(cells[b.j].y));
-    g2.stroke();
-  }
-
-  cells.forEach((c, i) => {
-    const on_ = i < built;
-    const r = 5.5 * dpr;
-    g2.beginPath(); g2.arc(cx(c.x), cy(c.y), r, 0, Math.PI * 2);
-    g2.fillStyle = on_ ? matColor(c) : '#141d1b';
-    g2.fill();
-    g2.strokeStyle = on_ ? '#06100e' : '#101917';
-    g2.lineWidth = 1.4 * dpr; g2.stroke();
-    // the newest cell, so the laying-down order is legible
-    if (on_ && i === built - 1) {
-      g2.strokeStyle = '#ffd08a'; g2.lineWidth = 2 * dpr;
-      g2.beginPath(); g2.arc(cx(c.x), cy(c.y), r + 3 * dpr, 0, Math.PI * 2); g2.stroke();
-    }
-  });
-
-  g2.fillStyle = '#4a625c'; g2.font = `${10 * dpr}px ui-monospace, monospace`;
-  g2.fillText(`${built}/${cells.length} divisions`, 4 * dpr, h - 4 * dpr);
-  const rt = 'tail';
-  g2.fillText(rt, w - g2.measureText(rt).width - 4 * dpr, h - 4 * dpr);
-
-  const m = devoRun.morph;
-  const inf = $('devoInfo');
-  if (inf) {
-    inf.textContent =
-      `${built}/${cells.length} cells laid down` +
-      (devoRun.all.length !== cells.length
-        ? ` · ${devoRun.all.length - cells.length} discarded as a detached piece` : '') +
-      ` · symmetry ${m.symmetry.toFixed(2)} · segments ${m.segments}` +
-      ` · elongation ${m.elongation.toFixed(2)} · stiffness range ${m.stiffSpan.toFixed(1)}x` +
-      (devoRun.aborted ? ' · YOLK RAN OUT (development aborted)' : '');
-  }
-}
-
-async function showDevo() {
-  // Fetch the genome ourselves if it has not been loaded — requiring a
-  // "show genome" press first is a sequencing rule the user should not have to
-  // know about.
-  if (!lastGenome || lastGenome.uid !== sel.uid) {
-    if (sel.uid < 0) { note('select an animal first — click one in the world'); return; }
+/** The selected creature's genome (an object carrying `.g`), from the server in
+ * watch mode or from this page's own living genomes otherwise. Cached in
+ * lastGenome so the gene viewer and the unfold share one fetch. */
+async function selGenome() {
+  if (sel.uid < 0) return null;
+  if (lastGenome && lastGenome.uid === sel.uid && lastGenome.g) return lastGenome;
+  if (WATCH) {
     try {
       const j = await (await srvFetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
-      if (!j.ok) { note(j.error); return; }
-      lastGenome = j;
-    } catch (e) { note('could not load genome: ' + e.message); return; }
+      if (!j.ok) { note(j.error || 'no genome'); return null; }
+      lastGenome = j; return j;
+    } catch (e) { note('could not load genome: ' + e.message); return null; }
   }
-  await buildDevo(lastGenome.g);
-  devoT = 0;
-  clearInterval(devoTimer);
-  // Step through the laying-down ORDER. Not a clock: development is still
-  // instantaneous in the world, and pretending otherwise here would be a lie.
-  // Ten times faster than it was. At 0.02 per 30 ms the unfold took 1.5 s,
-  // which is a long time to wait every time you click a different animal.
-  devoTimer = setInterval(() => {
-    devoT = Math.min(1, devoT + 0.2);
-    drawDevo();
-    if (devoT >= 1) clearInterval(devoTimer);
-  }, 30);
+  const row = localGenomes(400).rows.find(r => r.uid === sel.uid);
+  if (!row) { note('no genome for #' + sel.uid); return null; }
+  lastGenome = { uid: sel.uid, g: row.g, generation: row.generation ?? 0,
+                 cells: row.cells, lineage: row.lineage };
+  return lastGenome;
 }
+
+async function ensureDevoView() {
+  if (devoView) return devoView;
+  const cv = $('devoC');
+  if (!cv) return null;
+  // Size the backing buffer to the displayed size so the growth is crisp.
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  cv.width = Math.max(1, Math.floor((cv.clientWidth || 320) * dpr));
+  cv.height = Math.max(1, Math.floor((cv.clientHeight || 210) * dpr));
+  try { devoView = await DevoView.create(cv); }
+  catch { devoView = null; }
+  if (!devoView) $('devoInfo').innerHTML =
+    '<span style="color:#c7734f">the live unfold needs its own WebGPU canvas, which this browser would not give &mdash; the world itself still runs.</span>';
+  return devoView;
+}
+
+function stopUnfold() {
+  if (devoWorker) { devoWorker.terminate(); devoWorker = null; }
+  cancelAnimationFrame(devoRAF); devoRAF = 0;
+}
+
+// The unfold has its OWN clock and its OWN rAF, independent of the world loop:
+// birth times are wall-clock, so cells swell in as their frames arrive, and the
+// carve eases in once development reports done.
+function unfoldLoop() {
+  if (!devoView) return;
+  const now = (performance.now() - liveT0) / 1000;
+  if (liveDone && liveCarve < 1) liveCarve = Math.min(1, liveCarve + 0.02);
+  devoView.draw(now, devoView.egg ?? 12, liveCarve);
+  devoRAF = requestAnimationFrame(unfoldLoop);
+}
+
+async function startUnfold() {
+  const gj = await selGenome();
+  if (!gj) return;
+  const view = await ensureDevoView();
+  if (!view) return;
+  stopUnfold();
+  devoActive = true;
+  const EXTENT = 12;                    // devo2's egg (DEFAULT_EXTENT)
+  view.egg = EXTENT;
+  liveBirth = new Float32Array(1024);
+  liveN = 0; liveT0 = performance.now(); liveCarve = 0; liveDone = false;
+  $('devoInfo').textContent = `developing #${gj.uid} in a worker…`;
+
+  devoWorker = new Worker('./lib/devo-worker.js', { type: 'module' });
+  // A module worker that fails to LOAD reports nothing through onmessage, so
+  // without this a bad import in the worker looks exactly like a slow develop.
+  devoWorker.onerror = (err) => {
+    $('devoInfo').innerHTML = '<span style="color:#c7734f">worker failed: ' +
+      (err.message || 'load error') + '</span>';
+    stopUnfold();
+  };
+  devoWorker.onmessage = (e) => {
+    const m = e.data;
+    if (m.kind === 'error') {
+      $('devoInfo').innerHTML = '<span style="color:#c7734f">' + m.message + '</span>';
+      stopUnfold(); return;
+    }
+    const nowS = (performance.now() - liveT0) / 1000;
+    if (m.kind === 'frame') {
+      if (liveBirth.length < m.n) {
+        const b = new Float32Array(Math.max(m.n, liveBirth.length * 2));
+        b.set(liveBirth); liveBirth = b;
+      }
+      // Anything newly present was born now, for the swelling animation.
+      for (let i = liveN; i < m.n; i++) liveBirth[i] = nowS;
+      liveN = m.n; liveXY = m.xy;
+      view.setCells(m.n, m.xy, null, liveBirth, null);
+      $('devoInfo').innerHTML =
+        `<b>${m.n} cells</b> · step ${m.t}/${m.nStep} · +${m.born.length} divisions this frame`;
+    } else if (m.kind === 'done') {
+      // The finished body: label each cell by its dominant capacity, and mark
+      // which the survive-carve removes so the view can shrink them away together.
+      const kind = new Int32Array(m.n);
+      for (let i = 0; i < m.n; i++) {
+        kind[i] = describe({ sense: m.caps[i * 3], contract: m.caps[i * 3 + 1], grip: m.caps[i * 3 + 2] });
+      }
+      const culled = new Uint8Array(liveN);
+      const kept = new Set(); for (let i = 0; i < m.n; i++) kept.add(m.idx[i]);
+      for (let i = 0; i < liveN; i++) if (!kept.has(i)) culled[i] = 1;
+      const xy = new Float32Array(liveN * 2);
+      if (liveXY) xy.set(liveXY.subarray(0, Math.min(liveXY.length, liveN * 2)));
+      for (let i = 0; i < m.n; i++) {
+        const li = m.idx[i];
+        if (li < liveN) { xy[li * 2] = m.xy[i * 2]; xy[li * 2 + 1] = m.xy[i * 2 + 1]; }
+      }
+      const allKind = new Int32Array(liveN);
+      for (let i = 0; i < m.n; i++) if (m.idx[i] < liveN) allKind[m.idx[i]] = kind[i];
+      view.setCells(liveN, xy, allKind, liveBirth, culled);
+      liveDone = true;
+      const hist = [0, 0, 0, 0];
+      for (let i = 0; i < m.n; i++) hist[kind[i]]++;
+      const carved = culled.reduce((a, b) => a + b, 0);
+      $('devoInfo').innerHTML =
+        `<b>${m.n} cells</b> (the world caps at 60)${m.aborted ? ' · yolk ran out' : ''}` +
+        (carved ? ` · ${carved} carved away` : '') +
+        `<br>neuron ${hist[0]} · sensor ${hist[1]} · muscle ${hist[2]} · anchor ${hist[3]}`;
+      if (devoWorker) { devoWorker.terminate(); devoWorker = null; }
+    }
+  };
+  // maxCells well past the world's 60 so the growth is worth watching — the note
+  // above says where the world would have stopped. yolk is effectively unlimited
+  // here; the point is the shape the genome wants to build.
+  devoWorker.postMessage({
+    genome: Array.from(gj.g),
+    opts: { ms: 12000, dtMs: 40, extent: EXTENT, maxCells: 4000, yolk: 1e9, stepEvery: 4 },
+  });
+  cancelAnimationFrame(devoRAF);
+  devoRAF = requestAnimationFrame(unfoldLoop);
+}
+
 /**
  * A GALLERY OF BODIES, because clicking one cell in a crowd of twenty thousand
  * is not a way to choose an animal. Each tile develops a living genome with the
@@ -3342,12 +3344,8 @@ on('bGallery', 'onclick', showGallery);
   }, 4000);
 })();
 
-on('bDevo', 'onclick', showDevo);
-on('bDevoStage', 'onclick', (e) => {
-  devoStages = !devoStages;
-  e.target.classList.toggle('on', devoStages);
-  drawDevo();
-});
+on('bDevo', 'onclick', startUnfold);
+on('bDevoStop', 'onclick', () => { stopUnfold(); devoActive = false; const i = $('devoInfo'); if (i) i.textContent = ''; });
 
 /* ---- scope geometry: draggable, minimisable ---- */
 let scopeH = 200;
@@ -4415,7 +4413,6 @@ function loop() {
   dev.queue.submit([enc.finish()]);
 
   drawScope();
-  drawDevo();
 
   stepCamAnim(t);
   frames++; acc += t - last; last = t;
