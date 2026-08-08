@@ -411,12 +411,28 @@ export class Evolver {
     const g = this.D.mutate(this.genome[p], r,
       { rate: this.mutRate, size: this.mutSize });
 
+    // Eggs are laid facing a random way, or every animal in the world would
+    // share one anterior direction and the flow field would select on a
+    // coincidence of the code rather than on anything the genome did.
+    //
+    // Drawn HERE, before development, because the egg's bearing is not only
+    // where the hatchling will point. Development happens inside the egg, in
+    // the egg's own coordinates, and the world's heat reaches it through the
+    // shell — so which face of the embryo is the warm one depends on which way
+    // the egg is lying. Gene products stay in the quadrant they were made in;
+    // the warmth does not.
+    const th = r() * Math.PI * 2, ct = Math.cos(th), st = Math.sin(th);
+
     // The yolk is a fixed share of what the parent has managed to accumulate.
     // A poor parent lays a small egg and may lay one that cannot finish.
     const yolk = this.yolkFrac * Math.max(0, this.lastEnergy?.[p] ?? this.birthEnergy);
     const grown = this.D.develop(g, {
       extent: this.eggExtent, yolk, cellCost: this.cellCost,
-      maxCells: this.maxCells, ...this.devoOpts,
+      maxCells: this.maxCells,
+      // The egg's bearing in the world, so the shell's warm side is where the
+      // world actually put it. Inert unless the thermal layer is switched on.
+      heatPhase: th,
+      ...this.devoOpts,
     });
     let body = grown.cells;
     if (body.length > this.maxCells) body = body.slice(0, this.maxCells);
@@ -432,10 +448,6 @@ export class Evolver {
     if (child < 0) return -1;
     const dst = arena.off[child];
 
-    // Eggs are laid facing a random way, or every animal in the world would
-    // share one anterior direction and the flow field would select on a
-    // coincidence of the code rather than on anything the genome did.
-    const th = r() * Math.PI * 2, ct = Math.cos(th), st = Math.sin(th);
     const B = world.params.bound;
     const wrap = (v) => (v > B ? v - 2 * B : v < -B ? v + 2 * B : v);
 
