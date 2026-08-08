@@ -166,6 +166,14 @@ export const WORLD_FIELDS = [
   ['tempOpt', 'f32', 'the temperature a cell is built for'],
   ['tempTol', 'f32', 'how far it can stray before paying'],
   ['tempCost', 'f32', 'energy per second per unit of excess deviation; 0 = climate off'],
+
+  // ---- ORIENTATION -------------------------------------------------------
+  // A cell's heading is integrated state (pos.z) rather than something read off
+  // its bonds. These are the only three couples that act on it; everything else
+  // in the kernel is a central force and produces no torque.
+  ['twistK', 'f32', 'how strongly bonded cells pull each other toward a common heading'],
+  ['vortK', 'f32', 'how strongly the curl of the flow spins a cell; 0 = rivers do not turn things'],
+  ['angDrag', 'f32', 'angular drag against the ground; dissipative, can only remove spin'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */

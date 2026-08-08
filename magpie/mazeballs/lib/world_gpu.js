@@ -317,7 +317,24 @@ ${wgslStruct('W')}
 // conformant device. Packing also makes each cell's position one coalesced
 // 8-byte load instead of two strided 4-byte ones.
 @group(0) @binding(0) var<uniform>             P     : W;
-@group(0) @binding(1) var<storage, read_write> pos   : array<vec2<f32>>;
+// A POSE, NOT A POSITION: xy = where the cell is, z = theta, its heading in
+// the plane, w = omega, how fast that heading is turning.
+//
+// Orientation used to be derived from BOND GEOMETRY — the vector between a
+// cell's lowest- and highest-axial-index bonded neighbours. That made a cell's
+// heading a fact about who it was attached to rather than about itself, gave an
+// unbonded cell no heading at all (and so no compass and no anisotropic
+// friction), and meant a body could not turn without physically rearranging.
+//
+// It also capped locomotion. The friction anisotropy that turns undulation into
+// swimming is applied in the heading's frame, so every cell of a radially
+// symmetric body ratcheted along a different axis and the thrust cancelled
+// inside the body. A perfect imposed gait moved bodies 0.012 units in 300 s.
+//
+// theta is integrated state now. It cannot go in a new buffer — bindings 1-10
+// are all storage and 10 is the per-stage limit — so it rides in the two spare
+// lanes of what was already a per-cell vector.
+@group(0) @binding(1) var<storage, read_write> pos   : array<vec4<f32>>;
 @group(0) @binding(2) var<storage, read_write> vel   : array<vec4<f32>>;  // xy=velocity, z=radius, w=next energy
 @group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=packed, y=slot, z=body, w=packed
 
@@ -881,7 +898,7 @@ fn contact(i: u32, p: vec2<f32>, myR: f32) -> vec2<f32> {
         let j = atomicLoad(&hashData[b + 1u + k]);
         if (j == i) { continue; }
         if (cmeta[j].x < 0) { continue; }
-        let d = minImage(pos[j] - p);
+        let d = minImage(pos[j].xy - p);
         let dist = max(length(d), 1e-4);
         let touch = myR + vel[j].z;
         if (dist >= touch) { continue; }
@@ -948,7 +965,7 @@ fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
         if (j == i) { continue; }
         let other = cmeta[j];
         if (other.x < 0 || other.z == me.z) { continue; }   // same body: not a contest
-        let d = minImage(pos[j] - p);
+        let d = minImage(pos[j].xy - p);
         if (dot(d, d) > r2) { continue; }
 
         // CONSERVING. The first version simply added rate*(effort difference)
@@ -1042,7 +1059,7 @@ fn hashBuild(@builtin(global_invocation_id) gid: vec3<u32>) {
   // with 36k slots and 7.2k alive that inflated crowding fivefold and starved
   // the entire population in a single tick. type < 0 marks a slot as vacated.
   if (cmeta[i].x < 0) { return; }
-  let b = bucketOf(pos[i]) * (1u + P.bucketM);
+  let b = bucketOf(pos[i].xy) * (1u + P.bucketM);
   let n = atomicAdd(&hashData[b], 1u);
   if (n < P.bucketM) { atomicStore(&hashData[b + 1u + n], i); }
 }
@@ -1112,7 +1129,7 @@ fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
       for (var k = 0u; k < n; k = k + 1u) {
         let j = atomicLoad(&hashData[b + 1u + k]);
         if (cmeta[j].x < 0) { continue; }
-        if (length(minImage(pos[j] - p)) > P.moteR) { continue; }
+        if (length(minImage(pos[j].xy - p)) > P.moteR) { continue; }
         // COUNT COMPETITORS, NOT MOUTHS.
         //
         // Measured at deep time: crowding suppression accounts for about half
@@ -1343,7 +1360,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   let acuity = senseAcuity(m.x);
   if (acuity <= 0.0) { ext[u32(slot)] = 0.0; return; }
 
-  let p = pos[i];
+  let p = pos[i].xy;
   // Two things a cell can actually feel locally: how fast the medium is moving
   // past it, and a scalar gradient it sits in. Both are analytic at p.
   let rel = flowAt(p) - vel[i].xy;
@@ -1366,24 +1383,13 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   // rather than as zero. A blind compass returning 0 would be a confident
   // claim of due east; returning noise is honest ignorance, and it means
   // evolving accuracy has something to climb from.
-  // The cell's own bearing, computed once: both the compass and the neighbour
-  // sense are questions about direction and both need it.
-  var ax = vec2<f32>(0.0, 0.0);
-  {
-    let ab = i * P.bondK;
-    var loN = -1; var hiN = -1; var loA = 2.0; var hiA = -1.0;
-    for (var k = 0u; k < P.bondK; k = k + 1u) {
-      let nj = bitcast<i32>(bondD[ab + k].x);
-      if (nj < 0) { continue; }
-      let na = axialPos(cmeta[u32(nj)].x);
-      if (na < loA) { loA = na; loN = nj; }
-      if (na > hiA) { hiA = na; hiN = nj; }
-    }
-    if (loN >= 0 && hiN >= 0 && loN != hiN) { ax = minImage(pos[u32(hiN)] - pos[u32(loN)]); }
-    else if (loN >= 0) { ax = minImage(pos[u32(loN)] - p); }
-  }
-  let alen = length(ax);
-  if (P.compass > 0.0 && alen > 1e-5) {
+  // The cell's own bearing. This is read from its heading, which is integrated
+  // state, so a lone cell has a compass exactly like a cell in tissue does —
+  // it used to be derived from bonds, and an unbonded cell was skipped by both
+  // the compass and the terrain lean however much acuity it had paid for.
+  let ax = vec2<f32>(cos(pos[i].z), sin(pos[i].z));
+  let alen = 1.0;
+  if (P.compass > 0.0) {
     let u = ax / alen;
     let bearing = select(u.x, u.y, senseNorth(m.x));   // eastness or northness
     let acu = senseAcuity(m.x);
@@ -1477,7 +1483,7 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
           // property the kernel already carries for the contest and is not a
           // new concept. Proprioception is a real sense and a separate one.
           if (cmeta[j].z == cmeta[i].z) { continue; }
-          let d = minImage(pos[j] - p);
+          let d = minImage(pos[j].xy - p);
           let d2 = dot(d, d);
           if (d2 > sig2 * 9.0) { continue; }
           let rel = length(vel[j].xy - myV);
@@ -1507,9 +1513,15 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   if (i >= P.nCells) { return; }
   if (cmeta[i].x < 0) { return; }              // vacated slot; not in the world
 
-  let p = pos[i];
+  let p = pos[i].xy;
+  let myTheta = pos[i].z;
   var v = vel[i].xy;
   var force = vec2<f32>(0.0, 0.0);
+  // Angular acceleration, accumulated the way force is. Bond springs and contact
+  // are CENTRAL forces — they act along the line between two centres — so they
+  // produce no torque and none is taken from them. Everything that turns a cell
+  // below is a genuine couple.
+  var torque = 0.0;
 
   // A muscle cell shortens its bonds in proportion to its activation. That is
   // what a muscle IS; locomotion falls out of the body deforming against the
@@ -1615,7 +1627,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
       }
       sap = sap + flow;
     }
-    let d = minImage(pos[u32(j)] - p);
+    let d = minImage(pos[u32(j)].xy - p);
     let dist = max(length(d), 1e-3);
     // Symmetric: both endpoints derive the same rest length, so the pair's
     // forces cancel. See contractionOf.
@@ -1639,6 +1651,19 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     // removes the energy the drive adds, and leaves the static spring law and
     // the muscle's authority over rest length untouched.
     force = force + dir * dot(vel[u32(j)].xy - v, dir) * P.bondDamp * sqrt(bd.z);
+
+    // TISSUE TRANSMITS TORQUE. Two bonded cells resist being twisted relative to
+    // one another, because the material between them is not a frictionless
+    // pivot. This is the couple that makes a BODY have a heading rather than a
+    // bag of cells each pointing its own way: alignment propagates along bonds,
+    // so a connected body settles into a coherent axis and its cells' friction
+    // anisotropies stop cancelling against each other.
+    //
+    // Written as the sine of the heading difference so it is periodic and has no
+    // branch cut, and scaled by bond stiffness so a skeleton transmits twist and
+    // soft tissue barely does. Equal and opposite at the two endpoints.
+    let dth = pos[u32(j)].z - myTheta;
+    torque = torque + P.twistK * sin(dth) * bd.z;
   }
 
   // Contact with everything nearby, living or not.
@@ -1736,44 +1761,25 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     grab = max(grab, 0.0);
 
-    // THE BODY AXIS, taken between two bonded neighbours — the same construction
-    // the verified reference uses (tools/swim-verify.js). Traction is anisotropic
-    // about it: a cell slides along its own body far more easily than sideways,
-    // and that asymmetry is what converts a deformation into travel. Isotropic
-    // drag, which is what this used to be, cancels it exactly.
-    var axis = vec2<f32>(0.0, 0.0);
-    {
-      // THE BODY AXIS, taken along the head-tail gradient.
-      //
-      // This used to take the FIRST TWO bonds found in slot order. In a chain
-      // those are the two chain neighbours and it is exactly right — which is
-      // why the standalone swim demo works. In a hex body of degree 4 to 6 the
-      // first two bonds are an arbitrary local lattice direction, so every
-      // cell's drag anisotropy pointed a different, meaningless way and the
-      // anisotropy averaged to nothing across the body. Anisotropic drag can
-      // only convert deformation into travel if it is anisotropic about
-      // something the body agrees on.
-      //
-      // Each cell carries its position along the body's own axis (packMeta), so
-      // the neighbours with the lowest and highest axial position give the
-      // local anterior-posterior direction directly.
-      let ab = i * P.bondK;
-      var loN = -1; var hiN = -1;
-      var loA = 2.0; var hiA = -1.0;
-      for (var k = 0u; k < P.bondK; k = k + 1u) {
-        let nj = bitcast<i32>(bondD[ab + k].x);
-        if (nj < 0) { continue; }
-        let na = axialPos(cmeta[u32(nj)].x);
-        if (na < loA) { loA = na; loN = nj; }
-        if (na > hiA) { hiA = na; hiN = nj; }
-      }
-      if (loN >= 0 && hiN >= 0 && loN != hiN) {
-        axis = minImage(pos[u32(hiN)] - pos[u32(loN)]);
-      } else if (loN >= 0) {
-        axis = minImage(pos[u32(loN)] - p);
-      }
-    }
-    let alen = length(axis);
+    // THE FRICTION FRAME IS THE CELL'S OWN HEADING.
+    //
+    // Traction is anisotropic about it: a cell slides along its own heading far
+    // more easily than sideways, and that asymmetry is what converts a
+    // deformation into travel. Isotropic drag cancels it exactly.
+    //
+    // This used to be derived from BOND GEOMETRY — the vector between the
+    // neighbours with the lowest and highest axial position. That construction
+    // is right for a chain, which is why the standalone swim demo worked, and
+    // wrong for everything else: an unbonded cell got no axis and was damped
+    // isotropically, and in a hex body every cell's anisotropy pointed a
+    // different way, so the thrust cancelled inside the body. A perfect imposed
+    // travelling wave moved real bodies 0.012 units in 300 s at every frequency
+    // and wavelength tried, and the controller was never the blocker.
+    //
+    // theta is a cell's own integrated state now, so it always has a frame, and
+    // the bond twist coupling above is what makes a connected body agree on one.
+    let axis = vec2<f32>(cos(myTheta), sin(myTheta));
+    let alen = 1.0;   // a heading is a unit vector; every cell has one
 
     // Dissipative ONLY: exponential decay cannot add energy whatever the
     // coefficients, so net motion is still paid for out of muscle fuel.
@@ -1817,6 +1823,31 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // evaluates to inf*0 = NaN the moment a component overflows to infinity — so
   // the guard meant to prevent blow-up was itself manufacturing the NaN it was
   // there to stop. clamp() saturates infinities to the bound instead.
+  // THE RIVER TURNS THINGS. A flow with curl in it rotates whatever is floating
+  // in it — that is what a vortex does to a leaf, and it costs the cell nothing
+  // because the medium is doing the work. Without it a cell's heading could only
+  // be changed by its own tissue, so a body swept downstream kept pointing
+  // whichever way it happened to be pointing when it entered.
+  //
+  // Central difference of the flow field, which is the z component of its curl.
+  var w = pos[i].w;
+  if (P.vortK != 0.0) {
+    let h = P.hashCell * 0.5;
+    let fx1 = flowAt(p + vec2<f32>(h, 0.0)); let fx0 = flowAt(p - vec2<f32>(h, 0.0));
+    let fy1 = flowAt(p + vec2<f32>(0.0, h)); let fy0 = flowAt(p - vec2<f32>(0.0, h));
+    let curl = (fx1.y - fx0.y) / (2.0 * h) - (fy1.x - fy0.x) / (2.0 * h);
+    torque = torque + P.vortK * (curl - w);
+  }
+
+  // Angular drag, from the same ground the linear drag comes from. Dissipative:
+  // it can only remove spin, never add it, so nothing here mints rotation.
+  w = (w + torque * P.dt) * exp(-P.angDrag * (P.slipBase + gritAtM(p, mudHere)) * P.dt);
+  w = clamp(w, -20.0, 20.0);
+  var nth = myTheta + w * P.dt;
+  // Keep theta in [-pi, pi] so it never drifts to a magnitude where f32 loses
+  // the resolution to tell two headings apart.
+  nth = nth - 6.283185307 * floor((nth + 3.141592654) / 6.283185307);
+
   v = clamp((v + force * P.dt) * P.damp, vec2<f32>(-40.0, -40.0), vec2<f32>(40.0, 40.0));
 
   var np = p + v * P.dt;
@@ -1838,7 +1869,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (np.y < -b) { np.y = -b; v.y = max(v.y, 0.0); }
   }
 
-  pos[i] = np;
+  pos[i] = vec4<f32>(np, nth, w);
 
   // ------------------------------------------------------------- energy
   // Per CELL, not per organism: a cell is the thing that sits somewhere and
@@ -2096,14 +2127,19 @@ export class WorldGPU {
     // arrays because they are easier to reason about CPU-side; the interleaving
     // belongs here, next to the bindings it exists for.
     const n = this.n;
-    const pos = new Float32Array(n * 2), vel = new Float32Array(n * 4);
+    const pos = new Float32Array(n * 4), vel = new Float32Array(n * 4);
     // vec4 stride: (type, brain slot, body id, unused). The body id is what
     // lets a cell tell a stranger from its own tissue, which is the whole basis
     // of the contest — without it a body would fight itself.
     const meta = new Int32Array(n * 4);
     const bodyOf = cells.body ?? null;
     for (let i = 0; i < n; i++) {
-      pos[i * 2] = cells.px[i]; pos[i * 2 + 1] = cells.py[i];
+      pos[i * 4] = cells.px[i]; pos[i * 4 + 1] = cells.py[i];
+      // Founders get the heading the builder laid them out with, so a ring of
+      // cells starts pointing around its ring rather than all one way. Bodies
+      // built without one point along +x and the twist coupling sorts them out.
+      pos[i * 4 + 2] = cells.theta ? cells.theta[i] : 0;
+      pos[i * 4 + 3] = 0;
       vel[i * 4] = cells.vx[i]; vel[i * 4 + 1] = cells.vy[i];
       // z is the cell's radius. It had never been written by anything, so it
       // was 0 for every cell in every run, and `touch = myR + otherR` was 0 —
@@ -2247,6 +2283,11 @@ export class WorldGPU {
       // GLIDE and the gripped phase to HOLD, and at fricK 6 both phases were
       // overdamped against a 0.7 s gait.
       gripBase: 0.55, gripMod: 0.9, fricK: 2.0, gripAnchor: 1.0,
+      // ORIENTATION. twistK is the strongest of the three because it is what
+      // makes a body agree on a heading at all: with it at zero every cell keeps
+      // whatever bearing development gave it and the anisotropic traction
+      // cancels across the body, which is the state this world was in.
+      twistK: 6.0, vortK: 0.8, angDrag: 3.0,
       // Substrate. gritScale sets how big a patch of purchase is; slipBase is the
       // drag left on frictionless ground (open water); gripAniso is how much
       // harder sideways slip is than sliding along your own body, which is the
@@ -2766,17 +2807,25 @@ export class WorldGPU {
     // Per-call staging, for the same reason as BrainArenaGPU.readState: a
     // shared one breaks the moment two readbacks overlap.
     const staging = this.device.createBuffer({
-      size: this.n * 8, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+      size: this.n * 16, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     });
     const enc = this.device.createCommandEncoder();
-    enc.copyBufferToBuffer(this.bPos, 0, staging, 0, this.n * 8);
+    enc.copyBufferToBuffer(this.bPos, 0, staging, 0, this.n * 16);
     this.device.queue.submit([enc.finish()]);
     await staging.mapAsync(GPUMapMode.READ);
     const packed = new Float32Array(staging.getMappedRange().slice(0));
     staging.unmap(); staging.destroy();
+    // Callers want plain xy and always have; the pose's extra lanes come out as
+    // their own arrays rather than changing a stride every consumer assumes.
     const x = new Float32Array(this.n), y = new Float32Array(this.n);
-    for (let i = 0; i < this.n; i++) { x[i] = packed[i * 2]; y[i] = packed[i * 2 + 1]; }
-    return { x, y, packed };
+    const theta = new Float32Array(this.n), omega = new Float32Array(this.n);
+    const xy = new Float32Array(this.n * 2);
+    for (let i = 0; i < this.n; i++) {
+      x[i] = packed[i * 4]; y[i] = packed[i * 4 + 1];
+      theta[i] = packed[i * 4 + 2]; omega[i] = packed[i * 4 + 3];
+      xy[i * 2] = x[i]; xy[i * 2 + 1] = y[i];
+    }
+    return { x, y, theta, omega, packed: xy };
   }
 
   /**
@@ -2818,24 +2867,41 @@ export class WorldGPU {
   async readCells() {
     const n = this.n;
     const staging = this.device.createBuffer({
-      size: n * 4 * 3, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+      size: n * 4 * 5, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     });
     const enc = this.device.createCommandEncoder();
-    enc.copyBufferToBuffer(this.bPos, 0, staging, 0, n * 8);
-    enc.copyBufferToBuffer(this.bEnergy, 0, staging, n * 8, n * 4);
+    enc.copyBufferToBuffer(this.bPos, 0, staging, 0, n * 16);
+    enc.copyBufferToBuffer(this.bEnergy, 0, staging, n * 16, n * 4);
     this.device.queue.submit([enc.finish()]);
     await staging.mapAsync(GPUMapMode.READ);
     const raw = staging.getMappedRange();
-    const pos = new Float32Array(raw.slice(0, n * 8));
-    const energy = new Float32Array(raw.slice(n * 8, n * 12));
+    const pose = new Float32Array(raw.slice(0, n * 16));
+    const energy = new Float32Array(raw.slice(n * 16, n * 20));
     staging.unmap(); staging.destroy();
-    return { pos, energy };
+    // Same contract as before for pos: two floats per cell. theta and omega are
+    // additional, so nothing that read this already has to change.
+    const pos = new Float32Array(n * 2);
+    const theta = new Float32Array(n), omega = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      pos[i * 2] = pose[i * 4]; pos[i * 2 + 1] = pose[i * 4 + 1];
+      theta[i] = pose[i * 4 + 2]; omega[i] = pose[i * 4 + 3];
+    }
+    return { pos, energy, theta, omega };
   }
 
   /** Write one organism's contiguous cell range back after a birth or death. */
-  writeCellRange(from, count, { pos, vel, meta, bond, brest, bstiff, bbrittle, energy }) {
+  writeCellRange(from, count, { pos, posXY, vel, meta, bond, brest, bstiff, bbrittle, energy }) {
     const q = this.device.queue;
-    if (pos) q.writeBuffer(this.bPos, from * 8, pos);
+    if (pos) q.writeBuffer(this.bPos, from * 16, pos);
+    // MOVE WITHOUT REORIENTING. pos is a vec4, so writing xy alone means one
+    // 8-byte write per cell rather than a strided blit. Callers use this when
+    // they are relocating a body that must keep the headings it has, and the
+    // ranges are one body's worth of cells, so the loop is short.
+    if (posXY) {
+      for (let i = 0; i < count; i++) {
+        q.writeBuffer(this.bPos, (from + i) * 16, posXY, i * 2, 2);
+      }
+    }
     if (vel) q.writeBuffer(this.bVel, from * 16, vel);
     if (meta) q.writeBuffer(this.bMeta, from * 16, meta);
     if (bond || brest) {

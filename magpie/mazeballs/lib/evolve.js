@@ -439,7 +439,8 @@ export class Evolver {
     const B = world.params.bound;
     const wrap = (v) => (v > B ? v - 2 * B : v < -B ? v + 2 * B : v);
 
-    const pos = new Float32Array(n * 2), vel = new Float32Array(n * 4);
+    // pos is a POSE: xy, then theta and omega. See world_gpu.js binding 1.
+    const pos = new Float32Array(n * 4), vel = new Float32Array(n * 4);
     const meta = new Int32Array(n * 4), energy = new Float32Array(n);
     const bnd = new Int32Array(n * bK).fill(-1);
     const brest = new Float32Array(n * bK);
@@ -471,7 +472,14 @@ export class Evolver {
       const c = body[i];
       const wx = wrap(px + c.x * ct - c.y * st);
       const wy = wrap(py + c.x * st + c.y * ct);
-      pos[i * 2] = wx; pos[i * 2 + 1] = wy;
+      pos[i * 4] = wx; pos[i * 4 + 1] = wy;
+      // A hatchling points the way its egg was pointing. Development works in
+      // egg coordinates and does not yet emit a per-cell heading, so the egg's
+      // own orientation is the only honest thing to seed from — and it gives a
+      // fresh body a coherent axis to ratchet along instead of every cell
+      // pointing a different way. The bond twist coupling maintains it.
+      pos[i * 4 + 2] = th;
+      pos[i * 4 + 3] = 0;
       vel[i * 4 + 2] = cells.rad ? cells.rad[dst + i] || 0.34 : 0.34;
 
       const type = describe(c);
@@ -685,7 +693,7 @@ export class Evolver {
     // and the bond springs pull them into whatever configuration the graph
     // implies. Nothing computes a layout; morphology is what the physics settles
     // into, which is the only way it stays a consequence rather than a design.
-    const pos = new Float32Array(n * 2), vel = new Float32Array(n * 4);
+    const pos = new Float32Array(n * 4), vel = new Float32Array(n * 4);
     const meta = new Int32Array(n * 4), energy = new Float32Array(n);
     const bond = new Int32Array(n * bK).fill(-1), brest = new Float32Array(n * bK);
 
@@ -835,8 +843,10 @@ export class Evolver {
     const spread = 0.55 * Math.sqrt(n);
     for (let i = 0; i < n; i++) {
       const a = r() * Math.PI * 2, rad = spread * Math.sqrt(r());
-      pos[i * 2] = wrap(ox + Math.cos(a) * rad);
-      pos[i * 2 + 1] = wrap(oy + Math.sin(a) * rad);
+      pos[i * 4] = wrap(ox + Math.cos(a) * rad);
+      pos[i * 4 + 1] = wrap(oy + Math.sin(a) * rad);
+      pos[i * 4 + 2] = spin;    // the offspring points where it budded
+      pos[i * 4 + 3] = 0;
 
       let type = cells.ctype[src + srcOf(i)];
       if (r() < m * 0.5) type = (r() * 4) | 0;   // neuron, sensor, muscle, anchor
@@ -853,7 +863,7 @@ export class Evolver {
       // recycled, and without this a newborn would inherit whatever
       // contractility the previous tenant of these slots happened to have.
       cells.cslot[dst + i] = dst + i;
-      cells.px[dst + i] = pos[i * 2]; cells.py[dst + i] = pos[i * 2 + 1];
+      cells.px[dst + i] = pos[i * 4]; cells.py[dst + i] = pos[i * 4 + 1];
       cells.vx[dst + i] = 0; cells.vy[dst + i] = 0;
       arena.cell[dst + i] = dst + i;
       energy[i] = 0;
@@ -961,12 +971,15 @@ export class Evolver {
           let cx = 0, cy = 0;
           for (let i = 0; i < n0; i++) { cx += cells.px[off0 + i]; cy += cells.py[off0 + i]; }
           cx /= n0; cy /= n0;
-          const pos = new Float32Array(n0 * 2);
+          // Only the cells MOVE here — they keep the headings they had. Writing
+          // a full pose would zero theta and omega, so this goes through the
+          // xy-only path.
+          const posXY = new Float32Array(n0 * 2);
           for (let i = 0; i < n0; i++) {
             cells.px[off0 + i] += bx - cx; cells.py[off0 + i] += by - cy;
-            pos[i * 2] = cells.px[off0 + i]; pos[i * 2 + 1] = cells.py[off0 + i];
+            posXY[i * 2] = cells.px[off0 + i]; posXY[i * 2 + 1] = cells.py[off0 + i];
           }
-          this.world.writeCellRange(off0, n0, { pos });
+          this.world.writeCellRange(off0, n0, { posXY });
         }
       } catch { /* no motes in this world; leave it where it is */ }
     }

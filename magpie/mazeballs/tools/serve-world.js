@@ -316,7 +316,10 @@ async function loadSnapshot(path) {
     meta[i * 4 + 2] = c.body[i]; meta[i * 4 + 3] = c.bodySize[i];
     c.px[i] = pos[i * 2]; c.py[i] = pos[i * 2 + 1];
   }
-  world.writeCellRange(0, N, { pos, vel, meta, bond: c.bond, brest: c.brest, energy });
+  // posXY, not pos: the snapshot format predates headings and stores xy only,
+  // so writing it as a full pose would zero every cell's theta. Restored cells
+  // keep the headings the freshly-built world gave them.
+  world.writeCellRange(0, N, { posXY: pos, vel, meta, bond: c.bond, brest: c.brest, energy });
   brains.writeState(built.arena);
   return { steps, alive: evo.alive() };
 }
