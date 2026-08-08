@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A uniform field, and a cell colour that was never there</title>
+<style>
+  :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fbfbf9; --fg:#1c2530; --dim:#5d6b7c; --acc:#12766e; --line:#e2e5ea; }
+  }
+  body { background:var(--bg); color:var(--fg); margin:0;
+         font:16px/1.65 ui-serif, Georgia, "Iowan Old Style", serif; }
+  .wrap { max-width:46rem; margin:0 auto; padding:3rem 1.25rem 6rem; }
+  a { color:var(--acc); }
+  h1,h2,h3 { font-family:ui-sans-serif, system-ui, sans-serif; line-height:1.25; }
+  h1 { font-size:1.9rem; margin:0 0 .3rem; }
+  h2 { margin-top:2.4rem; border-bottom:1px solid var(--line); padding-bottom:.3rem; }
+  .meta { color:var(--dim); font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size:.8rem; letter-spacing:.02em; }
+  code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.85em; }
+  pre { background:rgba(127,127,127,.1); padding:.9rem 1rem; border-radius:6px;
+        overflow-x:auto; border:1px solid var(--line); }
+  table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; font-size:.9rem; }
+  th,td { border:1px solid var(--line); padding:.35rem .6rem; text-align:left; }
+  th { background:rgba(127,127,127,.08); }
+  blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
+               color:var(--dim); }
+  /* Figures. Plots here are generated as SVG straight from the wire format
+     rather than screenshotted, so they stay sharp at any width and weigh
+     almost nothing. */
+  img, svg.fig { max-width:100%; height:auto; display:block; border-radius:6px;
+                 border:1px solid var(--line); background:#070c0b; }
+  figure { margin:1.6rem 0; }
+  figcaption { color:var(--dim); font-size:.82rem; margin-top:.5rem;
+               font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
+  ul.index { list-style:none; padding:0; }
+  ul.index li { margin:.9rem 0; }
+  ul.index .meta { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
+  <article>
+  <h1>A uniform field, and a cell colour that was never there</h1>
+  <p class="meta">
+    8 August 2026 · posts, rendering, viewer, protocol, mobile, coordination
+  </p>
+  <p>Notes for the other session. This one worked on <code>world.html</code> from the cloud —
+no GPU in that container, so the shader change below is reasoned, not run. If
+the world comes up black, that commit is the first suspect and it reverts
+cleanly. Everything else is plain DOM/CSS/JS and was checked with <code>node --check</code>.</p>
+<h2>The one protocol change: the <code>Cam</code> uniform gained a field</h2>
+<p><code>writeCam</code> and the WGSL <code>Cam</code> struct are a wire format with no names on it, only
+offsets — the scar comment in the struct says as much. A field was <strong>appended</strong>:</p>
+<p>metaPacked : f32   // offset 228, written last in writeCam</p>
+<p><code>1</code> means <code>cmeta.x</code> is the packed material vector (a page running its own sim);
+<code>0</code> means a plain <code>0..3</code> type bucket (watch mode, where the server already
+resolved it). The buffer is still 240 bytes, the three cam buffers are unchanged,
+and no existing offset moved. If you add the next field, put it at 232 and write
+it last, same as always.</p>
+<h2>The colour it gates: cells were never actually coloured by type</h2>
+<p>The cell shader chose its hue with <code>m.x == 1</code>, <code>== 2</code>, <code>== 3</code>. That only ever
+worked in watch mode. In a page running its own sim, <code>cmeta.x</code> is the whole
+packed word (<code>packMeta</code>: type in the low two bits, capacities above), so it is
+never equal to 1, 2 or 3 — <strong>every cell fell through to the stone-grey default.</strong>
+The crowd has been monochrome the entire time in local mode, and nobody caught it
+because the same page in watch mode looked fine.</p>
+<p>It now decodes contractility, grippiness and sense acuity straight out of
+<code>cmeta.x</code> — the same shifts <code>world_gpu.js</code> uses — and blends the class hues by
+<em>how much</em> of each a cell has, rather than the argmax label:</p>
+<p>base = mix(neuron, (muscle<em>ct + anchor</em>gr + sensor*se)/max(w,ε),
+smoothstep(0, 0.5, w))</p>
+<p>So a cell that both contracts and grips reads between terracotta and plum, and a
+capacity-less cell stays stone. This is the &quot;continuous, not label buckets&quot; ask,
+and it doubles as the fix for the monochrome crowd. Watch mode keeps the discrete
+path, gated by <code>metaPacked</code>. The gallery and devo thumbnails now use a JS twin,
+<code>matColor(c)</code>, so all three views speak the same material language. The old
+<code>tint[kind(c)]</code> argmax helpers are gone.</p>
+<p>Worth knowing for <code>visual-language.md</code>: this delivers &quot;categorical colour derived
+from the material vector&quot; as a <em>continuous</em> blend rather than the binned hue
+families that doc proposed — the continuous version reads composition, not class.</p>
+<h2>Mobile defaults changed — deliberately, don't &quot;fix&quot; them back</h2>
+<p>The first-message complaint was that the viewer had stopped being usable on a
+phone. On a narrow screen (≤700px) the defaults are now:</p>
+<ul>
+<li>the <strong>readout HUD starts collapsed</strong> to a spine (it was ~40% of the screen);
+the <code>›</code> reopens it and the choice is remembered.</li>
+<li>the <strong>right panel starts hidden</strong> — world first; the hamburger (now a 44px
+target above the status popups) slides it out.</li>
+<li>the world <strong>fits to width</strong> instead of letterboxing the square arena in a tall
+screen.</li>
+<li>iOS pinch/gesture and double-tap zoom are swallowed so the page no longer drags
+around under two fingers; <code>touch-action</code> stays off the body so the panel and
+carousel still scroll.</li>
+<li>the creature carousel is a focusable control — arrow keys walk it — and it
+rescans on a 15s timer.</li>
+</ul>
+<p>An explicit saved preference always wins over the width default, so a person who
+opens the HUD on a phone keeps it open.</p>
+<h2>New UI: the cell scope</h2>
+<p>A pop-out (<code>#vizBox</code>, opened by the in-panel <code>cell scope</code> button) that scatters
+either one creature's cells or one dot per creature across the population, over
+any pair of properties with a third as colour and bounds read from the data. It
+reuses <code>develop()</code> / <code>ensureDevo()</code> / <code>localGenomes</code> and touches no render or
+frame code.</p>
+<h2>Deploy reality, confirmed</h2>
+<p>Pages deploys from <code>main</code> via GitHub's built-in <em>pages build and deployment</em> —
+watched run #353 go green for the colour commit, so this is settled, not assumed.
+The <code>claude/fink-authoring-guide-bDtaY</code> branch is stale and I stopped syncing it;
+<code>.github/workflows/static.yml</code> remains inert. The old
+<code>claude/mazeballs-github-pages-o6cog0</code> dev branch is being retired (deleted
+locally; the remote delete is blocked through the cloud git proxy, so it is a
+one-tap cleanup on GitHub, or a <code>git push origin --delete</code> from the laptop).
+</content>
+</invoke></p>
+
+</article>
+
+</div>
+</body>
+</html>
