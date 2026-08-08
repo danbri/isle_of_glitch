@@ -120,17 +120,6 @@ button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font
   background:#16211Fdd;border:1px solid var(--rule);border-radius:8px;
   backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,.4);
 }
-/* The cell-scope launcher: a second canvas button stacked under the hamburger,
-   so the scatter is reachable world-first without opening the right panel. */
-#vizToggle{
-  position:fixed;top:calc(.5rem + env(safe-area-inset-top) + 52px);right:.6rem;
-  width:44px;height:44px;min-width:0;flex:none;
-  z-index:59;padding:0;font-size:1.1rem;line-height:1;color:var(--ink);cursor:pointer;
-  background:#16211Fdd;border:1px solid var(--rule);border-radius:8px;
-  backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,.4);
-}
-#vizToggle:hover{border-color:var(--sensor)}
-#vizToggle.on{background:var(--sensor);border-color:var(--sensor);color:#06110F}
 .legend{display:flex;gap:.7rem;font-size:.68rem;color:var(--ink-soft);font-family:var(--mono)}
 .legend i{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:.25rem}
 .note{font-size:.68rem;line-height:1.5;color:var(--ink-soft)}
@@ -303,7 +292,6 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   </div>
 </div>
 <button id="toggle" title="panel">☰</button>
-<button id="vizToggle" title="cell scope — scatter cells or creatures by any property">▦</button>
 
 <!-- THE CELL SCOPE. A pop-out scatter with pickable axes; see the module near
      the gallery code. Empty selects are filled in by JS from the property list. -->
@@ -567,6 +555,20 @@ const note = (msg) => {
   note._t = setTimeout(() => { if (e.textContent === msg) e.style.display = 'none'; }, 4000);
 };
 
+// CONTINUOUS CELL COLOUR — the JS twin of the shader's material blend (see the
+// RENDER WGSL). A developed cell carries continuous contract/sense/grip; blend
+// the class hues by how much of each the cell has rather than snapping to the
+// single argmax label, so the thumbnails read the same material language the
+// world does. Capacity-less cells stay stone.
+const CELL_HUE = { neuron: [153, 153, 140], sense: [102, 168, 161], contract: [199, 115, 82], grip: [143, 112, 158] };
+function matColor(c) {
+  const ct = Math.max(0, c.contract || 0), gr = Math.max(0, c.grip || 0), se = Math.max(0, c.sense || 0);
+  const w = ct + gr + se, t = Math.min(1, w / 0.5), inv = Math.max(w, 1e-3);
+  const ch = (i) => Math.round(CELL_HUE.neuron[i] * (1 - t) +
+    (CELL_HUE.contract[i] * ct + CELL_HUE.grip[i] * gr + CELL_HUE.sense[i] * se) / inv * t);
+  return `rgb(${ch(0)},${ch(1)},${ch(2)})`;
+}
+
 if (!navigator.gpu) {
   // WebGPU is gated on a SECURE CONTEXT. Browsers exempt localhost and
   // 127.0.0.1, but a plain-http request to any other address — a LAN address, a
@@ -660,6 +662,8 @@ struct Cam {
   // next to the write that fills them.
   topPass     : f32,   // 1 = draw ONLY the inspected animal, over everything
   lerp        : f32,   // 0 draws the previous server frame, 1 the newest — see drawPos
+  metaPacked  : f32,   // 1 = cmeta.x is the packed material vector (a page running
+                       // its own sim); 0 = a plain 0..3 type bucket (watch mode).
 };
 @group(0) @binding(0) var<uniform>       C     : Cam;
 @group(0) @binding(1) var<storage, read> pos   : array<vec2<f32>>;
@@ -1362,10 +1366,28 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   let muscle = vec3<f32>(0.78, 0.45, 0.32);      // terracotta, not tangerine
   let neuron = vec3<f32>(0.60, 0.60, 0.55);      // warm stone
   let anchor = vec3<f32>(0.56, 0.44, 0.62);      // muted plum — suckers, the feet
+  // CONTINUOUS COLOUR FROM THE MATERIAL VECTOR, not the argmax label. cmeta.x
+  // packs each cell's contractility, grippiness and sense acuity as fixed point
+  // (lib/world_gpu.js packMeta); blend the class hues by HOW MUCH of each the
+  // cell has, so a cell that both contracts and grips reads between terracotta
+  // and plum, and a capacity-less cell stays stone — instead of every cell
+  // snapping to one of four buckets. (The old label path also never fired in a
+  // page running its own sim, where m.x is the whole packed word, not 1/2/3, so
+  // every cell fell through to stone.) Watch mode sends a plain 0..3 bucket
+  // (metaPacked == 0), and keeps the discrete path.
   var base = neuron;
-  if (m.x == 1) { base = sensor; }
-  if (m.x == 2) { base = muscle; }
-  if (m.x == 3) { base = anchor; }
+  if (C.metaPacked > 0.5) {
+    let ct = f32((m.x >> 8u) & 255) / 255.0;     // contractility, 8-bit
+    let gr = f32((m.x >> 16u) & 255) / 255.0;    // grippiness, 8-bit
+    let se = f32((m.x >> 2u) & 31) / 31.0;       // sense acuity, 5-bit
+    let wsum = ct + gr + se;
+    let mat = muscle * ct + anchor * gr + sensor * se;
+    base = mix(neuron, mat / max(wsum, 0.001), smoothstep(0.0, 0.5, wsum));
+  } else {
+    if (m.x == 1) { base = sensor; }
+    if (m.x == 2) { base = muscle; }
+    if (m.x == 3) { base = anchor; }
+  }
 
   // COLOUR THE STORY. Saturation and brightness are held back for the animal
   // under inspection, so one creature reads clearly out of a crowded field
@@ -2119,6 +2141,16 @@ async function rebuild() {
   $('hSyn').textContent = syn.toLocaleString();
   $('hDevo').textContent = WATCH ? (remoteDevo ?? 'server') : (DEVO_VERSION === 2 ? 'devo2-grn' : 'devo1-positional');
   fitAll();
+  // On a phone, fill the WIDTH rather than letterbox the square arena in the
+  // middle of a tall screen — a band of world beats a small square in a sea of
+  // black. Height overflows, which is fine; you pan up and down.
+  if (sim && innerWidth <= 700) {
+    const v = viewRect();
+    cam.zoom = v.w / (sim.bound * 2.05);
+    const c = camForPoint(0, 0, cam.zoom);
+    cam.cx = c.cx; cam.cy = c.cy;
+    $('hZoom').textContent = cam.zoom.toFixed(2);
+  }
 }
 
 /**
@@ -2871,19 +2903,11 @@ function drawDevo() {
     g2.stroke();
   }
 
-  const tint = ['#8f9c97', '#70b8bd', '#d98f57', '#a37cb8'];
-  const kind = (c) => {
-    let best = 0, v = 0.15;
-    if (c.sense > v) { best = 1; v = c.sense; }
-    if (c.contract > v) { best = 2; v = c.contract; }
-    if (c.grip > v) { best = 3; v = c.grip; }
-    return best;
-  };
   cells.forEach((c, i) => {
     const on_ = i < built;
     const r = 5.5 * dpr;
     g2.beginPath(); g2.arc(cx(c.x), cy(c.y), r, 0, Math.PI * 2);
-    g2.fillStyle = on_ ? tint[kind(c)] : '#141d1b';
+    g2.fillStyle = on_ ? matColor(c) : '#141d1b';
     g2.fill();
     g2.strokeStyle = on_ ? '#06100e' : '#101917';
     g2.lineWidth = 1.4 * dpr; g2.stroke();
@@ -3017,14 +3041,9 @@ async function showGallery() {
           x.beginPath(); x.moveTo(px(cs[b.i].x), py(cs[b.i].y));
           x.lineTo(px(cs[b.j].x), py(cs[b.j].y)); x.stroke();
         }
-        const tint = ['#8f9c97', '#70b8bd', '#d98f57', '#a37cb8'];
-        const kind = (c) => { let best = 0, v = 0.15;
-          if (c.sense > v) { best = 1; v = c.sense; }
-          if (c.contract > v) { best = 2; v = c.contract; }
-          if (c.grip > v) { best = 3; v = c.grip; } return best; };
         for (const c of cs) {
           x.beginPath(); x.arc(px(c.x), py(c.y), 3.2, 0, Math.PI * 2);
-          x.fillStyle = tint[kind(c)]; x.fill();
+          x.fillStyle = matColor(c); x.fill();
         }
       } else {
         x.fillStyle = '#5a4a42'; x.font = '11px ui-monospace, monospace';
@@ -3274,8 +3293,7 @@ on('bGallery', 'onclick', showGallery);
   };
   $('vizModeCell').addEventListener('click', () => switchMode('cell'));
   $('vizModeCrit').addEventListener('click', () => switchMode('crit'));
-  const setToggleState = (on) => { const vt = $('vizToggle'); if (vt) vt.classList.toggle('on', on); };
-  $('vizClose').addEventListener('click', () => { box.classList.remove('on'); setToggleState(false); });
+  $('vizClose').addEventListener('click', () => box.classList.remove('on'));
 
   // Click a population dot to select that creature — the same one-arg selectUid
   // the gallery tiles use.
@@ -3293,14 +3311,11 @@ on('bGallery', 'onclick', showGallery);
     if (best >= 0 && data[best].uid != null) { selectUid(data[best].uid); note('selected #' + data[best].uid); }
   });
 
-  const toggleViz = () => {
+  on('bViz', 'onclick', () => {
     const opening = !box.classList.contains('on');
     box.classList.toggle('on');
-    setToggleState(opening);
     if (opening) refresh();
-  };
-  on('bViz', 'onclick', toggleViz);
-  on('vizToggle', 'onclick', toggleViz);
+  });
 
   addEventListener('resize', () => { if (box.classList.contains('on')) draw(); });
   setMenus();
@@ -4077,6 +4092,10 @@ function writeCam(t0, pxScale = 1, target = null) {
     lerp = Math.min(1, (t0 - sim.frameAt) / sim.framePeriod);
   }
   dv.setFloat32(224, lerp, true);
+  // 1 = cmeta.x packs the continuous material vector (a page running its own
+  // sim, lib/world_gpu.js packMeta); 0 = the server sent a plain 0..3 type
+  // bucket. The cell colour decodes capacities only when packed.
+  dv.setFloat32(228, WATCH ? 0 : 1, true);
 
   // The cached setting draws no cells, so topPass has nothing to say about it.
   if (target) { dev.queue.writeBuffer(target, 0, b); return; }
