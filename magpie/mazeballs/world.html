@@ -2298,7 +2298,7 @@ function selectUid(uid, pos, type, uidArr, n) {
   sel.uid = uid;
   if (uid >= 0) { storeFor(uid); refreshTrace(); }
   const box = $('scope');
-  if (box) box.style.display = uid >= 0 ? '' : 'none';
+  if (box) { box.style.display = uid >= 0 ? '' : 'none'; if (uid >= 0) applyScopeMin(); }
   updateSelBadge();
   updateSelInfo();
   // Unfold on selection rather than on a second click. Picking an animal and
@@ -2558,6 +2558,20 @@ function drawScope() {
   if (!traces.length) { traces = all; allFlat = true; }
   if (!traces.length) return;
 
+  // A QUIET BRAIN is a real finding, not a broken panel — but a wall of flat
+  // lines reads as broken. Say it in words instead, once, centred.
+  if (allFlat) {
+    g.strokeStyle = '#12201d'; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(0, h * 0.5); g.lineTo(w, h * 0.5); g.stroke();
+    g.textAlign = 'center';
+    g.fillStyle = '#6d8880'; g.font = `${13 * dpr}px ui-monospace, monospace`;
+    g.fillText('brain quiet — no neuron is oscillating', w / 2, h * 0.5 - 7 * dpr);
+    g.fillStyle = '#4a625c'; g.font = `${11 * dpr}px ui-monospace, monospace`;
+    g.fillText(`${e.order.length} neurons, all within ±0.02`, w / 2, h * 0.5 + 13 * dpr);
+    g.textAlign = 'left';
+    return;
+  }
+
   if (overlay) {
     // SUPERIMPOSED on one shared axis: this is how phase is read. Two neurons in
     // antiphase are obvious here and invisible when each has its own lane.
@@ -2739,6 +2753,17 @@ async function showGenome() {
     const SOFF = j.grn ? j.grn.synOff : j.synOff;
     let html = `<h4>animal #${j.uid} · gen ${j.generation} · ${j.cells} cells ` +
       `<button id="bCopyGenome" class="mini" title="copy genome as TSV">⧉ copy</button></h4>`;
+    // A regulatory network is a network — so it also reads as one. The table is
+    // the exhaustive view; the network is the CTRNN-style wiring diagram, genes
+    // as nodes and regulation as edges (amber excites, blue represses). Only the
+    // devo2 GRN encoding has a graph to draw.
+    if (j.grn) {
+      html += `<div class="row" style="margin:.15rem 0 .3rem">
+        <button id="bGenTable" class="mini${genomeView === 'table' ? ' on' : ''}">table</button>
+        <button id="bGenNet" class="mini${genomeView === 'net' ? ' on' : ''}">network</button></div>
+        <canvas id="grnNet" style="display:${genomeView === 'net' ? 'block' : 'none'};width:100%;height:300px;background:#070c0b;border:1px solid #1d332e;border-radius:3px;margin-bottom:.3rem"></canvas>`;
+    }
+    html += `<div id="genomeTable" style="display:${(j.grn && genomeView === 'net') ? 'none' : 'block'}">`;
     if (j.grn) {
       // A REGULATORY NETWORK reads as rows of "who regulates me", not as a grid
       // of basis coefficients. The FULL network is shown — all gene products,
@@ -2803,10 +2828,117 @@ async function showGenome() {
     html += '<p class="note">amber positive, blue negative. A row of dots is a ' +
       'property the genome leaves flat. Weight on <b>|dv|</b> rather than <b>dv</b> ' +
       'is what makes a body bilaterally symmetric — it cannot tell left from right.</p>';
+    html += '</div>';                              // close #genomeTable
     box.innerHTML = html;
     on('bCopyGenome', 'onclick', (e) =>
       copyText('genome', genomeAsText(j), e.target));
+    if (j.grn) {
+      const showView = (v) => {
+        genomeView = v;
+        $('bGenTable')?.classList.toggle('on', v === 'table');
+        $('bGenNet')?.classList.toggle('on', v === 'net');
+        const t = $('genomeTable'), c = $('grnNet');
+        if (t) t.style.display = v === 'net' ? 'none' : 'block';
+        if (c) c.style.display = v === 'net' ? 'block' : 'none';
+        if (v === 'net') drawGrnNetwork(j);
+      };
+      on('bGenTable', 'onclick', () => showView('table'));
+      on('bGenNet', 'onclick', () => showView('net'));
+      if (genomeView === 'net') drawGrnNetwork(j);
+    }
   } catch (e) { box.textContent = 'could not load genome: ' + e.message; }
+}
+
+let genomeView = 'table';                          // 'table' | 'net'
+
+/**
+ * THE GRN AS A NETWORK — the CTRNN-style wiring view of a genome. Genes are
+ * nodes in three bands: the egg's gradients and external channels feed in from
+ * the left, the body outputs (what a cell is made of) sit on the right, the
+ * internal regulators fill the middle. Each edge is one regulator acting on one
+ * gene — amber excites, blue represses, brighter and thicker with weight. Named
+ * genes are labelled; the rest are dots. It reads the same genome the table does.
+ */
+function drawGrnNetwork(j) {
+  const cv = $('grnNet'); if (!cv || !j.grn) return;
+  const G = j.grn, nGene = G.nGene, extBase = nGene - 8;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const W = cv.clientWidth || 320, H = cv.clientHeight || 300;
+  cv.width = Math.max(1, Math.floor(W * dpr)); cv.height = Math.max(1, Math.floor(H * dpr));
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = '#070c0b'; g.fillRect(0, 0, W, H);
+
+  const role = (i) =>
+    i < G.maternal.length ? 'egg'
+    : (i >= G.outBase && i - G.outBase < G.outputs.length) ? 'out'
+    : (i >= extBase) ? 'ext' : 'int';
+  const nm = (i) =>
+    i < G.maternal.length ? G.maternal[i]
+    : (i >= G.outBase && i - G.outBase < G.outputs.length) ? G.outputs[i - G.outBase]
+    : (i >= extBase) ? `e${i - extBase}` : `${i}`;
+
+  // Three bands. Inputs (egg gradients, then external) on the left, outputs on
+  // the right, internal genes packed into a grid in the middle.
+  const left = [], mid = [], right = [];
+  for (let i = 0; i < nGene; i++) {
+    const r = role(i);
+    if (r === 'egg' || r === 'ext') left.push(i);
+    else if (r === 'out') right.push(i);
+    else mid.push(i);
+  }
+  const pos = new Array(nGene);
+  const padY = 16, colTop = padY, colBot = H - padY;
+  const placeCol = (arr, x) => arr.forEach((i, k) =>
+    { pos[i] = [x, colTop + (arr.length === 1 ? (colBot - colTop) / 2 : (colBot - colTop) * k / (arr.length - 1))]; });
+  placeCol(left, W * 0.10);
+  placeCol(right, W * 0.90);
+  // middle grid
+  const midCols = Math.max(1, Math.round(Math.sqrt(mid.length * W / Math.max(1, H))));
+  const midRows = Math.ceil(mid.length / midCols);
+  mid.forEach((i, k) => {
+    const cxi = k % midCols, cyi = Math.floor(k / midCols);
+    const x = W * 0.30 + (W * 0.40) * (midCols === 1 ? 0.5 : cxi / (midCols - 1));
+    const y = colTop + (colBot - colTop) * (midRows === 1 ? 0.5 : cyi / (midRows - 1));
+    pos[i] = [x, y];
+  });
+
+  // Edges first, so nodes sit on top. Regulator src -> gene i.
+  for (let i = 0; i < nGene; i++) {
+    const b = i * G.stride, p = pos[i]; if (!p) continue;
+    for (let k = 0; k < G.k; k++) {
+      const sIdx = j.g[b + G.offSrc + k];
+      if (!(sIdx >= 0)) continue;
+      const src = Math.floor(sIdx) % nGene, q = pos[src]; if (!q) continue;
+      const w = j.g[b + G.offW + k], a = Math.min(0.85, 0.12 + Math.abs(w) / 3);
+      g.strokeStyle = w >= 0 ? `rgba(226,150,70,${a})` : `rgba(80,150,220,${a})`;
+      g.lineWidth = Math.min(2.4, 0.4 + Math.abs(w) * 0.7);
+      g.beginPath(); g.moveTo(q[0], q[1]);
+      const mx = (q[0] + p[0]) / 2;
+      g.bezierCurveTo(mx, q[1], mx, p[1], p[0], p[1]);   // gentle curve, not a rat's nest
+      g.stroke();
+    }
+  }
+
+  const col = { egg: '#4dd1de', out: '#ff9433', ext: '#8f9c97', int: '#9aa6a0' };
+  for (let i = 0; i < nGene; i++) {
+    const p = pos[i]; if (!p) continue;
+    const r = role(i), named = r === 'egg' || r === 'out';
+    const rad = named ? 5 : 2.6;
+    g.beginPath(); g.arc(p[0], p[1], rad, 0, Math.PI * 2);
+    g.fillStyle = col[r]; g.fill();
+    g.lineWidth = 1; g.strokeStyle = 'rgba(4,8,7,.9)'; g.stroke();
+    if (named) {
+      g.fillStyle = '#cfe3dc'; g.font = `${9}px ui-monospace, monospace`;
+      g.textBaseline = 'middle';
+      if (r === 'egg') { g.textAlign = 'right'; g.fillText(nm(i), p[0] - 7, p[1]); }
+      else { g.textAlign = 'left'; g.fillText(nm(i), p[0] + 7, p[1]); }
+    }
+  }
+  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  g.fillStyle = '#5f7a73'; g.font = `${9}px ui-monospace, monospace`;
+  g.fillText('egg gradients →', 6, H - 5);
+  g.textAlign = 'right'; g.fillText('← outputs', W - 6, H - 5);
+  g.textAlign = 'left';
 }
 
 /* ============================ development viewer ==========================
@@ -3347,7 +3479,17 @@ on('bDevo', 'onclick', startUnfold);
 on('bDevoStop', 'onclick', () => { stopUnfold(); devoActive = false; const i = $('devoInfo'); if (i) i.textContent = ''; });
 
 /* ---- scope geometry: draggable, minimisable ---- */
-let scopeH = 200;
+let scopeH = 150;
+// Minimised = the control bar only, no trace canvas — so selecting an animal on
+// a phone does not throw a tall panel over the world. Compact by default on a
+// narrow screen; the choice is remembered.
+let scopeMinned = (localStorage.getItem('mz.scopemin') ?? (innerWidth <= 700 ? '1' : '0')) === '1';
+function applyScopeMin() {
+  const cv = $('scopeC'), foot = $('scopeFoot'), b = $('scopeMin');
+  if (cv) cv.style.display = scopeMinned ? 'none' : '';
+  if (foot) foot.style.display = scopeMinned ? 'none' : '';
+  if (b) b.textContent = scopeMinned ? 'expand' : 'minimise';
+}
 function applyScopeH() {
   const cv = $('scopeC');
   if (cv) cv.style.height = scopeH + 'px';
@@ -3366,13 +3508,12 @@ on('scopeGrip', 'onpointerdown', e => {
   addEventListener('pointermove', move);
   addEventListener('pointerup', up);
 });
-on('scopeMin', 'onclick', e => {
-  const cv = $('scopeC'), foot = $('scopeFoot');
-  const hidden = cv.style.display === 'none';
-  cv.style.display = hidden ? '' : 'none';
-  if (foot) foot.style.display = hidden ? '' : 'none';
-  e.target.textContent = hidden ? 'minimise' : 'expand';
+on('scopeMin', 'onclick', () => {
+  scopeMinned = !scopeMinned;
+  try { localStorage.setItem('mz.scopemin', scopeMinned ? '1' : '0'); } catch { /* private mode */ }
+  applyScopeMin();
 });
+applyScopeMin();
 
 /**
  * "LOOK AT THIS." A one-click way to tell whoever reads the logs that something
