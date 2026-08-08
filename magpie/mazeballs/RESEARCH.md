@@ -7055,3 +7055,41 @@ principled — a cell rebuilding before it divides is the G1 phase, where slowin
 the division rate directly would be a number chosen to produce an outcome — but
 the claim that it recovers the maternal signal needs pre-registering on the
 across-axis specifically, with independent seeds and both horizons.
+
+## 2026-08-08 — the syncytium breaks the clock
+
+danbri pointed at Jaeger's gap-gene work on the Drosophila syncytial blastoderm:
+nuclei there divide WITHOUT cytokinesis, so the cytoplasm is shared and gap-gene
+products form a field across the whole embryo that a nucleus reads its position
+in. This model does the opposite — every division halves every gene product in
+both cells — and that halving is the dilution measured to outrun synthesis and
+turn the embryo into a clock.
+
+`syncytial: true` makes a daughter COPY its mother's concentrations instead of
+splitting them. Size-matched, 16 genomes:
+
+```
+             cells   |r| head-tail    |r| across      |r| age
+as-is          197   0.091 +-0.019  0.105 +-0.011  0.589 +-0.025
+SYNCYTIAL      186   0.223 +-0.039  0.303 +-0.054  0.170 +-0.024
+difference             +3.0 SE        +3.6 SE       -12.2 SE
+```
+
+**The clock is broken.** Age correlation falls by a factor of 3.5 at 12.2 SE, and
+both maternal axes roughly triple. All three clear 2 SE, and the age result
+clears any correction that could reasonably be applied.
+
+The size confound runs AGAINST this result rather than explaining it: a larger
+body has more age spread, so a size artifact would raise the age correlation, and
+it fell. The unmatched comparison (156 against 186 cells) gives the same picture.
+
+What it costs, stated plainly: gene product is created rather than conserved at
+division. No ENERGY is minted — a cell still costs the yolk exactly what it did,
+so the friction law is untouched — but mass conservation of signalling molecules
+is relaxed, and this model never tracked those as a budget in the first place.
+Whether that is a licence worth taking is a design question, not a measurement.
+It is an option, not the default.
+
+Not measured: whether a body developed this way is FITTER, or merely more
+patterned. Patterning is the substrate differentiation needs, not differentiation
+itself, and the multicellularity tax is untouched by any of this.

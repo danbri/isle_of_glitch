@@ -353,6 +353,28 @@ export function develop(genome, {
   // whatever the chemistry can sustain.
   plump = false,
   plumpRate = 1.2,
+  // SYNCYTIAL DIVISION — nuclei divide, cytoplasm does not.
+  //
+  // Jaeger's gap-gene work is on the Drosophila syncytial blastoderm, where
+  // nuclei divide WITHOUT cytokinesis: there are no cell membranes yet, the
+  // cytoplasm is shared, and gap-gene products form a genuine field across the
+  // whole embryo that a nucleus reads its position in.
+  //
+  // This model does the opposite. Every division halves every gene product in
+  // both cells, which is correct for a cell with a wall and is the dilution
+  // measured to outrun synthesis — decay ~0.96 s against divisions every ~0.6 s
+  // — turning the embryo into a clock: expression correlates with age at 0.60
+  // and with the maternal axes at 0.08.
+  //
+  // With syncytial on, a daughter COPIES its mother's concentrations instead of
+  // splitting them. Nothing is diluted, so a gradient laid down early survives
+  // division and position can compete with age. It is not free: gene product is
+  // created rather than conserved, which is a real departure and is why it is an
+  // option rather than the default. The energy cost of a cell is still charged
+  // against the yolk exactly as before, so no ENERGY is minted — the friction
+  // law is untouched. What is relaxed is mass conservation of signalling
+  // molecules, which this model never tracked as a budget in the first place.
+  syncytial = false,
 } = {}) {
   const dt = dtMs / 1000;
   const nStep = Math.max(1, Math.round(ms / dtMs));
@@ -602,11 +624,16 @@ export function develop(genome, {
       X[d] = nx; Y[d] = ny; noise[d] = rndDev(); ready[d] = 0;
       mother[d] = i;
       spent += cellCost;
-      // Cytoplasm is divided, not created.
+      // Cytoplasm is divided, not created — unless the embryo is syncytial, in
+      // which case the nucleus divides and the shared cytoplasm does not.
       const bs = i * NGENE, bd = d * NGENE;
-      for (let g = N_MATERNAL; g < NGENE; g++) {
-        const half = conc[bs + g] * 0.5;
-        conc[bd + g] = half; conc[bs + g] = half;
+      if (syncytial) {
+        for (let g = N_MATERNAL; g < NGENE; g++) conc[bd + g] = conc[bs + g];
+      } else {
+        for (let g = N_MATERNAL; g < NGENE; g++) {
+          const half = conc[bs + g] * 0.5;
+          conc[bd + g] = half; conc[bs + g] = half;
+        }
       }
       setMaternal(d);
     }
