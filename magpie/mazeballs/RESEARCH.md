@@ -7137,3 +7137,48 @@ What it does suggest: the binding constraint is not that products cannot travel
 far enough. Better transport made things worse. The constraint is the dilution
 itself, which is what the copy hack removes and what a genuinely shared cytoplasm
 would also remove — by conserving one pool rather than by duplicating pools.
+
+## The continuum does not fix the clock — three variants, all worse
+
+The syncytial result (age 0.589 → 0.170) suggested that letting cells share a
+medium would loosen the division clock's grip on expression. A continuous
+medium was built properly: a grid the cells sample and deposit into by bilinear
+interpolation rather than snapping to the nearest bin, plus sourced sugar and
+heat layers, plus the egg/world frame distinction (gene products fixed in egg
+coordinates, heat entering through the shell from outside and sweeping around
+the egg's frame if the egg tumbles).
+
+Sixteen genomes, 18 s of development, extent 12, cap 400 cells:
+
+```
+                  cells   |r| head-tail   |r| across   |r| age
+no field            132       0.110          0.092       0.645
+medium only          37       0.117          0.117       0.823
++ sugar              33       0.120          0.089       0.853
++ sugar + heat       55       0.114          0.100       0.808
+fixed hot side       37       0.146          0.143       0.817
+tumbling 0.5/s       37       0.099          0.108       0.815
+```
+
+**The clock got worse in every variant, by about 6 SE.** The hypothesis that the
+first version failed because it was a sink with no source is falsified: adding
+sources did not help.
+
+The mechanism appears to be homogenisation. Exchange pulls every cell toward the
+shared local value, which erases the cell-to-cell differences that carried what
+little position signal existed, while doing nothing to the dilution that drives
+the clock. Bodies also shrink from 132 cells to 37, and that is not the cause of
+the age result — a smaller body has *less* age spread, which would push the
+correlation down, not up.
+
+One sub-result is in the predicted direction and is worth keeping: a fixed
+external thermal gradient raises across-axis correlation from 0.092 to 0.143
+(+2.3 SE), and spinning the egg in the same gradient washes it back to 0.108.
+That is what a world-frame field entering a rotating egg should do, so the frame
+machinery is wired correctly. But fixed-vs-tumbling is only 1.6–1.9 SE and is
+not yet a result.
+
+Retained, default off. The continuum is the right *mechanism* — the world does
+have heat and sugar and they do not respect cell walls — but as implemented it
+is not a route to spatial patterning, and it should not be switched on in the
+belief that it is.
