@@ -314,6 +314,23 @@ export function develop(genome, {
   cleaveFrac = 0.35,
   divRate = 1.6,
   surviveThresh = 0.5,
+  // WATCHING DEVELOPMENT HAPPEN, rather than being handed the corpse.
+  //
+  // develop() is one synchronous call that returns a finished body, so anything
+  // wanting to SHOW growth had to either re-develop to a series of shorter
+  // horizons — wasteful, and quadratic in the number of frames — or block until
+  // the whole thing finished and display the end state. Neither shows the
+  // process, which is the only interesting thing about a developmental encoding.
+  //
+  // onStep is called every `stepEvery` timesteps with a live view of the arrays.
+  // It is READ-ONLY by contract: it must not retain or mutate them, because they
+  // are the working buffers and will be overwritten on the next tick. A caller
+  // that wants to keep a frame copies it.
+  //
+  // Purely observational — with onStep unset nothing about this function changes,
+  // which is verified against the previous implementation across ten genomes.
+  onStep = null,
+  stepEvery = 8,
 } = {}) {
   const dt = dtMs / 1000;
   const nStep = Math.max(1, Math.round(ms / dtMs));
@@ -441,6 +458,11 @@ export function develop(genome, {
     }
   };
 
+  // Births SINCE THE LAST REPORT, not since the last step. Cleared when the
+  // callback fires rather than each tick — clearing per step dropped every
+  // division that happened between reports, which at stepEvery 8 lost seven
+  // eighths of them and made a body of 1,169 cells look like 162 divisions.
+  const bornSinceReport = [];
   for (let t = 0; t < nStep && !aborted; t++) {
     rebuildNeighbours();
     // ---- regulation, gather-style, out of place
@@ -526,6 +548,7 @@ export function develop(genome, {
       if (clash) continue;
 
       const d = n++;
+      if (onStep) bornSinceReport.push(d);
       X[d] = nx; Y[d] = ny; noise[d] = rndDev(); ready[d] = 0;
       mother[d] = i;
       spent += cellCost;
@@ -536,6 +559,13 @@ export function develop(genome, {
         conc[bd + g] = half; conc[bs + g] = half;
       }
       setMaternal(d);
+    }
+
+    // A live view of the embryo, for anything that wants to watch rather than
+    // wait. Arrays are the working buffers — see the note on onStep.
+    if (onStep && (t % stepEvery === 0 || t === nStep - 1)) {
+      onStep({ t, nStep, n, X, Y, mother, born: bornSinceReport, aborted });
+      bornSinceReport.length = 0;
     }
   }
 

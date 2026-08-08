@@ -265,47 +265,36 @@
   </div>
 
   <div class="card" style="margin-top:.8rem">
-    <h3>grow the selected one much larger</h3>
-    <p style="font-size:.85rem;margin:.2rem 0 .5rem">The world stops development at 12,000&nbsp;ms
-    with a 60-cell cap. Nothing about the encoding requires that. Pick a size and watch the
-    same genome keep going.</p>
+    <h3>watch one develop, live</h3>
+    <p style="font-size:.85rem;margin:.2rem 0 .5rem">The world stops development at
+    12,000&nbsp;ms with a 60-cell cap. Nothing about the encoding requires that. This runs
+    the same <code>develop()</code> in a worker and draws every division as it happens, so
+    the page stays responsive however large the body gets.</p>
     <div class="transport" style="flex-wrap:wrap">
-      <button class="act" data-big="0">~1,000 cells &middot; 3s</button>
-      <button class="act" data-big="1">~4,000 cells &middot; 25s</button>
-      <button class="act" data-big="2">~6,000 cells &middot; 2min</button>
+      <button class="act" data-big="0">~1,000 cells</button>
+      <button class="act" data-big="1">~4,000 cells</button>
+      <button class="act" data-big="2">~6,000 cells</button>
+      <button class="act" id="bStopBig">stop</button>
     </div>
-    <canvas id="cvBig" width="420" height="420" style="margin-top:.6rem;width:100%;height:auto;aspect-ratio:1"></canvas>
+    <canvas id="cvLive" width="760" height="760"
+            style="margin-top:.6rem;width:100%;height:auto;aspect-ratio:1"></canvas>
     <div id="bigStats" style="font-family:var(--mono);font-size:.76rem;margin-top:.4rem"></div>
-    <p class="note warn">The page will not respond while this runs — development is
-    single-threaded and synchronous. The time estimates are measured, not guessed.</p>
-    <p class="note"><b>The egg is the mould.</b> At the world's egg size a body saturates
-    around a thousand cells however long it develops — 936 at 48,000&nbsp;ms against 1,004 at
-    96,000. Bigger bodies need a bigger EGG, not more time: 3,907 cells at twice the radius,
-    6,200 at two and a half times, 11,131 at over three. Growth expands until it meets the
-    shell and can then only fill in, which is also why these bodies come out round. An
-    elongated animal may be unreachable here not because the genome cannot express one, but
-    because a circular egg has no long axis to grow along.</p>
-  </div>
-
-  <p class="note">Every egg is drawn at the same scale, so what you are watching is size
-  changing, not an arrangement changing. Development is <em>canalised</em> — the noise is
-  derived from the genome — so each of these is one fixed process being replayed, not a
-  fresh roll each time you scrub.</p>
-
-  <p class="note warn">The world only ever runs the first 12,000&nbsp;ms of this, with a
-  60-cell cap. These bodies keep going to about 18,000 and reach a mean of 156 cells. The
-  animals in the live world are early stages of a process that was stopped, not finished
-  organisms — and the reason is cost, not biology: every cell diffuses to its neighbours
-  each tick, so development is quadratic in cells.</p>
-
-  <p class="note warn"><b>Watch for stripes. There mostly are not any.</b> Measured across 40
-  random genomes, counting sign changes in contractility along the long axis: mean 1.0 bands
-  at 12,000&nbsp;ms, 0.9 at 30,000, 0.27 at 60,000, one genome in forty reaching seven. One
-  band is head-and-tail polarity, not segmentation. Elongation FALLS as they grow — 1.58,
-  1.23, 1.09 — so they get bigger and rounder, filling a circular egg rather than extending
-  along an axis. The mechanism for banding exists and step 4 shows it working in isolation.
-  Evolution in this world has not used it.</p>
-</section>
+    <p class="note"><b>What you are looking at.</b> A cell arrives bright and swells from
+    nothing — that is a division, the only event this model has while it is growing. Colour
+    settles to the cell type over about a second, so the growing margin reads as a bright
+    rind on older tissue. At the end the cells that <code>survive</code> rejects shrink away
+    together, because that is when it happens: apoptosis here is one pass at hatching, not a
+    trickle throughout. Drawing it as a trickle would look better and would misrepresent the
+    model.</p>
+    <p class="note warn"><b>The egg is the mould.</b> At the world's egg size a body
+    saturates near a thousand cells however long it develops — 936 at 48,000&nbsp;ms against
+    1,004 at 96,000, for triple the work. Size comes from a bigger EGG, not more time: 3,907
+    cells at twice the radius, 6,200 at two and a half, 11,131 at over three. Growth expands
+    until it meets the shell and can then only fill in, which is also why these come out
+    round. An elongated animal may be unreachable here not because the genome cannot express
+    one — elongation 2.95 has been measured in a small body — but because a circular egg has
+    no long axis to grow along.</p>
+  </section>
 
 <section data-step="6">
   <h2>6. Carving, not only building</h2>
@@ -458,6 +447,7 @@
 <script type="module">
 import * as D from './lib/devo2.js';
 import { describe } from './lib/evolve.js';
+import * as DevoViewMod from './lib/devo-view.js';
 
 const $ = (id) => document.getElementById(id);
 const TYPE_COL = ['#99998c', '#66a89e', '#c7734f', '#8f709e'];
@@ -864,53 +854,128 @@ const BIG_PRESETS = [
   { ms: 96000,  extent: 24, label: '~4,000 cells' },
   { ms: 150000, extent: 30, label: '~6,000 cells' },
 ];
+
+/**
+ * LIVE DEVELOPMENT, off the main thread.
+ *
+ * The previous version ran develop() synchronously behind a 30ms yield, so the
+ * browser froze for up to two minutes and then displayed a finished body. That
+ * hid the only interesting thing a developmental encoding does. Now a worker
+ * runs it and streams frames; this draws them as they arrive.
+ *
+ * Birth times are assigned HERE rather than in the model, because they are a
+ * property of the animation and not of the biology: a cell's birth time is when
+ * this view first saw it, which is what the swelling and the bright rind are
+ * keyed off.
+ */
+let devoWorker = null, devoView = null, devoRAF = 0;
+let liveBirth = null, liveXY = null, liveN = 0, liveT0 = 0, liveCarve = 0, liveDone = false;
+
+async function ensureView() {
+  if (devoView) return devoView;
+  devoView = await DevoViewMod.DevoView.create($('cvLive'));
+  if (!devoView) {
+    $('bigStats').innerHTML =
+      '<span style="color:#c7734f">no WebGPU on this browser — the live view needs it</span>';
+  }
+  return devoView;
+}
+
+function stopLive() {
+  if (devoWorker) { devoWorker.terminate(); devoWorker = null; }
+  cancelAnimationFrame(devoRAF); devoRAF = 0;
+}
+
+function liveLoop() {
+  if (!devoView) return;
+  const now = (performance.now() - liveT0) / 1000;
+  if (liveDone && liveCarve < 1) liveCarve = Math.min(1, liveCarve + 0.02);
+  devoView.draw(now, devoView.egg ?? 12, liveCarve);
+  devoRAF = requestAnimationFrame(liveLoop);
+}
+
 document.querySelectorAll('[data-big]').forEach(btn => {
-  btn.onclick = () => {
+  btn.onclick = async () => {
     if (playing) $('bPlay').click();
+    const view = await ensureView();
+    if (!view) return;
+    stopLive();
+
     const pre = BIG_PRESETS[+btn.dataset.big];
-    const all = [...document.querySelectorAll('[data-big]')];
-    all.forEach(b => b.disabled = true);
-    $('bigStats').textContent = `developing embryo ${galSel + 1} at egg radius ${pre.extent}…`;
-    setTimeout(() => {
-      const t0 = performance.now();
-      let r;
-      try {
-        r = D.develop(galGenomes[galSel], { ms: pre.ms, dtMs: GAL_DT,
-          extent: pre.extent, maxCells: 40000, yolk: 1e9 });
-      } catch (e) {
-        $('bigStats').textContent = 'development failed: ' + e.message;
-        all.forEach(b => b.disabled = false); return;
+    view.egg = pre.extent;
+    liveBirth = new Float32Array(1024);
+    liveN = 0; liveT0 = performance.now(); liveCarve = 0; liveDone = false;
+    $('bigStats').textContent = `developing embryo ${galSel + 1} in a worker…`;
+
+    devoWorker = new Worker('./lib/devo-worker.js', { type: 'module' });
+    // A module worker that fails to LOAD reports nothing through onmessage, so
+    // without this a bad import in the worker looks exactly like development
+    // taking a long time. It cost twenty-five silent frames to find that out.
+    devoWorker.onerror = (err) => {
+      $('bigStats').innerHTML = '<span style="color:#c7734f">worker failed: ' +
+        (err.message || 'load error') + '</span>';
+      stopLive();
+    };
+    devoWorker.onmessage = (e) => {
+      const m = e.data;
+      if (m.kind === 'error') {
+        $('bigStats').innerHTML = '<span style="color:#c7734f">' + m.message + '</span>';
+        stopLive(); return;
       }
-      const secs = ((performance.now() - t0) / 1000).toFixed(1);
-      const cells = r.cells.map(c => ({ x: c.x, y: c.y, t: describe(c) }));
-      paintTileExtent($('cvBig'), cells, pre.extent);
-      const hist = [0,0,0,0];
-      for (const c of cells) hist[c.t]++;
-      $('bigStats').innerHTML =
-        `<b>${cells.length} cells</b> in ${secs}s &nbsp; ` +
-        `(the world would have stopped at 60)<br>` +
-        `neuron ${hist[0]} sensor ${hist[1]} muscle ${hist[2]} anchor ${hist[3]}`;
-      all.forEach(b => b.disabled = false);
-    }, 30);
+      const nowS = (performance.now() - liveT0) / 1000;
+      if (m.kind === 'frame') {
+        if (liveBirth.length < m.n) {
+          const b = new Float32Array(Math.max(m.n, liveBirth.length * 2));
+          b.set(liveBirth); liveBirth = b;
+        }
+        // Anything newly present was born now, for animation purposes.
+        for (let i = liveN; i < m.n; i++) liveBirth[i] = nowS;
+        liveN = m.n; liveXY = m.xy;
+        view.setCells(m.n, m.xy, null, liveBirth, null);
+        $('bigStats').innerHTML =
+          `<b>${m.n} cells</b> &nbsp; step ${m.t}/${m.nStep} &nbsp; ` +
+          `+${m.born.length} divisions this frame`;
+      } else if (m.kind === 'done') {
+        // The finished body: label each cell, and mark which the carve removes.
+        const kind = new Int32Array(m.n);
+        for (let i = 0; i < m.n; i++) {
+          kind[i] = describe({ sense: m.caps[i * 3], contract: m.caps[i * 3 + 1],
+                               grip: m.caps[i * 3 + 2] });
+        }
+        // Cells present during growth but absent from the final body are what
+        // `survive` rejected — the carve.
+        const culled = new Uint8Array(liveN);
+        const kept = new Set(); for (let i = 0; i < m.n; i++) kept.add(m.idx[i]);
+        for (let i = 0; i < liveN; i++) if (!kept.has(i)) culled[i] = 1;
+        const xy = new Float32Array(liveN * 2);
+        xy.set(liveXY.subarray(0, Math.min(liveXY.length, liveN * 2)));
+        for (let i = 0; i < m.n; i++) {
+          const li = m.idx[i];
+          if (li < liveN) { xy[li * 2] = m.xy[i * 2]; xy[li * 2 + 1] = m.xy[i * 2 + 1]; }
+        }
+        const allKind = new Int32Array(liveN);
+        for (let i = 0; i < m.n; i++) if (m.idx[i] < liveN) allKind[m.idx[i]] = kind[i];
+        view.setCells(liveN, xy, allKind, liveBirth, culled);
+        liveDone = true;
+        const hist = [0, 0, 0, 0];
+        for (let i = 0; i < m.n; i++) hist[kind[i]]++;
+        $('bigStats').innerHTML =
+          `<b>${m.n} cells</b> (the world would have stopped at 60)` +
+          (culled.reduce((a, b) => a + b, 0) ? ` &nbsp; ${culled.reduce((a,b)=>a+b,0)} carved away` : '') +
+          `<br>neuron ${hist[0]} sensor ${hist[1]} muscle ${hist[2]} anchor ${hist[3]}`;
+        devoWorker.terminate(); devoWorker = null;
+      }
+    };
+    devoWorker.postMessage({
+      genome: Array.from(galGenomes[galSel]),
+      opts: { ms: pre.ms, dtMs: GAL_DT, extent: pre.extent,
+              maxCells: 40000, yolk: 1e9, stepEvery: 4 },
+    });
+    cancelAnimationFrame(devoRAF);
+    devoRAF = requestAnimationFrame(liveLoop);
   };
 });
-
-/** Same as paintTile but with the egg radius supplied, since these are not 12. */
-function paintTileExtent(cv, cells, extent) {
-  const x = cv.getContext('2d'), W = cv.width, H = cv.height;
-  x.fillStyle = '#070c0b'; x.fillRect(0, 0, W, H);
-  const eggPx = Math.min(W, H) * 0.46;
-  let reach = extent;
-  for (const c of cells) reach = Math.max(reach, Math.hypot(c.x, c.y) + 0.5);
-  const sc = eggPx / reach;
-  x.strokeStyle = '#1b2a27'; x.beginPath();
-  x.arc(W/2, H/2, extent * sc, 0, Math.PI * 2); x.stroke();
-  const r = Math.max(0.7, sc * 0.34);
-  for (const c of cells) {
-    x.fillStyle = TYPE_COL[c.t];
-    x.beginPath(); x.arc(W/2 + c.x*sc, H/2 + c.y*sc, r, 0, Math.PI*2); x.fill();
-  }
-}
+$('bStopBig').onclick = () => { stopLive(); $('bigStats').textContent = 'stopped'; };
 
 let galleryReady = false;
 async function ensureGallery() {
