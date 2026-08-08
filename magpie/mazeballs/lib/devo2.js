@@ -398,6 +398,48 @@ export function develop(genome, {
   ambRes = 24,        // grid cells across the egg
   ambK = 2.0,         // how fast a cell equilibrates with the medium around it
   ambDiff = 1.0,      // scales each gene's own diffusion rate on the grid
+  // THE CONTINUUM NEEDS SOURCES, or it is only a drain.
+  //
+  // The first version of the medium carried gene products and nothing else, and
+  // it made the clock WORSE — age correlation 0.645 to 0.790 — because cells
+  // equilibrated into a mostly empty field and lost concentration faster than
+  // before. A shared medium with nothing in it is a sink.
+  //
+  // Two more layers, and these are the ones with sources. SUGAR is the egg's
+  // provisioned soup: a finite stock, diffusing, that cells draw on to
+  // synthesise. Synthesis was already losing to dilution; now it has fuel, and
+  // running out of fuel is a real end to growth rather than an arbitrary yolk
+  // counter. HEAT sets the rate everything runs at, warm going faster, and
+  // diffuses from a boundary the world can set.
+  //
+  // Both are scalar fields on the same grid, and both are consumed or conducted
+  // rather than conjured — the sugar a cell burns leaves the bin it stood in.
+  sugar = 0,          // initial sugar per grid bin; 0 = no metabolic limit, as before
+  sugarDiff = 0.6,
+  sugarPerSynth = 0.02,
+  heat = 0,           // ambient heat, 0 = no thermal modulation
+  heatDiff = 1.4,
+  heatQ10 = 2.0,      // rate multiplier per unit of heat above the reference
+  heatRef = 1.0,
+  // TWO FRAMES, AND THAT IS THE POINT.
+  //
+  // Gene products live in EGG coordinates. A product concentrated in the
+  // egg's southwest quadrant stays southwest however the egg tumbles, because
+  // the egg is what it is dissolved in.
+  //
+  // Heat does not. It comes from the world through the shell, so it is a
+  // WORLD-frame quantity sampled at the egg's position — and if the egg is
+  // swirling in mud that is icy on one side and lukewarm on the other, the warm
+  // face sweeps around the egg's own frame while the chemistry stays put.
+  //
+  // That is a source of asymmetry nothing else here provides. A static gradient
+  // gives every embryo the same axis; a rotating one gives each embryo a
+  // different phase relationship between its chemistry and its warmth, decided
+  // by how it happened to be tumbling. heatGrad sets how uneven the outside is,
+  // heatSpin how fast the egg turns in it, in turns per second.
+  heatGrad = 0,
+  heatSpin = 0,
+  heatPhase = 0,
 } = {}) {
   const dt = dtMs / 1000;
   const nStep = Math.max(1, Math.round(ms / dtMs));
@@ -536,10 +578,61 @@ export function develop(genome, {
   const amb = ambient ? new Float32Array(AR * AR * NGENE) : null;
   const ambNext = ambient ? new Float32Array(AR * AR * NGENE) : null;
   const ambFlux = ambient ? new Float32Array(AR * AR * NGENE) : null;
-  const ambBin = (x, y) => {
-    const gx = Math.min(AR - 1, Math.max(0, Math.floor((x / extent + 1) * 0.5 * AR)));
-    const gy = Math.min(AR - 1, Math.max(0, Math.floor((y / extent + 1) * 0.5 * AR)));
-    return gy * AR + gx;
+  // The two sourced layers. Sugar starts stocked and is spent; heat starts
+  // uniform and conducts.
+  const sug = (ambient && sugar > 0) ? new Float32Array(AR * AR).fill(sugar) : null;
+  const sugNext = sug ? new Float32Array(AR * AR) : null;
+  const hot = (ambient && heat > 0) ? new Float32Array(AR * AR).fill(heat) : null;
+  const hotNext = hot ? new Float32Array(AR * AR) : null;
+  // Drive the shell from outside. Bins within a bin-width of the egg's edge are
+  // held at the external temperature for their direction, which rotates if the
+  // egg is spinning. Interior bins are reached only by conduction, so a big egg
+  // has a cold core and a small one equilibrates.
+  const driveShell = (t) => {
+    if (!hot || heatGrad <= 0) return;
+    const ang = heatPhase + 2 * Math.PI * heatSpin * t * dt;
+    const ux = Math.cos(ang), uy = Math.sin(ang);
+    for (let gy = 0; gy < AR; gy++) {
+      for (let gx = 0; gx < AR; gx++) {
+        const x = ((gx + 0.5) / AR * 2 - 1), y = ((gy + 0.5) / AR * 2 - 1);
+        const r = Math.hypot(x, y);
+        if (r < 1 - 2.0 / AR) continue;            // interior: conduction only
+        if (r > 1.0) { continue; }                  // outside the shell
+        // Warm on the side the gradient points at, cold opposite.
+        hot[gy * AR + gx] = heat + heatGrad * ((x * ux + y * uy) / Math.max(1e-6, r));
+      }
+    }
+  };
+  // How fast chemistry runs here, and whether there is fuel to run it. Read per
+  // cell each step, written by the layers above.
+  // How fast each cell's chemistry runs this step, from the heat and sugar it is
+  // standing in. 1.0 when neither layer is on, so the default is untouched.
+  const cellRate = new Float32Array(cap).fill(1);
+  // A CONTINUOUS FIELD, SAMPLED BILINEARLY — not a grid of pigeonholes.
+  //
+  // The first version snapped each cell to the bin containing it, so a cell that
+  // drifted across a bin boundary saw its ambient step. That is a lattice
+  // wearing a field's name, and this project has spent real effort keeping
+  // lattices out of the physics — the spatial hash is explicitly a query radius
+  // and not a grid for the same reason.
+  //
+  // Storage must be discrete somewhere; nothing is representable otherwise. What
+  // makes the field continuous is that a position between four samples reads a
+  // weighted blend of them, and deposits back in the same proportions. The
+  // weights sum to one, so mass is still conserved exactly.
+  //
+  // Returns the four bin indices and their weights for a position.
+  const ambW = [0, 0, 0, 0], ambI = [0, 0, 0, 0];
+  const ambAt = (x, y) => {
+    const fx = Math.min(AR - 1.0001, Math.max(0, (x / extent + 1) * 0.5 * AR - 0.5));
+    const fy = Math.min(AR - 1.0001, Math.max(0, (y / extent + 1) * 0.5 * AR - 0.5));
+    const gx = Math.floor(fx), gy = Math.floor(fy);
+    const tx = fx - gx, ty = fy - gy;
+    const gx1 = Math.min(AR - 1, gx + 1), gy1 = Math.min(AR - 1, gy + 1);
+    ambI[0] = gy * AR + gx;   ambW[0] = (1 - tx) * (1 - ty);
+    ambI[1] = gy * AR + gx1;  ambW[1] = tx * (1 - ty);
+    ambI[2] = gy1 * AR + gx;  ambW[2] = (1 - tx) * ty;
+    ambI[3] = gy1 * AR + gx1; ambW[3] = tx * ty;
   };
 
   const bornSinceReport = [];
@@ -569,7 +662,22 @@ export function develop(genome, {
           }
           if (cnt > 0) lap = diff[g] * (acc / cnt - conc[b + g]);
         }
-        const c = conc[b + g] + dt * (sigmoid(net) - decay[g] * conc[b + g] + lap);
+        // Synthesis runs at the local rate — warm and fed is fast, cold or
+        // starved is slow. Decay and diffusion are not scaled: a cell that
+        // cannot synthesise still loses what it has, which is the whole point of
+        // fuel mattering.
+        const made = sigmoid(net) * cellRate[i];
+        if (sug && made > 0) {
+          // Charge the ground the cell is standing on, spread over the same four
+          // samples it read from, so fuel is spent where it is used.
+          ambAt(X[i], Y[i]);
+          const cost = made * sugarPerSynth * dt;
+          for (let k = 0; k < 4; k++) {
+            const bi = ambI[k];
+            sug[bi] = Math.max(0, sug[bi] - cost * ambW[k]);
+          }
+        }
+        const c = conc[b + g] + dt * (made - decay[g] * conc[b + g] + lap);
         next[b + g] = c > 0 ? (c < 40 ? c : 40) : 0;
       }
     }
@@ -585,11 +693,29 @@ export function develop(genome, {
       //    of what their occupants took, so nothing is created or lost.
       ambFlux.fill(0);
       for (let i = 0; i < n; i++) {
-        const bin = ambBin(X[i], Y[i]) * NGENE, b = i * NGENE;
+        ambAt(X[i], Y[i]);
+        const b = i * NGENE;
+        // Local rate: how warm it is here and whether there is fuel, both read
+        // at the cell's exact position rather than at a bin's centre.
+        let rate = 1;
+        if (hot || sug) {
+          let h = 0, sgr = 0;
+          for (let k = 0; k < 4; k++) {
+            if (hot) h += hot[ambI[k]] * ambW[k];
+            if (sug) sgr += sug[ambI[k]] * ambW[k];
+          }
+          if (hot) rate *= Math.pow(heatQ10, h - heatRef);
+          if (sug) rate *= sgr / (sgr + 0.25);
+        }
+        cellRate[i] = rate;
         for (let g = N_MATERNAL; g < NGENE; g++) {
-          const f = ambK * (amb[bin + g] - conc[b + g]) * dt;
+          let here = 0;
+          for (let k = 0; k < 4; k++) here += amb[ambI[k] * NGENE + g] * ambW[k];
+          const f = ambK * (here - conc[b + g]) * dt;
           conc[b + g] = Math.max(0, conc[b + g] + f);
-          ambFlux[bin + g] += f;
+          // Debited in the same proportions it was read, so the weights cancel
+          // and nothing is created by the interpolation.
+          for (let k = 0; k < 4; k++) ambFlux[ambI[k] * NGENE + g] += f * ambW[k];
         }
       }
       for (let k = 0; k < AR * AR * NGENE; k++) amb[k] = Math.max(0, amb[k] - ambFlux[k]);
@@ -611,6 +737,23 @@ export function develop(genome, {
         }
       }
       amb.set(ambNext);
+
+      // The sourced layers conduct too. Sugar spreads slowly, heat quickly —
+      // which is why a warm patch is broad and a fed patch is local.
+      const spread = (src, dst, k) => {
+        for (let gy = 0; gy < AR; gy++) {
+          for (let gx = 0; gx < AR; gx++) {
+            const c = gy * AR + gx;
+            const lap = src[gy * AR + Math.max(0, gx - 1)] + src[gy * AR + Math.min(AR - 1, gx + 1)]
+                      + src[Math.max(0, gy - 1) * AR + gx] + src[Math.min(AR - 1, gy + 1) * AR + gx]
+                      - 4 * src[c];
+            dst[c] = Math.max(0, src[c] + k * lap * dt);
+          }
+        }
+        src.set(dst);
+      };
+      if (sug) spread(sug, sugNext, sugarDiff);
+      if (hot) { driveShell(t); spread(hot, hotNext, heatDiff); }
     }
 
     if (plump) {
