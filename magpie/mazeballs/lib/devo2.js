@@ -158,7 +158,14 @@ export const N_MATERNAL = 5;
 export const OUT_BASE = 8;
 export const OUTPUTS = ['grow', 'survive', 'contract', 'sense', 'grip', 'stiff', 'tau', 'bias',
                         'senseTune', 'divideAngle', 'spacing', 'dispersal',
-                        'toughness', 'tag', 'enzyme'];
+                        'toughness', 'tag', 'enzyme',
+                        // DENSITY — what the cell is made of, gaseous to leaden.
+                        // Not a role and not a behaviour: a material property
+                        // whose consequence is that inertia and drag no longer
+                        // scale together, so which ways of moving work at all
+                        // becomes something a body can be built into rather
+                        // than something the kernel decides.
+                        'density'];
 export const G_GROW    = OUT_BASE + 0;
 /**
  * SURVIVE — whether this cell is still part of the body when the egg hatches.
@@ -886,6 +893,10 @@ export function develop(genome, {
       // and a match is a distance along it.
       tag: 0.5 * (out(i, 13) + 1),
       enzyme: 0.5 * (out(i, 14) + 1),
+      // 0..1, mapped log-scaled onto densLo..densHi by the kernel. 0.5 is the
+      // geometric middle and is neutrally buoyant, so an unexpressed gene
+      // leaves the cell exactly where the old massless world had it.
+      density: 0.5 * (out(i, 15) + 1),
     });
   }
   return { cells, spent, aborted, steps: nStep, culled, laid: n };

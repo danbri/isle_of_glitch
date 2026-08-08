@@ -174,6 +174,16 @@ export const WORLD_FIELDS = [
   ['twistK', 'f32', 'how strongly bonded cells pull each other toward a common heading'],
   ['vortK', 'f32', 'how strongly the curl of the flow spins a cell; 0 = rivers do not turn things'],
   ['angDrag', 'f32', 'angular drag against the ground; dissipative, can only remove spin'],
+
+  // ---- MASS --------------------------------------------------------------
+  // Derived, not stored: mass = (r/massRef)^2 * density, where density is a
+  // material property development expresses, log-scaled over densLo..densHi. A
+  // default cell masses exactly 1 and every force constant tuned against the
+  // old implicit mass of 1 still means what it meant.
+  ['massRef', 'f32', 'the radius that defines mass 1; the default cell radius'],
+  ['densLo', 'f32', 'the lightest material a cell can be made of; gaseous'],
+  ['densHi', 'f32', 'the heaviest material a cell can be made of; leaden'],
+  ['mediumDens', 'f32', 'what the cell is swimming in; equal density means gravity nets zero'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */

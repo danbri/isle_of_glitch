@@ -75,13 +75,22 @@ export const CELL_MUSCLE = 2;
 
 /** Body size plus the two consumption axes, into cmeta.w. Size lives in the low
  *  byte (bodies never approach 255 cells), nutrition and toughness above it. */
-export function packSize(bodySize, tag, toughness, enzyme = 0.5) {
-  // Nutrition is not stored — it is read from the cell's own energy at use
-  // time. That byte now carries the surface TAG instead.
-  const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
-  const q7 = (v) => Math.max(0, Math.min(127, Math.round((v || 0) * 127)));
+export function packSize(bodySize, tag, toughness, enzyme = 0.5, density = 0.5) {
+  // REPACKED TO MAKE ROOM FOR DENSITY, at lower resolution where resolution was
+  // not doing any work. tag and enzyme are two sides of one Gaussian match with
+  // a width of dietWidth; at any sane width, 256 distinguishable tags was far
+  // finer than the mechanism could resolve, and 16 is not. toughness keeps 6
+  // bits, which is 64 levels of armour.
+  //
+  //   0-7   bodySize (8)      12-15  enzyme (4)      22-27  density (6)
+  //   8-11  tag (4)           16-21  toughness (6)   28-31  spare, 31 clear
+  const qn = (v, bits) => {
+    const hi = (1 << bits) - 1;
+    return Math.max(0, Math.min(hi, Math.round((v || 0) * hi)));
+  };
   return (Math.max(0, Math.min(255, bodySize | 0)))
-       | (q(tag) << 8) | (q(toughness) << 16) | (q7(enzyme) << 24);
+       | (qn(tag, 4) << 8) | (qn(enzyme, 4) << 12)
+       | (qn(toughness, 6) << 16) | (qn(density, 6) << 22);
 }
 export function packMeta(type, contractility, grippiness, apNorm = 0.5, senseTune = 0) {
   // A SLOT THAT IS NOT A CELL MUST PACK NEGATIVE.
@@ -373,7 +382,40 @@ fn bodySizeOf(w: i32) -> f32 { return f32(max(w & 255, 1)); }
 // the tradeoff the arms race needs — reserves make you viable AND make you a
 // target, and toughness becomes the way to hold reserves safely.
 fn nutritionOf(idx: u32) -> f32 { return clamp(energy[idx] / max(0.001, P.eCap), 0.0, 1.0); }
-fn toughnessOf(w: i32) -> f32 { return f32((w >> 16u) & 255) / 255.0; }
+fn toughnessOf(w: i32) -> f32 { return f32((w >> 16u) & 63) / 63.0; }
+
+// MASS. Not stored — every buffer is full — but it does not need to be, because
+// the two things it depends on are already per-cell: how big the cell is
+// (vel.z) and what it is made of (toughness). Area goes as r^2 and armour is
+// denser than flesh, so armour is now paid for in inertia as well as in
+// toughCost. That is a material consequence rather than a role: nothing checks
+// whether a cell "is armour", it just weighs what it is made of.
+//
+// Normalised so a default cell — radius massRef, no toughness — has mass
+// exactly 1. Every force constant in this kernel was tuned against an implicit
+// mass of 1, and this keeps all of that tuning meaning what it meant.
+// GASEOUS TO LEADEN, on a log scale, spanning densLo to densHi — a hundredfold
+// range at the defaults. This is what decides which way of moving is available
+// to a cell, because the ratio of its inertia to its drag is what separates a
+// world where flapping works from one where only cilia do. A light cell is all
+// drag and no memory: it stops the instant it stops pushing, so a reciprocal
+// stroke takes it nowhere and it needs something that breaks time symmetry. A
+// dense cell coasts, so a flap on the power stroke is not undone by the
+// recovery. Neither regime is legislated anywhere; both fall out of this number.
+fn densityOf(w: i32) -> f32 {
+  let d = f32((w >> 22u) & 63) / 63.0;
+  return P.densLo * pow(P.densHi / max(1e-6, P.densLo), d);
+}
+fn massOf(r: f32, w: i32) -> f32 {
+  let rr = r / max(1e-4, P.massRef);
+  return max(1e-4, rr * rr * densityOf(w));
+}
+// Moment of inertia goes as m*r^2 for any flat shape. Normalised the same way,
+// so the default cell has I = 1 and the angular tuning measured at I = 1 holds.
+fn inertiaOf(r: f32, m: f32) -> f32 {
+  let rr = r / max(1e-4, P.massRef);
+  return max(1e-3, m * rr * rr);
+}
 // SURFACE IDENTITY and DIGESTIVE REACH, the pair that makes diets differ.
 //
 // tag is what you are made of; enzyme is what you can break down. You can only
@@ -387,8 +429,8 @@ fn toughnessOf(w: i32) -> f32 { return f32((w >> 16u) & 255) / 255.0; }
 // the standard force that MAINTAINS diversity rather than eroding it. Lineages
 // collapsed from 245 to 3 in every arm of the last experiment; this is the
 // mechanism that should stop that, and whether it does is a measurement.
-fn tagOf(w: i32) -> f32 { return f32((w >> 8u) & 255) / 255.0; }
-fn enzymeOf(w: i32) -> f32 { return f32((w >> 24u) & 127) / 127.0; }
+fn tagOf(w: i32) -> f32 { return f32((w >> 8u) & 15) / 15.0; }
+fn enzymeOf(w: i32) -> f32 { return f32((w >> 12u) & 15) / 15.0; }
 // Gaussian in tag space. Narrow = a world of specialists, wide = generalists.
 fn digestMatch(eater: i32, eaten: i32) -> f32 {
   let d = enzymeOf(eater) - tagOf(eaten);
@@ -1515,6 +1557,9 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
 
   let p = pos[i].xy;
   let myTheta = pos[i].z;
+  let myR = vel[i].z;
+  let myMass = massOf(myR, cmeta[i].w);
+  let myI = inertiaOf(myR, myMass);
   var v = vel[i].xy;
   var force = vec2<f32>(0.0, 0.0);
   // Angular acceleration, accumulated the way force is. Bond springs and contact
@@ -1685,14 +1730,29 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   let wHere = wetnessFrom(hHere, rHere);
   let mudHere = mudFrom(wHere);
 
-  // GRAVITY, in the plane. -grad(height) is a tilted plane: things roll
-  // downhill, matter gathers in basins, ridges separate the world into
-  // places. Every cell has mass 1 for now, so this is an acceleration.
-  if (P.gravity != 0.0) { force = force - heightGradFrom(p, hHere) * P.gravity; }
+  // GRAVITY AND BUOYANCY, which are one term. In a vacuum everything falls
+  // alike; in a medium what matters is the cell's mass against the mass of the
+  // medium it displaces. A leaden cell settles downhill into the basins. A
+  // gaseous one is pushed UP the gradient, out of them.
+  //
+  // The passive case nets exactly zero at density == mediumDens, which is the
+  // affordance-not-forcing rule: a cell that does nothing about its density is
+  // neither helped nor punished, and the whole range is something a genome has
+  // to reach for. force is divided by mass below, so this is written as a force.
+  if (P.gravity != 0.0) {
+    let rr = myR / max(1e-4, P.massRef);
+    let displaced = rr * rr * P.mediumDens;
+    force = force - heightGradFrom(p, hHere) * P.gravity * (myMass - displaced);
+  }
 
   // The medium drags the cell toward the local flow velocity. This is the
   // "stickiness to the aether" every particle has, inert or alive.
-  force = force + (flowAtM(p, mudHere) - v) * P.drag;
+  //
+  // Drag is a FORCE and scales with how much of the cell the medium has to get
+  // past — its frontal extent, so r rather than r^2. Mass goes as r^2, so a
+  // large cell is accelerated by the current LESS than a small one, in
+  // proportion to 1/r. Big things are hard for a river to push around.
+  force = force + (flowAtM(p, mudHere) - v) * P.drag * (myR / max(1e-4, P.massRef));
 
   // Terminal velocity — the one guard that keeps explicit Euler bounded when
   // the stiffness slider outruns dt < 2/sqrt(k). Without it a large force gives
@@ -1841,14 +1901,17 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
 
   // Angular drag, from the same ground the linear drag comes from. Dissipative:
   // it can only remove spin, never add it, so nothing here mints rotation.
-  w = (w + torque * P.dt) * exp(-P.angDrag * (P.slipBase + gritAtM(p, mudHere)) * P.dt);
+  w = (w + (torque / myI) * P.dt) * exp(-P.angDrag * (P.slipBase + gritAtM(p, mudHere)) * P.dt);
   w = clamp(w, -20.0, 20.0);
   var nth = myTheta + w * P.dt;
   // Keep theta in [-pi, pi] so it never drifts to a magnitude where f32 loses
   // the resolution to tell two headings apart.
   nth = nth - 6.283185307 * floor((nth + 3.141592654) / 6.283185307);
 
-  v = clamp((v + force * P.dt) * P.damp, vec2<f32>(-40.0, -40.0), vec2<f32>(40.0, 40.0));
+  // F = ma. This used to be v + force*dt, which is F = a: every cell responded
+  // to a force as though it massed exactly 1, so a heavily armoured cell was
+  // flicked about as easily as a bare one.
+  v = clamp((v + (force / myMass) * P.dt) * P.damp, vec2<f32>(-40.0, -40.0), vec2<f32>(40.0, 40.0));
 
   var np = p + v * P.dt;
 
@@ -2288,6 +2351,15 @@ export class WorldGPU {
       // whatever bearing development gave it and the anisotropic traction
       // cancels across the body, which is the state this world was in.
       twistK: 6.0, vortK: 0.8, angDrag: 3.0,
+      // MASS. massRef is the radius evolve.js gives every cell, so today mass
+      // varies only with armour — radius is uniform at 0.34 and nothing in
+      // development expresses a cell size yet. The channel is real and the
+      // scaling is right; the variation is waiting on devo.
+      // MASS. massRef is the radius every cell currently has, so mass is
+      // density times 1 until development expresses a cell size. densLo/densHi
+      // span a hundredfold, and mediumDens sits at the geometric middle so the
+      // default cell is neutrally buoyant and gravity nets zero on it.
+      massRef: 0.34, densLo: 0.1, densHi: 10.0, mediumDens: 1.0,
       // Substrate. gritScale sets how big a patch of purchase is; slipBase is the
       // drag left on frictionless ground (open water); gripAniso is how much
       // harder sideways slip is than sliding along your own body, which is the
