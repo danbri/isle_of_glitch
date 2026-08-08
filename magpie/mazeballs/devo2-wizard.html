@@ -741,10 +741,21 @@ const GAL = 16, FRAMES = 20, GAL_MS = 18000, GAL_DT = 160;
 // Seeds chosen by scanning 600 for bodies over 45 cells, ranked by how many
 // distinct cell types they end up with. Hand-picked so the grid shows variety
 // rather than sixteen versions of the same blob.
-const GAL_SEEDS = [208, 229, 181, 49, 217, 143, 16, 97,
-                   226, 69, 193, 168, 104, 269, 80, 177];
+// Chosen by Codex from a 15,000-seed scan, scored for readable morphology and
+// for variety ACROSS the set rather than individually. My earlier list came from
+// scanning 600 and ranking by distinct label count, which selected for large
+// bodies and got fourteen blobs out of sixteen.
+//
+// The set is deliberately not the top sixteen by score: 5105, 5240 and 13606 are
+// compact mixed bodies included so the gallery is not only spidery specimens.
+const GAL_SEEDS = [12451, 1811, 10133, 4314,
+                   217,   7992, 443,   5744,
+                   8357,  13711, 6520, 6328,
+                   5105,  8117, 5240,  13606];
 let galGenomes = [], galFilm = [], galSel = 0, playing = false, playRAF = 0;
 let syncytial = false;
+// Per-embryo capacity summary of the FINAL body, for the tile tooltips.
+let galCaps = [];
 
 function seedsToGenomes(seeds) {
   return seeds.map(sd => D.randomGenome(seeded(sd)));
@@ -786,6 +797,23 @@ async function precompute() {
     paintGallery(f - 1);
     await new Promise(r => setTimeout(r, 0));
   }
+  // Summarise what each finished body can do, once.
+  galCaps = galGenomes.map((g) => {
+    try {
+      const r = D.develop(g, { ms: GAL_MS, dtMs: GAL_DT, extent: D.DEFAULT_EXTENT,
+                               maxCells: 400, yolk: 1e9, syncytial });
+      const b = r.cells;
+      const hist = [0, 0, 0, 0];
+      let s2 = 0, c2 = 0, g2 = 0;
+      for (const q of b) {
+        hist[describe(q)]++;
+        if (q.sense > 0.15) s2++;
+        if (Math.abs(q.contract) > 0.15) c2++;
+        if (q.grip > 0.15) g2++;
+      }
+      return { n: b.length, s: s2, c: c2, g: g2, hist };
+    } catch { return null; }
+  });
   $('prep').textContent =
     `${GAL} genomes x ${FRAMES} snapshots, precomputed — scrubbing is instant from here`;
 }
@@ -819,6 +847,18 @@ function paintGallery(frame = +$('sScrub').value) {
   }
   const ms = Math.round(GAL_MS * (frame + 1) / FRAMES);
   $('vClock').textContent = `${ms} ms · ${cells} cells`;
+  // CAPACITY, NOT ONLY COLOUR. describe() is winner-takes-all, so a genome with
+  // real contractility can show zero muscle-coloured cells. The tile title
+  // carries what each body can actually DO, which is what the kernel reads.
+  // (Codex's note; the same distinction the creature panel now makes.)
+  for (let i = 0; i < GAL; i++) {
+    const g = galCaps[i];
+    tiles[i].title = g
+      ? `embryo ${i + 1} · seed ${GAL_SEEDS[i] ?? '?'} · ${g.n} cells\n` +
+        `can sense ${g.s}  ·  can contract ${g.c}  ·  can grip ${g.g}\n` +
+        `labelled: ${g.hist[0]} neuron, ${g.hist[1]} sensor, ${g.hist[2]} muscle, ${g.hist[3]} anchor`
+      : `embryo ${i + 1}`;
+  }
 }
 
 $('sScrub').oninput = () => paintGallery();
