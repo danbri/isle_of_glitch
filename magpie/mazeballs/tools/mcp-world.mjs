@@ -155,6 +155,16 @@ const TOOLS = [
     },
   },
   {
+    name: 'world_health',
+    description:
+      'INTEGRITY CHECK, not a status readout. Looks for the failure modes that every other ' +
+      'instrument here is blind to, because they all read the same CPU mirrors: cells the physics ' +
+      'cannot see (radius 0 means no contact and no mass), orphan cells owned by no organism, ' +
+      'births failing for want of contiguous arena, and an egg queue that is not draining. Reads ' +
+      'the frame, so it sees what the GPU was actually given rather than what the server believes.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
     name: 'world_report',
     description:
       'One bounded paste describing this run, for handing to another agent: identity, population, ' +
@@ -165,12 +175,16 @@ const TOOLS = [
   {
     name: 'world_archives',
     description:
-      'The committed generation archives, as rows — step, alive, lineages, mean energy, and the ' +
-      'continuous material where the archive carries it. Returns the most recent few; manifests are ' +
-      'large and are not returned whole.',
+      'Generation archives for THIS world, as rows — step, alive, lineages, mean energy, and the ' +
+      'continuous material where the archive carries it. Boot-aware by default: the directory holds ' +
+      'every run ever, so after a reseed a filename tail returns the previous world. Pass ' +
+      'allBoots:true to see them all. Manifests are large and are never returned whole.',
     inputSchema: {
       type: 'object',
-      properties: { last: { type: 'number', description: 'how many recent archives (default 6, max 30)' } },
+      properties: {
+        last: { type: 'number', description: 'how many recent archives (default 6, max 30)' },
+        allBoots: { type: 'boolean', description: 'include archives from other runs' },
+      },
     },
   },
 ];
@@ -210,8 +224,32 @@ async function call(name, a = {}) {
       const n = Math.max(1, Math.min(30, a.last ?? 6));
       const names = await api('/runs/archive/index.json').catch(() => null);
       if (!Array.isArray(names)) return errText('archive index not served over HTTP from this instance');
+      // BOOT-AWARE. The directory holds every run, so after a reseed the last
+      // filenames belong to the world that was replaced - a tail returns
+      // gen-0201 from a 2.3M-step run beside gen-0013 from the one now going.
+      // Same chimera the analytics panel was drawing.
+      const st0 = await api('/status').catch(() => null);
+      const mine = st0?.bootId;
+      let picked = names, hidden = 0;
+      if (!a.allBoots && mine) {
+        const keep = [];
+        for (const nm of names) {
+          try {
+            const d = await api('/runs/archive/' + nm);
+            // STRICT. An archive without a bootId cannot be shown to belong to
+            // this world, and "its step is lower than ours" is not evidence:
+            // every reseed restarts the step count, so a previous short run
+            // sits in exactly the same range. Including them produced a
+            // non-monotonic series - step 76,363 at gen-0018 followed by
+            // 75,418 at gen-0021 - which is two worlds, not one history.
+            if (d.bootId && d.bootId === mine) keep.push(nm);
+          } catch { /* unreadable: leave it out rather than guess */ }
+        }
+        hidden = names.length - keep.length;
+        picked = keep;
+      }
       const rows = [];
-      for (const nm of names.slice(-n)) {
+      for (const nm of picked.slice(-n)) {
         try {
           const d = await api('/runs/archive/' + nm);
           const m = d.creatures?.[0]?.material;
@@ -221,7 +259,46 @@ async function call(name, a = {}) {
             (m ? `  dens ${m.density} rad ${m.radius}` : ''));
         } catch { rows.push(`${nm}  (unreadable)`); }
       }
-      return text(rows.join('\n') || 'no archives');
+      const note = hidden ? `\n(${hidden} archives from other runs hidden; allBoots:true to include)` : '';
+      return text((rows.join('\n') || 'no archives for this world yet') + note);
+    }
+
+    case 'world_health': {
+      const st = await api('/status');
+      const buf = await (await fetch(BASE + '/frame')).arrayBuffer();
+      const dv = new DataView(buf);
+      const HEAD = 56;
+      const ver = dv.getUint32(52, true), hasStatic = dv.getUint32(48, true);
+      const L = dv.getUint32(HEAD, true);
+      const L4 = [];
+      if (ver < 2 || !hasStatic) {
+        L4.push(`frame format ${ver}, static ${hasStatic}: cannot read radius or material.`);
+      } else {
+        let at = HEAD + 4 + L * 8 + L * 4 + L * 4;
+        at += ((L * 2) + 3) & ~3;              // theta
+        at += L * 4 * 3;                        // idx, type, uid
+        at += L * 4;                            // matW
+        const rad = new Float32Array(buf.slice(at, at + L * 4));
+        let zero = 0, fused = 0;
+        for (let i = 0; i < L; i++) { if (!(rad[i] > 0)) zero++; else if (rad[i] > 0.38) fused++; }
+        L4.push(`cells the physics cannot see: ${zero} of ${L} (${(100 * zero / L).toFixed(1)}%)` +
+          (zero ? '   <- radius 0: no contact, mass at the clamp floor' : '   ok'));
+        L4.push(`fused cells (radius > 0.38): ${fused}` +
+          (fused ? '' : '   <- none: development relaxation is not reaching the world'));
+      }
+      const owned = st.cellsOwned, typed = st.cellsLiveTyped;
+      if (owned != null && typed != null) {
+        L4.push(`orphan cells: ${typed - owned}` +
+          (typed === owned ? '   ok' : '   <- cells no organism owns, still crowding and rendering'));
+      }
+      L4.push(`blockedBirths ${num(st.blockedBirths)}` +
+        (st.blockedBirths > 0 ? '   <- arena has no contiguous room; fragmentation' : '   ok'));
+      L4.push(`pendingEggs ${num(st.pendingEggs)}` +
+        (st.pendingEggs > 500 ? '   <- queue not draining; births are pump-limited, not energy-limited' : ''));
+      L4.push(`lineages ${st.lineages}` + (st.lineages <= 5 ? '   <- near-clonal' : ''));
+      L4.push(`mintedEnergy ${st.mintedEnergy ?? 0}` +
+        ((st.mintedEnergy ?? 0) === 0 ? '   ok (conservation holds)' : '   <- ENERGY WAS MINTED'));
+      return text(L4.join('\n'));
     }
     default:
       return errText(`unknown tool: ${name}`);

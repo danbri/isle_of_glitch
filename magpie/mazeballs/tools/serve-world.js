@@ -543,7 +543,12 @@ async function archiveIfDue(gen) {
     }
     if (!best.size) return;
 
-    const tag = `gen-${String(gen).padStart(4, '0')}`;
+    // NAMED BY WORLD AS WELL AS GENERATION. gen-NNNN alone is not unique: every
+    // reseed restarts generation counting, so a new world's gen-0015 silently
+    // OVERWRITES the previous world's gen-0015 - and the two sit in the same
+    // step range, so nothing downstream can tell them apart either. Observed as
+    // an archive series whose step count went backwards.
+    const tag = `gen-${String(gen).padStart(4, '0')}-${BOOT_ID}`;
     const manifest = {
       t: new Date().toISOString(), step: steps, generation: gen,
       // WHICH REPRESENTATION THIS IS. Archives written before the pose, mass
@@ -587,7 +592,7 @@ async function archiveIfDue(gen) {
     try {
       const names = [];
       for await (const e of Deno.readDir(ARCHIVE_DIR)) {
-        if (e.isFile && /^gen-\d+\.json$/.test(e.name)) names.push(e.name);
+        if (e.isFile && /^gen-\d+(-[a-z0-9-]+)?\.json$/.test(e.name)) names.push(e.name);
       }
       names.sort();
       await Deno.writeTextFile(`${ARCHIVE_DIR}/index.json`, JSON.stringify(names));
@@ -1641,10 +1646,16 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
 
   // Static files, confined to the project directory.
   try {
-    const full = new URL('.' + path, `file://${ROOT}`).pathname;
+    // A DIRECTORY MEANS ITS INDEX. Every other static host does this, so a link
+    // to /lab/ works on GitHub Pages and 404'd here - which reads as a broken
+    // link in the app rather than as a server that resolves paths differently
+    // from the one the same files are published on.
+    let p2 = path;
+    if (p2.endsWith('/')) p2 += 'index.html';
+    const full = new URL('.' + p2, `file://${ROOT}`).pathname;
     if (!full.startsWith(ROOT)) return new Response('no', { status: 403 });
     const body = await Deno.readFile(full);
-    const ext = path.slice(path.lastIndexOf('.'));
+    const ext = p2.slice(p2.lastIndexOf('.'));
     return new Response(body, {
       headers: { 'content-type': MIME[ext] ?? 'application/octet-stream' },
     });

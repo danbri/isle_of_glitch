@@ -41,6 +41,9 @@ per lineage — chosen for rarity, not typicality — sampled every few generati
 <b>trends across representatives, not a full census</b>. Hand-drawn, no libraries; it reads the
 same static files on GitHub Pages and under the local server. <a href="index.html">← home</a></p>
 
+<div id="live" style="font-family:var(--mono);font-size:.78rem;color:var(--soft);
+     padding:.5rem .7rem;border:1px solid #23302e;border-radius:6px;margin:.6rem 0">
+  checking for a running world…</div>
 <div id="status">loading archives…</div>
 <div id="charts" hidden>
   <div class="card">
@@ -82,6 +85,38 @@ same static files on GitHub Pages and under the local server. <a href="index.htm
 const $ = (id) => document.getElementById(id);
 const COL = { sensor:'#41ADB2', muscle:'#E28C3E', anchor:'#8f709e', neuron:'#9aa6a0' };
 
+/**
+ * IS THERE A WORLD RUNNING, AND WHICH ONE.
+ *
+ * This page reads committed archives, which is a finished record: it does not
+ * move, and on GitHub Pages there is nothing that could make it move. That is
+ * honest for a history, and it reads as broken when the same page is opened
+ * beside a live simulation, because nothing distinguishes "this is the past"
+ * from "this is stuck".
+ *
+ * So: find the server if there is one, say so plainly if there is not, and use
+ * its bootId to keep other runs out of the series. The archive directory holds
+ * every world ever run, and every reseed restarts both the generation counter
+ * and the step count, so a filename tail after a reseed is a chimera - two
+ * worlds spliced at a point where the step count goes backwards.
+ */
+let LIVE = null;
+async function findWorld() {
+  try {
+    const r = await fetch('status', { cache: 'no-store' });
+    if (!r.ok) throw new Error('no');
+    LIVE = await r.json();
+  } catch { LIVE = null; }
+  const el = $('live');
+  if (!el) return;
+  el.innerHTML = LIVE
+    ? `<b style="color:#8fd9a8">live world</b> · step ${LIVE.steps.toLocaleString()}` +
+      ` · ${LIVE.alive} bodies · ${LIVE.lineages} lineages · boot <code>${LIVE.bootId}</code>` +
+      ` · <span id="tick">updating</span>`
+    : `<b>no running world</b> — this page is showing the committed archive record only. ` +
+      `That record does not change; it is history, not a dashboard.`;
+}
+
 async function load() {
   let names;
   try {
@@ -91,12 +126,17 @@ async function load() {
     return;
   }
   const gens = [];
+  let hidden = 0;
   for (const n of names) {
     try {
       const d = await (await fetch('runs/archive/' + n, { cache: 'no-store' })).json();
+      // With a live world, show only ITS archives. Without one, show everything
+      // and let the reader see the whole record.
+      if (LIVE && LIVE.bootId && d.bootId !== LIVE.bootId) { hidden++; continue; }
       gens.push(d);
     } catch { /* skip a missing archive rather than fail the whole page */ }
   }
+  window.__hidden = hidden;
   gens.sort((a, b) => a.generation - b.generation);
   if (!gens.length) { $('status').textContent = 'no archives loaded'; return; }
   $('status').hidden = true;
@@ -104,6 +144,7 @@ async function load() {
   window.__gens = gens;
   draw();
   $('foot').textContent =
+    (window.__hidden ? `${window.__hidden} archives from other runs hidden · ` : '') +
     `${gens.length} archived generations, ${gens[0].generation}–${gens[gens.length - 1].generation} · ` +
     `${gens.reduce((s, g) => s + g.creatures.length, 0)} lineage representatives · ` +
     `sim ${gens[gens.length - 1].simVersion ?? '?'} · ${gens[gens.length - 1].encoding ?? ''}`;
@@ -238,7 +279,25 @@ function draw() {
 
 let rz;
 addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (window.__gens) draw(); }, 150); });
-load();
+(async () => {
+  await findWorld();
+  await load();
+  if (!LIVE) return;
+  // Poll the world, not the files. The header updates every couple of seconds
+  // so the page is visibly alive; archives are only reloaded when the count
+  // actually changes, because re-reading seventy manifests on a timer to
+  // discover nothing happened is how a page becomes a load generator.
+  let lastCount = -1;
+  setInterval(async () => {
+    await findWorld();
+    const t = document.getElementById('tick');
+    if (t) t.textContent = 'updated ' + new Date().toLocaleTimeString();
+    try {
+      const names = await (await fetch('runs/archive/index.json', { cache: 'no-store' })).json();
+      if (Array.isArray(names) && names.length !== lastCount) { lastCount = names.length; await load(); }
+    } catch { /* the index is optional for the live header */ }
+  }, 3000);
+})();
 </script>
 </body>
 </html>
