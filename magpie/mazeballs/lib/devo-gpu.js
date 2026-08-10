@@ -32,8 +32,117 @@
  * an embryo that finishes early simply has its remaining cells masked off.
  */
 
-import { NGENE, K, GENE_STRIDE, N_MATERNAL, OFF_SRC, OFF_W, OFF_BIAS, OFF_DECAY, OFF_DIFF }
+import { NGENE, K, GENE_STRIDE, N_MATERNAL, OFF_SRC, OFF_W, OFF_BIAS, OFF_DECAY, OFF_DIFF, G_GROW }
   from './devo2.js';
+
+/**
+ * DIVISION, and why it is a separate kernel with a scan in it.
+ *
+ * The step is embarrassingly parallel: every cell reads its own state and its
+ * neighbours' and writes its own. Division is not, because two cells that
+ * divide in the same tick must be given DIFFERENT daughter slots, and that is
+ * an agreement between threads.
+ *
+ * The obvious way is an atomic counter: each dividing cell bumps it and takes
+ * what it gets. That works and it is wrong for this project, because the slot a
+ * daughter receives then depends on the order the hardware happened to schedule
+ * the lanes - so the same genome grows a different body on different runs.
+ * Non-reproducibility is the failure the green-light test has been stuck on
+ * since the beginning, and an atomic here would add a fresh source of it in the
+ * one place a genome becomes a phenotype.
+ *
+ * A PREFIX SCAN gives the same answer every time. Every cell computes whether it
+ * will divide; the scan turns that into "how many cells before me are dividing";
+ * the daughter slot is count + that. It is fixed by the cell's INDEX rather than
+ * by scheduling, so the body is a function of the genome and nothing else.
+ * Codex's recommendation, and it is the right one.
+ *
+ * One workgroup per embryo, so the scan lives in workgroup memory and never
+ * needs a global barrier.
+ */
+export const DIVIDE_WGSL = /* wgsl */`
+struct DP {
+  nEmbryo : u32, cap : u32, nGene : u32, k : u32,
+  nMaternal : u32, dt : f32, nbrK : u32, divRate : f32,
+};
+@group(0) @binding(0) var<uniform>             P     : DP;
+@group(0) @binding(1) var<storage, read_write> conc  : array<f32>;
+@group(0) @binding(2) var<storage, read_write> ready : array<f32>;
+@group(0) @binding(3) var<storage, read_write> xy    : array<vec2<f32>>;
+@group(0) @binding(4) var<storage, read_write> live  : array<u32>;
+@group(0) @binding(5) var<storage, read_write> count : array<u32>;   // per embryo
+@group(0) @binding(6) var<storage, read>       noise : array<f32>;
+
+var<workgroup> wants : array<u32, 256>;
+var<workgroup> scan  : array<u32, 256>;
+
+@compute @workgroup_size(256)
+fn divide(@builtin(workgroup_id) wg : vec3<u32>,
+          @builtin(local_invocation_id) lid : vec3<u32>) {
+  let e = wg.x;
+  let i = lid.x;
+  let base = e * P.cap;
+  let n = count[e];
+
+  // WHO WANTS TO DIVIDE. Readiness accumulates with the grow product, exactly
+  // as devo2 does, and a cell divides when it reaches one.
+  var w = 0u;
+  if (i < n && live[base + i] == 1u) {
+    ready[base + i] = ready[base + i] + P.dt * conc[(base + i) * P.nGene + ${G_GROW}u] * P.divRate;
+    if (ready[base + i] >= 1.0) { w = 1u; }
+  }
+  wants[i] = w;
+  workgroupBarrier();
+
+  // EXCLUSIVE PREFIX SUM, Hillis-Steele. Deterministic: the result depends on
+  // the index, not on which lane ran first.
+  scan[i] = w;
+  workgroupBarrier();
+  var off = 1u;
+  loop {
+    if (off >= 256u) { break; }
+    var v = 0u;
+    if (i >= off) { v = scan[i - off]; }
+    workgroupBarrier();
+    scan[i] = scan[i] + v;
+    workgroupBarrier();
+    off = off * 2u;
+  }
+  // scan[i] is now inclusive; make it exclusive.
+  var before = scan[i] - w;
+
+  if (w == 1u) {
+    let d = n + before;
+    if (d < P.cap) {
+      ready[base + i] = ready[base + i] - 1.0;
+      // The daughter is the mother, halved: cytoplasm is DIVIDED, not created.
+      // Both keep the maternal genes, which are boundary conditions.
+      for (var g = 0u; g < P.nGene; g = g + 1u) {
+        let src = conc[(base + i) * P.nGene + g];
+        let half = select(src * 0.5, src, g < P.nMaternal);
+        conc[(base + d) * P.nGene + g] = half;
+        conc[(base + i) * P.nGene + g] = half;
+      }
+      // Placed a short way off, at an angle carried per cell so the direction is
+      // a property of the genome's noise rather than of the schedule.
+      let a = noise[base + i] * 6.283185307;
+      xy[base + d] = xy[base + i] + vec2<f32>(cos(a), sin(a)) * 0.6;
+      ready[base + d] = 0.0;
+      live[base + d] = 1u;
+    }
+  }
+  workgroupBarrier();
+
+  // One lane publishes the new count, so it is written once and read the same
+  // by everyone next tick.
+  if (i == 0u) {
+    var added = scan[255];
+    let room = P.cap - n;
+    if (added > room) { added = room; }
+    count[e] = n + added;
+  }
+}
+`;
 
 export const DEVO_WGSL = /* wgsl */`
 // Named DP, not P. The uniform variable below is called P - as it is in
@@ -188,6 +297,11 @@ export class DevoGPU {
     // pipeline whose dispatches do nothing, so every buffer reads zero - which
     // is indistinguishable from a kernel that ran and computed zero. That cost
     // an afternoon and a request for help on a bug that was a compile failure.
+    d.bReady = mk(total * 4);
+    d.bXY = mk(total * 8, S | GPUBufferUsage.COPY_SRC);
+    d.bCount = mk(nEmbryo * 4, S | GPUBufferUsage.COPY_SRC);
+    d.bNoise = mk(total * 4);
+
     const mod = device.createShaderModule({ code: DEVO_WGSL, label: 'devo-grn' });
     const info = await mod.getCompilationInfo?.();
     const errs = (info?.messages ?? []).filter((m) => m.type === 'error');
@@ -208,7 +322,62 @@ export class DevoGPU {
         { binding: 6, resource: { buffer: d.bNbrW } },
       ],
     });
+    const dmod = device.createShaderModule({ code: DIVIDE_WGSL, label: 'devo-divide' });
+    const dinfo = await dmod.getCompilationInfo?.();
+    const derrs = (dinfo?.messages ?? []).filter((m) => m.type === 'error');
+    if (derrs.length) {
+      throw new Error('devo-gpu divide shader failed to compile:\n' +
+        derrs.map((m) => `  line ${m.lineNum}: ${m.message}`).join('\n'));
+    }
+    d.dpipe = device.createComputePipeline({ layout: 'auto', compute: { module: dmod, entryPoint: 'divide' } });
+    d.dbind = () => device.createBindGroup({
+      layout: d.dpipe.getBindGroupLayout(0),
+      entries: [
+        { binding: 0, resource: { buffer: d.bUni } },
+        { binding: 1, resource: { buffer: d.bConc } },
+        { binding: 2, resource: { buffer: d.bReady } },
+        { binding: 3, resource: { buffer: d.bXY } },
+        { binding: 4, resource: { buffer: d.bLive } },
+        { binding: 5, resource: { buffer: d.bCount } },
+        { binding: 6, resource: { buffer: d.bNoise } },
+      ],
+    });
     return d;
+  }
+
+  /** One division pass: every embryo, one workgroup each. */
+  divide() {
+    const enc = this.dev.createCommandEncoder();
+    const pass = enc.beginComputePass();
+    pass.setPipeline(this.dpipe);
+    pass.setBindGroup(0, this.dbind());
+    pass.dispatchWorkgroups(this.nEmbryo);
+    pass.end();
+    this.dev.queue.submit([enc.finish()]);
+  }
+
+  async readCounts() {
+    const bytes = this.nEmbryo * 4;
+    const stag = this.dev.createBuffer({ size: bytes, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+    const enc = this.dev.createCommandEncoder();
+    enc.copyBufferToBuffer(this.bCount, 0, stag, 0, bytes);
+    this.dev.queue.submit([enc.finish()]);
+    await stag.mapAsync(GPUMapMode.READ);
+    const out = new Uint32Array(stag.getMappedRange().slice(0));
+    stag.unmap(); stag.destroy();
+    return out;
+  }
+
+  async readXY() {
+    const bytes = this.total * 8;
+    const stag = this.dev.createBuffer({ size: bytes, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+    const enc = this.dev.createCommandEncoder();
+    enc.copyBufferToBuffer(this.bXY, 0, stag, 0, bytes);
+    this.dev.queue.submit([enc.finish()]);
+    await stag.mapAsync(GPUMapMode.READ);
+    const out = new Float32Array(stag.getMappedRange().slice(0));
+    stag.unmap(); stag.destroy();
+    return out;
   }
 
   /** @param {number} dt seconds per step, matching devo2's dtMs/1000. */
@@ -221,16 +390,21 @@ export class DevoGPU {
     dv.setUint32(16, N_MATERNAL, true);
     dv.setFloat32(20, dt, true);
     dv.setUint32(24, this.nbrK, true);
+    dv.setFloat32(28, this.divRate ?? 1.6, true);
     this.dev.queue.writeBuffer(this.bUni, 0, u);
   }
 
-  upload({ conc, genome, live, nbrI, nbrW }) {
+  upload({ conc, genome, live, nbrI, nbrW, ready, xy, count, noise }) {
     const q = this.dev.queue;
     if (conc) q.writeBuffer(this.bConc, 0, conc);
     if (genome) q.writeBuffer(this.bGenome, 0, genome);
     if (live) q.writeBuffer(this.bLive, 0, live);
     if (nbrI) q.writeBuffer(this.bNbrI, 0, nbrI);
     if (nbrW) q.writeBuffer(this.bNbrW, 0, nbrW);
+    if (ready) q.writeBuffer(this.bReady, 0, ready);
+    if (xy) q.writeBuffer(this.bXY, 0, xy);
+    if (count) q.writeBuffer(this.bCount, 0, count);
+    if (noise) q.writeBuffer(this.bNoise, 0, noise);
   }
 
   /** Advance every embryo by `steps` steps. Ping-pongs; leaves the result in bConc. */
@@ -279,7 +453,7 @@ export class DevoGPU {
   }
 
   destroy() {
-    for (const b of [this.bConc, this.bNext, this.bGenome, this.bLive,
+    for (const b of [this.bConc, this.bNext, this.bGenome, this.bLive, this.bReady, this.bXY, this.bCount, this.bNoise,
                      this.bNbrI, this.bNbrW, this.bUni]) b?.destroy?.();
   }
 }
