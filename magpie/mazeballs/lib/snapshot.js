@@ -29,7 +29,8 @@
  *   64       arena blob, then the per-cell arrays in a fixed order
  */
 
-export const SNAP_MAGIC = 0x324e5257;        // 'WRN2'
+export const SNAP_MAGIC = 0x334e5257;        // 'WRN3' — material and pose
+export const SNAP_MAGIC_V2 = 0x324e5257;     // 'WRN2' — no material, no radius
 export const SNAP_MAGIC_V1 = 0x314e5257;     // 'WRN1' — pre-packed cmeta
 
 /** The per-cell arrays, in the order they are written. Order IS the format. */
@@ -38,6 +39,19 @@ function cellArrays(cells, evo) {
     cells.ctype, cells.cslot, cells.body, cells.bodySize,
     cells.bond, cells.brest,
     evo.uid, evo.parentUid, evo.generation, evo.lineage, evo.birthStep,
+    // WRN3. WHAT A CELL IS MADE OF, WHICH WAS NEVER SAVED.
+    //
+    // ctype was persisted and treated as though it were the whole story, but a
+    // cell's type is two bits of a packed word: metaX also carries sense
+    // acuity, contractility, grippiness and axial position, and metaW carries
+    // density, toughness, tag and enzyme. None of it survived a resume, so a
+    // restored world got whatever material buildBodies had just invented for
+    // its founders while keeping the snapshot's types, lineages and bonds.
+    //
+    // rad is here for the same reason and one more: development's relaxation
+    // phase makes cells of different sizes, and without persisting it every
+    // fused node collapsed back to the base radius on restart.
+    cells.metaX, cells.metaW, cells.rad,
   ];
 }
 
@@ -50,12 +64,12 @@ function cellArrays(cells, evo) {
  * @param {Float32Array} o.energy  energies, read back from the GPU
  * @param {Uint8Array}   o.arenaBlob  arena.snapshot(), after brains.readState
  */
-export function encodeWorld({ pos, energy, arenaBlob, cells, evo, n, bondK,
+export function encodeWorld({ pos, energy, theta, arenaBlob, cells, evo, n, bondK,
                               steps, bound, arenaIslands, founderCells }) {
   const head = new ArrayBuffer(64);
   const hv = new DataView(head);
   hv.setUint32(0, SNAP_MAGIC, true);
-  hv.setUint32(4, 1, true);
+  hv.setUint32(4, 3, true);
   hv.setUint32(8, n, true);
   hv.setUint32(12, bondK, true);
   hv.setUint32(16, steps, true);
@@ -67,9 +81,15 @@ export function encodeWorld({ pos, energy, arenaBlob, cells, evo, n, bondK,
   hv.setUint32(40, arenaIslands, true);
   hv.setUint32(44, founderCells, true);
 
+  // theta rides beside pos because both are read back from the GPU rather than
+  // living in `cells`. A world resumed without it has every body pointing a way
+  // it never pointed, which is a silent re-randomisation of the one state the
+  // anisotropic traction is applied in.
+  const th = theta ?? new Float32Array(n);
   const bytes = [new Uint8Array(head), arenaBlob,
                  new Uint8Array(pos.buffer, pos.byteOffset, pos.byteLength),
-                 new Uint8Array(energy.buffer, energy.byteOffset, energy.byteLength)];
+                 new Uint8Array(energy.buffer, energy.byteOffset, energy.byteLength),
+                 new Uint8Array(th.buffer, th.byteOffset, th.byteLength)];
   for (const a of cellArrays(cells, evo)) {
     bytes.push(new Uint8Array(a.buffer, a.byteOffset, a.byteLength));
   }
@@ -89,6 +109,22 @@ export function encodeWorld({ pos, energy, arenaBlob, cells, evo, n, bondK,
 export function decodeHeader(raw) {
   const hv = new DataView(raw.buffer, raw.byteOffset);
   const magic = hv.getUint32(0, true);
+  // WRN2 is readable — it simply has no material, radius or heading in it, and
+  // decodeBody fills those with defaults. Refusing it would strand every
+  // snapshot written before today for no benefit; the caller is told instead.
+  if (magic === SNAP_MAGIC_V2) {
+    const arenaLen2 = hv.getUint32(36, true);
+    return {
+      legacy: 2,
+      n: hv.getUint32(8, true), bondK: hv.getUint32(12, true),
+      steps: hv.getUint32(16, true), bound: hv.getFloat32(20, true),
+      births: hv.getUint32(24, true), deaths: hv.getUint32(28, true),
+      nextUid: hv.getUint32(32, true),
+      arenaIslands: hv.getUint32(40, true), founderCells: hv.getUint32(44, true),
+      arenaBlob: raw.subarray(64, 64 + arenaLen2),
+      bodyOffset: 64 + arenaLen2,
+    };
+  }
   if (magic === SNAP_MAGIC_V1) {
     throw new Error(
       'this snapshot predates packed cell metadata (WRN1). Resuming it would give ' +
@@ -112,7 +148,7 @@ export function decodeHeader(raw) {
  * Fill the caller's arrays from the body of a snapshot. `pos` and `energy` come
  * back separately because they go to the GPU rather than into `cells`.
  */
-export function decodeBody(raw, offset, cells, evo, n) {
+export function decodeBody(raw, offset, cells, evo, n, legacy = 0) {
   let at = offset;
   const take = (arr) => {
     new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength)
@@ -120,7 +156,16 @@ export function decodeBody(raw, offset, cells, evo, n) {
     at += arr.byteLength;
   };
   const pos = new Float32Array(n * 2), energy = new Float32Array(n);
+  const theta = new Float32Array(n);
   take(pos); take(energy);
-  for (const a of cellArrays(cells, evo)) take(a);
-  return { pos, energy };
+  if (!legacy) take(theta);
+
+  const arrays = cellArrays(cells, evo);
+  // A WRN2 body stops after birthStep: it has no metaX, metaW or rad. Taking
+  // them anyway would read past the end and fill three arrays with whatever
+  // followed, which is worse than leaving them at their defaults.
+  const upto = legacy === 2 ? arrays.length - 3 : arrays.length;
+  for (let i = 0; i < upto; i++) take(arrays[i]);
+  if (legacy === 2 && cells.rad) cells.rad.fill(0.34);
+  return { pos, energy, theta, legacy };
 }

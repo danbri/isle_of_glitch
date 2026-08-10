@@ -265,7 +265,7 @@ async function saveSnapshot(path) {
   const { pos, energy, theta } = await world.readCells();
   await brains.readState(built.arena);          // pull GPU state into the arena
   const out = encodeWorld({
-    pos, energy, arenaBlob: built.arena.snapshot(),
+    pos, energy, theta, arenaBlob: built.arena.snapshot(),
     cells: built.cells, evo, n: N, bondK: built.cells.bondK,
     steps, bound: BOUND, arenaIslands: ARENA_ISLANDS, founderCells: args.founderCells,
   });
@@ -301,7 +301,13 @@ async function loadSnapshot(path) {
   built.arena.free = restored.free.map(hh => [hh[0], hh[1]]);
 
   const c = built.cells;
-  const { pos, energy } = decodeBody(raw, h.bodyOffset, c, evo, N);
+  const { pos, energy, theta, legacy } = decodeBody(raw, h.bodyOffset, c, evo, N, h.legacy ?? 0);
+  if (legacy) {
+    console.warn(`[resume] this snapshot is WRN${legacy}: it carries no per-cell material, ` +
+      `radius or heading. Types, bonds, lineages and positions are restored; capacities ` +
+      `and density come from the freshly built founders and radius defaults to 0.34. ` +
+      `Treat measurements from this world as contaminated.`);
+  }
 
   steps = h.steps;
   evo.births = h.births;
@@ -346,12 +352,20 @@ async function loadSnapshot(path) {
     // analytics all still reporting zeros, because they read this array.
     if (c.rad && !(c.rad[i] > 0)) c.rad[i] = 0.34;
     vel[i * 4 + 2] = c.rad ? c.rad[i] : 0.34;
+    // The heading the world was saved with. Restoring xy and re-randomising
+    // theta would silently rotate every body, and theta is the frame the
+    // anisotropic traction is applied in.
+    pose[i * 4] = pos[i * 2]; pose[i * 4 + 1] = pos[i * 2 + 1];
+    pose[i * 4 + 2] = theta ? theta[i] : 0;
+    pose[i * 4 + 3] = 0;
     c.px[i] = pos[i * 2]; c.py[i] = pos[i * 2 + 1];
   }
   // posXY, not pos: the snapshot format predates headings and stores xy only,
   // so writing it as a full pose would zero every cell's theta. Restored cells
   // keep the headings the freshly-built world gave them.
-  world.writeCellRange(0, N, { posXY: pos, vel, meta, bond: c.bond, brest: c.brest, energy });
+  // Full pose now, not posXY: the snapshot carries theta, so there is nothing
+  // to protect from being zeroed and the headings come back with the bodies.
+  world.writeCellRange(0, N, { pos: pose, vel, meta, bond: c.bond, brest: c.brest, energy });
   brains.writeState(built.arena);
   return { steps, alive: evo.alive() };
 }
