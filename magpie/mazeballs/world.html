@@ -1108,13 +1108,20 @@ struct Cam {
                        // its own sim); 0 = a plain 0..3 type bucket (watch mode).
 };
 @group(0) @binding(0) var<uniform>       C     : Cam;
-@group(0) @binding(1) var<storage, read> pos   : array<vec2<f32>>;
+// A POSE, xy/theta/omega — see lib/world_gpu.js binding 1. This was declared
+// vec2 and bound to the same buffer the simulation writes as vec4, so a page
+// running its OWN sim read cell i's position out of cell i/2's lanes and drew
+// the population as garbage. Watch mode survived only because it overwrites
+// the buffer with its own stride-2 data, which is why the served page looked
+// fine while the default page did not.
+@group(0) @binding(1) var<storage, read> pos   : array<vec4<f32>>;
 @group(0) @binding(2) var<storage, read> act   : array<f32>;
 @group(0) @binding(3) var<storage, read> cmeta   : array<vec4<i32>>;
 @group(0) @binding(4) var<storage, read> bondIdx : array<i32>;
 // The frame BEFORE the one in pos/act. Only watch mode fills these; a page
 // running its own simulation binds the live buffers here and never tweens.
-@group(0) @binding(5) var<storage, read> prevPos : array<vec2<f32>>;
+// Same layout, and it must be: in a page running its own sim bPrevPos IS bPos.
+@group(0) @binding(5) var<storage, read> prevPos : array<vec4<f32>>;
 @group(0) @binding(6) var<storage, read> prevAct : array<f32>;
 
 /* ---- drawing between two frames, without touching the simulation ---------- */
@@ -1136,9 +1143,9 @@ struct Cam {
 // is not bit-identical to a and because a page with no previous frame binds the
 // live buffer twice — this makes that a guaranteed no-op instead of an almost.
 fn drawPos(i: u32) -> vec2<f32> {
-  if (C.lerp >= 1.0) { return pos[i]; }
-  let b = prevPos[i];
-  var d = pos[i] - b;
+  if (C.lerp >= 1.0) { return pos[i].xy; }
+  let b = prevPos[i].xy;
+  var d = pos[i].xy - b;
   // Minimum image, as in lineVs: a cell that crossed the wrap seam between the
   // two frames moved a short way in the world, and mixing the raw coordinates
   // would instead slide it right across the map.
@@ -4320,7 +4327,21 @@ function applyFrame(ab) {
   sampleMotion(pos, label, uid, n, dv.getUint32(8, true));
 
   const q = dev.queue;
-  q.writeBuffer(sim.world.bPos, 0, pos);
+  // THE UPLOAD IS A POSE, THE CPU ARRAY IS A POSITION. Every analysis path in
+  // this page reads `pos` at stride 2 and should keep doing so; the GPU buffer
+  // is vec4 because the simulation writes theta and omega into it. Converting
+  // here keeps one conversion instead of rewriting a dozen readers.
+  //
+  // theta comes from the wire when the server sends it and is 0 otherwise,
+  // which is honest: a viewer that has not been told the headings should not
+  // invent them.
+  if (!sim.poseUp || sim.poseUp.length !== n * 4) sim.poseUp = new Float32Array(n * 4);
+  for (let i = 0; i < n; i++) {
+    sim.poseUp[i * 4] = pos[i * 2]; sim.poseUp[i * 4 + 1] = pos[i * 2 + 1];
+    sim.poseUp[i * 4 + 2] = sim.theta ? sim.theta[i] : 0;
+    sim.poseUp[i * 4 + 3] = 0;
+  }
+  q.writeBuffer(sim.world.bPos, 0, sim.poseUp);
   // The renderer reads activation through each cell's brain slot, but the
   // server already resolved that indirection, so write the per-cell values
   // straight into the act buffer at the slot the cell points to. Cell i's slot
@@ -4331,7 +4352,12 @@ function applyFrame(ab) {
   // on the machine this was written on, where the viewer sits on the vsync cap
   // at 60 fps both with and without it; it is a real cost on a slower bus and
   // the number is here so the next person knows what to weigh.
-  q.writeBuffer(sim.bPrevPos, 0, sim.prevPos);
+  if (!sim.prevPoseUp || sim.prevPoseUp.length !== n * 4) sim.prevPoseUp = new Float32Array(n * 4);
+  for (let i = 0; i < n; i++) {
+    sim.prevPoseUp[i * 4] = sim.prevPos[i * 2];
+    sim.prevPoseUp[i * 4 + 1] = sim.prevPos[i * 2 + 1];
+  }
+  q.writeBuffer(sim.bPrevPos, 0, sim.prevPoseUp);
   q.writeBuffer(sim.bPrevAct, 0, sim.prevAct);
   // The cell-meta buffer is a function of type and uid alone, so it only needs
   // rewriting when those changed — 400 KB of upload per frame, for bytes that
