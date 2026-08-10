@@ -753,7 +753,15 @@ const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
     // the batch form showed up as the world animating for two seconds and then
     // hanging for two. This is the same total work laid down flat.
     if (!ticking) {
-      try { evo.pump(steps, args.eggsPerPass ?? 2); }
+      // Drain proportionally to the backlog. A fixed two per pass cannot work
+      // off a queue that a burst has pushed to a thousand, and a queue that
+      // never drains means reproduction is limited by this constant rather than
+      // by the world - which is a scheduler deciding who breeds.
+      try {
+        const q = evo.pendingEggs ?? 0;
+        const perPass = Math.max(args.eggsPerPass ?? 2, Math.min(12, Math.ceil(q / 100)));
+        evo.pump(steps, perPass);
+      }
       catch (e) { console.error('pump failed:', e.message); }
     }
     if (SAVE_EVERY_MS > 0 && Date.now() - lastSave > SAVE_EVERY_MS && !ticking) {

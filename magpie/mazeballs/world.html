@@ -2384,6 +2384,7 @@ const view = { field: true, bonds: true, paused: false, spf: 1, evolve: true,
 // ?watch=1 turns this page into a VIEWPORT on the shared run in tools/serve-world.js
 // instead of a simulation of its own. Without it every tab is a separate
 // universe, which is why two browsers never agreed about anything.
+const TWEEN = new URLSearchParams(location.search).get('tween') === '1';
 const WATCH = new URLSearchParams(location.search).has('watch');
 /**
  * EVERY SERVER ENDPOINT GOES THROUGH HERE.
@@ -5017,7 +5018,20 @@ function writeCam(t0, pxScale = 1, target = null) {
   // ceiling stops that: past it the picture holds at the newest frame, which is
   // the truth, rather than creeping toward it.
   let lerp = 1;
-  if (WATCH && sim.framePeriod > 0 && sim.framePeriod < 1000) {
+  // TWEENING IS OFF BY DEFAULT, because it is INTERPOLATION and interpolation is
+  // always one frame behind. lerp starts at 0 when a frame lands, which draws
+  // the PREVIOUS positions, and climbs to 1 as the next frame is awaited. That
+  // is invisible only while frames arrive at the period the estimator expects.
+  // When the server lurches - and it does, whenever births start failing in
+  // bulk - the reset shows as every cell snapping backwards and sliding forward
+  // several times a second. Reported as "all the cells faintly jerk southwest
+  // then back to where we are", which is exactly what drawing frame N-1 for an
+  // instant looks like.
+  //
+  // Smoothing a jittery source by displaying it late is the wrong trade for an
+  // instrument: it makes the picture prettier and less true. Off unless asked
+  // for with ?tween=1.
+  if (TWEEN && WATCH && sim.framePeriod > 0 && sim.framePeriod < 1000) {
     lerp = Math.min(1, (t0 - sim.frameAt) / sim.framePeriod);
   }
   dv.setFloat32(224, lerp, true);

@@ -385,7 +385,7 @@ export class Evolver {
     const { arena, cells } = this;
     const pos = this.lastPos, cx = this.lastCx, cy = this.lastCy, total = this.lastEnergy;
     if (!pos || !total) return 0;
-    let born = 0, blocked = 0;
+    let born = 0, blocked = 0, misses = 0;
     while (born < n && this.eggQueue.length) {
       const p = this.eggQueue.shift();
       this.queued.delete(p);
@@ -436,7 +436,22 @@ export class Evolver {
       // investment. -1 is the arena refusing room, which is a real failure and
       // must still stop the loop loudly.
       if (child === -2) continue;
-      if (child < 0) { blocked++; this.eggQueue.unshift(p); this.queued.add(p); break; }
+      if (child < 0) {
+        // HEAD-OF-LINE BLOCKING, and it was mine. Putting the failed parent back
+        // on the FRONT meant the same egg was retried on every pass and failed
+        // every time, because the arena had not changed in between. One body too
+        // large for any remaining hole stalled every smaller egg behind it
+        // forever, and each retry counted as another blocked birth: measured at
+        // 1,668 blocked in 1,836 steps with the queue still growing.
+        //
+        // To the BACK instead, so a body that does not fit yields to ones that
+        // might, and stop after a couple of failures this pass rather than
+        // walking a queue that is currently unservable.
+        blocked++;
+        this.eggQueue.push(p); this.queued.add(p);
+        if (++misses >= 2) break;
+        continue;
+      }
       born++; this.births++;
     }
     this.pendingEggs = this.eggQueue.length;

@@ -125,6 +125,10 @@ export class BrainArena {
     // ------------------------------------------------------ per organism
     this.off = new Int32Array(this.P).fill(EMPTY);
     this.cnt = new Int32Array(this.P);
+    // RESERVED slots, which is cnt rounded up to a size class. The body uses the
+    // first cnt of them; the rest are held so the hole left behind is a shape
+    // something else can use. See birth().
+    this.cap = new Int32Array(this.P);
     this.alive = new Uint8Array(this.P);
 
     // Free list of holes as [offset, count] pairs, kept sorted by offset so
@@ -163,18 +167,46 @@ export class BrainArena {
     // Taking the SMALLEST hole that fits keeps the large ones intact for the
     // large bodies that actually need contiguity, and puts each sliver-producing
     // allocation where the sliver is smallest.
+    // SIZE CLASSES, because best-fit and coalescing were not enough.
+    //
+    // Both were already here, and the note above is right that coalescing
+    // cannot merge holes that are not adjacent. What neither fixes is that a
+    // hole's SIZE is arbitrary: with bodies from 2 to 60 cells, every death
+    // leaves a hole of a size nothing in particular wants, and the arena ends
+    // up as hundreds of near-misses. Measured on the fresh world: 12,599 blocked
+    // births, then 1,485 more in 831 steps, with 530 holes whose largest was 17.
+    //
+    // Rounding each reservation up to a power of two means holes come in six
+    // sizes instead of sixty, and a freed hole is exactly the right shape for
+    // any body of its class. The cost is internal waste - a 12-cell body holds
+    // 16 slots - which is bounded at under 2x and is space, whereas
+    // fragmentation costs births, which is selection.
+    let want = 1;
+    while (want < n) want <<= 1;
+    if (want > this.N) want = n;          // a body larger than any class fits exactly or not at all
     let best = -1, bestC = Infinity;
     for (let h = 0; h < this.free.length; h++) {
       const fc = this.free[h][1];
-      if (fc < n || fc >= bestC) continue;
+      if (fc < want || fc >= bestC) continue;
       best = h; bestC = fc;
-      if (fc === n) break;                // exact fit; nothing can beat it
+      if (fc === want) break;             // exact fit; nothing can beat it
+    }
+    // Fall back to an exact fit if no class-sized hole exists, so a nearly full
+    // arena still places bodies rather than refusing on principle.
+    if (best < 0) {
+      want = n;
+      for (let h = 0; h < this.free.length; h++) {
+        const fc = this.free[h][1];
+        if (fc < want || fc >= bestC) continue;
+        best = h; bestC = fc;
+        if (fc === want) break;
+      }
     }
     if (best >= 0) {
       const h = best, [fo, fc] = this.free[h];
-      if (fc === n) this.free.splice(h, 1);
-      else this.free[h] = [fo + n, fc - n];
-      this.off[o] = fo; this.cnt[o] = n; this.alive[o] = 1;
+      if (fc === want) this.free.splice(h, 1);
+      else this.free[h] = [fo + want, fc - want];
+      this.off[o] = fo; this.cnt[o] = n; this.cap[o] = want; this.alive[o] = 1;
       this.topologyEpoch++;
       // A recycled range carries the previous tenant's state and edges. Clear
       // it, or a newborn inherits a dead beast's synapses — and, worse, edges
@@ -188,9 +220,12 @@ export class BrainArena {
   /** Release an organism's slots back to the free list, coalescing holes. */
   death(o) {
     if (!this.alive[o]) return;
-    const fo = this.off[o], fc = this.cnt[o];
+    // Free the RESERVATION, not the cell count: returning only cnt would leak
+    // the rounding remainder on every death until the arena had no free list
+    // left that matched anything.
+    const fo = this.off[o], fc = this.cap[o] || this.cnt[o];
     this.clearRange(fo, fc);
-    this.alive[o] = 0; this.off[o] = EMPTY; this.cnt[o] = 0;
+    this.alive[o] = 0; this.off[o] = EMPTY; this.cnt[o] = 0; this.cap[o] = 0;
     this.topologyEpoch++;
 
     let i = 0;
@@ -458,9 +493,20 @@ export class BrainArena {
     a.next.set(a.state);
 
     // Rebuild the free list from what the organism table says is occupied.
+    //
+    // AND RESET EVERY RESERVATION TO ITS CELL COUNT. cap is not stored, so a
+    // restored body would otherwise free a range it no longer owns: the
+    // remainder between cnt and cap reads FREE here, could be handed to another
+    // body, and would then be released twice - the second time out from under
+    // its new tenant. Setting cap = cnt makes the table self-consistent. The
+    // size-class benefit is lost for bodies that predate the restore and
+    // returns as they die and are replaced.
     const used = new Uint8Array(N);
-    for (let o = 0; o < P; o++)
-      if (a.alive[o]) used.fill(1, a.off[o], a.off[o] + a.cnt[o]);
+    for (let o = 0; o < P; o++) {
+      if (!a.alive[o]) continue;
+      used.fill(1, a.off[o], a.off[o] + a.cnt[o]);
+      a.cap[o] = a.cnt[o];
+    }
     a.free = [];
     let run = -1;
     for (let i = 0; i <= N; i++) {
