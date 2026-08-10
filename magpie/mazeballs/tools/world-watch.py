@@ -21,6 +21,10 @@ import json, sys, time, urllib.request
 URL = sys.argv[1] if len(sys.argv) > 1 else 'http://127.0.0.1:8899/status'
 prev = None
 prev_stale = False
+# The last refusal CAUSE reported. A world at carrying capacity refuses births
+# on every sample, for hours, and saying so every 45 seconds is the same
+# always-on alarm as before wearing a better sentence. Say it when it changes.
+prev_cause = None
 
 while True:
     try:
@@ -65,7 +69,14 @@ while True:
                 else:
                     why = (f'space exists ({freeSlots} free, largest hole '
                            f'{f.get("largest", 0)}, mean body {mean:.0f}) — the allocator is losing births')
-                msgs.append(f'births refused at {per100:.0f} per 100 steps: {why}')
+                cause = why.split('(')[0].strip()
+                if cause != prev_cause:
+                    msgs.append(f'births refused at {per100:.0f} per 100 steps: {why}')
+                prev_cause = cause
+            else:
+                if prev_cause is not None:
+                    msgs.append('births are being placed again')
+                prev_cause = None
 
     if stale and not prev_stale:
         msgs.append(f'sim code on disk ({disk}) is newer than the running server')
