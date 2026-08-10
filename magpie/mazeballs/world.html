@@ -700,22 +700,50 @@ let lastStatus = null;
 const ana = { live: [], arch: null, on: false, useArch: true, lastStep: -1 };
 const ANA_CAP = 900;
 
-function anaSample(st) {
-  if (!st || st.steps == null) return;
-  if (st.steps === ana.lastStep) return;              // paused: do not pile up
-  ana.lastStep = st.steps;
+/**
+ * A sample straight off the frame header, throttled.
+ *
+ * Frames arrive as fast as the link allows, and a point per frame would fill
+ * the buffer in seconds and thin away the very resolution it was collecting.
+ * The gate is on SIM TIME, not wall time: a world running at 20x should put
+ * twenty times as many points on the chart per second, because the chart's x
+ * axis is steps.
+ *
+ * The depth median is not in the frame header and is carried over from the last
+ * /status poll rather than left null, which would break the line into segments
+ * for a value that is simply sampled less often.
+ */
+let anaLastFrameStep = -1e9;
+function anaSampleFrame(f) {
+  if (!f || !Number.isFinite(f.step)) return;
+  // 50 steps: about three points a second at spf 1, and proportionally more
+  // when the world is run faster, which is what a step-based axis wants. The
+  // buffer thins itself, so a tight gate costs recent resolution nothing.
+  if (f.step - anaLastFrameStep < 50) return;
+  anaLastFrameStep = f.step;
   ana.live.push({
-    step: st.steps, alive: st.alive ?? 0, cells: st.cellsOwned ?? st.cells ?? 0,
-    lineages: st.lineages ?? 0, meanEnergy: +(st.meanEnergy ?? 0),
-    depth: st.genStats?.median ?? null,
+    step: f.step, alive: f.alive, cells: f.cells,
+    lineages: f.lineages, meanEnergy: f.meanEnergy,
+    depth: lastStatus?.genStats?.median ?? null,
   });
   if (ana.live.length > ANA_CAP) {
-    // Thin by dropping every other sample from the older half, so the recent
-    // past keeps its resolution and the distant past keeps its shape.
     const half = ana.live.length >> 1;
     ana.live = ana.live.filter((_, i) => i >= half || (i & 1) === 0);
   }
   if (ana.on) anaDraw();
+}
+
+/**
+ * A sample from /status. Used when opening the panel, and by a page running its
+ * OWN simulation, which has no frame stream to ride. In watch mode the frame is
+ * the source — see anaSampleFrame — so this is not on the poll path any more.
+ */
+function anaSample(st) {
+  if (!st || st.steps == null) return;
+  anaSampleFrame({
+    step: st.steps, alive: st.alive ?? 0, cells: st.cellsOwned ?? st.cells ?? 0,
+    lineages: st.lineages ?? 0, meanEnergy: +(st.meanEnergy ?? 0),
+  });
 }
 
 async function anaLoadArchives() {
@@ -728,7 +756,8 @@ async function anaLoadArchives() {
         const d = await (await fetch('runs/archive/' + n, { cache: 'no-store' })).json();
         out.push({ step: d.step, alive: d.alive, cells: null,
                    lineages: d.lineages ?? null, meanEnergy: +(d.meanEnergy ?? 0),
-                   depth: null, archived: true });
+                   depth: d.genStats?.median ?? null, archived: true,
+                   bootId: d.bootId ?? null });
       } catch { /* a missing archive should not fail the panel */ }
     }
     out.sort((a, b) => a.step - b.step);
@@ -749,7 +778,23 @@ function anaDraw() {
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   g.fillStyle = '#070c0b'; g.fillRect(0, 0, W, H);
 
-  const arch = (ana.useArch && ana.arch) ? ana.arch : [];
+  // ARCHIVES FROM ANOTHER WORLD ARE NOT HISTORY, THEY ARE A DIFFERENT SERIES.
+  //
+  // The archive directory holds every run, and after a reseed it holds two: a
+  // world that reached 2.3M steps beside the one that replaced it at 60k.
+  // concatenating them drew a line that climbed to 2.3M and then leapt
+  // backwards, which is not a chart of anything.
+  //
+  // Archives carry bootId now, so same-world ones are true history. Older ones
+  // have no world identity at all, and the only honest test left is whether
+  // they precede this run: an archive at a HIGHER step than anything live
+  // cannot be this world's past.
+  const liveLo = ana.live.length ? ana.live[0].step : Infinity;
+  const arch = (ana.useArch && ana.arch)
+    ? ana.arch.filter(a => (a.bootId && lastStatus?.bootId && a.bootId === lastStatus.bootId)
+                           || a.step < liveLo)
+    : [];
+  const dropped = (ana.useArch && ana.arch) ? ana.arch.length - arch.length : 0;
   const pts = arch.concat(ana.live);
   if (pts.length < 2) {
     g.fillStyle = '#6d8880'; g.font = '11px ui-monospace,monospace'; g.textAlign = 'center';
@@ -808,8 +853,9 @@ function anaDraw() {
 
   const f = $('anaFoot');
   if (f) {
-    f.textContent = `${ana.live.length} live samples` +
-      (arch.length ? ` · ${arch.length} archived (dashed seam — a different world, before the current physics)` : '') +
+    f.textContent = `${ana.live.length} live sample${ana.live.length === 1 ? '' : 's'}` +
+      (arch.length ? ` · ${arch.length} archived (dashed seam)` : '') +
+      (dropped ? ` · ${dropped} archived hidden — another world` : '') +
       ` · ${lastStatus?.lineages ?? '?'} lineages now`;
   }
   const src = $('anaSrc');
@@ -820,7 +866,13 @@ async function anaToggle(force) {
   const box = $('anaBox'); if (!box) return;
   ana.on = force != null ? force : !ana.on;
   box.classList.toggle('on', ana.on);
-  if (ana.on) { if (ana.useArch) await anaLoadArchives(); anaDraw(); }
+  if (ana.on) {
+    if (ana.useArch) await anaLoadArchives();
+    // One sample now rather than waiting for the next status poll, or the panel
+    // reads "1 live sample" and draws nothing for as long as the poll interval.
+    if (lastStatus) anaSample(lastStatus);
+    anaDraw();
+  }
 }
 
 on('aAnalytics', 'onclick', (e) => { e.preventDefault(); anaToggle(); });
@@ -2320,7 +2372,6 @@ async function rebuild() {
       // the CTRNN scope: the trace advances by spf per loop, so at 6 it samples
       // every sixth step and a 1.7 Hz gait aliases into hash.
       if (st.genStats) setGenStats(st.genStats);
-      anaSample(st);
       if (st.spf != null) {
         const sl = $('sSrvSpf'), lb = $('vSrvSpf');
         if (sl && document.activeElement !== sl) sl.value = st.spf;
@@ -4448,6 +4499,19 @@ function applyFrame(ab) {
   $('hGen').textContent = dv.getUint32(28, true);
   $('hLin').textContent = dv.getUint32(32, true).toLocaleString();
   $('hEnergy').textContent = dv.getFloat32(36, true).toFixed(1);
+
+  // LIVE, FROM THE FRAME ITSELF. The analytics panel used to sample the /status
+  // poll, which runs on its own slow cadence, so a freshly opened panel sat at
+  // one sample and drew nothing. Everything it charts except the depth median
+  // is already in this header and arrives with every frame, at no extra cost
+  // and no extra request.
+  anaSampleFrame({
+    step: sim.serverSteps,
+    alive: dv.getUint32(16, true),
+    cells: L,
+    lineages: dv.getUint32(32, true),
+    meanEnergy: dv.getFloat32(36, true),
+  });
 }
 
 // RENDER SCALE — the single biggest performance knob there is.
