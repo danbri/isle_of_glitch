@@ -250,6 +250,13 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
    creature (a body's material laid out in property space, not physical space),
    or one dot per creature over the whole population. A floating panel so it can
    sit over the world; a bottom sheet on a phone. */
+/* DOCKED LARGE, RATHER THAN A LINK TO A LARGER PAGE. A popout that needs more
+   room should get more room here; sending the reader to a second page costs
+   them the run they were watching, and a second page is a second codepath that
+   drifts from this one. */
+.panelBig { left: .6rem !important; right: .6rem !important; top: 3.2rem !important;
+  bottom: .6rem !important; width: auto !important; }
+.panelBig canvas { height: calc(100vh - 9rem) !important; }
 #devBox { position: fixed; z-index: 58; right: .6rem; top: 3.2rem;
   width: min(420px, 92vw); background: #0b1211f2; border: 1px solid #24403a;
   border-radius: 8px; backdrop-filter: blur(8px); box-shadow: 0 8px 40px rgba(0,0,0,.55);
@@ -378,7 +385,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
     <span class="sp"></span>
     <button id="devGrow" title="grow a body from a genome">grow</button>
     <button id="devFromWorld" title="use the genome of the selected animal">from selection</button>
-    <a href="devo2-wizard.html" title="the guided tour, with the gallery">tour ↗</a>
+    <button id="devBig" title="expand to fill the window">⤢</button>
     <button id="devClose" title="close">✕</button>
   </div>
   <canvas id="devCv"></canvas>
@@ -391,7 +398,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
     <span id="anaSrc">–</span>
     <span class="sp"></span>
     <button id="anaArch" class="on" title="prepend the committed archive series as history">archives</button>
-    <a href="analytics.html" title="the standalone page, full archive detail">full page ↗</a>
+    <button id="anaBig" title="expand to fill the window">⤢</button>
     <button id="anaClose" title="close">✕</button>
   </div>
   <canvas id="anaCv"></canvas>
@@ -481,8 +488,8 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
     <nav class="ways">
       <a href="#" id="aAnalytics" title="live charts, in this page, with the archives as history">📈 Run analytics</a>
       <a href="#" id="aDevelop" title="watch a genome unfold into a body, in this page">🥚 Development</a>
-      <a href="lab/index.html" title="the lab notebook">📓 Lab notes</a>
-      <a href="index.html" title="everything else here">← All pages</a>
+      <a href="lab/index.html" title="the lab notebook — a separate written record, not a view of this run">📓 Lab notes</a>
+      <a href="index.html" title="the directory of everything in this project">← All pages</a>
     </nav>
   </div>
 
@@ -816,6 +823,10 @@ async function devToggle(force) {
 
 on('aDevelop', 'onclick', (e) => { e.preventDefault(); devToggle(); });
 on('devClose', 'onclick', () => devToggle(false));
+on('devBig', 'onclick', () => {
+  const b = $('devBox'); b.classList.toggle('panelBig');
+  $('devBig').textContent = b.classList.contains('panelBig') ? '⤡' : '⤢';
+});
 on('devGrow', 'onclick', async () => {
   const D = await import('./lib/devo2.js');
   // A seeded PRNG rather than Math.random, so a body that does something
@@ -1028,6 +1039,11 @@ async function anaToggle(force) {
 
 on('aAnalytics', 'onclick', (e) => { e.preventDefault(); anaToggle(); });
 on('anaClose', 'onclick', () => anaToggle(false));
+on('anaBig', 'onclick', () => {
+  const b = $('anaBox'); b.classList.toggle('panelBig');
+  $('anaBig').textContent = b.classList.contains('panelBig') ? '⤡' : '⤢';
+  anaDraw();
+});
 on('anaArch', 'onclick', async () => {
   ana.useArch = !ana.useArch;
   $('anaArch').classList.toggle('on', ana.useArch);
