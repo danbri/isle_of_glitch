@@ -42,7 +42,30 @@ while True:
         if ds > 0:
             per100 = db * 100.0 / ds
             if per100 > 50:
-                msgs.append(f'births refused at {per100:.0f} per 100 steps ({db} in {ds})')
+                # WHY, not just how often. A refusal at 97% occupancy is the world
+                # being full, which is a real limit and a lawful one - the
+                # population is pressing against the cell budget and competing
+                # for it. A refusal with space to spare is the allocator losing
+                # births the world could afford, which is a bug. Reporting the
+                # same sentence for both is how a monitor becomes noise: this
+                # alarm fired for hours about fragmentation, was fixed, and then
+                # fired again at the same rate for the opposite reason.
+                f = d.get('freeStats') or {}
+                freeSlots = f.get('freeSlots') or 0
+                cells = d.get('cellsOwned') or 0
+                budget = d.get('cellBudget') or 1
+                bodies = d.get('alive') or 0
+                slots = d.get('bodySlots') or 1
+                occ = 100.0 * cells / budget
+                mean = cells / max(1, bodies)
+                if bodies >= slots * 0.98:
+                    why = f'BODY SLOTS FULL ({bodies}/{slots}) — a real limit'
+                elif freeSlots < mean:
+                    why = f'CELLS FULL ({occ:.0f}% of budget) — a real limit'
+                else:
+                    why = (f'space exists ({freeSlots} free, largest hole '
+                           f'{f.get("largest", 0)}, mean body {mean:.0f}) — the allocator is losing births')
+                msgs.append(f'births refused at {per100:.0f} per 100 steps: {why}')
 
     if stale and not prev_stale:
         msgs.append(f'sim code on disk ({disk}) is newer than the running server')
