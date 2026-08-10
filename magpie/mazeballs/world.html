@@ -76,6 +76,15 @@ aside{
 aside.hidden{transform:translateX(100%)}
 /* The drag handle: a strip along the panel's left edge. Wide enough to hit
    without hunting, invisible until pointed at. */
+.ways{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0 2px}
+.ways a{flex:1 1 auto;text-align:center;white-space:nowrap;
+  font:11px/1 ui-monospace,monospace;color:var(--ink-soft);text-decoration:none;
+  padding:6px 8px;border:1px solid #23302e;border-radius:5px;
+  background:rgba(0,0,0,.22)}
+.ways a:hover{color:var(--ink);border-color:var(--sensor)}
+/* On a phone these are the primary way off this page, so they get a real
+   tap target rather than the 11px they can afford on a desktop column. */
+@media (max-width:820px){ .ways a{padding:9px 10px;font-size:12px} }
 .odo{margin:6px 0 10px;padding:7px 9px;border:1px solid #23302e;border-radius:6px;
   background:rgba(0,0,0,.22)}
 .odo .lab{display:flex;justify-content:space-between;align-items:baseline;
@@ -358,6 +367,17 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
       <span><i style="background:#99998c"></i>neuron</span>
       <span><i style="background:#8f709e"></i>anchor</span>
     </div>
+    <!-- WAYS OUT. This page had no outbound links at all, so the analytics
+         page and the notebook could only be reached by going back to the index
+         - which on a phone means losing the world you were watching. They live
+         in the panel because the panel is the one surface that exists in both
+         layouts: a column on desktop, the hamburger overlay on a phone. -->
+    <nav class="ways">
+      <a href="analytics.html" title="population, body size and composition over a run">📈 Run analytics</a>
+      <a href="devo2-wizard.html" title="watch a genome unfold into a body">🥚 Development</a>
+      <a href="lab/" title="the lab notebook">📓 Lab notes</a>
+      <a href="index.html" title="everything else here">← All pages</a>
+    </nav>
   </div>
 
   <div class="sl"><div class="lab"><span>flow strength</span><span class="v" id="vStr">4.00</span></div>
