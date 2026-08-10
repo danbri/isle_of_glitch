@@ -144,6 +144,116 @@ fn divide(@builtin(workgroup_id) wg : vec3<u32>,
 }
 `;
 
+/**
+ * RELAXATION, and why this is not a port.
+ *
+ * devo2's condenseBody walks i, then j > i, and takes the first acceptable
+ * partner. Codex's review flagged the consequence: creation order decides who
+ * gets first pick, which is a developmental prior nobody chose. On the CPU that
+ * is merely arbitrary; on a GPU it is worse, because "first" has no meaning
+ * when every cell is looking at once.
+ *
+ * MUTUAL BEST removes the question. Every cell scores every other and names its
+ * favourite; a pair fuses only if each is the other's favourite. That needs no
+ * ordering, no scan and no atomics - the answer is a property of the scores
+ * alone, so it is identical on every run and on every device. It also fuses
+ * fewer pairs per pass than greedy does, which is why passes are cheap and
+ * several are expected.
+ *
+ * This is deliberately NOT bit-parity with devo2. It is a different and better
+ * rule, and any measurement that compares bodies grown before and after has to
+ * treat it as a change to development rather than an implementation detail.
+ *
+ * WHAT FUSES. Cells that are touching and made of similar stuff, both willing.
+ * Similarity is over MATERIAL only - density, toughness, stiffness - never over
+ * what a cell does, because fusing by role would be the kernel deciding that
+ * muscle belongs with muscle. Area is conserved exactly: the merged radius is
+ * sqrt(r1^2 + r2^2), so nothing is created.
+ */
+export const RELAX_WGSL = /* wgsl */`
+struct RP {
+  nEmbryo : u32, cap : u32, maxRadius : f32, minScore : f32,
+};
+@group(0) @binding(0) var<uniform>             P     : RP;
+@group(0) @binding(1) var<storage, read_write> xy    : array<vec2<f32>>;
+@group(0) @binding(2) var<storage, read_write> rad   : array<f32>;
+@group(0) @binding(3) var<storage, read_write> live  : array<u32>;
+@group(0) @binding(4) var<storage, read>       count : array<u32>;
+// Material per cell: density, toughness, stiffness, fuse-willingness.
+@group(0) @binding(5) var<storage, read_write> mat   : array<vec4<f32>>;
+@group(0) @binding(6) var<storage, read_write> pick  : array<i32>;
+
+fn scoreOf(a: u32, b: u32) -> f32 {
+  let d = xy[a] - xy[b];
+  let dist = length(d);
+  let touch = (rad[a] + rad[b]) * 1.35;
+  if (dist > touch) { return -1.0; }
+  let rNew = sqrt(rad[a] * rad[a] + rad[b] * rad[b]);
+  if (rNew > P.maxRadius) { return -1.0; }
+  let ma = mat[a]; let mb = mat[b];
+  // Material distance. Capacities are deliberately absent.
+  let unlike = length(vec3<f32>((ma.x - mb.x) * 1.6, ma.y - mb.y, (ma.z - mb.z) * 0.5));
+  // Willingness is the MEAN of the pair: a product of two numbers that both sit
+  // near zero by default is a gate that never opens, which is how the first
+  // version of this on the CPU merged 2% of cells.
+  return 0.5 * (ma.w + mb.w) * exp(-unlike * 4.0);
+}
+
+// Pass one: every cell names its favourite partner.
+@compute @workgroup_size(64)
+fn choose(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let slot = gid.x;
+  if (slot >= P.nEmbryo * P.cap) { return; }
+  pick[slot] = -1;
+  if (live[slot] == 0u) { return; }
+  let e = slot / P.cap;
+  let n = count[e];
+  let i = slot - e * P.cap;
+  if (i >= n) { return; }
+  var best = -1;
+  var bestS = P.minScore;
+  for (var j = 0u; j < n; j = j + 1u) {
+    if (j == i) { continue; }
+    let o = e * P.cap + j;
+    if (live[o] == 0u) { continue; }
+    let sc = scoreOf(slot, o);
+    // Strictly greater, with the lower index winning a tie, so the choice does
+    // not depend on which order the loop happened to visit equals in.
+    if (sc > bestS) { bestS = sc; best = i32(o); }
+  }
+  pick[slot] = best;
+}
+
+// Pass two: a pair fuses only if each chose the other. The lower slot absorbs.
+@compute @workgroup_size(64)
+fn fuse(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let slot = gid.x;
+  if (slot >= P.nEmbryo * P.cap) { return; }
+  if (live[slot] == 0u) { return; }
+  // Bounds against the embryo's own count, which choose already does. It was
+  // missing here, and its absence also left count unused by this entry point
+  // - so layout:'auto' built a six-binding layout for a seven-binding group and
+  // every fuse dispatch failed validation.
+  let ec = slot / P.cap;
+  if (slot - ec * P.cap >= count[ec]) { return; }
+  let p = pick[slot];
+  if (p < 0) { return; }
+  let q = u32(p);
+  if (pick[q] != i32(slot)) { return; }      // not mutual
+  if (q < slot) { return; }                  // the lower slot does the work
+
+  let wa = rad[slot] * rad[slot];
+  let wb = rad[q] * rad[q];
+  let wt = wa + wb;
+  // Area conserved exactly; everything else is an area-weighted mean, so a node
+  // made of two cells counts as two cells' worth of whatever they were.
+  xy[slot] = (xy[slot] * wa + xy[q] * wb) / wt;
+  mat[slot] = (mat[slot] * wa + mat[q] * wb) / wt;
+  rad[slot] = sqrt(wt);
+  live[q] = 0u;
+}
+`;
+
 export const DEVO_WGSL = /* wgsl */`
 // Named DP, not P. The uniform variable below is called P - as it is in
 // world_gpu.js, where the struct is called W - and naming both the same thing
@@ -288,7 +398,11 @@ export class DevoGPU {
     d.bConc = mk(total * NGENE * 4, S | GPUBufferUsage.COPY_SRC);
     d.bNext = mk(total * NGENE * 4, S | GPUBufferUsage.COPY_SRC);
     d.bGenome = mk(nEmbryo * NGENE * GENE_STRIDE * 4);
-    d.bLive = mk(total * 4);
+    // COPY_SRC because readLive copies out of it. Without it the copy fails
+    // validation, the staging buffer stays zeroed, and every cell reads as dead
+    // - which looks exactly like a kernel that killed the whole population.
+    // Second time this exact omission has cost an hour in this file.
+    d.bLive = mk(total * 4, S | GPUBufferUsage.COPY_SRC);
     d.bNbrI = mk(total * nbrK * 4);
     d.bNbrW = mk(total * nbrK * 4);
     d.bUni = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
@@ -301,6 +415,10 @@ export class DevoGPU {
     d.bXY = mk(total * 8, S | GPUBufferUsage.COPY_SRC);
     d.bCount = mk(nEmbryo * 4, S | GPUBufferUsage.COPY_SRC);
     d.bNoise = mk(total * 4);
+    d.bRad = mk(total * 4, S | GPUBufferUsage.COPY_SRC);
+    d.bMat = mk(total * 16, S | GPUBufferUsage.COPY_SRC);
+    d.bPick = mk(total * 4);
+    d.bRUni = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
 
     const mod = device.createShaderModule({ code: DEVO_WGSL, label: 'devo-grn' });
     const info = await mod.getCompilationInfo?.();
@@ -340,6 +458,27 @@ export class DevoGPU {
         { binding: 4, resource: { buffer: d.bLive } },
         { binding: 5, resource: { buffer: d.bCount } },
         { binding: 6, resource: { buffer: d.bNoise } },
+      ],
+    });
+    const rmod = device.createShaderModule({ code: RELAX_WGSL, label: 'devo-relax' });
+    const rinfo = await rmod.getCompilationInfo?.();
+    const rerrs = (rinfo?.messages ?? []).filter((m) => m.type === 'error');
+    if (rerrs.length) {
+      throw new Error('devo-gpu relax shader failed to compile:\n' +
+        rerrs.map((m) => `  line ${m.lineNum}: ${m.message}`).join('\n'));
+    }
+    d.rchoose = device.createComputePipeline({ layout: 'auto', compute: { module: rmod, entryPoint: 'choose' } });
+    d.rfuse = device.createComputePipeline({ layout: 'auto', compute: { module: rmod, entryPoint: 'fuse' } });
+    d.rbind = (pipe) => device.createBindGroup({
+      layout: pipe.getBindGroupLayout(0),
+      entries: [
+        { binding: 0, resource: { buffer: d.bRUni } },
+        { binding: 1, resource: { buffer: d.bXY } },
+        { binding: 2, resource: { buffer: d.bRad } },
+        { binding: 3, resource: { buffer: d.bLive } },
+        { binding: 4, resource: { buffer: d.bCount } },
+        { binding: 5, resource: { buffer: d.bMat } },
+        { binding: 6, resource: { buffer: d.bPick } },
       ],
     });
     return d;
@@ -430,7 +569,7 @@ export class DevoGPU {
     this.dev.queue.writeBuffer(this.bUni, 0, u);
   }
 
-  upload({ conc, genome, live, nbrI, nbrW, ready, xy, count, noise }) {
+  upload({ conc, genome, live, nbrI, nbrW, ready, xy, count, noise, rad, mat }) {
     const q = this.dev.queue;
     if (conc) q.writeBuffer(this.bConc, 0, conc);
     if (genome) q.writeBuffer(this.bGenome, 0, genome);
@@ -441,6 +580,8 @@ export class DevoGPU {
     if (xy) q.writeBuffer(this.bXY, 0, xy);
     if (count) q.writeBuffer(this.bCount, 0, count);
     if (noise) q.writeBuffer(this.bNoise, 0, noise);
+    if (rad) q.writeBuffer(this.bRad, 0, rad);
+    if (mat) q.writeBuffer(this.bMat, 0, mat);
   }
 
   /** Advance every embryo by `steps` steps. Ping-pongs; leaves the result in bConc. */
@@ -476,6 +617,63 @@ export class DevoGPU {
     return true;
   }
 
+  /**
+   * Relaxation: `passes` rounds of mutual-best fusion.
+   *
+   * Two dispatches a round, because choose must see every cell's pick before
+   * fuse can test whether a choice was mutual, and that is a dependency across
+   * the whole batch rather than within one workgroup.
+   */
+  relax(passes = 3, { maxRadius = 1.02, minScore = 0.25 } = {}) {
+    const u = new ArrayBuffer(16), dv = new DataView(u);
+    dv.setUint32(0, this.nEmbryo, true);
+    dv.setUint32(4, this.cap, true);
+    dv.setFloat32(8, maxRadius, true);
+    dv.setFloat32(12, minScore, true);
+    this.dev.queue.writeBuffer(this.bRUni, 0, u);
+    const enc = this.dev.createCommandEncoder();
+    const groups = Math.ceil(this.total / 64);
+    for (let p = 0; p < passes; p++) {
+      for (const pipe of [this.rchoose, this.rfuse]) {
+        const pass = enc.beginComputePass();
+        pass.setPipeline(pipe);
+        pass.setBindGroup(0, this.rbind(pipe));
+        pass.dispatchWorkgroups(groups);
+        pass.end();
+      }
+    }
+    this.dev.queue.submit([enc.finish()]);
+  }
+
+  /** relax() inside an error scope, so an invalid dispatch raises. */
+  async verifyRelax() {
+    this.dev.pushErrorScope('validation');
+    this.relax(1);
+    const e = await this.dev.popErrorScope();
+    if (e) throw new Error('devo-gpu relax dispatch is invalid: ' + e.message);
+    return true;
+  }
+
+  async readU32(buf) {
+    const bytes = this.total * 4;
+    const stag = this.dev.createBuffer({ size: bytes, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+    const enc = this.dev.createCommandEncoder();
+    enc.copyBufferToBuffer(buf, 0, stag, 0, bytes);
+    this.dev.queue.submit([enc.finish()]);
+    await stag.mapAsync(GPUMapMode.READ);
+    const out = new Uint32Array(stag.getMappedRange().slice(0));
+    stag.unmap(); stag.destroy();
+    return out;
+  }
+
+  async readF32(buf) {
+    const u = await this.readU32(buf);
+    return new Float32Array(u.buffer);
+  }
+
+  readLive() { return this.readU32(this.bLive); }
+  readRad() { return this.readF32(this.bRad); }
+
   async readConc() {
     const bytes = this.total * NGENE * 4;
     const stag = this.dev.createBuffer({ size: bytes, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
@@ -489,7 +687,7 @@ export class DevoGPU {
   }
 
   destroy() {
-    for (const b of [this.bConc, this.bNext, this.bGenome, this.bLive, this.bReady, this.bXY, this.bCount, this.bNoise,
+    for (const b of [this.bConc, this.bNext, this.bGenome, this.bLive, this.bReady, this.bXY, this.bCount, this.bNoise, this.bRad, this.bMat, this.bPick, this.bRUni,
                      this.bNbrI, this.bNbrW, this.bUni]) b?.destroy?.();
   }
 }
