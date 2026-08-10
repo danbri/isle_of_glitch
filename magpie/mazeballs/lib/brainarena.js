@@ -181,9 +181,20 @@ export class BrainArena {
     // any body of its class. The cost is internal waste - a 12-cell body holds
     // 16 slots - which is bounded at under 2x and is space, whereas
     // fragmentation costs births, which is selection.
-    let want = 1;
-    while (want < n) want <<= 1;
-    if (want > this.N) want = n;          // a body larger than any class fits exactly or not at all
+    // ROUNDING REVERTED, and the measurement is why. Rounding a request up to a
+    // power of two is the standard answer to fragmentation, and it backfired
+    // here: bodies are ~9 cells, so a body needing 5 asked for 8 in an arena
+    // whose holes had settled at 7, and a body needing 9 asked for 16 when
+    // nothing above 7 existed. It made the mismatch worse in exactly the size
+    // range the population occupies.
+    //
+    // The real constraint is not hole size, it is that a body must own a
+    // CONTIGUOUS run at all - and nothing in the compute needs that. The physics
+    // is one dispatch over every cell and the brains are one sparse network over
+    // every neuron, both indexed; a body is a label in cmeta, not a region of
+    // memory. Fixing it properly means letting a body own scattered slots, which
+    // changes writeCellRange's contract at nine call sites. Recorded, not done.
+    const want = n;
     let best = -1, bestC = Infinity;
     for (let h = 0; h < this.free.length; h++) {
       const fc = this.free[h][1];
