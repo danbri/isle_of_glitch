@@ -556,6 +556,11 @@ export class Evolver {
     const child = arena.birth(n);
     if (child < 0) return -1;
     const dst = arena.off[child];
+    // WHERE THIS BODY'S CELLS ACTUALLY ARE. Identical to SLOT[i] whenever the
+    // body owns one run, which is the common case; different when the arena had
+    // to gather slots rather than refuse the birth. Everything below indexes
+    // through it so neither case is special.
+    const SLOT = arena.slotsOf(child);
 
     const B = world.params.bound;
     const wrap = (v) => (v > B ? v - 2 * B : v < -B ? v + 2 * B : v);
@@ -618,10 +623,10 @@ export class Evolver {
       const cid = this.lineageLog.cell(mom, -1, book, step);
       localId[i] = cid;
       if (cells.uid) {
-        cells.uid[dst + i] = cid;
-        cells.parentA[dst + i] = mom;
-        cells.parentB[dst + i] = -1;
-        cells.lifebook[dst + i] = book;
+        cells.uid[SLOT[i]] = cid;
+        cells.parentA[SLOT[i]] = mom;
+        cells.parentB[SLOT[i]] = -1;
+        cells.lifebook[SLOT[i]] = book;
       }
       // senseTune IS the cell's sense gene. packMeta documents it as a signed
       // value whose MAGNITUDE is acuity and whose SIGN picks the world axis —
@@ -638,29 +643,29 @@ export class Evolver {
       // available explanation for why no closed sense->decide->move loop has
       // ever appeared here.
       meta[i * 4] = packMeta(type, con, gri, apN, c.senseTune ?? c.sense ?? 0);
-      meta[i * 4 + 1] = dst + i;
+      meta[i * 4 + 1] = SLOT[i];
       meta[i * 4 + 2] = child;
       meta[i * 4 + 3] = packSize(n, c.tag ?? 0.5, Math.max(0, c.toughness ?? 0), c.enzyme ?? 0.5,
                                  c.density ?? 0.5);
-      if (cells.contractility) cells.contractility[dst + i] = con;
-      if (cells.grippiness) cells.grippiness[dst + i] = gri;
+      if (cells.contractility) cells.contractility[SLOT[i]] = con;
+      if (cells.grippiness) cells.grippiness[SLOT[i]] = gri;
       // Mirror exactly what went to the GPU, so a viewer reads the cell's real
       // material rather than the label that won its argmax.
-      if (cells.metaX) cells.metaX[dst + i] = meta[i * 4];
-      if (cells.metaW) cells.metaW[dst + i] = meta[i * 4 + 3];
-      cells.ctype[dst + i] = type;
-      cells.body[dst + i] = child; cells.bodySize[dst + i] = n;
-      cells.cslot[dst + i] = dst + i;
-      cells.px[dst + i] = wx; cells.py[dst + i] = wy;
-      cells.vx[dst + i] = 0; cells.vy[dst + i] = 0;
+      if (cells.metaX) cells.metaX[SLOT[i]] = meta[i * 4];
+      if (cells.metaW) cells.metaW[SLOT[i]] = meta[i * 4 + 3];
+      cells.ctype[SLOT[i]] = type;
+      cells.body[SLOT[i]] = child; cells.bodySize[SLOT[i]] = n;
+      cells.cslot[SLOT[i]] = SLOT[i];
+      cells.px[SLOT[i]] = wx; cells.py[SLOT[i]] = wy;
+      cells.vx[SLOT[i]] = 0; cells.vy[SLOT[i]] = 0;
       // The size relaxation gave this cell. Radius was 0.34 for every cell in
       // every body until now, which meant mass could not vary with size and the
       // r^2 and 1/r scalings in the kernel had nothing to bite on.
-      if (cells.rad) cells.rad[dst + i] = c.radius ?? 0.34;
-      arena.cell[dst + i] = dst + i;
-      arena.bias[dst + i] = c.bias;
-      arena.invTau[dst + i] = 1 / Math.max(0.05, c.tau);
-      arena.state[dst + i] = 0; arena.act[dst + i] = 0;
+      if (cells.rad) cells.rad[SLOT[i]] = c.radius ?? 0.34;
+      arena.cell[SLOT[i]] = SLOT[i];
+      arena.bias[SLOT[i]] = c.bias;
+      arena.invTau[SLOT[i]] = 1 / Math.max(0.05, c.tau);
+      arena.state[SLOT[i]] = 0; arena.act[SLOT[i]] = 0;
       energy[i] = 0;
     }
 
@@ -688,14 +693,14 @@ export class Evolver {
     // developed a different body is not wearing its parent's connectome.
     for (let i = 0; i < n; i++) {
       for (let k = 0; k < K; k++) {
-        arena.esrc[(dst + i) * K + k] = -1;
-        arena.ew[(dst + i) * K + k] = 0;
+        arena.esrc[SLOT[i] * K + k] = -1;
+        arena.ew[(SLOT[i]) * K + k] = 0;
       }
       let k = 0;
       for (const j of adj[i]) {
         if (k >= K) break;
-        arena.esrc[(dst + i) * K + k] = dst + j;
-        arena.ew[(dst + i) * K + k] = this.D.synapse(g, body[j], body[i]);
+        arena.esrc[(SLOT[i]) * K + k] = dst + j;
+        arena.ew[(SLOT[i]) * K + k] = this.D.synapse(g, body[j], body[i]);
         k++;
       }
     }
@@ -720,9 +725,10 @@ export class Evolver {
     world.brains.writeBrainRange(arena, dst, n);
 
     cells.bond.set(bnd, dst * bK); cells.brest.set(brest, dst * bK);
-    world.writeCellRange(dst, n, {
-      pos, vel, meta, bond: bnd, brest, bstiff, bbrittle: bbrit, energy,
-    });
+    // Scattered bodies write per slot; contiguous ones keep the single write.
+    const payload = { pos, vel, meta, bond: bnd, brest, bstiff, bbrittle: bbrit, energy };
+    if (arena.isScattered?.(child)) world.writeCellsAt(arena.slotsOf(child), payload);
+    else world.writeCellRange(dst, n, payload);
 
     // Carry the child's expressed dispersal, so ITS offspring travel the
     // distance its own tissue specifies.
@@ -751,6 +757,9 @@ export class Evolver {
     if (child < 0) return -1;
 
     const src = arena.off[p], dst = arena.off[child];
+    // As in divideDevo: index through the body's own slots, which equal
+    // dst + i whenever it owns one run.
+    const SLOT = arena.slotsOf(child);
     const K = arena.K, bK = cells.bondK;
     const m = this.mutRate, sz = this.mutSize;
     const r = this.rnd;
@@ -763,39 +772,40 @@ export class Evolver {
     // --- brain: per-neuron dynamics, then the edge table, both mutated
     for (let i = 0; i < n; i++) {
       const si = srcOf(i);
-      arena.bias[dst + i] = arena.bias[src + si] + (r() < m ? (r() * 2 - 1) * sz : 0);
+      arena.bias[SLOT[i]] = arena.bias[arena.slot(p, si)] + (r() < m ? (r() * 2 - 1) * sz : 0);
       // Mutate tau in log space and clamp to evodevo.js's evolved range, so a
       // mutation cannot produce a time constant the f32 integrator stalls on
       // (see the tau/epsilon note in brainarena.js).
-      const tau = 1 / Math.max(arena.invTau[src + si], 1e-6);
+      const tau = 1 / Math.max(arena.invTau[arena.slot(p, si)], 1e-6);
       const tau2 = r() < m ? tau * Math.exp((r() * 2 - 1) * sz) : tau;
-      arena.invTau[dst + i] = 1 / Math.min(1.89, Math.max(0.24, tau2));
-      arena.stride[dst + i] = arena.stride[src + i];
-      arena.state[dst + i] = 0;
-      arena.act[dst + i] = 0;
+      arena.invTau[SLOT[i]] = 1 / Math.min(1.89, Math.max(0.24, tau2));
+      // The PARENT can be scattered too, so read through its slots as well.
+      arena.stride[SLOT[i]] = arena.stride[arena.slot(p, srcOf(i))];
+      arena.state[SLOT[i]] = 0;
+      arena.act[SLOT[i]] = 0;
     }
     for (let i = 0; i < n; i++) {
       const si = srcOf(i);
       for (let k = 0; k < K; k++) {
-        const s = arena.esrc[(src + si) * K + k];
+        const s = arena.esrc[(arena.slot(p, si)) * K + k];
         // Edge sources are ABSOLUTE, so a copy must be rebased into the child's
         // island or the offspring would wire itself into its parent's brain —
         // which validate() forbids and which would be telepathy besides.
         // Rebase into the child's island, and remap through the size change so
         // an edge still points at the corresponding cell rather than off the
         // end of a smaller body.
-        arena.esrc[(dst + i) * K + k] = s < 0 ? -1
+        arena.esrc[(SLOT[i]) * K + k] = s < 0 ? -1
           : dst + Math.min(n - 1, Math.floor((s - src) * n / pn));
-        let w = arena.ew[(src + si) * K + k];
+        let w = arena.ew[(arena.slot(p, si)) * K + k];
         if (s >= 0 && r() < m) w += (r() * 2 - 1) * sz;
         // Structural mutation: an edge may appear or vanish, so connectivity
         // itself evolves rather than only its weights.
         if (r() < m * 0.25) {
           if (s < 0) {
-            arena.esrc[(dst + i) * K + k] = dst + ((r() * n) | 0);
+            arena.esrc[(SLOT[i]) * K + k] = dst + ((r() * n) | 0);
             w = (r() * 2 - 1) * 1.2;
           } else {
-            arena.esrc[(dst + i) * K + k] = -1; w = 0;
+            arena.esrc[SLOT[i] * K + k] = -1; w = 0;
           }
         }
         // CLAMPED. A weight is a random walk with no restoring force and
@@ -805,7 +815,7 @@ export class Evolver {
         // edge out of it. It takes thousands of generations to bite, which is
         // exactly long enough to surface as an unexplained failure in a long run
         // rather than as a bug while developing.
-        arena.ew[(dst + i) * K + k] = Math.max(-12, Math.min(12, w));
+        arena.ew[(SLOT[i]) * K + k] = Math.max(-12, Math.min(12, w));
       }
     }
 
@@ -836,7 +846,7 @@ export class Evolver {
     for (let i = 0; i < n; i++) {
       const si = srcOf(i);
       for (let k = 0; k < bK; k++) {
-        const pj = cells.bond[(src + si) * bK + k];
+        const pj = cells.bond[(arena.slot(p, si)) * bK + k];
         if (pj < 0) continue;
         const rel = pj - src;
         const cj = Math.min(n - 1, Math.floor(rel * n / pn));
@@ -948,7 +958,7 @@ export class Evolver {
         if (comp[i] !== 0 || adj[i].size >= bK) continue;
         for (let j = 0; j < n; j++) {
           if (comp[j] !== 1 || adj[j].size >= bK) continue;
-          const si = src + srcOf(i), sj = src + srcOf(j);
+          const si = arena.slot(p, srcOf(i)), sj = src + srcOf(j);
           const d = (cells.px[si] - cells.px[sj]) ** 2 + (cells.py[si] - cells.py[sj]) ** 2;
           if (d < best) { best = d; a = i; b = j; }
         }
@@ -977,13 +987,13 @@ export class Evolver {
       pos[i * 4 + 2] = spin;    // the offspring points where it budded
       pos[i * 4 + 3] = 0;
 
-      let type = cells.ctype[src + srcOf(i)];
+      let type = cells.ctype[arena.slot(p, srcOf(i))];
       if (r() < m * 0.5) type = (r() * 4) | 0;   // neuron, sensor, muscle, anchor
-      cells.ctype[dst + i] = type;
-      cells.body[dst + i] = child;
-      cells.bodySize[dst + i] = n;
+      cells.ctype[SLOT[i]] = type;
+      cells.body[SLOT[i]] = child;
+      cells.bodySize[SLOT[i]] = n;
       meta[i * 4] = packMeta(type, type === 2 ? 1 : 0, type === 3 ? 1 : 0);
-      meta[i * 4 + 1] = dst + i;
+      meta[i * 4 + 1] = SLOT[i];
       meta[i * 4 + 2] = child;
       // The copy path has no developed properties: middling meat, no armour.
       meta[i * 4 + 3] = packSize(n, 0.5, 0.0, 0.5);
@@ -991,10 +1001,10 @@ export class Evolver {
       // capacity here. Writing it explicitly matters: arena slots are
       // recycled, and without this a newborn would inherit whatever
       // contractility the previous tenant of these slots happened to have.
-      cells.cslot[dst + i] = dst + i;
-      cells.px[dst + i] = pos[i * 4]; cells.py[dst + i] = pos[i * 4 + 1];
-      cells.vx[dst + i] = 0; cells.vy[dst + i] = 0;
-      arena.cell[dst + i] = dst + i;
+      cells.cslot[SLOT[i]] = SLOT[i];
+      cells.px[SLOT[i]] = pos[i * 4]; cells.py[SLOT[i]] = pos[i * 4 + 1];
+      cells.vx[SLOT[i]] = 0; cells.vy[SLOT[i]] = 0;
+      arena.cell[SLOT[i]] = SLOT[i];
       energy[i] = 0;
     }
 
@@ -1047,7 +1057,9 @@ export class Evolver {
 
     // Half the parent's cell energy goes with the propagule. Division costs.
     const half = new Float32Array(pn);
-    world.writeCellRange(dst, n, { pos, vel, meta, bond, brest, energy });
+    const payload2 = { pos, vel, meta, bond, brest, energy };
+    if (arena.isScattered?.(child)) world.writeCellsAt(arena.slotsOf(child), payload2);
+    else world.writeCellRange(dst, n, payload2);
     world.writeCellRange(src, pn, { energy: half });
 
     this.bookkeep(child, p, step);

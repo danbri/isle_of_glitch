@@ -129,6 +129,18 @@ export class BrainArena {
     // first cnt of them; the rest are held so the hole left behind is a shape
     // something else can use. See birth().
     this.cap = new Int32Array(this.P);
+    // SCATTERED BODIES. null means the usual case - a contiguous run starting at
+    // off[o]. An Int32Array means this body's slots are wherever they could be
+    // found, in order.
+    //
+    // Contiguity was never a requirement of the compute. The physics is one
+    // dispatch over every cell and the brains are one sparse network over every
+    // neuron, both indexed by slot; a body is a label, not a region. It was a
+    // CPU convenience - one buffered write per body instead of n - and it was
+    // costing births at 194 refusals per 100 steps, refusing by SIZE because
+    // small bodies fit where large ones cannot. That is a selection pressure
+    // imposed by bookkeeping.
+    this.slots = new Array(this.P).fill(null);
     this.alive = new Uint8Array(this.P);
 
     // Free list of holes as [offset, count] pairs, kept sorted by offset so
@@ -213,10 +225,38 @@ export class BrainArena {
         if (fc === want) break;
       }
     }
+    // NO RUN LONG ENOUGH IS NOT A REASON TO REFUSE. Gather the slots from
+    // wherever they are: the body is the same body, and nothing downstream of
+    // slot() can tell the difference.
+    if (best < 0) {
+      let have = 0;
+      for (const [, c] of this.free) have += c;
+      if (have < n) return -1;                 // genuinely full; that IS a limit
+      const got = new Int32Array(n);
+      let k = 0;
+      // Smallest holes first, so the runs that could still serve a whole body
+      // are left intact for one.
+      const order = this.free.map((h, idx) => idx).sort((a, b) => this.free[a][1] - this.free[b][1]);
+      for (const idx of order) {
+        const [fo, fc] = this.free[idx];
+        const take = Math.min(fc, n - k);
+        for (let t = 0; t < take; t++) got[k++] = fo + t;
+        this.free[idx] = [fo + take, fc - take];
+        if (k >= n) break;
+      }
+      this.free = this.free.filter(([, c]) => c > 0);
+      got.sort();
+      this.slots[o] = got;
+      this.off[o] = got[0]; this.cnt[o] = n; this.cap[o] = n; this.alive[o] = 1;
+      this.topologyEpoch++;
+      this.clearSlots(got);
+      return o;
+    }
     if (best >= 0) {
       const h = best, [fo, fc] = this.free[h];
       if (fc === want) this.free.splice(h, 1);
       else this.free[h] = [fo + want, fc - want];
+      this.slots[o] = null;
       this.off[o] = fo; this.cnt[o] = n; this.cap[o] = want; this.alive[o] = 1;
       this.topologyEpoch++;
       // A recycled range carries the previous tenant's state and edges. Clear
@@ -253,12 +293,43 @@ export class BrainArena {
     };
   }
 
+  /** Return one slot to the free list, coalescing with its neighbours. */
+  freeOne(fo) {
+    let i = 0;
+    while (i < this.free.length && this.free[i][0] < fo) i++;
+    this.free.splice(i, 0, [fo, 1]);
+    if (i + 1 < this.free.length && this.free[i][0] + this.free[i][1] === this.free[i + 1][0]) {
+      this.free[i][1] += this.free[i + 1][1];
+      this.free.splice(i + 1, 1);
+    }
+    if (i > 0 && this.free[i - 1][0] + this.free[i - 1][1] === this.free[i][0]) {
+      this.free[i - 1][1] += this.free[i][1];
+      this.free.splice(i, 1);
+    }
+  }
+
+  /** clearRange, for slots that are not a run. */
+  clearSlots(list) {
+    for (let i = 0; i < list.length; i++) this.clearRange(list[i], 1);
+  }
+
   /** Release an organism's slots back to the free list, coalescing holes. */
   death(o) {
     if (!this.alive[o]) return;
     // Free the RESERVATION, not the cell count: returning only cnt would leak
     // the rounding remainder on every death until the arena had no free list
     // left that matched anything.
+    const sc = this.slots[o];
+    if (sc) {
+      // A scattered body returns each slot as its own hole; coalescing below
+      // merges any that happen to be adjacent.
+      this.clearSlots(sc);
+      this.alive[o] = 0; this.off[o] = EMPTY; this.cnt[o] = 0; this.cap[o] = 0;
+      this.slots[o] = null;
+      this.topologyEpoch++;
+      for (let i = 0; i < sc.length; i++) this.freeOne(sc[i]);
+      return;
+    }
     const fo = this.off[o], fc = this.cap[o] || this.cnt[o];
     this.clearRange(fo, fc);
     this.alive[o] = 0; this.off[o] = EMPTY; this.cnt[o] = 0; this.cap[o] = 0;
@@ -328,14 +399,36 @@ export class BrainArena {
   cellOf(slot) { return this.cell[slot]; }
 
   /** World cell ids of organism `o`'s neurons, island-relative order. */
-  cellsOf(o) { return this.cell.subarray(this.off[o], this.off[o] + this.cnt[o]); }
+  cellsOf(o) {
+    const sc = this.slots[o];
+    if (!sc) return this.cell.subarray(this.off[o], this.off[o] + this.cnt[o]);
+    // A scattered body cannot be a view; gather. Callers read this, they do not
+    // write through it, so a copy is safe — and the contiguous case, which is
+    // almost all of them, still returns a view and copies nothing.
+    const out = new Int32Array(sc.length);
+    for (let i = 0; i < sc.length; i++) out[i] = this.cell[sc[i]];
+    return out;
+  }
 
   /** Island-relative index -> absolute slot, bounds-checked. */
   slot(o, i) {
     if (!this.alive[o]) throw new Error(`organism ${o} is not alive`);
     if (i < 0 || i >= this.cnt[o]) throw new Error(`neuron ${i} outside organism ${o}'s ${this.cnt[o]}`);
-    return this.off[o] + i;
+    const sc = this.slots[o];
+    return sc ? sc[i] : this.off[o] + i;
   }
+
+  /** Every slot this body owns, in order. The one place that knows the layout. */
+  slotsOf(o) {
+    const sc = this.slots[o];
+    if (sc) return sc;
+    const out = new Int32Array(this.cnt[o]);
+    for (let i = 0; i < out.length; i++) out[i] = this.off[o] + i;
+    return out;
+  }
+
+  /** True if this body's slots are not one run — callers that write in bulk care. */
+  isScattered(o) { return this.slots[o] !== null; }
 
   /**
    * Check the island invariant across the whole arena: every live edge points
@@ -347,7 +440,10 @@ export class BrainArena {
     const bad = [];
     const owner = new Int32Array(this.N).fill(EMPTY);
     for (let o = 0; o < this.P; o++)
-      if (this.alive[o]) owner.fill(o, this.off[o], this.off[o] + this.cnt[o]);
+      if (!this.alive[o]) continue;
+      const sc = this.slots[o];
+      if (sc) { for (let i = 0; i < sc.length; i++) owner[sc[i]] = o; }
+      else owner.fill(o, this.off[o], this.off[o] + this.cnt[o]);
 
     for (let d = 0; d < this.N; d++) {
       for (let k = 0; k < this.K; k++) {
@@ -395,7 +491,11 @@ export class BrainArena {
 
   /** Activations of organism `o`, island-relative — what motors/logging read. */
   readAct(o) {
-    return this.act.subarray(this.off[o], this.off[o] + this.cnt[o]);
+    const sc = this.slots[o];
+    if (!sc) return this.act.subarray(this.off[o], this.off[o] + this.cnt[o]);
+    const out = new Float32Array(sc.length);
+    for (let i = 0; i < sc.length; i++) out[i] = this.act[sc[i]];
+    return out;
   }
 
   /* ------------------------------------------------------------ snapshot */
@@ -542,6 +642,7 @@ export class BrainArena {
       if (!a.alive[o]) continue;
       used.fill(1, a.off[o], a.off[o] + a.cnt[o]);
       a.cap[o] = a.cnt[o];
+      a.slots[o] = null;      // not persisted; a restored body is contiguous
     }
     a.free = [];
     let run = -1;

@@ -2989,6 +2989,32 @@ export class WorldGPU {
   }
 
   /** Write one organism's contiguous cell range back after a birth or death. */
+  /**
+   * The same write, for a body whose slots are not one run.
+   *
+   * A body no longer has to own a contiguous range - nothing in the compute
+   * needed it, and requiring it was refusing births by size. This is what that
+   * costs: one small write per slot instead of one per body. Bodies are about
+   * nine cells and this happens at birth, so it is nine writes where there was
+   * one, against a physics step that touches twenty-five thousand.
+   */
+  writeCellsAt(slots, data) {
+    for (let i = 0; i < slots.length; i++) {
+      const s = slots[i];
+      const one = {};
+      if (data.pos) one.pos = data.pos.subarray(i * 4, i * 4 + 4);
+      if (data.posXY) one.posXY = data.posXY.subarray(i * 2, i * 2 + 2);
+      if (data.vel) one.vel = data.vel.subarray(i * 4, i * 4 + 4);
+      if (data.meta) one.meta = data.meta.subarray(i * 4, i * 4 + 4);
+      if (data.energy) one.energy = data.energy.subarray(i, i + 1);
+      if (data.bond) one.bond = data.bond.subarray(i * this.bondK, (i + 1) * this.bondK);
+      if (data.brest) one.brest = data.brest.subarray(i * this.bondK, (i + 1) * this.bondK);
+      if (data.bstiff) one.bstiff = data.bstiff.subarray(i * this.bondK, (i + 1) * this.bondK);
+      if (data.bbrittle) one.bbrittle = data.bbrittle.subarray(i * this.bondK, (i + 1) * this.bondK);
+      this.writeCellRange(s, 1, one);
+    }
+  }
+
   writeCellRange(from, count, { pos, posXY, vel, meta, bond, brest, bstiff, bbrittle, energy }) {
     const q = this.device.queue;
     if (pos) q.writeBuffer(this.bPos, from * 16, pos);
