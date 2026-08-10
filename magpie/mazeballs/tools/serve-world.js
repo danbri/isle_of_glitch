@@ -1294,7 +1294,24 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
         'muscleCost', 'gripBase', 'gripMod', 'gripHold', 'gripAniso', 'fricK',
         'contestRate', 'toughCost', 'dietWidth', 'absorbTradeoff', 'crowdK',
         'regrowCrowdK', 'moteRegrow', 'senseOther', 'senseRange', 'compass',
+        // ORIENTATION, MASS AND SURFACES. Added with the pose and mass work and
+        // missing from this list ever since, so every one of them was rejected
+        // over HTTP and could only be changed by editing a default and
+        // restarting - which reseeds the question you were trying to ask.
+        'twistK', 'vortK', 'angDrag',
+        'massRef', 'densLo', 'densHi', 'mediumDens',
+        'foreignReach', 'foreignPush',
+        // CLIMATE. Off by default; tuning it live is the only way to run the
+        // poles-versus-torus comparison without restarting into a new world.
+        'tempPole', 'tempEq', 'tempLapse', 'tempOpt', 'tempTol', 'tempCost',
+        // Contact and sap were already reachable through their effects but not
+        // by name, which made a null test ("turn it off and see") impossible.
+        'contactK', 'sapRate',
       ]);
+      // NOT TUNABLE, on purpose: wrapY changes the world's topology, and
+      // hashCell/bucketM size the spatial hash. Changing either under a running
+      // population is not an intervention, it is a different world wearing the
+      // same step counter.
       const patch = {}, rejected = [];
       for (const [k, v] of Object.entries(body.params ?? {})) {
         if (!ALLOW.has(k)) { rejected.push(k); continue; }
