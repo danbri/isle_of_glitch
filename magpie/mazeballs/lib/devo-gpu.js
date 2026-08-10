@@ -345,6 +345,42 @@ export class DevoGPU {
     return d;
   }
 
+  /**
+   * Every tick of a whole development, in ONE command buffer.
+   *
+   * step() and divide() each submit, so driving development by calling them
+   * alternately costs two submits a tick - eight hundred for a four hundred
+   * tick development. Measured that way the GPU was 1.2x the CPU, which is not
+   * the compute being slow, it is the queue being asked eight hundred times to
+   * do a few microseconds of work.
+   *
+   * The ping-pong is unrolled here rather than copied back each tick, so the
+   * only copy is at the end and only if the parity is odd.
+   */
+  run(ticks) {
+    const enc = this.dev.createCommandEncoder();
+    const groups = Math.ceil(this.total / 64);
+    let a = this.bConc, b = this.bNext;
+    for (let t = 0; t < ticks; t++) {
+      const p1 = enc.beginComputePass();
+      p1.setPipeline(this.pipe);
+      p1.setBindGroup(0, this.bind(a, b));
+      p1.dispatchWorkgroups(groups);
+      p1.end();
+      const tmp = a; a = b; b = tmp;
+      // Division reads and writes bConc by binding, so the newest state has to
+      // be there before it runs.
+      if (a !== this.bConc) enc.copyBufferToBuffer(this.bNext, 0, this.bConc, 0, this.total * NGENE * 4);
+      a = this.bConc; b = this.bNext;
+      const p2 = enc.beginComputePass();
+      p2.setPipeline(this.dpipe);
+      p2.setBindGroup(0, this.dbind());
+      p2.dispatchWorkgroups(this.nEmbryo);
+      p2.end();
+    }
+    this.dev.queue.submit([enc.finish()]);
+  }
+
   /** One division pass: every embryo, one workgroup each. */
   divide() {
     const enc = this.dev.createCommandEncoder();

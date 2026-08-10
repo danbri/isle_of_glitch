@@ -25,6 +25,12 @@ prev_stale = False
 # on every sample, for hours, and saying so every 45 seconds is the same
 # always-on alarm as before wearing a better sentence. Say it when it changes.
 prev_cause = None
+# How many consecutive samples a cause has held. A population sitting exactly on
+# its ceiling crosses back and forth every minute, and reporting each crossing
+# is flapping rather than news.
+cause_run = 0
+last_seen = None
+HOLD = 2
 
 while True:
     try:
@@ -70,13 +76,17 @@ while True:
                     why = (f'space exists ({freeSlots} free, largest hole '
                            f'{f.get("largest", 0)}, mean body {mean:.0f}) — the allocator is losing births')
                 cause = why.split('(')[0].strip()
-                if cause != prev_cause:
+                cause_run = cause_run + 1 if cause == last_seen else 1
+                last_seen = cause
+                if cause != prev_cause and cause_run >= HOLD:
                     msgs.append(f'births refused at {per100:.0f} per 100 steps: {why}')
-                prev_cause = cause
+                    prev_cause = cause
             else:
-                if prev_cause is not None:
+                cause_run = cause_run - 1 if cause_run > 0 else 0
+                last_seen = None
+                if prev_cause is not None and cause_run == 0:
                     msgs.append('births are being placed again')
-                prev_cause = None
+                    prev_cause = None
 
     if stale and not prev_stale:
         msgs.append(f'sim code on disk ({disk}) is newer than the running server')
