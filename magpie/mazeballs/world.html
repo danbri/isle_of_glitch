@@ -76,6 +76,10 @@ aside{
 aside.hidden{transform:translateX(100%)}
 /* The drag handle: a strip along the panel's left edge. Wide enough to hit
    without hunting, invisible until pointed at. */
+.spark{display:flex;align-items:flex-end;gap:1px;height:26px;margin:5px 0 3px}
+.spark i{flex:1 1 0;min-width:1px;background:var(--sensor);opacity:.55;
+  border-radius:1px 1px 0 0;transition:height .4s ease}
+.spark i.pk{opacity:.95}
 .ways{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0 2px}
 .ways a{flex:1 1 auto;text-align:center;white-space:nowrap;
   font:11px/1 ui-monospace,monospace;color:var(--ink-soft);text-decoration:none;
@@ -361,6 +365,20 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
       <div class="lab"><span>steps taken</span><span class="v" id="pSteps">0</span></div>
       <div class="sub" id="pStepsSub">&nbsp;</div>
     </div>
+    <!-- ANCESTOR DEPTH, AS A DISTRIBUTION.
+         The HUD's "generation" is a MAX over living bodies, which is a ratchet
+         held up by whichever single deepest body is currently alive. It sat at
+         186 across 265,357 births and read as evolution having stopped, while
+         the population it was drawn from actually spanned 139 to 186 with a
+         median of 160 and was moving the whole time.
+         Lineages do not advance at one rate - a line in rich ground reproduces
+         while one in a barren patch does not - so depth is a spread and the
+         chart is the honest readout. The number is the MEDIAN, not the max. -->
+    <div class="odo">
+      <div class="lab"><span>ancestor depth</span><span class="v" id="pGen">–</span></div>
+      <div class="spark" id="pGenSpark" title="how many living bodies sit at each ancestor depth"></div>
+      <div class="sub" id="pGenSub">&nbsp;</div>
+    </div>
     <div class="legend">
       <span><i style="background:#66a8a1"></i>sensor</span>
       <span><i style="background:#c77352"></i>muscle</span>
@@ -612,6 +630,38 @@ function setSteps(n, dt = 0.015) {
           : secs < 172800 ? `${(secs / 3600).toFixed(1)} h`
           : `${(secs / 86400).toFixed(1)} days`;
   sub.textContent = `${s} of world time`;
+}
+
+/**
+ * Draw the ancestor-depth distribution as bars, and label it with the MEDIAN.
+ *
+ * Deliberately not the max: see the markup comment. The tallest bin is
+ * highlighted so a population that has converged on one depth reads as a spike
+ * rather than as a flat chart nobody looks twice at.
+ */
+function setGenStats(g) {
+  const v = $('pGen'), sp = $('pGenSpark'), sub = $('pGenSub');
+  if (!v || !g || !g.n) return;
+  v.textContent = g.median;
+  if (sub) {
+    // The spread matters more than the centre when lineages advance at
+    // different rates, so it is stated rather than left to be read off bars.
+    sub.textContent = `${g.p10}–${g.p90} across ${g.n.toLocaleString()} bodies` +
+                      `  ·  deepest ${g.max}`;
+  }
+  if (!sp) return;
+  const h = g.hist || [];
+  const mx = Math.max(1, ...h);
+  if (sp.children.length !== h.length) {
+    sp.innerHTML = '';
+    for (let i = 0; i < h.length; i++) sp.appendChild(document.createElement('i'));
+  }
+  for (let i = 0; i < h.length; i++) {
+    const b = sp.children[i];
+    b.style.height = `${Math.max(2, Math.round(h[i] / mx * 100))}%`;
+    b.classList.toggle('pk', h[i] === mx);
+    b.title = `${h[i]} bodies`;
+  }
 }
 
 const fail = (msg) => { $('err').style.display = 'block'; $('err').textContent = msg; };
@@ -1942,6 +1992,7 @@ async function rebuild() {
       // doing and the first touch pushed 6 to it. That also silently coarsened
       // the CTRNN scope: the trace advances by spf per loop, so at 6 it samples
       // every sixth step and a 1.7 Hz gait aliases into hash.
+      if (st.genStats) setGenStats(st.genStats);
       if (st.spf != null) {
         const sl = $('sSrvSpf'), lb = $('vSrvSpf');
         if (sl && document.activeElement !== sl) sl.value = st.spf;

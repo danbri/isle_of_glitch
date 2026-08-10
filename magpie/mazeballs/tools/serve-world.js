@@ -323,7 +323,7 @@ async function loadSnapshot(path) {
   brains.writeState(built.arena);
   return { steps, alive: evo.alive() };
 }
-let last = { alive: evo.alive(), born: 0, died: 0, meanEnergy: 0, maxGeneration: 0, lineages: evo.alive() };
+let last = { alive: evo.alive(), born: 0, died: 0, meanEnergy: 0, maxGeneration: 0, lineages: evo.alive(), genStats: null };
 let steps = 0, sinceTick = 0, ticking = false, running = true;
 
 /* ------------------------------------------------------------- the sim loop */
@@ -1432,7 +1432,11 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       cellsLiveTyped: (() => { let t = 0; for (let i = 0; i < N; i++) if (built.cells.ctype[i] >= 0) t++; return t; })(),
       drift: !!args.drift,
       alive: last.alive, births: evo.births, deaths: evo.deaths,
+      // generation is the MAX over living bodies - a ratchet held up by one
+      // deep survivor. genStats is the distribution it hides: lineages advance
+      // at different rates, so ancestor depth is a spread, not a number.
       generation: last.maxGeneration, lineages: last.lineages,
+      genStats: last.genStats ?? null,
       // BIRTHS THE ARENA REFUSED. Tracked since fragmentation once stopped
       // evolution for thousands of ticks while every other number looked
       // healthy — but only ever reported through a console warning that fires

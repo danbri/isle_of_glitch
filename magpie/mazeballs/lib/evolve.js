@@ -366,6 +366,7 @@ export class Evolver {
       alive: this.alive(), born: this.births - bornAtEntry, died: keepAlive,
       meanEnergy: this.meanOf(total),
       maxGeneration: this.maxGeneration(),
+      genStats: this.generationStats(),
       lineages: this.countLineages(),
       births: this.births, deaths: this.deaths, blockedBirths: this.blockedBirths,
       pendingEggs: this.pendingEggs,
@@ -1280,6 +1281,48 @@ export class Evolver {
     for (let o = 0; o < this.arena.P; o++)
       if (this.arena.alive[o]) g = Math.max(g, this.generation[o]);
     return g;
+  }
+
+  /**
+   * HOW DEEP THE LIVING POPULATION ACTUALLY IS.
+   *
+   * `generation` was reported as a max, and a max is a ratchet held up by
+   * whichever single deepest body happens to be alive. It says nothing about
+   * the population and it moves in jumps: observed sitting at 186 across
+   * 265,357 births, which reads as evolution having stopped when it had not.
+   *
+   * Lineages do not advance at one rate. A line in rich ground reproduces
+   * every few thousand steps while one in a barren patch may not reproduce at
+   * all, so ancestor depth is a DISTRIBUTION and the only honest summaries are
+   * distributional ones. The histogram is returned with the scalars because
+   * mean and median hide the shape - a population split between one ancient
+   * line and a burst of new ones has the same mean as an even spread.
+   *
+   * Cost is one pass over body slots, on the tick path where the energy sums
+   * already walk the same array.
+   */
+  generationStats(bins = 24) {
+    const gens = [];
+    for (let o = 0; o < this.arena.P; o++) {
+      if (this.arena.alive[o]) gens.push(this.generation[o] || 0);
+    }
+    if (!gens.length) return { n: 0, max: 0, min: 0, mean: 0, median: 0, p10: 0, p90: 0, hist: [], lo: 0, hi: 0 };
+    gens.sort((a, b) => a - b);
+    const q = (f) => gens[Math.min(gens.length - 1, Math.max(0, Math.round(f * (gens.length - 1))))];
+    const lo = gens[0], hi = gens[gens.length - 1];
+    // Bins span the observed range, so a population that has all converged on
+    // one depth shows as a single spike rather than an empty chart.
+    const hist = new Array(bins).fill(0);
+    const span = Math.max(1e-9, hi - lo);
+    for (const g of gens) {
+      hist[Math.min(bins - 1, Math.floor((g - lo) / span * bins))]++;
+    }
+    return {
+      n: gens.length, min: lo, max: hi,
+      mean: +(gens.reduce((a, b) => a + b, 0) / gens.length).toFixed(2),
+      median: q(0.5), p10: q(0.1), p90: q(0.9),
+      lo, hi, hist,
+    };
   }
 
   /**
