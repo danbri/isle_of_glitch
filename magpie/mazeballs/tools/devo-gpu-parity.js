@@ -83,6 +83,13 @@ for (let e = 0; e < EMB; e++) {
   // GRN part is the regulatory network the step reads.
   const g0 = D.randomGenome(seeded(900 + e));
   genome.set(g0.subarray(0, NGENE * GENE_STRIDE), e * NGENE * GENE_STRIDE);
+  if (Deno.env.get('NOW')) {          // bisect: silence every regulator edge
+    for (let g = 0; g < NGENE; g++)
+      for (let k = 0; k < K; k++) genome[e * NGENE * GENE_STRIDE + g * GENE_STRIDE + OFF_W + k] = 0;
+  }
+  if (Deno.env.get('NODIFF')) {       // bisect: no neighbours, so no diffusion
+    for (let i = 0; i < nbrI.length; i++) nbrI[i] = -1;
+  }
   const n = 20 + ((rnd() * 40) | 0);
   for (let i = 0; i < n; i++) {
     const slot = e * CAP + i;
@@ -111,13 +118,22 @@ for (let e = 0; e < EMB; e++) {
 
 const gpu = await DevoGPU.create(device, { nEmbryo: EMB, cap: CAP, nbrK: NB });
 gpu.setUniform(DT);
-gpu.upload({ conc, genome, xy, live, nbrI, nbrW });
+gpu.upload({ conc, genome, live, nbrI, nbrW });
+// Prove the dispatch is valid before comparing anything. An invalid dispatch is
+// a silent no-op and every number below would be the input echoed back.
+await gpu.verify();
+gpu.upload({ conc });
 gpu.step(STEPS);
 const got = await gpu.readConc();
 
 let a = conc.slice(), b = new Float32Array(conc.length);
 for (let s = 0; s < STEPS; s++) { b.set(a); cpuStep(a, b, genome, live, nbrI, nbrW, total); const t = a; a = b; b = t; }
 
+// SPLIT THE COMPARISON. Maternal genes are copied across untouched by both
+// implementations, so a disagreement there is indexing or plumbing and cannot
+// be the equation. Regulated genes are the equation. Reporting one number for
+// both hides which.
+let matRel = 0, regRel = 0;
 let maxAbs = 0, maxRel = 0, n = 0, nan = 0;
 for (let slot = 0; slot < total; slot++) {
   if (!live[slot]) continue;
@@ -129,6 +145,8 @@ for (let slot = 0; slot < total; slot++) {
     if (d > maxAbs) maxAbs = d;
     const r = d / Math.max(1e-6, Math.abs(x));
     if (r > maxRel) maxRel = r;
+    if (g < N_MATERNAL) { if (r > matRel) matRel = r; }
+    else if (r > regRel) regRel = r;
     n++;
   }
 }
@@ -136,6 +154,9 @@ console.log(`${EMB} embryos, ${live.reduce((s, v) => s + v, 0)} live cells, ${NG
 console.log(`  compared ${n.toLocaleString()} concentrations`);
 console.log(`  max absolute difference ${maxAbs.toExponential(3)}`);
 console.log(`  max relative difference ${maxRel.toExponential(3)}`);
+console.log(`    maternal genes (a pure copy)  ${matRel.toExponential(3)}` +
+            (matRel > 1e-5 ? '   <- INDEXING or plumbing, not the equation' : '   ok'));
+console.log(`    regulated genes (the equation) ${regRel.toExponential(3)}`);
 console.log(`  non-finite on GPU: ${nan}`);
 // f32 accumulation order differs between a scalar JS loop and a GPU lane, so
 // bit-identity is not the bar; drift far below the noise the world adds each

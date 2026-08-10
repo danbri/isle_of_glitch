@@ -36,7 +36,12 @@ import { NGENE, K, GENE_STRIDE, N_MATERNAL, OFF_SRC, OFF_W, OFF_BIAS, OFF_DECAY,
   from './devo2.js';
 
 export const DEVO_WGSL = /* wgsl */`
-struct P {
+// Named DP, not P. The uniform variable below is called P - as it is in
+// world_gpu.js, where the struct is called W - and naming both the same thing
+// is a WGSL redefinition error. The pipeline is then invalid, every dispatch is
+// a silent no-op, and every buffer reads zero, which looks exactly like a
+// kernel computing the wrong answer.
+struct DP {
   nEmbryo   : u32,
   cap       : u32,          // cell slots per embryo
   nGene     : u32,
@@ -47,22 +52,30 @@ struct P {
   pad       : f32,
 };
 
-@group(0) @binding(0) var<uniform>             P    : P;
+@group(0) @binding(0) var<uniform>             P    : DP;
 // Concentrations, double buffered: [embryo*cap + cell]*nGene + gene.
 @group(0) @binding(1) var<storage, read>       conc : array<f32>;
 @group(0) @binding(2) var<storage, read_write> next : array<f32>;
 // Per-embryo genome: bias/decay/diff/src/w, laid out exactly as devo2 packs it
 // so one encoding serves both. [embryo*genomeStride + gene*GENE_STRIDE + field]
 @group(0) @binding(3) var<storage, read>       genome : array<f32>;
-// xy per cell, and a liveness mask. Dead or unallocated slots are skipped
-// entirely rather than being given zero concentrations, because zero is a
-// legitimate concentration and would diffuse into its neighbours as if real.
-@group(0) @binding(4) var<storage, read>       xy   : array<vec2<f32>>;
-@group(0) @binding(5) var<storage, read>       live : array<u32>;
+// A liveness mask. Dead or unallocated slots are skipped entirely rather than
+// being given zero concentrations, because zero is a legitimate concentration
+// and would diffuse into its neighbours as if it were real.
+//
+// THERE IS NO xy BINDING, and that is not an oversight. The step needs
+// neighbours, not positions, and the neighbour lists are precomputed. Declaring
+// a buffer the shader never reads is worse than useless with layout:'auto':
+// WebGPU builds the layout from what the shader actually USES, so the unused
+// binding is absent from the layout while the bind group still supplies it, and
+// every dispatch fails validation with a binding-count mismatch. The kernel
+// then never runs, every buffer reads back as whatever was uploaded, and a
+// pure-copy gene looks like it agrees while a computed one does not.
+@group(0) @binding(4) var<storage, read>       live : array<u32>;
 // Neighbour lists, precomputed on the CPU exactly as devo2 does: index and
 // weight, nbrK per cell, -1 padded.
-@group(0) @binding(6) var<storage, read>       nbrI : array<i32>;
-@group(0) @binding(7) var<storage, read>       nbrW : array<f32>;
+@group(0) @binding(5) var<storage, read>       nbrI : array<i32>;
+@group(0) @binding(6) var<storage, read>       nbrW : array<f32>;
 
 fn sigmoid(x: f32) -> f32 { return 1.0 / (1.0 + exp(-x)); }
 
@@ -166,13 +179,22 @@ export class DevoGPU {
     d.bConc = mk(total * NGENE * 4, S | GPUBufferUsage.COPY_SRC);
     d.bNext = mk(total * NGENE * 4, S | GPUBufferUsage.COPY_SRC);
     d.bGenome = mk(nEmbryo * NGENE * GENE_STRIDE * 4);
-    d.bXY = mk(total * 8);
     d.bLive = mk(total * 4);
     d.bNbrI = mk(total * nbrK * 4);
     d.bNbrW = mk(total * nbrK * 4);
     d.bUni = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
 
-    const mod = device.createShaderModule({ code: DEVO_WGSL });
+    // ASK THE SHADER WHETHER IT COMPILED. A WGSL error leaves an invalid
+    // pipeline whose dispatches do nothing, so every buffer reads zero - which
+    // is indistinguishable from a kernel that ran and computed zero. That cost
+    // an afternoon and a request for help on a bug that was a compile failure.
+    const mod = device.createShaderModule({ code: DEVO_WGSL, label: 'devo-grn' });
+    const info = await mod.getCompilationInfo?.();
+    const errs = (info?.messages ?? []).filter((m) => m.type === 'error');
+    if (errs.length) {
+      throw new Error('devo-gpu shader failed to compile:\n' +
+        errs.map((m) => `  line ${m.lineNum}: ${m.message}`).join('\n'));
+    }
     d.pipe = device.createComputePipeline({ layout: 'auto', compute: { module: mod, entryPoint: 'step' } });
     d.bind = (a, b) => device.createBindGroup({
       layout: d.pipe.getBindGroupLayout(0),
@@ -181,10 +203,9 @@ export class DevoGPU {
         { binding: 1, resource: { buffer: a } },
         { binding: 2, resource: { buffer: b } },
         { binding: 3, resource: { buffer: d.bGenome } },
-        { binding: 4, resource: { buffer: d.bXY } },
-        { binding: 5, resource: { buffer: d.bLive } },
-        { binding: 6, resource: { buffer: d.bNbrI } },
-        { binding: 7, resource: { buffer: d.bNbrW } },
+        { binding: 4, resource: { buffer: d.bLive } },
+        { binding: 5, resource: { buffer: d.bNbrI } },
+        { binding: 6, resource: { buffer: d.bNbrW } },
       ],
     });
     return d;
@@ -203,11 +224,10 @@ export class DevoGPU {
     this.dev.queue.writeBuffer(this.bUni, 0, u);
   }
 
-  upload({ conc, genome, xy, live, nbrI, nbrW }) {
+  upload({ conc, genome, live, nbrI, nbrW }) {
     const q = this.dev.queue;
     if (conc) q.writeBuffer(this.bConc, 0, conc);
     if (genome) q.writeBuffer(this.bGenome, 0, genome);
-    if (xy) q.writeBuffer(this.bXY, 0, xy);
     if (live) q.writeBuffer(this.bLive, 0, live);
     if (nbrI) q.writeBuffer(this.bNbrI, 0, nbrI);
     if (nbrW) q.writeBuffer(this.bNbrW, 0, nbrW);
@@ -232,6 +252,20 @@ export class DevoGPU {
     this.dev.queue.submit([enc.finish()]);
   }
 
+  /**
+   * Run once inside an error scope. A dispatch that fails validation is a
+   * NO-OP, not an exception: the buffers keep whatever was uploaded and the
+   * caller compares plausible-looking numbers that nothing computed. Call this
+   * once at startup rather than trusting the first result.
+   */
+  async verify() {
+    this.dev.pushErrorScope('validation');
+    this.step(1);
+    const e = await this.dev.popErrorScope();
+    if (e) throw new Error('devo-gpu dispatch is invalid: ' + e.message);
+    return true;
+  }
+
   async readConc() {
     const bytes = this.total * NGENE * 4;
     const stag = this.dev.createBuffer({ size: bytes, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
@@ -245,7 +279,7 @@ export class DevoGPU {
   }
 
   destroy() {
-    for (const b of [this.bConc, this.bNext, this.bGenome, this.bXY, this.bLive,
+    for (const b of [this.bConc, this.bNext, this.bGenome, this.bLive,
                      this.bNbrI, this.bNbrW, this.bUni]) b?.destroy?.();
   }
 }
