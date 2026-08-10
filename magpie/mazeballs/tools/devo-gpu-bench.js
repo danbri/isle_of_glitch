@@ -55,8 +55,19 @@ t0 = performance.now();
 gpu.run(TICKS);
 const counts = await gpu.readCounts();          // forces completion
 const gpuMs = performance.now() - t0;
+
+// END TO END, which is the number that decides whether this is worth wiring in.
+// The compute figure above is not what a birth costs: the phenotype has to come
+// BACK across the bus before the CPU can build a body from it, and that
+// readback is a latency the CPU path never pays.
+const t2 = performance.now();
+const conc2 = await gpu.readConc();
+const xy2 = await gpu.readXY();
+const readMs = performance.now() - t2;
 const grown = Array.from(counts).reduce((a, b) => a + b, 0);
 console.log(`  CPU develop(): ${BATCH} eggs in ${cpuMs.toFixed(0)} ms = ${(cpuMs / BATCH).toFixed(2)} ms/egg (${cells} cells)`);
 console.log(`  GPU batch    : ${BATCH} eggs in ${gpuMs.toFixed(0)} ms = ${(gpuMs / BATCH).toFixed(2)} ms/egg (${grown} cells, ${TICKS} ticks)`);
-console.log(`  speedup      : ${(cpuMs / gpuMs).toFixed(1)}x`);
+console.log(`  speedup      : ${(cpuMs / gpuMs).toFixed(1)}x  (compute only)`);
+console.log(`  readback     : ${readMs.toFixed(0)} ms for ${(conc2.length * 4 / 1048576).toFixed(1)} MB of concentrations + ${(xy2.length * 4 / 1048576).toFixed(1)} MB of positions`);
+console.log(`  END TO END   : ${((gpuMs + readMs) / BATCH).toFixed(2)} ms/egg = ${(cpuMs / (gpuMs + readMs)).toFixed(1)}x`);
 gpu.destroy();
