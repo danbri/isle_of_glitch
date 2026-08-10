@@ -155,6 +155,16 @@ const TOOLS = [
     },
   },
   {
+    name: 'world_lineages',
+    description:
+      'How standing variation is DISTRIBUTED, not just how many lineages exist. A count says 12 ' +
+      'whether that is twelve equal lines or one line holding 99% and eleven stragglers about to ' +
+      'die, and only the second is a collapse in progress. Returns Shannon entropy over lineage ' +
+      'shares, effective lineages (2^H — the number of equally-common lines that would give the ' +
+      'same entropy), the largest share, and the top few.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
     name: 'world_health',
     description:
       'INTEGRITY CHECK, not a status readout. Looks for the failure modes that every other ' +
@@ -261,6 +271,20 @@ async function call(name, a = {}) {
       }
       const note = hidden ? `\n(${hidden} archives from other runs hidden; allBoots:true to include)` : '';
       return text((rows.join('\n') || 'no archives for this world yet') + note);
+    }
+
+    case 'world_lineages': {
+      const st = await api('/status');
+      const L = st.linStats;
+      if (!L || !L.n) return errText('no lineage stats yet — the server needs one tick');
+      const out = [
+        `bodies ${num(L.n)}   lineages ${L.count}   EFFECTIVE ${L.effective}` +
+          (L.effective < L.count / 2 ? '   <- the count overstates diversity' : ''),
+        `entropy ${L.entropyBits} bits   largest lineage holds ${(100 * L.topShare).toFixed(1)}%` +
+          (L.topShare > 0.5 ? '   <- one line holds the population' : ''),
+        'top: ' + L.top.map(t => `L${t.lineage} ${t.bodies} (${(100 * t.share).toFixed(1)}%)`).join('  '),
+      ];
+      return text(out.join('\n'));
     }
 
     case 'world_health': {

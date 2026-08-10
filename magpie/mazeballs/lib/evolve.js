@@ -367,6 +367,7 @@ export class Evolver {
       meanEnergy: this.meanOf(total),
       maxGeneration: this.maxGeneration(),
       genStats: this.generationStats(),
+      linStats: this.lineageStats(),
       lineages: this.countLineages(),
       births: this.births, deaths: this.deaths, blockedBirths: this.blockedBirths,
       pendingEggs: this.pendingEggs,
@@ -1316,6 +1317,43 @@ export class Evolver {
    * Cost is one pass over body slots, on the tick path where the energy sums
    * already walk the same array.
    */
+  /**
+   * HOW DIVERSITY IS DISTRIBUTED, not just how many lineages there are.
+   *
+   * A count says 12 whether that is twelve equal lines or one line holding 99%
+   * of the population and eleven stragglers about to die. Those are completely
+   * different states and only the second is a collapse in progress, so the
+   * count alone cannot tell you whether an intervention worked.
+   *
+   * Shannon entropy over lineage shares, reported in bits and also as
+   * EFFECTIVE lineages (2^H) - the number of equally-common lines that would
+   * give the same entropy, which is the honest answer to "how many are there
+   * really". Top share is the single biggest line, because a population one
+   * lineage away from clonal should say so.
+   */
+  lineageStats(topN = 5) {
+    const share = new Map();
+    let total = 0;
+    for (let o = 0; o < this.arena.P; o++) {
+      if (!this.arena.alive[o]) continue;
+      const l = this.lineage[o];
+      share.set(l, (share.get(l) ?? 0) + 1);
+      total++;
+    }
+    if (!total) return { n: 0, count: 0, entropyBits: 0, effective: 0, topShare: 0, top: [] };
+    let H = 0;
+    for (const c of share.values()) { const p = c / total; H -= p * Math.log2(p); }
+    const top = [...share.entries()].sort((a, b) => b[1] - a[1]).slice(0, topN)
+      .map(([l, c]) => ({ lineage: l, bodies: c, share: +(c / total).toFixed(4) }));
+    return {
+      n: total, count: share.size,
+      entropyBits: +H.toFixed(3),
+      effective: +Math.pow(2, H).toFixed(2),
+      topShare: top.length ? top[0].share : 0,
+      top,
+    };
+  }
+
   generationStats(bins = 24) {
     const gens = [];
     for (let o = 0; o < this.arena.P; o++) {

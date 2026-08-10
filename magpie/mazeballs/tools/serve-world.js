@@ -369,7 +369,7 @@ async function loadSnapshot(path) {
   brains.writeState(built.arena);
   return { steps, alive: evo.alive() };
 }
-let last = { alive: evo.alive(), born: 0, died: 0, meanEnergy: 0, maxGeneration: 0, lineages: evo.alive(), genStats: null };
+let last = { alive: evo.alive(), born: 0, died: 0, meanEnergy: 0, maxGeneration: 0, lineages: evo.alive(), genStats: null, linStats: null };
 let steps = 0, sinceTick = 0, ticking = false, running = true;
 
 /* ------------------------------------------------------------- the sim loop */
@@ -567,6 +567,9 @@ async function archiveIfDue(gen) {
       // generation above is a MAX over living bodies and moves in jumps; this
       // is the distribution it hides.
       genStats: last.genStats ?? null,
+      // Lineage COUNT hides whether one line holds the population. See
+      // Evolver.lineageStats.
+      linStats: last.linStats ?? null,
       simVersion: RUNNING.simVersion, devo: evo.devoVersion, encoding: evo.devoName ?? 'devo2-grn',
       // The physics a genome evolved under. Without it an archived genome is a
       // string of floats with no world to mean anything in.
@@ -1627,6 +1630,8 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       pendingEggs: evo.pendingEggs ?? 0,
       generation: last.maxGeneration, lineages: last.lineages,
       genStats: last.genStats ?? null,
+      // Lineage COUNT hides whether one line holds the population.
+      linStats: last.linStats ?? null,
       // BIRTHS THE ARENA REFUSED. Tracked since fragmentation once stopped
       // evolution for thousands of ticks while every other number looked
       // healthy — but only ever reported through a console warning that fires
