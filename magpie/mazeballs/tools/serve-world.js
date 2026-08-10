@@ -552,6 +552,12 @@ async function archiveIfDue(gen) {
       // label-and-genome form; 2 = continuous material, per-cell radius and
       // density, and the ancestor-depth distribution.
       repr: 2,
+      // WHICH WORLD THIS IS. Archives are named by generation and the directory
+      // now holds two runs, so gen-0201 from a world that reached 2.3M steps
+      // sorts beside gen-0013 from the one that replaced it. A reader charting
+      // the index without this draws a chimera - the step count jumping
+      // backwards is the only other clue.
+      bootId: BOOT_ID,
       alive: last.alive, lineages: last.lineages, meanEnergy: +last.meanEnergy.toFixed(3),
       // generation above is a MAX over living bodies and moves in jumps; this
       // is the distribution it hides.
@@ -568,6 +574,24 @@ async function archiveIfDue(gen) {
       })),
     };
     await Deno.writeTextFile(`${ARCHIVE_DIR}/${tag}.json`, JSON.stringify(manifest));
+
+    // AND THE INDEX, WHICH NOTHING HAD EVER WRITTEN.
+    //
+    // runs/archive/index.json is the only way a reader discovers what archives
+    // exist - analytics.html walks it, and so does the MCP world_archives tool.
+    // It was a hand-committed file listing 40 archives ending at gen-0129, so
+    // every archive written since was invisible to both: the analytics page
+    // charted a series that had stopped growing, and looked static because it
+    // WAS static. Rebuilt from the directory on every archive, sorted, so the
+    // index cannot drift from what is on disk.
+    try {
+      const names = [];
+      for await (const e of Deno.readDir(ARCHIVE_DIR)) {
+        if (e.isFile && /^gen-\d+\.json$/.test(e.name)) names.push(e.name);
+      }
+      names.sort();
+      await Deno.writeTextFile(`${ARCHIVE_DIR}/index.json`, JSON.stringify(names));
+    } catch (e) { console.error('archive index:', e.message); }
 
     // The world it lived in. Pruned below; the genomes above never are.
     const snap = `${ARCHIVE_DIR}/${tag}.snapshot`;
