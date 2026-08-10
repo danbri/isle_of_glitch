@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A run-analytics page, and two devo viewers that speak devo2</title>
+<style>
+  :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fbfbf9; --fg:#1c2530; --dim:#5d6b7c; --acc:#12766e; --line:#e2e5ea; }
+  }
+  body { background:var(--bg); color:var(--fg); margin:0;
+         font:16px/1.65 ui-serif, Georgia, "Iowan Old Style", serif; }
+  .wrap { max-width:46rem; margin:0 auto; padding:3rem 1.25rem 6rem; }
+  a { color:var(--acc); }
+  h1,h2,h3 { font-family:ui-sans-serif, system-ui, sans-serif; line-height:1.25; }
+  h1 { font-size:1.9rem; margin:0 0 .3rem; }
+  h2 { margin-top:2.4rem; border-bottom:1px solid var(--line); padding-bottom:.3rem; }
+  .meta { color:var(--dim); font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size:.8rem; letter-spacing:.02em; }
+  code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.85em; }
+  pre { background:rgba(127,127,127,.1); padding:.9rem 1rem; border-radius:6px;
+        overflow-x:auto; border:1px solid var(--line); }
+  table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; font-size:.9rem; }
+  th,td { border:1px solid var(--line); padding:.35rem .6rem; text-align:left; }
+  th { background:rgba(127,127,127,.08); }
+  blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
+               color:var(--dim); }
+  /* Figures. Plots here are generated as SVG straight from the wire format
+     rather than screenshotted, so they stay sharp at any width and weigh
+     almost nothing. */
+  img, svg.fig { max-width:100%; height:auto; display:block; border-radius:6px;
+                 border:1px solid var(--line); background:#070c0b; }
+  figure { margin:1.6rem 0; }
+  figcaption { color:var(--dim); font-size:.82rem; margin-top:.5rem;
+               font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
+  ul.index { list-style:none; padding:0; }
+  ul.index li { margin:.9rem 0; }
+  ul.index .meta { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
+  <article>
+  <h1>A run-analytics page, and two devo viewers that speak devo2</h1>
+  <p class="meta">
+    10 August 2026 · posts, viewer, analytics, devo, coordination
+  </p>
+  <p>Notes for the other session. All of this is in <code>world.html</code> and a new
+<code>analytics.html</code>; none of it touches the sim libs, so it sits on top of your
+devo2/world_gpu rework without conflict. I rebased onto it and checked: the
+genome layout, the <code>DevoView</code> API, and the <code>packMeta</code> bit-packing the cell
+colour decodes are all unchanged, so the colour, gene viewer, network view and
+unfold still match your libs.</p>
+<h2>The gene viewer and unfolder are devo2 now</h2>
+<ul>
+<li><strong>Unfolder</strong> — the Creature panel's <code>unfold ▶</code> runs the real model in
+<code>lib/devo-worker.js</code> and draws it with <code>DevoView</code>, growing in developmental
+time, instead of the old order-only animation. The 2D division-tree overlay is
+gone; if you want the mother→daughter links you added to <code>DevoView</code>, they can
+come back into this view for free.</li>
+<li><strong>Gene viewer</strong> — works without a server (reads this page's own living genomes
+and the devo2 layout off the module constants) and shows the full 64-gene GRN.</li>
+<li><strong>GRN network view</strong> — a table/network toggle. The network is the wiring
+diagram: genes as nodes in three bands (egg gradients and external channels in
+from the left, outputs on the right, internal regulators in the middle), edges
+coloured amber for excitation and blue for repression. Tap a gene and its
+regulators and targets light up, with its wiring read out in words; tap again
+to clear.</li>
+<li><strong>Egg panel</strong> — egg size and development time are sliders that re-run the
+unfold, so you can change the environment and watch the same genome build a
+different body. Heat, sugar-energy and agitation are marked as the egg factors
+still to come.</li>
+</ul>
+<p>Terminology: the viewer and the dev-viewer docs now say <strong>egg gradients</strong>, not
+maternal. They are a provisioned environment the egg sets, not a signal from a
+parent.</p>
+<h2>The CTRNN scope stops hogging and flatlining</h2>
+<p>It was opening a 200px full-width panel over the world on every selection. It now
+opens compact on a narrow screen (control bar only; the choice is remembered),
+the default height is smaller, and a genuinely quiet brain is drawn as one line
+of text rather than a wall of flat traces.</p>
+<h2>analytics.html — population dynamics from the committed archives</h2>
+<p>A standalone page, linked from the home hub, that reads
+<code>runs/archive/gen-*.json</code> directly. It draws four things over an evolutionary
+run: the population trajectory (alive / lineages / mean energy), a body-size
+strip plot per generation split by whether a lineage senses <strong>and</strong> moves, the
+cell-type composition band, and the sensorimotor fraction over time. The data is
+one representative per lineage sampled every few generations — trends, not a
+census — and the page says so.</p>
+<p>Two things worth knowing:</p>
+<ul>
+<li><strong>New artifact: <code>runs/archive/index.json</code></strong>, a manifest of the archive
+filenames. A static host cannot list a directory, so the page needs it to
+enumerate the files. It is committed and currently regenerated by hand; if
+<code>archiveIfDue()</code> appended each new filename to it, the page would stay current
+on its own.</li>
+<li><strong>No d3.</strong> The page is hand-drawn 2D canvas in the same idiom as <code>drawScope</code>.
+Reasoning: the site serves committed files with no build step, self-contained
+pages are the norm here, and these chart types are a few hundred lines in the
+existing style. d3 stays a future option — vendored as a committed file, never
+a CDN — only if network or Sankey views are wanted later.</li>
+</ul>
+<p>One thing the data already says: the sensorimotor fraction across the archived
+run drifts from about 0.66 at generation 5 to 0.44 at 129. Worth a proper look
+against the metrics ledger before reading anything into it.</p>
+<p>The dense series (births/deaths, the body-size min/median/max envelope, failed
+eggs) lives only in <code>runs/metrics.jsonl</code>, which is gitignored and has no HTTP
+route. A read-only <code>/metrics</code> route on the server would let <code>analytics.html?watch=1</code>
+show it live — the obvious next step if the static page proves useful.</p>
+
+</article>
+
+</div>
+</body>
+</html>
