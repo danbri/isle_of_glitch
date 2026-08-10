@@ -262,7 +262,7 @@ const SNAP_MAGIC = 0x324e5257;                  // 'WRN2'
 const SNAP_MAGIC_V1 = 0x314e5257;               // 'WRN1' — pre-packed cmeta
 
 async function saveSnapshot(path) {
-  const { pos, energy } = await world.readCells();
+  const { pos, energy, theta } = await world.readCells();
   await brains.readState(built.arena);          // pull GPU state into the arena
   const out = encodeWorld({
     pos, energy, arenaBlob: built.arena.snapshot(),
@@ -310,10 +310,42 @@ async function loadSnapshot(path) {
 
   // Push everything back to the GPU.
   const vel = new Float32Array(N * 4);
+  // RESUMING USED TO STRIP EVERY CELL OF ITS MATERIAL.
+  //
+  // cmeta.x is a PACKED word - type in the low bits, then sense acuity,
+  // contractility, grippiness and axial position - and this wrote the bare
+  // ctype into it, so a resumed cell came back as a type with no capacities at
+  // all. cmeta.w is packed the same way and got the bare bodySize, losing
+  // density, toughness, tag and enzyme. vel.z is the cell's RADIUS and this
+  // wrote a zero-filled array over it.
+  //
+  // Measured on a resumed world before the fix: 78.2% of 24,326 live cells had
+  // radius exactly 0. A radius-0 cell has no contact, because contact tests
+  // myR + otherR, and under the mass law its mass falls to the clamp floor. Most
+  // of the population was a massless ghost that still ate, bonded and bred.
+  //
+  // It went unnoticed for so long because the CPU mirrors stayed correct: every
+  // readout that reads built.cells - the frame, the archive, the analytics -
+  // showed healthy material while the GPU the physics actually runs on had
+  // none. The two only disagreed after a resume, and a resume looks like
+  // nothing happening.
   const meta = new Int32Array(N * 4);
   for (let i = 0; i < N; i++) {
-    meta[i * 4] = c.ctype[i]; meta[i * 4 + 1] = c.cslot[i];
-    meta[i * 4 + 2] = c.body[i]; meta[i * 4 + 3] = c.bodySize[i];
+    meta[i * 4] = c.metaX ? c.metaX[i] : c.ctype[i];
+    meta[i * 4 + 1] = c.cslot[i];
+    meta[i * 4 + 2] = c.body[i];
+    meta[i * 4 + 3] = c.metaW ? c.metaW[i] : c.bodySize[i];
+    // The cell's own size, or the base radius if this world predates it. Never
+    // zero: zero is not a small cell, it is a cell the physics cannot see.
+    //
+    // AND THE CPU MIRROR IS REPAIRED TOO, not just the upload. buildBodies
+    // places beasts*cells cells - about 5,000 of a 25,020-slot arena - and sets
+    // a radius only for those. A resume then marks 24,000 slots live from the
+    // snapshot, and every slot the builder never touched kept rad 0 forever.
+    // Repairing only the GPU copy would leave the frame, the archive and the
+    // analytics all still reporting zeros, because they read this array.
+    if (c.rad && !(c.rad[i] > 0)) c.rad[i] = 0.34;
+    vel[i * 4 + 2] = c.rad ? c.rad[i] : 0.34;
     c.px[i] = pos[i * 2]; c.py[i] = pos[i * 2 + 1];
   }
   // posXY, not pos: the snapshot format predates headings and stores xy only,
@@ -729,8 +761,19 @@ const HEAD = 56;
  *   HEAD 56  ... u32 hasStatic at offset 48
  *   u32 L
  *   f32 pos[L*2]     f32 act[L]     f32 energy[L]      <- every frame
+ *   u16 theta[L]     (padded to 4)                     <- every frame
  *   i32 idx[L]       i32 type[L]    i32 uid[L]         <- only when hasStatic
+ *   i32 matW[L]      f32 radius[L]                     <- only when hasStatic
  *   u32 pairCount    i32 pairs[pairCount]              <- only when hasStatic
+ *
+ * THETA IS TWO BYTES, NOT FOUR. It changes every step, so it rides in the
+ * dynamic block where a f32 would have cost 25% of the frame; a u16 over
+ * -pi..pi resolves to 0.0001 rad, which is far finer than a pixel. matW and
+ * radius change only at birth, so they cost nothing on a steady epoch.
+ *
+ * Offset 52 carries a FORMAT VERSION. It was reserved and unused, and a viewer
+ * parsing the old layout against the new one silently reads garbage rather
+ * than failing, which is the worst way for a protocol change to go wrong.
  */
 // One readback serves every viewer in the same window.
 //
@@ -806,7 +849,7 @@ async function frame(have = -1) {
 })();
 
 async function buildFrame() {
-  const { pos, energy } = await world.readCells();
+  const { pos, energy, theta } = await world.readCells();
   // readAct, not readState: this uses only the activations, and readState also
   // copies the whole neuron-state buffer — 100 KB a frame across the bus, on the
   // readback that gates how often the world can be watched. (Codex spotted this.)
@@ -869,8 +912,12 @@ async function buildFrame() {
   // arithmetic that caused it.
   // Dynamic: pos(8) + act(4) + energy(4). Static: idx(4) + type(4) + uid(4),
   // then the pair count and the pairs.
-  const DYN = 4 + L * (8 + 4 + 4);
-  const STAT = L * (4 + 4 + 4) + 4 + P32.byteLength;
+  // Dynamic gains theta as u16, padded so the static block stays 4-aligned.
+  const THETA = ((L * 2) + 3) & ~3;
+  const DYN = 4 + L * (8 + 4 + 4) + THETA;
+  // Static gains matW (the packed material word: density, toughness, tag,
+  // enzyme) and radius. Both change only at birth, so they ride the epoch.
+  const STAT = L * (4 + 4 + 4 + 4 + 4) + 4 + P32.byteLength;
   const buf = new ArrayBuffer(HEAD + DYN + STAT);
   const dv = new DataView(buf);
   dv.setUint32(0, FRAME_MAGIC, true);
@@ -891,7 +938,8 @@ async function buildFrame() {
   dv.setUint32(40, epoch, true);
   dv.setFloat32(44, world.params.flowScale, true);
   dv.setUint32(48, 1, true);           // this buffer carries the static block
-  dv.setUint32(52, 0, true);           // reserved
+  // Format 2: theta in the dynamic block, matW and radius in the static one.
+  dv.setUint32(52, 2, true);
 
   let at = HEAD;
   new DataView(buf).setUint32(at, L, true); at += 4;
@@ -931,6 +979,15 @@ async function buildFrame() {
     const e2 = new Float32Array(buf, at, L);
     for (let k = 0; k < L; k++) e2[k] = energy[liveIdx[k]];
     at += L * 4;
+    // Heading, quantised. theta is kept in [-pi, pi] by the kernel, so this is
+    // a straight affine map with no wrapping to get wrong.
+    const th2 = new Uint16Array(buf, at, L);
+    const TAU = Math.PI * 2;
+    for (let k = 0; k < L; k++) {
+      const t = theta ? theta[liveIdx[k]] : 0;
+      th2[k] = Math.max(0, Math.min(65535, Math.round(((t + Math.PI) / TAU) * 65535)));
+    }
+    at += THETA;
   }
   // ---- end of the dynamic block; everything below is constant for this epoch.
   const statAt = at;
@@ -963,6 +1020,20 @@ async function buildFrame() {
     }
     at += L * 4;
   }
+  // MATERIAL AND SIZE. matW is cmeta.w - density, toughness, tag, enzyme - and
+  // radius is what development's relaxation phase left the cell. Neither was on
+  // the wire at all, so a watching page could not colour by what a cell is MADE
+  // of, nor draw a fused node any bigger than a grain. Both change only at
+  // birth, so they ride the epoch and cost nothing on a steady frame.
+  {
+    const w2 = new Int32Array(buf, at, L);
+    for (let k = 0; k < L; k++) w2[k] = built.cells.metaW ? built.cells.metaW[liveIdx[k]] : 0;
+    at += L * 4;
+    const r2 = new Float32Array(buf, at, L);
+    for (let k = 0; k < L; k++) r2[k] = built.cells.rad ? built.cells.rad[liveIdx[k]] : 0.34;
+    at += L * 4;
+  }
+
   new DataView(buf).setUint32(at, P32.length, true); at += 4;
   new Int32Array(buf, at, P32.length).set(P32);
 
