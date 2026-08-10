@@ -447,18 +447,50 @@ async function archiveIfDue(gen) {
       if (!A.alive[o] || !evo.genome[o]) continue;
       const k = [0, 0, 0, 0];
       let n = 0;
+      // THE CONTINUOUS MATERIAL, not only the argmax label.
+      //
+      // `mix` counts which of four labels won a winner-takes-all argmax, and
+      // that is the representation this project has been removing everywhere
+      // else: a body of cells that all narrowly favour one capacity archives
+      // identically to one that is committed to it, and contractility hides
+      // entirely behind a label it lost. It stays for readers that expect it;
+      // these are what the world actually runs on.
+      let sSense = 0, sCon = 0, sGrip = 0, sDens = 0, sRad = 0, sTough = 0;
+      let rMin = Infinity, rMax = 0, dMin = Infinity, dMax = 0;
       for (let i = A.off[o]; i < A.off[o] + A.cnt[o]; i++) {
         const t = C.ctype[i];
-        if (t >= 0 && t < 4) { k[t]++; n++; }
+        if (t < 0 || t >= 4) continue;
+        k[t]++; n++;
+        const mx = C.metaX ? C.metaX[i] : 0, mw = C.metaW ? C.metaW[i] : 0;
+        sSense += ((mx >> 2) & 31) / 31;
+        sCon   += ((mx >> 8) & 255) / 255;
+        sGrip  += ((mx >> 16) & 255) / 255;
+        sTough += ((mw >> 16) & 63) / 63;
+        const d = ((mw >> 22) & 63) / 63;
+        sDens += d;
+        if (d < dMin) dMin = d; if (d > dMax) dMax = d;
+        const r = C.rad ? C.rad[i] : 0.34;
+        sRad += r;
+        if (r < rMin) rMin = r; if (r > rMax) rMax = r;
       }
       if (!n) continue;
+      const material = {
+        sense: +(sSense / n).toFixed(4), contract: +(sCon / n).toFixed(4),
+        grip: +(sGrip / n).toFixed(4), toughness: +(sTough / n).toFixed(4),
+        // density is 0..1 as the genome expresses it; the kernel maps it
+        // log-scaled onto densLo..densHi, which params records.
+        density: +(sDens / n).toFixed(4), densityMin: +dMin.toFixed(4), densityMax: +dMax.toFixed(4),
+        // Radius varies only since development gained its relaxation phase; a
+        // flat min==max==massRef marks a body from before that.
+        radius: +(sRad / n).toFixed(4), radiusMin: +rMin.toFixed(4), radiusMax: +rMax.toFixed(4),
+      };
       const tissues = k.filter((v) => v > 0).length;
       const score = tissues * 1000 + (k[1] > 0 && k[2] > 0 ? 500 : 0) + n;
       const lin = evo.lineage[o];
       const cur = best.get(lin);
       if (!cur || score > cur.score) {
         best.set(lin, { score, slot: o, uid: evo.uid[o], generation: evo.generation[o],
-                        lineage: lin, cells: n, tissues,
+                        lineage: lin, cells: n, tissues, material,
                         mix: { neuron: k[0], sensor: k[1], muscle: k[2], anchor: k[3] },
                         senseAndMove: k[1] > 0 && k[2] > 0 });
       }
@@ -468,7 +500,16 @@ async function archiveIfDue(gen) {
     const tag = `gen-${String(gen).padStart(4, '0')}`;
     const manifest = {
       t: new Date().toISOString(), step: steps, generation: gen,
+      // WHICH REPRESENTATION THIS IS. Archives written before the pose, mass
+      // and relaxation work describe a different world with the same field
+      // names, and a reader has no other way to tell. 1 = the original
+      // label-and-genome form; 2 = continuous material, per-cell radius and
+      // density, and the ancestor-depth distribution.
+      repr: 2,
       alive: last.alive, lineages: last.lineages, meanEnergy: +last.meanEnergy.toFixed(3),
+      // generation above is a MAX over living bodies and moves in jumps; this
+      // is the distribution it hides.
+      genStats: last.genStats ?? null,
       simVersion: RUNNING.simVersion, devo: evo.devoVersion, encoding: evo.devoName ?? 'devo2-grn',
       // The physics a genome evolved under. Without it an archived genome is a
       // string of floats with no world to mean anything in.
@@ -476,6 +517,7 @@ async function archiveIfDue(gen) {
       creatures: [...best.values()].map((b) => ({
         uid: b.uid, generation: b.generation, lineage: b.lineage,
         cells: b.cells, tissues: b.tissues, senseAndMove: b.senseAndMove, mix: b.mix,
+        material: b.material,
         genome: Array.from(evo.genome[b.slot]).map((v) => +v.toFixed(5)),
       })),
     };
