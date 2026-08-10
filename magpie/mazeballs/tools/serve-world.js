@@ -261,6 +261,48 @@ const N = built.meta.nCells;
 const SNAP_MAGIC = 0x324e5257;                  // 'WRN2'
 const SNAP_MAGIC_V1 = 0x314e5257;               // 'WRN1' — pre-packed cmeta
 
+/**
+ * INTERVENTIONS, RECORDED. A tune with no baseline beside it is an anecdote:
+ * the world moves on its own, so "I changed X and Y went up" means nothing
+ * without what Y was doing before and over how many steps. Held in memory for
+ * the life of the process, which is the honest lifetime of a claim about one
+ * continuous run.
+ */
+const EXPERIMENTS = [];
+
+/**
+ * The parameters a running world will accept, and the one place that decides.
+ * Both /control tune and the experiment recorder go through here, so an
+ * experiment cannot apply something tune would have refused.
+ *
+ * NOT tunable, deliberately: wrapY changes the world's topology, and hashCell
+ * and bucketM size the spatial hash. Changing either under a running population
+ * is not an intervention, it is a different world wearing the same step count.
+ */
+const TUNABLE = new Set([
+  'flowStr', 'flowScale', 'drag', 'springK', 'contract', 'damp', 'bondDamp',
+  'mudFlow', 'mudSlip', 'mudFog', 'flowDry', 'flowTerrain', 'gravity',
+  'highSap', 'lowLush', 'tidalYield', 'senseTerrain', 'harvest', 'brainTax',
+  'muscleCost', 'gripBase', 'gripMod', 'gripHold', 'gripAniso', 'fricK',
+  'contestRate', 'toughCost', 'dietWidth', 'absorbTradeoff', 'crowdK',
+  'regrowCrowdK', 'moteRegrow', 'senseOther', 'senseRange', 'compass',
+  'twistK', 'vortK', 'angDrag',
+  'massRef', 'densLo', 'densHi', 'mediumDens',
+  'foreignReach', 'foreignPush',
+  'tempPole', 'tempEq', 'tempLapse', 'tempOpt', 'tempTol', 'tempCost',
+  'contactK', 'sapRate',
+]);
+function applyTune(params) {
+  const patch = {}, rejected = [];
+  for (const [k, v] of Object.entries(params ?? {})) {
+    if (!TUNABLE.has(k)) { rejected.push(k); continue; }
+    const n = Number(v);
+    if (Number.isFinite(n)) patch[k] = n;
+  }
+  if (Object.keys(patch).length) world.writeParams(patch);
+  return { applied: patch, rejected };
+}
+
 async function saveSnapshot(path) {
   const { pos, energy, theta } = await world.readCells();
   await brains.readState(built.arena);          // pull GPU state into the arena
@@ -369,7 +411,7 @@ async function loadSnapshot(path) {
   brains.writeState(built.arena);
   return { steps, alive: evo.alive() };
 }
-let last = { alive: evo.alive(), born: 0, died: 0, meanEnergy: 0, maxGeneration: 0, lineages: evo.alive(), genStats: null, linStats: null };
+let last = { alive: evo.alive(), born: 0, died: 0, meanEnergy: 0, maxGeneration: 0, lineages: evo.alive(), genStats: null, linStats: null, birthStats: null };
 let steps = 0, sinceTick = 0, ticking = false, running = true;
 
 /* ------------------------------------------------------------- the sim loop */
@@ -1411,39 +1453,34 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
     // A PHYSICS KNOB, applied to the shared world. Whitelisted: this is a live
     // control surface on a running experiment, and an arbitrary key would let a
     // stray field name land somewhere in the uniform block with no complaint.
-    if (action === 'tune') {
-      const ALLOW = new Set([
-        'flowStr', 'flowScale', 'drag', 'springK', 'contract', 'damp', 'bondDamp',
-        'mudFlow', 'mudSlip', 'mudFog', 'flowDry', 'flowTerrain', 'gravity',
-        'highSap', 'lowLush', 'tidalYield', 'senseTerrain', 'harvest', 'brainTax',
-        'muscleCost', 'gripBase', 'gripMod', 'gripHold', 'gripAniso', 'fricK',
-        'contestRate', 'toughCost', 'dietWidth', 'absorbTradeoff', 'crowdK',
-        'regrowCrowdK', 'moteRegrow', 'senseOther', 'senseRange', 'compass',
-        // ORIENTATION, MASS AND SURFACES. Added with the pose and mass work and
-        // missing from this list ever since, so every one of them was rejected
-        // over HTTP and could only be changed by editing a default and
-        // restarting - which reseeds the question you were trying to ask.
-        'twistK', 'vortK', 'angDrag',
-        'massRef', 'densLo', 'densHi', 'mediumDens',
-        'foreignReach', 'foreignPush',
-        // CLIMATE. Off by default; tuning it live is the only way to run the
-        // poles-versus-torus comparison without restarting into a new world.
-        'tempPole', 'tempEq', 'tempLapse', 'tempOpt', 'tempTol', 'tempCost',
-        // Contact and sap were already reachable through their effects but not
-        // by name, which made a null test ("turn it off and see") impossible.
-        'contactK', 'sapRate',
-      ]);
-      // NOT TUNABLE, on purpose: wrapY changes the world's topology, and
-      // hashCell/bucketM size the spatial hash. Changing either under a running
-      // population is not an intervention, it is a different world wearing the
-      // same step counter.
-      const patch = {}, rejected = [];
-      for (const [k, v] of Object.entries(body.params ?? {})) {
-        if (!ALLOW.has(k)) { rejected.push(k); continue; }
-        const n = Number(v);
-        if (Number.isFinite(n)) patch[k] = n;
+    if (action === 'experiment') {
+      const name = String(body.name ?? '').trim();
+      if (!name) {
+        return new Response(JSON.stringify({ ok: false, error: 'an experiment needs a name' }),
+          { status: 400, headers: { 'content-type': 'application/json' } });
       }
-      if (Object.keys(patch).length) world.writeParams(patch);
+      // Tune at the same instant the baseline is taken, so the record and the
+      // change cannot disagree about when it happened.
+      const { applied, rejected } = applyTune(body.params);
+      EXPERIMENTS.push({
+        name, step: steps, t: new Date().toISOString(),
+        params: body.params ?? null,
+        base: {
+          alive: last.alive, lineages: last.lineages,
+          effective: last.linStats?.effective ?? null,
+          meanEnergy: last.meanEnergy, blockedBirths: evo.blockedBirths,
+          pendingEggs: evo.pendingEggs ?? 0,
+        },
+      });
+      return ok({ name, step: steps, applied, rejected });
+    }
+
+    if (action === 'tune') {
+      // One whitelist, defined at TUNABLE. This branch used to keep its own
+      // copy, which is how it went stale: every parameter added with the pose
+      // and mass work was silently rejected for days because only one of the
+      // two lists was updated.
+      const { applied: patch, rejected } = applyTune(body.params);
       // Tuning is an intervention in the same sense implant is — a run whose
       // parameters moved under it is not a run at one setting — so it goes in
       // the log rather than only into memory.
@@ -1558,6 +1595,11 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       headers: { 'content-type': 'application/json' },
     });
   }
+  if (path === '/experiments') {
+    return new Response(JSON.stringify({ runs: EXPERIMENTS }),
+      { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+  }
+
   if (path === '/status') {
     return new Response(JSON.stringify({
       steps, bound: BOUND, cells: N, neurons: built.arena.N,
@@ -1632,6 +1674,8 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       genStats: last.genStats ?? null,
       // Lineage COUNT hides whether one line holds the population.
       linStats: last.linStats ?? null,
+      // Birth outcomes BY REASON. See Evolver.birthStats.
+      birthStats: last.birthStats ?? null,
       // The SHAPE of the free space, not just the count of refusals.
       freeStats: built.arena.freeStats ? built.arena.freeStats() : null,
       // BIRTHS THE ARENA REFUSED. Tracked since fragmentation once stopped

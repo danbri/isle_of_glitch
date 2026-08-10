@@ -205,6 +205,14 @@ export class Evolver {
     // Parents that have earned a birth and are waiting their turn. A Set beside
     // the array so requalifying every tick does not enqueue the same body twice.
     this.eggQueue = []; this.queued = new Set(); this.pendingEggs = 0;
+    // WHY a birth failed, not just how often. Development failing is the world
+    // saying no - the yolk ran out, or the body was too small to live - and is
+    // a lawful outcome. Refusal for want of a contiguous arena run is the
+    // bookkeeping saying no, and it refuses by SIZE, so it is a selection
+    // pressure nothing in the world chose. Same symptom, opposite meaning.
+    this.devFailed = 0; this.refused = 0;
+    this.refusedSize = new Map();
+    this.queuedAt = new Map();
     this.founders = this.alive();
   }
 
@@ -354,6 +362,7 @@ export class Evolver {
       if (this.queued.has(p)) continue;
       this.queued.add(p);
       this.eggQueue.push(p);
+      if (!this.queuedAt.has(p)) this.queuedAt.set(p, step);
     }
     this.pendingEggs = this.eggQueue.length;
     // Positions and centroids are kept for pump(), which runs between ticks and
@@ -368,6 +377,7 @@ export class Evolver {
       maxGeneration: this.maxGeneration(),
       genStats: this.generationStats(),
       linStats: this.lineageStats(),
+      birthStats: this.birthStats(step),
       lineages: this.countLineages(),
       births: this.births, deaths: this.deaths, blockedBirths: this.blockedBirths,
       pendingEggs: this.pendingEggs,
@@ -436,7 +446,7 @@ export class Evolver {
       // small to live. That is a normal outcome and the parent simply lost the
       // investment. -1 is the arena refusing room, which is a real failure and
       // must still stop the loop loudly.
-      if (child === -2) continue;
+      if (child === -2) { this.devFailed++; this.queuedAt.delete(p); continue; }
       if (child < 0) {
         // HEAD-OF-LINE BLOCKING, and it was mine. Putting the failed parent back
         // on the FRONT meant the same egg was retried on every pass and failed
@@ -448,12 +458,14 @@ export class Evolver {
         // To the BACK instead, so a body that does not fit yields to ones that
         // might, and stop after a couple of failures this pass rather than
         // walking a queue that is currently unservable.
-        blocked++;
+        blocked++; this.refused++;
+        const sz = arena.cnt[p] || 0;
+        this.refusedSize.set(sz, (this.refusedSize.get(sz) ?? 0) + 1);
         this.eggQueue.push(p); this.queued.add(p);
         if (++misses >= 2) break;
         continue;
       }
-      born++; this.births++;
+      born++; this.births++; this.queuedAt.delete(p);
     }
     this.pendingEggs = this.eggQueue.length;
     // A birth that cannot find room is not a normal outcome, it is the arena
@@ -1331,6 +1343,22 @@ export class Evolver {
    * really". Top share is the single biggest line, because a population one
    * lineage away from clonal should say so.
    */
+  /** Birth outcomes by reason, and how long the queue head has waited. */
+  birthStats(step) {
+    let oldest = null;
+    for (const p of this.eggQueue) {
+      const at = this.queuedAt.get(p);
+      if (at != null && (oldest === null || at < oldest)) oldest = at;
+    }
+    const sizes = [...this.refusedSize.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6)
+      .map(([sz, n]) => `${sz}c x${n}`);
+    return {
+      devFailed: this.devFailed, refused: this.refused,
+      refusedSizes: sizes,
+      oldestQueuedSteps: oldest === null ? null : Math.max(0, step - oldest),
+    };
+  }
+
   lineageStats(topN = 5) {
     const share = new Map();
     let total = 0;

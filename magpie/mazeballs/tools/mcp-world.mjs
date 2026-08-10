@@ -104,6 +104,49 @@ function summarise(st) {
   return L.join('\n');
 }
 
+/**
+ * Read one frame and hand back typed views of everything in it.
+ *
+ * Several tools want per-cell truth, and every one of them should read it from
+ * the FRAME rather than from the server's own summary: the frame is what the
+ * GPU was actually given, and the whole ghost-cell episode was the CPU mirrors
+ * agreeing with each other while the GPU had nothing. One decoder, so a change
+ * to the wire format breaks in one place instead of four.
+ */
+async function readFrame() {
+  const buf = await (await fetch(BASE + '/frame')).arrayBuffer();
+  const dv = new DataView(buf);
+  const HEAD = 56;
+  const ver = dv.getUint32(52, true), hasStatic = dv.getUint32(48, true);
+  const L = dv.getUint32(HEAD, true);
+  if (ver < 2 || !hasStatic) return { ver, hasStatic, L, partial: true };
+  let at = HEAD + 4;
+  const pos = new Float32Array(buf.slice(at, at + L * 8)); at += L * 8;
+  at += L * 4;                                    // act
+  const energy = new Float32Array(buf.slice(at, at + L * 4)); at += L * 4;
+  at += ((L * 2) + 3) & ~3;                       // theta
+  at += L * 4;                                    // idx
+  const meta = new Int32Array(buf.slice(at, at + L * 4)); at += L * 4;
+  const uid = new Int32Array(buf.slice(at, at + L * 4)); at += L * 4;
+  const matW = new Int32Array(buf.slice(at, at + L * 4)); at += L * 4;
+  const rad = new Float32Array(buf.slice(at, at + L * 4)); at += L * 4;
+  return { ver, L, pos, energy, meta, uid, matW, rad };
+}
+
+const hist = (vals, lo, hi, bins) => {
+  const h = new Array(bins).fill(0), span = Math.max(1e-9, hi - lo);
+  for (const v of vals) h[Math.max(0, Math.min(bins - 1, Math.floor((v - lo) / span * bins)))]++;
+  return h;
+};
+const spark = (h) => { const m = Math.max(1, ...h); return h.map(v => ' .:-=+*#%@'[Math.min(9, Math.round(v / m * 9))]).join(''); };
+const entropy = (counts) => {
+  const t = counts.reduce((a, b) => a + b, 0);
+  if (!t) return 0;
+  let H = 0;
+  for (const c of counts) if (c > 0) { const p = c / t; H -= p * Math.log2(p); }
+  return H;
+};
+
 /* ------------------------------------------------------------------- tools */
 
 const TOOLS = [
@@ -150,6 +193,51 @@ const TOOLS = [
       properties: {
         action: { type: 'string', enum: ['pause', 'resume', 'save', 'restart', 'reseed', 'speed'] },
         spf: { type: 'number', description: 'steps per loop, for action=speed' },
+      },
+      required: ['action'],
+    },
+  },
+  {
+    name: 'world_phenotypes',
+    description:
+      'What the bodies actually ARE, read from the frame: body-size distribution, tissue entropy ' +
+      '(how mixed a body is, not which label won), the radius distribution including how much of ' +
+      'the population development actually fused, and the density range. Two of the Cambrian ' +
+      'target metrics — body-size spread and differentiation — are not measurable without this.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'world_fragmentation',
+    description:
+      'The SHAPE of the arena free list, which a blocked-birth count cannot tell you. Note the ' +
+      'arena is an index allocator, not world space: bodies must own a contiguous run of slots, ' +
+      'and holes are gaps in that index, nothing to do with room in the world. Reports hole count, ' +
+      'largest hole, total free, and how many holes could take a typical or full-size body.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'world_births',
+    description:
+      'Why births are failing, by reason rather than by count: how many were refused for want of a ' +
+      'contiguous arena run and at what body sizes, how many eggs failed in development, how deep ' +
+      'and how old the queue is. Distinguishes "the world could not afford it" from "the allocator ' +
+      'would not place it", which are different problems with the same symptom.',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'world_experiment',
+    description:
+      'Run an intervention as a recorded experiment rather than an anecdote. action:start captures ' +
+      'a baseline under a name; action:report gives a bounded before/after over the same metrics; ' +
+      'action:list shows what has been run this session. Pass params with start to tune at the same ' +
+      'moment, so the record and the change cannot disagree about when it happened.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action: { type: 'string', enum: ['start', 'report', 'list'] },
+        name: { type: 'string', description: 'what this intervention is called' },
+        params: { type: 'object', additionalProperties: { type: 'number' },
+                  description: 'optional tune applied at the moment the baseline is taken' },
       },
       required: ['action'],
     },
@@ -271,6 +359,143 @@ async function call(name, a = {}) {
       }
       const note = hidden ? `\n(${hidden} archives from other runs hidden; allBoots:true to include)` : '';
       return text((rows.join('\n') || 'no archives for this world yet') + note);
+    }
+
+    case 'world_phenotypes': {
+      const f = await readFrame();
+      if (f.partial) return errText(`frame format ${f.ver}, static ${f.hasStatic}: not enough to read phenotypes`);
+      // Bodies, by uid. Cells of one organism share it.
+      const size = new Map();
+      for (let i = 0; i < f.L; i++) {
+        if (f.uid[i] < 0) continue;
+        size.set(f.uid[i], (size.get(f.uid[i]) ?? 0) + 1);
+      }
+      const sizes = [...size.values()].sort((a, b) => a - b);
+      if (!sizes.length) return errText('no bodies in the frame');
+      const q = (fr) => sizes[Math.min(sizes.length - 1, Math.round(fr * (sizes.length - 1)))];
+      const L2 = [];
+      L2.push(`bodies ${num(sizes.length)}   cells ${num(f.L)}`);
+      L2.push(`body size: min ${sizes[0]}  p10 ${q(.1)}  median ${q(.5)}  p90 ${q(.9)}  max ${sizes[sizes.length - 1]}`);
+      L2.push(`  hist[${sizes[0]}..${sizes[sizes.length - 1]}] ` +
+              spark(hist(sizes, sizes[0], sizes[sizes.length - 1] + 1e-6, 20)));
+
+      // TISSUE ENTROPY PER BODY, over the four labels. Entropy rather than a
+      // count of types present: a body that is 97% one tissue and 1% each of
+      // three others has all four and is not differentiated, and a count says
+      // it is. Averaged over bodies, in bits, 2 being an even mix of four.
+      const perBody = new Map();
+      for (let i = 0; i < f.L; i++) {
+        const u = f.uid[i]; if (u < 0 || f.meta[i] < 0) continue;
+        let a = perBody.get(u); if (!a) { a = [0, 0, 0, 0]; perBody.set(u, a); }
+        a[f.meta[i] & 3]++;
+      }
+      let hSum = 0, hN = 0, mixed = 0;
+      for (const a of perBody.values()) {
+        const H = entropy(a); hSum += H; hN++;
+        if (a.filter(v => v > 0).length >= 3) mixed++;
+      }
+      L2.push(`tissue entropy: mean ${(hSum / Math.max(1, hN)).toFixed(3)} bits of 2 max` +
+              `   bodies with 3+ tissues ${mixed}/${hN} (${(100 * mixed / Math.max(1, hN)).toFixed(0)}%)`);
+
+      const rads = Array.from(f.rad);
+      const zero = rads.filter(r => !(r > 0)).length;
+      const fused = rads.filter(r => r > 0.38).length;
+      const rs = rads.slice().sort((a, b) => a - b);
+      const rq = (fr) => rs[Math.round(fr * (rs.length - 1))];
+      L2.push(`radius: median ${rq(.5).toFixed(3)}  p90 ${rq(.9).toFixed(3)}  max ${rs[rs.length - 1].toFixed(3)}` +
+              `   fused ${fused} (${(100 * fused / f.L).toFixed(1)}%)` +
+              (zero ? `   ZERO-RADIUS ${zero} — the physics cannot see these` : ''));
+      const dens = Array.from(f.matW, (w) => ((w >> 22) & 63) / 63);
+      const ds = dens.slice().sort((a, b) => a - b);
+      L2.push(`density (0..1 as expressed): p10 ${ds[Math.round(.1 * (ds.length - 1))].toFixed(3)}` +
+              `  median ${ds[Math.round(.5 * (ds.length - 1))].toFixed(3)}` +
+              `  p90 ${ds[Math.round(.9 * (ds.length - 1))].toFixed(3)}`);
+      L2.push(`  hist[0..1] ` + spark(hist(dens, 0, 1.0001, 20)));
+      return text(L2.join('\n'));
+    }
+
+    case 'world_fragmentation': {
+      const st = await api('/status');
+      const F = st.freeStats;
+      if (!F) return errText('this server does not report freeStats — restart it');
+      const mean = st.alive ? (st.cellsOwned / st.alive) : 0;
+      return text([
+        `NOTE: the arena is an INDEX allocator, not world space. A body must own a`,
+        `contiguous run of slots; holes are gaps in that index and have nothing to`,
+        `do with room in the world, which is large and freely overlapping.`,
+        ``,
+        `occupancy ${((100 * st.cellsOwned) / st.cellBudget).toFixed(1)}%  (${num(st.cellsOwned)} of ${num(st.cellBudget)} slots)`,
+        `mean body ${mean.toFixed(1)} cells`,
+        `free ${num(F.freeSlots)} slots in ${num(F.holes)} holes, largest ${F.largest}`,
+        `holes that fit a full 60-cell body: ${F.holesFor60}   a 16-cell body: ${F.holesFor16}`,
+        F.fragmented
+          ? `FRAGMENTED: the space exists and is unusable. Small bodies fit where large`
+            + `\nones do not, so the allocator is imposing a size bias the world never chose.`
+          : `not fragmented`,
+        `largest holes: ${F.top.join(', ')}`,
+        `blockedBirths ${num(st.blockedBirths)}`,
+      ].join('\n'));
+    }
+
+    case 'world_births': {
+      const st = await api('/status');
+      const B = st.birthStats;
+      const out = [
+        `births ${num(st.births)}   deaths ${num(st.deaths)}   agedOut ${num(st.agedOut)}`,
+        `queue ${num(st.pendingEggs)} waiting   blockedBirths ${num(st.blockedBirths)} (cumulative)`,
+      ];
+      if (B) {
+        out.push(`refused for want of a contiguous run: ${num(B.refused)}` +
+          (B.refusedSizes?.length ? `   at sizes ${B.refusedSizes.join(', ')}` : ''));
+        out.push(`eggs that failed in development: ${num(B.devFailed)}` +
+          `   (yolk ran out, or the body was too small to live — a lawful outcome)`);
+        if (B.oldestQueuedSteps != null) {
+          out.push(`oldest egg has waited ${num(B.oldestQueuedSteps)} steps`);
+        }
+        out.push(`THE DISTINCTION THAT MATTERS: development failures are the world saying no.`);
+        out.push(`Refusals for contiguity are the bookkeeping saying no, and they select by size.`);
+      } else {
+        out.push('(this server does not report birthStats — restart it)');
+      }
+      return text(out.join('\n'));
+    }
+
+    case 'world_experiment': {
+      const act = a.action;
+      if (act === 'list') {
+        const r = await api('/experiments').catch(() => null);
+        if (!r?.runs?.length) return text('no experiments recorded this session');
+        return text(r.runs.map(e =>
+          `${e.name.padEnd(24)} started step ${num(e.step)}  ${e.params ? JSON.stringify(e.params) : ''}`).join('\n'));
+      }
+      if (act === 'start') {
+        if (!a.name) return errText('an experiment needs a name — an unnamed intervention is an anecdote');
+        const r = await post('experiment', { name: a.name, params: a.params ?? null });
+        return text(`experiment "${a.name}" started at step ${num(r.step)}` +
+          (a.params ? `\napplied: ${JSON.stringify(r.applied ?? {})}` +
+            (r.rejected?.length ? `\nrejected: ${r.rejected.join(', ')}` : '') : '') +
+          `\nbaseline captured. Call world_experiment action:report to compare.`);
+      }
+      if (act === 'report') {
+        const r = await api('/experiments').catch(() => null);
+        const e = a.name ? r?.runs?.find(x => x.name === a.name) : r?.runs?.[r.runs.length - 1];
+        if (!e) return errText('no such experiment');
+        const st = await api('/status');
+        const row = (k, before, now) => `  ${k.padEnd(16)} ${String(before).padStart(10)} -> ${String(now).padStart(10)}`;
+        return text([
+          `experiment "${e.name}"   step ${num(e.step)} -> ${num(st.steps)}   (${num(st.steps - e.step)} steps)`,
+          e.params ? `  intervention: ${JSON.stringify(e.params)}` : '  intervention: none (observation only)',
+          row('alive', e.base.alive, st.alive),
+          row('lineages', e.base.lineages, st.lineages),
+          row('effective', e.base.effective ?? '?', st.linStats?.effective ?? '?'),
+          row('meanEnergy', Number(e.base.meanEnergy).toFixed(2), Number(st.meanEnergy).toFixed(2)),
+          row('blocked', e.base.blockedBirths, st.blockedBirths),
+          row('pendingEggs', e.base.pendingEggs, st.pendingEggs),
+          '',
+          'One run against one run is not a result. Repeat across seeds before believing it.',
+        ].join('\n'));
+      }
+      return errText('action must be start, report or list');
     }
 
     case 'world_lineages': {
