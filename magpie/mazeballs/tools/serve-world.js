@@ -1632,6 +1632,8 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       genStats: last.genStats ?? null,
       // Lineage COUNT hides whether one line holds the population.
       linStats: last.linStats ?? null,
+      // The SHAPE of the free space, not just the count of refusals.
+      freeStats: built.arena.freeStats ? built.arena.freeStats() : null,
       // BIRTHS THE ARENA REFUSED. Tracked since fragmentation once stopped
       // evolution for thousands of ticks while every other number looked
       // healthy — but only ever reported through a console warning that fires

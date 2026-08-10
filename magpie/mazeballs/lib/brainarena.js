@@ -217,6 +217,31 @@ export class BrainArena {
     return EMPTY;                       // arena full
   }
 
+  /**
+   * THE SHAPE OF THE FREE SPACE, which is the question a blocked-birth count
+   * cannot answer. Thousands of refusals mean one of two completely different
+   * things: the arena is FULL, or the arena has room in pieces too small to use.
+   * The first is a capacity limit and is honest; the second is the allocator
+   * losing births that the world had the space for, which is selection being
+   * decided by bookkeeping.
+   */
+  freeStats() {
+    let total = 0, largest = 0;
+    const sizes = [];
+    for (const [, c] of this.free) { total += c; if (c > largest) largest = c; sizes.push(c); }
+    sizes.sort((a, b) => b - a);
+    let usable60 = 0, usable16 = 0;
+    for (const c of sizes) { if (c >= 60) usable60++; if (c >= 16) usable16++; }
+    return {
+      holes: this.free.length, freeSlots: total, largest,
+      // How many holes could take a full-size body, and a typical one.
+      holesFor60: usable60, holesFor16: usable16,
+      // If total is large and largest is small, the space is in the wrong shape.
+      fragmented: total > 0 && largest < total / 8,
+      top: sizes.slice(0, 8),
+    };
+  }
+
   /** Release an organism's slots back to the free list, coalescing holes. */
   death(o) {
     if (!this.alive[o]) return;
