@@ -1435,6 +1435,15 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       // generation is the MAX over living bodies - a ratchet held up by one
       // deep survivor. genStats is the distribution it hides: lineages advance
       // at different rates, so ancestor depth is a spread, not a number.
+      // The physics added since the pose/mass work. Absent from here, any
+      // report built off /status silently claimed they were at defaults.
+      drag: world.params.drag, springK: world.params.springK, contract: world.params.contract,
+      wrapY: world.params.wrapY, tempCost: world.params.tempCost,
+      twistK: world.params.twistK, vortK: world.params.vortK, angDrag: world.params.angDrag,
+      massRef: world.params.massRef, densLo: world.params.densLo, densHi: world.params.densHi,
+      mediumDens: world.params.mediumDens,
+      foreignReach: world.params.foreignReach, foreignPush: world.params.foreignPush,
+      pendingEggs: evo.pendingEggs ?? 0,
       generation: last.maxGeneration, lineages: last.lineages,
       genStats: last.genStats ?? null,
       // BIRTHS THE ARENA REFUSED. Tracked since fragmentation once stopped

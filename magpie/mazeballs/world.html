@@ -48,6 +48,12 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-fo
 .hud .rule{
   display:block;height:1px;background:var(--rule);margin:.35rem 0 .3rem;opacity:.7;
 }
+.hudbtn{font:11px/1 ui-monospace,monospace;color:var(--ink-soft);cursor:pointer;
+  background:rgba(0,0,0,.25);border:1px solid #23302e;border-radius:5px;
+  padding:4px 7px;margin-left:2px}
+.hudbtn:hover{color:var(--ink);border-color:var(--sensor)}
+.hudbtn.ok{color:#8fd9a8;border-color:#3c6b4e}
+@media (max-width:820px){ .hudbtn{padding:7px 9px;font-size:12px} }
 #hudGrip{
   position:fixed;top:0;bottom:0;width:14px;z-index:41;cursor:pointer;
   pointer-events:auto;display:flex;align-items:center;justify-content:center;
@@ -244,6 +250,26 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
    creature (a body's material laid out in property space, not physical space),
    or one dot per creature over the whole population. A floating panel so it can
    sit over the world; a bottom sheet on a phone. */
+#anaBox { position: fixed; z-index: 58; right: .6rem; bottom: .6rem;
+  width: min(520px, 94vw); background: #0b1211f2; border: 1px solid #24403a;
+  border-radius: 8px; backdrop-filter: blur(8px); box-shadow: 0 8px 40px rgba(0,0,0,.55);
+  display: none; flex-direction: column; overflow: hidden;
+  font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #9fb8b0; }
+#anaBox.on { display: flex; }
+#anaHead { display: flex; align-items: center; gap: .4rem;
+  padding: .45rem .55rem; border-bottom: 1px solid #1a2a27; }
+#anaHead b { color: #cfe3dc; font-weight: 600; }
+#anaHead .sp { flex: 1 1 auto; }
+#anaHead a { color: #6d8880; text-decoration: none; }
+#anaHead a:hover { color: #5fc9c0; }
+#anaBox button { font: inherit; color: #9fb8b0; background: #16211F;
+  border: 1px solid #24403a; border-radius: 4px; padding: .15rem .4rem; cursor: pointer; }
+#anaBox button.on { background: #1d3b36; border-color: #5fc9c0; color: #cfe3dc; }
+#anaCv { width: 100%; height: 260px; display: block; }
+#anaFoot { padding: .35rem .55rem; border-top: 1px solid #1a2a27; color: #6d8880; }
+/* On a phone it takes the width and sits above the panel toggle. */
+@media (max-width:820px){ #anaBox{ left:.4rem; right:.4rem; width:auto; bottom:3.2rem }
+  #anaCv{ height: 220px } }
 #vizBox { position: fixed; z-index: 58; left: .6rem; bottom: .6rem;
   width: min(440px, 92vw); background: #0b1211f2; border: 1px solid #24403a;
   border-radius: 8px; backdrop-filter: blur(8px); box-shadow: 0 8px 40px rgba(0,0,0,.55);
@@ -315,6 +341,25 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 
 <!-- THE CELL SCOPE. A pop-out scatter with pickable axes; see the module near
      the gallery code. Empty selects are filled in by JS from the property list. -->
+<!-- RUN ANALYTICS, LIVE, IN THE APP.
+     analytics.html charts the committed archives, which is a fixed series: it
+     is a record of runs that have already happened and it does not move while
+     you watch. The same charts belong beside the world they describe, with the
+     archives as the HISTORY and the running world appended to them, so the
+     line grows while you look at it. -->
+<div id="anaBox">
+  <div id="anaHead">
+    <b>run analytics</b>
+    <span id="anaSrc">–</span>
+    <span class="sp"></span>
+    <button id="anaArch" class="on" title="prepend the committed archive series as history">archives</button>
+    <a href="analytics.html" title="the standalone page, full archive detail">full page ↗</a>
+    <button id="anaClose" title="close">✕</button>
+  </div>
+  <canvas id="anaCv"></canvas>
+  <div id="anaFoot">–</div>
+</div>
+
 <div id="vizBox">
   <div id="vizHead">
     <b>cell scope</b>
@@ -349,6 +394,11 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   <span>zoom <b id="hZoom">–</b></span>
   <span>gpu <b id="hGpu">–</b></span>
   <span>devo <b id="hDevo">–</b></span>
+  <!-- HANDING THE WORLD TO ANOTHER AGENT. Everything an agent needs to reason
+       about this run, in one paste, deliberately BOUNDED - a dump that floods a
+       context window is worse than no dump, because it costs the reader more
+       than it tells them. See buildStateReport. -->
+  <button id="bCopyState" class="hudbtn" title="copy this run's state for pasting into another agent">⧉ copy state</button>
 </div>
 <button id="hudGrip" title="collapse the readout">‹</button>
 
@@ -391,7 +441,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
          in the panel because the panel is the one surface that exists in both
          layouts: a column on desktop, the hamburger overlay on a phone. -->
     <nav class="ways">
-      <a href="analytics.html" title="population, body size and composition over a run">📈 Run analytics</a>
+      <a href="#" id="aAnalytics" title="live charts, in this page, with the archives as history">📈 Run analytics</a>
       <a href="devo2-wizard.html" title="watch a genome unfold into a body">🥚 Development</a>
       <a href="lab/" title="the lab notebook">📓 Lab notes</a>
       <a href="index.html" title="everything else here">← All pages</a>
@@ -631,6 +681,275 @@ function setSteps(n, dt = 0.015) {
           : `${(secs / 86400).toFixed(1)} days`;
   sub.textContent = `${s} of world time`;
 }
+
+let lastStatus = null;
+
+/* ---- RUN ANALYTICS, IN THE APP -------------------------------------------
+ *
+ * analytics.html draws the committed archives. That series is fixed: it
+ * records runs that already finished and it does not move while you watch,
+ * which is exactly what "looks static" means. The charts belong beside the
+ * world they describe, so this keeps the same chart kit and feeds it two
+ * sources - the archives as HISTORY, and the running world appended live from
+ * the /status poll that is already happening.
+ *
+ * The live buffer is capped and thinned rather than grown without limit: a page
+ * left open overnight would otherwise hold hundreds of thousands of samples to
+ * draw a few hundred pixels of line.
+ */
+const ana = { live: [], arch: null, on: false, useArch: true, lastStep: -1 };
+const ANA_CAP = 900;
+
+function anaSample(st) {
+  if (!st || st.steps == null) return;
+  if (st.steps === ana.lastStep) return;              // paused: do not pile up
+  ana.lastStep = st.steps;
+  ana.live.push({
+    step: st.steps, alive: st.alive ?? 0, cells: st.cellsOwned ?? st.cells ?? 0,
+    lineages: st.lineages ?? 0, meanEnergy: +(st.meanEnergy ?? 0),
+    depth: st.genStats?.median ?? null,
+  });
+  if (ana.live.length > ANA_CAP) {
+    // Thin by dropping every other sample from the older half, so the recent
+    // past keeps its resolution and the distant past keeps its shape.
+    const half = ana.live.length >> 1;
+    ana.live = ana.live.filter((_, i) => i >= half || (i & 1) === 0);
+  }
+  if (ana.on) anaDraw();
+}
+
+async function anaLoadArchives() {
+  if (ana.arch) return ana.arch;
+  try {
+    const names = await (await fetch('runs/archive/index.json', { cache: 'no-store' })).json();
+    const out = [];
+    for (const n of names) {
+      try {
+        const d = await (await fetch('runs/archive/' + n, { cache: 'no-store' })).json();
+        out.push({ step: d.step, alive: d.alive, cells: null,
+                   lineages: d.lineages ?? null, meanEnergy: +(d.meanEnergy ?? 0),
+                   depth: null, archived: true });
+      } catch { /* a missing archive should not fail the panel */ }
+    }
+    out.sort((a, b) => a.step - b.step);
+    ana.arch = out;
+  } catch { ana.arch = []; }
+  return ana.arch;
+}
+
+const anaNice = (v) => Math.abs(v) >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k'
+  : Math.abs(v) >= 10 ? v.toFixed(0) : Math.abs(v) >= 1 ? v.toFixed(1) : v.toFixed(2);
+
+function anaDraw() {
+  const cv = $('anaCv'); if (!cv) return;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const W = cv.clientWidth || 500, H = cv.clientHeight || 260;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = '#070c0b'; g.fillRect(0, 0, W, H);
+
+  const arch = (ana.useArch && ana.arch) ? ana.arch : [];
+  const pts = arch.concat(ana.live);
+  if (pts.length < 2) {
+    g.fillStyle = '#6d8880'; g.font = '11px ui-monospace,monospace'; g.textAlign = 'center';
+    g.fillText('collecting samples…', W / 2, H / 2);
+    return;
+  }
+  // Four stacked strips, one series each. Separate y-scales because population
+  // and lineage count differ by three orders of magnitude and sharing an axis
+  // would flatten the smaller one into the floor.
+  const SER = [
+    ['bodies alive', 'alive', '#41ADB2'],
+    ['lineages', 'lineages', '#E28C3E'],
+    ['mean energy', 'meanEnergy', '#8f709e'],
+    ['ancestor depth (median)', 'depth', '#9aa6a0'],
+  ];
+  const padL = 40, padR = 8, padT = 6, padB = 14;
+  const stripH = (H - padT - padB) / SER.length;
+  const xlo = pts[0].step, xhi = pts[pts.length - 1].step;
+  const px = (v) => padL + (xhi === xlo ? 0.5 : (v - xlo) / (xhi - xlo)) * (W - padL - padR);
+  // Where the archives stop and this run starts: the two are different worlds.
+  const seam = arch.length ? arch[arch.length - 1].step : null;
+
+  SER.forEach(([label, key, col], si) => {
+    const y0 = padT + si * stripH, h = stripH - 6;
+    const vals = pts.map(p => p[key]).filter(v => v != null && isFinite(v));
+    if (!vals.length) return;
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (hi === lo) { hi = lo + 1; lo = Math.max(0, lo - 1); }
+    const py = (v) => y0 + h - (v - lo) / (hi - lo) * h;
+    g.strokeStyle = '#162723'; g.lineWidth = 1; g.strokeRect(padL, y0, W - padL - padR, h);
+    if (seam != null && seam > xlo && seam < xhi) {
+      g.strokeStyle = '#2b4a43'; g.setLineDash([3, 3]); g.beginPath();
+      g.moveTo(px(seam), y0); g.lineTo(px(seam), y0 + h); g.stroke(); g.setLineDash([]);
+    }
+    g.strokeStyle = col; g.lineWidth = 1.5; g.beginPath();
+    let started = false;
+    for (const p of pts) {
+      const v = p[key];
+      if (v == null || !isFinite(v)) { started = false; continue; }   // gap, not a jump to zero
+      const X = px(p.step), Y = py(v);
+      started ? g.lineTo(X, Y) : g.moveTo(X, Y);
+      started = true;
+    }
+    g.stroke();
+    g.fillStyle = '#6d8880'; g.font = '9px ui-monospace,monospace';
+    g.textAlign = 'right'; g.textBaseline = 'middle';
+    g.fillText(anaNice(hi), padL - 4, y0 + 4);
+    g.fillText(anaNice(lo), padL - 4, y0 + h - 4);
+    g.textAlign = 'left'; g.fillStyle = col;
+    g.fillText(label, padL + 4, y0 + 7);
+  });
+
+  g.fillStyle = '#6d8880'; g.font = '9px ui-monospace,monospace';
+  g.textAlign = 'left';  g.fillText(anaNice(xlo), padL, H - 4);
+  g.textAlign = 'right'; g.fillText(anaNice(xhi) + ' steps', W - padR, H - 4);
+
+  const f = $('anaFoot');
+  if (f) {
+    f.textContent = `${ana.live.length} live samples` +
+      (arch.length ? ` · ${arch.length} archived (dashed seam — a different world, before the current physics)` : '') +
+      ` · ${lastStatus?.lineages ?? '?'} lineages now`;
+  }
+  const src = $('anaSrc');
+  if (src) src.textContent = WATCH ? 'live from server' : 'local sim';
+}
+
+async function anaToggle(force) {
+  const box = $('anaBox'); if (!box) return;
+  ana.on = force != null ? force : !ana.on;
+  box.classList.toggle('on', ana.on);
+  if (ana.on) { if (ana.useArch) await anaLoadArchives(); anaDraw(); }
+}
+
+on('aAnalytics', 'onclick', (e) => { e.preventDefault(); anaToggle(); });
+on('anaClose', 'onclick', () => anaToggle(false));
+on('anaArch', 'onclick', async () => {
+  ana.useArch = !ana.useArch;
+  $('anaArch').classList.toggle('on', ana.useArch);
+  if (ana.useArch) await anaLoadArchives();
+  anaDraw();
+});
+addEventListener('resize', () => { if (ana.on) anaDraw(); });
+
+
+/**
+ * EVERYTHING ANOTHER AGENT NEEDS ABOUT THIS RUN, IN ONE PASTE.
+ *
+ * BOUNDED ON PURPOSE. The temptation is to dump every uniform and every
+ * archive; a report that fills a context window costs the reader more than it
+ * tells them, and an agent that has spent its budget reading state has none
+ * left to think with. So: identity, the numbers that describe the population,
+ * the parameters that were actually changed away from defaults, and a short
+ * archive tail. Roughly 40 lines, hard-capped at the end.
+ *
+ * WHAT IS DELIBERATELY LEFT OUT: per-cell anything, genomes, bond graphs, the
+ * full uniform block. Those are large, and an agent that needs them should be
+ * told to read the file or hit the endpoint rather than handed a wall of them.
+ */
+async function buildStateReport() {
+  const L = [];
+  const st = lastStatus;
+  const t = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  L.push(`# mazeballs run state  (${t}Z)`);
+  L.push(WATCH ? 'mode: watching the deno server (?watch=1)'
+               : 'mode: standalone in-browser sim');
+
+  if (!st) {
+    L.push('', 'No server status yet - this page is running its own world, or the poll has not landed.');
+    if (!WATCH) {
+      L.push(`steps ${(sim?.world?.steps ?? 0).toLocaleString()}`);
+    }
+    return L.join('\n');
+  }
+
+  const dt = st.dt ?? 0.015;
+  const secs = (st.steps ?? 0) * dt;
+  const wt = secs < 5400 ? `${(secs / 60).toFixed(1)} min`
+           : secs < 172800 ? `${(secs / 3600).toFixed(1)} h` : `${(secs / 86400).toFixed(1)} days`;
+  L.push('', '## run');
+  L.push(`steps ${(st.steps ?? 0).toLocaleString()}  (${wt} world time, dt ${dt})`);
+  L.push(`boot ${st.bootId}  sim ${st.simVersion}  page ${st.pageVersion}  devo ${st.devoName}`);
+  L.push(`paused ${!!st.paused}  spf ${st.spf}  bound ${st.bound}  seed ${st.worldSeed}`);
+
+  L.push('', '## population');
+  // bodySlots is the arena capacity; beasts is how many the world was BUILT
+  // with and is not a ceiling - reporting alive/beasts read as 2902/417.
+  L.push(`alive ${st.alive} bodies of ${st.bodySlots} slots   cells ${st.cellsOwned ?? st.cells}/${st.cellBudget}`);
+  L.push(`births ${(st.births ?? 0).toLocaleString()}  deaths ${(st.deaths ?? 0).toLocaleString()}` +
+         `  agedOut ${(st.agedOut ?? 0).toLocaleString()}`);
+  L.push(`blockedBirths ${st.blockedBirths ?? 0}  pendingEggs ${st.pendingEggs ?? 0}` +
+         `  meanEnergy ${Number(st.meanEnergy ?? 0).toFixed(2)}  minted ${st.mintedEnergy ?? 0}`);
+  // Lineage count first, because it is the number most likely to be the story:
+  // a population down to a handful of lines has no standing variation left.
+  L.push(`LINEAGES ${st.lineages}${st.lineages <= 5 ? '  <- near-clonal, adaptation depends on new mutation' : ''}`);
+
+  const g = st.genStats;
+  if (g && g.n) {
+    L.push('', '## ancestor depth  (generation is a MAX and misleads; this is the spread)');
+    L.push(`median ${g.median}  mean ${g.mean}  p10-p90 ${g.p10}-${g.p90}  min ${g.min}  max ${g.max}`);
+    const mx = Math.max(1, ...g.hist);
+    const bars = g.hist.map(v => ' .:-=+*#%@'[Math.min(9, Math.round(v / mx * 9))]).join('');
+    L.push(`hist[${g.lo}..${g.hi}] ${bars}`);
+  }
+
+  // Only what differs from the shipped defaults. A parameter at its default
+  // tells the reader nothing and costs them a line.
+  const DEF = {
+    flowStr: 4, drag: 24, springK: 300, contract: 8, gravity: 0.55, morphRate: 0,
+    twistK: 6, vortK: 0.8, angDrag: 3, massRef: 0.34, densLo: 0.1, densHi: 10,
+    mediumDens: 1, foreignReach: 1, foreignPush: 1.6, wrapY: 1, tempCost: 0,
+    flowScale: 6, heightScale: 0.018, eggExtent: 12,
+  };
+  const changed = [], same = [];
+  for (const [k, d] of Object.entries(DEF)) {
+    if (st[k] === undefined) continue;
+    (Math.abs(st[k] - d) > 1e-9 ? changed : same).push(`${k} ${st[k]}`);
+  }
+  L.push('', '## parameters');
+  L.push(changed.length ? `CHANGED FROM DEFAULT: ${changed.join('  ')}` : 'all sampled parameters at defaults');
+  if (same.length) L.push(`at default: ${same.join('  ')}`);
+
+  // The archive tail is the analytics page's own data, compressed. Last few
+  // snapshots only - the trend matters, the full series does not fit.
+  try {
+    const names = await (await fetch('runs/archive/index.json', { cache: 'no-store' })).json();
+    const tail = names.slice(-4);
+    const rows = [];
+    for (const n of tail) {
+      const d = await (await fetch('runs/archive/' + n, { cache: 'no-store' })).json();
+      rows.push(`  ${n.replace('.json', '').padEnd(10)} step ${String(d.step).padStart(9)}` +
+                `  alive ${String(d.alive).padStart(5)}  lineages ${String(d.lineages ?? '?').padStart(4)}` +
+                `  meanE ${Number(d.meanEnergy ?? 0).toFixed(1)}`);
+    }
+    L.push('', `## archive  (${names.length} snapshots, last 4 - full series on analytics.html)`);
+    L.push(...rows);
+    L.push('NOTE: archives predate the current physics (mass, orientation, varying radius).');
+  } catch { L.push('', '## archive: unreadable from this page'); }
+
+  L.push('', '## caveats an agent should know');
+  L.push('- the world is NOT reproducible: same seed twice differs (atomics in the spatial hash).');
+  L.push('- locomotion is RETRACTED; bodies twitch but do not travel. See RESEARCH.md.');
+  L.push('- development is CPU JS, ~6ms/egg, the largest non-GPU cost.');
+
+  let out = L.join('\n');
+  // Hard cap. Better a truncated report with a stated cut than an unbounded one.
+  const CAP = 4000;
+  if (out.length > CAP) out = out.slice(0, CAP) + '\n[truncated at ' + CAP + ' chars]';
+  return out;
+}
+
+on('bCopyState', 'onclick', async () => {
+  const b = $('bCopyState');
+  const prev = b.textContent;
+  b.textContent = '… building';
+  // The archive tail is fetched, so this is genuinely async and the button has
+  // to say so; a button that looks inert for a second gets pressed twice.
+  const txt = await buildStateReport();
+  b.textContent = prev;
+  await copyText('run state', txt, b);
+});
 
 /**
  * Draw the ancestor-depth distribution as bars, and label it with the MEDIAN.
@@ -1977,6 +2296,7 @@ async function rebuild() {
   if (WATCH) {
     try {
       const st = await (await srvFetch('/status', { cache: 'no-store' })).json();
+      lastStatus = st;                       // for the copy-state button
       beasts = st.beasts; cellsPer = st.cellsPerBeast;
       // Bodies are limited by ENERGY, not by allocation. bodySlots is the
       // allocation ceiling and is deliberately far above any real population;
@@ -1993,6 +2313,7 @@ async function rebuild() {
       // the CTRNN scope: the trace advances by spf per loop, so at 6 it samples
       // every sixth step and a 1.7 Hz gait aliases into hash.
       if (st.genStats) setGenStats(st.genStats);
+      anaSample(st);
       if (st.spf != null) {
         const sl = $('sSrvSpf'), lb = $('vSrvSpf');
         if (sl && document.activeElement !== sl) sl.value = st.spf;
@@ -2787,9 +3108,26 @@ async function copyText(label, text, btn) {
     note(`${label} copied (${text.length} chars)`);
   } catch (e) {
     // Clipboard needs a secure context; over plain http on a tailnet address it
-    // is simply absent, so fall back to something the user can still act on.
-    note('clipboard unavailable — see console');
-    console.log(`--- ${label} ---\n${text}`);
+    // is simply absent. execCommand is deprecated and still works there, which
+    // is the whole point - this page is normally opened over plain http.
+    let ok = false;
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;top:-1000px;left:0;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      ok = document.execCommand('copy');
+      ta.remove();
+    } catch { ok = false; }
+    if (ok) {
+      if (btn) { const t = btn.textContent; btn.textContent = 'copied ✓';
+        setTimeout(() => { btn.textContent = t; }, 1400); }
+      note(`${label} copied (${text.length} chars)`);
+    } else {
+      note('clipboard unavailable — see console');
+      console.log(`--- ${label} ---\n${text}`);
+    }
   }
 }
 
