@@ -115,6 +115,15 @@ posts equally.
 - Generated files exist — edit the tool, not the output. `world.html` runs a
   standalone in-browser WebGPU sim by default; `?watch=1` views the Deno server
   (`tools/serve-world.js`).
+- **Drive a RUNNING world over HTTP, not through the browser.** `/control` takes
+  `pause|resume|speed|save|restart|reseed|tune|implant|load|flag`; `tune` patches
+  physics live off a whitelist in `tools/serve-world.js` (keep it current — every
+  parameter added with the pose/mass work was silently rejected for days). The
+  page is a VIEWER; the sim is the server. `tools/mcp-world.mjs` wraps the same
+  API as an MCP server so other agents get discovery and typed arguments:
+  `node tools/mcp-world.mjs`. Every tool returns bounded text — a screenshot is
+  the worst context-per-fact trade there is, so reach for a browser only to check
+  what is true only at the pixels.
 - Commit author: `noreply@anthropic.com` / `Claude`. Keep model IDs out of artifacts.
 - These design docs are **agent-facing law + spec** — keep them honest and current:
   if a claim is retracted in `RESEARCH.md`, fix the doc that made it.
