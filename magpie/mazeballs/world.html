@@ -434,6 +434,17 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
       <button id="bDevo" title="watch this genome grow into a body, cell by cell, in a worker">unfold ▶</button>
       <button id="bDevoStop" title="stop the unfold">stop</button>
     </div>
+    <div id="eggBox">
+      <p class="cap" style="font-size:.63rem;letter-spacing:.09em;text-transform:uppercase;color:#7fb3c4;opacity:.95;margin:.5rem 0 .35rem">the egg · play god</p>
+      <div class="sl"><div class="lab"><span>egg size</span><span class="v" id="vEggSize">12</span></div>
+        <input type="range" id="sEggSize" min="4" max="24" step="1" value="12"></div>
+      <div class="sl"><div class="lab"><span>development time</span><span class="v" id="vEggMs">12.0s</span></div>
+        <input type="range" id="sEggMs" min="3000" max="30000" step="500" value="12000"></div>
+      <p class="note" style="font-size:.64rem;line-height:1.45">The controlled, isolated
+        environment the genome develops in. Change it and re-<b>unfold</b> to watch the
+        same genome build a different body. Heat, sugar-energy and agitation are coming
+        as lawful egg factors.</p>
+    </div>
     <div class="row" style="margin-top:.3rem">
       <button id="bViz" title="scatter cells or creatures by any pair of properties, coloured by a third">cell scope ▦</button>
     </div>
@@ -2753,6 +2764,7 @@ async function showGenome() {
   if (sel.uid < 0) { box.style.display = ''; box.textContent = 'Select an animal first.'; return; }
   box.style.display = '';
   box.textContent = 'loading…';
+  grnSel = -1;                                     // a fresh genome starts unfocused
   try {
     // WATCH mode gets the genome AND its layout descriptor from the server; a
     // page running its own sim has neither endpoint, so the genome comes from
@@ -2895,6 +2907,8 @@ let genomeView = 'table';                          // 'table' | 'net'
  * gene — amber excites, blue represses, brighter and thicker with weight. Named
  * genes are labelled; the rest are dots. It reads the same genome the table does.
  */
+let grnSel = -1;                                   // the tapped gene, or -1
+
 function drawGrnNetwork(j) {
   const cv = $('grnNet'); if (!cv || !j.grn) return;
   const G = j.grn, nGene = G.nGene, extBase = nGene - 8;
@@ -2913,8 +2927,6 @@ function drawGrnNetwork(j) {
     : (i >= G.outBase && i - G.outBase < G.outputs.length) ? G.outputs[i - G.outBase]
     : (i >= extBase) ? `e${i - extBase}` : `${i}`;
 
-  // Three bands. Inputs (egg gradients, then external) on the left, outputs on
-  // the right, internal genes packed into a grid in the middle.
   const left = [], mid = [], right = [];
   for (let i = 0; i < nGene; i++) {
     const r = role(i);
@@ -2923,58 +2935,97 @@ function drawGrnNetwork(j) {
     else mid.push(i);
   }
   const pos = new Array(nGene);
-  const padY = 16, colTop = padY, colBot = H - padY;
+  const padY = 18, colTop = padY, colBot = H - padY - 12;
   const placeCol = (arr, x) => arr.forEach((i, k) =>
     { pos[i] = [x, colTop + (arr.length === 1 ? (colBot - colTop) / 2 : (colBot - colTop) * k / (arr.length - 1))]; });
   placeCol(left, W * 0.10);
   placeCol(right, W * 0.90);
-  // middle grid
   const midCols = Math.max(1, Math.round(Math.sqrt(mid.length * W / Math.max(1, H))));
   const midRows = Math.ceil(mid.length / midCols);
   mid.forEach((i, k) => {
     const cxi = k % midCols, cyi = Math.floor(k / midCols);
-    const x = W * 0.30 + (W * 0.40) * (midCols === 1 ? 0.5 : cxi / (midCols - 1));
-    const y = colTop + (colBot - colTop) * (midRows === 1 ? 0.5 : cyi / (midRows - 1));
-    pos[i] = [x, y];
+    pos[i] = [W * 0.30 + (W * 0.40) * (midCols === 1 ? 0.5 : cxi / (midCols - 1)),
+              colTop + (colBot - colTop) * (midRows === 1 ? 0.5 : cyi / (midRows - 1))];
   });
 
-  // Edges first, so nodes sit on top. Regulator src -> gene i.
+  const edges = [];
   for (let i = 0; i < nGene; i++) {
-    const b = i * G.stride, p = pos[i]; if (!p) continue;
+    const b = i * G.stride;
     for (let k = 0; k < G.k; k++) {
-      const sIdx = j.g[b + G.offSrc + k];
-      if (!(sIdx >= 0)) continue;
-      const src = Math.floor(sIdx) % nGene, q = pos[src]; if (!q) continue;
-      const w = j.g[b + G.offW + k], a = Math.min(0.85, 0.12 + Math.abs(w) / 3);
-      g.strokeStyle = w >= 0 ? `rgba(226,150,70,${a})` : `rgba(80,150,220,${a})`;
-      g.lineWidth = Math.min(2.4, 0.4 + Math.abs(w) * 0.7);
-      g.beginPath(); g.moveTo(q[0], q[1]);
-      const mx = (q[0] + p[0]) / 2;
-      g.bezierCurveTo(mx, q[1], mx, p[1], p[0], p[1]);   // gentle curve, not a rat's nest
-      g.stroke();
+      const s = j.g[b + G.offSrc + k];
+      if (!(s >= 0)) continue;
+      edges.push({ src: Math.floor(s) % nGene, dst: i, w: j.g[b + G.offW + k] });
     }
+  }
+  const sel = grnSel;
+  const touches = (e) => sel < 0 || e.src === sel || e.dst === sel;
+  const isNbr = (i) => sel >= 0 && edges.some(e => (e.src === sel && e.dst === i) || (e.dst === sel && e.src === i));
+
+  for (const e of edges) {
+    const p = pos[e.dst], q = pos[e.src]; if (!p || !q) continue;
+    const on = touches(e);
+    const a = on ? Math.min(0.9, 0.15 + Math.abs(e.w) / 3) : 0.045;
+    g.strokeStyle = e.w >= 0 ? `rgba(226,150,70,${a})` : `rgba(80,150,220,${a})`;
+    g.lineWidth = on ? Math.min(2.6, 0.5 + Math.abs(e.w) * 0.8) : 0.5;
+    g.beginPath(); g.moveTo(q[0], q[1]);
+    const mx = (q[0] + p[0]) / 2;
+    g.bezierCurveTo(mx, q[1], mx, p[1], p[0], p[1]);
+    g.stroke();
   }
 
   const col = { egg: '#4dd1de', out: '#ff9433', ext: '#8f9c97', int: '#9aa6a0' };
   for (let i = 0; i < nGene; i++) {
     const p = pos[i]; if (!p) continue;
     const r = role(i), named = r === 'egg' || r === 'out';
-    const rad = named ? 5 : 2.6;
+    const me = i === sel, nbr = isNbr(i), dim = sel >= 0 && !me && !nbr;
+    const rad = me ? 6.5 : (named ? 5 : (nbr ? 3.6 : 2.6));
+    g.globalAlpha = dim ? 0.32 : 1;
     g.beginPath(); g.arc(p[0], p[1], rad, 0, Math.PI * 2);
     g.fillStyle = col[r]; g.fill();
-    g.lineWidth = 1; g.strokeStyle = 'rgba(4,8,7,.9)'; g.stroke();
-    if (named) {
-      g.fillStyle = '#cfe3dc'; g.font = `${9}px ui-monospace, monospace`;
+    g.lineWidth = me ? 2 : 1; g.strokeStyle = me ? '#ffffff' : 'rgba(4,8,7,.9)'; g.stroke();
+    if (named || me || nbr) {
+      g.fillStyle = dim ? '#5f7a73' : '#cfe3dc'; g.font = '9px ui-monospace, monospace';
       g.textBaseline = 'middle';
-      if (r === 'egg') { g.textAlign = 'right'; g.fillText(nm(i), p[0] - 7, p[1]); }
+      if (p[0] < W * 0.5) { g.textAlign = 'right'; g.fillText(nm(i), p[0] - 7, p[1]); }
       else { g.textAlign = 'left'; g.fillText(nm(i), p[0] + 7, p[1]); }
     }
+    g.globalAlpha = 1;
   }
-  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
-  g.fillStyle = '#5f7a73'; g.font = `${9}px ui-monospace, monospace`;
-  g.fillText('egg gradients →', 6, H - 5);
-  g.textAlign = 'right'; g.fillText('← outputs', W - 6, H - 5);
+  g.textBaseline = 'alphabetic';
+
+  // Footer: the legend, or the tapped gene's wiring read out in words.
   g.textAlign = 'left';
+  if (sel < 0) {
+    g.fillStyle = '#5f7a73'; g.font = '9px ui-monospace, monospace';
+    g.fillText('egg gradients →', 6, H - 5);
+    g.textAlign = 'right'; g.fillText('← outputs · tap a gene', W - 6, H - 5);
+  } else {
+    const b = sel * G.stride, bias = j.g[b + G.offBias];
+    const ins = edges.filter(e => e.dst === sel).map(e => `${nm(e.src)}${e.w >= 0 ? '+' : '−'}`);
+    const outs = edges.filter(e => e.src === sel).map(e => nm(e.dst));
+    g.fillStyle = '#cfe3dc'; g.font = '10px ui-monospace, monospace';
+    g.fillText(`${nm(sel)} · bias ${bias.toFixed(1)}`, 6, H - 17);
+    g.fillStyle = '#9fb8b0'; g.font = '9px ui-monospace, monospace';
+    g.fillText(`in: ${ins.join(' ') || '—'}`.slice(0, 88), 6, H - 5);
+    g.textAlign = 'right'; g.fillText(`out: ${outs.join(' ') || '—'}`.slice(0, 52), W - 6, H - 5);
+  }
+  g.textAlign = 'left';
+
+  // Tap a node to focus it (its regulators and targets light up); tap it again,
+  // or empty space, to clear. Rebound each draw because the canvas is recreated
+  // with the panel.
+  cv.onclick = (ev) => {
+    const rect = cv.getBoundingClientRect();
+    const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
+    let best = -1, bestD = 16 * 16;
+    for (let i = 0; i < nGene; i++) {
+      const p = pos[i]; if (!p) continue;
+      const dx = p[0] - mx, dy = p[1] - my, d = dx * dx + dy * dy;
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    grnSel = (best === grnSel) ? -1 : best;
+    drawGrnNetwork(j);
+  };
 }
 
 /* ============================ development viewer ==========================
@@ -3070,7 +3121,8 @@ async function startUnfold() {
   if (!view) return;
   stopUnfold();
   devoActive = true;
-  const EXTENT = 12;                    // devo2's egg (DEFAULT_EXTENT)
+  const EXTENT = +($('sEggSize')?.value ?? 12);    // egg size, from the egg panel
+  const MS = +($('sEggMs')?.value ?? 12000);       // developmental time in the egg
   view.egg = EXTENT;
   liveBirth = new Float32Array(1024);
   liveN = 0; liveT0 = performance.now(); liveCarve = 0; liveDone = false;
@@ -3137,7 +3189,7 @@ async function startUnfold() {
   // here; the point is the shape the genome wants to build.
   devoWorker.postMessage({
     genome: Array.from(gj.g),
-    opts: { ms: 12000, dtMs: 40, extent: EXTENT, maxCells: 4000, yolk: 1e9, stepEvery: 4 },
+    opts: { ms: MS, dtMs: 40, extent: EXTENT, maxCells: 4000, yolk: 1e9, stepEvery: 4 },
   });
   cancelAnimationFrame(devoRAF);
   devoRAF = requestAnimationFrame(unfoldLoop);
@@ -3513,6 +3565,13 @@ on('bGallery', 'onclick', showGallery);
 
 on('bDevo', 'onclick', startUnfold);
 on('bDevoStop', 'onclick', () => { stopUnfold(); devoActive = false; const i = $('devoInfo'); if (i) i.textContent = ''; });
+// The egg panel: tweak the environment, re-unfold on release to watch the same
+// genome build differently. Only re-runs while an unfold is already on screen.
+on('sEggSize', 'oninput', e => { const v = $('vEggSize'); if (v) v.textContent = e.target.value; });
+on('sEggMs', 'oninput', e => { const v = $('vEggMs'); if (v) v.textContent = (+e.target.value / 1000).toFixed(1) + 's'; });
+const eggRerun = () => { if (devoActive) startUnfold(); };
+on('sEggSize', 'onchange', eggRerun);
+on('sEggMs', 'onchange', eggRerun);
 
 /* ---- scope geometry: draggable, minimisable ---- */
 let scopeH = 150;

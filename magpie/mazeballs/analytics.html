@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mazeballs — run analytics</title>
+<style>
+:root{
+  --paper:#0A100F; --card:#111A19; --ink:#E3EBE9; --soft:#8FA39F; --rule:#213230;
+  --sensor:#41ADB2; --muscle:#E28C3E; --neuron:#9aa6a0; --anchor:#8f709e;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+  --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+body{padding:1rem 1rem calc(2rem + env(safe-area-inset-bottom));
+  padding-left:calc(1rem + env(safe-area-inset-left));padding-right:calc(1rem + env(safe-area-inset-right));
+  max-width:820px;margin:0 auto}
+h1{font-size:1.15rem;margin:.2rem 0 .1rem}
+a{color:var(--sensor)}
+.lede{color:var(--soft);font-size:.82rem;line-height:1.5;margin:.2rem 0 1rem}
+.card{background:var(--card);border:1px solid var(--rule);border-radius:10px;
+  padding:.7rem .8rem .8rem;margin:0 0 1rem}
+.card h2{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--soft);margin:0 0 .1rem;font-weight:500}
+.card .sub{color:var(--soft);font-size:.72rem;line-height:1.45;margin:.15rem 0 .5rem}
+canvas{display:block;width:100%;height:auto;background:#070c0b;border:1px solid #1a2a27;border-radius:6px}
+.legend{display:flex;flex-wrap:wrap;gap:.5rem .9rem;font-family:var(--mono);font-size:.68rem;color:var(--soft);margin-top:.45rem}
+.legend i{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:.3rem;vertical-align:middle}
+.note{color:var(--soft);font-size:.7rem;line-height:1.5}
+#status{color:var(--soft);font-family:var(--mono);font-size:.78rem;padding:1rem 0}
+.foot{color:var(--soft);font-size:.7rem;line-height:1.6;margin-top:.5rem}
+</style>
+</head>
+<body>
+<h1>Mazeballs — run analytics</h1>
+<p class="lede">Population and development over an evolutionary run, read from the committed
+generation archives (<code>runs/archive/gen-*.json</code>). Each archive keeps one representative
+per lineage — chosen for rarity, not typicality — sampled every few generations, so these are
+<b>trends across representatives, not a full census</b>. Hand-drawn, no libraries; it reads the
+same static files on GitHub Pages and under the local server. <a href="index.html">← home</a></p>
+
+<div id="status">loading archives…</div>
+<div id="charts" hidden>
+  <div class="card">
+    <h2>Population trajectory</h2>
+    <p class="sub">Living bodies, distinct lineages, and mean energy against generation.</p>
+    <canvas id="cPop"></canvas>
+  </div>
+  <div class="card">
+    <h2>Body size across generations</h2>
+    <p class="sub">Each dot is one lineage's representative; the line is the median. Teal dots
+      sense <i>and</i> move; grey do not. Watch whether bodies shrink and whether sensorimotor
+      lineages persist.</p>
+    <canvas id="cSize"></canvas>
+    <div class="legend"><span><i style="background:var(--sensor)"></i>senses &amp; moves</span>
+      <span><i style="background:#5f7a73"></i>does not</span>
+      <span><i style="background:#ffd08a"></i>median</span></div>
+  </div>
+  <div class="card">
+    <h2>Cell-type composition</h2>
+    <p class="sub">Share of each cell type across all representatives at each generation
+      (argmax labels — the strongest trait per cell, not a capability). A collapsing band is a
+      loss of differentiation.</p>
+    <canvas id="cMix"></canvas>
+    <div class="legend"><span><i style="background:var(--sensor)"></i>sensor</span>
+      <span><i style="background:var(--muscle)"></i>muscle</span>
+      <span><i style="background:var(--anchor)"></i>anchor</span>
+      <span><i style="background:var(--neuron)"></i>neuron</span></div>
+  </div>
+  <div class="card">
+    <h2>Sensorimotor lineages</h2>
+    <p class="sub">Fraction of lineage representatives that both sense and move — the closed
+      loop the world is trying to find.</p>
+    <canvas id="cSM"></canvas>
+  </div>
+  <p class="foot" id="foot"></p>
+</div>
+
+<script type="module">
+const $ = (id) => document.getElementById(id);
+const COL = { sensor:'#41ADB2', muscle:'#E28C3E', anchor:'#8f709e', neuron:'#9aa6a0' };
+
+async function load() {
+  let names;
+  try {
+    names = await (await fetch('runs/archive/index.json', { cache: 'no-store' })).json();
+  } catch {
+    $('status').textContent = 'could not read runs/archive/index.json';
+    return;
+  }
+  const gens = [];
+  for (const n of names) {
+    try {
+      const d = await (await fetch('runs/archive/' + n, { cache: 'no-store' })).json();
+      gens.push(d);
+    } catch { /* skip a missing archive rather than fail the whole page */ }
+  }
+  gens.sort((a, b) => a.generation - b.generation);
+  if (!gens.length) { $('status').textContent = 'no archives loaded'; return; }
+  $('status').hidden = true;
+  $('charts').hidden = false;
+  window.__gens = gens;
+  draw();
+  $('foot').textContent =
+    `${gens.length} archived generations, ${gens[0].generation}–${gens[gens.length - 1].generation} · ` +
+    `${gens.reduce((s, g) => s + g.creatures.length, 0)} lineage representatives · ` +
+    `sim ${gens[gens.length - 1].simVersion ?? '?'} · ${gens[gens.length - 1].encoding ?? ''}`;
+}
+
+// ---- tiny canvas chart kit -------------------------------------------------
+function fit(cv, h) {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = cv.clientWidth || 600;
+  cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h); g.fillStyle = '#070c0b'; g.fillRect(0, 0, w, h);
+  return { g, w, h };
+}
+const nice = (v) => Math.abs(v) >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k'
+  : Math.abs(v) >= 10 ? v.toFixed(0) : Math.abs(v) >= 1 ? v.toFixed(1) : v.toFixed(2);
+
+// A framed panel with x=generation, y in [lo,hi]. Returns projector fns.
+function panel(g, x0, y0, w, h, xlo, xhi, ylo, yhi, ylab) {
+  g.strokeStyle = '#1d332e'; g.lineWidth = 1; g.strokeRect(x0, y0, w, h);
+  const px = (v) => x0 + (xhi === xlo ? 0.5 : (v - xlo) / (xhi - xlo)) * w;
+  const py = (v) => y0 + h - (yhi === ylo ? 0.5 : (v - ylo) / (yhi - ylo)) * h;
+  g.fillStyle = '#6d8880'; g.font = '10px ui-monospace, monospace';
+  g.textAlign = 'right'; g.textBaseline = 'middle';
+  for (let i = 0; i <= 2; i++) {
+    const v = ylo + (yhi - ylo) * i / 2, Y = py(v);
+    g.strokeStyle = '#12211d'; g.beginPath(); g.moveTo(x0, Y); g.lineTo(x0 + w, Y); g.stroke();
+    g.fillStyle = '#6d8880'; g.fillText(nice(v), x0 - 4, Y);
+  }
+  g.textAlign = 'center'; g.textBaseline = 'top';
+  g.fillStyle = '#7fb3c4'; g.font = '9px ui-monospace, monospace';
+  g.save(); g.translate(x0 - 30, y0 + h / 2); g.rotate(-Math.PI / 2);
+  g.fillText(ylab, 0, 0); g.restore();
+  return { px, py };
+}
+function line(g, pts, color, wdt = 1.6) {
+  g.strokeStyle = color; g.lineWidth = wdt; g.beginPath();
+  pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y));
+  g.stroke();
+}
+
+function draw() {
+  const gens = window.__gens;
+  const gx = gens.map(g => g.generation);
+  const xlo = Math.min(...gx), xhi = Math.max(...gx);
+
+  // 1. POPULATION TRAJECTORY — three stacked strips sharing the x axis.
+  {
+    const rows = [
+      { k: 'alive', lab: 'alive', col: '#cfe3dc' },
+      { k: 'lineages', lab: 'lineages', col: '#7fb3c4' },
+      { k: 'meanEnergy', lab: 'mean energy', col: '#E28C3E' },
+    ];
+    const H = 260, { g, w } = fit($('cPop'), H);
+    const mL = 40, mR = 10, mT = 8, mB = 18, gap = 10;
+    const ph = (H - mT - mB - gap * (rows.length - 1)) / rows.length;
+    rows.forEach((r, i) => {
+      const y0 = mT + i * (ph + gap);
+      let hi = Math.max(...gens.map(d => d[r.k] ?? 0)); if (!(hi > 0)) hi = 1;
+      const { px, py } = panel(g, mL, y0, w - mL - mR, ph, xlo, xhi, 0, hi * 1.08, r.lab);
+      line(g, gens.map(d => [px(d.generation), py(d[r.k] ?? 0)]), r.col);
+      if (i === rows.length - 1) {
+        g.fillStyle = '#6d8880'; g.font = '9px ui-monospace, monospace'; g.textAlign = 'center';
+        for (let t = 0; t <= 4; t++) { const gg = xlo + (xhi - xlo) * t / 4; g.fillText('gen ' + Math.round(gg), px(gg), y0 + ph + 5); }
+      }
+    });
+  }
+
+  // 2. BODY SIZE — strip plot of every representative's cell count per generation.
+  {
+    const H = 220, { g, w } = fit($('cSize'), H);
+    const mL = 40, mR = 10, mT = 10, mB = 22;
+    let hi = 1; for (const d of gens) for (const c of d.creatures) hi = Math.max(hi, c.cells);
+    const { px, py } = panel(g, mL, mT, w - mL - mR, H - mT - mB, xlo, xhi, 0, hi * 1.06, 'cells');
+    const jit = (i) => ((i * 2654435761 >>> 0) % 1000 / 1000 - 0.5) * Math.max(3, (px(xhi) - px(xlo)) / (gens.length * 2.2));
+    gens.forEach((d) => {
+      d.creatures.forEach((c, i) => {
+        g.beginPath(); g.arc(px(c.generation ?? d.generation) + jit(c.uid ?? i), py(c.cells), 2.1, 0, Math.PI * 2);
+        g.fillStyle = c.senseAndMove ? 'rgba(65,173,178,.75)' : 'rgba(95,122,115,.6)'; g.fill();
+      });
+      const cells = d.creatures.map(c => c.cells).sort((a, b) => a - b);
+      const med = cells.length ? cells[cells.length >> 1] : 0;
+      g.fillStyle = '#ffd08a'; g.beginPath(); g.arc(px(d.generation), py(med), 2.6, 0, Math.PI * 2); g.fill();
+    });
+    line(g, gens.map(d => { const c = d.creatures.map(x => x.cells).sort((a, b) => a - b); return [px(d.generation), py(c.length ? c[c.length >> 1] : 0)]; }), '#ffd08a', 1.4);
+    g.fillStyle = '#6d8880'; g.font = '9px ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'top';
+    for (let t = 0; t <= 4; t++) { const gg = xlo + (xhi - xlo) * t / 4; g.fillText('gen ' + Math.round(gg), px(gg), H - mB + 5); }
+  }
+
+  // 3. CELL-TYPE COMPOSITION — stacked area of type shares across representatives.
+  {
+    const H = 200, { g, w } = fit($('cMix'), H);
+    const mL = 40, mR = 10, mT = 10, mB = 22;
+    const order = ['sensor', 'muscle', 'anchor', 'neuron'];
+    const frac = gens.map(d => {
+      const t = { neuron: 0, sensor: 0, muscle: 0, anchor: 0 };
+      for (const c of d.creatures) for (const k of order) t[k] += (c.mix?.[k] ?? 0);
+      const tot = order.reduce((s, k) => s + t[k], 0) || 1;
+      return { gen: d.generation, f: Object.fromEntries(order.map(k => [k, t[k] / tot])) };
+    });
+    const { px, py } = panel(g, mL, mT, w - mL - mR, H - mT - mB, xlo, xhi, 0, 1, 'share');
+    let base = frac.map(() => 0);
+    for (const k of order) {
+      g.fillStyle = COL[k] + 'cc'; g.beginPath();
+      frac.forEach((p, i) => { const x = px(p.gen), y = py(base[i] + p.f[k]); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+      for (let i = frac.length - 1; i >= 0; i--) g.lineTo(px(frac[i].gen), py(base[i]));
+      g.closePath(); g.fill();
+      base = base.map((b, i) => b + frac[i].f[k]);
+    }
+    g.fillStyle = '#6d8880'; g.font = '9px ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'top';
+    for (let t = 0; t <= 4; t++) { const gg = xlo + (xhi - xlo) * t / 4; g.fillText('gen ' + Math.round(gg), px(gg), H - mB + 5); }
+  }
+
+  // 4. SENSORIMOTOR FRACTION — the closed loop, over generations.
+  {
+    const H = 150, { g, w } = fit($('cSM'), H);
+    const mL = 40, mR = 10, mT = 10, mB = 22;
+    const { px, py } = panel(g, mL, mT, w - mL - mR, H - mT - mB, xlo, xhi, 0, 1, 'fraction');
+    const pts = gens.map(d => {
+      const sm = d.creatures.filter(c => c.senseAndMove).length / (d.creatures.length || 1);
+      return [px(d.generation), py(sm)];
+    });
+    // faint area under the line
+    g.fillStyle = 'rgba(65,173,178,.14)'; g.beginPath();
+    pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y));
+    g.lineTo(pts[pts.length - 1][0], py(0)); g.lineTo(pts[0][0], py(0)); g.closePath(); g.fill();
+    line(g, pts, '#41ADB2', 1.8);
+    g.fillStyle = '#6d8880'; g.font = '9px ui-monospace, monospace'; g.textAlign = 'center'; g.textBaseline = 'top';
+    for (let t = 0; t <= 4; t++) { const gg = xlo + (xhi - xlo) * t / 4; g.fillText('gen ' + Math.round(gg), px(gg), H - mB + 5); }
+  }
+}
+
+let rz;
+addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (window.__gens) draw(); }, 150); });
+load();
+</script>
+</body>
+</html>
