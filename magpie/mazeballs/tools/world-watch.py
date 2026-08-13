@@ -25,6 +25,7 @@ prev_stale = False
 # on every sample, for hours, and saying so every 45 seconds is the same
 # always-on alarm as before wearing a better sentence. Say it when it changes.
 prev_cause = None
+prev_clonal = False
 # How many consecutive samples a cause has held. A population sitting exactly on
 # its ceiling crosses back and forth every minute, and reporting each crossing
 # is flapping rather than news.
@@ -97,9 +98,18 @@ while True:
     if isinstance(minted, (int, float)) and minted != 0:
         msgs.append(f'ENERGY MINTED: {minted}')
 
+    # ON CHANGE, like everything else here. A world that has collapsed to three
+    # lineages stays collapsed, and saying so every 45 seconds is the same
+    # always-on alarm I have now written three times: first as a cumulative
+    # total, then as a persistent refusal cause, now as this.
     lin = d.get('lineages')
-    if isinstance(lin, int) and 0 < lin <= 3:
-        msgs.append(f'lineages {lin} — near-clonal')
+    clonal = isinstance(lin, int) and 0 < lin <= 3
+    if clonal and not prev_clonal:
+        eff = (d.get('linStats') or {}).get('effective')
+        msgs.append(f'lineages {lin} — near-clonal' + (f' (effective {eff})' if eff else ''))
+    elif prev_clonal and not clonal:
+        msgs.append(f'lineages recovered to {lin}')
+    prev_clonal = clonal
 
     if msgs:
         print(' | '.join(msgs), flush=True)
