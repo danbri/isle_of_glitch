@@ -21,6 +21,11 @@ import json, sys, time, urllib.request
 URL = sys.argv[1] if len(sys.argv) > 1 else 'http://127.0.0.1:8899/status'
 prev = None
 prev_stale = False
+# The world this watcher is describing. A reseed replaces it entirely, and every
+# counter starts over - so without noticing the boot id the watcher reads the
+# replacement as a recovery and announces that lineages went from 3 back to 279,
+# which is not something that happened.
+prev_boot = None
 # The last refusal CAUSE reported. A world at carrying capacity refuses births
 # on every sample, for hours, and saying so every 45 seconds is the same
 # always-on alarm as before wearing a better sentence. Say it when it changes.
@@ -43,6 +48,13 @@ while True:
 
     msgs = []
     step = d.get('steps') or 0
+    boot = d.get('bootId')
+    if prev_boot is not None and boot != prev_boot:
+        msgs.append(f'NEW WORLD (boot {boot}) — counters restart; nothing below carries over')
+        prev = None            # no rate across a discontinuity
+        prev_cause = None
+        prev_clonal = False
+    prev_boot = boot
     blocked = d.get('blockedBirths') or 0
     disk = (d.get('onDisk') or {}).get('simVersion')
     stale = bool(disk and d.get('simVersion') != disk)
