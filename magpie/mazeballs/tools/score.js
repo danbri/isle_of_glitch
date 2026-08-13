@@ -2,6 +2,13 @@
 /**
  * The objective for autoresearch-style experiments on this simulation.
  *
+ * LEGACY, AND KNOWN BROKEN. This forks tools/run.js, which needs a
+ * TensorFlow.js backend and predates the WebGPU world entirely; it cannot score
+ * the simulation this project now runs. tools/score-config.js is the multi-seed
+ * runner for the current stack. Left in place because the scoring COMPOSITE
+ * here - viability-gated, diagnostics rather than raw fitness - is the design
+ * worth keeping, and rewriting it against the new stack should start from it.
+ *
  *   node tools/score.js --seeds 1,2,3,4 --generations 12
  *   node tools/score.js --seeds 1,2,3,4 --compare baseline.json
  *
@@ -126,7 +133,13 @@ function runSeed(seed) {
     child.stdout.on('data', d => { out += d; });
     child.stderr.on('data', d => { err += d; });
     child.on('close', code => {
-      if (code !== 0) return resolve({ seed, error: err.trim().split('\n').slice(-1)[0] || `exit ${code}` });
+      if (code !== 0) {
+        // The LAST line of a node crash is the version banner, so taking it
+        // reported "Node.js v22.22.2" as the cause of every failure and threw
+        // away the actual error. Keep the first few meaningful lines instead.
+        const lines = err.trim().split('\n').filter(l => l.trim() && !/^Node\.js v/.test(l));
+        return resolve({ seed, error: lines.slice(0, 4).join(' | ') || `exit ${code}` });
+      }
       try { resolve({ seed, ...scoreReport(JSON.parse(out).report, elites) }); }
       catch (e) { resolve({ seed, error: 'unparseable child output' }); }
     });
