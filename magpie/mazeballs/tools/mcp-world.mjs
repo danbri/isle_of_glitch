@@ -133,6 +133,64 @@ async function readFrame() {
   return { ver, L, pos, energy, meta, uid, matW, rad };
 }
 
+/**
+ * SHAPE, for one body, from its cell positions alone.
+ *
+ * Codex asked for modularity and symmetry descriptors and was right that the
+ * bounding-box ratio this project used for months is too weak: a plus sign and
+ * a diagonal bar have the same box. These are the cheapest measures that are
+ * not fooled by that.
+ *
+ *   elongation  the ratio of the second-moment eigenvalues. A property of the
+ *               mass distribution, so it does not care which way the body is
+ *               pointing and cannot be gamed by rotation.
+ *   mirror      reflect every cell across the principal axis and ask how well
+ *               the body covers its own reflection. 1 is bilaterally
+ *               symmetric, 0 is one-sided. Grid-binned rather than
+ *               nearest-neighbour, so it costs O(n) and not O(n^2).
+ *   sectors     how many of twelve angular sectors around the centroid hold
+ *               any cell. A disc fills all twelve; a filament fills two. This
+ *               is the branchiness proxy, and it is deliberately crude - it
+ *               counts directions occupied, not limbs, because "limb" is not
+ *               something this code is allowed to know.
+ */
+function shapeOf(xs, ys) {
+  const n = xs.length;
+  if (n < 3) return null;
+  let mx = 0, my = 0;
+  for (let i = 0; i < n; i++) { mx += xs[i]; my += ys[i]; }
+  mx /= n; my /= n;
+  let xx = 0, yy = 0, xy = 0;
+  for (let i = 0; i < n; i++) {
+    const dx = xs[i] - mx, dy = ys[i] - my;
+    xx += dx * dx; yy += dy * dy; xy += dx * dy;
+  }
+  const tr = xx + yy, disc = Math.sqrt(Math.max(0, (xx - yy) ** 2 + 4 * xy * xy));
+  const l1 = (tr + disc) / 2, l2 = (tr - disc) / 2;
+  const elong = l2 > 1e-9 ? Math.sqrt(l1 / l2) : 1;
+  // Principal axis, and the frame it defines.
+  const ang = 0.5 * Math.atan2(2 * xy, xx - yy);
+  const ca = Math.cos(-ang), sa = Math.sin(-ang);
+  const GRID = 0.5;
+  const cells = new Set(), reflected = new Set();
+  for (let i = 0; i < n; i++) {
+    const dx = xs[i] - mx, dy = ys[i] - my;
+    const u = dx * ca - dy * sa, v = dx * sa + dy * ca;
+    cells.add(`${Math.round(u / GRID)},${Math.round(v / GRID)}`);
+    reflected.add(`${Math.round(u / GRID)},${Math.round(-v / GRID)}`);
+  }
+  let shared = 0;
+  for (const k of reflected) if (cells.has(k)) shared++;
+  const mirror = reflected.size ? shared / reflected.size : 0;
+  const SECT = 12;
+  const seen = new Array(SECT).fill(false);
+  for (let i = 0; i < n; i++) {
+    const a = Math.atan2(ys[i] - my, xs[i] - mx);
+    seen[Math.min(SECT - 1, Math.floor(((a + Math.PI) / (2 * Math.PI)) * SECT))] = true;
+  }
+  return { elong, mirror, sectors: seen.filter(Boolean).length };
+}
+
 const hist = (vals, lo, hi, bins) => {
   const h = new Array(bins).fill(0), span = Math.max(1e-9, hi - lo);
   for (const v of vals) h[Math.max(0, Math.min(bins - 1, Math.floor((v - lo) / span * bins)))]++;
@@ -411,6 +469,37 @@ async function call(name, a = {}) {
               `  median ${ds[Math.round(.5 * (ds.length - 1))].toFixed(3)}` +
               `  p90 ${ds[Math.round(.9 * (ds.length - 1))].toFixed(3)}`);
       L2.push(`  hist[0..1] ` + spark(hist(dens, 0, 1.0001, 20)));
+
+      // SHAPE. Only bodies with enough cells to have one - three points always
+      // look like a triangle, and averaging that in tells you about the cap
+      // rather than about morphology.
+      const byBody = new Map();
+      for (let i = 0; i < f.L; i++) {
+        const u = f.uid[i]; if (u < 0) continue;
+        let a = byBody.get(u); if (!a) { a = { xs: [], ys: [] }; byBody.set(u, a); }
+        a.xs.push(f.pos[i * 2]); a.ys.push(f.pos[i * 2 + 1]);
+      }
+      const el = [], mi = [], se = [];
+      for (const [, b] of byBody) {
+        if (b.xs.length < 6) continue;
+        const sh = shapeOf(b.xs, b.ys);
+        if (!sh) continue;
+        el.push(sh.elong); mi.push(sh.mirror); se.push(sh.sectors);
+      }
+      if (el.length) {
+        const mean = (a) => a.reduce((x, y) => x + y, 0) / a.length;
+        const q = (a, fr) => { const s2 = a.slice().sort((x, y) => x - y); return s2[Math.round(fr * (s2.length - 1))]; };
+        L2.push('');
+        L2.push(`shape, over ${el.length} bodies of 6+ cells:`);
+        L2.push(`  elongation  median ${q(el, .5).toFixed(2)}  p90 ${q(el, .9).toFixed(2)}` +
+                `   (1.0 = round; the second-moment ratio, not a bounding box)`);
+        L2.push(`  mirror      median ${q(mi, .5).toFixed(2)}  mean ${mean(mi).toFixed(2)}` +
+                `   (1.0 = bilaterally symmetric about the principal axis)`);
+        L2.push(`  sectors     median ${q(se, .5)} of 12 occupied  mean ${mean(se).toFixed(1)}` +
+                `   (12 = fills every direction, 2 = a filament)`);
+      } else {
+        L2.push('', 'shape: no body has 6+ cells — nothing to measure');
+      }
       return text(L2.join('\n'));
     }
 
@@ -509,6 +598,32 @@ async function call(name, a = {}) {
           (L.topShare > 0.5 ? '   <- one line holds the population' : ''),
         'top: ' + L.top.map(t => `L${t.lineage} ${t.bodies} (${(100 * t.share).toFixed(1)}%)`).join('  '),
       ];
+      const S = st.survStats;
+      if (S && (S.lost || S.livingNow)) {
+        out.push('');
+        out.push(`SURVIVAL   ${num(S.lost)} lineages have gone extinct, ${num(S.livingNow)} still going`);
+        if (S.deadMedian != null) {
+          out.push(`  the dead lasted   median ${num(S.deadMedian)} steps  p90 ${num(S.deadP90)}  longest ${num(S.deadMax)}`);
+        }
+        if (S.liveMedian != null) {
+          out.push(`  the living are    median ${num(S.liveMedian)} steps old  p90 ${num(S.liveP90)}  oldest ${num(S.liveMax)}`);
+        }
+        // Lineage birth times are not persisted, so a restarted world can only
+        // say "at least this old". Saying it plainly, because ages that all
+        // equal the tracking window look like a cohort that arose together.
+        if (S.censored) {
+          out.push(`  NOTE ${S.censored} of those ages are censored at ${num(S.trackedFor)} steps —` +
+            ` tracking began then, so they are lower bounds, not ages.`);
+        }
+        // The comparison that carries the information: if survivors are much
+        // older than the dead ever got, the population has stopped turning over
+        // its lines and is coasting on a few incumbents.
+        if (S.deadMedian && S.liveMedian) {
+          const r = S.liveMedian / S.deadMedian;
+          out.push(`  survivors are ${r.toFixed(1)}x the median dead lifetime` +
+            (r > 10 ? '   <- a few incumbents; new lines are not establishing' : ''));
+        }
+      }
       return text(out.join('\n'));
     }
 

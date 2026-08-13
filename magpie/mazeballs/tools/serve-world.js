@@ -411,7 +411,7 @@ async function loadSnapshot(path) {
   brains.writeState(built.arena);
   return { steps, alive: evo.alive() };
 }
-let last = { alive: evo.alive(), born: 0, died: 0, meanEnergy: 0, maxGeneration: 0, lineages: evo.alive(), genStats: null, linStats: null, birthStats: null };
+let last = { alive: evo.alive(), born: 0, died: 0, meanEnergy: 0, maxGeneration: 0, lineages: evo.alive(), genStats: null, linStats: null, birthStats: null, survStats: null };
 let steps = 0, sinceTick = 0, ticking = false, running = true;
 
 /* ------------------------------------------------------------- the sim loop */
@@ -1674,6 +1674,8 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       genStats: last.genStats ?? null,
       // Lineage COUNT hides whether one line holds the population.
       linStats: last.linStats ?? null,
+      // How long lineages last, not just how many remain.
+      survStats: last.survStats ?? null,
       // Birth outcomes BY REASON. See Evolver.birthStats.
       birthStats: last.birthStats ?? null,
       // The SHAPE of the free space, not just the count of refusals.

@@ -205,6 +205,16 @@ export class Evolver {
     // Parents that have earned a birth and are waiting their turn. A Set beside
     // the array so requalifying every tick does not enqueue the same body twice.
     this.eggQueue = []; this.queued = new Set(); this.pendingEggs = 0;
+    // WHEN EACH LINEAGE APPEARED, and how long the dead ones lasted.
+    //
+    // A count of surviving lineages says nothing about the shape of the loss.
+    // Sixty lines that each lasted a thousand steps and sixty that lasted a
+    // hundred thousand are the same number and completely different worlds, and
+    // only the second has anything to select on. The distribution of lifetimes
+    // is the thing an intervention has to move.
+    this.lineageBorn = new Map();
+    this.lineageLife = [];          // lifetimes of extinct lineages, in steps
+    this.lineagesLost = 0;
     // WHY a birth failed, not just how often. Development failing is the world
     // saying no - the yolk ran out, or the body was too small to live - and is
     // a lawful outcome. Refusal for want of a contiguous arena run is the
@@ -230,6 +240,7 @@ export class Evolver {
   async tick(step) {
     const { arena, world, cells } = this;
     const bornAtEntry = this.births;
+    this.trackLineages(step);
     const { pos, energy } = await world.readCells();
     this.ticks++;
 
@@ -377,6 +388,7 @@ export class Evolver {
       maxGeneration: this.maxGeneration(),
       genStats: this.generationStats(),
       linStats: this.lineageStats(),
+      survStats: this.survivalStats(step),
       birthStats: this.birthStats(step),
       lineages: this.countLineages(),
       births: this.births, deaths: this.deaths, blockedBirths: this.blockedBirths,
@@ -1374,6 +1386,60 @@ export class Evolver {
       devFailed: this.devFailed, refused: this.refused,
       refusedSizes: sizes,
       oldestQueuedSteps: oldest === null ? null : Math.max(0, step - oldest),
+    };
+  }
+
+  /**
+   * Note which lineages exist now, and close the books on any that have gone.
+   * Called from tick, because extinction is only observable as an absence and
+   * an absence needs something to compare against.
+   */
+  trackLineages(step) {
+    // WHEN THIS BOOK WAS OPENED. Lineage birth times are not persisted, so a
+    // resumed world knows only that a line existed when tracking began - not
+    // when it actually arose. Without recording that, every lineage in a
+    // restarted world reports the same age and reads as a cohort that appeared
+    // together, which is an artefact of the restart rather than anything the
+    // world did.
+    if (this.trackFrom == null) this.trackFrom = step;
+    const now = new Set();
+    for (let o = 0; o < this.arena.P; o++) {
+      if (this.arena.alive[o]) now.add(this.lineage[o]);
+    }
+    for (const l of now) if (!this.lineageBorn.has(l)) this.lineageBorn.set(l, step);
+    for (const [l, born] of this.lineageBorn) {
+      if (now.has(l)) continue;
+      this.lineageLife.push(step - born);
+      this.lineageBorn.delete(l);
+      this.lineagesLost++;
+    }
+    // Bounded: a long run extinguishes tens of thousands of lines and the
+    // distribution is what matters, not every sample of it.
+    if (this.lineageLife.length > 20000) {
+      this.lineageLife = this.lineageLife.filter((_, i) => (i & 1) === 0);
+    }
+  }
+
+  /** How long lineages last: the survival side of the diversity question. */
+  survivalStats(step) {
+    const lives = this.lineageLife;
+    const ages = [];
+    for (const [, born] of this.lineageBorn) ages.push(step - born);
+    ages.sort((a, b) => a - b);
+    const q = (a, f) => a.length ? a[Math.round(f * (a.length - 1))] : null;
+    const sorted = lives.slice().sort((a, b) => a - b);
+    return {
+      lost: this.lineagesLost,
+      livingNow: ages.length,
+      // Ages are measured from here, not from the origin of the world.
+      trackedFor: this.trackFrom == null ? 0 : step - this.trackFrom,
+      censored: ages.length ? ages.filter(a => a >= (step - (this.trackFrom ?? step))).length : 0,
+      // Of the lines that died, how long they lasted.
+      deadMedian: q(sorted, 0.5), deadP90: q(sorted, 0.9), deadMax: sorted.length ? sorted[sorted.length - 1] : null,
+      // Of the lines still going, how old they are. A population whose living
+      // lines are all young is still churning; one where they are old has
+      // settled into a few survivors.
+      liveMedian: q(ages, 0.5), liveP90: q(ages, 0.9), liveMax: ages.length ? ages[ages.length - 1] : null,
     };
   }
 
