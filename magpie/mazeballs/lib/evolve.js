@@ -475,9 +475,15 @@ export class Evolver {
     if (blocked && !this.warnedBlocked) {
       this.warnedBlocked = true;
       const holes = arena.free.map(h => h[1]).sort((a, b) => b - a);
-      console.warn(`[evolve] a birth found no contiguous room: ${holes.reduce((s, v) => s + v, 0)} ` +
-        `slots free across ${holes.length} holes, largest ${holes[0] ?? 0}. ` +
-        `Size the arena with buildBodies({ maxCells }) for the bodies evolution can reach.`);
+      if (arena.lastBirthFail === 'slots') {
+        console.warn(`[evolve] births are failing because every ORGANISM SLOT is taken ` +
+          `(${arena.P} of ${arena.P}). That is the population at its ceiling, not the arena — ` +
+          `raise bodySlots if the cell budget still has room.`);
+      } else {
+        console.warn(`[evolve] a birth found no cell room: ${holes.reduce((s, v) => s + v, 0)} ` +
+          `slots free across ${holes.length} holes, largest ${holes[0] ?? 0}. ` +
+          `Size the arena with buildBodies({ maxCells }) for the bodies evolution can reach.`);
+      }
     }
 
     return born;

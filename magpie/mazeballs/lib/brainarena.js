@@ -158,9 +158,15 @@ export class BrainArena {
    */
   birth(n) {
     if (n <= 0) throw new Error(`birth(${n}): brains need at least one neuron`);
+    // WHY a birth failed, recorded, because the two causes are opposite and the
+    // caller was reporting one of them for both. Running out of ORGANISM slots
+    // is the population hitting its ceiling; running out of CELL room is the
+    // arena. A log line blaming fragmentation while 14,400 contiguous slots sat
+    // free sent me looking in entirely the wrong place.
+    this.lastBirthFail = null;
     let o = -1;
     for (let i = 0; i < this.P; i++) if (!this.alive[i]) { o = i; break; }
-    if (o === EMPTY) return EMPTY;
+    if (o === EMPTY) { this.lastBirthFail = 'slots'; return EMPTY; }
 
     // BEST FIT, not first fit.
     //
@@ -231,7 +237,7 @@ export class BrainArena {
     if (best < 0) {
       let have = 0;
       for (const [, c] of this.free) have += c;
-      if (have < n) return -1;                 // genuinely full; that IS a limit
+      if (have < n) { this.lastBirthFail = 'cells'; return -1; }   // genuinely full
       const got = new Int32Array(n);
       let k = 0;
       // Smallest holes first, so the runs that could still serve a whole body
