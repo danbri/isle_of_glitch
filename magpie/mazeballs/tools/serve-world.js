@@ -20,7 +20,7 @@
  * always used. Deno is not drawing to your browser and could not; it is
  * shipping numbers, and the browser is drawing them.
  *
- *   deno run -A tools/serve-world.js --port 8899 --beasts 3000
+ *   deno run -A tools/serve-world.js --port 8899 --cells 25000 --resume
  *   open http://127.0.0.1:8899/world.html?watch=1
  *
  * Without ?watch=1 the page still runs its own local simulation, which stays
@@ -688,10 +688,10 @@ const HEAD = 48;
 /**
  * A frame is positions, activations and cell types.
  *
- * Types change only on birth and death, but they are sent every frame anyway:
- * at these sizes the saving is not worth a second code path that can disagree
- * with itself about which cells are alive. Correctness first; the topologyEpoch
- * machinery in brainarena.js is there when this becomes the bottleneck.
+ * Types, uids and bonds change only on birth and death, but in this RWM2 layout
+ * they are still sent every frame. Cache the CPU-side slices by epoch so the
+ * wire format stays simple while the request path stops rebuilding topology
+ * from scratch at frame rate.
  */
 // One readback serves every viewer in the same window.
 //
@@ -715,30 +715,57 @@ async function frame() {
   return inFlight;
 }
 
-async function buildFrame() {
-  const { pos, energy } = await world.readCells();
-  const { act } = await brains.readState();
+let topologyCache = null;
+function frameTopology() {
+  const epoch = evo.births + evo.deaths;
+  if (topologyCache?.epoch === epoch) return topologyCache;
 
-  // Live bond pairs, computed HERE so they describe the same instant as the
-  // positions above. Sending them out-of-band (the /bonds endpoint) meant the
-  // viewer held a bond list from one moment and positions from another, and
-  // with tens of thousands of births constantly recycling slots those lists
-  // disagreed about which cells belong to which body. The result was lines
-  // drawn between cells that were never bonded — arbitrary pairs, which is
-  // exactly why they ignored the renderer's length cull. Diagnosed twice as
-  // something else (dead cells, then over-stretched bodies) before the strain
-  // measurement came back clean at 1.00 and ruled the physics out.
-  const pairs = [];
-  const bond = built.cells.bond, bondK = built.cells.bondK;
+  const C = built.cells;
+  const live = new Int32Array(N);
+  const slots = new Int32Array(N);
+  const types = new Int32Array(N);
+  const uids = new Int32Array(N);
+  let L = 0;
+
+  const bondK = C.bondK;
+  const pairTmp = new Int32Array(N * bondK * 2);
+  let pairN = 0;
+
   for (let i = 0; i < N; i++) {
-    if (built.cells.ctype[i] < 0) continue;
+    const t = C.ctype[i];
+    if (t < 0) continue;
+
+    live[L] = i;
+    slots[L] = C.cslot[i];
+    types[L] = t;
+    const b = C.body ? C.body[i] : -1;
+    uids[L] = b >= 0 ? evo.uid[b] : -1;
+    L++;
+
     for (let k = 0; k < bondK; k++) {
-      const j = bond[i * bondK + k];
-      if (j < 0 || j <= i || built.cells.ctype[j] < 0) continue;   // each bond once
-      pairs.push(i, j);
+      const j = C.bond[i * bondK + k];
+      if (j < 0 || j <= i || C.ctype[j] < 0) continue;
+      pairTmp[pairN++] = i;
+      pairTmp[pairN++] = j;
     }
   }
-  const P32 = Int32Array.from(pairs);
+
+  topologyCache = {
+    epoch,
+    liveIdx: live.slice(0, L),
+    slots: slots.slice(0, L),
+    types: types.slice(0, L),
+    uids: uids.slice(0, L),
+    pairs: pairTmp.slice(0, pairN),
+  };
+  return topologyCache;
+}
+
+async function buildFrame() {
+  const { pos, energy } = await world.readCells();
+  const { act } = await brains.readAct();
+  const topo = frameTopology();
+  const { liveIdx, slots, types, uids, pairs: P32 } = topo;
 
   // LIVE CELLS ONLY.
   //
@@ -747,8 +774,6 @@ async function buildFrame() {
   // made a frame take 0.7s to build and 1.8s of world time to arrive, which in
   // turn aliased the brain trace by thirty-two times. Sending an index with each
   // live cell costs 4 bytes and removes seven eighths of the message.
-  const liveIdx = [];
-  for (let i = 0; i < N; i++) if (built.cells.ctype[i] >= 0) liveIdx.push(i);
   const L = liveIdx.length;
   // idx(4) + pos(8) + act(4) + type(4) + energy(4) + uid(4) per live cell.
   // Sized for five of those six once, which threw only when the bond pairs
@@ -777,7 +802,7 @@ async function buildFrame() {
 
   let at = HEAD;
   new DataView(buf).setUint32(at, L, true); at += 4;
-  new Int32Array(buf, at, L).set(Int32Array.from(liveIdx)); at += L * 4;
+  new Int32Array(buf, at, L).set(liveIdx); at += L * 4;
   {
     const p2 = new Float32Array(buf, at, L * 2);
     for (let k = 0; k < L; k++) { const i = liveIdx[k]; p2[k * 2] = pos[i * 2]; p2[k * 2 + 1] = pos[i * 2 + 1]; }
@@ -785,20 +810,11 @@ async function buildFrame() {
   }
   // Per-CELL activation: the browser draws cells, not slots, so resolve the
   // cell -> brain-slot indirection here rather than shipping the slot table.
-  const cellAct = new Float32Array(N);
-  const cellType = new Int32Array(N);
-  for (let i = 0; i < N; i++) {
-    const t = built.cells.ctype[i];
-    cellType[i] = t;
-    const slot = built.cells.cslot[i];
-    cellAct[i] = (t >= 0 && slot >= 0) ? act[slot] : 0;
-  }
   {
     const a2 = new Float32Array(buf, at, L);
-    for (let k = 0; k < L; k++) a2[k] = cellAct[liveIdx[k]];
+    for (let k = 0; k < L; k++) a2[k] = slots[k] >= 0 ? act[slots[k]] : 0;
     at += L * 4;
-    const t2 = new Int32Array(buf, at, L);
-    for (let k = 0; k < L; k++) t2[k] = cellType[liveIdx[k]];
+    new Int32Array(buf, at, L).set(types);
     at += L * 4;
     const e2 = new Float32Array(buf, at, L);
     for (let k = 0; k < L; k++) e2[k] = energy[liveIdx[k]];
@@ -818,15 +834,8 @@ async function buildFrame() {
   // so it survives a body being torn in half: both halves still name the same
   // animal. Genome identity would not do this — siblings and twins share a
   // genome and are different animals.
-  {
-    const u2 = new Int32Array(buf, at, L);
-    for (let k = 0; k < L; k++) {
-      const i = liveIdx[k];
-      const b = built.cells.body ? built.cells.body[i] : -1;
-      u2[k] = b >= 0 ? evo.uid[b] : -1;
-    }
-    at += L * 4;
-  }
+  new Int32Array(buf, at, L).set(uids);
+  at += L * 4;
   new DataView(buf).setUint32(at, P32.length, true); at += 4;
   new Int32Array(buf, at, P32.length).set(P32);
   return new Uint8Array(buf);

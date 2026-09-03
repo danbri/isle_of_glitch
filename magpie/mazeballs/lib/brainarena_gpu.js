@@ -341,6 +341,24 @@ export class BrainArenaGPU {
     return { state, act, from };
   }
 
+  async readAct(into = null) {
+    // Frame rendering only needs activation. Pulling state as well doubles the
+    // readback and stalls the sim for bytes the watcher will never inspect.
+    const staging = this.device.createBuffer({
+      size: this.N * 4, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    });
+    const enc = this.device.createCommandEncoder();
+    enc.copyBufferToBuffer(this.bAct, 0, staging, 0, this.N * 4);
+    this.device.queue.submit([enc.finish()]);
+
+    await staging.mapAsync(GPUMapMode.READ);
+    const act = new Float32Array(staging.getMappedRange().slice(0));
+    staging.unmap(); staging.destroy();
+
+    if (into) into.act.set(act);
+    return { act };
+  }
+
   async readState(into = null) {
     // A staging buffer PER CALL, not one shared for the object's lifetime.
     // mapAsync is asynchronous, so two overlapping readbacks both reach for the

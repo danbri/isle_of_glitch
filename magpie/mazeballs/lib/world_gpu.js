@@ -4,7 +4,7 @@
  * This closes the loop that lib/brainarena_gpu.js leaves open. There, `ext` was
  * uploaded from the CPU and held constant, which forfeits the batching win the
  * moment sensing is live. Here the sense -> brain -> muscle -> move cycle runs
- * as four dispatches with nothing crossing the bus: sensor cells WRITE `ext`
+ * as four dispatches with nothing crossing the bus: cells WRITE `ext`
  * GPU-side, the arena kernels consume it, muscle cells READ `act`, and the
  * physics moves the bodies. The CPU sees the world only when something asks —
  * a snapshot, the inspector, a log line.
@@ -1223,13 +1223,14 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   let m = cmeta[i];
   let slot = m.y;
   if (slot < 0 || m.x < 0) { return; }
-  if (cellType(m.x) != 1) { ext[u32(slot)] = 0.0; return; }
+  let acuity = senseAcuity(m.x);
 
   let p = pos[i];
   // Two things a cell can actually feel locally: how fast the medium is moving
   // past it, and a scalar gradient it sits in. Both are analytic at p.
   let rel = flowAt(p) - vel[i].xy;
-  var e = tanh((length(rel) + fbm(p * P.flowScale * 0.5, P.seed + 77u) - 0.5) * P.senseGain);
+  let mediumNoise = fbm(p * P.flowScale * 0.5, P.seed + 77u) * 2.0 - 1.0;
+  var e = tanh(mix(P.senseNoise * mediumNoise, length(rel), acuity) * P.senseGain);
 
   // A COMPASS: the cell's own bearing against the world's basis vectors.
   //
@@ -1268,9 +1269,8 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   if (P.compass > 0.0 && alen > 1e-5) {
     let u = ax / alen;
     let bearing = select(u.x, u.y, senseNorth(m.x));   // eastness or northness
-    let acu = senseAcuity(m.x);
     let grit2 = fbm(p * 3.1 + vec2<f32>(f32(i) * 0.017, 0.0), P.seed + 913u) * 2.0 - 1.0;
-    e = e + P.compass * mix(P.senseNoise * grit2, bearing, acu);
+    e = e + P.compass * mix(P.senseNoise * grit2, bearing, acuity);
   }
   // FEELING THE GROUND — wet, and which way is down.
   //
@@ -1299,14 +1299,13 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   // Both fade into noise as acuity falls, and acuity is already charged for by
   // senseCost — so a creature that can find the good ground is paying to.
   if (P.senseTerrain > 0.0) {
-    let acuT = senseAcuity(m.x);
     let wet = mudAt(p) * 2.0 - 1.0;
     var lean = 0.0;
     if (alen > 1e-5) {
       lean = clamp(dot(-heightGrad(p), ax / alen) * 3.0, -1.0, 1.0);
     }
     let nzT = fbm(p * 2.7 + vec2<f32>(f32(i) * 0.023, 0.0), P.seed + 521u) * 2.0 - 1.0;
-    e = e + P.senseTerrain * mix(P.senseNoise * nzT, 0.55 * wet + lean, acuT);
+    e = e + P.senseTerrain * mix(P.senseNoise * nzT, 0.55 * wet + lean, acuity);
   }
 
   // PERCEIVING OTHER CREATURES.
@@ -1330,54 +1329,56 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   // sharp about where things are, a vague one just knows something is near.
   //
   // Cost: this walks the neighbour hash, which PHYSICS-2.md warns is the
-  // expensive thing. It walks it ONLY for sensor cells, so the cost scales with
-  // how much of the world has chosen to see.
+  // expensive thing. It walks it only for cells with nonzero acuity, so the
+  // cost follows the continuous sensory capacity rather than a display label.
   if (P.senseOther > 0.0) {
     var acc = 0.0;
-    let sig2 = max(1e-4, P.senseRange * P.senseRange);
-    let myV = vel[i].xy;
+    if (acuity > 0.0) {
+      let sig2 = max(1e-4, P.senseRange * P.senseRange);
+      let myV = vel[i].xy;
     // A WIDER WALK, FOR SENSORS ONLY. The contact walk is 3x3 buckets and reaches
     // 1.8 world units; bodies are 4-6 across and land about seven apart, so at
     // that radius a sensor can only ever see its own tissue. Perception of other
     // creatures needs more reach, and it is affordable here precisely because
     // only sensor cells pay for it — the cost scales with how much of the world
     // has chosen to see.
-    let R = i32(max(1.0, P.senseBuckets));
-    for (var dy = -R; dy <= R; dy = dy + 1) {
-      for (var dx = -R; dx <= R; dx = dx + 1) {
-        let b = bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM);
-        let cnt = min(atomicLoad(&hashData[b]), P.bucketM);
-        for (var k = 0u; k < cnt; k = k + 1u) {
-          let j = atomicLoad(&hashData[b + 1u + k]);
-          if (j == i) { continue; }
-          if (cmeta[j].x < 0) { continue; }
-          // OTHER BODIES ONLY. Relative motion was supposed to make a cell's
-          // own tissue invisible to it, and it does not: a body that deforms
-          // moves its own cells past each other, so a sensor heard mostly
-          // itself — measured, the reading was identical alone and in a
-          // crowd. Own-body cells are excluded by BODY ID, which is a
-          // property the kernel already carries for the contest and is not a
-          // new concept. Proprioception is a real sense and a separate one.
-          if (cmeta[j].z == cmeta[i].z) { continue; }
-          let d = minImage(pos[j] - p);
-          let d2 = dot(d, d);
-          if (d2 > sig2 * 9.0) { continue; }
-          let rel = length(vel[j].xy - myV);
-          if (rel < 1e-4) { continue; }
-          let fall = exp(-d2 / (2.0 * sig2));
-          var w = 1.0;
-          if (alen > 1e-5) {
-            let u = ax / alen;
-            let dirTo = d / max(1e-4, sqrt(d2));
-            let cosT = dot(u, dirTo);
-            let sharp = senseAcuity(m.x);
-            w = mix(1.0, max(0.0, cosT), sharp);
+      let R = i32(max(1.0, P.senseBuckets));
+      for (var dy = -R; dy <= R; dy = dy + 1) {
+        for (var dx = -R; dx <= R; dx = dx + 1) {
+          let b = bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM);
+          let cnt = min(atomicLoad(&hashData[b]), P.bucketM);
+          for (var k = 0u; k < cnt; k = k + 1u) {
+            let j = atomicLoad(&hashData[b + 1u + k]);
+            if (j == i) { continue; }
+            if (cmeta[j].x < 0) { continue; }
+            // OTHER BODIES ONLY. Relative motion was supposed to make a cell's
+            // own tissue invisible to it, and it does not: a body that deforms
+            // moves its own cells past each other, so a sensor heard mostly
+            // itself — measured, the reading was identical alone and in a
+            // crowd. Own-body cells are excluded by BODY ID, which is a
+            // property the kernel already carries for the contest and is not a
+            // new concept. Proprioception is a real sense and a separate one.
+            if (cmeta[j].z == cmeta[i].z) { continue; }
+            let d = minImage(pos[j] - p);
+            let d2 = dot(d, d);
+            if (d2 > sig2 * 9.0) { continue; }
+            let rel = length(vel[j].xy - myV);
+            if (rel < 1e-4) { continue; }
+            let fall = exp(-d2 / (2.0 * sig2));
+            var w = 1.0;
+            if (alen > 1e-5) {
+              let u = ax / alen;
+              let dirTo = d / max(1e-4, sqrt(d2));
+              let cosT = dot(u, dirTo);
+              w = mix(1.0, max(0.0, cosT), acuity);
+            }
+            acc = acc + rel * fall * w;
           }
-          acc = acc + rel * fall * w;
         }
       }
     }
-    e = e + P.senseOther * tanh(acc);
+    let nzO = fbm(p * 1.9 + vec2<f32>(f32(i) * 0.031, 0.0), P.seed + 1771u) * 2.0 - 1.0;
+    e = e + P.senseOther * mix(P.senseNoise * nzO, tanh(acc), acuity);
   }
   ext[u32(slot)] = clamp(e, -4.0, 4.0);
 }
@@ -1781,26 +1782,12 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // cheap noisy sense stays a live option. primitives.md: an axis without a
   // cost has no teeth.
   //
-  // AND IT IS CHARGED WHERE IT IS USED. This was levied on EVERY cell, while
-  // sense() computes a reading only for cells whose type is sensor — so the
-  // world charged the whole population for an organ almost none of them had.
-  // Measured before the fix: mean acuity 0.682 across all live cells against a
-  // senseCost of 0.25, i.e. 0.17 energy per second of pure tax, on a brainTax
-  // of 0.4. A 43% surcharge on existing, for nothing.
-  //
-  // It also explains the shape of the population. Sensor cells sat at acuity
-  // 0.000 — every one of them — while non-sensors averaged 0.682: the bits are
-  // near-neutral where they are not charged against a benefit, and the cells
-  // that could have used them had been driven to zero. A sensor was an organ
-  // that reads pure noise and a non-sensor was paying for one.
-  //
-  // Gating a COST on type is uncomfortable next to the First Law, and it is the
-  // honest reading here: the kernel ALREADY decides who senses by exactly this
-  // test, so making the bill follow the benefit is consistency rather than a
-  // new branch. The alternative — charging by continuous sense capacity — needs
-  // that capacity in cmeta, where there is no room for it.
-  let senseWork = P.senseCost * senseAcuity(cmeta[i].x)
-                * select(0.0, 1.0, cellType(cmeta[i].x) == 1);
+  // AND IT IS CHARGED WHERE IT IS USED. Sensing is a continuous capacity packed
+  // into cmeta.x, not the display label in the low bits. Gating either the
+  // input or the bill on the label silently discards near-sensors whose sensory
+  // capacity lost an argmax contest with grip or contraction. Cost follows
+  // acuity directly, so a sharp cell pays wherever it appears.
+  let senseWork = P.senseCost * senseAcuity(cmeta[i].x);
   // ARMOUR IS EXPENSIVE TO HOLD. Without a cost, toughness is a free defence
   // and evolution takes it to the ceiling in every lineage — the same failure
   // as feeding being independent of what a cell is, which produced a 94%
@@ -2287,7 +2274,7 @@ export class WorldGPU {
       //
       // Perception costs a third of the world's throughput. That is the price of
       // any creature being able to perceive any other at all, and it is paid only
-      // by cells that are sensors.
+      // by cells carrying nonzero acuity.
       senseOther: 0.35, senseRange: 1.6, senseBuckets: 4.0,
       dt: brains.dt, ...params,
     };

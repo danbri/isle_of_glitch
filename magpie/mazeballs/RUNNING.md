@@ -9,10 +9,11 @@ half-remembered `nohup` line — if this file is all you have, it is enough.
 ## Quick reference
 
 ```sh
-./tools/world start          # start it (or restart if already up)
+./tools/world start          # start it, resuming the autosave by default
 ./tools/world stop           # stop it
 ./tools/world status         # is it up, what step, how many bodies
-./tools/world restart        # stop then start
+./tools/world restart        # stop then start, also resuming by default
+./tools/world start --no-resume     # deliberately reseed
 ./tools/world log            # follow the server log
 ./tools/world tailscale on   # serve it over your tailnet, with HTTPS
 ./tools/world tailscale off  # stop serving it there
@@ -40,22 +41,24 @@ disturbing the shared run.
 ## Options
 
 ```sh
-./tools/world start --beasts 2500 --cells 12 --port 8899
+./tools/world start --cells 25000 --port 8899
 ```
 
 | flag | default | meaning |
 |---|---|---|
-| `--beasts` | 1200 | founder population; also sizes the arena |
-| `--cells` | 12 | cells per body at the start (evolution changes this) |
+| `--cells`, `--budget` | 25000 via `tools/world`, 100000 in `serve-world.js` | total cell budget for the universe |
+| `--maxCells`, `--bodyCap` | 60 | maximum cells in one body island |
+| `--founderCells` | 12 | cells in a founder ring |
 | `--port` | 8899 | |
 | `--host` | 0.0.0.0 | `127.0.0.1` to refuse anything but this machine |
 | `--drift` | 1 | non-stationary resource field; `0` for a static one |
-| `--spf` | 6 | physics steps per scheduler tick |
+| `--spf` | 1 | physics steps per scheduler tick |
+| `--resume` | on via `tools/world` | restore `runs/world.snapshot` before stepping |
+| `--no-resume` | off | wrapper-only escape hatch for a deliberate fresh reseed |
 
-Memory scales as `beasts × maxCells`, so 1200 beasts reserves 48,000 cell slots
-even though only ~25,000 are usually alive. That headroom is deliberate: bodies
-grow, and an arena sized for the starting bodies fragments and silently stops
-all reproduction (see RESEARCH.md).
+Memory scales with the total cell budget and `maxCells`. The server derives the
+number of body islands from those, leaving ecology rather than an old `--beasts`
+flag to decide how many bodies the world can actually support.
 
 ## Over tailscale
 

@@ -47,6 +47,16 @@ gpuTest('one GPU step matches the CPU reference to f32 precision', async () => {
   gpu.destroy();
 });
 
+gpuTest('activation can be read without pulling full brain state', async () => {
+  const cpu = populated();
+  const gpu = await BrainArenaGPU.create(cpu);
+  for (let i = 0; i < 20; i++) cpu.step(null);
+  gpu.step(20);
+  const { act } = await gpu.readAct();
+  assert(maxDiff(act, cpu.act) < 1e-5, `act diverged by ${maxDiff(act, cpu.act)}`);
+  gpu.destroy();
+});
+
 gpuTest('a batch of GPU steps tracks the CPU over a short horizon', async () => {
   const cpu = populated();
   const gpu = await BrainArenaGPU.create(cpu);

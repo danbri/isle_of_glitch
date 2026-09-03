@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Start, stop and inspect the world server without needing to remember anything.
 #
-#   ./tools/world start [--beasts N] [--cells N] [--port N] ...
+#   ./tools/world start [--cells N] [--port N] [--resume|--no-resume] ...
 #   ./tools/world stop | restart | status | log
 #   ./tools/world tailscale on | off
 #
@@ -13,6 +13,7 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PIDFILE="$HERE/runs/world.pid"
 LOGFILE="$HERE/runs/world.log"
 PORT_DEFAULT=8899
+DEFAULT_CELLS=25000
 
 mkdir -p "$HERE/runs"
 
@@ -32,8 +33,17 @@ cmd_start() {
     echo "already running (pid $(cat "$PIDFILE")); restarting instead"
     cmd_stop
   fi
-  local args=("$@")
-  [ ${#args[@]} -eq 0 ] && args=(--beasts 1200 --cells 12 --port "$PORT_DEFAULT")
+  local args=()
+  local resume=1
+  for a in "$@"; do
+    case "$a" in
+      --resume) ;;
+      --no-resume) resume=0 ;;
+      *) args+=("$a") ;;
+    esac
+  done
+  [ ${#args[@]} -eq 0 ] && args=(--cells "$DEFAULT_CELLS" --port "$PORT_DEFAULT" --maxAge 25000 --ageSpread 0.35)
+  [ "$resume" -eq 1 ] && args+=(--resume)
   echo "${args[*]}" > "$HERE/runs/world.cmd"
 
   ( cd "$HERE" && nohup deno run -A tools/serve-world.js "${args[@]}" \
