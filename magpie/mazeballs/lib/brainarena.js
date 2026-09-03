@@ -125,6 +125,22 @@ export class BrainArena {
     // ------------------------------------------------------ per organism
     this.off = new Int32Array(this.P).fill(EMPTY);
     this.cnt = new Int32Array(this.P);
+    // RESERVED slots, which is cnt rounded up to a size class. The body uses the
+    // first cnt of them; the rest are held so the hole left behind is a shape
+    // something else can use. See birth().
+    this.cap = new Int32Array(this.P);
+    // SCATTERED BODIES. null means the usual case - a contiguous run starting at
+    // off[o]. An Int32Array means this body's slots are wherever they could be
+    // found, in order.
+    //
+    // Contiguity was never a requirement of the compute. The physics is one
+    // dispatch over every cell and the brains are one sparse network over every
+    // neuron, both indexed by slot; a body is a label, not a region. It was a
+    // CPU convenience - one buffered write per body instead of n - and it was
+    // costing births at 194 refusals per 100 steps, refusing by SIZE because
+    // small bodies fit where large ones cannot. That is a selection pressure
+    // imposed by bookkeeping.
+    this.slots = new Array(this.P).fill(null);
     this.alive = new Uint8Array(this.P);
 
     // Free list of holes as [offset, count] pairs, kept sorted by offset so
@@ -142,16 +158,112 @@ export class BrainArena {
    */
   birth(n) {
     if (n <= 0) throw new Error(`birth(${n}): brains need at least one neuron`);
+    // WHY a birth failed, recorded, because the two causes are opposite and the
+    // caller was reporting one of them for both. Running out of ORGANISM slots
+    // is the population hitting its ceiling; running out of CELL room is the
+    // arena. A log line blaming fragmentation while 14,400 contiguous slots sat
+    // free sent me looking in entirely the wrong place.
+    this.lastBirthFail = null;
     let o = -1;
     for (let i = 0; i < this.P; i++) if (!this.alive[i]) { o = i; break; }
-    if (o === EMPTY) return EMPTY;
+    if (o === EMPTY) { this.lastBirthFail = 'slots'; return EMPTY; }
 
+    // BEST FIT, not first fit.
+    //
+    // This took the first hole large enough and left the remainder behind. With
+    // bodies varying from 2 to 60 cells and constant birth/death churn, that
+    // shreds the arena: every oversized hole a small body lands in leaves a
+    // sliver, and slivers are never reusable by anything but the smallest
+    // bodies. Coalescing does not save you — it can only merge holes that are
+    // ADJACENT, and scattered deaths do not produce adjacent holes.
+    //
+    // Measured on the live world when this was found: 541 cell slots free, room
+    // for roughly 43 more bodies at the observed 12.5 cells each, and births
+    // being refused anyway because no single hole was big enough. The space was
+    // there; it was in the wrong shape.
+    //
+    // Taking the SMALLEST hole that fits keeps the large ones intact for the
+    // large bodies that actually need contiguity, and puts each sliver-producing
+    // allocation where the sliver is smallest.
+    // SIZE CLASSES, because best-fit and coalescing were not enough.
+    //
+    // Both were already here, and the note above is right that coalescing
+    // cannot merge holes that are not adjacent. What neither fixes is that a
+    // hole's SIZE is arbitrary: with bodies from 2 to 60 cells, every death
+    // leaves a hole of a size nothing in particular wants, and the arena ends
+    // up as hundreds of near-misses. Measured on the fresh world: 12,599 blocked
+    // births, then 1,485 more in 831 steps, with 530 holes whose largest was 17.
+    //
+    // Rounding each reservation up to a power of two means holes come in six
+    // sizes instead of sixty, and a freed hole is exactly the right shape for
+    // any body of its class. The cost is internal waste - a 12-cell body holds
+    // 16 slots - which is bounded at under 2x and is space, whereas
+    // fragmentation costs births, which is selection.
+    // ROUNDING REVERTED, and the measurement is why. Rounding a request up to a
+    // power of two is the standard answer to fragmentation, and it backfired
+    // here: bodies are ~9 cells, so a body needing 5 asked for 8 in an arena
+    // whose holes had settled at 7, and a body needing 9 asked for 16 when
+    // nothing above 7 existed. It made the mismatch worse in exactly the size
+    // range the population occupies.
+    //
+    // The real constraint is not hole size, it is that a body must own a
+    // CONTIGUOUS run at all - and nothing in the compute needs that. The physics
+    // is one dispatch over every cell and the brains are one sparse network over
+    // every neuron, both indexed; a body is a label in cmeta, not a region of
+    // memory. Fixing it properly means letting a body own scattered slots, which
+    // changes writeCellRange's contract at nine call sites. Recorded, not done.
+    const want = n;
+    let best = -1, bestC = Infinity;
     for (let h = 0; h < this.free.length; h++) {
-      const [fo, fc] = this.free[h];
-      if (fc < n) continue;
-      if (fc === n) this.free.splice(h, 1);
-      else this.free[h] = [fo + n, fc - n];
-      this.off[o] = fo; this.cnt[o] = n; this.alive[o] = 1;
+      const fc = this.free[h][1];
+      if (fc < want || fc >= bestC) continue;
+      best = h; bestC = fc;
+      if (fc === want) break;             // exact fit; nothing can beat it
+    }
+    // Fall back to an exact fit if no class-sized hole exists, so a nearly full
+    // arena still places bodies rather than refusing on principle.
+    if (best < 0) {
+      want = n;
+      for (let h = 0; h < this.free.length; h++) {
+        const fc = this.free[h][1];
+        if (fc < want || fc >= bestC) continue;
+        best = h; bestC = fc;
+        if (fc === want) break;
+      }
+    }
+    // NO RUN LONG ENOUGH IS NOT A REASON TO REFUSE. Gather the slots from
+    // wherever they are: the body is the same body, and nothing downstream of
+    // slot() can tell the difference.
+    if (best < 0) {
+      let have = 0;
+      for (const [, c] of this.free) have += c;
+      if (have < n) { this.lastBirthFail = 'cells'; return -1; }   // genuinely full
+      const got = new Int32Array(n);
+      let k = 0;
+      // Smallest holes first, so the runs that could still serve a whole body
+      // are left intact for one.
+      const order = this.free.map((h, idx) => idx).sort((a, b) => this.free[a][1] - this.free[b][1]);
+      for (const idx of order) {
+        const [fo, fc] = this.free[idx];
+        const take = Math.min(fc, n - k);
+        for (let t = 0; t < take; t++) got[k++] = fo + t;
+        this.free[idx] = [fo + take, fc - take];
+        if (k >= n) break;
+      }
+      this.free = this.free.filter(([, c]) => c > 0);
+      got.sort();
+      this.slots[o] = got;
+      this.off[o] = got[0]; this.cnt[o] = n; this.cap[o] = n; this.alive[o] = 1;
+      this.topologyEpoch++;
+      this.clearSlots(got);
+      return o;
+    }
+    if (best >= 0) {
+      const h = best, [fo, fc] = this.free[h];
+      if (fc === want) this.free.splice(h, 1);
+      else this.free[h] = [fo + want, fc - want];
+      this.slots[o] = null;
+      this.off[o] = fo; this.cnt[o] = n; this.cap[o] = want; this.alive[o] = 1;
       this.topologyEpoch++;
       // A recycled range carries the previous tenant's state and edges. Clear
       // it, or a newborn inherits a dead beast's synapses — and, worse, edges
@@ -162,12 +274,71 @@ export class BrainArena {
     return EMPTY;                       // arena full
   }
 
+  /**
+   * THE SHAPE OF THE FREE SPACE, which is the question a blocked-birth count
+   * cannot answer. Thousands of refusals mean one of two completely different
+   * things: the arena is FULL, or the arena has room in pieces too small to use.
+   * The first is a capacity limit and is honest; the second is the allocator
+   * losing births that the world had the space for, which is selection being
+   * decided by bookkeeping.
+   */
+  freeStats() {
+    let total = 0, largest = 0;
+    const sizes = [];
+    for (const [, c] of this.free) { total += c; if (c > largest) largest = c; sizes.push(c); }
+    sizes.sort((a, b) => b - a);
+    let usable60 = 0, usable16 = 0;
+    for (const c of sizes) { if (c >= 60) usable60++; if (c >= 16) usable16++; }
+    return {
+      holes: this.free.length, freeSlots: total, largest,
+      // How many holes could take a full-size body, and a typical one.
+      holesFor60: usable60, holesFor16: usable16,
+      // If total is large and largest is small, the space is in the wrong shape.
+      fragmented: total > 0 && largest < total / 8,
+      top: sizes.slice(0, 8),
+    };
+  }
+
+  /** Return one slot to the free list, coalescing with its neighbours. */
+  freeOne(fo) {
+    let i = 0;
+    while (i < this.free.length && this.free[i][0] < fo) i++;
+    this.free.splice(i, 0, [fo, 1]);
+    if (i + 1 < this.free.length && this.free[i][0] + this.free[i][1] === this.free[i + 1][0]) {
+      this.free[i][1] += this.free[i + 1][1];
+      this.free.splice(i + 1, 1);
+    }
+    if (i > 0 && this.free[i - 1][0] + this.free[i - 1][1] === this.free[i][0]) {
+      this.free[i - 1][1] += this.free[i][1];
+      this.free.splice(i, 1);
+    }
+  }
+
+  /** clearRange, for slots that are not a run. */
+  clearSlots(list) {
+    for (let i = 0; i < list.length; i++) this.clearRange(list[i], 1);
+  }
+
   /** Release an organism's slots back to the free list, coalescing holes. */
   death(o) {
     if (!this.alive[o]) return;
-    const fo = this.off[o], fc = this.cnt[o];
+    // Free the RESERVATION, not the cell count: returning only cnt would leak
+    // the rounding remainder on every death until the arena had no free list
+    // left that matched anything.
+    const sc = this.slots[o];
+    if (sc) {
+      // A scattered body returns each slot as its own hole; coalescing below
+      // merges any that happen to be adjacent.
+      this.clearSlots(sc);
+      this.alive[o] = 0; this.off[o] = EMPTY; this.cnt[o] = 0; this.cap[o] = 0;
+      this.slots[o] = null;
+      this.topologyEpoch++;
+      for (let i = 0; i < sc.length; i++) this.freeOne(sc[i]);
+      return;
+    }
+    const fo = this.off[o], fc = this.cap[o] || this.cnt[o];
     this.clearRange(fo, fc);
-    this.alive[o] = 0; this.off[o] = EMPTY; this.cnt[o] = 0;
+    this.alive[o] = 0; this.off[o] = EMPTY; this.cnt[o] = 0; this.cap[o] = 0;
     this.topologyEpoch++;
 
     let i = 0;
@@ -234,14 +405,36 @@ export class BrainArena {
   cellOf(slot) { return this.cell[slot]; }
 
   /** World cell ids of organism `o`'s neurons, island-relative order. */
-  cellsOf(o) { return this.cell.subarray(this.off[o], this.off[o] + this.cnt[o]); }
+  cellsOf(o) {
+    const sc = this.slots[o];
+    if (!sc) return this.cell.subarray(this.off[o], this.off[o] + this.cnt[o]);
+    // A scattered body cannot be a view; gather. Callers read this, they do not
+    // write through it, so a copy is safe — and the contiguous case, which is
+    // almost all of them, still returns a view and copies nothing.
+    const out = new Int32Array(sc.length);
+    for (let i = 0; i < sc.length; i++) out[i] = this.cell[sc[i]];
+    return out;
+  }
 
   /** Island-relative index -> absolute slot, bounds-checked. */
   slot(o, i) {
     if (!this.alive[o]) throw new Error(`organism ${o} is not alive`);
     if (i < 0 || i >= this.cnt[o]) throw new Error(`neuron ${i} outside organism ${o}'s ${this.cnt[o]}`);
-    return this.off[o] + i;
+    const sc = this.slots[o];
+    return sc ? sc[i] : this.off[o] + i;
   }
+
+  /** Every slot this body owns, in order. The one place that knows the layout. */
+  slotsOf(o) {
+    const sc = this.slots[o];
+    if (sc) return sc;
+    const out = new Int32Array(this.cnt[o]);
+    for (let i = 0; i < out.length; i++) out[i] = this.off[o] + i;
+    return out;
+  }
+
+  /** True if this body's slots are not one run — callers that write in bulk care. */
+  isScattered(o) { return this.slots[o] !== null; }
 
   /**
    * Check the island invariant across the whole arena: every live edge points
@@ -253,7 +446,10 @@ export class BrainArena {
     const bad = [];
     const owner = new Int32Array(this.N).fill(EMPTY);
     for (let o = 0; o < this.P; o++)
-      if (this.alive[o]) owner.fill(o, this.off[o], this.off[o] + this.cnt[o]);
+      if (!this.alive[o]) continue;
+      const sc = this.slots[o];
+      if (sc) { for (let i = 0; i < sc.length; i++) owner[sc[i]] = o; }
+      else owner.fill(o, this.off[o], this.off[o] + this.cnt[o]);
 
     for (let d = 0; d < this.N; d++) {
       for (let k = 0; k < this.K; k++) {
@@ -301,7 +497,11 @@ export class BrainArena {
 
   /** Activations of organism `o`, island-relative — what motors/logging read. */
   readAct(o) {
-    return this.act.subarray(this.off[o], this.off[o] + this.cnt[o]);
+    const sc = this.slots[o];
+    if (!sc) return this.act.subarray(this.off[o], this.off[o] + this.cnt[o]);
+    const out = new Float32Array(sc.length);
+    for (let i = 0; i < sc.length; i++) out[i] = this.act[sc[i]];
+    return out;
   }
 
   /* ------------------------------------------------------------ snapshot */
@@ -435,9 +635,21 @@ export class BrainArena {
     a.next.set(a.state);
 
     // Rebuild the free list from what the organism table says is occupied.
+    //
+    // AND RESET EVERY RESERVATION TO ITS CELL COUNT. cap is not stored, so a
+    // restored body would otherwise free a range it no longer owns: the
+    // remainder between cnt and cap reads FREE here, could be handed to another
+    // body, and would then be released twice - the second time out from under
+    // its new tenant. Setting cap = cnt makes the table self-consistent. The
+    // size-class benefit is lost for bodies that predate the restore and
+    // returns as they die and are replaced.
     const used = new Uint8Array(N);
-    for (let o = 0; o < P; o++)
-      if (a.alive[o]) used.fill(1, a.off[o], a.off[o] + a.cnt[o]);
+    for (let o = 0; o < P; o++) {
+      if (!a.alive[o]) continue;
+      used.fill(1, a.off[o], a.off[o] + a.cnt[o]);
+      a.cap[o] = a.cnt[o];
+      a.slots[o] = null;      // not persisted; a restored body is contiguous
+    }
     a.free = [];
     let run = -1;
     for (let i = 0; i <= N; i++) {

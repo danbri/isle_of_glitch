@@ -31,6 +31,7 @@ import { BrainArenaGPU } from '../lib/brainarena_gpu.js';
 import { WorldGPU } from '../lib/world_gpu.js';
 import { Evolver } from '../lib/evolve.js';
 import { Lineage } from '../lib/lineage.js';
+import { encodeWorld, decodeHeader, decodeBody } from '../lib/snapshot.js';
 
 /**
  * ONE RESOURCE KNOB: --cells, the universe's total cell budget.
@@ -255,42 +256,61 @@ const N = built.meta.nCells;
 // into this build would decode every cell as having zero contractility —
 // bodies that look right, brains that run, and not one muscle in the world.
 // Silent wrong beats loud wrong every time, so refuse it by magic instead.
+// The format lives in lib/snapshot.js so the browser can write the same bytes.
+// See the note there: two implementations of one binary format drift silently.
 const SNAP_MAGIC = 0x324e5257;                  // 'WRN2'
 const SNAP_MAGIC_V1 = 0x314e5257;               // 'WRN1' — pre-packed cmeta
 
+/**
+ * INTERVENTIONS, RECORDED. A tune with no baseline beside it is an anecdote:
+ * the world moves on its own, so "I changed X and Y went up" means nothing
+ * without what Y was doing before and over how many steps. Held in memory for
+ * the life of the process, which is the honest lifetime of a claim about one
+ * continuous run.
+ */
+const EXPERIMENTS = [];
+
+/**
+ * The parameters a running world will accept, and the one place that decides.
+ * Both /control tune and the experiment recorder go through here, so an
+ * experiment cannot apply something tune would have refused.
+ *
+ * NOT tunable, deliberately: wrapY changes the world's topology, and hashCell
+ * and bucketM size the spatial hash. Changing either under a running population
+ * is not an intervention, it is a different world wearing the same step count.
+ */
+const TUNABLE = new Set([
+  'flowStr', 'flowScale', 'drag', 'springK', 'contract', 'damp', 'bondDamp',
+  'mudFlow', 'mudSlip', 'mudFog', 'flowDry', 'flowTerrain', 'gravity',
+  'highSap', 'lowLush', 'tidalYield', 'senseTerrain', 'harvest', 'brainTax',
+  'muscleCost', 'gripBase', 'gripMod', 'gripHold', 'gripAniso', 'fricK',
+  'contestRate', 'toughCost', 'dietWidth', 'absorbTradeoff', 'crowdK',
+  'regrowCrowdK', 'moteRegrow', 'senseOther', 'senseRange', 'compass',
+  'twistK', 'vortK', 'angDrag',
+  'massRef', 'densLo', 'densHi', 'mediumDens',
+  'foreignReach', 'foreignPush',
+  'tempPole', 'tempEq', 'tempLapse', 'tempOpt', 'tempTol', 'tempCost',
+  'contactK', 'sapRate',
+]);
+function applyTune(params) {
+  const patch = {}, rejected = [];
+  for (const [k, v] of Object.entries(params ?? {})) {
+    if (!TUNABLE.has(k)) { rejected.push(k); continue; }
+    const n = Number(v);
+    if (Number.isFinite(n)) patch[k] = n;
+  }
+  if (Object.keys(patch).length) world.writeParams(patch);
+  return { applied: patch, rejected };
+}
+
 async function saveSnapshot(path) {
-  const { pos, energy } = await world.readCells();
+  const { pos, energy, theta } = await world.readCells();
   await brains.readState(built.arena);          // pull GPU state into the arena
-  const arenaBlob = built.arena.snapshot();
-  const c = built.cells;
-
-  const parts = [
-    ['pos', pos], ['energy', energy],
-    ['ctype', c.ctype], ['cslot', c.cslot], ['body', c.body], ['bodySize', c.bodySize],
-    ['bond', c.bond], ['brest', c.brest],
-    ['uid', evo.uid], ['parentUid', evo.parentUid], ['generation', evo.generation],
-    ['lineage', evo.lineage], ['birthStep', evo.birthStep],
-  ];
-  const head = new ArrayBuffer(64);
-  const hv = new DataView(head);
-  hv.setUint32(0, SNAP_MAGIC, true);
-  hv.setUint32(4, 1, true);                     // version
-  hv.setUint32(8, N, true);
-  hv.setUint32(12, c.bondK, true);
-  hv.setUint32(16, steps, true);
-  hv.setFloat32(20, BOUND, true);
-  hv.setUint32(24, evo.births, true);
-  hv.setUint32(28, evo.deaths, true);
-  hv.setUint32(32, evo.nextUid, true);
-  hv.setUint32(36, arenaBlob.byteLength, true);
-  hv.setUint32(40, ARENA_ISLANDS, true);
-  hv.setUint32(44, args.founderCells, true);
-
-  const bytes = [new Uint8Array(head), arenaBlob];
-  for (const [, a] of parts) bytes.push(new Uint8Array(a.buffer, a.byteOffset, a.byteLength));
-  let total = 0; for (const b of bytes) total += b.byteLength;
-  const out = new Uint8Array(total);
-  let at = 0; for (const b of bytes) { out.set(b, at); at += b.byteLength; }
+  const out = encodeWorld({
+    pos, energy, theta, arenaBlob: built.arena.snapshot(),
+    cells: built.cells, evo, n: N, bondK: built.cells.bondK,
+    steps, bound: BOUND, arenaIslands: ARENA_ISLANDS, founderCells: args.founderCells,
+  });
 
   // Write beside the target then rename, so a crash mid-write cannot leave a
   // half-file where a good one used to be.
@@ -303,63 +323,95 @@ async function saveSnapshot(path) {
     const ring = `${path}.${String(Math.floor(steps / 1e5) % 8)}.ring`;
     await Deno.writeFile(ring, out);
   } catch { /* ring is a convenience, never fatal */ }
-  return { bytes: total, steps };
+  return { bytes: out.byteLength, steps };
 }
 
 async function loadSnapshot(path) {
   const raw = await Deno.readFile(path);
-  const hv = new DataView(raw.buffer, raw.byteOffset);
-  const magic = hv.getUint32(0, true);
-  if (magic === SNAP_MAGIC_V1) throw new Error(
-    'this snapshot predates packed cell metadata (WRN1). Resuming it would give ' +
-    'every cell zero contractility — a world of bodies that cannot contract a ' +
-    'single bond, with nothing in the logs to say so. Start a fresh world.');
-  if (magic !== SNAP_MAGIC) throw new Error('not a world snapshot');
-  const n = hv.getUint32(8, true);
-  if (n !== N) throw new Error(`snapshot has ${n} cell slots, this world has ${N} — start with the same --beasts/--cells`);
-  const arenaLen = hv.getUint32(36, true);
+  const h = decodeHeader(raw);
+  if (h.n !== N) {
+    throw new Error(`snapshot has ${h.n} cell slots, this world has ${N} — start with the same --beasts/--cells`);
+  }
 
   const { BrainArena } = await import('../lib/brainarena.js');
-  const restored = BrainArena.restore(raw.subarray(64, 64 + arenaLen));
+  const restored = BrainArena.restore(h.arenaBlob);
   built.arena.state.set(restored.state); built.arena.bias.set(restored.bias);
   built.arena.invTau.set(restored.invTau); built.arena.act.set(restored.act);
   built.arena.esrc.set(restored.esrc); built.arena.ew.set(restored.ew);
   built.arena.off.set(restored.off); built.arena.cnt.set(restored.cnt);
   built.arena.alive.set(restored.alive); built.arena.cell.set(restored.cell);
-  built.arena.free = restored.free.map(h => [h[0], h[1]]);
+  built.arena.free = restored.free.map(hh => [hh[0], hh[1]]);
 
-  let at = 64 + arenaLen;
-  const take = (arr) => {
-    new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength)
-      .set(raw.subarray(at, at + arr.byteLength));
-    at += arr.byteLength;
-  };
   const c = built.cells;
-  const pos = new Float32Array(N * 2), energy = new Float32Array(N);
-  take(pos); take(energy);
-  take(c.ctype); take(c.cslot); take(c.body); take(c.bodySize);
-  take(c.bond); take(c.brest);
-  take(evo.uid); take(evo.parentUid); take(evo.generation);
-  take(evo.lineage); take(evo.birthStep);
+  const { pos, energy, theta, legacy } = decodeBody(raw, h.bodyOffset, c, evo, N, h.legacy ?? 0);
+  if (legacy) {
+    console.warn(`[resume] this snapshot is WRN${legacy}: it carries no per-cell material, ` +
+      `radius or heading. Types, bonds, lineages and positions are restored; capacities ` +
+      `and density come from the freshly built founders and radius defaults to 0.34. ` +
+      `Treat measurements from this world as contaminated.`);
+  }
 
-  steps = hv.getUint32(16, true);
-  evo.births = hv.getUint32(24, true);
-  evo.deaths = hv.getUint32(28, true);
-  evo.nextUid = hv.getUint32(32, true);
+  steps = h.steps;
+  evo.births = h.births;
+  evo.deaths = h.deaths;
+  evo.nextUid = h.nextUid;
 
   // Push everything back to the GPU.
   const vel = new Float32Array(N * 4);
+  // RESUMING USED TO STRIP EVERY CELL OF ITS MATERIAL.
+  //
+  // cmeta.x is a PACKED word - type in the low bits, then sense acuity,
+  // contractility, grippiness and axial position - and this wrote the bare
+  // ctype into it, so a resumed cell came back as a type with no capacities at
+  // all. cmeta.w is packed the same way and got the bare bodySize, losing
+  // density, toughness, tag and enzyme. vel.z is the cell's RADIUS and this
+  // wrote a zero-filled array over it.
+  //
+  // Measured on a resumed world before the fix: 78.2% of 24,326 live cells had
+  // radius exactly 0. A radius-0 cell has no contact, because contact tests
+  // myR + otherR, and under the mass law its mass falls to the clamp floor. Most
+  // of the population was a massless ghost that still ate, bonded and bred.
+  //
+  // It went unnoticed for so long because the CPU mirrors stayed correct: every
+  // readout that reads built.cells - the frame, the archive, the analytics -
+  // showed healthy material while the GPU the physics actually runs on had
+  // none. The two only disagreed after a resume, and a resume looks like
+  // nothing happening.
   const meta = new Int32Array(N * 4);
   for (let i = 0; i < N; i++) {
-    meta[i * 4] = c.ctype[i]; meta[i * 4 + 1] = c.cslot[i];
-    meta[i * 4 + 2] = c.body[i]; meta[i * 4 + 3] = c.bodySize[i];
+    meta[i * 4] = c.metaX ? c.metaX[i] : c.ctype[i];
+    meta[i * 4 + 1] = c.cslot[i];
+    meta[i * 4 + 2] = c.body[i];
+    meta[i * 4 + 3] = c.metaW ? c.metaW[i] : c.bodySize[i];
+    // The cell's own size, or the base radius if this world predates it. Never
+    // zero: zero is not a small cell, it is a cell the physics cannot see.
+    //
+    // AND THE CPU MIRROR IS REPAIRED TOO, not just the upload. buildBodies
+    // places beasts*cells cells - about 5,000 of a 25,020-slot arena - and sets
+    // a radius only for those. A resume then marks 24,000 slots live from the
+    // snapshot, and every slot the builder never touched kept rad 0 forever.
+    // Repairing only the GPU copy would leave the frame, the archive and the
+    // analytics all still reporting zeros, because they read this array.
+    if (c.rad && !(c.rad[i] > 0)) c.rad[i] = 0.34;
+    vel[i * 4 + 2] = c.rad ? c.rad[i] : 0.34;
+    // The heading the world was saved with. Restoring xy and re-randomising
+    // theta would silently rotate every body, and theta is the frame the
+    // anisotropic traction is applied in.
+    pose[i * 4] = pos[i * 2]; pose[i * 4 + 1] = pos[i * 2 + 1];
+    pose[i * 4 + 2] = theta ? theta[i] : 0;
+    pose[i * 4 + 3] = 0;
     c.px[i] = pos[i * 2]; c.py[i] = pos[i * 2 + 1];
   }
-  world.writeCellRange(0, N, { pos, vel, meta, bond: c.bond, brest: c.brest, energy });
+  // posXY, not pos: the snapshot format predates headings and stores xy only,
+  // so writing it as a full pose would zero every cell's theta. Restored cells
+  // keep the headings the freshly-built world gave them.
+  // Full pose now, not posXY: the snapshot carries theta, so there is nothing
+  // to protect from being zeroed and the headings come back with the bodies.
+  world.writeCellRange(0, N, { pos: pose, vel, meta, bond: c.bond, brest: c.brest, energy });
   brains.writeState(built.arena);
   return { steps, alive: evo.alive() };
 }
-let last = { alive: evo.alive(), born: 0, died: 0, meanEnergy: 0, maxGeneration: 0, lineages: evo.alive() };
+let last = { alive: evo.alive(), born: 0, died: 0, meanEnergy: 0, maxGeneration: 0, lineages: evo.alive(), genStats: null, linStats: null, birthStats: null, survStats: null };
 let steps = 0, sinceTick = 0, ticking = false, running = true;
 
 /* ------------------------------------------------------------- the sim loop */
@@ -483,28 +535,83 @@ async function archiveIfDue(gen) {
       if (!A.alive[o] || !evo.genome[o]) continue;
       const k = [0, 0, 0, 0];
       let n = 0;
+      // THE CONTINUOUS MATERIAL, not only the argmax label.
+      //
+      // `mix` counts which of four labels won a winner-takes-all argmax, and
+      // that is the representation this project has been removing everywhere
+      // else: a body of cells that all narrowly favour one capacity archives
+      // identically to one that is committed to it, and contractility hides
+      // entirely behind a label it lost. It stays for readers that expect it;
+      // these are what the world actually runs on.
+      let sSense = 0, sCon = 0, sGrip = 0, sDens = 0, sRad = 0, sTough = 0;
+      let rMin = Infinity, rMax = 0, dMin = Infinity, dMax = 0;
       for (let i = A.off[o]; i < A.off[o] + A.cnt[o]; i++) {
         const t = C.ctype[i];
-        if (t >= 0 && t < 4) { k[t]++; n++; }
+        if (t < 0 || t >= 4) continue;
+        k[t]++; n++;
+        const mx = C.metaX ? C.metaX[i] : 0, mw = C.metaW ? C.metaW[i] : 0;
+        sSense += ((mx >> 2) & 31) / 31;
+        sCon   += ((mx >> 8) & 255) / 255;
+        sGrip  += ((mx >> 16) & 255) / 255;
+        sTough += ((mw >> 16) & 63) / 63;
+        const d = ((mw >> 22) & 63) / 63;
+        sDens += d;
+        if (d < dMin) dMin = d; if (d > dMax) dMax = d;
+        const r = C.rad ? C.rad[i] : 0.34;
+        sRad += r;
+        if (r < rMin) rMin = r; if (r > rMax) rMax = r;
       }
       if (!n) continue;
+      const material = {
+        sense: +(sSense / n).toFixed(4), contract: +(sCon / n).toFixed(4),
+        grip: +(sGrip / n).toFixed(4), toughness: +(sTough / n).toFixed(4),
+        // density is 0..1 as the genome expresses it; the kernel maps it
+        // log-scaled onto densLo..densHi, which params records.
+        density: +(sDens / n).toFixed(4), densityMin: +dMin.toFixed(4), densityMax: +dMax.toFixed(4),
+        // Radius varies only since development gained its relaxation phase; a
+        // flat min==max==massRef marks a body from before that.
+        radius: +(sRad / n).toFixed(4), radiusMin: +rMin.toFixed(4), radiusMax: +rMax.toFixed(4),
+      };
       const tissues = k.filter((v) => v > 0).length;
       const score = tissues * 1000 + (k[1] > 0 && k[2] > 0 ? 500 : 0) + n;
       const lin = evo.lineage[o];
       const cur = best.get(lin);
       if (!cur || score > cur.score) {
         best.set(lin, { score, slot: o, uid: evo.uid[o], generation: evo.generation[o],
-                        lineage: lin, cells: n, tissues,
+                        lineage: lin, cells: n, tissues, material,
                         mix: { neuron: k[0], sensor: k[1], muscle: k[2], anchor: k[3] },
                         senseAndMove: k[1] > 0 && k[2] > 0 });
       }
     }
     if (!best.size) return;
 
-    const tag = `gen-${String(gen).padStart(4, '0')}`;
+    // NAMED BY WORLD AS WELL AS GENERATION. gen-NNNN alone is not unique: every
+    // reseed restarts generation counting, so a new world's gen-0015 silently
+    // OVERWRITES the previous world's gen-0015 - and the two sit in the same
+    // step range, so nothing downstream can tell them apart either. Observed as
+    // an archive series whose step count went backwards.
+    const tag = `gen-${String(gen).padStart(4, '0')}-${BOOT_ID}`;
     const manifest = {
       t: new Date().toISOString(), step: steps, generation: gen,
+      // WHICH REPRESENTATION THIS IS. Archives written before the pose, mass
+      // and relaxation work describe a different world with the same field
+      // names, and a reader has no other way to tell. 1 = the original
+      // label-and-genome form; 2 = continuous material, per-cell radius and
+      // density, and the ancestor-depth distribution.
+      repr: 2,
+      // WHICH WORLD THIS IS. Archives are named by generation and the directory
+      // now holds two runs, so gen-0201 from a world that reached 2.3M steps
+      // sorts beside gen-0013 from the one that replaced it. A reader charting
+      // the index without this draws a chimera - the step count jumping
+      // backwards is the only other clue.
+      bootId: BOOT_ID,
       alive: last.alive, lineages: last.lineages, meanEnergy: +last.meanEnergy.toFixed(3),
+      // generation above is a MAX over living bodies and moves in jumps; this
+      // is the distribution it hides.
+      genStats: last.genStats ?? null,
+      // Lineage COUNT hides whether one line holds the population. See
+      // Evolver.lineageStats.
+      linStats: last.linStats ?? null,
       simVersion: RUNNING.simVersion, devo: evo.devoVersion, encoding: evo.devoName ?? 'devo2-grn',
       // The physics a genome evolved under. Without it an archived genome is a
       // string of floats with no world to mean anything in.
@@ -512,10 +619,29 @@ async function archiveIfDue(gen) {
       creatures: [...best.values()].map((b) => ({
         uid: b.uid, generation: b.generation, lineage: b.lineage,
         cells: b.cells, tissues: b.tissues, senseAndMove: b.senseAndMove, mix: b.mix,
+        material: b.material,
         genome: Array.from(evo.genome[b.slot]).map((v) => +v.toFixed(5)),
       })),
     };
     await Deno.writeTextFile(`${ARCHIVE_DIR}/${tag}.json`, JSON.stringify(manifest));
+
+    // AND THE INDEX, WHICH NOTHING HAD EVER WRITTEN.
+    //
+    // runs/archive/index.json is the only way a reader discovers what archives
+    // exist - analytics.html walks it, and so does the MCP world_archives tool.
+    // It was a hand-committed file listing 40 archives ending at gen-0129, so
+    // every archive written since was invisible to both: the analytics page
+    // charted a series that had stopped growing, and looked static because it
+    // WAS static. Rebuilt from the directory on every archive, sorted, so the
+    // index cannot drift from what is on disk.
+    try {
+      const names = [];
+      for await (const e of Deno.readDir(ARCHIVE_DIR)) {
+        if (e.isFile && /^gen-\d+(-[a-z0-9-]+)?\.json$/.test(e.name)) names.push(e.name);
+      }
+      names.sort();
+      await Deno.writeTextFile(`${ARCHIVE_DIR}/index.json`, JSON.stringify(names));
+    } catch (e) { console.error('archive index:', e.message); }
 
     // The world it lived in. Pruned below; the genomes above never are.
     const snap = `${ARCHIVE_DIR}/${tag}.snapshot`;
@@ -667,6 +793,22 @@ const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
       try { last = await evo.tick(steps); } catch (e) { console.error('tick failed:', e.message); }
       ticking = false;
     }
+    // EGGS DROP CONTINUOUSLY, a couple per pass, instead of a tick emptying the
+    // whole queue at once. Development is ~6 ms of synchronous JS per egg, so
+    // the batch form showed up as the world animating for two seconds and then
+    // hanging for two. This is the same total work laid down flat.
+    if (!ticking) {
+      // Drain proportionally to the backlog. A fixed two per pass cannot work
+      // off a queue that a burst has pushed to a thousand, and a queue that
+      // never drains means reproduction is limited by this constant rather than
+      // by the world - which is a scheduler deciding who breeds.
+      try {
+        const q = evo.pendingEggs ?? 0;
+        const perPass = Math.max(args.eggsPerPass ?? 2, Math.min(12, Math.ceil(q / 100)));
+        evo.pump(steps, perPass);
+      }
+      catch (e) { console.error('pump failed:', e.message); }
+    }
     if (SAVE_EVERY_MS > 0 && Date.now() - lastSave > SAVE_EVERY_MS && !ticking) {
       lastSave = Date.now();
       try {
@@ -682,16 +824,52 @@ const SAVE_EVERY_MS = (args.saveEvery ?? 120) * 1000;
 
 /* ----------------------------------------------------------------- framing */
 
-const FRAME_MAGIC = 0x324d5257;   // 'RWM2' — layout changed to live-cells-only         // 'WRM1'
-const HEAD = 48;
+const FRAME_MAGIC = 0x334d5257;   // 'RWM3' — dynamic and static split by epoch
+const HEAD = 56;
 
 /**
- * A frame is positions, activations and cell types.
+ * A frame is positions, activations and cell types — split into the part that
+ * changes every step and the part that changes only when something is born or
+ * dies.
  *
- * Types, uids and bonds change only on birth and death, but in this RWM2 layout
- * they are still sent every frame. Cache the CPU-side slices by epoch so the
- * wire format stays simple while the request path stops rebuilding topology
- * from scratch at frame rate.
+ * It used to send everything every frame. Measured at 23,403 live cells that is
+ * 898 KB per frame, of which 531 KB — the live-cell index list, the types, the
+ * uids and the bond pairs — is byte-identical to the frame before unless the
+ * population changed. At ~14 frames a second on loopback that is most of the
+ * bandwidth and most of the client's decode, and it was the reason the viewer
+ * sat at 11 fps.
+ *
+ * THE EPOCH IS births + deaths. It is exactly the quantity that changes when the
+ * live SET changes, which is what makes this safe: same epoch means the same
+ * cells are alive, in the same order, so the index list, the types, the uids and
+ * the bond graph are all still correct. The client sends the epoch it holds as
+ * ?have=; if it matches, the static block is omitted.
+ *
+ * WHY NOT AN OUT-OF-BAND ENDPOINT. That was tried, for bonds, and it is recorded
+ * a few lines below: the viewer held a bond list from one instant and positions
+ * from another, and drew lines between cells that were never bonded. The static
+ * block still travels IN the frame and still describes the same instant as the
+ * positions — it is elided only when the client provably already has that exact
+ * block. Nothing is ever assembled from two different moments.
+ *
+ * Layout, v3 ('RWM3'), dynamic first so the static tail can simply be cut off:
+ *
+ *   HEAD 56  ... u32 hasStatic at offset 48
+ *   u32 L
+ *   f32 pos[L*2]     f32 act[L]     f32 energy[L]      <- every frame
+ *   u16 theta[L]     (padded to 4)                     <- every frame
+ *   i32 idx[L]       i32 type[L]    i32 uid[L]         <- only when hasStatic
+ *   i32 matW[L]      f32 radius[L]                     <- only when hasStatic
+ *   u32 pairCount    i32 pairs[pairCount]              <- only when hasStatic
+ *
+ * THETA IS TWO BYTES, NOT FOUR. It changes every step, so it rides in the
+ * dynamic block where a f32 would have cost 25% of the frame; a u16 over
+ * -pi..pi resolves to 0.0001 rad, which is far finer than a pixel. matW and
+ * radius change only at birth, so they cost nothing on a steady epoch.
+ *
+ * Offset 52 carries a FORMAT VERSION. It was reserved and unused, and a viewer
+ * parsing the old layout against the new one silently reads garbage rather
+ * than failing, which is the worst way for a protocol change to go wrong.
  */
 // One readback serves every viewer in the same window.
 //
@@ -703,69 +881,118 @@ const HEAD = 48;
 // but coalescing is still right — the GPU should not do the same work twice
 // because two people are watching.
 let cached = null, cachedAt = -1, inFlight = null;
+// The live-cell index list and the bond pairs, held for as long as the epoch
+// they describe. See buildFrame.
+let topoCache = null;
+// When a viewer last asked for a frame. Framing is skipped when nothing is
+// watching — see frameLoop.
+let lastFrameWant = -1e9;
 const FRAME_MS = 40;
 
-async function frame() {
-  const now = performance.now();
-  if (cached && now - cachedAt < FRAME_MS) return cached;
-  if (inFlight) return inFlight;
+/**
+ * @param {number} have  the topology epoch the caller already holds, or -1.
+ *   When it matches the frame's epoch the static block is omitted — see the
+ *   layout note above buildFrame.
+ */
+async function frame(have = -1) {
+  lastFrameWant = performance.now();
+  const pick = (f) => (have >= 0 && have === f.epoch ? f.dyn : f.full);
+  // ANSWER FROM THE CACHE, ALWAYS, IF THERE IS ONE.
+  //
+  // This used to build on demand whenever the cache was older than FRAME_MS.
+  // Building a frame costs two GPU readbacks, measured at 554-1619ms while
+  // other jobs share the device — so a viewer asking for a frame every ~70ms
+  // was really waiting up to 1.6 SECONDS, at random. That variance is the jank:
+  // not a low frame rate but an unpredictable one.
+  //
+  // The cache is now kept warm by the loop below instead, so a request never
+  // waits on the GPU. The frame may be a little old; it arrives on time, and a
+  // steady stream of slightly-late frames reads as smooth motion where an
+  // erratic stream of fresh ones does not.
+  if (cached) return pick(cached);
+  if (inFlight) return inFlight.then(pick);      // only before the first frame
   inFlight = buildFrame().then(f => {
     cached = f; cachedAt = performance.now(); inFlight = null; return f;
   }).catch(e => { inFlight = null; throw e; });
-  return inFlight;
+  return inFlight.then(pick);
 }
 
-let topologyCache = null;
-function frameTopology() {
-  const epoch = evo.births + evo.deaths;
-  if (topologyCache?.epoch === epoch) return topologyCache;
-
-  const C = built.cells;
-  const live = new Int32Array(N);
-  const slots = new Int32Array(N);
-  const types = new Int32Array(N);
-  const uids = new Int32Array(N);
-  let L = 0;
-
-  const bondK = C.bondK;
-  const pairTmp = new Int32Array(N * bondK * 2);
-  let pairN = 0;
-
-  for (let i = 0; i < N; i++) {
-    const t = C.ctype[i];
-    if (t < 0) continue;
-
-    live[L] = i;
-    slots[L] = C.cslot[i];
-    types[L] = t;
-    const b = C.body ? C.body[i] : -1;
-    uids[L] = b >= 0 ? evo.uid[b] : -1;
-    L++;
-
-    for (let k = 0; k < bondK; k++) {
-      const j = C.bond[i * bondK + k];
-      if (j < 0 || j <= i || C.ctype[j] < 0) continue;
-      pairTmp[pairN++] = i;
-      pairTmp[pairN++] = j;
+// Rebuild continuously, off the request path. One build at a time — the GPU is
+// already the scarce resource and queueing more readbacks against it makes every
+// one of them slower.
+(async function frameLoop() {
+  while (running) {
+    // NOBODY WATCHING, NOBODY PAYS.
+    //
+    // Framing is two GPU readbacks, and a readback stalls the pipeline the
+    // simulation is trying to fill. Running it unconditionally meant a headless
+    // evolution run — the whole point of which is steps per second — spent a
+    // fraction of every second serving a viewer that did not exist.
+    //
+    // Display rate and simulation rate are different numbers with different
+    // targets: 60/s is plenty for a screen, while evolution wants thousands.
+    // Chaining them is the mistake; this unchains the idle case.
+    const watched = (performance.now() - lastFrameWant) < 2000;
+    if (!paused && !inFlight && watched) {
+      inFlight = buildFrame().then(f => {
+        cached = f; cachedAt = performance.now(); inFlight = null;
+        return f;
+      }).catch(() => { inFlight = null; return null; });
+      await inFlight;
     }
+    await new Promise(r => setTimeout(r, FRAME_MS));
   }
-
-  topologyCache = {
-    epoch,
-    liveIdx: live.slice(0, L),
-    slots: slots.slice(0, L),
-    types: types.slice(0, L),
-    uids: uids.slice(0, L),
-    pairs: pairTmp.slice(0, pairN),
-  };
-  return topologyCache;
-}
+})();
 
 async function buildFrame() {
-  const { pos, energy } = await world.readCells();
+  const { pos, energy, theta } = await world.readCells();
+  // readAct, not readState: this uses only the activations, and readState also
+  // copies the whole neuron-state buffer — 100 KB a frame across the bus, on the
+  // readback that gates how often the world can be watched. (Codex spotted this.)
   const { act } = await brains.readAct();
-  const topo = frameTopology();
-  const { liveIdx, slots, types, uids, pairs: P32 } = topo;
+
+  // Live bond pairs, computed HERE so they describe the same instant as the
+  // positions above. Sending them out-of-band (the /bonds endpoint) meant the
+  // viewer held a bond list from one moment and positions from another, and
+  // with tens of thousands of births constantly recycling slots those lists
+  // disagreed about which cells belong to which body. The result was lines
+  // drawn between cells that were never bonded — arbitrary pairs, which is
+  // exactly why they ignored the renderer's length cull. Diagnosed twice as
+  // something else (dead cells, then over-stretched bodies) before the strain
+  // measurement came back clean at 1.00 and ruled the physics out.
+  // BOTH OF THESE ARE FUNCTIONS OF THE EPOCH, so they are computed once per
+  // epoch rather than once per frame. Each was an O(N x bondK) scan building a
+  // plain array with push(), running ~25 times a second, fully synchronous — and
+  // synchronous work here blocks the HTTP handler, which is what put an 800ms
+  // tail on requests that should be served from a cache in a millisecond.
+  const epoch = evo.births + evo.deaths;
+  if (!topoCache || topoCache.epoch !== epoch) {
+    const bond = built.cells.bond, bondK = built.cells.bondK;
+    const ctype = built.cells.ctype;
+    let nLive = 0, nPair = 0;
+    for (let i = 0; i < N; i++) {
+      if (ctype[i] < 0) continue;
+      nLive++;
+      for (let k = 0; k < bondK; k++) {
+        const j = bond[i * bondK + k];
+        if (j < 0 || j <= i || ctype[j] < 0) continue;
+        nPair += 2;
+      }
+    }
+    const liveIdx = new Int32Array(nLive), P32 = new Int32Array(nPair);
+    let li = 0, pi = 0;
+    for (let i = 0; i < N; i++) {
+      if (ctype[i] < 0) continue;
+      liveIdx[li++] = i;
+      for (let k = 0; k < bondK; k++) {
+        const j = bond[i * bondK + k];
+        if (j < 0 || j <= i || ctype[j] < 0) continue;
+        P32[pi++] = i; P32[pi++] = j;
+      }
+    }
+    topoCache = { epoch, liveIdx, P32 };
+  }
+  const { liveIdx, P32 } = topoCache;
 
   // LIVE CELLS ONLY.
   //
@@ -779,8 +1006,15 @@ async function buildFrame() {
   // Sized for five of those six once, which threw only when the bond pairs
   // overran the end — an error about a typed array length, nowhere near the
   // arithmetic that caused it.
-  const PER = 4 + 8 + 4 + 4 + 4 + 4;
-  const buf = new ArrayBuffer(HEAD + 4 + L * PER + 4 + P32.byteLength);
+  // Dynamic: pos(8) + act(4) + energy(4). Static: idx(4) + type(4) + uid(4),
+  // then the pair count and the pairs.
+  // Dynamic gains theta as u16, padded so the static block stays 4-aligned.
+  const THETA = ((L * 2) + 3) & ~3;
+  const DYN = 4 + L * (8 + 4 + 4) + THETA;
+  // Static gains matW (the packed material word: density, toughness, tag,
+  // enzyme) and radius. Both change only at birth, so they ride the epoch.
+  const STAT = L * (4 + 4 + 4 + 4 + 4) + 4 + P32.byteLength;
+  const buf = new ArrayBuffer(HEAD + DYN + STAT);
   const dv = new DataView(buf);
   dv.setUint32(0, FRAME_MAGIC, true);
   dv.setUint32(4, N, true);
@@ -797,12 +1031,14 @@ async function buildFrame() {
   // moves. Sending them every frame would nearly double the bandwidth for data
   // that is identical 99% of the time — which matters once this is watched over
   // a tailnet rather than loopback.
-  dv.setUint32(40, evo.births + evo.deaths, true);
+  dv.setUint32(40, epoch, true);
   dv.setFloat32(44, world.params.flowScale, true);
+  dv.setUint32(48, 1, true);           // this buffer carries the static block
+  // Format 2: theta in the dynamic block, matW and radius in the static one.
+  dv.setUint32(52, 2, true);
 
   let at = HEAD;
   new DataView(buf).setUint32(at, L, true); at += 4;
-  new Int32Array(buf, at, L).set(liveIdx); at += L * 4;
   {
     const p2 = new Float32Array(buf, at, L * 2);
     for (let k = 0; k < L; k++) { const i = liveIdx[k]; p2[k * 2] = pos[i * 2]; p2[k * 2 + 1] = pos[i * 2 + 1]; }
@@ -810,14 +1046,51 @@ async function buildFrame() {
   }
   // Per-CELL activation: the browser draws cells, not slots, so resolve the
   // cell -> brain-slot indirection here rather than shipping the slot table.
+  const cellAct = new Float32Array(N);
+  const cellType = new Int32Array(N);
+  // THE PACKED MATERIAL WORD, not the 0..3 argmax label.
+  //
+  // The viewer has always had a continuous colour path - hue from which
+  // capacities a cell has, saturation from how committed it is - but it was
+  // gated on receiving the packed word, and this frame only ever carried the
+  // label. So every page in watch mode fell through to four flat colours while
+  // a page running its own sim showed the real thing. Reported as the palette
+  // looking simplistic, and it was: the information was on the server the whole
+  // time and the wire dropped it.
+  //
+  // Costs nothing extra: this is the same 4 bytes per cell the label used, in a
+  // block that is only resent when the epoch changes.
+  const cellMat = new Int32Array(N);
+  for (let i = 0; i < N; i++) {
+    const t = built.cells.ctype[i];
+    cellType[i] = t;
+    cellMat[i] = built.cells.metaX ? built.cells.metaX[i] : t;
+    const slot = built.cells.cslot[i];
+    cellAct[i] = (t >= 0 && slot >= 0) ? act[slot] : 0;
+  }
   {
     const a2 = new Float32Array(buf, at, L);
-    for (let k = 0; k < L; k++) a2[k] = slots[k] >= 0 ? act[slots[k]] : 0;
-    at += L * 4;
-    new Int32Array(buf, at, L).set(types);
+    for (let k = 0; k < L; k++) a2[k] = cellAct[liveIdx[k]];
     at += L * 4;
     const e2 = new Float32Array(buf, at, L);
     for (let k = 0; k < L; k++) e2[k] = energy[liveIdx[k]];
+    at += L * 4;
+    // Heading, quantised. theta is kept in [-pi, pi] by the kernel, so this is
+    // a straight affine map with no wrapping to get wrong.
+    const th2 = new Uint16Array(buf, at, L);
+    const TAU = Math.PI * 2;
+    for (let k = 0; k < L; k++) {
+      const t = theta ? theta[liveIdx[k]] : 0;
+      th2[k] = Math.max(0, Math.min(65535, Math.round(((t + Math.PI) / TAU) * 65535)));
+    }
+    at += THETA;
+  }
+  // ---- end of the dynamic block; everything below is constant for this epoch.
+  const statAt = at;
+  new Int32Array(buf, at, L).set(Int32Array.from(liveIdx)); at += L * 4;
+  {
+    const t2 = new Int32Array(buf, at, L);
+    for (let k = 0; k < L; k++) t2[k] = cellMat[liveIdx[k]];
     at += L * 4;
   }
 
@@ -834,11 +1107,41 @@ async function buildFrame() {
   // so it survives a body being torn in half: both halves still name the same
   // animal. Genome identity would not do this — siblings and twins share a
   // genome and are different animals.
-  new Int32Array(buf, at, L).set(uids);
-  at += L * 4;
+  {
+    const u2 = new Int32Array(buf, at, L);
+    for (let k = 0; k < L; k++) {
+      const i = liveIdx[k];
+      const b = built.cells.body ? built.cells.body[i] : -1;
+      u2[k] = b >= 0 ? evo.uid[b] : -1;
+    }
+    at += L * 4;
+  }
+  // MATERIAL AND SIZE. matW is cmeta.w - density, toughness, tag, enzyme - and
+  // radius is what development's relaxation phase left the cell. Neither was on
+  // the wire at all, so a watching page could not colour by what a cell is MADE
+  // of, nor draw a fused node any bigger than a grain. Both change only at
+  // birth, so they ride the epoch and cost nothing on a steady frame.
+  {
+    const w2 = new Int32Array(buf, at, L);
+    for (let k = 0; k < L; k++) w2[k] = built.cells.metaW ? built.cells.metaW[liveIdx[k]] : 0;
+    at += L * 4;
+    const r2 = new Float32Array(buf, at, L);
+    for (let k = 0; k < L; k++) r2[k] = built.cells.rad ? built.cells.rad[liveIdx[k]] : 0.34;
+    at += L * 4;
+  }
+
   new DataView(buf).setUint32(at, P32.length, true); at += 4;
   new Int32Array(buf, at, P32.length).set(P32);
-  return new Uint8Array(buf);
+
+  // Two views of ONE build. The dynamic-only variant is the same bytes with the
+  // static tail cut off and the flag cleared, so the two cannot describe
+  // different instants — there is only one instant here.
+  const full = new Uint8Array(buf);
+  full.atStep = steps;
+  const dyn = new Uint8Array(statAt);
+  dyn.set(full.subarray(0, statAt));
+  new DataView(dyn.buffer).setUint32(48, 0, true);
+  return { full, dyn, epoch, atStep: steps };
 }
 
 /* ------------------------------------------------------------------ server */
@@ -1023,13 +1326,18 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
   if (path === '/motes') {
     const m = await world.readMotes();
     const n = m.stock.length;
-    const buf = new ArrayBuffer(8 + n * 12);
+    // Four floats a mote now, not three. Capacity has to travel with the mote:
+    // motes differ in size by up to fifty times, so a viewer holding only the
+    // stock cannot tell a drained megamote from a full ordinary one, and would
+    // draw them identically.
+    const buf = new ArrayBuffer(8 + n * 16);
     new Uint32Array(buf, 0, 2).set([n, 0]);
     const f = new Float32Array(buf, 8);
     for (let i = 0; i < n; i++) {
-      f[i * 3] = m.pos[i * 2];
-      f[i * 3 + 1] = m.pos[i * 2 + 1];
-      f[i * 3 + 2] = m.stock[i];
+      f[i * 4] = m.pos[i * 2];
+      f[i * 4 + 1] = m.pos[i * 2 + 1];
+      f[i * 4 + 2] = m.stock[i];
+      f[i * 4 + 3] = m.cap[i];
     }
     return new Response(buf, {
       headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' },
@@ -1145,22 +1453,34 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
     // A PHYSICS KNOB, applied to the shared world. Whitelisted: this is a live
     // control surface on a running experiment, and an arbitrary key would let a
     // stray field name land somewhere in the uniform block with no complaint.
-    if (action === 'tune') {
-      const ALLOW = new Set([
-        'flowStr', 'flowScale', 'drag', 'springK', 'contract', 'damp', 'bondDamp',
-        'mudFlow', 'mudSlip', 'mudFog', 'flowDry', 'flowTerrain', 'gravity',
-        'highSap', 'lowLush', 'tidalYield', 'senseTerrain', 'harvest', 'brainTax',
-        'muscleCost', 'gripBase', 'gripMod', 'gripHold', 'gripAniso', 'fricK',
-        'contestRate', 'toughCost', 'dietWidth', 'absorbTradeoff', 'crowdK',
-        'regrowCrowdK', 'moteRegrow', 'senseOther', 'senseRange', 'compass',
-      ]);
-      const patch = {}, rejected = [];
-      for (const [k, v] of Object.entries(body.params ?? {})) {
-        if (!ALLOW.has(k)) { rejected.push(k); continue; }
-        const n = Number(v);
-        if (Number.isFinite(n)) patch[k] = n;
+    if (action === 'experiment') {
+      const name = String(body.name ?? '').trim();
+      if (!name) {
+        return new Response(JSON.stringify({ ok: false, error: 'an experiment needs a name' }),
+          { status: 400, headers: { 'content-type': 'application/json' } });
       }
-      if (Object.keys(patch).length) world.writeParams(patch);
+      // Tune at the same instant the baseline is taken, so the record and the
+      // change cannot disagree about when it happened.
+      const { applied, rejected } = applyTune(body.params);
+      EXPERIMENTS.push({
+        name, step: steps, t: new Date().toISOString(),
+        params: body.params ?? null,
+        base: {
+          alive: last.alive, lineages: last.lineages,
+          effective: last.linStats?.effective ?? null,
+          meanEnergy: last.meanEnergy, blockedBirths: evo.blockedBirths,
+          pendingEggs: evo.pendingEggs ?? 0,
+        },
+      });
+      return ok({ name, step: steps, applied, rejected });
+    }
+
+    if (action === 'tune') {
+      // One whitelist, defined at TUNABLE. This branch used to keep its own
+      // copy, which is how it went stale: every parameter added with the pose
+      // and mass work was silently rejected for days because only one of the
+      // two lists was updated.
+      const { applied: patch, rejected } = applyTune(body.params);
       // Tuning is an intervention in the same sense implant is — a run whose
       // parameters moved under it is not a run at one setting — so it goes in
       // the log rather than only into memory.
@@ -1246,7 +1566,8 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
   }
 
   if (path === '/frame') {
-    return new Response(await frame(), {
+    const have = Number(url.searchParams.get('have') ?? -1);
+    return new Response(await frame(Number.isFinite(have) ? have : -1), {
       headers: { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' },
     });
   }
@@ -1274,6 +1595,11 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       headers: { 'content-type': 'application/json' },
     });
   }
+  if (path === '/experiments') {
+    return new Response(JSON.stringify({ runs: EXPERIMENTS }),
+      { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
+  }
+
   if (path === '/status') {
     return new Response(JSON.stringify({
       steps, bound: BOUND, cells: N, neurons: built.arena.N,
@@ -1332,17 +1658,65 @@ const server = Deno.serve({ port: args.port, hostname: args.host }, async (req) 
       cellsLiveTyped: (() => { let t = 0; for (let i = 0; i < N; i++) if (built.cells.ctype[i] >= 0) t++; return t; })(),
       drift: !!args.drift,
       alive: last.alive, births: evo.births, deaths: evo.deaths,
+      // generation is the MAX over living bodies - a ratchet held up by one
+      // deep survivor. genStats is the distribution it hides: lineages advance
+      // at different rates, so ancestor depth is a spread, not a number.
+      // The physics added since the pose/mass work. Absent from here, any
+      // report built off /status silently claimed they were at defaults.
+      drag: world.params.drag, springK: world.params.springK, contract: world.params.contract,
+      wrapY: world.params.wrapY, tempCost: world.params.tempCost,
+      twistK: world.params.twistK, vortK: world.params.vortK, angDrag: world.params.angDrag,
+      massRef: world.params.massRef, densLo: world.params.densLo, densHi: world.params.densHi,
+      mediumDens: world.params.mediumDens,
+      foreignReach: world.params.foreignReach, foreignPush: world.params.foreignPush,
+      pendingEggs: evo.pendingEggs ?? 0,
       generation: last.maxGeneration, lineages: last.lineages,
+      genStats: last.genStats ?? null,
+      // Lineage COUNT hides whether one line holds the population.
+      linStats: last.linStats ?? null,
+      // How long lineages last, not just how many remain.
+      survStats: last.survStats ?? null,
+      // Birth outcomes BY REASON. See Evolver.birthStats.
+      birthStats: last.birthStats ?? null,
+      // The SHAPE of the free space, not just the count of refusals.
+      freeStats: built.arena.freeStats ? built.arena.freeStats() : null,
+      // BIRTHS THE ARENA REFUSED. Tracked since fragmentation once stopped
+      // evolution for thousands of ticks while every other number looked
+      // healthy — but only ever reported through a console warning that fires
+      // ONCE per process, so a run could be strangling and say nothing. It is a
+      // headline number: it is the difference between a population limited by
+      // energy, which is the design, and one limited by bookkeeping, which is a
+      // bug wearing the same clothes.
+      blockedBirths: last.blockedBirths ?? 0,
+      // Ran out of the per-tick laying budget, not out of arena room.
+      deferredBirths: evo.deferredBirths ?? 0,
+      // FRAME PUBLISHING, OBSERVABLE. Codex's point, and a fair one: without
+      // these you can infer the frame contract from timing but not verify it,
+      // because a cached frame can be older than the request that receives it.
+      // frameAgeMs is how stale the cached frame is right now; cachedFrameStep
+      // is the world step it actually depicts; frameEveryMs is the cadence the
+      // background builder is aiming at. A viewer or an auditor can then say
+      // exactly which step it is looking at rather than which step it asked at.
+      frameEveryMs: FRAME_MS,
+      cachedFrameStep: cached?.atStep ?? null,
+      frameAgeMs: cached ? Math.round(performance.now() - cachedAt) : null,
+      framing: (performance.now() - lastFrameWant) < 2000,
       meanEnergy: last.meanEnergy, organisms: evo.nextUid,
     }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } });
   }
 
   // Static files, confined to the project directory.
   try {
-    const full = new URL('.' + path, `file://${ROOT}`).pathname;
+    // A DIRECTORY MEANS ITS INDEX. Every other static host does this, so a link
+    // to /lab/ works on GitHub Pages and 404'd here - which reads as a broken
+    // link in the app rather than as a server that resolves paths differently
+    // from the one the same files are published on.
+    let p2 = path;
+    if (p2.endsWith('/')) p2 += 'index.html';
+    const full = new URL('.' + p2, `file://${ROOT}`).pathname;
     if (!full.startsWith(ROOT)) return new Response('no', { status: 403 });
     const body = await Deno.readFile(full);
-    const ext = path.slice(path.lastIndexOf('.'));
+    const ext = p2.slice(p2.lastIndexOf('.'));
     return new Response(body, {
       headers: { 'content-type': MIME[ext] ?? 'application/octet-stream' },
     });

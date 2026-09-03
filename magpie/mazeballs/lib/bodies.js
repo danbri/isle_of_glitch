@@ -102,6 +102,11 @@ export function buildBodies({
   // developed cell writes its real contractility here and the kernel scales
   // force by it rather than branching on the label.
   const contractility = new Float32Array(NC), grippiness = new Float32Array(NC);
+  // CPU mirrors of the two packed material words the GPU holds in cmeta.x and
+  // cmeta.w. The server needs them to send a cell's real material to a viewer:
+  // without these the frame could only carry the 0..3 argmax label, and every
+  // watching page fell back to four flat colours.
+  const metaX = new Int32Array(NC), metaW = new Int32Array(NC);
   // CELL IDENTITY AND DESCENT.
   //
   // Float64Array, not BigInt64Array: a double holds exact integers to 2^53,
@@ -200,7 +205,7 @@ export function buildBodies({
   return {
     arena,
     cells: { px, py, vx, vy, rad, ctype, cslot, body, bodySize, bond, brest, bondK,
-             contractility, grippiness, uid, parentA, parentB, lifebook },
+             contractility, grippiness, metaX, metaW, uid, parentA, parentB, lifebook },
     // nCells is the ARENA width — every consumer (GPU buffers, frames, the
     // viewer) must agree on it, and it is no longer beasts*cells.
     meta: { beasts, cellsPerBeast: cells, nCells: NC, degree, bound, maxCells },

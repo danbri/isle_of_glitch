@@ -6824,3 +6824,361 @@ chosen, and how many worlds a comparison costs.
 It also reframes every null above. "Not implicated" was reported as "does not
 matter". It should have been reported as "does not suffice alone", which is a
 much weaker claim and leaves those mechanisms in play as conjuncts.
+
+## 2026-08-07 — the green-light test, run for the first time, and failed
+
+`AUTORESEARCH.md` §8 gates the whole autoresearch programme on one criterion:
+*"Green light = a config scored twice gives the same `net` within SE."* Nobody had
+run it. `tools/green-light.js` runs it.
+
+Same config, same seed, 6,000 steps, twice:
+
+```
+alive            416            416   same
+births            76             86   DIFFER
+deaths            76             86   DIFFER
+lineages         351            347   DIFFER
+liveCells       5068           5162   DIFFER
+eSum        13405.39       13651.23   DIFFER
+pSum       -96287.11      -70961.27   DIFFER
+non-finite                 0 / 0
+```
+
+Noise floor at the same config across six seeds: births cv 7.1%, lineages 1.2%,
+meanEnergy 1.7%. So births differ run-to-run by 10 against an across-seed SE of
+2.36 — **4.2 SE, a clear fail of the stated criterion.**
+
+**The world is not reproducible.** The likely cause is the atomics-based spatial
+hash: bucket insertion order races between invocations, neighbour iteration order
+follows it, floating-point summation order follows that, and a chaotic system
+amplifies the last bit into a 13% difference in births over 6,000 steps. Nothing
+here is a NaN or a crash; every individual force is correct.
+
+**A correction to my own reporting.** The same run showed `alive` with sd 0.000
+across all six seeds, which I first read as remarkable stability. It is not a
+measurement at all: 416 is the body-slot ceiling (5,000 cells / 12 per founder),
+so the population is saturated against bookkeeping and cannot vary. A statistic
+that cannot move is not evidence that the thing it measures is stable.
+
+**What follows.** Every measurement in this project is a sample from a
+distribution, not a repeatable observation, and "run it again to check" does not
+work here. Effects must be established across seeds with the noise floor above in
+hand. This does not invalidate the large measured effects — the multicellularity
+tax at −0.4041 is far outside this — but it does mean no experiment should ever
+again be reported from a single run, and it means the autoresearch loop cannot be
+closed on the criterion as written. Either the hash is made deterministic, or the
+criterion changes from "same answer" to "same answer within a measured noise
+floor", which is a different and weaker claim than §8 intends.
+
+## 2026-08-07 — H4 falsified: counting competitors does not make size pay
+
+Pre-registered in `runs/PREREGISTERED-size-pays.md`. The hypothesis, from Codex,
+was structural rather than statistical:
+
+> To make movement pay, a patch must be punished for being worked.
+> A body is a thing that works a patch.
+> So the rule that makes movement pay also punishes being a body.
+
+The kernel already had the fix and had it switched off: regrowth suppression is
+driven by `rivals = sum_j bodySize_j ^ (-grazeBodyShare)`, and at
+`grazeBodyShare = 0` a rival is a mouth, so an N-cell body suppresses its own
+ground N times over. At 1.0 a body counts once however large. Paired worlds,
+identical seeds and founders, 4 replicates, both horizons.
+
+```
+                contrast at 0.0     contrast at 1.0     change
+first  (8k)     -0.2141 +-0.0721    -0.0242 +-0.0777    +0.190  +-0.106
+deep  (80k)     -0.0869 +-0.0408    -0.1123 +-0.0214    -0.026  +-0.046
+```
+
+**Both horizons fail the pre-registered 2 SE bar, and the deep horizon reverses
+direction.** The falsifier was written before the run and is met. H4 is rejected.
+
+Two things worth keeping from a negative result.
+
+The first-horizon effect was large, consistent in 4 of 4 replicates, and in the
+predicted direction. It would have been entirely persuasive on its own. Adding
+replicates until it cleared 2 SE was available and tempting; the deep horizon
+says it would have been wrong. That is the sixth effect in this project to clear
+or approach a bar at a first horizon and fail at ten times it.
+
+The tax itself weakens with time regardless of the parameter: −0.2141 at 8k
+against −0.0869 at 80k in the control arm. So the multicellularity tax is partly
+a transient of young worlds, and any measurement of it at a short horizon
+overstates it. The published −0.4041 was taken from a live world of unknown age
+and inherits that.
+
+The crowding argument remains a good reading of the design. It is simply not what
+is binding.
+
+## 2026-08-08 — grow-then-carve does not sculpt, because there is nothing to carve along
+
+danbri proposed growing an egg to thousands of cells and then trimming to a
+manageable body — overproduce and prune, which is how real nervous systems
+develop. `devo2.js` already implements it as `mode: 'cleave'`, and the world does
+not use it: the default is `mode: 'grow'`, and `sculpt` is gated on cleave, so the
+`survive` gene — one of the fifteen readout genes — has never done anything in
+the live world. Same shape of defect as senseTune.
+
+Turning it on, 30 genomes each:
+
+```
+mode / ms / extent   bodies  mean cells  mean bands  mean elong  mean types
+grow    12000 / 12        8          16        0.63        1.54        1.25
+cleave  12000 / 12       16          87        0.00        1.09        1.13
+cleave  30000 / 20       16         486        0.00        1.06        1.13
+```
+
+Cleave gives more viable bodies and much bigger ones, and LESS structure.
+
+Sweeping the carve threshold on a 486-cell field:
+
+```
+thresh  viable  mean kept  mean bands
+   0.5      16        486        0.00
+  0.75      14        522        0.00
+   0.9       5        416        0.00
+  0.96       0          -           -
+  0.99       0          -           -
+```
+
+**The carve is all-or-nothing.** Raising the threshold does not remove more cells
+from a body — it removes whole bodies, 16 viable to 5 to none, while the number
+kept barely moves. `survive` is spatially uniform across the embryo, so it is a
+global switch rather than a chisel, and there is no pattern in it to carve along.
+
+The implication is upstream of the idea. Bands measure 0.00 in every cleave
+condition tested, and 0.63 under grow — which is head-and-tail polarity, not
+segmentation. **The GRN produces shape but not spatial pattern in gene
+expression.** Bodies vary in outline — elongation 2.95 has been measured, and the
+wizard gallery contains stars and spirals — while the tissue inside them does not
+band. That is precisely the differentiation blocker, stated in developmental
+rather than economic terms, and it is a different problem from the
+multicellularity tax.
+
+Not retracted, because it was never claimed: cleave mode is not broken. It does
+what it says. What is missing is a reason for `survive` to vary across the embryo,
+and diffusion-driven patterning (step 4 of the wizard demonstrates it working in
+isolation) is the mechanism that would supply one.
+
+## 2026-08-08 — the embryo is a clock, not a map
+
+danbri observed that every form in the wizard has radial symmetry and tends to a
+circular blob, and that if the maternal gradients were working, limbs should vary
+with depth into a gradient. They are not working, and here is what is.
+
+Correlating each readout against position, over the 16 gallery genomes at
+18,000 ms (absolute correlations, so strength and not direction):
+
+```
+prop        sd across cells   |r| with ap   |r| with dv   |r| with radius
+contract             0.2037         0.134         0.074            0.468
+sense                0.1516         0.078         0.098            0.527
+grip                 0.1482         0.080         0.069            0.490
+stiff                0.0879         0.106         0.104            0.472
+tau                  0.1056         0.094         0.123            0.503
+bias                 0.1553         0.120         0.071            0.513
+```
+
+Expression is NOT flat — sd 0.09 to 0.20 — but it is organised radially, and the
+maternal axes barely register at 0.07 to 0.13. Radial organisation is rotationally
+invariant, which is exactly the radial symmetry observed.
+
+But radius is confounded with age at r = 0.596, because the body grows outward
+from one cell. Separating them:
+
+```
+prop        |r| with radius   |r| with age
+contract              0.468          0.614
+sense                 0.527          0.631
+grip                  0.490          0.601
+tau                   0.503          0.545
+```
+
+**Age wins for every property.** The radial gradient is developmental age wearing
+a spatial costume: cells born early are near the centre and share an expression
+state, cells born late are at the rim and share a different one.
+
+The mechanism is in the division step. Cytoplasm is divided rather than created:
+
+```
+const half = conc[bs + g] * 0.5;
+conc[bd + g] = half; conc[bs + g] = half;
+```
+
+Every division halves every gene product in BOTH cells, so concentration falls as
+2^-(divisions). Against that, the network restores state at its decay rate —
+median 1.04, i.e. about 0.96 s — while divisions arrive every ~0.6 s at full
+`grow`. **Dilution outruns synthesis.** The dominant signal in the embryo is
+therefore how many times a cell has divided, not where it is, and a signal that
+counts divisions is a clock.
+
+Three earlier findings fall out of this one:
+
+- No bands along an axis. Banding needs ap-dependence; ap correlates at 0.08-0.13.
+- The carve is all-or-nothing. `survive` is uniform because it tracks age, and at
+  any instant most cells are of similar age.
+- Bigger bodies are rounder. More growth means more concentric age layers.
+
+Not measured: whether slowing division relative to decay recovers the maternal
+signal. That is the obvious experiment and it is a one-parameter change
+(`divRate`), which makes it cheap and makes it suspect — a result that appears
+only at a hand-tuned ratio is a knob, not a mechanism. It needs a pre-registered
+bar and both horizons.
+
+## 2026-08-08 — plumping, size-matched: one comparison of four, and it does not survive correction
+
+The plump-before-divide mechanism was reported earlier as moving three quantities
+in the predicted direction. Size-matched, most of that was the size confound.
+
+Plump-on at 18,000 ms gives 111 cells; plump-off reaches the same 111 at
+16,000 ms, so the comparison is at matched size:
+
+```
+              cells   |r| head-tail    |r| across      |r| age      elongation
+plump OFF       111   0.119 +-0.018  0.113 +-0.013  0.611 +-0.022  1.141 +-0.048
+plump ON        111   0.123 +-0.020  0.158 +-0.015  0.561 +-0.025  1.321 +-0.124
+difference                   +0.18 SE      +2.22 SE      -1.53 SE      +1.35 SE
+```
+
+Only the across-axis correlation clears 2 SE. The age reduction and the
+elongation gain, both of which looked convincing unmatched, do not survive once
+body size is held constant.
+
+**And the surviving one does not survive correction either.** Four comparisons
+were made; 2.22 SE is about p = 0.026 uncorrected and about p = 0.10 across four
+tests. This project has been here before — six traits at two horizons produced one
+pass, which was the null expectation for twelve tests.
+
+So: a direction, not a result. The mechanism is worth keeping because it is
+principled — a cell rebuilding before it divides is the G1 phase, where slowing
+the division rate directly would be a number chosen to produce an outcome — but
+the claim that it recovers the maternal signal needs pre-registering on the
+across-axis specifically, with independent seeds and both horizons.
+
+## 2026-08-08 — the syncytium breaks the clock
+
+danbri pointed at Jaeger's gap-gene work on the Drosophila syncytial blastoderm:
+nuclei there divide WITHOUT cytokinesis, so the cytoplasm is shared and gap-gene
+products form a field across the whole embryo that a nucleus reads its position
+in. This model does the opposite — every division halves every gene product in
+both cells — and that halving is the dilution measured to outrun synthesis and
+turn the embryo into a clock.
+
+`syncytial: true` makes a daughter COPY its mother's concentrations instead of
+splitting them. Size-matched, 16 genomes:
+
+```
+             cells   |r| head-tail    |r| across      |r| age
+as-is          197   0.091 +-0.019  0.105 +-0.011  0.589 +-0.025
+SYNCYTIAL      186   0.223 +-0.039  0.303 +-0.054  0.170 +-0.024
+difference             +3.0 SE        +3.6 SE       -12.2 SE
+```
+
+**The clock is broken.** Age correlation falls by a factor of 3.5 at 12.2 SE, and
+both maternal axes roughly triple. All three clear 2 SE, and the age result
+clears any correction that could reasonably be applied.
+
+The size confound runs AGAINST this result rather than explaining it: a larger
+body has more age spread, so a size artifact would raise the age correlation, and
+it fell. The unmatched comparison (156 against 186 cells) gives the same picture.
+
+What it costs, stated plainly: gene product is created rather than conserved at
+division. No ENERGY is minted — a cell still costs the yolk exactly what it did,
+so the friction law is untouched — but mass conservation of signalling molecules
+is relaxed, and this model never tracked those as a budget in the first place.
+Whether that is a licence worth taking is a design question, not a measurement.
+It is an option, not the default.
+
+Not measured: whether a body developed this way is FITTER, or merely more
+patterned. Patterning is the substrate differentiation needs, not differentiation
+itself, and the multicellularity tax is untouched by any of this.
+
+## 2026-08-08 — the ambient medium makes the clock worse, and my syncytial option was not what was asked for
+
+Correction first. danbri proposed, from Jaeger's gap-gene work, that "expression
+at some position affects the ambient chemistry of the other proto-cells", and
+asked whether we need an ambient term and egg-wide fields per protein. What I
+built and reported as "syncytial" was a division-time COPY: the daughter
+duplicates its mother's concentrations. That is not a shared medium — no cell's
+expression reaches any other cell through it — and it is not faithful to a
+syncytium either, since giving each daughter a full copy DOUBLES total gene
+product at every division where a shared cytoplasm conserves it. The measurement
+stands; the interpretation does not. It tests "remove dilution", not "share a
+medium".
+
+The ambient field is now implemented as asked: NGENE layers of a grid over the
+egg, cells exchanging with the bin they occupy, transfer summed per bin so it is
+mass-conserving by construction, and the grid diffusing at each gene's own rate.
+
+Measured over Codex's sixteen demo genomes, with PCA elongation rather than the
+bounding-box ratio Codex correctly called too weak:
+
+```
+            cells   |r| head-tail   |r| across    |r| age     PCA elong
+as-is         132   0.110 +-0.011  0.092 +-0.012 0.645 +-0.020 1.360 +-0.074
+AMBIENT        51   0.118 +-0.013  0.117 +-0.013 0.790 +-0.021 1.183 +-0.030
+syncytial     142   0.255 +-0.046  0.313 +-0.047 0.189 +-0.028 1.660 +-0.138
+```
+
+**The ambient field strengthens the clock.** Age correlation rises by 5.0 SE, PCA
+elongation falls by 2.2 SE, and bodies come out at 51 cells against 132. The
+maternal axes do not move. The likely mechanism is that the medium is a sink:
+cells equilibrate with a mostly-empty field, concentrations fall faster than
+before, and dilution — already the dominant signal — gets stronger.
+
+Caveats that keep this from being a verdict on the idea. ambK 2.0, ambRes 24 and
+ambDiff 1.0 are guesses rather than tuned values. The size difference is large and
+age correlation depends on size, so this needs the same matched comparison the
+plump claim needed. A negative result from an untuned implementation is weak
+evidence about a mechanism.
+
+What it does suggest: the binding constraint is not that products cannot travel
+far enough. Better transport made things worse. The constraint is the dilution
+itself, which is what the copy hack removes and what a genuinely shared cytoplasm
+would also remove — by conserving one pool rather than by duplicating pools.
+
+## The continuum does not fix the clock — three variants, all worse
+
+The syncytial result (age 0.589 → 0.170) suggested that letting cells share a
+medium would loosen the division clock's grip on expression. A continuous
+medium was built properly: a grid the cells sample and deposit into by bilinear
+interpolation rather than snapping to the nearest bin, plus sourced sugar and
+heat layers, plus the egg/world frame distinction (gene products fixed in egg
+coordinates, heat entering through the shell from outside and sweeping around
+the egg's frame if the egg tumbles).
+
+Sixteen genomes, 18 s of development, extent 12, cap 400 cells:
+
+```
+                  cells   |r| head-tail   |r| across   |r| age
+no field            132       0.110          0.092       0.645
+medium only          37       0.117          0.117       0.823
++ sugar              33       0.120          0.089       0.853
++ sugar + heat       55       0.114          0.100       0.808
+fixed hot side       37       0.146          0.143       0.817
+tumbling 0.5/s       37       0.099          0.108       0.815
+```
+
+**The clock got worse in every variant, by about 6 SE.** The hypothesis that the
+first version failed because it was a sink with no source is falsified: adding
+sources did not help.
+
+The mechanism appears to be homogenisation. Exchange pulls every cell toward the
+shared local value, which erases the cell-to-cell differences that carried what
+little position signal existed, while doing nothing to the dilution that drives
+the clock. Bodies also shrink from 132 cells to 37, and that is not the cause of
+the age result — a smaller body has *less* age spread, which would push the
+correlation down, not up.
+
+One sub-result is in the predicted direction and is worth keeping: a fixed
+external thermal gradient raises across-axis correlation from 0.092 to 0.143
+(+2.3 SE), and spinning the egg in the same gradient washes it back to 0.108.
+That is what a world-frame field entering a rotating egg should do, so the frame
+machinery is wired correctly. But fixed-vs-tumbling is only 1.6–1.9 SE and is
+not yet a result.
+
+Retained, default off. The continuum is the right *mechanism* — the world does
+have heat and sugar and they do not respect cell walls — but as implemented it
+is not a route to spatial patterning, and it should not be switched on in the
+belief that it is.

@@ -306,7 +306,25 @@ export function develop(genome, o = {}) {
         stiff: express(genome, 'stiff', ap, dv),
         // tau spans a decade, log-spaced: fast reflex arcs and slow integrators
         // are both reachable and neither is the default.
-        tau: 0.18 * Math.pow(10, express(genome, 'tau', ap, dv)),
+        // HALF A DECADE EACH WAY, not a full one — 0.126 s to 1.26 s.
+        //
+        // This was 0.18 * 10^tanh, so 0.018 s to 1.8 s, and the floor sat barely
+        // above dt = 0.015. A neuron with dt/tau = 0.83 moves 83% of the way to
+        // its input every step: that is a comparator, not an integrator, and it
+        // draws the jagged zigzag traces that do not look like a CTRNN because
+        // they are not behaving like one.
+        //
+        // It bites because express() returns tanh(s) and evolution drives s to
+        // the rails, so tau was effectively BIMODAL — measured over 1,440 living
+        // cells, every single one sat at either 0.018 or 1.800 with nothing in
+        // between, and 24% were on the fast rail. A brain with two time
+        // constants and no middle cannot have a range of dynamics.
+        //
+        // 0.126 s is the range the comment above SYN_RANGE already says the
+        // synapse sweep was re-measured against ("the corrected tau range
+        // (0.126-1.26 s)"). That correction was made to the measurement and
+        // never to the code. Worst case is now dt/tau = 0.119.
+        tau: 0.4 * Math.pow(10, 0.5 * express(genome, 'tau', ap, dv)),
         bias: express(genome, 'bias', ap, dv),
       });
     }

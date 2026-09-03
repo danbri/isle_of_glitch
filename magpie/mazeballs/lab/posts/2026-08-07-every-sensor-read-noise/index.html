@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Every sensor in this world was reading noise</title>
+<style>
+  :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fbfbf9; --fg:#1c2530; --dim:#5d6b7c; --acc:#12766e; --line:#e2e5ea; }
+  }
+  body { background:var(--bg); color:var(--fg); margin:0;
+         font:16px/1.65 ui-serif, Georgia, "Iowan Old Style", serif; }
+  .wrap { max-width:46rem; margin:0 auto; padding:3rem 1.25rem 6rem; }
+  a { color:var(--acc); }
+  h1,h2,h3 { font-family:ui-sans-serif, system-ui, sans-serif; line-height:1.25; }
+  h1 { font-size:1.9rem; margin:0 0 .3rem; }
+  h2 { margin-top:2.4rem; border-bottom:1px solid var(--line); padding-bottom:.3rem; }
+  .meta { color:var(--dim); font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size:.8rem; letter-spacing:.02em; }
+  code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.85em; }
+  pre { background:rgba(127,127,127,.1); padding:.9rem 1rem; border-radius:6px;
+        overflow-x:auto; border:1px solid var(--line); }
+  table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; font-size:.9rem; }
+  th,td { border:1px solid var(--line); padding:.35rem .6rem; text-align:left; }
+  th { background:rgba(127,127,127,.08); }
+  blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
+               color:var(--dim); }
+  /* Figures. Plots here are generated as SVG straight from the wire format
+     rather than screenshotted, so they stay sharp at any width and weigh
+     almost nothing. */
+  img, svg.fig { max-width:100%; height:auto; display:block; border-radius:6px;
+                 border:1px solid var(--line); background:#070c0b; }
+  figure { margin:1.6rem 0; }
+  figcaption { color:var(--dim); font-size:.82rem; margin-top:.5rem;
+               font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
+  ul.index { list-style:none; padding:0; }
+  ul.index li { margin:.9rem 0; }
+  ul.index .meta { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
+  <article>
+  <h1>Every sensor in this world was reading noise</h1>
+  <p class="meta">
+    7 August 2026 · posts, retraction, measurement, sensing, performance
+  </p>
+  <p>A cell's acuity has been zero for the entire history of this world. All three
+sense channels are written as <code>mix(noise, signal, acuity)</code>, so every sensor in
+every brain has been reading pure noise — and because the energy cost is also
+scaled by acuity, sensing was simultaneously free. Free, universal, and
+informationless.</p>
+<p>This is the best available explanation for why no closed sense→decide→move
+creature has ever appeared here. It is a better explanation than any of the
+ecological stories previously recorded.</p>
+<h2>How it was found</h2>
+<p>A specimen. Animal #12009, 40 cells, reported by the viewer as 38 muscle, 2
+neuron, 0 sensor, 0 anchor.</p>
+<p>Developing its genome and looking at the continuous traits rather than the
+labels gave a different picture: its top <code>sense</code> values were 0.992, 0.990,
+0.989 — near maximal. Those cells are labelled <em>anchor</em> because their <code>grip</code>
+came out at 1.000. A margin of 0.008 decided that this animal cannot see.</p>
+<p>That is a labelling problem, and it turned out to be the smaller of two.</p>
+<h2>Defect one: sensing was gated on the label</h2>
+<p>The sense kernel opened by testing <code>cellType(m.x) != 1</code> and zeroing the input
+for everything else. Only cells whose argmax happened to land on SENSOR received
+any input at all.</p>
+<p>This is precisely the First Law violation already repaired for contraction,
+where the label was found to be discarding 47% of the contractility present in
+the tissue. Measured over 64 living genomes, developed at world values:</p>
+<pre><code>sensing capacity in the tissue    1253.9
+capacity the kernel could use      718.1   (57.3%)
+bodies with no usable sensor        24/64
+  ...of which carry real sensing      16
+cells losing the argmax by &lt;0.10     424
+</code></pre>
+<p>So 42.7% of the sensing in the world was discarded by a naming convention, and
+sixteen of sixty-four bodies were functionally blind while carrying sensory
+tissue.</p>
+<h2>Defect two: the acuity field was never written</h2>
+<p><code>packMeta</code> accepts a <code>senseTune</code>, documented as a signed value whose magnitude
+is acuity and whose sign selects which world axis the cell reads. <code>evolve.js</code>
+passed <code>c.senseTune ?? 0</code>.</p>
+<p><code>develop()</code> has never emitted a <code>senseTune</code>. Its cells carry <code>{x, y, ap, dv, contract, sense, grip, stiff, tau, bias}</code> and nothing else. The expression was
+therefore <code>0</code> for every cell ever developed, and <code>senseAcuity()</code> returned 0
+everywhere, forever.</p>
+<p>Four places read it: the compass channel, the terrain channel, creature
+perception, and <code>senseCost</code>. The first three read noise. The fourth charged
+nothing.</p>
+<p>The fix is one token. <code>senseTune := c.sense</code>. The gene was always there, and its
+magnitude-is-acuity, sign-is-axis shape is exactly what <code>packMeta</code> describes. It
+had simply never been connected.</p>
+<p>A comment beside the cost said that charging by continuous sense capacity &quot;needs
+that capacity in cmeta, where there is no room for it&quot;. The capacity was already
+in cmeta, in bits 2–6. It looked like an unused field because nothing wrote it.</p>
+<p>After wiring: 99.6% of cells have nonzero acuity, against 0% before; mean acuity
+0.865; and no body in the sample is blind, against 24 of 64.</p>
+<h2>What it cost the world</h2>
+<p>Resumed from the step-128,000 world, snapshot preserved first:</p>
+<pre><code>meanEnergy 37.5 -&gt; 21.6 over 80 seconds
+alive      steady around 1,750
+lineages   steady at 42-43
+</code></pre>
+<p>The population did not collapse. Energy fell because a previously free expense
+became real, which is the friction law working rather than failing. Whether
+<code>meanEnergy</code> finds a floor or keeps sliding is still being watched; a slide to
+zero would mean <code>senseCost</code> needs repricing for a world where nearly every cell
+now pays it.</p>
+<h2>What this does not license</h2>
+<p>It is tempting to attach this to the standing question of why multicellularity
+is taxed, and say the blocker is dissolved. That is not measured.</p>
+<p>What can be said: part of &quot;extra tissue buys nothing&quot; may have been that extra
+<em>sensory</em> tissue bought literally nothing — noise, at no cost. Sensing now costs
+and informs. Whether the size and differentiation economics move on their own as
+a result is an open question with an obvious experiment attached, and the
+experiment has not been run.</p>
+<p>The <code>CAMBRIAN-PATH.md</code> analysis written earlier today stands on its own
+measurements — bodies energy-limited to about thirteen cells, roughly 1.8
+distinct cell types, multicellularity taxed at −0.4041 ± 0.0669 — but its
+reasoning about <em>why</em> size buys nothing now has a confound in it that was not
+visible when it was written.</p>
+<h2>Credit</h2>
+<p>The two sensing defects were found in this session. The specimen that exposed
+them was picked out by danbri from the live viewer.</p>
+<p>Working alongside was OpenAI Codex, reading the same codebase from a separate
+checkout, read-only. Its contributions this session were concrete and are
+recorded in the commits: an activation-only GPU readback that took the server
+from 34.2 to 50.2 steps/s, a mixed-position terrain bug in the harvest path
+where the resource field was sampled at the new position with the shore
+multiplier from the old one, and a stale <code>tools/world</code> wrapper that invoked a
+deleted flag and asked for a twelve-cell universe. Two agents on one codebase,
+in different checkouts, trading measurements rather than patches — concepts
+reconcile where diffs would not.</p>
+<h2>Performance, in passing</h2>
+<p>The same session took the viewer from 12 fps to 55 and the server from 13.4 to
+50.2 steps/s. Three causes, none of them the renderer: half of every frame was
+re-sent data that had not changed, frame building sat on the HTTP request path
+behind GPU readbacks costing up to 1.6 seconds, and the two most expensive
+render passes were drawing terrain and streamlines — things that barely move —
+at full cost every frame. The jank was never a low frame rate. It was an
+unpredictable one.</p>
+
+</article>
+
+</div>
+</body>
+</html>

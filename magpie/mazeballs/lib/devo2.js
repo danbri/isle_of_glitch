@@ -158,7 +158,20 @@ export const N_MATERNAL = 5;
 export const OUT_BASE = 8;
 export const OUTPUTS = ['grow', 'survive', 'contract', 'sense', 'grip', 'stiff', 'tau', 'bias',
                         'senseTune', 'divideAngle', 'spacing', 'dispersal',
-                        'toughness', 'tag', 'enzyme'];
+                        'toughness', 'tag', 'enzyme',
+                        // DENSITY — what the cell is made of, gaseous to leaden.
+                        // Not a role and not a behaviour: a material property
+                        // whose consequence is that inertia and drag no longer
+                        // scale together, so which ways of moving work at all
+                        // becomes something a body can be built into rather
+                        // than something the kernel decides.
+                        'density',
+                        // FUSE — how readily this cell merges with a neighbour
+                        // made of the same stuff, during the relaxation phase
+                        // that ends development. Nothing here names a joint or
+                        // a limb: a joint is what is LEFT where fusion did not
+                        // happen, at the boundary between unlike tissue.
+                        'fuse'];
 export const G_GROW    = OUT_BASE + 0;
 /**
  * SURVIVE — whether this cell is still part of the body when the egg hatches.
@@ -314,6 +327,137 @@ export function develop(genome, {
   cleaveFrac = 0.35,
   divRate = 1.6,
   surviveThresh = 0.5,
+  // How many rounds of fusion end development. 0 hands over the raw grain of
+  // cells, which is what every body before this was.
+  condense = 0,
+  baseRadius = 0.34,
+  maxRadius = 3.0,        // in units of baseRadius
+  // WATCHING DEVELOPMENT HAPPEN, rather than being handed the corpse.
+  //
+  // develop() is one synchronous call that returns a finished body, so anything
+  // wanting to SHOW growth had to either re-develop to a series of shorter
+  // horizons — wasteful, and quadratic in the number of frames — or block until
+  // the whole thing finished and display the end state. Neither shows the
+  // process, which is the only interesting thing about a developmental encoding.
+  //
+  // onStep is called every `stepEvery` timesteps with a live view of the arrays.
+  // It is READ-ONLY by contract: it must not retain or mutate them, because they
+  // are the working buffers and will be overwritten on the next tick. A caller
+  // that wants to keep a frame copies it.
+  //
+  // Purely observational — with onStep unset nothing about this function changes,
+  // which is verified against the previous implementation across ten genomes.
+  onStep = null,
+  stepEvery = 8,
+  // PLUMPING UP AFTER DIVISION — the G1 phase, and the fix for the clock.
+  //
+  // Cytoplasm is divided rather than created, so every division halves every
+  // gene product in both cells and concentration falls as 2^-divisions. Measured
+  // against that, the network restores state at a median decay of about 1.04,
+  // i.e. ~0.96 s, while divisions arrive every ~0.6 s at full grow. Dilution
+  // outruns synthesis, so the dominant signal in the embryo is how many times a
+  // cell has divided — a clock — and the maternal gradients are swamped: they
+  // correlate with expression at 0.07-0.13 where age correlates at 0.60-0.63.
+  //
+  // A real cell grows back to size before dividing again. `mass` halves at
+  // division and recovers toward 1 by feeding on a nutrient soup assumed
+  // abundant inside the egg — this is about VOLUME, not energy, and the energy
+  // cost of a cell is still charged against the yolk exactly as before. A cell
+  // cannot divide until it has plumped up.
+  //
+  // This is deliberately not a rate knob. Slowing divRate would also slow
+  // dilution and would be a number chosen to produce a result; gating on
+  // recovery is a mechanism, and the division rate that falls out of it is
+  // whatever the chemistry can sustain.
+  plump = false,
+  plumpRate = 1.2,
+  // SYNCYTIAL DIVISION — nuclei divide, cytoplasm does not.
+  //
+  // Jaeger's gap-gene work is on the Drosophila syncytial blastoderm, where
+  // nuclei divide WITHOUT cytokinesis: there are no cell membranes yet, the
+  // cytoplasm is shared, and gap-gene products form a genuine field across the
+  // whole embryo that a nucleus reads its position in.
+  //
+  // This model does the opposite. Every division halves every gene product in
+  // both cells, which is correct for a cell with a wall and is the dilution
+  // measured to outrun synthesis — decay ~0.96 s against divisions every ~0.6 s
+  // — turning the embryo into a clock: expression correlates with age at 0.60
+  // and with the maternal axes at 0.08.
+  //
+  // With syncytial on, a daughter COPIES its mother's concentrations instead of
+  // splitting them. Nothing is diluted, so a gradient laid down early survives
+  // division and position can compete with age. It is not free: gene product is
+  // created rather than conserved, which is a real departure and is why it is an
+  // option rather than the default. The energy cost of a cell is still charged
+  // against the yolk exactly as before, so no ENERGY is minted — the friction
+  // law is untouched. What is relaxed is mass conservation of signalling
+  // molecules, which this model never tracked as a budget in the first place.
+  syncytial = false,
+  // AN AMBIENT MEDIUM — the thing danbri actually asked for, and which the
+  // syncytial option above does not provide.
+  //
+  // In the fly's blastoderm there are no cell walls yet, so a gene product
+  // expressed at one position enters a shared cytoplasm and changes the
+  // chemistry every other nucleus is reading. Jaeger's gap-gene models are of
+  // exactly that: a field across the embryo, and nuclei reading their position
+  // in it.
+  //
+  // What this model had instead was cell-to-cell exchange between neighbours
+  // within REACH. That is a medium only in the sense that a chain of buckets is
+  // a river: nothing travels further than adjacency allows, and a gradient can
+  // only be built by relay.
+  //
+  // `ambient` adds a real field: a grid over the egg, one layer per gene, that
+  // cells secrete into and draw from, and which diffuses on its own. Transfer is
+  // MASS CONSERVING by construction — what a cell gains the field loses, summed
+  // per bin — so unlike the syncytial copy this creates nothing. The only source
+  // is synthesis and the only sink is decay, exactly as before.
+  ambient = false,
+  ambRes = 24,        // grid cells across the egg
+  ambK = 2.0,         // how fast a cell equilibrates with the medium around it
+  ambDiff = 1.0,      // scales each gene's own diffusion rate on the grid
+  // THE CONTINUUM NEEDS SOURCES, or it is only a drain.
+  //
+  // The first version of the medium carried gene products and nothing else, and
+  // it made the clock WORSE — age correlation 0.645 to 0.790 — because cells
+  // equilibrated into a mostly empty field and lost concentration faster than
+  // before. A shared medium with nothing in it is a sink.
+  //
+  // Two more layers, and these are the ones with sources. SUGAR is the egg's
+  // provisioned soup: a finite stock, diffusing, that cells draw on to
+  // synthesise. Synthesis was already losing to dilution; now it has fuel, and
+  // running out of fuel is a real end to growth rather than an arbitrary yolk
+  // counter. HEAT sets the rate everything runs at, warm going faster, and
+  // diffuses from a boundary the world can set.
+  //
+  // Both are scalar fields on the same grid, and both are consumed or conducted
+  // rather than conjured — the sugar a cell burns leaves the bin it stood in.
+  sugar = 0,          // initial sugar per grid bin; 0 = no metabolic limit, as before
+  sugarDiff = 0.6,
+  sugarPerSynth = 0.02,
+  heat = 0,           // ambient heat, 0 = no thermal modulation
+  heatDiff = 1.4,
+  heatQ10 = 2.0,      // rate multiplier per unit of heat above the reference
+  heatRef = 1.0,
+  // TWO FRAMES, AND THAT IS THE POINT.
+  //
+  // Gene products live in EGG coordinates. A product concentrated in the
+  // egg's southwest quadrant stays southwest however the egg tumbles, because
+  // the egg is what it is dissolved in.
+  //
+  // Heat does not. It comes from the world through the shell, so it is a
+  // WORLD-frame quantity sampled at the egg's position — and if the egg is
+  // swirling in mud that is icy on one side and lukewarm on the other, the warm
+  // face sweeps around the egg's own frame while the chemistry stays put.
+  //
+  // That is a source of asymmetry nothing else here provides. A static gradient
+  // gives every embryo the same axis; a rotating one gives each embryo a
+  // different phase relationship between its chemistry and its warmth, decided
+  // by how it happened to be tumbling. heatGrad sets how uneven the outside is,
+  // heatSpin how fast the egg turns in it, in turns per second.
+  heatGrad = 0,
+  heatSpin = 0,
+  heatPhase = 0,
 } = {}) {
   const dt = dtMs / 1000;
   const nStep = Math.max(1, Math.round(ms / dtMs));
@@ -331,6 +475,8 @@ export function develop(genome, {
   // world worth keeping rather than an implementation detail. Local indices
   // here; evolve.js maps them onto durable 64-bit ids.
   const mother = new Int32Array(cap).fill(-1);
+  // Cell volume, 1 = fully grown. Only consulted when `plump` is on.
+  const mass = new Float32Array(cap).fill(1);
   let n = 0;
 
   // CANALISATION — developmental noise derived from the genome, so the same
@@ -389,10 +535,131 @@ export function develop(genome, {
   let spent = cellCost, aborted = false;
   const cleaveSteps = Math.round(nStep * cleaveFrac);
 
+  // NEIGHBOUR LISTS, BUILT ONCE PER TIMESTEP.
+  //
+  // The diffusion term below used to scan all n cells for every cell AND for
+  // every one of the 64 genes, so a step cost n * n * NGENE distance tests for a
+  // neighbour set that does not depend on the gene at all. That is why
+  // development was quadratic with a large constant, why the world can only
+  // afford 12,000 ms and 60 cells at a birth, and why a 588-cell body took 41
+  // seconds.
+  //
+  // Two changes, neither of which alters a result. The neighbour set is hoisted
+  // out of the gene loop, which alone removes a factor of NGENE. And it is found
+  // through a uniform grid of REACH-sized bins instead of a full scan, which
+  // removes the factor of n.
+  //
+  // IDENTICAL OUTPUT IS THE REQUIREMENT, not merely similar. Floating-point
+  // addition is not associative, so the accumulation order has to be preserved
+  // exactly — the bins are walked and the resulting indices SORTED ASCENDING, so
+  // each cell sums its neighbours in the same order the full scan did.
+  const nbrIdx = [], nbrWgt = [];
+  const bin = new Map();
+  const rebuildNeighbours = () => {
+    bin.clear();
+    const cell = REACH;
+    for (let i = 0; i < n; i++) {
+      const key = (Math.floor(X[i] / cell) << 16) ^ (Math.floor(Y[i] / cell) & 0xffff);
+      let a = bin.get(key);
+      if (!a) { a = []; bin.set(key, a); }
+      a.push(i);
+    }
+    for (let i = 0; i < n; i++) {
+      const gx = Math.floor(X[i] / cell), gy = Math.floor(Y[i] / cell);
+      const idx = [], wgt = [];
+      for (let ox = -1; ox <= 1; ox++) for (let oy = -1; oy <= 1; oy++) {
+        const a = bin.get(((gx + ox) << 16) ^ ((gy + oy) & 0xffff));
+        if (!a) continue;
+        for (const j of a) {
+          if (j === i) continue;
+          const dx = X[j] - X[i], dy = Y[j] - Y[i];
+          const d2 = dx * dx + dy * dy;
+          if (d2 >= REACH2) continue;
+          idx.push(j);
+        }
+      }
+      idx.sort((p, q) => p - q);            // the full scan's order, restored
+      for (const j of idx) {
+        const dx = X[j] - X[i], dy = Y[j] - Y[i];
+        wgt.push(1 - Math.sqrt(dx * dx + dy * dy) / REACH);
+      }
+      nbrIdx[i] = idx; nbrWgt[i] = wgt;
+    }
+  };
+
+  // Births SINCE THE LAST REPORT, not since the last step. Cleared when the
+  // callback fires rather than each tick — clearing per step dropped every
+  // division that happened between reports, which at stepEvery 8 lost seven
+  // eighths of them and made a body of 1,169 cells look like 162 divisions.
+  // The medium: NGENE layers of an ambRes x ambRes grid over the egg.
+  const AR = ambient ? Math.max(4, ambRes | 0) : 0;
+  const amb = ambient ? new Float32Array(AR * AR * NGENE) : null;
+  const ambNext = ambient ? new Float32Array(AR * AR * NGENE) : null;
+  const ambFlux = ambient ? new Float32Array(AR * AR * NGENE) : null;
+  // The two sourced layers. Sugar starts stocked and is spent; heat starts
+  // uniform and conducts.
+  const sug = (ambient && sugar > 0) ? new Float32Array(AR * AR).fill(sugar) : null;
+  const sugNext = sug ? new Float32Array(AR * AR) : null;
+  const hot = (ambient && heat > 0) ? new Float32Array(AR * AR).fill(heat) : null;
+  const hotNext = hot ? new Float32Array(AR * AR) : null;
+  // Drive the shell from outside. Bins within a bin-width of the egg's edge are
+  // held at the external temperature for their direction, which rotates if the
+  // egg is spinning. Interior bins are reached only by conduction, so a big egg
+  // has a cold core and a small one equilibrates.
+  const driveShell = (t) => {
+    if (!hot || heatGrad <= 0) return;
+    const ang = heatPhase + 2 * Math.PI * heatSpin * t * dt;
+    const ux = Math.cos(ang), uy = Math.sin(ang);
+    for (let gy = 0; gy < AR; gy++) {
+      for (let gx = 0; gx < AR; gx++) {
+        const x = ((gx + 0.5) / AR * 2 - 1), y = ((gy + 0.5) / AR * 2 - 1);
+        const r = Math.hypot(x, y);
+        if (r < 1 - 2.0 / AR) continue;            // interior: conduction only
+        if (r > 1.0) { continue; }                  // outside the shell
+        // Warm on the side the gradient points at, cold opposite.
+        hot[gy * AR + gx] = heat + heatGrad * ((x * ux + y * uy) / Math.max(1e-6, r));
+      }
+    }
+  };
+  // How fast chemistry runs here, and whether there is fuel to run it. Read per
+  // cell each step, written by the layers above.
+  // How fast each cell's chemistry runs this step, from the heat and sugar it is
+  // standing in. 1.0 when neither layer is on, so the default is untouched.
+  const cellRate = new Float32Array(cap).fill(1);
+  // A CONTINUOUS FIELD, SAMPLED BILINEARLY — not a grid of pigeonholes.
+  //
+  // The first version snapped each cell to the bin containing it, so a cell that
+  // drifted across a bin boundary saw its ambient step. That is a lattice
+  // wearing a field's name, and this project has spent real effort keeping
+  // lattices out of the physics — the spatial hash is explicitly a query radius
+  // and not a grid for the same reason.
+  //
+  // Storage must be discrete somewhere; nothing is representable otherwise. What
+  // makes the field continuous is that a position between four samples reads a
+  // weighted blend of them, and deposits back in the same proportions. The
+  // weights sum to one, so mass is still conserved exactly.
+  //
+  // Returns the four bin indices and their weights for a position.
+  const ambW = [0, 0, 0, 0], ambI = [0, 0, 0, 0];
+  const ambAt = (x, y) => {
+    const fx = Math.min(AR - 1.0001, Math.max(0, (x / extent + 1) * 0.5 * AR - 0.5));
+    const fy = Math.min(AR - 1.0001, Math.max(0, (y / extent + 1) * 0.5 * AR - 0.5));
+    const gx = Math.floor(fx), gy = Math.floor(fy);
+    const tx = fx - gx, ty = fy - gy;
+    const gx1 = Math.min(AR - 1, gx + 1), gy1 = Math.min(AR - 1, gy + 1);
+    ambI[0] = gy * AR + gx;   ambW[0] = (1 - tx) * (1 - ty);
+    ambI[1] = gy * AR + gx1;  ambW[1] = tx * (1 - ty);
+    ambI[2] = gy1 * AR + gx;  ambW[2] = (1 - tx) * ty;
+    ambI[3] = gy1 * AR + gx1; ambW[3] = tx * ty;
+  };
+
+  const bornSinceReport = [];
   for (let t = 0; t < nStep && !aborted; t++) {
+    rebuildNeighbours();
     // ---- regulation, gather-style, out of place
     for (let i = 0; i < n; i++) {
       const b = i * NGENE;
+      const ni = nbrIdx[i], nw = nbrWgt[i], nn = ni.length;
       for (let g = N_MATERNAL; g < NGENE; g++) {
         let net = bias[g];
         const wb = g * K;
@@ -402,20 +669,33 @@ export function develop(genome, {
         }
         let lap = 0;
         if (diff[g] > 0) {
+          // Weighted by proximity: a cell twice as far away signals less. On a
+          // lattice every neighbour was equidistant and this was a plain mean.
+          // The set and the weights are the same for every gene, so they are
+          // computed once per step above rather than 64 times per cell here.
           let acc = 0, cnt = 0;
-          for (let j = 0; j < n; j++) {
-            if (j === i) continue;
-            const dx = X[j] - X[i], dy = Y[j] - Y[i];
-            const d2 = dx * dx + dy * dy;
-            if (d2 >= REACH2) continue;
-            // Weighted by proximity: a cell twice as far away signals less. On a
-            // lattice every neighbour was equidistant and this was a plain mean.
-            const wgt = 1 - Math.sqrt(d2) / REACH;
-            acc += conc[j * NGENE + g] * wgt; cnt += wgt;
+          for (let q = 0; q < nn; q++) {
+            const wgt = nw[q];
+            acc += conc[ni[q] * NGENE + g] * wgt; cnt += wgt;
           }
           if (cnt > 0) lap = diff[g] * (acc / cnt - conc[b + g]);
         }
-        const c = conc[b + g] + dt * (sigmoid(net) - decay[g] * conc[b + g] + lap);
+        // Synthesis runs at the local rate — warm and fed is fast, cold or
+        // starved is slow. Decay and diffusion are not scaled: a cell that
+        // cannot synthesise still loses what it has, which is the whole point of
+        // fuel mattering.
+        const made = sigmoid(net) * cellRate[i];
+        if (sug && made > 0) {
+          // Charge the ground the cell is standing on, spread over the same four
+          // samples it read from, so fuel is spent where it is used.
+          ambAt(X[i], Y[i]);
+          const cost = made * sugarPerSynth * dt;
+          for (let k = 0; k < 4; k++) {
+            const bi = ambI[k];
+            sug[bi] = Math.max(0, sug[bi] - cost * ambW[k]);
+          }
+        }
+        const c = conc[b + g] + dt * (made - decay[g] * conc[b + g] + lap);
         next[b + g] = c > 0 ? (c < 40 ? c : 40) : 0;
       }
     }
@@ -425,6 +705,81 @@ export function develop(genome, {
       setMaternal(i);
     }
 
+    if (ambient) {
+      // 1. Exchange, in two passes so it conserves exactly. Each cell computes
+      //    what it would take from the medium; the bins are debited by the sum
+      //    of what their occupants took, so nothing is created or lost.
+      ambFlux.fill(0);
+      for (let i = 0; i < n; i++) {
+        ambAt(X[i], Y[i]);
+        const b = i * NGENE;
+        // Local rate: how warm it is here and whether there is fuel, both read
+        // at the cell's exact position rather than at a bin's centre.
+        let rate = 1;
+        if (hot || sug) {
+          let h = 0, sgr = 0;
+          for (let k = 0; k < 4; k++) {
+            if (hot) h += hot[ambI[k]] * ambW[k];
+            if (sug) sgr += sug[ambI[k]] * ambW[k];
+          }
+          if (hot) rate *= Math.pow(heatQ10, h - heatRef);
+          if (sug) rate *= sgr / (sgr + 0.25);
+        }
+        cellRate[i] = rate;
+        for (let g = N_MATERNAL; g < NGENE; g++) {
+          let here = 0;
+          for (let k = 0; k < 4; k++) here += amb[ambI[k] * NGENE + g] * ambW[k];
+          const f = ambK * (here - conc[b + g]) * dt;
+          conc[b + g] = Math.max(0, conc[b + g] + f);
+          // Debited in the same proportions it was read, so the weights cancel
+          // and nothing is created by the interpolation.
+          for (let k = 0; k < 4; k++) ambFlux[ambI[k] * NGENE + g] += f * ambW[k];
+        }
+      }
+      for (let k = 0; k < AR * AR * NGENE; k++) amb[k] = Math.max(0, amb[k] - ambFlux[k]);
+
+      // 2. The medium diffuses on its own, at each gene's own rate. This is what
+      //    makes it a field rather than a set of buckets: a product reaches
+      //    cells its maker never touched.
+      for (let gy = 0; gy < AR; gy++) {
+        for (let gx = 0; gx < AR; gx++) {
+          const c = (gy * AR + gx) * NGENE;
+          const l = (gy * AR + Math.max(0, gx - 1)) * NGENE;
+          const r = (gy * AR + Math.min(AR - 1, gx + 1)) * NGENE;
+          const u = (Math.max(0, gy - 1) * AR + gx) * NGENE;
+          const d = (Math.min(AR - 1, gy + 1) * AR + gx) * NGENE;
+          for (let g = N_MATERNAL; g < NGENE; g++) {
+            const lap = amb[l + g] + amb[r + g] + amb[u + g] + amb[d + g] - 4 * amb[c + g];
+            ambNext[c + g] = Math.max(0, amb[c + g] + ambDiff * diff[g] * lap * dt);
+          }
+        }
+      }
+      amb.set(ambNext);
+
+      // The sourced layers conduct too. Sugar spreads slowly, heat quickly —
+      // which is why a warm patch is broad and a fed patch is local.
+      const spread = (src, dst, k) => {
+        for (let gy = 0; gy < AR; gy++) {
+          for (let gx = 0; gx < AR; gx++) {
+            const c = gy * AR + gx;
+            const lap = src[gy * AR + Math.max(0, gx - 1)] + src[gy * AR + Math.min(AR - 1, gx + 1)]
+                      + src[Math.max(0, gy - 1) * AR + gx] + src[Math.min(AR - 1, gy + 1) * AR + gx]
+                      - 4 * src[c];
+            dst[c] = Math.max(0, src[c] + k * lap * dt);
+          }
+        }
+        src.set(dst);
+      };
+      if (sug) spread(sug, sugNext, sugarDiff);
+      if (hot) { driveShell(t); spread(hot, hotNext, heatDiff); }
+    }
+
+    if (plump) {
+      for (let i = 0; i < n; i++) {
+        if (mass[i] < 1) mass[i] = Math.min(1, mass[i] + dt * plumpRate);
+      }
+    }
+
     // ---- division, in continuous space
     const cleaving = mode === 'cleave' && t < cleaveSteps;
     const born = n;
@@ -432,6 +787,19 @@ export function develop(genome, {
       if (!cleaving) {
         ready[i] += dt * conc[i * NGENE + G_GROW] * divRate;
         if (ready[i] < 1) continue;
+        // NOT YET BACK TO FULL SIZE: hold the readiness and wait.
+        //
+        // Gated on the CONCENTRATION the cell actually lost, not on an abstract
+        // volume. A first version tracked a separate `mass` that halved and
+        // recovered on its own clock, and it changed nothing at all — recovery
+        // took 0.375 s against a division interval of 0.6 s, so the gate never
+        // fired, and mass was not what dilution had damaged in any case.
+        if (plump) {
+          let tot = 0;
+          const bb = i * NGENE;
+          for (let g = N_MATERNAL; g < NGENE; g++) tot += conc[bb + g];
+          if (tot < mass[i]) continue;          // mass[i] holds the pre-division total
+        }
         ready[i] -= 1;
       }
       if (spent + cellCost > yolk) { aborted = true; break; }
@@ -474,16 +842,36 @@ export function develop(genome, {
       if (clash) continue;
 
       const d = n++;
+      if (plump) {
+        // Remember what this lineage had before the split: both cells must
+        // rebuild to it before either divides again.
+        let tot = 0; const bb = i * NGENE;
+        for (let g = N_MATERNAL; g < NGENE; g++) tot += conc[bb + g];
+        mass[i] = tot; mass[d] = tot;
+      }
+      if (onStep) bornSinceReport.push(d);
       X[d] = nx; Y[d] = ny; noise[d] = rndDev(); ready[d] = 0;
       mother[d] = i;
       spent += cellCost;
-      // Cytoplasm is divided, not created.
+      // Cytoplasm is divided, not created — unless the embryo is syncytial, in
+      // which case the nucleus divides and the shared cytoplasm does not.
       const bs = i * NGENE, bd = d * NGENE;
-      for (let g = N_MATERNAL; g < NGENE; g++) {
-        const half = conc[bs + g] * 0.5;
-        conc[bd + g] = half; conc[bs + g] = half;
+      if (syncytial) {
+        for (let g = N_MATERNAL; g < NGENE; g++) conc[bd + g] = conc[bs + g];
+      } else {
+        for (let g = N_MATERNAL; g < NGENE; g++) {
+          const half = conc[bs + g] * 0.5;
+          conc[bd + g] = half; conc[bs + g] = half;
+        }
       }
       setMaternal(d);
+    }
+
+    // A live view of the embryo, for anything that wants to watch rather than
+    // wait. Arrays are the working buffers — see the note on onStep.
+    if (onStep && (t % stepEvery === 0 || t === nStep - 1)) {
+      onStep({ t, nStep, n, X, Y, mother, born: bornSinceReport, aborted });
+      bornSinceReport.length = 0;
     }
   }
 
@@ -516,9 +904,111 @@ export function develop(genome, {
       // and a match is a distance along it.
       tag: 0.5 * (out(i, 13) + 1),
       enzyme: 0.5 * (out(i, 14) + 1),
+      // 0..1, mapped log-scaled onto densLo..densHi by the kernel. 0.5 is the
+      // geometric middle and is neutrally buoyant, so an unexpressed gene
+      // leaves the cell exactly where the old massless world had it.
+      density: 0.5 * (out(i, 15) + 1),
+      fuse: 0.5 * (out(i, 16) + 1),
+      // Every cell leaves development the same size. Relaxation below is what
+      // makes some of them big.
+      radius: baseRadius,
     });
   }
-  return { cells, spent, aborted, steps: nStep, culled, laid: n };
+  // ---- RELAXATION: the embryo simplifies before it has to work -----------
+  //
+  // Development lays down a body one cell at a time and every cell comes out the
+  // same size, so a body was a crowd of identical grains. Real embryos do not
+  // hand over what they built: tissue condenses, like fuses with like, and what
+  // is left between unlike regions is a joint.
+  //
+  // WHAT MERGES. Two bonded cells fuse when they are made of similar stuff AND
+  // both are willing, willingness being the `fuse` gene. Similarity is measured
+  // over the material properties only - density, toughness, tag, stiffness -
+  // not over what the cells DO, because fusing by role would be the kernel
+  // deciding that muscle belongs with muscle. A uniform stretch of tissue
+  // condenses into one large node; a boundary between two materials does not
+  // fuse, and the small cells left along it articulate. Joints are a residue.
+  //
+  // WHAT IS CONSERVED. Area, exactly: a merged cell has radius sqrt(r1^2+r2^2),
+  // so mass is conserved and nothing is minted. Every other property is an
+  // area-weighted mean, so a big node made of ten cells counts as ten cells
+  // worth of whatever they were.
+  const relaxed = condense > 0 ? condenseBody(cells, {
+    condense, maxRadius: maxRadius * baseRadius, extent,
+  }) : cells;
+
+  return { cells: relaxed, spent, aborted, steps: nStep, culled, laid: n,
+           merged: cells.length - relaxed.length };
+}
+
+/**
+ * Greedy area-conserving fusion over the neighbour graph.
+ *
+ * Deliberately NOT iterative-to-convergence: each pass merges the best
+ * available partner for each cell and then stops, so the result is a body with
+ * a range of sizes rather than one that has collapsed to a few blobs. `condense`
+ * sets how many passes run, which is how far the body is allowed to simplify.
+ */
+function condenseBody(cells, { condense, maxRadius, extent }) {
+  let live = cells.map((c) => ({ ...c }));
+  const passes = Math.max(1, Math.round(condense));
+
+  for (let pass = 0; pass < passes; pass++) {
+    const n = live.length;
+    if (n < 2) break;
+    // Material distance. Capacities are deliberately absent - see above.
+    const unlike = (a, b) => Math.hypot(
+      (a.density - b.density) * 1.6,
+      (a.toughness - b.toughness),
+      (a.tag - b.tag),
+      (Math.tanh(a.stiff) - Math.tanh(b.stiff)) * 0.5,
+    );
+    const gone = new Uint8Array(n);
+    const out = [];
+    // Nearest-neighbour pairing in space; a cell only fuses with something it
+    // is touching, so this respects the body's actual geometry.
+    for (let i = 0; i < n; i++) {
+      if (gone[i]) continue;
+      const a = live[i];
+      let best = -1, bestScore = 0;
+      for (let j = i + 1; j < n; j++) {
+        if (gone[j]) continue;
+        const b = live[j];
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d > (a.radius + b.radius) * 1.35) continue;      // not touching
+        const rNew = Math.sqrt(a.radius * a.radius + b.radius * b.radius);
+        if (rNew > maxRadius) continue;                       // a cell has a limit
+        // Willingness is the MEAN of the pair, not the product. A product of
+        // two numbers that both sit near zero by default is a gate that never
+        // opens - measured median fuse was 0.097, so no pair ever cleared the
+        // threshold and 2% of cells merged over three passes.
+        const score = 0.5 * (a.fuse + b.fuse) * Math.exp(-unlike(a, b) * 4);
+        if (score > bestScore) { bestScore = score; best = j; }
+      }
+      if (best < 0 || bestScore < 0.25) { out.push(a); continue; }
+      const b = live[best];
+      gone[i] = 1; gone[best] = 1;
+      const wa = a.radius * a.radius, wb = b.radius * b.radius, wt = wa + wb;
+      const mix = (k) => (a[k] * wa + b[k] * wb) / wt;
+      out.push({
+        ...a,
+        // The merged cell keeps the elder's identity so lineage stays traceable.
+        mother: a.localIndex <= b.localIndex ? a.mother : b.mother,
+        localIndex: Math.min(a.localIndex, b.localIndex),
+        x: mix('x'), y: mix('y'),
+        radius: Math.sqrt(wt),                       // area conserved exactly
+        contract: mix('contract'), sense: mix('sense'), grip: mix('grip'),
+        stiff: mix('stiff'), tau: mix('tau'), bias: mix('bias'),
+        senseTune: mix('senseTune'), dispersal: mix('dispersal'),
+        toughness: mix('toughness'), tag: mix('tag'), enzyme: mix('enzyme'),
+        density: mix('density'), fuse: mix('fuse'),
+      });
+    }
+    if (out.length === n) break;                     // nothing fused; done
+    live = out;
+    for (const c of live) { c.ap = c.x / extent; c.dv = c.y / extent; }
+  }
+  return live;
 }
 
 /**
@@ -555,6 +1045,8 @@ export const SEED_DEFAULTS = {
   // apoptosis should be something regulation REACHES for, not the default state
   // of matter. Mutation is free to carve from here.
   surviveBias: 1.2,
+  fuseBias: 1.0,
+  fuseDecay: 0.0,
   surviveDecay: 0.0,
   surviveDiff: -0.5,
   // CONTRACTILITY MUST EXIST BEFORE IT CAN BE SELECTED ON.
@@ -628,6 +1120,14 @@ export function randomGenome(rnd = Math.random, opts = {}) {
   // sigmoid(net)/decay, division halves it below threshold, and a tip must
   // actively re-produce to grow again. That turns "grow" from a switch into a
   // rate, which is what lets one end of a body keep growing while another stops.
+  // FUSE defaults ON, for the same reason survival does: a body whose fuse gene
+  // sits at zero hands over the raw grain of cells it developed, which is the
+  // one outcome we already know is uninteresting. Mutation is free to carve
+  // articulation back in, and that is where joints come from.
+  const fb = (OUT_BASE + 16) * GENE_STRIDE;
+  g[fb + OFF_BIAS] = o.fuseBias;
+  g[fb + OFF_DECAY] = o.fuseDecay;
+
   const gb = G_GROW * GENE_STRIDE;
   g[gb + OFF_BIAS] = o.growBias;
   g[gb + OFF_SRC + 0] = G_CROWD; g[gb + OFF_W + 0] = o.growCrowd;  // grow at a TIP

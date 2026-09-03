@@ -1,0 +1,214 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Mazeballs transcripts</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!--
+  A reader for the JSONL session logs, run locally from a file:// URL.
+
+  It takes a file you pick and renders it. It does not fetch anything, does not
+  upload anything, and has no external dependencies — which is why it works from
+  a local directory with no server, and why nothing leaves the machine.
+
+  The JSONL is one record per line. Records carry a `message` with a role and a
+  content array; assistant turns interleave text with tool_use blocks, and tool
+  results come back as role:user records containing only tool_result parts. The
+  distinction matters: a user record that is only tool results is not a turn
+  anyone typed.
+-->
+<style>
+  :root{
+    --bg:#0d1211; --panel:#131b1a; --ink:#e6eeea; --soft:#8fa39d; --rule:#22302d;
+    --user:#7fd1c1; --tool:#6f8a9c; --accent:#e8a33f;
+    --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f7f9f8; --panel:#fff; --ink:#12201c; --soft:#5d706a; --rule:#dfe6e3;
+           --user:#0f7f6c; --tool:#5b7385; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.55}
+  header{
+    position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--rule);
+    padding:.7rem 1rem;display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;
+  }
+  header h1{font-size:.95rem;margin:0;font-weight:600}
+  header .meta{font-family:var(--mono);font-size:.72rem;color:var(--soft)}
+  input[type=file]{font:inherit;font-size:.8rem;color:var(--soft)}
+  input[type=search]{
+    font:inherit;font-size:.8rem;padding:.3rem .5rem;background:var(--panel);
+    color:var(--ink);border:1px solid var(--rule);border-radius:4px;min-width:12rem;
+  }
+  label.chk{font-size:.78rem;color:var(--soft);display:flex;gap:.3rem;align-items:center}
+  main{max-width:52rem;margin:0 auto;padding:1rem}
+  .turn{margin:1.4rem 0;padding-left:.9rem;border-left:2px solid var(--rule)}
+  .turn.user{border-left-color:var(--user)}
+  .who{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;
+       color:var(--soft);margin-bottom:.35rem}
+  .turn.user .who{color:var(--user)}
+  .body{white-space:pre-wrap;overflow-wrap:anywhere}
+  .tool{
+    font-family:var(--mono);font-size:.72rem;color:var(--tool);background:var(--panel);
+    border:1px solid var(--rule);border-radius:4px;padding:.3rem .5rem;margin:.35rem 0;
+    overflow-x:auto;white-space:pre-wrap;overflow-wrap:anywhere;
+  }
+  .tool b{color:var(--accent);font-weight:600}
+  .tool.hidden{display:none}
+  .drop{
+    margin:3rem auto;max-width:34rem;padding:2.5rem 1.5rem;text-align:center;
+    border:2px dashed var(--rule);border-radius:8px;color:var(--soft);
+  }
+  mark{background:var(--accent);color:#12201c;border-radius:2px}
+  .count{font-family:var(--mono);font-size:.72rem;color:var(--soft)}
+</style>
+
+<header>
+  <h1>Mazeballs transcripts</h1>
+  <input type="file" id="pick" accept=".jsonl,application/jsonl,text/plain">
+  <input type="search" id="find" placeholder="find in transcript">
+  <label class="chk"><input type="checkbox" id="tools"> show tool calls</label>
+  <span class="meta" id="meta"></span>
+</header>
+
+<main>
+  <div class="drop" id="drop">
+    Pick a <code>.jsonl</code> file, or drop one here.<br>
+    <span class="count">Everything stays on this machine — nothing is uploaded.</span>
+  </div>
+  <div id="out"></div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let turns = [];
+
+const clip = (s, n) => {
+  const t = String(s ?? '').replace(/\s+/g, ' ').trim();
+  return t.length > n ? t.slice(0, n) + '…' : t;
+};
+
+/** Pull the readable parts out of one message's content. */
+function parts(content) {
+  const out = [];
+  if (typeof content === 'string') return [{ kind: 'text', text: content }];
+  if (!Array.isArray(content)) return out;
+  for (const p of content) {
+    if (p.type === 'text' && p.text?.trim()) out.push({ kind: 'text', text: p.text });
+    else if (p.type === 'tool_use') {
+      const i = p.input ?? {};
+      const gist = i.command ?? i.file_path ?? i.pattern ?? i.url ?? i.prompt ?? i.old_string ?? '';
+      out.push({ kind: 'tool', name: p.name, text: clip(gist, 400) });
+    } else if (p.type === 'tool_result') {
+      const body = typeof p.content === 'string'
+        ? p.content
+        : (p.content ?? []).map((x) => x.text ?? '').join('\n');
+      if (String(body).trim()) out.push({ kind: 'result', text: clip(body, 400) });
+    }
+    // thinking blocks are deliberately not rendered: they are not the exchange
+  }
+  return out;
+}
+
+function parse(text) {
+  const rows = [];
+  let first = null, last = null, nUser = 0, nAsst = 0;
+  for (const line of text.split('\n')) {
+    if (!line.trim()) continue;
+    let r;
+    try { r = JSON.parse(line); } catch { continue; }
+    const ts = r.timestamp ?? r.ts;
+    if (ts) { first ??= ts; last = ts; }
+    const m = r.message;
+    if (!m?.role) continue;
+    const ps = parts(m.content);
+    if (!ps.length) continue;
+    // A user record made only of tool results is machinery, not a typed turn.
+    const toolOnly = m.role === 'user' && ps.every((p) => p.kind === 'result');
+    if (m.role === 'user' && !toolOnly) nUser++;
+    if (m.role === 'assistant') nAsst++;
+    rows.push({ role: toolOnly ? 'tooling' : m.role, ts, parts: ps });
+  }
+  return { rows, first, last, nUser, nAsst };
+}
+
+function render(filter = '') {
+  const out = $('out');
+  const showTools = $('tools').checked;
+  const q = filter.trim().toLowerCase();
+  const frag = document.createDocumentFragment();
+  let shown = 0;
+
+  for (const t of turns) {
+    if (t.role === 'tooling' && !showTools) continue;
+    const text = t.parts.map((p) => p.text).join('\n');
+    if (q && !text.toLowerCase().includes(q)) continue;
+    shown++;
+
+    const div = document.createElement('div');
+    div.className = 'turn' + (t.role === 'user' ? ' user' : '');
+    const who = document.createElement('div');
+    who.className = 'who';
+    who.textContent = (t.role === 'user' ? 'danbri' : t.role === 'assistant' ? 'claude' : 'tooling')
+      + (t.ts ? ' · ' + t.ts.replace('T', ' ').slice(0, 19) : '');
+    div.appendChild(who);
+
+    for (const p of t.parts) {
+      if ((p.kind === 'tool' || p.kind === 'result') && !showTools) continue;
+      const el = document.createElement('div');
+      if (p.kind === 'text') {
+        el.className = 'body';
+        el.textContent = p.text;
+      } else {
+        el.className = 'tool';
+        el.innerHTML = p.kind === 'tool'
+          ? '<b>' + p.name + '</b>  ' + escapeHtml(p.text)
+          : '→ ' + escapeHtml(p.text);
+      }
+      div.appendChild(el);
+    }
+    frag.appendChild(div);
+  }
+  out.replaceChildren(frag);
+  if (q) highlight(q);
+  $('meta').textContent = $('meta').dataset.base + ' · showing ' + shown;
+}
+
+const escapeHtml = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+function highlight(q) {
+  const walk = document.createTreeWalker($('out'), NodeFilter.SHOW_TEXT);
+  const hits = [];
+  while (walk.nextNode()) {
+    const n = walk.currentNode;
+    if (n.nodeValue.toLowerCase().includes(q)) hits.push(n);
+  }
+  for (const n of hits.slice(0, 500)) {
+    const span = document.createElement('span');
+    span.innerHTML = escapeHtml(n.nodeValue).replace(
+      new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), (m) => '<mark>' + m + '</mark>');
+    n.parentNode.replaceChild(span, n);
+  }
+}
+
+async function load(file) {
+  $('drop').style.display = 'none';
+  $('out').textContent = 'reading ' + file.name + '…';
+  const text = await file.text();
+  const p = parse(text);
+  turns = p.rows;
+  $('meta').dataset.base =
+    file.name.slice(0, 8) + '… · ' + p.nUser + ' from danbri, ' + p.nAsst + ' from claude'
+    + (p.first ? ' · ' + p.first.slice(0, 10) : '');
+  render($('find').value);
+}
+
+$('pick').onchange = (e) => { if (e.target.files[0]) load(e.target.files[0]); };
+$('find').oninput = (e) => render(e.target.value);
+$('tools').onchange = () => render($('find').value);
+document.addEventListener('dragover', (e) => { e.preventDefault(); });
+document.addEventListener('drop', (e) => {
+  e.preventDefault();
+  const f = e.dataTransfer?.files?.[0];
+  if (f) load(f);
+});
+</script>

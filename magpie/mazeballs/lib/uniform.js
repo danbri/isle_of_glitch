@@ -146,6 +146,51 @@ export const WORLD_FIELDS = [
   ['sapLoss', 'f32', 'fraction of moved energy lost to heat — transport is not free'],
   ['shelterK', 'f32', 'how much a larger body shields its cells from being taken from'],
   ['grazeBodyShare', 'f32', 'crowding counts competitors not mouths; 0 = as before, 1 = per body'],
+
+  // CLIMATE AND POLES. Appended at the end so no existing offset moves.
+  //
+  // wrapY 1 is the torus this world has always been. At 0 the y axis stops
+  // wrapping and the world gains two ends — poles — which a lineage cannot walk
+  // round. That is the classic condition for allopatric speciation, and this
+  // world's diversity has been collapsing (277 lineages to 14 over a million
+  // steps), so a barrier is worth testing. x still wraps, so the world is a
+  // cylinder rather than a plane.
+  ['wrapY', 'f32', '1 = toroidal in y as before, 0 = hard poles'],
+  // Temperature is a FIELD, not a role: warm at the equator, cold at the poles,
+  // and colder with altitude. A cell pays to hold itself away from ambient, so
+  // the passive case costs nothing extra and only living somewhere unsuitable
+  // does — affordance, not forcing.
+  ['tempPole', 'f32', 'temperature at the poles, in normalised units'],
+  ['tempEq', 'f32', 'temperature at the equator'],
+  ['tempLapse', 'f32', 'how much colder high ground is'],
+  ['tempOpt', 'f32', 'the temperature a cell is built for'],
+  ['tempTol', 'f32', 'how far it can stray before paying'],
+  ['tempCost', 'f32', 'energy per second per unit of excess deviation; 0 = climate off'],
+
+  // ---- ORIENTATION -------------------------------------------------------
+  // A cell's heading is integrated state (pos.z) rather than something read off
+  // its bonds. These are the only three couples that act on it; everything else
+  // in the kernel is a central force and produces no torque.
+  ['twistK', 'f32', 'how strongly bonded cells pull each other toward a common heading'],
+  ['vortK', 'f32', 'how strongly the curl of the flow spins a cell; 0 = rivers do not turn things'],
+  ['angDrag', 'f32', 'angular drag against the ground; dissipative, can only remove spin'],
+
+  // ---- MASS --------------------------------------------------------------
+  // Derived, not stored: mass = (r/massRef)^2 * density, where density is a
+  // material property development expresses, log-scaled over densLo..densHi. A
+  // default cell masses exactly 1 and every force constant tuned against the
+  // old implicit mass of 1 still means what it meant.
+  ['massRef', 'f32', 'the radius that defines mass 1; the default cell radius'],
+  ['densLo', 'f32', 'the lightest material a cell can be made of; gaseous'],
+  ['densHi', 'f32', 'the heaviest material a cell can be made of; leaden'],
+  ['mediumDens', 'f32', 'what the cell is swimming in; equal density means gravity nets zero'],
+
+  // ---- SURFACES AND COLLISIONS -------------------------------------------
+  // Measured: a standoff zone is expensive. 179 steps/s at 1.0, 114 at 1.15,
+  // 90 at 1.45, because the hash cell is sized to the contact radius. Extra
+  // PUSH on pairs already found is free; extra REACH is not.
+  ['foreignReach', 'f32', 'how much further a cell holds off matter from another body; 1 = no zone'],
+  ['foreignPush', 'f32', 'how much harder it pushes on a stranger than on its own tissue'],
 ];
 
 /** Byte offset of each field, and the total block size rounded up to 16. */

@@ -111,8 +111,24 @@ export class Evolver {
     maxAge = 25000, ageSpread = 0.35,
     sizeMutRate = 0.25, minCells = 5, maxCells = 40, topoMutRate = 0.30,
     birthOrder = 'lottery',
+    // Milliseconds of egg-laying per tick. Development is synchronous JS at
+    // ~6 ms an egg, so this is the only thing standing between a birth burst
+    // and a visibly frozen world. 0 disables the cap.
+    //
+    // SIZED AGAINST THE TICK INTERVAL, not against a frame. A tick covers a few
+    // hundred steps - seconds of sim - so a budget of 8 ms capped reproduction
+    // at roughly one egg per tick and took a fresh world from 1975 births in
+    // its first 2125 steps down to 21 in 5187. That is not a jank fix, it is a
+    // throttle on evolution. 40 ms lays a handful per tick, which paces a burst
+    // over minutes instead of freezing for seconds, and is a hitch of two or
+    // three frames rather than a stall.
+    birthBudgetMs = 40,
     devo = true, yolkFrac = 0.55, cellCost = 0.55, eggExtent = null, birthMargin = 1.15,
-    devoVersion = 2, devoOpts = {}, lineageLog = null, dispersal = 9,
+    // condense: development hands over a body that has SIMPLIFIED. Uniform
+    // tissue fuses into larger nodes and the small cells left along material
+    // boundaries are what articulate. Three passes merges about a quarter of
+    // the cells and yields eight distinct sizes.
+    devoVersion = 2, devoOpts = { condense: 3 }, lineageLog = null, dispersal = 9,
   }) {
     this.arena = arena; this.world = world; this.cells = cells;
     this.birthEnergy = birthEnergy; this.deathEnergy = deathEnergy;
@@ -120,6 +136,7 @@ export class Evolver {
     this.mutRate = mutRate; this.mutSize = mutSize;
     this.sizeMutRate = sizeMutRate; this.topoMutRate = topoMutRate;
     this.birthOrder = birthOrder;
+    this.birthBudgetMs = birthBudgetMs;
     this.minCells = minCells; this.maxCells = maxCells;
     this.rnd = rng(seed);
     // EVO-DEVO. Each organism carries a genome; a body is what that genome
@@ -185,6 +202,27 @@ export class Evolver {
 
     this.births = 0; this.deaths = 0; this.ticks = 0;
     this.blockedBirths = 0; this.warnedBlocked = false;
+    // Parents that have earned a birth and are waiting their turn. A Set beside
+    // the array so requalifying every tick does not enqueue the same body twice.
+    this.eggQueue = []; this.queued = new Set(); this.pendingEggs = 0;
+    // WHEN EACH LINEAGE APPEARED, and how long the dead ones lasted.
+    //
+    // A count of surviving lineages says nothing about the shape of the loss.
+    // Sixty lines that each lasted a thousand steps and sixty that lasted a
+    // hundred thousand are the same number and completely different worlds, and
+    // only the second has anything to select on. The distribution of lifetimes
+    // is the thing an intervention has to move.
+    this.lineageBorn = new Map();
+    this.lineageLife = [];          // lifetimes of extinct lineages, in steps
+    this.lineagesLost = 0;
+    // WHY a birth failed, not just how often. Development failing is the world
+    // saying no - the yolk ran out, or the body was too small to live - and is
+    // a lawful outcome. Refusal for want of a contiguous arena run is the
+    // bookkeeping saying no, and it refuses by SIZE, so it is a selection
+    // pressure nothing in the world chose. Same symptom, opposite meaning.
+    this.devFailed = 0; this.refused = 0;
+    this.refusedSize = new Map();
+    this.queuedAt = new Map();
     this.founders = this.alive();
   }
 
@@ -201,6 +239,8 @@ export class Evolver {
    */
   async tick(step) {
     const { arena, world, cells } = this;
+    const bornAtEntry = this.births;
+    this.trackLineages(step);
     const { pos, energy } = await world.readCells();
     this.ticks++;
 
@@ -306,8 +346,77 @@ export class Evolver {
     // the parent's actual means rather than a constant.
     this.lastEnergy = total;
 
-    let born = 0, blocked = 0;
+    // A TIME BUDGET ON LAYING, because development is synchronous JS and every
+    // egg costs about 6 ms of it. Uncapped, a burst lays every eligible egg in
+    // one tick: a fresh world had ~1975 births in its first 2125 steps, which
+    // is seconds of blocked main thread and shows up as the world animating for
+    // two seconds and then hanging for two.
+    //
+    // Deferring is FAIR because `rich` is reshuffled every tick under the
+    // lottery, so a body passed over now is not passed over systematically. It
+    // is not fair under birthOrder 'rich', where the sort is stable and the
+    // poor tail would never be reached - so the budget only applies to the
+    // lottery, and 'rich' keeps its old uncapped behaviour rather than silently
+    // acquiring a bias.
+    // THE QUEUE, drained continuously by pump() rather than emptied here.
+    //
+    // Laying every eligible egg at tick time is a burst: a fresh world had 1975
+    // births in its first 2125 steps, each costing about 6 ms of synchronous
+    // development, which is the world animating for two seconds and then
+    // hanging for two. Capping that burst with a time budget was worse - it
+    // deferred 6383 eggs to get 47 births, because a tick covers seconds of sim
+    // and the same bodies simply requalified and were passed over again.
+    //
+    // Eggs go in a queue instead, and a few are laid every step. The CPU cost
+    // is spread flat instead of spiking, and nothing is thrown away.
     for (const p of rich) {
+      if (this.queued.has(p)) continue;
+      this.queued.add(p);
+      this.eggQueue.push(p);
+      if (!this.queuedAt.has(p)) this.queuedAt.set(p, step);
+    }
+    this.pendingEggs = this.eggQueue.length;
+    // Positions and centroids are kept for pump(), which runs between ticks and
+    // has no readback of its own. They go stale by design: an egg laid three
+    // hundred steps after its parent qualified is placed relative to where the
+    // parent was, and that is a scattering, not an error.
+    this.lastPos = pos; this.lastCx = cx; this.lastCy = cy;
+
+    return {
+      alive: this.alive(), born: this.births - bornAtEntry, died: keepAlive,
+      meanEnergy: this.meanOf(total),
+      maxGeneration: this.maxGeneration(),
+      genStats: this.generationStats(),
+      linStats: this.lineageStats(),
+      survStats: this.survivalStats(step),
+      birthStats: this.birthStats(step),
+      lineages: this.countLineages(),
+      births: this.births, deaths: this.deaths, blockedBirths: this.blockedBirths,
+      pendingEggs: this.pendingEggs,
+    };
+  }
+
+  /**
+   * Lay up to `n` queued eggs. Called from the step loop, not from tick, so the
+   * cost of development lands as a thin slice every step rather than a stall
+   * every few hundred.
+   *
+   * Eligibility is rechecked here because the queue is not instantaneous: a
+   * parent can die, or spend its energy, between qualifying and being served.
+   */
+  pump(step, n = 2) {
+    const { arena, cells } = this;
+    const pos = this.lastPos, cx = this.lastCx, cy = this.lastCy, total = this.lastEnergy;
+    if (!pos || !total) return 0;
+    let born = 0, blocked = 0, misses = 0;
+    while (born < n && this.eggQueue.length) {
+      const p = this.eggQueue.shift();
+      this.queued.delete(p);
+      if (!arena.alive[p]) continue;
+      const need = Math.max(
+        this.birthEnergy,
+        (this.cellCost * arena.cnt[p] / Math.max(0.05, this.yolkFrac)) * this.birthMargin);
+      if (!(total[p] >= need)) continue;
       // DISPERSAL. An offspring laid on top of its parent competes with it for
       // the same patch immediately, and with crowding suppression that is a
       // shared starvation rather than a shared meal. Measured at the extreme: a
@@ -349,10 +458,28 @@ export class Evolver {
       // small to live. That is a normal outcome and the parent simply lost the
       // investment. -1 is the arena refusing room, which is a real failure and
       // must still stop the loop loudly.
-      if (child === -2) continue;
-      if (child < 0) { blocked++; break; }
-      born++; this.births++;
+      if (child === -2) { this.devFailed++; this.queuedAt.delete(p); continue; }
+      if (child < 0) {
+        // HEAD-OF-LINE BLOCKING, and it was mine. Putting the failed parent back
+        // on the FRONT meant the same egg was retried on every pass and failed
+        // every time, because the arena had not changed in between. One body too
+        // large for any remaining hole stalled every smaller egg behind it
+        // forever, and each retry counted as another blocked birth: measured at
+        // 1,668 blocked in 1,836 steps with the queue still growing.
+        //
+        // To the BACK instead, so a body that does not fit yields to ones that
+        // might, and stop after a couple of failures this pass rather than
+        // walking a queue that is currently unservable.
+        blocked++; this.refused++;
+        const sz = arena.cnt[p] || 0;
+        this.refusedSize.set(sz, (this.refusedSize.get(sz) ?? 0) + 1);
+        this.eggQueue.push(p); this.queued.add(p);
+        if (++misses >= 2) break;
+        continue;
+      }
+      born++; this.births++; this.queuedAt.delete(p);
     }
+    this.pendingEggs = this.eggQueue.length;
     // A birth that cannot find room is not a normal outcome, it is the arena
     // failing, and it must never be silent again. Fragmentation stopped
     // evolution for thousands of ticks while every other number looked healthy.
@@ -360,18 +487,18 @@ export class Evolver {
     if (blocked && !this.warnedBlocked) {
       this.warnedBlocked = true;
       const holes = arena.free.map(h => h[1]).sort((a, b) => b - a);
-      console.warn(`[evolve] a birth found no contiguous room: ${holes.reduce((s, v) => s + v, 0)} ` +
-        `slots free across ${holes.length} holes, largest ${holes[0] ?? 0}. ` +
-        `Size the arena with buildBodies({ maxCells }) for the bodies evolution can reach.`);
+      if (arena.lastBirthFail === 'slots') {
+        console.warn(`[evolve] births are failing because every ORGANISM SLOT is taken ` +
+          `(${arena.P} of ${arena.P}). That is the population at its ceiling, not the arena — ` +
+          `raise bodySlots if the cell budget still has room.`);
+      } else {
+        console.warn(`[evolve] a birth found no cell room: ${holes.reduce((s, v) => s + v, 0)} ` +
+          `slots free across ${holes.length} holes, largest ${holes[0] ?? 0}. ` +
+          `Size the arena with buildBodies({ maxCells }) for the bodies evolution can reach.`);
+      }
     }
 
-    return {
-      alive: this.alive(), born, died: keepAlive,
-      meanEnergy: this.meanOf(total),
-      maxGeneration: this.maxGeneration(),
-      lineages: this.countLineages(),
-      births: this.births, deaths: this.deaths, blockedBirths: this.blockedBirths,
-    };
+    return born;
   }
 
   /**
@@ -411,12 +538,28 @@ export class Evolver {
     const g = this.D.mutate(this.genome[p], r,
       { rate: this.mutRate, size: this.mutSize });
 
+    // Eggs are laid facing a random way, or every animal in the world would
+    // share one anterior direction and the flow field would select on a
+    // coincidence of the code rather than on anything the genome did.
+    //
+    // Drawn HERE, before development, because the egg's bearing is not only
+    // where the hatchling will point. Development happens inside the egg, in
+    // the egg's own coordinates, and the world's heat reaches it through the
+    // shell — so which face of the embryo is the warm one depends on which way
+    // the egg is lying. Gene products stay in the quadrant they were made in;
+    // the warmth does not.
+    const th = r() * Math.PI * 2, ct = Math.cos(th), st = Math.sin(th);
+
     // The yolk is a fixed share of what the parent has managed to accumulate.
     // A poor parent lays a small egg and may lay one that cannot finish.
     const yolk = this.yolkFrac * Math.max(0, this.lastEnergy?.[p] ?? this.birthEnergy);
     const grown = this.D.develop(g, {
       extent: this.eggExtent, yolk, cellCost: this.cellCost,
-      maxCells: this.maxCells, ...this.devoOpts,
+      maxCells: this.maxCells,
+      // The egg's bearing in the world, so the shell's warm side is where the
+      // world actually put it. Inert unless the thermal layer is switched on.
+      heatPhase: th,
+      ...this.devoOpts,
     });
     let body = grown.cells;
     if (body.length > this.maxCells) body = body.slice(0, this.maxCells);
@@ -431,15 +574,17 @@ export class Evolver {
     const child = arena.birth(n);
     if (child < 0) return -1;
     const dst = arena.off[child];
+    // WHERE THIS BODY'S CELLS ACTUALLY ARE. Identical to SLOT[i] whenever the
+    // body owns one run, which is the common case; different when the arena had
+    // to gather slots rather than refuse the birth. Everything below indexes
+    // through it so neither case is special.
+    const SLOT = arena.slotsOf(child);
 
-    // Eggs are laid facing a random way, or every animal in the world would
-    // share one anterior direction and the flow field would select on a
-    // coincidence of the code rather than on anything the genome did.
-    const th = r() * Math.PI * 2, ct = Math.cos(th), st = Math.sin(th);
     const B = world.params.bound;
     const wrap = (v) => (v > B ? v - 2 * B : v < -B ? v + 2 * B : v);
 
-    const pos = new Float32Array(n * 2), vel = new Float32Array(n * 4);
+    // pos is a POSE: xy, then theta and omega. See world_gpu.js binding 1.
+    const pos = new Float32Array(n * 4), vel = new Float32Array(n * 4);
     const meta = new Int32Array(n * 4), energy = new Float32Array(n);
     const bnd = new Int32Array(n * bK).fill(-1);
     const brest = new Float32Array(n * bK);
@@ -471,8 +616,15 @@ export class Evolver {
       const c = body[i];
       const wx = wrap(px + c.x * ct - c.y * st);
       const wy = wrap(py + c.x * st + c.y * ct);
-      pos[i * 2] = wx; pos[i * 2 + 1] = wy;
-      vel[i * 4 + 2] = cells.rad ? cells.rad[dst + i] || 0.34 : 0.34;
+      pos[i * 4] = wx; pos[i * 4 + 1] = wy;
+      // A hatchling points the way its egg was pointing. Development works in
+      // egg coordinates and does not yet emit a per-cell heading, so the egg's
+      // own orientation is the only honest thing to seed from — and it gives a
+      // fresh body a coherent axis to ratchet along instead of every cell
+      // pointing a different way. The bond twist coupling maintains it.
+      pos[i * 4 + 2] = th;
+      pos[i * 4 + 3] = 0;
+      vel[i * 4 + 2] = c.radius ?? 0.34;
 
       const type = describe(c);
       // Negative expression is no capacity, not reverse capacity.
@@ -489,27 +641,49 @@ export class Evolver {
       const cid = this.lineageLog.cell(mom, -1, book, step);
       localId[i] = cid;
       if (cells.uid) {
-        cells.uid[dst + i] = cid;
-        cells.parentA[dst + i] = mom;
-        cells.parentB[dst + i] = -1;
-        cells.lifebook[dst + i] = book;
+        cells.uid[SLOT[i]] = cid;
+        cells.parentA[SLOT[i]] = mom;
+        cells.parentB[SLOT[i]] = -1;
+        cells.lifebook[SLOT[i]] = book;
       }
-      meta[i * 4] = packMeta(type, con, gri, apN, c.senseTune ?? 0);
-      meta[i * 4 + 1] = dst + i;
+      // senseTune IS the cell's sense gene. packMeta documents it as a signed
+      // value whose MAGNITUDE is acuity and whose SIGN picks the world axis —
+      // which is exactly the shape of `c.sense`. Nobody ever wired the two
+      // together, so `c.senseTune ?? 0` was 0 for every cell ever developed, and
+      // therefore senseAcuity() was 0 everywhere in the world.
+      //
+      // That is not a small miscalibration. All three sense channels read
+      //   mix(noise, signal, acuity)
+      // so at acuity 0 every sensor in the world has been reading PURE NOISE —
+      // the compass, the terrain channel and creature perception alike — while
+      // senseCost, which is also scaled by acuity, charged nothing for it.
+      // Sensing was free, universal, and informationless. It is the best
+      // available explanation for why no closed sense->decide->move loop has
+      // ever appeared here.
+      meta[i * 4] = packMeta(type, con, gri, apN, c.senseTune ?? c.sense ?? 0);
+      meta[i * 4 + 1] = SLOT[i];
       meta[i * 4 + 2] = child;
-      meta[i * 4 + 3] = packSize(n, c.tag ?? 0.5, Math.max(0, c.toughness ?? 0), c.enzyme ?? 0.5);
-      if (cells.contractility) cells.contractility[dst + i] = con;
-      if (cells.grippiness) cells.grippiness[dst + i] = gri;
-      cells.ctype[dst + i] = type;
-      cells.body[dst + i] = child; cells.bodySize[dst + i] = n;
-      cells.cslot[dst + i] = dst + i;
-      cells.px[dst + i] = wx; cells.py[dst + i] = wy;
-      cells.vx[dst + i] = 0; cells.vy[dst + i] = 0;
-      if (cells.rad) cells.rad[dst + i] = 0.34;
-      arena.cell[dst + i] = dst + i;
-      arena.bias[dst + i] = c.bias;
-      arena.invTau[dst + i] = 1 / Math.max(0.05, c.tau);
-      arena.state[dst + i] = 0; arena.act[dst + i] = 0;
+      meta[i * 4 + 3] = packSize(n, c.tag ?? 0.5, Math.max(0, c.toughness ?? 0), c.enzyme ?? 0.5,
+                                 c.density ?? 0.5);
+      if (cells.contractility) cells.contractility[SLOT[i]] = con;
+      if (cells.grippiness) cells.grippiness[SLOT[i]] = gri;
+      // Mirror exactly what went to the GPU, so a viewer reads the cell's real
+      // material rather than the label that won its argmax.
+      if (cells.metaX) cells.metaX[SLOT[i]] = meta[i * 4];
+      if (cells.metaW) cells.metaW[SLOT[i]] = meta[i * 4 + 3];
+      cells.ctype[SLOT[i]] = type;
+      cells.body[SLOT[i]] = child; cells.bodySize[SLOT[i]] = n;
+      cells.cslot[SLOT[i]] = SLOT[i];
+      cells.px[SLOT[i]] = wx; cells.py[SLOT[i]] = wy;
+      cells.vx[SLOT[i]] = 0; cells.vy[SLOT[i]] = 0;
+      // The size relaxation gave this cell. Radius was 0.34 for every cell in
+      // every body until now, which meant mass could not vary with size and the
+      // r^2 and 1/r scalings in the kernel had nothing to bite on.
+      if (cells.rad) cells.rad[SLOT[i]] = c.radius ?? 0.34;
+      arena.cell[SLOT[i]] = SLOT[i];
+      arena.bias[SLOT[i]] = c.bias;
+      arena.invTau[SLOT[i]] = 1 / Math.max(0.05, c.tau);
+      arena.state[SLOT[i]] = 0; arena.act[SLOT[i]] = 0;
       energy[i] = 0;
     }
 
@@ -537,14 +711,14 @@ export class Evolver {
     // developed a different body is not wearing its parent's connectome.
     for (let i = 0; i < n; i++) {
       for (let k = 0; k < K; k++) {
-        arena.esrc[(dst + i) * K + k] = -1;
-        arena.ew[(dst + i) * K + k] = 0;
+        arena.esrc[SLOT[i] * K + k] = -1;
+        arena.ew[(SLOT[i]) * K + k] = 0;
       }
       let k = 0;
       for (const j of adj[i]) {
         if (k >= K) break;
-        arena.esrc[(dst + i) * K + k] = dst + j;
-        arena.ew[(dst + i) * K + k] = this.D.synapse(g, body[j], body[i]);
+        arena.esrc[(SLOT[i]) * K + k] = dst + j;
+        arena.ew[(SLOT[i]) * K + k] = this.D.synapse(g, body[j], body[i]);
         k++;
       }
     }
@@ -569,9 +743,10 @@ export class Evolver {
     world.brains.writeBrainRange(arena, dst, n);
 
     cells.bond.set(bnd, dst * bK); cells.brest.set(brest, dst * bK);
-    world.writeCellRange(dst, n, {
-      pos, vel, meta, bond: bnd, brest, bstiff, bbrittle: bbrit, energy,
-    });
+    // Scattered bodies write per slot; contiguous ones keep the single write.
+    const payload = { pos, vel, meta, bond: bnd, brest, bstiff, bbrittle: bbrit, energy };
+    if (arena.isScattered?.(child)) world.writeCellsAt(arena.slotsOf(child), payload);
+    else world.writeCellRange(dst, n, payload);
 
     // Carry the child's expressed dispersal, so ITS offspring travel the
     // distance its own tissue specifies.
@@ -600,6 +775,9 @@ export class Evolver {
     if (child < 0) return -1;
 
     const src = arena.off[p], dst = arena.off[child];
+    // As in divideDevo: index through the body's own slots, which equal
+    // dst + i whenever it owns one run.
+    const SLOT = arena.slotsOf(child);
     const K = arena.K, bK = cells.bondK;
     const m = this.mutRate, sz = this.mutSize;
     const r = this.rnd;
@@ -612,39 +790,40 @@ export class Evolver {
     // --- brain: per-neuron dynamics, then the edge table, both mutated
     for (let i = 0; i < n; i++) {
       const si = srcOf(i);
-      arena.bias[dst + i] = arena.bias[src + si] + (r() < m ? (r() * 2 - 1) * sz : 0);
+      arena.bias[SLOT[i]] = arena.bias[arena.slot(p, si)] + (r() < m ? (r() * 2 - 1) * sz : 0);
       // Mutate tau in log space and clamp to evodevo.js's evolved range, so a
       // mutation cannot produce a time constant the f32 integrator stalls on
       // (see the tau/epsilon note in brainarena.js).
-      const tau = 1 / Math.max(arena.invTau[src + si], 1e-6);
+      const tau = 1 / Math.max(arena.invTau[arena.slot(p, si)], 1e-6);
       const tau2 = r() < m ? tau * Math.exp((r() * 2 - 1) * sz) : tau;
-      arena.invTau[dst + i] = 1 / Math.min(1.89, Math.max(0.24, tau2));
-      arena.stride[dst + i] = arena.stride[src + i];
-      arena.state[dst + i] = 0;
-      arena.act[dst + i] = 0;
+      arena.invTau[SLOT[i]] = 1 / Math.min(1.89, Math.max(0.24, tau2));
+      // The PARENT can be scattered too, so read through its slots as well.
+      arena.stride[SLOT[i]] = arena.stride[arena.slot(p, srcOf(i))];
+      arena.state[SLOT[i]] = 0;
+      arena.act[SLOT[i]] = 0;
     }
     for (let i = 0; i < n; i++) {
       const si = srcOf(i);
       for (let k = 0; k < K; k++) {
-        const s = arena.esrc[(src + si) * K + k];
+        const s = arena.esrc[(arena.slot(p, si)) * K + k];
         // Edge sources are ABSOLUTE, so a copy must be rebased into the child's
         // island or the offspring would wire itself into its parent's brain —
         // which validate() forbids and which would be telepathy besides.
         // Rebase into the child's island, and remap through the size change so
         // an edge still points at the corresponding cell rather than off the
         // end of a smaller body.
-        arena.esrc[(dst + i) * K + k] = s < 0 ? -1
+        arena.esrc[(SLOT[i]) * K + k] = s < 0 ? -1
           : dst + Math.min(n - 1, Math.floor((s - src) * n / pn));
-        let w = arena.ew[(src + si) * K + k];
+        let w = arena.ew[(arena.slot(p, si)) * K + k];
         if (s >= 0 && r() < m) w += (r() * 2 - 1) * sz;
         // Structural mutation: an edge may appear or vanish, so connectivity
         // itself evolves rather than only its weights.
         if (r() < m * 0.25) {
           if (s < 0) {
-            arena.esrc[(dst + i) * K + k] = dst + ((r() * n) | 0);
+            arena.esrc[(SLOT[i]) * K + k] = dst + ((r() * n) | 0);
             w = (r() * 2 - 1) * 1.2;
           } else {
-            arena.esrc[(dst + i) * K + k] = -1; w = 0;
+            arena.esrc[SLOT[i] * K + k] = -1; w = 0;
           }
         }
         // CLAMPED. A weight is a random walk with no restoring force and
@@ -654,7 +833,7 @@ export class Evolver {
         // edge out of it. It takes thousands of generations to bite, which is
         // exactly long enough to surface as an unexplained failure in a long run
         // rather than as a bug while developing.
-        arena.ew[(dst + i) * K + k] = Math.max(-12, Math.min(12, w));
+        arena.ew[(SLOT[i]) * K + k] = Math.max(-12, Math.min(12, w));
       }
     }
 
@@ -671,7 +850,7 @@ export class Evolver {
     // and the bond springs pull them into whatever configuration the graph
     // implies. Nothing computes a layout; morphology is what the physics settles
     // into, which is the only way it stays a consequence rather than a design.
-    const pos = new Float32Array(n * 2), vel = new Float32Array(n * 4);
+    const pos = new Float32Array(n * 4), vel = new Float32Array(n * 4);
     const meta = new Int32Array(n * 4), energy = new Float32Array(n);
     const bond = new Int32Array(n * bK).fill(-1), brest = new Float32Array(n * bK);
 
@@ -685,7 +864,7 @@ export class Evolver {
     for (let i = 0; i < n; i++) {
       const si = srcOf(i);
       for (let k = 0; k < bK; k++) {
-        const pj = cells.bond[(src + si) * bK + k];
+        const pj = cells.bond[(arena.slot(p, si)) * bK + k];
         if (pj < 0) continue;
         const rel = pj - src;
         const cj = Math.min(n - 1, Math.floor(rel * n / pn));
@@ -797,7 +976,7 @@ export class Evolver {
         if (comp[i] !== 0 || adj[i].size >= bK) continue;
         for (let j = 0; j < n; j++) {
           if (comp[j] !== 1 || adj[j].size >= bK) continue;
-          const si = src + srcOf(i), sj = src + srcOf(j);
+          const si = arena.slot(p, srcOf(i)), sj = src + srcOf(j);
           const d = (cells.px[si] - cells.px[sj]) ** 2 + (cells.py[si] - cells.py[sj]) ** 2;
           if (d < best) { best = d; a = i; b = j; }
         }
@@ -821,16 +1000,18 @@ export class Evolver {
     const spread = 0.55 * Math.sqrt(n);
     for (let i = 0; i < n; i++) {
       const a = r() * Math.PI * 2, rad = spread * Math.sqrt(r());
-      pos[i * 2] = wrap(ox + Math.cos(a) * rad);
-      pos[i * 2 + 1] = wrap(oy + Math.sin(a) * rad);
+      pos[i * 4] = wrap(ox + Math.cos(a) * rad);
+      pos[i * 4 + 1] = wrap(oy + Math.sin(a) * rad);
+      pos[i * 4 + 2] = spin;    // the offspring points where it budded
+      pos[i * 4 + 3] = 0;
 
-      let type = cells.ctype[src + srcOf(i)];
+      let type = cells.ctype[arena.slot(p, srcOf(i))];
       if (r() < m * 0.5) type = (r() * 4) | 0;   // neuron, sensor, muscle, anchor
-      cells.ctype[dst + i] = type;
-      cells.body[dst + i] = child;
-      cells.bodySize[dst + i] = n;
+      cells.ctype[SLOT[i]] = type;
+      cells.body[SLOT[i]] = child;
+      cells.bodySize[SLOT[i]] = n;
       meta[i * 4] = packMeta(type, type === 2 ? 1 : 0, type === 3 ? 1 : 0);
-      meta[i * 4 + 1] = dst + i;
+      meta[i * 4 + 1] = SLOT[i];
       meta[i * 4 + 2] = child;
       // The copy path has no developed properties: middling meat, no armour.
       meta[i * 4 + 3] = packSize(n, 0.5, 0.0, 0.5);
@@ -838,10 +1019,10 @@ export class Evolver {
       // capacity here. Writing it explicitly matters: arena slots are
       // recycled, and without this a newborn would inherit whatever
       // contractility the previous tenant of these slots happened to have.
-      cells.cslot[dst + i] = dst + i;
-      cells.px[dst + i] = pos[i * 2]; cells.py[dst + i] = pos[i * 2 + 1];
-      cells.vx[dst + i] = 0; cells.vy[dst + i] = 0;
-      arena.cell[dst + i] = dst + i;
+      cells.cslot[SLOT[i]] = SLOT[i];
+      cells.px[SLOT[i]] = pos[i * 4]; cells.py[SLOT[i]] = pos[i * 4 + 1];
+      cells.vx[SLOT[i]] = 0; cells.vy[SLOT[i]] = 0;
+      arena.cell[SLOT[i]] = SLOT[i];
       energy[i] = 0;
     }
 
@@ -894,7 +1075,9 @@ export class Evolver {
 
     // Half the parent's cell energy goes with the propagule. Division costs.
     const half = new Float32Array(pn);
-    world.writeCellRange(dst, n, { pos, vel, meta, bond, brest, energy });
+    const payload2 = { pos, vel, meta, bond, brest, energy };
+    if (arena.isScattered?.(child)) world.writeCellsAt(arena.slotsOf(child), payload2);
+    else world.writeCellRange(dst, n, payload2);
     world.writeCellRange(src, pn, { energy: half });
 
     this.bookkeep(child, p, step);
@@ -947,12 +1130,15 @@ export class Evolver {
           let cx = 0, cy = 0;
           for (let i = 0; i < n0; i++) { cx += cells.px[off0 + i]; cy += cells.py[off0 + i]; }
           cx /= n0; cy /= n0;
-          const pos = new Float32Array(n0 * 2);
+          // Only the cells MOVE here — they keep the headings they had. Writing
+          // a full pose would zero theta and omega, so this goes through the
+          // xy-only path.
+          const posXY = new Float32Array(n0 * 2);
           for (let i = 0; i < n0; i++) {
             cells.px[off0 + i] += bx - cx; cells.py[off0 + i] += by - cy;
-            pos[i * 2] = cells.px[off0 + i]; pos[i * 2 + 1] = cells.py[off0 + i];
+            posXY[i * 2] = cells.px[off0 + i]; posXY[i * 2 + 1] = cells.py[off0 + i];
           }
-          this.world.writeCellRange(off0, n0, { pos });
+          this.world.writeCellRange(off0, n0, { posXY });
         }
       } catch { /* no motes in this world; leave it where it is */ }
     }
@@ -1153,6 +1339,155 @@ export class Evolver {
     for (let o = 0; o < this.arena.P; o++)
       if (this.arena.alive[o]) g = Math.max(g, this.generation[o]);
     return g;
+  }
+
+  /**
+   * HOW DEEP THE LIVING POPULATION ACTUALLY IS.
+   *
+   * `generation` was reported as a max, and a max is a ratchet held up by
+   * whichever single deepest body happens to be alive. It says nothing about
+   * the population and it moves in jumps: observed sitting at 186 across
+   * 265,357 births, which reads as evolution having stopped when it had not.
+   *
+   * Lineages do not advance at one rate. A line in rich ground reproduces
+   * every few thousand steps while one in a barren patch may not reproduce at
+   * all, so ancestor depth is a DISTRIBUTION and the only honest summaries are
+   * distributional ones. The histogram is returned with the scalars because
+   * mean and median hide the shape - a population split between one ancient
+   * line and a burst of new ones has the same mean as an even spread.
+   *
+   * Cost is one pass over body slots, on the tick path where the energy sums
+   * already walk the same array.
+   */
+  /**
+   * HOW DIVERSITY IS DISTRIBUTED, not just how many lineages there are.
+   *
+   * A count says 12 whether that is twelve equal lines or one line holding 99%
+   * of the population and eleven stragglers about to die. Those are completely
+   * different states and only the second is a collapse in progress, so the
+   * count alone cannot tell you whether an intervention worked.
+   *
+   * Shannon entropy over lineage shares, reported in bits and also as
+   * EFFECTIVE lineages (2^H) - the number of equally-common lines that would
+   * give the same entropy, which is the honest answer to "how many are there
+   * really". Top share is the single biggest line, because a population one
+   * lineage away from clonal should say so.
+   */
+  /** Birth outcomes by reason, and how long the queue head has waited. */
+  birthStats(step) {
+    let oldest = null;
+    for (const p of this.eggQueue) {
+      const at = this.queuedAt.get(p);
+      if (at != null && (oldest === null || at < oldest)) oldest = at;
+    }
+    const sizes = [...this.refusedSize.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6)
+      .map(([sz, n]) => `${sz}c x${n}`);
+    return {
+      devFailed: this.devFailed, refused: this.refused,
+      refusedSizes: sizes,
+      oldestQueuedSteps: oldest === null ? null : Math.max(0, step - oldest),
+    };
+  }
+
+  /**
+   * Note which lineages exist now, and close the books on any that have gone.
+   * Called from tick, because extinction is only observable as an absence and
+   * an absence needs something to compare against.
+   */
+  trackLineages(step) {
+    // WHEN THIS BOOK WAS OPENED. Lineage birth times are not persisted, so a
+    // resumed world knows only that a line existed when tracking began - not
+    // when it actually arose. Without recording that, every lineage in a
+    // restarted world reports the same age and reads as a cohort that appeared
+    // together, which is an artefact of the restart rather than anything the
+    // world did.
+    if (this.trackFrom == null) this.trackFrom = step;
+    const now = new Set();
+    for (let o = 0; o < this.arena.P; o++) {
+      if (this.arena.alive[o]) now.add(this.lineage[o]);
+    }
+    for (const l of now) if (!this.lineageBorn.has(l)) this.lineageBorn.set(l, step);
+    for (const [l, born] of this.lineageBorn) {
+      if (now.has(l)) continue;
+      this.lineageLife.push(step - born);
+      this.lineageBorn.delete(l);
+      this.lineagesLost++;
+    }
+    // Bounded: a long run extinguishes tens of thousands of lines and the
+    // distribution is what matters, not every sample of it.
+    if (this.lineageLife.length > 20000) {
+      this.lineageLife = this.lineageLife.filter((_, i) => (i & 1) === 0);
+    }
+  }
+
+  /** How long lineages last: the survival side of the diversity question. */
+  survivalStats(step) {
+    const lives = this.lineageLife;
+    const ages = [];
+    for (const [, born] of this.lineageBorn) ages.push(step - born);
+    ages.sort((a, b) => a - b);
+    const q = (a, f) => a.length ? a[Math.round(f * (a.length - 1))] : null;
+    const sorted = lives.slice().sort((a, b) => a - b);
+    return {
+      lost: this.lineagesLost,
+      livingNow: ages.length,
+      // Ages are measured from here, not from the origin of the world.
+      trackedFor: this.trackFrom == null ? 0 : step - this.trackFrom,
+      censored: ages.length ? ages.filter(a => a >= (step - (this.trackFrom ?? step))).length : 0,
+      // Of the lines that died, how long they lasted.
+      deadMedian: q(sorted, 0.5), deadP90: q(sorted, 0.9), deadMax: sorted.length ? sorted[sorted.length - 1] : null,
+      // Of the lines still going, how old they are. A population whose living
+      // lines are all young is still churning; one where they are old has
+      // settled into a few survivors.
+      liveMedian: q(ages, 0.5), liveP90: q(ages, 0.9), liveMax: ages.length ? ages[ages.length - 1] : null,
+    };
+  }
+
+  lineageStats(topN = 5) {
+    const share = new Map();
+    let total = 0;
+    for (let o = 0; o < this.arena.P; o++) {
+      if (!this.arena.alive[o]) continue;
+      const l = this.lineage[o];
+      share.set(l, (share.get(l) ?? 0) + 1);
+      total++;
+    }
+    if (!total) return { n: 0, count: 0, entropyBits: 0, effective: 0, topShare: 0, top: [] };
+    let H = 0;
+    for (const c of share.values()) { const p = c / total; H -= p * Math.log2(p); }
+    const top = [...share.entries()].sort((a, b) => b[1] - a[1]).slice(0, topN)
+      .map(([l, c]) => ({ lineage: l, bodies: c, share: +(c / total).toFixed(4) }));
+    return {
+      n: total, count: share.size,
+      entropyBits: +H.toFixed(3),
+      effective: +Math.pow(2, H).toFixed(2),
+      topShare: top.length ? top[0].share : 0,
+      top,
+    };
+  }
+
+  generationStats(bins = 24) {
+    const gens = [];
+    for (let o = 0; o < this.arena.P; o++) {
+      if (this.arena.alive[o]) gens.push(this.generation[o] || 0);
+    }
+    if (!gens.length) return { n: 0, max: 0, min: 0, mean: 0, median: 0, p10: 0, p90: 0, hist: [], lo: 0, hi: 0 };
+    gens.sort((a, b) => a - b);
+    const q = (f) => gens[Math.min(gens.length - 1, Math.max(0, Math.round(f * (gens.length - 1))))];
+    const lo = gens[0], hi = gens[gens.length - 1];
+    // Bins span the observed range, so a population that has all converged on
+    // one depth shows as a single spike rather than an empty chart.
+    const hist = new Array(bins).fill(0);
+    const span = Math.max(1e-9, hi - lo);
+    for (const g of gens) {
+      hist[Math.min(bins - 1, Math.floor((g - lo) / span * bins))]++;
+    }
+    return {
+      n: gens.length, min: lo, max: hi,
+      mean: +(gens.reduce((a, b) => a + b, 0) / gens.length).toFixed(2),
+      median: q(0.5), p10: q(0.1), p90: q(0.9),
+      lo, hi, hist,
+    };
   }
 
   /**

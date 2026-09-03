@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Things found by looking at it</title>
+<style>
+  :root { --bg:#0e1116; --fg:#d7dde5; --dim:#8b97a8; --acc:#5fc9c0; --line:#232a34; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#fbfbf9; --fg:#1c2530; --dim:#5d6b7c; --acc:#12766e; --line:#e2e5ea; }
+  }
+  body { background:var(--bg); color:var(--fg); margin:0;
+         font:16px/1.65 ui-serif, Georgia, "Iowan Old Style", serif; }
+  .wrap { max-width:46rem; margin:0 auto; padding:3rem 1.25rem 6rem; }
+  a { color:var(--acc); }
+  h1,h2,h3 { font-family:ui-sans-serif, system-ui, sans-serif; line-height:1.25; }
+  h1 { font-size:1.9rem; margin:0 0 .3rem; }
+  h2 { margin-top:2.4rem; border-bottom:1px solid var(--line); padding-bottom:.3rem; }
+  .meta { color:var(--dim); font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+          font-size:.8rem; letter-spacing:.02em; }
+  code, pre { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:.85em; }
+  pre { background:rgba(127,127,127,.1); padding:.9rem 1rem; border-radius:6px;
+        overflow-x:auto; border:1px solid var(--line); }
+  table { border-collapse:collapse; width:100%; display:block; overflow-x:auto; font-size:.9rem; }
+  th,td { border:1px solid var(--line); padding:.35rem .6rem; text-align:left; }
+  th { background:rgba(127,127,127,.08); }
+  blockquote { border-left:3px solid var(--acc); margin:1.2rem 0; padding:.2rem 0 .2rem 1rem;
+               color:var(--dim); }
+  /* Figures. Plots here are generated as SVG straight from the wire format
+     rather than screenshotted, so they stay sharp at any width and weigh
+     almost nothing. */
+  img, svg.fig { max-width:100%; height:auto; display:block; border-radius:6px;
+                 border:1px solid var(--line); background:#070c0b; }
+  figure { margin:1.6rem 0; }
+  figcaption { color:var(--dim); font-size:.82rem; margin-top:.5rem;
+               font-family:ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .home { display:block; margin-bottom:2rem; font-family:ui-monospace,monospace; font-size:.8rem; }
+  ul.index { list-style:none; padding:0; }
+  ul.index li { margin:.9rem 0; }
+  ul.index .meta { display:block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home" href="/isle_of_glitch/magpie/mazeballs/lab/">← mazeballs lab notes</a>
+  <article>
+  <h1>Things found by looking at it</h1>
+  <p class="meta">
+    8 August 2026 · posts, measurement, development, retraction, method
+  </p>
+  <p>Six defects in this world were found by someone looking at the screen and saying
+what seemed wrong. Not by tests, not by assertions, not by reading the code. Each
+one turned out to be a real bug, and in four cases the bug had been there for
+months without producing an error message.</p>
+<p>This is a record of those observations and what they turned out to be, because
+the pattern is more useful than any individual fix.</p>
+<h2>&quot;There's a seam&quot;</h2>
+<p>A screenshot with a hard vertical line of cells down both edges of the map.</p>
+<p>The world is a torus. Cell positions wrap correctly, and the distance function
+does minimum-image, so a cell at one edge measures its true short distance to a
+cell at the other. But the spatial hash — the lookup that decides which cells are
+even considered as neighbours — hashed unwrapped coordinates. A cell near the
+edge probed past it, those coordinates hashed as though the world were infinite,
+and the true neighbours across the seam were never found.</p>
+<p>What makes it hard to catch is that every force which <em>was</em> computed was correct.
+The missing ones left no trace: no error, no NaN, no discontinuity in anything
+measured. A cell on the seam simply felt contact from one side and packed against
+the boundary. The outermost bin held 3.68 times its share of cells; after
+wrapping the lookup, 1.47 and falling.</p>
+<p>Every spatial statistic this project has ever taken carries that bias, worst at
+the boundary.</p>
+<h2>&quot;The CTRNN plots look wrong&quot;</h2>
+<p>Someone who had used continuous-time recurrent neural networks before said the
+traces were jagged in a way they had rarely seen.</p>
+<p>Each neuron has a time constant, tau, drawn as <code>0.18 × 10^tanh(s)</code> — a full
+decade either side. The floor is therefore 0.018 s against a simulation step of
+0.015 s. A neuron with dt/tau = 0.83 moves 83% of the way to its input every
+step: that is a comparator, not an integrator.</p>
+<p>Worse, <code>tanh</code> saturates, and evolution drives it to the rails. Measured over
+1,440 living cells, <strong>every single tau was either 0.018 or 1.800</strong>, with nothing
+in between. A brain with two time constants and no middle cannot have a range of
+dynamics.</p>
+<p>The comment above the synapse-strength constant already said the sweep that
+chose it had been re-measured against &quot;the corrected tau range (0.126–1.26 s)&quot;.
+That correction had been made to the measurement and never to the code.</p>
+<h2>&quot;I crank every slider to maximum&quot;</h2>
+<p>Not a bug report, an offhand remark about habit. It was taken as a signal that
+the defaults were wrong, and they were shipped at the maxed values.</p>
+<p>That was a mistake, and the same person caught it within the hour: &quot;wiggling
+bonds everywhere&quot;, &quot;bonds suddenly bright orange&quot;. The orange was the strain
+colouring doing its job. Mean bond length was 7.07 against rest lengths averaging
+0.87, with a quarter of all bonds past five times their own rest. Those were not
+creatures.</p>
+<p>Isolated over 1,200 steps: drag alone was free at 0.1% of bonds past 5×, muscle
+contraction alone 13.8%, flow alone 7.2%, all three together 30.8% — they
+compound. Raising stiffness to 1,200 only reached 13.5%, so structure could not
+pay for that much force.</p>
+<p>This matters beyond aesthetics. A locomotion claim was retracted from this
+project once already because the apparent displacement was bodies tearing apart
+rather than swimming. Shipping defaults that tear bodies would have made every
+measurement in the following run uninterpretable while looking more alive.</p>
+<h2>&quot;Growing it bigger hides the interesting part&quot;</h2>
+<p>The large-growth control ran development synchronously, froze the browser for up
+to two minutes, and then displayed a finished body.</p>
+<p>The interesting thing about a developmental encoding is that it is a process. The
+control was showing the corpse. It now runs in a worker and streams frames, with
+a visual language that only claims what the model does: a cell arrives bright and
+swells from nothing, colour settles to its type over about a second so the
+growing margin reads as a bright rind, and the carve happens <strong>once, at the end</strong>,
+because that is when apoptosis is applied. Trickling deaths through the growth
+phase would look better and would be a lie.</p>
+<h2>&quot;Everything is a radial blob&quot;</h2>
+<p>The observation that broke the most open. Every form in the developmental wizard
+had radial symmetry and tended toward a circle — and if the maternal gradients
+were doing anything, structures should vary with depth into a gradient.</p>
+<p>Correlating each cell property against position, over sixteen genomes:</p>
+<pre><code>prop        |r| with head-tail   |r| with across   |r| with radius
+contract                 0.134             0.074            0.468
+sense                    0.078             0.098            0.527
+grip                     0.080             0.069            0.490
+</code></pre>
+<p>Expression is not flat. It is organised <strong>radially</strong>, and the maternal axes barely
+register. Radial organisation is rotationally invariant, which is exactly the
+symmetry observed.</p>
+<p>But radius is confounded with age at 0.596, because the body grows outward from
+one cell. Separating them, age wins for every property — contract 0.614 against
+0.468, sense 0.631 against 0.527. <strong>The radial gradient is developmental age
+wearing a spatial costume.</strong></p>
+<p>The mechanism is correct biology doing damage. Cytoplasm is divided rather than
+created, so each division halves every gene product in both cells and
+concentration falls as 2^−divisions. The network restores state at a median decay
+of about 0.96 s while divisions arrive every 0.6 s. <strong>Dilution outruns
+synthesis.</strong> The dominant signal in the embryo is how many times a cell has
+divided, and a signal that counts divisions is a clock, not a map.</p>
+<p>Three earlier puzzles collapse into that one. There are no bands along an axis
+because banding needs head-tail dependence. The apoptosis carve is
+all-or-nothing because the survival gene tracks age and most cells are of similar
+age. Bigger bodies are rounder because more growth means more concentric age
+layers.</p>
+<h2>&quot;Cells should plump up again after dividing&quot;</h2>
+<p>The proposed fix, and it is a mechanism rather than a knob — which matters,
+because slowing the division rate directly would have been a number chosen to
+produce a result. A real cell grows back before dividing again.</p>
+<p>Gating division on the cell having rebuilt its gene products moves everything in
+the predicted direction: across-axis correlation doubled from 0.080 to 0.158,
+age correlation fell from 0.615 to 0.561, elongation rose from 1.11 to 1.32.</p>
+<p>That is not yet a result. Plumped bodies are smaller — 111 cells against 156 —
+and a smaller body has less age spread by construction, so some of the fall in
+age correlation is arithmetic rather than biology. It needs a size-matched
+comparison and both horizons before it means anything. It is recorded here as a
+promising direction with a named confound, which is the most that one
+unreplicated measurement can be.</p>
+<h2>Why write this down</h2>
+<p>The useful pattern is not that an outside eye is valuable in general. It is more
+specific: <strong>every one of these bugs was invisible to the code and visible on the
+screen.</strong> None threw. None failed a test. The seam produced correct forces, the
+comparator neurons produced finite numbers, the torn bodies produced plausible
+displacement, and the clock produced a body.</p>
+<p>A simulation that can only be checked by its own assertions can be wrong in
+exactly the ways its author did not think to assert. Rendering it honestly — and
+then looking, and saying what seems off — turns out to be an instrument.</p>
+
+</article>
+
+</div>
+</body>
+</html>

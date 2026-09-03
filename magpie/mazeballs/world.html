@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Mazeballs — the lawful world, on the GPU</title>
 <style>
 :root{
@@ -12,7 +12,10 @@
   --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;overflow:hidden}
+/* overscroll-behavior stops the rubber-band that let iOS drag the whole page.
+   touch-action stays OFF the body so the panel and gallery can still scroll —
+   it is set to none only on the canvas, which does its own pan/zoom. */
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%}
 body{background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
 #c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 #c.drag{cursor:grabbing}
@@ -45,6 +48,12 @@ body{background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-fo
 .hud .rule{
   display:block;height:1px;background:var(--rule);margin:.35rem 0 .3rem;opacity:.7;
 }
+.hudbtn{font:11px/1 ui-monospace,monospace;color:var(--ink-soft);cursor:pointer;
+  background:rgba(0,0,0,.25);border:1px solid #23302e;border-radius:5px;
+  padding:4px 7px;margin-left:2px}
+.hudbtn:hover{color:var(--ink);border-color:var(--sensor)}
+.hudbtn.ok{color:#8fd9a8;border-color:#3c6b4e}
+@media (max-width:820px){ .hudbtn{padding:7px 9px;font-size:12px} }
 #hudGrip{
   position:fixed;top:0;bottom:0;width:14px;z-index:41;cursor:pointer;
   pointer-events:auto;display:flex;align-items:center;justify-content:center;
@@ -58,14 +67,41 @@ aside{
   border-left:1px solid var(--rule);padding:3rem 1rem 1rem;overflow-y:auto;overflow-x:hidden;
   display:flex;flex-direction:column;gap:.95rem;backdrop-filter:blur(8px);
   transition:transform .22s ease;
+  touch-action:pan-y;              /* it scrolls vertically; do not let the page eat the gesture */
   /* Fixed at 264px this clipped its own contents on any narrow window, with no
      way to see what was cut off. Width is now a variable, dragged from the left
      edge and remembered, and it never grows past half the viewport. */
   min-width:200px;max-width:min(620px, 60vw);
 }
+/* On a phone the panel is an overlay, not a column that steals half the world:
+   it spans most of the width, sits above everything, and starts hidden so the
+   world is what you see first. */
+@media (max-width:700px){
+  aside{--panelw:min(84vw,320px);z-index:55;box-shadow:-12px 0 40px rgba(0,0,0,.5)}
+}
 aside.hidden{transform:translateX(100%)}
 /* The drag handle: a strip along the panel's left edge. Wide enough to hit
    without hunting, invisible until pointed at. */
+.spark{display:flex;align-items:flex-end;gap:1px;height:26px;margin:5px 0 3px}
+.spark i{flex:1 1 0;min-width:1px;background:var(--sensor);opacity:.55;
+  border-radius:1px 1px 0 0;transition:height .4s ease}
+.spark i.pk{opacity:.95}
+.ways{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0 2px}
+.ways a{flex:1 1 auto;text-align:center;white-space:nowrap;
+  font:11px/1 ui-monospace,monospace;color:var(--ink-soft);text-decoration:none;
+  padding:6px 8px;border:1px solid #23302e;border-radius:5px;
+  background:rgba(0,0,0,.22)}
+.ways a:hover{color:var(--ink);border-color:var(--sensor)}
+/* On a phone these are the primary way off this page, so they get a real
+   tap target rather than the 11px they can afford on a desktop column. */
+@media (max-width:820px){ .ways a{padding:9px 10px;font-size:12px} }
+.odo{margin:6px 0 10px;padding:7px 9px;border:1px solid #23302e;border-radius:6px;
+  background:rgba(0,0,0,.22)}
+.odo .lab{display:flex;justify-content:space-between;align-items:baseline;
+  font-size:11px;color:var(--ink-soft)}
+.odo .v{font:600 15px/1.1 ui-monospace,monospace;color:var(--ink);
+  font-variant-numeric:tabular-nums}
+.odo .sub{font:10px/1.3 ui-monospace,monospace;color:#6b7d78;margin-top:2px}
 #panelGrip{
   position:fixed;top:0;bottom:0;width:9px;cursor:ew-resize;z-index:40;
   background:transparent;transition:background .12s ease;
@@ -78,6 +114,20 @@ h2{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:
 .sl .lab{display:flex;justify-content:space-between}
 .sl .v{font-family:var(--mono);color:var(--ink)}
 input[type=range]{width:100%;accent-color:var(--sensor);margin:0}
+/* THIS VIEWER ONLY. Everything else in the panel edits the world on the server
+   and every watcher sees it; these change nothing but your own window. The two
+   were interleaved with no way to tell them apart, so a slider that alters the
+   physics for everyone looked exactly like one that dims some dots. */
+#localOnly{
+  border:1px solid #2c4a52; border-radius:5px; padding:.5rem .55rem .55rem;
+  margin:.55rem 0 .2rem; background:rgba(80,140,160,.05);
+}
+#localOnly > .cap{
+  font-size:.63rem; letter-spacing:.09em; text-transform:uppercase;
+  color:#7fb3c4; opacity:.95; margin:0 0 .4rem;
+}
+#localOnly input[type=range]{accent-color:#7fb3c4}
+#localOnly h2{color:#7fb3c4}
 .row{display:flex;gap:.4rem;flex-wrap:wrap}
 button{
   font:inherit;font-size:.76rem;color:var(--ink);background:#16211F;border:1px solid var(--rule);
@@ -85,9 +135,16 @@ button{
 }
 button:hover{border-color:var(--sensor)}
 button.on{background:var(--sensor);border-color:var(--sensor);color:#06110F;font-weight:600}
+/* The hamburger must be a reliable, thumb-sized target that nothing covers.
+   At 30px and z-index 5 it was both hard to hit and buried under the status
+   popups (#codeWarn z-50, #linkBox z-45). Now 44px — Apple's minimum touch
+   target — and above every overlay, with a legible backdrop of its own. */
 #toggle{
-  position:fixed;top:.5rem;right:.6rem;width:30px;height:30px;min-width:0;flex:none;
-  z-index:5;padding:0;font-size:.9rem;line-height:1;
+  position:fixed;top:calc(.5rem + env(safe-area-inset-top));right:.6rem;
+  width:44px;height:44px;min-width:0;flex:none;
+  z-index:60;padding:0;font-size:1.25rem;line-height:1;
+  background:#16211Fdd;border:1px solid var(--rule);border-radius:8px;
+  backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,.4);
 }
 .legend{display:flex;gap:.7rem;font-size:.68rem;color:var(--ink-soft);font-family:var(--mono)}
 .legend i{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:.25rem}
@@ -134,11 +191,27 @@ button.on::before { content: '\25CF\00a0'; opacity: .85; }
   padding: .35rem .6rem; text-align: center; max-width: 70vw; }
 #codeWarn b { color: #ffb84d; }
 
+/* A SELECTION IS A STATE OF THE PICTURE, so it is announced in the picture.
+   Selecting an animal dims every other cell, and the dimming lasts until it is
+   cleared — which can be minutes after the click, or a selection made from the
+   gallery rather than by clicking the world. With nothing on screen saying so,
+   a dimmed world is indistinguishable from a broken one. */
+#selBadge { position: fixed; top: .5rem; left: 50%; transform: translateX(-50%);
+  z-index: 46; font: 11px/1.5 ui-monospace, monospace; color: #cfe3dc;
+  background: #11201cee; border: 1px solid #2f5b50; border-radius: 3px;
+  padding: .2rem .25rem .2rem .55rem; display: none; align-items: center; gap: .5rem;
+  white-space: nowrap; max-width: 96vw; }
+#selBadge.on { display: flex; }
+#selBadge b { color: #eaf5f0; }
+
 /* THE CREATURE CAROUSEL. A scroll strip rather than a grid, because the tiles
    are RANKED — the order carries meaning, so the best movers stay first and
    visible instead of being spread over a block. */
 #galleryBox { display:flex; gap:5px; margin:.4rem 0; overflow-x:auto; overflow-y:hidden;
-  scroll-snap-type:x proximity; padding-bottom:5px; scrollbar-width:thin; }
+  scroll-snap-type:x proximity; padding-bottom:5px; scrollbar-width:thin;
+  touch-action:pan-x; outline:none; scroll-behavior:smooth; }
+/* When the carousel has keyboard focus, say so, so arrow keys have an obvious home. */
+#galleryBox:focus-visible { box-shadow:0 0 0 1px #5fc9c0 inset; border-radius:4px; }
 #galleryBox canvas { flex:0 0 auto; width:74px; height:74px; background:#070c0b;
   border:1px solid #1d2a27; border-radius:4px; cursor:pointer; display:block;
   scroll-snap-align:start; }
@@ -171,6 +244,84 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 #devoC { display: block; width: 100%; height: 210px; background: #070c0b;
   border: 1px solid #1d332e; border-radius: 3px; margin-top: .35rem; }
 #devoInfo { font: 10px/1.4 ui-monospace, monospace; color: #6d8880; }
+
+/* THE CELL SCOPE — a pop-out scatter. Any pair of cell properties on the axes,
+   a third as colour, bounds chosen from the data. Two modes: the cells of one
+   creature (a body's material laid out in property space, not physical space),
+   or one dot per creature over the whole population. A floating panel so it can
+   sit over the world; a bottom sheet on a phone. */
+/* DOCKED LARGE, RATHER THAN A LINK TO A LARGER PAGE. A popout that needs more
+   room should get more room here; sending the reader to a second page costs
+   them the run they were watching, and a second page is a second codepath that
+   drifts from this one. */
+.panelBig { left: .6rem !important; right: .6rem !important; top: 3.2rem !important;
+  bottom: .6rem !important; width: auto !important; }
+.panelBig canvas { height: calc(100vh - 9rem) !important; }
+#devBox { position: fixed; z-index: 58; right: .6rem; top: 3.2rem;
+  width: min(420px, 92vw); background: #0b1211f2; border: 1px solid #24403a;
+  border-radius: 8px; backdrop-filter: blur(8px); box-shadow: 0 8px 40px rgba(0,0,0,.55);
+  display: none; flex-direction: column; overflow: hidden;
+  font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #9fb8b0; }
+#devBox.on { display: flex; }
+#devHead { display: flex; align-items: center; gap: .4rem;
+  padding: .45rem .55rem; border-bottom: 1px solid #1a2a27; }
+#devHead b { color: #cfe3dc; font-weight: 600; }
+#devHead .sp { flex: 1 1 auto; }
+#devHead a { color: #6d8880; text-decoration: none; }
+#devHead a:hover { color: #5fc9c0; }
+#devBox button { font: inherit; color: #9fb8b0; background: #16211F;
+  border: 1px solid #24403a; border-radius: 4px; padding: .15rem .4rem; cursor: pointer; }
+#devBox button:hover { border-color: #5fc9c0; }
+#devCv { width: 100%; height: 300px; display: block; background: #070c0b; }
+#devFoot { padding: .35rem .55rem; border-top: 1px solid #1a2a27; color: #6d8880; }
+@media (max-width:820px){ #devBox{ left:.4rem; right:.4rem; width:auto; top:auto; bottom:3.2rem }
+  #devCv{ height: 240px } }
+#anaBox { position: fixed; z-index: 58; right: .6rem; bottom: .6rem;
+  width: min(520px, 94vw); background: #0b1211f2; border: 1px solid #24403a;
+  border-radius: 8px; backdrop-filter: blur(8px); box-shadow: 0 8px 40px rgba(0,0,0,.55);
+  display: none; flex-direction: column; overflow: hidden;
+  font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #9fb8b0; }
+#anaBox.on { display: flex; }
+#anaHead { display: flex; align-items: center; gap: .4rem;
+  padding: .45rem .55rem; border-bottom: 1px solid #1a2a27; }
+#anaHead b { color: #cfe3dc; font-weight: 600; }
+#anaHead .sp { flex: 1 1 auto; }
+#anaHead a { color: #6d8880; text-decoration: none; }
+#anaHead a:hover { color: #5fc9c0; }
+#anaBox button { font: inherit; color: #9fb8b0; background: #16211F;
+  border: 1px solid #24403a; border-radius: 4px; padding: .15rem .4rem; cursor: pointer; }
+#anaBox button.on { background: #1d3b36; border-color: #5fc9c0; color: #cfe3dc; }
+#anaCv { width: 100%; height: 260px; display: block; }
+#anaFoot { padding: .35rem .55rem; border-top: 1px solid #1a2a27; color: #6d8880; }
+/* On a phone it takes the width and sits above the panel toggle. */
+@media (max-width:820px){ #anaBox{ left:.4rem; right:.4rem; width:auto; bottom:3.2rem }
+  #anaCv{ height: 220px } }
+#vizBox { position: fixed; z-index: 58; left: .6rem; bottom: .6rem;
+  width: min(440px, 92vw); background: #0b1211f2; border: 1px solid #24403a;
+  border-radius: 8px; backdrop-filter: blur(8px); box-shadow: 0 8px 40px rgba(0,0,0,.55);
+  display: none; flex-direction: column; overflow: hidden;
+  font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #9fb8b0; }
+#vizBox.on { display: flex; }
+#vizHead { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .5rem;
+  padding: .45rem .55rem; border-bottom: 1px solid #1a2a27; }
+#vizHead b { color: #cfe3dc; font-weight: 600; margin-right: .2rem; }
+#vizHead .sp { flex: 1 1 auto; }
+#vizHead label { display: inline-flex; align-items: center; gap: .2rem; color: #6d8880; }
+#vizHead select { font: inherit; color: #cfe3dc; background: #16211F;
+  border: 1px solid #24403a; border-radius: 3px; padding: .1rem .2rem; max-width: 8.5rem; }
+#vizBox button { font: inherit; color: #9fb8b0; background: #16211F;
+  border: 1px solid #24403a; border-radius: 3px; padding: .18rem .45rem; cursor: pointer;
+  flex: 0 0 auto; min-width: 0; }
+#vizBox button:hover { border-color: #5fc9c0; }
+#vizBox button.on { background: #2c4a52; border-color: #5fc9c0; color: #eaf5f0; }
+#vizCanvas { display: block; width: 100%; height: 300px; background: #070c0b; }
+#vizFoot { padding: .3rem .55rem .45rem; color: #6d8880; min-height: 1.2em; }
+@media (max-width: 700px) {
+  #vizBox { left: 0; right: 0; bottom: 0; width: 100%;
+    border-radius: 12px 12px 0 0; border-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom); }
+  #vizCanvas { height: 46vh; }
+}
 </style>
 </head>
 <body>
@@ -179,6 +330,16 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 <!-- CTRNN scope. Rows are the selected animal's neurons, x is time. Lives over
      the canvas rather than in the sidebar because it needs the width: reading a
      gait means seeing whether bands are in phase, and that is a wide picture. -->
+<!-- OUTSIDE THE PANEL, deliberately. The right-hand aside has a
+     backdrop-filter, and a filter makes an element the containing block for its
+     fixed-position descendants — so a badge placed in there is positioned and
+     width-constrained by the panel rather than by the window, which is where it
+     needs to be. -->
+<div id="selBadge">
+  <span>watching <b id="selBadgeId">#0</b> · the rest of the world is dimmed</span>
+  <button id="bShowAll">show all</button>
+</div>
+
 <div id="scope" style="display:none">
   <div id="scopeGrip" title="drag to resize"><i></i><i></i><i></i></div>
   <div id="scopeHead">
@@ -204,6 +365,61 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 </div>
 <button id="toggle" title="panel">☰</button>
 
+<!-- THE CELL SCOPE. A pop-out scatter with pickable axes; see the module near
+     the gallery code. Empty selects are filled in by JS from the property list. -->
+<!-- RUN ANALYTICS, LIVE, IN THE APP.
+     analytics.html charts the committed archives, which is a fixed series: it
+     is a record of runs that have already happened and it does not move while
+     you watch. The same charts belong beside the world they describe, with the
+     archives as the HISTORY and the running world appended to them, so the
+     line grows while you look at it. -->
+<!-- DEVELOPMENT, INLINE. This was a link to devo2-wizard.html, and a link out
+     of the world is not a feature of the world: you lose the run you were
+     watching to look at the thing that made it. Same worker and same WebGPU
+     view the wizard uses - lib/devo-worker.js and lib/devo-view.js exist
+     precisely so both can drive them. -->
+<div id="devBox">
+  <div id="devHead">
+    <b>development</b>
+    <span id="devSrc">–</span>
+    <span class="sp"></span>
+    <button id="devGrow" title="grow a body from a genome">grow</button>
+    <button id="devFromWorld" title="use the genome of the selected animal">from selection</button>
+    <button id="devBig" title="expand to fill the window">⤢</button>
+    <button id="devClose" title="close">✕</button>
+  </div>
+  <canvas id="devCv"></canvas>
+  <div id="devFoot">pick grow, or select an animal in the world and use its genome</div>
+</div>
+
+<div id="anaBox">
+  <div id="anaHead">
+    <b>run analytics</b>
+    <span id="anaSrc">–</span>
+    <span class="sp"></span>
+    <button id="anaArch" class="on" title="prepend the committed archive series as history">archives</button>
+    <button id="anaBig" title="expand to fill the window">⤢</button>
+    <button id="anaClose" title="close">✕</button>
+  </div>
+  <canvas id="anaCv"></canvas>
+  <div id="anaFoot">–</div>
+</div>
+
+<div id="vizBox">
+  <div id="vizHead">
+    <b>cell scope</b>
+    <button id="vizModeCell" class="on" title="the cells of the selected creature, in property space">this creature</button>
+    <button id="vizModeCrit" title="one dot per creature across the population">population</button>
+    <span class="sp"></span>
+    <label>x&nbsp;<select id="vizX"></select></label>
+    <label>y&nbsp;<select id="vizY"></select></label>
+    <label>colour&nbsp;<select id="vizColor"></select></label>
+    <button id="vizClose" title="close">✕</button>
+  </div>
+  <canvas id="vizCanvas"></canvas>
+  <div id="vizFoot"></div>
+</div>
+
 <div class="hud" id="hud">
   <span class="t">Mazeballs</span>
   <span title="living bodies / arena capacity">alive <b id="hAlive">–</b></span>
@@ -219,9 +435,15 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
   <i class="rule"></i>
   <span>sim <b id="hRate">–</b>×</span>
   <span>fps <b id="hFps">–</b></span>
+  <span>seen <b id="hSeen">–</b></span>
   <span>zoom <b id="hZoom">–</b></span>
   <span>gpu <b id="hGpu">–</b></span>
   <span>devo <b id="hDevo">–</b></span>
+  <!-- HANDING THE WORLD TO ANOTHER AGENT. Everything an agent needs to reason
+       about this run, in one paste, deliberately BOUNDED - a dump that floods a
+       context window is worse than no dump, because it costs the reader more
+       than it tells them. See buildStateReport. -->
+  <button id="bCopyState" class="hudbtn" title="copy this run's state for pasting into another agent">⧉ copy state</button>
 </div>
 <button id="hudGrip" title="collapse the readout">‹</button>
 
@@ -229,28 +451,64 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 <aside id="panel">
   <div>
     <h2>World</h2>
+    <!-- HOW FAR THIS UNIVERSE HAS RUN. The HUD carries the same number, but the
+         HUD is a strip that collapses and is easy to lose; the age of the run is
+         the first thing you want when you come back to a window that has been
+         open overnight, and it belongs where the controls are. In watch mode it
+         is the SERVER's step count, not this browser's frame count. -->
+    <div class="odo">
+      <div class="lab"><span>steps taken</span><span class="v" id="pSteps">0</span></div>
+      <div class="sub" id="pStepsSub">&nbsp;</div>
+    </div>
+    <!-- ANCESTOR DEPTH, AS A DISTRIBUTION.
+         The HUD's "generation" is a MAX over living bodies, which is a ratchet
+         held up by whichever single deepest body is currently alive. It sat at
+         186 across 265,357 births and read as evolution having stopped, while
+         the population it was drawn from actually spanned 139 to 186 with a
+         median of 160 and was moving the whole time.
+         Lineages do not advance at one rate - a line in rich ground reproduces
+         while one in a barren patch does not - so depth is a spread and the
+         chart is the honest readout. The number is the MEDIAN, not the max. -->
+    <div class="odo">
+      <div class="lab"><span>ancestor depth</span><span class="v" id="pGen">–</span></div>
+      <div class="spark" id="pGenSpark" title="how many living bodies sit at each ancestor depth"></div>
+      <div class="sub" id="pGenSub">&nbsp;</div>
+    </div>
     <div class="legend">
       <span><i style="background:#66a8a1"></i>sensor</span>
       <span><i style="background:#c77352"></i>muscle</span>
       <span><i style="background:#99998c"></i>neuron</span>
       <span><i style="background:#8f709e"></i>anchor</span>
     </div>
+    <!-- WAYS OUT. This page had no outbound links at all, so the analytics
+         page and the notebook could only be reached by going back to the index
+         - which on a phone means losing the world you were watching. They live
+         in the panel because the panel is the one surface that exists in both
+         layouts: a column on desktop, the hamburger overlay on a phone. -->
+    <nav class="ways">
+      <a href="#" id="aAnalytics" title="live charts, in this page, with the archives as history">📈 Run analytics</a>
+      <a href="#" id="aDevelop" title="watch a genome unfold into a body, in this page">🥚 Development</a>
+      <a href="lab/index.html" title="the lab notebook — a separate written record, not a view of this run">📓 Lab notes</a>
+      <a href="index.html" title="the directory of everything in this project">← All pages</a>
+    </nav>
   </div>
 
-  <div class="sl"><div class="lab"><span>flow strength</span><span class="v" id="vStr">3.00</span></div>
-    <input type="range" id="sStr" min="0" max="800" value="300"></div>
-  <div class="sl"><div class="lab"><span>eddy scale</span><span class="v" id="vScale">4.00</span></div>
-    <input type="range" id="sScale" min="10" max="1200" value="400"></div>
-  <div class="sl"><div class="lab"><span>drag</span><span class="v" id="vDrag">8.00</span></div>
-    <input type="range" id="sDrag" min="0" max="2400" value="800"></div>
-  <div class="sl"><div class="lab"><span>current in the mud</span><span class="v" id="vMudFlow">1.15</span></div>
-    <input type="range" id="sMudFlow" min="0" max="800" step="5" value="115"></div>
-  <div class="sl"><div class="lab"><span>bond stiffness</span><span class="v" id="vSpring">90</span></div>
-    <input type="range" id="sSpring" min="1" max="300" value="90"></div>
-  <div class="sl"><div class="lab"><span>muscle contraction</span><span class="v" id="vCon">5.00</span></div>
-    <input type="range" id="sCon" min="0" max="1500" value="500"></div>
+  <div class="sl"><div class="lab"><span>flow strength</span><span class="v" id="vStr">4.00</span></div>
+    <input type="range" id="sStr" min="0" max="2000" value="400"></div>
+  <div class="sl"><div class="lab"><span>eddy scale</span><span class="v" id="vScale">6.00</span></div>
+    <input type="range" id="sScale" min="10" max="3000" value="600"></div>
+  <div class="sl"><div class="lab"><span>drag</span><span class="v" id="vDrag">24.00</span></div>
+    <input type="range" id="sDrag" min="0" max="6000" value="2400"></div>
+  <div class="sl"><div class="lab"><span>current in the mud</span><span class="v" id="vMudFlow">2.00</span></div>
+    <input type="range" id="sMudFlow" min="0" max="2000" step="5" value="200"></div>
+  <div class="sl"><div class="lab"><span>bond stiffness</span><span class="v" id="vSpring">300</span></div>
+    <input type="range" id="sSpring" min="1" max="1500" value="300"></div>
+  <div class="sl"><div class="lab"><span>muscle contraction</span><span class="v" id="vCon">8.00</span></div>
+    <input type="range" id="sCon" min="0" max="4000" value="800"></div>
   <div class="sl"><div class="lab"><span>steps per frame</span><span class="v" id="vSpf">1</span></div>
     <input type="range" id="sSpf" min="0" max="40" value="1"></div>
+  <div id="localOnly">
+  <p class="cap">this viewer only &middot; changes nothing in the world</p>
   <div class="sl"><div class="lab"><span>render scale</span><span class="v" id="vRScale">0.70</span></div>
     <input type="range" id="sRScale" min="30" max="100" step="5" value="70"></div>
   <div class="sl"><div class="lab"><span>cell brightness</span><span class="v" id="vCellInk">1.00</span></div>
@@ -282,6 +540,7 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
       <button id="bReseed">reseed</button>
     </div>
   </div>
+  </div><!-- /localOnly -->
 
   <!-- Only meaningful when watching a server; hidden in local sandbox mode. -->
   <div id="codeWarn" style="display:none"></div>
@@ -305,8 +564,22 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
       <button id="bFlag" title="mark this moment for review">flag this ⚑</button>
       <button id="bCopyStats" title="copy world + creature stats">⧉ stats</button></div>
     <div class="row" style="margin-top:.3rem">
-      <button id="bDevo">unfold ▶</button>
-      <button id="bDevoStage" title="show which cell budded from which — the division tree">division tree</button>
+      <button id="bDevo" title="watch this genome grow into a body, cell by cell, in a worker">unfold ▶</button>
+      <button id="bDevoStop" title="stop the unfold">stop</button>
+    </div>
+    <div id="eggBox">
+      <p class="cap" style="font-size:.63rem;letter-spacing:.09em;text-transform:uppercase;color:#7fb3c4;opacity:.95;margin:.5rem 0 .35rem">the egg · play god</p>
+      <div class="sl"><div class="lab"><span>egg size</span><span class="v" id="vEggSize">12</span></div>
+        <input type="range" id="sEggSize" min="4" max="24" step="1" value="12"></div>
+      <div class="sl"><div class="lab"><span>development time</span><span class="v" id="vEggMs">12.0s</span></div>
+        <input type="range" id="sEggMs" min="3000" max="30000" step="500" value="12000"></div>
+      <p class="note" style="font-size:.64rem;line-height:1.45">The controlled, isolated
+        environment the genome develops in. Change it and re-<b>unfold</b> to watch the
+        same genome build a different body. Heat, sugar-energy and agitation are coming
+        as lawful egg factors.</p>
+    </div>
+    <div class="row" style="margin-top:.3rem">
+      <button id="bViz" title="scatter cells or creatures by any pair of properties, coloured by a third">cell scope ▦</button>
     </div>
     <canvas id="devoC"></canvas>
     <div id="devoInfo" class="note"></div>
@@ -414,7 +687,8 @@ button.mini { font-size: 9px; padding: .05rem .3rem; margin-left: .4rem;
 import { buildBodies } from './lib/bodies.js';
 import { BrainArenaGPU } from './lib/brainarena_gpu.js';
 import { WorldGPU, WGSL_FIELD } from './lib/world_gpu.js';
-import { Evolver } from './lib/evolve.js';
+import { Evolver, describe } from './lib/evolve.js';
+import { DevoView } from './lib/devo-view.js';
 
 const $ = id => document.getElementById(id);
 /**
@@ -433,6 +707,501 @@ const on = (id, ev, fn) => {
   el[ev] = fn;
 };
 
+/**
+ * The sidebar's run odometer. Also writes a human-scale subtitle, because
+ * "71,896" does not tell you whether that is a coffee break or a night's run —
+ * the world advances by dt seconds a step, so the same number in world-time is
+ * the one that means something.
+ */
+let odoLast = -1;
+function setSteps(n, dt = 0.015) {
+  if (!Number.isFinite(n) || n === odoLast) return;
+  odoLast = n;
+  const el = $('pSteps'); if (el) el.textContent = n.toLocaleString();
+  const sub = $('pStepsSub'); if (!sub) return;
+  const secs = n * dt;
+  const s = secs < 90 ? `${secs.toFixed(1)} s`
+          : secs < 5400 ? `${(secs / 60).toFixed(1)} min`
+          : secs < 172800 ? `${(secs / 3600).toFixed(1)} h`
+          : `${(secs / 86400).toFixed(1)} days`;
+  sub.textContent = `${s} of world time`;
+}
+
+let lastStatus = null;
+
+/* ---- DEVELOPMENT, IN THIS PAGE ------------------------------------------
+ *
+ * The same worker and the same WebGPU view the wizard drives. lib/devo-worker
+ * streams frames off the main thread and lib/devo-view draws swelling cells and
+ * the mother-daughter link of each division, so neither had to be rebuilt - they
+ * were written to be driven by more than one page.
+ *
+ * The genome comes from the WORLD where possible. A body unfolding from a
+ * random seed is a demo; the same body unfolding from the animal you just
+ * clicked is the run explaining itself.
+ */
+const devPane = { view: null, worker: null, on: false, t0: 0, n: 0, xy: null,
+              birth: new Float32Array(1024), done: false, raf: 0 };
+
+async function devEnsure() {
+  if (devPane.view) return devPane.view;
+  const mod = await import('./lib/devo-view.js');
+  devPane.view = await mod.DevoView.create($('devCv'));
+  return devPane.view;
+}
+
+function devStop() {
+  if (devPane.worker) { devPane.worker.terminate(); devPane.worker = null; }
+  if (devPane.raf) { cancelAnimationFrame(devPane.raf); devPane.raf = 0; }
+}
+
+function devLoop() {
+  if (!devPane.on || !devPane.view) return;
+  devPane.view.draw((performance.now() - devPane.t0) / 1000, 12, devPane.done ? 1 : 0);
+  devPane.raf = requestAnimationFrame(devLoop);
+}
+
+async function devGrow(genome, label) {
+  await devEnsure();
+  devStop();
+  devPane.t0 = performance.now(); devPane.n = 0; devPane.done = false;
+  $('devFoot').textContent = `developing ${label}…`;
+  $('devSrc').textContent = label;
+
+  devPane.worker = new Worker('./lib/devo-worker.js', { type: 'module' });
+  // A module worker that fails to LOAD reports nothing through onmessage, so
+  // without this a bad import looks exactly like development being slow.
+  devPane.worker.onerror = (e) => {
+    $('devFoot').textContent = 'worker failed: ' + (e.message || 'load error');
+    devStop();
+  };
+  devPane.worker.onmessage = (e) => {
+    const m = e.data;
+    if (m.kind === 'error') { $('devFoot').textContent = m.message; devStop(); return; }
+    const nowS = (performance.now() - devPane.t0) / 1000;
+    if (m.kind === 'frame') {
+      if (devPane.birth.length < m.n) {
+        const b = new Float32Array(Math.max(m.n, devPane.birth.length * 2));
+        b.set(devPane.birth); devPane.birth = b;
+      }
+      for (let i = devPane.n; i < m.n; i++) devPane.birth[i] = nowS;   // newly present = born now
+      const pairs = new Float32Array(m.born.length * 4);
+      for (let k = 0; k < m.born.length; k++) {
+        const d = m.born[k], mo = m.mums[k];
+        if (mo < 0 || mo >= m.n || d >= m.n) continue;
+        pairs[k * 4] = m.xy[mo * 2]; pairs[k * 4 + 1] = m.xy[mo * 2 + 1];
+        pairs[k * 4 + 2] = m.xy[d * 2]; pairs[k * 4 + 3] = m.xy[d * 2 + 1];
+      }
+      devPane.n = m.n; devPane.xy = m.xy;
+      devPane.view.setCells(m.n, m.xy, null, devPane.birth, null);
+      devPane.view.setLinks(pairs, nowS);
+      $('devFoot').textContent = `${m.n} cells · step ${m.t}/${m.nStep} · +${m.born.length} divisions`;
+    } else if (m.kind === 'done') {
+      devPane.done = true;
+      const caps = new Float32Array(m.n * 4), rad = new Float32Array(m.n).fill(0.34);
+      for (let i = 0; i < m.n; i++) {
+        caps[i * 4] = m.caps[i * 4]; caps[i * 4 + 1] = m.caps[i * 4 + 1];
+        caps[i * 4 + 2] = m.caps[i * 4 + 2]; caps[i * 4 + 3] = m.caps[i * 4 + 3];
+        if (m.radius) rad[i] = m.radius[i];
+      }
+      devPane.view.setCells(m.n, m.xy, caps, devPane.birth, null, rad);
+      const fused = m.radius ? Array.from(m.radius).filter(r => r > 0.38).length : 0;
+      $('devFoot').textContent = `${m.n} cells` + (m.merged ? ` · ${m.merged} fused by relaxation` : '') +
+        (fused ? ` · ${fused} larger than base` : '');
+    }
+  };
+  devPane.worker.postMessage({ genome, opts: { extent: 12, yolk: 1e9, maxCells: 400, condense: 3, stepEvery: 6 } });
+  if (!devPane.raf) devLoop();
+}
+
+async function devToggle(force) {
+  const box = $('devBox'); if (!box) return;
+  devPane.on = force != null ? force : !devPane.on;
+  box.classList.toggle('on', devPane.on);
+  if (devPane.on) { await devEnsure(); devLoop(); } else { devStop(); }
+}
+
+on('aDevelop', 'onclick', (e) => { e.preventDefault(); devToggle(); });
+on('devClose', 'onclick', () => devToggle(false));
+on('devBig', 'onclick', () => {
+  const b = $('devBox'); b.classList.toggle('panelBig');
+  $('devBig').textContent = b.classList.contains('panelBig') ? '⤡' : '⤢';
+});
+on('devGrow', 'onclick', async () => {
+  const D = await import('./lib/devo2.js');
+  // A seeded PRNG rather than Math.random, so a body that does something
+  // interesting can be grown again by quoting its seed.
+  const seed = (Math.random() * 1e6) | 0;
+  let v = seed >>> 0;
+  const rnd = () => ((v = (Math.imul(v, 1664525) + 1013904223) >>> 0) / 4294967296);
+  devGrow(D.randomGenome(rnd), `seed ${seed}`);
+});
+on('devFromWorld', 'onclick', async () => {
+  if (!(sel.uid >= 0)) { note('select an animal in the world first'); return; }
+  try {
+    const j = await (await srvFetch('/genome?uid=' + sel.uid)).json();
+    if (!j.g) throw new Error('no genome in the response');
+    devGrow(Float32Array.from(j.g), `animal #${sel.uid}`);
+  } catch (err) { note('could not fetch that genome: ' + err.message); }
+});
+
+
+/* ---- RUN ANALYTICS, IN THE APP -------------------------------------------
+ *
+ * analytics.html draws the committed archives. That series is fixed: it
+ * records runs that already finished and it does not move while you watch,
+ * which is exactly what "looks static" means. The charts belong beside the
+ * world they describe, so this keeps the same chart kit and feeds it two
+ * sources - the archives as HISTORY, and the running world appended live from
+ * the /status poll that is already happening.
+ *
+ * The live buffer is capped and thinned rather than grown without limit: a page
+ * left open overnight would otherwise hold hundreds of thousands of samples to
+ * draw a few hundred pixels of line.
+ */
+const ana = { live: [], arch: null, on: false, useArch: true, lastStep: -1 };
+const ANA_CAP = 900;
+
+/**
+ * A sample straight off the frame header, throttled.
+ *
+ * Frames arrive as fast as the link allows, and a point per frame would fill
+ * the buffer in seconds and thin away the very resolution it was collecting.
+ * The gate is on SIM TIME, not wall time: a world running at 20x should put
+ * twenty times as many points on the chart per second, because the chart's x
+ * axis is steps.
+ *
+ * The depth median is not in the frame header and is carried over from the last
+ * /status poll rather than left null, which would break the line into segments
+ * for a value that is simply sampled less often.
+ */
+let anaLastFrameStep = -1e9;
+function anaSampleFrame(f) {
+  if (!f || !Number.isFinite(f.step)) return;
+  // 50 steps: about three points a second at spf 1, and proportionally more
+  // when the world is run faster, which is what a step-based axis wants. The
+  // buffer thins itself, so a tight gate costs recent resolution nothing.
+  if (f.step - anaLastFrameStep < 50) return;
+  anaLastFrameStep = f.step;
+  ana.live.push({
+    step: f.step, alive: f.alive, cells: f.cells,
+    lineages: f.lineages, meanEnergy: f.meanEnergy,
+    depth: lastStatus?.genStats?.median ?? null,
+  });
+  if (ana.live.length > ANA_CAP) {
+    const half = ana.live.length >> 1;
+    ana.live = ana.live.filter((_, i) => i >= half || (i & 1) === 0);
+  }
+  if (ana.on) anaDraw();
+}
+
+/**
+ * A sample from /status. Used when opening the panel, and by a page running its
+ * OWN simulation, which has no frame stream to ride. In watch mode the frame is
+ * the source — see anaSampleFrame — so this is not on the poll path any more.
+ */
+function anaSample(st) {
+  if (!st || st.steps == null) return;
+  anaSampleFrame({
+    step: st.steps, alive: st.alive ?? 0, cells: st.cellsOwned ?? st.cells ?? 0,
+    lineages: st.lineages ?? 0, meanEnergy: +(st.meanEnergy ?? 0),
+  });
+}
+
+async function anaLoadArchives() {
+  if (ana.arch) return ana.arch;
+  try {
+    const names = await (await fetch('runs/archive/index.json', { cache: 'no-store' })).json();
+    const out = [];
+    for (const n of names) {
+      try {
+        const d = await (await fetch('runs/archive/' + n, { cache: 'no-store' })).json();
+        out.push({ step: d.step, alive: d.alive, cells: null,
+                   lineages: d.lineages ?? null, meanEnergy: +(d.meanEnergy ?? 0),
+                   depth: d.genStats?.median ?? null, archived: true,
+                   bootId: d.bootId ?? null });
+      } catch { /* a missing archive should not fail the panel */ }
+    }
+    out.sort((a, b) => a.step - b.step);
+    ana.arch = out;
+  } catch { ana.arch = []; }
+  return ana.arch;
+}
+
+const anaNice = (v) => Math.abs(v) >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k'
+  : Math.abs(v) >= 10 ? v.toFixed(0) : Math.abs(v) >= 1 ? v.toFixed(1) : v.toFixed(2);
+
+function anaDraw() {
+  const cv = $('anaCv'); if (!cv) return;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const W = cv.clientWidth || 500, H = cv.clientHeight || 260;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = '#070c0b'; g.fillRect(0, 0, W, H);
+
+  // ARCHIVES FROM ANOTHER WORLD ARE NOT HISTORY, THEY ARE A DIFFERENT SERIES.
+  //
+  // The archive directory holds every run, and after a reseed it holds two: a
+  // world that reached 2.3M steps beside the one that replaced it at 60k.
+  // concatenating them drew a line that climbed to 2.3M and then leapt
+  // backwards, which is not a chart of anything.
+  //
+  // Archives carry bootId now, so same-world ones are true history. Older ones
+  // have no world identity at all, and the only honest test left is whether
+  // they precede this run: an archive at a HIGHER step than anything live
+  // cannot be this world's past.
+  const liveLo = ana.live.length ? ana.live[0].step : Infinity;
+  const arch = (ana.useArch && ana.arch)
+    ? ana.arch.filter(a => (a.bootId && lastStatus?.bootId && a.bootId === lastStatus.bootId)
+                           || a.step < liveLo)
+    : [];
+  const dropped = (ana.useArch && ana.arch) ? ana.arch.length - arch.length : 0;
+  const pts = arch.concat(ana.live);
+  if (pts.length < 2) {
+    g.fillStyle = '#6d8880'; g.font = '11px ui-monospace,monospace'; g.textAlign = 'center';
+    g.fillText('collecting samples…', W / 2, H / 2);
+    return;
+  }
+  // Four stacked strips, one series each. Separate y-scales because population
+  // and lineage count differ by three orders of magnitude and sharing an axis
+  // would flatten the smaller one into the floor.
+  const SER = [
+    ['bodies alive', 'alive', '#41ADB2'],
+    ['lineages', 'lineages', '#E28C3E'],
+    ['mean energy', 'meanEnergy', '#8f709e'],
+    ['ancestor depth (median)', 'depth', '#9aa6a0'],
+  ];
+  const padL = 40, padR = 8, padT = 6, padB = 14;
+  const stripH = (H - padT - padB) / SER.length;
+  const xlo = pts[0].step, xhi = pts[pts.length - 1].step;
+  const px = (v) => padL + (xhi === xlo ? 0.5 : (v - xlo) / (xhi - xlo)) * (W - padL - padR);
+  // Where the archives stop and this run starts: the two are different worlds.
+  const seam = arch.length ? arch[arch.length - 1].step : null;
+
+  SER.forEach(([label, key, col], si) => {
+    const y0 = padT + si * stripH, h = stripH - 6;
+    const vals = pts.map(p => p[key]).filter(v => v != null && isFinite(v));
+    if (!vals.length) return;
+    let lo = Math.min(...vals), hi = Math.max(...vals);
+    if (hi === lo) { hi = lo + 1; lo = Math.max(0, lo - 1); }
+    const py = (v) => y0 + h - (v - lo) / (hi - lo) * h;
+    g.strokeStyle = '#162723'; g.lineWidth = 1; g.strokeRect(padL, y0, W - padL - padR, h);
+    if (seam != null && seam > xlo && seam < xhi) {
+      g.strokeStyle = '#2b4a43'; g.setLineDash([3, 3]); g.beginPath();
+      g.moveTo(px(seam), y0); g.lineTo(px(seam), y0 + h); g.stroke(); g.setLineDash([]);
+    }
+    g.strokeStyle = col; g.lineWidth = 1.5; g.beginPath();
+    let started = false;
+    for (const p of pts) {
+      const v = p[key];
+      if (v == null || !isFinite(v)) { started = false; continue; }   // gap, not a jump to zero
+      const X = px(p.step), Y = py(v);
+      started ? g.lineTo(X, Y) : g.moveTo(X, Y);
+      started = true;
+    }
+    g.stroke();
+    g.fillStyle = '#6d8880'; g.font = '9px ui-monospace,monospace';
+    g.textAlign = 'right'; g.textBaseline = 'middle';
+    g.fillText(anaNice(hi), padL - 4, y0 + 4);
+    g.fillText(anaNice(lo), padL - 4, y0 + h - 4);
+    g.textAlign = 'left'; g.fillStyle = col;
+    g.fillText(label, padL + 4, y0 + 7);
+  });
+
+  g.fillStyle = '#6d8880'; g.font = '9px ui-monospace,monospace';
+  g.textAlign = 'left';  g.fillText(anaNice(xlo), padL, H - 4);
+  g.textAlign = 'right'; g.fillText(anaNice(xhi) + ' steps', W - padR, H - 4);
+
+  const f = $('anaFoot');
+  if (f) {
+    f.textContent = `${ana.live.length} live sample${ana.live.length === 1 ? '' : 's'}` +
+      (arch.length ? ` · ${arch.length} archived (dashed seam)` : '') +
+      (dropped ? ` · ${dropped} archived hidden — another world` : '') +
+      ` · ${lastStatus?.lineages ?? '?'} lineages now`;
+  }
+  const src = $('anaSrc');
+  if (src) src.textContent = WATCH ? 'live from server' : 'local sim';
+}
+
+async function anaToggle(force) {
+  const box = $('anaBox'); if (!box) return;
+  ana.on = force != null ? force : !ana.on;
+  box.classList.toggle('on', ana.on);
+  if (ana.on) {
+    if (ana.useArch) await anaLoadArchives();
+    // One sample now rather than waiting for the next status poll, or the panel
+    // reads "1 live sample" and draws nothing for as long as the poll interval.
+    if (lastStatus) anaSample(lastStatus);
+    anaDraw();
+  }
+}
+
+on('aAnalytics', 'onclick', (e) => { e.preventDefault(); anaToggle(); });
+on('anaClose', 'onclick', () => anaToggle(false));
+on('anaBig', 'onclick', () => {
+  const b = $('anaBox'); b.classList.toggle('panelBig');
+  $('anaBig').textContent = b.classList.contains('panelBig') ? '⤡' : '⤢';
+  anaDraw();
+});
+on('anaArch', 'onclick', async () => {
+  ana.useArch = !ana.useArch;
+  $('anaArch').classList.toggle('on', ana.useArch);
+  if (ana.useArch) await anaLoadArchives();
+  anaDraw();
+});
+addEventListener('resize', () => { if (ana.on) anaDraw(); });
+
+
+/**
+ * EVERYTHING ANOTHER AGENT NEEDS ABOUT THIS RUN, IN ONE PASTE.
+ *
+ * BOUNDED ON PURPOSE. The temptation is to dump every uniform and every
+ * archive; a report that fills a context window costs the reader more than it
+ * tells them, and an agent that has spent its budget reading state has none
+ * left to think with. So: identity, the numbers that describe the population,
+ * the parameters that were actually changed away from defaults, and a short
+ * archive tail. Roughly 40 lines, hard-capped at the end.
+ *
+ * WHAT IS DELIBERATELY LEFT OUT: per-cell anything, genomes, bond graphs, the
+ * full uniform block. Those are large, and an agent that needs them should be
+ * told to read the file or hit the endpoint rather than handed a wall of them.
+ */
+async function buildStateReport() {
+  const L = [];
+  const st = lastStatus;
+  const t = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  L.push(`# mazeballs run state  (${t}Z)`);
+  L.push(WATCH ? 'mode: watching the deno server (?watch=1)'
+               : 'mode: standalone in-browser sim');
+
+  if (!st) {
+    L.push('', 'No server status yet - this page is running its own world, or the poll has not landed.');
+    if (!WATCH) {
+      L.push(`steps ${(sim?.world?.steps ?? 0).toLocaleString()}`);
+    }
+    return L.join('\n');
+  }
+
+  const dt = st.dt ?? 0.015;
+  const secs = (st.steps ?? 0) * dt;
+  const wt = secs < 5400 ? `${(secs / 60).toFixed(1)} min`
+           : secs < 172800 ? `${(secs / 3600).toFixed(1)} h` : `${(secs / 86400).toFixed(1)} days`;
+  L.push('', '## run');
+  L.push(`steps ${(st.steps ?? 0).toLocaleString()}  (${wt} world time, dt ${dt})`);
+  L.push(`boot ${st.bootId}  sim ${st.simVersion}  page ${st.pageVersion}  devo ${st.devoName}`);
+  L.push(`paused ${!!st.paused}  spf ${st.spf}  bound ${st.bound}  seed ${st.worldSeed}`);
+
+  L.push('', '## population');
+  // bodySlots is the arena capacity; beasts is how many the world was BUILT
+  // with and is not a ceiling - reporting alive/beasts read as 2902/417.
+  L.push(`alive ${st.alive} bodies of ${st.bodySlots} slots   cells ${st.cellsOwned ?? st.cells}/${st.cellBudget}`);
+  L.push(`births ${(st.births ?? 0).toLocaleString()}  deaths ${(st.deaths ?? 0).toLocaleString()}` +
+         `  agedOut ${(st.agedOut ?? 0).toLocaleString()}`);
+  L.push(`blockedBirths ${st.blockedBirths ?? 0}  pendingEggs ${st.pendingEggs ?? 0}` +
+         `  meanEnergy ${Number(st.meanEnergy ?? 0).toFixed(2)}  minted ${st.mintedEnergy ?? 0}`);
+  // Lineage count first, because it is the number most likely to be the story:
+  // a population down to a handful of lines has no standing variation left.
+  L.push(`LINEAGES ${st.lineages}${st.lineages <= 5 ? '  <- near-clonal, adaptation depends on new mutation' : ''}`);
+
+  const g = st.genStats;
+  if (g && g.n) {
+    L.push('', '## ancestor depth  (generation is a MAX and misleads; this is the spread)');
+    L.push(`median ${g.median}  mean ${g.mean}  p10-p90 ${g.p10}-${g.p90}  min ${g.min}  max ${g.max}`);
+    const mx = Math.max(1, ...g.hist);
+    const bars = g.hist.map(v => ' .:-=+*#%@'[Math.min(9, Math.round(v / mx * 9))]).join('');
+    L.push(`hist[${g.lo}..${g.hi}] ${bars}`);
+  }
+
+  // Only what differs from the shipped defaults. A parameter at its default
+  // tells the reader nothing and costs them a line.
+  const DEF = {
+    flowStr: 4, drag: 24, springK: 300, contract: 8, gravity: 0.55, morphRate: 0,
+    twistK: 6, vortK: 0.8, angDrag: 3, massRef: 0.34, densLo: 0.1, densHi: 10,
+    mediumDens: 1, foreignReach: 1, foreignPush: 1.6, wrapY: 1, tempCost: 0,
+    flowScale: 6, heightScale: 0.018, eggExtent: 12,
+  };
+  const changed = [], same = [];
+  for (const [k, d] of Object.entries(DEF)) {
+    if (st[k] === undefined) continue;
+    (Math.abs(st[k] - d) > 1e-9 ? changed : same).push(`${k} ${st[k]}`);
+  }
+  L.push('', '## parameters');
+  L.push(changed.length ? `CHANGED FROM DEFAULT: ${changed.join('  ')}` : 'all sampled parameters at defaults');
+  if (same.length) L.push(`at default: ${same.join('  ')}`);
+
+  // The archive tail is the analytics page's own data, compressed. Last few
+  // snapshots only - the trend matters, the full series does not fit.
+  try {
+    const names = await (await fetch('runs/archive/index.json', { cache: 'no-store' })).json();
+    const tail = names.slice(-4);
+    const rows = [];
+    for (const n of tail) {
+      const d = await (await fetch('runs/archive/' + n, { cache: 'no-store' })).json();
+      rows.push(`  ${n.replace('.json', '').padEnd(10)} step ${String(d.step).padStart(9)}` +
+                `  alive ${String(d.alive).padStart(5)}  lineages ${String(d.lineages ?? '?').padStart(4)}` +
+                `  meanE ${Number(d.meanEnergy ?? 0).toFixed(1)}`);
+    }
+    L.push('', `## archive  (${names.length} snapshots, last 4 - full series on analytics.html)`);
+    L.push(...rows);
+    L.push('NOTE: archives predate the current physics (mass, orientation, varying radius).');
+  } catch { L.push('', '## archive: unreadable from this page'); }
+
+  L.push('', '## caveats an agent should know');
+  L.push('- the world is NOT reproducible: same seed twice differs (atomics in the spatial hash).');
+  L.push('- locomotion is RETRACTED; bodies twitch but do not travel. See RESEARCH.md.');
+  L.push('- development is CPU JS, ~6ms/egg, the largest non-GPU cost.');
+
+  let out = L.join('\n');
+  // Hard cap. Better a truncated report with a stated cut than an unbounded one.
+  const CAP = 4000;
+  if (out.length > CAP) out = out.slice(0, CAP) + '\n[truncated at ' + CAP + ' chars]';
+  return out;
+}
+
+on('bCopyState', 'onclick', async () => {
+  const b = $('bCopyState');
+  const prev = b.textContent;
+  b.textContent = '… building';
+  // The archive tail is fetched, so this is genuinely async and the button has
+  // to say so; a button that looks inert for a second gets pressed twice.
+  const txt = await buildStateReport();
+  b.textContent = prev;
+  await copyText('run state', txt, b);
+});
+
+/**
+ * Draw the ancestor-depth distribution as bars, and label it with the MEDIAN.
+ *
+ * Deliberately not the max: see the markup comment. The tallest bin is
+ * highlighted so a population that has converged on one depth reads as a spike
+ * rather than as a flat chart nobody looks twice at.
+ */
+function setGenStats(g) {
+  const v = $('pGen'), sp = $('pGenSpark'), sub = $('pGenSub');
+  if (!v || !g || !g.n) return;
+  v.textContent = g.median;
+  if (sub) {
+    // The spread matters more than the centre when lineages advance at
+    // different rates, so it is stated rather than left to be read off bars.
+    sub.textContent = `${g.p10}–${g.p90} across ${g.n.toLocaleString()} bodies` +
+                      `  ·  deepest ${g.max}`;
+  }
+  if (!sp) return;
+  const h = g.hist || [];
+  const mx = Math.max(1, ...h);
+  if (sp.children.length !== h.length) {
+    sp.innerHTML = '';
+    for (let i = 0; i < h.length; i++) sp.appendChild(document.createElement('i'));
+  }
+  for (let i = 0; i < h.length; i++) {
+    const b = sp.children[i];
+    b.style.height = `${Math.max(2, Math.round(h[i] / mx * 100))}%`;
+    b.classList.toggle('pk', h[i] === mx);
+    b.title = `${h[i]} bodies`;
+  }
+}
+
 const fail = (msg) => { $('err').style.display = 'block'; $('err').textContent = msg; };
 /** A transient notice: something is being handled, not something that broke. */
 const note = (msg) => {
@@ -441,6 +1210,25 @@ const note = (msg) => {
   clearTimeout(note._t);
   note._t = setTimeout(() => { if (e.textContent === msg) e.style.display = 'none'; }, 4000);
 };
+
+// CONTINUOUS CELL COLOUR — the JS twin of the shader's material blend (see the
+// RENDER WGSL). A developed cell carries continuous contract/sense/grip; blend
+// the class hues by how much of each the cell has rather than snapping to the
+// single argmax label, so the thumbnails read the same material language the
+// world does. Capacity-less cells stay stone.
+const CELL_HUE = { neuron: [153, 153, 140], sense: [102, 168, 161], contract: [199, 115, 82], grip: [143, 112, 158] };
+const smooth01 = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+function matColor(c) {
+  const ct = Math.max(0, c.contract || 0), gr = Math.max(0, c.grip || 0), se = Math.max(0, c.sense || 0);
+  const w = ct + gr + se, inv = Math.max(w, 1e-3);
+  // Hue from composition, saturation + brightness from total capacity — same as
+  // the shader, so an idle cell reads dim stone and a committed one reads bright.
+  const sat = smooth01(0.15, 0.9, w), val = 0.65 + 0.60 * smooth01(0.1, 2.0, w);
+  const ch = (i) => Math.max(0, Math.min(255, Math.round(
+    (CELL_HUE.neuron[i] * (1 - sat) +
+     (CELL_HUE.contract[i] * ct + CELL_HUE.grip[i] * gr + CELL_HUE.sense[i] * se) / inv * sat) * val)));
+  return `rgb(${ch(0)},${ch(1)},${ch(2)})`;
+}
 
 if (!navigator.gpu) {
   // WebGPU is gated on a SECURE CONTEXT. Browsers exempt localhost and
@@ -523,13 +1311,76 @@ struct Cam {
   streamSide  : f32,   // lines across, so side*side lines are drawn
   streamInk   : f32,
   cellInk     : f32,   // how loud the population is drawn, 0..1
-  padB0       : f32,
+  // APPENDED, NOT INSERTED. This field was declared between streamSteps and
+  // streamSide, while writeCam() writes it last — so the final four fields all
+  // read one slot early and the picture was wrong in three visible ways at once:
+  // the crowd got cellInk = topPass = 0 and every cell drew BLACK; streamSide
+  // read 0.62, so u32(max(1.0, 0.62)) = 1 and all 676 streamlines seeded in a
+  // single column off to one side, i.e. the current vanished; and topPass read
+  // STREAM_SIDE = 26, so selecting an animal made the whole crowd disappear
+  // instead of dimming. A uniform struct has no names on the wire, only offsets,
+  // and nothing checks that the two ends agree — so new fields go on the END,
+  // next to the write that fills them.
+  topPass     : f32,   // 1 = draw ONLY the inspected animal, over everything
+  lerp        : f32,   // 0 draws the previous server frame, 1 the newest — see drawPos
+  metaPacked  : f32,   // 1 = cmeta.x is the packed material vector (a page running
+                       // its own sim); 0 = a plain 0..3 type bucket (watch mode).
 };
 @group(0) @binding(0) var<uniform>       C     : Cam;
-@group(0) @binding(1) var<storage, read> pos   : array<vec2<f32>>;
+// A POSE, xy/theta/omega — see lib/world_gpu.js binding 1. This was declared
+// vec2 and bound to the same buffer the simulation writes as vec4, so a page
+// running its OWN sim read cell i's position out of cell i/2's lanes and drew
+// the population as garbage. Watch mode survived only because it overwrites
+// the buffer with its own stride-2 data, which is why the served page looked
+// fine while the default page did not.
+@group(0) @binding(1) var<storage, read> pos   : array<vec4<f32>>;
 @group(0) @binding(2) var<storage, read> act   : array<f32>;
 @group(0) @binding(3) var<storage, read> cmeta   : array<vec4<i32>>;
 @group(0) @binding(4) var<storage, read> bondIdx : array<i32>;
+// The frame BEFORE the one in pos/act. Only watch mode fills these; a page
+// running its own simulation binds the live buffers here and never tweens.
+// Same layout, and it must be: in a page running its own sim bPrevPos IS bPos.
+@group(0) @binding(5) var<storage, read> prevPos : array<vec4<f32>>;
+@group(0) @binding(6) var<storage, read> prevAct : array<f32>;
+
+/* ---- drawing between two frames, without touching the simulation ---------- */
+//
+// In watch mode the page is shown roughly one server step in twenty-five, and
+// those arrive when the server has a frame and the network delivers it, not on
+// a regular beat. Drawing each one the instant it lands puts every cell through
+// a visible jump: the world moves in discrete kicks at whatever cadence the link
+// happens to have, which reads as a stuttering simulation rather than as a
+// sampled one. Nothing about the physics is irregular — only the sampling is.
+//
+// So the last two frames are both on the GPU and the renderer draws between
+// them. C.lerp is the fraction of the observed inter-frame interval that has
+// passed, so at lerp 0 the picture is the older frame and at 1 the newer. This
+// costs one frame of latency, which at the measured interval is a few tens of
+// milliseconds, and buys continuous motion.
+//
+// The exact-1 case returns pos untouched rather than mixing, because b + (a-b)
+// is not bit-identical to a and because a page with no previous frame binds the
+// live buffer twice — this makes that a guaranteed no-op instead of an almost.
+fn drawPos(i: u32) -> vec2<f32> {
+  if (C.lerp >= 1.0) { return pos[i].xy; }
+  let b = prevPos[i].xy;
+  var d = pos[i].xy - b;
+  // Minimum image, as in lineVs: a cell that crossed the wrap seam between the
+  // two frames moved a short way in the world, and mixing the raw coordinates
+  // would instead slide it right across the map.
+  if (d.x >  C.bound) { d.x = d.x - 2.0 * C.bound; }
+  if (d.x < -C.bound) { d.x = d.x + 2.0 * C.bound; }
+  if (d.y >  C.bound) { d.y = d.y - 2.0 * C.bound; }
+  if (d.y < -C.bound) { d.y = d.y + 2.0 * C.bound; }
+  return b + d * C.lerp;
+}
+
+fn drawAct(slot: i32) -> f32 {
+  if (slot < 0) { return 0.0; }
+  let i = u32(slot);
+  if (C.lerp >= 1.0) { return act[i]; }
+  return mix(prevAct[i], act[i], C.lerp);
+}
 
 /* ---- background: the field the cells actually swim in, same definition ---- */
 
@@ -1120,17 +1971,33 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
     vec2(-1.0,  1.0), vec2(1.0, -1.0), vec2( 1.0, 1.0));
   let corner = q[vi];
   let m = cmeta[ii];
-  var a = 0.0;
-  if (m.y >= 0) { a = act[u32(m.y)]; }
+  var a = drawAct(m.y);
   // A non-finite activation must not silently erase the cell. It used to: the
   // radius is scaled by activation, so NaN produced a degenerate quad and the
   // creature simply was not drawn — which reads as "no creatures here" rather
   // than "something is wrong", and cost several diagnoses.
   if (a != a) { a = 0.0; }
+  // WHO IS BEING INSPECTED — needed here rather than further down, because it
+  // now decides which PASS draws this cell.
+  //
+  // The cells are one draw call with alpha blending and no depth buffer, so the
+  // painting order is instance order and nothing else. A selected creature
+  // living at a low index was simply painted over by every cell above it, and
+  // in a crowded patch — exactly where you most want to watch one animal — it
+  // vanished under the neighbours it was competing with.
+  //
+  // So the crowd is drawn without it, and it is drawn again on top. Two passes
+  // over the same instances: the wasted ones collapse to a degenerate point,
+  // which costs a vertex and no fragments.
+  let anyPicked = (C.selUid >= 0);
+  let picked = (anyPicked && m.z == C.selUid);
+  let wrongPass = select(picked, !picked, C.topPass > 0.5);
+
   // A vacated slot is not in the world and must not be on screen either.
   // Collapsing the quad to a degenerate point is cheaper than a branch that
   // still rasterises, and keeps the instance count fixed.
-  if (m.x < 0 || (C.soloBody >= 0 && m.z != C.soloBody) || C.cellsOn < 0.5) {
+  if (m.x < 0 || (C.soloBody >= 0 && m.z != C.soloBody) || C.cellsOn < 0.5
+      || (anyPicked && wrongPass)) {
     var dead: VOut;
     dead.p = vec4<f32>(0.0, 0.0, 0.0, 0.0);
     dead.uv = vec2<f32>(9.0, 9.0);
@@ -1146,7 +2013,7 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // are rather than how many specks. Detail returns as you descend.
   let wide = 1.0 - smoothstep(1.5, 7.0, C.zoomPx);
   let r = C.radius * (1.0 + 0.35 * abs(a)) * (1.0 + 0.45 * wide);
-  let world = pos[ii] + corner * r;
+  let world = drawPos(ii) + corner * r;
 
   var o: VOut;
   o.p = vec4<f32>((world - C.center) * C.ndc, 0.0, 1.0);
@@ -1167,10 +2034,36 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   let muscle = vec3<f32>(0.78, 0.45, 0.32);      // terracotta, not tangerine
   let neuron = vec3<f32>(0.60, 0.60, 0.55);      // warm stone
   let anchor = vec3<f32>(0.56, 0.44, 0.62);      // muted plum — suckers, the feet
+  // CONTINUOUS COLOUR FROM THE MATERIAL VECTOR, not the argmax label. cmeta.x
+  // packs each cell's contractility, grippiness and sense acuity as fixed point
+  // (lib/world_gpu.js packMeta); blend the class hues by HOW MUCH of each the
+  // cell has, so a cell that both contracts and grips reads between terracotta
+  // and plum, and a capacity-less cell stays stone — instead of every cell
+  // snapping to one of four buckets. (The old label path also never fired in a
+  // page running its own sim, where m.x is the whole packed word, not 1/2/3, so
+  // every cell fell through to stone.) Watch mode sends a plain 0..3 bucket
+  // (metaPacked == 0), and keeps the discrete path.
   var base = neuron;
-  if (m.x == 1) { base = sensor; }
-  if (m.x == 2) { base = muscle; }
-  if (m.x == 3) { base = anchor; }
+  if (C.metaPacked > 0.5) {
+    let ct = f32((m.x >> 8u) & 255) / 255.0;     // contractility, 8-bit
+    let gr = f32((m.x >> 16u) & 255) / 255.0;    // grippiness, 8-bit
+    let se = f32((m.x >> 2u) & 31) / 31.0;       // sense acuity, 5-bit
+    // HUE says WHICH capacities; MAGNITUDE says HOW MUCH, carried separately as
+    // saturation and brightness. Without this a cell high in all three averaged
+    // to a muddy grey indistinguishable from a cell low in all three — "does
+    // everything" looked like "does nothing". Now total capacity desaturates
+    // toward stone AND dims when low, so a committed generalist reads bright and
+    // an idle cell reads dim, whatever their hues share.
+    let wsum = ct + gr + se;
+    let hueDir = (muscle * ct + anchor * gr + sensor * se) / max(wsum, 0.001);
+    let sat = smoothstep(0.15, 0.9, wsum);       // stone until a capacity is real
+    let val = mix(0.65, 1.25, smoothstep(0.1, 2.0, wsum));  // magnitude -> brightness
+    base = mix(neuron, hueDir, sat) * val;
+  } else {
+    if (m.x == 1) { base = sensor; }
+    if (m.x == 2) { base = muscle; }
+    if (m.x == 3) { base = anchor; }
+  }
 
   // COLOUR THE STORY. Saturation and brightness are held back for the animal
   // under inspection, so one creature reads clearly out of a crowded field
@@ -1182,14 +2075,24 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // picked a creature you could no longer see what its cells were. Contrast now
   // comes from dimming everything else — the subject keeps its own colours at
   // full strength and simply stops competing with a thousand neighbours.
-  let anyPicked = (C.selUid >= 0);
-  let picked = (anyPicked && m.z == C.selUid);
   if (anyPicked && !picked) {
-    // A step back, not a blackout. The crowd stays readable as a living context —
-    // you still want to see what the subject is swimming through — it simply
-    // stops competing. Desaturate a little, dim a little.
+    // A STEP BACK, NOT A BLACKOUT — and much smaller a step than it was.
+    //
+    // This was mix(base, grey, 0.35) * 0.62 with a further 0.66 on the glow,
+    // leaving the crowd at 41% of its normal brightness. That was set before the
+    // subject got a pass of its own drawn over everything else; with that pass
+    // in place the subject is already unmistakable and the crowd does not need
+    // suppressing anywhere near this hard. What it produced instead was a world
+    // that looked broken to anyone who did not know a selection was in force —
+    // reported as "things seem too dark, like a few nodes got highlighted
+    // somehow", which is the symptom described exactly.
+    //
+    // 0.85 on the colour and 0.90 on the glow leaves the crowd at 77%: still a
+    // visible recession, no longer a dimmer switch on the whole world. The
+    // desaturation is down to a trace for the same reason — cell type is told
+    // apart by hue, including in the crowd.
     let grey = vec3<f32>(dot(base, vec3<f32>(0.33, 0.34, 0.33)));
-    base = mix(base, grey, 0.35) * 0.62;
+    base = mix(base, grey, 0.12) * 0.85;
   } else if (picked) {
     base = base * 1.25;                 // a lift, not a bleach
   }
@@ -1204,7 +2107,7 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VOut 
   // pop against a living grey-green broth rather than a field of neon.
   var g0 = clamp(0.55 + 0.55 * abs(a) * abs(a), 0.0, 1.35);
   if (picked) { g0 = clamp(0.85 + 1.4 * abs(a) * abs(a), 0.0, 2.4); }
-  if (anyPicked && !picked) { g0 = g0 * 0.66; }
+  if (anyPicked && !picked) { g0 = g0 * 0.90; }
   o.glow = g0;
   return o;
 }
@@ -1281,7 +2184,11 @@ fn lineVs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> L
   // — not dead cells, and not moving much because the bodies straddling the
   // seam are simply sitting there. Suppress the segment rather than fake it;
   // the cells themselves still draw in both places, which is the truth.
-  var d = pos[ib] - pos[ia];
+  // The SAME tweened positions the cells are drawn at, or the sinews come away
+  // from the cells they connect for as long as a frame lasts on screen.
+  let pa = drawPos(ia);
+  let pb = drawPos(ib);
+  var d = pb - pa;
   // Minimum image, matching the physics: a bond across the wrap seam is SHORT
   // in the world however far apart the raw coordinates are.
   if (d.x >  C.bound) { d.x = d.x - 2.0 * C.bound; }
@@ -1291,8 +2198,8 @@ fn lineVs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> L
   // A settled bond sits near its rest length. Beyond a few multiples of it the
   // pair is not holding a body together in any meaningful sense, and drawing a
   // fat slab across the world says the opposite of what is true.
-  if (length(d) > C.restLen * 4.0 || abs(pos[ib].x - pos[ia].x) > C.bound
-                                  || abs(pos[ib].y - pos[ia].y) > C.bound) {
+  if (length(d) > C.restLen * 4.0 || abs(pb.x - pa.x) > C.bound
+                                  || abs(pb.y - pa.y) > C.bound) {
     o.p = vec4<f32>(0.0, 0.0, 0.0, 0.0); o.tint = vec3<f32>(0.0); o.edge = 0.0; return o;
   }
 
@@ -1312,7 +2219,7 @@ fn lineVs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> L
     vec2(0.0, -1.0), vec2(1.0, -1.0), vec2(0.0, 1.0),
     vec2(0.0,  1.0), vec2(1.0, -1.0), vec2(1.0, 1.0));
   let c = q[vi];
-  let world = pos[ia] + dir * (c.x * len) + nrm * (c.y * w);
+  let world = pa + dir * (c.x * len) + nrm * (c.y * w);
   o.p = vec4<f32>((world - C.center) * C.ndc, 0.0, 1.0);
   o.edge = c.y;
 
@@ -1320,10 +2227,8 @@ fn lineVs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> L
   // warm; a slack one stays cool and dark. This is what makes a body legible as
   // something working rather than as a static diagram, and it is the single
   // thing viewer.html had that this renderer did not.
-  var aa = 0.0;
-  var bb = 0.0;
-  if (cmeta[ia].y >= 0) { aa = act[u32(cmeta[ia].y)]; }
-  if (cmeta[ib].y >= 0) { bb = act[u32(cmeta[ib].y)]; }
+  let aa = drawAct(cmeta[ia].y);
+  let bb = drawAct(cmeta[ib].y);
   let pull = clamp(0.5 * (abs(aa) + abs(bb)), 0.0, 1.0);
   let slack = vec3<f32>(0.10, 0.22, 0.21);
   let taut  = vec3<f32>(0.95, 0.52, 0.16);
@@ -1355,7 +2260,7 @@ fn lineFs(i: LOut) -> @location(0) vec4<f32> {
 const MOTE_WGSL = /* wgsl */`
 // Its own uniform rather than the main camera's: this pass needs four numbers,
 // and sharing a struct would couple it to a layout it does not care about.
-struct MoteCam { center: vec2<f32>, ndc: vec2<f32>, radius: f32, dim: f32 };
+struct MoteCam { center: vec2<f32>, ndc: vec2<f32>, radius: f32, dim: f32, capNorm: f32, pad: f32 };
 @group(0) @binding(0) var<uniform> MC : MoteCam;
 // STRIDE 1 HERE, deliberately, and not the same layout as the simulation.
 // The page builds this buffer itself from readMotes() and the /motes endpoint,
@@ -1381,19 +2286,36 @@ fn mvs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> MOut
   // An exhausted mote collapses rather than drawing a dark dot: absence should
   // read as absence, and a grid of black dots would be a grid, which this world
   // does not have.
+  // SIZE IS CAPACITY, BRIGHTNESS IS FILL.
+  //
+  // Both used to come from the stock, which worked while every mote had the same
+  // ceiling of 1.0. Motes now differ in capacity by up to fifty times and stock
+  // runs to the hundreds, so reading the radius off the stock would put a few
+  // motes across half the screen and make a drained megamote indistinguishable
+  // from a full ordinary one.
+  //
+  // Area, not radius, is proportional to capacity — hence the square root. A
+  // mote holding fifty times the energy is about seven times across, which is
+  // the honest way to draw a quantity as an area and keeps the biggest ones from
+  // swallowing the map.
+  let cap = max(1e-4, m.w);
+  let fill = clamp(m.z / cap, 0.0, 1.0);
   if (m.z <= 0.004) {
     o.p = vec4<f32>(0.0, 0.0, 0.0, 0.0);
     o.uv = vec2<f32>(9.0, 9.0); o.v = 0.0;
     return o;
   }
-  // Radius grows with stock, so a well-fed patch reads as a bloom and a grazed
-  // one as a scatter of specks — the shape of the depletion is visible without
-  // needing to resolve individual values.
-  let r = MC.radius * (0.45 + 0.55 * m.z);
+  // NORMALISED BY THE MEAN CAPACITY. sqrt(cap) alone was tuned against a world
+  // where every cap was 1.0; with capacities running to 248 it drew the biggest
+  // motes six world units across, which at bound 66 is a tenth of everything and
+  // reads as a bloom of fog rather than a rich patch. Dividing by the mean first
+  // keeps a TYPICAL mote about the size the old uniform ones were, and lets the
+  // tail be conspicuous without being the scenery.
+  let r = MC.radius * sqrt(cap / max(1e-4, MC.capNorm)) * (0.45 + 0.55 * fill);
   let world = m.xy + corner * r;
   o.p = vec4<f32>((world - MC.center) * MC.ndc, 0.0, 1.0);
   o.uv = corner;
-  o.v = m.z;
+  o.v = fill;
   return o;
 }
 
@@ -1409,6 +2331,48 @@ fn mfs(i: MOut) -> @location(0) vec4<f32> {
   return vec4<f32>(mix(lean, rich, i.v) * a, a);
 }`;
 
+/**
+ * THE SETTING, CACHED.
+ *
+ * Terrain, crop and streamlines are all slow: the fields drift over seconds and
+ * the crop is refetched every 1.5s. They were nonetheless recomputed every
+ * frame, and they are the two most expensive passes by a wide margin — measured
+ * on the live viewer by stripping passes one at a time:
+ *
+ *   all on 12 fps | terrain off 14 | terrain+streamlines off 34 | ground only 39
+ *
+ * Streamlines alone cost ~20 fps and terrain ~13, while the cells and bonds —
+ * the things that actually move — cost about 5 between them. The reason is that
+ * both sample the same four-octave fbm: the terrain once per PIXEL, and the
+ * streamlines O(steps^2) per line, roughly 390,000 full flow evaluations a
+ * frame.
+ *
+ * So the setting is drawn into an offscreen texture and reused until something
+ * it depends on changes — the camera, the canvas size, a view toggle, the crop,
+ * or simply enough time for the drift to show. This blit is what puts it back.
+ */
+const BLIT_WGSL = /* wgsl */`
+@group(0) @binding(0) var samp : sampler;
+@group(0) @binding(1) var tex  : texture_2d<f32>;
+
+struct BOut { @builtin(position) p : vec4<f32>, @location(0) uv : vec2<f32> };
+
+@vertex
+fn blitVs(@builtin(vertex_index) vi : u32) -> BOut {
+  // One oversized triangle rather than two triangles: no seam down the middle,
+  // and the same three vertices the background pass already uses.
+  let x = f32((vi << 1u) & 2u);
+  let y = f32(vi & 2u);
+  var o : BOut;
+  o.p  = vec4<f32>(x * 2.0 - 1.0, 1.0 - y * 2.0, 0.0, 1.0);
+  o.uv = vec2<f32>(x, y);
+  return o;
+}
+
+@fragment
+fn blitFs(i : BOut) -> @location(0) vec4<f32> {
+  return textureSample(tex, samp, i.uv);
+}`;
 
 
 /* ------------------------------------------------------------------- setup */
@@ -1420,7 +2384,32 @@ const view = { field: true, bonds: true, paused: false, spf: 1, evolve: true,
 // ?watch=1 turns this page into a VIEWPORT on the shared run in tools/serve-world.js
 // instead of a simulation of its own. Without it every tab is a separate
 // universe, which is why two browsers never agreed about anything.
+const TWEEN = new URLSearchParams(location.search).get('tween') === '1';
 const WATCH = new URLSearchParams(location.search).has('watch');
+/**
+ * EVERY SERVER ENDPOINT GOES THROUGH HERE.
+ *
+ * These paths (`/status`, `/genomes`, `/genome`, `/trace`, `/control`, ...) exist
+ * only under tools/serve-world.js. On GitHub Pages there is no server, so the
+ * host answers with its own 404 *page* — status 404, body `<!DOCTYPE html>`. Code
+ * that called .json() on that got `Unexpected token '<'`, which reads as a parse
+ * bug and is actually a missing server.
+ *
+ * Worse than the confusing message: a `/status` poll sat in the render loop and
+ * fired forever on a page that could never have a server.
+ *
+ * So: refuse before the request, with a sentence saying what is actually wrong.
+ * Callers already have try/catch that shows e.message, so they need no changes
+ * beyond using this instead of fetch.
+ */
+function srvFetch(path, opts) {
+  if (!WATCH) {
+    return Promise.reject(new Error(
+      'needs the local world server — this page is running its own simulation. ' +
+      'Start tools/serve-world.js and open it with ?watch=1.'));
+  }
+  return fetch(path, opts);
+}
 // Developmental encoding for this page's OWN sim: 2 = the GRN-in-an-egg
 // (DEVELOPMENT-2.md), 1 = the old positional readout. ?devo=1 to compare.
 // In watch mode the server owns development and this is only a label.
@@ -1533,7 +2522,8 @@ async function rebuild() {
   // rather than as the trivially fixable thing it is.
   if (WATCH) {
     try {
-      const st = await (await fetch('/status', { cache: 'no-store' })).json();
+      const st = await (await srvFetch('/status', { cache: 'no-store' })).json();
+      lastStatus = st;                       // for the copy-state button
       beasts = st.beasts; cellsPer = st.cellsPerBeast;
       // Bodies are limited by ENERGY, not by allocation. bodySlots is the
       // allocation ceiling and is deliberately far above any real population;
@@ -1549,6 +2539,7 @@ async function rebuild() {
       // doing and the first touch pushed 6 to it. That also silently coarsened
       // the CTRNN scope: the trace advances by spf per loop, so at 6 it samples
       // every sixth step and a 1.7 Hz gait aliases into hash.
+      if (st.genStats) setGenStats(st.genStats);
       if (st.spf != null) {
         const sl = $('sSrvSpf'), lb = $('vSrvSpf');
         if (sl && document.activeElement !== sl) sl.value = st.spf;
@@ -1606,7 +2597,23 @@ async function rebuild() {
   const bBond = dev.createBuffer({ size: bondCapacity, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST });
   dev.queue.writeBuffer(bBond, 0, idx);
 
-  const bCam = dev.createBuffer({ size: 224, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  const bCam = dev.createBuffer({ size: 240, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  // The same camera with topPass = 1, for the second cell pass that puts the
+  // inspected animal over the crowd. A whole second uniform rather than a
+  // dynamic offset because it is 224 bytes and this is not the expensive part.
+  const bCamTop = dev.createBuffer({ size: 240, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  // And the same camera again for the cached setting, whose target is BG_SCALE
+  // of the canvas — same world region, fewer pixels, so every field that counts
+  // pixels holds a different number. See writeCam.
+  const bCamBg = dev.createBuffer({ size: 240, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+
+  // THE FRAME BEFORE THIS ONE, for the tween in drawPos. Watch mode gets its own
+  // pair of buffers; a page running its own simulation binds the live ones here
+  // instead, which costs nothing, allocates nothing, and — with C.lerp pinned at
+  // 1 — is read by a branch that never runs.
+  const st = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST;
+  const bPrevPos = WATCH ? dev.createBuffer({ size: world.bPos.size, usage: st }) : world.bPos;
+  const bPrevAct = WATCH ? dev.createBuffer({ size: brains.bAct.size, usage: st }) : brains.bAct;
 
   const module = dev.createShaderModule({ code: RENDER, label: 'render' });
   // SAY WHAT IS WRONG WITH THE SHADER. A WGSL compile failure does not throw:
@@ -1631,6 +2638,8 @@ async function rebuild() {
       { binding: 2, visibility: V, buffer: ro },
       { binding: 3, visibility: V, buffer: ro },
       { binding: 4, visibility: V, buffer: ro },
+      { binding: 5, visibility: V, buffer: ro },
+      { binding: 6, visibility: V, buffer: ro },
     ],
   });
   const pl = dev.createPipelineLayout({ bindGroupLayouts: [layout] });
@@ -1705,16 +2714,39 @@ async function rebuild() {
     ],
   });
 
-  const bind = dev.createBindGroup({
+  // The blit that puts the cached setting back on screen — see BLIT_WGSL.
+  const blitMod = dev.createShaderModule({ code: BLIT_WGSL, label: 'blit' });
+  const blitLayout = dev.createBindGroupLayout({
+    entries: [
+      { binding: 0, visibility: GPUShaderStage.FRAGMENT, sampler: { type: 'filtering' } },
+      { binding: 1, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: 'float' } },
+    ],
+  });
+  const pipeBlit = dev.createRenderPipeline({
+    layout: dev.createPipelineLayout({ bindGroupLayouts: [blitLayout] }),
+    vertex: { module: blitMod, entryPoint: 'blitVs' },
+    fragment: { module: blitMod, entryPoint: 'blitFs', targets: [{ format: fmt }] },
+    primitive: { topology: 'triangle-list' },
+  });
+  // Linear, so that a cached layer surviving a sub-pixel camera nudge does not
+  // shimmer; the setting is smooth and has no detail that nearest would protect.
+  const blitSampler = dev.createSampler({ magFilter: 'linear', minFilter: 'linear' });
+
+  const mkBind = (camBuf) => dev.createBindGroup({
     layout,
     entries: [
-      { binding: 0, resource: { buffer: bCam } },
+      { binding: 0, resource: { buffer: camBuf } },
       { binding: 1, resource: { buffer: world.bPos } },
       { binding: 2, resource: { buffer: brains.bAct } },
       { binding: 3, resource: { buffer: world.bMeta } },
       { binding: 4, resource: { buffer: bBond } },
+      { binding: 5, resource: { buffer: bPrevPos } },
+      { binding: 6, resource: { buffer: bPrevAct } },
     ],
   });
+  const bind = mkBind(bCam);
+  const bindTop = mkBind(bCamTop);
+  const bindBg = mkBind(bCamBg);
 
   let syn = 0;
   for (let i = 0; i < built.arena.esrc.length; i++) if (built.arena.esrc[i] >= 0) syn++;
@@ -1749,7 +2781,14 @@ async function rebuild() {
       morphRate: world.params.morphRate, dt: world.params.dt,
     },
     bondCapacity, topoVersion: -1, fetchingBonds: false,
+    pipeBlit, blitLayout, blitSampler, bgKey: null, bgAt: 0,
+    bCamTop, bindTop, bCamBg, bindBg, bPrevPos, bPrevAct,
   };
+  // A DELIBERATE HANDLE ON MODULE STATE, for the console and for Playwright.
+  // Everything in this file is module-scoped, so from outside the module the
+  // world is unreachable and any question about it has to be answered by
+  // guessing at the source. Two wrong guesses in a row is enough.
+  window.mazeballs = { get sim() { return sim; }, localGenomes, view, sel, cam };
   if (WATCH) {
     document.title = 'Mazeballs — watching the shared world';
     $('bEvolve').textContent = 'remote'; $('bEvolve').disabled = true;
@@ -1781,6 +2820,16 @@ async function rebuild() {
   $('hSyn').textContent = syn.toLocaleString();
   $('hDevo').textContent = WATCH ? (remoteDevo ?? 'server') : (DEVO_VERSION === 2 ? 'devo2-grn' : 'devo1-positional');
   fitAll();
+  // On a phone, fill the WIDTH rather than letterbox the square arena in the
+  // middle of a tall screen — a band of world beats a small square in a sea of
+  // black. Height overflows, which is fine; you pan up and down.
+  if (sim && innerWidth <= 700) {
+    const v = viewRect();
+    cam.zoom = v.w / (sim.bound * 2.05);
+    const c = camForPoint(0, 0, cam.zoom);
+    cam.cx = c.cx; cam.cy = c.cy;
+    $('hZoom').textContent = cam.zoom.toFixed(2);
+  }
 }
 
 /**
@@ -1803,21 +2852,26 @@ async function refreshMotes() {
   if (sim.fetchingMotes) return;
   sim.fetchingMotes = true;
   try {
-    let xy, stock, n;
+    let xy, stock, n, cap = null;
     if (WATCH) {
-      const ab = await (await fetch('/motes', { cache: 'no-store' })).arrayBuffer();
+      const ab = await (await srvFetch('/motes', { cache: 'no-store' })).arrayBuffer();
       n = new Uint32Array(ab, 0, 1)[0];
-      const f = new Float32Array(ab, 8, n * 3);
-      xy = f; stock = null;                       // interleaved x,y,stock
+      const f = new Float32Array(ab, 8, n * 4);
+      xy = f; stock = null;                       // interleaved x,y,stock,cap
     } else {
       const m = await sim.world.readMotes();
-      n = m.stock.length; xy = m.pos; stock = m.stock;
+      n = m.stock.length; xy = m.pos; stock = m.stock; cap = m.cap;
     }
     if (!n) { sim.moteCount = 0; return; }
     const packed = new Float32Array(n * 4);       // vec4 per mote: x, y, stock, pad
     for (let i = 0; i < n; i++) {
-      if (stock) { packed[i * 4] = xy[i * 2]; packed[i * 4 + 1] = xy[i * 2 + 1]; packed[i * 4 + 2] = stock[i]; }
-      else { packed[i * 4] = xy[i * 3]; packed[i * 4 + 1] = xy[i * 3 + 1]; packed[i * 4 + 2] = xy[i * 3 + 2]; }
+      if (stock) {
+        packed[i * 4] = xy[i * 2]; packed[i * 4 + 1] = xy[i * 2 + 1];
+        packed[i * 4 + 2] = stock[i]; packed[i * 4 + 3] = cap ? cap[i] : 1;
+      } else {
+        packed[i * 4] = xy[i * 4]; packed[i * 4 + 1] = xy[i * 4 + 1];
+        packed[i * 4 + 2] = xy[i * 4 + 2]; packed[i * 4 + 3] = xy[i * 4 + 3];
+      }
     }
     // Never reallocated mid-run. If the server somehow has more motes than the
     // buffer holds, draw the ones that fit rather than swapping a buffer out
@@ -1826,6 +2880,14 @@ async function refreshMotes() {
     if (fits <= 0) { sim.moteCount = 0; return; }
     dev.queue.writeBuffer(sim.bMoteData, 0, packed.subarray(0, fits * 4));
     sim.moteCount = fits;
+    {
+      let s2 = 0;
+      for (let i = 0; i < fits; i++) s2 += packed[i * 4 + 3];
+      sim.moteCapMean = fits ? s2 / fits : 1;
+    }
+    // The crop is part of the cached setting, and new stock values change it
+    // without changing the mote COUNT — so the count alone cannot key the cache.
+    sim.moteGen = (sim.moteGen ?? 0) + 1;
   } catch (e) {
     // A missing /motes is not fatal: an older server simply has no crop to show.
     sim.moteCount = 0;
@@ -1901,12 +2963,20 @@ function selectUid(uid, pos, type, uidArr, n) {
   sel.uid = uid;
   if (uid >= 0) { storeFor(uid); refreshTrace(); }
   const box = $('scope');
-  if (box) box.style.display = uid >= 0 ? '' : 'none';
+  if (box) { box.style.display = uid >= 0 ? '' : 'none'; if (uid >= 0) applyScopeMin(); }
+  updateSelBadge();
   updateSelInfo();
   // Unfold on selection rather than on a second click. Picking an animal and
   // then pressing a button to see what built it is a sequencing rule the user
   // should not have to know; the genome is the thing you selected it FOR.
-  if (changed && uid >= 0) { lastGenome = null; showDevo(); frameCreature(uid); }
+  if (changed && uid >= 0) { lastGenome = null; if (devoActive) startUnfold(); frameCreature(uid); }
+}
+
+function updateSelBadge() {
+  const b = $('selBadge');
+  if (!b) return;
+  b.classList.toggle('on', sel.uid >= 0);
+  if (sel.uid >= 0) $('selBadgeId').textContent = '#' + sel.uid;
 }
 
 function updateSelInfo() {
@@ -1921,8 +2991,27 @@ function updateSelInfo() {
   const names = ['neuron', 'sensor', 'muscle', 'anchor'];
   const c = [0, 0, 0, 0];
   for (let r = 0; r < e.order.length; r++) if (e.types[r] >= 0) c[e.types[r]]++;
-  el.textContent = `animal #${sel.uid} — ${e.order.length} cells: ` +
+  // LABELS, NOT CAPABILITIES — and the difference stopped being cosmetic.
+  //
+  // These counts are describe()'s argmax over each cell's sense/contract/grip.
+  // Until the three label gates came out of the kernel, that argmax DECIDED what
+  // a cell could do, so counting it was counting capability. It no longer does:
+  // sensing, contraction and grip are all read from the continuous capacities
+  // now, and the label is only a summary of which one happened to be largest.
+  //
+  // A real specimen, #9252: reported as 28 muscle and 0 sensor, while every cell
+  // in its genome carries acuity 1.000 and a third of them can grip. Reporting
+  // the argmax as though it were the composition is the panel asserting
+  // something the world stopped believing this afternoon.
+  //
+  // The capacities are packed in cmeta on the GPU and are not on this side of
+  // the bus — the frame carries the label and nothing else — so the honest move
+  // is to say what this number IS rather than to imply what it is not.
+  el.textContent = `animal #${sel.uid} — ${e.order.length} cells, by strongest trait: ` +
     names.map((nm, k) => `${c[k]} ${nm}`).join(', ');
+  el.title = 'Cells are labelled by whichever of sense/contract/grip is largest. ' +
+    'Since the kernel reads those capacities directly, a cell labelled "muscle" ' +
+    'may also sense and grip. These are labels, not capabilities.';
   title.textContent = `CTRNN — animal #${sel.uid}, ${e.order.length} neurons` +
     (scopeStore.size > 1 ? ` (${scopeStore.size} tracked)` : '');
 }
@@ -1944,7 +3033,7 @@ async function refreshTrace() {
   sim.tracing = true;
   try {
     const want = Math.max(64, +($('scopeWin')?.value ?? 200) * 3);
-    const ab = await (await fetch(`/trace?uid=${sel.uid}&n=${want}`,
+    const ab = await (await srvFetch(`/trace?uid=${sel.uid}&n=${want}`,
       { cache: 'no-store' })).arrayBuffer();
     const dv = new DataView(ab);
     const uid = dv.getUint32(0, true), rows = dv.getUint32(4, true), cols = dv.getUint32(8, true);
@@ -2023,7 +3112,9 @@ function sampleSelected(pos, act, type, uidArr, n, step) {
   for (let i = 0; i < n; i++) {
     if (uidArr[i] === sel.uid && type[i] >= 0) { sx += pos[i * 2]; sy += pos[i * 2 + 1]; k++; }
   }
-  if (k) { cam.cx = sx / k; cam.cy = sy / k; }
+  // Held at the middle of what is visible, not of the window — otherwise follow
+  // parks the animal it is following under the right-hand panel.
+  if (k) { const c = camForPoint(sx / k, sy / k, cam.zoom); cam.cx = c.cx; cam.cy = c.cy; }
 }
 
 /** Nearest live cell to a world point, or -1. */
@@ -2132,6 +3223,20 @@ function drawScope() {
   if (!traces.length) { traces = all; allFlat = true; }
   if (!traces.length) return;
 
+  // A QUIET BRAIN is a real finding, not a broken panel — but a wall of flat
+  // lines reads as broken. Say it in words instead, once, centred.
+  if (allFlat) {
+    g.strokeStyle = '#12201d'; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(0, h * 0.5); g.lineTo(w, h * 0.5); g.stroke();
+    g.textAlign = 'center';
+    g.fillStyle = '#6d8880'; g.font = `${13 * dpr}px ui-monospace, monospace`;
+    g.fillText('brain quiet — no neuron is oscillating', w / 2, h * 0.5 - 7 * dpr);
+    g.fillStyle = '#4a625c'; g.font = `${11 * dpr}px ui-monospace, monospace`;
+    g.fillText(`${e.order.length} neurons, all within ±0.02`, w / 2, h * 0.5 + 13 * dpr);
+    g.textAlign = 'left';
+    return;
+  }
+
   if (overlay) {
     // SUPERIMPOSED on one shared axis: this is how phase is read. Two neurons in
     // antiphase are obvious here and invisible when each has its own lane.
@@ -2196,16 +3301,16 @@ function drawScope() {
 }
 
 /**
- * Genome viewer. A genome here is NOT a body — it is a small table of weights
- * saying how a cell's properties depend on WHERE IT IS in the egg, read off two
- * maternal gradients. This shows that table, because otherwise the genetics is
- * invisible and the bodies look like they come from nowhere.
+ * Genome viewer. A genome here is NOT a body — it is a gene regulatory network
+ * that runs inside the egg. The devo2 genome reads the egg's own gradients
+ * (position along and across it, distance from the centre, a fixed noise seed,
+ * local crowding) as its first few gene products and regulates the rest from
+ * there; the outputs say what a cell is made of. This shows that network, because
+ * otherwise the genetics is invisible and the bodies look like they come from
+ * nowhere.
  *
- * Rows are properties (does a cell exist here at all, how hard does it contract,
- * how well does it grip...). Columns are basis functions of position: `bias` is
- * uniform, `ap` runs head-to-tail, `|dv|` is symmetric across the midline so a
- * genome using it CANNOT tell left from right, and `sin*ap` terms are what make
- * repeated segments.
+ * (The egg's gradients are set by the egg — they are a provisioned environment,
+ * not a signal from a parent. We do not call them maternal.)
  */
 function cellShade(v) {
   const a = Math.min(1, Math.abs(v) / 3);
@@ -2229,9 +3334,26 @@ async function copyText(label, text, btn) {
     note(`${label} copied (${text.length} chars)`);
   } catch (e) {
     // Clipboard needs a secure context; over plain http on a tailnet address it
-    // is simply absent, so fall back to something the user can still act on.
-    note('clipboard unavailable — see console');
-    console.log(`--- ${label} ---\n${text}`);
+    // is simply absent. execCommand is deprecated and still works there, which
+    // is the whole point - this page is normally opened over plain http.
+    let ok = false;
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;top:-1000px;left:0;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      ok = document.execCommand('copy');
+      ta.remove();
+    } catch { ok = false; }
+    if (ok) {
+      if (btn) { const t = btn.textContent; btn.textContent = 'copied ✓';
+        setTimeout(() => { btn.textContent = t; }, 1400); }
+      note(`${label} copied (${text.length} chars)`);
+    } else {
+      note('clipboard unavailable — see console');
+      console.log(`--- ${label} ---\n${text}`);
+    }
   }
 }
 
@@ -2277,9 +3399,34 @@ async function showGenome() {
   if (sel.uid < 0) { box.style.display = ''; box.textContent = 'Select an animal first.'; return; }
   box.style.display = '';
   box.textContent = 'loading…';
+  grnSel = -1;                                     // a fresh genome starts unfocused
   try {
-    const j = await (await fetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
-    if (!j.ok) { box.textContent = j.error; return; }
+    // WATCH mode gets the genome AND its layout descriptor from the server; a
+    // page running its own sim has neither endpoint, so the genome comes from
+    // this tab's living set and the devo2 layout is read straight off the module
+    // constants. Either way `j` ends up in the same shape the renderer wants.
+    let j;
+    if (WATCH) {
+      j = await (await srvFetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
+      if (!j.ok) { box.textContent = j.error; return; }
+    } else {
+      const gj = await selGenome();
+      if (!gj) { box.textContent = 'no genome for #' + sel.uid; return; }
+      const d = await import('./lib/devo2.js');
+      j = {
+        ok: true, uid: gj.uid, generation: gj.generation ?? 0,
+        cells: gj.cells ?? '?', lineage: gj.lineage ?? '', encoding: 'devo2-grn', g: gj.g,
+        grn: {
+          nGene: d.NGENE, k: d.K, stride: d.GENE_STRIDE,
+          offSrc: d.OFF_SRC, offW: d.OFF_W, offBias: d.OFF_BIAS,
+          offDecay: d.OFF_DECAY, offDiff: d.OFF_DIFF,
+          maternal: ['ap', 'dv', 'rad', 'noise', 'crowd'].slice(0, d.N_MATERNAL),
+          outputs: d.OUTPUTS, outBase: d.OUT_BASE,
+          synBasis: d.SYN_BASIS.map(x => Array.isArray(x) ? x[0] : x),
+          nsyn: d.NSYN, synOff: d.SYN_OFF,
+        },
+      };
+    }
     lastGenome = j;
     // The synapse block lives in different places depending on the encoding,
     // and reading devo1's field names off a devo2 reply is what broke genome
@@ -2289,17 +3436,33 @@ async function showGenome() {
     const SOFF = j.grn ? j.grn.synOff : j.synOff;
     let html = `<h4>animal #${j.uid} · gen ${j.generation} · ${j.cells} cells ` +
       `<button id="bCopyGenome" class="mini" title="copy genome as TSV">⧉ copy</button></h4>`;
+    // A regulatory network is a network — so it also reads as one. The table is
+    // the exhaustive view; the network is the CTRNN-style wiring diagram, genes
+    // as nodes and regulation as edges (amber excites, blue represses). Only the
+    // devo2 GRN encoding has a graph to draw.
+    if (j.grn) {
+      html += `<div class="row" style="margin:.15rem 0 .3rem">
+        <button id="bGenTable" class="mini${genomeView === 'table' ? ' on' : ''}">table</button>
+        <button id="bGenNet" class="mini${genomeView === 'net' ? ' on' : ''}">network</button></div>
+        <canvas id="grnNet" style="display:${genomeView === 'net' ? 'block' : 'none'};width:100%;height:300px;background:#070c0b;border:1px solid #1d332e;border-radius:3px;margin-bottom:.3rem"></canvas>`;
+    }
+    html += `<div id="genomeTable" style="display:${(j.grn && genomeView === 'net') ? 'none' : 'block'}">`;
     if (j.grn) {
       // A REGULATORY NETWORK reads as rows of "who regulates me", not as a grid
-      // of basis coefficients. Only genes that DO something are shown: the named
-      // outputs, plus any gene with a live regulator. Sixty-four rows of mostly
-      // silenced edges is not a genome viewer, it is a hex dump.
-      const G = j.grn, name = (i) =>
+      // of basis coefficients. The FULL network is shown — all gene products,
+      // named where they have a role (the egg's gradients, the named outputs,
+      // external channels) and by index otherwise — so a silenced gene reads as
+      // an empty row rather than being hidden.
+      const G = j.grn, extBase = G.nGene - 8, name = (i) =>
         i < G.maternal.length ? G.maternal[i]
         : (i >= G.outBase && i - G.outBase < G.outputs.length) ? G.outputs[i - G.outBase]
+        : (i >= extBase) ? `ext${i - extBase}`
         : `g${i}`;
       html += `<p class="note">${j.encoding} · ${G.nGene} gene products, ` +
-        `${G.k} regulators each. Rows are genes that do something.</p>`;
+        `${G.k} regulators each. Genes <b>${G.maternal.join(', ')}</b> are the egg's ` +
+        `gradients (its provisioned environment, not a parent's signal); ` +
+        `<b>${G.outputs.join(', ')}</b> are what a cell is made of. Every gene is shown; ` +
+        `a row of dots is a silent one.</p>`;
       html += '<table><tr><th>gene</th><td class="hd">bias</td><td class="hd">decay</td>' +
         '<td class="hd">diff</td><td class="hd" colspan="' + G.k + '">regulated by</td></tr>';
       for (let i = 0; i < G.nGene; i++) {
@@ -2307,11 +3470,9 @@ async function showGenome() {
         const regs = [];
         for (let k = 0; k < G.k; k++) {
           const sIdx = j.g[b + G.offSrc + k];
-          if (!(sIdx >= 0)) continue;
+          if (!(sIdx >= 0)) { regs.push(null); continue; }
           regs.push([Math.floor(sIdx) % G.nGene, j.g[b + G.offW + k]]);
         }
-        const isOut = i >= G.outBase && i - G.outBase < G.outputs.length;
-        if (!regs.length && !isOut) continue;
         const bias = j.g[b + G.offBias], dec = j.g[b + G.offDecay], dif = j.g[b + G.offDiff];
         html += `<tr><th>${name(i)}</th>` +
           `<td style="${cellShade(bias)}">${bias.toFixed(1)}</td>` +
@@ -2350,35 +3511,182 @@ async function showGenome() {
     html += '<p class="note">amber positive, blue negative. A row of dots is a ' +
       'property the genome leaves flat. Weight on <b>|dv|</b> rather than <b>dv</b> ' +
       'is what makes a body bilaterally symmetric — it cannot tell left from right.</p>';
+    html += '</div>';                              // close #genomeTable
     box.innerHTML = html;
     on('bCopyGenome', 'onclick', (e) =>
       copyText('genome', genomeAsText(j), e.target));
+    if (j.grn) {
+      const showView = (v) => {
+        genomeView = v;
+        $('bGenTable')?.classList.toggle('on', v === 'table');
+        $('bGenNet')?.classList.toggle('on', v === 'net');
+        const t = $('genomeTable'), c = $('grnNet');
+        if (t) t.style.display = v === 'net' ? 'none' : 'block';
+        if (c) c.style.display = v === 'net' ? 'block' : 'none';
+        if (v === 'net') drawGrnNetwork(j);
+      };
+      on('bGenTable', 'onclick', () => showView('table'));
+      on('bGenNet', 'onclick', () => showView('net'));
+      if (genomeView === 'net') drawGrnNetwork(j);
+    }
   } catch (e) { box.textContent = 'could not load genome: ' + e.message; }
+}
+
+let genomeView = 'table';                          // 'table' | 'net'
+
+/**
+ * THE GRN AS A NETWORK — the CTRNN-style wiring view of a genome. Genes are
+ * nodes in three bands: the egg's gradients and external channels feed in from
+ * the left, the body outputs (what a cell is made of) sit on the right, the
+ * internal regulators fill the middle. Each edge is one regulator acting on one
+ * gene — amber excites, blue represses, brighter and thicker with weight. Named
+ * genes are labelled; the rest are dots. It reads the same genome the table does.
+ */
+let grnSel = -1;                                   // the tapped gene, or -1
+
+function drawGrnNetwork(j) {
+  const cv = $('grnNet'); if (!cv || !j.grn) return;
+  const G = j.grn, nGene = G.nGene, extBase = nGene - 8;
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const W = cv.clientWidth || 320, H = cv.clientHeight || 300;
+  cv.width = Math.max(1, Math.floor(W * dpr)); cv.height = Math.max(1, Math.floor(H * dpr));
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = '#070c0b'; g.fillRect(0, 0, W, H);
+
+  const role = (i) =>
+    i < G.maternal.length ? 'egg'
+    : (i >= G.outBase && i - G.outBase < G.outputs.length) ? 'out'
+    : (i >= extBase) ? 'ext' : 'int';
+  const nm = (i) =>
+    i < G.maternal.length ? G.maternal[i]
+    : (i >= G.outBase && i - G.outBase < G.outputs.length) ? G.outputs[i - G.outBase]
+    : (i >= extBase) ? `e${i - extBase}` : `${i}`;
+
+  const left = [], mid = [], right = [];
+  for (let i = 0; i < nGene; i++) {
+    const r = role(i);
+    if (r === 'egg' || r === 'ext') left.push(i);
+    else if (r === 'out') right.push(i);
+    else mid.push(i);
+  }
+  const pos = new Array(nGene);
+  const padY = 18, colTop = padY, colBot = H - padY - 12;
+  const placeCol = (arr, x) => arr.forEach((i, k) =>
+    { pos[i] = [x, colTop + (arr.length === 1 ? (colBot - colTop) / 2 : (colBot - colTop) * k / (arr.length - 1))]; });
+  placeCol(left, W * 0.10);
+  placeCol(right, W * 0.90);
+  const midCols = Math.max(1, Math.round(Math.sqrt(mid.length * W / Math.max(1, H))));
+  const midRows = Math.ceil(mid.length / midCols);
+  mid.forEach((i, k) => {
+    const cxi = k % midCols, cyi = Math.floor(k / midCols);
+    pos[i] = [W * 0.30 + (W * 0.40) * (midCols === 1 ? 0.5 : cxi / (midCols - 1)),
+              colTop + (colBot - colTop) * (midRows === 1 ? 0.5 : cyi / (midRows - 1))];
+  });
+
+  const edges = [];
+  for (let i = 0; i < nGene; i++) {
+    const b = i * G.stride;
+    for (let k = 0; k < G.k; k++) {
+      const s = j.g[b + G.offSrc + k];
+      if (!(s >= 0)) continue;
+      edges.push({ src: Math.floor(s) % nGene, dst: i, w: j.g[b + G.offW + k] });
+    }
+  }
+  const sel = grnSel;
+  const touches = (e) => sel < 0 || e.src === sel || e.dst === sel;
+  const isNbr = (i) => sel >= 0 && edges.some(e => (e.src === sel && e.dst === i) || (e.dst === sel && e.src === i));
+
+  for (const e of edges) {
+    const p = pos[e.dst], q = pos[e.src]; if (!p || !q) continue;
+    const on = touches(e);
+    const a = on ? Math.min(0.9, 0.15 + Math.abs(e.w) / 3) : 0.045;
+    g.strokeStyle = e.w >= 0 ? `rgba(226,150,70,${a})` : `rgba(80,150,220,${a})`;
+    g.lineWidth = on ? Math.min(2.6, 0.5 + Math.abs(e.w) * 0.8) : 0.5;
+    g.beginPath(); g.moveTo(q[0], q[1]);
+    const mx = (q[0] + p[0]) / 2;
+    g.bezierCurveTo(mx, q[1], mx, p[1], p[0], p[1]);
+    g.stroke();
+  }
+
+  const col = { egg: '#4dd1de', out: '#ff9433', ext: '#8f9c97', int: '#9aa6a0' };
+  for (let i = 0; i < nGene; i++) {
+    const p = pos[i]; if (!p) continue;
+    const r = role(i), named = r === 'egg' || r === 'out';
+    const me = i === sel, nbr = isNbr(i), dim = sel >= 0 && !me && !nbr;
+    const rad = me ? 6.5 : (named ? 5 : (nbr ? 3.6 : 2.6));
+    g.globalAlpha = dim ? 0.32 : 1;
+    g.beginPath(); g.arc(p[0], p[1], rad, 0, Math.PI * 2);
+    g.fillStyle = col[r]; g.fill();
+    g.lineWidth = me ? 2 : 1; g.strokeStyle = me ? '#ffffff' : 'rgba(4,8,7,.9)'; g.stroke();
+    if (named || me || nbr) {
+      g.fillStyle = dim ? '#5f7a73' : '#cfe3dc'; g.font = '9px ui-monospace, monospace';
+      g.textBaseline = 'middle';
+      if (p[0] < W * 0.5) { g.textAlign = 'right'; g.fillText(nm(i), p[0] - 7, p[1]); }
+      else { g.textAlign = 'left'; g.fillText(nm(i), p[0] + 7, p[1]); }
+    }
+    g.globalAlpha = 1;
+  }
+  g.textBaseline = 'alphabetic';
+
+  // Footer: the legend, or the tapped gene's wiring read out in words.
+  g.textAlign = 'left';
+  if (sel < 0) {
+    g.fillStyle = '#5f7a73'; g.font = '9px ui-monospace, monospace';
+    g.fillText('egg gradients →', 6, H - 5);
+    g.textAlign = 'right'; g.fillText('← outputs · tap a gene', W - 6, H - 5);
+  } else {
+    const b = sel * G.stride, bias = j.g[b + G.offBias];
+    const ins = edges.filter(e => e.dst === sel).map(e => `${nm(e.src)}${e.w >= 0 ? '+' : '−'}`);
+    const outs = edges.filter(e => e.src === sel).map(e => nm(e.dst));
+    g.fillStyle = '#cfe3dc'; g.font = '10px ui-monospace, monospace';
+    g.fillText(`${nm(sel)} · bias ${bias.toFixed(1)}`, 6, H - 17);
+    g.fillStyle = '#9fb8b0'; g.font = '9px ui-monospace, monospace';
+    g.fillText(`in: ${ins.join(' ') || '—'}`.slice(0, 88), 6, H - 5);
+    g.textAlign = 'right'; g.fillText(`out: ${outs.join(' ') || '—'}`.slice(0, 52), W - 6, H - 5);
+  }
+  g.textAlign = 'left';
+
+  // Tap a node to focus it (its regulators and targets light up); tap it again,
+  // or empty space, to clear. Rebound each draw because the canvas is recreated
+  // with the panel.
+  cv.onclick = (ev) => {
+    const rect = cv.getBoundingClientRect();
+    const mx = ev.clientX - rect.left, my = ev.clientY - rect.top;
+    let best = -1, bestD = 16 * 16;
+    for (let i = 0; i < nGene; i++) {
+      const p = pos[i]; if (!p) continue;
+      const dx = p[0] - mx, dy = p[1] - my, d = dx * dx + dy * dy;
+      if (d < bestD) { bestD = d; best = i; }
+    }
+    grnSel = (best === grnSel) ? -1 : best;
+    drawGrnNetwork(j);
+  };
 }
 
 /* ============================ development viewer ==========================
  *
- * WHAT DEVELOPMENT IS HERE, honestly. A genome is not a body: it says how a
- * cell's properties depend on WHERE IT SITS in the egg, read off two maternal
- * gradients. `develop()` walks lattice sites outward, asks the genome whether
- * there is a cell there at all (`presence`), and if so what it is made of,
- * spending yolk as it goes and stopping when the yolk runs out.
+ * WHAT DEVELOPMENT IS HERE. A genome is a gene regulatory network that runs
+ * inside the egg. Each cell reads the egg's own gradients — position along and
+ * across it, distance from the centre, a fixed noise seed, local crowding — as
+ * its first gene products, regulates the rest over a series of timesteps, divides
+ * and grows, and the outputs say what each cell is made of. The egg is a
+ * controlled, isolated environment for this rapid first development; the
+ * gradients are provisioned by it, not signals from a parent.
  *
- * WHAT IS MISSING, equally honestly. All of that happens inside ONE TICK, so in
- * the world an adult simply materialises — the point-event `eggs.md` says to
- * remove, and the reason a fully grown creature appears from nowhere when you
- * watch. This viewer therefore shows an UNFOLDING ORDER, not an unfolding in
- * time: the sequence cells are laid down in, which is what would become a
- * temporal process under the cellwise redesign in CELLWISE.md.
- *
- * Runs client-side against the same lib/devo.js the server develops with, so
- * what you see is what the world built, not a reimplementation of it.
+ * The unfold below runs the ACTUAL model (lib/devo2.js) in a worker and draws
+ * the body growing in real developmental time, rather than the old order-only
+ * animation of the finished corpse.
  */
 let devo = null;                       // lazily imported module
-let devoRun = null;                    // { cells, bonds, full }
-let devoT = 1;                         // 0..1 how far through the unfolding
-let devoTimer = null;
-let devoStages = false;
+
+/* THE LIVE UNFOLD. The selected genome developed in a worker (lib/devo-worker.js)
+ * and drawn by DevoView (lib/devo-view.js) as it grows — cells swelling in as
+ * they are born, the survive-carve drawn once at hatching. This is the
+ * construction devo2-wizard.html uses, driven off the creature you selected. It
+ * has its own rAF and its own WebGPU device on #devoC; if that device cannot be
+ * had the panel says so and nothing else on the page is affected. */
+let devoView = null, devoWorker = null, devoRAF = 0, devoActive = false;
+let liveBirth = null, liveXY = null, liveN = 0, liveT0 = 0, liveCarve = 0, liveDone = false;
 
 async function ensureDevo() {
   // THE ENCODING THE WORLD ACTUALLY USES. This imported devo.js and developed
@@ -2390,185 +3698,185 @@ async function ensureDevo() {
   return devo;
 }
 
-async function buildDevo(genomeArr) {
-  const d = await ensureDevo();
-  const g = Float32Array.from(genomeArr);
-  // Egg size travels with the encoding, exactly as evolve.js does it — hand
-  // devo2 an extent of 3 and it rebuilds the disc it exists to escape.
-  const grown = d.develop(g, { extent: d.DEFAULT_EXTENT ?? 3.0, maxCells: 60 });
-  // bond()/largestPiece()/morphology() are shared and live in devo.js.
-  const shared = await import('./lib/devo.js');
-  const whole = shared.largestPiece(grown.cells, shared.bond(grown.cells, { maxDegree: 4 }));
-  // REMAP THE DIVISION TREE ONTO THE SURVIVING PIECE.
-  //
-  // `mother` is a local index into the FULL developed set, and what is drawn is
-  // `whole.cells` — the largest connected piece, re-indexed from zero. Using one
-  // index in the other array points at a different cell entirely, so the tree
-  // was drawing links between unrelated cells or, where the index fell out of
-  // range, drawing nothing. Both look like "the division tree is broken", and
-  // neither is a rendering problem.
-  //
-  // devo2 stamps each cell with its own localIndex, so the remap is exact. A
-  // cell whose mother did not make it into this piece has no line to draw,
-  // which is correct: its mother is not in the picture.
-  {
-    const pos = new Map();
-    whole.cells.forEach((c, i) => { if (c.localIndex !== undefined) pos.set(c.localIndex, i); });
-    for (const c of whole.cells) {
-      c.motherIdx = (c.mother !== undefined && pos.has(c.mother)) ? pos.get(c.mother) : -1;
-    }
-  }
-  devoRun = {
-    g, all: grown.cells, cells: whole.cells, bonds: whole.bonds,
-    aborted: grown.aborted, spent: grown.spent,
-    morph: shared.morphology(whole.cells, whole.bonds),
-  };
-  return devoRun;
-}
-
-function drawDevo() {
-  const cv = $('devoC');
-  if (!cv || cv.style.display === 'none' || !devoRun) return;
-  const dpr = Math.min(devicePixelRatio || 1, 2);
-  const w = Math.max(1, Math.round(cv.clientWidth * dpr));
-  const h = Math.max(1, Math.round(cv.clientHeight * dpr));
-  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
-  const g2 = cv.getContext('2d');
-  g2.fillStyle = '#070c0b'; g2.fillRect(0, 0, w, h);
-
-  const cells = devoRun.cells, bonds = devoRun.bonds;
-  if (!cells.length) {
-    g2.fillStyle = '#7a5a4a'; g2.font = `${12 * dpr}px ui-monospace, monospace`;
-    g2.fillText('this genome builds nothing — a viable egg that never becomes a body',
-      8 * dpr, h / 2);
-    return;
-  }
-
-  // fit the body
-  let lo = Infinity, hi = -Infinity, ylo = Infinity, yhi = -Infinity;
-  for (const c of cells) { lo = Math.min(lo, c.x); hi = Math.max(hi, c.x);
-    ylo = Math.min(ylo, c.y); yhi = Math.max(yhi, c.y); }
-  const pad = 14 * dpr;
-  const sc = Math.min((w - 2 * pad) / Math.max(0.4, hi - lo),
-                      (h - 2 * pad) / Math.max(0.4, yhi - ylo));
-  const cx = (x) => pad + (x - lo) * sc, cy = (y) => pad + (y - ylo) * sc;
-
-  const built = Math.max(1, Math.round(cells.length * devoT));
-
-  // THE DIVISION TREE — which cell budded from which.
-  //
-  // This is the development PROCESS rather than its outcome: every cell but the
-  // zygote came from a specific mother, devo2 records it, and drawing those
-  // links shows the body growing as a lineage instead of as a set of dots
-  // appearing in order. Where the tree is a path, the tissue is a filament;
-  // where it fans, the body branched.
-  //
-  // (This slot used to draw a maternal `presence` field via devo.express, which
-  // is a Dev 1.0 function. devo2 has neither, so it would have thrown the moment
-  // anyone pressed "stages".)
-  if (devoStages) {
-    for (let i = 0; i < built; i++) {
-      // motherIdx, not mother — see the remap in buildDevo.
-      const m = cells[i].motherIdx;
-      if (m === undefined || m < 0 || m >= built) continue;
-      const age = 1 - i / Math.max(1, built);
-      g2.strokeStyle = `rgba(255,190,120,${(0.20 + 0.55 * age).toFixed(3)})`;
-      g2.lineWidth = 2.2 * dpr;
-      g2.beginPath();
-      g2.moveTo(cx(cells[m].x), cy(cells[m].y));
-      g2.lineTo(cx(cells[i].x), cy(cells[i].y));
-      g2.stroke();
-    }
-  }
-
-  // holdfasts first
-  g2.strokeStyle = '#2a4a42'; g2.lineWidth = 1.2 * dpr;
-  for (const b of bonds) {
-    if (b.i >= built || b.j >= built) continue;
-    g2.beginPath();
-    g2.moveTo(cx(cells[b.i].x), cy(cells[b.i].y));
-    g2.lineTo(cx(cells[b.j].x), cy(cells[b.j].y));
-    g2.stroke();
-  }
-
-  const tint = ['#8f9c97', '#70b8bd', '#d98f57', '#a37cb8'];
-  const kind = (c) => {
-    let best = 0, v = 0.15;
-    if (c.sense > v) { best = 1; v = c.sense; }
-    if (c.contract > v) { best = 2; v = c.contract; }
-    if (c.grip > v) { best = 3; v = c.grip; }
-    return best;
-  };
-  cells.forEach((c, i) => {
-    const on_ = i < built;
-    const r = 5.5 * dpr;
-    g2.beginPath(); g2.arc(cx(c.x), cy(c.y), r, 0, Math.PI * 2);
-    g2.fillStyle = on_ ? tint[kind(c)] : '#141d1b';
-    g2.fill();
-    g2.strokeStyle = on_ ? '#06100e' : '#101917';
-    g2.lineWidth = 1.4 * dpr; g2.stroke();
-    // the newest cell, so the laying-down order is legible
-    if (on_ && i === built - 1) {
-      g2.strokeStyle = '#ffd08a'; g2.lineWidth = 2 * dpr;
-      g2.beginPath(); g2.arc(cx(c.x), cy(c.y), r + 3 * dpr, 0, Math.PI * 2); g2.stroke();
-    }
-  });
-
-  g2.fillStyle = '#4a625c'; g2.font = `${10 * dpr}px ui-monospace, monospace`;
-  g2.fillText(`${built}/${cells.length} divisions`, 4 * dpr, h - 4 * dpr);
-  const rt = 'tail';
-  g2.fillText(rt, w - g2.measureText(rt).width - 4 * dpr, h - 4 * dpr);
-
-  const m = devoRun.morph;
-  const inf = $('devoInfo');
-  if (inf) {
-    inf.textContent =
-      `${built}/${cells.length} cells laid down` +
-      (devoRun.all.length !== cells.length
-        ? ` · ${devoRun.all.length - cells.length} discarded as a detached piece` : '') +
-      ` · symmetry ${m.symmetry.toFixed(2)} · segments ${m.segments}` +
-      ` · elongation ${m.elongation.toFixed(2)} · stiffness range ${m.stiffSpan.toFixed(1)}x` +
-      (devoRun.aborted ? ' · YOLK RAN OUT (development aborted)' : '');
-  }
-}
-
-async function showDevo() {
-  // Fetch the genome ourselves if it has not been loaded — requiring a
-  // "show genome" press first is a sequencing rule the user should not have to
-  // know about.
-  if (!lastGenome || lastGenome.uid !== sel.uid) {
-    if (sel.uid < 0) { note('select an animal first — click one in the world'); return; }
+/** The selected creature's genome (an object carrying `.g`), from the server in
+ * watch mode or from this page's own living genomes otherwise. Cached in
+ * lastGenome so the gene viewer and the unfold share one fetch. */
+async function selGenome() {
+  if (sel.uid < 0) return null;
+  if (lastGenome && lastGenome.uid === sel.uid && lastGenome.g) return lastGenome;
+  if (WATCH) {
     try {
-      const j = await (await fetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
-      if (!j.ok) { note(j.error); return; }
-      lastGenome = j;
-    } catch (e) { note('could not load genome: ' + e.message); return; }
+      const j = await (await srvFetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
+      if (!j.ok) { note(j.error || 'no genome'); return null; }
+      lastGenome = j; return j;
+    } catch (e) { note('could not load genome: ' + e.message); return null; }
   }
-  await buildDevo(lastGenome.g);
-  devoT = 0;
-  clearInterval(devoTimer);
-  // Step through the laying-down ORDER. Not a clock: development is still
-  // instantaneous in the world, and pretending otherwise here would be a lie.
-  // Ten times faster than it was. At 0.02 per 30 ms the unfold took 1.5 s,
-  // which is a long time to wait every time you click a different animal.
-  devoTimer = setInterval(() => {
-    devoT = Math.min(1, devoT + 0.2);
-    drawDevo();
-    if (devoT >= 1) clearInterval(devoTimer);
-  }, 30);
+  const row = localGenomes(400).rows.find(r => r.uid === sel.uid);
+  if (!row) { note('no genome for #' + sel.uid); return null; }
+  lastGenome = { uid: sel.uid, g: row.g, generation: row.generation ?? 0,
+                 cells: row.cells, lineage: row.lineage };
+  return lastGenome;
 }
+
+async function ensureDevoView() {
+  if (devoView) return devoView;
+  const cv = $('devoC');
+  if (!cv) return null;
+  // Size the backing buffer to the displayed size so the growth is crisp.
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  cv.width = Math.max(1, Math.floor((cv.clientWidth || 320) * dpr));
+  cv.height = Math.max(1, Math.floor((cv.clientHeight || 210) * dpr));
+  try { devoView = await DevoView.create(cv); }
+  catch { devoView = null; }
+  if (!devoView) $('devoInfo').innerHTML =
+    '<span style="color:#c7734f">the live unfold needs its own WebGPU canvas, which this browser would not give &mdash; the world itself still runs.</span>';
+  return devoView;
+}
+
+function stopUnfold() {
+  if (devoWorker) { devoWorker.terminate(); devoWorker = null; }
+  cancelAnimationFrame(devoRAF); devoRAF = 0;
+}
+
+// The unfold has its OWN clock and its OWN rAF, independent of the world loop:
+// birth times are wall-clock, so cells swell in as their frames arrive, and the
+// carve eases in once development reports done.
+function unfoldLoop() {
+  if (!devoView) return;
+  const now = (performance.now() - liveT0) / 1000;
+  if (liveDone && liveCarve < 1) liveCarve = Math.min(1, liveCarve + 0.02);
+  devoView.draw(now, devoView.egg ?? 12, liveCarve);
+  devoRAF = requestAnimationFrame(unfoldLoop);
+}
+
+async function startUnfold() {
+  const gj = await selGenome();
+  if (!gj) return;
+  const view = await ensureDevoView();
+  if (!view) return;
+  stopUnfold();
+  devoActive = true;
+  const EXTENT = +($('sEggSize')?.value ?? 12);    // egg size, from the egg panel
+  const MS = +($('sEggMs')?.value ?? 12000);       // developmental time in the egg
+  view.egg = EXTENT;
+  liveBirth = new Float32Array(1024);
+  liveN = 0; liveT0 = performance.now(); liveCarve = 0; liveDone = false;
+  $('devoInfo').textContent = `developing #${gj.uid} in a worker…`;
+
+  devoWorker = new Worker('./lib/devo-worker.js', { type: 'module' });
+  // A module worker that fails to LOAD reports nothing through onmessage, so
+  // without this a bad import in the worker looks exactly like a slow develop.
+  devoWorker.onerror = (err) => {
+    $('devoInfo').innerHTML = '<span style="color:#c7734f">worker failed: ' +
+      (err.message || 'load error') + '</span>';
+    stopUnfold();
+  };
+  devoWorker.onmessage = (e) => {
+    const m = e.data;
+    if (m.kind === 'error') {
+      $('devoInfo').innerHTML = '<span style="color:#c7734f">' + m.message + '</span>';
+      stopUnfold(); return;
+    }
+    const nowS = (performance.now() - liveT0) / 1000;
+    if (m.kind === 'frame') {
+      if (liveBirth.length < m.n) {
+        const b = new Float32Array(Math.max(m.n, liveBirth.length * 2));
+        b.set(liveBirth); liveBirth = b;
+      }
+      // Anything newly present was born now, for the swelling animation.
+      for (let i = liveN; i < m.n; i++) liveBirth[i] = nowS;
+      liveN = m.n; liveXY = m.xy;
+      view.setCells(m.n, m.xy, null, liveBirth, null);
+      $('devoInfo').innerHTML =
+        `<b>${m.n} cells</b> · step ${m.t}/${m.nStep} · +${m.born.length} divisions this frame`;
+    } else if (m.kind === 'done') {
+      // The finished body: label each cell by its dominant capacity, and mark
+      // which the survive-carve removes so the view can shrink them away together.
+      const kind = new Int32Array(m.n);
+      for (let i = 0; i < m.n; i++) {
+        kind[i] = describe({ sense: m.caps[i * 3], contract: m.caps[i * 3 + 1], grip: m.caps[i * 3 + 2] });
+      }
+      const culled = new Uint8Array(liveN);
+      const kept = new Set(); for (let i = 0; i < m.n; i++) kept.add(m.idx[i]);
+      for (let i = 0; i < liveN; i++) if (!kept.has(i)) culled[i] = 1;
+      const xy = new Float32Array(liveN * 2);
+      if (liveXY) xy.set(liveXY.subarray(0, Math.min(liveXY.length, liveN * 2)));
+      for (let i = 0; i < m.n; i++) {
+        const li = m.idx[i];
+        if (li < liveN) { xy[li * 2] = m.xy[i * 2]; xy[li * 2 + 1] = m.xy[i * 2 + 1]; }
+      }
+      const allKind = new Int32Array(liveN);
+      for (let i = 0; i < m.n; i++) if (m.idx[i] < liveN) allKind[m.idx[i]] = kind[i];
+      view.setCells(liveN, xy, allKind, liveBirth, culled);
+      liveDone = true;
+      const hist = [0, 0, 0, 0];
+      for (let i = 0; i < m.n; i++) hist[kind[i]]++;
+      const carved = culled.reduce((a, b) => a + b, 0);
+      $('devoInfo').innerHTML =
+        `<b>${m.n} cells</b> (the world caps at 60)${m.aborted ? ' · yolk ran out' : ''}` +
+        (carved ? ` · ${carved} carved away` : '') +
+        `<br>neuron ${hist[0]} · sensor ${hist[1]} · muscle ${hist[2]} · anchor ${hist[3]}`;
+      if (devoWorker) { devoWorker.terminate(); devoWorker = null; }
+    }
+  };
+  // maxCells well past the world's 60 so the growth is worth watching — the note
+  // above says where the world would have stopped. yolk is effectively unlimited
+  // here; the point is the shape the genome wants to build.
+  devoWorker.postMessage({
+    genome: Array.from(gj.g),
+    opts: { ms: MS, dtMs: 40, extent: EXTENT, maxCells: 4000, yolk: 1e9, stepEvery: 4 },
+  });
+  cancelAnimationFrame(devoRAF);
+  devoRAF = requestAnimationFrame(unfoldLoop);
+}
+
 /**
  * A GALLERY OF BODIES, because clicking one cell in a crowd of twenty thousand
  * is not a way to choose an animal. Each tile develops a living genome with the
  * same encoding the world uses and draws the result; clicking one selects that
  * animal properly, scope and all.
  */
+/**
+ * The living genomes of THIS page's own simulation, in the shape `/genomes`
+ * returns.
+ *
+ * Without a server the gallery was fetching an endpoint that does not exist, but
+ * the genomes it wanted were in this tab the whole time — a page not in watch
+ * mode is running the world, not observing one. Reading them locally is also
+ * strictly better than the alternative of shipping a canned set: these are the
+ * animals actually alive on screen, so clicking a tile can select a real one.
+ *
+ * Deliberately mirrors the server's loop, including the deepest-first sort, so
+ * the gallery cannot mean two different things depending on the URL.
+ */
+function localGenomes(want) {
+  const rows = [];
+  const arena = sim?.arena, evo = sim?.evo;
+  if (!arena || !evo) return { steps: 0, count: 0, rows, why: 'no arena/evo on sim' };
+  for (let o = 0; o < arena.P && rows.length < want; o++) {
+    if (!arena.alive[o] || !evo.genome[o]) continue;
+    rows.push({
+      slot: o, uid: evo.uid[o], generation: evo.generation[o],
+      lineage: evo.lineage[o], cells: arena.cnt[o],
+      g: Array.from(evo.genome[o]),
+    });
+  }
+  rows.sort((a, b) => b.generation - a.generation);
+  return { steps: sim.world?.steps ?? 0, count: rows.length, rows };
+}
+
 async function showGallery() {
   const box = $('galleryBox');
   if (!box) return;
   box.textContent = 'developing…';
   try {
-    const j = await (await fetch('/genomes?n=48', { cache: 'no-store' })).json();
+    // TWO SOURCES, same reasoning as the creature library. The live world's
+    // genomes are the point in watch mode; without a server there is still a
+    // committed set to develop, and developing is done entirely in this page —
+    // the server was only ever supplying the genome vectors.
+    const j = WATCH
+      ? await (await srvFetch('/genomes?n=48', { cache: 'no-store' })).json()
+      : localGenomes(48);
     // RANKED BY MOVEMENT. 'Interestingness' has no measure; distance actually
     // covered is the honest proxy and is already being sampled from frames.
     // Ties and unseen animals fall back on generation, so a fresh gallery is
@@ -2602,14 +3910,9 @@ async function showGallery() {
           x.beginPath(); x.moveTo(px(cs[b.i].x), py(cs[b.i].y));
           x.lineTo(px(cs[b.j].x), py(cs[b.j].y)); x.stroke();
         }
-        const tint = ['#8f9c97', '#70b8bd', '#d98f57', '#a37cb8'];
-        const kind = (c) => { let best = 0, v = 0.15;
-          if (c.sense > v) { best = 1; v = c.sense; }
-          if (c.contract > v) { best = 2; v = c.contract; }
-          if (c.grip > v) { best = 3; v = c.grip; } return best; };
         for (const c of cs) {
           x.beginPath(); x.arc(px(c.x), py(c.y), 3.2, 0, Math.PI * 2);
-          x.fillStyle = tint[kind(c)]; x.fill();
+          x.fillStyle = matColor(c); x.fill();
         }
       } else {
         x.fillStyle = '#5a4a42'; x.font = '11px ui-monospace, monospace';
@@ -2626,15 +3929,297 @@ async function showGallery() {
   } catch (e) { box.textContent = 'gallery failed: ' + e.message; }
 }
 on('bGallery', 'onclick', showGallery);
-on('bDevo', 'onclick', showDevo);
-on('bDevoStage', 'onclick', (e) => {
-  devoStages = !devoStages;
-  e.target.classList.toggle('on', devoStages);
-  drawDevo();
-});
+
+/* THE CAROUSEL IS A FOCUSABLE CONTROL. On a laptop it takes focus when pointed
+   at and the arrow keys walk the ranked tiles, selecting each and keeping it in
+   view — the zoo drives from the keyboard, not just the scrollbar. And it
+   rescans on a slow timer so freshly-born movers show up without hunting for the
+   refresh button. The rescan holds off while the strip is hovered, focused, or
+   mid-develop, because rebuilding the tiles under a scrolling finger is jarring. */
+(() => {
+  const box = $('galleryBox');
+  if (!box) return;
+  box.tabIndex = 0;
+  box.setAttribute('aria-label', 'creature carousel — left/right arrows to browse');
+  const tiles = () => [...box.querySelectorAll('canvas')];
+  const step = (dir) => {
+    const t = tiles(); if (!t.length) return;
+    let i = t.findIndex(c => c.classList.contains('sel'));
+    i = i < 0 ? (dir > 0 ? 0 : t.length - 1)
+             : Math.min(t.length - 1, Math.max(0, i + dir));
+    t[i].click();
+    t[i].scrollIntoView({ inline: 'center', block: 'nearest' });
+  };
+  box.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') { step(1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft') { step(-1); e.preventDefault(); }
+  });
+  let hovering = false;
+  box.addEventListener('pointerenter', () => {
+    hovering = true;
+    if (tiles().length) box.focus({ preventScroll: true });
+  });
+  box.addEventListener('pointerleave', () => { hovering = false; });
+  setInterval(() => {
+    if (document.hidden) return;
+    if ($('panel').classList.contains('hidden')) return;   // panel shut — nobody's looking
+    if (hovering || box.matches(':focus-within')) return;   // don't yank a live scroll
+    if (box.textContent === 'developing…') return;          // a rescan is already running
+    showGallery();
+  }, 15000);
+})();
+
+/* ------------------------------------------------------------ the cell scope
+ * A pop-out scatter (see #vizBox). Any two cell properties on the axes, a third
+ * as colour, bounds read from the data. Two modes:
+ *   this creature — the selected animal's cells laid out in PROPERTY space, not
+ *     physical space, so you read its material composition rather than its shape.
+ *     Every prop develop() gives a cell is on the menu: contractility, sense,
+ *     grip, stiffness, τ, bias, and the developmental coordinates ap/dv.
+ *   population — one dot per creature over the gallery's genome set, each a mean
+ *     of its cells, so "counts of creatures vs cell count" reads off the density
+ *     along the cell-count axis, coloured by real cell state (not a type bucket).
+ * It reuses develop()/ensureDevo()/localGenomes — the same machinery the gallery
+ * runs — and touches no render or frame code. */
+(() => {
+  const box = $('vizBox'), cv = $('vizCanvas'), foot = $('vizFoot');
+  if (!box || !cv) return;
+  const selX = $('vizX'), selY = $('vizY'), selColor = $('vizColor');
+
+  const CELL_PROPS = [
+    ['contract', 'contractility'], ['sense', 'sensitivity'], ['grip', 'grip'],
+    ['stiff', 'stiffness'], ['tau', 'time constant τ'], ['bias', 'bias'],
+    ['ap', 'apical–basal'], ['dv', 'dorsal–ventral'], ['x', 'x position'], ['y', 'y position'],
+  ];
+  const CRIT_PROPS = [
+    ['cells', 'cell count'], ['contract', 'mean contractility'], ['sense', 'mean sensitivity'],
+    ['grip', 'mean grip'], ['stiff', 'mean stiffness'], ['tau', 'mean τ'],
+    ['gen', 'generation'], ['speed', 'speed (observed)'],
+  ];
+
+  let mode = 'cell';        // 'cell' | 'crit'
+  let data = [];            // records with the prop keys
+  let dataKey = null;       // guards redundant recompute
+  let building = false;
+  let lastMap = null;       // {px, py, xk, yk} from the last draw, for click-to-select
+
+  const propList = () => mode === 'cell' ? CELL_PROPS : CRIT_PROPS;
+  const labelOf = (k) => (propList().find(p => p[0] === k) || [k, k])[1];
+  const fmt = (v) => Math.abs(v) >= 100 ? v.toFixed(0) : Math.abs(v) >= 1 ? v.toFixed(1) : v.toFixed(2);
+
+  const fillSel = (sel, chosen) => {
+    sel.innerHTML = '';
+    for (const [k, label] of propList()) {
+      const o = document.createElement('option');
+      o.value = k; o.textContent = label; if (k === chosen) o.selected = true;
+      sel.appendChild(o);
+    }
+  };
+  const setMenus = () => {
+    const def = mode === 'cell'
+      ? { x: 'contract', y: 'grip', c: 'stiff' }
+      : { x: 'cells', y: 'contract', c: 'grip' };
+    fillSel(selX, def.x); fillSel(selY, def.y); fillSel(selColor, def.c);
+  };
+
+  // Muted teal → warm amber, matching the palette: cool/quiet low, warm accent high.
+  const ramp = (u) => {
+    u = Math.max(0, Math.min(1, Number.isFinite(u) ? u : 0));
+    const lo = [65, 173, 178], hi = [226, 140, 62];
+    return `rgb(${Math.round(lo[0] + (hi[0] - lo[0]) * u)},${Math.round(lo[1] + (hi[1] - lo[1]) * u)},${Math.round(lo[2] + (hi[2] - lo[2]) * u)})`;
+  };
+  const extent = (key) => {
+    let lo = Infinity, hi = -Infinity;
+    for (const d of data) { const v = d[key]; if (Number.isFinite(v)) { if (v < lo) lo = v; if (v > hi) hi = v; } }
+    if (!Number.isFinite(lo)) { lo = 0; hi = 1; }
+    if (hi - lo < 1e-9) { lo -= 1; hi += 1; }
+    const pad = (hi - lo) * 0.05; return [lo - pad, hi + pad];
+  };
+
+  const draw = () => {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const W = cv.clientWidth || 400, H = cv.clientHeight || 300;
+    cv.width = Math.max(1, Math.floor(W * dpr)); cv.height = Math.max(1, Math.floor(H * dpr));
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = '#070c0b'; g.fillRect(0, 0, W, H);
+
+    const m = { l: 48, r: 12, t: 12, b: 26 };
+    const pw = W - m.l - m.r, ph = H - m.t - m.b;
+
+    if (!data.length) {
+      g.fillStyle = '#5f7a73'; g.font = '12px ui-monospace, monospace'; g.textAlign = 'left';
+      g.fillText(building ? 'developing…'
+        : mode === 'cell' ? 'select a creature — a gallery tile, or click one in the world'
+        : 'no creatures yet', m.l, m.t + 22);
+      lastMap = null; return;
+    }
+
+    const xk = selX.value, yk = selY.value, ck = selColor.value;
+    const [xlo, xhi] = extent(xk), [ylo, yhi] = extent(yk), [clo, chi] = extent(ck);
+    const px = (v) => m.l + (v - xlo) / (xhi - xlo) * pw;
+    const py = (v) => m.t + ph - (v - ylo) / (yhi - ylo) * ph;
+    lastMap = { px, py, xk, yk };
+
+    g.strokeStyle = '#1d332e'; g.lineWidth = 1; g.strokeRect(m.l, m.t, pw, ph);
+    g.fillStyle = '#6d8880'; g.font = '10px ui-monospace, monospace';
+    const tick = (lo, hi, n, fn) => { for (let i = 0; i <= n; i++) fn(lo + (hi - lo) * i / n); };
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    tick(xlo, xhi, 4, (v) => { const X = px(v); g.strokeStyle = '#12211d'; g.beginPath(); g.moveTo(X, m.t); g.lineTo(X, m.t + ph); g.stroke(); g.fillStyle = '#6d8880'; g.fillText(fmt(v), X, m.t + ph + 4); });
+    g.textAlign = 'right'; g.textBaseline = 'middle';
+    tick(ylo, yhi, 4, (v) => { const Y = py(v); g.strokeStyle = '#12211d'; g.beginPath(); g.moveTo(m.l, Y); g.lineTo(m.l + pw, Y); g.stroke(); g.fillStyle = '#6d8880'; g.fillText(fmt(v), m.l - 5, Y); });
+
+    const rad = mode === 'cell' ? 3.4 : 4.4;
+    for (const d of data) {
+      const xv = d[xk], yv = d[yk];
+      if (!Number.isFinite(xv) || !Number.isFinite(yv)) continue;
+      const X = px(xv), Y = py(yv);
+      g.beginPath(); g.arc(X, Y, rad, 0, Math.PI * 2);
+      g.fillStyle = ramp((d[ck] - clo) / (chi - clo)); g.fill();
+      g.lineWidth = 1; g.strokeStyle = 'rgba(4,8,7,.85)'; g.stroke();
+    }
+
+    // colour legend
+    const lw = 84, lx = m.l + pw - lw, ly = m.t + 3;
+    for (let i = 0; i < lw; i++) { g.fillStyle = ramp(i / lw); g.fillRect(lx + i, ly, 1, 5); }
+    g.fillStyle = '#9fb8b0'; g.textAlign = 'right'; g.textBaseline = 'top';
+    g.fillText(labelOf(ck), lx + lw, ly + 7);
+  };
+
+  const updateFoot = () => {
+    foot.textContent = data.length
+      ? `${data.length} ${mode === 'cell' ? 'cells' : 'creatures'} · x ${labelOf(selX.value)} · y ${labelOf(selY.value)} · colour ${labelOf(selColor.value)}`
+      : '';
+  };
+
+  async function genomeForSel() {
+    if (lastGenome && lastGenome.uid === sel.uid) return lastGenome.g;
+    if (WATCH) {
+      const j = await (await srvFetch(`/genome?uid=${sel.uid}`, { cache: 'no-store' })).json();
+      if (j.ok) { lastGenome = j; return j.g; }
+      return null;
+    }
+    const row = localGenomes(400).rows.find(r => r.uid === sel.uid);
+    return row ? row.g : null;
+  }
+
+  async function buildCells() {
+    const key = 'cell:' + sel.uid;
+    if (dataKey === key && data.length) return;
+    if (sel.uid < 0) { data = []; dataKey = key; return; }
+    building = true; draw();
+    try {
+      const gvec = await genomeForSel();
+      if (!gvec) { data = []; dataKey = key; return; }
+      const d = await ensureDevo();
+      const grown = d.develop(Float32Array.from(gvec), { extent: d.DEFAULT_EXTENT ?? 3.0, maxCells: 200 });
+      data = grown.cells.map(c => ({ ...c }));
+      dataKey = key;
+    } catch (e) { foot.textContent = 'cell scope failed: ' + e.message; data = []; }
+    finally { building = false; }
+  }
+
+  async function buildCrit() {
+    building = true; draw();
+    try {
+      const j = WATCH
+        ? await (await srvFetch('/genomes?n=48', { cache: 'no-store' })).json()
+        : localGenomes(48);
+      const d = await ensureDevo();
+      const out = [];
+      for (const row of j.rows) {
+        const grown = d.develop(Float32Array.from(row.g), { extent: d.DEFAULT_EXTENT ?? 3.0, maxCells: 120 });
+        const cs = grown.cells; if (!cs.length) continue;
+        const mean = (k) => cs.reduce((s, c) => s + c[k], 0) / cs.length;
+        out.push({
+          uid: row.uid, cells: cs.length,
+          contract: mean('contract'), sense: mean('sense'), grip: mean('grip'),
+          stiff: mean('stiff'), tau: mean('tau'),
+          gen: row.generation ?? 0, speed: motion.get(row.uid)?.speed ?? 0,
+        });
+      }
+      data = out; dataKey = 'crit';
+    } catch (e) { foot.textContent = 'cell scope failed: ' + e.message; data = []; }
+    finally { building = false; }
+  }
+
+  async function refresh() {
+    if (!box.classList.contains('on')) return;
+    if (mode === 'cell') await buildCells(); else await buildCrit();
+    draw(); updateFoot();
+  }
+
+  const redraw = () => { draw(); updateFoot(); };
+  selX.addEventListener('change', redraw);
+  selY.addEventListener('change', redraw);
+  selColor.addEventListener('change', redraw);
+
+  const switchMode = (next) => {
+    if (mode === next) return;
+    mode = next;
+    $('vizModeCell').classList.toggle('on', mode === 'cell');
+    $('vizModeCrit').classList.toggle('on', mode === 'crit');
+    setMenus(); dataKey = null; refresh();
+  };
+  $('vizModeCell').addEventListener('click', () => switchMode('cell'));
+  $('vizModeCrit').addEventListener('click', () => switchMode('crit'));
+  $('vizClose').addEventListener('click', () => box.classList.remove('on'));
+
+  // Click a population dot to select that creature — the same one-arg selectUid
+  // the gallery tiles use.
+  cv.addEventListener('click', (e) => {
+    if (mode !== 'crit' || !data.length || !lastMap) return;
+    const r = cv.getBoundingClientRect();
+    const mx = e.clientX - r.left, my = e.clientY - r.top;
+    let best = -1, bestD = 20 * 20;
+    for (let i = 0; i < data.length; i++) {
+      const d = data[i];
+      const dx = lastMap.px(d[lastMap.xk]) - mx, dy = lastMap.py(d[lastMap.yk]) - my;
+      const dd = dx * dx + dy * dy;
+      if (dd < bestD) { bestD = dd; best = i; }
+    }
+    if (best >= 0 && data[best].uid != null) { selectUid(data[best].uid); note('selected #' + data[best].uid); }
+  });
+
+  on('bViz', 'onclick', () => {
+    const opening = !box.classList.contains('on');
+    box.classList.toggle('on');
+    if (opening) refresh();
+  });
+
+  addEventListener('resize', () => { if (box.classList.contains('on')) draw(); });
+  setMenus();
+  // Follow a changed selection in cell mode, and keep the population fresh, both
+  // only while the scope is open. buildCells guards on the uid so an unchanged
+  // selection costs nothing.
+  setInterval(() => {
+    if (!box.classList.contains('on')) return;
+    if (mode === 'cell') { if (dataKey !== 'cell:' + sel.uid) refresh(); }
+    else if (!building) refresh();
+  }, 4000);
+})();
+
+on('bDevo', 'onclick', startUnfold);
+on('bDevoStop', 'onclick', () => { stopUnfold(); devoActive = false; const i = $('devoInfo'); if (i) i.textContent = ''; });
+// The egg panel: tweak the environment, re-unfold on release to watch the same
+// genome build differently. Only re-runs while an unfold is already on screen.
+on('sEggSize', 'oninput', e => { const v = $('vEggSize'); if (v) v.textContent = e.target.value; });
+on('sEggMs', 'oninput', e => { const v = $('vEggMs'); if (v) v.textContent = (+e.target.value / 1000).toFixed(1) + 's'; });
+const eggRerun = () => { if (devoActive) startUnfold(); };
+on('sEggSize', 'onchange', eggRerun);
+on('sEggMs', 'onchange', eggRerun);
 
 /* ---- scope geometry: draggable, minimisable ---- */
-let scopeH = 200;
+let scopeH = 150;
+// Minimised = the control bar only, no trace canvas — so selecting an animal on
+// a phone does not throw a tall panel over the world. Compact by default on a
+// narrow screen; the choice is remembered.
+let scopeMinned = (localStorage.getItem('mz.scopemin') ?? (innerWidth <= 700 ? '1' : '0')) === '1';
+function applyScopeMin() {
+  const cv = $('scopeC'), foot = $('scopeFoot'), b = $('scopeMin');
+  if (cv) cv.style.display = scopeMinned ? 'none' : '';
+  if (foot) foot.style.display = scopeMinned ? 'none' : '';
+  if (b) b.textContent = scopeMinned ? 'expand' : 'minimise';
+}
 function applyScopeH() {
   const cv = $('scopeC');
   if (cv) cv.style.height = scopeH + 'px';
@@ -2653,13 +4238,12 @@ on('scopeGrip', 'onpointerdown', e => {
   addEventListener('pointermove', move);
   addEventListener('pointerup', up);
 });
-on('scopeMin', 'onclick', e => {
-  const cv = $('scopeC'), foot = $('scopeFoot');
-  const hidden = cv.style.display === 'none';
-  cv.style.display = hidden ? '' : 'none';
-  if (foot) foot.style.display = hidden ? '' : 'none';
-  e.target.textContent = hidden ? 'minimise' : 'expand';
+on('scopeMin', 'onclick', () => {
+  scopeMinned = !scopeMinned;
+  try { localStorage.setItem('mz.scopemin', scopeMinned ? '1' : '0'); } catch { /* private mode */ }
+  applyScopeMin();
 });
+applyScopeMin();
 
 /**
  * "LOOK AT THIS." A one-click way to tell whoever reads the logs that something
@@ -2674,7 +4258,7 @@ async function flagThis() {
   const note_ = prompt('What should we look at? (short note)');
   if (note_ === null) return;
   try {
-    const r = await fetch('/control', {
+    const r = await srvFetch('/control', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ action: 'flag', note: note_, uid: sel.uid }),
     });
@@ -2684,7 +4268,7 @@ async function flagThis() {
 }
 on('bFlag', 'onclick', flagThis);
 on('bCopyStats', 'onclick', async (e) => {
-  const st = await (await fetch('/status', { cache: 'no-store' })).json();
+  const st = await (await srvFetch('/status', { cache: 'no-store' })).json();
   const keys = ['steps','alive','births','deaths','generation','lineages','meanEnergy',
                 'cellsLiveTyped','nCells','maxCells','bound','nMotes','spf','simVersion',
                 'devo','devoName','eggExtent'];
@@ -2692,6 +4276,10 @@ on('bCopyStats', 'onclick', async (e) => {
   const e2 = scopeStore.get(sel.uid);
   if (sel.uid >= 0 && e2) {
     lines.push('', `selected\tanimal #${sel.uid}`, `neurons\t${e2.order.length}`);
+    // See the note in the panel: these are argmax LABELS, and the kernel reads
+    // continuous capacities. Pasting them into a report without the caveat is
+    // how a stale summary becomes a quoted number.
+    lines.push('cell labels are the strongest trait per cell, not capabilities');
     const names = ['neuron','sensor','muscle','anchor'], c = [0,0,0,0];
     for (let r = 0; r < e2.order.length; r++) if (e2.types[r] >= 0) c[e2.types[r]]++;
     names.forEach((nm, k) => lines.push(`${nm}\t${c[k]}`));
@@ -2714,8 +4302,12 @@ on('bPick', 'onclick', e => {
   sel.picking = !sel.picking;
   e.target.classList.toggle('on', sel.picking);
 });
-on('bClearSel', 'onclick', () => selectUid(-1, sim?.lastPos ?? new Float32Array(0),
-  sim?.lastType ?? new Int32Array(0), sim?.lastUid ?? new Int32Array(0), 0));
+const clearSel = () => selectUid(-1, sim?.lastPos ?? new Float32Array(0),
+  sim?.lastType ?? new Int32Array(0), sim?.lastUid ?? new Int32Array(0), 0);
+on('bClearSel', 'onclick', clearSel);
+// The same thing, reachable from the world view rather than from a panel the
+// user may never have opened.
+on('bShowAll', 'onclick', clearSel);
 on('bFollow', 'onclick', e => {
   sel.follow = !sel.follow;
   e.target.classList.toggle('on', sel.follow);
@@ -2814,7 +4406,7 @@ try {
   setTimeout(() => tabChan.postMessage({ k: 'ping', id: myTab }), 2500);
 } catch { /* no BroadcastChannel: not important enough to care */ }
 
-const FRAME_MAGIC = 0x324d5257;   // 'RWM2' — live-cells-only layout
+const FRAME_MAGIC = 0x334d5257;   // 'RWM3' — dynamic and static split by epoch
 function applyFrame(ab) {
   const dv = new DataView(ab);
   if (dv.getUint32(0, true) !== FRAME_MAGIC) return fail('bad frame from server');
@@ -2843,66 +4435,208 @@ function applyFrame(ab) {
   // Offsets are walked in the same order the server writes them. They were once
   // hand-computed and uid was read where energy lives, so every assembly id was a
   // float reinterpreted as an integer and nothing could be selected.
-  const HEAD = 48;
+  const HEAD = 56;
+  const epoch = dv.getUint32(40, true);
+  const hasStatic = dv.getUint32(48, true) === 1;
   let at = HEAD;
   const L = dv.getUint32(at, true); at += 4;
-  const idx = new Int32Array(ab, at, L); at += L * 4;
   const lpos = new Float32Array(ab, at, L * 2); at += L * 8;
   const lact = new Float32Array(ab, at, L); at += L * 4;
-  const ltype = new Int32Array(ab, at, L); at += L * 4;
   const lenergy = new Float32Array(ab, at, L); at += L * 4;
-  const luid = new Int32Array(ab, at, L); at += L * 4;
 
+  // THE STATIC BLOCK — index list, types, uids — arrives only when the
+  // population has changed. Same epoch means the same cells are alive in the
+  // same order, so the copy held here is not a stale approximation of the
+  // server's: it is the same bytes it would have sent.
+  let idx, ltype, luid;
+  if (hasStatic) {
+    idx = new Int32Array(ab, at, L); at += L * 4;
+    ltype = new Int32Array(ab, at, L); at += L * 4;
+    luid = new Int32Array(ab, at, L); at += L * 4;
+    // Copied out of the frame buffer, which is about to be garbage.
+    sim.topo = { epoch, idx: idx.slice(), type: ltype.slice(), uid: luid.slice() };
+  } else if (sim.topo?.epoch === epoch && sim.topo.idx.length === L) {
+    ({ idx, type: ltype, uid: luid } = sim.topo);
+  } else {
+    // The server elided a block we cannot reconstruct — only possible if it
+    // restarted under us. Ask for a whole one next time rather than drawing
+    // something assembled from a mismatched index list.
+    sim.topo = null;
+    return;
+  }
+
+  let fresh = false;
   if (!sim.expPos || sim.expPos.length !== n * 2) {
     sim.expPos = new Float32Array(n * 2);
     sim.expAct = new Float32Array(n);
     sim.expType = new Int32Array(n);
     sim.expEnergy = new Float32Array(n);
     sim.expUid = new Int32Array(n);
+    fresh = true;                    // nothing to carry over into these
   }
   const pos = sim.expPos, act = sim.expAct, type = sim.expType,
         energy = sim.expEnergy, uid = sim.expUid;
-  type.fill(-1); uid.fill(-1); act.fill(0);
+  // Rebuild the per-slot type/uid scatter only when it can have changed. On an
+  // unchanged epoch the arrays already hold exactly this, so refilling them with
+  // -1 and scattering the same values back is pure work.
+  const restatic = hasStatic || fresh;
+
+  // KEEP THE FRAME THAT IS ABOUT TO BE OVERWRITTEN. Right now these arrays hold
+  // the previous frame, which is exactly what drawPos needs to tween from, so
+  // the copy has to happen before the scatter below — and before act.fill(0),
+  // which is the first thing that destroys it.
+  let prevFresh = false;
+  if (!sim.prevPos || sim.prevPos.length !== n * 2) {
+    sim.prevPos = new Float32Array(n * 2);
+    sim.prevAct = new Float32Array(n);
+    sim.prevUid = new Int32Array(n);
+    prevFresh = true;
+  }
+  const carry = !fresh && !prevFresh;
+  if (carry) {
+    sim.prevPos.set(pos); sim.prevAct.set(act);
+    // uid only moves with the static block, so on every other frame the copy
+    // kept here already matches the one about to be scattered.
+    if (restatic) sim.prevUid.set(uid);
+  }
+
+  act.fill(0);
+  if (restatic) { type.fill(-1); uid.fill(-1); }
   for (let k = 0; k < L; k++) {
     const i = idx[k];
     pos[i * 2] = lpos[k * 2]; pos[i * 2 + 1] = lpos[k * 2 + 1];
-    act[i] = lact[k]; type[i] = ltype[k];
-    energy[i] = lenergy[k]; uid[i] = luid[k];
+    act[i] = lact[k]; energy[i] = lenergy[k];
+    if (restatic) { type[i] = ltype[k]; uid[i] = luid[k]; }
   }
-  sim.lastPos = pos; sim.lastAct = act; sim.lastType = type;
+  // A SLOT THAT CHANGED HANDS MUST NOT BE TWEENED. The arena recycles slots: a
+  // cell that died frees its index and a newborn somewhere else in the world
+  // takes it. Interpolating across that draws a streak between two unrelated
+  // animals — silently, and only on the frames where something was born, which
+  // is the hardest kind of artefact to catch. So wherever the uid at a slot is
+  // not the uid that was there last frame, the previous frame is set equal to
+  // this one and that slot simply appears where it is.
+  if (!carry) {
+    sim.prevPos.set(pos); sim.prevAct.set(act); sim.prevUid.set(uid);
+  } else if (restatic) {
+    const pu = sim.prevUid;
+    for (let i = 0; i < n; i++) {
+      if (pu[i] === uid[i]) continue;
+      sim.prevPos[i * 2] = pos[i * 2]; sim.prevPos[i * 2 + 1] = pos[i * 2 + 1];
+      sim.prevAct[i] = act[i]; pu[i] = uid[i];
+    }
+  }
+
+  // THE WIRE CARRIES THE PACKED MATERIAL WORD NOW, not the 0..3 label.
+  //
+  // The renderer wants the packed word - hue from which capacities a cell has,
+  // saturation from how committed it is - and everything else here wants the
+  // label: the type histogram counts into a four-slot array and the scope
+  // strokes by type, both of which would index wildly out of range on a packed
+  // word. So the label is derived once, here, and the two consumers stop
+  // fighting over one field.
+  //
+  // A vacated slot packs negative (packMeta guarantees bit 31 set), so the sign
+  // test still identifies the dead before any masking happens.
+  const label = new Int32Array(type.length);
+  for (let i = 0; i < type.length; i++) label[i] = type[i] < 0 ? -1 : (type[i] & 3);
+  sim.lastMat = type;
+  sim.lastPos = pos; sim.lastAct = act; sim.lastType = label;
   sim.lastUid = uid; sim.lastEnergy = energy;
-  sampleSelected(pos, act, type, uid, n, dv.getUint32(8, true));
-  sampleMotion(pos, type, uid, n, dv.getUint32(8, true));
+  sampleSelected(pos, act, label, uid, n, dv.getUint32(8, true));
+  sampleMotion(pos, label, uid, n, dv.getUint32(8, true));
 
   const q = dev.queue;
-  q.writeBuffer(sim.world.bPos, 0, pos);
+  // THE UPLOAD IS A POSE, THE CPU ARRAY IS A POSITION. Every analysis path in
+  // this page reads `pos` at stride 2 and should keep doing so; the GPU buffer
+  // is vec4 because the simulation writes theta and omega into it. Converting
+  // here keeps one conversion instead of rewriting a dozen readers.
+  //
+  // theta comes from the wire when the server sends it and is 0 otherwise,
+  // which is honest: a viewer that has not been told the headings should not
+  // invent them.
+  if (!sim.poseUp || sim.poseUp.length !== n * 4) sim.poseUp = new Float32Array(n * 4);
+  for (let i = 0; i < n; i++) {
+    sim.poseUp[i * 4] = pos[i * 2]; sim.poseUp[i * 4 + 1] = pos[i * 2 + 1];
+    sim.poseUp[i * 4 + 2] = sim.theta ? sim.theta[i] : 0;
+    sim.poseUp[i * 4 + 3] = 0;
+  }
+  q.writeBuffer(sim.world.bPos, 0, sim.poseUp);
   // The renderer reads activation through each cell's brain slot, but the
   // server already resolved that indirection, so write the per-cell values
   // straight into the act buffer at the slot the cell points to. Cell i's slot
   // is i in this builder, which keeps the mapping trivial.
   q.writeBuffer(sim.brains.bAct, 0, act);
-  const meta = new Int32Array(n * 4);
+  // The frame to tween FROM. This doubles the per-frame upload — 300 KB at the
+  // 25,020 cells the server is running, about 18 MB/s at 60 fps. Not measurable
+  // on the machine this was written on, where the viewer sits on the vsync cap
+  // at 60 fps both with and without it; it is a real cost on a slower bus and
+  // the number is here so the next person knows what to weigh.
+  if (!sim.prevPoseUp || sim.prevPoseUp.length !== n * 4) sim.prevPoseUp = new Float32Array(n * 4);
   for (let i = 0; i < n; i++) {
-    meta[i * 4] = type[i];
-    meta[i * 4 + 1] = type[i] >= 0 ? i : -1;
-    meta[i * 4 + 2] = uid[i];
+    sim.prevPoseUp[i * 4] = sim.prevPos[i * 2];
+    sim.prevPoseUp[i * 4 + 1] = sim.prevPos[i * 2 + 1];
   }
-  q.writeBuffer(sim.world.bMeta, 0, meta);
+  q.writeBuffer(sim.bPrevPos, 0, sim.prevPoseUp);
+  q.writeBuffer(sim.bPrevAct, 0, sim.prevAct);
+  // The cell-meta buffer is a function of type and uid alone, so it only needs
+  // rewriting when those changed — 400 KB of upload per frame, for bytes that
+  // were identical.
+  if (restatic) {
+    const meta = new Int32Array(n * 4);
+    for (let i = 0; i < n; i++) {
+      // The packed word, so the shader's continuous path fires in watch mode
+      // exactly as it does for a page running its own simulation.
+      meta[i * 4] = type[i];
+      meta[i * 4 + 1] = type[i] >= 0 ? i : -1;
+      meta[i * 4 + 2] = uid[i];
+    }
+    q.writeBuffer(sim.world.bMeta, 0, meta);
+  }
 
   // Bond pairs ride WITH the frame, so they always describe the same instant as
   // the positions. Fetching them separately let the two drift apart and drew
-  // lines between cells that were never bonded.
-  const pairOff = at;
-  const pairCount = dv.getUint32(pairOff, true);
-  if (pairCount > 0 && (pairCount * 4) <= sim.bondCapacity) {
-    q.writeBuffer(sim.bBond, 0, new Int32Array(ab, pairOff + 4, pairCount));
-    sim.bondVerts = pairCount;
-  } else if (pairCount * 4 > sim.bondCapacity) {
-    sim.bondVerts = 0;                      // never draw a truncated graph
+  // lines between cells that were never bonded. They are part of the static
+  // block: an unchanged epoch means the graph on the GPU is still correct.
+  if (hasStatic) {
+    const pairOff = at;
+    const pairCount = dv.getUint32(pairOff, true);
+    if (pairCount > 0 && (pairCount * 4) <= sim.bondCapacity) {
+      q.writeBuffer(sim.bBond, 0, new Int32Array(ab, pairOff + 4, pairCount));
+      sim.bondVerts = pairCount;
+    } else if (pairCount * 4 > sim.bondCapacity) {
+      sim.bondVerts = 0;                    // never draw a truncated graph
+    }
+  }
+
+  // HOW LONG THIS FRAME WILL BE ON SCREEN, which is what drawPos tweens across.
+  // Taken from the gap between arrivals rather than from the server's step rate,
+  // because the thing being smoothed over is the arrival cadence: a request in
+  // flight, a slow round trip, a frame the server had not finished. Smoothed
+  // hard, since one late frame should not stretch the tween for the next ten.
+  {
+    const now = performance.now();
+    if (sim.frameAt) {
+      const gap = now - sim.frameAt;
+      sim.framePeriod = sim.framePeriod ? sim.framePeriod * 0.85 + gap * 0.15 : gap;
+    }
+    sim.frameAt = now;
   }
 
   const prevServerSteps = sim.serverSteps ?? 0;
   sim.serverSteps = dv.getUint32(8, true);
+  // HOW MUCH OF THE WORLD THIS PAGE IS ACTUALLY SEEING.
+  //
+  // The display is capped at the monitor's refresh by requestAnimationFrame and
+  // the simulation is not, so as the server gets faster a viewer sees a smaller
+  // fraction of what happens. That is sampling, not lag: /frame always returns
+  // the NEWEST frame and there is no queue, so nothing accumulates and there is
+  // nothing to catch up on. What does change is the stride between the frames
+  // you are shown, and that is worth being told rather than left to infer from
+  // a step counter jumping.
+  {
+    const d = sim.serverSteps - prevServerSteps;
+    if (d > 0) sim.seenStride = sim.seenStride ? sim.seenStride * 0.8 + d * 0.2 : d;
+  }
   // SIM RATE IN WATCH MODE. `simRate` is computed from the LOCAL world's spf,
   // and in watch mode the local world never steps — so it sat at exactly 0 and
   // the HUD read `sim 0.0xrealtime` forever. RUNNING.md lists that precise
@@ -2925,6 +4659,7 @@ function applyFrame(ab) {
     sim.lastServerAt = now;
   }
   $('hStep').textContent = sim.serverSteps.toLocaleString();
+  setSteps(sim.serverSteps, sim.world?.params?.dt ?? 0.015);
   $('hCells').textContent = `${L.toLocaleString()}/${(cellCap ?? L).toLocaleString()}`;
   $('hAlive').textContent = `${dv.getUint32(16, true).toLocaleString()}/${(beastCap ?? '?').toLocaleString?.() ?? beastCap}`;
   $('hBirths').textContent = dv.getUint32(20, true).toLocaleString();
@@ -2932,6 +4667,19 @@ function applyFrame(ab) {
   $('hGen').textContent = dv.getUint32(28, true);
   $('hLin').textContent = dv.getUint32(32, true).toLocaleString();
   $('hEnergy').textContent = dv.getFloat32(36, true).toFixed(1);
+
+  // LIVE, FROM THE FRAME ITSELF. The analytics panel used to sample the /status
+  // poll, which runs on its own slow cadence, so a freshly opened panel sat at
+  // one sample and drew nothing. Everything it charts except the depth median
+  // is already in this header and arrives with every frame, at no extra cost
+  // and no extra request.
+  anaSampleFrame({
+    step: sim.serverSteps,
+    alive: dv.getUint32(16, true),
+    cells: L,
+    lineages: dv.getUint32(32, true),
+    meanEnergy: dv.getFloat32(36, true),
+  });
 }
 
 // RENDER SCALE — the single biggest performance knob there is.
@@ -2952,6 +4700,23 @@ let renderScale = Number(localStorage.getItem('mz.rscale')) || 0.7;
 // 34 segments is about 480k flow evaluations a frame, which is small beside a
 // single megapixel of background.
 const STREAM_SIDE = 26, STREAM_STEPS = 34;
+// THE CACHED SETTING IS DRAWN SMALLER THAN THE SCREEN, and stretched back up.
+//
+// Cells and bonds need every pixel they can get — they are small, they move, and
+// a soft edge on a cell reads as a different cell. The setting does not: it is
+// hills, mud, standing crop and streamlines, all of which are smooth at the
+// scale of a pixel, and it is already being blitted through a linear sampler.
+//
+// Measured by forcing a rebuild on every frame at a canvas of 2286x914 and
+// reading fps, with the passes turned off one at a time. At full size a rebuild
+// took 55.6 ms, of which terrain was 29.3 ms and the streamlines 22.3 ms; at 0.6
+// it took 40.0 ms. So 15.6 ms back, all of it terrain — the streamline cost is
+// O(steps^2) integration in the vertex shader and does not care how large the
+// target is, and no amount of shrinking this will touch it.
+//
+// 0.6 rather than lower because the streamlines ARE drawn into this texture, and
+// they are thin: below about this they start to break up.
+const BG_SCALE = 0.6;
 function resize() {
   const dpr = Math.min(devicePixelRatio || 1, 2) * renderScale;
   canvas.width = Math.max(1, Math.floor(innerWidth * dpr));
@@ -2969,6 +4734,50 @@ function resize() {
  * enough to read its cells, small enough to keep its surroundings on screen,
  * because a creature with no context is just a diagram.
  */
+/**
+ * WHERE THE WORLD IS ACTUALLY VISIBLE.
+ *
+ * The canvas is the whole window and the panels are drawn OVER it: the HUD down
+ * the left, the controls down the right, and — when an animal is selected — the
+ * CTRNN scope across the bottom, which is tall. So the centre of the window is
+ * not the centre of anything the user can see, and framing a creature there put
+ * it under a panel; with the scope open it put it behind the scope, which is the
+ * one moment you most want to see the animal and the trace together.
+ *
+ * Measured from the DOM every time rather than from constants, because all three
+ * move: the HUD collapses to a spine, the panel slides off to the right and is
+ * drag-resizable, and the scope opens and closes with the selection.
+ */
+function viewRect() {
+  const shown = (el) => el && getComputedStyle(el).display !== 'none';
+  let l = 0, r = innerWidth, t = 0, b = innerHeight;
+  const hud = $('hud'), panel = $('panel'), scope = $('scope');
+  // Each only counts on the side it is actually on. A panel translated off
+  // screen reports a rect outside the window, which these comparisons ignore
+  // without needing to know how it was hidden.
+  if (shown(hud))   { const q = hud.getBoundingClientRect();
+                      if (q.right > l && q.right < innerWidth * 0.5) l = q.right; }
+  if (shown(panel)) { const q = panel.getBoundingClientRect();
+                      if (q.left < r && q.left > innerWidth * 0.5) r = q.left; }
+  if (shown(scope)) { const q = scope.getBoundingClientRect();
+                      if (q.top < b && q.top > innerHeight * 0.4) b = q.top; }
+  // A window narrow or short enough that the panels have eaten it: fall back to
+  // the whole thing rather than to a rectangle nothing fits in.
+  if (r - l < 120 || b - t < 120) return { x: innerWidth / 2, y: innerHeight / 2, w: innerWidth, h: innerHeight };
+  return { x: (l + r) / 2, y: (t + b) / 2, w: r - l, h: b - t };
+}
+
+/**
+ * The camera centre that puts a world point at the middle of the VISIBLE
+ * rectangle. The projection puts cam.cx/cy at the middle of the canvas, so the
+ * correction is the gap between the two centres, in world units. Same arithmetic
+ * as the click handler, in the other direction.
+ */
+function camForPoint(wx, wy, zoom) {
+  const v = viewRect();
+  return { cx: wx - (v.x - innerWidth / 2) / zoom, cy: wy + (v.y - innerHeight / 2) / zoom };
+}
+
 let camAnim = null;
 function frameCreature(uid, frac = 0.2) {
   if (!sim?.lastPos || uid < 0) return;
@@ -2983,12 +4792,18 @@ function frameCreature(uid, frac = 0.2) {
   }
   if (!k) return;
   const span = Math.max(1.2, Math.max(hi - lo, yhi - ylo));
-  const target = (Math.min(innerWidth, innerHeight) * frac) / span;
+  // Sized against the UNOCCLUDED rectangle, so the fraction of it the creature
+  // fills is the fraction of what can be seen — with the scope open that box is
+  // much shorter, and taking the window's height instead drew the animal larger
+  // than the space left for it.
+  const v = viewRect();
+  const target = (Math.min(v.w, v.h) * frac) / span;
+  const z1 = Math.max(2, Math.min(400, target));
+  const c = camForPoint(sx / k, sy / k, z1);
   camAnim = {
     t0: performance.now(), ms: 700,
     x0: cam.cx, y0: cam.cy, z0: cam.zoom,
-    x1: sx / k, y1: sy / k,
-    z1: Math.max(2, Math.min(400, target)),
+    x1: c.cx, y1: c.cy, z1,
   };
 }
 function stepCamAnim(now) {
@@ -3006,8 +4821,12 @@ function stepCamAnim(now) {
 
 function fitAll() {
   if (!sim) return;
-  cam.cx = 0; cam.cy = 0;
-  cam.zoom = Math.min(innerWidth, innerHeight) / (sim.bound * 2.15);
+  // Same correction as frameCreature: fit the world into what is not covered by
+  // a panel, and put its middle in the middle of that.
+  const v = viewRect();
+  cam.zoom = Math.min(v.w, v.h) / (sim.bound * 2.15);
+  const c = camForPoint(0, 0, cam.zoom);
+  cam.cx = c.cx; cam.cy = c.cy;
   $('hZoom').textContent = cam.zoom.toFixed(2);
 }
 
@@ -3015,7 +4834,18 @@ function fitAll() {
 
 let last = performance.now(), fps = 0, simRate = 0, acc = 0, frames = 0;
 
-function writeCam() {
+// pxScale says how large the TARGET is against the canvas — 1 for the screen,
+// BG_SCALE for the cached setting, which is drawn into a smaller texture. It
+// changes nothing about which world region is drawn, because NDC is a fraction
+// of the target and a fraction does not know how many pixels it covers; it
+// changes only the numbers that count device pixels, which is the terrain and
+// flow LOD, the streamline and arrow fades, and pxWorld itself. Getting those
+// from the canvas while drawing into a smaller texture would resolve detail the
+// texture cannot hold and then throw it away, which costs exactly what the
+// smaller texture was meant to save.
+//
+// target, when given, is the buffer to write instead of the two screen cameras.
+function writeCam(t0, pxScale = 1, target = null) {
   // THE RENDER DPR, not the display dpr. resize() sizes the backing store by
   // renderScale as well, so anything converting world units to device pixels
   // must use the same product or the two disagree — which drew the world
@@ -3028,8 +4858,10 @@ function writeCam() {
   // to get device px, then 2/size to reach NDC.
   const nx = cam.zoom * dpr * 2 / w, ny = cam.zoom * dpr * 2 / h;
   // The crop pass has its own small uniform; fill it from the SAME numbers
-  // rather than recomputing, or the two layers drift apart under zoom.
-  if (sim?.bMoteCam) {
+  // rather than recomputing, or the two layers drift apart under zoom. It holds
+  // nothing that counts pixels, so the smaller background target does not
+  // change it and it is written once, on the screen pass.
+  if (sim?.bMoteCam && !target) {
     const mc = new Float32Array(8);
     // cam.cx/cy, not cam.x/y — the camera has never had x or y, so this was
     // writing undefined into a Float32Array, i.e. NaN, and the motes were being
@@ -3040,8 +4872,19 @@ function writeCam() {
     // been tuned against what they actually look like — at 0.6/0.85 the standing
     // crop is a carpet that buries the landscape underneath it. Food should read
     // as specks on ground you can still see.
-    mc[4] = 0.42;                // world-unit radius of a full mote
-    mc[5] = 0.40;                // overall brightness
+    // A MOTE OF MEAN CAPACITY, in world units. Raised from 0.42 because there
+    // are now a tenth as many motes: at the old size the crop nearly vanished
+    // from the map, and the food economy is the most consequential thing in the
+    // world to be able to see. Area is proportional to capacity, so the richest
+    // motes come out around 7 world units across against a bound of 66 —
+    // conspicuous, which is the point of them, without being the scenery.
+    mc[4] = 0.75;
+    mc[5] = 0.52;                // overall brightness, likewise lifted
+    // Mean capacity, so the shader can size a mote relative to a typical one
+    // rather than absolutely. Measured from the field itself: it depends on the
+    // mote density and the lognormal spread, and hardcoding it here would go
+    // stale the moment either changes.
+    mc[6] = sim.moteCapMean ?? 1;
     dev.queue.writeBuffer(sim.bMoteCam, 0, mc);
   }
   // Cells keep a physical size in world units, with a floor so the population
@@ -3055,7 +4898,10 @@ function writeCam() {
   // looking at it.
   const rWorld = Math.max(0.34, 1.15 / cam.zoom);
 
-  const b = new ArrayBuffer(224), dv = new DataView(b);
+  // 240, not 224: adding topPass pushed the struct past the old size, and WebGPU
+  // pads a uniform binding up to a multiple of 16, so it demanded 232 and the
+  // next legal size is 240.
+  const b = new ArrayBuffer(240), dv = new DataView(b);
   dv.setFloat32(0, cam.cx, true); dv.setFloat32(4, cam.cy, true);
   dv.setFloat32(8, nx, true); dv.setFloat32(12, ny, true);
   dv.setFloat32(16, rWorld, true);
@@ -3072,7 +4918,9 @@ function writeCam() {
   // across; resolve only those still ~2 device pixels wide or wider. Left as a
   // FRACTION rather than floored: the shader fades the finest octave in by
   // weight, so zooming reveals detail smoothly instead of stepping.
-  const pxPerWorld = cam.zoom * dpr;   // dpr here is the RENDER dpr, below
+  // Device pixels per world unit ON THE TARGET, which is the canvas scaled by
+  // pxScale. dpr here is the RENDER dpr, above.
+  const pxPerWorld = cam.zoom * dpr * pxScale;
   const fs = sim.world.params.flowScale;
   const oct = Math.max(1, Math.min(5, 1 + Math.log2(Math.max(1, fs * pxPerWorld / 2))));
   dv.setFloat32(52, oct, true);
@@ -3160,7 +5008,50 @@ function writeCam() {
   dv.setFloat32(208, STREAM_SIDE, true);
   dv.setFloat32(212, 0.62, true);
   dv.setFloat32(216, view.cellInk, true);
+
+  // WHERE BETWEEN THE LAST TWO SERVER FRAMES TO DRAW — see drawPos. Held at
+  // exactly 1 whenever there is nothing to tween from: a page running its own
+  // simulation, and the first frame after a reconnect or a reshape.
+  //
+  // A period this has not seen enough of yet, or one long enough that the link
+  // is plainly stalling, would stretch a tween across seconds of guesswork. The
+  // ceiling stops that: past it the picture holds at the newest frame, which is
+  // the truth, rather than creeping toward it.
+  let lerp = 1;
+  // TWEENING IS OFF BY DEFAULT, because it is INTERPOLATION and interpolation is
+  // always one frame behind. lerp starts at 0 when a frame lands, which draws
+  // the PREVIOUS positions, and climbs to 1 as the next frame is awaited. That
+  // is invisible only while frames arrive at the period the estimator expects.
+  // When the server lurches - and it does, whenever births start failing in
+  // bulk - the reset shows as every cell snapping backwards and sliding forward
+  // several times a second. Reported as "all the cells faintly jerk southwest
+  // then back to where we are", which is exactly what drawing frame N-1 for an
+  // instant looks like.
+  //
+  // Smoothing a jittery source by displaying it late is the wrong trade for an
+  // instrument: it makes the picture prettier and less true. Off unless asked
+  // for with ?tween=1.
+  if (TWEEN && WATCH && sim.framePeriod > 0 && sim.framePeriod < 1000) {
+    lerp = Math.min(1, (t0 - sim.frameAt) / sim.framePeriod);
+  }
+  dv.setFloat32(224, lerp, true);
+  // 1 = cmeta.x packs the continuous material vector (a page running its own
+  // sim, lib/world_gpu.js packMeta); 0 = the server sent a plain 0..3 type
+  // bucket. The cell colour decodes capacities only when packed.
+  // ALWAYS 1 NOW. This was `WATCH ? 0 : 1` because the frame protocol only
+  // carried a 0..3 argmax label, so a watching page had no material to colour
+  // from and fell back to four flat buckets - which is exactly what "the
+  // palette looks simplistic again" was. The frame carries the packed word
+  // since the material mirror was added server-side, at no extra bytes, so both
+  // paths now draw the same continuous colour.
+  dv.setFloat32(228, 1, true);
+
+  // The cached setting draws no cells, so topPass has nothing to say about it.
+  if (target) { dev.queue.writeBuffer(target, 0, b); return; }
+  dv.setFloat32(220, 0, true);                 // crowd pass
   dev.queue.writeBuffer(sim.bCam, 0, b);
+  dv.setFloat32(220, 1, true);                 // the inspected animal, on top
+  if (sim.bCamTop) dev.queue.writeBuffer(sim.bCamTop, 0, b);
 }
 
 let reviveAt = 0;
@@ -3196,7 +5087,9 @@ function loop() {
     // frame, which is the whole reason hiding the tab is free.
     if (!document.hidden && !sim.fetching && t >= (sim.retryAt ?? 0)) {
       sim.fetching = true;
-      fetch('/frame', { cache: 'no-store' })
+      // Tell the server which topology we already hold, so it can leave the
+      // static half out. -1 asks for everything.
+      srvFetch(`/frame?have=${sim.topo?.epoch ?? -1}`, { cache: 'no-store' })
         .then(r => r.arrayBuffer())
         .then(b => {
           applyFrame(b); sim.fetching = false; sim.misses = 0;
@@ -3247,7 +5140,13 @@ function loop() {
   // while the server was healthy, which is indistinguishable from a frozen world.
   {
     const box = $('linkBox'), txt = $('linkTxt');
-    if (box && txt) {
+    // WATCH ONLY. This reports the health of the link to the server, and a page
+    // running its own simulation has no link — it sat there reading "no frame
+    // yet" forever, in red, which is precisely how a working world announces
+    // itself as broken. The badge is hidden rather than reworded because there
+    // is no connection to describe.
+    if (box && !WATCH) box.style.display = 'none';
+    else if (box && txt) {
       const age = sim.lastFrameAt ? (t - sim.lastFrameAt) / 1000 : Infinity;
       let cls = 'live', msg = 'live';
       if (serverPaused) { cls = 'paused'; msg = 'world PAUSED on server'; }
@@ -3262,10 +5161,15 @@ function loop() {
 
   // Am I running the latest code? Two answers, because there are two codebases.
   // Polled slowly — this is a staleness check, not a heartbeat.
+  //
+  // WATCH-ONLY, and the guard belongs here rather than inside srvFetch: this
+  // sits in the render loop, so on a serverless page it was a rejected promise
+  // every twenty seconds, forever, for a question that has no answer without a
+  // server. A page serving its own simulation cannot be stale relative to one.
   sim.sinceVer = (sim.sinceVer ?? 0) + (t - last);
-  if (sim.sinceVer > 20000 && !sim.checkingVer) {
+  if (WATCH && sim.sinceVer > 20000 && !sim.checkingVer) {
     sim.sinceVer = 0; sim.checkingVer = true;
-    fetch('/status', { cache: 'no-store' }).then(r => r.json()).then(st => {
+    srvFetch('/status', { cache: 'no-store' }).then(r => r.json()).then(st => {
       sim.checkingVer = false;
       if (!st.onDisk) return;                       // older server, no stamps
       const simStale = st.simVersion !== st.onDisk.simVersion;
@@ -3294,8 +5198,114 @@ function loop() {
   sim.sinceMotes += t - last;
   if (view.food && sim.sinceMotes > 1500) { sim.sinceMotes = 0; refreshMotes(); }
 
-  writeCam();
+  writeCam(t);
+  writeCam(t, BG_SCALE, sim.bCamBg);
   const enc = dev.createCommandEncoder();
+
+  // ---- the cached setting: terrain, crop, streamlines. See BLIT_WGSL.
+  //
+  // The key is everything the layer depends on. Anything not in it must not be
+  // able to change the picture, or the cache shows a stale world — so the view
+  // toggles and the crop generation are in here alongside the camera, and the
+  // timer covers the field drift that no discrete key can capture.
+  const camKeyOnly = cam.cx.toFixed(4) + ',' + cam.cy.toFixed(4) + ',' + cam.zoom.toFixed(4);
+  const bgKey = [
+    canvas.width, canvas.height,
+    cam.cx.toFixed(4), cam.cy.toFixed(4), cam.zoom.toFixed(4),
+    view.terrain ? 1 : 0, view.streams ? 1 : 0, view.food ? 1 : 0,
+    view.crescent ? 1 : 0, view.glitter ? 1 : 0, view.field ? 1 : 0,
+    sim.moteCount, sim.moteGen ?? 0,
+  ].join(',');
+  // THE PARAMETERS THE SHADER IS ACTUALLY USING. This read the LOCAL world's
+  // params, which in watch mode are all zero — the server's are in sim.remote,
+  // and writeCam has always taken the drift and morph rates from there. So the
+  // timer below never fired on a watching page while the field it is meant to
+  // track drifted on screen, and the only thing refreshing the cached setting
+  // was the standing crop bumping its generation every 1.5s. With food off,
+  // nothing refreshed it at all.
+  const rp = sim.remote ?? sim.world?.params ?? {};
+  const drifting = (rp.driftX || rp.driftY || rp.morphRate);
+  // A moving field must be redrawn on a clock; a still one never needs to be.
+  //
+  // 1800ms, not the 400ms this was. Two reasons, both measured. A rebuild costs
+  // 40 ms, so every one of these is a dropped frame you can see, and at 400ms
+  // that is one hitch every 24 frames for no visible gain: at the running
+  // driftX 0.06 / driftY 0.037 the field moves 0.05 world units in 1.5s, across
+  // a world 132 units wide.
+  //
+  // And it is deliberately LONGER than the standing crop's 1.5s refresh, which
+  // rebuilds the layer anyway and resets this clock. Set equal to it the two
+  // raced: measured as pairs of rebuilds 17 ms apart, an 80 ms hitch instead of
+  // a 40 ms one, because the crop generation bumps a moment after the async
+  // fetch that carried it. With 300 ms of margin the crop always wins while food
+  // is on, and this drives the refresh on its own when food is off.
+  const bgStale = drifting ? (t - sim.bgAt > 1800) : false;
+  // A MOVING CAMERA IS NOT A REASON TO REDRAW SIXTY TIMES A SECOND.
+  //
+  // The key includes the camera, so dragging or wheel-zooming invalidated the
+  // cache every frame and paid the full terrain-plus-streamlines cost on each
+  // one — measured at 54 fps holding still against 13 fps while panning, which
+  // is the whole saving handed back precisely when the interface should feel
+  // most responsive. (Codex spotted this in the source.)
+  //
+  // While the camera is actually moving the setting is rebuilt at most every
+  // 90ms and the previous one is blitted in between. It lags the cells by up to
+  // that long during a drag, which reads as the ground settling a beat behind
+  // the hand; stopping still snaps it exact within a frame.
+  const camMoved = sim.bgCamKey !== undefined && sim.bgCamKey !== camKeyOnly;
+  const movingNow = camMoved && (t - (sim.camMovedAt ?? 0) < 250);
+  if (camMoved) sim.camMovedAt = t;
+  sim.bgCamKey = camKeyOnly;
+  // HOLD ACROSS PAN, NEVER ACROSS ZOOM. Reusing the cached setting across a pan
+  // only slides it a beat behind the hand — the ground settling late, tolerable.
+  // Reusing it across a zoom blits a bitmap baked at a DIFFERENT scale, so the
+  // ground zooms in steps while the cells zoom smoothly: the "several layers move
+  // differently" bug. So the 90ms hold covers translation only; the instant zoom
+  // differs from the scale the texture was baked at, it rebuilds in lockstep.
+  const zoomDrifted = sim.bgZoomAt !== undefined && sim.bgZoomAt !== cam.zoom;
+  const holdBg = movingNow && (t - sim.bgAt < 90) && !zoomDrifted;
+  // The setting has its own, smaller target — see BG_SCALE.
+  const bgW = Math.max(1, Math.floor(canvas.width * BG_SCALE));
+  const bgH = Math.max(1, Math.floor(canvas.height * BG_SCALE));
+  if (!sim.bgTex || sim.bgW !== bgW || sim.bgH !== bgH) {
+    sim.bgTex?.destroy?.();
+    sim.bgTex = dev.createTexture({
+      size: [bgW, bgH], format: fmt,
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+    });
+    sim.bgW = bgW; sim.bgH = bgH;
+    sim.bgBind = dev.createBindGroup({
+      layout: sim.blitLayout,
+      entries: [
+        { binding: 0, resource: sim.blitSampler },
+        { binding: 1, resource: sim.bgTex.createView() },
+      ],
+    });
+    sim.bgKey = null;
+  }
+  if ((sim.bgKey !== bgKey || bgStale) && !holdBg) {
+    sim.bgKey = bgKey; sim.bgAt = t; sim.bgZoomAt = cam.zoom;   // stamp the scale this texture is baked at
+    const bg = enc.beginRenderPass({
+      colorAttachments: [{
+        view: sim.bgTex.createView(),
+        clearValue: { r: 0.039, g: 0.063, b: 0.059, a: 1 },
+        loadOp: 'clear', storeOp: 'store',
+      }],
+    });
+    // sim.bindBg, not sim.bind: the same camera, but with the pixel counts of
+    // the smaller target it is being drawn into. See writeCam.
+    if (view.terrain) { bg.setPipeline(sim.pipeBg); bg.setBindGroup(0, sim.bindBg); bg.draw(3); }
+    if (view.food && sim.moteCount > 0) {
+      bg.setPipeline(sim.pipeMotes); bg.setBindGroup(0, sim.moteBind);
+      bg.draw(6, sim.moteCount);
+    }
+    if (view.streams && sim.pipeStream) {
+      bg.setPipeline(sim.pipeStream); bg.setBindGroup(0, sim.bindBg);
+      bg.draw(STREAM_SIDE * STREAM_SIDE * STREAM_STEPS * 2);
+    }
+    bg.end();
+  }
+
   const pass = enc.beginRenderPass({
     colorAttachments: [{
       view: ctx.getCurrentTexture().createView(),
@@ -3303,6 +5313,10 @@ function loop() {
       loadOp: 'clear', storeOp: 'store',
     }],
   });
+  // The setting, as of whenever it last changed.
+  pass.setPipeline(sim.pipeBlit);
+  pass.setBindGroup(0, sim.bgBind);
+  pass.draw(3);
   // BIND GROUP AFTER PIPELINE, EVERY TIME.
   //
   // Setting a pipeline whose layout is incompatible with the previous one
@@ -3313,26 +5327,8 @@ function loop() {
   // unset. That is the "previous error" behind the bare
   // "[Invalid CommandBuffer] is invalid due to a previous error" on submit,
   // which names nothing and appears only when food is on and motes exist.
-  pass.setPipeline(sim.pipeBg);
-  pass.setBindGroup(0, sim.bind);
-  pass.draw(3);
-
-  // Crop first: it is ground, and everything else stands on it.
-  if (view.food && sim.moteCount > 0) {
-    pass.setPipeline(sim.pipeMotes);
-    pass.setBindGroup(0, sim.moteBind);
-    pass.draw(6, sim.moteCount);
-  }
-
-  // Streamlines above the ground and below the creatures: they are the setting.
-  // Note the bind group is set again after setPipeline — see the block above;
-  // the mote pass has a different layout and invalidates whatever was bound.
-  if (view.streams && sim.pipeStream) {
-    pass.setPipeline(sim.pipeStream);
-    pass.setBindGroup(0, sim.bind);
-    pass.draw(STREAM_SIDE * STREAM_SIDE * STREAM_STEPS * 2);
-  }
-
+  // Terrain, crop and streamlines are NOT drawn here any more — they are the
+  // cached setting, blitted above. Only the things that move are below.
   if (view.bonds && sim.bondVerts) {
     pass.setPipeline(sim.pipeBonds);
     pass.setBindGroup(0, sim.bind);
@@ -3342,20 +5338,40 @@ function loop() {
   pass.setPipeline(sim.pipeCells);
   pass.setBindGroup(0, sim.bind);
   pass.draw(6, sim.meta.nCells);
+  // THE INSPECTED ANIMAL, LAST. Same pipeline and instances, a camera whose
+  // topPass is 1, so every cell that is not the subject collapses. Without this
+  // the one creature you are watching is painted over by whichever neighbours
+  // happen to sit at higher instance indices — worst exactly in a crowded patch,
+  // which is where you are watching.
+  if (sel.uid >= 0 && sim.bindTop) {
+    pass.setBindGroup(0, sim.bindTop);
+    pass.draw(6, sim.meta.nCells);
+  }
   pass.end();
   dev.queue.submit([enc.finish()]);
 
   drawScope();
-  drawDevo();
 
   stepCamAnim(t);
   frames++; acc += t - last; last = t;
   if (acc > 400) {
     fps = frames * 1000 / acc; frames = 0; acc = 0;
     $('hFps').textContent = fps.toFixed(0);
+    // "1 in N" — the stride between the frames this page is shown. 1 means you
+    // are seeing every step the server takes; 20 means the world is running
+    // twenty times faster than you can look at it, which is the good case.
+    if (WATCH) {
+      const st = sim.seenStride;
+      $('hSeen').textContent = st ? '1 in ' + Math.max(1, Math.round(st)) : '–';
+    } else {
+      $('hSeen').textContent = view.spf > 1 ? '1 in ' + view.spf : 'every step';
+    }
     // In watch mode the step counter belongs to the server; the local world is
     // never advanced, so writing its 0 here would overwrite the real clock.
-    if (!WATCH) $('hStep').textContent = (sim.world.steps ?? 0).toLocaleString();
+    if (!WATCH) {
+      $('hStep').textContent = (sim.world.steps ?? 0).toLocaleString();
+      setSteps(sim.world.steps ?? 0, sim.world?.params?.dt ?? 0.015);
+    }
     $('hRate').textContent = simRate.toFixed(1);
     $('hZoom').textContent = cam.zoom.toFixed(2);
   }
@@ -3425,6 +5441,14 @@ const clearTouch = e => { touches.delete(e.pointerId); if (touches.size < 2) pin
 canvas.addEventListener('pointerup', clearTouch);
 canvas.addEventListener('pointercancel', clearTouch);
 
+// iOS Safari turns a two-finger pinch into a PAGE zoom and fires gesture* events;
+// without swallowing them the whole page scales and the world drags around under
+// your fingers. The canvas already does its own pinch-zoom from pointer events,
+// so the page never needs the gesture. Double-tap would page-zoom too — swallow it.
+for (const g of ['gesturestart', 'gesturechange', 'gestureend'])
+  document.addEventListener(g, e => e.preventDefault(), { passive: false });
+canvas.addEventListener('dblclick', e => e.preventDefault());
+
 /* ---------------------------------------------------------------- controls */
 
 /**
@@ -3451,7 +5475,7 @@ function tune(patch) {
     const send = { ...pendingTune };
     for (const k of Object.keys(pendingTune)) delete pendingTune[k];
     try {
-      await fetch('/control', {
+      await srvFetch('/control', {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ action: 'tune', params: send }),
       });
@@ -3489,7 +5513,12 @@ $('bTerrain').onclick = e => { view.terrain = !view.terrain; e.target.classList.
     grip.textContent = hud.classList.contains('min') ? '›' : '‹';
     grip.title = hud.classList.contains('min') ? 'show the readout' : 'collapse the readout';
   };
-  if (localStorage.getItem('mz.hudmin') === '1') hud.classList.add('min');
+  // On a phone the readout is ~40% of the screen, so it starts collapsed to a
+  // spine and the world gets the width — the numbers are one tap away on the `›`
+  // and the choice is remembered. On a wide screen it starts open as before.
+  // An explicit saved preference always wins over the width default.
+  const savedHud = localStorage.getItem('mz.hudmin');
+  if (savedHud === '1' || (savedHud === null && innerWidth <= 700)) hud.classList.add('min');
   place();
   grip.onclick = () => {
     hud.classList.toggle('min');
@@ -3609,10 +5638,10 @@ $('bArrows').onclick = e => { view.arrows = !view.arrows; e.target.classList.tog
         try {
           // Needs SOME living creature as a slot to stand in; the occupant is
           // untouched, its genome is swapped back immediately.
-          const gs = await (await fetch('/genomes?n=1', { cache: 'no-store' })).json();
+          const gs = await (await srvFetch('/genomes?n=1', { cache: 'no-store' })).json();
           const host = Array.isArray(gs) ? gs[0]?.uid : gs?.rows?.[0]?.uid;
           if (host == null) throw new Error('no living creature to seed from');
-          const r = await (await fetch('/control', {
+          const r = await (await srvFetch('/control', {
             method: 'POST', headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ action: 'implant', uid: host,
               copies: Number($('sIdN').value), mutate: Number($('sIdM').value) / 100,
@@ -3634,7 +5663,7 @@ $('bArrows').onclick = e => { view.arrows = !view.arrows; e.target.classList.tog
     const btn = $('bImplant'), out = $('idResult');
     btn.disabled = true; out.textContent = 'seeding…';
     try {
-      const r = await (await fetch('/control', {
+      const r = await (await srvFetch('/control', {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ action: 'implant', uid: sel.uid,
                                copies: Number(nEl.value), mutate: mutOf() }),
@@ -3688,7 +5717,7 @@ $('bFood').onclick = e => { view.food = !view.food; e.target.classList.toggle('o
 async function control(action, confirmText) {
   if (confirmText && !confirm(confirmText)) return;
   try {
-    const r = await fetch('/control', {
+    const r = await srvFetch('/control', {
       method: 'POST', headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ action }),
     });
@@ -3706,7 +5735,7 @@ async function control(action, confirmText) {
       const poll = async () => {
         waited += 1500;
         try {
-          const st = await (await fetch('/status', { cache: 'no-store' })).json();
+          const st = await (await srvFetch('/status', { cache: 'no-store' })).json();
           // A DIFFERENT process, not merely any answer. The outgoing server keeps
           // serving for a moment after agreeing to restart.
           if (st && st.nCells && st.bootId && st.bootId !== wasBoot) {
@@ -3752,7 +5781,7 @@ if (WATCH) {
     clearTimeout(spfT);
     spfT = setTimeout(async () => {
       try {
-        const r = await fetch('/control', { method: 'POST',
+        const r = await srvFetch('/control', { method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ action: 'speed', spf: +e.target.value }) });
         const j = await r.json();
@@ -3783,6 +5812,9 @@ $('bFit').onclick = fitAll;
 $('bReseed').onclick = () => sim?.world.writeParams({ seed: (Math.random() * 1e5) | 0 });
 $('bRebuild').onclick = () => rebuild().catch(e => fail(String(e.stack || e)));
 $('toggle').onclick = () => $('panel').classList.toggle('hidden');
+// On a phone the panel starts tucked into the wall — the world is what you meet
+// first, and the (now thumb-sized) hamburger slides it back out on demand.
+if (innerWidth <= 700) $('panel').classList.add('hidden');
 
 addEventListener('keydown', e => {
   if (e.key === ' ') { view.paused = !view.paused; $('bPause').classList.toggle('on', view.paused); e.preventDefault(); }

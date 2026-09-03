@@ -75,13 +75,22 @@ export const CELL_MUSCLE = 2;
 
 /** Body size plus the two consumption axes, into cmeta.w. Size lives in the low
  *  byte (bodies never approach 255 cells), nutrition and toughness above it. */
-export function packSize(bodySize, tag, toughness, enzyme = 0.5) {
-  // Nutrition is not stored — it is read from the cell's own energy at use
-  // time. That byte now carries the surface TAG instead.
-  const q = (v) => Math.max(0, Math.min(255, Math.round((v || 0) * 255)));
-  const q7 = (v) => Math.max(0, Math.min(127, Math.round((v || 0) * 127)));
+export function packSize(bodySize, tag, toughness, enzyme = 0.5, density = 0.5) {
+  // REPACKED TO MAKE ROOM FOR DENSITY, at lower resolution where resolution was
+  // not doing any work. tag and enzyme are two sides of one Gaussian match with
+  // a width of dietWidth; at any sane width, 256 distinguishable tags was far
+  // finer than the mechanism could resolve, and 16 is not. toughness keeps 6
+  // bits, which is 64 levels of armour.
+  //
+  //   0-7   bodySize (8)      12-15  enzyme (4)      22-27  density (6)
+  //   8-11  tag (4)           16-21  toughness (6)   28-31  spare, 31 clear
+  const qn = (v, bits) => {
+    const hi = (1 << bits) - 1;
+    return Math.max(0, Math.min(hi, Math.round((v || 0) * hi)));
+  };
   return (Math.max(0, Math.min(255, bodySize | 0)))
-       | (q(tag) << 8) | (q(toughness) << 16) | (q7(enzyme) << 24);
+       | (qn(tag, 4) << 8) | (qn(enzyme, 4) << 12)
+       | (qn(toughness, 6) << 16) | (qn(density, 6) << 22);
 }
 export function packMeta(type, contractility, grippiness, apNorm = 0.5, senseTune = 0) {
   // A SLOT THAT IS NOT A CELL MUST PACK NEGATIVE.
@@ -317,7 +326,24 @@ ${wgslStruct('W')}
 // conformant device. Packing also makes each cell's position one coalesced
 // 8-byte load instead of two strided 4-byte ones.
 @group(0) @binding(0) var<uniform>             P     : W;
-@group(0) @binding(1) var<storage, read_write> pos   : array<vec2<f32>>;
+// A POSE, NOT A POSITION: xy = where the cell is, z = theta, its heading in
+// the plane, w = omega, how fast that heading is turning.
+//
+// Orientation used to be derived from BOND GEOMETRY — the vector between a
+// cell's lowest- and highest-axial-index bonded neighbours. That made a cell's
+// heading a fact about who it was attached to rather than about itself, gave an
+// unbonded cell no heading at all (and so no compass and no anisotropic
+// friction), and meant a body could not turn without physically rearranging.
+//
+// It also capped locomotion. The friction anisotropy that turns undulation into
+// swimming is applied in the heading's frame, so every cell of a radially
+// symmetric body ratcheted along a different axis and the thrust cancelled
+// inside the body. A perfect imposed gait moved bodies 0.012 units in 300 s.
+//
+// theta is integrated state now. It cannot go in a new buffer — bindings 1-10
+// are all storage and 10 is the per-stage limit — so it rides in the two spare
+// lanes of what was already a per-cell vector.
+@group(0) @binding(1) var<storage, read_write> pos   : array<vec4<f32>>;
 @group(0) @binding(2) var<storage, read_write> vel   : array<vec4<f32>>;  // xy=velocity, z=radius, w=next energy
 @group(0) @binding(3) var<storage, read>       cmeta : array<vec4<i32>>;  // x=packed, y=slot, z=body, w=packed
 
@@ -356,7 +382,40 @@ fn bodySizeOf(w: i32) -> f32 { return f32(max(w & 255, 1)); }
 // the tradeoff the arms race needs — reserves make you viable AND make you a
 // target, and toughness becomes the way to hold reserves safely.
 fn nutritionOf(idx: u32) -> f32 { return clamp(energy[idx] / max(0.001, P.eCap), 0.0, 1.0); }
-fn toughnessOf(w: i32) -> f32 { return f32((w >> 16u) & 255) / 255.0; }
+fn toughnessOf(w: i32) -> f32 { return f32((w >> 16u) & 63) / 63.0; }
+
+// MASS. Not stored — every buffer is full — but it does not need to be, because
+// the two things it depends on are already per-cell: how big the cell is
+// (vel.z) and what it is made of (toughness). Area goes as r^2 and armour is
+// denser than flesh, so armour is now paid for in inertia as well as in
+// toughCost. That is a material consequence rather than a role: nothing checks
+// whether a cell "is armour", it just weighs what it is made of.
+//
+// Normalised so a default cell — radius massRef, no toughness — has mass
+// exactly 1. Every force constant in this kernel was tuned against an implicit
+// mass of 1, and this keeps all of that tuning meaning what it meant.
+// GASEOUS TO LEADEN, on a log scale, spanning densLo to densHi — a hundredfold
+// range at the defaults. This is what decides which way of moving is available
+// to a cell, because the ratio of its inertia to its drag is what separates a
+// world where flapping works from one where only cilia do. A light cell is all
+// drag and no memory: it stops the instant it stops pushing, so a reciprocal
+// stroke takes it nowhere and it needs something that breaks time symmetry. A
+// dense cell coasts, so a flap on the power stroke is not undone by the
+// recovery. Neither regime is legislated anywhere; both fall out of this number.
+fn densityOf(w: i32) -> f32 {
+  let d = f32((w >> 22u) & 63) / 63.0;
+  return P.densLo * pow(P.densHi / max(1e-6, P.densLo), d);
+}
+fn massOf(r: f32, w: i32) -> f32 {
+  let rr = r / max(1e-4, P.massRef);
+  return max(1e-4, rr * rr * densityOf(w));
+}
+// Moment of inertia goes as m*r^2 for any flat shape. Normalised the same way,
+// so the default cell has I = 1 and the angular tuning measured at I = 1 holds.
+fn inertiaOf(r: f32, m: f32) -> f32 {
+  let rr = r / max(1e-4, P.massRef);
+  return max(1e-3, m * rr * rr);
+}
 // SURFACE IDENTITY and DIGESTIVE REACH, the pair that makes diets differ.
 //
 // tag is what you are made of; enzyme is what you can break down. You can only
@@ -370,8 +429,8 @@ fn toughnessOf(w: i32) -> f32 { return f32((w >> 16u) & 255) / 255.0; }
 // the standard force that MAINTAINS diversity rather than eroding it. Lineages
 // collapsed from 245 to 3 in every arm of the last experiment; this is the
 // mechanism that should stop that, and whether it does is a measurement.
-fn tagOf(w: i32) -> f32 { return f32((w >> 8u) & 255) / 255.0; }
-fn enzymeOf(w: i32) -> f32 { return f32((w >> 24u) & 127) / 127.0; }
+fn tagOf(w: i32) -> f32 { return f32((w >> 8u) & 15) / 15.0; }
+fn enzymeOf(w: i32) -> f32 { return f32((w >> 12u) & 15) / 15.0; }
 // Gaussian in tag space. Narrow = a world of specialists, wide = generalists.
 fn digestMatch(eater: i32, eaten: i32) -> f32 {
   let d = enzymeOf(eater) - tagOf(eaten);
@@ -413,7 +472,9 @@ fn senseNorth(m: i32) -> bool { return ((m >> 7u) & 1) == 1; }
 // cell grazes what is near it, the stock goes down, and it regrows from a
 // bounded solar inflow. Grazing is a TRANSFER — what the cell gains, the mote
 // loses — so harvest no longer creates anything. Total energy in the world is
-// bounded by nMotes * moteCap plus what is standing in tissue.
+// bounded by sum(cap_i) plus what is standing in tissue. Capacities vary per
+// mote now, and the seeder holds their SUM at ((2*bound)^2/2) * moteCap, so the
+// bound no longer depends on how many motes there are.
 //
 // Motes are particles, not a grid: positions are continuous, they are found
 // through a hash exactly as cells are, and nothing is ever addressed by bucket.
@@ -437,8 +498,15 @@ fn moteOfferOf(m: vec4<f32>) -> f32 {
 }
 
 fn moteBucketOf(p: vec2<f32>) -> u32 {
-  let gx = i32(floor(p.x / P.moteR));
-  let gy = i32(floor(p.y / P.moteR));
+  // Toroidal, for the same reason as bucketOf: grazing probes neighbouring
+  // buckets, and an unwrapped probe at the seam looks somewhere the food is not.
+  let b = P.bound;
+  let span = 2.0 * b;
+  var q = p;
+  q.x = q.x - span * floor((q.x + b) / span);
+  if (P.wrapY > 0.5) { q.y = q.y - span * floor((q.y + b) / span); }
+  let gx = i32(floor(q.x / P.moteR));
+  let gy = i32(floor(q.y / P.moteR));
   let h = u32(gx * 73856093) ^ u32(gy * 19349663);
   return h % P.moteHashSize;
 }
@@ -597,6 +665,22 @@ fn wetnessAt(p: vec2<f32>) -> f32 {
 
 fn mudAt(p: vec2<f32>) -> f32 { return mudFrom(wetnessAt(p)); }
 
+// CLIMATE. Warm at the equator, cold at the poles, colder with altitude.
+//
+// A field, not a role — nothing here knows what a "polar species" is. What the
+// world provides is a place that costs more to live in, and what a lineage does
+// about that is its own business.
+//
+// Latitude is |y| over the half-width, so the equator is the line y = 0 and both
+// poles are cold. The lapse term makes high ground colder at any latitude, which
+// is what gives mountains their own climate and stops latitude being the only
+// axis a lineage can specialise along.
+fn tempAt(p: vec2<f32>, h: f32) -> f32 {
+  let lat = clamp(abs(p.y) / max(1e-4, P.bound), 0.0, 1.0);
+  let base = mix(P.tempEq, P.tempPole, lat * lat);
+  return base - P.tempLapse * max(0.0, h);
+}
+
 // THE SHORE — a band hugging the OUTSIDE of the channel, and the only place
 // worth living.
 //
@@ -675,8 +759,15 @@ fn minImage(d: vec2<f32>) -> vec2<f32> {
   let b = P.bound;
   if (r.x >  b) { r.x = r.x - 2.0 * b; }
   if (r.x < -b) { r.x = r.x + 2.0 * b; }
-  if (r.y >  b) { r.y = r.y - 2.0 * b; }
-  if (r.y < -b) { r.y = r.y + 2.0 * b; }
+  // Y WRAPS ONLY ON A TORUS. With poles the shortest path between two cells is
+  // the direct one — going "round the top" is not a route that exists, and
+  // wrapping here would have bodies at the north pole exerting forces on bodies
+  // at the south. All four places that wrap y must agree or a body straddling a
+  // pole is torn apart by forces pointing at a neighbour it cannot reach.
+  if (P.wrapY > 0.5) {
+    if (r.y >  b) { r.y = r.y - 2.0 * b; }
+    if (r.y < -b) { r.y = r.y + 2.0 * b; }
+  }
   return r;
 }
 
@@ -793,8 +884,28 @@ fn contractionOf(i: u32) -> f32 {
 // moving half a bucket changes nothing about what the body is. Nothing is ever
 // snapped to it.
 fn bucketOf(p: vec2<f32>) -> u32 {
-  let gx = i32(floor(p.x / P.hashCell));
-  let gy = i32(floor(p.y / P.hashCell));
+  // WRAP BEFORE HASHING. The world is a torus and this lookup was not.
+  //
+  // Neighbour search probes bucketOf(p + offset*hashCell), so a cell sitting
+  // near +bound probes past the edge. Those coordinates hashed as if the world
+  // were infinite, landing in buckets unrelated to where the true neighbours —
+  // the cells just across the seam at -bound — actually are. minImage corrects
+  // the DISTANCE once a pair is found, which is why this survived: every force
+  // that was computed was right, and the ones that were missing left no trace.
+  //
+  // A cell on the seam therefore felt contact repulsion from the inside only,
+  // and packed against the boundary. Measured on the live world: the outermost
+  // |x| bin held 3.68x its share of cells, drawn as a hard line down both edges.
+  //
+  // Insertion is unaffected — stored positions are already inside the domain —
+  // so wrapping here makes probe and insert agree rather than changing the table.
+  let b = P.bound;
+  let span = 2.0 * b;
+  var q = p;
+  q.x = q.x - span * floor((q.x + b) / span);
+  if (P.wrapY > 0.5) { q.y = q.y - span * floor((q.y + b) / span); }
+  let gx = i32(floor(q.x / P.hashCell));
+  let gy = i32(floor(q.y / P.hashCell));
   var h : u32 = (u32(gx) * 73856093u) ^ (u32(gy) * 19349663u);
   return h % P.hashSize;
 }
@@ -821,6 +932,7 @@ fn bucketOf(p: vec2<f32>) -> u32 {
 fn contact(i: u32, p: vec2<f32>, myR: f32) -> vec2<f32> {
   if (P.contactK <= 0.0) { return vec2<f32>(0.0, 0.0); }
   var force = vec2<f32>(0.0, 0.0);
+  let myBody = cmeta[i].z;
   for (var dy = -1; dy <= 1; dy = dy + 1) {
     for (var dx = -1; dx <= 1; dx = dx + 1) {
       let b = bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM);
@@ -829,13 +941,28 @@ fn contact(i: u32, p: vec2<f32>, myR: f32) -> vec2<f32> {
         let j = atomicLoad(&hashData[b + 1u + k]);
         if (j == i) { continue; }
         if (cmeta[j].x < 0) { continue; }
-        let d = minImage(pos[j] - p);
+        let d = minImage(pos[j].xy - p);
         let dist = max(length(d), 1e-4);
-        let touch = myR + vel[j].z;
+        let otherR = vel[j].z;
+        // KEEPING STRANGERS OUT. A cell reaches further against matter that is
+        // not its own body, so a creature has a zone that other creatures are
+        // pushed out of before they are actually touching it. Free: the body id
+        // is already loaded here for the contest, so this is one comparison.
+        //
+        // Not a behaviour and not recognition - it is a surface. Two cells of
+        // one body are bonded and packed; a foreign cell meets the outside of
+        // that surface and is held off it.
+        let foreign = cmeta[j].z != myBody;
+        let reach = select(1.0, P.foreignReach, foreign);
+        let touch = (myR + otherR) * reach;
         if (dist >= touch) { continue; }
+        let nrm = d / dist;
+        let over = touch - dist;
         // Linear in overlap: cheap, stable, and enough for bodies that are
         // mostly held together by bonds rather than by contact.
-        force = force - (d / dist) * (touch - dist) * P.contactK;
+        let push = select(P.contactK, P.contactK * P.foreignPush, foreign);
+        force = force - nrm * over * push;
+
       }
     }
   }
@@ -896,7 +1023,7 @@ fn contest(i: u32, p: vec2<f32>, effort: f32) -> f32 {
         if (j == i) { continue; }
         let other = cmeta[j];
         if (other.x < 0 || other.z == me.z) { continue; }   // same body: not a contest
-        let d = minImage(pos[j] - p);
+        let d = minImage(pos[j].xy - p);
         if (dot(d, d) > r2) { continue; }
 
         // CONSERVING. The first version simply added rate*(effort difference)
@@ -990,7 +1117,7 @@ fn hashBuild(@builtin(global_invocation_id) gid: vec3<u32>) {
   // with 36k slots and 7.2k alive that inflated crowding fivefold and starved
   // the entire population in a single tick. type < 0 marks a slot as vacated.
   if (cmeta[i].x < 0) { return; }
-  let b = bucketOf(pos[i]) * (1u + P.bucketM);
+  let b = bucketOf(pos[i].xy) * (1u + P.bucketM);
   let n = atomicAdd(&hashData[b], 1u);
   if (n < P.bucketM) { atomicStore(&hashData[b + 1u + n], i); }
 }
@@ -1060,7 +1187,7 @@ fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
       for (var k = 0u; k < n; k = k + 1u) {
         let j = atomicLoad(&hashData[b + 1u + k]);
         if (cmeta[j].x < 0) { continue; }
-        if (length(minImage(pos[j] - p)) > P.moteR) { continue; }
+        if (length(minImage(pos[j].xy - p)) > P.moteR) { continue; }
         // COUNT COMPETITORS, NOT MOUTHS.
         //
         // Measured at deep time: crowding suppression accounts for about half
@@ -1095,14 +1222,20 @@ fn moteOffer(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
   }
   mote[i * 2u] = vec4<f32>(m0.x, m0.y, m0.z, demanders);
-  mote[i * 2u + 1u] = vec4<f32>(rivals, 0.0, 0.0, 0.0);
+  // .y IS THE MOTE'S CAPACITY and must survive this write. It is seeded once and
+  // never recomputed, so blanking it here — which the old vec4(rivals,0,0,0)
+  // did — would set every capacity to zero on the first step, the logistic term
+  // would divide by it, and the entire crop would stop regrowing. Read it back
+  // and write it through.
+  mote[i * 2u + 1u] = vec4<f32>(rivals, mote[i * 2u + 1u].y, 0.0, 0.0);
 }
 
 // PHASE 3. Subtract what was actually handed out, then let the sun put some
 // back. Regrowth is logistic toward moteCap and scaled by local fertility, so
 // the analytic field still decides WHERE the world is rich — it just no longer
 // decides how much there is. The inflow is bounded: at most
-// nMotes * moteRegrow * moteCap per second enters the world, whatever lives in
+// moteRegrow * sum(cap_i)/moteCap per second enters the world — equivalently
+// moteRegrow * ((2*bound)^2/2), independent of mote count — whatever lives in
 // it and however hungry they are. That is the one boundary inflow.
 @compute @workgroup_size(${WORKGROUP})
 fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
@@ -1130,7 +1263,7 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   // patch is still perfectly well off. Weak Boids-like separation falls out of it.
   //
   // Friction-law clean: this can only REDUCE the sun's delivery, never raise it.
-  // Total inflow stays bounded by nMotes * moteRegrow * moteCap, and no
+  // Total inflow stays bounded by moteRegrow * sum(cap_i)/moteCap, and no
   // capability is granted energy — the crowd term is blind to what the crowding
   // cells are or what they are doing.
   //
@@ -1150,10 +1283,50 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
   // SUPPRESSION USES THE RIVAL COUNT, sharing used the cell count. This is the
   // whole point of the second slot: what a patch is worth is divided among
   // mouths, and how hard it is being WORKED is measured in competitors.
+  // This mote's capacity, needed by both the refill rate below and the logistic
+  // ceiling further down.
+  let cap = max(1e-4, mote[i * 2u + 1u].y);
   let draw = moteOfferOf(m0) * rivals;
-  let refill = max(1e-6, P.moteRegrow * P.dt);
+  // REFILL MUST BE THIS MOTE'S REFILL. The ratio below is draw against what the
+  // sun puts back HERE, and once regrowth started scaling with capacity — to keep
+  // total inflow invariant to mote density — this line was still quoting the
+  // unscaled base rate. A megamote refills many times faster than the reference
+  // and was being told it refilled at the reference, so draw/refill came out far
+  // too large and suppression punished exactly the rich patches the sparse-mote
+  // design exists to create. Introduced by the inflow fix two commits ago.
+  let refill = max(1e-6, P.moteRegrow * (cap / max(1e-4, P.moteCap)) * P.dt);
   let suppress = 1.0 / (1.0 + P.regrowCrowdK * (draw / refill));
-  stock = stock + P.moteRegrow * fert * suppress * (1.0 - stock / P.moteCap) * P.dt;
+  // PER-MOTE CAPACITY, in the spare float beside the rival count. The world used
+  // one cap for every mote, so the only way to hold a fixed amount of food was to
+  // spread it evenly — which is a world where every patch is worth the same and
+  // there is nothing to search FOR. Capacity now varies mote to mote and the
+  // logistic ceiling is the mote's own.
+  //
+  // TWO QUANTITIES, AND ONLY ONE OF THEM WAS CONSERVED.
+  //
+  // The seeder normalises the capacities so their sum equals the old
+  // nMotes * moteCap exactly, and an earlier version of this comment claimed
+  // that made the whole change conservative. It did not. Capacity is the
+  // standing-crop CEILING; the friction law is about INFLOW, and inflow here is
+  //
+  //     sum_i moteRegrow * (1 - stock_i/cap_i)
+  //
+  // which is an absolute rate per mote and does not mention capacity at all. A
+  // tenth as many motes was therefore a tenth of the world's income — the sun
+  // dimmed by 10x, silently, while the ceiling stayed put. Exactly the class of
+  // error energy-speculative-friction.md exists to prevent, committed by the
+  // person who wrote the conservation check.
+  //
+  // Scaling the rate by the mote's share of the reference capacity restores it:
+  // sum_i moteRegrow * cap_i/moteCap = moteRegrow * (sum_i cap_i)/moteCap, and
+  // the seeder guarantees sum_i cap_i = nMotesOld * moteCap, so the total is
+  // moteRegrow * nMotesOld — what it was before. A megamote refills faster in
+  // absolute terms and at the same fractional rate, which is what "a bigger
+  // patch of the same ground" should mean.
+  //
+  // (Found by Codex from the source, not from a symptom.)
+  let rate = P.moteRegrow * (cap / max(1e-4, P.moteCap));
+  stock = stock + rate * fert * suppress * (1.0 - stock / cap) * P.dt;
 
   // ---- FOOD GOES WHERE THE WATER GOES ---------------------------------------
   //
@@ -1182,12 +1355,16 @@ fn moteCommit(@builtin(global_invocation_id) gid: vec3<u32>) {
     let B = P.bound;
     if (np.x >  B) { np.x = np.x - 2.0 * B; }
     if (np.x < -B) { np.x = np.x + 2.0 * B; }
-    if (np.y >  B) { np.y = np.y - 2.0 * B; }
-    if (np.y < -B) { np.y = np.y + 2.0 * B; }
-    mote[i * 2u] = vec4<f32>(np.x, np.y, clamp(stock, 0.0, P.moteCap), 0.0);
+    if (P.wrapY > 0.5) {
+      if (np.y >  B) { np.y = np.y - 2.0 * B; }
+      if (np.y < -B) { np.y = np.y + 2.0 * B; }
+    } else {
+      np.y = clamp(np.y, -B, B);
+    }
+    mote[i * 2u] = vec4<f32>(np.x, np.y, clamp(stock, 0.0, cap), 0.0);
     return;
   }
-  mote[i * 2u] = vec4<f32>(m0.x, m0.y, clamp(stock, 0.0, P.moteCap), 0.0);
+  mote[i * 2u] = vec4<f32>(m0.x, m0.y, clamp(stock, 0.0, cap), 0.0);
 }
 
 // PHASE 2 lives inside physics(): what cell i can pick up from the motes it is
@@ -1223,9 +1400,25 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   let m = cmeta[i];
   let slot = m.y;
   if (slot < 0 || m.x < 0) { return; }
+  // PROPORTIONAL TO THE CAPACITY, not gated on the label — the same First Law
+  // repair already made to contraction, for the same reason and with the same
+  // arithmetic behind it.
+  //
+  // This tested cellType(m.x) != 1, so only cells whose argmax happened to
+  // land on SENSOR received any input at all. Measured over 64 living genomes
+  // developed at world values: 1253.9 units of sensing capacity existed in the
+  // tissue and 718.1 of it could be used — the labelling discarded 42.7%. 424
+  // cells lost the argmax by less than 0.10. Twenty-four of sixty-four bodies
+  // had no usable sensor, and sixteen of those were carrying real sensory
+  // tissue while being functionally blind. One specimen (#12009) had cells with
+  // sense 0.992 that were labelled anchor because grip came out at 1.000.
+  //
+  // A cell now senses as well as it is able to, and "sensor" goes back to being
+  // a description of a region of that continuum rather than a permit.
   let acuity = senseAcuity(m.x);
+  if (acuity <= 0.0) { ext[u32(slot)] = 0.0; return; }
 
-  let p = pos[i];
+  let p = pos[i].xy;
   // Two things a cell can actually feel locally: how fast the medium is moving
   // past it, and a scalar gradient it sits in. Both are analytic at p.
   let rel = flowAt(p) - vel[i].xy;
@@ -1249,24 +1442,13 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   // rather than as zero. A blind compass returning 0 would be a confident
   // claim of due east; returning noise is honest ignorance, and it means
   // evolving accuracy has something to climb from.
-  // The cell's own bearing, computed once: both the compass and the neighbour
-  // sense are questions about direction and both need it.
-  var ax = vec2<f32>(0.0, 0.0);
-  {
-    let ab = i * P.bondK;
-    var loN = -1; var hiN = -1; var loA = 2.0; var hiA = -1.0;
-    for (var k = 0u; k < P.bondK; k = k + 1u) {
-      let nj = bitcast<i32>(bondD[ab + k].x);
-      if (nj < 0) { continue; }
-      let na = axialPos(cmeta[u32(nj)].x);
-      if (na < loA) { loA = na; loN = nj; }
-      if (na > hiA) { hiA = na; hiN = nj; }
-    }
-    if (loN >= 0 && hiN >= 0 && loN != hiN) { ax = minImage(pos[u32(hiN)] - pos[u32(loN)]); }
-    else if (loN >= 0) { ax = minImage(pos[u32(loN)] - p); }
-  }
-  let alen = length(ax);
-  if (P.compass > 0.0 && alen > 1e-5) {
+  // The cell's own bearing. This is read from its heading, which is integrated
+  // state, so a lone cell has a compass exactly like a cell in tissue does —
+  // it used to be derived from bonds, and an unbonded cell was skipped by both
+  // the compass and the terrain lean however much acuity it had paid for.
+  let ax = vec2<f32>(cos(pos[i].z), sin(pos[i].z));
+  let alen = 1.0;
+  if (P.compass > 0.0) {
     let u = ax / alen;
     let bearing = select(u.x, u.y, senseNorth(m.x));   // eastness or northness
     let grit2 = fbm(p * 3.1 + vec2<f32>(f32(i) * 0.017, 0.0), P.seed + 913u) * 2.0 - 1.0;
@@ -1333,47 +1515,45 @@ fn sense(@builtin(global_invocation_id) gid: vec3<u32>) {
   // cost follows the continuous sensory capacity rather than a display label.
   if (P.senseOther > 0.0) {
     var acc = 0.0;
-    if (acuity > 0.0) {
-      let sig2 = max(1e-4, P.senseRange * P.senseRange);
-      let myV = vel[i].xy;
+    let sig2 = max(1e-4, P.senseRange * P.senseRange);
+    let myV = vel[i].xy;
     // A WIDER WALK, FOR SENSORS ONLY. The contact walk is 3x3 buckets and reaches
     // 1.8 world units; bodies are 4-6 across and land about seven apart, so at
     // that radius a sensor can only ever see its own tissue. Perception of other
     // creatures needs more reach, and it is affordable here precisely because
     // only sensor cells pay for it — the cost scales with how much of the world
     // has chosen to see.
-      let R = i32(max(1.0, P.senseBuckets));
-      for (var dy = -R; dy <= R; dy = dy + 1) {
-        for (var dx = -R; dx <= R; dx = dx + 1) {
-          let b = bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM);
-          let cnt = min(atomicLoad(&hashData[b]), P.bucketM);
-          for (var k = 0u; k < cnt; k = k + 1u) {
-            let j = atomicLoad(&hashData[b + 1u + k]);
-            if (j == i) { continue; }
-            if (cmeta[j].x < 0) { continue; }
-            // OTHER BODIES ONLY. Relative motion was supposed to make a cell's
-            // own tissue invisible to it, and it does not: a body that deforms
-            // moves its own cells past each other, so a sensor heard mostly
-            // itself — measured, the reading was identical alone and in a
-            // crowd. Own-body cells are excluded by BODY ID, which is a
-            // property the kernel already carries for the contest and is not a
-            // new concept. Proprioception is a real sense and a separate one.
-            if (cmeta[j].z == cmeta[i].z) { continue; }
-            let d = minImage(pos[j] - p);
-            let d2 = dot(d, d);
-            if (d2 > sig2 * 9.0) { continue; }
-            let rel = length(vel[j].xy - myV);
-            if (rel < 1e-4) { continue; }
-            let fall = exp(-d2 / (2.0 * sig2));
-            var w = 1.0;
-            if (alen > 1e-5) {
-              let u = ax / alen;
-              let dirTo = d / max(1e-4, sqrt(d2));
-              let cosT = dot(u, dirTo);
-              w = mix(1.0, max(0.0, cosT), acuity);
-            }
-            acc = acc + rel * fall * w;
+    let R = i32(max(1.0, P.senseBuckets));
+    for (var dy = -R; dy <= R; dy = dy + 1) {
+      for (var dx = -R; dx <= R; dx = dx + 1) {
+        let b = bucketOf(p + vec2<f32>(f32(dx), f32(dy)) * P.hashCell) * (1u + P.bucketM);
+        let cnt = min(atomicLoad(&hashData[b]), P.bucketM);
+        for (var k = 0u; k < cnt; k = k + 1u) {
+          let j = atomicLoad(&hashData[b + 1u + k]);
+          if (j == i) { continue; }
+          if (cmeta[j].x < 0) { continue; }
+          // OTHER BODIES ONLY. Relative motion was supposed to make a cell's
+          // own tissue invisible to it, and it does not: a body that deforms
+          // moves its own cells past each other, so a sensor heard mostly
+          // itself — measured, the reading was identical alone and in a
+          // crowd. Own-body cells are excluded by BODY ID, which is a
+          // property the kernel already carries for the contest and is not a
+          // new concept. Proprioception is a real sense and a separate one.
+          if (cmeta[j].z == cmeta[i].z) { continue; }
+          let d = minImage(pos[j].xy - p);
+          let d2 = dot(d, d);
+          if (d2 > sig2 * 9.0) { continue; }
+          let rel = length(vel[j].xy - myV);
+          if (rel < 1e-4) { continue; }
+          let fall = exp(-d2 / (2.0 * sig2));
+          var w = 1.0;
+          if (alen > 1e-5) {
+            let u = ax / alen;
+            let dirTo = d / max(1e-4, sqrt(d2));
+            let cosT = dot(u, dirTo);
+            w = mix(1.0, max(0.0, cosT), acuity);
           }
+          acc = acc + rel * fall * w;
         }
       }
     }
@@ -1390,9 +1570,18 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   if (i >= P.nCells) { return; }
   if (cmeta[i].x < 0) { return; }              // vacated slot; not in the world
 
-  let p = pos[i];
+  let p = pos[i].xy;
+  let myTheta = pos[i].z;
+  let myR = vel[i].z;
+  let myMass = massOf(myR, cmeta[i].w);
+  let myI = inertiaOf(myR, myMass);
   var v = vel[i].xy;
   var force = vec2<f32>(0.0, 0.0);
+  // Angular acceleration, accumulated the way force is. Bond springs and contact
+  // are CENTRAL forces — they act along the line between two centres — so they
+  // produce no torque and none is taken from them. Everything that turns a cell
+  // below is a genuine couple.
+  var torque = 0.0;
 
   // A muscle cell shortens its bonds in proportion to its activation. That is
   // what a muscle IS; locomotion falls out of the body deforming against the
@@ -1498,7 +1687,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
       }
       sap = sap + flow;
     }
-    let d = minImage(pos[u32(j)] - p);
+    let d = minImage(pos[u32(j)].xy - p);
     let dist = max(length(d), 1e-3);
     // Symmetric: both endpoints derive the same rest length, so the pair's
     // forces cancel. See contractionOf.
@@ -1522,10 +1711,23 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     // removes the energy the drive adds, and leaves the static spring law and
     // the muscle's authority over rest length untouched.
     force = force + dir * dot(vel[u32(j)].xy - v, dir) * P.bondDamp * sqrt(bd.z);
+
+    // TISSUE TRANSMITS TORQUE. Two bonded cells resist being twisted relative to
+    // one another, because the material between them is not a frictionless
+    // pivot. This is the couple that makes a BODY have a heading rather than a
+    // bag of cells each pointing its own way: alignment propagates along bonds,
+    // so a connected body settles into a coherent axis and its cells' friction
+    // anisotropies stop cancelling against each other.
+    //
+    // Written as the sine of the heading difference so it is periodic and has no
+    // branch cut, and scaled by bond stiffness so a skeleton transmits twist and
+    // soft tissue barely does. Equal and opposite at the two endpoints.
+    let dth = pos[u32(j)].z - myTheta;
+    torque = torque + P.twistK * sin(dth) * bd.z;
   }
 
   // Contact with everything nearby, living or not.
-  force = force + contact(i, p, vel[i].z);
+  force = force + contact(i, p, myR);
 
   // ---- THE GROUND UNDER THIS CELL, SAMPLED ONCE ---------------------------
   //
@@ -1543,14 +1745,29 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   let wHere = wetnessFrom(hHere, rHere);
   let mudHere = mudFrom(wHere);
 
-  // GRAVITY, in the plane. -grad(height) is a tilted plane: things roll
-  // downhill, matter gathers in basins, ridges separate the world into
-  // places. Every cell has mass 1 for now, so this is an acceleration.
-  if (P.gravity != 0.0) { force = force - heightGradFrom(p, hHere) * P.gravity; }
+  // GRAVITY AND BUOYANCY, which are one term. In a vacuum everything falls
+  // alike; in a medium what matters is the cell's mass against the mass of the
+  // medium it displaces. A leaden cell settles downhill into the basins. A
+  // gaseous one is pushed UP the gradient, out of them.
+  //
+  // The passive case nets exactly zero at density == mediumDens, which is the
+  // affordance-not-forcing rule: a cell that does nothing about its density is
+  // neither helped nor punished, and the whole range is something a genome has
+  // to reach for. force is divided by mass below, so this is written as a force.
+  if (P.gravity != 0.0) {
+    let rr = myR / max(1e-4, P.massRef);
+    let displaced = rr * rr * P.mediumDens;
+    force = force - heightGradFrom(p, hHere) * P.gravity * (myMass - displaced);
+  }
 
   // The medium drags the cell toward the local flow velocity. This is the
   // "stickiness to the aether" every particle has, inert or alive.
-  force = force + (flowAtM(p, mudHere) - v) * P.drag;
+  //
+  // Drag is a FORCE and scales with how much of the cell the medium has to get
+  // past — its frontal extent, so r rather than r^2. Mass goes as r^2, so a
+  // large cell is accelerated by the current LESS than a small one, in
+  // proportion to 1/r. Big things are hard for a river to push around.
+  force = force + (flowAtM(p, mudHere) - v) * P.drag * (myR / max(1e-4, P.massRef));
 
   // Terminal velocity — the one guard that keeps explicit Euler bounded when
   // the stiffness slider outruns dt < 2/sqrt(k). Without it a large force gives
@@ -1582,11 +1799,25 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     let me2 = cmeta[i];
     // Every cell has a little purchase on the world; an ANCHOR cell has far
     // more, and modulates it with its activation so it can let go.
-    var grab = P.gripBase;
-    // Grip still keys off the LABEL, deliberately: making it continuous too
-    // would change traction and contraction in the same commit and neither
-    // effect could be attributed. grippiness(me2.x) is packed and waiting.
-    if (cellType(me2.x) == 3) { grab = P.gripAnchor; }
+    // PROPORTIONAL TO THE CAPACITY — the last of the three label gates, and the
+    // one that was always going to matter most.
+    //
+    // The note here said grip keyed off the label "deliberately: making it
+    // continuous too would change traction and contraction in the same commit
+    // and neither effect could be attributed", and that grippiness(me2.x) was
+    // packed and waiting. That was right at the time. Contraction was made
+    // continuous long since and sensing today, so the confound it was guarding
+    // against is gone and the reason to wait has expired.
+    //
+    // It matters because grip is what converts oscillation into travel. The
+    // brains ARE oscillating — the scope shows sustained phase-offset rhythm,
+    // which is a central pattern generator — and a contract-relax cycle without
+    // varying grip is reciprocal, returns where it started, and is the scallop
+    // theorem. Measured over 48 living genomes: mean grip capacity 0.660 per
+    // cell, yet only 31% of bodies had a cell where grip won the argmax. Roughly
+    // two thirds of the population was carrying the means to anchor and being
+    // told it could not, on a tie-break against contract.
+    var grab = mix(P.gripBase, P.gripAnchor, grippiness(me2.x));
     // ACTIVELY PHASED, which is the whole point. A cell raises and drops its grip
     // with its activation, so a brain can grip on the power stroke and release on
     // recovery. Constant grip nets zero however strong it is — the scallop
@@ -1605,44 +1836,25 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
     grab = max(grab, 0.0);
 
-    // THE BODY AXIS, taken between two bonded neighbours — the same construction
-    // the verified reference uses (tools/swim-verify.js). Traction is anisotropic
-    // about it: a cell slides along its own body far more easily than sideways,
-    // and that asymmetry is what converts a deformation into travel. Isotropic
-    // drag, which is what this used to be, cancels it exactly.
-    var axis = vec2<f32>(0.0, 0.0);
-    {
-      // THE BODY AXIS, taken along the head-tail gradient.
-      //
-      // This used to take the FIRST TWO bonds found in slot order. In a chain
-      // those are the two chain neighbours and it is exactly right — which is
-      // why the standalone swim demo works. In a hex body of degree 4 to 6 the
-      // first two bonds are an arbitrary local lattice direction, so every
-      // cell's drag anisotropy pointed a different, meaningless way and the
-      // anisotropy averaged to nothing across the body. Anisotropic drag can
-      // only convert deformation into travel if it is anisotropic about
-      // something the body agrees on.
-      //
-      // Each cell carries its position along the body's own axis (packMeta), so
-      // the neighbours with the lowest and highest axial position give the
-      // local anterior-posterior direction directly.
-      let ab = i * P.bondK;
-      var loN = -1; var hiN = -1;
-      var loA = 2.0; var hiA = -1.0;
-      for (var k = 0u; k < P.bondK; k = k + 1u) {
-        let nj = bitcast<i32>(bondD[ab + k].x);
-        if (nj < 0) { continue; }
-        let na = axialPos(cmeta[u32(nj)].x);
-        if (na < loA) { loA = na; loN = nj; }
-        if (na > hiA) { hiA = na; hiN = nj; }
-      }
-      if (loN >= 0 && hiN >= 0 && loN != hiN) {
-        axis = minImage(pos[u32(hiN)] - pos[u32(loN)]);
-      } else if (loN >= 0) {
-        axis = minImage(pos[u32(loN)] - p);
-      }
-    }
-    let alen = length(axis);
+    // THE FRICTION FRAME IS THE CELL'S OWN HEADING.
+    //
+    // Traction is anisotropic about it: a cell slides along its own heading far
+    // more easily than sideways, and that asymmetry is what converts a
+    // deformation into travel. Isotropic drag cancels it exactly.
+    //
+    // This used to be derived from BOND GEOMETRY — the vector between the
+    // neighbours with the lowest and highest axial position. That construction
+    // is right for a chain, which is why the standalone swim demo worked, and
+    // wrong for everything else: an unbonded cell got no axis and was damped
+    // isotropically, and in a hex body every cell's anisotropy pointed a
+    // different way, so the thrust cancelled inside the body. A perfect imposed
+    // travelling wave moved real bodies 0.012 units in 300 s at every frequency
+    // and wavelength tried, and the controller was never the blocker.
+    //
+    // theta is a cell's own integrated state now, so it always has a frame, and
+    // the bond twist coupling above is what makes a connected body agree on one.
+    let axis = vec2<f32>(cos(myTheta), sin(myTheta));
+    let alen = 1.0;   // a heading is a unit vector; every cell has one
 
     // Dissipative ONLY: exponential decay cannot add energy whatever the
     // coefficients, so net motion is still paid for out of muscle fuel.
@@ -1686,18 +1898,56 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // evaluates to inf*0 = NaN the moment a component overflows to infinity — so
   // the guard meant to prevent blow-up was itself manufacturing the NaN it was
   // there to stop. clamp() saturates infinities to the bound instead.
-  v = clamp((v + force * P.dt) * P.damp, vec2<f32>(-40.0, -40.0), vec2<f32>(40.0, 40.0));
+  // THE RIVER TURNS THINGS. A flow with curl in it rotates whatever is floating
+  // in it — that is what a vortex does to a leaf, and it costs the cell nothing
+  // because the medium is doing the work. Without it a cell's heading could only
+  // be changed by its own tissue, so a body swept downstream kept pointing
+  // whichever way it happened to be pointing when it entered.
+  //
+  // Central difference of the flow field, which is the z component of its curl.
+  var w = pos[i].w;
+  if (P.vortK != 0.0) {
+    let h = P.hashCell * 0.5;
+    let fx1 = flowAt(p + vec2<f32>(h, 0.0)); let fx0 = flowAt(p - vec2<f32>(h, 0.0));
+    let fy1 = flowAt(p + vec2<f32>(0.0, h)); let fy0 = flowAt(p - vec2<f32>(0.0, h));
+    let curl = (fx1.y - fx0.y) / (2.0 * h) - (fy1.x - fy0.x) / (2.0 * h);
+    torque = torque + P.vortK * (curl - w);
+  }
+
+  // Angular drag, from the same ground the linear drag comes from. Dissipative:
+  // it can only remove spin, never add it, so nothing here mints rotation.
+  w = (w + (torque / myI) * P.dt) * exp(-P.angDrag * (P.slipBase + gritAtM(p, mudHere)) * P.dt);
+  w = clamp(w, -20.0, 20.0);
+  var nth = myTheta + w * P.dt;
+  // Keep theta in [-pi, pi] so it never drifts to a magnitude where f32 loses
+  // the resolution to tell two headings apart.
+  nth = nth - 6.283185307 * floor((nth + 3.141592654) / 6.283185307);
+
+  // F = ma. This used to be v + force*dt, which is F = a: every cell responded
+  // to a force as though it massed exactly 1, so a heavily armoured cell was
+  // flicked about as easily as a bare one.
+  v = clamp((v + (force / myMass) * P.dt) * P.damp, vec2<f32>(-40.0, -40.0), vec2<f32>(40.0, 40.0));
 
   var np = p + v * P.dt;
 
-  // Toroidal wrap keeps the world edgeless without a wall to pile up against.
+  // Toroidal wrap keeps the world edgeless without a wall to pile up against —
+  // in x always, and in y only when there are no poles.
   let b = P.bound;
   if (np.x >  b) { np.x = np.x - 2.0 * b; }
   if (np.x < -b) { np.x = np.x + 2.0 * b; }
-  if (np.y >  b) { np.y = np.y - 2.0 * b; }
-  if (np.y < -b) { np.y = np.y + 2.0 * b; }
+  if (P.wrapY > 0.5) {
+    if (np.y >  b) { np.y = np.y - 2.0 * b; }
+    if (np.y < -b) { np.y = np.y + 2.0 * b; }
+  } else {
+    // A POLE IS A WALL, and a wall needs the velocity killed as well as the
+    // position clamped. Clamping alone leaves the cell pressed against it with
+    // its momentum intact, so it stays there paying drag forever and the pole
+    // becomes a trap that collects the population rather than a boundary.
+    if (np.y >  b) { np.y = b; v.y = min(v.y, 0.0); }
+    if (np.y < -b) { np.y = -b; v.y = max(v.y, 0.0); }
+  }
 
-  pos[i] = np;
+  pos[i] = vec4<f32>(np, nth, w);
 
   // ------------------------------------------------------------- energy
   // Per CELL, not per organism: a cell is the thing that sits somewhere and
@@ -1770,9 +2020,37 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   let absorb = clamp(1.0 - P.absorbTradeoff * commit, 0.0, 1.0);
   var gain = 0.0;
   if (P.nMotes > 0u) {
-    gain = absorb * grazeAt(np) / P.dt;
+    // GRAZE WHERE THE OFFER WAS COUNTED, which is the OLD position.
+    //
+    // moteOffer counts its demanders from the cell hash, and that hash is built
+    // at the start of the step from pos[j]. This then grazed at np, the position
+    // after motion. A cell that crossed INTO a mote during the step took an
+    // offer it was never counted in — energy minted — and one that crossed out
+    // was charged in the mote's commit without taking it — energy destroyed.
+    // Neither is large per event and both are invisible in aggregate, which is
+    // exactly the profile of the errors this project keeps having to retract.
+    //
+    // At dt 0.015 with the current drag and flow defaults, boundary crossings
+    // are common rather than exotic.
+    //
+    // p is also the convention already used by the analytic fallback below,
+    // after the same mixed-position defect was fixed there — that one was
+    // dormant, since nMotes > 0 sends every real world down this branch instead.
+    // So the fix landed in the path nobody runs and missed the path everybody
+    // runs. (Found by Codex, reviewing the grazing path against HEAD.)
+    gain = absorb * grazeAt(p) / P.dt;
   } else {
-    gain = absorb * P.harvest * resourceAtS(np, shoreFrom(wHere)) * share;
+    // ONE POSITION, NOT TWO. This read the resource field at the NEW position
+    // while taking the shore multiplier from wHere, which is the wetness at the
+    // OLD one — so a cell leaving the shore carried its shore bonus one step
+    // into the mud, and a cell entering it was taxed one step longer than it
+    // should have been. The displacement per step is small, so the error is
+    // small; it is also systematic and in the direction of the thing this world
+    // is built to measure, which is the kind of bias that gets a result
+    // retracted. Harvesting where the cell started is a consistent convention
+    // and costs nothing, where recomputing wetness at np would be four more fbm.
+    // (Codex found this reading the physics cold.)
+    gain = absorb * P.harvest * resourceAtS(p, shoreFrom(wHere)) * share;
   }
   let work = P.muscleCost * abs(mine);
   // ACUITY COSTS. A sense organ that reads the world perfectly for free is a
@@ -1782,11 +2060,29 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // cheap noisy sense stays a live option. primitives.md: an axis without a
   // cost has no teeth.
   //
-  // AND IT IS CHARGED WHERE IT IS USED. Sensing is a continuous capacity packed
-  // into cmeta.x, not the display label in the low bits. Gating either the
-  // input or the bill on the label silently discards near-sensors whose sensory
-  // capacity lost an argmax contest with grip or contraction. Cost follows
-  // acuity directly, so a sharp cell pays wherever it appears.
+  // AND IT IS CHARGED WHERE IT IS USED. This was levied on EVERY cell, while
+  // sense() computes a reading only for cells whose type is sensor — so the
+  // world charged the whole population for an organ almost none of them had.
+  // Measured before the fix: mean acuity 0.682 across all live cells against a
+  // senseCost of 0.25, i.e. 0.17 energy per second of pure tax, on a brainTax
+  // of 0.4. A 43% surcharge on existing, for nothing.
+  //
+  // It also explains the shape of the population. Sensor cells sat at acuity
+  // 0.000 — every one of them — while non-sensors averaged 0.682: the bits are
+  // near-neutral where they are not charged against a benefit, and the cells
+  // that could have used them had been driven to zero. A sensor was an organ
+  // that reads pure noise and a non-sensor was paying for one.
+  //
+  // The type gate is gone, and with it the discomfort recorded above. That note
+  // said charging by continuous sense capacity "needs that capacity in cmeta,
+  // where there is no room for it" — but it was already there, as senseAcuity in
+  // bits 2-6. It only looked absent because nothing ever wrote it: senseTune was
+  // never derived from the sense gene, so acuity read 0 for every cell and the
+  // field was indistinguishable from an unused one.
+  //
+  // Now that it carries the gene, the bill follows the benefit exactly: a cell
+  // pays in proportion to how sharply it senses, and a cell that does not sense
+  // pays nothing without anyone testing what it is called.
   let senseWork = P.senseCost * senseAcuity(cmeta[i].x);
   // ARMOUR IS EXPENSIVE TO HOLD. Without a cost, toughness is a free defence
   // and evolution takes it to the ceiling in every lineage — the same failure
@@ -1798,6 +2094,24 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // heights a frontier only some lineages can afford rather than just another
   // place. Only the upper half of the range charges anything.
   let terrainWork = P.highSap * max(0.0, hHere);
+  // THERMOREGULATION. A cell pays to hold itself away from ambient, and only
+  // beyond a tolerance — inside the band it pays nothing, so the passive case
+  // costs nothing extra and the affordance law holds. Outside it, the bill rises
+  // with the square of the excess, because losing heat to a colder world is
+  // roughly proportional to the gradient and the work to replace it rises faster
+  // than linearly.
+  //
+  // It is a COST and never an income. There is no temperature at which a cell
+  // gains energy; the friction law does not permit a place that pays you to
+  // stand in it. Warmth is the absence of a bill.
+  //
+  // tempCost 0 is the world as it has always been, and is the default.
+  var climateWork = 0.0;
+  if (P.tempCost > 0.0) {
+    let dev = abs(tempAt(p, hHere) - P.tempOpt);
+    let excess = max(0.0, dev - P.tempTol);
+    climateWork = P.tempCost * excess * excess;
+  }
 
   // ---------------------------------------------------------- TIDAL INCOME
   //
@@ -1855,6 +2169,7 @@ fn physics(@builtin(global_invocation_id) gid: vec3<u32>) {
   // contactK being a denormal (see lib/uniform.js), cells have never collided.
   vel[i] = vec4<f32>(v.x, v.y, vel[i].z,
     clamp(energy[i] + (gain + tidal - P.brainTax - work - senseWork - armourWork - terrainWork
+                       - climateWork
                        + taken + sap - abs(sap) * P.sapLoss) * P.dt, P.eFloor, P.eCap));
 }
 
@@ -1890,14 +2205,19 @@ export class WorldGPU {
     // arrays because they are easier to reason about CPU-side; the interleaving
     // belongs here, next to the bindings it exists for.
     const n = this.n;
-    const pos = new Float32Array(n * 2), vel = new Float32Array(n * 4);
+    const pos = new Float32Array(n * 4), vel = new Float32Array(n * 4);
     // vec4 stride: (type, brain slot, body id, unused). The body id is what
     // lets a cell tell a stranger from its own tissue, which is the whole basis
     // of the contest — without it a body would fight itself.
     const meta = new Int32Array(n * 4);
     const bodyOf = cells.body ?? null;
     for (let i = 0; i < n; i++) {
-      pos[i * 2] = cells.px[i]; pos[i * 2 + 1] = cells.py[i];
+      pos[i * 4] = cells.px[i]; pos[i * 4 + 1] = cells.py[i];
+      // Founders get the heading the builder laid them out with, so a ring of
+      // cells starts pointing around its ring rather than all one way. Bodies
+      // built without one point along +x and the twist coupling sorts them out.
+      pos[i * 4 + 2] = cells.theta ? cells.theta[i] : 0;
+      pos[i * 4 + 3] = 0;
       vel[i * 4] = cells.vx[i]; vel[i * 4 + 1] = cells.vy[i];
       // z is the cell's radius. It had never been written by anything, so it
       // was 0 for every cell in every run, and `touch = myR + otherR` was 0 —
@@ -1912,6 +2232,10 @@ export class WorldGPU {
       // read these from, and a founder that was inedible would be a boundary
       // condition with teeth.
       meta[i * 4 + 3] = packSize(cells.bodySize ? cells.bodySize[i] : 0, 0.5, 0.0, 0.5);
+      // Founders mirror too, or a fresh world's first generation would draw as
+      // undifferentiated stone until it had bred once.
+      if (cells.metaX) cells.metaX[i] = meta[i * 4];
+      if (cells.metaW) cells.metaW[i] = meta[i * 4 + 3];
     }
     this.bPos = mk(pos); this.bVel = mk(vel); this.bMeta = mk(meta);
     // Pack bond index + rest length into the one vec2 buffer the shader binds.
@@ -1942,7 +2266,7 @@ export class WorldGPU {
       // the medium, so it raises transport AND damps a body's own locomotion.
       // Worth separating later; kept together here because this is the
       // combination with a measurement behind it.
-      flowScale: 4.0,
+      flowScale: 6.0,
       // Flow reduced from 1.0 so that swimming beats drifting, but NOT for the
       // reason first recorded here. That claim — flow carrying cells ten times
       // faster than they could swim — came from tracking cells by arena index,
@@ -1958,13 +2282,13 @@ export class WorldGPU {
       // about as far as its own muscles do, which leaves swimming with little
       // selective advantage. 0.3 keeps flow as a genuine force to anchor against
       // and be swept by, while making self-propulsion clearly worth having.
-      flowStr: 3.0, drag: 8.0, springK: 90.0,
+      flowStr: 4.0, drag: 24.0, springK: 300.0,
       // MUSCLE FORCE, raised 11x. Measured with an imposed gait over 300 s,
       // median displacement against contract: 0.45 -> 0.067, 2.5 -> 0.199,
       // 5 -> 0.490, 10 -> 0.891, 20 -> 1.594. Bodies end at 0.82-0.97 of their
       // starting span with at most 2 of 30 torn, so this is not the
       // dismemberment artefact this project has retracted before.
-      contract: 5.0, seed: 3, senseGain: 2.0, damp: 0.986, bound: 64.0,
+      contract: 8.0, seed: 3, senseGain: 2.0, damp: 0.986, bound: 64.0,
       // Calibrated against the density the world actually runs at. A 3x3 bucket
       // neighbourhood holds ~34 cells at the starting population, so crowdK
       // 0.012 discounts a shared patch to ~0.79 rather than erasing it: at
@@ -2041,6 +2365,27 @@ export class WorldGPU {
       // GLIDE and the gripped phase to HOLD, and at fricK 6 both phases were
       // overdamped against a 0.7 s gait.
       gripBase: 0.55, gripMod: 0.9, fricK: 2.0, gripAnchor: 1.0,
+      // ORIENTATION. twistK is the strongest of the three because it is what
+      // makes a body agree on a heading at all: with it at zero every cell keeps
+      // whatever bearing development gave it and the anisotropic traction
+      // cancels across the body, which is the state this world was in.
+      twistK: 6.0, vortK: 0.8, angDrag: 3.0,
+      // MASS. massRef is the radius evolve.js gives every cell, so today mass
+      // varies only with armour — radius is uniform at 0.34 and nothing in
+      // development expresses a cell size yet. The channel is real and the
+      // scaling is right; the variation is waiting on devo.
+      // MASS. massRef is the radius every cell currently has, so mass is
+      // density times 1 until development expresses a cell size. densLo/densHi
+      // span a hundredfold, and mediumDens sits at the geometric middle so the
+      // default cell is neutrally buoyant and gravity nets zero on it.
+      massRef: 0.34, densLo: 0.1, densHi: 10.0, mediumDens: 1.0,
+      // A creature pushes harder on a stranger than on its own tissue. The
+      // reach stays at 1.0 - a standoff ZONE was measured and is not cheap at
+      // any width, because the spatial hash cell is sized to the contact radius
+      // and widening the test outgrows it: 179 steps/s at reach 1.0, 114 at
+      // 1.15, 90 at 1.45. Extra push is one comparison on pairs already found
+      // and costs nothing.
+      foreignReach: 1.0, foreignPush: 1.6,
       // Substrate. gritScale sets how big a patch of purchase is; slipBase is the
       // drag left on frictionless ground (open water); gripAniso is how much
       // harder sideways slip is than sliding along your own body, which is the
@@ -2074,7 +2419,7 @@ export class WorldGPU {
       // Geography. Scales chosen so a world of bound ~132 holds a handful of
       // basins and ridges rather than one hill or a thousand.
       heightScale: 0.018, heightSeed: 5150, gravity: 0.55, highSap: 0.35,
-      mudScale: 0.014, mudSeed: 8801, mudSlip: 0.85, mudFlow: 1.15, mudFog: 0.8, flowDry: 0.07, shoreWidth: 0.30,
+      mudScale: 0.014, mudSeed: 8801, mudSlip: 0.85, mudFlow: 2.0, mudFog: 0.8, flowDry: 0.07, shoreWidth: 0.30,
       lowLush: 0.75,
       // How far the biotic channel reaches, and how fast food goes downstream.
       // contestR against contactR 1.0: proximity rather than collision, capped
@@ -2182,6 +2527,15 @@ export class WorldGPU {
       // so loud that it drowns out everything else a sensor reads.
       senseTerrain: 0.45,
       warpAmt: 0.55, ridgeAmt: 0.42, mudBank: 0.52, contactR: 1.0, sizeScale: 1.0, sizeNorm: 1.0,
+      // CLIMATE AND POLES, OFF BY DEFAULT. wrapY 1 is the torus this world has
+      // always been and tempCost 0 charges nothing, so the shipped world is
+      // unchanged until these are turned on deliberately. The band is written in
+      // normalised units where 1.0 is the equator and 0.0 the poles; tempOpt
+      // 0.62 with tolerance 0.18 makes roughly the middle latitudes free and
+      // both the tropics and the poles expensive.
+      wrapY: 1.0,
+      tempPole: 0.0, tempEq: 1.0, tempLapse: 0.35,
+      tempOpt: 0.62, tempTol: 0.18, tempCost: 0.0,
       // Cells are solid. This was silently 1.68e-44 for the life of the code —
       // see lib/uniform.js — so nothing has ever pushed back on anything. Sized
       // against springK so a bond can still hold a body together against the
@@ -2297,11 +2651,23 @@ export class WorldGPU {
     // a lattice would put the world's food on a grid, which is the thing we do
     // not do, and would also give every patch the same size and spacing. Random
     // scatter clumps and thins the way real ground does, for free.
+    // FEWER, BIGGER, AND VERY UNEQUAL.
+    //
+    // The world used one mote per two square units, all with the same cap. Two
+    // problems with that. It was half the cost of a step — 34,848 of them
+    // running offer-and-graze every step for a crop that changes on the
+    // timescale of grazing. And a world where every patch is worth the same is a
+    // world with nothing to search FOR: finding food is not a skill if food is
+    // uniform, so nothing selects for finding it.
+    //
+    // So: a tenth as many motes, carrying the same total energy, distributed
+    // lognormally. A few megamotes are worth crossing the world for and most are
+    // not. No cell can yet TELL them apart at a distance — that would need a
+    // sense channel — so what this selects for is covering ground and being
+    // where the good ones are, which is the honest first step.
+    const denser = this.params.moteDensity ?? 0.1;
     if (this.params.nMotes == null) {
-      // One mote per two square units: with moteR 1.2 a cell has about two in
-      // reach, so ground is granular enough to be exhausted patch by patch
-      // rather than all at once.
-      this.params.nMotes = Math.round((2 * this.params.bound) ** 2 / 2);
+      this.params.nMotes = Math.round(((2 * this.params.bound) ** 2 / 2) * denser);
     }
     const nM = this.params.nMotes | 0;
     // Stride 2: eight floats a mote, not four. See the note in moteOffer.
@@ -2310,14 +2676,32 @@ export class WorldGPU {
       let sd = (this.params.moteSeed ?? 20260803) >>> 0;
       const rnd = () => ((sd = (Math.imul(sd, 1664525) + 1013904223) >>> 0) / 4294967296);
       const B = this.params.bound;
+      // Lognormal, because the tail is the point: sigma 1.15 puts the richest
+      // motes tens of times above the median while most sit below it. The draws
+      // are then RESCALED so their sum is exactly what the old uniform field
+      // held — nMotesOld * moteCap — which is what keeps the inflow bound in
+      // moteCommit true. Conservation here is arithmetic, not intention.
+      const target = ((2 * B) ** 2 / 2) * this.params.moteCap;
+      const caps = new Float64Array(nM);
+      let sum = 0;
       for (let i = 0; i < nM; i++) {
-        // STRIDE 2 — see the note in moteOffer. Slot 0 is (x, y, stock,
-        // cellDemanders); slot 1 carries the rival count and three spares.
+        // Box-Muller from the same stream, so the whole field is reproducible
+        // from moteSeed alone.
+        const u1 = Math.max(1e-12, rnd()), u2 = rnd();
+        const g = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        caps[i] = Math.exp(1.15 * g);
+        sum += caps[i];
+      }
+      const k = sum > 0 ? target / sum : 1;
+      for (let i = 0; i < nM; i++) {
         mv[i * 8] = (rnd() * 2 - 1) * B;
         mv[i * 8 + 1] = (rnd() * 2 - 1) * B;
+        const cap = caps[i] * k;
         // Start full, so the opening moments are not an artificial famine.
-        mv[i * 8 + 2] = this.params.moteCap;
+        mv[i * 8 + 2] = cap;          // stock
+        mv[i * 8 + 5] = cap;          // slot 1 .y — the capacity itself
       }
+      this.moteCapTotal = target;
     }
     const mkS = (a) => {
       const b = device.createBuffer({
@@ -2416,7 +2800,7 @@ export class WorldGPU {
 
   /** Mote stock, for the viewer and for conservation checks. */
   async readMotes() {
-    if (!this.moteGroups) return { pos: new Float32Array(0), stock: new Float32Array(0) };
+    if (!this.moteGroups) return { pos: new Float32Array(0), stock: new Float32Array(0), cap: new Float32Array(0) };
     if (this.params.nMotes == null) {
       // One mote per two square units: with moteR 1.2 a cell has about two in
       // reach, so ground is granular enough to be exhausted patch by patch
@@ -2434,14 +2818,19 @@ export class WorldGPU {
     const raw = new Float32Array(ss.getMappedRange().slice(0));
     ss.unmap(); ss.destroy();
     const pos = new Float32Array(nM * 2), stock = new Float32Array(nM);
+    // Capacity travels with the mote now: it is what decides how big it is
+    // drawn, and a viewer that only knows the stock cannot tell a drained
+    // megamote from a full ordinary one.
+    const cap = new Float32Array(nM);
     for (let i = 0; i < nM; i++) {
       // Stride 8 floats — the mote is two vec4s. Reading at 4 here would return
       // every other mote's position interleaved with rival counts, which looks
       // like plausible data and is not.
       pos[i * 2] = raw[i * 8]; pos[i * 2 + 1] = raw[i * 8 + 1];
       stock[i] = raw[i * 8 + 2];
+      cap[i] = raw[i * 8 + 5];
     }
-    return { pos, stock };
+    return { pos, stock, cap };
   }
 
   writeParams(patch = {}) {
@@ -2516,17 +2905,25 @@ export class WorldGPU {
     // Per-call staging, for the same reason as BrainArenaGPU.readState: a
     // shared one breaks the moment two readbacks overlap.
     const staging = this.device.createBuffer({
-      size: this.n * 8, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+      size: this.n * 16, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     });
     const enc = this.device.createCommandEncoder();
-    enc.copyBufferToBuffer(this.bPos, 0, staging, 0, this.n * 8);
+    enc.copyBufferToBuffer(this.bPos, 0, staging, 0, this.n * 16);
     this.device.queue.submit([enc.finish()]);
     await staging.mapAsync(GPUMapMode.READ);
     const packed = new Float32Array(staging.getMappedRange().slice(0));
     staging.unmap(); staging.destroy();
+    // Callers want plain xy and always have; the pose's extra lanes come out as
+    // their own arrays rather than changing a stride every consumer assumes.
     const x = new Float32Array(this.n), y = new Float32Array(this.n);
-    for (let i = 0; i < this.n; i++) { x[i] = packed[i * 2]; y[i] = packed[i * 2 + 1]; }
-    return { x, y, packed };
+    const theta = new Float32Array(this.n), omega = new Float32Array(this.n);
+    const xy = new Float32Array(this.n * 2);
+    for (let i = 0; i < this.n; i++) {
+      x[i] = packed[i * 4]; y[i] = packed[i * 4 + 1];
+      theta[i] = packed[i * 4 + 2]; omega[i] = packed[i * 4 + 3];
+      xy[i * 2] = x[i]; xy[i * 2 + 1] = y[i];
+    }
+    return { x, y, theta, omega, packed: xy };
   }
 
   /**
@@ -2568,24 +2965,67 @@ export class WorldGPU {
   async readCells() {
     const n = this.n;
     const staging = this.device.createBuffer({
-      size: n * 4 * 3, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+      size: n * 4 * 5, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     });
     const enc = this.device.createCommandEncoder();
-    enc.copyBufferToBuffer(this.bPos, 0, staging, 0, n * 8);
-    enc.copyBufferToBuffer(this.bEnergy, 0, staging, n * 8, n * 4);
+    enc.copyBufferToBuffer(this.bPos, 0, staging, 0, n * 16);
+    enc.copyBufferToBuffer(this.bEnergy, 0, staging, n * 16, n * 4);
     this.device.queue.submit([enc.finish()]);
     await staging.mapAsync(GPUMapMode.READ);
     const raw = staging.getMappedRange();
-    const pos = new Float32Array(raw.slice(0, n * 8));
-    const energy = new Float32Array(raw.slice(n * 8, n * 12));
+    const pose = new Float32Array(raw.slice(0, n * 16));
+    const energy = new Float32Array(raw.slice(n * 16, n * 20));
     staging.unmap(); staging.destroy();
-    return { pos, energy };
+    // Same contract as before for pos: two floats per cell. theta and omega are
+    // additional, so nothing that read this already has to change.
+    const pos = new Float32Array(n * 2);
+    const theta = new Float32Array(n), omega = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      pos[i * 2] = pose[i * 4]; pos[i * 2 + 1] = pose[i * 4 + 1];
+      theta[i] = pose[i * 4 + 2]; omega[i] = pose[i * 4 + 3];
+    }
+    return { pos, energy, theta, omega };
   }
 
   /** Write one organism's contiguous cell range back after a birth or death. */
-  writeCellRange(from, count, { pos, vel, meta, bond, brest, bstiff, bbrittle, energy }) {
+  /**
+   * The same write, for a body whose slots are not one run.
+   *
+   * A body no longer has to own a contiguous range - nothing in the compute
+   * needed it, and requiring it was refusing births by size. This is what that
+   * costs: one small write per slot instead of one per body. Bodies are about
+   * nine cells and this happens at birth, so it is nine writes where there was
+   * one, against a physics step that touches twenty-five thousand.
+   */
+  writeCellsAt(slots, data) {
+    for (let i = 0; i < slots.length; i++) {
+      const s = slots[i];
+      const one = {};
+      if (data.pos) one.pos = data.pos.subarray(i * 4, i * 4 + 4);
+      if (data.posXY) one.posXY = data.posXY.subarray(i * 2, i * 2 + 2);
+      if (data.vel) one.vel = data.vel.subarray(i * 4, i * 4 + 4);
+      if (data.meta) one.meta = data.meta.subarray(i * 4, i * 4 + 4);
+      if (data.energy) one.energy = data.energy.subarray(i, i + 1);
+      if (data.bond) one.bond = data.bond.subarray(i * this.bondK, (i + 1) * this.bondK);
+      if (data.brest) one.brest = data.brest.subarray(i * this.bondK, (i + 1) * this.bondK);
+      if (data.bstiff) one.bstiff = data.bstiff.subarray(i * this.bondK, (i + 1) * this.bondK);
+      if (data.bbrittle) one.bbrittle = data.bbrittle.subarray(i * this.bondK, (i + 1) * this.bondK);
+      this.writeCellRange(s, 1, one);
+    }
+  }
+
+  writeCellRange(from, count, { pos, posXY, vel, meta, bond, brest, bstiff, bbrittle, energy }) {
     const q = this.device.queue;
-    if (pos) q.writeBuffer(this.bPos, from * 8, pos);
+    if (pos) q.writeBuffer(this.bPos, from * 16, pos);
+    // MOVE WITHOUT REORIENTING. pos is a vec4, so writing xy alone means one
+    // 8-byte write per cell rather than a strided blit. Callers use this when
+    // they are relocating a body that must keep the headings it has, and the
+    // ranges are one body's worth of cells, so the loop is short.
+    if (posXY) {
+      for (let i = 0; i < count; i++) {
+        q.writeBuffer(this.bPos, (from + i) * 16, posXY, i * 2, 2);
+      }
+    }
     if (vel) q.writeBuffer(this.bVel, from * 16, vel);
     if (meta) q.writeBuffer(this.bMeta, from * 16, meta);
     if (bond || brest) {
