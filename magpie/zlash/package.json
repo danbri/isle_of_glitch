@@ -6,7 +6,8 @@
   "scripts": {
     "serve": "python3 tools/serve.py 8765",
     "build": "node tools/build.js",
-    "check": "node tools/check-examples.js"
+    "check": "node tools/check-examples.js",
+    "stamp": "node tools/stamp.js"
   },
   "keywords": [],
   "author": "",

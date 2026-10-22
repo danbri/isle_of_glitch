@@ -9,6 +9,7 @@ A single-page app that compiles a ZX Spectrum flavoured BASIC to Flash
     npm run serve        # http://127.0.0.1:8765/  (no-store headers, so plain reloads pick up edits)
     npm run build examples/hello.bas out.swf   # command-line compile
     npm run check        # compile every bundled example
+    npm run stamp        # version-stamp script URLs and imports before committing (GitHub Pages caches for 10 min)
 
 Open the page, pick an example from LOAD, type. CODE shows the editor over
 the running movie through frosted glass; SCREEN shows the movie full size
