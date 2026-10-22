@@ -1,7 +1,7 @@
 // Spectrum-flavoured BASIC -> AVM1 IR compiler.
 // Single pass: the parser emits IR as it goes. Output drops straight into runtime.js.
-import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root } from './avm1.js?v=mvjsxwdc';
-import { SCREEN } from './runtime.js?v=mvjsxwdc';
+import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root } from './avm1.js?v=mvju2q96';
+import { SCREEN } from './runtime.js?v=mvju2q96';
 
 export class BasicError extends Error {
   constructor(msg, line, col) { super(msg); this.line = line; this.col = col; }
@@ -87,7 +87,7 @@ const Sx = (e) => ({ ir: e, type: 's' });
 const math = (f, ...a) => cm(v('Math'), f, ...a);
 const varName = (name) => 'b_' + name;
 
-export function compileBasic(source, far = new Set(), chunks = null) {
+export function compileBasic(source, far = new Set(), chunks = null, trace = false) {
   const rawLines = source.split('\n');
   // pass 1: line numbers & resume indexes
   const lines = [];
@@ -112,7 +112,8 @@ export function compileBasic(source, far = new Set(), chunks = null) {
   const sprites = new Map(); // SPRITE name -> rows of cell characters (compile-time bitmaps baked into the SWF)
   const emojis = new Map(); // EMOJI name -> { text, size }: rasterised by the host at compile time, baked as alpha bitmaps
   const dataAt = new Map(); // line number -> index of its first DATA item
-  const chunkOf = (idx) => (chunks ? chunks[idx] : 0);
+  const resumeChunk = []; // resume index -> chunk it was emitted in (loop bodies, GOSUB returns, yields)
+  const chunkOf = (idx) => (chunks ? (idx < lines.length ? chunks[idx] : (resumeChunk[idx] ?? curChunk)) : 0);
   const nChunks = chunks ? Math.max(...chunks) + 1 : 1;
   const outs = Array.from({ length: nChunks }, () => []);
   let out = outs[0]; // body of the chunk being compiled
@@ -128,6 +129,7 @@ export function compileBasic(source, far = new Set(), chunks = null) {
   let chain = 0, curChunk = 0;
   const PL = (n) => 'P' + curChunk + '_' + n;
   const resumeLabel = (r) => {
+    resumeChunk[r] = curChunk;
     out.push(['jmp', 'R' + r], ['label', PL(chain)], ['jif', op('==', v('__pc'), num(r)), 'R' + r], ['jmp', PL(chain + 1)], ['label', 'R' + r]);
     chain++;
   };
@@ -150,15 +152,19 @@ export function compileBasic(source, far = new Set(), chunks = null) {
   for (const line of lines) {
     cur = line; curStmt = 1;
     splittable[line.idx] = forStack.length + loopStack.length === 0;
-    if (chunkOf(line.idx) !== curChunk) { // close this chunk: nothing matched its chain, let the driver try the next one
-      out.push(['label', PL(chain)], set('__claimed', num(0)), ret());
+    if (chunkOf(line.idx) !== curChunk) { // close this chunk
+      farJump(line.idx); // sequential flow off the end of this chunk continues at this line, in the next chunk
+      out.push(['label', PL(chain)]); // the chain's "nothing matched" exit: let the driver try the next chunk
+      if (trace) out.push(['trace', ['op', '+', ['s', 'chunk ' + curChunk + ' has no resume point '], v('__pc')]]);
+      out.push(set('__claimed', num(0)), ret());
       curChunk = chunkOf(line.idx); out = outs[curChunk]; chain = 0;
     }
     out.push(['mark', line.idx]);
     resumeLabel(line.idx);
+    if (trace) out.push(['trace', ['s', 'line ' + line.n]]); // TRON-style: logs every line reached (Ruffle shows it at logLevel info)
     const toks = tokenize(line.text, line.src);
     const P = new Parser(toks, line, {
-      vars, dims, out, data, dataAt, sprites, emojis, newResume, yieldAt, jumpToLineIdx, jumpTo, resumeLabel, targetFor, lineIdx, report, forStack, loopStack,
+      vars, dims, out, data, dataAt, sprites, emojis, trace, newResume, yieldAt, jumpToLineIdx, jumpTo, resumeLabel, targetFor, lineIdx, report, forStack, loopStack,
       setStmt: (k) => { curStmt = k; },
     });
     P.statements();
@@ -166,6 +172,7 @@ export function compileBasic(source, far = new Set(), chunks = null) {
   if (forStack.length) throw new BasicError(`FOR ${forStack[forStack.length - 1].name} without NEXT`, cur ? cur.src : 1, 1);
   if (loopStack.length) throw new BasicError(`${loopStack[loopStack.length - 1].kind} without ${loopStack[loopStack.length - 1].kind === 'REPEAT' ? 'UNTIL' : 'WEND'}`, cur ? cur.src : 1, 1);
   out.push(['label', PL(chain)]); // end of the last prologue chain: nothing matched, fall into the exit
+  if (trace) out.push(['trace', ['op', '+', ['s', 'last chunk has no resume point '], v('__pc')]]);
   out.push(x(call('__lo', str(lines.length ? `0 OK, ${lines[lines.length - 1].n}:1` : '0 OK'))), set('__done', num(1)), ret());
 
   // program prologue: variables, line table, dispatcher
@@ -241,6 +248,7 @@ class Parser {
       case 'GOTO': case 'GOSUB': return this.gotoStmt(t.v === 'GOSUB');
       case 'RETURN':
         out.push(set('__pc', cm(v('__gs'), 'pop')));
+        if (this.trace) out.push(['trace', ['op', '+', ['s', 'RETURN to resume point '], v('__pc')]]);
         out.push(iff(op('==', v('__pc'), ['undef']), [x(call('__err', str(this.report('7 RETURN without GOSUB')))), ret()]));
         out.push(set('__budget', op('-', v('__budget'), num(1))), set('__again', num(1)), ret());
         return;

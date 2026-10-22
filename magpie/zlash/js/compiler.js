@@ -1,8 +1,8 @@
 // Glue: BASIC source -> complete SWF bytes.
-import * as S from './swf.js?v=mvjsxwdc';
-import { compileIR } from './avm1.js?v=mvjsxwdc';
-import { buildAssets, runtimeIR, STAGE, SCREEN, PALETTE } from './runtime.js?v=mvjsxwdc';
-import { compileBasic, BasicError } from './basic.js?v=mvjsxwdc';
+import * as S from './swf.js?v=mvju2q96';
+import { compileIR } from './avm1.js?v=mvju2q96';
+import { buildAssets, runtimeIR, STAGE, SCREEN, PALETTE } from './runtime.js?v=mvju2q96';
+import { compileBasic, BasicError } from './basic.js?v=mvju2q96';
 
 let assetCache = null;
 // The host supplies the rasteriser (a canvas in the browser); Node gets a placeholder so builds still succeed.
@@ -17,13 +17,13 @@ function assets() { return assetCache || (assetCache = buildAssets()); }
 
 export { BasicError };
 
-export function buildProgram(source) {
+export function buildProgram(source, opts = {}) {
   const t0 = performance.now();
   const a = assets();
   const far = new Set();
   let prog, actions, chunks = null;
   for (let attempt = 0; ; attempt++) {
-    prog = compileBasic(source, far, chunks);
+    prog = compileBasic(source, far, chunks, !!opts.trace);
     const marks = {};
     try { actions = compileIR([...runtimeIR(a.beepLengths), ...prog.ir], marks); break; }
     catch (e) {

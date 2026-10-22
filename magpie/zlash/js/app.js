@@ -1,7 +1,7 @@
-import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js?v=mvjsxwdc';
-import { defineZxBasicMode } from './mode-zxbasic.js?v=mvjsxwdc';
-import { EXAMPLES } from './examples.js?v=mvjsxwdc';
-import { tapToListing } from './tap.js?v=mvjsxwdc';
+import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js?v=mvju2q96';
+import { defineZxBasicMode } from './mode-zxbasic.js?v=mvju2q96';
+import { EXAMPLES } from './examples.js?v=mvju2q96';
+import { tapToListing } from './tap.js?v=mvju2q96';
 
 const $ = (s) => document.querySelector(s);
 const STORE = 'zxflash.src', STORE_EX = 'zxflash.example';
@@ -55,7 +55,7 @@ async function doLoad(bytes) {
     data: bytes, swfFileName: 'zxflash.swf',
     autoplay: 'on', unmuteOverlay: 'hidden', letterbox: 'on', scale: 'showAll',
     backgroundColor: '#000000', allowScriptAccess: false, contextMenu: 'rightClickOnly',
-    splashScreen: false, warnOnUnsupportedContent: false, logLevel: 'warn',
+    splashScreen: false, warnOnUnsupportedContent: false, logLevel: window.zxflash?.trace ? 'info' : 'warn',
     maxExecutionDuration: 5,
     });
   } finally { busy(false); }
@@ -93,7 +93,7 @@ function run(force = false) {
   clearError();
   busy(true);
   let r;
-  try { r = buildProgram(src); } catch (e) { showError(e); busy(false); return; }
+  try { r = buildProgram(src, { trace: !!window.zxflash?.trace }); } catch (e) { showError(e); busy(false); return; }
   const st = $('#status');
   st.className = 'status ok';
   st.innerHTML = `<span>0 OK</span><span class="detail">${r.lines} lines &middot; ${r.bytecode} bytes AVM1 &middot; ${(r.swf.length / 1024).toFixed(1)} KB swf &middot; ${r.ms.toFixed(1)} ms</span>`;

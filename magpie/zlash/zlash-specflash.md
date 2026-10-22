@@ -42,6 +42,11 @@ bytecode in pure JavaScript and plays it with Ruffle. Reference implementation:
   `['mark', idx]` IR node). Cross-chunk jumps are far jumps; a driver `__run` calls chunks in
   order until one "claims" the resume point (`__claimed`), the last chunk's chain end is the
   program end. A 100 KB text adventure runs this way.
+- **Chunk boundaries need two exits.** The chain's "nothing matched" exit hands over to the next
+  chunk with the program counter untouched, but sequential flow off the end of a chunk must be a far
+  jump to the next chunk's first line, or a program silently ends with "0 OK" there. Keep a map from
+  every resume index to its chunk so loop back-jumps stay local. A line-trace mode (`zxflash.trace`)
+  that logs line numbers, RETURN targets and chain misses found this in minutes.
 - **Variables live on the timeline.** Pre-initialise every BASIC variable at top level
   (`b_name` / `b_name$` to dodge AVM1 globals like Key, Math, String); SetVariable inside
   functions then finds them in the scope chain. Runtime locals use DefineLocal.
