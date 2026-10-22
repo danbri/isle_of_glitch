@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZX Flash</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 fill=%27%23000%27/%3E%3Cpath d=%27M6 32 18 0h4L10 32z%27 fill=%27%23f00%27/%3E%3Cpath d=%27M10 32 22 0h4L14 32z%27 fill=%27%23ff0%27/%3E%3Cpath d=%27M14 32 26 0h4L18 32z%27 fill=%27%230f0%27/%3E%3Cpath d=%27M18 32 30 0h4L22 32z%27 fill=%27%230ff%27/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vendor/codemirror/codemirror.css">
+<link rel="stylesheet" href="css/app.css">
+<script>window.RufflePlayer = window.RufflePlayer || {}; window.RufflePlayer.config = { publicPath: 'vendor/ruffle/', polyfills: false };</script>
+<script src="vendor/ruffle/ruffle.js"></script>
+<script src="vendor/codemirror/codemirror.js"></script>
+<script src="vendor/codemirror/simple.js"></script>
+</head>
+<body data-tab="code">
+
+<div id="stage"><div id="player-host"></div></div>
+<div id="frost"></div>
+
+<header id="top">
+  <div class="brand"><span class="stripe"></span><span class="name">ZX<b>FLASH</b></span><span class="sub">Spectrum BASIC &rarr; AVM1 bytecode &rarr; Ruffle</span></div>
+  <nav class="tabs" role="tablist">
+    <button class="tab" data-tab="code" role="tab">CODE</button>
+    <button class="tab" data-tab="screen" role="tab">SCREEN</button>
+    <button class="tab" data-tab="manual" role="tab">MANUAL</button>
+  </nav>
+  <div class="tools">
+    <label class="sel">LOAD <select id="examples" name="examples"></select></label>
+    <button id="open" title="Open a .bas listing or a ZX Spectrum .tap tape image">OPEN FILE</button>
+    <input type="file" id="openfile" accept=".bas,.txt,.tap,.TAP" hidden>
+    <label class="chk"><input type="checkbox" id="auto" checked> auto RUN</label>
+    <button id="run" title="Compile and run (Ctrl/Cmd+Enter)">RUN</button>
+    <button id="download" title="Save the generated Flash movie as a .swf file">DOWNLOAD .SWF</button>
+  </div>
+</header>
+
+<main id="code-panel" class="panel">
+  <div class="panel-head"><span class="lbl">PROGRAM</span><span id="progname" class="progname"></span><span id="meta" class="meta"></span></div>
+  <textarea id="editor"></textarea>
+  <div id="status" class="status ok">0 OK</div>
+</main>
+
+<div id="compiling" hidden style="display:none">
+  <div class="card">
+    <svg viewBox="0 0 240 90" width="240" height="90" aria-hidden="true">
+      <g class="fig left">
+        <circle cx="50" cy="18" r="7"/><line x1="50" y1="25" x2="50" y2="50"/>
+        <line x1="50" y1="32" x2="34" y2="44"/><line x1="50" y1="32" x2="70" y2="26"/>
+        <line class="sword" x1="70" y1="26" x2="100" y2="12"/>
+        <line x1="50" y1="50" x2="40" y2="66"/><line x1="50" y1="50" x2="60" y2="66"/>
+        <rect x="36" y="64" width="28" height="4" rx="2"/><line x1="50" y1="68" x2="50" y2="80"/>
+        <circle cx="40" cy="84" r="3"/><circle cx="60" cy="84" r="3"/>
+      </g>
+      <g class="fig right">
+        <circle cx="190" cy="18" r="7"/><line x1="190" y1="25" x2="190" y2="50"/>
+        <line x1="190" y1="32" x2="206" y2="44"/><line x1="190" y1="32" x2="170" y2="26"/>
+        <line class="sword" x1="170" y1="26" x2="140" y2="12"/>
+        <line x1="190" y1="50" x2="180" y2="66"/><line x1="190" y1="50" x2="200" y2="66"/>
+        <rect x="176" y="64" width="28" height="4" rx="2"/><line x1="190" y1="68" x2="190" y2="80"/>
+        <circle cx="180" cy="84" r="3"/><circle cx="200" cy="84" r="3"/>
+      </g>
+      <text x="120" y="60" text-anchor="middle" class="shout">COMPILING!</text>
+    </svg>
+  </div>
+</div>
+
+<div id="screen-hint">click the screen to give it the keyboard &middot; <kbd>Esc</kbd> back to code</div>
+
+<main id="manual-panel" class="panel manual">
+  <div class="panel-head"><span class="lbl">MANUAL</span><span class="meta">everything compiles to Flash 8 bytecode and runs inside Ruffle</span></div>
+  <div class="manual-body">
+    <h2>What this is</h2>
+    <p>You type a ZX Spectrum BASIC program. The page compiles it, in JavaScript, straight to an uncompressed <code>.swf</code>: the
+    Spectrum ROM font as sprite glyphs, a bank of square-wave <code>DefineSound</code>s for <code>BEEP</code>, and your program as AVM1
+    (ActionScript 1) bytecode with a small runtime. Ruffle, the open-source Flash player, runs it. Nothing is interpreted in the browser;
+    the BASIC really is running inside the Flash movie. Every edit rebuilds the movie and reloads it.</p>
+
+    <h2>Lines and statements</h2>
+    <p>Lines may start with a number, as on the Spectrum. Lines without a number are numbered automatically (previous + 10).
+    Several statements go on one line separated by <code>:</code>. Keywords are case-insensitive. <code>LET</code> is optional.</p>
+
+    <h2>Statements</h2>
+    <table>
+      <tr><td><code>PRINT</code> items</td><td>items separated by <code>;</code> (no gap), <code>,</code> (next 16-column zone), <code>'</code> (newline). Modifiers: <code>AT row,col;</code> <code>TAB n;</code> <code>INK n;</code> <code>PAPER n;</code> <code>BRIGHT n;</code></td></tr>
+      <tr><td><code>INPUT "prompt"; a$</code></td><td>reads from the lower screen; <code>Enter</code> finishes, <code>Backspace</code> edits. Several variables allowed.</td></tr>
+      <tr><td><code>LET a = 1</code>, <code>LET a$ = "x"</code></td><td>string variables end in <code>$</code></td></tr>
+      <tr><td><code>IF c THEN ... ELSE ...</code></td><td><code>ELSE</code> is an extension; <code>IF x THEN 100</code> jumps</td></tr>
+      <tr><td><code>FOR i = a TO b STEP s</code> / <code>NEXT i</code></td><td></td></tr>
+      <tr><td><code>REPEAT</code> / <code>UNTIL c</code>, <code>WHILE c</code> / <code>WEND</code></td><td>extensions</td></tr>
+      <tr><td><code>GO TO n</code>, <code>GO SUB n</code>, <code>RETURN</code></td><td><code>GOTO</code>/<code>GOSUB</code> also accepted; computed targets work (<code>GO TO 100+k*10</code>)</td></tr>
+      <tr><td><code>CLS</code>, <code>INK n</code>, <code>PAPER n</code>, <code>BORDER n</code>, <code>BRIGHT n</code></td><td>colours 0 black 1 blue 2 red 3 magenta 4 green 5 cyan 6 yellow 7 white; 8&ndash;15 are the bright set; extension: any <code>#RRGGBB</code></td></tr>
+      <tr><td><code>PLOT x,y</code>, <code>DRAW dx,dy</code>, <code>CIRCLE x,y,r</code></td><td>256&times;176 pixel grid, origin bottom-left, colour items allowed first (<code>PLOT INK 2; x,y</code>)</td></tr>
+      <tr><td><code>RECT x,y,w,h</code></td><td>extension: filled rectangle in the current INK (w, h in pixels)</td></tr>
+      <tr><td><code>PAUSE n</code></td><td>n frames at 50 per second; <code>PAUSE 0</code> waits for a key; any key ends a pause early</td></tr>
+      <tr><td><code>BEEP seconds, pitch</code></td><td>pitch in semitones from middle C, &minus;24 to 36</td></tr>
+      <tr><td><code>DIM a(10)</code>, <code>DIM b$(3,4)</code></td><td>arrays, elements 1..n</td></tr>
+      <tr><td><code>DATA 1,2,"x"</code>, <code>READ a, b$</code>, <code>RESTORE [n]</code></td><td>as on the Spectrum</td></tr>
+      <tr><td><code>WRAP 1</code> / <code>WRAP 0</code></td><td>extension: with WRAP 1, PRINT moves a word that would not fit onto the next line instead of splitting it (handy for text adventures)</td></tr>
+      <tr><td><code>SPRITE "name", "row", "row"...</code></td><td>defines a bitmap sprite baked into the movie: <code>.</code> transparent, <code>#</code> black, <code>+</code> grey, <code>W</code> white, <code>0</code>-<code>7</code> colours, <code>a</code>-<code>h</code> bright colours; repeating the name appends rows</td></tr>
+      <tr><td><code>SPRITE n$, x, y [, xscale [, yscale]]</code></td><td>places a copy (top-left at x,y in screen pixels, y downwards, scale in percent); <code>SPRITE CLEAR</code> removes them all, <code>CLS</code> too</td></tr>
+      <tr><td><code>FX "method", args...</code></td><td>escape hatch to Flash: calls that MovieClip drawing-API method on the graphics layer, e.g. <code>FX "lineStyle", 3, #ff00ff, 60</code>, <code>FX "moveTo", 10, 10</code>, <code>FX "curveTo", 128, 0, 246, 180</code>, <code>FX "beginFill", #0000ff, 40</code>, <code>FX "endFill"</code>. Coordinates are Flash's: pixels, origin top-left.</td></tr>
+      <tr><td><code>FXP "property", value</code></td><td>sets a property of the graphics layer: <code>FXP "_alpha", 50</code>, <code>FXP "_rotation", 30</code>, <code>FXP "_xscale", 200</code></td></tr>
+      <tr><td><code>STOP</code>, <code>REM</code></td><td><code>FLASH</code>, <code>INVERSE</code>, <code>OVER</code>, <code>POKE</code>, <code>RANDOMIZE</code>, <code>CLEAR</code> are accepted and ignored</td></tr>
+    </table>
+
+    <h2>Functions</h2>
+    <p>Spectrum style, no brackets needed: <code>INT x</code>, <code>ABS</code>, <code>SGN</code>, <code>SQR</code>, <code>SIN</code>, <code>COS</code>, <code>TAN</code>, <code>ATN</code>, <code>EXP</code>, <code>LN</code>, <code>RND</code>, <code>PI</code>,
+    <code>LEN a$</code>, <code>STR$ n</code>, <code>VAL a$</code>, <code>CHR$ n</code>, <code>CODE a$</code>, <code>INKEY$</code> (cursor keys give <code>CHR$ 8</code> left, <code>9</code> right, <code>10</code> down, <code>11</code> up). String slicing: <code>a$(2 TO 4)</code>, <code>a$(3)</code>.
+    Extensions: <code>MOUSEX</code>, <code>MOUSEY</code> (Spectrum pixel coordinates), <code>TICKS</code> (frames since start).</p>
+    <p>Characters 128&ndash;143 are the block graphics; you can also paste <code>▘▝▀▖▌▞▛▗▚▐▜▄▙▟█</code> into strings. <code>©</code> and <code>£</code> work too.</p>
+
+    <h2>Loading real tapes</h2>
+    <p><b>OPEN FILE</b> takes a <code>.bas</code> listing or a Spectrum <code>.tap</code> tape image. BASIC blocks are detokenised into the
+    editor; CODE blocks are listed in a REM at the top. Tape, printer and stream commands (<code>LOAD</code>, <code>SAVE</code>,
+    <code>LPRINT</code>...) are accepted and skipped, <code>PEEK</code>/<code>IN</code>/<code>ATTR</code>/<code>POINT</code> return dummies, and
+    <code>USR</code> stops the program with a report, because machine code cannot run here.</p>
+
+    <h2>Playing the .swf elsewhere</h2>
+    <p><b>DOWNLOAD .SWF</b> saves the current movie. It is a plain Flash 8 file using only Flash 6&ndash;8 era APIs, so it should play in
+    Adobe's original player, but it has only been tested in Ruffle. Adobe ended Flash Player at the end of 2020 and removed the downloads;
+    the last standalone projector (32.0.0.465) survives in archives such as BlueMaxima's Flashpoint. The practical options today are the
+    <a href="https://ruffle.rs/downloads" target="_blank" rel="noopener">Ruffle desktop app</a> or any page that embeds Ruffle.</p>
+
+    <h2>Where the extension points are</h2>
+    <p>Everything the BASIC can do is a compiler case in <code>js/basic.js</code> that emits a call into the AVM1 runtime in
+    <code>js/runtime.js</code>. <code>RECT</code> is twelve lines across the two. Three ways to go further, from cheap to deep:</p>
+    <ol>
+      <li><b>FX / FXP</b> (above): call any MovieClip drawing-API method or set any clip property from BASIC, no compiler change needed.</li>
+      <li><b>New statements</b>: add a keyword, a parser case and a runtime function. Sprites (<code>SPRITE n, x, y</code> backed by attachMovie),
+      gradients, alpha, rotation, bitmap fills, sound bank entries, a second graphics layer.</li>
+      <li><b>New assets</b>: the SWF writer in <code>js/swf.js</code> can add tags (DefineBitsLossless for images, DefineFont for text fields,
+      longer DefineSounds) that BASIC statements then reference by export name.</li>
+    </ol>
+    <p>REM lines are deliberately inert; directives would be better as real keywords so the editor and the error messages know about them.</p>
+
+    <h2>How the running works</h2>
+    <p>The whole program becomes one AVM1 function that is re-entered every frame (a program over about 40 KB of bytecode is split across several functions automatically; a function may hold 64 KB). Backward jumps spend a per-frame budget, so a
+    <code>10 GO TO 10</code> loop never hangs the player: it just yields and carries on next frame. <code>PAUSE</code>, <code>BEEP</code> and
+    <code>INPUT</code> yield properly. Errors appear Spectrum-style in the lower two rows of the screen.</p>
+  </div>
+</main>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

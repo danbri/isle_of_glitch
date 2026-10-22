@@ -1,0 +1,19 @@
+{
+  "name": "flash",
+  "version": "1.0.0",
+  "description": "ZX Spectrum BASIC compiled to Flash (AVM1) bytecode in the browser, played by Ruffle",
+  "main": "index.js",
+  "scripts": {
+    "serve": "python3 tools/serve.py 8765",
+    "build": "node tools/build.js",
+    "check": "node tools/check-examples.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ruffle-rs/ruffle": "^0.7.1",
+    "codemirror": "^5.65.21"
+  },
+  "type": "module"
+}

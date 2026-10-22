@@ -1,0 +1,174 @@
+:root {
+  --ink: #e8e8e8;
+  --dim: #9a9aa6;
+  --glass: rgba(10, 10, 16, 0.62);
+  --glass-edge: rgba(255, 255, 255, 0.14);
+  --accent: #ffd400;
+  --red: #ff2a2a; --yel: #ffd400; --grn: #19e03a; --cyn: #19e0e0;
+  --mono: "JetBrains Mono", Menlo, Consolas, monospace;
+  --pix: "VT323", "JetBrains Mono", monospace;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #000;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 13px;
+  overflow: hidden;
+}
+
+/* The Flash movie always sits full-bleed at the back */
+#stage { position: fixed; inset: 0; background: #000; }
+#player-host, #player-host ruffle-player { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+/* Frosted glass between the movie and the code */
+#frost {
+  position: fixed; inset: 0; pointer-events: none;
+  backdrop-filter: blur(14px) saturate(140%) brightness(0.55);
+  -webkit-backdrop-filter: blur(14px) saturate(140%) brightness(0.55);
+  background: radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.05), transparent 60%);
+  transition: opacity .35s ease;
+}
+body[data-tab="screen"] #frost { opacity: 0; }
+
+/* Top bar */
+#top {
+  position: fixed; top: 0; left: 0; right: 0; height: 48px; z-index: 10;
+  display: flex; align-items: center; gap: 18px; padding: 0 16px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(0,0,0,0.55));
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--glass-edge);
+}
+.brand { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.brand .stripe {
+  width: 34px; height: 26px; display: inline-block;
+  background: linear-gradient(135deg, transparent 0 18%, var(--red) 18% 38%, var(--yel) 38% 58%, var(--grn) 58% 78%, var(--cyn) 78% 98%, transparent 98%);
+}
+.brand .name { font-family: var(--pix); font-size: 28px; letter-spacing: 1px; line-height: 1; }
+.brand .name b { color: var(--accent); font-weight: 400; }
+.brand .sub { color: var(--dim); font-size: 11px; }
+.tabs { display: flex; gap: 2px; margin-left: auto; }
+.tab {
+  font-family: var(--pix); font-size: 20px; letter-spacing: 1px; color: var(--dim);
+  background: transparent; border: 1px solid transparent; padding: 4px 14px; cursor: pointer;
+}
+.tab:hover { color: var(--ink); }
+.tab.active { color: #000; background: var(--accent); border-color: var(--accent); }
+.tools { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.tools button, .tools select {
+  font-family: var(--pix); font-size: 18px; color: var(--ink); background: rgba(255,255,255,0.08);
+  border: 1px solid var(--glass-edge); padding: 3px 10px; cursor: pointer;
+}
+.tools button:hover { background: rgba(255,255,255,0.18); }
+.tools #run { background: var(--grn); color: #000; border-color: var(--grn); }
+.tools .sel, .tools .chk { display: flex; align-items: center; gap: 6px; font-family: var(--pix); font-size: 18px; color: var(--dim); }
+.tools select { max-width: 180px; }
+
+/* Panels */
+.panel {
+  position: fixed; top: 64px; left: 50%; transform: translateX(-50%);
+  width: min(880px, calc(100vw - 32px)); height: calc(100vh - 80px);
+  display: flex; flex-direction: column;
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  transition: opacity .25s ease, transform .25s ease;
+}
+.panel-head {
+  display: flex; align-items: baseline; gap: 14px; padding: 8px 14px;
+  border-bottom: 1px solid var(--glass-edge); font-family: var(--pix); font-size: 18px;
+}
+.panel-head .lbl { color: var(--accent); }
+.panel-head .progname { color: var(--ink); }
+.panel-head .meta { color: var(--dim); font-size: 15px; margin-left: auto; max-width: 45%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body:not([data-tab="code"]) #code-panel { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(10px); }
+body:not([data-tab="manual"]) #manual-panel { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(10px); }
+
+#screen-hint {
+  position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+  font-family: var(--pix); font-size: 18px; color: var(--dim); background: rgba(0,0,0,0.55); padding: 4px 12px;
+  border: 1px solid var(--glass-edge); opacity: 0; pointer-events: none; transition: opacity .3s;
+}
+body[data-tab="screen"] #screen-hint { opacity: 1; }
+kbd { font-family: inherit; border: 1px solid var(--dim); padding: 0 4px; }
+
+/* Editor */
+.CodeMirror {
+  flex: 1; height: auto; font-family: var(--mono); font-size: 14px; line-height: 1.5;
+  background: transparent; color: var(--ink);
+}
+.CodeMirror-gutters { background: rgba(0,0,0,0.25); border-right: 1px solid var(--glass-edge); }
+.CodeMirror-linenumber { color: #555; }
+.CodeMirror-cursor { border-left: 8px solid var(--accent); opacity: .8; }
+.CodeMirror-selected { background: rgba(255,212,0,0.18) !important; }
+.CodeMirror-focused .CodeMirror-selected { background: rgba(255,212,0,0.25) !important; }
+.cm-s-default .cm-lineno { color: #8a8a8a; }
+.cm-s-default .cm-keyword { color: #ffd400; font-weight: 700; }
+.cm-s-default .cm-builtin { color: #19e0e0; }
+.cm-s-default .cm-string { color: #19e03a; }
+.cm-s-default .cm-number { color: #ff9c3a; }
+.cm-s-default .cm-comment { color: #8a8a9a; font-style: italic; }
+.cm-s-default .cm-operator { color: #ff5fd2; }
+.cm-s-default .cm-variable { color: #e8e8e8; }
+.cm-s-default .cm-error { color: #fff; background: rgba(255,42,42,0.5); }
+.line-error { background: rgba(255,42,42,0.22); }
+.gutter-error { color: var(--red); }
+
+.status {
+  font-family: var(--pix); font-size: 19px; padding: 6px 14px; border-top: 1px solid var(--glass-edge);
+  display: flex; gap: 14px; align-items: baseline;
+}
+.status.ok { color: var(--grn); }
+.status.err { color: #fff; background: rgba(215,0,0,0.6); }
+.status .detail { color: var(--dim); font-size: 15px; margin-left: auto; }
+
+/* Manual */
+.manual-body { overflow: auto; padding: 10px 22px 30px; line-height: 1.55; }
+.manual-body h2 { font-family: var(--pix); font-size: 24px; color: var(--accent); margin: 18px 0 6px; font-weight: 400; }
+.manual-body code { color: var(--cyn); }
+.manual-body a { color: var(--accent); }
+.manual-body table { border-collapse: collapse; width: 100%; }
+.manual-body td { vertical-align: top; padding: 4px 10px 4px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.manual-body td:first-child { white-space: nowrap; }
+
+@media (max-width: 720px) {
+  .brand .sub, .tools .chk { display: none; }
+  #top { gap: 8px; padding: 0 8px; }
+  .panel { top: 56px; height: calc(100vh - 64px); }
+}
+
+/* xkcd 303 while the movie rebuilds */
+#compiling {
+  position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+#compiling[hidden] { display: none; }
+#compiling .card {
+  position: relative;
+  background: #000; color: #fff; padding: 10px 24px 12px;
+  /* ZX tape-loading stripes as the frame, kept small so it stays cheap to paint */
+  border: 10px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  font-family: var(--pix); text-align: center;
+}
+#compiling .card::before {
+  content: ""; position: absolute; inset: -10px; z-index: -1;
+  background: repeating-linear-gradient(0deg, #d70000 0 5px, #00d7d7 5px 10px);
+  animation: tape .2s linear infinite;
+}
+#compiling svg { display: block; margin: 0 auto; }
+#compiling .fig { fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; }
+#compiling .fig circle { fill: #000; }
+/* they take turns: left thrusts, then right cuts */
+#compiling .fig.left { animation: thrust 1s ease-in-out infinite; }
+#compiling .fig.right { animation: cut 1s ease-in-out infinite; transform-origin: 190px 84px; }
+#compiling .fig.right .sword { animation: swing 1s ease-in-out infinite; transform-origin: 170px 26px; }
+#compiling .sword { stroke: #ffd400; stroke-width: 2.6; }
+#compiling .shout { fill: #ffd400; font-family: var(--pix); font-size: 20px; letter-spacing: 1px; }
+@keyframes thrust { 0%, 50%, 100% { transform: translateX(0); } 20% { transform: translateX(26px); } 35% { transform: translateX(22px); } }
+@keyframes cut { 0%, 50%, 100% { transform: translateX(0) rotate(0); } 70% { transform: translateX(-18px) rotate(-6deg); } 85% { transform: translateX(-14px) rotate(3deg); } }
+@keyframes swing { 0%, 50%, 100% { transform: rotate(0); } 62% { transform: rotate(40deg); } 75% { transform: rotate(-30deg); } }
+@keyframes tape { from { background-position: 0 0; } to { background-position: 0 10px; } }
