@@ -1,4 +1,4 @@
-10 REM JOOST (2007) SPLASH SCREEN, REBOOTED - every pixel here is vector: the logo was traced from the PNG into curves
+10 REM TVP
 20 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
 30 LET nl=9: LET np=345: DIM cn(nl): DIM lx(np): DIM ly(np)
 40 RESTORE 9000: LET k=0: FOR i=1 TO nl: READ cn(i): FOR j=1 TO cn(i): LET k=k+1: READ lx(k),ly(k): LET lx(k)=lx(k)/10: LET ly(k)=ly(k)/10: NEXT j: NEXT i

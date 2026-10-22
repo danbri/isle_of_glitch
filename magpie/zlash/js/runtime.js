@@ -13,6 +13,21 @@ export const PALETTE = [
 ];
 
 export const BEEP_MIN = -24, BEEP_MAX = 36, BEEP_RATE = 22050;
+export const TONE_MIN = -12, TONE_MAX = 24, TONE_RATE = 11025, TONE_SECS = 0.22;
+
+// a soft chime: sine with a quick attack and exponential decay, 8-bit unsigned samples
+function toneSamples(pitch) {
+  const f = 261.63 * Math.pow(2, pitch / 12);
+  const n = Math.round(TONE_RATE * TONE_SECS);
+  const s = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / TONE_RATE;
+    const env = Math.min(1, t * 400) * Math.exp(-t * 14) * 0.45;
+    const v = Math.sin(2 * Math.PI * f * t) * 0.8 + Math.sin(4 * Math.PI * f * t) * 0.2;
+    s[i] = 128 + Math.round(v * env * 127);
+  }
+  return s;
+}
 
 // ---- glyphs ----
 export function glyphBitmap(code) {
@@ -83,6 +98,11 @@ export function buildAssets() {
     tags.push(S.tagDefineSound(sid, smp, 2));
     exports.push({ id: sid, name: 'b' + p });
     beepLengths.push(smp.length);
+  }
+  for (let p = TONE_MIN; p <= TONE_MAX; p++) {
+    const sid = id++;
+    tags.push(S.tagDefineSound8(sid, toneSamples(p), 1));
+    exports.push({ id: sid, name: 't' + p });
   }
   tags.push(S.tagExportAssets(exports));
   return { tags, beepLengths, nextId: id };
@@ -316,6 +336,21 @@ export function runtimeIR(beepLengths) {
     iff(lt(v('l'), num(1)), [set('l', num(1))]),
     x(cm(v('s'), 'start', num(0), v('l'))),
   ]));
+
+  out.push(fn('__tone', ['_p'], [
+    set('_p', math('round', v('_p'))),
+    iff(lt(v('_p'), num(TONE_MIN)), [set('_p', num(TONE_MIN))]),
+    iff(op('>', v('_p'), num(TONE_MAX)), [set('_p', num(TONE_MAX))]),
+    local('s', nw('Sound')),
+    x(cm(v('s'), 'attachSound', add(str('t'), v('_p')))),
+    x(cm(v('s'), 'start', num(0), num(1))),
+  ]));
+
+  // mouse button state for MOUSEB (touch arrives as mouse events)
+  out.push(set('__mb', num(0)), set('__ml', ['obj', []]));
+  out.push(setm(v('__ml'), 'onMouseDown', ['fnx', [], [set('__mb', num(1))]]));
+  out.push(setm(v('__ml'), 'onMouseUp', ['fnx', [], [set('__mb', num(0))]]));
+  out.push(x(cm(v('Mouse'), 'addListener', v('__ml'))));
 
   // lower screen (rows 22-23): INPUT prompt, error reports
   out.push(fn('__lo', ['_s'], [

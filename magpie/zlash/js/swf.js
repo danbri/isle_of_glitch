@@ -183,6 +183,15 @@ export function tagDefineSound(id, samples /* Int16Array */, rate = 2) {
   return tag(T.DefineSound, w);
 }
 
+// Uncompressed 8-bit unsigned mono PCM. rate: 0=5.5k 1=11k 2=22k 3=44k
+export function tagDefineSound8(id, samples /* Uint8Array */, rate = 1) {
+  const w = new ByteWriter(); w.u16(id);
+  w.u8((3 << 4) | (rate << 2) | (0 << 1) | 0); // format 3, 8-bit, mono
+  w.u32(samples.length);
+  w.bytes(samples);
+  return tag(T.DefineSound, w);
+}
+
 // Assemble a whole SWF (uncompressed, "FWS").
 export function buildSwf({ width, height, frameRate = 50, frameCount = 1, tags, version = 8 }) {
   const body = new ByteWriter();

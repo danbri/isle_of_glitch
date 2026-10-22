@@ -174,6 +174,6 @@ try { initial = localStorage.getItem(STORE); initialEx = localStorage.getItem(ST
   else editor.setValue(initial || EXAMPLES[0].src);
   showName();
 }
-setTab('code');
+setTab('screen');
 run(true);
 window.zxflash = { editor, player, run, buildProgram, setTab };

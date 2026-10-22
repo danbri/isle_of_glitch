@@ -9,8 +9,8 @@ export class BasicError extends Error {
 
 const KEYWORDS = new Set(('LET PRINT INPUT IF THEN ELSE FOR TO STEP NEXT GOTO GOSUB RETURN STOP END REM CLS INK PAPER BORDER BRIGHT ' +
   'FLASH INVERSE OVER PLOT DRAW CIRCLE PAUSE BEEP RANDOMIZE RANDOMISE DIM POKE CLEAR RUN REPEAT UNTIL WHILE WEND RECT AT TAB ' +
-  'AND OR NOT LINE GO SUB NEW LIST DATA READ RESTORE FX FXP SPRITE EMOJI WRAP LOAD SAVE VERIFY MERGE CAT FORMAT MOVE ERASE OPEN CLOSE LPRINT LLIST COPY CONTINUE OUT DEF FN BIN ' +
-  'RND INT ABS SGN SQR SIN COS TAN ATN ASN ACS EXP LN LEN STR$ VAL VAL$ CHR$ CODE INKEY$ PI PEEK IN USR ATTR POINT SCREEN$ MOUSEX MOUSEY TICKS').split(' '));
+  'AND OR NOT LINE GO SUB NEW LIST DATA READ RESTORE FX FXP SPRITE EMOJI WRAP TONE LOAD SAVE VERIFY MERGE CAT FORMAT MOVE ERASE OPEN CLOSE LPRINT LLIST COPY CONTINUE OUT DEF FN BIN ' +
+  'RND INT ABS SGN SQR SIN COS TAN ATN ASN ACS EXP LN LEN STR$ VAL VAL$ CHR$ CODE INKEY$ PI PEEK IN USR ATTR POINT SCREEN$ MOUSEX MOUSEY MOUSEB TICKS').split(' '));
 const IGNORED = new Set(['FLASH', 'INVERSE', 'OVER', 'POKE', 'CLEAR', 'RANDOMIZE', 'RANDOMISE', 'NEW', 'LIST', 'OUT']);
 // statements skipped without looking at their arguments (tape, printer and stream commands)
 const SKIPPED = new Set(['LOAD', 'SAVE', 'VERIFY', 'MERGE', 'CAT', 'FORMAT', 'MOVE', 'ERASE', 'OPEN', 'CLOSE', 'LPRINT', 'LLIST', 'COPY', 'CONTINUE', 'DEF']);
@@ -267,6 +267,12 @@ class Parser {
         out.push(x(call('__beep', v('_bd'), p)));
         out.push(set('__wait', math('round', op('*', v('_bd'), num(SCREEN.FPS)))));
         this.yieldAt(); return;
+      }
+      case 'TONE': { // TONE pitch [, seconds]: a soft chime (sine, quick decay); waits like BEEP only if seconds is given
+        const pch = this.numExpr();
+        out.push(x(call('__tone', pch)));
+        if (this.isOp(',')) { this.next(); out.push(set('__wait', math('round', op('*', this.numExpr(), num(SCREEN.FPS))))); this.yieldAt(); }
+        return;
       }
       case 'DIM': return this.dim();
       case 'SPRITE': {
@@ -671,6 +677,7 @@ class Parser {
       case 'MOUSEX': return N(math('floor', m(v('scr'), '_xmouse')));
       case 'MOUSEY': return N(op('-', num(175), math('floor', m(v('scr'), '_ymouse'))));
       case 'TICKS': return N(v('__t'));
+      case 'MOUSEB': return N(v('__mb'));
       case 'INT': return N(math('floor', nArg()));
       case 'ASN': return N(math('asin', nArg()));
       case 'ACS': return N(math('acos', nArg()));
