@@ -40,7 +40,7 @@ method or set any clip property, so BASIC can reach the whole Flash 8
 vector API without touching the compiler). `examples/monster-maze.bas` is a 3D Monster Maze
 homage written in it, using Rex's sprites and the view geometry recovered from
 the commented ZX81 disassembly (dl/mm); `examples/platform.bas` is a small
-platform game; `examples/hobbit.bas` ("Pipkin's Quest") is a 49-room text
+platform-game demo; `examples/hobbit.bas` ("Pipkin's Quest") is a 49-room text
 adventure in the shape of the 1982 Melbourne House one, with all names and
 text rewritten (personal use); `WRAP 1` gives it word-wrapped PRINT; `examples/fiesta.bas` shows `EMOJI`,
 which rasterises emoji through the browser's canvas at compile time into

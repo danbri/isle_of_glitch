@@ -1,4 +1,4 @@
-10 REM MANIC MINOR - a one-screen platform game built on SPRITE
+10 REM JUMP DEMO - a one-screen platform game built on SPRITE
 20 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
 30 SPRITE "hero1","..WWWW..",".WWWWWW.",".W2WW2W.",".WWWWWW.","..WWWW..","...55...","..5555..",".55..55.",".5....5.","..6..6..","..6..6..",".66..66."
 40 SPRITE "hero2","..WWWW..",".WWWWWW.",".W2WW2W.",".WWWWWW.","..WWWW..","...55...","..5555..",".55..55.",".5....5.","..6..6..",".6....6.","66....66"
@@ -12,7 +12,7 @@
 120 LET hx=8: LET hy=152: LET vx=0: LET vy=0: LET onp=1: LET gx=100: LET gd=1: LET got=0: LET t=0: LET lives=3
 130 REM --- draw the static scene once; sprites are repositioned every frame ---
 140 CLS: FOR i=1 TO 8: FOR j=0 TO INT (pw(i)/32)-1: SPRITE "plat", px(i)+j*32, py(i), 100, 100: NEXT j: NEXT i
-150 PRINT AT 0,0; INK 6; "MANIC MINOR"; TAB 20; "LIVES "; lives
+150 PRINT AT 0,0; INK 6; "JUMP DEMO"; TAB 20; "LIVES "; lives
 160 REPEAT
 170 LET k$=INKEY$: LET t=t+1
 175 IF k$=CHR$ 8 OR k$="a" OR k$="o" THEN LET vx=-2.5
@@ -47,7 +47,7 @@
 500 REM --- lost a life ---
 510 FOR i=1 TO 4: BEEP 0.05,-10-i*2: NEXT i
 520 LET lives=lives-1: IF lives=0 THEN PRINT AT 10,10; INK 2; PAPER 7; " GAME OVER ": PAUSE 100: GO TO 20
-530 LET hx=8: LET hy=152: LET vx=0: LET vy=0: PRINT AT 0,0; INK 6; "MANIC MINOR"; TAB 20; "LIVES "; lives; " ": GO TO 160
+530 LET hx=8: LET hy=152: LET vx=0: LET vy=0: PRINT AT 0,0; INK 6; "JUMP DEMO"; TAB 20; "LIVES "; lives; " ": GO TO 160
 600 REM --- won ---
 610 PRINT AT 10,8; INK 4; PAPER 7; " ALL KEYS FOUND! "
 620 FOR i=0 TO 24 STEP 2: BEEP 0.04,i: NEXT i

@@ -139,7 +139,8 @@
     <h2>How the running works</h2>
     <p>The whole program becomes one AVM1 function that is re-entered every frame (a program over about 40 KB of bytecode is split across several functions automatically; a function may hold 64 KB). Backward jumps spend a per-frame budget, so a
     <code>10 GO TO 10</code> loop never hangs the player: it just yields and carries on next frame. <code>PAUSE</code>, <code>BEEP</code> and
-    <code>INPUT</code> yield properly. Errors appear Spectrum-style in the lower two rows of the screen.</p>
+    <code>INPUT</code> yield properly. <code>RETURN</code> and computed <code>GO TO</code> re-enter through that resume chain, so
+    they cost a few hundred operations each: keep GO SUBs out of per-vertex inner loops. Errors appear Spectrum-style in the lower two rows of the screen.</p>
   </div>
 </main>
 
