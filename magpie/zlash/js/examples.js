@@ -173,12 +173,12 @@ export const EXAMPLES = [
 1040 LET r=pr+dr(f)*d: LET c=pc+dc(f)*d
 1050 LET xa=32+cs(d)*8: LET xb=32+cs(d+1)*8: LET ta=(12-hh(d))*7.333: LET tb=(12-hh(d+1))*7.333: LET ba=(12+hh(d))*7.333: LET bb=(12+hh(d+1))*7.333
 1060 LET lw=m(r+dr(lf),c+dc(lf)): LET rw=m(r+dr(rt2),c+dc(rt2))
-1070 IF lw=1 THEN FX "beginFill", #000000, 100: FX "moveTo", xa, ta: FX "lineTo", xb, tb: FX "lineTo", xb, bb: FX "lineTo", xa, ba: FX "lineTo", xa, ta: FX "endFill"
-1080 IF lw<>1 THEN FX "beginFill", #808080, 100: FX "moveTo", xa, tb: FX "lineTo", xb, tb: FX "lineTo", xb, bb: FX "lineTo", xa, bb: FX "lineTo", xa, tb: FX "endFill"
-1090 IF rw=1 THEN FX "beginFill", #000000, 100: FX "moveTo", 256-xa, ta: FX "lineTo", 256-xb, tb: FX "lineTo", 256-xb, bb: FX "lineTo", 256-xa, ba: FX "lineTo", 256-xa, ta: FX "endFill"
-1100 IF rw<>1 THEN FX "beginFill", #808080, 100: FX "moveTo", 256-xb, tb: FX "lineTo", 256-xa, tb: FX "lineTo", 256-xa, bb: FX "lineTo", 256-xb, bb: FX "lineTo", 256-xb, tb: FX "endFill"
+1070 IF lw=1 THEN LET x0=xa: LET x1=xb: GO SUB 1400
+1080 IF lw<>1 THEN FX "chequer": FX "moveTo", xa, tb: FX "lineTo", xb, tb: FX "lineTo", xb, bb: FX "lineTo", xa, bb: FX "lineTo", xa, tb: FX "endFill"
+1090 IF rw=1 THEN LET x0=256-xa: LET x1=256-xb: GO SUB 1400
+1100 IF rw<>1 THEN FX "chequer": FX "moveTo", 256-xb, tb: FX "lineTo", 256-xa, tb: FX "lineTo", 256-xa, bb: FX "lineTo", 256-xb, bb: FX "lineTo", 256-xb, tb: FX "endFill"
 1110 LET fw=m(r+dr(f),c+dc(f))
-1120 IF fw=1 THEN FX "beginFill", #808080, 100: FX "moveTo", xb, tb: FX "lineTo", 256-xb, tb: FX "lineTo", 256-xb, bb: FX "lineTo", xb, bb: FX "lineTo", xb, tb: FX "endFill": LET far=d: LET d=5
+1120 IF fw=1 THEN FX "chequer": FX "moveTo", xb, tb: FX "lineTo", 256-xb, tb: FX "lineTo", 256-xb, bb: FX "lineTo", xb, bb: FX "lineTo", xb, tb: FX "endFill": LET far=d: LET d=5
 1130 IF fw=2 THEN GO SUB 1300: LET far=d: LET d=5
 1140 NEXT d
 1150 IF far=6 THEN FX "beginFill", #000000, 100: FX "moveTo", 128, tb: FX "lineTo", 128, bb: FX "lineTo", 128, tb: FX "endFill"
@@ -203,6 +203,13 @@ export const EXAMPLES = [
 1320 FX "beginFill", q*#ffffff, 100: FX "moveTo", xb+e*(128-xb)/6, tb+e*(88-tb)/6: FX "lineTo", 256-xb-e*(128-xb)/6, tb+e*(88-tb)/6: FX "lineTo", 256-xb-e*(128-xb)/6, bb-e*(bb-88)/6: FX "lineTo", xb+e*(128-xb)/6, bb-e*(bb-88)/6: FX "endFill"
 1330 LET q=1-q: NEXT e
 1340 RETURN
+1400 REM --- a side wall the ZX81 way: one step per character column, edges snapped to quarter-character rows ---
+1410 LET nc=ABS (x1-x0)/8: LET sg=SGN (x1-x0): LET q=176/48
+1420 FX "beginFill", #000000, 100: FX "moveTo", x0, INT (ta/q+0.5)*q
+1430 FOR k=1 TO nc: LET yy=INT ((ta+(tb-ta)*(k-1)/nc)/q+0.5)*q: LET yb=INT ((ta+(tb-ta)*k/nc)/q+0.5)*q: FX "lineTo", x0+k*8*sg, yy: FX "lineTo", x0+k*8*sg, yb: NEXT k
+1440 FX "lineTo", x1, INT (bb/q+0.5)*q
+1450 FOR k=nc TO 1 STEP -1: LET yy=INT ((ba+(bb-ba)*k/nc)/q+0.5)*q: LET yb=INT ((ba+(bb-ba)*(k-1)/nc)/q+0.5)*q: FX "lineTo", x0+(k-1)*8*sg, yy: FX "lineTo", x0+(k-1)*8*sg, yb: NEXT k
+1460 FX "lineTo", x0, INT (ba/q+0.5)*q: FX "endFill": RETURN
 2000 REM --- Rex, from the 1981 ZX81 code: one cell = one quarter of a ZX81 character ---
 2001 SPRITE "d1l","................................","...........##########...........","..........############..........",".........##############.........","........################........",".......#################........"
 2002 SPRITE "d1l",".......##################.......","......#####.#########.###.......","......###################.......","......###################.......","......###################.......",".....#########.##.#######......."
@@ -258,21 +265,24 @@ export const EXAMPLES = [
 90 RESTORE 100: FOR i=1 TO 8: READ px(i),py(i),pw(i): NEXT i: FOR i=1 TO 5: READ kx(i),ky(i): LET kg(i)=0: NEXT i
 100 DATA 0,164,256,0,128,96,160,128,96,32,96,64,128,96,96,0,64,80,176,64,80,96,32,64
 110 DATA 12,112,230,112,120,80,20,48,200,48
-120 LET hx=8: LET hy=152: LET vy=0: LET onp=1: LET gx=100: LET gd=1: LET got=0: LET t=0: LET lives=3
+120 LET hx=8: LET hy=152: LET vx=0: LET vy=0: LET onp=1: LET gx=100: LET gd=1: LET got=0: LET t=0: LET lives=3
 130 REM --- draw the static scene once; sprites are repositioned every frame ---
 140 CLS: FOR i=1 TO 8: FOR j=0 TO INT (pw(i)/32)-1: SPRITE "plat", px(i)+j*32, py(i), 100, 100: NEXT j: NEXT i
 150 PRINT AT 0,0; INK 6; "MANIC MINOR"; TAB 20; "LIVES "; lives
 160 REPEAT
 170 LET k$=INKEY$: LET t=t+1
-180 IF k$=CHR$ 8 OR k$="a" OR k$="o" THEN LET hx=hx-2: IF hx<0 THEN LET hx=0
-190 IF k$=CHR$ 9 OR k$="d" OR k$="p" THEN LET hx=hx+2: IF hx>248 THEN LET hx=248
-200 IF (k$=CHR$ 11 OR k$="w" OR k$="q" OR k$=" ") AND onp=1 THEN LET vy=-5: LET onp=0: BEEP 0.02,12
+175 IF k$=CHR$ 8 OR k$="a" OR k$="o" THEN LET vx=-2.5
+176 IF k$=CHR$ 9 OR k$="d" OR k$="p" THEN LET vx=2.5
+177 IF k$="" AND onp=1 THEN LET vx=vx*0.6: IF ABS vx<0.3 THEN LET vx=0
+180 LET hx=hx+vx: IF hx<0 THEN LET hx=0: LET vx=0
+190 IF hx>248 THEN LET hx=248: LET vx=0
+200 IF (k$=CHR$ 11 OR k$="w" OR k$="q" OR k$=" ") AND onp=1 THEN LET vy=-6.6: LET onp=0: BEEP 0.02,12
 210 LET vy=vy+0.4: IF vy>6 THEN LET vy=6
 220 LET hy=hy+vy: LET onp=0
 230 FOR i=1 TO 8: IF vy>=0 AND hx+6>px(i) AND hx+2<px(i)+pw(i) AND hy+12>=py(i) AND hy+12<=py(i)+6 THEN LET hy=py(i)-12: LET vy=0: LET onp=1
 240 NEXT i
 250 IF hy>170 THEN GO TO 500
-260 LET gx=gx+gd*1.5: IF gx<96 OR gx>152 THEN LET gd=-gd
+260 LET gx=gx+gd*1.2: IF gx<96 OR gx>152 THEN LET gd=-gd
 270 IF ABS (hx-gx)<7 AND ABS (hy-116)<10 THEN GO TO 500
 280 FOR i=1 TO 5: IF kg(i)=0 AND ABS (hx+4-kx(i)-3)<8 AND ABS (hy+6-ky(i)-3)<10 THEN LET kg(i)=1: LET got=got+1: BEEP 0.05,20: BEEP 0.05,27
 290 NEXT i
@@ -286,14 +296,14 @@ export const EXAMPLES = [
 430 FOR i=1 TO 5: IF kg(i)=0 THEN SPRITE "key", kx(i), ky(i)+2*(INT (t/10)-INT (INT (t/10)/2)*2)
 440 NEXT i
 450 SPRITE "guard", gx, 118
-460 IF onp=1 AND k$<>"" AND INT (t/4)-INT (INT (t/4)/2)*2=0 THEN SPRITE "hero2", hx, hy: RETURN
+460 IF onp=1 AND vx<>0 AND INT (t/4)-INT (INT (t/4)/2)*2=0 THEN SPRITE "hero2", hx, hy: RETURN
 470 SPRITE "hero1", hx, hy
-480 PRINT AT 21,0; INK 5; "KEYS "; got; "/5"; TAB 12; "A D run  W jump"
+480 PRINT AT 21,0; INK 5; "KEYS "; got; "/5"; TAB 12; "A D run  W jump  (hold W+D)"
 490 RETURN
 500 REM --- lost a life ---
 510 FOR i=1 TO 4: BEEP 0.05,-10-i*2: NEXT i
 520 LET lives=lives-1: IF lives=0 THEN PRINT AT 10,10; INK 2; PAPER 7; " GAME OVER ": PAUSE 100: GO TO 20
-530 LET hx=8: LET hy=152: LET vy=0: PRINT AT 0,0; INK 6; "MANIC MINOR"; TAB 20; "LIVES "; lives; " ": GO TO 160
+530 LET hx=8: LET hy=152: LET vx=0: LET vy=0: PRINT AT 0,0; INK 6; "MANIC MINOR"; TAB 20; "LIVES "; lives; " ": GO TO 160
 600 REM --- won ---
 610 PRINT AT 10,8; INK 4; PAPER 7; " ALL KEYS FOUND! "
 620 FOR i=0 TO 24 STEP 2: BEEP 0.04,i: NEXT i
@@ -570,4 +580,28 @@ export const EXAMPLES = [
 9530 DATA "boat","a small flat boat",29,1,"lunch","a packed lunch",0,0
 9540 DATA "north","south","east","west","northeast","northwest","southeast","southwest","up","down"
 9550 DATA "round oak door","massive stone door","high barred window","iron goblin door","red cellar door"` },
+  { name: 'Emoji Fiesta (bitmaps, rotation, alpha)', src: `10 REM EMOJI FIESTA - the browser rasterises emoji at compile time, the compiler bakes them into Flash bitmaps, BASIC throws them about
+20 EMOJI "🙂","a",64: EMOJI "🚀","b",64: EMOJI "🍕","c",64: EMOJI "👾","d",64: EMOJI "🌈","e",64: EMOJI "🎸","f",64: EMOJI "🦖","g",64: EMOJI "💾","h",64
+30 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
+40 LET n=16: DIM x(n): DIM y(n): DIM vx(n): DIM vy(n): DIM r(n): DIM vr(n): DIM s(n): DIM i$(n)
+50 FOR i=1 TO n: LET x(i)=20+RND*216: LET y(i)=RND*100: LET vx(i)=RND*4-2: LET vy(i)=0: LET r(i)=RND*360: LET vr(i)=RND*8-4: LET s(i)=30+RND*45: LET i$(i)=CHR$ (97+INT (RND*8)): NEXT i
+60 LET t=0: LET mode=0
+70 REPEAT
+80 SPRITE CLEAR: LET t=t+1
+90 IF INKEY$=" " THEN LET mode=1-mode: PAUSE 10
+100 FOR i=1 TO n
+110 LET w=32*s(i)/100
+120 LET vy(i)=vy(i)+0.25: LET x(i)=x(i)+vx(i): LET y(i)=y(i)+vy(i): LET r(i)=r(i)+vr(i)
+130 IF y(i)>176-w THEN LET y(i)=176-w: LET vy(i)=-vy(i)*0.85: LET vr(i)=vx(i)*3: IF ABS vy(i)>2 THEN BEEP 0.01,INT (RND*24)
+140 IF y(i)<w THEN LET y(i)=w: LET vy(i)=ABS vy(i)
+150 IF x(i)<w OR x(i)>256-w THEN LET vx(i)=-vx(i)*0.9: LET x(i)=x(i)+vx(i)*2
+160 REM the mouse is a magnet; press space to make it a repeller
+170 LET dx=MOUSEX-x(i): LET dy=(175-MOUSEY)-y(i): LET d=SQR (dx*dx+dy*dy)+12: LET g=0.7-1.4*mode: LET vx(i)=vx(i)+dx/d*g: LET vy(i)=vy(i)+dy/d*g
+180 LET vx(i)=vx(i)*0.995: LET vy(i)=vy(i)*0.995
+190 SPRITE i$(i), x(i), y(i), s(i), s(i), r(i), 65+35*SIN (t/9+i)
+200 NEXT i
+210 PRINT AT 0,0; INK 6; "EMOJI FIESTA"; TAB 16; INK 5; "mouse: "; "magnet " AND mode=0; "repeller" AND mode=1
+220 PRINT AT 21,0; INK 2; "space flips the field"; TAB 24; INK 7; t
+230 PAUSE 1
+240 UNTIL 0` },
 ];

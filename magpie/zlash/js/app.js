@@ -1,4 +1,4 @@
-import { buildProgram, BasicError } from './compiler.js';
+import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js';
 import { defineZxBasicMode } from './mode-zxbasic.js';
 import { EXAMPLES } from './examples.js';
 import { tapToListing } from './tap.js';
@@ -13,6 +13,17 @@ const editor = CodeMirror.fromTextArea($('#editor'), {
     'Ctrl-Enter': () => run(true), 'Cmd-Enter': () => run(true),
     'Esc': () => setTab('screen'),
   },
+});
+
+// ---- emoji rasteriser: the browser's own colour emoji font, sampled into an alpha bitmap ----
+setEmojiRenderer((text, size) => {
+  const c = document.createElement('canvas'); c.width = size; c.height = size;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.clearRect(0, 0, size, size);
+  g.font = `${Math.round(size * 0.82)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(text, size / 2, size / 2 + size * 0.04);
+  return { width: size, height: size, rgba: g.getImageData(0, 0, size, size).data };
 });
 
 // ---- Ruffle ----

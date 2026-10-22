@@ -286,12 +286,18 @@ export function runtimeIR(beepLengths) {
     ret(v('a')),
   ]));
 
+  // a ZX81-style chequerboard fill (2x2 bitmap scaled to 4 px cells), used by FX "chequer"
+  out.push(set('__chq', ['nm', m(v('flash'), 'display'), str('BitmapData'), [num(2), num(2), ['b', false], num(0)]]));
+  out.push(x(cm(v('__chq'), 'setPixel', num(1), num(0), num(0xFFFFFF))), x(cm(v('__chq'), 'setPixel', num(0), num(1), num(0xFFFFFF))));
+  out.push(set('__chm', ['nm', m(v('flash'), 'geom'), str('Matrix'), [num(4), num(0), num(0), num(4), num(0), num(0)]]));
+  out.push(fn('__fxchq', [], [x(cm(gfx(), 'beginBitmapFill', v('__chq'), v('__chm'), ['b', true], ['b', false]))]));
+
   // sprites baked into the SWF by SPRITE definitions
   out.push(set('__sn', num(0)));
-  out.push(fn('__spr', ['_n', '_x', '_y', '_xs', '_ys'], [
+  out.push(fn('__spr', ['_n', '_x', '_y', '_xs', '_ys', '_rot', '_al'], [
     set('__sn', add(v('__sn'), num(1))),
     x(cm(m(inner(), 'spr'), 'attachMovie', add(str('s_'), v('_n')), add(str('sp'), v('__sn')), v('__sn'),
-      ['obj', [['_x', v('_x')], ['_y', add(v('_y'), mul(num(8), v('__sr')))], ['_xscale', v('_xs')], ['_yscale', v('_ys')]]])),
+      ['obj', [['_x', v('_x')], ['_y', add(v('_y'), mul(num(8), v('__sr')))], ['_xscale', v('_xs')], ['_yscale', v('_ys')], ['_rotation', v('_rot')], ['_alpha', v('_al')]]])),
   ]));
   out.push(fn('__sprclr', [], [
     x(cm(m(inner(), 'spr'), 'removeMovieClip')),

@@ -8,7 +8,7 @@ export const OP = {
   Trace: 0x26, Return: 0x3e, Modulo: 0x3f, NewObject: 0x40, InitArray: 0x42, InitObject: 0x43,
   TypeOf: 0x44, Add2: 0x47, Less2: 0x48, Equals2: 0x49, ToNumber: 0x4a, ToString: 0x4b,
   PushDuplicate: 0x4c, GetMember: 0x4e, SetMember: 0x4f, Increment: 0x50, Decrement: 0x51,
-  CallMethod: 0x52, CallFunction: 0x3d, DefineLocal: 0x3c, DefineLocal2: 0x41, Delete: 0x3a,
+  CallMethod: 0x52, NewMethod: 0x53, CallFunction: 0x3d, DefineLocal: 0x3c, DefineLocal2: 0x41, Delete: 0x3a,
   Greater: 0x67, StrictEquals: 0x66, StringLength: 0x14, StringExtract: 0x15,
   Push: 0x96, Jump: 0x99, If: 0x9d, DefineFunction: 0x9b, StoreRegister: 0x87, ConstantPool: 0x88,
 };
@@ -96,6 +96,7 @@ export class IRCompiler {
       case 'm': this.expr(r[0]); this.expr(r[1]); a.op(OP.GetMember); return;
       case 'call': { const args = r[1] || []; for (let i = args.length - 1; i >= 0; i--) this.expr(args[i]); a.push(args.length).push(r[0]).op(OP.CallFunction); return; }
       case 'cm': { const args = r[2] || []; for (let i = args.length - 1; i >= 0; i--) this.expr(args[i]); a.push(args.length); this.expr(r[0]); this.expr(r[1]); a.op(OP.CallMethod); return; }
+      case 'nm': { const args = r[2] || []; for (let i = args.length - 1; i >= 0; i--) this.expr(args[i]); a.push(args.length); this.expr(r[0]); this.expr(r[1]); a.op(OP.NewMethod); return; } // new obj.Name(args)
       case 'new': { const args = r[1] || []; for (let i = args.length - 1; i >= 0; i--) this.expr(args[i]); a.push(args.length).push(r[0]).op(OP.NewObject); return; }
       case 'op': { const ops = BINOPS[r[0]]; if (!ops) throw new Error('bad op ' + r[0]); this.expr(r[1]); this.expr(r[2]); for (const o of ops) a.op(o); return; }
       case 'not': this.expr(r[0]); a.op(OP.Not); return;

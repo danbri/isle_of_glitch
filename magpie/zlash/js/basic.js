@@ -9,7 +9,7 @@ export class BasicError extends Error {
 
 const KEYWORDS = new Set(('LET PRINT INPUT IF THEN ELSE FOR TO STEP NEXT GOTO GOSUB RETURN STOP END REM CLS INK PAPER BORDER BRIGHT ' +
   'FLASH INVERSE OVER PLOT DRAW CIRCLE PAUSE BEEP RANDOMIZE RANDOMISE DIM POKE CLEAR RUN REPEAT UNTIL WHILE WEND RECT AT TAB ' +
-  'AND OR NOT LINE GO SUB NEW LIST DATA READ RESTORE FX FXP SPRITE WRAP LOAD SAVE VERIFY MERGE CAT FORMAT MOVE ERASE OPEN CLOSE LPRINT LLIST COPY CONTINUE OUT DEF FN BIN ' +
+  'AND OR NOT LINE GO SUB NEW LIST DATA READ RESTORE FX FXP SPRITE EMOJI WRAP LOAD SAVE VERIFY MERGE CAT FORMAT MOVE ERASE OPEN CLOSE LPRINT LLIST COPY CONTINUE OUT DEF FN BIN ' +
   'RND INT ABS SGN SQR SIN COS TAN ATN ASN ACS EXP LN LEN STR$ VAL VAL$ CHR$ CODE INKEY$ PI PEEK IN USR ATTR POINT SCREEN$ MOUSEX MOUSEY TICKS').split(' '));
 const IGNORED = new Set(['FLASH', 'INVERSE', 'OVER', 'POKE', 'CLEAR', 'RANDOMIZE', 'RANDOMISE', 'NEW', 'LIST', 'OUT']);
 // statements skipped without looking at their arguments (tape, printer and stream commands)
@@ -110,6 +110,7 @@ export function compileBasic(source, far = new Set(), chunks = null) {
   const dims = new Set();
   const data = []; // DATA constants, in program order
   const sprites = new Map(); // SPRITE name -> rows of cell characters (compile-time bitmaps baked into the SWF)
+  const emojis = new Map(); // EMOJI name -> { text, size }: rasterised by the host at compile time, baked as alpha bitmaps
   const dataAt = new Map(); // line number -> index of its first DATA item
   const chunkOf = (idx) => (chunks ? chunks[idx] : 0);
   const nChunks = chunks ? Math.max(...chunks) + 1 : 1;
@@ -157,7 +158,7 @@ export function compileBasic(source, far = new Set(), chunks = null) {
     resumeLabel(line.idx);
     const toks = tokenize(line.text, line.src);
     const P = new Parser(toks, line, {
-      vars, dims, out, data, dataAt, sprites, newResume, yieldAt, jumpToLineIdx, jumpTo, resumeLabel, targetFor, lineIdx, report, forStack, loopStack,
+      vars, dims, out, data, dataAt, sprites, emojis, newResume, yieldAt, jumpToLineIdx, jumpTo, resumeLabel, targetFor, lineIdx, report, forStack, loopStack,
       setStmt: (k) => { curStmt = k; },
     });
     P.statements();
@@ -188,7 +189,7 @@ export function compileBasic(source, far = new Set(), chunks = null) {
   const drv = [];
   outs.forEach((o, k) => { drv.push(set('__claimed', num(1)), x(call('__run' + k))); if (k < outs.length - 1) drv.push(iff(v('__claimed'), [ret()])); });
   prog.push(fn('__run', [], drv));
-  return { ir: prog, lines: lines.length, resumePoints: resumeCount, vars: [...vars.keys()], sprites, splittable };
+  return { ir: prog, lines: lines.length, resumePoints: resumeCount, vars: [...vars.keys()], sprites, emojis, splittable };
 }
 
 class Parser {
@@ -279,18 +280,30 @@ class Parser {
           this.sprites.set(name, rows);
           return;
         }
-        // draw: SPRITE name$, x, y [, xscale% [, yscale%]]   (x,y = top-left in screen pixels, y downwards)
+        // draw: SPRITE name$, x, y [, xscale% [, yscale% [, rotation [, alpha%]]]]   (x,y = top-left in screen pixels, y downwards)
         const name = this.strExpr(); this.expectOp(',');
         const px = this.numExpr(); this.expectOp(',');
         const py = this.numExpr();
-        let xs = num(100), ys = num(100);
-        if (this.isOp(',')) { this.next(); xs = this.numExpr(); ys = xs; if (this.isOp(',')) { this.next(); ys = this.numExpr(); } }
-        out.push(x(call('__spr', name, px, py, xs, ys)));
+        const extra = [num(100), num(100), num(0), num(100)];
+        for (let k = 0; k < 4 && this.isOp(','); k++) { this.next(); extra[k] = this.numExpr(); if (k === 0) extra[1] = extra[0]; }
+        out.push(x(call('__spr', name, px, py, ...extra)));
+        return;
+      }
+      case 'EMOJI': { // EMOJI "🙂", "name" [, size px]: the host rasterises it at compile time; use it with SPRITE "name", x, y
+        const e = this.next();
+        if (!e || e.t !== 'str') this.err('EMOJI needs a quoted emoji', e);
+        this.expectOp(',');
+        const n = this.next();
+        if (!n || n.t !== 'str') this.err('EMOJI needs a quoted sprite name', n);
+        let size = 48;
+        if (this.isOp(',')) { this.next(); const sz = this.next(); if (!sz || sz.t !== 'num') this.err('EMOJI size must be a number', sz); size = Math.max(8, Math.min(256, sz.v)); }
+        this.emojis.set(n.v, { text: e.v, size });
         return;
       }
       case 'FX': { // FX "method", args...  -> calls that MovieClip drawing-API method on the graphics layer
         const n = this.next();
         if (!n || n.t !== 'str') this.err('FX needs a quoted method name, e.g. FX "lineStyle", 2, #ff0000', n);
+        if (n.v === 'chequer') { out.push(x(call('__fxchq'))); return; } // beginFill with a ZX81 chequerboard
         const args = [];
         while (this.isOp(',')) { this.next(); args.push(this.expr().ir); }
         out.push(x(['cm', ['m', ['m', v('scr'), 'inner'], 'gfx'], ['s', n.v], args]));

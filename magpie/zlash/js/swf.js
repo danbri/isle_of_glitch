@@ -95,7 +95,7 @@ export function tag(code, body) {
   return out.finish();
 }
 
-export const T = { End: 0, ShowFrame: 1, DefineShape: 2, PlaceObject: 4, RemoveObject: 5, SetBackgroundColor: 9, DoAction: 12, DefineSound: 14, StartSound: 15, PlaceObject2: 26, DefineShape3: 32, DefineSprite: 39, ExportAssets: 56, FileAttributes: 69 };
+export const T = { DefineBitsLossless2: 36, End: 0, ShowFrame: 1, DefineShape: 2, PlaceObject: 4, RemoveObject: 5, SetBackgroundColor: 9, DoAction: 12, DefineSound: 14, StartSound: 15, PlaceObject2: 26, DefineShape3: 32, DefineSprite: 39, ExportAssets: 56, FileAttributes: 69 };
 
 export function tagFileAttributes() { return tag(T.FileAttributes, new ByteWriter().u32(0)); }
 export function tagBackground(c) { const w = new ByteWriter(); rgb(w, c); return tag(T.SetBackgroundColor, w); }
@@ -198,4 +198,55 @@ export function buildSwf({ width, height, frameRate = 50, frameCount = 1, tags, 
   out.bytes(body.finish());
   out.patchU32(lenPos, out.position);
   return out.finish();
+}
+
+// zlib stream with stored (uncompressed) deflate blocks: tiny to write, valid everywhere.
+export function zlibStored(data) {
+  const w = new ByteWriter();
+  w.u8(0x78).u8(0x01);
+  for (let i = 0; i < data.length || i === 0; i += 65535) {
+    const chunk = data.subarray(i, Math.min(i + 65535, data.length));
+    const last = i + 65535 >= data.length;
+    w.u8(last ? 1 : 0); w.u16(chunk.length); w.u16(~chunk.length & 0xffff); w.bytes(chunk);
+    if (data.length === 0) break;
+  }
+  let a = 1, b = 0;
+  for (let i = 0; i < data.length; i++) { a = (a + data[i]) % 65521; b = (b + a) % 65521; }
+  w.u8(b >> 8).u8(b & 0xff).u8(a >> 8).u8(a & 0xff); // adler32, big-endian
+  return w.finish();
+}
+
+// 32-bit ARGB bitmap with alpha (premultiplied, as the format requires). rgba = Uint8ClampedArray from canvas.
+export function tagDefineBitsLossless2(id, width, height, rgba) {
+  const px = new Uint8Array(width * height * 4);
+  for (let i = 0; i < width * height; i++) {
+    const a = rgba[i * 4 + 3];
+    px[i * 4] = a;
+    px[i * 4 + 1] = (rgba[i * 4] * a + 127) / 255;
+    px[i * 4 + 2] = (rgba[i * 4 + 1] * a + 127) / 255;
+    px[i * 4 + 3] = (rgba[i * 4 + 2] * a + 127) / 255;
+  }
+  const w = new ByteWriter(); w.u16(id); w.u8(5); w.u16(width); w.u16(height); w.bytes(zlibStored(px));
+  return tag(T.DefineBitsLossless2, w);
+}
+
+// A w x h pixel rectangle filled with a (clipped) bitmap.
+export function tagDefineShapeBitmap(id, bitmapId, width, height) {
+  const w = new ByteWriter(); w.u16(id);
+  const bw = new BitWriter();
+  writeRect(bw, 0, width * TWIP, 0, height * TWIP); bw.align(); w.bits(bw);
+  w.u8(1); w.u8(0x41); w.u16(bitmapId); // one fill: clipped bitmap
+  const mb = new BitWriter(); writeMatrix(mb, { sx: TWIP, sy: TWIP }); mb.align(); w.bits(mb); // bitmap pixels -> twips
+  w.u8(0); // no line styles
+  const sb = new BitWriter();
+  sb.ub(4, 1).ub(4, 0);
+  sb.ub(1, 0).ub(1, 0).ub(1, 0).ub(1, 0).ub(1, 1).ub(1, 1); // style change: fill0 + moveTo
+  sb.ub(5, 1).sb(1, 0).sb(1, 0); sb.ub(1, 1);
+  const W = width * TWIP, H = height * TWIP;
+  for (const [dx, dy] of [[W, 0], [0, H], [-W, 0], [0, -H]]) {
+    const nb = Math.max(2, bitsForSigned(dx, dy));
+    sb.ub(1, 1).ub(1, 1).ub(4, nb - 2).ub(1, 1).sb(nb, dx).sb(nb, dy);
+  }
+  sb.ub(6, 0); w.bits(sb);
+  return tag(T.DefineShape, w);
 }

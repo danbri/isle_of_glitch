@@ -42,7 +42,9 @@ homage written in it, using Rex's sprites and the view geometry recovered from
 the commented ZX81 disassembly (dl/mm); `examples/platform.bas` is a small
 platform game; `examples/hobbit.bas` ("Pipkin's Quest") is a 49-room text
 adventure in the shape of the 1982 Melbourne House one, with all names and
-text rewritten (personal use); `WRAP 1` gives it word-wrapped PRINT; `node tools/avmcheck.js prog.bas` verifies every AVM1 branch
+text rewritten (personal use); `WRAP 1` gives it word-wrapped PRINT; `examples/fiesta.bas` shows `EMOJI`,
+which rasterises emoji through the browser's canvas at compile time into
+alpha bitmaps (DefineBitsLossless2) that `SPRITE` can rotate and fade; `node tools/avmcheck.js prog.bas` verifies every AVM1 branch
 in a build lands on an instruction boundary.
 
 Programs bigger than 32 KB of bytecode work: every resume point gets a

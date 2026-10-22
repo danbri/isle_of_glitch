@@ -78,12 +78,12 @@
 1040 LET r=pr+dr(f)*d: LET c=pc+dc(f)*d
 1050 LET xa=32+cs(d)*8: LET xb=32+cs(d+1)*8: LET ta=(12-hh(d))*7.333: LET tb=(12-hh(d+1))*7.333: LET ba=(12+hh(d))*7.333: LET bb=(12+hh(d+1))*7.333
 1060 LET lw=m(r+dr(lf),c+dc(lf)): LET rw=m(r+dr(rt2),c+dc(rt2))
-1070 IF lw=1 THEN FX "beginFill", #000000, 100: FX "moveTo", xa, ta: FX "lineTo", xb, tb: FX "lineTo", xb, bb: FX "lineTo", xa, ba: FX "lineTo", xa, ta: FX "endFill"
-1080 IF lw<>1 THEN FX "beginFill", #808080, 100: FX "moveTo", xa, tb: FX "lineTo", xb, tb: FX "lineTo", xb, bb: FX "lineTo", xa, bb: FX "lineTo", xa, tb: FX "endFill"
-1090 IF rw=1 THEN FX "beginFill", #000000, 100: FX "moveTo", 256-xa, ta: FX "lineTo", 256-xb, tb: FX "lineTo", 256-xb, bb: FX "lineTo", 256-xa, ba: FX "lineTo", 256-xa, ta: FX "endFill"
-1100 IF rw<>1 THEN FX "beginFill", #808080, 100: FX "moveTo", 256-xb, tb: FX "lineTo", 256-xa, tb: FX "lineTo", 256-xa, bb: FX "lineTo", 256-xb, bb: FX "lineTo", 256-xb, tb: FX "endFill"
+1070 IF lw=1 THEN LET x0=xa: LET x1=xb: GO SUB 1400
+1080 IF lw<>1 THEN FX "chequer": FX "moveTo", xa, tb: FX "lineTo", xb, tb: FX "lineTo", xb, bb: FX "lineTo", xa, bb: FX "lineTo", xa, tb: FX "endFill"
+1090 IF rw=1 THEN LET x0=256-xa: LET x1=256-xb: GO SUB 1400
+1100 IF rw<>1 THEN FX "chequer": FX "moveTo", 256-xb, tb: FX "lineTo", 256-xa, tb: FX "lineTo", 256-xa, bb: FX "lineTo", 256-xb, bb: FX "lineTo", 256-xb, tb: FX "endFill"
 1110 LET fw=m(r+dr(f),c+dc(f))
-1120 IF fw=1 THEN FX "beginFill", #808080, 100: FX "moveTo", xb, tb: FX "lineTo", 256-xb, tb: FX "lineTo", 256-xb, bb: FX "lineTo", xb, bb: FX "lineTo", xb, tb: FX "endFill": LET far=d: LET d=5
+1120 IF fw=1 THEN FX "chequer": FX "moveTo", xb, tb: FX "lineTo", 256-xb, tb: FX "lineTo", 256-xb, bb: FX "lineTo", xb, bb: FX "lineTo", xb, tb: FX "endFill": LET far=d: LET d=5
 1130 IF fw=2 THEN GO SUB 1300: LET far=d: LET d=5
 1140 NEXT d
 1150 IF far=6 THEN FX "beginFill", #000000, 100: FX "moveTo", 128, tb: FX "lineTo", 128, bb: FX "lineTo", 128, tb: FX "endFill"
@@ -108,6 +108,13 @@
 1320 FX "beginFill", q*#ffffff, 100: FX "moveTo", xb+e*(128-xb)/6, tb+e*(88-tb)/6: FX "lineTo", 256-xb-e*(128-xb)/6, tb+e*(88-tb)/6: FX "lineTo", 256-xb-e*(128-xb)/6, bb-e*(bb-88)/6: FX "lineTo", xb+e*(128-xb)/6, bb-e*(bb-88)/6: FX "endFill"
 1330 LET q=1-q: NEXT e
 1340 RETURN
+1400 REM --- a side wall the ZX81 way: one step per character column, edges snapped to quarter-character rows ---
+1410 LET nc=ABS (x1-x0)/8: LET sg=SGN (x1-x0): LET q=176/48
+1420 FX "beginFill", #000000, 100: FX "moveTo", x0, INT (ta/q+0.5)*q
+1430 FOR k=1 TO nc: LET yy=INT ((ta+(tb-ta)*(k-1)/nc)/q+0.5)*q: LET yb=INT ((ta+(tb-ta)*k/nc)/q+0.5)*q: FX "lineTo", x0+k*8*sg, yy: FX "lineTo", x0+k*8*sg, yb: NEXT k
+1440 FX "lineTo", x1, INT (bb/q+0.5)*q
+1450 FOR k=nc TO 1 STEP -1: LET yy=INT ((ba+(bb-ba)*k/nc)/q+0.5)*q: LET yb=INT ((ba+(bb-ba)*(k-1)/nc)/q+0.5)*q: FX "lineTo", x0+(k-1)*8*sg, yy: FX "lineTo", x0+(k-1)*8*sg, yb: NEXT k
+1460 FX "lineTo", x0, INT (ba/q+0.5)*q: FX "endFill": RETURN
 2000 REM --- Rex, from the 1981 ZX81 code: one cell = one quarter of a ZX81 character ---
 2001 SPRITE "d1l","................................","...........##########...........","..........############..........",".........##############.........","........################........",".......#################........"
 2002 SPRITE "d1l",".......##################.......","......#####.#########.###.......","......###################.......","......###################.......","......###################.......",".....#########.##.#######......."
