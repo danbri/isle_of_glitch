@@ -1,7 +1,7 @@
-import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js?v=mvli9hob';
-import { defineZxBasicMode } from './mode-zxbasic.js?v=mvli9hob';
-import { EXAMPLES } from './examples.js?v=mvli9hob';
-import { tapToListing } from './tap.js?v=mvli9hob';
+import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js?v=mvliy6ys';
+import { defineZxBasicMode } from './mode-zxbasic.js?v=mvliy6ys';
+import { EXAMPLES } from './examples.js?v=mvliy6ys';
+import { tapToListing } from './tap.js?v=mvliy6ys';
 
 const $ = (s) => document.querySelector(s);
 const STORE = 'zxflash.src', STORE_EX = 'zxflash.example';

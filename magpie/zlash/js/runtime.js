@@ -1,8 +1,8 @@
 // The "ROM": an AVM1 runtime that gives a Flash movie a ZX Spectrum screen,
 // plus the SWF assets (glyph sprites, colour cell, beep bank) it relies on.
-import { zxFont } from './font.js?v=mvli9hob';
-import * as S from './swf.js?v=mvli9hob';
-import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root, path } from './avm1.js?v=mvli9hob';
+import { zxFont } from './font.js?v=mvliy6ys';
+import * as S from './swf.js?v=mvliy6ys';
+import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root, path } from './avm1.js?v=mvliy6ys';
 
 export const SCREEN = { W: 256, H: 192, BORDER_X: 32, BORDER_Y: 24, COLS: 32, ROWS: 22, FPS: 50 };
 export const STAGE = { W: SCREEN.W + 2 * SCREEN.BORDER_X, H: SCREEN.H + 2 * SCREEN.BORDER_Y };
@@ -392,6 +392,18 @@ export function runtimeIR(beepLengths) {
     ret(str('')),
   ]));
   // INKEY$: the key held right now, or else the last key tapped since INKEY$ was last read
+  // KEEP / KEPT: numbers that survive between visits, in a Flash SharedObject (Ruffle keeps it in the browser's storage)
+  out.push(fn('__keep', ['_k', '_v'], [
+    local('so', cm(v('SharedObject'), 'getLocal', str('zxflash'))),
+    setm(m(v('so'), 'data'), v('_k'), v('_v')),
+    x(cm(v('so'), 'flush')),
+  ]));
+  out.push(fn('__kept', ['_k'], [
+    local('so', cm(v('SharedObject'), 'getLocal', str('zxflash'))),
+    local('r', m(m(v('so'), 'data'), v('_k'))),
+    iff(op('!=', ['typeof', v('r')], str('number')), [ret(num(0))]), // never kept: 0
+    ret(v('r')),
+  ]));
   out.push(set('__kbuf', str('')));
   out.push(fn('__inkey', [], [
     local('k', cm(v('Key'), 'getCode')),

@@ -1,7 +1,7 @@
 // Spectrum-flavoured BASIC -> AVM1 IR compiler.
 // Single pass: the parser emits IR as it goes. Output drops straight into runtime.js.
-import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root } from './avm1.js?v=mvli9hob';
-import { SCREEN } from './runtime.js?v=mvli9hob';
+import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root } from './avm1.js?v=mvliy6ys';
+import { SCREEN } from './runtime.js?v=mvliy6ys';
 
 export class BasicError extends Error {
   constructor(msg, line, col) { super(msg); this.line = line; this.col = col; }
@@ -10,7 +10,7 @@ export class BasicError extends Error {
 const KEYWORDS = new Set(('LET PRINT INPUT IF THEN ELSE FOR TO STEP NEXT GOTO GOSUB RETURN STOP END REM CLS INK PAPER BORDER BRIGHT ' +
   'FLASH INVERSE OVER PLOT DRAW CIRCLE PAUSE BEEP RANDOMIZE RANDOMISE DIM POKE CLEAR RUN REPEAT UNTIL WHILE WEND RECT AT TAB ' +
   'AND OR NOT LINE GO SUB NEW LIST DATA READ RESTORE FX FXP SPRITE EMOJI WRAP TONE LOAD SAVE VERIFY MERGE CAT FORMAT MOVE ERASE OPEN CLOSE LPRINT LLIST COPY CONTINUE OUT DEF FN BIN ' +
-  'RND INT ABS SGN SQR SIN COS TAN ATN ASN ACS EXP LN LEN STR$ VAL VAL$ CHR$ CODE INKEY$ PI PEEK IN USR ATTR POINT SCREEN$ MOUSEX MOUSEY MOUSEB TICKS LOADER HALT').split(' '));
+  'RND INT ABS SGN SQR SIN COS TAN ATN ASN ACS EXP LN LEN STR$ VAL VAL$ CHR$ CODE INKEY$ PI PEEK IN USR ATTR POINT SCREEN$ MOUSEX MOUSEY MOUSEB TICKS LOADER HALT KEEP KEPT').split(' '));
 const IGNORED = new Set(['FLASH', 'INVERSE', 'OVER', 'POKE', 'CLEAR', 'RANDOMIZE', 'RANDOMISE', 'NEW', 'LIST', 'OUT']);
 // statements skipped without looking at their arguments (tape, printer and stream commands)
 const SKIPPED = new Set(['LOAD', 'SAVE', 'VERIFY', 'MERGE', 'CAT', 'FORMAT', 'MOVE', 'ERASE', 'OPEN', 'CLOSE', 'LPRINT', 'LLIST', 'COPY', 'CONTINUE', 'DEF']);
@@ -269,6 +269,10 @@ class Parser {
       case 'BORDER': out.push(x(call('__border', this.numExpr()))); return;
       case 'WRAP': out.push(set('__wrap', this.numExpr())); return;
       case 'PLOT': case 'DRAW': case 'CIRCLE': case 'RECT': return this.graphics(t.v);
+      case 'KEEP': { // extension: KEEP "name", number saves it between visits (a Flash SharedObject); KEPT "name" reads it back
+        const name = this.strExpr(); this.expectOp(',');
+        out.push(x(call('__keep', name, this.numExpr()))); return;
+      }
       case 'HALT': this.yieldAt(); return; // extension: wait for the next frame, like the Z80's HALT (PAUSE 1 skips a whole frame first)
       case 'PAUSE': {
         const e = this.numExpr();
@@ -695,6 +699,7 @@ class Parser {
       case 'MOUSEX': return N(math('floor', ['cond', v('__mbTap'), v('__mbX'), m(v('scr'), '_xmouse')]));
       case 'MOUSEY': return N(op('-', num(175), math('floor', ['cond', v('__mbTap'), v('__mbY'), m(v('scr'), '_ymouse')])));
       case 'TICKS': return N(v('__t'));
+      case 'KEPT': return N(call('__kept', sArg())); // 0 if nothing was kept under that name
       case 'MOUSEB': return N(v('__mb'));
       case 'INT': return N(math('floor', nArg()));
       case 'ASN': return N(math('asin', nArg()));
