@@ -1,6 +1,6 @@
 10 REM ZX FLASH LOADER - pick a program with a key or a tap. Any program can come back here with LOADER, or open another with LOADER "name"
 20 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
-30 LET n=14: DIM i$(n,22): DIM n$(n,17): DIM t$(n,9): DIM c$(n,1): DIM r(n)
+30 LET n=15: DIM i$(n,22): DIM n$(n,17): DIM t$(n,9): DIM c$(n,1): DIM r(n)
 40 RESTORE 900: FOR i=1 TO n: READ i$(i),n$(i),t$(i),r(i),c$(i): NEXT i
 50 REM loading stripes, as a tape would: pilot tone, then data. Any key or tap skips them
 60 FOR i=1 TO 30: BORDER 2+3*(i-INT (i/2)*2): PAUSE 1: IF INKEY$<>"" OR MOUSEB<>0 THEN GO TO 100
@@ -39,12 +39,13 @@
 620 LOADER i$(i)
 900 DATA "monster-maze","3D MONSTER MAZE","ZX81 1981",5,"1"
 905 DATA "pop-party","POP PARTY","EMOJI",6,"2"
-910 DATA "tvp","TVP","TV",7,"3"
-920 DATA "emo-asteroids","EMO ASTEROIDS","EMOJI",8,"4"
-930 DATA "miner-ned","MINER NED","PLATFORM",9,"5"
-940 DATA "pipkins-quest","PIPKIN'S QUEST","ADVENTURE",10,"6"
-950 DATA "hello-1982","HELLO 1982","",13,"7","10-print-maze","10 PRINT MAZE","",14,"8"
-960 DATA "bouncing-ball","BOUNCING BALL","",15,"9","sierpinski-chaos-game","SIERPINSKI","",16,"a"
-970 DATA "tune-beep","TUNE (BEEP)","",17,"b","input-and-strings","INPUT AND STRINGS","",18,"c"
-980 DATA "paint-with-the-mouse","PAINT WITH MOUSE","",19,"d","demo-bars-and-scroller","BARS AND SCROLLER","",20,"e"
+907 DATA "vector-trader","VECTOR TRADER","SPACE",7,"3"
+910 DATA "tvp","TVP","TV",8,"4"
+920 DATA "emo-asteroids","EMO ASTEROIDS","EMOJI",9,"5"
+930 DATA "miner-ned","MINER NED","PLATFORM",10,"6"
+940 DATA "pipkins-quest","PIPKIN'S QUEST","ADVENTURE",11,"7"
+950 DATA "hello-1982","HELLO 1982","",13,"8","10-print-maze","10 PRINT MAZE","",14,"9"
+960 DATA "bouncing-ball","BOUNCING BALL","",15,"a","sierpinski-chaos-game","SIERPINSKI","",16,"b"
+970 DATA "tune-beep","TUNE (BEEP)","",17,"c","input-and-strings","INPUT AND STRINGS","",18,"d"
+980 DATA "paint-with-the-mouse","PAINT WITH MOUSE","",19,"e","demo-bars-and-scroller","BARS AND SCROLLER","",20,"f"
 990 DATA 2,6,4,5

@@ -68,7 +68,11 @@ contents REM, long variable names, a DATA table of things to pop, one
 subroutine per idea, and Percy the pelican cycling past in FX vectors with
 legs that follow the pedals (law of cosines). Plain-text `EMOJI` comes out as
 outlined cartoon lettering; `HALT` waits one frame (50 Hz loops), and `KEEP "name", n`
-/ `KEPT "name"` keep a number between visits in a Flash SharedObject. `examples/loader.bas` is the menu the page opens with. Its `LOADER
+/ `KEPT "name"` keep a number between visits in a Flash SharedObject. `examples/elite.bas` is Vector Trader, an Elite tribute: a 128-world galaxy
+grown from seeds with the ZX81's RND formula, hidden-line wireframes from
+face normals, a universe that rotates around you, trading, charts, hyperspace,
+pirates, a spinning station to dock with (or a docking computer playing the Blue
+Danube), and the commander kept with KEEP. `examples/loader.bas` is the menu the page opens with. Its `LOADER
 "name"` statement compiles to an AVM1 `getURL("#name", "_self")`: a same-page
 link, so it needs no script access, and the page's `hashchange` handler opens
 that example (by id, as in `#monster-maze`), or the loader itself when no name
