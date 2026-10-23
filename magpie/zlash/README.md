@@ -8,13 +8,27 @@ A single-page app that compiles a ZX Spectrum flavoured BASIC to Flash
 
     npm run serve        # http://127.0.0.1:8765/  (no-store headers, so plain reloads pick up edits)
     npm run build examples/hello.bas out.swf   # command-line compile
-    npm run check        # compile every bundled example
+    npm run check        # compile every example and check Monster Maze gameplay
     npm run stamp        # version-stamp script URLs and imports before committing (GitHub Pages caches for 10 min)
 
 Open the page, pick an example from LOAD, type. CODE shows the editor over
 the running movie through frosted glass; SCREEN shows the movie full size
 (click it to give it the keyboard, Esc returns to the code); MANUAL is the
 language reference.
+
+Open [3D Monster Maze directly](./#monster-maze), or choose it from LOAD.
+Use the cursor keys or W/A/D (S turns around), or the four on-screen buttons.
+Turns happen once per press; holding forward keeps walking. The title and result
+screens also accept a tap. Other examples have their own shareable URL hashes.
+
+The maze keeps a complete wall border and chooses a reachable exit without
+closing passages. Its original greedy Rex pursuit and monochrome sprites remain.
+`npm run check` includes 128 seeded mazes, five constant random sources, and
+keyboard, pointer, wall collision, visibility, win and retry checks against the
+compiled BASIC IR. Drawing and audio are stubbed in those checks; use Ruffle for
+visual verification and `tools/avmcheck.js` for the emitted AVM1 branches. Keep
+`examples/monster-maze.bas` and its entry in `js/examples.js` in sync; the check
+also verifies that the browser uses the tested listing.
 
 ## How it works
 

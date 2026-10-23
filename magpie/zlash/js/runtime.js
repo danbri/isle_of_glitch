@@ -1,8 +1,8 @@
 // The "ROM": an AVM1 runtime that gives a Flash movie a ZX Spectrum screen,
 // plus the SWF assets (glyph sprites, colour cell, beep bank) it relies on.
-import { zxFont } from './font.js?v=mvju2q96';
-import * as S from './swf.js?v=mvju2q96';
-import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root, path } from './avm1.js?v=mvju2q96';
+import { zxFont } from './font.js?v=mvlgpntz';
+import * as S from './swf.js?v=mvlgpntz';
+import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root, path } from './avm1.js?v=mvlgpntz';
 
 export const SCREEN = { W: 256, H: 192, BORDER_X: 32, BORDER_Y: 24, COLS: 32, ROWS: 22, FPS: 50 };
 export const STAGE = { W: SCREEN.W + 2 * SCREEN.BORDER_X, H: SCREEN.H + 2 * SCREEN.BORDER_Y };
@@ -132,6 +132,7 @@ export function runtimeVars() {
     __r: 0, __c: 0, __sr: 0, __ink: 0, __pap: 7, __brt: 0, __bdr: 7, __tink: 0, __tpap: 7,
     __px: 0, __py: 0, __pc: 0, __wait: 0, __mode: 0, __budget: 0, __done: 0, __t: 0,
     __ibuf: '', __ivar: '', __istr: 0, __iprompt: '', __again: 0, __claimed: 1,
+    __mb: 0, __mbHeld: 0, __mbPending: 0, __mbTap: 0, __mbX: 0, __mbY: 0,
   };
 }
 
@@ -346,10 +347,14 @@ export function runtimeIR(beepLengths) {
     x(cm(v('s'), 'start', num(0), num(1))),
   ]));
 
-  // mouse button state for MOUSEB (touch arrives as mouse events)
-  out.push(set('__mb', num(0)), set('__ml', ['obj', []]));
-  out.push(setm(v('__ml'), 'onMouseDown', ['fnx', [], [set('__mb', num(1))]]));
-  out.push(setm(v('__ml'), 'onMouseUp', ['fnx', [], [set('__mb', num(0))]]));
+  // Touch arrives as mouse events. Latch brief presses until BASIC next runs;
+  // a down/up pair between frames must not disappear before MOUSEB can read it.
+  out.push(set('__ml', ['obj', []]));
+  out.push(setm(v('__ml'), 'onMouseDown', ['fnx', [], [
+    set('__mbX', m(scr(), '_xmouse')), set('__mbY', m(scr(), '_ymouse')),
+    set('__mbHeld', num(1)), set('__mbPending', num(1)),
+  ]]));
+  out.push(setm(v('__ml'), 'onMouseUp', ['fnx', [], [set('__mbHeld', num(0))]]));
   out.push(x(cm(v('Mouse'), 'addListener', v('__ml'))));
 
   // lower screen (rows 22-23): INPUT prompt, error reports
@@ -445,6 +450,12 @@ export function runtimeIR(beepLengths) {
     iff(v('__done'), [ret()]),
     iff(op('!=', v('__mode'), num(0)), [ret()]),
     iff(op('>', v('__wait'), num(0)), [set('__wait', sub(v('__wait'), num(1))), ret()]),
+    // Every MOUSEB read in this execution frame sees the same snapshot. Waiting
+    // frames leave the pending press intact, just as a held button stays down.
+    set('__mb', ['cond', op('||', v('__mbHeld'), v('__mbPending')), num(1), num(0)]),
+    // Released taps use their press position; held buttons keep live coordinates.
+    set('__mbTap', ['cond', and(v('__mbPending'), not(v('__mbHeld'))), num(1), num(0)]),
+    set('__mbPending', num(0)),
     set('__budget', num(4000)),
     set('__again', num(1)),
     whl(v('__again'), [ // a far jump or RETURN sets __again and comes back here to re-enter via the prologue chain

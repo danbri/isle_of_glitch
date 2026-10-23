@@ -1,7 +1,7 @@
 // Spectrum-flavoured BASIC -> AVM1 IR compiler.
 // Single pass: the parser emits IR as it goes. Output drops straight into runtime.js.
-import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root } from './avm1.js?v=mvju2q96';
-import { SCREEN } from './runtime.js?v=mvju2q96';
+import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root } from './avm1.js?v=mvlgpntz';
+import { SCREEN } from './runtime.js?v=mvlgpntz';
 
 export class BasicError extends Error {
   constructor(msg, line, col) { super(msg); this.line = line; this.col = col; }
@@ -682,8 +682,8 @@ class Parser {
       case 'RND': return N(math('random'));
       case 'PI': return N(num(Math.PI));
       case 'INKEY$': return Sx(call('__inkey'));
-      case 'MOUSEX': return N(math('floor', m(v('scr'), '_xmouse')));
-      case 'MOUSEY': return N(op('-', num(175), math('floor', m(v('scr'), '_ymouse'))));
+      case 'MOUSEX': return N(math('floor', ['cond', v('__mbTap'), v('__mbX'), m(v('scr'), '_xmouse')]));
+      case 'MOUSEY': return N(op('-', num(175), math('floor', ['cond', v('__mbTap'), v('__mbY'), m(v('scr'), '_ymouse')])));
       case 'TICKS': return N(v('__t'));
       case 'MOUSEB': return N(v('__mb'));
       case 'INT': return N(math('floor', nArg()));

@@ -7,6 +7,7 @@
   --red: #ff2a2a; --yel: #ffd400; --grn: #19e03a; --cyn: #19e0e0;
   --mono: "JetBrains Mono", Menlo, Consolas, monospace;
   --pix: "VT323", "JetBrains Mono", monospace;
+  --toolbar-height: 48px;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
@@ -19,7 +20,7 @@ body {
 }
 
 /* The Flash movie always sits full-bleed at the back */
-#stage { position: fixed; inset: 0; background: #000; }
+#stage { position: fixed; inset: var(--toolbar-height) 0 0; background: #000; }
 #player-host, #player-host ruffle-player { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
 /* Frosted glass between the movie and the code */
@@ -34,7 +35,7 @@ body[data-tab="screen"] #frost { opacity: 0; }
 
 /* Top bar */
 #top {
-  position: fixed; top: 0; left: 0; right: 0; height: 48px; z-index: 10;
+  position: fixed; top: 0; left: 0; right: 0; height: var(--toolbar-height); z-index: 10;
   display: flex; align-items: center; gap: 18px; padding: 0 16px;
   background: linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(0,0,0,0.55));
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -67,8 +68,8 @@ body[data-tab="screen"] #frost { opacity: 0; }
 
 /* Panels */
 .panel {
-  position: fixed; top: 64px; left: 50%; transform: translateX(-50%);
-  width: min(880px, calc(100vw - 32px)); height: calc(100vh - 80px);
+  position: fixed; top: calc(var(--toolbar-height) + 16px); left: 50%; transform: translateX(-50%);
+  width: min(880px, calc(100vw - 32px)); height: calc(100vh - var(--toolbar-height) - 32px);
   display: flex; flex-direction: column;
   background: var(--glass);
   border: 1px solid var(--glass-edge);
@@ -133,10 +134,45 @@ kbd { font-family: inherit; border: 1px solid var(--dim); padding: 0 4px; }
 .manual-body td { vertical-align: top; padding: 4px 10px 4px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
 .manual-body td:first-child { white-space: nowrap; }
 
-@media (max-width: 720px) {
+@media (max-width: 1200px) {
+  .brand .sub { display: none; }
+}
+
+@media (max-width: 1050px) {
+  :root { --toolbar-height: 96px; }
   .brand .sub, .tools .chk { display: none; }
-  #top { gap: 8px; padding: 0 8px; }
-  .panel { top: 56px; height: calc(100vh - 64px); }
+  #top {
+    display: grid; grid-template-columns: auto 1fr; grid-template-rows: 40px 40px;
+    gap: 4px 8px; padding: 6px 8px;
+  }
+  .tabs { justify-self: end; margin-left: 0; }
+  .tab { min-height: 36px; padding: 4px 10px; }
+  .tools { grid-column: 1 / -1; min-width: 0; margin-left: 0; gap: 8px; }
+  .tools .sel { flex: 1; min-width: 0; }
+  .tools select { flex: 1; width: 100%; min-width: 0; max-width: none; }
+  .tools button, .tools select { min-height: 36px; }
+  .tools button { white-space: nowrap; }
+  .panel { top: calc(var(--toolbar-height) + 8px); height: calc(100vh - var(--toolbar-height) - 16px); }
+  #screen-hint { width: max-content; max-width: calc(100vw - 16px); text-align: center; font-size: 16px; }
+}
+
+@media (max-width: 560px) {
+  :root { --toolbar-height: 140px; }
+  #top { grid-template-rows: 40px 84px; }
+  .brand .stripe { display: none; }
+  .brand .name { font-size: 24px; }
+  .tab { font-size: 18px; padding: 4px 8px; }
+  .tools { display: grid; grid-template-columns: 1fr 1fr auto; grid-template-rows: 40px 40px; gap: 4px 8px; }
+  .tools .sel { grid-column: 1 / 3; grid-row: 1; }
+  .tools #run { grid-column: 3; grid-row: 1; }
+  .tools #open { grid-column: 1; grid-row: 2; }
+  .tools #download { grid-column: 2 / 4; grid-row: 2; }
+  .panel-head { gap: 8px; padding: 8px; }
+  .panel-head .meta { display: none; }
+  .status { flex-wrap: wrap; gap: 4px; padding: 6px 8px; }
+  .status .detail { margin-left: 0; }
+  .manual-body { padding: 8px 12px 20px; }
+  .manual-body td:first-child { white-space: normal; }
 }
 
 /* xkcd 303 while the movie rebuilds */
