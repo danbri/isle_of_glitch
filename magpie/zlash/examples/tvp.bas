@@ -20,6 +20,7 @@
 200 FOR d=0 TO 7: LET a=t/6+d*PI/4: FX "beginFill", #ffffff, 25+70*(d=INT (t/3)-INT (INT (t/3)/8)*8): LET cx=128+18*COS a: LET cy=150+6*SIN a: FX "moveTo", cx-2, cy-2: FX "lineTo", cx+2, cy-2: FX "lineTo", cx+2, cy+2: FX "lineTo", cx-2, cy+2: FX "endFill": NEXT d
 210 REM TV scanlines, because 2007
 220 FX "lineStyle", 1, #000000, 12: FOR y=1 TO 175 STEP 2: FX "moveTo", 0, y: FX "lineTo", 256, y: NEXT y
+225 IF t>40 THEN PRINT AT 21,8; INK 1; "ANY KEY: LOADER": IF INKEY$<>"" OR MOUSEB<>0 THEN LOADER
 230 PAUSE 1
 240 UNTIL 0
 1000 REM glow ring of radius rr at (128,80), 24 segments

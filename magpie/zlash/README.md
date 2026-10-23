@@ -60,8 +60,16 @@ adventure in the shape of the 1982 Melbourne House one, with all names and
 text rewritten (personal use); `WRAP 1` gives it word-wrapped PRINT; `examples/asteroids.bas` (Emo Asteroids) shows `EMOJI`,
 which rasterises emoji through the browser's canvas at compile time into
 alpha bitmaps (DefineBitsLossless2) that `SPRITE` can rotate and fade, plus
-`TONE` chimes and `MOUSEB`; `examples/tvp.bas` is the first example: a traced
-vector logo splash; `node tools/avmcheck.js prog.bas` verifies every AVM1 branch
+`TONE` chimes and `MOUSEB`; `examples/tvp.bas` is a traced vector logo
+splash; `examples/pop-party.bas` is a Flash-style emoji game written to be read: a
+contents REM, long variable names, a DATA table of things to pop, one
+subroutine per idea, and Percy the pelican cycling past in FX vectors with
+legs that follow the pedals (law of cosines). Plain-text `EMOJI` comes out as
+outlined cartoon lettering. `examples/loader.bas` is the menu the page opens with. Its `LOADER
+"name"` statement compiles to an AVM1 `getURL("#name", "_self")`: a same-page
+link, so it needs no script access, and the page's `hashchange` handler opens
+that example (by id, as in `#monster-maze`), or the loader itself when no name
+is given; `node tools/avmcheck.js prog.bas` verifies every AVM1 branch
 in a build lands on an instruction boundary.
 
 Programs bigger than 32 KB of bytecode work: every resume point gets a

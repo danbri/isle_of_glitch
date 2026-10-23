@@ -14,6 +14,7 @@
 140 FOR i=1 TO ns: SPRITE "star", sx(i), sy(i), 50+25*SIN (t/9+sb(i)), 50+25*SIN (t/9+sb(i)), 0, 35+30*SIN (t/13+sb(i)*2): NEXT i
 150 REM steering: a/d or cursors turn, w/up thrusts, click or touch steers the ship towards the pointer
 160 LET k$=INKEY$
+165 IF k$="l" OR k$="L" THEN LOADER
 170 IF k$="a" OR k$=CHR$ 8 THEN LET pa=pa-6
 180 IF k$="d" OR k$=CHR$ 9 THEN LET pa=pa+6
 190 IF k$="w" OR k$=CHR$ 11 THEN LET pu=pu+0.18*COS (pa*PI/180): LET pv=pv+0.18*SIN (pa*PI/180)
@@ -45,7 +46,7 @@
 440 NEXT i
 450 SPRITE "ship", px, py, 80, 80, pa+45, 100
 460 PRINT AT 0,0; INK 6; "EMO ASTEROIDS"; TAB 20; INK 5; "found "; found
-470 PRINT AT 21,0; INK 1; BRIGHT 1; "a d turn  w go  or click/touch"
+470 PRINT AT 21,0; INK 1; BRIGHT 1; "a d turn  w go  l loader  touch"
 480 PAUSE 1
 490 UNTIL 0
 700 REM --- an asteroid is greeted: it shrinks, sheds sparks, and eventually becomes a heart and is reborn ---

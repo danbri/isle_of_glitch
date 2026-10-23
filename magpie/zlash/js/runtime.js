@@ -1,8 +1,8 @@
 // The "ROM": an AVM1 runtime that gives a Flash movie a ZX Spectrum screen,
 // plus the SWF assets (glyph sprites, colour cell, beep bank) it relies on.
-import { zxFont } from './font.js?v=mvlgpntz';
-import * as S from './swf.js?v=mvlgpntz';
-import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root, path } from './avm1.js?v=mvlgpntz';
+import { zxFont } from './font.js?v=mvli9hob';
+import * as S from './swf.js?v=mvli9hob';
+import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root, path } from './avm1.js?v=mvli9hob';
 
 export const SCREEN = { W: 256, H: 192, BORDER_X: 32, BORDER_Y: 24, COLS: 32, ROWS: 22, FPS: 50 };
 export const STAGE = { W: SCREEN.W + 2 * SCREEN.BORDER_X, H: SCREEN.H + 2 * SCREEN.BORDER_Y };

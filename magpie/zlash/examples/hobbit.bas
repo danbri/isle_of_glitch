@@ -30,7 +30,7 @@
 100 LET vw$="n      1north  1s      2south  2e      3east   3w      4west   4ne     5northea5nw     6northwe6se     7southea7sw     8southwe8u      9up     9d      :down   :go     ;run    ;walk   ;look   <l      <take   =get    =t      =grab   ="
 101 LET vw$=vw$+"drop   >invento?i      ?inv    ?open   @close  Ashut   Aunlock Bsay    Ctalk   Cask    Ctell   Cwait   Dz      Dkill   Eattack Efight  Estrike Ehit    Estab   EexamineFx      Fread   Fsearch Fhelp   Gquit   Hwear   Iremove Jbreak  K"
 102 LET vw$=vw$+"cut    Kslash  Kthrow  Lput    Minsert Mclimb  Njump   Nenter  Nride   Neat    Odrink  Pscore  Qcross  Rswim   Rgive   Soffer  Spull   Thaul   Tanswer Ushoot  Vfire   Vsleep  Wrest   Wthe    /a      /an     /to     /with   /at     /"
-103 LET vw$=vw$+"in     /into   /of     /me     /across /through/onto   /from   /out    /and    /on     /please /my     /"
+103 LET vw$=vw$+"in     /into   /of     /me     /across /through/onto   /from   /out    /and    /on     /please /my     /loader H"
 130 GO SUB 2500
 135 PRINT "PIPKIN'S QUEST. a small person, a long road, and a dragon at the end of it. type HELP for a list of words."
 200 INPUT "> "; a$
@@ -367,9 +367,13 @@
 6122 IF ob>0 AND (ol(ob)=r OR ol(ob)=99) THEN PRINT "you look closely at ";on$(ob);"."'"it is just what it seems to be.": GO TO 8010
 6124 PRINT " there is no ";w$(2);" here.": GO TO 8000
 6150 PRINT "move with n s e w ne nw se sw u d or go ";
-6151 PRINT "<direction>."'"useful words: look, take, drop, inventory, open, close, unlock, examine, wait, kill, wear, remove, break, throw, put, climb, cross, give, eat, drink, pull, answer, shoot, score, quit."
+6151 PRINT "<direction>."'"useful words: look, take, drop, inventory, open, close, unlock, examine, wait, kill, wear, remove, break, throw, put, climb, cross, give, eat, drink, pull, answer, shoot, score, quit (or loader)."
 6152 PRINT "to ask a companion, say to durrock ""open window"", say to harl ""follow me"", say to sliver ""<answer>""."'"bring the dragons gold home and put it in the chest.": GO TO 8000
-6200 GO SUB 4600: PRINT "press any key to start again.": PAUSE 0: GO TO 23
+6200 GO SUB 4600: PRINT "press R to start again, or any other key for the loader."
+6210 IF INKEY$<>"" THEN PAUSE 1: GO TO 6210
+6220 LET k$=INKEY$: IF k$="" THEN PAUSE 1: GO TO 6220
+6230 IF k$="r" OR k$="R" THEN GO TO 23
+6240 LOADER
 6250 IF ob=7 AND ol(7)=99 THEN LET wr=1: LET rtm=12: PRINT "you slip the copper band on your finger and fade from sight.": IF svr=r THEN PRINT "sliver shrieks "" where is it? thief! thief! ""."
 6252 IF ob=7 AND ol(7)=99 THEN GO TO 8010
 6254 PRINT " you cannot wear that.": GO TO 8000

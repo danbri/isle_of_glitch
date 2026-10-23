@@ -174,7 +174,7 @@ export class BasicTestRuntime {
         case 'jif': if (e(args[0])) i = jump(args[1]); break;
         case 'jifnot': if (!e(args[0])) i = jump(args[1]); break;
         case 'ret': return args.length ? e(args[0]) : undefined;
-        case 'label': case 'mark': case 'nop': case 'trace': break;
+        case 'label': case 'mark': case 'nop': case 'trace': case 'geturl2': break;
         default: throw new Error(`Unsupported IR statement ${kind}`);
       }
     }

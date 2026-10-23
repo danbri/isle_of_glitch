@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="vendor/codemirror/codemirror.css">
-<link rel="stylesheet" href="css/app.css?v=mvlgpntz">
+<link rel="stylesheet" href="css/app.css?v=mvli9hob">
 <script>window.RufflePlayer = window.RufflePlayer || {}; window.RufflePlayer.config = { publicPath: 'vendor/ruffle/', polyfills: false };</script>
 <script src="vendor/ruffle/ruffle.js"></script>
 <script src="vendor/codemirror/codemirror.js"></script>
@@ -94,14 +94,16 @@
       <tr><td><code>PLOT x,y</code>, <code>DRAW dx,dy</code>, <code>CIRCLE x,y,r</code></td><td>256&times;176 pixel grid, origin bottom-left, colour items allowed first (<code>PLOT INK 2; x,y</code>)</td></tr>
       <tr><td><code>RECT x,y,w,h</code></td><td>extension: filled rectangle in the current INK (w, h in pixels)</td></tr>
       <tr><td><code>PAUSE n</code></td><td>n frames at 50 per second; <code>PAUSE 0</code> waits for a key; any key ends a pause early</td></tr>
+      <tr><td><code>HALT</code></td><td>extension: wait for the next frame (a 50th of a second), like the Z80 instruction. A game loop ending in <code>HALT</code> runs 50 times a second; one ending in <code>PAUSE 1</code> skips a frame and runs 25 times</td></tr>
       <tr><td><code>BEEP seconds, pitch</code></td><td>pitch in semitones from middle C, &minus;24 to 36 (Spectrum square wave)</td></tr>
+      <tr><td><code>LOADER</code>, <code>LOADER "name"</code></td><td>extension: stops the program and goes back to the loader menu, or opens the example with that id (<code>"monster-maze"</code>, <code>"tvp"</code>, <code>"jump"</code>...; the same ids as the <code>#</code> in the page address). It follows a <code>#name</code> link on this page, so a downloaded .swf just stops there</td></tr>
       <tr><td><code>TONE pitch [, seconds]</code></td><td>extension: a soft sine chime with a quick decay, &minus;12 to 24; does not pause unless seconds is given</td></tr>
       <tr><td><code>DIM a(10)</code>, <code>DIM b$(3,4)</code></td><td>arrays, elements 1..n</td></tr>
       <tr><td><code>DATA 1,2,"x"</code>, <code>READ a, b$</code>, <code>RESTORE [n]</code></td><td>as on the Spectrum</td></tr>
       <tr><td><code>WRAP 1</code> / <code>WRAP 0</code></td><td>extension: with WRAP 1, PRINT moves a word that would not fit onto the next line instead of splitting it (handy for text adventures)</td></tr>
       <tr><td><code>SPRITE "name", "row", "row"...</code></td><td>defines a bitmap sprite baked into the movie: <code>.</code> transparent, <code>#</code> black, <code>+</code> grey, <code>W</code> white, <code>0</code>-<code>7</code> colours, <code>a</code>-<code>h</code> bright colours; repeating the name appends rows</td></tr>
       <tr><td><code>SPRITE n$, x, y [, xscale [, yscale [, rotation [, alpha]]]]</code></td><td>places a copy (top-left at x,y in screen pixels, y downwards; scale in percent, rotation in degrees, alpha in percent); <code>SPRITE CLEAR</code> removes them all, <code>CLS</code> too</td></tr>
-      <tr><td><code>EMOJI "🙂", "name" [, size]</code></td><td>the browser rasterises the emoji at compile time (default 48 px) and bakes it into the movie as a true-colour alpha bitmap; place it with <code>SPRITE "name", x, y, ...</code>, centred on x,y so rotation spins about the middle</td></tr>
+      <tr><td><code>EMOJI "🙂", "name" [, size]</code></td><td>the browser rasterises the emoji at compile time (default 48 px) and bakes it into the movie as a true-colour alpha bitmap; place it with <code>SPRITE "name", x, y, ...</code>, centred on x,y so rotation spins about the middle. Plain text with no emoji in it, such as <code>EMOJI "+10", "plus10"</code>, comes out as chunky outlined cartoon lettering, shrunk to fit: handy for titles and score pop-ups</td></tr>
       <tr><td><code>FX "method", args...</code></td><td>escape hatch to Flash: calls that MovieClip drawing-API method on the graphics layer, e.g. <code>FX "lineStyle", 3, #ff00ff, 60</code>, <code>FX "moveTo", 10, 10</code>, <code>FX "curveTo", 128, 0, 246, 180</code>, <code>FX "beginFill", #0000ff, 40</code>, <code>FX "endFill"</code>, <code>FX "chequer"</code> (a ZX81 chequerboard fill). Coordinates are Flash's: pixels, origin top-left.</td></tr>
       <tr><td><code>FXP "property", value</code></td><td>sets a property of the graphics layer: <code>FXP "_alpha", 50</code>, <code>FXP "_rotation", 30</code>, <code>FXP "_xscale", 200</code></td></tr>
       <tr><td><code>STOP</code>, <code>REM</code></td><td><code>FLASH</code>, <code>INVERSE</code>, <code>OVER</code>, <code>POKE</code>, <code>RANDOMIZE</code>, <code>CLEAR</code> are accepted and ignored</td></tr>
@@ -145,6 +147,6 @@
   </div>
 </main>
 
-<script type="module" src="js/app.js?v=mvlgpntz"></script>
+<script type="module" src="js/app.js?v=mvli9hob"></script>
 </body>
 </html>

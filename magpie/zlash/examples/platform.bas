@@ -18,6 +18,7 @@
 175 IF k$=CHR$ 8 OR k$="a" OR k$="o" THEN LET vx=-2.5
 176 IF k$=CHR$ 9 OR k$="d" OR k$="p" THEN LET vx=2.5
 177 IF k$="" AND onp=1 THEN LET vx=vx*0.6: IF ABS vx<0.3 THEN LET vx=0
+178 IF k$="l" OR k$="L" THEN LOADER
 180 LET hx=hx+vx: IF hx<0 THEN LET hx=0: LET vx=0
 190 IF hx>248 THEN LET hx=248: LET vx=0
 200 IF (k$=CHR$ 11 OR k$="w" OR k$="q" OR k$=" ") AND onp=1 THEN LET vy=-6.6: LET onp=0: BEEP 0.02,12
@@ -42,7 +43,7 @@
 450 SPRITE "guard", gx, 118
 460 IF onp=1 AND vx<>0 AND INT (t/4)-INT (INT (t/4)/2)*2=0 THEN SPRITE "hero2", hx, hy: RETURN
 470 SPRITE "hero1", hx, hy
-480 PRINT AT 21,0; INK 5; "KEYS "; got; "/5"; TAB 12; "A D run  W jump  (hold W+D)"
+480 PRINT AT 21,0; INK 5; "KEYS "; got; "/5"; TAB 12; "A D run  W jump  L loader"
 490 RETURN
 500 REM --- lost a life ---
 510 FOR i=1 TO 4: BEEP 0.05,-10-i*2: NEXT i

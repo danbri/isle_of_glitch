@@ -1,150 +1,56 @@
 export const EXAMPLES = [
-  { name: 'TVP', src: `10 REM TVP
+  { id: 'loader', name: 'Loader', src: `10 REM ZX FLASH LOADER - pick a program with a key or a tap. Any program can come back here with LOADER, or open another with LOADER "name"
 20 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
-30 LET nl=9: LET np=345: DIM cn(nl): DIM lx(np): DIM ly(np)
-40 RESTORE 9000: LET k=0: FOR i=1 TO nl: READ cn(i): FOR j=1 TO cn(i): LET k=k+1: READ lx(k),ly(k): LET lx(k)=lx(k)/10: LET ly(k)=ly(k)/10: NEXT j: NEXT i
-50 LET t=0
-60 REPEAT
-70 CLS: LET t=t+1: FX "lineStyle"
-80 REM night-blue gradient, stacked bands
-90 FOR b=0 TO 10: FX "beginFill", #0a0c18+b*#040610, 100: FX "moveTo", 0, b*16: FX "lineTo", 256, b*16: FX "lineTo", 256, b*16+16: FX "lineTo", 0, b*16+16: FX "endFill": NEXT b
-100 REM pulsing magenta glow behind the logo
-110 FOR g=5 TO 1 STEP -1: FX "beginFill", #c020a0, 6+3*SIN (t/7): LET rr=g*22+6*SIN (t/5): GO SUB 1000: NEXT g
-120 REM the logo flies in, then breathes
-130 LET s=1+9*EXP (-t/12): LET al=100-100*EXP (-t/8): IF t>40 THEN LET s=1+0.02*SIN (t/9)
-140 LET ox=128: LET oy=80: LET rf=0: FX "beginFill", #ffffff, al: GO SUB 2000
-150 REM the reflection on the glossy floor
-160 LET rf=1: FX "beginFill", #ffffff, 18: GO SUB 2000
-170 REM a shine sweeping across
-180 LET sx=((t*4)-INT ((t*4)/400)*400)-80: FX "beginFill", #ffffff, 22: FX "moveTo", sx, 40: FX "lineTo", sx+28, 40: FX "lineTo", sx+58, 124: FX "lineTo", sx+30, 124: FX "endFill"
-190 REM the little loading dots
-200 FOR d=0 TO 7: LET a=t/6+d*PI/4: FX "beginFill", #ffffff, 25+70*(d=INT (t/3)-INT (INT (t/3)/8)*8): LET cx=128+18*COS a: LET cy=150+6*SIN a: FX "moveTo", cx-2, cy-2: FX "lineTo", cx+2, cy-2: FX "lineTo", cx+2, cy+2: FX "lineTo", cx-2, cy+2: FX "endFill": NEXT d
-210 REM TV scanlines, because 2007
-220 FX "lineStyle", 1, #000000, 12: FOR y=1 TO 175 STEP 2: FX "moveTo", 0, y: FX "lineTo", 256, y: NEXT y
-230 PAUSE 1
-240 UNTIL 0
-1000 REM glow ring of radius rr at (128,80), 24 segments
-1010 FX "moveTo", 128+rr, 80: FOR a=1 TO 24: FX "lineTo", 128+rr*COS (a*PI/12), 80+rr*0.62*SIN (a*PI/12): NEXT a: FX "endFill": RETURN
-2000 REM draw the traced logo through midpoint quadratics; rf=1 mirrors it below the baseline and squashes it
-2010 LET k=0: LET ka=1-1.5*rf: LET kb=rf*1.5*(oy+34*s)
-2020 FOR i=1 TO nl
-2030 LET n=cn(i): LET ax=lx(k+n): LET ay=ly(k+n): LET bx=lx(k+1): LET by=ly(k+1): FX "moveTo", ox+((ax+bx)/2-128)*s, ka*(oy+((ay+by)/2-80)*s)+kb
-2040 FOR j=1 TO n: LET ax=lx(k+j): LET ay=ly(k+j): LET bx=lx(k+1+(j-INT (j/n)*n)): LET by=ly(k+1+(j-INT (j/n)*n)): FX "curveTo", ox+(ax-128)*s, ka*(oy+(ay-80)*s)+kb, ox+((ax+bx)/2-128)*s, ka*(oy+((ay+by)/2-80)*s)+kb: NEXT j
-2050 LET k=k+n
-2060 NEXT i
-2070 FX "endFill": RETURN
-9000 DATA 146,1797,482,1787,482,1787,918,1759,918,1759,909,1740,909,1740,900,1598,833,1607,805,1635,805,1635,814,1749,862,1749,729,1721,710,1683,710,1683,700,1550,710,1550,719,1512,729,1493,757,1474
-9001 DATA 757,1465,776,1446,776,1427,748,1408,748,1398,729,1351,719,1351,710,1228,710,1228,719,1199,719,1171,748,1152,748,1095,814,1067,767,1048,767,1038,748,1019,748,1000,729,953,729,953,719,839,738
-9002 DATA 792,786,773,786,773,672,763,672,716,719,697,719,688,738,659,748,659,966,621,1023,602,1023,583,1042,507,1042,451,1004,451,985,432,966,432,928,318,928,327,1013,384,1099,403,1099,441,1136,470
-9003 DATA 1136,498,1155,593,1155,593,1146,650,1136,688,1099,716,1089,716,1070,744,1051,744,1032,763,1032,782,1051,782,1070,801,1070,820,1099,839,1099,858,1118,896,1118,896,1127,1000,1118,1000,1108
-9004 DATA 1038,1099,1048,1080,1067,1080,1105,1042,1162,1108,1180,1108,1218,1136,1266,1136,1266,1146,1361,1136,1361,1127,1417,1108,1455,1070,1484,1108,1503,1108,1512,1127,1531,1127,1550,1146,1692,1155
-9005 DATA 1692,1146,1721,1146,1721,1136,1778,1118,1825,1061,1844,1070,1853,1099,1872,1099,1910,1136,1939,1136,1967,1155,2062,1155,2062,1146,2119,1136,2128,1118,2176,1099,2185,1070,2214,1051,2233,985
-9006 DATA 2242,985,2242,928,2128,928,2128,966,2119,966,2109,1004,2053,1042,1977,1042,1977,1032,1939,1023,1901,966,1901,852,1977,852,1986,833,2005,833,2015,748,1986,719,1901,719,1901,558,1882,539,1863
-9007 DATA 539,1853,520,1835,520,121,1749,407,1939,539,1939,682,2005,691,2053,748,2043,843,1977,890,1939,890,1939,966,1967,994,1986,994,1986,1004,2062,994,2090,966,2090,890,2280,890,2280,985,2271,985
-9008 DATA 2252,1061,2176,1146,2157,1146,2119,1174,2053,1184,2053,1193,1977,1193,1977,1184,1910,1174,1910,1165,1853,1146,1835,1118,1816,1118,1787,1155,1768,1155,1730,1184,1692,1184,1692,1193,1541,1184
-9009 DATA 1541,1174,1484,1155,1465,1127,1436,1127,1427,1146,1361,1165,1361,1174,1275,1184,1275,1174,1190,1165,1190,1155,1152,1146,1143,1127,1124,1127,1105,1099,1086,1099,1067,1127,1048,1127,1029,1146
-9010 DATA 962,1155,962,1165,906,1165,906,1155,830,1146,754,1089,707,1146,688,1146,650,1174,583,1184,583,1193,507,1193,507,1184,470,1184,470,1174,441,1174,441,1165,384,1146,299,1042,299,1013,280,985
-9011 DATA 280,890,470,890,470,966,498,994,517,994,517,1004,593,994,621,966,621,738,631,738,631,719,650,719,659,700,707,682,725,653,773,634,792,606,811,606,811,710,944,682,944,691,1000,691,1019,710
-9012 DATA 1048,710,1086,748,1124,738,1171,691,1199,691,1228,672,1351,672,1351,682,1380,682,1380,691,1436,710,1446,729,1465,729,1503,691,1531,691,1531,682,1588,672,1588,663,1683,663,1683,672,1749,682
-9013 DATA 18,669,407,763,416,801,454,811,549,801,549,792,587,763,596,754,615,725,615,725,625,650,615,640,596,621,596,621,577,593,549,593,482,602,482,612,445,15,896,824,972,824,1029,881,1029,909,1038
-9014 DATA 909,1029,966,972,1023,934,1023,934,1032,887,1023,830,966,830,890,839,890,849,852,896,833,10,1256,814,1351,824,1389,862,1398,966,1332,1032,1247,1032,1180,966,1180,881,1228,824,1256,824,9,1266
-9015 DATA 852,1237,862,1218,890,1218,956,1256,994,1323,994,1361,956,1361,890,1323,852,9,906,862,868,890,868,956,925,994,981,975,981,956,1000,937,991,890,962,862,9,1512,937,1654,1004,1673,1023,1673
-9016 DATA 1042,1645,1051,1645,1042,1607,1032,1598,1013,1503,975,8,678,445,631,482,631,539,659,577,725,587,773,539,773,482,735,445` },
-  { name: 'Hello 1982', src: `10 REM Hello from 1982
-20 BORDER 1: PAPER 0: INK 7: CLS
-30 PRINT "HELLO WORLD"; TAB 16; "from Flash"
-40 FOR i=1 TO 7
-50 PRINT INK i; BRIGHT 1; "Colour "; i; TAB 16; "squared is "; i*i
-60 NEXT i
-70 PLOT 0,0: DRAW 255,175
-80 CIRCLE INK 6; 128,88,40
-90 LET a$="ZX Spectrum": PRINT AT 20,0; a$(4 TO 11); " says "; CHR$ 127; " 1982"
-100 BEEP 0.1,0: BEEP 0.1,4: BEEP 0.2,7
-110 PRINT AT 21,0; "press a key"; : PAUSE 0
-120 GO TO 20` },
-  { name: '10 PRINT maze', src: `10 BORDER 0: PAPER 0: BRIGHT 1: CLS
-20 PRINT INK 1+INT (RND*6); CHR$ (47+45*INT (RND*2));
-30 GO TO 20` },
-  { name: 'Bouncing ball', src: `10 BORDER 0: PAPER 0: INK 5: CLS
-20 LET x=40: LET y=90: LET dx=3: LET dy=2: LET r=10
-30 REPEAT
-40 CLS
-50 CIRCLE INK 6; x,y,r
-60 RECT INK 2; 0,0,256,4
-70 PRINT AT 0,0; INK 7; "x="; INT x; " y="; INT y; TAB 20; "t="; TICKS
-80 LET x=x+dx: LET y=y+dy
-90 IF x<r OR x>255-r THEN LET dx=-dx: BEEP 0.02,20
-100 IF y<r+4 OR y>175-r THEN LET dy=-dy: BEEP 0.02,8
-110 PAUSE 1
-120 UNTIL 0` },
-  { name: 'Sierpinski chaos game', src: `10 REM The chaos game draws a Sierpinski triangle one dot at a time
-20 BORDER 0: PAPER 0: INK 4: CLS
-30 DIM x(3): DIM y(3)
-40 LET x(1)=0: LET y(1)=0: LET x(2)=255: LET y(2)=0: LET x(3)=128: LET y(3)=175
-50 LET px=128: LET py=60
-60 FOR i=1 TO 20000
-70 LET k=1+INT (RND*3)
-80 LET px=(px+x(k))/2: LET py=(py+y(k))/2
-90 PLOT INK 1+k; px,py
-100 NEXT i
-110 PRINT AT 0,0; INK 7; "done"` },
-  { name: 'Tune (BEEP)', src: `10 REM Twinkle twinkle, in BEEPs
-20 BORDER 2: PAPER 0: INK 6: BRIGHT 1: CLS
-30 LET n$="0 0 7 7 9 9 7 5 5 4 4 2 2 0"
-40 LET p=1
-50 LET s=p: REPEAT: LET p=p+1: UNTIL p>LEN n$ OR n$(p)=" "
-60 LET note=VAL n$(s TO p-1)
-70 PRINT INK 1+note-INT (note/6)*6; CHR$ (131+8*INT (note/4));
-80 PLOT 10+s*8,20+note*10: DRAW 0,-20+note*2
-90 BEEP 0.25,note
-100 LET p=p+1
-110 IF p<=LEN n$ THEN GO TO 50
-120 PRINT: PRINT "again? (y/n)"
-130 LET k$=INKEY$: IF k$="" THEN PAUSE 1: GO TO 130
-140 IF k$="y" THEN GO TO 20` },
-  { name: 'INPUT and strings', src: `10 BORDER 7: PAPER 7: INK 0: CLS
-20 PRINT "What is your name?"
-30 INPUT "Name: "; n$
-40 IF n$="" THEN LET n$="Nobody"
-50 PRINT "Hello, "; n$; "!"
-60 PRINT "Backwards that is ";
-70 FOR i=LEN n$ TO 1 STEP -1: PRINT n$(i);: NEXT i
-80 PRINT
-90 INPUT "How old are you? "; a
-100 PRINT "In 1982 you were "; a-44; "."
-110 IF a-44<0 THEN PRINT "So you were not born yet. Lucky you."
-120 PRINT: PRINT INK 2; "Run again? (y/n)"
-130 LET k$=INKEY$: IF k$="" THEN PAUSE 1: GO TO 130
-140 IF k$="y" OR k$="Y" THEN GO TO 10` },
-  { name: 'Paint with the mouse', src: `10 BORDER 0: PAPER 0: INK 7: CLS
-20 PRINT AT 0,0; "move the mouse over the screen"
-30 LET c=1
-40 REPEAT
-50 LET x=MOUSEX: LET y=MOUSEY
-60 IF x>=0 AND x<256 AND y>=0 AND y<176 THEN PLOT INK c; x,y
-70 LET c=1+INT (TICKS/25)-INT (INT (TICKS/25)/7)*7
-80 PRINT AT 21,0; INK c; "ink "; c; " at "; x; ","; y; "   "
-90 PAUSE 1
-100 UNTIL 0` },
-  { name: 'Demo: bars and scroller', src: `10 REM colour bars, a sine scroller and a flashing border
-20 PAPER 0: INK 7: BRIGHT 1: CLS
-30 LET m$="      ZX FLASH ... SPECTRUM BASIC COMPILED TO AVM1 BYTECODE, RUNNING IN RUFFLE ... HELLO TO ALL 8-BIT FRIENDS      "
-40 FOR b=0 TO 6: RECT INK 1+b; 0,10+b*8,256,8: NEXT b
-50 DIM p(32): LET t=0
-60 REPEAT
-70 FOR i=1 TO 32
-80 LET k=1+(t+i)-INT ((t+i)/LEN m$)*LEN m$
-90 LET r=5+INT (3*SIN ((t+i)/4))
-100 IF p(i)<>r THEN PRINT AT p(i),i-1;" "
-110 PRINT AT r,i-1; INK 2+i-INT (i/6)*6; m$(k)
-120 LET p(i)=r
-130 NEXT i
-140 BORDER 1+t-INT (t/7)*7
-150 PRINT AT 0,0; INK 6; "frame "; t
-160 LET t=t+1
-170 PAUSE 2
-180 UNTIL 0` },
-  { name: '3D Monster Maze', src: `10 REM 3D MONSTER MAZE - after Malcolm Evans' 1981 ZX81 original. Rex's sprites and the view geometry follow the original code.
+30 LET n=14: DIM i$(n,22): DIM n$(n,17): DIM t$(n,9): DIM c$(n,1): DIM r(n)
+40 RESTORE 900: FOR i=1 TO n: READ i$(i),n$(i),t$(i),r(i),c$(i): NEXT i
+50 REM loading stripes, as a tape would: pilot tone, then data. Any key or tap skips them
+60 FOR i=1 TO 30: BORDER 2+3*(i-INT (i/2)*2): PAUSE 1: IF INKEY$<>"" OR MOUSEB<>0 THEN GO TO 100
+70 NEXT i
+80 FOR i=1 TO 40: BORDER 1+5*INT (RND*2): PAUSE 1: IF INKEY$<>"" OR MOUSEB<>0 THEN GO TO 100
+90 NEXT i
+100 BORDER 0: CLS
+110 PRINT AT 1,1; INK 7; "ZX FLASH"
+120 PRINT AT 2,1; INK 5; "PROGRAM LOADER"
+130 RESTORE 990: FOR s=0 TO 3: READ c: FOR k=0 TO 19: RECT INK c; 196+s*8+k,148+k,8,1: NEXT k: NEXT s
+140 PRINT AT 4,1; INK 6; "FEATURED": PRINT AT 12,1; INK 6; "MORE PROGRAMS"
+150 LET p=0: FOR i=1 TO n: GO SUB 500: NEXT i
+160 PRINT AT 21,1; INK 5; "PRESS A KEY OR TAP A PROGRAM"
+170 LET s=1: LET p=1: LET i=s: GO SUB 500
+200 REM wait until nothing is held, then for a key or a tap
+210 IF INKEY$<>"" OR MOUSEB<>0 THEN PAUSE 1: GO TO 210
+220 LET a$=INKEY$: IF a$="" AND MOUSEB=0 THEN PAUSE 1: GO TO 220
+230 IF MOUSEB=0 THEN GO TO 260
+240 LET rr=INT ((175-MOUSEY)/8): FOR i=1 TO n: IF r(i)=rr THEN GO TO 600
+250 NEXT i: GO TO 210
+260 IF a$=CHR$ 10 THEN LET d=1: GO TO 280
+270 IF a$=CHR$ 11 THEN LET d=-1: GO TO 280
+275 GO TO 300
+280 LET p=0: LET i=s: GO SUB 500: LET s=s+d: IF s<1 THEN LET s=n
+285 IF s>n THEN LET s=1
+290 LET p=1: LET i=s: GO SUB 500: TONE 12: PAUSE 6: GO TO 220
+300 IF a$=CHR$ 13 OR a$=" " THEN LET i=s: GO TO 600
+310 FOR i=1 TO n: IF c$(i)=a$ THEN GO TO 600
+320 NEXT i: GO TO 210
+500 REM draw program i, highlighted in PAPER p
+510 PRINT AT r(i),1; PAPER p; INK 7; " "; c$(i); " "; n$(i); " "
+520 PRINT AT r(i),23; PAPER 0; INK 4; t$(i)
+530 RETURN
+600 REM chosen: light it up, chime, and ask the page to load it
+610 LET p=2: GO SUB 500: TONE 7: PAUSE 4: TONE 12: PAUSE 4: TONE 19: PAUSE 8
+620 LOADER i$(i)
+900 DATA "monster-maze","3D MONSTER MAZE","ZX81 1981",5,"1"
+905 DATA "pop-party","POP PARTY","EMOJI",6,"2"
+910 DATA "tvp","TVP","TV",7,"3"
+920 DATA "emo-asteroids","EMO ASTEROIDS","EMOJI",8,"4"
+930 DATA "jump","JUMP DEMO","PLATFORM",9,"5"
+940 DATA "pipkins-quest","PIPKIN'S QUEST","ADVENTURE",10,"6"
+950 DATA "hello-1982","HELLO 1982","",13,"7","10-print-maze","10 PRINT MAZE","",14,"8"
+960 DATA "bouncing-ball","BOUNCING BALL","",15,"9","sierpinski-chaos-game","SIERPINSKI","",16,"a"
+970 DATA "tune-beep","TUNE (BEEP)","",17,"b","input-and-strings","INPUT AND STRINGS","",18,"c"
+980 DATA "paint-with-the-mouse","PAINT WITH MOUSE","",19,"d","demo-bars-and-scroller","BARS AND SCROLLER","",20,"e"
+990 DATA 2,6,4,5
+` },
+  { id: 'monster-maze', name: '3D Monster Maze', src: `10 REM 3D MONSTER MAZE - after Malcolm Evans' 1981 ZX81 original. Rex's sprites and the view geometry follow the original code.
 20 BORDER 15: PAPER 7: INK 0: BRIGHT 1: CLS
 30 DIM m(17,16): DIM dr(3): DIM dc(3): DIM cs(7): DIM hh(7): DIM sn$(11,3): DIM sr(11): DIM sc(11)
 40 RESTORE 50: FOR i=0 TO 3: READ dr(i),dc(i): NEXT i: FOR i=0 TO 7: READ cs(i),hh(i): NEXT i
@@ -157,6 +63,7 @@ export const EXAMPLES = [
 110 PRINT '"  SEE THE AMAZING TYRANNOSAURUS": PRINT "  REX, KING OF THE DINOSAURS,": PRINT "  IN HIS LAIR. FIND THE EXIT": PRINT "  BEFORE HE FINDS YOU."
 120 PRINT '"  A D TURN (O P, 5 8, CURSORS)": PRINT "  W WALKS FORWARD (Q, 7, UP)": PRINT "  S TURNS ROUND"
 125 PRINT AT 16,2; "OR TAP THE MOVE BUTTONS"
+127 PRINT AT 18,2; "L GOES BACK TO THE LOADER"
 130 IF won>0 THEN PRINT AT 2,3; "ESCAPES: "; won; "  REX IS QUICKER"
 140 SPRITE "d2l", 210, 116, 200, 183
 150 PRINT AT 21,2; "PRESS A KEY OR TAP TO ENTER": GO SUB 1500
@@ -204,6 +111,7 @@ export const EXAMPLES = [
 424 IF k$=CHR$ 9 OR k$="d" OR k$="D" OR k$="p" OR k$="P" OR k$="8" THEN LET act=2
 426 IF k$=CHR$ 11 OR k$="w" OR k$="W" OR k$="q" OR k$="Q" OR k$="7" THEN LET act=3
 428 IF k$=CHR$ 10 OR k$="s" OR k$="S" THEN LET act=4
+429 IF k$="l" OR k$="L" THEN LOADER
 430 IF MOUSEB=1 AND MOUSEX>=0 AND MOUSEX<256 AND MOUSEY<=19 AND MOUSEY>=-16 THEN LET act=INT (MOUSEX/64)+1: IF act=2 THEN LET act=3: GO TO 436
 432 IF MOUSEB=1 AND MOUSEX>=128 AND MOUSEX<192 AND MOUSEY<=19 AND MOUSEY>=-16 THEN LET act=2
 436 LET do=0: IF act<>0 THEN IF act<>la OR (act=3 AND TICKS>=nk) THEN LET do=1: LET nk=TICKS+8
@@ -290,6 +198,7 @@ export const EXAMPLES = [
 1500 REM wait for a fresh key or tap, then release it before entering the next screen
 1510 LET k$=INKEY$: IF k$<>"" OR MOUSEB<>0 THEN PAUSE 1: GO TO 1510
 1520 LET k$=INKEY$: IF k$="" AND MOUSEB=0 THEN PAUSE 1: GO TO 1520
+1525 IF k$="l" OR k$="L" THEN LOADER
 1530 LET k$=INKEY$: IF k$<>"" OR MOUSEB<>0 THEN PAUSE 1: GO TO 1530
 1540 RETURN
 1600 REM touch controls, below the view and status: left, forward, right, turn round
@@ -340,7 +249,365 @@ export const EXAMPLES = [
 2989 REM sprite name, ZX81 row and column of its top-left corner
 2990 DATA "d1l",2,6,"d1r",3,7,"d2l",5,8,"d2r",6,10,"d3l",8,10,"d3r",9,11,"d4l",9,12,"d4r",10,12,"d5l",11,13,"d5r",11,13,"d0r",0,1
 ` },
-  { name: 'Jump demo (platform game)', src: `10 REM JUMP DEMO - a one-screen platform game built on SPRITE
+  { id: 'pop-party', name: 'Pop Party (emoji, Flash-style)', src: `10 REM ======================== POP PARTY ========================
+20 REM A Flash-style party game made from emoji, in plain BASIC.
+30 REM Click, or hold the button and swipe, to pop things as they float up.
+40 REM Sweets score more, a star sends out a shockwave that pops its neighbours,
+50 REM a clock gives you five more seconds, and a bomb costs a heart.
+60 REM Pop quickly for a combo. Percy the pelican cycles past, drawn with FX.
+70 REM
+80 REM   100 setup            300 title screen       500 a new round
+90 REM   600 the game loop    800 results           1000 popping
+92 REM  1100 bursts of bits  1150 pop-up words      1200 bits and words move
+94 REM  1300 floating things 1500 launch one        2000 sun and clouds
+96 REM  2500 pointer, keys   2600 the swipe trail   2700 hearts, time bar
+97 REM  2800 the music       3000 scenery           4000 Percy the pelican
+98 REM  Every loop ends with HALT: wait for the next frame, so it all runs 50 times a second.  L: loader  M: music
+100 REM ======================== setup ========================
+110 REM EMOJI turns an emoji into a bitmap when the program is compiled; SPRITE stamps copies of it
+120 EMOJI "🎈","balloon",48: EMOJI "🍬","candy",40: EMOJI "🌟","star",44: EMOJI "💣","bomb",44: EMOJI "⏰","clock",40
+130 EMOJI "🎉","confetti",28: EMOJI "✨","sparkle",24: EMOJI "💥","boom",48: EMOJI "☁️","cloud",64: EMOJI "🌞","sun",56
+140 EMOJI "❤️","heart",24: EMOJI "🎯","aim",28: EMOJI "🟩","timebar",16: EMOJI "🟥","hurry",16
+150 REM ...and plain words come out as chunky cartoon lettering
+160 EMOJI "POP PARTY","title",256: EMOJI "TIME UP!","timeup",192: EMOJI "KABOOM!","gameover",192
+170 EMOJI "+10","plus10",48: EMOJI "+20","plus20",48: EMOJI "+50","plus50",48: EMOJI "+5 SEC","plus5",64: EMOJI "OUCH!","ouch",64
+180 EMOJI "x2","x2",40: EMOJI "x3","x3",40: EMOJI "x4","x4",40: EMOJI "x5","x5",40
+190 BORDER #1d2b53: PAPER #3a7bd5: INK 7: BRIGHT 1: CLS
+200 REM the five kinds of thing: looks, points, size (percent), rising speed (pixels a frame), sway (pixels)
+210 LET kinds=5: DIM look$(kinds): DIM points(kinds): DIM size(kinds): DIM speed(kinds): DIM sway(kinds)
+220 RESTORE 290: FOR k=1 TO kinds: READ look$(k),points(k),size(k),speed(k),sway(k): NEXT k
+230 REM up to ten floating things at once; each one has a slot in these arrays
+240 LET most=10: DIM kind(most): DIM alive(most): DIM homex(most): DIM screenx(most): DIM y(most): DIM rise(most): DIM age(most): DIM phase(most): DIM scale(most)
+250 REM little bits for bursts, words that pop up, and the points of the swipe trail
+260 LET bits=36: DIM bit$(bits): DIM bitx(bits): DIM bity(bits): DIM bitdx(bits): DIM bitdy(bits): DIM bitlife(bits): DIM bitsize(bits): DIM bitspin(bits)
+265 LET labels=8: DIM label$(labels): DIM labelx(labels): DIM labely(labels): DIM labellife(labels)
+270 LET trail=10: DIM trailx(trail): DIM traily(trail): LET trailsize=0
+280 LET clouds=4: DIM cloudx(clouds): DIM cloudy(clouds): DIM cloudsize(clouds): FOR c=1 TO clouds: LET cloudx(c)=RND*300-30: LET cloudy(c)=14+RND*50: LET cloudsize(c)=60+RND*70: NEXT c
+285 LET best=0: LET cyclex=-40: LET shake=0: LET ringlife=0: LET music=1: LET beat=0: LET note=0: LET wasm=0
+290 DATA "balloon",10,110,0.5,9, "candy",20,80,0.65,9, "star",50,85,0.85,28, "bomb",0,105,0.45,5, "clock",0,90,0.5,9
+300 REM ======================== title screen ========================
+310 LET frame=0: LET wasdown=1
+320 FOR b=1 TO most: LET alive(b)=0: NEXT b
+330 CLS: PRINT AT 21,1; INK 0; "L: LOADER   M: MUSIC"
+340 REPEAT
+350 SPRITE CLEAR: LET frame=frame+1: GO SUB 3000: GO SUB 2000: GO SUB 2800
+360 IF frame-INT (frame/70)*70=1 THEN GO SUB 1500
+370 GO SUB 1300: GO SUB 1200
+380 REM the title drops in on a spring: 1 - e^(-t)*cos(t) overshoots, then settles
+390 LET spring=1-EXP (-frame/18)*COS (frame/8)
+400 SPRITE "title", 128, 100*spring-40, 100+5*SIN (frame/22), 100-5*SIN (frame/22), 3*SIN (frame/34), 100
+410 IF frame>60 AND INT (frame/50)=2*INT (frame/100) THEN PRINT AT 12,4; INK 0; "CLICK OR SWIPE TO START"
+420 IF frame>60 AND INT (frame/50)<>2*INT (frame/100) THEN PRINT AT 12,4; "                       "
+430 IF best>0 THEN PRINT AT 14,11; INK 0; "BEST "; best
+440 GO SUB 2500: HALT
+450 UNTIL clicked OR startkey
+500 REM ======================== a new round ========================
+505 REM time the round with TICKS, the real clock (50 a second), rather than counting passes round the loop
+510 LET score=0: LET hearts=3: LET endtick=TICKS+60*50: LET timeleft=60*50: LET combo=0: LET lastpop=-99: LET every=60: LET frame=0
+520 CLS: PRINT AT 0,1; INK 7; "SCORE 0": PRINT AT 21,1; INK 0; "L: LOADER   M: MUSIC"
+530 FOR b=1 TO most: LET alive(b)=0: NEXT b
+600 REM ======================== the game loop: once per frame, 50 times a second ========================
+610 REPEAT
+620 SPRITE CLEAR: LET frame=frame+1: LET timeleft=endtick-TICKS
+630 GO SUB 3000: GO SUB 2000: GO SUB 2800
+640 REM new things come more often as the round goes on
+650 IF frame-INT (frame/every)*every=0 THEN GO SUB 1500
+660 IF frame-INT (frame/300)*300=0 AND every>24 THEN LET every=every-6
+670 GO SUB 2500
+680 IF down THEN GO SUB 1000
+690 GO SUB 1300: GO SUB 1200: GO SUB 2700
+700 HALT
+710 UNTIL timeleft<=0 OR hearts<=0
+800 REM ======================== results ========================
+810 LET newbest=0: IF score>best THEN LET best=score: LET newbest=1
+820 LET banner$="timeup": IF hearts<=0 THEN LET banner$="gameover"
+830 LET t=0: LET wasdown=1
+840 REPEAT
+850 SPRITE CLEAR: LET t=t+1: LET frame=frame+1: GO SUB 3000: GO SUB 2000: GO SUB 2800: GO SUB 1300: GO SUB 1200
+860 IF newbest AND t-INT (t/12)*12=0 THEN LET burstx=RND*256: LET bursty=20: LET many=2: LET newbit$="confetti": GO SUB 1100
+870 LET spring=1-EXP (-t/14)*COS (t/6)
+880 SPRITE banner$, 128, 52, 110*spring, 110*spring, 4*SIN (t/26), 100
+890 IF t=50 THEN PRINT AT 11,10; INK 0; "SCORE "; score: PRINT AT 12,10; INK 0; "BEST  "; best
+900 IF t=50 AND newbest THEN PRINT AT 13,10; INK 2; "NEW BEST!"
+910 IF t>80 THEN PRINT AT 15,6; INK 0; "CLICK TO PLAY AGAIN"
+920 GO SUB 2500: HALT
+930 UNTIL t>80 AND (clicked OR startkey)
+940 GO TO 500
+1000 REM ======================== popping: whatever is under the pointer while the button is down ========================
+1010 REM holding the button and sweeping pops everything you pass through; later things are drawn on top, so look from the last
+1020 LET hit=0: FOR b=most TO 1 STEP -1
+1030 IF alive(b) AND hit=0 THEN IF ABS (aimx-screenx(b))<scale(b)/4.5 AND ABS (aimy-y(b))<scale(b)/4.5 THEN LET hit=b
+1040 NEXT b
+1045 IF hit=0 THEN IF clicked THEN LET combo=0
+1048 IF hit=0 THEN RETURN
+1049 LET b=hit
+1050 REM ---- pop thing number b ----
+1052 LET alive(b)=0: LET burstx=screenx(b): LET bursty=y(b)
+1054 IF look$(kind(b))="bomb" THEN LET hearts=hearts-1: LET shake=28: LET combo=0: LET newbit$="boom": LET many=6: GO SUB 1100: LET newlabel$="ouch": GO SUB 1150: TONE -12: RETURN
+1060 REM pops close together build a combo, which multiplies the points (up to five times)
+1062 IF frame-lastpop<70 THEN LET combo=combo+1 ELSE LET combo=1
+1064 LET lastpop=frame: LET times=combo: IF times>5 THEN LET times=5
+1066 LET score=score+points(kind(b))*times: PRINT AT 0,1; INK 7; "SCORE "; score
+1068 IF look$(kind(b))="clock" THEN LET endtick=endtick+250: LET newlabel$="plus5" ELSE LET newlabel$="plus"+STR$ points(kind(b))
+1070 REM a star sends out a ring that pops everything it reaches (see 1385)
+1072 IF look$(kind(b))="star" THEN LET ringx=burstx: LET ringy=bursty: LET ringr=4: LET ringlife=30: LET shake=8
+1074 LET newbit$="confetti": LET many=5: GO SUB 1100: LET newbit$="sparkle": LET many=3: GO SUB 1100: GO SUB 1150
+1076 IF times>1 THEN LET newlabel$="x"+STR$ times: LET bursty=bursty-14: GO SUB 1150
+1078 TONE 4+3*times: RETURN
+1100 REM ======================== a burst: "many" bits called newbit$ fly out of (burstx, bursty) ========================
+1110 FOR i=1 TO bits
+1120 IF many>0 AND bitlife(i)<=0 THEN LET many=many-1: LET angle=RND*2*PI: LET push=0.5+RND*1.3: LET bit$(i)=newbit$: LET bitx(i)=burstx: LET bity(i)=bursty: LET bitdx(i)=push*COS angle: LET bitdy(i)=push*SIN angle-0.8: LET bitlife(i)=48+RND*28: LET bitsize(i)=50+RND*60: LET bitspin(i)=(RND-0.5)*15
+1130 NEXT i: RETURN
+1150 REM ======================== a word (newlabel$) pops up at (burstx, bursty) ========================
+1160 FOR i=1 TO labels: IF labellife(i)<=0 THEN LET label$(i)=newlabel$: LET labelx(i)=burstx: LET labely(i)=bursty: LET labellife(i)=80: LET i=labels
+1170 NEXT i: RETURN
+1200 REM ======================== bits fall, spin and fade; words spring up and drift away ========================
+1210 FOR i=1 TO bits: IF bitlife(i)>0 THEN LET bitlife(i)=bitlife(i)-1: LET bitx(i)=bitx(i)+bitdx(i): LET bity(i)=bity(i)+bitdy(i): LET bitdy(i)=bitdy(i)+0.03: SPRITE bit$(i), bitx(i)+shakex, bity(i)+shakey, bitsize(i), bitsize(i), bitspin(i)*bitlife(i), 1.5*bitlife(i)
+1220 NEXT i
+1230 FOR i=1 TO labels: IF labellife(i)>0 THEN LET labellife(i)=labellife(i)-1: LET labely(i)=labely(i)-0.35: LET grow=80-labellife(i): LET spring=1-EXP (-grow/8)*COS (grow/4): SPRITE label$(i), labelx(i), labely(i), 60*spring, 60*spring, 0, 4*labellife(i)
+1240 NEXT i: RETURN
+1300 REM ======================== everything floating rises, sways on a sine wave and wobbles ========================
+1305 IF ringlife>0 THEN LET ringlife=ringlife-1: LET ringr=ringr+3
+1310 FOR b=1 TO most: IF alive(b) THEN GO SUB 1330
+1320 NEXT b: RETURN
+1330 LET age(b)=age(b)+1: LET y(b)=y(b)-rise(b)
+1340 LET screenx(b)=homex(b)+sway(kind(b))*SIN (frame/44+phase(b))
+1350 REM it arrives on a spring, then squashes and stretches a little, out of step with its neighbours
+1360 LET spring=1-EXP (-age(b)/10)*COS (age(b)/5): LET wobble=0.04*SIN (frame/14+phase(b))
+1370 SPRITE look$(kind(b)), screenx(b)+shakex, y(b)+shakey, scale(b)*spring*(1+wobble), scale(b)*spring*(1-wobble), 8*COS (frame/44+phase(b)), 100
+1380 IF y(b)<-30 THEN LET alive(b)=0
+1385 REM a star's shockwave pops everything inside the ring, except bombs: a chain reaction
+1390 IF ringlife>0 AND alive(b) AND look$(kind(b))<>"bomb" THEN LET dx=screenx(b)-ringx: LET dy=y(b)-ringy: IF dx*dx+dy*dy<ringr*ringr THEN GO SUB 1050
+1395 RETURN
+1500 REM ======================== launch something new from below the screen ========================
+1510 LET b=0: FOR i=1 TO most: IF alive(i)=0 THEN LET b=i: LET i=most
+1520 NEXT i: IF b=0 THEN RETURN
+1530 REM roll a dice: mostly balloons and sweets; bombs get commoner as the round goes on
+1540 LET roll=RND: LET late=frame/3000
+1550 LET k=1: IF roll<0.45 THEN LET k=2
+1560 IF roll<0.25+0.12*late THEN LET k=4
+1570 IF roll<0.12 THEN LET k=5
+1580 IF roll<0.07 THEN LET k=3
+1590 LET kind(b)=k: LET alive(b)=1: LET age(b)=0: LET phase(b)=RND*2*PI: LET homex(b)=24+RND*208: LET screenx(b)=homex(b): LET y(b)=196
+1595 LET scale(b)=size(k)*(0.9+RND*0.25): LET rise(b)=speed(k)*(0.6+RND*0.4+late*0.5): RETURN
+2000 REM ======================== the sun turns; nearer (bigger) clouds drift faster: parallax ========================
+2010 SPRITE "sun", 226+shakex, 24+shakey, 100+5*SIN (frame/28), 100+5*SIN (frame/28), frame/8, 100
+2020 FOR c=1 TO clouds: LET cloudx(c)=cloudx(c)+cloudsize(c)/1000: IF cloudx(c)>290 THEN LET cloudx(c)=-34: LET cloudy(c)=14+RND*50
+2030 SPRITE "cloud", cloudx(c)+shakex, cloudy(c)+shakey, cloudsize(c), cloudsize(c)*0.8, 0, 90: NEXT c: RETURN
+2500 REM ======================== the pointer, and the keys ========================
+2510 REM MOUSEY counts up from the bottom of the screen; sprites count down from the top
+2520 LET aimx=MOUSEX: LET aimy=175-MOUSEY
+2530 REM a click is the moment the button goes down; "down" stays true while it is held
+2540 LET down=MOUSEB: LET clicked=down AND NOT wasdown: LET wasdown=down
+2550 IF aimx>=0 AND aimx<256 AND aimy>=0 AND aimy<176 THEN SPRITE "aim", aimx, aimy, 70, 70, frame*1.5, 80
+2560 LET key$=INKEY$: LET startkey=(key$=" " OR key$=CHR$ 13)
+2570 IF key$="l" OR key$="L" THEN LOADER
+2580 IF (key$="m" OR key$="M") AND NOT wasm THEN LET music=1-music
+2585 LET wasm=(key$="m" OR key$="M")
+2590 REM remember where the pointer has been while held, newest first, for the trail; it shrinks away when let go
+2592 IF down THEN FOR i=trail TO 2 STEP -1: LET trailx(i)=trailx(i-1): LET traily(i)=traily(i-1): NEXT i: LET trailx(1)=aimx: LET traily(1)=aimy: IF trailsize<trail THEN LET trailsize=trailsize+1
+2594 IF NOT down AND trailsize>0 THEN LET trailsize=trailsize-1
+2596 RETURN
+2600 REM ======================== the swipe trail: a fat soft line, then a thin bright one, both tapering ========================
+2610 IF trailsize<2 THEN RETURN
+2620 FOR i=2 TO trailsize: FX "lineStyle", 9-i*0.7, #fff3a0, 30: FX "moveTo", trailx(i-1), traily(i-1): FX "lineTo", trailx(i), traily(i): NEXT i
+2630 FOR i=2 TO trailsize: FX "lineStyle", 3-i*0.25, #ffffff, 100-i*9: FX "moveTo", trailx(i-1), traily(i-1): FX "lineTo", trailx(i), traily(i): NEXT i
+2640 RETURN
+2700 REM ======================== hearts, and the time bar: a green square emoji, stretched ========================
+2710 FOR i=1 TO 3: SPRITE "heart", 254-i*15, 8, 70, 70, 0, 20+80*(i<=hearts): NEXT i
+2720 LET left=timeleft/3000: IF left>1 THEN LET left=1
+2730 LET bar$="timebar": IF timeleft<500 AND INT (frame/16)=2*INT (frame/32) THEN LET bar$="hurry"
+2740 SPRITE bar$, 96+40*left, 4, 500*left, 50, 0, 100: RETURN
+2800 REM ======================== the music: a tune in DATA, one step every 9 frames ========================
+2810 REM each step is a melody note and a bass note, in semitones from middle C; 99 means a rest
+2820 LET beat=beat+1: IF beat<9 THEN RETURN
+2830 LET beat=0: IF NOT music THEN RETURN
+2840 IF note=0 OR note>=32 THEN LET note=0: RESTORE 2900
+2850 LET note=note+1: READ tune,bass
+2860 IF tune<>99 THEN TONE tune
+2870 IF bass<>99 THEN TONE bass
+2880 RETURN
+2900 DATA 12,-12, 16,99, 19,-5, 16,99, 21,-12, 19,99, 16,-5, 12,99
+2910 DATA 14,-7, 17,99, 21,0, 17,99, 19,-5, 99,99, 14,-10, 99,99
+2920 DATA 12,-12, 16,99, 19,-5, 24,99, 23,-3, 19,99, 16,-8, 14,99
+2930 DATA 12,-5, 99,99, 7,-10, 99,99, 12,-12, 99,99, 99,-12, 99,99
+3000 REM ======================== the scenery, redrawn every frame with Flash's vector pen (FX) ========================
+3010 REM screen shake: move the whole drawing by a random amount that dies away
+3020 LET shakex=0: LET shakey=0: IF shake>0 THEN LET shake=shake-1: LET shakex=(RND-0.5)*shake/2: LET shakey=(RND-0.5)*shake/2
+3030 FX "clear": FX "lineStyle": FXP "_x", shakex: FXP "_y", shakey
+3040 REM the sky is eleven bands, each one a small step lighter: colours are just numbers, so add a step
+3050 FOR band=0 TO 10: FX "beginFill", #3a7bd5+band*#0b0a04, 100: FX "moveTo", -8, band*16: FX "lineTo", 264, band*16: FX "lineTo", 264, band*16+16: FX "lineTo", -8, band*16+16: FX "endFill": NEXT band
+3060 REM two rows of hills, each a few curves
+3070 FX "beginFill", #7fc98a, 100: FX "moveTo", -8, 200: FX "lineTo", -8, 138: FX "curveTo", 40, 110, 92, 134: FX "curveTo", 140, 156, 190, 126: FX "curveTo", 232, 104, 264, 128: FX "lineTo", 264, 200: FX "endFill"
+3080 FX "beginFill", #4fae5a, 100: FX "moveTo", -8, 200: FX "lineTo", -8, 154: FX "curveTo", 64, 140, 128, 152: FX "curveTo", 196, 164, 264, 148: FX "lineTo", 264, 200: FX "endFill"
+3090 REM and the road Percy rides along
+3100 FX "beginFill", #d4ad6a, 100: FX "moveTo", -8, 163: FX "lineTo", 264, 163: FX "lineTo", 264, 200: FX "lineTo", -8, 200: FX "endFill"
+3110 GO SUB 4000
+3120 REM a star's shockwave: an expanding ring that fades as it grows
+3130 IF ringlife>0 THEN FX "lineStyle", 2+ringlife/5, #fff07a, ringlife*3: LET cx=ringx: LET cy=ringy: LET rx=ringr: LET ry=ringr: GO SUB 4400
+3140 GO SUB 2600: RETURN
+4000 REM ======================== Percy the pelican, cycling ========================
+4010 LET cyclex=cyclex+0.35: IF cyclex>290 THEN LET cyclex=-40
+4020 REM a wheel turns by the distance rolled over its radius; the pedals turn half as fast
+4030 LET wheelturn=cyclex/7: LET crank=wheelturn/2: LET bob=0.6*SIN (2*crank)
+4040 REM the far leg goes behind everything else
+4050 LET pedal=crank+PI: LET legink=#c86a20: GO SUB 4500
+4060 REM two wheels, each a rim and three spokes
+4070 FX "lineStyle", 1.5, #2a1052, 100: FOR w=-1 TO 1 STEP 2: LET cx=cyclex+12*w: LET cy=156: LET rx=7: LET ry=7: GO SUB 4400
+4080 FOR s=0 TO 2: LET a=wheelturn+s*PI/3: FX "moveTo", cx-7*COS a, cy-7*SIN a: FX "lineTo", cx+7*COS a, cy+7*SIN a: NEXT s: NEXT w
+4090 REM the frame joins back wheel, pedals, seat and handlebars
+4100 FX "lineStyle", 2, #e8364f, 100: FX "moveTo", cyclex-12, 156: FX "lineTo", cyclex, 157: FX "lineTo", cyclex+8, 146: FX "lineTo", cyclex-4, 146: FX "lineTo", cyclex-12, 156
+4110 FX "moveTo", cyclex-4, 146: FX "lineTo", cyclex, 157: FX "moveTo", cyclex+8, 146: FX "lineTo", cyclex+12, 156: FX "moveTo", cyclex+8, 146: FX "lineTo", cyclex+9, 141: FX "lineTo", cyclex+13, 141
+4120 FX "lineStyle", 2, #2a1052, 100: FX "moveTo", cyclex-7, 145: FX "lineTo", cyclex-1, 145
+4130 REM body: a white egg that bobs as he pushes the pedals
+4140 FX "lineStyle", 1.5, #2a1052, 100: FX "beginFill", #f6f2ea, 100: LET cx=cyclex-2: LET cy=135+bob: LET rx=9: LET ry=6.5: GO SUB 4400: FX "endFill"
+4150 FX "lineStyle", 4, #f6f2ea, 100: FX "moveTo", cyclex+4, 133+bob: FX "curveTo", cyclex+9, 129+bob, cyclex+8, 122+bob
+4160 FX "lineStyle", 1.5, #2a1052, 100: FX "beginFill", #f6f2ea, 100: LET cx=cyclex+8: LET cy=120+bob: LET rx=3.5: LET ry=3.5: GO SUB 4400: FX "endFill"
+4170 REM the famous beak, with a pouch that wobbles
+4180 LET pouch=1.5*SIN (frame/10)
+4190 FX "beginFill", #f39c34, 100: FX "moveTo", cyclex+10, 121+bob: FX "curveTo", cyclex+17, 129+bob+pouch, cyclex+26, 123+bob: FX "lineTo", cyclex+10, 119+bob: FX "endFill"
+4200 FX "beginFill", #ffc04d, 100: FX "moveTo", cyclex+10, 118.5+bob: FX "lineTo", cyclex+27, 122.5+bob: FX "lineTo", cyclex+10, 121+bob: FX "endFill"
+4210 FX "lineStyle": FX "beginFill", #2a1052, 100: LET cx=cyclex+8.5: LET cy=119+bob: LET rx=0.9: LET ry=0.9: GO SUB 4400: FX "endFill"
+4220 REM a wing reaches forward to hold the handlebars
+4230 FX "lineStyle", 1.5, #2a1052, 100: FX "beginFill", #cfc8bb, 100: FX "moveTo", cyclex-9, 133+bob: FX "curveTo", cyclex+2, 128+bob, cyclex+12, 141: FX "curveTo", cyclex, 139+bob, cyclex-9, 133+bob: FX "endFill"
+4240 LET pedal=crank: LET legink=#ff9a3c: GO SUB 4500: RETURN
+4400 REM ======================== an ellipse at (cx,cy) with radii rx, ry ========================
+4410 REM eight curves; each one's control point sits out at the corner of its slice
+4420 FX "moveTo", cx+rx, cy
+4430 FOR s=1 TO 8: LET a=s*PI/4: LET mid=a-PI/8: FX "curveTo", cx+rx*COS mid/COS (PI/8), cy+ry*SIN mid/COS (PI/8), cx+rx*COS a, cy+ry*SIN a: NEXT s
+4440 RETURN
+4500 REM ======================== one leg, from hip to pedal, bending at the knee ========================
+4510 LET hipx=cyclex-3: LET hipy=142+bob
+4520 LET footx=cyclex+3.5*COS pedal: LET footy=157+3.5*SIN pedal
+4530 LET dx=footx-hipx: LET dy=footy-hipy: LET reach=SQR (dx*dx+dy*dy): IF reach>15.8 THEN LET reach=15.8
+4540 REM which way is the foot? ATN only covers half a circle, so turn it round when the foot is behind
+4550 LET toward=ATN (dy/(dx+0.0001))+PI*(dx<0)
+4560 REM thigh and shin are both 8 long, so half the reach over 8 is the cosine of the knee's bend
+4570 LET bend=ACS (reach/16)
+4580 LET kneex=hipx+8*COS (toward-bend): LET kneey=hipy+8*SIN (toward-bend)
+4590 FX "lineStyle", 2, legink, 100: FX "moveTo", hipx, hipy: FX "lineTo", kneex, kneey: FX "lineTo", footx, footy
+4600 REM and a webbed foot on the pedal
+4610 FX "lineStyle": FX "beginFill", legink, 100: FX "moveTo", footx-1, footy: FX "lineTo", footx+4, footy-1: FX "lineTo", footx+4, footy+1.5: FX "endFill": RETURN
+` },
+  { name: 'TVP', src: `10 REM TVP
+20 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
+30 LET nl=9: LET np=345: DIM cn(nl): DIM lx(np): DIM ly(np)
+40 RESTORE 9000: LET k=0: FOR i=1 TO nl: READ cn(i): FOR j=1 TO cn(i): LET k=k+1: READ lx(k),ly(k): LET lx(k)=lx(k)/10: LET ly(k)=ly(k)/10: NEXT j: NEXT i
+50 LET t=0
+60 REPEAT
+70 CLS: LET t=t+1: FX "lineStyle"
+80 REM night-blue gradient, stacked bands
+90 FOR b=0 TO 10: FX "beginFill", #0a0c18+b*#040610, 100: FX "moveTo", 0, b*16: FX "lineTo", 256, b*16: FX "lineTo", 256, b*16+16: FX "lineTo", 0, b*16+16: FX "endFill": NEXT b
+100 REM pulsing magenta glow behind the logo
+110 FOR g=5 TO 1 STEP -1: FX "beginFill", #c020a0, 6+3*SIN (t/7): LET rr=g*22+6*SIN (t/5): GO SUB 1000: NEXT g
+120 REM the logo flies in, then breathes
+130 LET s=1+9*EXP (-t/12): LET al=100-100*EXP (-t/8): IF t>40 THEN LET s=1+0.02*SIN (t/9)
+140 LET ox=128: LET oy=80: LET rf=0: FX "beginFill", #ffffff, al: GO SUB 2000
+150 REM the reflection on the glossy floor
+160 LET rf=1: FX "beginFill", #ffffff, 18: GO SUB 2000
+170 REM a shine sweeping across
+180 LET sx=((t*4)-INT ((t*4)/400)*400)-80: FX "beginFill", #ffffff, 22: FX "moveTo", sx, 40: FX "lineTo", sx+28, 40: FX "lineTo", sx+58, 124: FX "lineTo", sx+30, 124: FX "endFill"
+190 REM the little loading dots
+200 FOR d=0 TO 7: LET a=t/6+d*PI/4: FX "beginFill", #ffffff, 25+70*(d=INT (t/3)-INT (INT (t/3)/8)*8): LET cx=128+18*COS a: LET cy=150+6*SIN a: FX "moveTo", cx-2, cy-2: FX "lineTo", cx+2, cy-2: FX "lineTo", cx+2, cy+2: FX "lineTo", cx-2, cy+2: FX "endFill": NEXT d
+210 REM TV scanlines, because 2007
+220 FX "lineStyle", 1, #000000, 12: FOR y=1 TO 175 STEP 2: FX "moveTo", 0, y: FX "lineTo", 256, y: NEXT y
+225 IF t>40 THEN PRINT AT 21,8; INK 1; "ANY KEY: LOADER": IF INKEY$<>"" OR MOUSEB<>0 THEN LOADER
+230 PAUSE 1
+240 UNTIL 0
+1000 REM glow ring of radius rr at (128,80), 24 segments
+1010 FX "moveTo", 128+rr, 80: FOR a=1 TO 24: FX "lineTo", 128+rr*COS (a*PI/12), 80+rr*0.62*SIN (a*PI/12): NEXT a: FX "endFill": RETURN
+2000 REM draw the traced logo through midpoint quadratics; rf=1 mirrors it below the baseline and squashes it
+2010 LET k=0: LET ka=1-1.5*rf: LET kb=rf*1.5*(oy+34*s)
+2020 FOR i=1 TO nl
+2030 LET n=cn(i): LET ax=lx(k+n): LET ay=ly(k+n): LET bx=lx(k+1): LET by=ly(k+1): FX "moveTo", ox+((ax+bx)/2-128)*s, ka*(oy+((ay+by)/2-80)*s)+kb
+2040 FOR j=1 TO n: LET ax=lx(k+j): LET ay=ly(k+j): LET bx=lx(k+1+(j-INT (j/n)*n)): LET by=ly(k+1+(j-INT (j/n)*n)): FX "curveTo", ox+(ax-128)*s, ka*(oy+(ay-80)*s)+kb, ox+((ax+bx)/2-128)*s, ka*(oy+((ay+by)/2-80)*s)+kb: NEXT j
+2050 LET k=k+n
+2060 NEXT i
+2070 FX "endFill": RETURN
+9000 DATA 146,1797,482,1787,482,1787,918,1759,918,1759,909,1740,909,1740,900,1598,833,1607,805,1635,805,1635,814,1749,862,1749,729,1721,710,1683,710,1683,700,1550,710,1550,719,1512,729,1493,757,1474
+9001 DATA 757,1465,776,1446,776,1427,748,1408,748,1398,729,1351,719,1351,710,1228,710,1228,719,1199,719,1171,748,1152,748,1095,814,1067,767,1048,767,1038,748,1019,748,1000,729,953,729,953,719,839,738
+9002 DATA 792,786,773,786,773,672,763,672,716,719,697,719,688,738,659,748,659,966,621,1023,602,1023,583,1042,507,1042,451,1004,451,985,432,966,432,928,318,928,327,1013,384,1099,403,1099,441,1136,470
+9003 DATA 1136,498,1155,593,1155,593,1146,650,1136,688,1099,716,1089,716,1070,744,1051,744,1032,763,1032,782,1051,782,1070,801,1070,820,1099,839,1099,858,1118,896,1118,896,1127,1000,1118,1000,1108
+9004 DATA 1038,1099,1048,1080,1067,1080,1105,1042,1162,1108,1180,1108,1218,1136,1266,1136,1266,1146,1361,1136,1361,1127,1417,1108,1455,1070,1484,1108,1503,1108,1512,1127,1531,1127,1550,1146,1692,1155
+9005 DATA 1692,1146,1721,1146,1721,1136,1778,1118,1825,1061,1844,1070,1853,1099,1872,1099,1910,1136,1939,1136,1967,1155,2062,1155,2062,1146,2119,1136,2128,1118,2176,1099,2185,1070,2214,1051,2233,985
+9006 DATA 2242,985,2242,928,2128,928,2128,966,2119,966,2109,1004,2053,1042,1977,1042,1977,1032,1939,1023,1901,966,1901,852,1977,852,1986,833,2005,833,2015,748,1986,719,1901,719,1901,558,1882,539,1863
+9007 DATA 539,1853,520,1835,520,121,1749,407,1939,539,1939,682,2005,691,2053,748,2043,843,1977,890,1939,890,1939,966,1967,994,1986,994,1986,1004,2062,994,2090,966,2090,890,2280,890,2280,985,2271,985
+9008 DATA 2252,1061,2176,1146,2157,1146,2119,1174,2053,1184,2053,1193,1977,1193,1977,1184,1910,1174,1910,1165,1853,1146,1835,1118,1816,1118,1787,1155,1768,1155,1730,1184,1692,1184,1692,1193,1541,1184
+9009 DATA 1541,1174,1484,1155,1465,1127,1436,1127,1427,1146,1361,1165,1361,1174,1275,1184,1275,1174,1190,1165,1190,1155,1152,1146,1143,1127,1124,1127,1105,1099,1086,1099,1067,1127,1048,1127,1029,1146
+9010 DATA 962,1155,962,1165,906,1165,906,1155,830,1146,754,1089,707,1146,688,1146,650,1174,583,1184,583,1193,507,1193,507,1184,470,1184,470,1174,441,1174,441,1165,384,1146,299,1042,299,1013,280,985
+9011 DATA 280,890,470,890,470,966,498,994,517,994,517,1004,593,994,621,966,621,738,631,738,631,719,650,719,659,700,707,682,725,653,773,634,792,606,811,606,811,710,944,682,944,691,1000,691,1019,710
+9012 DATA 1048,710,1086,748,1124,738,1171,691,1199,691,1228,672,1351,672,1351,682,1380,682,1380,691,1436,710,1446,729,1465,729,1503,691,1531,691,1531,682,1588,672,1588,663,1683,663,1683,672,1749,682
+9013 DATA 18,669,407,763,416,801,454,811,549,801,549,792,587,763,596,754,615,725,615,725,625,650,615,640,596,621,596,621,577,593,549,593,482,602,482,612,445,15,896,824,972,824,1029,881,1029,909,1038
+9014 DATA 909,1029,966,972,1023,934,1023,934,1032,887,1023,830,966,830,890,839,890,849,852,896,833,10,1256,814,1351,824,1389,862,1398,966,1332,1032,1247,1032,1180,966,1180,881,1228,824,1256,824,9,1266
+9015 DATA 852,1237,862,1218,890,1218,956,1256,994,1323,994,1361,956,1361,890,1323,852,9,906,862,868,890,868,956,925,994,981,975,981,956,1000,937,991,890,962,862,9,1512,937,1654,1004,1673,1023,1673
+9016 DATA 1042,1645,1051,1645,1042,1607,1032,1598,1013,1503,975,8,678,445,631,482,631,539,659,577,725,587,773,539,773,482,735,445
+` },
+  { id: 'emo-asteroids', name: 'Emo Asteroids (emoji bitmaps)', src: `10 REM EMO ASTEROIDS - a cosy drift through a wraparound sky. Nothing here can hurt you.
+20 EMOJI "🚀","ship",48: EMOJI "🪨","r1",64: EMOJI "🌑","r2",64: EMOJI "🍩","r3",64: EMOJI "🧀","r4",64: EMOJI "🪐","r5",64
+30 EMOJI "✨","spark",32: EMOJI "⭐","star",20: EMOJI "💖","heart",32: EMOJI "🌟","pop",40
+40 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
+50 LET n=7: DIM ax(n): DIM ay(n): DIM au(n): DIM av(n): DIM ar(n): DIM aw(n): DIM ab(n): DIM ak(n)
+60 LET ns=28: DIM sx(ns): DIM sy(ns): DIM sb(ns): FOR i=1 TO ns: LET sx(i)=RND*256: LET sy(i)=8+RND*160: LET sb(i)=RND*6: NEXT i
+70 FOR i=1 TO n: GO SUB 900: NEXT i
+80 LET nb=5: DIM bx(nb): DIM by(nb): DIM bu(nb): DIM bv(nb): DIM bl(nb)
+90 LET nq=10: DIM qx(nq): DIM qy(nq): DIM qu(nq): DIM qv(nq): DIM ql(nq): DIM q$(nq)
+100 LET px=128: LET py=88: LET pa=-90: LET pu=0: LET pv=0: LET found=0: LET t=0: LET fire=0
+110 REPEAT
+120 SPRITE CLEAR: LET t=t+1
+130 REM stars twinkle
+140 FOR i=1 TO ns: SPRITE "star", sx(i), sy(i), 50+25*SIN (t/9+sb(i)), 50+25*SIN (t/9+sb(i)), 0, 35+30*SIN (t/13+sb(i)*2): NEXT i
+150 REM steering: a/d or cursors turn, w/up thrusts, click or touch steers the ship towards the pointer
+160 LET k$=INKEY$
+165 IF k$="l" OR k$="L" THEN LOADER
+170 IF k$="a" OR k$=CHR$ 8 THEN LET pa=pa-6
+180 IF k$="d" OR k$=CHR$ 9 THEN LET pa=pa+6
+190 IF k$="w" OR k$=CHR$ 11 THEN LET pu=pu+0.18*COS (pa*PI/180): LET pv=pv+0.18*SIN (pa*PI/180)
+200 IF MOUSEB=1 THEN LET dx=MOUSEX-px: LET dy=(175-MOUSEY)-py: IF ABS dx+ABS dy>6 THEN LET pa=ATN (dy/(dx+0.001))*180/PI+180*(dx<0): LET pu=pu+0.14*COS (pa*PI/180): LET pv=pv+0.14*SIN (pa*PI/180)
+210 LET pu=pu*0.985: LET pv=pv*0.985: LET px=px+pu: LET py=py+pv
+220 IF px<0 THEN LET px=px+256
+230 IF px>=256 THEN LET px=px-256
+240 IF py<0 THEN LET py=py+176
+250 IF py>=176 THEN LET py=py-176
+260 REM the ship sends out sparkles by itself
+270 LET fire=fire+1: IF fire>=22 THEN LET fire=0: FOR i=1 TO nb: IF bl(i)<=0 THEN LET bx(i)=px: LET by(i)=py: LET bu(i)=pu+3*COS (pa*PI/180): LET bv(i)=pv+3*SIN (pa*PI/180): LET bl(i)=55: LET i=nb
+275 IF fire=0 THEN NEXT i: TONE 12+2*INT (RND*4)
+280 FOR i=1 TO nb: IF bl(i)>0 THEN LET bl(i)=bl(i)-1: LET bx(i)=bx(i)+bu(i): LET by(i)=by(i)+bv(i): LET bx(i)=bx(i)-256*INT (bx(i)/256): LET by(i)=by(i)-176*INT (by(i)/176): SPRITE "spark", bx(i), by(i), 40+20*SIN (t/2+i), 40+20*SIN (t/2+i), t*9, 100*bl(i)/55
+290 NEXT i
+300 REM asteroids drift, spin and wrap
+310 FOR i=1 TO n
+320 LET ax(i)=ax(i)+au(i): LET ay(i)=ay(i)+av(i): LET ar(i)=ar(i)+aw(i)
+330 LET ax(i)=ax(i)-256*INT (ax(i)/256): LET ay(i)=ay(i)-176*INT (ay(i)/176)
+340 LET rr=ab(i)*0.3
+350 REM a sparkle meeting an asteroid turns it into a smaller, happier one
+360 FOR j=1 TO nb: IF bl(j)>0 THEN IF ABS (bx(j)-ax(i))<rr AND ABS (by(j)-ay(i))<rr THEN LET bl(j)=0: GO SUB 700
+370 NEXT j
+380 REM bumping into one just nudges you both, softly
+390 IF ABS (px-ax(i))<rr+6 AND ABS (py-ay(i))<rr+6 THEN LET pu=pu+(px-ax(i))*0.02: LET pv=pv+(py-ay(i))*0.02: LET au(i)=au(i)-(px-ax(i))*0.004: LET av(i)=av(i)-(py-ay(i))*0.004: IF t-lt>15 THEN LET lt=t: TONE -7
+400 SPRITE "r"+STR$ ak(i), ax(i), ay(i), ab(i), ab(i), ar(i), 100
+410 NEXT i
+420 REM little sparks and hearts fade away
+430 FOR i=1 TO nq: IF ql(i)>0 THEN LET ql(i)=ql(i)-1: LET qx(i)=qx(i)+qu(i): LET qy(i)=qy(i)+qv(i): LET qv(i)=qv(i)-0.03: SPRITE q$(i), qx(i), qy(i), 30+ql(i), 30+ql(i), t*5*(i-INT (i/2)*2*2+1), 100*ql(i)/40
+440 NEXT i
+450 SPRITE "ship", px, py, 80, 80, pa+45, 100
+460 PRINT AT 0,0; INK 6; "EMO ASTEROIDS"; TAB 20; INK 5; "found "; found
+470 PRINT AT 21,0; INK 1; BRIGHT 1; "a d turn  w go  l loader  touch"
+480 PAUSE 1
+490 UNTIL 0
+700 REM --- an asteroid is greeted: it shrinks, sheds sparks, and eventually becomes a heart and is reborn ---
+710 LET found=found+1: TONE 7+INT (RND*3)*2+(found-INT (found/5)*5)
+720 FOR k=1 TO 3: GO SUB 800: NEXT k
+730 IF ab(i)>45 THEN LET ab(i)=ab(i)*0.72: LET au(i)=au(i)*1.3+(RND-0.5)*0.4: LET av(i)=av(i)*1.3+(RND-0.5)*0.4: LET aw(i)=aw(i)*1.5: RETURN
+740 LET q$(1+(t-INT (t/nq)*nq))="heart": LET qx(1+(t-INT (t/nq)*nq))=ax(i): LET qy(1+(t-INT (t/nq)*nq))=ay(i): LET qu(1+(t-INT (t/nq)*nq))=0: LET qv(1+(t-INT (t/nq)*nq))=-0.6: LET ql(1+(t-INT (t/nq)*nq))=40
+750 TONE 19: GO SUB 900: RETURN
+800 REM a spark particle in a free slot
+810 FOR m=1 TO nq: IF ql(m)<=0 THEN LET q$(m)="pop": LET qx(m)=ax(i): LET qy(m)=ay(i): LET qu(m)=(RND-0.5)*2: LET qv(m)=(RND-0.5)*2: LET ql(m)=24+RND*14: LET m=nq
+820 NEXT m: RETURN
+900 REM --- a fresh asteroid drifting in from an edge ---
+910 LET ak(i)=1+INT (RND*5): LET ab(i)=55+RND*45: LET ar(i)=RND*360: LET aw(i)=(RND-0.5)*3
+920 LET ax(i)=RND*256: LET ay(i)=RND*176: IF ABS (ax(i)-px)<50 AND ABS (ay(i)-py)<50 THEN LET ax(i)=ax(i)+128: LET ax(i)=ax(i)-256*INT (ax(i)/256)
+930 LET au(i)=(RND-0.5)*1.2: LET av(i)=(RND-0.5)*1.2: RETURN
+` },
+  { id: 'jump', name: 'Jump demo (platform game)', src: `10 REM JUMP DEMO - a one-screen platform game built on SPRITE
 20 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
 30 SPRITE "hero1","..WWWW..",".WWWWWW.",".W2WW2W.",".WWWWWW.","..WWWW..","...55...","..5555..",".55..55.",".5....5.","..6..6..","..6..6..",".66..66."
 40 SPRITE "hero2","..WWWW..",".WWWWWW.",".W2WW2W.",".WWWWWW.","..WWWW..","...55...","..5555..",".55..55.",".5....5.","..6..6..",".6....6.","66....66"
@@ -360,6 +627,7 @@ export const EXAMPLES = [
 175 IF k$=CHR$ 8 OR k$="a" OR k$="o" THEN LET vx=-2.5
 176 IF k$=CHR$ 9 OR k$="d" OR k$="p" THEN LET vx=2.5
 177 IF k$="" AND onp=1 THEN LET vx=vx*0.6: IF ABS vx<0.3 THEN LET vx=0
+178 IF k$="l" OR k$="L" THEN LOADER
 180 LET hx=hx+vx: IF hx<0 THEN LET hx=0: LET vx=0
 190 IF hx>248 THEN LET hx=248: LET vx=0
 200 IF (k$=CHR$ 11 OR k$="w" OR k$="q" OR k$=" ") AND onp=1 THEN LET vy=-6.6: LET onp=0: BEEP 0.02,12
@@ -384,7 +652,7 @@ export const EXAMPLES = [
 450 SPRITE "guard", gx, 118
 460 IF onp=1 AND vx<>0 AND INT (t/4)-INT (INT (t/4)/2)*2=0 THEN SPRITE "hero2", hx, hy: RETURN
 470 SPRITE "hero1", hx, hy
-480 PRINT AT 21,0; INK 5; "KEYS "; got; "/5"; TAB 12; "A D run  W jump  (hold W+D)"
+480 PRINT AT 21,0; INK 5; "KEYS "; got; "/5"; TAB 12; "A D run  W jump  L loader"
 490 RETURN
 500 REM --- lost a life ---
 510 FOR i=1 TO 4: BEEP 0.05,-10-i*2: NEXT i
@@ -393,8 +661,9 @@ export const EXAMPLES = [
 600 REM --- won ---
 610 PRINT AT 10,8; INK 4; PAPER 7; " ALL KEYS FOUND! "
 620 FOR i=0 TO 24 STEP 2: BEEP 0.04,i: NEXT i
-630 PRINT AT 12,6; INK 7; "press a key to play again": PAUSE 0: GO TO 20` },
-  { name: "Pipkin's Quest (text adventure)", src: `10 REM PIPKIN'S QUEST - a text adventure with pictures, a homage to the 1982 Melbourne House adventure. All names and text here are original.
+630 PRINT AT 12,6; INK 7; "press a key to play again": PAUSE 0: GO TO 20
+` },
+  { id: 'pipkins-quest', name: "Pipkin's Quest (text adventure)", src: `10 REM PIPKIN'S QUEST - a text adventure with pictures, a homage to the 1982 Melbourne House adventure. All names and text here are original.
 11 REM Who stands in for whom: pipkin = the burrow-dwelling hero; wendel = the wizard; durrock = the dwarf leader; aelric = lord of the hidden valley;
 12 REM sliver = the creature of the underground lake; harl = the bowman of the lake town; ashwyrm = the dragon; ursk = the skin-changer; the butler = the woodkings butler;
 13 REM the ogres = the trolls; the grey wolf = the warg; the woodfolk = the wood elves; hollow hill = the hero's home; elmhaven = the hidden valley;
@@ -426,7 +695,7 @@ export const EXAMPLES = [
 100 LET vw$="n      1north  1s      2south  2e      3east   3w      4west   4ne     5northea5nw     6northwe6se     7southea7sw     8southwe8u      9up     9d      :down   :go     ;run    ;walk   ;look   <l      <take   =get    =t      =grab   ="
 101 LET vw$=vw$+"drop   >invento?i      ?inv    ?open   @close  Ashut   Aunlock Bsay    Ctalk   Cask    Ctell   Cwait   Dz      Dkill   Eattack Efight  Estrike Ehit    Estab   EexamineFx      Fread   Fsearch Fhelp   Gquit   Hwear   Iremove Jbreak  K"
 102 LET vw$=vw$+"cut    Kslash  Kthrow  Lput    Minsert Mclimb  Njump   Nenter  Nride   Neat    Odrink  Pscore  Qcross  Rswim   Rgive   Soffer  Spull   Thaul   Tanswer Ushoot  Vfire   Vsleep  Wrest   Wthe    /a      /an     /to     /with   /at     /"
-103 LET vw$=vw$+"in     /into   /of     /me     /across /through/onto   /from   /out    /and    /on     /please /my     /"
+103 LET vw$=vw$+"in     /into   /of     /me     /across /through/onto   /from   /out    /and    /on     /please /my     /loader H"
 130 GO SUB 2500
 135 PRINT "PIPKIN'S QUEST. a small person, a long road, and a dragon at the end of it. type HELP for a list of words."
 200 INPUT "> "; a$
@@ -763,9 +1032,13 @@ export const EXAMPLES = [
 6122 IF ob>0 AND (ol(ob)=r OR ol(ob)=99) THEN PRINT "you look closely at ";on$(ob);"."'"it is just what it seems to be.": GO TO 8010
 6124 PRINT " there is no ";w$(2);" here.": GO TO 8000
 6150 PRINT "move with n s e w ne nw se sw u d or go ";
-6151 PRINT "<direction>."'"useful words: look, take, drop, inventory, open, close, unlock, examine, wait, kill, wear, remove, break, throw, put, climb, cross, give, eat, drink, pull, answer, shoot, score, quit."
+6151 PRINT "<direction>."'"useful words: look, take, drop, inventory, open, close, unlock, examine, wait, kill, wear, remove, break, throw, put, climb, cross, give, eat, drink, pull, answer, shoot, score, quit (or loader)."
 6152 PRINT "to ask a companion, say to durrock ""open window"", say to harl ""follow me"", say to sliver ""<answer>""."'"bring the dragons gold home and put it in the chest.": GO TO 8000
-6200 GO SUB 4600: PRINT "press any key to start again.": PAUSE 0: GO TO 23
+6200 GO SUB 4600: PRINT "press R to start again, or any other key for the loader."
+6210 IF INKEY$<>"" THEN PAUSE 1: GO TO 6210
+6220 LET k$=INKEY$: IF k$="" THEN PAUSE 1: GO TO 6220
+6230 IF k$="r" OR k$="R" THEN GO TO 23
+6240 LOADER
 6250 IF ob=7 AND ol(7)=99 THEN LET wr=1: LET rtm=12: PRINT "you slip the copper band on your finger and fade from sight.": IF svr=r THEN PRINT "sliver shrieks "" where is it? thief! thief! ""."
 6252 IF ob=7 AND ol(7)=99 THEN GO TO 8010
 6254 PRINT " you cannot wear that.": GO TO 8000
@@ -995,67 +1268,98 @@ export const EXAMPLES = [
 20200 DATA "north","south","east","west","northeast","northwest","southeast","southwest","up","down"
 20210 DATA "round oak door","massive stone door","high barred window","iron goblin door","red cellar door","web","web","web","web","river","hidden way","iron hatch","pale wooden door","hidden crag door","choked great gate"
 20300 DATA 1,2,3,35,4,5,6,7,4,7,8,9,10,9,9,9,9,9,11,9,12,13,14,13,15,16,16,17,18,19,19,17,20,20,21,16,22,22,23,24,25,26,6,34,27,28,29,30,31,32,9,9,33` },
-  { name: 'Emo Asteroids (emoji bitmaps)', src: `10 REM EMO ASTEROIDS - a cosy drift through a wraparound sky. Nothing here can hurt you.
-20 EMOJI "🚀","ship",48: EMOJI "🪨","r1",64: EMOJI "🌑","r2",64: EMOJI "🍩","r3",64: EMOJI "🧀","r4",64: EMOJI "🪐","r5",64
-30 EMOJI "✨","spark",32: EMOJI "⭐","star",20: EMOJI "💖","heart",32: EMOJI "🌟","pop",40
-40 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
-50 LET n=7: DIM ax(n): DIM ay(n): DIM au(n): DIM av(n): DIM ar(n): DIM aw(n): DIM ab(n): DIM ak(n)
-60 LET ns=28: DIM sx(ns): DIM sy(ns): DIM sb(ns): FOR i=1 TO ns: LET sx(i)=RND*256: LET sy(i)=8+RND*160: LET sb(i)=RND*6: NEXT i
-70 FOR i=1 TO n: GO SUB 900: NEXT i
-80 LET nb=5: DIM bx(nb): DIM by(nb): DIM bu(nb): DIM bv(nb): DIM bl(nb)
-90 LET nq=10: DIM qx(nq): DIM qy(nq): DIM qu(nq): DIM qv(nq): DIM ql(nq): DIM q$(nq)
-100 LET px=128: LET py=88: LET pa=-90: LET pu=0: LET pv=0: LET found=0: LET t=0: LET fire=0
-110 REPEAT
-120 SPRITE CLEAR: LET t=t+1
-130 REM stars twinkle
-140 FOR i=1 TO ns: SPRITE "star", sx(i), sy(i), 50+25*SIN (t/9+sb(i)), 50+25*SIN (t/9+sb(i)), 0, 35+30*SIN (t/13+sb(i)*2): NEXT i
-150 REM steering: a/d or cursors turn, w/up thrusts, click or touch steers the ship towards the pointer
-160 LET k$=INKEY$
-170 IF k$="a" OR k$=CHR$ 8 THEN LET pa=pa-6
-180 IF k$="d" OR k$=CHR$ 9 THEN LET pa=pa+6
-190 IF k$="w" OR k$=CHR$ 11 THEN LET pu=pu+0.18*COS (pa*PI/180): LET pv=pv+0.18*SIN (pa*PI/180)
-200 IF MOUSEB=1 THEN LET dx=MOUSEX-px: LET dy=(175-MOUSEY)-py: IF ABS dx+ABS dy>6 THEN LET pa=ATN (dy/(dx+0.001))*180/PI+180*(dx<0): LET pu=pu+0.14*COS (pa*PI/180): LET pv=pv+0.14*SIN (pa*PI/180)
-210 LET pu=pu*0.985: LET pv=pv*0.985: LET px=px+pu: LET py=py+pv
-220 IF px<0 THEN LET px=px+256
-230 IF px>=256 THEN LET px=px-256
-240 IF py<0 THEN LET py=py+176
-250 IF py>=176 THEN LET py=py-176
-260 REM the ship sends out sparkles by itself
-270 LET fire=fire+1: IF fire>=22 THEN LET fire=0: FOR i=1 TO nb: IF bl(i)<=0 THEN LET bx(i)=px: LET by(i)=py: LET bu(i)=pu+3*COS (pa*PI/180): LET bv(i)=pv+3*SIN (pa*PI/180): LET bl(i)=55: LET i=nb
-275 IF fire=0 THEN NEXT i: TONE 12+2*INT (RND*4)
-280 FOR i=1 TO nb: IF bl(i)>0 THEN LET bl(i)=bl(i)-1: LET bx(i)=bx(i)+bu(i): LET by(i)=by(i)+bv(i): LET bx(i)=bx(i)-256*INT (bx(i)/256): LET by(i)=by(i)-176*INT (by(i)/176): SPRITE "spark", bx(i), by(i), 40+20*SIN (t/2+i), 40+20*SIN (t/2+i), t*9, 100*bl(i)/55
-290 NEXT i
-300 REM asteroids drift, spin and wrap
-310 FOR i=1 TO n
-320 LET ax(i)=ax(i)+au(i): LET ay(i)=ay(i)+av(i): LET ar(i)=ar(i)+aw(i)
-330 LET ax(i)=ax(i)-256*INT (ax(i)/256): LET ay(i)=ay(i)-176*INT (ay(i)/176)
-340 LET rr=ab(i)*0.3
-350 REM a sparkle meeting an asteroid turns it into a smaller, happier one
-360 FOR j=1 TO nb: IF bl(j)>0 THEN IF ABS (bx(j)-ax(i))<rr AND ABS (by(j)-ay(i))<rr THEN LET bl(j)=0: GO SUB 700
-370 NEXT j
-380 REM bumping into one just nudges you both, softly
-390 IF ABS (px-ax(i))<rr+6 AND ABS (py-ay(i))<rr+6 THEN LET pu=pu+(px-ax(i))*0.02: LET pv=pv+(py-ay(i))*0.02: LET au(i)=au(i)-(px-ax(i))*0.004: LET av(i)=av(i)-(py-ay(i))*0.004: IF t-lt>15 THEN LET lt=t: TONE -7
-400 SPRITE "r"+STR$ ak(i), ax(i), ay(i), ab(i), ab(i), ar(i), 100
-410 NEXT i
-420 REM little sparks and hearts fade away
-430 FOR i=1 TO nq: IF ql(i)>0 THEN LET ql(i)=ql(i)-1: LET qx(i)=qx(i)+qu(i): LET qy(i)=qy(i)+qv(i): LET qv(i)=qv(i)-0.03: SPRITE q$(i), qx(i), qy(i), 30+ql(i), 30+ql(i), t*5*(i-INT (i/2)*2*2+1), 100*ql(i)/40
-440 NEXT i
-450 SPRITE "ship", px, py, 80, 80, pa+45, 100
-460 PRINT AT 0,0; INK 6; "EMO ASTEROIDS"; TAB 20; INK 5; "found "; found
-470 PRINT AT 21,0; INK 1; BRIGHT 1; "a d turn  w go  or click/touch"
-480 PAUSE 1
-490 UNTIL 0
-700 REM --- an asteroid is greeted: it shrinks, sheds sparks, and eventually becomes a heart and is reborn ---
-710 LET found=found+1: TONE 7+INT (RND*3)*2+(found-INT (found/5)*5)
-720 FOR k=1 TO 3: GO SUB 800: NEXT k
-730 IF ab(i)>45 THEN LET ab(i)=ab(i)*0.72: LET au(i)=au(i)*1.3+(RND-0.5)*0.4: LET av(i)=av(i)*1.3+(RND-0.5)*0.4: LET aw(i)=aw(i)*1.5: RETURN
-740 LET q$(1+(t-INT (t/nq)*nq))="heart": LET qx(1+(t-INT (t/nq)*nq))=ax(i): LET qy(1+(t-INT (t/nq)*nq))=ay(i): LET qu(1+(t-INT (t/nq)*nq))=0: LET qv(1+(t-INT (t/nq)*nq))=-0.6: LET ql(1+(t-INT (t/nq)*nq))=40
-750 TONE 19: GO SUB 900: RETURN
-800 REM a spark particle in a free slot
-810 FOR m=1 TO nq: IF ql(m)<=0 THEN LET q$(m)="pop": LET qx(m)=ax(i): LET qy(m)=ay(i): LET qu(m)=(RND-0.5)*2: LET qv(m)=(RND-0.5)*2: LET ql(m)=24+RND*14: LET m=nq
-820 NEXT m: RETURN
-900 REM --- a fresh asteroid drifting in from an edge ---
-910 LET ak(i)=1+INT (RND*5): LET ab(i)=55+RND*45: LET ar(i)=RND*360: LET aw(i)=(RND-0.5)*3
-920 LET ax(i)=RND*256: LET ay(i)=RND*176: IF ABS (ax(i)-px)<50 AND ABS (ay(i)-py)<50 THEN LET ax(i)=ax(i)+128: LET ax(i)=ax(i)-256*INT (ax(i)/256)
-930 LET au(i)=(RND-0.5)*1.2: LET av(i)=(RND-0.5)*1.2: RETURN` },
+  { name: 'Hello 1982', src: `10 REM Hello from 1982
+20 BORDER 1: PAPER 0: INK 7: CLS
+30 PRINT "HELLO WORLD"; TAB 16; "from Flash"
+40 FOR i=1 TO 7
+50 PRINT INK i; BRIGHT 1; "Colour "; i; TAB 16; "squared is "; i*i
+60 NEXT i
+70 PLOT 0,0: DRAW 255,175
+80 CIRCLE INK 6; 128,88,40
+90 LET a$="ZX Spectrum": PRINT AT 20,0; a$(4 TO 11); " says "; CHR$ 127; " 1982"
+100 BEEP 0.1,0: BEEP 0.1,4: BEEP 0.2,7
+110 PRINT AT 21,0; "press a key"; : PAUSE 0
+120 GO TO 20` },
+  { name: '10 PRINT maze', src: `10 BORDER 0: PAPER 0: BRIGHT 1: CLS
+20 PRINT INK 1+INT (RND*6); CHR$ (47+45*INT (RND*2));
+30 GO TO 20` },
+  { name: 'Bouncing ball', src: `10 BORDER 0: PAPER 0: INK 5: CLS
+20 LET x=40: LET y=90: LET dx=3: LET dy=2: LET r=10
+30 REPEAT
+40 CLS
+50 CIRCLE INK 6; x,y,r
+60 RECT INK 2; 0,0,256,4
+70 PRINT AT 0,0; INK 7; "x="; INT x; " y="; INT y; TAB 20; "t="; TICKS
+80 LET x=x+dx: LET y=y+dy
+90 IF x<r OR x>255-r THEN LET dx=-dx: BEEP 0.02,20
+100 IF y<r+4 OR y>175-r THEN LET dy=-dy: BEEP 0.02,8
+110 PAUSE 1
+120 UNTIL 0` },
+  { name: 'Sierpinski chaos game', src: `10 REM The chaos game draws a Sierpinski triangle one dot at a time
+20 BORDER 0: PAPER 0: INK 4: CLS
+30 DIM x(3): DIM y(3)
+40 LET x(1)=0: LET y(1)=0: LET x(2)=255: LET y(2)=0: LET x(3)=128: LET y(3)=175
+50 LET px=128: LET py=60
+60 FOR i=1 TO 20000
+70 LET k=1+INT (RND*3)
+80 LET px=(px+x(k))/2: LET py=(py+y(k))/2
+90 PLOT INK 1+k; px,py
+100 NEXT i
+110 PRINT AT 0,0; INK 7; "done"` },
+  { name: 'Tune (BEEP)', src: `10 REM Twinkle twinkle, in BEEPs
+20 BORDER 2: PAPER 0: INK 6: BRIGHT 1: CLS
+30 LET n$="0 0 7 7 9 9 7 5 5 4 4 2 2 0"
+40 LET p=1
+50 LET s=p: REPEAT: LET p=p+1: UNTIL p>LEN n$ OR n$(p)=" "
+60 LET note=VAL n$(s TO p-1)
+70 PRINT INK 1+note-INT (note/6)*6; CHR$ (131+8*INT (note/4));
+80 PLOT 10+s*8,20+note*10: DRAW 0,-20+note*2
+90 BEEP 0.25,note
+100 LET p=p+1
+110 IF p<=LEN n$ THEN GO TO 50
+120 PRINT: PRINT "again? (y/n)"
+130 LET k$=INKEY$: IF k$="" THEN PAUSE 1: GO TO 130
+140 IF k$="y" THEN GO TO 20` },
+  { name: 'INPUT and strings', src: `10 BORDER 7: PAPER 7: INK 0: CLS
+20 PRINT "What is your name?"
+30 INPUT "Name: "; n$
+40 IF n$="" THEN LET n$="Nobody"
+50 PRINT "Hello, "; n$; "!"
+60 PRINT "Backwards that is ";
+70 FOR i=LEN n$ TO 1 STEP -1: PRINT n$(i);: NEXT i
+80 PRINT
+90 INPUT "How old are you? "; a
+100 PRINT "In 1982 you were "; a-44; "."
+110 IF a-44<0 THEN PRINT "So you were not born yet. Lucky you."
+120 PRINT: PRINT INK 2; "Run again? (y/n)"
+130 LET k$=INKEY$: IF k$="" THEN PAUSE 1: GO TO 130
+140 IF k$="y" OR k$="Y" THEN GO TO 10` },
+  { name: 'Paint with the mouse', src: `10 BORDER 0: PAPER 0: INK 7: CLS
+20 PRINT AT 0,0; "move the mouse over the screen"
+30 LET c=1
+40 REPEAT
+50 LET x=MOUSEX: LET y=MOUSEY
+60 IF x>=0 AND x<256 AND y>=0 AND y<176 THEN PLOT INK c; x,y
+70 LET c=1+INT (TICKS/25)-INT (INT (TICKS/25)/7)*7
+80 PRINT AT 21,0; INK c; "ink "; c; " at "; x; ","; y; "   "
+90 PAUSE 1
+100 UNTIL 0` },
+  { name: 'Demo: bars and scroller', src: `10 REM colour bars, a sine scroller and a flashing border
+20 PAPER 0: INK 7: BRIGHT 1: CLS
+30 LET m$="      ZX FLASH ... SPECTRUM BASIC COMPILED TO AVM1 BYTECODE, RUNNING IN RUFFLE ... HELLO TO ALL 8-BIT FRIENDS      "
+40 FOR b=0 TO 6: RECT INK 1+b; 0,10+b*8,256,8: NEXT b
+50 DIM p(32): LET t=0
+60 REPEAT
+70 FOR i=1 TO 32
+80 LET k=1+(t+i)-INT ((t+i)/LEN m$)*LEN m$
+90 LET r=5+INT (3*SIN ((t+i)/4))
+100 IF p(i)<>r THEN PRINT AT p(i),i-1;" "
+110 PRINT AT r,i-1; INK 2+i-INT (i/6)*6; m$(k)
+120 LET p(i)=r
+130 NEXT i
+140 BORDER 1+t-INT (t/7)*7
+150 PRINT AT 0,0; INK 6; "frame "; t
+160 LET t=t+1
+170 PAUSE 2
+180 UNTIL 0` },
 ];

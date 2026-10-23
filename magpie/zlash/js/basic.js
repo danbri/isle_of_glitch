@@ -1,7 +1,7 @@
 // Spectrum-flavoured BASIC -> AVM1 IR compiler.
 // Single pass: the parser emits IR as it goes. Output drops straight into runtime.js.
-import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root } from './avm1.js?v=mvlgpntz';
-import { SCREEN } from './runtime.js?v=mvlgpntz';
+import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root } from './avm1.js?v=mvli9hob';
+import { SCREEN } from './runtime.js?v=mvli9hob';
 
 export class BasicError extends Error {
   constructor(msg, line, col) { super(msg); this.line = line; this.col = col; }
@@ -10,10 +10,12 @@ export class BasicError extends Error {
 const KEYWORDS = new Set(('LET PRINT INPUT IF THEN ELSE FOR TO STEP NEXT GOTO GOSUB RETURN STOP END REM CLS INK PAPER BORDER BRIGHT ' +
   'FLASH INVERSE OVER PLOT DRAW CIRCLE PAUSE BEEP RANDOMIZE RANDOMISE DIM POKE CLEAR RUN REPEAT UNTIL WHILE WEND RECT AT TAB ' +
   'AND OR NOT LINE GO SUB NEW LIST DATA READ RESTORE FX FXP SPRITE EMOJI WRAP TONE LOAD SAVE VERIFY MERGE CAT FORMAT MOVE ERASE OPEN CLOSE LPRINT LLIST COPY CONTINUE OUT DEF FN BIN ' +
-  'RND INT ABS SGN SQR SIN COS TAN ATN ASN ACS EXP LN LEN STR$ VAL VAL$ CHR$ CODE INKEY$ PI PEEK IN USR ATTR POINT SCREEN$ MOUSEX MOUSEY MOUSEB TICKS').split(' '));
+  'RND INT ABS SGN SQR SIN COS TAN ATN ASN ACS EXP LN LEN STR$ VAL VAL$ CHR$ CODE INKEY$ PI PEEK IN USR ATTR POINT SCREEN$ MOUSEX MOUSEY MOUSEB TICKS LOADER HALT').split(' '));
 const IGNORED = new Set(['FLASH', 'INVERSE', 'OVER', 'POKE', 'CLEAR', 'RANDOMIZE', 'RANDOMISE', 'NEW', 'LIST', 'OUT']);
 // statements skipped without looking at their arguments (tape, printer and stream commands)
 const SKIPPED = new Set(['LOAD', 'SAVE', 'VERIFY', 'MERGE', 'CAT', 'FORMAT', 'MOVE', 'ERASE', 'OPEN', 'CLOSE', 'LPRINT', 'LLIST', 'COPY', 'CONTINUE', 'DEF']);
+
+const FX_METHODS = new Set(['lineStyle', 'lineGradientStyle', 'moveTo', 'lineTo', 'curveTo', 'beginFill', 'beginGradientFill', 'beginBitmapFill', 'endFill', 'clear']);
 
 const UNICODE_MAP = { '©': 127, '£': 96, '▝': 129, '▘': 130, '▀': 131, '▗': 132, '▐': 133, '▚': 134, '▜': 135, '▖': 136, '▞': 137, '▌': 138, '▛': 139, '▄': 140, '▟': 141, '▙': 142, '█': 143 };
 export function spectrumString(s) {
@@ -256,12 +258,18 @@ class Parser {
       case 'END': out.push(x(call('__lo', str(this.report('0 OK')))), set('__done', num(1)), ret()); return;
       case 'RUN': { const idx = this.lineIdx.size ? 0 : -1; out.push(x(call('__cls'))); this.jumpToLineIdx(idx); return; }
       case 'CLS': out.push(x(call('__cls'))); return;
+      case 'LOADER': { // extension: LOADER ["name"] follows the page link #name (getURL, no script access needed); the page opens that example, or the loader
+        const name = this.atEnd() || this.isOp(':') || this.isKw('ELSE') ? str('') : this.strExpr();
+        out.push(['geturl2', ['cond', name, op('+', str('#'), name), str('#loader')], str('_self')], set('__done', num(1)), ret());
+        return;
+      }
       case 'INK': out.push(set('__ink', this.numExpr())); return;
       case 'PAPER': out.push(set('__pap', this.numExpr())); return;
       case 'BRIGHT': out.push(set('__brt', this.numExpr())); return;
       case 'BORDER': out.push(x(call('__border', this.numExpr()))); return;
       case 'WRAP': out.push(set('__wrap', this.numExpr())); return;
       case 'PLOT': case 'DRAW': case 'CIRCLE': case 'RECT': return this.graphics(t.v);
+      case 'HALT': this.yieldAt(); return; // extension: wait for the next frame, like the Z80's HALT (PAUSE 1 skips a whole frame first)
       case 'PAUSE': {
         const e = this.numExpr();
         out.push(set('__wait', e));
@@ -318,6 +326,8 @@ class Parser {
         const n = this.next();
         if (!n || n.t !== 'str') this.err('FX needs a quoted method name, e.g. FX "lineStyle", 2, #ff0000', n);
         if (n.v === 'chequer') { out.push(x(call('__fxchq'))); return; } // beginFill with a ZX81 chequerboard
+        // drawing methods only: the player runs with script access (for LOADER), so getURL and friends stay out of reach
+        if (!FX_METHODS.has(n.v)) this.err(`FX can only call the drawing methods ${[...FX_METHODS].join(', ')}`, n);
         const args = [];
         while (this.isOp(',')) { this.next(); args.push(this.expr().ir); }
         out.push(x(['cm', ['m', ['m', v('scr'), 'inner'], 'gfx'], ['s', n.v], args]));

@@ -1,6 +1,6 @@
 // AVM1 (ActionScript 1/2 bytecode) assembler plus a tiny tree IR so the
 // runtime and the BASIC compiler don't have to think in opcodes.
-import { ByteWriter } from './swf.js?v=mvlgpntz';
+import { ByteWriter } from './swf.js?v=mvli9hob';
 
 export const OP = {
   End: 0x00, NextFrame: 0x04, Stop: 0x07, Pop: 0x17, Subtract: 0x0b, Multiply: 0x0c, Divide: 0x0d,
@@ -10,7 +10,7 @@ export const OP = {
   PushDuplicate: 0x4c, GetMember: 0x4e, SetMember: 0x4f, Increment: 0x50, Decrement: 0x51,
   CallMethod: 0x52, NewMethod: 0x53, CallFunction: 0x3d, DefineLocal: 0x3c, DefineLocal2: 0x41, Delete: 0x3a,
   Greater: 0x67, StrictEquals: 0x66, StringLength: 0x14, StringExtract: 0x15,
-  Push: 0x96, Jump: 0x99, If: 0x9d, DefineFunction: 0x9b, StoreRegister: 0x87, ConstantPool: 0x88,
+  Push: 0x96, Jump: 0x99, GetURL2: 0x9a, If: 0x9d, DefineFunction: 0x9b, StoreRegister: 0x87, ConstantPool: 0x88,
 };
 
 export class Asm {
@@ -144,6 +144,8 @@ export class IRCompiler {
       case 'ret': if (r.length) this.expr(r[0]); else a.push(undefined); a.op(OP.Return); return;
       case 'fn': a.defineFunction(r[0], r[1], () => { this.stmts(r[2]); }); return;
       case 'trace': this.expr(r[0]); a.op(OP.Trace); return;
+      // getURL(url, target) with no flags; a url of "FSCommand:cmd" is fscommand(cmd, target)
+      case 'geturl2': this.expr(r[0]); this.expr(r[1]); a.op(OP.GetURL2); a.w.u16(1).u8(0); return;
       case 'raw': r[0](a, this); return;
       case 'nop': return;
       case 'mark': if (this.marks) this.marks[r[0]] = a.w.position; return; // record a byte position (used to split big programs)

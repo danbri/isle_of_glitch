@@ -1,7 +1,7 @@
-import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js?v=mvlgpntz';
-import { defineZxBasicMode } from './mode-zxbasic.js?v=mvlgpntz';
-import { EXAMPLES } from './examples.js?v=mvlgpntz';
-import { tapToListing } from './tap.js?v=mvlgpntz';
+import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js?v=mvli9hob';
+import { defineZxBasicMode } from './mode-zxbasic.js?v=mvli9hob';
+import { EXAMPLES } from './examples.js?v=mvli9hob';
+import { tapToListing } from './tap.js?v=mvli9hob';
 
 const $ = (s) => document.querySelector(s);
 const STORE = 'zxflash.src', STORE_EX = 'zxflash.example';
@@ -20,9 +20,22 @@ setEmojiRenderer((text, size) => {
   const c = document.createElement('canvas'); c.width = size; c.height = size;
   const g = c.getContext('2d', { willReadFrequently: true });
   g.clearRect(0, 0, size, size);
-  g.font = `${Math.round(size * 0.82)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
   g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText(text, size / 2, size / 2 + size * 0.04);
+  if (/\p{Extended_Pictographic}/u.test(text)) {
+    g.font = `${Math.round(size * 0.82)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+    g.fillText(text, size / 2, size / 2 + size * 0.04);
+  } else { // plain text: chunky outlined cartoon lettering, shrunk to fit the width (titles, score pop-ups)
+    const face = (px) => `900 ${px}px "Arial Rounded MT Bold", "Trebuchet MS", "Arial Black", sans-serif`;
+    let px = size * 0.7;
+    g.font = face(px);
+    const w = g.measureText(text).width;
+    if (w > size * 0.86) { px *= size * 0.86 / w; g.font = face(px); }
+    const fill = g.createLinearGradient(0, size / 2 - px / 2, 0, size / 2 + px / 2);
+    fill.addColorStop(0, '#fff7b0'); fill.addColorStop(0.5, '#ffd23a'); fill.addColorStop(1, '#ff7a1a');
+    g.lineJoin = 'round'; g.lineWidth = Math.max(2, px * 0.2); g.strokeStyle = '#2a1052';
+    g.strokeText(text, size / 2, size / 2);
+    g.fillStyle = fill; g.fillText(text, size / 2, size / 2);
+  }
   return { width: size, height: size, rgba: g.getImageData(0, 0, size, size).data };
 });
 
@@ -58,13 +71,16 @@ async function doLoad(bytes) {
     await player.ruffle().load({
     data: bytes, swfFileName: 'zxflash.swf',
     autoplay: 'on', unmuteOverlay: 'hidden', letterbox: 'on', scale: 'showAll',
-    backgroundColor: '#000000', allowScriptAccess: false, contextMenu: 'rightClickOnly',
+    // script access lets LOADER's getURL('#name', '_self') through; FX is limited to drawing methods so BASIC can't reach other getURLs
+    backgroundColor: '#000000', allowScriptAccess: true, contextMenu: 'rightClickOnly',
     splashScreen: false, warnOnUnsupportedContent: false, logLevel: window.zxflash?.trace ? 'info' : 'warn',
     maxExecutionDuration: 5,
     });
   } finally {
     busy(false);
-    if (document.body.dataset.tab === 'screen') player.focus();
+    // A freshly loaded Ruffle instance only takes keys after it sees the player gain focus;
+    // focus() on the already-focused element fires nothing, so blur first.
+    if (document.body.dataset.tab === 'screen') { player.blur(); player.focus(); }
   }
 }
 
@@ -147,10 +163,10 @@ player.addEventListener('keydown', (e) => { if (e.key === 'Escape') setTab('code
 
 // ---- examples ----
 const sel = $('#examples');
-const exampleSlug = (ex) => ex.name === '3D Monster Maze' ? 'monster-maze' : ex.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const exampleSlug = (ex) => ex.id || ex.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 function exampleFromHash() {
   let id;
-  try { id = decodeURIComponent(location.hash.slice(1)).toLowerCase(); } catch (_) { return null; }
+  try { id = decodeURIComponent(location.hash.slice(1)).trim().toLowerCase(); } catch (_) { return null; }
   return EXAMPLES.find(ex => exampleSlug(ex) === id) || null;
 }
 function setExampleHash(id, replace = false) {
@@ -173,6 +189,7 @@ sel.addEventListener('change', () => {
   showExample(ex);
   run(true);
 });
+// LOADER ["name"] in BASIC is getURL('#name', '_self'), so it arrives here as a hash change.
 window.addEventListener('hashchange', () => {
   const ex = exampleFromHash();
   if (!ex) return;
