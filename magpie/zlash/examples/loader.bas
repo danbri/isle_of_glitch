@@ -41,7 +41,7 @@
 905 DATA "pop-party","POP PARTY","EMOJI",6,"2"
 910 DATA "tvp","TVP","TV",7,"3"
 920 DATA "emo-asteroids","EMO ASTEROIDS","EMOJI",8,"4"
-930 DATA "jump","JUMP DEMO","PLATFORM",9,"5"
+930 DATA "miner-ned","MINER NED","PLATFORM",9,"5"
 940 DATA "pipkins-quest","PIPKIN'S QUEST","ADVENTURE",10,"6"
 950 DATA "hello-1982","HELLO 1982","",13,"7","10-print-maze","10 PRINT MAZE","",14,"8"
 960 DATA "bouncing-ball","BOUNCING BALL","",15,"9","sierpinski-chaos-game","SIERPINSKI","",16,"a"

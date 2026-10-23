@@ -1,8 +1,8 @@
 // The "ROM": an AVM1 runtime that gives a Flash movie a ZX Spectrum screen,
 // plus the SWF assets (glyph sprites, colour cell, beep bank) it relies on.
-import { zxFont } from './font.js?v=mvliy6ys';
-import * as S from './swf.js?v=mvliy6ys';
-import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root, path } from './avm1.js?v=mvliy6ys';
+import { zxFont } from './font.js?v=mvlk267s';
+import * as S from './swf.js?v=mvlk267s';
+import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root, path } from './avm1.js?v=mvlk267s';
 
 export const SCREEN = { W: 256, H: 192, BORDER_X: 32, BORDER_Y: 24, COLS: 32, ROWS: 22, FPS: 50 };
 export const STAGE = { W: SCREEN.W + 2 * SCREEN.BORDER_X, H: SCREEN.H + 2 * SCREEN.BORDER_Y };
@@ -380,6 +380,15 @@ export function runtimeIR(beepLengths) {
     set('__ibuf', str('')), set('__ivar', v('_name')), set('__istr', v('_isStr')), set('__iprompt', v('_prompt')),
     set('__mode', num(1)),
     x(call('__lo', add(add(v('__iprompt'), v('__ibuf')), str(String.fromCharCode(143))))),
+  ]));
+  // KEY "p": is that key held right now? Letters either case; CHR$ 8-11 are the cursor keys, as INKEY$ gives them
+  out.push(fn('__kdown', ['_s'], [
+    local('c', cm(cm(add(str(''), v('_s')), 'toUpperCase'), 'charCodeAt', num(0))),
+    iff(eq(v('c'), num(8)), [set('c', num(37))]),
+    iff(eq(v('c'), num(9)), [set('c', num(39))]),
+    iff(eq(v('c'), num(10)), [set('c', num(40))]),
+    iff(eq(v('c'), num(11)), [set('c', num(38))]),
+    ret(['cond', cm(v('Key'), 'isDown', v('c')), num(1), num(0)]),
   ]));
   // key code -> character; cursor keys give the Spectrum's own codes: 8 left, 9 right, 10 down, 11 up
   out.push(fn('__kchar', ['_k'], [

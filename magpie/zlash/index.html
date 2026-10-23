@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="vendor/codemirror/codemirror.css">
-<link rel="stylesheet" href="css/app.css?v=mvliy6ys">
+<link rel="stylesheet" href="css/app.css?v=mvlk267s">
 <script>window.RufflePlayer = window.RufflePlayer || {}; window.RufflePlayer.config = { publicPath: 'vendor/ruffle/', polyfills: false };</script>
 <script src="vendor/ruffle/ruffle.js"></script>
 <script src="vendor/codemirror/codemirror.js"></script>
@@ -113,7 +113,7 @@
     <h2>Functions</h2>
     <p>Spectrum style, no brackets needed: <code>INT x</code>, <code>ABS</code>, <code>SGN</code>, <code>SQR</code>, <code>SIN</code>, <code>COS</code>, <code>TAN</code>, <code>ATN</code>, <code>EXP</code>, <code>LN</code>, <code>RND</code>, <code>PI</code>,
     <code>LEN a$</code>, <code>STR$ n</code>, <code>VAL a$</code>, <code>CHR$ n</code>, <code>CODE a$</code>, <code>INKEY$</code> (cursor keys give <code>CHR$ 8</code> left, <code>9</code> right, <code>10</code> down, <code>11</code> up). String slicing: <code>a$(2 TO 4)</code>, <code>a$(3)</code>.
-    Extensions: <code>MOUSEX</code>, <code>MOUSEY</code> (Spectrum pixel coordinates), <code>MOUSEB</code> (1 while pressed; brief clicks and taps are reported for one executing BASIC frame), <code>TICKS</code> (frames since start).</p>
+    Extensions: <code>MOUSEX</code>, <code>MOUSEY</code> (Spectrum pixel coordinates), <code>MOUSEB</code> (1 while pressed; brief clicks and taps are reported for one executing BASIC frame), <code>TICKS</code> (frames since start), <code>KEY "p"</code> (1 while that key is held; several keys can be held at once, unlike <code>INKEY$</code>; <code>KEY CHR$ 9</code> is cursor right).</p>
     <p>Characters 128&ndash;143 are the block graphics; you can also paste <code>▘▝▀▖▌▞▛▗▚▐▜▄▙▟█</code> into strings. <code>©</code> and <code>£</code> work too.</p>
 
     <h2>Loading real tapes</h2>
@@ -148,6 +148,6 @@
   </div>
 </main>
 
-<script type="module" src="js/app.js?v=mvliy6ys"></script>
+<script type="module" src="js/app.js?v=mvlk267s"></script>
 </body>
 </html>

@@ -54,8 +54,10 @@ Flash shapes, and `FX`/`FXP` which call any MovieClip drawing-API
 method or set any clip property, so BASIC can reach the whole Flash 8
 vector API without touching the compiler). `examples/monster-maze.bas` is a 3D Monster Maze
 homage written in it, using Rex's sprites and the view geometry recovered from
-the commented ZX81 disassembly (dl/mm); `examples/platform.bas` is a small
-platform-game demo; `examples/hobbit.bas` ("Pipkin's Quest") is a 49-room text
+the commented ZX81 disassembly (dl/mm); `examples/platform.bas` is Miner Ned, a
+Manic Miner tribute: the original's movement rules (fixed jump arc, conveyors,
+crumbling floors, fatal falls, air) from mrcook's C++ port, with new caverns
+and sprites and Grieg's Hall of the Mountain King, using the new `KEY "p"` held-key test; `examples/hobbit.bas` ("Pipkin's Quest") is a 49-room text
 adventure in the shape of the 1982 Melbourne House one, with all names and
 text rewritten (personal use); `WRAP 1` gives it word-wrapped PRINT; `examples/asteroids.bas` (Emo Asteroids) shows `EMOJI`,
 which rasterises emoji through the browser's canvas at compile time into
