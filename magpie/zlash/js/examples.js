@@ -587,36 +587,44 @@ export const EXAMPLES = [
 160 DIM adj$(10): DIM thing$(10): RESTORE 6200: FOR i=1 TO 10: READ adj$(i): NEXT i: FOR i=1 TO 10: READ thing$(i): NEXT i
 170 LET notes=48: DIM waltz(notes): RESTORE 6300: FOR i=1 TO notes: READ waltz(i): NEXT i
 175 SPRITE "cross","....g....","....g....","....g....",".........","ggg...ggg",".........","....g....","....g....","....g...."
-176 REM ship shapes (see 4800): up to 16 corners and 16 faces of up to 4 corners each; corner k of face f is fv(m,(f-1)*4+k)
-177 LET models=3: DIM mverts(models): DIM mfaces(models): DIM medges(models): DIM mvx(models,16): DIM mvy(models,16): DIM mvz(models,16)
-178 DIM fsize(models,16): DIM fv(models,64): DIM fnx(models,16): DIM fny(models,16): DIM fnz(models,16): DIM ev1(models,32): DIM ev2(models,32): DIM ef1(models,32): DIM ef2(models,32)
+176 REM ship shapes (see 4800 and 5000): up to 64 corners and 40 faces of up to 6 corners; corner k of face f is fv(m,(f-1)*6+k)
+177 LET models=4: DIM mverts(models): DIM mfaces(models): DIM medges(models): DIM mvx(models,64): DIM mvy(models,64): DIM mvz(models,64)
+178 DIM fsize(models,40): DIM fmat(models,40): DIM fv(models,240): DIM fnx(models,40): DIM fny(models,40): DIM fnz(models,40): DIM ev1(models,128): DIM ev2(models,128): DIM ef1(models,128): DIM ef2(models,128)
+179 DIM hullr(models): DIM hullg(models): DIM hullb(models): DIM accr(models): DIM accg(models): DIM accb(models): DIM edgecol(models): DIM shipname$(models)
 180 GO SUB 4800
 190 LET galaxy=1: GO SUB 4000
 200 REM the things in space around us: 1 is the station, the rest are ships (kind 2) or wreckage (kind 99)
 210 LET most=6: DIM kind(most): DIM posx(most): DIM posy(most): DIM posz(most): DIM nosex(most): DIM nosey(most): DIM nosez(most)
-220 DIM roofx(most): DIM roofy(most): DIM roofz(most): DIM sidex(most): DIM sidey(most): DIM sidez(most): DIM life(most): DIM veer(most)
+220 DIM roofx(most): DIM roofy(most): DIM roofz(most): DIM sidex(most): DIM sidey(most): DIM sidez(most): DIM life(most): DIM veer(most): DIM shape(most): DIM ord(most)
 230 LET dusts=20: DIM dustx(dusts): DIM dusty(dusts): DIM dustz(dusts)
-240 DIM cornx(16): DIM corny(16): DIM cornz(16): DIM scrx(16): DIM scry(16): DIM seen(16)
+235 REM far-off stars: just directions, so they turn with us but never come nearer
+236 LET stars=60: DIM starx(stars): DIM stary(stars): DIM starz(stars)
+237 FOR i=1 TO stars: LET a=RND*2*PI: LET z=RND*2-1: LET q=SQR (1-z*z): LET starx(i)=q*COS a: LET stary(i)=q*SIN a: LET starz(i)=z: NEXT i
+240 DIM cornx(64): DIM corny(64): DIM cornz(64): DIM scrx(64): DIM scry(64): DIM seen(40)
 250 LET zoom=128: LET planetr=6000: LET sunr=9000: LET lastk$="": LET msg$="": LET shown$="": LET msgt=0
 260 GO SUB 4900
-300 REM ======================== title: a pirate ship turns in space ========================
+300 REM ======================== title: the ships of the galaxy, turning in space ========================
 310 CLS: FX "clear": FX "lineStyle": LET docked=1
 320 PRINT AT 1,9; INK 6; "VECTOR TRADER"
 330 PRINT AT 3,7; INK 5; "a tribute to Elite": PRINT AT 4,2; INK 5; "by Ian Bell and David Braben": PRINT AT 5,10; INK 5; "(1984)"
 340 PRINT AT 16,5; INK 7; "PRESS SPACE, COMMANDER"
 350 PRINT AT 18,1; INK 4; "arrows steer, W/S speed": PRINT AT 19,1; INK 4; "SPACE fire, J jump drive": PRINT AT 20,1; INK 4; "H hyperspace, C dock, L loader"
-360 LET o=most: LET kind(o)=2: LET posx(o)=0: LET posy(o)=-10: LET posz(o)=330: LET nosex(o)=0: LET nosey(o)=0: LET nosez(o)=1
+360 LET o=most: LET kind(o)=2: LET posx(o)=0: LET posy(o)=-6: LET posz(o)=330: LET nosex(o)=0: LET nosey(o)=0: LET nosez(o)=1
 370 LET roofx(o)=0: LET roofy(o)=1: LET roofz(o)=0: LET sidex(o)=1: LET sidey(o)=0: LET sidez(o)=0
-380 REPEAT: FX "clear": FX "lineStyle", 1, #ffffff, 100: LET a=0.04
+375 LET sunx=-9000: LET suny=9000: LET sunz=-20000: LET show=1: LET t=0
+380 REPEAT: LET t=t+1: IF t-160*INT (t/160)=1 THEN GO SUB 398
+381 FX "clear": LET a=0.03
 382 LET vx=nosex(o): LET vy=nosey(o): LET vz=nosez(o): GO SUB 395: LET nosex(o)=vx: LET nosey(o)=vy: LET nosez(o)=vz
 384 LET vx=roofx(o): LET vy=roofy(o): LET vz=roofz(o): GO SUB 395: LET roofx(o)=vx: LET roofy(o)=vy: LET roofz(o)=vz
 386 LET vx=sidex(o): LET vy=sidey(o): LET vz=sidez(o): GO SUB 395: LET sidex(o)=vx: LET sidey(o)=vy: LET sidez(o)=vz
 388 GO SUB 1600: IF KEY "l" THEN LOADER
-390 HALT: HALT: UNTIL KEY " " OR KEY CHR$ 13
+390 HALT: UNTIL KEY " " OR KEY CHR$ 13
 392 LET kind(o)=0: GO TO 400
 395 REM turn (vx,vy,vz) about the vertical by angle a, and tip it a little towards us
-396 LET t=vx*COS a+vz*SIN a: LET vz=vz*COS a-vx*SIN a: LET vx=t
-397 LET t=vy*COS (a/3)-vz*SIN (a/3): LET vz=vy*SIN (a/3)+vz*COS (a/3): LET vy=t: RETURN
+396 LET t2=vx*COS a+vz*SIN a: LET vz=vz*COS a-vx*SIN a: LET vx=t2
+397 LET t2=vy*COS (a/3)-vz*SIN (a/3): LET vz=vy*SIN (a/3)+vz*COS (a/3): LET vy=t2: RETURN
+398 REM ---- the next ship in the line-up, at a distance that suits its size ----
+399 LET show=show+1-models*(show=models): LET shape(o)=show: LET posz(o)=330+1500*(show=1): LET posy(o)=-0.13*posz(o): PRINT AT 14,0; "                                ": PRINT AT 14,INT (16-LEN shipname$(show)/2); INK 6; shipname$(show): RETURN
 400 REM ======================== docked at the station: the screens ========================
 410 LET docked=1: LET screen=7
 420 REPEAT
@@ -644,8 +652,8 @@ export const EXAMPLES = [
 1068 LET speed=10+5*(1-launching): LET shield=100: LET energy=100: LET heat=0: LET cool=0: LET hyperc=0: LET hyper=0: LET dead=0: LET docked=0: LET auto=0: LET frame=0: LET view=1: LET shotflash=0
 1070 GO SUB 1950: LET msg$=name$(here): LET msgt=60
 1072 RETURN
-1080 REM ---- object o becomes kind k at (ax,ay,az), facing along (dx,dy,dz) ----
-1081 LET kind(o)=k: LET posx(o)=ax: LET posy(o)=ay: LET posz(o)=az: LET life(o)=3: LET veer(o)=0
+1080 REM ---- object o becomes kind k at (ax,ay,az), facing along (dx,dy,dz); its shape is model k unless we change it ----
+1081 LET kind(o)=k: LET shape(o)=k: LET posx(o)=ax: LET posy(o)=ay: LET posz(o)=az: LET life(o)=3: LET veer(o)=0
 1082 LET d=SQR (dx*dx+dy*dy+dz*dz): LET nosex(o)=dx/d: LET nosey(o)=dy/d: LET nosez(o)=dz/d
 1083 LET roofx(o)=0: LET roofy(o)=1: LET roofz(o)=0: IF ABS nosey(o)>0.9 THEN LET roofx(o)=1: LET roofy(o)=0
 1085 REM ---- square up: make the roof at right angles to the nose, and the side at right angles to both ----
@@ -653,8 +661,8 @@ export const EXAMPLES = [
 1087 LET roofx(o)=roofx(o)-dp*nosex(o): LET roofy(o)=roofy(o)-dp*nosey(o): LET roofz(o)=roofz(o)-dp*nosez(o)
 1088 LET d=SQR (roofx(o)*roofx(o)+roofy(o)*roofy(o)+roofz(o)*roofz(o)): LET roofx(o)=roofx(o)/d: LET roofy(o)=roofy(o)/d: LET roofz(o)=roofz(o)/d
 1089 LET sidex(o)=roofy(o)*nosez(o)-roofz(o)*nosey(o): LET sidey(o)=roofz(o)*nosex(o)-roofx(o)*nosez(o): LET sidez(o)=roofx(o)*nosey(o)-roofy(o)*nosex(o): RETURN
-1090 REM ---- a pirate, somewhere ahead, turning towards us ----
-1091 FOR o=2 TO most: IF kind(o)=0 THEN LET ax=(RND-0.5)*7000: LET ay=(RND-0.5)*3000: LET az=5000+RND*5000: LET dx=-ax: LET dy=-ay: LET dz=-az: LET k=2: GO SUB 1080: LET o=most
+1090 REM ---- a pirate, somewhere ahead, turning towards us: a Jackal, or now and then a tougher Wyvern ----
+1091 FOR o=2 TO most: IF kind(o)=0 THEN LET ax=(RND-0.5)*7000: LET ay=(RND-0.5)*3000: LET az=5000+RND*5000: LET dx=-ax: LET dy=-ay: LET dz=-az: LET k=2: GO SUB 1080: LET shape(o)=2+2*(RND<0.4): LET life(o)=3+2*(shape(o)=4): LET o=most
 1092 NEXT o: RETURN
 1094 REM ---- a trader (kind 3): coming in to the station from out in space, or just leaving it through the slot ----
 1095 FOR o=2 TO most: IF kind(o)<>0 THEN GO TO 1098
@@ -712,6 +720,7 @@ export const EXAMPLES = [
 1329 LET vx=sidex(o): LET vy=sidey(o): LET vz=sidez(o): GO SUB 1390: LET sidex(o)=vx: LET sidey(o)=vy: LET sidez(o)=vz
 1335 NEXT o
 1337 FOR d=1 TO dusts: LET vx=dustx(d): LET vy=dusty(d): LET vz=dustz(d): GO SUB 1390: LET dustx(d)=vx: LET dusty(d)=vy: LET dustz(d)=vz: NEXT d
+1338 FOR i=1 TO stars: LET vx=starx(i): LET vy=stary(i): LET vz=starz(i): GO SUB 1390: LET starx(i)=vx: LET stary(i)=vy: LET starz(i)=vz: NEXT i
 1340 REM and forward: everything comes towards us
 1342 LET planetz=planetz-push: LET sunz=sunz-push: FOR o=1 TO most: LET posz(o)=posz(o)-push: NEXT o
 1344 FOR d=1 TO dusts: LET dustz(d)=dustz(d)-speed: NEXT d
@@ -766,38 +775,70 @@ export const EXAMPLES = [
 1468 LET posx(o)=posx(o)+nosex(o)*10: LET posy(o)=posy(o)+nosey(o)*10: LET posz(o)=posz(o)+nosez(o)*10
 1469 IF ABS posx(o)+ABS posy(o)+ABS posz(o)>40000 THEN LET kind(o)=0
 1470 RETURN
-1500 REM ======================== draw what is out there ========================
-1505 FX "lineStyle", 1, #ffffff, 100
-1510 FOR o=1 TO most
+1500 REM ======================== draw what is out there, farthest first, so that nearer ships cover farther ones ========================
+1502 LET count=0: FOR o=1 TO most: IF kind(o)>0 THEN LET count=count+1: LET ord(count)=o
+1504 NEXT o
+1506 FOR i=2 TO count: LET j=i
+1507 IF j>1 THEN IF posz(ord(j-1))<posz(ord(j)) THEN LET t=ord(j): LET ord(j)=ord(j-1): LET ord(j-1)=t: LET j=j-1: GO TO 1507
+1508 NEXT i
+1510 FOR i=1 TO count: LET o=ord(i)
 1512 IF kind(o)>=1 AND kind(o)<=3 AND posz(o)>60 AND posz(o)<60000 THEN GO SUB 1600
 1515 IF kind(o)=99 AND posz(o)>60 THEN GO SUB 1580
-1520 NEXT o: RETURN
+1520 NEXT i: RETURN
 1580 REM ---- wreckage: a cloud of sparks that spreads and fades ----
 1582 FX "lineStyle", 1, #ffd040, life(o)*4: LET cx=128+posx(o)*zoom/posz(o): LET cy=64-posy(o)*zoom/posz(o): LET rr=(30-life(o))*3000/posz(o)
 1584 FOR q=1 TO 12: LET a=RND*2*PI: LET sx=cx+rr*RND*COS a: LET sy=cy+rr*RND*SIN a: FX "moveTo", sx, sy: FX "lineTo", sx+1, sy+1: NEXT q
 1586 FX "lineStyle", 1, #ffffff, 100: RETURN
-1600 REM ======================== one wireframe: object o, drawn with its model kind(o) ========================
-1602 LET m=kind(o)
-1604 REM each corner, from the model's own axes (side, roof, nose) into ours; then perspective: divide by distance
+1600 REM ======================== one ship, solid: faces that point at us are filled and lit by the sun, then every edge glows ========================
+1602 LET m=shape(o): LET near=0
+1604 LET lx=sunx-posx(o): LET ly=suny-posy(o): LET lz=sunz-posz(o): LET d=SQR (lx*lx+ly*ly+lz*lz): LET lx=lx/d: LET ly=ly/d: LET lz=lz/d
+1605 REM each corner, from the ship's own axes (side, roof, nose) into ours; then perspective: divide by distance
 1606 FOR v=1 TO mverts(m)
 1608 LET a=mvx(m,v): LET b=mvy(m,v): LET c=mvz(m,v)
 1610 LET cornx(v)=posx(o)+a*sidex(o)+b*roofx(o)+c*nosex(o): LET corny(v)=posy(o)+a*sidey(o)+b*roofy(o)+c*nosey(o): LET cornz(v)=posz(o)+a*sidez(o)+b*roofz(o)+c*nosez(o)
-1612 IF cornz(v)>20 THEN LET scrx(v)=128+cornx(v)*zoom/cornz(v): LET scry(v)=64-corny(v)*zoom/cornz(v)
+1612 IF cornz(v)>20 THEN LET scrx(v)=128+cornx(v)*zoom/cornz(v): LET scry(v)=64-corny(v)*zoom/cornz(v) ELSE LET near=1
 1614 NEXT v
-1616 REM hidden lines: a face can be seen if it points towards us (its outward direction, dotted with a corner, is negative)
-1618 FOR f=1 TO mfaces(m): LET a=fnx(m,f): LET b=fny(m,f): LET c=fnz(m,f): LET p=fv(m,(f-1)*4+1)
+1616 REM a face can be seen if it points towards us: its outward direction, dotted with one of its corners, is negative
+1618 FOR f=1 TO mfaces(m): LET a=fnx(m,f): LET b=fny(m,f): LET c=fnz(m,f): LET p=fv(m,(f-1)*6+1)
 1620 LET nx=a*sidex(o)+b*roofx(o)+c*nosex(o): LET ny=a*sidey(o)+b*roofy(o)+c*nosey(o): LET nz=a*sidez(o)+b*roofz(o)+c*nosez(o)
-1622 LET seen(f)=(nx*cornx(p)+ny*corny(p)+nz*cornz(p)<0): NEXT f
-1624 REM an edge is drawn if either of its two faces can be seen
-1626 FOR e=1 TO medges(m): LET a=ev1(m,e): LET b=ev2(m,e)
-1628 IF (seen(ef1(m,e)) OR seen(ef2(m,e))) AND cornz(a)>20 AND cornz(b)>20 THEN FX "moveTo", scrx(a), scry(a): FX "lineTo", scrx(b), scry(b)
-1630 NEXT e: RETURN
-1700 REM ======================== the sun and the planet: circles in perspective ========================
-1705 IF sunz>200 THEN LET rr=sunr*zoom/sunz: IF rr<400 THEN LET cx=128+sunx*zoom/sunz: LET cy=64-suny*zoom/sunz: FX "lineStyle": FX "beginFill", #ffd23a, 75+20*RND: LET rx=rr: LET ry=rr: GO SUB 4400: FX "endFill"
-1710 IF planetz>200 THEN LET rr=planetr*zoom/planetz: IF rr<600 THEN LET cx=128+planetx*zoom/planetz: LET cy=64-planety*zoom/planetz: FX "lineStyle", 1, #6fd3ff, 100: LET rx=rr: LET ry=rr: GO SUB 4400: LET ry=rr*0.3: GO SUB 4400
+1622 LET seen(f)=(nx*cornx(p)+ny*corny(p)+nz*cornz(p)<0): IF seen(f) AND NOT near THEN GO SUB 1650
+1624 NEXT f
+1626 REM the edges: a wide faint stroke, then a fine bright one on top of it, which looks like a glow
+1628 FOR pass=1 TO 2: IF pass=1 THEN FX "lineStyle", 4, edgecol(m), 22 ELSE FX "lineStyle", 1, edgecol(m), 100
+1630 FOR e=1 TO medges(m): LET a=ev1(m,e): LET b=ev2(m,e)
+1632 IF (seen(ef1(m,e)) OR seen(ef2(m,e))) AND cornz(a)>20 AND cornz(b)>20 THEN FX "moveTo", scrx(a), scry(a): FX "lineTo", scrx(b), scry(b)
+1634 NEXT e: NEXT pass: RETURN
+1650 REM ---- fill face f: its colour comes from its material, and how squarely it faces the sun ----
+1652 LET lit=nx*lx+ny*ly+nz*lz: IF lit<0 THEN LET lit=0
+1654 LET lit=0.35+0.65*lit: LET mt=fmat(m,f)
+1656 LET red=hullr(m)*lit: LET green=hullg(m)*lit: LET blue=hullb(m)*lit
+1658 IF mt=1 THEN LET red=red*0.55: LET green=green*0.55: LET blue=blue*0.55
+1660 IF mt=2 THEN LET red=accr(m)*lit: LET green=accg(m)*lit: LET blue=accb(m)*lit
+1662 IF mt=3 THEN LET red=110: LET green=220: LET blue=255
+1664 IF mt=4 THEN LET red=255: LET green=110+60*RND: LET blue=30
+1666 IF mt=5 THEN LET red=255: LET green=240: LET blue=180
+1668 IF mt=6 THEN LET red=14: LET green=20: LET blue=30
+1670 FX "lineStyle": FX "beginFill", INT red*65536+INT green*256+INT blue, 100
+1672 LET p=fv(m,(f-1)*6+1): FX "moveTo", scrx(p), scry(p)
+1674 FOR k=2 TO fsize(m,f): LET p=fv(m,(f-1)*6+k): FX "lineTo", scrx(p), scry(p): NEXT k
+1676 FX "endFill": RETURN
+1700 REM ======================== the sun (a core in a halo) and the planet (lit on the side that faces the sun) ========================
+1705 IF sunz>200 THEN LET rr=sunr*zoom/sunz: IF rr<400 THEN LET cx=128+sunx*zoom/sunz: LET cy=64-suny*zoom/sunz: FX "lineStyle": GO SUB 1720
+1710 IF planetz>200 THEN LET rr=planetr*zoom/planetz: IF rr<900 THEN LET cx=128+planetx*zoom/planetz: LET cy=64-planety*zoom/planetz: GO SUB 1730
 1715 RETURN
-1800 REM ======================== space dust: specks streaming past show how fast we go ========================
-1805 FX "lineStyle", 1, #c8c8c8, 100
+1720 FX "beginFill", #ff9a20, 10: LET rx=rr*1.9: LET ry=rx: GO SUB 4400: FX "endFill": FX "beginFill", #ffc040, 22: LET rx=rr*1.35: LET ry=rx: GO SUB 4400: FX "endFill"
+1722 FX "beginFill", #ffe68a, 90+10*RND: LET rx=rr: LET ry=rr: GO SUB 4400: FX "endFill": RETURN
+1730 REM the lit side: circles nudged towards the sun, each inside the last and a little brighter
+1732 LET lx=sunx-planetx: LET ly=suny-planety: LET d=SQR (lx*lx+ly*ly)+0.001: LET lx=lx/d: LET ly=ly/d
+1734 FX "lineStyle": FX "beginFill", #0c2a52, 100: LET rx=rr: LET ry=rr: GO SUB 4400: FX "endFill"
+1736 LET sh=0.25: LET bcol=#1d5a96: GO SUB 1745: LET sh=0.45: LET bcol=#3d8ccc: GO SUB 1745: LET sh=0.62: LET bcol=#7cc4ee: GO SUB 1745
+1738 FX "lineStyle", 1, #6fd3ff, 45: LET rx=rr: LET ry=rr: GO SUB 4400: LET ry=rr*0.3: GO SUB 4400: RETURN
+1745 LET cx0=cx: LET cy0=cy: LET cx=cx0+lx*rr*sh: LET cy=cy0-ly*rr*sh: FX "beginFill", bcol, 55: LET rx=rr*(1-sh): LET ry=rx: GO SUB 4400: FX "endFill": LET cx=cx0: LET cy=cy0: RETURN
+1800 REM ======================== distant stars (they only turn with us) and space dust (it streams past) ========================
+1801 FX "lineStyle", 1, #8890a0, 100
+1802 FOR i=1 TO stars: IF starz(i)>0.05 THEN LET sx=128+starx(i)*zoom/starz(i): LET sy=64-stary(i)*zoom/starz(i): IF sx>=0 AND sx<256 AND sy>=0 AND sy<128 THEN FX "moveTo", sx, sy: FX "lineTo", sx+0.6, sy
+1803 NEXT i
+1805 FX "lineStyle", 1, #e0e0e0, 100
 1810 FOR d=1 TO dusts
 1815 IF dustz(d)<40 THEN GO SUB 1840
 1820 LET sx=128+dustx(d)*zoom/dustz(d): LET sy=64-dusty(d)*zoom/dustz(d)
@@ -1035,24 +1076,35 @@ export const EXAMPLES = [
 4780 LET price(i)=INT (base(i)+grad(i)*econ(here)+r*spread(i)/256): IF price(i)<1 THEN LET price(i)=1
 4790 GO SUB 4500: LET forsale(i)=INT (r/16): IF (grad(i)<0 AND econ(here)>=5) OR (grad(i)>0 AND econ(here)<=2) THEN LET forsale(i)=forsale(i)+15
 4795 NEXT i: RETURN
-4800 REM ======================== ship shapes: corners and faces; the edges, and the way each face points, are worked out here ========================
-4825 RESTORE 5000: FOR m=1 TO models
-4830 READ mverts(m), mfaces(m), size
-4835 FOR v=1 TO mverts(m): READ a,b,c: LET mvx(m,v)=a*size: LET mvy(m,v)=b*size: LET mvz(m,v)=c*size: NEXT v
-4840 LET medges(m)=0: FOR f=1 TO mfaces(m): READ fsize(m,f): FOR k=1 TO fsize(m,f): READ fv(m,(f-1)*4+k): NEXT k
-4845 REM which way the face points: the cross product of two of its sides, turned round if it points inwards
-4850 LET a=fv(m,(f-1)*4+1): LET b=fv(m,(f-1)*4+2): LET c=fv(m,(f-1)*4+3)
+4800 REM ======================== ship shapes: read from DATA; the edges, the way each face points, and inset panels are worked out here ========================
+4805 RESTORE 5000: FOR m=1 TO models
+4810 READ shipname$(m), corners, size, hullr(m), hullg(m), hullb(m), accr(m), accg(m), accb(m), er, eg, eb: LET edgecol(m)=er*65536+eg*256+eb
+4815 LET mverts(m)=corners: FOR v=1 TO corners: READ a,b,c: LET mvx(m,v)=a*size: LET mvy(m,v)=b*size: LET mvz(m,v)=c*size: NEXT v
+4820 LET mfaces(m)=0: LET medges(m)=0
+4822 REM each face: how many corners (or 0 for a panel inset into an earlier face), its material, then its corners; -1 ends the ship
+4824 READ n: IF n<0 THEN GO TO 4898
+4826 LET mfaces(m)=mfaces(m)+1: LET f=mfaces(m): READ fmat(m,f)
+4828 IF n>0 THEN LET fsize(m,f)=n: FOR k=1 TO n: READ fv(m,(f-1)*6+k): NEXT k: GO TO 4850
+4830 REM an inset panel: the parent face's corners pulled in towards its middle, as new corners of its own
+4832 READ parent, pct: LET fsize(m,f)=fsize(m,parent): LET mx=0: LET my=0: LET mz=0
+4834 FOR k=1 TO fsize(m,parent): LET p=fv(m,(parent-1)*6+k): LET mx=mx+mvx(m,p): LET my=my+mvy(m,p): LET mz=mz+mvz(m,p): NEXT k
+4836 LET mx=mx/fsize(m,parent): LET my=my/fsize(m,parent): LET mz=mz/fsize(m,parent)
+4838 FOR k=1 TO fsize(m,parent): LET p=fv(m,(parent-1)*6+k): LET mverts(m)=mverts(m)+1: LET v=mverts(m)
+4840 LET mvx(m,v)=mx+(mvx(m,p)-mx)*pct/100: LET mvy(m,v)=my+(mvy(m,p)-my)*pct/100: LET mvz(m,v)=mz+(mvz(m,p)-mz)*pct/100: LET fv(m,(f-1)*6+k)=v: NEXT k
+4850 REM which way the face points: the cross product of two of its sides, one unit long, turned round if it points inwards
+4852 LET a=fv(m,(f-1)*6+1): LET b=fv(m,(f-1)*6+2): LET c=fv(m,(f-1)*6+3)
 4855 LET ux=mvx(m,b)-mvx(m,a): LET uy=mvy(m,b)-mvy(m,a): LET uz=mvz(m,b)-mvz(m,a): LET wx=mvx(m,c)-mvx(m,a): LET wy=mvy(m,c)-mvy(m,a): LET wz=mvz(m,c)-mvz(m,a)
-4860 LET nx=uy*wz-uz*wy: LET ny=uz*wx-ux*wz: LET nz=ux*wy-uy*wx
+4860 LET nx=uy*wz-uz*wy: LET ny=uz*wx-ux*wz: LET nz=ux*wy-uy*wx: LET d=SQR (nx*nx+ny*ny+nz*nz): LET nx=nx/d: LET ny=ny/d: LET nz=nz/d
 4865 IF nx*mvx(m,a)+ny*mvy(m,a)+nz*mvz(m,a)<0 THEN LET nx=-nx: LET ny=-ny: LET nz=-nz
 4870 LET fnx(m,f)=nx: LET fny(m,f)=ny: LET fnz(m,f)=nz
 4875 REM every side of a face is an edge; an edge we have met before belongs to two faces
 4880 FOR k=1 TO fsize(m,f): LET k2=k+1: IF k2>fsize(m,f) THEN LET k2=1
-4885 LET a=fv(m,(f-1)*4+k): LET b=fv(m,(f-1)*4+k2): LET found=0
+4885 LET a=fv(m,(f-1)*6+k): LET b=fv(m,(f-1)*6+k2): LET found=0
 4890 FOR e=1 TO medges(m): IF (ev1(m,e)=a AND ev2(m,e)=b) OR (ev1(m,e)=b AND ev2(m,e)=a) THEN LET ef2(m,e)=f: LET found=1
 4892 NEXT e
 4894 IF found=0 THEN LET medges(m)=medges(m)+1: LET e=medges(m): LET ev1(m,e)=a: LET ev2(m,e)=b: LET ef1(m,e)=f: LET ef2(m,e)=f
-4896 NEXT k: NEXT f: NEXT m: RETURN
+4896 NEXT k: GO TO 4824
+4898 NEXT m: RETURN
 4900 REM ======================== the commander: KEPT brings back what KEEP saved the last time we docked (the docking computer is standard) ========================
 4910 LET dockcomp=0: LET bigbay=0: LET beam=0
 4920 IF KEPT "vt.saved"=0 THEN LET credits=100: LET fuel=7: LET here=home: LET kills=0: FOR i=1 TO goods: LET hold(i)=0: NEXT i: GO TO 4950
@@ -1064,24 +1116,41 @@ export const EXAMPLES = [
 4970 KEEP "vt.saved",1: KEEP "vt.credits",credits: KEEP "vt.fuel",fuel: KEEP "vt.here",here: KEEP "vt.kills",kills
 4975 KEEP "vt.dockcomp",dockcomp: KEEP "vt.bigbay",bigbay: KEEP "vt.beam",beam
 4980 FOR i=1 TO goods: KEEP "vt.hold"+STR$ i,hold(i): NEXT i: RETURN
-5000 REM ======================== the station: a cuboctahedron (the middles of a cube's edges), with a slot on its front ========================
-5005 REM corners, faces, size; then each corner (x,y,z); then each face: how many corners, and which
-5010 DATA 16, 15, 400
+5000 REM ======================== the ships. Each: name, corners, size, hull colour (r,g,b), trim colour, edge colour;
+5002 REM then its corners (x across, y up, z forwards); then its faces: how many corners, the material, which corners;
+5004 REM or 0, the material, the face it is set into, and its size in percent (an inset panel); -1 ends the ship.
+5006 REM Materials: 0 hull, 1 darker panel, 2 trim, 3 lit window, 4 engine glow, 5 lamp, 6 black
+5010 REM the Orbital: a cuboctahedron (the middles of a cube's edges), a slot on the front, panels and lit windows
+5012 DATA "ORBITAL  the station", 16, 400, 150,160,175, 220,80,60, 143,233,255
 5020 DATA 1,1,0, 1,-1,0, -1,-1,0, -1,1,0
 5030 DATA 1,0,1, 0,1,1, -1,0,1, 0,-1,1
 5040 DATA 1,0,-1, 0,1,-1, -1,0,-1, 0,-1,-1
 5050 DATA 0.35,0.1,1, -0.35,0.1,1, -0.35,-0.1,1, 0.35,-0.1,1
-5060 DATA 4,5,6,7,8, 4,9,10,11,12, 4,1,5,2,9, 4,4,7,3,11, 4,1,6,4,10, 4,2,8,3,12
-5070 DATA 3,1,6,5, 3,2,5,8, 3,4,7,6, 3,3,8,7, 3,1,9,10, 3,2,12,9, 3,4,10,11, 3,3,11,12
-5080 DATA 4,13,14,15,16
-5100 REM the Jackal: a pirate's arrowhead
-5110 DATA 5, 5, 3
-5120 DATA 0,0,36, -32,0,-18, 32,0,-18, 0,10,-18, 0,-8,-18
-5130 DATA 3,1,2,4, 3,1,4,3, 3,1,5,2, 3,1,3,5, 4,2,4,3,5
-5200 REM the Hauler: a trader's box, narrower at the front
-5210 DATA 8, 6, 3
+5060 DATA 4,0,5,6,7,8, 4,0,9,10,11,12, 4,0,1,5,2,9, 4,0,4,7,3,11, 4,0,1,6,4,10, 4,0,2,8,3,12
+5070 DATA 3,0,1,6,5, 3,0,2,5,8, 3,0,4,7,6, 3,0,3,8,7, 3,0,1,9,10, 3,0,2,12,9, 3,0,4,10,11, 3,0,3,11,12
+5080 DATA 4,6,13,14,15,16
+5085 DATA 0,1,2,60, 0,1,3,60, 0,1,4,60, 0,1,5,60, 0,1,6,60
+5090 DATA 0,3,7,35, 0,3,8,35, 0,3,9,35, 0,3,10,35, 0,3,11,35, 0,3,12,35, 0,3,13,35, 0,3,14,35, -1
+5100 REM the Jackal: a pirate fighter with swept wings, a canopy, wing stripes and twin engines
+5110 DATA "JACKAL  pirate fighter", 17, 2.2, 130,36,36, 245,200,60, 255,106,90
+5120 DATA 0,2,60, -20,8,0, 20,8,0, -56,0,-34, 56,0,-34, -18,10,-34, 18,10,-34, -18,-8,-34, 18,-8,-34
+5125 DATA -15,5,-34, -5,5,-34, -5,-5,-34, -15,-5,-34, 5,5,-34, 15,5,-34, 15,-5,-34, 5,-5,-34
+5130 DATA 3,0,1,3,2, 4,0,2,3,7,6, 3,0,1,2,4, 3,0,1,5,3, 3,0,2,6,4, 3,0,3,5,7, 6,1,4,6,7,5,9,8, 3,0,1,4,8, 3,0,1,8,9, 3,0,1,9,5
+5135 DATA 4,4,10,11,12,13, 4,4,14,15,16,17, 0,3,1,45, 0,2,3,40, 0,2,4,40, -1
+5200 REM the Hauler: a trader's box with a bridge window, cargo bays, a stripe and four engines
+5210 DATA "HAULER  trader", 24, 3, 96,116,84, 235,190,40, 255,215,106
 5220 DATA -20,12,40, 20,12,40, 20,-12,40, -20,-12,40, -30,16,-40, 30,16,-40, 30,-16,-40, -30,-16,-40
-5230 DATA 4,1,2,3,4, 4,5,6,7,8, 4,1,5,6,2, 4,4,3,7,8, 4,2,6,7,3, 4,1,4,8,5
+5222 DATA -24,12,-40, -6,12,-40, -6,2,-40, -24,2,-40, 6,12,-40, 24,12,-40, 24,2,-40, 6,2,-40
+5224 DATA -24,-2,-40, -6,-2,-40, -6,-12,-40, -24,-12,-40, 6,-2,-40, 24,-2,-40, 24,-12,-40, 6,-12,-40
+5230 DATA 4,0,1,2,3,4, 4,1,5,6,7,8, 4,0,1,5,6,2, 4,0,4,3,7,8, 4,0,2,6,7,3, 4,0,1,4,8,5
+5235 DATA 4,4,9,10,11,12, 4,4,13,14,15,16, 4,4,17,18,19,20, 4,4,21,22,23,24, 0,3,1,55, 0,1,5,70, 0,1,6,70, 0,2,3,30, -1
+5240 REM the Wyvern: a pirate gunship, a long six-sided hull with a glowing exhaust ring
+5250 DATA "WYVERN  pirate gunship", 13, 2.6, 72,60,118, 255,120,200, 200,138,255
+5260 DATA 0,0,70, 10.4,4.2,40, 0,8.4,40, -10.4,4.2,40, -10.4,-4.2,40, 0,-8.4,40, 10.4,-4.2,40
+5265 DATA 24.2,9.8,-40, 0,19.6,-40, -24.2,9.8,-40, -24.2,-9.8,-40, 0,-19.6,-40, 24.2,-9.8,-40
+5270 DATA 3,0,1,2,3, 3,0,1,3,4, 3,0,1,4,5, 3,0,1,5,6, 3,0,1,6,7, 3,0,1,7,2
+5275 DATA 4,0,2,8,9,3, 4,0,3,9,10,4, 4,0,4,10,11,5, 4,0,5,11,12,6, 4,0,6,12,13,7, 4,0,7,13,8,2, 6,1,8,9,10,11,12,13
+5280 DATA 0,4,13,62, 0,6,14,40, 0,3,7,40, 0,3,8,40, 0,2,10,50, 0,2,11,50, -1
 6000 DATA "la","ve","di","so","ri","ed","qu","at","ti","on","us","er","in","an","be","ce","or","za","ge","ma","ra","le","xe","te","is","ar","en","ou","al","es","ib","ox"
 6010 DATA "Rich Industrial","Average Industrial","Poor Industrial","Mainly Industrial","Mainly Agricultural","Rich Agricultural","Average Agricultural","Poor Agricultural"
 6015 DATA "Anarchy","Feudal","Multi-Government","Dictatorship","Communist","Confederacy","Democracy","Corporate State"
