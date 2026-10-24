@@ -15,6 +15,7 @@
 130 REM every cell starts on the free list, chained through d()
 135 LET fr=0: FOR i=cells TO 1 STEP -1: LET d(i)=fr: LET fr=i: NEXT i: LET free=cells
 140 LET nsym=0: LET g=0: LET sp=0: LET er=0: LET tr=0: LET tc=0: LET v$="": LET r$="": LET blink=0: LET lit=0: LET lr=0
+145 LET ec=0: LET sn=0: LET sf=0: LET q$="|/-\"
 150 REM the words the evaluator treats specially
 155 RESTORE 9000: FOR i=1 TO 12: READ n$: GO SUB 8450: LET k(i)=rv: NEXT i
 160 LET symquote=k(1): LET symif=k(2): LET symcond=k(3): LET symdefun=k(4): LET symsetq=k(5): LET symlambda=k(6)
@@ -68,8 +69,15 @@
 3525 RETURN
 3550 FOR i=1 TO LEN z$: IF z$(i)=c$ AND c$<>" " THEN LET lr=r: LET lc=c+i-1: LET x$=c$
 3555 NEXT i: RETURN
+3600 REM ---- busy: while it works, a spinner turns where the answer will go and the power lamp flickers ----
+3602 REM the evaluator comes here every 40 calls; a step every 6 frames, timed by FRAMES, however fast it runs
+3605 LET ec=0: LET nl=PEEK 23672: IF ABS (nl-sf)<6 THEN RETURN
+3610 LET sf=nl: LET sn=sn+1: IF sn=4 THEN LET sn=0
+3615 IF tc<26 THEN PRINT AT 2+tr,3+tc; q$(sn+1)
+3620 IF sn<2 THEN PRINT AT 16,27; PAPER 7; INK 4; BRIGHT 0; CHR$ 143: RETURN
+3625 PRINT AT 16,27; PAPER 7; INK 2; BRIGHT 0; CHR$ 143: RETURN
 4000 REM ======================== read, evaluate, print: one line at a time, more if a bracket is still open ========================
-4005 LET l$="": LET depth=0: LET pr=tr: LET o$="* ": GO SUB 4900
+4005 PRINT AT 16,27; PAPER 7; INK 2; BRIGHT 0; CHR$ 143: LET l$="": LET depth=0: LET pr=tr: LET o$="* ": GO SUB 4900
 4010 GO SUB 4500
 4015 IF c$=CHR$ 13 THEN GO TO 4100
 4020 IF c$=CHR$ 8 OR c$=CHR$ 12 THEN GO TO 4200
@@ -174,6 +182,7 @@
 7000 REM ======================== the evaluator: the expression ex in the environment en; the value comes back in rv ========================
 7002 REM around each call to itself, the evaluator saves its six working values on the stack k() and restores them
 7003 REM afterwards, written out in full each time: on this machine a GO SUB costs more than the copying
+7004 LET ec=ec+1: IF ec>40 THEN GO SUB 3600
 7005 IF sp>3000 THEN LET er=1: LET e$="TOO DEEP"
 7006 IF er THEN RETURN
 7010 IF ex=0 THEN LET rv=0: RETURN
@@ -365,7 +374,7 @@
 8520 IF b(p)=1 THEN GO TO 8510
 8525 LET b(p)=1: IF t(p)=1 OR t(p)=5 THEN LET k(ms+1)=a(p): LET k(ms+2)=d(p): LET ms=ms+2
 8530 GO TO 8510
-8550 FOR h=1 TO nsym: LET b(y(h))=1: NEXT h
+8550 GO SUB 3600: FOR h=1 TO nsym: LET b(y(h))=1: NEXT h
 8555 LET fr=0: LET free=0: FOR h=cells TO 1 STEP -1: IF b(h)=0 THEN LET t(h)=0: LET d(h)=fr: LET fr=h: LET free=free+1
 8560 LET b(h)=0
 8565 NEXT h: RETURN
