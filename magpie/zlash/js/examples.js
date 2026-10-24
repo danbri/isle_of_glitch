@@ -588,7 +588,7 @@ export const EXAMPLES = [
 170 LET notes=48: DIM waltz(notes): RESTORE 6300: FOR i=1 TO notes: READ waltz(i): NEXT i
 175 SPRITE "cross","....g....","....g....","....g....",".........","ggg...ggg",".........","....g....","....g....","....g...."
 176 REM ship shapes (see 4800): up to 16 corners and 16 faces of up to 4 corners each; corner k of face f is fv(m,(f-1)*4+k)
-177 LET models=2: DIM mverts(models): DIM mfaces(models): DIM medges(models): DIM mvx(models,16): DIM mvy(models,16): DIM mvz(models,16)
+177 LET models=3: DIM mverts(models): DIM mfaces(models): DIM medges(models): DIM mvx(models,16): DIM mvy(models,16): DIM mvz(models,16)
 178 DIM fsize(models,16): DIM fv(models,64): DIM fnx(models,16): DIM fny(models,16): DIM fnz(models,16): DIM ev1(models,32): DIM ev2(models,32): DIM ef1(models,32): DIM ef2(models,32)
 180 GO SUB 4800
 190 LET galaxy=1: GO SUB 4000
@@ -639,6 +639,7 @@ export const EXAMPLES = [
 1060 REM pirates wait at the edge of lawless systems: more in anarchies, none in corporate states
 1062 LET n=0: IF NOT launching THEN LET n=INT ((7-gov(here))/2.5): IF RND<0.35 THEN LET n=0
 1064 FOR p=1 TO n: GO SUB 1090: NEXT p
+1065 LET inbound=1: GO SUB 1094: LET inbound=0: GO SUB 1094
 1066 FOR d=1 TO dusts: GO SUB 1840: NEXT d
 1068 LET speed=10+5*(1-launching): LET shield=100: LET energy=100: LET heat=0: LET cool=0: LET hyperc=0: LET hyper=0: LET dead=0: LET docked=0: LET auto=0: LET frame=0: LET view=1: LET shotflash=0
 1070 GO SUB 1950: LET msg$=name$(here): LET msgt=60
@@ -655,6 +656,12 @@ export const EXAMPLES = [
 1090 REM ---- a pirate, somewhere ahead, turning towards us ----
 1091 FOR o=2 TO most: IF kind(o)=0 THEN LET ax=(RND-0.5)*7000: LET ay=(RND-0.5)*3000: LET az=5000+RND*5000: LET dx=-ax: LET dy=-ay: LET dz=-az: LET k=2: GO SUB 1080: LET o=most
 1092 NEXT o: RETURN
+1094 REM ---- a trader (kind 3): coming in to the station from out in space, or just leaving it through the slot ----
+1095 FOR o=2 TO most: IF kind(o)<>0 THEN GO TO 1098
+1096 IF inbound THEN LET ax=posx(1)+(RND-0.5)*16000: LET ay=posy(1)+(RND-0.5)*6000: LET az=posz(1)+(RND-0.5)*16000: LET dx=posx(1)-ax: LET dy=posy(1)-ay: LET dz=posz(1)-az
+1097 IF NOT inbound THEN LET ax=posx(1)+nosex(1)*700: LET ay=posy(1)+nosey(1)*700: LET az=posz(1)+nosez(1)*700: LET dx=nosex(1): LET dy=nosey(1): LET dz=nosez(1)
+1098 IF kind(o)=0 THEN LET k=3: GO SUB 1080: LET veer(o)=inbound: LET o=most
+1099 NEXT o: RETURN
 1100 REM ======================== in flight: the game loop, 25 times a second ========================
 1110 REPEAT
 1120 LET frame=frame+1: GO SUB 1200: GO SUB 1300: GO SUB 1400: GO SUB 2100
@@ -685,13 +692,14 @@ export const EXAMPLES = [
 1236 IF heat>0 THEN LET heat=heat-0.5
 1240 LET jumping=KEY "j"
 1245 GO SUB 2950: IF k$="h" OR k$="H" THEN GO SUB 2250
-1250 IF (k$="c" OR k$="C") AND dockcomp=1 AND auto=0 THEN LET auto=1: LET autot=0: LET msg$="DOCKING COMPUTER ON": LET msgt=60
+1249 IF (k$="c" OR k$="C") AND auto=1 THEN LET auto=0: LET k$="": LET msg$="DOCKING COMPUTER OFF": LET msgt=40
+1250 IF (k$="c" OR k$="C") AND dockcomp=1 AND auto=0 THEN GO SUB 1365
 1252 IF (k$="c" OR k$="C") AND dockcomp=0 THEN LET msg$="NO DOCKING COMPUTER FITTED": LET msgt=40
 1255 IF LEN k$=1 THEN IF CODE k$>=52 AND CODE k$<=55 THEN LET view=CODE k$-48
 1260 IF k$="l" OR k$="L" THEN LOADER
 1270 RETURN
 1300 REM ======================== the universe turns and slides past: we never move, everything else does ========================
-1305 LET push=speed: IF jumping THEN GO SUB 1380: IF NOT locked THEN LET push=speed+1500
+1305 LET push=speed: IF jumping THEN GO SUB 1381: IF NOT locked THEN LET push=speed+1500
 1308 IF auto THEN GO SUB 1370
 1310 IF turnroll=0 AND turnpitch=0 THEN GO TO 1340
 1315 LET ca=COS turnroll: LET sa=SIN turnroll: LET cb=COS turnpitch: LET sb=SIN turnpitch
@@ -708,26 +716,36 @@ export const EXAMPLES = [
 1342 LET planetz=planetz-push: LET sunz=sunz-push: FOR o=1 TO most: LET posz(o)=posz(o)-push: NEXT o
 1344 FOR d=1 TO dusts: LET dustz(d)=dustz(d)-speed: NEXT d
 1346 RETURN
+1365 LET d=SQR (posx(1)*posx(1)+posy(1)*posy(1)+posz(1)*posz(1)): IF d>25000 THEN LET msg$="TOO FAR FROM THE STATION": LET msgt=50: RETURN
+1366 LET auto=1: LET autot=0: LET msg$="DOCKING COMPUTER ON": LET msgt=60: RETURN
 1370 REM ---- the docking computer flies us in, to a waltz: Johann Strauss II's Blue Danube (1866) ----
-1372 LET autot=autot+1: LET n=1+INT (autot/6): IF autot-6*INT (autot/6)=0 AND n<=notes THEN IF waltz(n)<>99 THEN TONE waltz(n)
-1374 IF autot>=notes*6 THEN LET docked=1
-1376 RETURN
-1380 REM ---- mass lock: the jump drive won't work near the station, a ship, or the planet ----
-1382 LET locked=0: FOR o=1 TO most: IF kind(o)>0 THEN IF ABS posx(o)+ABS posy(o)+ABS posz(o)<15000 THEN LET locked=1
-1384 NEXT o: IF SQR (planetx*planetx+planety*planety+planetz*planetz)<planetr*2.5 THEN LET locked=1
-1386 IF locked THEN LET msg$="MASS LOCKED": LET msgt=10
-1388 RETURN
+1371 LET autot=autot+1: LET n=1+INT (autot/6): LET n=n-notes*INT ((n-1)/notes): IF autot-6*INT (autot/6)=0 THEN IF waltz(n)<>99 THEN TONE waltz(n)
+1372 REM steer: roll the station onto the up-down line of the view, then pitch towards it; behind us, just loop over
+1373 LET x=posx(1): LET y=posy(1): LET z=posz(1): LET d=SQR (x*x+y*y+z*z): LET turnroll=0: LET turnpitch=0
+1374 IF z<0 THEN LET turnpitch=0.035: GO TO 1378
+1375 IF ABS x>0.04*z THEN LET turnroll=0.04*SGN x: IF y<0 THEN LET turnroll=-turnroll
+1376 IF ABS y>0.04*z THEN LET turnpitch=0.03*SGN y
+1378 LET speed=20: IF d<3000 THEN LET speed=10
+1379 IF d<650 THEN LET docked=1
+1380 RETURN
+1381 REM ---- mass lock: the jump drive won't work near the station, a ship, or the planet ----
+1383 LET locked=0: FOR o=1 TO most: IF kind(o)>0 THEN IF ABS posx(o)+ABS posy(o)+ABS posz(o)<15000 THEN LET locked=1
+1385 NEXT o: IF SQR (planetx*planetx+planety*planety+planetz*planetz)<planetr*2.5 THEN LET locked=1
+1387 IF locked THEN LET msg$="MASS LOCKED": LET msgt=10
+1389 RETURN
 1390 REM ---- turn one point (vx,vy,vz) with us: roll about the line of sight, then pitch ----
 1392 LET t=vx*ca-vy*sa: LET vy=vx*sa+vy*ca: LET vx=t
 1394 LET t=vy*cb-vz*sb: LET vz=vy*sb+vz*cb: LET vy=t: RETURN
 1400 REM ======================== the station spins; pirates hunt ========================
 1402 IF kind(1)<>1 THEN GO TO 1410
-1404 LET c=COS 0.012: LET s=SIN 0.012: LET t=roofx(1)*c+sidex(1)*s: LET sidex(1)=sidex(1)*c-roofx(1)*s: LET roofx(1)=t
+1404 LET c=COS 0.006: LET s=SIN 0.006: LET t=roofx(1)*c+sidex(1)*s: LET sidex(1)=sidex(1)*c-roofx(1)*s: LET roofx(1)=t
 1406 LET t=roofy(1)*c+sidey(1)*s: LET sidey(1)=sidey(1)*c-roofy(1)*s: LET roofy(1)=t: LET t=roofz(1)*c+sidez(1)*s: LET sidez(1)=sidez(1)*c-roofz(1)*s: LET roofz(1)=t
 1410 FOR o=2 TO most: IF kind(o)=2 THEN GO SUB 1430
+1412 IF kind(o)=3 THEN GO SUB 1460
 1415 IF kind(o)=99 THEN LET life(o)=life(o)-1: IF life(o)<=0 THEN LET kind(o)=0
 1420 NEXT o
-1422 IF frame-500*INT (frame/500)=0 AND RND<(7-gov(here))/14 THEN GO SUB 1090: LET msg$="CONTACT": LET msgt=40
+1422 IF frame-500*INT (frame/500)=0 AND RND<0.1+(7-gov(here))/14 THEN GO SUB 1090: LET msg$="CONTACT": LET msgt=40
+1423 IF frame-300*INT (frame/300)=0 AND RND<0.6 THEN LET inbound=(RND<0.5): GO SUB 1094
 1425 RETURN
 1430 REM ---- one pirate: turn towards us (or away for a while after a close pass), fly on, and fire when lined up ----
 1431 LET d=SQR (posx(o)*posx(o)+posy(o)*posy(o)+posz(o)*posz(o)): LET tx=-posx(o)/d: LET ty=-posy(o)/d: LET tz=-posz(o)/d
@@ -739,10 +757,19 @@ export const EXAMPLES = [
 1437 LET posx(o)=posx(o)+nosex(o)*14: LET posy(o)=posy(o)+nosey(o)*14: LET posz(o)=posz(o)+nosez(o)*14
 1438 IF veer(o)=0 AND d<4500 AND aim>0.96 AND RND<0.025 THEN GO SUB 2050
 1439 RETURN
+1460 REM ---- a trader minds its own business: arriving ones head for the station and vanish inside; leaving ones fly off ----
+1461 IF veer(o)=0 THEN GO TO 1468
+1462 LET tx=posx(1)-posx(o): LET ty=posy(1)-posy(o): LET tz=posz(1)-posz(o): LET d=SQR (tx*tx+ty*ty+tz*tz): IF d<700 THEN LET kind(o)=0: RETURN
+1463 LET tx=tx/d: LET ty=ty/d: LET tz=tz/d
+1464 LET nosex(o)=nosex(o)+0.03*(tx-nosex(o)): LET nosey(o)=nosey(o)+0.03*(ty-nosey(o)): LET nosez(o)=nosez(o)+0.03*(tz-nosez(o))
+1465 LET n=SQR (nosex(o)*nosex(o)+nosey(o)*nosey(o)+nosez(o)*nosez(o)): LET nosex(o)=nosex(o)/n: LET nosey(o)=nosey(o)/n: LET nosez(o)=nosez(o)/n: GO SUB 1085
+1468 LET posx(o)=posx(o)+nosex(o)*10: LET posy(o)=posy(o)+nosey(o)*10: LET posz(o)=posz(o)+nosez(o)*10
+1469 IF ABS posx(o)+ABS posy(o)+ABS posz(o)>40000 THEN LET kind(o)=0
+1470 RETURN
 1500 REM ======================== draw what is out there ========================
 1505 FX "lineStyle", 1, #ffffff, 100
 1510 FOR o=1 TO most
-1512 IF (kind(o)=1 OR kind(o)=2) AND posz(o)>60 AND posz(o)<60000 THEN GO SUB 1600
+1512 IF kind(o)>=1 AND kind(o)<=3 AND posz(o)>60 AND posz(o)<60000 THEN GO SUB 1600
 1515 IF kind(o)=99 AND posz(o)>60 THEN GO SUB 1580
 1520 NEXT o: RETURN
 1580 REM ---- wreckage: a cloud of sparks that spreads and fades ----
@@ -788,7 +815,7 @@ export const EXAMPLES = [
 1914 LET bw=fuel*50/7: LET by=153: LET bcol=#ff9040: GO SUB 2190: LET bw=heat/2: LET by=161: LET bcol=#ff4040: GO SUB 2190
 1920 REM the scanner: each ship sits at its place on an ellipse, on a stick as tall as it is high above or below us
 1922 FX "lineStyle", 1, #00c000, 100: LET cx=128: LET cy=160: LET rx=56: LET ry=20: GO SUB 4400: FX "moveTo", 72, 160: FX "lineTo", 184, 160: FX "moveTo", 128, 140: FX "lineTo", 128, 180
-1924 FOR o=1 TO most: IF kind(o)=1 OR kind(o)=2 THEN GO SUB 1940
+1924 FOR o=1 TO most: IF kind(o)>=1 AND kind(o)<=3 THEN GO SUB 1940
 1926 NEXT o
 1930 REM the compass points to the station: green dot ahead, red behind
 1932 FX "lineStyle", 1, #00c000, 100: LET cx=228: LET cy=150: LET rx=11: LET ry=11: GO SUB 4400
@@ -799,7 +826,8 @@ export const EXAMPLES = [
 1942 LET st=sy-posy(o)/300: IF st<132 THEN LET st=132
 1943 IF st>190 THEN LET st=190
 1944 LET bcol=#ff5050: IF kind(o)=1 THEN LET bcol=#50e0ff
-1945 FX "lineStyle", 1, bcol, 100: FX "moveTo", sx, sy: FX "lineTo", sx, st: FX "lineStyle": LET bx=sx-1: LET by=st-1: LET bw=3: LET bh=2: GO SUB 2190: RETURN
+1946 IF kind(o)=3 THEN LET bcol=#e0e040
+1947 FX "lineStyle", 1, bcol, 100: FX "moveTo", sx, sy: FX "lineTo", sx, st: FX "lineStyle": LET bx=sx-1: LET by=st-1: LET bw=3: LET bh=2: GO SUB 2190: RETURN
 1950 REM ---- the dashboard's labels, printed once ----
 1955 CLS: SPRITE CLEAR: PRINT AT 16,0; INK 5; "SP": PRINT AT 17,0; INK 5; "SH": PRINT AT 18,0; INK 5; "EN": PRINT AT 19,0; INK 5; "FU": PRINT AT 20,0; INK 5; "LT": LET shown$="": RETURN
 2000 REM ======================== the crosshair, our lasers, and enemy fire ========================
@@ -808,9 +836,10 @@ export const EXAMPLES = [
 2015 IF shotflash>0 THEN LET shotflash=shotflash-1: FX "lineStyle", 2, #ffd040, 100: FX "moveTo", shotx, shoty: FX "lineTo", 128, 120
 2020 RETURN
 2030 REM ---- did we hit anything? A ship whose middle is near the crosshair, by its size at that distance ----
-2032 FOR o=2 TO most: IF kind(o)=2 AND posz(o)>60 AND posz(o)<7000 THEN LET rr=6+100*zoom/posz(o): IF ABS (posx(o)*zoom/posz(o))<rr AND ABS (posy(o)*zoom/posz(o))<rr THEN GO SUB 2040
+2032 FOR o=2 TO most: IF (kind(o)=2 OR kind(o)=3) AND posz(o)>60 AND posz(o)<7000 THEN LET rr=6+100*zoom/posz(o): IF ABS (posx(o)*zoom/posz(o))<rr AND ABS (posy(o)*zoom/posz(o))<rr THEN GO SUB 2040
 2034 NEXT o: RETURN
 2040 LET life(o)=life(o)-1-beam: TONE 0: IF life(o)>0 THEN RETURN
+2041 IF kind(o)=3 THEN LET kind(o)=99: LET life(o)=25: LET msg$="YOU DESTROYED A TRADER!": LET msgt=50: TONE -12: RETURN
 2042 LET kind(o)=99: LET life(o)=25: LET kills=kills+1: LET credits=credits+25: LET msg$="BOUNTY: 25 CR": LET msgt=50: TONE -12: RETURN
 2050 REM ---- we are hit: the shields take it first, then the energy banks ----
 2052 LET shotflash=4: LET shotx=128: LET shoty=10: IF posz(o)>60 THEN LET shotx=128+posx(o)*zoom/posz(o): LET shoty=64-posy(o)*zoom/posz(o)
@@ -820,10 +849,18 @@ export const EXAMPLES = [
 2059 RETURN
 2100 REM ======================== docking: come in slowly, through the slot, lined up with it ========================
 2105 IF kind(1)<>1 THEN GO TO 2140
-2110 LET d=SQR (posx(1)*posx(1)+posy(1)*posy(1)+posz(1)*posz(1)): IF d>560 THEN GO TO 2140
+2106 LET d=SQR (posx(1)*posx(1)+posy(1)*posy(1)+posz(1)*posz(1)): IF d>4000 OR auto OR msgt>2 THEN GO TO 2113
+2107 REM within 4000 of the station, say what to do next
+2108 LET facing=-(nosex(1)*posx(1)+nosey(1)*posy(1)+nosez(1)*posz(1))/d: LET ahead=posz(1)/d: LET msgt=2
+2109 LET msg$="LINED UP - GO IN": IF speed>14 THEN LET msg$="SLOW DOWN (S)"
+2110 IF ABS roofy(1)<=0.8 THEN LET msg$="ROLL TO LINE UP THE SLOT"
+2111 IF ahead<=0.85 THEN LET msg$="POINT AT THE STATION"
+2112 IF facing<=0.8 THEN LET msg$="FLY ROUND TO THE SLOT SIDE"
+2113 IF d>560 THEN GO TO 2140
 2115 LET facing=-(nosex(1)*posx(1)+nosey(1)*posy(1)+nosez(1)*posz(1))/d: REM is the slot turned towards us?
 2120 LET ahead=posz(1)/d: REM is the station straight ahead?
-2125 IF facing>0.88 AND ahead>0.9 AND ABS roofy(1)>0.85 AND speed<=12 THEN LET docked=1: RETURN
+2124 IF auto THEN LET docked=1: RETURN
+2125 IF facing>0.8 AND ahead>0.85 AND ABS roofy(1)>0.8 AND speed<=14 THEN LET docked=1: RETURN
 2130 REM anything else is a collision: we bounce off it and lose shields
 2132 LET shield=shield-40: IF shield<0 THEN LET energy=energy+shield: LET shield=0
 2134 LET speed=0: LET bx=posx(1)/d*300: LET by=posy(1)/d*300: LET bw=posz(1)/d*300
@@ -894,7 +931,7 @@ export const EXAMPLES = [
 3310 LET head$="EQUIP SHIP": GO SUB 2900: GO SUB 3190
 3315 LET cost=INT ((7-fuel)*3+0.99)
 3320 PRINT AT 3,1; INK 7; "F  fill the tank"; TAB 24; cost; " CR"
-3325 PRINT AT 5,1; INK 7; "D  docking computer"; TAB 24;: IF dockcomp THEN PRINT INK 4; "FITTED" ELSE PRINT "150 CR"
+3325 PRINT AT 5,1; INK 7; "   docking computer"; TAB 24; INK 4; "FITTED"
 3330 PRINT AT 7,1; INK 7; "C  bigger cargo bay"; TAB 24;: IF bigbay THEN PRINT INK 4; "FITTED" ELSE PRINT "400 CR"
 3335 PRINT AT 9,1; INK 7; "B  beam laser"; TAB 24;: IF beam THEN PRINT INK 4; "FITTED" ELSE PRINT "600 CR"
 3340 PRINT AT 12,1; INK 5; "fuel "; fuel; " light years"
@@ -1016,13 +1053,13 @@ export const EXAMPLES = [
 4892 NEXT e
 4894 IF found=0 THEN LET medges(m)=medges(m)+1: LET e=medges(m): LET ev1(m,e)=a: LET ev2(m,e)=b: LET ef1(m,e)=f: LET ef2(m,e)=f
 4896 NEXT k: NEXT f: NEXT m: RETURN
-4900 REM ======================== the commander: KEPT brings back what KEEP saved the last time we docked ========================
+4900 REM ======================== the commander: KEPT brings back what KEEP saved the last time we docked (the docking computer is standard) ========================
 4910 LET dockcomp=0: LET bigbay=0: LET beam=0
 4920 IF KEPT "vt.saved"=0 THEN LET credits=100: LET fuel=7: LET here=home: LET kills=0: FOR i=1 TO goods: LET hold(i)=0: NEXT i: GO TO 4950
 4930 LET credits=KEPT "vt.credits": LET fuel=KEPT "vt.fuel": LET here=KEPT "vt.here": LET kills=KEPT "vt.kills"
 4935 LET dockcomp=KEPT "vt.dockcomp": LET bigbay=KEPT "vt.bigbay": LET beam=KEPT "vt.beam"
 4940 FOR i=1 TO goods: LET hold(i)=KEPT ("vt.hold"+STR$ i): NEXT i
-4950 LET sel=here: LET visits(here)=visits(here)+1: GO SUB 4750: GO SUB 3190: RETURN
+4950 LET dockcomp=1: LET sel=here: LET visits(here)=visits(here)+1: GO SUB 4750: GO SUB 3190: RETURN
 4960 REM ---- save the commander (we do it every time we dock) ----
 4970 KEEP "vt.saved",1: KEEP "vt.credits",credits: KEEP "vt.fuel",fuel: KEEP "vt.here",here: KEEP "vt.kills",kills
 4975 KEEP "vt.dockcomp",dockcomp: KEEP "vt.bigbay",bigbay: KEEP "vt.beam",beam
@@ -1041,6 +1078,10 @@ export const EXAMPLES = [
 5110 DATA 5, 5, 3
 5120 DATA 0,0,36, -32,0,-18, 32,0,-18, 0,10,-18, 0,-8,-18
 5130 DATA 3,1,2,4, 3,1,4,3, 3,1,5,2, 3,1,3,5, 4,2,4,3,5
+5200 REM the Hauler: a trader's box, narrower at the front
+5210 DATA 8, 6, 3
+5220 DATA -20,12,40, 20,12,40, 20,-12,40, -20,-12,40, -30,16,-40, 30,16,-40, 30,-16,-40, -30,-16,-40
+5230 DATA 4,1,2,3,4, 4,5,6,7,8, 4,1,5,6,2, 4,4,3,7,8, 4,2,6,7,3, 4,1,4,8,5
 6000 DATA "la","ve","di","so","ri","ed","qu","at","ti","on","us","er","in","an","be","ce","or","za","ge","ma","ra","le","xe","te","is","ar","en","ou","al","es","ib","ox"
 6010 DATA "Rich Industrial","Average Industrial","Poor Industrial","Mainly Industrial","Mainly Agricultural","Rich Agricultural","Average Agricultural","Poor Agricultural"
 6015 DATA "Anarchy","Feudal","Multi-Government","Dictatorship","Communist","Confederacy","Democracy","Corporate State"
