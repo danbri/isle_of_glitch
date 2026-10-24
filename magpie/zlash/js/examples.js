@@ -1,5 +1,6 @@
 export const EXAMPLES = [
-  { id: 'loader', name: 'Loader', src: `10 REM ZX FLASH LOADER - pick a program with a key or a tap. Any program can come back here with LOADER, or open another with LOADER "name"
+  { id: 'loader', name: 'Loader', src: `5 REM touch:
+10 REM ZX FLASH LOADER - pick a program with a key or a tap. Any program can come back here with LOADER, or open another with LOADER "name"
 20 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
 30 LET n=16: DIM i$(n,22): DIM n$(n,17): DIM t$(n,9): DIM c$(n,1): DIM r(n)
 40 RESTORE 900: FOR i=1 TO n: READ i$(i),n$(i),t$(i),r(i),c$(i): NEXT i
@@ -52,7 +53,8 @@ export const EXAMPLES = [
 980 DATA "paint-with-the-mouse","PAINT WITH MOUSE","",20,"f","demo-bars-and-scroller","BARS AND SCROLLER","",21,"g"
 990 DATA 2,6,4,5
 ` },
-  { id: 'monster-maze', name: '3D Monster Maze', src: `10 REM 3D MONSTER MAZE - after Malcolm Evans' 1981 ZX81 original. Rex's sprites and the view geometry follow the original code.
+  { id: 'monster-maze', name: '3D Monster Maze', src: `5 REM touch: l=LOADER
+10 REM 3D MONSTER MAZE - after Malcolm Evans' 1981 ZX81 original. Rex's sprites and the view geometry follow the original code.
 20 BORDER 15: PAPER 7: INK 0: BRIGHT 1: CLS
 30 DIM m(17,16): DIM dr(3): DIM dc(3): DIM cs(7): DIM hh(7): DIM sn$(11,3): DIM sr(11): DIM sc(11)
 40 RESTORE 50: FOR i=0 TO 3: READ dr(i),dc(i): NEXT i: FOR i=0 TO 7: READ cs(i),hh(i): NEXT i
@@ -251,7 +253,8 @@ export const EXAMPLES = [
 2989 REM sprite name, ZX81 row and column of its top-left corner
 2990 DATA "d1l",2,6,"d1r",3,7,"d2l",5,8,"d2r",6,10,"d3l",8,10,"d3r",9,11,"d4l",9,12,"d4r",10,12,"d5l",11,13,"d5r",11,13,"d0r",0,1
 ` },
-  { id: 'pop-party', name: 'Pop Party (emoji, Flash-style)', src: `10 REM ======================== POP PARTY ========================
+  { id: 'pop-party', name: 'Pop Party (emoji, Flash-style)', src: `5 REM touch: m=MUSIC l=LOADER
+10 REM ======================== POP PARTY ========================
 20 REM A Flash-style party game made from emoji, in plain BASIC.
 30 REM Click, or hold the button and swipe, to pop things as they float up.
 40 REM Popped sweets fall: Percy the pelican pedals after them and catches them in his pouch.
@@ -562,7 +565,8 @@ export const EXAMPLES = [
 4600 REM and a webbed foot on the pedal
 4610 FX "lineStyle": FX "beginFill", legink, 100: FX "moveTo", footx-1, footy: FX "lineTo", footx+4, footy-1: FX "lineTo", footx+4, footy+1.5: FX "endFill": RETURN
 ` },
-  { id: 'vector-trader', name: 'Vector Trader (Elite tribute)', src: `10 REM ======================== VECTOR TRADER: a tribute to Elite ========================
+  { id: 'vector-trader', name: 'Vector Trader (Elite tribute)', src: `5 REM touch: left right up down space=FIRE w=FASTER s=SLOWER j=JUMP h=HYPER c=DOCK b=BUY 1 2 3 4 5 6 7 l=LOADER
+10 REM ======================== VECTOR TRADER: a tribute to Elite ========================
 20 REM After Ian Bell and David Braben's Elite (1984): a whole galaxy grown from a few numbers,
 30 REM wireframe ships with hidden lines, trading between worlds, pirates, and docking with a
 40 REM spinning station. Like the original, you never move: the universe turns around you.
@@ -1164,7 +1168,8 @@ export const EXAMPLES = [
 6310 DATA 2,2,6,9,9,99,21,21,99,18,18,99,2,2,6,9,9,99,21,21,99,19,19,99
 6320 DATA 1,1,4,11,11,99,23,23,99,19,19,99,1,1,4,11,11,99,23,23,99,18,18,99
 ` },
-  { id: 'titan', name: 'Farewell, Titan! (illustrated adventure)', src: `10 REM ======================== FAREWELL, TITAN! ========================
+  { id: 'titan', name: 'Farewell, Titan! (illustrated adventure)', src: `5 REM touch: >n=N >s=S >e=E >w=W >u=UP >d=DOWN >look=LOOK >i=INV >help=HELP enter
+10 REM ======================== FAREWELL, TITAN! ========================
 20 REM A short illustrated adventure in the manner of Level 9 (Red Moon, Snowball, Return to Eden):
 30 REM type two-word commands, and every place has a picture, painted like the cover of a 1950s science fiction magazine.
 40 REM New Hope Dome on Titan is dying. The Administrator, the computer that governs the colony, wants everyone to go
@@ -1518,7 +1523,8 @@ export const EXAMPLES = [
 9320 DATA "tape",6,"reel",6,"chart",6,"cube",7,"heart",7,"biscuit",8,"ration",8,"food",8
 9350 DATA "north","south","east","west","up","down"
 ` },
-  { name: 'TVP', src: `10 REM TVP
+  { name: 'TVP', src: `5 REM touch:
+10 REM TVP
 20 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
 30 LET nl=9: LET np=345: DIM cn(nl): DIM lx(np): DIM ly(np)
 40 RESTORE 9000: LET k=0: FOR i=1 TO nl: READ cn(i): FOR j=1 TO cn(i): LET k=k+1: READ lx(k),ly(k): LET lx(k)=lx(k)/10: LET ly(k)=ly(k)/10: NEXT j: NEXT i
@@ -1571,7 +1577,8 @@ export const EXAMPLES = [
 9015 DATA 852,1237,862,1218,890,1218,956,1256,994,1323,994,1361,956,1361,890,1323,852,9,906,862,868,890,868,956,925,994,981,975,981,956,1000,937,991,890,962,862,9,1512,937,1654,1004,1673,1023,1673
 9016 DATA 1042,1645,1051,1645,1042,1607,1032,1598,1013,1503,975,8,678,445,631,482,631,539,659,577,725,587,773,539,773,482,735,445
 ` },
-  { id: 'emo-asteroids', name: 'Emo Asteroids (emoji bitmaps)', src: `10 REM EMO ASTEROIDS - a cosy drift through a wraparound sky. Nothing here can hurt you.
+  { id: 'emo-asteroids', name: 'Emo Asteroids (emoji bitmaps)', src: `5 REM touch: a=LEFT w=GO d=RIGHT l=LOADER
+10 REM EMO ASTEROIDS - a cosy drift through a wraparound sky. Nothing here can hurt you.
 20 EMOJI "🚀","ship",48: EMOJI "🪨","r1",64: EMOJI "🌑","r2",64: EMOJI "🍩","r3",64: EMOJI "🧀","r4",64: EMOJI "🪐","r5",64
 30 EMOJI "✨","spark",32: EMOJI "⭐","star",20: EMOJI "💖","heart",32: EMOJI "🌟","pop",40
 40 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
@@ -1636,7 +1643,8 @@ export const EXAMPLES = [
 920 LET ax(i)=RND*256: LET ay(i)=RND*176: IF ABS (ax(i)-px)<50 AND ABS (ay(i)-py)<50 THEN LET ax(i)=ax(i)+128: LET ax(i)=ax(i)-256*INT (ax(i)/256)
 930 LET au(i)=(RND-0.5)*1.2: LET av(i)=(RND-0.5)*1.2: RETURN
 ` },
-  { id: 'miner-ned', name: 'Miner Ned (Manic Miner tribute)', src: `10 REM ======================== MINER NED: a Manic Miner tribute ========================
+  { id: 'miner-ned', name: 'Miner Ned (Manic Miner tribute)', src: `5 REM touch: left right space=JUMP m=MUSIC l=LOADER
+10 REM ======================== MINER NED: a Manic Miner tribute ========================
 20 REM The rules of Matthew Smith's Manic Miner (1983), as written up in mrcook's C++ port,
 30 REM played in BASIC with new caverns and new sprites. Collect every flashing key, then
 40 REM step into the portal before the air runs out. Ned's jump is fixed once he leaves the
@@ -1887,7 +1895,8 @@ export const EXAMPLES = [
 3235 DATA "#=======~~~~===================#"
 3250 DATA 2, 1,144,40,144,176,1, 2,128,24,24,88,2
 ` },
-  { id: 'pipkins-quest', name: "Pipkin's Quest (text adventure)", src: `10 REM PIPKIN'S QUEST - a text adventure with pictures, a homage to the 1982 Melbourne House adventure. All names and text here are original.
+  { id: 'pipkins-quest', name: "Pipkin's Quest (text adventure)", src: `5 REM touch: >n=N >s=S >e=E >w=W >u=UP >d=DOWN >look=LOOK >i=INV enter
+10 REM PIPKIN'S QUEST - a text adventure with pictures, a homage to the 1982 Melbourne House adventure. All names and text here are original.
 11 REM Who stands in for whom: pipkin = the burrow-dwelling hero; wendel = the wizard; durrock = the dwarf leader; aelric = lord of the hidden valley;
 12 REM sliver = the creature of the underground lake; harl = the bowman of the lake town; ashwyrm = the dragon; ursk = the skin-changer; the butler = the woodkings butler;
 13 REM the ogres = the trolls; the grey wolf = the warg; the woodfolk = the wood elves; hollow hill = the hero's home; elmhaven = the hidden valley;
@@ -2492,7 +2501,8 @@ export const EXAMPLES = [
 20200 DATA "north","south","east","west","northeast","northwest","southeast","southwest","up","down"
 20210 DATA "round oak door","massive stone door","high barred window","iron goblin door","red cellar door","web","web","web","web","river","hidden way","iron hatch","pale wooden door","hidden crag door","choked great gate"
 20300 DATA 1,2,3,35,4,5,6,7,4,7,8,9,10,9,9,9,9,9,11,9,12,13,14,13,15,16,16,17,18,19,19,17,20,20,21,16,22,22,23,24,25,26,6,34,27,28,29,30,31,32,9,9,33` },
-  { name: 'Hello 1982', src: `10 REM Hello from 1982
+  { name: 'Hello 1982', src: `5 REM touch: enter=PRESS
+10 REM Hello from 1982
 20 BORDER 1: PAPER 0: INK 7: CLS
 30 PRINT "HELLO WORLD"; TAB 16; "from Flash"
 40 FOR i=1 TO 7
@@ -2504,10 +2514,12 @@ export const EXAMPLES = [
 100 BEEP 0.1,0: BEEP 0.1,4: BEEP 0.2,7
 110 PRINT AT 21,0; "press a key"; : PAUSE 0
 120 GO TO 20` },
-  { name: '10 PRINT maze', src: `10 BORDER 0: PAPER 0: BRIGHT 1: CLS
+  { name: '10 PRINT maze', src: `5 REM touch:
+10 BORDER 0: PAPER 0: BRIGHT 1: CLS
 20 PRINT INK 1+INT (RND*6); CHR$ (47+45*INT (RND*2));
 30 GO TO 20` },
-  { name: 'Bouncing ball', src: `10 BORDER 0: PAPER 0: INK 5: CLS
+  { name: 'Bouncing ball', src: `5 REM touch:
+10 BORDER 0: PAPER 0: INK 5: CLS
 20 LET x=40: LET y=90: LET dx=3: LET dy=2: LET r=10
 30 REPEAT
 40 CLS
@@ -2519,7 +2531,8 @@ export const EXAMPLES = [
 100 IF y<r+4 OR y>175-r THEN LET dy=-dy: BEEP 0.02,8
 110 PAUSE 1
 120 UNTIL 0` },
-  { name: 'Sierpinski chaos game', src: `10 REM The chaos game draws a Sierpinski triangle one dot at a time
+  { name: 'Sierpinski chaos game', src: `5 REM touch:
+10 REM The chaos game draws a Sierpinski triangle one dot at a time
 20 BORDER 0: PAPER 0: INK 4: CLS
 30 DIM x(3): DIM y(3)
 40 LET x(1)=0: LET y(1)=0: LET x(2)=255: LET y(2)=0: LET x(3)=128: LET y(3)=175
@@ -2530,7 +2543,8 @@ export const EXAMPLES = [
 90 PLOT INK 1+k; px,py
 100 NEXT i
 110 PRINT AT 0,0; INK 7; "done"` },
-  { name: 'Tune (BEEP)', src: `10 REM Twinkle twinkle, in BEEPs
+  { name: 'Tune (BEEP)', src: `5 REM touch: enter=PRESS
+10 REM Twinkle twinkle, in BEEPs
 20 BORDER 2: PAPER 0: INK 6: BRIGHT 1: CLS
 30 LET n$="0 0 7 7 9 9 7 5 5 4 4 2 2 0"
 40 LET p=1
@@ -2544,7 +2558,8 @@ export const EXAMPLES = [
 120 PRINT: PRINT "again? (y/n)"
 130 LET k$=INKEY$: IF k$="" THEN PAUSE 1: GO TO 130
 140 IF k$="y" THEN GO TO 20` },
-  { name: 'INPUT and strings', src: `10 BORDER 7: PAPER 7: INK 0: CLS
+  { name: 'INPUT and strings', src: `5 REM touch: y n enter
+10 BORDER 7: PAPER 7: INK 0: CLS
 20 PRINT "What is your name?"
 30 INPUT "Name: "; n$
 40 IF n$="" THEN LET n$="Nobody"
@@ -2556,9 +2571,11 @@ export const EXAMPLES = [
 100 PRINT "In 1982 you were "; a-44; "."
 110 IF a-44<0 THEN PRINT "So you were not born yet. Lucky you."
 120 PRINT: PRINT INK 2; "Run again? (y/n)"
+125 IF INKEY$<>"" THEN PAUSE 1: GO TO 125
 130 LET k$=INKEY$: IF k$="" THEN PAUSE 1: GO TO 130
 140 IF k$="y" OR k$="Y" THEN GO TO 10` },
-  { name: 'Paint with the mouse', src: `10 BORDER 0: PAPER 0: INK 7: CLS
+  { name: 'Paint with the mouse', src: `5 REM touch:
+10 BORDER 0: PAPER 0: INK 7: CLS
 20 PRINT AT 0,0; "move the mouse over the screen"
 30 LET c=1
 40 REPEAT
@@ -2568,7 +2585,8 @@ export const EXAMPLES = [
 80 PRINT AT 21,0; INK c; "ink "; c; " at "; x; ","; y; "   "
 90 PAUSE 1
 100 UNTIL 0` },
-  { name: 'Demo: bars and scroller', src: `10 REM colour bars, a sine scroller and a flashing border
+  { name: 'Demo: bars and scroller', src: `5 REM touch:
+10 REM colour bars, a sine scroller and a flashing border
 20 PAPER 0: INK 7: BRIGHT 1: CLS
 30 LET m$="      ZX FLASH ... SPECTRUM BASIC COMPILED TO AVM1 BYTECODE, RUNNING IN RUFFLE ... HELLO TO ALL 8-BIT FRIENDS      "
 40 FOR b=0 TO 6: RECT INK 1+b; 0,10+b*8,256,8: NEXT b

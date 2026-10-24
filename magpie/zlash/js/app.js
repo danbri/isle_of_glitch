@@ -1,7 +1,7 @@
-import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js?v=mvm7zhkz';
-import { defineZxBasicMode } from './mode-zxbasic.js?v=mvm7zhkz';
-import { EXAMPLES } from './examples.js?v=mvm7zhkz';
-import { tapToListing } from './tap.js?v=mvm7zhkz';
+import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js?v=mvmcq990';
+import { defineZxBasicMode } from './mode-zxbasic.js?v=mvmcq990';
+import { EXAMPLES } from './examples.js?v=mvmcq990';
+import { tapToListing } from './tap.js?v=mvmcq990';
 
 const $ = (s) => document.querySelector(s);
 const STORE = 'zxflash.src', STORE_EX = 'zxflash.example';
@@ -121,6 +121,7 @@ function run(force = false) {
   st.className = 'status ok';
   st.innerHTML = `<span>0 OK</span><span class="detail">${r.lines} lines &middot; ${r.bytecode} bytes AVM1 &middot; ${(r.swf.length / 1024).toFixed(1)} KB swf &middot; ${r.ms.toFixed(1)} ms</span>`;
   $('#meta').textContent = r.vars.filter(v => v.startsWith('b_')).map(v => v.slice(2)).join(' ');
+  setupPad(src);
   loadSwf(r.swf);
 }
 function schedule() {
@@ -231,6 +232,68 @@ try { initial = localStorage.getItem(STORE); initialEx = localStorage.getItem(ST
   else setSource(initial || EXAMPLES[0].src);
   showName();
 }
+// ---- touch keys ----
+// Phones have no keyboard, so they get keys under the screen. A program says which with a line like
+//   REM touch: left right space=JUMP >north=N
+// (key names, letters or digits, each with an optional =LABEL; >words types a whole command and presses Enter).
+// The keys send ordinary key events into the player, so INKEY$, KEY and INPUT all see them, and they can be held.
+// Without that line you get arrows, space and enter; a program that uses INPUT also gets a box to type into.
+const touchMode = matchMedia('(pointer: coarse)').matches || /[?&]touch\b/.test(location.search);
+if (touchMode) document.body.classList.add('touch');
+const pad = $('#touchpad'), padKeys = $('#pad-keys'), padType = $('#pad-type'), padText = $('#pad-text');
+const NAMED = { left: ['ArrowLeft', 'ArrowLeft', '\u25c0'], right: ['ArrowRight', 'ArrowRight', '\u25b6'], up: ['ArrowUp', 'ArrowUp', '\u25b2'],
+  down: ['ArrowDown', 'ArrowDown', '\u25bc'], space: [' ', 'Space', 'SPACE'], enter: ['Enter', 'Enter', 'ENTER'] };
+function keyFor(ch) { // [key, code, label] for a named key or one character
+  if (NAMED[ch]) return NAMED[ch];
+  if (ch === ' ') return NAMED.space;
+  const up = ch.toUpperCase();
+  return [ch, /[A-Z]/.test(up) ? 'Key' + up : /[0-9]/.test(ch) ? 'Digit' + ch : '', up];
+}
+function sendKey(k, down) {
+  // Ruffle only listens while it thinks it has focus; tell it so without taking focus away from the
+  // type box (that would close the phone's keyboard after every command)
+  if (down) { player.dispatchEvent(new FocusEvent('focus')); player.dispatchEvent(new FocusEvent('focusin', { bubbles: true })); }
+  player.dispatchEvent(new KeyboardEvent(down ? 'keydown' : 'keyup', { key: k[0], code: k[1], bubbles: true, cancelable: true }));
+}
+const pause = (ms) => new Promise(r => setTimeout(r, ms));
+async function typeText(text) { // one key at a time, so the program sees every one, then Enter
+  for (const ch of text) { const k = keyFor(ch); sendKey(k, true); await pause(30); sendKey(k, false); await pause(30); }
+  sendKey(NAMED.enter, true); await pause(30); sendKey(NAMED.enter, false);
+}
+function setupPad(src) {
+  const m = src.match(/^\s*\d*\s*REM\s+touch:(.*)$/im);
+  const tokens = m ? m[1].trim().split(/\s+/).filter(Boolean) : ['left', 'up', 'down', 'right', 'space', 'enter'];
+  padKeys.textContent = '';
+  for (const t of tokens) {
+    const [name, label] = t.split('=');
+    const b = document.createElement('button');
+    b.type = 'button';
+    if (name.startsWith('>')) { // a whole command
+      const words = name.slice(1).replace(/_/g, ' ');
+      b.className = 'cmd'; b.textContent = label || words.toUpperCase();
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); typeText(words); });
+    } else { // a key that is held down for as long as the finger is
+      const k = keyFor(name.toLowerCase() in NAMED ? name.toLowerCase() : name);
+      b.textContent = label || k[2];
+      // a quick tap still holds the key for 120 ms, so a program that looks once a frame doesn't miss it
+      let downAt = 0;
+      const release = () => {
+        if (!b.classList.contains('down')) return;
+        b.classList.remove('down');
+        setTimeout(() => sendKey(k, false), Math.max(0, 120 - (performance.now() - downAt)));
+      };
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); b.setPointerCapture(e.pointerId); b.classList.add('down'); downAt = performance.now(); sendKey(k, true); });
+      b.addEventListener('pointerup', release); b.addEventListener('pointercancel', release); b.addEventListener('lostpointercapture', release);
+    }
+    padKeys.append(b);
+  }
+  padType.hidden = !/\bINPUT\b/i.test(src.replace(/^\s*\d*\s*REM.*$/gim, '').replace(/"[^"\n]*"/g, '')); // INPUT outside REMs and strings
+  pad.classList.toggle('has', tokens.length > 0 || !padType.hidden);
+  requestAnimationFrame(() => document.body.style.setProperty('--pad-h', (pad.classList.contains('has') && touchMode ? pad.offsetHeight : 0) + 'px'));
+}
+$('#pad-type button').addEventListener('pointerdown', (e) => e.preventDefault()); // keep the phone's keyboard open
+padType.addEventListener('submit', (e) => { e.preventDefault(); const t = padText.value; padText.value = ''; typeText(t); });
+
 setTab('screen');
 run(true);
 window.zxflash = { editor, player, run, buildProgram, setTab };

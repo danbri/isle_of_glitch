@@ -1,3 +1,4 @@
+5 REM touch: a=LEFT w=GO d=RIGHT l=LOADER
 10 REM EMO ASTEROIDS - a cosy drift through a wraparound sky. Nothing here can hurt you.
 20 EMOJI "🚀","ship",48: EMOJI "🪨","r1",64: EMOJI "🌑","r2",64: EMOJI "🍩","r3",64: EMOJI "🧀","r4",64: EMOJI "🪐","r5",64
 30 EMOJI "✨","spark",32: EMOJI "⭐","star",20: EMOJI "💖","heart",32: EMOJI "🌟","pop",40

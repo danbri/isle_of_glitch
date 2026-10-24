@@ -75,7 +75,9 @@ pirates, a spinning station to dock with (or a docking computer playing the Blue
 Danube), and the commander kept with KEEP. `examples/titan.bas` is Farewell, Titan!, a short illustrated adventure in
 the manner of Level 9: a two-word parser, thirteen places, each with a picture
 painted like a 1950s science fiction magazine cover (sky gradients, ringed
-Saturn, finned rockets, ink outlines), two endings and a score out of 100. `examples/loader.bas` is the menu the page opens with. Its `LOADER
+Saturn, finned rockets, ink outlines), two endings and a score out of 100. On touch screens the page shows keys under the screen, chosen by each program
+with a `REM touch: left right space=JUMP >north=N` line; they send real key
+events (held, several at once) and a type box feeds `INPUT`. `examples/loader.bas` is the menu the page opens with. Its `LOADER
 "name"` statement compiles to an AVM1 `getURL("#name", "_self")`: a same-page
 link, so it needs no script access, and the page's `hashchange` handler opens
 that example (by id, as in `#monster-maze`), or the loader itself when no name

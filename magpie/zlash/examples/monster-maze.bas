@@ -1,3 +1,4 @@
+5 REM touch: l=LOADER
 10 REM 3D MONSTER MAZE - after Malcolm Evans' 1981 ZX81 original. Rex's sprites and the view geometry follow the original code.
 20 BORDER 15: PAPER 7: INK 0: BRIGHT 1: CLS
 30 DIM m(17,16): DIM dr(3): DIM dc(3): DIM cs(7): DIM hh(7): DIM sn$(11,3): DIM sr(11): DIM sc(11)

@@ -1,3 +1,4 @@
+5 REM touch: left right up down space=FIRE w=FASTER s=SLOWER j=JUMP h=HYPER c=DOCK b=BUY 1 2 3 4 5 6 7 l=LOADER
 10 REM ======================== VECTOR TRADER: a tribute to Elite ========================
 20 REM After Ian Bell and David Braben's Elite (1984): a whole galaxy grown from a few numbers,
 30 REM wireframe ships with hidden lines, trading between worlds, pirates, and docking with a

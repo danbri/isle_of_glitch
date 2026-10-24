@@ -1,3 +1,4 @@
+5 REM touch: >n=N >s=S >e=E >w=W >u=UP >d=DOWN >look=LOOK >i=INV >help=HELP enter
 10 REM ======================== FAREWELL, TITAN! ========================
 20 REM A short illustrated adventure in the manner of Level 9 (Red Moon, Snowball, Return to Eden):
 30 REM type two-word commands, and every place has a picture, painted like the cover of a 1950s science fiction magazine.

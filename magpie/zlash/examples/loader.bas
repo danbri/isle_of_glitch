@@ -1,3 +1,4 @@
+5 REM touch:
 10 REM ZX FLASH LOADER - pick a program with a key or a tap. Any program can come back here with LOADER, or open another with LOADER "name"
 20 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
 30 LET n=16: DIM i$(n,22): DIM n$(n,17): DIM t$(n,9): DIM c$(n,1): DIM r(n)

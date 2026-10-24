@@ -1,3 +1,4 @@
+5 REM touch: m=MUSIC l=LOADER
 10 REM ======================== POP PARTY ========================
 20 REM A Flash-style party game made from emoji, in plain BASIC.
 30 REM Click, or hold the button and swipe, to pop things as they float up.

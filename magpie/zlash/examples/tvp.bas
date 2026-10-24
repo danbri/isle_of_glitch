@@ -1,3 +1,4 @@
+5 REM touch:
 10 REM TVP
 20 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
 30 LET nl=9: LET np=345: DIM cn(nl): DIM lx(np): DIM ly(np)

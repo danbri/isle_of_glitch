@@ -1,3 +1,4 @@
+5 REM touch: left right space=JUMP m=MUSIC l=LOADER
 10 REM ======================== MINER NED: a Manic Miner tribute ========================
 20 REM The rules of Matthew Smith's Manic Miner (1983), as written up in mrcook's C++ port,
 30 REM played in BASIC with new caverns and new sprites. Collect every flashing key, then

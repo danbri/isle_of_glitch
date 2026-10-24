@@ -208,3 +208,27 @@ kbd { font-family: inherit; border: 1px solid var(--dim); padding: 0 4px; }
 @keyframes cut { 0%, 50%, 100% { transform: translateX(0) rotate(0); } 70% { transform: translateX(-18px) rotate(-6deg); } 85% { transform: translateX(-14px) rotate(3deg); } }
 @keyframes swing { 0%, 50%, 100% { transform: rotate(0); } 62% { transform: rotate(40deg); } 75% { transform: rotate(-30deg); } }
 @keyframes tape { from { background-position: 0 0; } to { background-position: 0 10px; } }
+
+/* Touch keys: phones get on-screen keys under the screen, declared by each program with  REM touch: ... */
+#touchpad {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 9; display: none; flex-direction: column; gap: 6px;
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); background: rgba(0,0,0,0.88); border-top: 1px solid var(--glass-edge);
+}
+body.touch[data-tab="screen"] #touchpad.has { display: flex; }
+body.touch[data-tab="screen"] #stage { bottom: var(--pad-h, 0px); }
+body.touch #screen-hint { display: none; }
+#pad-keys { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+#pad-keys:empty { display: none; }
+#pad-keys button, #pad-type button {
+  min-width: 46px; min-height: 46px; padding: 0 10px; font-family: var(--pix); font-size: 20px; color: var(--ink);
+  background: #1c1c24; border: 1px solid var(--glass-edge); border-radius: 8px;
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+#pad-keys button.cmd { color: var(--cyn); }
+#pad-keys button.down { background: var(--accent); color: #000; }
+#pad-type { display: flex; gap: 6px; margin: 0; }
+#pad-type[hidden] { display: none; }
+#pad-text {
+  flex: 1; min-width: 0; min-height: 46px; padding: 0 10px; font-family: var(--mono); font-size: 18px;
+  color: #fff; background: #111; border: 1px solid var(--glass-edge); border-radius: 8px;
+}

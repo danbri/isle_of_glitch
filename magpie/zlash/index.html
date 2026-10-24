@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="vendor/codemirror/codemirror.css">
-<link rel="stylesheet" href="css/app.css?v=mvm7zhkz">
+<link rel="stylesheet" href="css/app.css?v=mvmcq990">
 <script>window.RufflePlayer = window.RufflePlayer || {}; window.RufflePlayer.config = { publicPath: 'vendor/ruffle/', polyfills: false };</script>
 <script src="vendor/ruffle/ruffle.js"></script>
 <script src="vendor/codemirror/codemirror.js"></script>
@@ -66,6 +66,10 @@
   </div>
 </div>
 
+<div id="touchpad" aria-label="touch keys">
+  <div id="pad-keys"></div>
+  <form id="pad-type"><input id="pad-text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="type a command"><button type="submit" aria-label="enter">&#8629;</button></form>
+</div>
 <div id="screen-hint">click the screen to give it the keyboard &middot; <kbd>Esc</kbd> back to code</div>
 
 <main id="manual-panel" class="panel manual">
@@ -116,7 +120,14 @@
     Extensions: <code>MOUSEX</code>, <code>MOUSEY</code> (Spectrum pixel coordinates), <code>MOUSEB</code> (1 while pressed; brief clicks and taps are reported for one executing BASIC frame), <code>TICKS</code> (frames since start), <code>KEY "p"</code> (1 while that key is held; several keys can be held at once, unlike <code>INKEY$</code>; <code>KEY CHR$ 9</code> is cursor right).</p>
     <p>Characters 128&ndash;143 are the block graphics; you can also paste <code>▘▝▀▖▌▞▛▗▚▐▜▄▙▟█</code> into strings. <code>©</code> and <code>£</code> work too.</p>
 
-    <h2>Loading real tapes</h2>
+    <h2>Phones and touch screens</h2>
+<p>On a touch screen, keys appear under the screen. A program chooses them with one line, such as
+<code>5 REM touch: left right space=JUMP m=MUSIC</code>: key names (<code>left right up down space enter</code>), letters or digits,
+each with an optional <code>=LABEL</code>, and <code>&gt;north=N</code> for a button that types a whole command and presses Enter.
+Keys can be held, several at once, and <code>INKEY$</code>, <code>KEY</code> and <code>INPUT</code> all see them. A program that uses
+<code>INPUT</code> also gets a box to type into. Without the line you get arrows, space and enter; <code>REM touch:</code> on its own means none.
+Taps and drags on the screen arrive as the mouse.</p>
+<h2>Loading real tapes</h2>
     <p><b>OPEN FILE</b> takes a <code>.bas</code> listing or a Spectrum <code>.tap</code> tape image. BASIC blocks are detokenised into the
     editor; CODE blocks are listed in a REM at the top. Tape, printer and stream commands (<code>LOAD</code>, <code>SAVE</code>,
     <code>LPRINT</code>...) are accepted and skipped, <code>PEEK</code>/<code>IN</code>/<code>ATTR</code>/<code>POINT</code> return dummies, and
@@ -148,6 +159,6 @@
   </div>
 </main>
 
-<script type="module" src="js/app.js?v=mvm7zhkz"></script>
+<script type="module" src="js/app.js?v=mvmcq990"></script>
 </body>
 </html>
