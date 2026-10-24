@@ -1,6 +1,6 @@
 // AVM1 (ActionScript 1/2 bytecode) assembler plus a tiny tree IR so the
 // runtime and the BASIC compiler don't have to think in opcodes.
-import { ByteWriter } from './swf.js?v=mvmw033x';
+import { ByteWriter } from './swf.js?v=mvmy66hr';
 
 export const OP = {
   End: 0x00, NextFrame: 0x04, Stop: 0x07, Pop: 0x17, Subtract: 0x0b, Multiply: 0x0c, Divide: 0x0d,

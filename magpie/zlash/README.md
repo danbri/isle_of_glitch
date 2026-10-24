@@ -83,7 +83,7 @@ plain Spectrum BASIC (arrays for the heap, a mark-and-sweep collector, closures,
 DEFUN, LET, COND), drawn as a Lear Siegler ADM-3A terminal, with a toy RDF store queried by
 SPARQL-style basic graph patterns, `(QUERY '(SELECT (?X ?Y) WHERE (?X FOAF:KNOWS ?Y) (?Y EX:LIVESON TITAN)))`,
 and forward-chaining RDFS rules; type `(DEMO)`, or press up and down to bring back
-earlier lines and ready-made examples to edit and run. While it works, a spinner turns at the cursor, the power lamp flickers, and an `EMOJI` timer spins and throbs on the case. On touch screens the page shows keys under the screen, chosen by each program
+earlier lines and ready-made examples to edit and run. While it works, a spinner turns at the cursor, the power lamp flickers, and an `EMOJI` timer spins and throbs on the case. `examples/hallows.bas` is The Four Hallows, an isometric quest in the manner of Knight Lore, Ant Attack, Fairlight and Tir Na Nog: nine flick-screen rooms on a height map, redrawn with `FX` back to front every frame so blocks hide whatever is behind them, giant ants that cannot climb, crates to carry between rooms and stack, wraiths that only bite by night, and a sun and moon (`EMOJI`) counting twenty days. Its every-frame code avoids `GO SUB` (each `RETURN` re-enters the program) and comes first in the listing, so the compiler's split into functions falls between the game and the drawing. On touch screens the page shows keys under the screen, chosen by each program
 with a `REM touch: left right space=JUMP >north=N` line; they send real key
 events (held, several at once) and a type box feeds `INPUT`. `examples/loader.bas` is the menu the page opens with. Its `LOADER
 "name"` statement compiles to an AVM1 `getURL("#name", "_self")`: a same-page
