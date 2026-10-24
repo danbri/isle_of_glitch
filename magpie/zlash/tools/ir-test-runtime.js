@@ -31,7 +31,7 @@ function flatten(body) {
 }
 
 const runtime = runtimeIR([]);
-const realFunctions = new Set(['__dim', '__inkey', '__kchar']);
+const realFunctions = new Set(['__dim', '__inkey', '__kchar', '__more']);
 const runtimeFunctions = runtime.filter(node => node[0] === 'fn' && realFunctions.has(node[1]));
 const keyboardBody = runtime.find(node => node[0] === 'setm' && node[2] === 'onKeyDown')[3];
 const mouseDownBody = runtime.find(node => node[0] === 'setm' && node[2] === 'onMouseDown')[3];
@@ -59,6 +59,7 @@ export class BasicTestRuntime {
     this.ascii = 0;
     this.state = { ...runtimeVars(), __gs: [], __kbuf: '' };
     const state = this.state;
+    let clock = 0; state.getTimer = () => (clock += 5); // a stand-in clock: every reading is 5 ms later
     state.Math = Object.create(Math);
     state.Math.random = random;
     state.String = String;
@@ -179,7 +180,7 @@ export class BasicTestRuntime {
       }
     }
   }
-  frame(count = 1) { for (let i = 0; i < count; i++) this.onEnterFrame(); }
+  frame(count = 1) { for (let i = 0; i < count; i++) { this.steps = 0; this.onEnterFrame(); } } // the cap is per frame: a runaway frame, not a long program
   until(predicate, maxFrames = 200) {
     for (let i = 0; i < maxFrames; i++) {
       if (predicate(this.state)) return;

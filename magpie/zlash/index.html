@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="vendor/codemirror/codemirror.css">
-<link rel="stylesheet" href="css/app.css?v=mvmcq990">
+<link rel="stylesheet" href="css/app.css?v=mvmh8dg5">
 <script>window.RufflePlayer = window.RufflePlayer || {}; window.RufflePlayer.config = { publicPath: 'vendor/ruffle/', polyfills: false };</script>
 <script src="vendor/ruffle/ruffle.js"></script>
 <script src="vendor/codemirror/codemirror.js"></script>
@@ -97,7 +97,7 @@
       <tr><td><code>CLS</code>, <code>INK n</code>, <code>PAPER n</code>, <code>BORDER n</code>, <code>BRIGHT n</code></td><td>colours 0 black 1 blue 2 red 3 magenta 4 green 5 cyan 6 yellow 7 white; 8&ndash;15 are the bright set; extension: any <code>#RRGGBB</code></td></tr>
       <tr><td><code>PLOT x,y</code>, <code>DRAW dx,dy</code>, <code>CIRCLE x,y,r</code></td><td>256&times;176 pixel grid, origin bottom-left, colour items allowed first (<code>PLOT INK 2; x,y</code>)</td></tr>
       <tr><td><code>RECT x,y,w,h</code></td><td>extension: filled rectangle in the current INK (w, h in pixels)</td></tr>
-      <tr><td><code>PAUSE n</code></td><td>n frames at 50 per second; <code>PAUSE 0</code> waits for a key; any key ends a pause early</td></tr>
+      <tr><td><code>PAUSE n</code></td><td>n frames at 50 per second; <code>PAUSE 0</code> waits for a key; any key ends a pause early, and is still there for <code>INKEY$</code></td></tr>
       <tr><td><code>KEEP "name", n</code></td><td>extension: remembers the number n under that name between visits (a Flash SharedObject, stored by the browser); the function <code>KEPT "name"</code> gives it back, or 0 if nothing was kept. Names are shared by every program, so make them specific, like <code>"popparty.best"</code></td></tr>
       <tr><td><code>HALT</code></td><td>extension: wait for the next frame (a 50th of a second), like the Z80 instruction. A game loop ending in <code>HALT</code> runs 50 times a second; one ending in <code>PAUSE 1</code> skips a frame and runs 25 times</td></tr>
       <tr><td><code>BEEP seconds, pitch</code></td><td>pitch in semitones from middle C, &minus;24 to 36 (Spectrum square wave)</td></tr>
@@ -130,7 +130,7 @@ Taps and drags on the screen arrive as the mouse.</p>
 <h2>Loading real tapes</h2>
     <p><b>OPEN FILE</b> takes a <code>.bas</code> listing or a Spectrum <code>.tap</code> tape image. BASIC blocks are detokenised into the
     editor; CODE blocks are listed in a REM at the top. Tape, printer and stream commands (<code>LOAD</code>, <code>SAVE</code>,
-    <code>LPRINT</code>...) are accepted and skipped, <code>PEEK</code>/<code>IN</code>/<code>ATTR</code>/<code>POINT</code> return dummies, and
+    <code>LPRINT</code>...) are accepted and skipped, <code>PEEK</code> returns dummies except for the FRAMES counter at 23672/23673, <code>IN</code>/<code>ATTR</code>/<code>POINT</code> return dummies, and
     <code>USR</code> stops the program with a report, because machine code cannot run here.</p>
 
     <h2>Playing the .swf elsewhere</h2>
@@ -153,12 +153,12 @@ Taps and drags on the screen arrive as the mouse.</p>
 
     <h2>How the running works</h2>
     <p>The whole program becomes one AVM1 function that is re-entered every frame (a program over about 40 KB of bytecode is split across several functions automatically; a function may hold 64 KB). Backward jumps spend a per-frame budget, so a
-    <code>10 GO TO 10</code> loop never hangs the player: it just yields and carries on next frame. <code>PAUSE</code>, <code>BEEP</code> and
+    <code>10 GO TO 10</code> loop never hangs the player: it just yields and carries on next frame. When the budget runs out, the frame keeps going in slices while it has taken under 14 ms, so long computations get the whole frame. <code>PAUSE</code>, <code>BEEP</code> and
     <code>INPUT</code> yield properly. <code>RETURN</code> and computed <code>GO TO</code> re-enter through that resume chain, so
     they cost a few hundred operations each: keep GO SUBs out of per-vertex inner loops. Errors appear Spectrum-style in the lower two rows of the screen.</p>
   </div>
 </main>
 
-<script type="module" src="js/app.js?v=mvmcq990"></script>
+<script type="module" src="js/app.js?v=mvmh8dg5"></script>
 </body>
 </html>

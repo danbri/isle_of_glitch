@@ -1,7 +1,7 @@
 // Spectrum-flavoured BASIC -> AVM1 IR compiler.
 // Single pass: the parser emits IR as it goes. Output drops straight into runtime.js.
-import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root } from './avm1.js?v=mvmcq990';
-import { SCREEN } from './runtime.js?v=mvmcq990';
+import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root } from './avm1.js?v=mvmh8dg5';
+import { SCREEN } from './runtime.js?v=mvmh8dg5';
 
 export class BasicError extends Error {
   constructor(msg, line, col) { super(msg); this.line = line; this.col = col; }
@@ -141,7 +141,8 @@ export function compileBasic(source, far = new Set(), chunks = null, trace = fal
   const yieldAt = () => { const r = newResume(); out.push(set('__pc', num(r)), ret()); resumeLabel(r); return r; };
   const budgetJump = (idx) => {
     out.push(set('__budget', op('-', v('__budget'), num(1))));
-    out.push(iff(op('<=', v('__budget'), num(0)), [set('__pc', num(idx)), ret()]));
+    // out of jumps: carry on if the frame still has time (__more refills the budget), otherwise yield
+    out.push(iff(op('<=', v('__budget'), num(0)), [iff(not(call('__more')), [set('__pc', num(idx)), ret()])]));
     jumpTo(idx);
   };
   const jumpToLineIdx = (idx) => { if (idx <= cur.idx) budgetJump(idx); else jumpTo(idx); };
@@ -421,7 +422,7 @@ class Parser {
   }
   budgetJump(idx) {
     this.out.push(set('__budget', op('-', v('__budget'), num(1))));
-    this.out.push(iff(op('<=', v('__budget'), num(0)), [set('__pc', num(idx)), ret()]));
+    this.out.push(iff(op('<=', v('__budget'), num(0)), [iff(not(call('__more')), [set('__pc', num(idx)), ret()])]));
     this.jumpTo(idx);
   }
   assignment() {
@@ -705,7 +706,11 @@ class Parser {
       case 'INT': return N(math('floor', nArg()));
       case 'ASN': return N(math('asin', nArg()));
       case 'ACS': return N(math('acos', nArg()));
-      case 'PEEK': nArg(); return N(num(0));
+      case 'PEEK': { // the FRAMES system variable (23672, 23673) counts 50ths of a second; everything else reads as 0
+        const at = nArg();
+        return N(['cond', op('==', at, num(23672)), op('%', v('__t'), num(256)),
+          ['cond', op('==', at, num(23673)), op('%', math('floor', op('/', v('__t'), num(256))), num(256)), num(0)]]);
+      }
       case 'IN': nArg(); return N(num(255));
       case 'ATTR': { this.expectOp('('); this.numExpr(); this.expectOp(','); this.numExpr(); this.expectOp(')'); return N(num(56)); }
       case 'POINT': { this.expectOp('('); this.numExpr(); this.expectOp(','); this.numExpr(); this.expectOp(')'); return N(num(0)); }

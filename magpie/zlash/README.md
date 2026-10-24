@@ -45,7 +45,10 @@ also verifies that the browser uses the tested listing.
 The program becomes one AVM1 function that is re-entered every frame
 (50 fps). Backward jumps spend a per-frame budget so `10 GO TO 10` can't
 hang the player; `PAUSE`, `BEEP` and `INPUT` yield and resume via a jump
-table at the top of the function.
+table at the top of the function. When the budget runs out the frame carries on in
+slices while it is under 14 ms, so long computations use the frame rather than
+crawl. `PEEK 23672` and `PEEK 23673` read the FRAMES counter, as on the Spectrum,
+and a key that ends a `PAUSE` is still there for the next `INKEY$`.
 
 The language is Spectrum BASIC plus a few extensions (ELSE, REPEAT/UNTIL,
 WHILE/WEND, RECT, DATA/READ/RESTORE, hex colours, MOUSEX/MOUSEY/TICKS,
@@ -75,7 +78,11 @@ pirates, a spinning station to dock with (or a docking computer playing the Blue
 Danube), and the commander kept with KEEP. `examples/titan.bas` is Farewell, Titan!, a short illustrated adventure in
 the manner of Level 9: a two-word parser, thirteen places, each with a picture
 painted like a 1950s science fiction magazine cover (sky gradients, ringed
-Saturn, finned rockets, ink outlines), two endings and a score out of 100. On touch screens the page shows keys under the screen, chosen by each program
+Saturn, finned rockets, ink outlines), two endings and a score out of 100. `examples/lisp.bas` is a small Lisp written in
+plain Spectrum BASIC (arrays for the heap, a mark-and-sweep collector, closures,
+DEFUN, LET, COND), drawn as a Lear Siegler ADM-3A terminal, with a toy RDF store queried by
+SPARQL-style basic graph patterns, `(QUERY '(SELECT (?X ?Y) WHERE (?X FOAF:KNOWS ?Y) (?Y EX:LIVESON TITAN)))`,
+and forward-chaining RDFS rules; type `(DEMO)`. On touch screens the page shows keys under the screen, chosen by each program
 with a `REM touch: left right space=JUMP >north=N` line; they send real key
 events (held, several at once) and a type box feeds `INPUT`. `examples/loader.bas` is the menu the page opens with. Its `LOADER
 "name"` statement compiles to an AVM1 `getURL("#name", "_self")`: a same-page

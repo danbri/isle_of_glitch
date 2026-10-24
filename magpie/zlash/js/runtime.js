@@ -1,8 +1,8 @@
 // The "ROM": an AVM1 runtime that gives a Flash movie a ZX Spectrum screen,
 // plus the SWF assets (glyph sprites, colour cell, beep bank) it relies on.
-import { zxFont } from './font.js?v=mvmcq990';
-import * as S from './swf.js?v=mvmcq990';
-import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root, path } from './avm1.js?v=mvmcq990';
+import { zxFont } from './font.js?v=mvmh8dg5';
+import * as S from './swf.js?v=mvmh8dg5';
+import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root, path } from './avm1.js?v=mvmh8dg5';
 
 export const SCREEN = { W: 256, H: 192, BORDER_X: 32, BORDER_Y: 24, COLS: 32, ROWS: 22, FPS: 50 };
 export const STAGE = { W: SCREEN.W + 2 * SCREEN.BORDER_X, H: SCREEN.H + 2 * SCREEN.BORDER_Y };
@@ -425,6 +425,13 @@ export function runtimeIR(beepLengths) {
     ret(v('b')),
   ]));
 
+  // The jump budget stops runaway loops from hanging the page. When it runs out, a program may carry on
+  // while the frame has used less than 14 ms, so heavy programs run at full speed and still yield every frame.
+  out.push(fn('__more', [], [
+    iff(lt(sub(call('getTimer'), v('__fstart')), num(14)), [set('__budget', num(1000)), ret(num(1))]),
+    ret(num(0)),
+  ]));
+
   // keyboard listener
   out.push(set('__kl', ['obj', []]));
   out.push(setm(v('__kl'), 'onKeyDown', ['fnx', [], [
@@ -432,7 +439,7 @@ export function runtimeIR(beepLengths) {
     local('a', cm(v('Key'), 'getAscii')),
     set('__wait', num(0)), // any key cuts a PAUSE short, as on the Spectrum
     iff(eq(v('__mode'), num(0)), [set('__kbuf', call('__kchar', v('k')))]),
-    iff(eq(v('__mode'), num(2)), [set('__mode', num(0)), ret()]),
+    iff(eq(v('__mode'), num(2)), [set('__kbuf', call('__kchar', v('k'))), set('__mode', num(0)), ret()]), // the key that ends a PAUSE is still there to be read
     iff(eq(v('__mode'), num(1)), [
       iff(eq(v('k'), num(13)), [
         iff(v('__istr'), [['setd', v('__ivar'), v('__ibuf')]], [
@@ -480,12 +487,13 @@ export function runtimeIR(beepLengths) {
     // Released taps use their press position; held buttons keep live coordinates.
     set('__mbTap', ['cond', and(v('__mbPending'), not(v('__mbHeld'))), num(1), num(0)]),
     set('__mbPending', num(0)),
-    set('__budget', num(4000)),
+    set('__budget', num(4000)), set('__fstart', call('getTimer')),
     set('__again', num(1)),
     whl(v('__again'), [ // a far jump or RETURN sets __again and comes back here to re-enter via the prologue chain
       set('__again', num(0)),
       x(call('__run')),
-      iff(op('||', v('__done'), op('<=', v('__budget'), num(0))), [set('__again', num(0))]),
+      iff(v('__done'), [set('__again', num(0))]),
+      iff(op('<=', v('__budget'), num(0)), [iff(not(call('__more')), [set('__again', num(0))])]),
     ]),
   ]]));
   return out;

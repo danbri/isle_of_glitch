@@ -1,7 +1,7 @@
 5 REM touch:
 10 REM ZX FLASH LOADER - pick a program with a key or a tap. Any program can come back here with LOADER, or open another with LOADER "name"
 20 BORDER 0: PAPER 0: INK 7: BRIGHT 1: CLS
-30 LET n=16: DIM i$(n,22): DIM n$(n,17): DIM t$(n,9): DIM c$(n,1): DIM r(n)
+30 LET n=17: DIM i$(n,22): DIM n$(n,17): DIM t$(n,9): DIM c$(n,1): DIM r(n)
 40 RESTORE 900: FOR i=1 TO n: READ i$(i),n$(i),t$(i),r(i),c$(i): NEXT i
 50 REM loading stripes, as a tape would: pilot tone, then data. Any key or tap skips them
 60 FOR i=1 TO 30: BORDER 2+3*(i-INT (i/2)*2): PAUSE 1: IF INKEY$<>"" OR MOUSEB<>0 THEN GO TO 100
@@ -9,12 +9,12 @@
 80 FOR i=1 TO 40: BORDER 1+5*INT (RND*2): PAUSE 1: IF INKEY$<>"" OR MOUSEB<>0 THEN GO TO 100
 90 NEXT i
 100 BORDER 0: CLS
-110 PRINT AT 1,1; INK 7; "ZX FLASH"
-120 PRINT AT 2,1; INK 5; "PROGRAM LOADER"
-130 RESTORE 990: FOR s=0 TO 3: READ c: FOR k=0 TO 19: RECT INK c; 196+s*8+k,148+k,8,1: NEXT k: NEXT s
-140 PRINT AT 4,1; INK 6; "FEATURED": PRINT AT 13,1; INK 6; "MORE PROGRAMS"
+110 PRINT AT 0,1; INK 7; "ZX FLASH"
+120 PRINT AT 1,1; INK 5; "PROGRAM LOADER"
+130 RESTORE 990: FOR s=0 TO 3: READ c: FOR k=0 TO 15: RECT INK c; 200+s*7+k,158+k,7,1: NEXT k: NEXT s
+140 PRINT AT 3,1; INK 6; "FEATURED": PRINT AT 13,1; INK 6; "MORE PROGRAMS"
 150 LET p=0: FOR i=1 TO n: GO SUB 500: NEXT i
-160 PRINT AT 3,1; INK 5; "PRESS A KEY OR TAP A PROGRAM"
+160 PRINT AT 2,1; INK 4; "PRESS A KEY OR TAP A PROGRAM"
 170 LET s=1: LET p=1: LET i=s: GO SUB 500
 200 REM wait until nothing is held, then for a key or a tap
 210 IF INKEY$<>"" OR MOUSEB<>0 THEN PAUSE 1: GO TO 210
@@ -38,16 +38,17 @@
 600 REM chosen: light it up, chime, and ask the page to load it
 610 LET p=2: GO SUB 500: TONE 7: PAUSE 4: TONE 12: PAUSE 4: TONE 19: PAUSE 8
 620 LOADER i$(i)
-900 DATA "monster-maze","3D MONSTER MAZE","ZX81 1981",5,"1"
-905 DATA "pop-party","POP PARTY","EMOJI",6,"2"
-907 DATA "vector-trader","VECTOR TRADER","SPACE",7,"3"
-908 DATA "titan","FAREWELL, TITAN!","ADVENTURE",8,"4"
-910 DATA "tvp","TVP","TV",9,"5"
-920 DATA "emo-asteroids","EMO ASTEROIDS","EMOJI",10,"6"
-930 DATA "miner-ned","MINER NED","PLATFORM",11,"7"
-940 DATA "pipkins-quest","PIPKIN'S QUEST","ADVENTURE",12,"8"
-950 DATA "hello-1982","HELLO 1982","",14,"9","10-print-maze","10 PRINT MAZE","",15,"a"
-960 DATA "bouncing-ball","BOUNCING BALL","",16,"b","sierpinski-chaos-game","SIERPINSKI","",17,"c"
-970 DATA "tune-beep","TUNE (BEEP)","",18,"d","input-and-strings","INPUT AND STRINGS","",19,"e"
-980 DATA "paint-with-the-mouse","PAINT WITH MOUSE","",20,"f","demo-bars-and-scroller","BARS AND SCROLLER","",21,"g"
+900 DATA "monster-maze","3D MONSTER MAZE","ZX81 1981",4,"1"
+905 DATA "pop-party","POP PARTY","EMOJI",5,"2"
+907 DATA "vector-trader","VECTOR TRADER","SPACE",6,"3"
+908 DATA "titan","FAREWELL, TITAN!","ADVENTURE",7,"4"
+909 DATA "lisp","LISP ON AN ADM-3A","LISP+RDF",8,"5"
+910 DATA "tvp","TVP","TV",9,"6"
+920 DATA "emo-asteroids","EMO ASTEROIDS","EMOJI",10,"7"
+930 DATA "miner-ned","MINER NED","PLATFORM",11,"8"
+940 DATA "pipkins-quest","PIPKIN'S QUEST","ADVENTURE",12,"9"
+950 DATA "hello-1982","HELLO 1982","",14,"a","10-print-maze","10 PRINT MAZE","",15,"b"
+960 DATA "bouncing-ball","BOUNCING BALL","",16,"c","sierpinski-chaos-game","SIERPINSKI","",17,"d"
+970 DATA "tune-beep","TUNE (BEEP)","",18,"e","input-and-strings","INPUT AND STRINGS","",19,"f"
+980 DATA "paint-with-the-mouse","PAINT WITH MOUSE","",20,"g","demo-bars-and-scroller","BARS AND SCROLLER","",21,"h"
 990 DATA 2,6,4,5
