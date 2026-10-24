@@ -82,7 +82,8 @@ Saturn, finned rockets, ink outlines), two endings and a score out of 100. `exam
 plain Spectrum BASIC (arrays for the heap, a mark-and-sweep collector, closures,
 DEFUN, LET, COND), drawn as a Lear Siegler ADM-3A terminal, with a toy RDF store queried by
 SPARQL-style basic graph patterns, `(QUERY '(SELECT (?X ?Y) WHERE (?X FOAF:KNOWS ?Y) (?Y EX:LIVESON TITAN)))`,
-and forward-chaining RDFS rules; type `(DEMO)`. On touch screens the page shows keys under the screen, chosen by each program
+and forward-chaining RDFS rules; type `(DEMO)`, or press up and down to bring back
+earlier lines and ready-made examples to edit and run. On touch screens the page shows keys under the screen, chosen by each program
 with a `REM touch: left right space=JUMP >north=N` line; they send real key
 events (held, several at once) and a type box feeds `INPUT`. `examples/loader.bas` is the menu the page opens with. Its `LOADER
 "name"` statement compiles to an AVM1 `getURL("#name", "_self")`: a same-page

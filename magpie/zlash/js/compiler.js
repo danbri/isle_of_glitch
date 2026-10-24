@@ -1,8 +1,8 @@
 // Glue: BASIC source -> complete SWF bytes.
-import * as S from './swf.js?v=mvmh8dg5';
-import { compileIR } from './avm1.js?v=mvmh8dg5';
-import { buildAssets, runtimeIR, STAGE, SCREEN, PALETTE } from './runtime.js?v=mvmh8dg5';
-import { compileBasic, BasicError } from './basic.js?v=mvmh8dg5';
+import * as S from './swf.js?v=mvmi8b95';
+import { compileIR } from './avm1.js?v=mvmi8b95';
+import { buildAssets, runtimeIR, STAGE, SCREEN, PALETTE } from './runtime.js?v=mvmi8b95';
+import { compileBasic, BasicError } from './basic.js?v=mvmi8b95';
 
 let assetCache = null;
 // The host supplies the rasteriser (a canvas in the browser); Node gets a placeholder so builds still succeed.

@@ -11,7 +11,7 @@
 95 REM   7000 evaluator  8000 cells  8100 built-ins  8400 globals  8450 symbols  8500 garbage  9000 words
 100 REM ======================== setup ========================
 110 GO SUB 3000
-120 LET cells=6000: DIM t(cells): DIM a(cells): DIM d(cells): DIM b(cells): DIM k(9000): DIM s$(160,16): DIM y(160): DIM w$(13,26)
+120 LET cells=6000: DIM t(cells): DIM a(cells): DIM d(cells): DIM b(cells): DIM k(9000): DIM s$(160,16): DIM y(160): DIM w$(13,26): DIM h$(60,200)
 130 REM every cell starts on the free list, chained through d()
 135 LET fr=0: FOR i=cells TO 1 STEP -1: LET d(i)=fr: LET fr=i: NEXT i: LET free=cells
 140 LET nsym=0: LET g=0: LET sp=0: LET er=0: LET tr=0: LET tc=0: LET v$="": LET r$="": LET blink=0: LET lit=0: LET lr=0
@@ -22,7 +22,10 @@
 170 REM the built-in functions: each is a cell of type 4 holding its number, bound to its name
 175 RESTORE 9010: FOR i=1 TO 23: READ n$,bn: GO SUB 8450: LET sm=rv: LET ty=4: LET p1=bn: LET p2=0: GO SUB 8000: LET vl=nw: GO SUB 8400: NEXT i
 180 LET o$="LISP FOR THE ADM-3A": GO SUB 5100: LET o$="LOADING THE PRELUDE ": GO SUB 4900
-185 REM the rest of the language, written in Lisp
+182 REM the examples the cursor keys bring back, before any lines of your own
+183 RESTORE 9200: LET nh=0
+184 READ n$: IF n$<>"END" THEN LET nh=nh+1: LET h$(nh)=n$: GO TO 184
+185 LET ne=nh: LET hi=nh+1: REM the rest of the language, written in Lisp
 190 RESTORE 9100
 191 READ l$: IF l$="END" THEN GO TO 196
 192 LET ps=1: LET er=0: LET sp=0: GO SUB 6000: IF er THEN GO TO 194
@@ -30,7 +33,7 @@
 194 IF er THEN LET o$="PRELUDE: "+e$: GO SUB 5100
 195 LET c$=".": GO SUB 5000: GO TO 191
 196 GO SUB 5050: GO SUB 8500: LET o$=STR$ free+" CELLS FREE.": GO SUB 5100
-197 LET o$="TYPE (DEMO) OR (HELP)": GO SUB 5100
+197 LET o$="TYPE (DEMO) OR (HELP), OR": GO SUB 5100: LET o$="UP AND DOWN FOR EXAMPLES.": GO SUB 5100
 198 GO TO 4000
 3000 REM ======================== the terminal: an ADM-3A, made of PAPER squares and drawn lines ========================
 3005 BORDER 0: PAPER 0: INK 7: BRIGHT 0: CLS
@@ -66,10 +69,12 @@
 3550 FOR i=1 TO LEN z$: IF z$(i)=c$ AND c$<>" " THEN LET lr=r: LET lc=c+i-1: LET x$=c$
 3555 NEXT i: RETURN
 4000 REM ======================== read, evaluate, print: one line at a time, more if a bracket is still open ========================
-4005 LET l$="": LET depth=0: LET o$="* ": GO SUB 4900
+4005 LET l$="": LET depth=0: LET pr=tr: LET o$="* ": GO SUB 4900
 4010 GO SUB 4500
 4015 IF c$=CHR$ 13 THEN GO TO 4100
 4020 IF c$=CHR$ 8 OR c$=CHR$ 12 THEN GO TO 4200
+4022 IF c$=CHR$ 11 THEN GO TO 4400
+4023 IF c$=CHR$ 10 THEN GO TO 4415
 4025 IF CODE c$<32 OR CODE c$>126 THEN GO TO 4010
 4030 IF CODE c$>=97 AND CODE c$<=122 THEN LET c$=CHR$ (CODE c$-32)
 4035 IF c$="(" THEN LET depth=depth+1
@@ -77,6 +82,8 @@
 4045 LET l$=l$+c$: GO SUB 5000: GO SUB 3500: GO TO 4010
 4100 REM Enter: if a bracket is still open, carry on on the next line
 4105 GO SUB 5050: IF depth>0 THEN LET l$=l$+" ": LET o$="  ": GO SUB 4900: GO TO 4010
+4107 IF l$<>"" THEN IF l$<>h$(nh) THEN GO SUB 4470
+4108 LET hi=nh+1
 4110 LET ps=1
 4115 GO SUB 6090: IF ps>LEN l$ THEN GO TO 4300
 4120 LET er=0: LET sp=0: GO SUB 6000: IF er THEN GO TO 4250
@@ -90,6 +97,23 @@
 4250 LET o$="ERROR: "+e$: GO SUB 5100
 4300 IF free<900 THEN GO SUB 8500
 4310 GO TO 4000
+4400 REM ---- up and down: your earlier lines, then the examples; each comes back typed in, ready to edit or run ----
+4405 IF hi>1 THEN LET hi=hi-1: GO TO 4420
+4410 GO TO 4010
+4415 IF hi<nh THEN LET hi=hi+1: GO TO 4420
+4416 IF hi=nh THEN LET hi=nh+1: LET n$="": GO TO 4425
+4417 GO TO 4010
+4420 LET n$=h$(hi)
+4425 REM rub out every row of the line being typed (pr is the row its prompt is on), and prompt again there
+4430 IF pr<0 THEN LET pr=0
+4435 FOR j=pr TO tr: PRINT AT 2+j,3;"                          ": LET w$(j+1)="": NEXT j: LET tr=pr: LET tc=0: LET v$="": LET o$="* ": GO SUB 4900
+4440 LET l$="": LET depth=0: LET o$=n$: GO SUB 4900: LET l$=n$
+4445 FOR j=1 TO LEN l$: IF l$(j)="(" THEN LET depth=depth+1
+4446 IF l$(j)=")" THEN LET depth=depth-1
+4447 NEXT j: GO TO 4010
+4470 REM keep a line typed in; when the list is full the oldest of your own goes
+4475 IF nh=60 THEN FOR j=ne+1 TO 59: LET h$(j)=h$(j+1): NEXT j: LET nh=59
+4480 LET nh=nh+1: LET h$(nh)=l$: RETURN
 4500 REM ---- wait for a key to go down; the cursor blinks meanwhile ----
 4502 REM the cursor blinks by the FRAMES counter (PEEK 23672 counts 50ths of a second)
 4505 LET nl=INT (PEEK 23672/16)-2*INT (PEEK 23672/32): IF nl<>lit THEN LET lit=nl: IF tc<26 THEN PRINT AT 2+tr,3+tc; CHR$ (32+111*lit)
@@ -104,7 +128,7 @@
 5010 PRINT AT 2+tr,3+tc; c$: LET v$=v$+c$: LET tc=tc+1: RETURN
 5050 REM a new line: keep the finished one; at the bottom, every line moves up
 5055 LET w$(tr+1)=v$: LET v$="": LET tc=0: IF tr<12 THEN LET tr=tr+1: RETURN
-5060 FOR i=1 TO 12: LET w$(i)=w$(i+1): NEXT i: LET w$(13)=""
+5060 LET pr=pr-1: FOR i=1 TO 12: LET w$(i)=w$(i+1): NEXT i: LET w$(13)=""
 5065 FOR i=1 TO 13: LET z$=w$(i)+"                          ": PRINT AT 1+i,3; z$(1 TO 26): NEXT i: RETURN
 5100 REM ---- o$ onto the screen, then a new line ----
 5105 GO SUB 4900: GO SUB 5050: RETURN
@@ -381,5 +405,18 @@
 9142 REM run every rule until nothing new appears; the answer is how many triples there are then
 9143 DATA "(DEFUN INFER () (LET ((NEW (ADD-NEW (FIRE-ALL *RULES*) *KB*))) (IF (= (LENGTH NEW) (LENGTH *KB*)) (LENGTH *KB*) (PROGN (PRINT (LIST (- (LENGTH NEW) (LENGTH *KB*)) 'NEW)) (SETQ *KB* NEW) (INFER)))))"
 9144 DATA "(DEFUN DEMO () (PRINT (QUERY '(SELECT (?X) WHERE (?X A PERSON)))) (PRINT (LIST (INFER) 'TRIPLES)) (PRINT (QUERY '(SELECT (?X) WHERE (?X A PERSON)))) (PRINT (QUERY '(SELECT (?X) WHERE (?X A ANIMAL)))) (QUERY '(SELECT (?X ?Y) WHERE (?X FOAF:KNOWS ?Y) (?Y EX:LIVESON TITAN))))"
-9145 DATA "(DEFUN HELP () (PRINT '(TRY (+ 1 2) (FACT 10) (REVERSE '(A B C)))) (PRINT '(OR (DEFUN SQ (X) (* X X)) THEN (MAPCAR SQ '(1 2 3)))) (PRINT '(OR (QUERY '(SELECT (?X) WHERE (?X FOAF:KNOWS NED))))) (PRINT '(OR (DEMO) (INFER) *KB* (ROOM))) 'OK)"
+9145 DATA "(DEFUN HELP () (PRINT '(TRY (+ 1 2) (FACT 10) (REVERSE '(A B C)))) (PRINT '(OR (DEFUN SQ (X) (* X X)) THEN (MAPCAR SQ '(1 2 3)))) (PRINT '(OR (QUERY '(SELECT (?X) WHERE (?X FOAF:KNOWS NED))))) (PRINT '(OR (DEMO) (INFER) *KB* (ROOM))) (PRINT '(UP AND DOWN BRING BACK EXAMPLES)) 'OK)"
 9199 DATA "END"
+9200 REM ---- the examples under the cursor keys: the last one here is the first that up brings back ----
+9201 DATA "(ROOM)","*KB*","(REVERSE '(A B C))","(FACT 10)"
+9202 DATA "(DEFUN SQ (X) (* X X))","(MAPCAR SQ '(1 2 3 4))","(MAPCAR (LAMBDA (X) (+ X 1)) '(1 2 3))"
+9203 DATA "(LET ((A 2) (B 3)) (LIST A B (* A B)))"
+9204 DATA "(DEMO)"
+9205 DATA "(QUERY '(SELECT (?X) WHERE (?X A PERSON)))"
+9206 DATA "(INFER)"
+9207 DATA "(SETQ *KB* (CONS '(PIPKIN A ASTRA) *KB*))"
+9208 DATA "(QUERY '(SELECT (?X ?C) WHERE (?X A ?C) (?C RDFS:SUBCLASSOF PERSON)))"
+9209 DATA "(QUERY '(SELECT (?P ?O) WHERE (VEGA ?P ?O)))"
+9210 DATA "(QUERY '(SELECT (?X ?Y) WHERE (?X FOAF:KNOWS ?Y) (?Y EX:LIVESON TITAN)))"
+9211 DATA "(QUERY '(SELECT (?X) WHERE (?X FOAF:KNOWS NED)))"
+9299 DATA "END"
