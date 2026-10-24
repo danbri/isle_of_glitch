@@ -1541,7 +1541,7 @@ export const EXAMPLES = [
 130 REM every cell starts on the free list, chained through d()
 135 LET fr=0: FOR i=cells TO 1 STEP -1: LET d(i)=fr: LET fr=i: NEXT i: LET free=cells
 140 LET nsym=0: LET g=0: LET sp=0: LET er=0: LET tr=0: LET tc=0: LET v$="": LET r$="": LET blink=0: LET lit=0: LET lr=0
-145 LET ec=0: LET sn=0: LET sf=0: LET q$="|/-\\"
+145 LET ec=0: LET sn=0: LET sf=0: LET sg=0: LET ra=0: LET q$="|/-\\": EMOJI "⏲️","timer",32
 150 REM the words the evaluator treats specially
 155 RESTORE 9000: FOR i=1 TO 12: READ n$: GO SUB 8450: LET k(i)=rv: NEXT i
 160 LET symquote=k(1): LET symif=k(2): LET symcond=k(3): LET symdefun=k(4): LET symsetq=k(5): LET symlambda=k(6)
@@ -1595,15 +1595,18 @@ export const EXAMPLES = [
 3525 RETURN
 3550 FOR i=1 TO LEN z$: IF z$(i)=c$ AND c$<>" " THEN LET lr=r: LET lc=c+i-1: LET x$=c$
 3555 NEXT i: RETURN
-3600 REM ---- busy: while it works, a spinner turns where the answer will go and the power lamp flickers ----
-3602 REM the evaluator comes here every 40 calls; a step every 6 frames, timed by FRAMES, however fast it runs
-3605 LET ec=0: LET nl=PEEK 23672: IF ABS (nl-sf)<6 THEN RETURN
+3600 REM ---- busy: while it works, a timer spins and throbs on the case, a spinner turns where the answer will go, and the power lamp flickers ----
+3602 REM the evaluator comes here every 40 calls; the timer moves once a frame, the spinner every 6 frames, timed by FRAMES, however fast it runs
+3605 LET ec=0: LET nl=PEEK 23672: IF nl=sg THEN RETURN
+3606 LET sg=nl: LET ra=ra+8: IF ra>=360 THEN LET ra=ra-360
+3607 LET sz=72+10*SIN (ra*PI/90): SPRITE CLEAR: SPRITE "timer",238,163,sz,sz,ra,100
+3608 IF ABS (nl-sf)<6 THEN RETURN
 3610 LET sf=nl: LET sn=sn+1: IF sn=4 THEN LET sn=0
 3615 IF tc<26 THEN PRINT AT 2+tr,3+tc; q$(sn+1)
 3620 IF sn<2 THEN PRINT AT 16,27; PAPER 7; INK 4; BRIGHT 0; CHR$ 143: RETURN
 3625 PRINT AT 16,27; PAPER 7; INK 2; BRIGHT 0; CHR$ 143: RETURN
 4000 REM ======================== read, evaluate, print: one line at a time, more if a bracket is still open ========================
-4005 PRINT AT 16,27; PAPER 7; INK 2; BRIGHT 0; CHR$ 143: LET l$="": LET depth=0: LET pr=tr: LET o$="* ": GO SUB 4900
+4005 SPRITE CLEAR: PRINT AT 16,27; PAPER 7; INK 2; BRIGHT 0; CHR$ 143: LET l$="": LET depth=0: LET pr=tr: LET o$="* ": GO SUB 4900
 4010 GO SUB 4500
 4015 IF c$=CHR$ 13 THEN GO TO 4100
 4020 IF c$=CHR$ 8 OR c$=CHR$ 12 THEN GO TO 4200
