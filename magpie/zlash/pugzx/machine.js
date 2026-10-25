@@ -1,9 +1,9 @@
-// ZX GPU: the machine a program sees (../SPEC.md sections 9 to 17): the screen as data (text
+// PUGZX: the machine a program sees (../SPEC.md sections 9 to 17): the screen as data (text
 // cells, a retained display list of fills and strokes, sprites), sound and storage through the
 // host, keys and mouse from the host, and the 50 Hz frame clock. Renderers read the screen from
 // here; nothing in this file draws pixels except the text rasteriser, which both renderers share.
-import { zxFont } from '../js/font.js';
-import { compile, instantiate } from './compile.js';
+import { zxFont } from './font.js?v=mvnun35f';
+import { compile, instantiate } from './compile.js?v=mvnun35f';
 
 export const FPS = 50;
 export const PALETTE = [
@@ -96,6 +96,7 @@ export class Machine {
   // host: { beep(d,p), tone(p), loader(name), store: {get(k), set(k,v)}, emoji(text,size) -> {w,h,data} }
   constructor(source, host = {}) {
     this.host = host;
+    this.rnd = host.random || Math.random;
     this.compiled = compile(source);
     this.STOP = { stop: true };
     this.fx = new DrawingLayer();

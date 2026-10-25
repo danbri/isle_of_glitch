@@ -1,4 +1,4 @@
-// ZX GPU: the WebGPU renderer. One render pass a frame, 4x multisampled, drawing the machine's
+// PUGZX: the WebGPU renderer. One render pass a frame, 4x multisampled, drawing the machine's
 // screen (SPEC 10.2) back to front. Fills use stencil-then-cover: a triangle fan over each
 // outline inverts the stencil (so the parity left behind is the even-odd rule), then a quad over
 // the fill's bounds paints where the stencil is set and clears it. Strokes go into the stencil
@@ -35,58 +35,74 @@ struct VOut { @builtin(position) p: vec4f, @location(0) uv: vec2f, @location(1) 
 
 const FLOATS = 8; // x, y, u, v, r, g, b, a
 
+// One GPU device and one set of pipelines for every player on the page; each renderer keeps only
+// its own canvas, targets, textures and buffers.
+let shared = null;
+async function getShared() {
+  if (!navigator.gpu) return null;
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) return null;
+  const device = await adapter.requestDevice();
+  const format = navigator.gpu.getPreferredCanvasFormat();
+  const module = device.createShaderModule({ code: WGSL });
+  const bgl0 = device.createBindGroupLayout({ entries: [{ binding: 0, visibility: GPUShaderStage.VERTEX, buffer: {} }] });
+  const bgl1 = device.createBindGroupLayout({ entries: [
+    { binding: 0, visibility: GPUShaderStage.FRAGMENT, texture: {} },
+    { binding: 1, visibility: GPUShaderStage.FRAGMENT, sampler: {} },
+  ] });
+  const layoutC = device.createPipelineLayout({ bindGroupLayouts: [bgl0] });
+  const layoutT = device.createPipelineLayout({ bindGroupLayouts: [bgl0, bgl1] });
+  const vertex = { module, entryPoint: 'vs', buffers: [{ arrayStride: FLOATS * 4, attributes: [
+    { shaderLocation: 0, offset: 0, format: 'float32x2' },
+    { shaderLocation: 1, offset: 8, format: 'float32x2' },
+    { shaderLocation: 2, offset: 16, format: 'float32x4' },
+  ] }] };
+  const blend = { color: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' } };
+  const stencilFace = (compare, passOp) => ({ compare, passOp, failOp: 'keep', depthFailOp: 'keep' });
+  const ds = (compare, passOp, writeMask = 0xff) => ({
+    format: 'depth24plus-stencil8', depthWriteEnabled: false, depthCompare: 'always',
+    stencilFront: stencilFace(compare, passOp), stencilBack: stencilFace(compare, passOp),
+    stencilReadMask: 0xff, stencilWriteMask: writeMask,
+  });
+  const pipe = (layout, fs, depthStencil, writeMask = GPUColorWrite.ALL) => device.createRenderPipeline({
+    layout, vertex, primitive: { topology: 'triangle-list', cullMode: 'none' },
+    fragment: { module, entryPoint: fs, targets: [{ format, blend, writeMask }] },
+    depthStencil, multisample: { count: 4 },
+  });
+  return {
+    device, format, bgl0, bgl1,
+    pipes: {
+      fillStencil: pipe(layoutC, 'fsNone', ds('always', 'invert'), 0),
+      strokeStencil: pipe(layoutC, 'fsNone', ds('always', 'replace'), 0),
+      cover: pipe(layoutC, 'fsColour', ds('not-equal', 'zero')),
+      solid: pipe(layoutC, 'fsColour', ds('always', 'keep', 0)),
+      tex: pipe(layoutT, 'fsTex', ds('always', 'keep', 0)),
+    },
+    nearest: device.createSampler({ magFilter: 'nearest', minFilter: 'nearest' }),
+    linear: device.createSampler({ magFilter: 'linear', minFilter: 'linear' }),
+  };
+}
+
 export class WebGPURenderer {
   constructor(canvas) { this.canvas = canvas; this.name = 'WebGPU'; }
 
   async init() {
-    if (!navigator.gpu) return false;
-    const adapter = await navigator.gpu.requestAdapter();
-    if (!adapter) return false;
-    const device = this.device = await adapter.requestDevice();
+    shared = shared || getShared().catch(() => null);
+    const S = await shared;
+    if (!S) return false;
+    const device = this.device = S.device;
+    this.S = S; this.format = S.format; this.bgl1 = S.bgl1; this.nearest = S.nearest; this.linear = S.linear;
     this.ctx = this.canvas.getContext('webgpu');
-    this.format = navigator.gpu.getPreferredCanvasFormat();
     this.ctx.configure({ device, format: this.format, alphaMode: 'opaque' });
-    const module = device.createShaderModule({ code: WGSL });
-    this.bgl0 = device.createBindGroupLayout({ entries: [{ binding: 0, visibility: GPUShaderStage.VERTEX, buffer: {} }] });
-    this.bgl1 = device.createBindGroupLayout({ entries: [
-      { binding: 0, visibility: GPUShaderStage.FRAGMENT, texture: {} },
-      { binding: 1, visibility: GPUShaderStage.FRAGMENT, sampler: {} },
-    ] });
-    const layoutC = device.createPipelineLayout({ bindGroupLayouts: [this.bgl0] });
-    const layoutT = device.createPipelineLayout({ bindGroupLayouts: [this.bgl0, this.bgl1] });
-    const vertex = { module, entryPoint: 'vs', buffers: [{ arrayStride: FLOATS * 4, attributes: [
-      { shaderLocation: 0, offset: 0, format: 'float32x2' },
-      { shaderLocation: 1, offset: 8, format: 'float32x2' },
-      { shaderLocation: 2, offset: 16, format: 'float32x4' },
-    ] }] };
-    const blend = { color: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' }, alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha', operation: 'add' } };
-    const stencilFace = (compare, passOp) => ({ compare, passOp, failOp: 'keep', depthFailOp: 'keep' });
-    const ds = (compare, passOp, writeMask = 0xff) => ({
-      format: 'depth24plus-stencil8', depthWriteEnabled: false, depthCompare: 'always',
-      stencilFront: stencilFace(compare, passOp), stencilBack: stencilFace(compare, passOp),
-      stencilReadMask: 0xff, stencilWriteMask: writeMask,
-    });
-    const pipe = (layout, fs, depthStencil, writeMask = GPUColorWrite.ALL) => device.createRenderPipeline({
-      layout, vertex, primitive: { topology: 'triangle-list', cullMode: 'none' },
-      fragment: { module, entryPoint: fs, targets: [{ format: this.format, blend, writeMask }] },
-      depthStencil, multisample: { count: 4 },
-    });
-    this.pFillStencil = pipe(layoutC, 'fsNone', ds('always', 'invert'), 0);
-    this.pStrokeStencil = pipe(layoutC, 'fsNone', ds('always', 'replace'), 0);
-    this.pCover = pipe(layoutC, 'fsColour', ds('not-equal', 'zero'));
-    this.pSolid = pipe(layoutC, 'fsColour', ds('always', 'keep', 0));
-    this.pTex = pipe(layoutT, 'fsTex', ds('always', 'keep', 0));
     this.ubuf = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-    this.bg0 = device.createBindGroup({ layout: this.bgl0, entries: [{ binding: 0, resource: { buffer: this.ubuf } }] });
-    this.nearest = device.createSampler({ magFilter: 'nearest', minFilter: 'nearest' });
-    this.linear = device.createSampler({ magFilter: 'linear', minFilter: 'linear' });
+    this.bg0 = device.createBindGroup({ layout: S.bgl0, entries: [{ binding: 0, resource: { buffer: this.ubuf } }] });
     const screenTex = () => {
       const t = device.createTexture({ size: [256, 192], format: 'rgba8unorm', usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST });
       return { t, bg: device.createBindGroup({ layout: this.bgl1, entries: [{ binding: 0, resource: t.createView() }, { binding: 1, resource: this.nearest }] }) };
     };
     this.paper = screenTex(); this.ink = screenTex(); this.lo = screenTex();
     this.paperD = new Uint8ClampedArray(256 * 192 * 4); this.inkD = new Uint8ClampedArray(256 * 192 * 4); this.loD = new Uint8ClampedArray(256 * 192 * 4);
-    this.spriteTex = new Map();
+    this.spriteTex = new Map(); this.spriteImg = null;
     this.verts = new Float32Array(1 << 16);
     this.vbuf = null; this.vcap = 0;
     this.size = [0, 0];
@@ -103,6 +119,7 @@ export class WebGPURenderer {
   }
 
   spriteTexture(m, name) {
+    if (this.spriteImg !== m.images) { this.spriteTex.clear(); this.spriteImg = m.images; }
     let s = this.spriteTex.get(name);
     if (!s) {
       const img = m.images[name];
@@ -227,7 +244,7 @@ export class WebGPURenderer {
     });
     pass.setVertexBuffer(0, this.vbuf);
     pass.setBindGroup(0, this.bg0);
-    const pipes = { fillStencil: this.pFillStencil, strokeStencil: this.pStrokeStencil, cover: this.pCover, solid: this.pSolid, tex: this.pTex };
+    const pipes = this.S.pipes;
     let cur = null, clipped = null;
     const sx = Math.max(0, Math.floor(ox + 32 * s)), sy = Math.max(0, Math.floor(oy + 24 * s));
     const sw = Math.min(W - sx, Math.ceil(256 * s)), sh = Math.min(H - sy, Math.ceil(192 * s));

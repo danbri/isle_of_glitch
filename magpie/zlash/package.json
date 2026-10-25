@@ -1,14 +1,14 @@
 {
   "name": "flash",
   "version": "1.0.0",
-  "description": "ZX Spectrum BASIC compiled to Flash (AVM1) bytecode in the browser, played by Ruffle",
+  "description": "PUGZX: extended ZX Spectrum BASIC compiled in the browser to JavaScript + WebGPU, or to Flash (AVM1) for Ruffle",
   "main": "index.js",
   "scripts": {
     "serve": "python3 tools/serve.py 8765",
     "build": "node tools/build.js",
     "check": "node tools/check-examples.js && node tools/check-monster-maze.js",
     "stamp": "node tools/stamp.js",
-    "test:gpu": "node gpu/test/run-examples.mjs && node gpu/test/lisp.mjs"
+    "test:pugzx": "node pugzx/test/run-examples.mjs && node pugzx/test/lisp.mjs && node pugzx/test/monster-maze.mjs"
   },
   "keywords": [],
   "author": "",

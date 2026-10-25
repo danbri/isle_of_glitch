@@ -1,4 +1,4 @@
-// ZX GPU: compiles ZX Flash BASIC (see ../SPEC.md) to a JavaScript state machine.
+// PUGZX: compiles ZX Flash BASIC (see ../SPEC.md) to a JavaScript state machine.
 // The whole program becomes one function holding a switch over resume points; variables are
 // locals of the closure around it. GO TO and loops set pc and continue; HALT, PAUSE, BEEP and
 // INPUT return 1 (yield to the next frame); a backward jump that finds the frame's time used up
@@ -139,7 +139,9 @@ ${code.map(l => '      ' + l).join('\n')}
   } catch (e) { if (e === R.STOP) return 0; throw e; }
 }
 function peek(name) { switch (name) { ${[...names].map(n => `case ${JSON.stringify(n)}: return ${jsName(n)};`).join(' ')} } }
-return { run, peek };`;
+function poke(name, v) { switch (name) { ${[...names].map(n => `case ${JSON.stringify(n)}: ${jsName(n)} = v; return true;`).join(' ')} } return false; }
+function jump(n) { const t = LN[n]; if (t === undefined) return false; pc = t; gs.length = 0; return true; }
+return { run, peek, poke, jump };`;
   const dataLines = dataAt.sort((a, b) => a[0] - b[0]);
   return { js, data, dataLines, sprites, emojis, lines: lines.length, lineNumbers: lines.map(l => l.n) };
 }
@@ -568,7 +570,7 @@ class LineCompiler {
     const N = (js) => ({ js, type: 'n' }), S = (js) => ({ js, type: 's' });
     const pair = () => { this.expectOp('('); const a = this.num(); this.expectOp(','); const b = this.num(); this.expectOp(')'); return `(void ${a},void ${b})`; };
     switch (k) {
-      case 'RND': return N('Math.random()');
+      case 'RND': return N('R.rnd()');
       case 'PI': return N(String(Math.PI));
       case 'INKEY$': return S('R.inkey()');
       case 'MOUSEX': return N('R.mousex()');

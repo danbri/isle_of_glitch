@@ -1,5 +1,5 @@
-// Behaviour check: the Lisp written in BASIC (examples/lisp.bas) must answer correctly on ZX GPU.
-import { EXAMPLES } from '../../js/examples.js';
+// Behaviour check: the Lisp written in BASIC (examples/lisp.bas) must answer correctly on PUGZX.
+import { EXAMPLES } from '../examples.js';
 import { Machine } from '../machine.js';
 
 const ex = EXAMPLES.find(e => e.id === 'lisp');

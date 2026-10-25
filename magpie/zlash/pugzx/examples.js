@@ -1577,10 +1577,10 @@ export const EXAMPLES = [
 3070 PRINT AT 16,2; PAPER 7; INK 0; "ADM-3A": PRINT AT 16,24; PAPER 7; INK 0; "ON": PRINT AT 16,27; PAPER 7; INK 2; CHR$ 143
 3075 PLOT INK 0;0,39: DRAW INK 0;255,0
 3080 REM the keyboard: dark keys on the light case; each letter is printed on its key
-3085 RESTORE 9050: READ f$,g$,h$,j$
+3085 RESTORE 9050: READ f$,g$,k$,j$: REM the keyboard rows (k$, not h$: h$ is the line history, and arrays share names with scalars)
 3090 LET z$=f$: LET r=17: LET c=4: GO SUB 3150
 3095 LET z$=g$: LET r=18: LET c=5: GO SUB 3150
-3100 LET z$=h$: LET r=19: LET c=6: GO SUB 3150
+3100 LET z$=k$: LET r=19: LET c=6: GO SUB 3150
 3105 LET z$=j$: LET r=20: LET c=7: GO SUB 3150
 3110 PRINT AT 21,9; PAPER 0; INK 7; "              "
 3115 PRINT AT 18,26; PAPER 0; INK 7; "RET"
@@ -1591,7 +1591,7 @@ export const EXAMPLES = [
 3500 REM ---- light up the key just typed, and put the last one back ----
 3505 IF lr>0 THEN PRINT AT lr,lc; PAPER 0; INK 7; BRIGHT 0; x$
 3510 LET lr=0: LET z$=f$: LET r=17: LET c=4: GO SUB 3550: LET z$=g$: LET r=18: LET c=5: GO SUB 3550
-3515 LET z$=h$: LET r=19: LET c=6: GO SUB 3550: LET z$=j$: LET r=20: LET c=7: GO SUB 3550
+3515 LET z$=k$: LET r=19: LET c=6: GO SUB 3550: LET z$=j$: LET r=20: LET c=7: GO SUB 3550
 3520 IF lr>0 THEN PRINT AT lr,lc; PAPER 4; INK 0; BRIGHT 1; x$
 3525 RETURN
 3550 FOR i=1 TO LEN z$: IF z$(i)=c$ AND c$<>" " THEN LET lr=r: LET lc=c+i-1: LET x$=c$

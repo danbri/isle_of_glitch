@@ -21,7 +21,7 @@ body {
 
 /* The Flash movie always sits full-bleed at the back */
 #stage { position: fixed; inset: var(--toolbar-height) 0 0; background: #000; }
-#player-host, #player-host ruffle-player { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#player-host, #player-host ruffle-player, #player-host pugzx-player { position: absolute; inset: 0; width: 100%; height: 100%; display: block; aspect-ratio: auto; }
 
 /* Frosted glass between the movie and the code */
 #frost {

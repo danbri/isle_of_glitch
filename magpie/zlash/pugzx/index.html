@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PUGZX</title>
+<style>
+  :root { color-scheme: dark; --bar: 44px; }
+  html, body { margin: 0; height: 100%; background: #000; color: #ddd; font: 14px/1.3 system-ui, sans-serif; overflow: hidden; }
+  #bar { position: fixed; inset: 0 0 auto 0; height: var(--bar); display: flex; align-items: center; gap: 14px; padding: 0 14px; background: #111; border-bottom: 1px solid #222; white-space: nowrap; overflow: hidden; }
+  #bar b { letter-spacing: .06em; }
+  #bar select, #bar button { background: #1c1c1c; color: #eee; border: 1px solid #333; border-radius: 4px; padding: 4px 6px; font: inherit; }
+  #bar select { max-width: 40vw; }
+  #bar a { color: #9cf; }
+  #fps { margin-left: auto; color: #8a8; font-variant-numeric: tabular-nums; }
+  #main { position: fixed; inset: var(--bar) 0 0 0; display: flex; }
+  #side { display: none; flex: 0 0 min(46%, 640px); flex-direction: column; border-right: 1px solid #222; }
+  body.listing #side { display: flex; }
+  pugzx-editor { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  pugzx-editor textarea { flex: 1; resize: none; background: #0b0b0b; color: #e8e8e8; border: 0; padding: 10px 12px; font: 13px/1.45 ui-monospace, "JetBrains Mono", Menlo, monospace; outline: none; tab-size: 2; }
+  .pugzx-status { padding: 6px 12px; border-top: 1px solid #222; font: 12px ui-monospace, Menlo, monospace; }
+  .pugzx-status.ok { color: #8c8; } .pugzx-status.err { color: #f88; }
+  #run { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  pugzx-player { flex: 1; aspect-ratio: auto; }
+  pugzx-keys:not([has]) { display: none; }
+  .pugzx-keys { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; padding: 6px; }
+  .pugzx-keys button, .pugzx-type button { min-width: 56px; min-height: 48px; font: 600 14px system-ui; color: #fff; background: #222; border: 1px solid #444; border-radius: 8px; touch-action: none; user-select: none; }
+  .pugzx-keys button.down { background: #444; }
+  .pugzx-type { display: flex; gap: 6px; padding: 0 6px 6px; }
+  .pugzx-type input { flex: 1; min-height: 40px; font: 16px ui-monospace, Menlo, monospace; background: #111; color: #eee; border: 1px solid #444; border-radius: 8px; padding: 0 10px; }
+  body.play #bar, body.play #side { display: none; }
+  body.play #main { inset: 0; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <b>PUGZX</b>
+  <pugzx-examples for="p"></pugzx-examples>
+  <button id="toggle" type="button" aria-pressed="false">LISTING</button>
+  <a href="demo.html">two programs talking</a>
+  <a href="../SPEC.md">language spec</a>
+  <a href="../">editor (PUGZX + Flash)</a>
+  <span id="fps"></span>
+</div>
+<div id="main">
+  <div id="side"><pugzx-editor for="p"></pugzx-editor></div>
+  <div id="run">
+    <pugzx-player id="p"></pugzx-player>
+    <pugzx-keys for="p"></pugzx-keys>
+  </div>
+</div>
+<script type="module">
+  // The workbench is only elements: <pugzx-player> runs the program, the others drive it.
+  // #id picks an example, ?play shows only the program (for embedding), ?renderer=canvas skips WebGPU.
+  import { findExample, exampleId, EXAMPLES } from './pugzx.js?v=mvnun35f';
+  const p = document.getElementById('p'), params = new URLSearchParams(location.search);
+  const PLAY = params.has('play');
+  if (PLAY) { document.body.classList.add('play'); p.setAttribute('play', ''); p.setAttribute('controls', ''); }
+  const fromHash = () => { try { return findExample(decodeURIComponent(location.hash.slice(1))); } catch (_) { return null; } };
+  const home = fromHash() || EXAMPLES[0];
+  p.addEventListener('pugzx-run', (e) => {
+    if (findExample(e.detail.name) && location.hash.slice(1) !== e.detail.name) history.replaceState(null, '', '#' + e.detail.name);
+    document.title = (findExample(e.detail.name)?.name || 'listing') + ' · PUGZX';
+  });
+  p.addEventListener('pugzx-loader', (e) => { if (PLAY && e.detail.name === 'loader') e.preventDefault(); }); // an embedded program stays put
+  p.addEventListener('pugzx-stats', (e) => {
+    const s = e.detail;
+    document.getElementById('fps').textContent = `${s.renderer} · ${s.fps} fps · ${s.runs} runs/s · BASIC ${s.basicMs.toFixed(0)} ms/s · draw ${s.drawMs.toFixed(0)} ms/s`;
+  });
+  window.addEventListener('hashchange', () => { const ex = fromHash(); if (ex) p.loadExample(location.hash.slice(1)); });
+  document.getElementById('toggle').addEventListener('click', (e) => {
+    const on = document.body.classList.toggle('listing');
+    e.target.setAttribute('aria-pressed', String(on));
+  });
+  await p.ready();
+  p.loadExample(exampleId(home));
+  if (!PLAY) p.focus();
+  window.pugzx = p;
+</script>
+</body>
+</html>

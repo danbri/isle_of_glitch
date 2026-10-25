@@ -1,4 +1,4 @@
-// ZX GPU: the Canvas 2D renderer, the fallback where WebGPU is missing. It draws the machine's
+// PUGZX: the Canvas 2D renderer, the fallback where WebGPU is missing. It draws the machine's
 // screen (SPEC 10.2) back to front: border, paper, drawing layer, text, sprites, lower screen.
 const css = (rgb, a = 1) => `rgba(${(rgb >> 16) & 255},${(rgb >> 8) & 255},${rgb & 255},${a})`;
 
@@ -17,6 +17,7 @@ export class CanvasRenderer {
   }
   async init() { return true; }
   spriteCanvas(m, name) {
+    if (this.spriteImg !== m.images) { this.spriteC.clear(); this.spriteImg = m.images; }
     let c = this.spriteC.get(name);
     if (!c) {
       const img = m.images[name];

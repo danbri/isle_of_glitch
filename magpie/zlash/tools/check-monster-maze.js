@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { BasicTestRuntime, seedRandom } from './ir-test-runtime.js';
-import { EXAMPLES } from '../js/examples.js';
+import { EXAMPLES } from '../pugzx/examples.js';
 
 const source = readFileSync(process.argv[2] || new URL('../examples/monster-maze.bas', import.meta.url), 'utf8');
 const directions = [[-1, 0], [0, 1], [1, 0], [0, -1]];

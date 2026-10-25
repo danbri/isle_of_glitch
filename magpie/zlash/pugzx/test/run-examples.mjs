@@ -1,6 +1,6 @@
 // Conformance (SPEC 21): every example compiles, and runs 600 frames with scripted keys
 // without crashing or stopping on a report its design does not produce.
-import { EXAMPLES } from '../../js/examples.js';
+import { EXAMPLES } from '../examples.js';
 import { Machine } from '../machine.js';
 
 const frames = +(process.argv[2] || 600);

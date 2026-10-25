@@ -3,14 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ZX Flash</title>
+<title>PUGZX</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 fill=%27%23000%27/%3E%3Cpath d=%27M6 32 18 0h4L10 32z%27 fill=%27%23f00%27/%3E%3Cpath d=%27M10 32 22 0h4L14 32z%27 fill=%27%23ff0%27/%3E%3Cpath d=%27M14 32 26 0h4L18 32z%27 fill=%27%230f0%27/%3E%3Cpath d=%27M18 32 30 0h4L22 32z%27 fill=%27%230ff%27/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="vendor/codemirror/codemirror.css">
-<link rel="stylesheet" href="css/app.css?v=mvndlvfl">
-<script>window.RufflePlayer = window.RufflePlayer || {}; window.RufflePlayer.config = { publicPath: 'vendor/ruffle/', polyfills: false };</script>
-<script src="vendor/ruffle/ruffle.js"></script>
+<link rel="stylesheet" href="css/app.css?v=mvnun35f">
 <script src="vendor/codemirror/codemirror.js"></script>
 <script src="vendor/codemirror/simple.js"></script>
 </head>
@@ -20,7 +18,7 @@
 <div id="frost"></div>
 
 <header id="top">
-  <div class="brand"><span class="stripe"></span><span class="name">ZX<b>FLASH</b></span><span class="sub">Spectrum BASIC &rarr; AVM1 bytecode &rarr; Ruffle</span></div>
+  <div class="brand"><span class="stripe"></span><span class="name">PUG<b>ZX</b></span><span class="sub">Spectrum BASIC, extended &rarr; JavaScript &rarr; WebGPU</span></div>
   <nav class="tabs" role="tablist">
     <button class="tab" data-tab="code" role="tab">CODE</button>
     <button class="tab" data-tab="screen" role="tab">SCREEN</button>
@@ -30,9 +28,10 @@
     <label class="sel">LOAD <select id="examples" name="examples"></select></label>
     <button id="open" title="Open a .bas listing or a ZX Spectrum .tap tape image">OPEN FILE</button>
     <input type="file" id="openfile" accept=".bas,.txt,.tap,.TAP" hidden>
+    <label class="sel" title="PUGZX runs the program as JavaScript drawn with WebGPU; Flash compiles it to a .swf played by Ruffle">ENGINE <select id="engine"><option value="pugzx">PUGZX</option><option value="flash">FLASH</option></select></label>
     <label class="chk"><input type="checkbox" id="auto" checked> auto RUN</label>
     <button id="run" title="Compile and run (Ctrl/Cmd+Enter)">RUN</button>
-    <button id="download" title="Save the generated Flash movie as a .swf file">DOWNLOAD .SWF</button>
+    <button id="download" title="Compile to a Flash movie and save it as a .swf file">DOWNLOAD .SWF</button>
   </div>
 </header>
 
@@ -75,13 +74,22 @@
 <div id="screen-hint">click the screen to give it the keyboard &middot; <kbd>Esc</kbd> back to code</div>
 
 <main id="manual-panel" class="panel manual">
-  <div class="panel-head"><span class="lbl">MANUAL</span><span class="meta">everything compiles to Flash 8 bytecode and runs inside Ruffle</span></div>
+  <div class="panel-head"><span class="lbl">MANUAL</span><span class="meta">one language, two engines: PUGZX (JavaScript + WebGPU) and Flash (AVM1 in Ruffle)</span></div>
   <div class="manual-body">
     <h2>What this is</h2>
-    <p>You type a ZX Spectrum BASIC program. The page compiles it, in JavaScript, straight to an uncompressed <code>.swf</code>: the
-    Spectrum ROM font as sprite glyphs, a bank of square-wave <code>DefineSound</code>s for <code>BEEP</code>, and your program as AVM1
-    (ActionScript 1) bytecode with a small runtime. Ruffle, the open-source Flash player, runs it. Nothing is interpreted in the browser;
-    the BASIC really is running inside the Flash movie. Every edit rebuilds the movie and reloads it.</p>
+    <p>You type a ZX Spectrum BASIC program, extended with sprites, emoji, a vector drawing layer, mouse, sound and more. The page
+    compiles it in your browser and runs it. There are two engines for the same language (the full definition is in
+    <a href="SPEC.md">SPEC.md</a>), chosen with <b>ENGINE</b>:</p>
+    <ul>
+      <li><b>PUGZX</b>, the default: the BASIC becomes one JavaScript function that runs on a 50&nbsp;Hz frame clock, and the screen,
+      sprites and drawing layer are drawn with WebGPU (Canvas&nbsp;2D where WebGPU is missing). Nothing else is loaded. It is a set of
+      web components, so any page can embed a program: see <a href="pugzx/">the PUGZX workbench</a> and
+      <a href="pugzx/demo.html">two programs talking to each other</a>.</li>
+      <li><b>Flash</b>: the BASIC becomes an uncompressed Flash&nbsp;8 <code>.swf</code> (the ROM font as glyph sprites, a bank of
+      square-wave sounds for <code>BEEP</code>, and the program as AVM1 bytecode with a small runtime), played by Ruffle, the
+      open-source Flash player, which is fetched only when you pick this engine. <b>DOWNLOAD .SWF</b> works with either.</li>
+    </ul>
+    <p>Every edit recompiles and restarts the program. Add <code>?play</code> to the address to show only the running program, for embedding.</p>
 
     <h2>Lines and statements</h2>
     <p>Lines may start with a number, as on the Spectrum. Lines without a number are numbered automatically (previous + 10).
@@ -100,7 +108,7 @@
       <tr><td><code>PLOT x,y</code>, <code>DRAW dx,dy</code>, <code>CIRCLE x,y,r</code></td><td>256&times;176 pixel grid, origin bottom-left, colour items allowed first (<code>PLOT INK 2; x,y</code>)</td></tr>
       <tr><td><code>RECT x,y,w,h</code></td><td>extension: filled rectangle in the current INK (w, h in pixels)</td></tr>
       <tr><td><code>PAUSE n</code></td><td>n frames at 50 per second; <code>PAUSE 0</code> waits for a key; any key ends a pause early, and is still there for <code>INKEY$</code></td></tr>
-      <tr><td><code>KEEP "name", n</code></td><td>extension: remembers the number n under that name between visits (a Flash SharedObject, stored by the browser); the function <code>KEPT "name"</code> gives it back, or 0 if nothing was kept. Names are shared by every program, so make them specific, like <code>"popparty.best"</code></td></tr>
+      <tr><td><code>KEEP "name", n</code></td><td>extension: remembers the number n under that name between visits (stored by the browser: a Flash SharedObject in the Flash engine; in PUGZX it is shared at once with every other PUGZX program open on the page, in other tabs and frames); the function <code>KEPT "name"</code> gives it back, or 0 if nothing was kept. Names are shared by every program, so make them specific, like <code>"popparty.best"</code></td></tr>
       <tr><td><code>HALT</code></td><td>extension: wait for the next frame (a 50th of a second), like the Z80 instruction. A game loop ending in <code>HALT</code> runs 50 times a second; one ending in <code>PAUSE 1</code> skips a frame and runs 25 times</td></tr>
       <tr><td><code>BEEP seconds, pitch</code></td><td>pitch in semitones from middle C, &minus;24 to 36 (Spectrum square wave)</td></tr>
       <tr><td><code>LOADER</code>, <code>LOADER "name"</code></td><td>extension: stops the program and goes back to the loader menu, or opens the example with that id (<code>"monster-maze"</code>, <code>"tvp"</code>, <code>"jump"</code>...; the same ids as the <code>#</code> in the page address). It follows a <code>#name</code> link on this page, so a downloaded .swf just stops there</td></tr>
@@ -110,8 +118,8 @@
       <tr><td><code>WRAP 1</code> / <code>WRAP 0</code></td><td>extension: with WRAP 1, PRINT moves a word that would not fit onto the next line instead of splitting it (handy for text adventures)</td></tr>
       <tr><td><code>SPRITE "name", "row", "row"...</code></td><td>defines a bitmap sprite baked into the movie: <code>.</code> transparent, <code>#</code> black, <code>+</code> grey, <code>W</code> white, <code>0</code>-<code>7</code> colours, <code>a</code>-<code>h</code> bright colours; repeating the name appends rows</td></tr>
       <tr><td><code>SPRITE n$, x, y [, xscale [, yscale [, rotation [, alpha]]]]</code></td><td>places a copy (top-left at x,y in screen pixels, y downwards; scale in percent, rotation in degrees, alpha in percent); <code>SPRITE CLEAR</code> removes them all, <code>CLS</code> too</td></tr>
-      <tr><td><code>EMOJI "🙂", "name" [, size]</code></td><td>the browser rasterises the emoji at compile time (default 48 px) and bakes it into the movie as a true-colour alpha bitmap; place it with <code>SPRITE "name", x, y, ...</code>, centred on x,y so rotation spins about the middle. Plain text with no emoji in it, such as <code>EMOJI "+10", "plus10"</code>, comes out as chunky outlined cartoon lettering, shrunk to fit: handy for titles and score pop-ups</td></tr>
-      <tr><td><code>FX "method", args...</code></td><td>escape hatch to Flash: calls that MovieClip drawing-API method on the graphics layer, e.g. <code>FX "lineStyle", 3, #ff00ff, 60</code>, <code>FX "moveTo", 10, 10</code>, <code>FX "curveTo", 128, 0, 246, 180</code>, <code>FX "beginFill", #0000ff, 40</code>, <code>FX "endFill"</code>, <code>FX "chequer"</code> (a ZX81 chequerboard fill). Coordinates are Flash's: pixels, origin top-left.</td></tr>
+      <tr><td><code>EMOJI "🙂", "name" [, size]</code></td><td>the browser rasterises the emoji at compile time (default 48 px) and bakes it into the program as a true-colour alpha bitmap; place it with <code>SPRITE "name", x, y, ...</code>, centred on x,y so rotation spins about the middle. Plain text with no emoji in it, such as <code>EMOJI "+10", "plus10"</code>, comes out as chunky outlined cartoon lettering, shrunk to fit: handy for titles and score pop-ups</td></tr>
+      <tr><td><code>FX "method", args...</code></td><td>the Flash drawing API, in both engines: calls that MovieClip drawing method on the graphics layer, e.g. <code>FX "lineStyle", 3, #ff00ff, 60</code>, <code>FX "moveTo", 10, 10</code>, <code>FX "curveTo", 128, 0, 246, 180</code>, <code>FX "beginFill", #0000ff, 40</code>, <code>FX "endFill"</code>, <code>FX "chequer"</code> (a ZX81 chequerboard fill). Coordinates are Flash's: pixels, origin top-left.</td></tr>
       <tr><td><code>FXP "property", value</code></td><td>sets a property of the graphics layer: <code>FXP "_alpha", 50</code>, <code>FXP "_rotation", 30</code>, <code>FXP "_xscale", 200</code></td></tr>
       <tr><td><code>STOP</code>, <code>REM</code></td><td><code>FLASH</code>, <code>INVERSE</code>, <code>OVER</code>, <code>POKE</code>, <code>RANDOMIZE</code>, <code>CLEAR</code> are accepted and ignored</td></tr>
     </table>
@@ -141,7 +149,7 @@ Taps and drags on the screen arrive as the mouse.</p>
     the last standalone projector (32.0.0.465) survives in archives such as BlueMaxima's Flashpoint. The practical options today are the
     <a href="https://ruffle.rs/downloads" target="_blank" rel="noopener">Ruffle desktop app</a> or any page that embeds Ruffle.</p>
 
-    <h2>Where the extension points are</h2>
+    <h2>Where the extension points are (Flash engine)</h2>
     <p>Everything the BASIC can do is a compiler case in <code>js/basic.js</code> that emits a call into the AVM1 runtime in
     <code>js/runtime.js</code>. <code>RECT</code> is twelve lines across the two. Three ways to go further, from cheap to deep:</p>
     <ol>
@@ -153,7 +161,14 @@ Taps and drags on the screen arrive as the mouse.</p>
     </ol>
     <p>REM lines are deliberately inert; directives would be better as real keywords so the editor and the error messages know about them.</p>
 
-    <h2>How the running works</h2>
+    <h2>How the running works in PUGZX</h2>
+    <p>The program becomes one JavaScript closure: BASIC variables are its local variables and line numbers are cases of a
+    <code>switch</code>, so <code>GO TO</code>, <code>GO SUB</code> and <code>RETURN</code> cost next to nothing. It runs once per 50&nbsp;Hz frame;
+    backward jumps spend a budget and, when it runs out, the frame keeps going in slices while it has taken under 12&nbsp;ms, so
+    <code>10 GO TO 10</code> never hangs the page. Drawing happens at the display's own rate. Every PUGZX player on a page shares one
+    clock, one GPU device and one store of kept numbers.</p>
+
+    <h2>How the running works in Flash</h2>
     <p>The whole program becomes one AVM1 function that is re-entered every frame (a program over about 40 KB of bytecode is split across several functions automatically; a function may hold 64 KB). Backward jumps spend a per-frame budget, so a
     <code>10 GO TO 10</code> loop never hangs the player: it just yields and carries on next frame. When the budget runs out, the frame keeps going in slices while it has taken under 14 ms, so long computations get the whole frame. <code>PAUSE</code>, <code>BEEP</code> and
     <code>INPUT</code> yield properly. <code>RETURN</code> and computed <code>GO TO</code> re-enter through that resume chain, so
@@ -161,6 +176,6 @@ Taps and drags on the screen arrive as the mouse.</p>
   </div>
 </main>
 
-<script type="module" src="js/app.js?v=mvndlvfl"></script>
+<script type="module" src="js/app.js?v=mvnun35f"></script>
 </body>
 </html>

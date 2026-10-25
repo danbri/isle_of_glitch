@@ -1,11 +1,11 @@
-# ZX Flash BASIC: language and machine specification
+# PUGZX BASIC: language and machine specification
 
-Version 1, October 2026. This document specifies the BASIC dialect run by ZX Flash, and the
+Version 1, October 2026. This document specifies the BASIC dialect run by PUGZX and ZX Flash, and the
 virtual machine (screen, sound, input, time) that its programs see, precisely enough that a
 second implementation can be written without reading the first. Two implementations exist:
 
 - **ZX Flash** (`js/basic.js`, `js/runtime.js`): compiles BASIC to Flash 8 AVM1 bytecode, played by Ruffle.
-- **ZX GPU** (`gpu/`): compiles BASIC to JavaScript and draws with WebGPU, or Canvas 2D where WebGPU is missing.
+- **PUGZX** (`pugzx/`): compiles BASIC to JavaScript and draws with WebGPU, or Canvas 2D where WebGPU is missing.
 
 The words MUST, SHOULD and MAY are used in their usual sense. Where the two implementations
 are known to differ, or where ZX Flash's behaviour is an accident that programs should not lean
@@ -110,7 +110,7 @@ compiler needs to know that `a(...)` is an array and not a string slice or an er
 
 **Subscripts** SHOULD be integers within bounds. Reading outside the bounds or with a
 non-integer subscript is undefined (ZX Flash yields an undefined value that behaves as NaN in
-arithmetic; ZX GPU yields 0 or `""`). Writing outside the bounds is undefined.
+arithmetic; PUGZX yields 0 or `""`). Writing outside the bounds is undefined.
 
 ## 5. Expressions
 
@@ -625,13 +625,28 @@ preferably at section banners (`REM ===`). Backward jumps spend a per-frame budg
 spent the frame continues while it has used less than 14 ms. Sprites and emoji are baked into
 the SWF; text is Flash clips per character cell.
 
-**ZX GPU** compiles the program to one JavaScript function holding a `switch` over resume
+**PUGZX** compiles the program to one JavaScript function holding a `switch` over resume
 points, which the browser's JIT compiles to native code. It keeps the screen as data (cells,
 a retained display list of fills and strokes, sprite instances) and redraws it each display
 frame with WebGPU: fills by stencil-then-cover (an even-odd stencil pass over a triangle fan,
 then a covering quad), strokes as triangles, text and paper as textures, sprites as textured
 quads, all multisampled. Canvas 2D is the fallback.
 
-**Conformance**: the example programs in `js/examples.js` are the test suite. Each MUST
+**Conformance**: the example programs in `pugzx/examples.js` are the test suite. Each MUST
 compile, and run for 600 frames with scripted input without a run-time report other than the
-ones its design produces. `gpu/test/` runs them headless.
+ones its design produces. `pugzx/test/` runs them headless.
+
+**Embedding PUGZX** (`pugzx/pugzx.js`, one module, no dependencies) defines four elements:
+
+| element | what it does |
+| --- | --- |
+| `<pugzx-player>` | runs a program: `example="id"`, `src="prog.bas"`, or an inline `<script type="text/x-pugzx">`. `play` adds a click-to-play prompt, `controls` a full-screen button, `renderer="canvas"` skips WebGPU. Methods `load(source, name)`, `loadExample(id)`, `restart()`, `stop()`, `press({id, ch}, down)`; events `pugzx-run`, `pugzx-error`, `pugzx-report`, `pugzx-loader` (cancelable), `pugzx-stats`. |
+| `<pugzx-keys for="id">` | the touch keys and INPUT box from the program's `REM touch:` line (section 17); shown on touch screens, or always with `always`. |
+| `<pugzx-examples for="id">` | a picker of the built-in programs. |
+| `<pugzx-editor for="id">` | the listing, which recompiles and restarts its player as it is edited. |
+
+Without `for`, the companion elements drive the player they sit inside, or the first on the
+page. All players share one clock, one GPU device, and one store of kept numbers: `KEEP` in
+one program is `KEPT` in every other at once, including in other tabs and frames of the same
+site (a `BroadcastChannel` named `pugzx`), and the page sees each as a `pugzx-keep` event on
+`document`. That store is how programs, and programs and pages, talk to each other.

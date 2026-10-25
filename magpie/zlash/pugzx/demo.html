@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PUGZX Garden</title>
+<style>
+  :root { color-scheme: dark; --bg: #0d0f14; --fg: #e6e6e6; --dim: #9aa0aa; --line: #262a33; --accent: #ffd23a; }
+  :root[data-theme="light"] { color-scheme: light; --bg: #f6f4ef; --fg: #1b1b1b; --dim: #5d6168; --line: #d9d5cc; --accent: #b36b00; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: .02em; }
+  p { color: var(--dim); max-width: 70ch; margin: 6px 0 14px; }
+  a { color: var(--accent); }
+  code { font: 13px ui-monospace, Menlo, monospace; }
+  .row { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  figure { margin: 0; }
+  figcaption { font-size: 13px; color: var(--dim); margin-top: 6px; }
+  pugzx-player { border-radius: 6px; }
+  .page { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 18px 0 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+  .page label { display: flex; align-items: center; gap: 8px; }
+  .page button { font: inherit; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--fg); cursor: pointer; }
+  #log { font: 12px/1.6 ui-monospace, Menlo, monospace; color: var(--dim); min-height: 1.6em; }
+  pugzx-keys:not([has]) { display: none; }
+  .pugzx-keys { display: flex; gap: 6px; justify-content: center; padding: 6px 0; }
+  .pugzx-keys button { min-width: 56px; min-height: 44px; font: 600 14px system-ui; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--fg); touch-action: none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Two programs, one garden</h1>
+  <p>Three <code>&lt;pugzx-player&gt;</code> elements, each running its own BASIC program, written inline in this page. They talk
+  through kept numbers: <code>KEEP "demo.sun", s</code> in the sky is <code>KEPT "demo.sun"</code> in the gardens at once, and a
+  flower planted in either garden (click it, or press Space) appears in both. The page joins in too: the wind slider writes a kept
+  number, and the log below listens for them. Open this page in a second window and it joins the same garden.
+  <a href="./">PUGZX workbench</a> &middot; <a href="../">editor</a></p>
+
+  <div class="row">
+    <figure>
+      <pugzx-player id="sky" name="sky" controls>
+<script type="text/x-pugzx">
+10 REM touch: left right
+20 EMOJI "☀️", "sun", 56
+30 LET s = KEPT "demo.sun": IF s = 0 THEN LET s = 30
+40 BORDER 0: PAPER 0: INK 7: CLS: LET ls = -1
+100 REM ==== each frame: move the sun, tell the others where it is
+110 IF KEY CHR$ 8 THEN LET s = s - 1
+120 IF KEY CHR$ 9 THEN LET s = s + 1
+130 IF MOUSEB THEN LET s = MOUSEX / 2.55
+140 IF s < 1 THEN LET s = 1
+150 IF s > 99 THEN LET s = 99
+160 IF s <> ls THEN KEEP "demo.sun", s: LET ls = s: GO SUB 300
+170 HALT: GO TO 110
+300 REM ==== draw the sky
+310 LET a = PI * s / 100: LET b = SIN a
+320 FX "clear": FX "beginFill", INT (10 + 90 * b) * 65536 + INT (20 + 150 * b) * 256 + INT (60 + 190 * b)
+330 FX "moveTo", 0, 0: FX "lineTo", 256, 0: FX "lineTo", 256, 192: FX "lineTo", 0, 192: FX "endFill"
+340 FX "beginFill", #2b5d34: FX "moveTo", 0, 170: FX "curveTo", 128, 150, 256, 170: FX "lineTo", 256, 192: FX "lineTo", 0, 192: FX "endFill"
+350 SPRITE CLEAR: SPRITE "sun", 128 - 112 * COS a, 166 - 136 * b, 70 + 50 * b
+360 PRINT AT 0, 0; INK 7; "SKY  drag the sun"
+370 RETURN
+</script>
+      </pugzx-player>
+      <pugzx-keys for="sky"></pugzx-keys>
+      <figcaption>the sky: drag the sun (or the cursor keys); it keeps <code>demo.sun</code></figcaption>
+    </figure>
+    <figure>
+      <pugzx-player id="garden" name="garden" controls>
+<script type="text/x-pugzx">
+10 REM touch: space=PLANT r=RESET
+20 EMOJI "🌻", "fl", 40: EMOJI "🌱", "sp", 26
+30 BORDER 0: PAPER 0: INK 7: CLS: LET pm = 0
+100 REM ==== each frame: read the sky, the wind and the shared flower count
+110 LET s = KEPT "demo.sun": LET w = KEPT "demo.wind": LET n = KEPT "demo.blooms"
+120 LET m = MOUSEB: LET k$ = INKEY$
+130 IF (m AND NOT pm) OR k$ = " " THEN IF n < 40 THEN LET n = n + 1: KEEP "demo.blooms", n: BEEP 0.03, 12 + n / 2
+140 IF k$ = "r" OR k$ = "R" THEN LET n = 0: KEEP "demo.blooms", 0
+150 LET pm = m
+160 LET a = PI * s / 100: LET b = SIN a: LET sx = 128 - 112 * COS a
+170 FX "clear": FX "beginFill", INT (10 + 90 * b) * 65536 + INT (20 + 150 * b) * 256 + INT (60 + 190 * b)
+180 FX "moveTo", 0, 0: FX "lineTo", 256, 0: FX "lineTo", 256, 192: FX "lineTo", 0, 192: FX "endFill"
+190 FX "beginFill", #3a7a3f: FX "moveTo", 0, 120: FX "curveTo", 128, 100, 256, 120: FX "lineTo", 256, 192: FX "lineTo", 0, 192: FX "endFill"
+200 SPRITE CLEAR
+210 FOR i = 1 TO n
+220 LET x = i * 97: LET x = 12 + x - 232 * INT (x / 232): LET y = i * 37: LET y = 126 + y - 56 * INT (y / 56)
+230 LET r = (sx - x) / 5 + w * SIN (TICKS / 9 + i)
+240 SPRITE "sp", x, y + 12, 100, 100, r / 2
+250 SPRITE "fl", x + r / 3, y - 4, 40 + 60 * b, 40 + 60 * b, r
+260 NEXT i
+270 PRINT AT 0, 0; INK 7; "GARDEN  "; n; " flowers  "
+280 HALT: GO TO 110
+</script>
+      </pugzx-player>
+      <pugzx-keys for="garden"></pugzx-keys>
+      <figcaption>a garden: click to plant (Space too, R resets); flowers turn to the sun</figcaption>
+    </figure>
+  </div>
+
+  <div class="page">
+    <label>wind <input type="range" id="wind" min="0" max="40" value="0"></label>
+    <button type="button" id="copy">another garden &darr;</button>
+    <span id="log"></span>
+  </div>
+
+  <div class="row" id="more"></div>
+</main>
+<script type="module">
+  import { kept } from './pugzx.js?v=mvnun35f';
+  // the page is a participant too: it writes demo.wind, and hears every KEEP from every program
+  const wind = document.getElementById('wind'), log = document.getElementById('log');
+  wind.value = kept.get('demo.wind') || 0;
+  wind.addEventListener('input', () => kept.set('demo.wind', Number(wind.value)));
+  const seen = [];
+  document.addEventListener('pugzx-keep', (e) => {
+    if (e.detail.name === 'demo.wind') wind.value = e.detail.value;
+    seen.unshift(`${e.detail.name} = ${Math.round(e.detail.value * 10) / 10}`);
+    log.textContent = 'kept: ' + [...new Set(seen)].slice(0, 4).join(' · ');
+    seen.length = Math.min(seen.length, 20);
+  });
+  // a second garden, made from the first one's listing: same program, same shared numbers
+  document.getElementById('copy').addEventListener('click', () => {
+    const g = document.createElement('pugzx-player'), src = document.getElementById('garden').source;
+    g.setAttribute('controls', '');
+    document.getElementById('more').append(g);
+    g.ready().then(() => g.load(src, 'garden 2'));
+  }, { once: true });
+</script>
+<script type="module" src="pugzx.js?v=mvnun35f"></script>
+</body>
+</html>

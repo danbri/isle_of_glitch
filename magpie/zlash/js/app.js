@@ -1,10 +1,10 @@
-import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js?v=mvndlvfl';
-import { defineZxBasicMode } from './mode-zxbasic.js?v=mvndlvfl';
-import { EXAMPLES } from './examples.js?v=mvndlvfl';
-import { tapToListing } from './tap.js?v=mvndlvfl';
+import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js?v=mvnun35f';
+import { defineZxBasicMode } from './mode-zxbasic.js?v=mvnun35f';
+import { EXAMPLES, CompileError, emoji } from '../pugzx/pugzx.js?v=mvnun35f';
+import { tapToListing } from './tap.js?v=mvnun35f';
 
 const $ = (s) => document.querySelector(s);
-const STORE = 'zxflash.src', STORE_EX = 'zxflash.example';
+const STORE = 'zxflash.src', STORE_EX = 'zxflash.example', STORE_ENGINE = 'zxflash.engine';
 
 defineZxBasicMode(CodeMirror);
 const editor = CodeMirror.fromTextArea($('#editor'), {
@@ -15,34 +15,37 @@ const editor = CodeMirror.fromTextArea($('#editor'), {
   },
 });
 
-// ---- emoji rasteriser: the browser's own colour emoji font, sampled into an alpha bitmap ----
-setEmojiRenderer((text, size) => {
-  const c = document.createElement('canvas'); c.width = size; c.height = size;
-  const g = c.getContext('2d', { willReadFrequently: true });
-  g.clearRect(0, 0, size, size);
-  g.textAlign = 'center'; g.textBaseline = 'middle';
-  if (/\p{Extended_Pictographic}/u.test(text)) {
-    g.font = `${Math.round(size * 0.82)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
-    g.fillText(text, size / 2, size / 2 + size * 0.04);
-  } else { // plain text: chunky outlined cartoon lettering, shrunk to fit the width (titles, score pop-ups)
-    const face = (px) => `900 ${px}px "Arial Rounded MT Bold", "Trebuchet MS", "Arial Black", sans-serif`;
-    let px = size * 0.7;
-    g.font = face(px);
-    const w = g.measureText(text).width;
-    if (w > size * 0.86) { px *= size * 0.86 / w; g.font = face(px); }
-    const fill = g.createLinearGradient(0, size / 2 - px / 2, 0, size / 2 + px / 2);
-    fill.addColorStop(0, '#fff7b0'); fill.addColorStop(0.5, '#ffd23a'); fill.addColorStop(1, '#ff7a1a');
-    g.lineJoin = 'round'; g.lineWidth = Math.max(2, px * 0.2); g.strokeStyle = '#2a1052';
-    g.strokeText(text, size / 2, size / 2);
-    g.fillStyle = fill; g.fillText(text, size / 2, size / 2);
-  }
-  return { width: size, height: size, rgba: g.getImageData(0, 0, size, size).data };
-});
+// ---- emoji: the Flash compiler bakes the same pictures PUGZX draws ----
+setEmojiRenderer((text, size) => { const img = emoji(text, size); return { width: img.w, height: img.h, rgba: img.data }; });
 
-// ---- Ruffle ----
-const ruffle = window.RufflePlayer.newest();
-const player = ruffle.createPlayer();
-$('#player-host').append(player);
+// ---- engines ----
+// PUGZX (the default) compiles the BASIC to JavaScript and draws it with WebGPU, in a <pugzx-player>.
+// Flash compiles it to an AVM1 .swf and plays that in Ruffle, which is only fetched when Flash is chosen.
+const params = new URLSearchParams(location.search);
+let engine = params.get('engine') || (() => { try { return localStorage.getItem(STORE_ENGINE); } catch (_) { return null; } })() || 'pugzx';
+if (engine !== 'flash') engine = 'pugzx';
+document.body.dataset.engine = engine;
+let player = null; // the element on the stage: a <pugzx-player> or a <ruffle-player>
+function loadScript(src) {
+  return new Promise((ok, fail) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = fail; document.head.append(s); });
+}
+async function mountEngine() {
+  $('#player-host').textContent = '';
+  if (engine === 'flash') {
+    if (!window.RufflePlayer?.newest) {
+      window.RufflePlayer = window.RufflePlayer || {};
+      window.RufflePlayer.config = { publicPath: 'vendor/ruffle/', polyfills: false };
+      await loadScript('vendor/ruffle/ruffle.js');
+    }
+    player = window.RufflePlayer.newest().createPlayer();
+  } else {
+    player = document.createElement('pugzx-player');
+    // LOADER: go through the page's #hash like the Flash engine does, so the menu and links agree
+    player.addEventListener('pugzx-loader', (e) => { e.preventDefault(); location.hash = e.detail.name; });
+  }
+  $('#player-host').append(player);
+  if (engine === 'pugzx') await player.ready();
+}
 let lastSwf = null, swfName = 'zxflash', progName = '', progSrc = null, settingSource = false;
 function setSource(src) {
   settingSource = true;
@@ -67,6 +70,7 @@ function loadSwf(bytes) {
   return loading;
 }
 async function doLoad(bytes) {
+  if (engine !== 'flash') return;
   try {
     await player.ruffle().load({
     data: bytes, swfFileName: 'zxflash.swf',
@@ -93,7 +97,7 @@ function showError(e) {
   const st = $('#status');
   st.className = 'status err';
   $('#meta').textContent = '';
-  if (e instanceof BasicError) {
+  if (e instanceof BasicError || e instanceof CompileError) {
     st.innerHTML = `<span>C ${esc(e.message)}, line ${e.line}:${e.col}</span>`;
     const ln = e.line - 1;
     editor.addLineClass(ln, 'background', 'line-error');
@@ -114,10 +118,21 @@ function run(force = false) {
   lastSrc = src;
   if (!PLAY) try { localStorage.setItem(STORE, src); localStorage.setItem(STORE_EX, progSrc !== null && src === progSrc ? progName : ''); } catch (_) { /* ignore */ }
   clearError();
+  const st = $('#status');
+  if (engine === 'pugzx') {
+    lastSwf = null; // DOWNLOAD .SWF builds it on demand
+    let r;
+    try { r = player.load(src, progName); } catch (e) { showError(e); return; }
+    st.className = 'status ok';
+    st.innerHTML = `<span>0 OK</span><span class="detail">${r.lines} lines &middot; ${(r.bytes / 1024).toFixed(1)} KB JavaScript &middot; ${r.ms.toFixed(1)} ms</span>`;
+    $('#meta').textContent = '';
+    setupPad(src);
+    if (document.body.dataset.tab === 'screen') player.focus();
+    return;
+  }
   busy(true);
   let r;
   try { r = buildProgram(src, { trace: !!window.zxflash?.trace }); } catch (e) { showError(e); busy(false); return; }
-  const st = $('#status');
   st.className = 'status ok';
   st.innerHTML = `<span>0 OK</span><span class="detail">${r.lines} lines &middot; ${r.bytecode} bytes AVM1 &middot; ${(r.swf.length / 1024).toFixed(1)} KB swf &middot; ${r.ms.toFixed(1)} ms</span>`;
   $('#meta').textContent = r.vars.filter(v => v.startsWith('b_')).map(v => v.slice(2)).join(' ');
@@ -137,8 +152,9 @@ editor.on('change', () => {
 });
 $('#run').addEventListener('click', () => run(true));
 $('#download').addEventListener('click', () => {
-  if (!lastSwf) run(true);
-  if (!lastSwf) return;
+  if (!lastSwf) { // the PUGZX engine doesn't build a movie; make one for the download
+    try { lastSwf = buildProgram(editor.getValue()).swf; } catch (e) { showError(e); return; }
+  }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([lastSwf], { type: 'application/x-shockwave-flash' }));
   a.download = swfName + '.swf'; a.click();
@@ -149,11 +165,11 @@ $('#download').addEventListener('click', () => {
 const PLAY = new URLSearchParams(location.search).has('play');
 if (PLAY) document.body.classList.add('play');
 let playHome = '';
-$('#play-start').addEventListener('click', () => { document.body.classList.add('started'); player.focus(); });
+$('#play-start').addEventListener('click', () => { document.body.classList.add('started'); player?.focus(); });
 $('#play-full').addEventListener('click', () => {
   if (document.fullscreenElement) document.exitFullscreen?.();
   else document.documentElement.requestFullscreen?.().catch(() => {});
-  setTimeout(() => player.focus(), 100);
+  setTimeout(() => player?.focus(), 100);
 });
 
 // ---- tabs ----
@@ -165,13 +181,13 @@ function setTab(name) {
     b.setAttribute('aria-selected', String(active));
   });
   if (name === 'code') setTimeout(() => editor.focus(), 50);
-  if (name === 'screen') setTimeout(() => player.focus(), 50);
+  if (name === 'screen') setTimeout(() => player?.focus(), 50);
 }
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 document.addEventListener('keydown', (e) => {
   if (!PLAY && e.key === 'Escape' && document.body.dataset.tab !== 'code') { setTab('code'); e.preventDefault(); }
 });
-player.addEventListener('keydown', (e) => { if (!PLAY && e.key === 'Escape') setTab('code'); });
+$('#player-host').addEventListener('keydown', (e) => { if (!PLAY && e.key === 'Escape') setTab('code'); });
 
 // ---- examples ----
 const sel = $('#examples');
@@ -263,7 +279,13 @@ function keyFor(ch) { // [key, code, label] for a named key or one character
   const up = ch.toUpperCase();
   return [ch, /[A-Z]/.test(up) ? 'Key' + up : /[0-9]/.test(ch) ? 'Digit' + ch : '', up];
 }
+const KEY_ID = { ArrowLeft: [37, '\x08'], ArrowRight: [39, '\x09'], ArrowDown: [40, '\x0a'], ArrowUp: [38, '\x0b'], Enter: [13, '\r'], ' ': [32, ' '] };
 function sendKey(k, down) {
+  if (engine === 'pugzx') {
+    const [id, ch] = KEY_ID[k[0]] || [k[0].toUpperCase().charCodeAt(0), k[0]];
+    player.press({ id, ch }, down);
+    return;
+  }
   // Ruffle only listens while it thinks it has focus; tell it so without taking focus away from the
   // type box (that would close the phone's keyboard after every command)
   if (down) { player.dispatchEvent(new FocusEvent('focus')); player.dispatchEvent(new FocusEvent('focusin', { bubbles: true })); }
@@ -308,6 +330,18 @@ function setupPad(src) {
 $('#pad-type button').addEventListener('pointerdown', (e) => e.preventDefault()); // keep the phone's keyboard open
 padType.addEventListener('submit', (e) => { e.preventDefault(); const t = padText.value; padText.value = ''; typeText(t); });
 
+// ---- engine picker ----
+const engineSel = $('#engine');
+engineSel.value = engine;
+engineSel.addEventListener('change', async () => {
+  engine = engineSel.value;
+  document.body.dataset.engine = engine;
+  try { localStorage.setItem(STORE_ENGINE, engine); } catch (_) { /* ignore */ }
+  await mountEngine();
+  run(true);
+});
+
+await mountEngine();
 setTab('screen');
 run(true);
-window.zxflash = { editor, player, run, buildProgram, setTab };
+window.zxflash = { editor, get player() { return player; }, get engine() { return engine; }, run, buildProgram, setTab };
