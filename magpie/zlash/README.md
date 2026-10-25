@@ -42,6 +42,8 @@ also verifies that the browser uses the tested listing.
 | `js/app.js` | editor (CodeMirror 5), tabs, auto-reload into Ruffle |
 | `js/font.js` | the 768-byte character set from the 48K ROM |
 
+**The language is specified in [`SPEC.md`](SPEC.md)**, and has a second, independent implementation, **ZX GPU** ([`gpu/`](gpu/), live at [`gpu/#four-hallows`](https://danbri.github.io/isle_of_glitch/magpie/zlash/gpu/#four-hallows)). ZX GPU skips Flash: it compiles BASIC to one JavaScript function holding a `switch` over resume points (so the browser's JIT runs it natively), keeps the screen as data, and draws it with WebGPU: fills by stencil-then-cover (an even-odd stencil pass over a triangle fan, then a covering quad), strokes the same way so translucent lines stay even, paper and text as textures, sprites as textured quads, all 4x multisampled; Canvas 2D is the fallback (`?renderer=canvas`). Running the BASIC on the GPU itself would not help (AVM1-style bytecode is one sequential, branching stream, the worst case for a GPU, and Ruffle already draws with wgpu); the gain is in not interpreting it at all. The Four Hallows spends about 0.4 ms per game update there. `npm run test:gpu` runs every example headless for 600 frames and checks the Lisp's answers. ZX GPU also takes `?play`.
+
 Any program can be shown on its own, filling the window, by adding `?play` to the page address: `index.html?play#four-hallows` shows only The Four Hallows, with a click-to-play prompt (a browser gives keys to the player only after a click) and a full-screen button, and its `LOADER` back to the menu is ignored. To embed one in another site:
 
 ```html
