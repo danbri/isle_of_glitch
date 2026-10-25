@@ -232,3 +232,23 @@ body.touch #screen-hint { display: none; }
   flex: 1; min-width: 0; min-height: 46px; padding: 0 10px; font-family: var(--mono); font-size: 18px;
   color: #fff; background: #111; border: 1px solid var(--glass-edge); border-radius: 8px;
 }
+
+/* ?play: only the running program, filling the window, for embedding in another page */
+#play-start, #play-full { display: none; }
+body.play #top, body.play #code-panel, body.play #manual-panel, body.play #screen-hint, body.play #frost, body.play #compiling { display: none !important; }
+body.play #stage { inset: 0; }
+body.play.touch[data-tab="screen"] #stage { bottom: var(--pad-h, 0px); }
+body.play #play-full {
+  display: block; position: fixed; top: 10px; right: 10px; z-index: 20; width: 36px; height: 36px;
+  font-size: 20px; line-height: 1; color: #fff; background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 6px; cursor: pointer; opacity: 0.35; transition: opacity .2s;
+}
+body.play #play-full:hover, body.play #play-full:focus-visible { opacity: 1; }
+body.play:not(.started) #play-start {
+  display: flex; position: fixed; inset: 0; z-index: 15; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.35); cursor: pointer;
+}
+body.play #play-start span {
+  font: 600 18px/1 system-ui, sans-serif; letter-spacing: .04em; color: #fff;
+  background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.35); border-radius: 999px; padding: 12px 22px;
+}

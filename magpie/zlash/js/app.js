@@ -1,7 +1,7 @@
-import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js?v=mvmzln9o';
-import { defineZxBasicMode } from './mode-zxbasic.js?v=mvmzln9o';
-import { EXAMPLES } from './examples.js?v=mvmzln9o';
-import { tapToListing } from './tap.js?v=mvmzln9o';
+import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js?v=mvndlvfl';
+import { defineZxBasicMode } from './mode-zxbasic.js?v=mvndlvfl';
+import { EXAMPLES } from './examples.js?v=mvndlvfl';
+import { tapToListing } from './tap.js?v=mvndlvfl';
 
 const $ = (s) => document.querySelector(s);
 const STORE = 'zxflash.src', STORE_EX = 'zxflash.example';
@@ -112,7 +112,7 @@ function run(force = false) {
   const src = editor.getValue();
   if (!force && src === lastSrc) return;
   lastSrc = src;
-  try { localStorage.setItem(STORE, src); localStorage.setItem(STORE_EX, progSrc !== null && src === progSrc ? progName : ''); } catch (_) { /* ignore */ }
+  if (!PLAY) try { localStorage.setItem(STORE, src); localStorage.setItem(STORE_EX, progSrc !== null && src === progSrc ? progName : ''); } catch (_) { /* ignore */ }
   clearError();
   busy(true);
   let r;
@@ -145,6 +145,17 @@ $('#download').addEventListener('click', () => {
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 });
 
+// ---- play mode: ?play shows only the running program, for embedding any of them in another page ----
+const PLAY = new URLSearchParams(location.search).has('play');
+if (PLAY) document.body.classList.add('play');
+let playHome = '';
+$('#play-start').addEventListener('click', () => { document.body.classList.add('started'); player.focus(); });
+$('#play-full').addEventListener('click', () => {
+  if (document.fullscreenElement) document.exitFullscreen?.();
+  else document.documentElement.requestFullscreen?.().catch(() => {});
+  setTimeout(() => player.focus(), 100);
+});
+
 // ---- tabs ----
 function setTab(name) {
   document.body.dataset.tab = name;
@@ -158,9 +169,9 @@ function setTab(name) {
 }
 document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && document.body.dataset.tab !== 'code') { setTab('code'); e.preventDefault(); }
+  if (!PLAY && e.key === 'Escape' && document.body.dataset.tab !== 'code') { setTab('code'); e.preventDefault(); }
 });
-player.addEventListener('keydown', (e) => { if (e.key === 'Escape') setTab('code'); });
+player.addEventListener('keydown', (e) => { if (!PLAY && e.key === 'Escape') setTab('code'); });
 
 // ---- examples ----
 const sel = $('#examples');
@@ -194,6 +205,8 @@ sel.addEventListener('change', () => {
 window.addEventListener('hashchange', () => {
   const ex = exampleFromHash();
   if (!ex) return;
+  // an embedded program stays put: its way back to the ZX Flash menu leads nowhere here
+  if (PLAY && exampleSlug(ex) === 'loader' && playHome && playHome !== 'loader') { setExampleHash(playHome, true); return; }
   showExample(ex);
   run(true);
 });
@@ -227,7 +240,8 @@ $('#openfile').addEventListener('change', async () => {
 let initial = null, initialEx = '';
 try { initial = localStorage.getItem(STORE); initialEx = localStorage.getItem(STORE_EX) || ''; } catch (_) { /* ignore */ }
 { // an unedited example always comes back as its current version, so updates to the examples show up
-  const ex = exampleFromHash() || EXAMPLES.find(e => e.name === initialEx) || (initial ? EXAMPLES.find(e => e.src === initial) : EXAMPLES[0]);
+  const ex = PLAY ? (exampleFromHash() || EXAMPLES[0]) : exampleFromHash() || EXAMPLES.find(e => e.name === initialEx) || (initial ? EXAMPLES.find(e => e.src === initial) : EXAMPLES[0]);
+  if (ex) playHome = exampleSlug(ex);
   if (ex) showExample(ex);
   else setSource(initial || EXAMPLES[0].src);
   showName();

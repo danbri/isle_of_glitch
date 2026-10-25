@@ -1,8 +1,8 @@
 // Glue: BASIC source -> complete SWF bytes.
-import * as S from './swf.js?v=mvmzln9o';
-import { compileIR } from './avm1.js?v=mvmzln9o';
-import { buildAssets, runtimeIR, STAGE, SCREEN, PALETTE } from './runtime.js?v=mvmzln9o';
-import { compileBasic, BasicError } from './basic.js?v=mvmzln9o';
+import * as S from './swf.js?v=mvndlvfl';
+import { compileIR } from './avm1.js?v=mvndlvfl';
+import { buildAssets, runtimeIR, STAGE, SCREEN, PALETTE } from './runtime.js?v=mvndlvfl';
+import { compileBasic, BasicError } from './basic.js?v=mvndlvfl';
 
 let assetCache = null;
 // The host supplies the rasteriser (a canvas in the browser); Node gets a placeholder so builds still succeed.
@@ -31,7 +31,7 @@ export function buildProgram(source, opts = {}) {
       // AVM1 branches are 16-bit: recompile any that don't reach as "far" jumps
       if (e.farLabel && !far.has(e.farLabel)) { far.add(e.farLabel); continue; }
       // a function may hold 64 KB: split the program into chunks at loop-free line boundaries
-      if (e.tooLarge && !chunks) { chunks = planChunks(marks, prog.splittable, prog.lines); if (chunks) continue; }
+      if (e.tooLarge && !chunks) { chunks = planChunks(marks, prog.splittable, prog.lines, prog.banner); if (chunks) continue; }
       throw e;
     }
   }
@@ -50,12 +50,21 @@ export function buildProgram(source, opts = {}) {
   return { swf, bytecode: actions.length, lines: prog.lines, vars: prog.vars, ms: performance.now() - t0 };
 }
 
-const CHUNK_BYTES = 40000;
-function planChunks(marks, splittable, nLines) {
-  const chunks = []; let k = 0, start = marks[0] || 0;
-  for (let i = 0; i < nLines; i++) {
-    if (i > 0 && splittable[i] && (marks[i] - start) > CHUNK_BYTES) { k++; start = marks[i]; }
+// A chunk holds up to CHUNK_BYTES (a function may hold 64 KB). When one fills up, it ends at the last
+// section banner (a line beginning REM ====) in its second half, if there is one, so that a program's
+// own sections become the chunk boundaries: a jump between chunks costs a walk of the target chunk's
+// resume chain, cheap only near the chunk's start, so hot code should not straddle one.
+const CHUNK_BYTES = 56000;
+function planChunks(marks, splittable, nLines, banner = []) {
+  const chunks = new Array(nLines).fill(0); let k = 0, start = 0;
+  const at = (i) => marks[i] || 0;
+  for (let i = 1; i < nLines; i++) {
     chunks[i] = k;
+    if (!splittable[i] || at(i) - at(start) <= CHUNK_BYTES) continue;
+    let cut = i;
+    for (let b = i; b > start && at(b) - at(start) >= CHUNK_BYTES / 2; b--) if (banner[b] && splittable[b]) { cut = b; break; }
+    k++; start = cut;
+    for (let j = cut; j <= i; j++) chunks[j] = k;
   }
   return k > 0 ? chunks : null;
 }

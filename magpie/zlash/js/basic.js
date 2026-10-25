@@ -1,7 +1,7 @@
 // Spectrum-flavoured BASIC -> AVM1 IR compiler.
 // Single pass: the parser emits IR as it goes. Output drops straight into runtime.js.
-import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root } from './avm1.js?v=mvmzln9o';
-import { SCREEN } from './runtime.js?v=mvmzln9o';
+import { v, m, call, cm, nw, op, not, set, setm, local, x, iff, whl, ret, fn, root } from './avm1.js?v=mvndlvfl';
+import { SCREEN } from './runtime.js?v=mvndlvfl';
 
 export class BasicError extends Error {
   constructor(msg, line, col) { super(msg); this.line = line; this.col = col; }
@@ -120,6 +120,7 @@ export function compileBasic(source, far = new Set(), chunks = null, trace = fal
   const outs = Array.from({ length: nChunks }, () => []);
   let out = outs[0]; // body of the chunk being compiled
   const splittable = []; // line idx -> true when no FOR/REPEAT/WHILE is open at its start (a chunk may begin there)
+  const banner = []; // line idx -> true for a section banner (REM ====...), where a chunk had best begin
   let resumeCount = lines.length; // resume index 0..lines-1 are line starts
   const forStack = [], loopStack = [];
   let cur; // current line
@@ -155,6 +156,7 @@ export function compileBasic(source, far = new Set(), chunks = null, trace = fal
   for (const line of lines) {
     cur = line; curStmt = 1;
     splittable[line.idx] = forStack.length + loopStack.length === 0;
+    banner[line.idx] = /^\s*REM\s*={3}/i.test(line.text);
     if (chunkOf(line.idx) !== curChunk) { // close this chunk
       farJump(line.idx); // sequential flow off the end of this chunk continues at this line, in the next chunk
       out.push(['label', PL(chain)]); // the chain's "nothing matched" exit: let the driver try the next chunk
@@ -199,7 +201,7 @@ export function compileBasic(source, far = new Set(), chunks = null, trace = fal
   const drv = [];
   outs.forEach((o, k) => { drv.push(set('__claimed', num(1)), x(call('__run' + k))); if (k < outs.length - 1) drv.push(iff(v('__claimed'), [ret()])); });
   prog.push(fn('__run', [], drv));
-  return { ir: prog, lines: lines.length, resumePoints: resumeCount, vars: [...vars.keys()], sprites, emojis, splittable };
+  return { ir: prog, lines: lines.length, resumePoints: resumeCount, vars: [...vars.keys()], sprites, emojis, splittable, banner };
 }
 
 class Parser {
