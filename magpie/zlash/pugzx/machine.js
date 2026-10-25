@@ -2,8 +2,8 @@
 // cells, a retained display list of fills and strokes, sprites), sound and storage through the
 // host, keys and mouse from the host, and the 50 Hz frame clock. Renderers read the screen from
 // here; nothing in this file draws pixels except the text rasteriser, which both renderers share.
-import { zxFont } from './font.js?v=mvnun35f';
-import { compile, instantiate } from './compile.js?v=mvnun35f';
+import { zxFont } from './font.js?v=mvnv6n1c';
+import { compile, instantiate } from './compile.js?v=mvnv6n1c';
 
 export const FPS = 50;
 export const PALETTE = [

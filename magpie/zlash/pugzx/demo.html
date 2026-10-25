@@ -23,6 +23,7 @@
   #log { font: 12px/1.6 ui-monospace, Menlo, monospace; color: var(--dim); min-height: 1.6em; }
   pugzx-keys:not([has]) { display: none; }
   .pugzx-keys { display: flex; gap: 6px; justify-content: center; padding: 6px 0; }
+  .pugzx-keys button small { display: block; font-size: 10px; opacity: .6; }
   .pugzx-keys button { min-width: 56px; min-height: 44px; font: 600 14px system-ui; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--fg); touch-action: none; }
 </style>
 </head>
@@ -105,7 +106,7 @@
   <div class="row" id="more"></div>
 </main>
 <script type="module">
-  import { kept } from './pugzx.js?v=mvnun35f';
+  import { kept } from './pugzx.js?v=mvnv6n1c';
   // the page is a participant too: it writes demo.wind, and hears every KEEP from every program
   const wind = document.getElementById('wind'), log = document.getElementById('log');
   wind.value = kept.get('demo.wind') || 0;
@@ -125,6 +126,6 @@
     g.ready().then(() => g.load(src, 'garden 2'));
   }, { once: true });
 </script>
-<script type="module" src="pugzx.js?v=mvnun35f"></script>
+<script type="module" src="pugzx.js?v=mvnv6n1c"></script>
 </body>
 </html>

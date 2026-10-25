@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=VT323&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="vendor/codemirror/codemirror.css">
-<link rel="stylesheet" href="css/app.css?v=mvnun35f">
+<link rel="stylesheet" href="css/app.css?v=mvnv6n1c">
 <script src="vendor/codemirror/codemirror.js"></script>
 <script src="vendor/codemirror/simple.js"></script>
 </head>
@@ -28,7 +28,7 @@
     <label class="sel">LOAD <select id="examples" name="examples"></select></label>
     <button id="open" title="Open a .bas listing or a ZX Spectrum .tap tape image">OPEN FILE</button>
     <input type="file" id="openfile" accept=".bas,.txt,.tap,.TAP" hidden>
-    <label class="sel" title="PUGZX runs the program as JavaScript drawn with WebGPU; Flash compiles it to a .swf played by Ruffle">ENGINE <select id="engine"><option value="pugzx">PUGZX</option><option value="flash">FLASH</option></select></label>
+    <label class="sel engine" title="PUGZX runs the program as JavaScript drawn with WebGPU; Flash compiles it to a .swf played by Ruffle">ENGINE <select id="engine"><option value="pugzx">PUGZX</option><option value="flash">FLASH</option></select></label>
     <label class="chk"><input type="checkbox" id="auto" checked> auto RUN</label>
     <button id="run" title="Compile and run (Ctrl/Cmd+Enter)">RUN</button>
     <button id="download" title="Compile to a Flash movie and save it as a .swf file">DOWNLOAD .SWF</button>
@@ -176,6 +176,6 @@ Taps and drags on the screen arrive as the mouse.</p>
   </div>
 </main>
 
-<script type="module" src="js/app.js?v=mvnun35f"></script>
+<script type="module" src="js/app.js?v=mvnv6n1c"></script>
 </body>
 </html>

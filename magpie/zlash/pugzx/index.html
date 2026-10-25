@@ -25,6 +25,7 @@
   pugzx-keys:not([has]) { display: none; }
   .pugzx-keys { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; padding: 6px; }
   .pugzx-keys button, .pugzx-type button { min-width: 56px; min-height: 48px; font: 600 14px system-ui; color: #fff; background: #222; border: 1px solid #444; border-radius: 8px; touch-action: none; user-select: none; }
+  .pugzx-keys button small { display: block; font-size: 10px; opacity: .6; }
   .pugzx-keys button.down { background: #444; }
   .pugzx-type { display: flex; gap: 6px; padding: 0 6px 6px; }
   .pugzx-type input { flex: 1; min-height: 40px; font: 16px ui-monospace, Menlo, monospace; background: #111; color: #eee; border: 1px solid #444; border-radius: 8px; padding: 0 10px; }
@@ -52,7 +53,7 @@
 <script type="module">
   // The workbench is only elements: <pugzx-player> runs the program, the others drive it.
   // #id picks an example, ?play shows only the program (for embedding), ?renderer=canvas skips WebGPU.
-  import { findExample, exampleId, EXAMPLES } from './pugzx.js?v=mvnun35f';
+  import { findExample, exampleId, EXAMPLES } from './pugzx.js?v=mvnv6n1c';
   const p = document.getElementById('p'), params = new URLSearchParams(location.search);
   const PLAY = params.has('play');
   if (PLAY) { document.body.classList.add('play'); p.setAttribute('play', ''); p.setAttribute('controls', ''); }

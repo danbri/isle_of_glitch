@@ -9,11 +9,11 @@
 // Every player on a page shares one clock, one GPU device and one store of kept numbers, so
 // KEEP in one program is KEPT in another at once (and in other tabs and frames, through a
 // BroadcastChannel). That is how programs talk to each other.
-import { Machine, FPS } from './machine.js?v=mvnun35f';
-import { CompileError, compile } from './compile.js?v=mvnun35f';
-import { WebGPURenderer } from './render-webgpu.js?v=mvnun35f';
-import { CanvasRenderer } from './render-canvas.js?v=mvnun35f';
-import { EXAMPLES } from './examples.js?v=mvnun35f';
+import { Machine, FPS } from './machine.js?v=mvnv6n1c';
+import { CompileError, compile } from './compile.js?v=mvnv6n1c';
+import { WebGPURenderer } from './render-webgpu.js?v=mvnv6n1c';
+import { CanvasRenderer } from './render-canvas.js?v=mvnv6n1c';
+import { EXAMPLES } from './examples.js?v=mvnv6n1c';
 
 export { Machine, CompileError, compile, EXAMPLES, FPS };
 export const exampleId = (ex) => ex.id || ex.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -310,6 +310,7 @@ export class PugzxKeys extends HTMLElement {
       } else {
         const k = keyFromName(name), named = { left: '◀', right: '▶', up: '▲', down: '▼', space: 'SPACE', enter: 'ENTER' }[name.toLowerCase()];
         b.textContent = label || named || name.toUpperCase();
+        if (label && label.toUpperCase() !== (named || name.toUpperCase())) { const s = document.createElement('small'); s.textContent = named || name.toUpperCase(); b.append(s); } // the key it stands for, when a label hides it
         let downAt = 0;
         const release = () => {
           if (!b.classList.contains('down')) return;

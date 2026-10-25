@@ -1,7 +1,7 @@
-import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js?v=mvnun35f';
-import { defineZxBasicMode } from './mode-zxbasic.js?v=mvnun35f';
-import { EXAMPLES, CompileError, emoji } from '../pugzx/pugzx.js?v=mvnun35f';
-import { tapToListing } from './tap.js?v=mvnun35f';
+import { buildProgram, BasicError, setEmojiRenderer } from './compiler.js?v=mvnv6n1c';
+import { defineZxBasicMode } from './mode-zxbasic.js?v=mvnv6n1c';
+import { EXAMPLES, CompileError, emoji } from '../pugzx/pugzx.js?v=mvnv6n1c';
+import { tapToListing } from './tap.js?v=mvnv6n1c';
 
 const $ = (s) => document.querySelector(s);
 const STORE = 'zxflash.src', STORE_EX = 'zxflash.example', STORE_ENGINE = 'zxflash.engine';
@@ -311,6 +311,7 @@ function setupPad(src) {
     } else { // a key that is held down for as long as the finger is
       const k = keyFor(name.toLowerCase() in NAMED ? name.toLowerCase() : name);
       b.textContent = label || k[2];
+      if (label && label.toUpperCase() !== k[2]) { const s = document.createElement('small'); s.textContent = k[2] === ' ' ? 'SPACE' : k[2]; b.append(s); } // the key it stands for, when a label hides it
       // a quick tap still holds the key for 120 ms, so a program that looks once a frame doesn't miss it
       let downAt = 0;
       const release = () => {

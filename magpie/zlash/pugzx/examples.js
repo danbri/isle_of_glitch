@@ -614,7 +614,7 @@ export const EXAMPLES = [
 310 CLS: FX "clear": FX "lineStyle": LET docked=1
 320 PRINT AT 1,9; INK 6; "VECTOR TRADER"
 330 PRINT AT 3,7; INK 5; "a tribute to Elite": PRINT AT 4,2; INK 5; "by Ian Bell and David Braben": PRINT AT 5,10; INK 5; "(1984)"
-340 PRINT AT 16,5; INK 7; "PRESS SPACE, COMMANDER"
+340 PRINT AT 16,2; INK 7; "PRESS SPACE OR TAP, COMMANDER"
 350 PRINT AT 18,1; INK 4; "arrows steer, W/S speed": PRINT AT 19,1; INK 4; "SPACE fire, J jump drive": PRINT AT 20,1; INK 4; "H hyperspace, C dock, L loader"
 360 LET o=most: LET kind(o)=2: LET posx(o)=0: LET posy(o)=-6: LET posz(o)=330: LET nosex(o)=0: LET nosey(o)=0: LET nosez(o)=1
 370 LET roofx(o)=0: LET roofy(o)=1: LET roofz(o)=0: LET sidex(o)=1: LET sidey(o)=0: LET sidez(o)=0
@@ -625,7 +625,7 @@ export const EXAMPLES = [
 384 LET vx=roofx(o): LET vy=roofy(o): LET vz=roofz(o): GO SUB 395: LET roofx(o)=vx: LET roofy(o)=vy: LET roofz(o)=vz
 386 LET vx=sidex(o): LET vy=sidey(o): LET vz=sidez(o): GO SUB 395: LET sidex(o)=vx: LET sidey(o)=vy: LET sidez(o)=vz
 388 GO SUB 1600: IF KEY "l" THEN LOADER
-390 HALT: UNTIL KEY " " OR KEY CHR$ 13
+390 HALT: UNTIL KEY " " OR KEY CHR$ 13 OR MOUSEB
 392 LET kind(o)=0: GO TO 400
 395 REM turn (vx,vy,vz) about the vertical by angle a, and tip it a little towards us
 396 LET t2=vx*COS a+vz*SIN a: LET vz=vz*COS a-vx*SIN a: LET vx=t2
